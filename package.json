@@ -21,8 +21,9 @@
     "lint:static": "pnpm run lint:unused && pnpm run lint:circular",
     "validate": "turbo run build lint prettier typecheck test cypress && pnpm run lint:static && pnpm run lint:duplicates",
     "validate:ci": "CI=true turbo run build lint typecheck test format:check cypress && pnpm run lint:unused && pnpm run lint:circular && pnpm run lint:duplicates",
-    "emulators": "firebase emulators:start --only auth,firestore,storage,hosting --project demo-project-base",
-    "emulators:docker": "docker compose -f docker-compose.dev.yml up firebase-emulator"
+    "emulators:prepare": "pnpm --filter web build",
+    "emulators": "pnpm run emulators:prepare && firebase emulators:start --only auth,firestore,storage,hosting --project demo-project-base",
+    "emulators:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up firebase-emulator --force-recreate"
   },
   "devDependencies": {
     "firebase-tools": "catalog:",
