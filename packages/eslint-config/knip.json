@@ -1,6 +1,4 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "entry": ["base.js", "react.js"],
-  "project": ["**/*.js"],
-  "ignoreBinaries": ["eslint", "knip", "madge", "prettier"]
+  "project": ["**/*.js"]
 }

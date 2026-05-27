@@ -1,38 +1,7 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "workspaces": {
-    "apps/web": {
-      "project": ["app/**/*.{ts,tsx}", "cypress/**/*.ts", "vitest.setup.ts"],
-      "ignore": [".react-router/**", "build/**"],
-      "ignoreBinaries": [
-        "cypress",
-        "eslint",
-        "knip",
-        "madge",
-        "prettier",
-        "react-router",
-        "tsc",
-        "vite",
-        "vitest"
-      ],
-      "ignoreDependencies": [
-        "@repo/eslint-config",
-        "@repo/typescript-config",
-        "start-server-and-test"
-      ]
-    },
-    "packages/eslint-config": {
-      "entry": ["base.js", "react.js"],
-      "project": ["**/*.js"]
-    }
-  },
   "ignoreWorkspaces": ["packages/typescript-config"],
-  "ignore": [
-    "**/*.test.{ts,tsx}",
-    "**/__tests__/**",
-    "build/**",
-    ".react-router/**"
-  ],
+  "ignore": ["**/*.test.{ts,tsx}", "**/__tests__/**"],
   "rules": {
     "files": "error",
     "dependencies": "error",
