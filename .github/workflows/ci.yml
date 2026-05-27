@@ -234,6 +234,9 @@ jobs:
       - name: Circular dependencies
         run: pnpm run lint:circular
 
+      - name: Dependency catalog alignment
+        run: pnpm run lint:deps
+
       - name: Duplicate detection
         run: pnpm run lint:duplicates
 

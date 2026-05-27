@@ -2,6 +2,8 @@ packages:
   - "apps/*"
   - "packages/*"
 
+catalogMode: strict
+
 catalog:
   react: ^19.2.6
   react-dom: ^19.2.6
@@ -33,3 +35,4 @@ catalog:
   ts-morph: ^25.0.0
   tsx: ^4.21.0
   firebase-tools: ^13.0.0
+  syncpack: ^15.0.0

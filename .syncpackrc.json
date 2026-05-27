@@ -1,0 +1,32 @@
+{
+  "versionGroups": [
+    {
+      "label": "Ignore internal workspace packages",
+      "dependencies": ["@repo/**"],
+      "isIgnored": true
+    },
+    {
+      "label": "Ignore local package version fields",
+      "dependencyTypes": ["local"],
+      "isIgnored": true
+    },
+    {
+      "label": "Shared deps must use the pnpm catalog",
+      "dependencyTypes": ["prod", "dev"],
+      "policy": "catalog",
+      "packages": ["**"],
+      "dependencies": ["**"],
+      "severity": {
+        "NotUsingCatalog": "error",
+        "MissingFromCatalog": "error"
+      }
+    }
+  ],
+  "semverGroups": [
+    {
+      "label": "Catalog entries use caret ranges",
+      "dependencyTypes": ["pnpmCatalog"],
+      "range": "^"
+    }
+  ]
+}
