@@ -3,11 +3,21 @@
   "private": true,
   "packageManager": "pnpm@10.12.1",
   "scripts": {
-    "dev": "pnpm --filter web dev",
-    "build": "pnpm --filter web build",
-    "typecheck": "pnpm --filter web typecheck"
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "format": "turbo run format",
+    "prettier": "turbo run prettier",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "cypress": "turbo run cypress",
+    "validate": "turbo run lint prettier typecheck test cypress"
+  },
+  "devDependencies": {
+    "prettier": "catalog:",
+    "turbo": "catalog:"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
+    "onlyBuiltDependencies": ["cypress", "esbuild"]
   }
 }

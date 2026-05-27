@@ -5,7 +5,15 @@
   "scripts": {
     "dev": "react-router dev",
     "build": "react-router build",
-    "typecheck": "react-router typegen && tsc"
+    "preview": "vite preview --port 4173 --strictPort",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "prettier": "prettier --check .",
+    "typecheck": "react-router typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "cypress": "start-server-and-test 'pnpm preview' http://localhost:4173 'env -u ELECTRON_RUN_AS_NODE pnpm exec cypress run'",
+    "cypress:open": "cypress open"
   },
   "dependencies": {
     "@react-router/node": "catalog:",
@@ -16,10 +24,20 @@
   },
   "devDependencies": {
     "@react-router/dev": "catalog:",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
     "@types/node": "catalog:",
     "@types/react": "catalog:",
     "@types/react-dom": "catalog:",
+    "cypress": "catalog:",
+    "eslint": "catalog:",
+    "jsdom": "catalog:",
+    "prettier": "catalog:",
+    "start-server-and-test": "catalog:",
     "typescript": "catalog:",
-    "vite": "catalog:"
+    "vite": "catalog:",
+    "vitest": "catalog:"
   }
 }

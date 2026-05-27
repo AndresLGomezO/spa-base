@@ -29,14 +29,18 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function HydrateFallback() {
   return (
-    <main>
+    <main aria-busy="true">
       <p>Loading...</p>
     </main>
   );
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <main>
+      <Outlet />
+    </main>
+  );
 }
 
 export function ErrorBoundary({ error }: { error: unknown }) {

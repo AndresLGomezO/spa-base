@@ -1,3 +1,5 @@
+import { HomePage } from "./home-page";
+
 export function meta() {
   return [
     { title: "Home" },
@@ -5,11 +7,4 @@ export function meta() {
   ];
 }
 
-export default function Home() {
-  return (
-    <main>
-      <h1>Home</h1>
-      <p>Welcome.</p>
-    </main>
-  );
-}
+export default HomePage;
