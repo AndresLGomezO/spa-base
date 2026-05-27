@@ -1,30 +1,27 @@
 services:
-  # firebase-emulator:
-  #   image: andreysenov/firebase-tools
-  #   container_name: project-base_firebase_emulator
-  #   restart: unless-stopped
-  #   ports:
-  #     - '8080:8080'
-  #     - '9099:9099'
-  #     - '4000:4000'
-  #     - '9199:9199'
-  #     - '9150:9150'
-  #     - '5001:5001'
-  #     - '5002:5002'
-  #   command:
-  #     [
-  #       'firebase',
-  #       'emulators:start',
-  #       '--only',
-  #       'firestore,auth,storage,hosting,functions',
-  #       '--project=demo-project',
-  #     ]
-  #   volumes:
-  #     - ./apps/firebase-emulators-config/firebase.json:/home/node/firebase.json
-  #     - .:/home/node/project
-  #     - ./firestore.rules:/home/node/firestore.rules
-  #     - ./firestore.indexes.json:/home/node/firestore.indexes.json
-  #     - ./apps/web/build/client:/apps/web/build/client
+  firebase-emulator:
+    image: andreysenov/firebase-tools
+    container_name: project-base_firebase_emulator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "9099:9099"
+      - "4000:4000"
+      - "9199:9199"
+      - "5002:5002"
+    command:
+      [
+        "firebase",
+        "emulators:start",
+        "--only",
+        "firestore,auth,storage,hosting",
+        "--project=demo-project-base",
+      ]
+    volumes:
+      - ./firebase.json:/home/node/firebase.json
+      - ./firestore.rules:/home/node/firestore.rules
+      - ./firestore.indexes.json:/home/node/firestore.indexes.json
+      - ./apps/web/build/client:/home/node/apps/web/build/client
 
   # api:
   #   build:
@@ -90,7 +87,7 @@ services:
     container_name: project-base_web_dev
     restart: unless-stopped
     ports:
-      - '5173:5173'
+      - "5173:5173"
     volumes:
       - ./package.json:/app/package.json
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
@@ -105,6 +102,13 @@ services:
     #   - ./apps/web/.env.dev
     environment:
       - NODE_ENV=development
+      # Uncomment when Firebase client is wired in apps/web:
+      # - VITE_FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+      # - VITE_FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+      # - VITE_FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+    depends_on:
+      firebase-emulator:
+        condition: service_started
     # depends_on:
     #   - api
 
