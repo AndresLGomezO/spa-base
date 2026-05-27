@@ -1,0 +1,16 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+catalog:
+  react: ^19.2.6
+  react-dom: ^19.2.6
+  react-router: ^7.15.1
+  "@react-router/dev": ^7.15.1
+  "@react-router/node": ^7.15.1
+  isbot: ^5.1.36
+  typescript: ^5.9.3
+  vite: ^8.0.3
+  "@types/node": ^22.13.4
+  "@types/react": ^19.2.6
+  "@types/react-dom": ^19.2.3

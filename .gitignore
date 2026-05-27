@@ -3,3 +3,5 @@ build/
 .react-router/
 .env*
 .DS_Store
+pnpm-debug.log*
+.pnpm-store/
