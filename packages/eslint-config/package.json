@@ -2,6 +2,11 @@
   "name": "@repo/eslint-config",
   "private": true,
   "type": "module",
+  "scripts": {
+    "format:check": "prettier --check .",
+    "lint:unused": "knip --no-progress",
+    "lint:circular": "madge --circular --extensions js ."
+  },
   "exports": {
     "./base": "./base.js",
     "./react": "./react.js"
@@ -12,6 +17,9 @@
     "eslint-config-prettier": "catalog:",
     "eslint-plugin-react": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
+    "knip": "catalog:",
+    "madge": "catalog:",
+    "prettier": "catalog:",
     "typescript-eslint": "catalog:"
   }
 }

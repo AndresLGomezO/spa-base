@@ -7,17 +7,33 @@
     "build": "turbo run build",
     "lint": "turbo run lint",
     "format": "turbo run format",
+    "format:check": "turbo run format:check",
+    "format:check:root": "prettier --check --no-error-on-unmatched-pattern \"*.{json,md,js,yml,yaml,mjs}\" \"packages/**/*.{json,js,mjs}\" \"apps/**/*.{json,js,ts,mjs}\" \".github/**/*.{yml,md}\"",
+    "format:root": "prettier --write --no-error-on-unmatched-pattern \"*.{json,md,js,yml,yaml,mjs}\" \"packages/**/*.{json,js,mjs}\" \"apps/**/*.{json,js,ts,mjs}\" \".github/**/*.{yml,md}\"",
     "prettier": "turbo run prettier",
     "typecheck": "turbo run typecheck",
     "test": "turbo run test",
     "cypress": "turbo run cypress",
-    "validate": "turbo run lint prettier typecheck test cypress"
+    "lint:unused": "turbo run lint:unused",
+    "lint:circular": "turbo run lint:circular",
+    "lint:duplicates": "tsx scripts/find-duplicates.ts",
+    "lint:duplicates:json": "tsx scripts/find-duplicates.ts --json",
+    "lint:static": "pnpm run lint:unused && pnpm run lint:circular",
+    "validate": "turbo run build lint prettier typecheck test cypress && pnpm run lint:static && pnpm run lint:duplicates",
+    "validate:ci": "CI=true turbo run build lint typecheck test format:check cypress && pnpm run lint:unused && pnpm run lint:circular && pnpm run lint:duplicates"
   },
   "devDependencies": {
+    "knip": "catalog:",
+    "madge": "catalog:",
     "prettier": "catalog:",
+    "ts-morph": "catalog:",
+    "tsx": "catalog:",
     "turbo": "catalog:"
   },
   "pnpm": {
-    "onlyBuiltDependencies": ["cypress", "esbuild"]
+    "onlyBuiltDependencies": [
+      "cypress",
+      "esbuild"
+    ]
   }
 }
