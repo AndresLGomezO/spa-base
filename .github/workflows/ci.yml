@@ -1,0 +1,381 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/**"
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+    branches: [main, develop]
+    paths:
+      - "apps/**"
+      - "packages/**"
+      - "scripts/**"
+      - "package.json"
+      - "pnpm-lock.yaml"
+      - "pnpm-workspace.yaml"
+      - ".github/workflows/**"
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+  pull-requests: read
+
+env:
+  NODE_VERSION: "22"
+  # Minimum lines coverage % per workspace; 0 = no enforcement. Raise to e.g. 50 to fail when below 50%.
+  MIN_COVERAGE_LINES: "0"
+
+jobs:
+  changes:
+    name: Detect changed workspaces
+    runs-on: ubuntu-latest
+    outputs:
+      web: ${{ steps.filter.outputs.web }}
+      any: ${{ steps.filter.outputs.any }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Path filter
+        id: filter
+        uses: dorny/paths-filter@v3
+        with:
+          filters: |
+            web:
+              - "apps/web/**"
+              - "packages/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+            scripts:
+              - "scripts/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+            any:
+              - "apps/**"
+              - "packages/**"
+              - "scripts/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - ".github/workflows/**"
+
+  install:
+    name: Install
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: "pnpm"
+
+      - run: pnpm install --frozen-lockfile
+        env:
+          CYPRESS_INSTALL_BINARY: "0"
+
+      - uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            apps/*/node_modules
+            packages/*/node_modules
+            scripts/node_modules
+          key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # VALIDATE-CORE — lint, format, type-check, unit tests, coverage
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  validate-core:
+    name: Lint / Type-check / Test
+    needs: [changes, install]
+    if: needs.changes.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      test_outcome: ${{ steps.test.outputs.test_outcome }}
+      run_id: ${{ steps.test.outputs.run_id }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Lint / type-check / test / format (turbo)
+        id: turbo
+        run: CI=true pnpm turbo run format:check lint typecheck test --concurrency=4
+
+      - name: Check coverage threshold
+        run: node .github/scripts/check-coverage-threshold.js
+        env:
+          MIN_COVERAGE_LINES: ${{ env.MIN_COVERAGE_LINES }}
+
+      - name: Set test outcomes
+        id: test
+        if: always()
+        run: |
+          echo "test_outcome=${{ steps.turbo.outcome }}" >> $GITHUB_OUTPUT
+          echo "run_id=${{ github.run_id }}" >> $GITHUB_OUTPUT
+
+      - name: Collect unit test coverage reports
+        if: always()
+        run: |
+          mkdir -p coverage-reports
+          if [ -f apps/web/coverage/coverage-summary.json ]; then
+            mkdir -p coverage-reports/apps/web
+            cp apps/web/coverage/coverage-summary.json coverage-reports/apps/web/
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-reports-unit
+          path: coverage-reports/
+          retention-days: 7
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # VALIDATE-CYPRESS — E2E tests (parallel with validate-core)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  validate-cypress:
+    name: Cypress E2E tests
+    needs: [changes, install]
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      cypress_outcome: ${{ steps.outcomes.outputs.cypress_outcome }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Cypress binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/Cypress
+          key: cypress-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}
+
+      - name: Install Cypress binary
+        run: pnpm --filter web exec cypress install
+
+      - name: Build web
+        run: pnpm --filter web build
+
+      - name: Cypress E2E tests
+        id: cypress
+        run: pnpm --filter web cypress
+
+      - name: Set cypress outcome
+        id: outcomes
+        if: always()
+        run: echo "cypress_outcome=${{ steps.cypress.outcome }}" >> $GITHUB_OUTPUT
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # VALIDATE-STATIC — unused code, circular deps, duplicates (parallel)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  validate-static:
+    name: Static analysis
+    needs: [changes, install]
+    if: needs.changes.outputs.any == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Unused code
+        run: pnpm run lint:unused
+
+      - name: Generate Knip failure report
+        if: failure() && github.event_name == 'pull_request'
+        run: |
+          {
+            echo "## 🗑️ Unused Code Detected by Knip"
+            echo ""
+            echo "Remove unused code or add exceptions in \`knip.json\` with a comment."
+            echo ""
+            echo '```'
+            pnpm run lint:unused 2>&1 || true
+            echo '```'
+            echo ""
+            echo "**Local:** \`pnpm run lint:unused\`"
+          } > knip-comment.md
+
+      - name: Post Knip PR comment
+        if: failure() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: knip-unused-code
+          path: knip-comment.md
+
+      - name: Circular dependencies
+        run: pnpm run lint:circular
+
+      - name: Dependency catalog alignment
+        run: pnpm run lint:deps
+
+      - name: Duplicate detection
+        run: pnpm run lint:duplicates
+
+      - name: Save duplicate report JSON
+        if: always()
+        run: |
+          mkdir -p reports
+          pnpm run lint:duplicates:json > reports/duplicates-report.json 2>/dev/null || true
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: duplicate-analysis-report
+          path: reports/duplicates-report.json
+          retention-days: 30
+
+      - name: Generate duplicate failure report
+        if: failure()
+        run: |
+          {
+            echo "## 🔁 Duplicate / Overlapping Code Detected"
+            echo ""
+            echo '```'
+            pnpm run lint:duplicates 2>&1 || true
+            echo '```'
+            echo "**Local:** \`pnpm run lint:duplicates\`"
+          } > duplicates-comment.md
+
+      - name: Post duplicate PR comment
+        if: failure() && github.event_name == 'pull_request'
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: duplicate-detection
+          path: duplicates-comment.md
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # TEST SUMMARY COMMENT — merges outcomes from validation jobs
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  test-summary-comment:
+    name: Test summary comment
+    needs: [validate-core, validate-cypress]
+    if: always() && github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download unit coverage
+        uses: actions/download-artifact@v4
+        continue-on-error: true
+        with:
+          name: coverage-reports-unit
+          path: coverage-reports
+
+      - name: Post or update test summary comment
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const script = require(`${process.env.GITHUB_WORKSPACE}/.github/scripts/test-summary-comment.js`);
+            await script({ github, context });
+        env:
+          VALIDATE_RESULT: ${{ needs.validate-core.result }}
+          TEST_OUTCOME: ${{ needs.validate-core.outputs.test_outcome }}
+          CYPRESS_OUTCOME: ${{ needs.validate-cypress.outputs.cypress_outcome }}
+          VALIDATE_RUN_ID: ${{ needs.validate-core.outputs.run_id }}
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # BUILD — only changed workspaces get a runner
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  prepare-build-matrix:
+    name: Prepare build matrix
+    needs: [changes]
+    if: needs.changes.outputs.web == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.set.outputs.matrix }}
+      has_builds: ${{ steps.set.outputs.has_builds }}
+    steps:
+      - id: set
+        run: |
+          WORKSPACES='["web"]'
+          echo "matrix={\"workspace\":$WORKSPACES}" >> $GITHUB_OUTPUT
+          echo "has_builds=true" >> $GITHUB_OUTPUT
+
+  build:
+    name: Build (${{ matrix.workspace }})
+    needs: [prepare-build-matrix, validate-core]
+    if: |
+      needs.prepare-build-matrix.outputs.has_builds == 'true' &&
+      needs.validate-core.result != 'failure'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJson(needs.prepare-build-matrix.outputs.matrix) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build ${{ matrix.workspace }}
+        run: pnpm --filter ${{ matrix.workspace }} build
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # GATE — fail only if a required job failed (skipped is OK)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  ci-ok:
+    name: CI ✓
+    if: always()
+    needs:
+      - changes
+      - validate-core
+      - validate-cypress
+      - validate-static
+      - build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Evaluate results
+        run: |
+          echo "changes:          ${{ needs.changes.result }}"
+          echo "validate-core:    ${{ needs.validate-core.result }}"
+          echo "validate-cypress: ${{ needs.validate-cypress.result }}"
+          echo "validate-static:  ${{ needs.validate-static.result }}"
+          echo "build:            ${{ needs.build.result }}"
+
+          for result in \
+            "${{ needs.validate-core.result }}" \
+            "${{ needs.validate-cypress.result }}" \
+            "${{ needs.validate-static.result }}" \
+            "${{ needs.build.result }}"; do
+            if [ "$result" = "failure" ]; then
+              echo ""
+              echo "❌ One or more required checks failed."
+              exit 1
+            fi
+          done
+
+          echo ""
+          echo "✅ All CI checks passed."

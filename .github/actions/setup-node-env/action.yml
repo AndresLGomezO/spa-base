@@ -1,0 +1,30 @@
+# Composite action: pnpm + node + restore cached node_modules.
+# Use in CI jobs that need a ready-to-build env (validate-core, validate-cypress, validate-static, build).
+# Callers must run actions/checkout first so this local action can be loaded.
+# Do not use in install job (that job uses cache: 'pnpm' and cache/save).
+name: Setup Node Environment
+description: Setup pnpm/node, restore cached modules
+
+inputs:
+  node-version:
+    description: "Node.js version (e.g. 22)"
+    required: false
+    default: "22"
+
+runs:
+  using: "composite"
+  steps:
+    - uses: pnpm/action-setup@v4
+
+    - uses: actions/setup-node@v4
+      with:
+        node-version: ${{ inputs.node-version }}
+
+    - uses: actions/cache/restore@v4
+      with:
+        path: |
+          node_modules
+          apps/*/node_modules
+          packages/*/node_modules
+          scripts/node_modules
+        key: modules-${{ runner.os }}-${{ hashFiles('pnpm-lock.yaml') }}

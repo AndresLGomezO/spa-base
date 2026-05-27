@@ -1,0 +1,60 @@
+{
+  "name": "web",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "react-router dev",
+    "build": "react-router build",
+    "preview": "vite preview --port 4173 --strictPort",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prettier": "prettier --check .",
+    "typecheck": "react-router typegen && tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint:unused": "knip --no-progress",
+    "lint:circular": "madge --circular --ts-config tsconfig.madge.json --extensions ts,tsx app/",
+    "cypress": "start-server-and-test 'pnpm preview' http://localhost:4173 'env -u ELECTRON_RUN_AS_NODE pnpm exec cypress run'",
+    "cypress:open": "cypress open"
+  },
+  "dependencies": {
+    "@react-router/node": "catalog:",
+    "isbot": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "react-router": "catalog:"
+  },
+  "devDependencies": {
+    "@react-router/dev": "catalog:",
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@testing-library/jest-dom": "catalog:",
+    "@testing-library/react": "catalog:",
+    "@types/node": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "cypress": "catalog:",
+    "eslint": "catalog:",
+    "jsdom": "catalog:",
+    "knip": "catalog:",
+    "madge": "catalog:",
+    "prettier": "catalog:",
+    "start-server-and-test": "catalog:",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vitest": "catalog:"
+  },
+  "madge": {
+    "detectiveOptions": {
+      "ts": {
+        "skipTypeImports": true,
+        "skipAsyncImports": true
+      },
+      "tsx": {
+        "skipTypeImports": true,
+        "skipAsyncImports": true
+      }
+    }
+  }
+}

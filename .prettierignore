@@ -1,0 +1,9 @@
+node_modules
+build
+dist
+.react-router
+.turbo
+coverage
+pnpm-lock.yaml
+cypress/videos
+cypress/screenshots

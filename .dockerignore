@@ -1,0 +1,29 @@
+# Defaults (apply to root and subdirectories)
+.git
+.gitignore
+.vscode
+.idea
+*.log
+
+# Dependencies (Crucial: ignore recursively)
+**/node_modules
+**/.pnpm-store
+
+# Build Artifacts
+**/dist
+**/out
+**/build
+**/.turbo
+**/coverage
+
+# Documentation (exclude from build context)
+**/*.md
+
+# Terraform (optional: exclude from build context)
+**/terraform.tfstate*
+**/.terraform
+
+# Environment configuration
+.env
+.env.*
+!.env.example

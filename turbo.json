@@ -1,0 +1,69 @@
+{
+  "$schema": "https://turbo.build/schema.json",
+  "globalDependencies": [
+    "pnpm-workspace.yaml",
+    "prettier.config.mjs",
+    "knip.json",
+    "packages/eslint-config/**",
+    "packages/typescript-config/**"
+  ],
+  "tasks": {
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["build/**", "dist/**"]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true
+    },
+    "lint": {
+      "dependsOn": ["^lint"]
+    },
+    "format": {
+      "dependsOn": ["//#format:root"],
+      "cache": false
+    },
+    "format:check": {
+      "dependsOn": ["//#format:check:root"],
+      "outputs": [],
+      "cache": false
+    },
+    "prettier": {},
+    "typecheck": {
+      "dependsOn": ["^typecheck"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
+    },
+    "cypress": {
+      "dependsOn": ["build"],
+      "cache": false
+    },
+    "lint:unused": {
+      "dependsOn": ["^build"],
+      "inputs": ["**/*", "package.json", "knip.json"],
+      "outputs": [],
+      "cache": false
+    },
+    "lint:circular": {
+      "dependsOn": ["^build"],
+      "inputs": ["**/*", "tsconfig*.json", "package.json"],
+      "outputs": [],
+      "cache": false
+    },
+    "//#format:root": {
+      "cache": false
+    },
+    "//#format:check:root": {
+      "inputs": [
+        "*.{json,md,js,yml,yaml,mjs}",
+        "turbo.json",
+        "pnpm-workspace.yaml",
+        "prettier.config.mjs",
+        "knip.json"
+      ],
+      "outputs": [],
+      "cache": false
+    }
+  }
+}

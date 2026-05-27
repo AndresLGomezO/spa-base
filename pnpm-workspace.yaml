@@ -1,0 +1,38 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+
+catalogMode: strict
+
+catalog:
+  react: ^19.2.6
+  react-dom: ^19.2.6
+  react-router: ^7.15.1
+  "@react-router/dev": ^7.15.1
+  "@react-router/node": ^7.15.1
+  isbot: ^5.1.36
+  typescript: ^5.9.3
+  vite: ^8.0.3
+  "@types/node": ^22.13.4
+  "@types/react": ^19.2.6
+  "@types/react-dom": ^19.2.3
+  turbo: ^2.5.0
+  prettier: ^3.6.0
+  eslint: ^9.30.0
+  "@eslint/js": ^9.30.0
+  typescript-eslint: ^8.35.0
+  eslint-plugin-react: ^7.37.0
+  eslint-plugin-react-hooks: ^5.2.0
+  eslint-config-prettier: ^10.1.0
+  vitest: ^3.2.0
+  "@testing-library/react": ^16.3.0
+  "@testing-library/jest-dom": ^6.6.0
+  jsdom: ^26.1.0
+  cypress: ^14.5.0
+  start-server-and-test: ^2.0.0
+  knip: ^5.63.0
+  madge: ^8.0.0
+  ts-morph: ^25.0.0
+  tsx: ^4.21.0
+  firebase-tools: ^13.0.0
+  syncpack: ^15.0.0

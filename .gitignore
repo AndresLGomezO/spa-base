@@ -1,0 +1,17 @@
+node_modules/
+build/
+.react-router/
+.env*
+.DS_Store
+pnpm-debug.log*
+.pnpm-store/
+coverage/
+.turbo/
+cypress/videos/
+cypress/screenshots/
+
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+firebase-data/

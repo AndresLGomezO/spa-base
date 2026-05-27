@@ -1,0 +1,116 @@
+services:
+  firebase-emulator:
+    image: andreysenov/firebase-tools
+    container_name: project-base_firebase_emulator
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+      - "9099:9099"
+      - "4000:4000"
+      - "9199:9199"
+      - "5002:5002"
+    command:
+      [
+        "firebase",
+        "emulators:start",
+        "--only",
+        "firestore,auth,storage,hosting",
+        "--project=demo-project-base",
+      ]
+    volumes:
+      # Hosting emulator serves apps/web/build/client — run `pnpm --filter web build` before start
+      - ./firebase.json:/home/node/firebase.json
+      - ./firestore.rules:/home/node/firestore.rules
+      - ./firestore.indexes.json:/home/node/firestore.indexes.json
+      - ./apps/web/build/client:/home/node/apps/web/build/client
+
+  # api:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/api/Dockerfile.dev
+  #   container_name: project-base_api_dev
+  #   restart: unless-stopped
+  #   ports:
+  #     - '3000:3000'
+  #   volumes:
+  #     - ./package.json:/app/package.json
+  #     - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+  #     - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+  #     - ./apps/api:/app/apps/api
+  #     - ./packages:/app/packages
+  #     - /app/node_modules
+  #     - /app/apps/api/node_modules
+  #     - ~/.config/gcloud:/root/.config/gcloud:ro
+  #   env_file:
+  #     - ./apps/api/.env.dev
+  #   environment:
+  #     - NODE_ENV=development
+  #     - IS_LOCAL=true
+  #     - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+  #     - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+  #     - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+  #   depends_on:
+  #     - firebase-emulator
+
+  # worker-service:
+  #   build:
+  #     context: .
+  #     dockerfile: apps/worker-service/Dockerfile.dev
+  #   container_name: project-base_worker_service_dev
+  #   restart: unless-stopped
+  #   ports:
+  #     - '3001:3001'
+  #   volumes:
+  #     - ./package.json:/app/package.json
+  #     - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+  #     - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+  #     - ./apps/worker-service:/app/apps/worker-service
+  #     - ./packages:/app/packages
+  #     - /app/node_modules
+  #     - /app/apps/worker-service/node_modules
+  #     - ~/.config/gcloud:/root/.config/gcloud:ro
+  #   env_file:
+  #     - ./apps/worker-service/.env.dev
+  #   environment:
+  #     - NODE_ENV=development
+  #     - IS_LOCAL=true
+  #     - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+  #     - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+  #     - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+  #   depends_on:
+  #     firebase-emulator:
+  #       condition: service_started
+
+  web:
+    build:
+      context: .
+      dockerfile: apps/web/Dockerfile.dev
+    container_name: project-base_web_dev
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./apps/web:/app/apps/web
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/web/node_modules
+      # Preserve Linux node_modules from the image (host bind-mount of ./packages overwrites them)
+      - /app/packages/eslint-config/node_modules
+    # env_file:
+    #   - ./apps/web/.env.dev
+    environment:
+      - NODE_ENV=development
+      # Uncomment when Firebase client is wired in apps/web:
+      # - VITE_FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+      # - VITE_FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+      # - VITE_FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+    depends_on:
+      firebase-emulator:
+        condition: service_started
+    # depends_on:
+    #   - api
+
+volumes: {}
