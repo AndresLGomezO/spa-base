@@ -50,6 +50,10 @@
     "build-storybook": {
       "outputs": ["storybook-static/**"]
     },
+    "test:visual": {
+      "dependsOn": ["build-storybook"],
+      "cache": false
+    },
     "lint:unused": {
       "dependsOn": ["^build"],
       "inputs": ["**/*", "package.json", "knip.json"],

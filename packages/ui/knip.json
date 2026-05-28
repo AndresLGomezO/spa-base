@@ -1,5 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignoreDependencies": ["@repo/theme", "tailwindcss", "vite"],
-  "project": ["src/**/*.{ts,tsx}", ".storybook/**/*.{ts,tsx}"]
+  "ignoreDependencies": ["@repo/theme", "tailwindcss", "vite", "serve"],
+  "project": [
+    "src/**/*.{ts,tsx}",
+    ".storybook/**/*.{ts,tsx}",
+    "playwright.config.ts",
+    "serve.json",
+    "tests/**/*.ts"
+  ]
 }

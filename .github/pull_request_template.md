@@ -45,5 +45,6 @@ Describe the steps to verify the changes. Include any relevant environment setup
 - [ ] When adding or changing UI copy, I updated all locale files (`apps/web/app/i18n/locales/en` and `es`) with matching keys and ran `pnpm i18n:validate` (or confirmed `pnpm validate` passes).
 - [ ] In `apps/web`, I used `@repo/ui` primitives (`Button`, `Heading`, `Text`, etc.) instead of raw `<button>`, `<h1>`–`<h3>`, or `<p>` (enforced by ESLint).
 - [ ] If I changed `packages/ui`, I added/updated Storybook stories and confirmed `pnpm build-storybook` passes (or `pnpm storybook` for local review).
+- [ ] If UI appearance changed, I ran `pnpm build-storybook && pnpm test:visual` (or `pnpm test:visual:update` and committed snapshot PNGs when intentional).
 - [ ] My changes generate no new warnings.
 - [ ] I have added tests that prove my fix is effective or that my feature works.
