@@ -10,6 +10,7 @@
     "validate": "pnpm run typecheck && pnpm run format:check && pnpm run lint:unused"
   },
   "exports": {
+    "./fonts.css": "./src/fonts.css",
     "./tokens.css": "./src/tokens.css",
     "./dark.css": "./src/dark.css",
     "./base.css": "./src/base.css",
