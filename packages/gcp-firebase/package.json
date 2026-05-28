@@ -1,5 +1,5 @@
 {
-  "name": "@repo/shared-types",
+  "name": "@repo/gcp-firebase",
   "private": true,
   "type": "module",
   "scripts": {
@@ -9,7 +9,10 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.ts"
+    "./env": "./src/env.ts",
+    "./auth": "./src/auth.ts",
+    "./app-check": "./src/app-check.ts",
+    "./firebase-admin": "./src/firebase-admin.ts"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
@@ -18,6 +21,7 @@
     "typescript": "catalog:"
   },
   "dependencies": {
+    "firebase-admin": "catalog:",
     "zod": "catalog:"
   }
 }

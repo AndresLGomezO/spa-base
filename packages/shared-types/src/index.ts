@@ -1,1 +1,1 @@
-export { AppEnvSchema, type AppEnv } from "./env";
+export { AppEnvSchema, type AppEnv } from "./env.js";

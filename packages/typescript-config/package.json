@@ -1,6 +1,13 @@
 {
   "name": "@repo/typescript-config",
   "private": true,
+  "scripts": {
+    "format:check": "prettier --check .",
+    "validate": "pnpm run format:check"
+  },
+  "devDependencies": {
+    "prettier": "catalog:"
+  },
   "exports": {
     "./base.json": "./base.json",
     "./react-app.json": "./react-app.json"
