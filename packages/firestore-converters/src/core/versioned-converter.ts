@@ -21,12 +21,18 @@ export interface VersionedConverterConfig<
   readonly persistedSchema: z.ZodType<TPersistedLatest>;
   readonly migrations?: Record<number, SchemaTransform>;
   readonly fromPersisted: (persisted: TPersistedLatest) => TDomain;
-  readonly toPersisted: (domain: TDomain) => Omit<TPersistedLatest, "_schemaVersion">;
+  readonly toPersisted: (
+    domain: TDomain,
+  ) => Omit<TPersistedLatest, "_schemaVersion">;
 }
 
 function parseSchemaVersion(input: AnyRecord): number {
   const version = input._schemaVersion;
-  if (typeof version !== "number" || !Number.isInteger(version) || version < 1) {
+  if (
+    typeof version !== "number" ||
+    !Number.isInteger(version) ||
+    version < 1
+  ) {
     throw new MissingSchemaVersionError(input);
   }
   return version;
@@ -56,7 +62,11 @@ function parseDomainWithUnknownKeyStripping<T>(
       "Domain document does not match schema.",
     );
   }
-  return parseWithSchema(schema, input, "Domain document does not match schema.");
+  return parseWithSchema(
+    schema,
+    input,
+    "Domain document does not match schema.",
+  );
 }
 
 export function createVersionedConverter<
@@ -75,11 +85,18 @@ export function createVersionedConverter<
 
     const sourceVersion = parseSchemaVersion(asRecord);
     if (sourceVersion > config.currentVersion) {
-      throw new UnsupportedSchemaVersionError(sourceVersion, config.currentVersion);
+      throw new UnsupportedSchemaVersionError(
+        sourceVersion,
+        config.currentVersion,
+      );
     }
 
     let workingDocument = asRecord;
-    for (let version = sourceVersion; version < config.currentVersion; version += 1) {
+    for (
+      let version = sourceVersion;
+      version < config.currentVersion;
+      version += 1
+    ) {
       const transform = migrations[version];
       if (!transform) {
         throw new MissingSchemaTransformError(version, version + 1);

@@ -20,7 +20,8 @@ function fromSecondsAndNanoseconds(value: {
   seconds: number;
   nanoseconds: number;
 }): string {
-  const millis = value.seconds * 1_000 + Math.floor(value.nanoseconds / 1_000_000);
+  const millis =
+    value.seconds * 1_000 + Math.floor(value.nanoseconds / 1_000_000);
   return new Date(millis).toISOString();
 }
 

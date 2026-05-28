@@ -1,5 +1,8 @@
 export class ConverterError extends Error {
-  constructor(message: string, public readonly context?: Record<string, unknown>) {
+  constructor(
+    message: string,
+    public readonly context?: Record<string, unknown>,
+  ) {
     super(message);
     this.name = "ConverterError";
   }

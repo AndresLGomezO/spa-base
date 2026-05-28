@@ -22,8 +22,8 @@ const CI = process.argv.includes("--ci");
 
 const VALIDATE_STEPS: ValidateStep[] = [
   {
-    label: "Build, lint, prettier, typecheck, test, cypress",
-    command: "turbo run build lint prettier typecheck test cypress",
+    label: "Build, lint, typecheck, test, format check, cypress",
+    command: "turbo run build lint typecheck test format:check cypress",
   },
   {
     label: "Static analysis (unused + circular)",
