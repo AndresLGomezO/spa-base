@@ -4,7 +4,7 @@ import baseConfig from "@repo/eslint-config/base";
 export default [
   ...baseConfig,
   {
-    files: ["**/*.ts"],
+    files: ["src/**/*.ts"],
     rules: {
       "no-restricted-imports": [
         "error",
@@ -13,16 +13,22 @@ export default [
             {
               name: "firebase-admin/firestore",
               message:
-                "Use @repo/gcp-firebase repository modules instead of direct Firestore access.",
+                "Use the dedicated repository adapter module for Firestore reads/writes.",
             },
             {
               name: "firebase/firestore",
               message:
-                "Use API repository modules instead of direct client Firestore access.",
+                "Client Firestore SDK is not allowed in server Firebase package.",
             },
           ],
         },
       ],
+    },
+  },
+  {
+    files: ["src/firestore-admin-user-repository.ts", "src/firebase-admin.ts"],
+    rules: {
+      "no-restricted-imports": "off",
     },
   },
 ];

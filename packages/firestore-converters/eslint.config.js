@@ -11,14 +11,14 @@ export default [
         {
           paths: [
             {
-              name: "firebase-admin/firestore",
-              message:
-                "Use @repo/gcp-firebase repository modules instead of direct Firestore access.",
-            },
-            {
               name: "firebase/firestore",
               message:
-                "Use API repository modules instead of direct client Firestore access.",
+                "Firestore SDK access must stay in repository adapters, not converter modules.",
+            },
+            {
+              name: "firebase-admin/firestore",
+              message:
+                "Firestore Admin SDK access must stay in repository adapters, not converter modules.",
             },
           ],
         },

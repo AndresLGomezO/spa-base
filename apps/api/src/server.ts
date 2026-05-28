@@ -16,6 +16,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     firebaseAdminConfig: {
       projectId: apiEnv.GCP_PROJECT_ID,
       authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,
+      firestoreEmulatorHost: apiEnv.FIRESTORE_EMULATOR_HOST,
     },
   });
 

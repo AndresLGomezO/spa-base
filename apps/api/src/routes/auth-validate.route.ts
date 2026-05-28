@@ -2,6 +2,9 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
 import {
+  createFirestoreAdminRegisteredUserRepository,
+  getFirebaseUserRecord,
+  mapFirebaseUserRecordToAuthUserProjection,
   verifyFirebaseAppCheckToken,
   verifyFirebaseIdToken,
   type FirebaseAdminConfig,
@@ -23,6 +26,10 @@ function extractBearerToken(value: string): string | null {
 export const authValidateRoute: FastifyPluginAsync<{
   firebaseAdminConfig: FirebaseAdminConfig;
 }> = async (fastify, opts) => {
+  const registeredUserRepository = createFirestoreAdminRegisteredUserRepository(
+    opts.firebaseAdminConfig,
+  );
+
   fastify.get("/auth/validate", async (request, reply) => {
     const parsedHeaders = headerSchema.safeParse(request.headers);
 
@@ -51,12 +58,19 @@ export const authValidateRoute: FastifyPluginAsync<{
           opts.firebaseAdminConfig,
         ),
       ]);
+      const authUserRecord = await getFirebaseUserRecord(
+        decodedIdToken.uid,
+        opts.firebaseAdminConfig,
+      );
+      const registeredUser = await registeredUserRepository.upsertFromAuthUser(
+        mapFirebaseUserRecordToAuthUserProjection(authUserRecord),
+      );
 
       return reply.send({
         ok: true,
         user: {
-          uid: decodedIdToken.uid,
-          email: decodedIdToken.email ?? null,
+          uid: registeredUser.uid,
+          email: registeredUser.email,
           claims: decodedIdToken,
         },
         appCheck: {

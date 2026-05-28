@@ -8,6 +8,48 @@ vi.mock("@repo/gcp-firebase", () => ({
     verifyFirebaseAppCheckToken: vi.fn(async () => ({
         appId: "demo-app-id",
     })),
+    getFirebaseUserRecord: vi.fn(async () => ({
+        uid: "user_123",
+        email: "demo@example.com",
+        emailVerified: true,
+        displayName: "Demo User",
+        photoURL: null,
+        phoneNumber: null,
+        disabled: false,
+        providerData: [],
+        metadata: {
+            creationTime: new Date().toISOString(),
+            lastSignInTime: new Date().toISOString(),
+        },
+    })),
+    mapFirebaseUserRecordToAuthUserProjection: vi.fn((user) => ({
+        uid: user.uid,
+        email: user.email,
+        emailVerified: user.emailVerified,
+        displayName: user.displayName,
+        photoURL: user.photoURL,
+        phoneNumber: user.phoneNumber,
+        disabled: user.disabled,
+        providers: [],
+        authCreatedAt: user.metadata.creationTime,
+        authLastSignInAt: user.metadata.lastSignInTime,
+    })),
+    createFirestoreAdminRegisteredUserRepository: vi.fn(() => ({
+        upsertFromAuthUser: vi.fn(async (authUser) => ({
+            uid: authUser.uid,
+            email: authUser.email,
+            emailVerified: authUser.emailVerified,
+            displayName: authUser.displayName,
+            photoURL: authUser.photoURL,
+            phoneNumber: authUser.phoneNumber,
+            disabled: authUser.disabled,
+            providers: authUser.providers,
+            authCreatedAt: authUser.authCreatedAt,
+            authLastSignInAt: authUser.authLastSignInAt,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+        })),
+    })),
 }));
 import { buildServer } from "../server.js";
 describe("GET /auth/validate", () => {

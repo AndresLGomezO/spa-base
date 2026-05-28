@@ -5,10 +5,12 @@ import {
   type App,
   type AppOptions,
 } from "firebase-admin/app";
+import { getFirestore, type Firestore } from "firebase-admin/firestore";
 
 export interface FirebaseAdminConfig {
   readonly projectId: string;
   readonly authEmulatorHost?: string;
+  readonly firestoreEmulatorHost?: string;
   readonly serviceAccountJson?: string;
 }
 
@@ -26,6 +28,9 @@ export function initializeFirebaseAdmin(config: FirebaseAdminConfig): App {
   if (config.authEmulatorHost) {
     process.env.FIREBASE_AUTH_EMULATOR_HOST = config.authEmulatorHost;
   }
+  if (config.firestoreEmulatorHost) {
+    process.env.FIRESTORE_EMULATOR_HOST = config.firestoreEmulatorHost;
+  }
 
   const existing = getApps()[0];
   if (existing) return existing;
@@ -37,4 +42,9 @@ export function initializeFirebaseAdmin(config: FirebaseAdminConfig): App {
   };
 
   return initializeApp(options);
+}
+
+export function getFirestoreAdmin(config: FirebaseAdminConfig): Firestore {
+  const app = initializeFirebaseAdmin(config);
+  return getFirestore(app);
 }
