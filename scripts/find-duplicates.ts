@@ -26,6 +26,11 @@ interface WorkspaceTarget {
 
 const WORKSPACES: WorkspaceTarget[] = [
   {
+    name: "api",
+    tsconfig: path.resolve("apps/api/tsconfig.json"),
+    srcRoot: path.resolve("apps/api/src"),
+  },
+  {
     name: "web",
     tsconfig: path.resolve("apps/web/tsconfig.json"),
     srcRoot: path.resolve("apps/web/app"),

@@ -1,0 +1,16 @@
+{
+  "name": "@repo/gcp-firebase",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./env": "./src/env.ts",
+    "./auth": "./src/auth.ts",
+    "./app-check": "./src/app-check.ts",
+    "./firebase-admin": "./src/firebase-admin.ts"
+  },
+  "dependencies": {
+    "firebase-admin": "catalog:",
+    "zod": "catalog:"
+  }
+}
