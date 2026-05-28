@@ -17,7 +17,9 @@ import {
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
 
-function normalizeOptionalString(value: string | null | undefined): string | null {
+function normalizeOptionalString(
+  value: string | null | undefined,
+): string | null {
   if (!value) return null;
   const normalized = value.trim();
   return normalized.length > 0 ? normalized : null;
@@ -62,19 +64,26 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
     if (!parsedUid) return null;
 
     const firestore = getFirestoreAdmin(this.config);
-    const snapshot = await firestore.collection(USERS_COLLECTION).doc(parsedUid).get();
+    const snapshot = await firestore
+      .collection(USERS_COLLECTION)
+      .doc(parsedUid)
+      .get();
     if (!snapshot.exists) return null;
 
     return registeredUserConverter.read(snapshot.data());
   }
 
-  async upsertFromAuthUser(authUser: AuthUserProjection): Promise<RegisteredUser> {
+  async upsertFromAuthUser(
+    authUser: AuthUserProjection,
+  ): Promise<RegisteredUser> {
     const parsedAuthUser = registeredUserSchemaV1.pick({ uid: true }).parse({
       uid: authUser.uid,
     });
 
     const firestore = getFirestoreAdmin(this.config);
-    const userDocRef = firestore.collection(USERS_COLLECTION).doc(parsedAuthUser.uid);
+    const userDocRef = firestore
+      .collection(USERS_COLLECTION)
+      .doc(parsedAuthUser.uid);
 
     return firestore.runTransaction(async (transaction) => {
       const nowIso = new Date().toISOString();

@@ -35,6 +35,10 @@
     "test": {
       "dependsOn": ["^build"]
     },
+    "test:coverage": {
+      "dependsOn": ["^build"],
+      "outputs": ["coverage/**"]
+    },
     "cypress": {
       "dependsOn": ["build"],
       "cache": false
