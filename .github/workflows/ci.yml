@@ -130,7 +130,11 @@ jobs:
         run: CI=true pnpm turbo run format:check lint typecheck test --concurrency=4
 
       - name: Validate shared packages
-        run: CI=true pnpm turbo run validate --filter="./packages/*" --concurrency=4
+        run: |
+          pnpm --filter @repo/shared-types run validate
+          pnpm --filter @repo/gcp-firebase run validate
+          pnpm --filter @repo/typescript-config run validate
+          pnpm --filter @repo/eslint-config run validate
 
       - name: Check coverage threshold
         run: node .github/scripts/check-coverage-threshold.js
