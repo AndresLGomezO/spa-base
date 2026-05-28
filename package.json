@@ -21,6 +21,7 @@
     "lint:deps": "syncpack lint",
     "lint:deps:fix": "syncpack fix",
     "lint:static": "pnpm run lint:unused && pnpm run lint:circular",
+    "i18n:validate": "pnpm --filter web run i18n:validate",
     "validate": "tsx scripts/validate.ts",
     "validate:ci": "tsx scripts/validate.ts --ci",
     "emulators:prepare": "pnpm --filter web build",

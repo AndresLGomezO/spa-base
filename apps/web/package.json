@@ -16,6 +16,7 @@
     "test:watch": "vitest",
     "lint:unused": "knip --no-progress",
     "lint:circular": "madge --circular --ts-config tsconfig.madge.json --extensions ts,tsx app/",
+    "i18n:validate": "node scripts/validate-i18n.mjs",
     "cypress": "start-server-and-test 'pnpm preview' http://localhost:4173 'env -u ELECTRON_RUN_AS_NODE pnpm exec cypress run'",
     "cypress:open": "cypress open"
   },
@@ -25,8 +26,11 @@
     "@react-router/node": "catalog:",
     "firebase": "catalog:",
     "isbot": "catalog:",
+    "i18next": "catalog:",
+    "i18next-browser-languagedetector": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
+    "react-i18next": "catalog:",
     "react-router": "catalog:"
   },
   "devDependencies": {

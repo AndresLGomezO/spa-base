@@ -30,6 +30,10 @@ const VALIDATE_STEPS: ValidateStep[] = [
     command: "pnpm run lint:static",
   },
   {
+    label: "i18n locale key parity",
+    command: "pnpm run i18n:validate -- --strict",
+  },
+  {
     label: "Duplicate detection",
     command: "pnpm run lint:duplicates",
   },
@@ -54,6 +58,10 @@ const VALIDATE_CI_STEPS: ValidateStep[] = [
     label: "Circular dependencies",
     command: "pnpm run lint:circular",
     env: { CI: "true" },
+  },
+  {
+    label: "i18n locale key parity",
+    command: "pnpm run i18n:validate -- --strict",
   },
   {
     label: "Duplicate detection",

@@ -1,0 +1,39 @@
+{
+  "loading": "Loading...",
+  "language": {
+    "label": "Language"
+  },
+  "theme": {
+    "switchToDark": "Switch to dark mode",
+    "switchToLight": "Switch to light mode",
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "error": {
+    "oops": "Oops!",
+    "unexpected": "An unexpected error occurred.",
+    "notFound": "404",
+    "notFoundDetail": "The requested page could not be found.",
+    "generic": "Error"
+  },
+  "login": {
+    "title": "Login",
+    "subtitle": "Sign in with Firebase Auth (local emulator friendly).",
+    "email": "Email",
+    "password": "Password",
+    "signingIn": "Signing in...",
+    "signInEmailPassword": "Sign in with email/password",
+    "waiting": "Waiting...",
+    "signInGoogle": "Sign in with Google",
+    "failed": "Login failed.",
+    "googleFailed": "Google login failed."
+  },
+  "home": {
+    "title": "Home",
+    "sessionActive": "Authenticated session active.",
+    "signedInAs": "Signed in as",
+    "unknownUser": "unknown user",
+    "provider": "Provider",
+    "logout": "Logout"
+  }
+}

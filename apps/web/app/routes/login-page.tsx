@@ -1,8 +1,10 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
+  const { t } = useTranslation("common");
   const {
     error: authError,
     loginWithEmailPassword,
@@ -25,7 +27,7 @@ export function LoginPage() {
 
     setSubmitting(false);
     if (!result.success) {
-      setError(result.error ?? "Login failed.");
+      setError(result.error ?? t("login.failed"));
     }
   }
 
@@ -37,14 +39,14 @@ export function LoginPage() {
 
     setSubmitting(false);
     if (!result.success) {
-      setError(result.error ?? "Google login failed.");
+      setError(result.error ?? t("login.googleFailed"));
     }
   }
 
   return (
     <>
-      <h1>Login</h1>
-      <p>Sign in with Firebase Auth (local emulator friendly).</p>
+      <h1>{t("login.title")}</h1>
+      <p>{t("login.subtitle")}</p>
 
       {activeError ? (
         <p role="alert" className="text-destructive">
@@ -53,7 +55,7 @@ export function LoginPage() {
       ) : null}
 
       <form onSubmit={handleEmailPasswordSubmit}>
-        <label htmlFor="email">Email</label>
+        <label htmlFor="email">{t("login.email")}</label>
         <input
           id="email"
           name="email"
@@ -64,7 +66,7 @@ export function LoginPage() {
           required
         />
 
-        <label htmlFor="password">Password</label>
+        <label htmlFor="password">{t("login.password")}</label>
         <input
           id="password"
           name="password"
@@ -76,14 +78,14 @@ export function LoginPage() {
         />
 
         <button type="submit" disabled={submitting}>
-          {submitting ? "Signing in..." : "Sign in with email/password"}
+          {submitting ? t("login.signingIn") : t("login.signInEmailPassword")}
         </button>
       </form>
 
       <hr />
 
       <button type="button" onClick={handleGoogleLogin} disabled={submitting}>
-        {submitting ? "Waiting..." : "Sign in with Google"}
+        {submitting ? t("login.waiting") : t("login.signInGoogle")}
       </button>
     </>
   );

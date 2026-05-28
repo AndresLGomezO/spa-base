@@ -41,5 +41,6 @@ Describe the steps to verify the changes. Include any relevant environment setup
 
 - [ ] I have run `pnpm format` to ensure code style consistency.
 - [ ] I have verified that `pnpm lint` and `pnpm typecheck` pass (if applicable).
+- [ ] When adding or changing UI copy, I updated all locale files (`apps/web/app/i18n/locales/en` and `es`) with matching keys and ran `pnpm i18n:validate` (or confirmed `pnpm validate` passes).
 - [ ] My changes generate no new warnings.
 - [ ] I have added tests that prove my fix is effective or that my feature works.

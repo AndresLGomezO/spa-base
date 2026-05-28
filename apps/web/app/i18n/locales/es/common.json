@@ -1,0 +1,39 @@
+{
+  "loading": "Cargando...",
+  "language": {
+    "label": "Idioma"
+  },
+  "theme": {
+    "switchToDark": "Cambiar a modo oscuro",
+    "switchToLight": "Cambiar a modo claro",
+    "dark": "Oscuro",
+    "light": "Claro"
+  },
+  "error": {
+    "oops": "¡Ups!",
+    "unexpected": "Ocurrió un error inesperado.",
+    "notFound": "404",
+    "notFoundDetail": "No se encontró la página solicitada.",
+    "generic": "Error"
+  },
+  "login": {
+    "title": "Iniciar sesión",
+    "subtitle": "Inicia sesión con Firebase Auth (compatible con emulador local).",
+    "email": "Correo electrónico",
+    "password": "Contraseña",
+    "signingIn": "Iniciando sesión...",
+    "signInEmailPassword": "Iniciar sesión con correo/contraseña",
+    "waiting": "Esperando...",
+    "signInGoogle": "Iniciar sesión con Google",
+    "failed": "Error al iniciar sesión.",
+    "googleFailed": "Error al iniciar sesión con Google."
+  },
+  "home": {
+    "title": "Inicio",
+    "sessionActive": "Sesión autenticada activa.",
+    "signedInAs": "Conectado como",
+    "unknownUser": "usuario desconocido",
+    "provider": "Proveedor",
+    "logout": "Cerrar sesión"
+  }
+}

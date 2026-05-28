@@ -55,6 +55,17 @@
       "outputs": [],
       "cache": false
     },
+    "i18n:validate": {
+      "inputs": [
+        "scripts/validate-i18n.mjs",
+        "app/i18n/locales/**/*.json",
+        "app/**/*.ts",
+        "app/**/*.tsx",
+        "package.json"
+      ],
+      "outputs": [],
+      "cache": false
+    },
     "//#format:root": {
       "cache": false
     },
