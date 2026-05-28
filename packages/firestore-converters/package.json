@@ -1,20 +1,16 @@
 {
-  "name": "@repo/gcp-firebase",
+  "name": "@repo/firestore-converters",
   "private": true,
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
     "lint": "pnpm exec eslint .",
     "format:check": "prettier --check .",
-    "validate": "pnpm run typecheck && pnpm run lint && pnpm run format:check"
+    "validate": "pnpm run typecheck && pnpm run test && pnpm run lint && pnpm run format:check"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./env": "./src/env.ts",
-    "./auth": "./src/auth.ts",
-    "./app-check": "./src/app-check.ts",
-    "./firebase-admin": "./src/firebase-admin.ts",
-    "./firestore-admin-user-repository": "./src/firestore-admin-user-repository.ts"
+    ".": "./src/index.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -22,12 +18,11 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
-    "@repo/firestore-converters": "workspace:*",
     "@repo/shared-types": "workspace:*",
-    "firebase-admin": "catalog:",
     "zod": "catalog:"
   }
 }

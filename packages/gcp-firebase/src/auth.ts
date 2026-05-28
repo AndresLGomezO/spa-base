@@ -12,3 +12,11 @@ export async function verifyFirebaseIdToken(
   initializeFirebaseAdmin(config);
   return getAuth().verifyIdToken(idToken);
 }
+
+export async function getFirebaseUserRecord(
+  uid: string,
+  config: FirebaseAdminConfig,
+) {
+  initializeFirebaseAdmin(config);
+  return getAuth().getUser(uid);
+}

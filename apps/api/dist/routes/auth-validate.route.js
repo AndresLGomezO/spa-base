@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { verifyFirebaseAppCheckToken, verifyFirebaseIdToken, } from "@repo/gcp-firebase";
+import { createFirestoreAdminRegisteredUserRepository, getFirebaseUserRecord, mapFirebaseUserRecordToAuthUserProjection, verifyFirebaseAppCheckToken, verifyFirebaseIdToken, } from "@repo/gcp-firebase";
 const headerSchema = z.object({
     authorization: z.string().min(1),
     "x-firebase-appcheck": z.string().min(1),
@@ -12,6 +12,7 @@ function extractBearerToken(value) {
     return parsed.data.replace(/^Bearer\s+/i, "");
 }
 export const authValidateRoute = async (fastify, opts) => {
+    const registeredUserRepository = createFirestoreAdminRegisteredUserRepository(opts.firebaseAdminConfig);
     fastify.get("/auth/validate", async (request, reply) => {
         const parsedHeaders = headerSchema.safeParse(request.headers);
         if (!parsedHeaders.success) {
@@ -34,11 +35,13 @@ export const authValidateRoute = async (fastify, opts) => {
                 verifyFirebaseIdToken(idToken, opts.firebaseAdminConfig),
                 verifyFirebaseAppCheckToken(parsedHeaders.data["x-firebase-appcheck"], opts.firebaseAdminConfig),
             ]);
+            const authUserRecord = await getFirebaseUserRecord(decodedIdToken.uid, opts.firebaseAdminConfig);
+            const registeredUser = await registeredUserRepository.upsertFromAuthUser(mapFirebaseUserRecordToAuthUserProjection(authUserRecord));
             return reply.send({
                 ok: true,
                 user: {
-                    uid: decodedIdToken.uid,
-                    email: decodedIdToken.email ?? null,
+                    uid: registeredUser.uid,
+                    email: registeredUser.email,
                     claims: decodedIdToken,
                 },
                 appCheck: {
