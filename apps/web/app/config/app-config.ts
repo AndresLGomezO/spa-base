@@ -12,6 +12,7 @@ interface FirebaseConfig {
 
 interface AppConfig {
   readonly env: AppEnv;
+  readonly apiBaseUrl: string;
   readonly firebase: FirebaseConfig;
 }
 
@@ -29,6 +30,7 @@ function readEnv(name: string, fallback: string): string {
 
 export const appConfig: Readonly<AppConfig> = Object.freeze({
   env: normalizeEnvMode(import.meta.env.VITE_ENV),
+  apiBaseUrl: readEnv("VITE_API_URL", "http://127.0.0.1:3000"),
   firebase: {
     apiKey: readEnv("VITE_FIREBASE_API_KEY", "fake-api-key"),
     authDomain: readEnv("VITE_FIREBASE_AUTH_DOMAIN", "localhost"),

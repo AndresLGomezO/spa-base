@@ -24,33 +24,33 @@ services:
       - ./firestore.indexes.json:/home/node/firestore.indexes.json
       - ./apps/web/build/client:/home/node/apps/web/build/client
 
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/api/Dockerfile.dev
-  #   container_name: project-base_api_dev
-  #   restart: unless-stopped
-  #   ports:
-  #     - '3000:3000'
-  #   volumes:
-  #     - ./package.json:/app/package.json
-  #     - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
-  #     - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
-  #     - ./apps/api:/app/apps/api
-  #     - ./packages:/app/packages
-  #     - /app/node_modules
-  #     - /app/apps/api/node_modules
-  #     - ~/.config/gcloud:/root/.config/gcloud:ro
-  #   env_file:
-  #     - ./apps/api/.env.dev
-  #   environment:
-  #     - NODE_ENV=development
-  #     - IS_LOCAL=true
-  #     - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
-  #     - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
-  #     - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
-  #   depends_on:
-  #     - firebase-emulator
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile.dev
+    container_name: project-base_api_dev
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./turbo.json:/app/turbo.json
+      - ./apps/api:/app/apps/api
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/api/node_modules
+      - /app/packages/eslint-config/node_modules
+    env_file:
+      - ./apps/api/.env.dev
+    environment:
+      - NODE_ENV=development
+      - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+    depends_on:
+      firebase-emulator:
+        condition: service_started
 
   # worker-service:
   #   build:
@@ -99,18 +99,22 @@ services:
       - /app/apps/web/node_modules
       # Preserve Linux node_modules from the image (host bind-mount of ./packages overwrites them)
       - /app/packages/eslint-config/node_modules
-    # env_file:
-    #   - ./apps/web/.env.dev
     environment:
       - NODE_ENV=development
-      # Uncomment when Firebase client is wired in apps/web:
-      # - VITE_FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
-      # - VITE_FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
-      # - VITE_FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+      # Browser uses published host ports (127.0.0.1), not Docker service names.
+      - VITE_API_URL=http://127.0.0.1:3000
+      - VITE_FIREBASE_AUTH_EMULATOR_HOST=127.0.0.1:9099
+      - VITE_FIREBASE_API_KEY=fake-api-key
+      - VITE_FIREBASE_AUTH_DOMAIN=localhost
+      - VITE_FIREBASE_PROJECT_ID=demo-project-base
+      - VITE_FIREBASE_STORAGE_BUCKET=demo-project-base.appspot.com
+      - VITE_FIREBASE_MESSAGING_SENDER_ID=123456789
+      - VITE_FIREBASE_APP_ID=1:123456789:web:abcdef
+      # TODO: App Check production provider — VITE_FIREBASE_APPCHECK_*
     depends_on:
       firebase-emulator:
         condition: service_started
-    # depends_on:
-    #   - api
+      api:
+        condition: service_started
 
 volumes: {}

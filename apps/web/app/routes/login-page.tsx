@@ -1,10 +1,8 @@
 import { useState, type FormEvent } from "react";
-import { useNavigate } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
 
 export function LoginPage() {
-  const navigate = useNavigate();
   const {
     error: authError,
     loginWithEmailPassword,
@@ -28,9 +26,7 @@ export function LoginPage() {
     setSubmitting(false);
     if (!result.success) {
       setError(result.error ?? "Login failed.");
-      return;
     }
-    navigate("/", { replace: true });
   }
 
   async function handleGoogleLogin() {
@@ -42,9 +38,7 @@ export function LoginPage() {
     setSubmitting(false);
     if (!result.success) {
       setError(result.error ?? "Google login failed.");
-      return;
     }
-    navigate("/", { replace: true });
   }
 
   return (

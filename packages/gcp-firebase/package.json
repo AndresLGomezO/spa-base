@@ -4,9 +4,10 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
     "lint": "pnpm exec eslint .",
     "format:check": "prettier --check .",
-    "validate": "pnpm run typecheck && pnpm run lint && pnpm run format:check"
+    "validate": "pnpm run typecheck && pnpm run test && pnpm run lint && pnpm run format:check"
   },
   "exports": {
     ".": "./src/index.ts",
@@ -22,7 +23,8 @@
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@repo/firestore-converters": "workspace:*",

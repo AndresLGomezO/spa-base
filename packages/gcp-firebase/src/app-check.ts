@@ -10,5 +10,10 @@ export async function verifyFirebaseAppCheckToken(
   config: FirebaseAdminConfig,
 ) {
   initializeFirebaseAdmin(config);
+
+  if (config.authEmulatorHost) {
+    return { appId: "emulator", token: appCheckToken };
+  }
+
   return getAppCheck().verifyToken(appCheckToken);
 }
