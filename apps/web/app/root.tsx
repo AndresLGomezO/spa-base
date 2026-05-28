@@ -7,6 +7,7 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { AuthProvider } from "./auth/AuthProvider";
 import "./app.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
@@ -37,9 +38,11 @@ export function HydrateFallback() {
 
 export default function App() {
   return (
-    <main>
-      <Outlet />
-    </main>
+    <AuthProvider>
+      <main>
+        <Outlet />
+      </main>
+    </AuthProvider>
   );
 }
 

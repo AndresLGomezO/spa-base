@@ -8,8 +8,11 @@ pnpm-debug.log*
 coverage/
 .turbo/
 .vite/
-cypress/videos/
-cypress/screenshots/
+# Cypress generated artifacts
+**/cypress/videos/
+**/cypress/screenshots/
+**/cypress/downloads/
+**/cypress/results/
 
 .firebase/
 firebase-debug.log

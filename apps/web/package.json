@@ -19,7 +19,9 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
+    "@repo/shared-types": "workspace:*",
     "@react-router/node": "catalog:",
+    "firebase": "catalog:",
     "isbot": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

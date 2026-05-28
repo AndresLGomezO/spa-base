@@ -1,7 +1,8 @@
 describe("Home page", () => {
-  it("displays the public home route", () => {
+  it("redirects unauthenticated users to login", () => {
     cy.visit("/");
-    cy.contains("h1", "Home", { timeout: 10000 });
-    cy.contains("p", "Welcome.");
+    cy.location("pathname", { timeout: 10000 }).should("eq", "/login");
+    cy.contains("h1", "Login");
+    cy.contains("p", "Sign in with Firebase Auth (local emulator friendly).");
   });
 });
