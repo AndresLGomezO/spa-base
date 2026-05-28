@@ -8,6 +8,11 @@
       --color-foreground: var(--color-neutral-50);
       --color-muted: var(--color-neutral-400);
       --color-border: var(--color-neutral-800);
+      --color-sidebar: var(--color-neutral-900);
+      --color-sidebar-foreground: var(--color-neutral-50);
+      --color-sidebar-border: var(--color-neutral-800);
+      --color-sidebar-accent: var(--color-neutral-800);
+      --color-sidebar-accent-foreground: var(--color-neutral-50);
     }
   }
 }

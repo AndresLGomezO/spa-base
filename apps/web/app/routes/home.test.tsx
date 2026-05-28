@@ -9,6 +9,8 @@ vi.mock("../auth/AuthContext", () => ({
       uid: "123",
       email: "person@example.com",
       displayName: "Test User",
+      photoURL: null,
+      role: "member",
       providerId: "password",
     },
     logout: vi.fn(),

@@ -7,6 +7,8 @@ export interface AuthUser {
   readonly uid: string;
   readonly email: string | null;
   readonly displayName: string | null;
+  readonly photoURL: string | null;
+  readonly role: string | null;
   readonly providerId: string | null;
 }
 

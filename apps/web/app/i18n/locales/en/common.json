@@ -33,5 +33,26 @@
     "unknownUser": "unknown user",
     "provider": "Provider",
     "logout": "Logout"
+  },
+  "nav": {
+    "home": "Home",
+    "settings": "Settings",
+    "profile": "Profile",
+    "team": "Team",
+    "billing": "Billing",
+    "collapse": "Collapse sidebar",
+    "open": "Open menu",
+    "userMenu": "Account menu",
+    "signOut": "Sign out",
+    "fallbackName": "User"
+  },
+  "roles": {
+    "member": "Member",
+    "admin": "Admin"
+  },
+  "settings": {
+    "profileDescription": "Manage your profile settings.",
+    "teamDescription": "Manage team members and invitations.",
+    "billingDescription": "View billing details and invoices."
   }
 }

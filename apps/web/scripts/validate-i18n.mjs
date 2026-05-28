@@ -182,6 +182,40 @@ function extractUsedKeys(files, namespaces) {
   return usedKeys;
 }
 
+/** labelKey values in nav-config.ts → common:nav.{labelKey} */
+function extractNavConfigKeys(files) {
+  const navConfig = files.find((f) => f.path.endsWith("nav-config.ts"));
+  if (!navConfig) return [];
+
+  const keys = new Set();
+  for (const match of navConfig.content.matchAll(/labelKey:\s*"([^"]+)"/g)) {
+    keys.add(`${DEFAULT_NAMESPACE}:nav.${match[1]}`);
+  }
+  return [...keys];
+}
+
+/** roles.${roleKey} in source → all keys under roles in reference locale */
+function extractDynamicRoleKeys(corpus, namespaces) {
+  if (!corpus.includes("roles.${")) return [];
+
+  const refRoles = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).roles;
+
+  if (!refRoles || typeof refRoles !== "object") return [];
+
+  return Object.keys(refRoles).map(
+    (key) => `${DEFAULT_NAMESPACE}:roles.${key}`,
+  );
+}
+
+function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
+  for (const qualified of qualifiedKeys) {
+    if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
+    usedKeys.get(qualified).add(filePath);
+  }
+}
+
 function checkKeyParity() {
   const errors = [];
   const locales = getLocales();
@@ -328,6 +362,14 @@ let exit = 0;
 const { keySet: refKeySet, namespaces } = buildRefKeySet();
 const { corpus, files } = loadSourceCorpus();
 const usedKeys = extractUsedKeys(files, namespaces);
+const navConfigFile =
+  files.find((f) => f.path.endsWith("nav-config.ts"))?.path ?? SRC_DIR;
+mergeUsedKeys(usedKeys, extractNavConfigKeys(files), navConfigFile);
+mergeUsedKeys(
+  usedKeys,
+  extractDynamicRoleKeys(corpus, namespaces),
+  path.join(SRC_DIR, "components/sidebar/SidebarUser.tsx"),
+);
 
 console.log("── 1. Key Parity ──────────────────────────────");
 const parityErrs = checkKeyParity();

@@ -1,4 +1,5 @@
 export { Alert, type AlertProps } from "./alert/Alert";
+export { Avatar, type AvatarProps } from "./avatar/Avatar";
 export { Button, type ButtonProps } from "./button/Button";
 export {
   buttonSizes,
@@ -16,6 +17,32 @@ export {
   type PopoverPlacement,
   type PopoverProps,
 } from "./popover/Popover";
+export { Sheet, type SheetProps } from "./sheet/Sheet";
+export {
+  Sidebar,
+  SidebarCollapseButton,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarHeader,
+  SidebarLabel,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuIcon,
+  SidebarMenuItem,
+  SidebarMobile,
+  SidebarProvider,
+  SidebarRail,
+  SidebarSeparator,
+  SidebarSubMenu,
+  SidebarTrigger,
+  sidebarMenuButtonClassName,
+  useSidebar,
+  type SidebarContextValue,
+  type SidebarMenuButtonProps,
+  type SidebarMenuButtonSize,
+  type SidebarState,
+} from "./sidebar";
 export { MoonIcon } from "./icons/MoonIcon";
 export { SunIcon } from "./icons/SunIcon";
 export {

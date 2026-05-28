@@ -8,11 +8,7 @@ import {
 } from "react";
 
 import { AuthContext } from "./AuthContext";
-import {
-  AUTH_INITIAL_STATE,
-  authReducer,
-  mapFirebaseUser,
-} from "./auth.machine";
+import { AUTH_INITIAL_STATE, authReducer, buildAuthUser } from "./auth.machine";
 import type { AuthContextValue, LoginResult } from "./auth.types";
 import { syncAuthSession } from "../lib/auth-session";
 import {
@@ -57,7 +53,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (!cancelled) {
             dispatch({
               type: "AUTH_STATE_AUTHENTICATED",
-              user: mapFirebaseUser(firebaseUser),
+              user: await buildAuthUser(firebaseUser),
             });
           }
           return;
@@ -92,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         syncedUidRef.current = firebaseUser.uid;
         dispatch({
           type: "AUTH_STATE_AUTHENTICATED",
-          user: mapFirebaseUser(firebaseUser),
+          user: await buildAuthUser(firebaseUser),
         });
       })();
     });
