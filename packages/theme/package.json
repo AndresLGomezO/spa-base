@@ -1,0 +1,38 @@
+{
+  "name": "@repo/theme",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format:check": "prettier --check .",
+    "lint:unused": "knip --no-progress",
+    "lint:circular": "echo \"Skipping circular check for theme package\"",
+    "validate": "pnpm run typecheck && pnpm run format:check && pnpm run lint:unused"
+  },
+  "exports": {
+    "./tokens.css": "./src/tokens.css",
+    "./dark.css": "./src/dark.css",
+    "./base.css": "./src/base.css",
+    "./index.css": "./src/index.css",
+    "./react": "./src/react/index.ts",
+    "./utils": "./src/utils/cn.ts"
+  },
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "peerDependencies": {
+    "react": "catalog:"
+  },
+  "dependencies": {
+    "clsx": "catalog:",
+    "tailwind-merge": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/react": "catalog:",
+    "knip": "catalog:",
+    "prettier": "catalog:",
+    "react": "catalog:",
+    "typescript": "catalog:"
+  }
+}

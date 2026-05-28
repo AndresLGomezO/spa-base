@@ -7,15 +7,23 @@ import {
   ScrollRestoration,
 } from "react-router";
 
+import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
+
 import { AuthProvider } from "./auth/AuthProvider";
+import { ThemeToggle } from "./components/ThemeToggle";
 import "./app.css";
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{if(localStorage.getItem("${COLOR_SCHEME_KEY}")==="dark"){document.documentElement.classList.add("dark")}}catch(e){}})();`,
+          }}
+        />
         <Meta />
         <Links />
       </head>
@@ -38,11 +46,14 @@ export function HydrateFallback() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <main>
-        <Outlet />
-      </main>
-    </AuthProvider>
+    <ThemeProvider>
+      <AuthProvider>
+        <ThemeToggle />
+        <main>
+          <Outlet />
+        </main>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 
