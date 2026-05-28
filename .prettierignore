@@ -7,3 +7,6 @@ coverage
 pnpm-lock.yaml
 cypress/videos
 cypress/screenshots
+**/storybook-static
+**/playwright-report
+**/test-results

@@ -9,7 +9,10 @@
     "lint:circular": "echo \"Skipping circular check for ui package\"",
     "validate": "pnpm run typecheck && pnpm run format:check && pnpm run lint:unused",
     "storybook": "storybook dev -p 6006",
-    "build-storybook": "storybook build"
+    "build-storybook": "storybook build",
+    "test:visual:install": "playwright install chromium",
+    "test:visual": "playwright test",
+    "test:visual:update": "playwright test --update-snapshots"
   },
   "exports": {
     ".": "./src/index.ts"
@@ -22,6 +25,7 @@
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
+    "@playwright/test": "catalog:",
     "@storybook/addon-a11y": "catalog:",
     "@storybook/addon-essentials": "catalog:",
     "@storybook/addon-themes": "catalog:",
@@ -32,6 +36,7 @@
     "@types/react-dom": "catalog:",
     "knip": "catalog:",
     "prettier": "catalog:",
+    "serve": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
     "storybook": "catalog:",
