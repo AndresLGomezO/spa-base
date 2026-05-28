@@ -43,9 +43,6 @@ for (const entry of storyEntries) {
       .waitForLoadState("networkidle", { timeout: 5000 })
       .catch(() => {});
 
-    await expect(root).toHaveScreenshot(`${entry.id}.png`, {
-      animations: "disabled",
-      maxDiffPixelRatio: 0.01,
-    });
+    await expect(root).toHaveScreenshot(`${entry.id}.png`);
   });
 }

@@ -13,6 +13,13 @@ export default defineConfig({
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
   reporter: [["html", { open: "never" }], ["list"]],
+  expect: {
+    toHaveScreenshot: {
+      animations: "disabled",
+      // Allow minor cross-OS font/antialiasing drift (macOS vs Linux CI).
+      maxDiffPixelRatio: 0.04,
+    },
+  },
   use: {
     ...devices["Desktop Chrome"],
     baseURL: "http://127.0.0.1:6007",
