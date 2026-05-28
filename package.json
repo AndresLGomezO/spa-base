@@ -25,7 +25,8 @@
     "validate:ci": "tsx scripts/validate.ts --ci",
     "emulators:prepare": "pnpm --filter web build",
     "emulators": "pnpm run emulators:prepare && firebase emulators:start --only auth,firestore,storage,hosting --project demo-project-base",
-    "emulators:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up firebase-emulator --force-recreate"
+    "emulators:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up firebase-emulator --force-recreate",
+    "dev:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up --build firebase-emulator api web"
   },
   "devDependencies": {
     "firebase-tools": "catalog:",

@@ -3,16 +3,16 @@ services:
   # This file can be used for local production-like testing if needed,
   # but requires real GCP credentials and environment variables when backend services exist.
 
-  # api:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/api/Dockerfile
-  #   container_name: project-base_api
-  #   restart: always
-  #   ports:
-  #     - '3000:3000'
-  #   env_file:
-  #     - ./apps/api/.env
+  api:
+    build:
+      context: .
+      dockerfile: apps/api/Dockerfile
+    container_name: project-base_api
+    restart: always
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./apps/api/.env
 
   # worker-service:
   #   build:
@@ -33,7 +33,7 @@ services:
       - "8080:80"
     # env_file:
     #   - ./apps/web/.env
-    # depends_on:
-    #   - api
+    depends_on:
+      - api
 
 volumes: {}

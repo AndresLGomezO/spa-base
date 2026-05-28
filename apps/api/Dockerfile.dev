@@ -1,0 +1,38 @@
+# TODO: worker-service — add package.json COPY + volumes when introduced
+# TODO: Cloud Tasks / Pub/Sub emulators — extend depends_on and env in compose files
+
+FROM node:22-slim
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+
+COPY apps/api/package.json ./apps/api/
+COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
+COPY packages/firestore-converters/package.json ./packages/firestore-converters/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/typescript-config/ ./packages/typescript-config/
+
+RUN pnpm install --frozen-lockfile
+
+COPY packages/shared-types ./packages/shared-types
+COPY packages/firestore-converters ./packages/firestore-converters
+COPY packages/gcp-firebase ./packages/gcp-firebase
+COPY packages/eslint-config ./packages/eslint-config
+COPY packages/typescript-config ./packages/typescript-config
+COPY apps/api ./apps/api
+
+COPY apps/api/docker-dev-entrypoint.sh /docker-dev-entrypoint.sh
+RUN sed -i 's/\r$//' /docker-dev-entrypoint.sh
+RUN chmod +x /docker-dev-entrypoint.sh
+
+EXPOSE 3000
+
+WORKDIR /app/apps/api
+ENTRYPOINT ["/docker-dev-entrypoint.sh"]
+CMD ["pnpm", "dev"]

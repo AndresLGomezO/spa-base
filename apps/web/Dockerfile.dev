@@ -13,6 +13,7 @@ WORKDIR /app
 # Copy package.json files and workspace packages (web depends on @repo/eslint-config and @repo/typescript-config)
 COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
+COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/ ./packages/typescript-config/
 

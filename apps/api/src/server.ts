@@ -1,3 +1,4 @@
+import cors from "@fastify/cors";
 import Fastify from "fastify";
 
 import { apiEnv } from "./config/env.js";
@@ -10,6 +11,14 @@ interface BuildServerOptions {
 export async function buildServer(options: BuildServerOptions = {}) {
   const server = Fastify({
     logger: options.logger ?? true,
+  });
+
+  const corsOrigins = apiEnv.API_CORS_ORIGINS.split(",")
+    .map((origin) => origin.trim())
+    .filter((origin) => origin.length > 0);
+
+  await server.register(cors, {
+    origin: corsOrigins,
   });
 
   await server.register(authValidateRoute, {
