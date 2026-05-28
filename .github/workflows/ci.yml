@@ -255,6 +255,9 @@ jobs:
       - name: Dependency catalog alignment
         run: pnpm run lint:deps
 
+      - name: i18n locale key parity
+        run: pnpm run i18n:validate -- --strict
+
       - name: Duplicate detection
         run: pnpm run lint:duplicates
 

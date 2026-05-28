@@ -4,6 +4,6 @@ import reactConfig from "@repo/eslint-config/react";
 export default [
   ...reactConfig,
   {
-    ignores: ["build/**", ".react-router/**", "cypress/**"],
+    ignores: ["build/**", ".react-router/**", "cypress/**", "scripts/**"],
   },
 ];

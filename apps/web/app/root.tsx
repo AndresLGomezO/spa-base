@@ -11,7 +11,10 @@ import {
 import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 
 import { AuthProvider } from "./auth/AuthProvider";
-import { ThemeToggle } from "./components/ThemeToggle";
+import { AppChrome } from "./components/AppChrome";
+import { I18nSync } from "./components/I18nSync";
+import "./i18n";
+import { i18n } from "./i18n";
 import "./app.css";
 
 export const links: LinksFunction = () => [
@@ -45,7 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 export function HydrateFallback() {
   return (
     <main aria-busy="true">
-      <p>Loading...</p>
+      <p>{i18n.t("loading")}</p>
     </main>
   );
 }
@@ -54,7 +57,8 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <ThemeToggle />
+        <I18nSync />
+        <AppChrome />
         <main>
           <Outlet />
         </main>
@@ -64,15 +68,16 @@ export default function App() {
 }
 
 export function ErrorBoundary({ error }: { error: unknown }) {
-  let message = "Oops!";
-  let details = "An unexpected error occurred.";
+  let message = i18n.t("error.oops");
+  let details = i18n.t("error.unexpected");
   let stack: string | undefined;
 
   if (isRouteErrorResponse(error)) {
-    message = error.status === 404 ? "404" : "Error";
+    message =
+      error.status === 404 ? i18n.t("error.notFound") : i18n.t("error.generic");
     details =
       error.status === 404
-        ? "The requested page could not be found."
+        ? i18n.t("error.notFoundDetail")
         : error.statusText || details;
   } else if (import.meta.env.DEV && error instanceof Error) {
     details = error.message;
