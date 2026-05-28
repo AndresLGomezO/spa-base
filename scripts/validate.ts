@@ -26,6 +26,10 @@ const VALIDATE_STEPS: ValidateStep[] = [
     command: "turbo run build lint typecheck test format:check cypress",
   },
   {
+    label: "Storybook build (@repo/ui)",
+    command: "pnpm run build-storybook",
+  },
+  {
     label: "Static analysis (unused + circular)",
     command: "pnpm run lint:static",
   },

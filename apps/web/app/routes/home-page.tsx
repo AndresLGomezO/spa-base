@@ -1,3 +1,4 @@
+import { Button, Heading, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/AuthContext";
@@ -8,18 +9,18 @@ export function HomePage() {
 
   return (
     <>
-      <h1>{t("home.title")}</h1>
-      <p>{t("home.sessionActive")}</p>
-      <p>
+      <Heading level={1}>{t("home.title")}</Heading>
+      <Text>{t("home.sessionActive")}</Text>
+      <Text>
         {t("home.signedInAs")}{" "}
         <strong>{user?.email ?? t("home.unknownUser")}</strong>
-      </p>
-      <p>
+      </Text>
+      <Text>
         {t("home.provider")}: {user?.providerId ?? "email/password"}
-      </p>
-      <button type="button" onClick={logout}>
+      </Text>
+      <Button type="button" onClick={() => void logout()}>
         {t("home.logout")}
-      </button>
+      </Button>
     </>
   );
 }
