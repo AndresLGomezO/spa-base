@@ -23,7 +23,11 @@ button {
 }
 
 button {
-  @apply w-fit cursor-pointer;
+  @apply cursor-pointer;
+}
+
+form button {
+  @apply w-fit;
 }
 
 button:disabled {

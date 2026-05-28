@@ -58,5 +58,6 @@ catalog:
   "@storybook/blocks": ^8.6.18
   "@playwright/test": ^1.52.0
   serve: ^14.2.4
+  lucide-react: ^0.511.0
 
 catalogMode: strict

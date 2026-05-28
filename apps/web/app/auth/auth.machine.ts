@@ -14,14 +14,33 @@ type AuthAction =
   | { readonly type: "LOGIN_FAILED"; readonly error: string }
   | { readonly type: "LOGOUT_COMPLETED" };
 
-export function mapFirebaseUser(user: User): AuthUser {
+function mapFirebaseUser(user: User): AuthUser {
   const provider = user.providerData[0]?.providerId ?? null;
   return {
     uid: user.uid,
     email: user.email,
     displayName: user.displayName,
+    photoURL: user.photoURL,
+    role: "member",
     providerId: provider,
   };
+}
+
+export async function buildAuthUser(user: User): Promise<AuthUser> {
+  const base = mapFirebaseUser(user);
+
+  try {
+    const tokenResult = await user.getIdTokenResult();
+    const claimRole = tokenResult.claims.role;
+    const role =
+      typeof claimRole === "string" && claimRole.length > 0
+        ? claimRole
+        : base.role;
+
+    return { ...base, role };
+  } catch {
+    return base;
+  }
 }
 
 export function authReducer(state: AuthState, action: AuthAction): AuthState {

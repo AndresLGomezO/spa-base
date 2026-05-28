@@ -102,6 +102,9 @@ catalogs:
     knip:
       specifier: ^5.63.0
       version: 5.88.1
+    lucide-react:
+      specifier: ^0.511.0
+      version: 0.511.0
     madge:
       specifier: ^8.0.0
       version: 8.0.0
@@ -273,6 +276,9 @@ importers:
       isbot:
         specifier: 'catalog:'
         version: 5.1.40
+      lucide-react:
+        specifier: 'catalog:'
+        version: 0.511.0(react@19.2.6)
       react:
         specifier: 'catalog:'
         version: 19.2.6
@@ -5067,6 +5073,11 @@ packages:
 
   lsofi@1.0.0:
     resolution: {integrity: sha512-MKr9vM1MSm+TSKfI05IYxpKV1NCxpJaBLnELyIf784zYJ5KV9lGCE1EvpA2DtXDNM3fCuFeCwXUzim/fyQRi+A==}
+
+  lucide-react@0.511.0:
+    resolution: {integrity: sha512-VK5a2ydJ7xm8GvBeKLS9mu1pVK6ucef9780JVUjw6bAjJL/QXnd4Y0p7SPeOUMC27YhzNCZvm5d/QX0Tp3rc0w==}
+    peerDependencies:
+      react: ^16.5.1 || ^17.0.0 || ^18.0.0 || ^19.0.0
 
   lz-string@1.5.0:
     resolution: {integrity: sha512-h5bgJWpxJNswbU7qCrV0tIKQCaS3blPDrqKWx+QxzuzL1zGUzij9XCWLrSLsJPu5t+eWA/ycetzYAO5IOMcWAQ==}
@@ -12189,6 +12200,10 @@ snapshots:
     dependencies:
       is-number: 2.1.0
       through2: 2.0.5
+
+  lucide-react@0.511.0(react@19.2.6):
+    dependencies:
+      react: 19.2.6
 
   lz-string@1.5.0: {}
 

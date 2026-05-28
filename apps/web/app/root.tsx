@@ -5,7 +5,6 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
-  useLocation,
   type LinksFunction,
 } from "react-router";
 
@@ -13,7 +12,6 @@ import { Heading, Text } from "@repo/ui";
 import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 
 import { AuthProvider } from "./auth/AuthProvider";
-import { AppChrome } from "./components/AppChrome";
 import { I18nSync } from "./components/I18nSync";
 import "./i18n";
 import { i18n } from "./i18n";
@@ -56,16 +54,10 @@ export function HydrateFallback() {
 }
 
 function AppShell() {
-  const location = useLocation();
-  const isLoginRoute = location.pathname === "/login";
-
   return (
     <>
       <I18nSync />
-      {!isLoginRoute ? <AppChrome /> : null}
-      <main>
-        <Outlet />
-      </main>
+      <Outlet />
     </>
   );
 }

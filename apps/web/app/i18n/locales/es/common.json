@@ -33,5 +33,26 @@
     "unknownUser": "usuario desconocido",
     "provider": "Proveedor",
     "logout": "Cerrar sesión"
+  },
+  "nav": {
+    "home": "Inicio",
+    "settings": "Configuración",
+    "profile": "Perfil",
+    "team": "Equipo",
+    "billing": "Facturación",
+    "collapse": "Contraer barra lateral",
+    "open": "Abrir menú",
+    "userMenu": "Menú de cuenta",
+    "signOut": "Cerrar sesión",
+    "fallbackName": "Usuario"
+  },
+  "roles": {
+    "member": "Miembro",
+    "admin": "Administrador"
+  },
+  "settings": {
+    "profileDescription": "Administra la configuración de tu perfil.",
+    "teamDescription": "Administra miembros del equipo e invitaciones.",
+    "billingDescription": "Consulta detalles de facturación e invoices."
   }
 }
