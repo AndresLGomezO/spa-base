@@ -47,7 +47,7 @@ export function LoginPage() {
       <p>Sign in with Firebase Auth (local emulator friendly).</p>
 
       {activeError ? (
-        <p role="alert" style={{ color: "crimson" }}>
+        <p role="alert" className="text-destructive">
           {activeError}
         </p>
       ) : null}

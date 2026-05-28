@@ -1,0 +1,91 @@
+@theme {
+  --color-*: initial;
+
+  /* Primary (blue) */
+  --color-primary-50: #eff9ff;
+  --color-primary-100: #def2ff;
+  --color-primary-200: #b6e8ff;
+  --color-primary-300: #75d8ff;
+  --color-primary-400: #2cc5ff;
+  --color-primary-500: #00a1e5;
+  --color-primary-600: #008bd4;
+  --color-primary-700: #006eab;
+  --color-primary-800: #005d8d;
+  --color-primary-900: #064d74;
+  --color-primary-950: #04314d;
+
+  /* Neutral (gray) */
+  --color-neutral-50: #f7f7f8;
+  --color-neutral-100: #ededf1;
+  --color-neutral-200: #d7d8e0;
+  --color-neutral-300: #b5b6c4;
+  --color-neutral-400: #8c8ea4;
+  --color-neutral-500: #6e7189;
+  --color-neutral-600: #595a70;
+  --color-neutral-700: #48495c;
+  --color-neutral-800: #3e3e4e;
+  --color-neutral-900: #373843;
+  --color-neutral-950: #18181b;
+
+  /* Success (green) */
+  --color-success-50: #ecfdf3;
+  --color-success-100: #d2f9e0;
+  --color-success-200: #a9f1c7;
+  --color-success-300: #5be09b;
+  --color-success-400: #38cf86;
+  --color-success-500: #14b56c;
+  --color-success-600: #089357;
+  --color-success-700: #077549;
+  --color-success-800: #085d3b;
+  --color-success-900: #084c32;
+  --color-success-950: #032b1c;
+
+  /* Danger (red) */
+  --color-danger-50: #fef4ee;
+  --color-danger-100: #fee5d6;
+  --color-danger-200: #fbc7ad;
+  --color-danger-300: #f99f78;
+  --color-danger-400: #f56d42;
+  --color-danger-500: #f2451a;
+  --color-danger-600: #e32e13;
+  --color-danger-700: #bd1f11;
+  --color-danger-800: #961b16;
+  --color-danger-900: #791a15;
+  --color-danger-950: #410909;
+
+  /* Warning (yellow) */
+  --color-warning-50: #fffeeb;
+  --color-warning-100: #fdf9c8;
+  --color-warning-200: #fbf48c;
+  --color-warning-300: #f9e950;
+  --color-warning-400: #f8da27;
+  --color-warning-500: #f2c01c;
+  --color-warning-600: #d69309;
+  --color-warning-700: #b16a0c;
+  --color-warning-800: #905310;
+  --color-warning-900: #764311;
+  --color-warning-950: #442304;
+
+  --color-white: #ffffff;
+  --color-black: #0e0e11;
+
+  /* Semantic aliases */
+  --color-background: var(--color-neutral-50);
+  --color-foreground: var(--color-neutral-950);
+  --color-muted: var(--color-neutral-500);
+  --color-border: var(--color-neutral-200);
+  --color-destructive: var(--color-danger-600);
+
+  /* Typography */
+  --font-sans: Inter, ui-sans-serif, system-ui, sans-serif;
+  --text-body: 1rem;
+  --text-body--line-height: 1.5;
+  --text-heading: 1.5rem;
+  --text-heading--line-height: 1.25;
+
+  /* Spacing */
+  --spacing: 0.25rem;
+
+  /* Radius */
+  --radius-md: 0.375rem;
+}

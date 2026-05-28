@@ -1,5 +1,11 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
-  "ignoreDependencies": ["@repo/eslint-config", "@repo/shared-types"],
+  "ignoreDependencies": [
+    "@repo/eslint-config",
+    "@repo/shared-types",
+    "@repo/theme",
+    "tailwindcss",
+    "@tailwindcss/vite"
+  ],
   "project": ["app/**/*.{ts,tsx}"]
 }

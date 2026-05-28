@@ -16,6 +16,7 @@ Briefly describe the changes introduced by this PR.
 - [ ] `packages/gcp-firebase`
 - [ ] `packages/eslint-config`
 - [ ] `packages/typescript-config`
+- [ ] `packages/theme`
 
 ### Root / shared config
 

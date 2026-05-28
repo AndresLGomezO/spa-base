@@ -20,6 +20,7 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
+    "@repo/theme": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "@react-router/node": "catalog:",
     "firebase": "catalog:",
@@ -29,6 +30,7 @@
     "react-router": "catalog:"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "catalog:",
     "@react-router/dev": "catalog:",
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
@@ -44,6 +46,7 @@
     "madge": "catalog:",
     "prettier": "catalog:",
     "start-server-and-test": "catalog:",
+    "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
     "@vitest/coverage-v8": "catalog:",
