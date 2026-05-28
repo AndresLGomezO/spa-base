@@ -4,10 +4,22 @@ Briefly describe the changes introduced by this PR.
 
 ## Apps/Packages Affected
 
-- [ ] `web`
+### Apps
+
+- [ ] `apps/web`
+- [ ] `apps/api`
+
+### Packages
+
+- [ ] `packages/shared-types`
+- [ ] `packages/firestore-converters`
+- [ ] `packages/gcp-firebase`
 - [ ] `packages/eslint-config`
 - [ ] `packages/typescript-config`
-- [ ] Root / shared config (specify: )
+
+### Root / shared config
+
+- [ ] Root / shared config (specify: e.g. `turbo.json`, `pnpm-workspace.yaml`, `firestore.rules`, `.github/workflows/`)
 
 ## Type of Change
 
