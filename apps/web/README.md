@@ -17,3 +17,9 @@ Translations live under `app/i18n/locales/{en,es}/`. English (`en`) is the refer
 - Use `useTranslation('common')` and `t('key.path')` in components.
 - Locale preference is stored in `localStorage` under `i18n-locale`.
 - Validate locales from repo root: `pnpm i18n:validate` (warnings only) or `pnpm i18n:validate -- --strict` (fail on unused keys).
+
+## UI components
+
+Use primitives from `@repo/ui` (`Button`, `Heading`, `Text`, `Card`, etc.) instead of raw `<button>`, heading tags, or `<p>` in `app/`. ESLint enforces this via `@repo/eslint-config/ui-primitives`.
+
+Component docs and visual review: from repo root, `pnpm storybook` (package `packages/ui`).
