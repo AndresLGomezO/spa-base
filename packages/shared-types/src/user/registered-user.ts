@@ -72,4 +72,6 @@ export interface AuthUserProjection {
 }
 
 export type RegisteredUser = z.infer<typeof registeredUserSchemaV1>;
-export type PersistedRegisteredUser = z.infer<typeof persistedRegisteredUserSchemaV1>;
+export type PersistedRegisteredUser = z.infer<
+  typeof persistedRegisteredUserSchemaV1
+>;
