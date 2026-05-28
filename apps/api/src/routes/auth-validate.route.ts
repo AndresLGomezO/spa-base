@@ -64,7 +64,8 @@ export const authValidateRoute: FastifyPluginAsync<{
         },
       });
     } catch (error) {
-      const message = error instanceof Error ? error.message : "Token verification failed.";
+      const message =
+        error instanceof Error ? error.message : "Token verification failed.";
       return reply.status(401).send({
         ok: false,
         code: "TOKEN_VERIFICATION_FAILED",

@@ -1,4 +1,10 @@
-import { cert, getApps, initializeApp, type App, type AppOptions } from "firebase-admin/app";
+import {
+  cert,
+  getApps,
+  initializeApp,
+  type App,
+  type AppOptions,
+} from "firebase-admin/app";
 
 export interface FirebaseAdminConfig {
   readonly projectId: string;

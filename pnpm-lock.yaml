@@ -69,6 +69,9 @@ catalogs:
     madge:
       specifier: ^8.0.0
       version: 8.0.0
+    nanoid:
+      specifier: ^5.1.11
+      version: 5.1.11
     prettier:
       specifier: ^3.6.0
       version: 3.8.3
@@ -125,6 +128,9 @@ importers:
       madge:
         specifier: 'catalog:'
         version: 8.0.0(typescript@5.9.3)
+      nanoid:
+        specifier: 'catalog:'
+        version: 5.1.11
       prettier:
         specifier: 'catalog:'
         version: 3.8.3
@@ -283,9 +289,6 @@ importers:
       knip:
         specifier: 'catalog:'
         version: 5.88.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@22.19.19)(typescript@5.9.3)
-      madge:
-        specifier: 'catalog:'
-        version: 8.0.0(typescript@5.9.3)
       prettier:
         specifier: 'catalog:'
         version: 3.8.3
@@ -301,14 +304,44 @@ importers:
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
   packages/shared-types:
     dependencies:
       zod:
         specifier: 'catalog:'
         version: 4.4.3
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
-  packages/typescript-config: {}
+  packages/typescript-config:
+    devDependencies:
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
 
 packages:
 
@@ -4325,6 +4358,11 @@ packages:
   nanoid@3.3.12:
     resolution: {integrity: sha512-ZB9RH/39qpq5Vu6Y+NmUaFhQR6pp+M2Xt76XBnEwDaGcVAqhlvxrl3B2bKS5D3NH3QR76v3aSrKaF/Kiy7lEtQ==}
     engines: {node: ^10 || ^12 || ^13.7 || ^14 || >=15.0.1}
+    hasBin: true
+
+  nanoid@5.1.11:
+    resolution: {integrity: sha512-v+KEsUv2ps74PaSKv0gHTxTCgMXOIfBEbaqa6w6ISIGC7ZsvHN4N9oJ8d4cmf0n5oTzQz2SLmThbQWhjd/8eKg==}
+    engines: {node: ^18 || >=20}
     hasBin: true
 
   natural-compare@1.4.0:
@@ -10544,6 +10582,8 @@ snapshots:
     optional: true
 
   nanoid@3.3.12: {}
+
+  nanoid@5.1.11: {}
 
   natural-compare@1.4.0: {}
 

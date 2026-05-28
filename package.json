@@ -31,11 +31,12 @@
     "firebase-tools": "catalog:",
     "knip": "catalog:",
     "madge": "catalog:",
+    "nanoid": "catalog:",
     "prettier": "catalog:",
+    "syncpack": "catalog:",
     "ts-morph": "catalog:",
     "tsx": "catalog:",
-    "turbo": "catalog:",
-    "syncpack": "catalog:"
+    "turbo": "catalog:"
   },
   "pnpm": {
     "onlyBuiltDependencies": [

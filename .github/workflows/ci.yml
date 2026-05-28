@@ -42,6 +42,7 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       web: ${{ steps.filter.outputs.web }}
+      api: ${{ steps.filter.outputs.api }}
       any: ${{ steps.filter.outputs.any }}
     steps:
       - name: Checkout
@@ -56,6 +57,12 @@ jobs:
           filters: |
             web:
               - "apps/web/**"
+              - "packages/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+            api:
+              - "apps/api/**"
               - "packages/**"
               - "package.json"
               - "pnpm-lock.yaml"
@@ -121,6 +128,9 @@ jobs:
       - name: Lint / type-check / test / format (turbo)
         id: turbo
         run: CI=true pnpm turbo run format:check lint typecheck test --concurrency=4
+
+      - name: Validate shared packages
+        run: CI=true pnpm turbo run validate --filter="./packages/*" --concurrency=4
 
       - name: Check coverage threshold
         run: node .github/scripts/check-coverage-threshold.js
@@ -311,7 +321,7 @@ jobs:
   prepare-build-matrix:
     name: Prepare build matrix
     needs: [changes]
-    if: needs.changes.outputs.web == 'true'
+    if: needs.changes.outputs.any == 'true'
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.set.outputs.matrix }}
@@ -319,9 +329,22 @@ jobs:
     steps:
       - id: set
         run: |
-          WORKSPACES='["web"]'
-          echo "matrix={\"workspace\":$WORKSPACES}" >> $GITHUB_OUTPUT
-          echo "has_builds=true" >> $GITHUB_OUTPUT
+          WORKSPACES=()
+          if [ "${{ needs.changes.outputs.web }}" = "true" ]; then
+            WORKSPACES+=("\"web\"")
+          fi
+          if [ "${{ needs.changes.outputs.api }}" = "true" ]; then
+            WORKSPACES+=("\"api\"")
+          fi
+
+          if [ ${#WORKSPACES[@]} -eq 0 ]; then
+            echo "matrix={\"workspace\":[]}" >> $GITHUB_OUTPUT
+            echo "has_builds=false" >> $GITHUB_OUTPUT
+          else
+            WORKSPACES_JSON="[$(IFS=,; echo "${WORKSPACES[*]}")]"
+            echo "matrix={\"workspace\":$WORKSPACES_JSON}" >> $GITHUB_OUTPUT
+            echo "has_builds=true" >> $GITHUB_OUTPUT
+          fi
 
   build:
     name: Build (${{ matrix.workspace }})

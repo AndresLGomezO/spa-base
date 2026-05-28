@@ -2,12 +2,23 @@
   "name": "@repo/gcp-firebase",
   "private": true,
   "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run typecheck && pnpm run format:check"
+  },
   "exports": {
     ".": "./src/index.ts",
     "./env": "./src/env.ts",
     "./auth": "./src/auth.ts",
     "./app-check": "./src/app-check.ts",
     "./firebase-admin": "./src/firebase-admin.ts"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
   },
   "dependencies": {
     "firebase-admin": "catalog:",

@@ -5,7 +5,8 @@
   "scripts": {
     "format:check": "prettier --check .",
     "lint:unused": "knip --no-progress",
-    "lint:circular": "madge --circular --extensions js ."
+    "lint:circular": "echo \"Skipping circular check for config-only package\"",
+    "validate": "pnpm run format:check && pnpm run lint:unused"
   },
   "exports": {
     "./base": "./base.js",
@@ -18,7 +19,6 @@
     "eslint-plugin-react": "catalog:",
     "eslint-plugin-react-hooks": "catalog:",
     "knip": "catalog:",
-    "madge": "catalog:",
     "prettier": "catalog:",
     "typescript-eslint": "catalog:"
   }

@@ -15,7 +15,7 @@ import { buildServer } from "../server.js";
 
 describe("GET /auth/validate", () => {
   it("returns 401 when headers are missing", async () => {
-    const server = await buildServer();
+    const server = await buildServer({ logger: false });
     const response = await server.inject({
       method: "GET",
       url: "/auth/validate",
@@ -26,7 +26,7 @@ describe("GET /auth/validate", () => {
   });
 
   it("returns success when headers are present", async () => {
-    const server = await buildServer();
+    const server = await buildServer({ logger: false });
     const response = await server.inject({
       method: "GET",
       url: "/auth/validate",

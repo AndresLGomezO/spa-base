@@ -1,8 +1,6 @@
 packages:
-  - "apps/*"
-  - "packages/*"
-
-catalogMode: strict
+  - apps/*
+  - packages/*
 
 catalog:
   react: ^19.2.6
@@ -41,3 +39,6 @@ catalog:
   tsx: ^4.21.0
   firebase-tools: ^13.0.0
   syncpack: ^15.0.0
+  nanoid: ^5.1.11
+
+catalogMode: strict

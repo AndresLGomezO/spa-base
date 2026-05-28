@@ -3,9 +3,13 @@ import Fastify from "fastify";
 import { apiEnv } from "./config/env.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 
-export async function buildServer() {
+interface BuildServerOptions {
+  readonly logger?: boolean;
+}
+
+export async function buildServer(options: BuildServerOptions = {}) {
   const server = Fastify({
-    logger: true,
+    logger: options.logger ?? true,
   });
 
   await server.register(authValidateRoute, {
