@@ -6,20 +6,13 @@ import {
   getAuth,
   onAuthStateChanged,
   setPersistence,
-  signInWithEmailAndPassword,
   signInWithPopup,
   type User,
 } from "firebase/auth";
 
 import { appConfig } from "../config/app-config";
 
-export {
-  GoogleAuthProvider,
-  onAuthStateChanged,
-  signInWithEmailAndPassword,
-  signInWithPopup,
-  type User,
-};
+export { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, type User };
 
 const app = initializeApp({
   apiKey: appConfig.firebase.apiKey,

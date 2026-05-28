@@ -4,6 +4,7 @@
     "label": "Language"
   },
   "theme": {
+    "label": "Theme",
     "switchToDark": "Switch to dark mode",
     "switchToLight": "Switch to light mode",
     "dark": "Dark",
@@ -17,16 +18,13 @@
     "generic": "Error"
   },
   "login": {
-    "title": "Login",
-    "subtitle": "Sign in with Firebase Auth (local emulator friendly).",
-    "email": "Email",
-    "password": "Password",
-    "signingIn": "Signing in...",
-    "signInEmailPassword": "Sign in with email/password",
+    "title": "Welcome Back",
+    "subtitle": "Sign in to your account",
+    "settingsTitle": "Settings",
     "waiting": "Waiting...",
     "signInGoogle": "Sign in with Google",
-    "failed": "Login failed.",
-    "googleFailed": "Google login failed."
+    "googleFailed": "Google login failed.",
+    "rightsReserved": "© {{year}} Project Base. All rights reserved."
   },
   "home": {
     "title": "Home",

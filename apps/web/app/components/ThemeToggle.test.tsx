@@ -27,26 +27,29 @@ describe("ThemeToggle", () => {
     cleanup();
   });
 
-  it("shows switch to dark mode when light", () => {
+  it("shows light mode as active by default", () => {
     renderToggle();
 
-    const toggle = screen.getByRole("switch", { name: "Switch to dark mode" });
-
-    expect(toggle).toHaveAttribute("aria-checked", "false");
-    expect(toggle).toHaveTextContent("Dark");
+    expect(screen.getByRole("group", { name: "Theme" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("radio", { name: "Switch to light mode" }),
+    ).toHaveAttribute("aria-checked", "true");
+    expect(
+      screen.getByRole("radio", { name: "Switch to dark mode" }),
+    ).toHaveAttribute("aria-checked", "false");
   });
 
-  it("toggles to dark mode on click and persists to localStorage", () => {
+  it("switches to dark mode on click and persists to localStorage", () => {
     renderToggle();
 
-    const toggle = screen.getByRole("switch", { name: "Switch to dark mode" });
-
-    fireEvent.click(toggle);
+    fireEvent.click(screen.getByRole("radio", { name: "Switch to dark mode" }));
 
     expect(
-      screen.getByRole("switch", { name: "Switch to light mode" }),
+      screen.getByRole("radio", { name: "Switch to dark mode" }),
     ).toHaveAttribute("aria-checked", "true");
-    expect(screen.getByRole("switch")).toHaveTextContent("Light");
+    expect(
+      screen.getByRole("radio", { name: "Switch to light mode" }),
+    ).toHaveAttribute("aria-checked", "false");
     expect(localStorage.getItem("color_scheme")).toBe("dark");
     expect(document.documentElement.classList.contains("dark")).toBe(true);
   });
@@ -57,7 +60,7 @@ describe("ThemeToggle", () => {
     renderToggle();
 
     expect(
-      screen.getByRole("switch", { name: "Switch to light mode" }),
+      screen.getByRole("radio", { name: "Switch to dark mode" }),
     ).toHaveAttribute("aria-checked", "true");
   });
 });

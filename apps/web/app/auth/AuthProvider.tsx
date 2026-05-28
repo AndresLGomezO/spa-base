@@ -19,7 +19,6 @@ import {
   GoogleAuthProvider,
   auth,
   onAuthStateChanged,
-  signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
 } from "../lib/firebase";
@@ -104,22 +103,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     };
   }, []);
 
-  const loginWithEmailPassword = useCallback(
-    async (email: string, password: string): Promise<LoginResult> => {
-      dispatch({ type: "LOGIN_STARTED" });
-
-      try {
-        await signInWithEmailAndPassword(auth, email, password);
-        return { success: true };
-      } catch (error) {
-        const message = mapAuthError(error);
-        dispatch({ type: "LOGIN_FAILED", error: message });
-        return { success: false, error: message };
-      }
-    },
-    [],
-  );
-
   const loginWithGoogle = useCallback(async (): Promise<LoginResult> => {
     dispatch({ type: "LOGIN_STARTED" });
 
@@ -147,18 +130,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthenticated: state.phase === "authenticated",
       isReady:
         state.phase === "authenticated" || state.phase === "unauthenticated",
-      loginWithEmailPassword,
       loginWithGoogle,
       logout,
     }),
-    [
-      loginWithEmailPassword,
-      loginWithGoogle,
-      logout,
-      state.error,
-      state.phase,
-      state.user,
-    ],
+    [loginWithGoogle, logout, state.error, state.phase, state.user],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

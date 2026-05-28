@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  useLocation,
   type LinksFunction,
 } from "react-router";
 
@@ -53,15 +54,26 @@ export function HydrateFallback() {
   );
 }
 
+function AppShell() {
+  const location = useLocation();
+  const isLoginRoute = location.pathname === "/login";
+
+  return (
+    <>
+      <I18nSync />
+      {!isLoginRoute ? <AppChrome /> : null}
+      <main>
+        <Outlet />
+      </main>
+    </>
+  );
+}
+
 export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <I18nSync />
-        <AppChrome />
-        <main>
-          <Outlet />
-        </main>
+        <AppShell />
       </AuthProvider>
     </ThemeProvider>
   );

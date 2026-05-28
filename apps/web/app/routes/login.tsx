@@ -4,7 +4,7 @@ import { LoginPage } from "./login-page";
 export function meta() {
   return [
     { title: "Login" },
-    { name: "description", content: "Login with Firebase Auth." },
+    { name: "description", content: "Sign in with your Google account." },
   ];
 }
 

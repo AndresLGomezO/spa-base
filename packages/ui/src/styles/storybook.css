@@ -1,0 +1,9 @@
+@import "@repo/theme/fonts.css";
+@import "tailwindcss";
+@source "../";
+@import "@repo/theme/tokens.css";
+@import "@repo/theme/dark.css";
+
+body {
+  margin: 0;
+}

@@ -11,6 +11,12 @@
       "isIgnored": true
     },
     {
+      "label": "@repo/ui uses Vite 6 for Storybook (web uses catalog Vite 8)",
+      "packages": ["@repo/ui"],
+      "dependencies": ["vite"],
+      "isIgnored": true
+    },
+    {
       "label": "Shared deps must use the pnpm catalog",
       "dependencyTypes": ["prod", "dev"],
       "policy": "catalog",

@@ -43,6 +43,7 @@ jobs:
     outputs:
       web: ${{ steps.filter.outputs.web }}
       api: ${{ steps.filter.outputs.api }}
+      ui: ${{ steps.filter.outputs.ui }}
       any: ${{ steps.filter.outputs.any }}
     steps:
       - name: Checkout
@@ -64,6 +65,12 @@ jobs:
             api:
               - "apps/api/**"
               - "packages/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+            ui:
+              - "packages/ui/**"
+              - "packages/theme/**"
               - "package.json"
               - "pnpm-lock.yaml"
               - "pnpm-workspace.yaml"
@@ -135,6 +142,7 @@ jobs:
           pnpm --filter @repo/gcp-firebase run validate
           pnpm --filter @repo/typescript-config run validate
           pnpm --filter @repo/eslint-config run validate
+          pnpm --filter @repo/ui run validate
 
       - name: Check coverage threshold
         run: node .github/scripts/check-coverage-threshold.js
@@ -327,6 +335,30 @@ jobs:
           VALIDATE_RUN_ID: ${{ needs.validate-core.outputs.run_id }}
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # STORYBOOK — build component catalog
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  storybook:
+    name: Storybook build
+    needs: [changes, install]
+    if: needs.changes.outputs.ui == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: ./.github/actions/setup-node-env
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Build Storybook
+        run: pnpm --filter @repo/ui build-storybook
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: storybook-static
+          path: packages/ui/storybook-static
+          retention-days: 7
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # BUILD — only changed workspaces get a runner
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   prepare-build-matrix:
@@ -388,6 +420,7 @@ jobs:
       - validate-core
       - validate-cypress
       - validate-static
+      - storybook
       - build
     runs-on: ubuntu-latest
     steps:
@@ -397,12 +430,14 @@ jobs:
           echo "validate-core:    ${{ needs.validate-core.result }}"
           echo "validate-cypress: ${{ needs.validate-cypress.result }}"
           echo "validate-static:  ${{ needs.validate-static.result }}"
+          echo "storybook:        ${{ needs.storybook.result }}"
           echo "build:            ${{ needs.build.result }}"
 
           for result in \
             "${{ needs.validate-core.result }}" \
             "${{ needs.validate-cypress.result }}" \
             "${{ needs.validate-static.result }}" \
+            "${{ needs.storybook.result }}" \
             "${{ needs.build.result }}"; do
             if [ "$result" = "failure" ]; then
               echo ""

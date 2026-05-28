@@ -30,10 +30,6 @@ export interface AuthContextValue {
   readonly isAuthenticated: boolean;
   readonly isReady: boolean;
   readonly error: string | null;
-  readonly loginWithEmailPassword: (
-    email: string,
-    password: string,
-  ) => Promise<LoginResult>;
   readonly loginWithGoogle: () => Promise<LoginResult>;
   readonly logout: () => Promise<void>;
 }
