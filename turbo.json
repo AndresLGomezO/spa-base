@@ -43,6 +43,13 @@
       "dependsOn": ["build"],
       "cache": false
     },
+    "storybook": {
+      "cache": false,
+      "persistent": true
+    },
+    "build-storybook": {
+      "outputs": ["storybook-static/**"]
+    },
     "lint:unused": {
       "dependsOn": ["^build"],
       "inputs": ["**/*", "package.json", "knip.json"],

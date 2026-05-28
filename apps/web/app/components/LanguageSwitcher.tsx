@@ -1,6 +1,8 @@
 import { useCallback } from "react";
 import { useTranslation } from "react-i18next";
 
+import { SegmentedSwitch } from "@repo/ui";
+
 import { loadLocale } from "../i18n";
 import {
   LOCALE_LABELS,
@@ -12,12 +14,16 @@ import {
 
 interface LanguageSwitcherProps {
   readonly className?: string;
+  readonly fullWidth?: boolean;
 }
 
 /**
  * Locale switch (EN | ES). Lazy-loads non-default locale on change and persists to localStorage.
  */
-export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
+export function LanguageSwitcher({
+  className,
+  fullWidth = false,
+}: LanguageSwitcherProps) {
   const { t, i18n } = useTranslation("common");
   const effectiveLocale = normalizeLocale(i18n.language);
 
@@ -39,27 +45,36 @@ export function LanguageSwitcher({ className }: LanguageSwitcherProps) {
   );
 
   return (
-    <div
-      className={
-        className ?? "border-border bg-muted/50 flex rounded-md border p-0.5"
-      }
-      role="group"
-      aria-label={t("language.label")}
-    >
-      {SUPPORTED_LOCALES.map((code) => (
-        <button
-          key={code}
-          type="button"
-          onClick={() => void selectLocale(code)}
-          className={
-            effectiveLocale === code
-              ? "bg-background text-foreground min-w-0 flex-1 rounded px-2.5 py-1 text-xs font-medium shadow-sm"
-              : "text-muted-foreground hover:text-foreground min-w-0 flex-1 rounded px-2.5 py-1 text-xs font-medium transition-colors"
-          }
-        >
-          {LOCALE_LABELS[code]}
-        </button>
-      ))}
-    </div>
+    <SegmentedSwitch
+      value={effectiveLocale}
+      onChange={(locale) => void selectLocale(locale)}
+      ariaLabel={t("language.label")}
+      fullWidth={fullWidth}
+      className={className}
+      options={SUPPORTED_LOCALES.map((code) => {
+        const isActive = effectiveLocale === code;
+
+        return {
+          value: code,
+          ariaLabel: LOCALE_LABELS[code],
+          label: (
+            <span className="flex flex-col items-center leading-tight">
+              <span className="text-xs font-semibold tracking-wide uppercase">
+                {code}
+              </span>
+              <span
+                className={
+                  isActive
+                    ? "text-[10px] font-medium"
+                    : "text-[10px] font-medium invisible"
+                }
+              >
+                {LOCALE_LABELS[code]}
+              </span>
+            </span>
+          ),
+        };
+      })}
+    />
   );
 }

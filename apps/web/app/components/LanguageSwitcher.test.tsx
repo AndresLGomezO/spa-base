@@ -34,15 +34,20 @@ describe("LanguageSwitcher", () => {
     renderSwitcher();
 
     expect(screen.getByRole("group", { name: "Language" })).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "English" })).toHaveClass(
-      "shadow-sm",
+    expect(screen.getByRole("radio", { name: "English" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+    expect(screen.getByRole("radio", { name: "Español" })).toHaveAttribute(
+      "aria-checked",
+      "false",
     );
   });
 
   it("switches to Spanish and persists to localStorage", async () => {
     renderSwitcher();
 
-    fireEvent.click(screen.getByRole("button", { name: "Español" }));
+    fireEvent.click(screen.getByRole("radio", { name: "Español" }));
 
     await waitFor(() => {
       expect(i18n.language).toMatch(/^es/);
@@ -50,6 +55,10 @@ describe("LanguageSwitcher", () => {
 
     expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("es");
     expect(screen.getByRole("group", { name: "Idioma" })).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Español" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
   });
 
   it("restores Spanish from localStorage on init", async () => {
@@ -58,8 +67,9 @@ describe("LanguageSwitcher", () => {
 
     renderSwitcher();
 
-    expect(screen.getByRole("button", { name: "Español" })).toHaveClass(
-      "shadow-sm",
+    expect(screen.getByRole("radio", { name: "Español" })).toHaveAttribute(
+      "aria-checked",
+      "true",
     );
   });
 });

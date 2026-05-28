@@ -4,8 +4,8 @@
     "@repo/eslint-config",
     "@repo/shared-types",
     "@repo/theme",
-    "tailwindcss",
-    "@tailwindcss/vite"
+    "@repo/ui",
+    "tailwindcss"
   ],
   "project": ["app/**/*.{ts,tsx}"]
 }

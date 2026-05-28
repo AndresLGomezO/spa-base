@@ -49,5 +49,12 @@ catalog:
   i18next: ^24.2.0
   react-i18next: ^15.1.0
   i18next-browser-languagedetector: ^8.0.0
+  storybook: ^8.6.18
+  "@storybook/react-vite": ^8.6.18
+  "@storybook/react": ^8.6.18
+  "@storybook/addon-essentials": ^8.6.18
+  "@storybook/addon-a11y": ^8.6.18
+  "@storybook/addon-themes": ^8.6.18
+  "@storybook/blocks": ^8.6.18
 
 catalogMode: strict
