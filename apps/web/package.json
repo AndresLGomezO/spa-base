@@ -7,11 +7,12 @@
     "build": "react-router build",
     "preview": "vite preview --port 4173 --strictPort",
     "lint": "eslint .",
-    "format": "prettier --write .",
+    "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
     "prettier": "prettier --check .",
     "typecheck": "react-router typegen && tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint:unused": "knip --no-progress",
     "lint:circular": "madge --circular --ts-config tsconfig.madge.json --extensions ts,tsx app/",
@@ -45,6 +46,7 @@
     "start-server-and-test": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "vitest": "catalog:"
   },
   "madge": {

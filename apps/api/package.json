@@ -9,6 +9,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
     "lint:unused": "knip --no-progress",
     "lint:circular": "madge --circular --extensions ts src/"
   },
@@ -27,6 +28,7 @@
     "madge": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
+    "@vitest/coverage-v8": "catalog:",
     "vitest": "catalog:"
   }
 }

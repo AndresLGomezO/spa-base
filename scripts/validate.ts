@@ -41,8 +41,8 @@ const VALIDATE_STEPS: ValidateStep[] = [
 
 const VALIDATE_CI_STEPS: ValidateStep[] = [
   {
-    label: "Build, lint, typecheck, test, format check, cypress",
-    command: "turbo run build lint typecheck test format:check cypress",
+    label: "Build, lint, typecheck, test:coverage, format check, cypress",
+    command: "turbo run build lint typecheck test:coverage format:check cypress",
     env: { CI: "true" },
   },
   {
