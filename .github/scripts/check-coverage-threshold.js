@@ -10,7 +10,7 @@
 const fs = require('fs');
 const path = require('path');
 
-const WORKSPACES = ['apps/web'];
+const WORKSPACES = ['apps/web', 'apps/api'];
 
 function readCoverageSummary(workspacePath) {
   const filePath = path.join(

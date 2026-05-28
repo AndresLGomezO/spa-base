@@ -156,6 +156,10 @@ jobs:
             mkdir -p coverage-reports/apps/web
             cp apps/web/coverage/coverage-summary.json coverage-reports/apps/web/
           fi
+          if [ -f apps/api/coverage/coverage-summary.json ]; then
+            mkdir -p coverage-reports/apps/api
+            cp apps/api/coverage/coverage-summary.json coverage-reports/apps/api/
+          fi
 
       - uses: actions/upload-artifact@v4
         if: always()

@@ -78,7 +78,7 @@ module.exports = async function ({ github, context }) {
     ? `https://github.com/${context.repo.owner}/${context.repo.repo}/actions/runs/${validateRunId}`
     : null;
 
-  const workspaces = ['apps/web'];
+  const workspaces = ['apps/web', 'apps/api'];
 
   const coverageRows = [];
   for (const ws of workspaces) {
