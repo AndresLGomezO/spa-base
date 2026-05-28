@@ -5,6 +5,7 @@ import {
   Outlet,
   Scripts,
   ScrollRestoration,
+  type LinksFunction,
 } from "react-router";
 
 import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
@@ -12,6 +13,11 @@ import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 import { AuthProvider } from "./auth/AuthProvider";
 import { ThemeToggle } from "./components/ThemeToggle";
 import "./app.css";
+
+export const links: LinksFunction = () => [
+  { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
+  { rel: "icon", href: "/favicon.ico", sizes: "any" },
+];
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
