@@ -1,0 +1,183 @@
+import { appConfig } from "../config/app-config";
+import { getAppCheckHeaderValue } from "./app-check";
+import { auth } from "./firebase";
+
+interface ApiErrorBody {
+  readonly code: string;
+  readonly message: string;
+  readonly details?: unknown;
+}
+
+interface ApiEnvelope<T> {
+  readonly data: T | null;
+  readonly error: ApiErrorBody | null;
+}
+
+interface ApiClientError extends Error {
+  statusCode: number;
+  code: string;
+  fieldErrors: Record<string, string>;
+}
+
+interface PaginatedResult<T> {
+  readonly items: readonly T[];
+  readonly nextCursor: string | null;
+}
+
+interface RequestOptions {
+  readonly method?: "GET" | "POST" | "PUT" | "DELETE";
+  readonly body?: unknown;
+  readonly query?: Record<string, string | number | undefined>;
+}
+
+export function mapFieldErrors(details: unknown): Record<string, string> {
+  if (!details || typeof details !== "object") {
+    return {};
+  }
+
+  const fieldErrors: Record<string, string> = {};
+  for (const [field, messages] of Object.entries(details)) {
+    if (Array.isArray(messages) && messages.length > 0) {
+      const first = messages[0];
+      if (typeof first === "string") {
+        fieldErrors[field] = first;
+      }
+    } else if (typeof messages === "string") {
+      fieldErrors[field] = messages;
+    }
+  }
+  return fieldErrors;
+}
+
+function createApiClientError(
+  statusCode: number,
+  error: ApiErrorBody,
+): ApiClientError {
+  const clientError = new Error(error.message) as ApiClientError;
+  clientError.name = "ApiClientError";
+  clientError.statusCode = statusCode;
+  clientError.code = error.code;
+  clientError.fieldErrors = mapFieldErrors(error.details);
+  return clientError;
+}
+
+async function getAuthHeaders(): Promise<Record<string, string>> {
+  const currentUser = auth.currentUser;
+  if (!currentUser) {
+    throw new Error("Authentication is required.");
+  }
+
+  const [idToken, appCheckToken] = await Promise.all([
+    currentUser.getIdToken(),
+    getAppCheckHeaderValue(),
+  ]);
+
+  return {
+    Authorization: `Bearer ${idToken}`,
+    "X-Firebase-AppCheck": appCheckToken,
+  };
+}
+
+function buildUrl(path: string, query?: RequestOptions["query"]): URL {
+  const url = new URL(path, appConfig.apiBaseUrl);
+  if (query) {
+    for (const [key, value] of Object.entries(query)) {
+      if (value === undefined) continue;
+      url.searchParams.set(key, String(value));
+    }
+  }
+  return url;
+}
+
+export async function apiRequest<T>(
+  path: string,
+  options: RequestOptions = {},
+): Promise<T> {
+  const headers = await getAuthHeaders();
+  const url = buildUrl(path, options.query);
+
+  const response = await fetch(url, {
+    method: options.method ?? "GET",
+    headers: {
+      ...headers,
+      ...(options.body !== undefined
+        ? { "Content-Type": "application/json" }
+        : {}),
+    },
+    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+  });
+
+  const payload = (await response.json()) as ApiEnvelope<T>;
+  if (!response.ok || payload.error) {
+    throw createApiClientError(
+      response.status,
+      payload.error ?? {
+        code: "REQUEST_FAILED",
+        message: "Request failed.",
+      },
+    );
+  }
+
+  if (payload.data === null) {
+    throw createApiClientError(response.status, {
+      code: "EMPTY_RESPONSE",
+      message: "Response did not include data.",
+    });
+  }
+
+  return payload.data;
+}
+
+export async function listEntity<T>(
+  entityName: string,
+  options: { readonly limit?: number; readonly cursor?: string } = {},
+): Promise<PaginatedResult<T>> {
+  return apiRequest<PaginatedResult<T>>(`/api/${entityName}`, {
+    query: {
+      limit: options.limit,
+      cursor: options.cursor,
+    },
+  });
+}
+
+export async function getEntity<T>(entityName: string, id: string): Promise<T> {
+  return apiRequest<T>(`/api/${entityName}/${id}`);
+}
+
+export async function createEntity<T>(
+  entityName: string,
+  body: Record<string, unknown>,
+): Promise<T> {
+  return apiRequest<T>(`/api/${entityName}`, {
+    method: "POST",
+    body,
+  });
+}
+
+export async function updateEntity<T>(
+  entityName: string,
+  id: string,
+  body: Record<string, unknown>,
+): Promise<T> {
+  return apiRequest<T>(`/api/${entityName}/${id}`, {
+    method: "PUT",
+    body,
+  });
+}
+
+export async function deleteEntity(
+  entityName: string,
+  id: string,
+): Promise<{ readonly deleted: boolean }> {
+  return apiRequest<{ readonly deleted: boolean }>(`/api/${entityName}/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export function isApiClientError(error: unknown): error is ApiClientError {
+  return (
+    error instanceof Error &&
+    error.name === "ApiClientError" &&
+    "fieldErrors" in error
+  );
+}

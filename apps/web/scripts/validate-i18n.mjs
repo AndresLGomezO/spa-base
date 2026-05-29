@@ -194,6 +194,20 @@ function extractNavConfigKeys(files) {
   return [...keys];
 }
 
+/** navLabelKey values in entity-catalog.ts → common:nav.{navLabelKey} */
+function extractEntityNavKeys(files) {
+  const entityCatalog = files.find((f) => f.path.endsWith("entity-catalog.ts"));
+  if (!entityCatalog) return [];
+
+  const keys = new Set();
+  for (const match of entityCatalog.content.matchAll(
+    /navLabelKey:\s*"([^"]+)"/g,
+  )) {
+    keys.add(`${DEFAULT_NAMESPACE}:nav.${match[1]}`);
+  }
+  return [...keys];
+}
+
 /** roles.${roleKey} in source → all keys under roles in reference locale */
 function extractDynamicRoleKeys(corpus, namespaces) {
   if (!corpus.includes("roles.${")) return [];
@@ -365,6 +379,9 @@ const usedKeys = extractUsedKeys(files, namespaces);
 const navConfigFile =
   files.find((f) => f.path.endsWith("nav-config.ts"))?.path ?? SRC_DIR;
 mergeUsedKeys(usedKeys, extractNavConfigKeys(files), navConfigFile);
+const entityCatalogFile =
+  files.find((f) => f.path.endsWith("entity-catalog.ts"))?.path ?? SRC_DIR;
+mergeUsedKeys(usedKeys, extractEntityNavKeys(files), entityCatalogFile);
 mergeUsedKeys(
   usedKeys,
   extractDynamicRoleKeys(corpus, namespaces),

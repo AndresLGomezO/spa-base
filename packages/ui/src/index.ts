@@ -1,4 +1,9 @@
 export { Alert, type AlertProps } from "./alert/Alert";
+export { Checkbox, type CheckboxProps } from "./checkbox/Checkbox";
+export { FieldError, type FieldErrorProps } from "./field/FieldError";
+export { FieldLabel, type FieldLabelProps } from "./field/FieldLabel";
+export { Form, type FormProps } from "./form/Form";
+export { Input, type InputProps } from "./input/Input";
 export { Avatar, type AvatarProps } from "./avatar/Avatar";
 export { Button, type ButtonProps } from "./button/Button";
 export {
