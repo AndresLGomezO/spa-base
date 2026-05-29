@@ -7,6 +7,8 @@ export const AUTH_INITIAL_STATE: AuthState = {
   error: null,
   permissions: [],
   isSuperAdmin: false,
+  tenantId: null,
+  availableTenants: [],
 };
 
 type AuthAction =
@@ -16,6 +18,15 @@ type AuthAction =
       readonly user: AuthUser;
       readonly permissions?: readonly string[];
       readonly isSuperAdmin?: boolean;
+      readonly tenantId?: string | null;
+      readonly availableTenants?: readonly string[];
+    }
+  | {
+      readonly type: "TENANT_SELECTED";
+      readonly tenantId: string;
+      readonly availableTenants: readonly string[];
+      readonly permissions: readonly string[];
+      readonly isSuperAdmin: boolean;
     }
   | { readonly type: "AUTH_STATE_UNAUTHENTICATED" }
   | { readonly type: "LOGIN_FAILED"; readonly error: string }
@@ -50,6 +61,18 @@ export async function buildAuthUser(user: User): Promise<AuthUser> {
   }
 }
 
+function clearSessionFields(): Pick<
+  AuthState,
+  "permissions" | "isSuperAdmin" | "tenantId" | "availableTenants"
+> {
+  return {
+    permissions: [],
+    isSuperAdmin: false,
+    tenantId: null,
+    availableTenants: [],
+  };
+}
+
 export function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case "LOGIN_STARTED":
@@ -57,8 +80,7 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         phase: "authenticating",
         user: null,
         error: null,
-        permissions: [],
-        isSuperAdmin: false,
+        ...clearSessionFields(),
       };
     case "AUTH_STATE_AUTHENTICATED":
       return {
@@ -67,30 +89,39 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         error: null,
         permissions: action.permissions ?? state.permissions,
         isSuperAdmin: action.isSuperAdmin ?? state.isSuperAdmin,
+        tenantId: action.tenantId ?? state.tenantId,
+        availableTenants: action.availableTenants ?? state.availableTenants,
+      };
+    case "TENANT_SELECTED":
+      return {
+        ...state,
+        phase: "authenticated",
+        error: null,
+        tenantId: action.tenantId,
+        availableTenants: action.availableTenants,
+        permissions: action.permissions,
+        isSuperAdmin: action.isSuperAdmin,
       };
     case "AUTH_STATE_UNAUTHENTICATED":
       return {
         phase: "unauthenticated",
         user: null,
         error: null,
-        permissions: [],
-        isSuperAdmin: false,
+        ...clearSessionFields(),
       };
     case "LOGIN_FAILED":
       return {
         phase: "unauthenticated",
         user: null,
         error: action.error,
-        permissions: [],
-        isSuperAdmin: false,
+        ...clearSessionFields(),
       };
     case "LOGOUT_COMPLETED":
       return {
         phase: "unauthenticated",
         user: null,
         error: null,
-        permissions: [],
-        isSuperAdmin: false,
+        ...clearSessionFields(),
       };
     default: {
       const exhaustive: never = action;

@@ -22,9 +22,16 @@ export interface AuthState {
   readonly error: string | null;
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;
+  readonly tenantId: string | null;
+  readonly availableTenants: readonly string[];
 }
 
 export interface LoginResult {
+  readonly success: boolean;
+  readonly error?: string;
+}
+
+export interface SelectTenantResult {
   readonly success: boolean;
   readonly error?: string;
 }
@@ -36,6 +43,9 @@ export interface AuthContextValue {
   readonly error: string | null;
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;
+  readonly tenantId: string | null;
+  readonly availableTenants: readonly string[];
   readonly loginWithGoogle: () => Promise<LoginResult>;
   readonly logout: () => Promise<void>;
+  readonly selectTenant: (tenantId: string) => Promise<SelectTenantResult>;
 }

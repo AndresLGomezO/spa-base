@@ -67,6 +67,17 @@
     "editTitle": "Edit {{entity}}",
     "deleteSuccess": "Record deleted successfully."
   },
+  "tenant": {
+    "selectTitle": "Select a tenant",
+    "selectDescription": "Choose which tenant you want to work in.",
+    "select": "Select",
+    "selectFailed": "Unable to select tenant. Please try again.",
+    "switchTenant": "Tenant",
+    "currentTenant": "Tenant: {{tenant}}",
+    "none": "None",
+    "noTenants": "No tenant access",
+    "noTenantsDetail": "Your account is not assigned to any tenant. Contact an administrator."
+  },
   "roles": {
     "member": "Member",
     "admin": "Admin"

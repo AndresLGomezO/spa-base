@@ -20,3 +20,12 @@ export async function getFirebaseUserRecord(
   initializeFirebaseAdmin(config);
   return getAuth().getUser(uid);
 }
+
+export async function setFirebaseUserCustomClaims(
+  uid: string,
+  claims: Record<string, unknown>,
+  config: FirebaseAdminConfig,
+) {
+  initializeFirebaseAdmin(config);
+  await getAuth().setCustomUserClaims(uid, claims);
+}

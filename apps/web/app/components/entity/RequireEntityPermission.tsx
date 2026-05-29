@@ -1,9 +1,7 @@
 import type { ReactNode } from "react";
-import { Alert, Text } from "@repo/ui";
-import { useTranslation } from "react-i18next";
 
 import { type EntityName } from "../../entities/entity-catalog";
-import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { PermissionGuard } from "../../routing/RouteGuards";
 
 interface RequireEntityPermissionProps {
   readonly entityName: EntityName;
@@ -16,23 +14,9 @@ export function RequireEntityPermission({
   action = "read",
   children,
 }: RequireEntityPermissionProps) {
-  const { t } = useTranslation("common");
-  const permissions = useEntityPermissions(entityName);
-  const allowed =
-    action === "create"
-      ? permissions.canCreate
-      : action === "update"
-        ? permissions.canUpdate
-        : permissions.canRead;
-
-  if (!allowed) {
-    return (
-      <div className="flex w-full flex-col gap-3">
-        <Text>{t("entity.forbidden")}</Text>
-        <Alert>{t("entity.forbiddenDetail")}</Alert>
-      </div>
-    );
-  }
-
-  return <>{children}</>;
+  return (
+    <PermissionGuard permission={`${entityName}.${action}`}>
+      {children}
+    </PermissionGuard>
+  );
 }

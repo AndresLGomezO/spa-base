@@ -6,9 +6,10 @@ Fastify HTTP API for the platform. Handles auth validation and auto-generated CR
 
 ### Auth (legacy envelope)
 
-| Method | Path             | Auth               |
-| ------ | ---------------- | ------------------ |
-| GET    | `/auth/validate` | Bearer + App Check |
+| Method | Path                  | Auth               |
+| ------ | --------------------- | ------------------ |
+| GET    | `/auth/validate`      | Bearer + App Check |
+| POST   | `/auth/select-tenant` | Bearer + App Check |
 
 Response shape: `{ ok, user, appCheck }` or `{ ok: false, code, message }`.
 
@@ -19,9 +20,35 @@ The `user` object includes resolved RBAC fields for the active tenant (when `ten
   "uid": "...",
   "email": "...",
   "permissions": ["customer.read", "order.read"],
+  "isSuperAdmin": false,
+  "tenantId": "tenant_dev_1",
+  "availableTenants": ["tenant_dev_1", "tenant_dev_2"]
+}
+```
+
+When `tenantId` is missing from the JWT, `permissions` is empty and `tenantId` is `null`. The web app redirects to tenant selection.
+
+### `POST /auth/select-tenant`
+
+Request body:
+
+```json
+{ "tenantId": "tenant_dev_1" }
+```
+
+Verifies the user has the tenant in Firestore `users/{uid}.tenants`, sets the Firebase custom claim, and returns:
+
+```json
+{
+  "ok": true,
+  "tenantId": "tenant_dev_1",
+  "availableTenants": ["tenant_dev_1", "tenant_dev_2"],
+  "permissions": ["..."],
   "isSuperAdmin": false
 }
 ```
+
+The client must call `getIdToken(true)` after a successful response to pick up the new claim.
 
 ### CRUD (standard envelope)
 

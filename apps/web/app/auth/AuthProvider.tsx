@@ -9,8 +9,12 @@ import {
 
 import { AuthContext } from "./AuthContext";
 import { AUTH_INITIAL_STATE, authReducer, buildAuthUser } from "./auth.machine";
-import type { AuthContextValue, LoginResult } from "./auth.types";
-import { syncAuthSession } from "../lib/auth-session";
+import type {
+  AuthContextValue,
+  LoginResult,
+  SelectTenantResult,
+} from "./auth.types";
+import { selectTenantSession, syncAuthSession } from "../lib/auth-session";
 import {
   GoogleAuthProvider,
   auth,
@@ -91,6 +95,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
           user: await buildAuthUser(firebaseUser),
           permissions: syncResult.user?.permissions ?? [],
           isSuperAdmin: syncResult.user?.isSuperAdmin ?? false,
+          tenantId: syncResult.user?.tenantId ?? null,
+          availableTenants: syncResult.user?.availableTenants ?? [],
         });
       })();
     });
@@ -121,6 +127,44 @@ export function AuthProvider({ children }: AuthProviderProps) {
     dispatch({ type: "LOGOUT_COMPLETED" });
   }, []);
 
+  const selectTenant = useCallback(
+    async (tenantId: string): Promise<SelectTenantResult> => {
+      const firebaseUser = auth.currentUser;
+      if (!firebaseUser) {
+        return { success: false, error: "Not authenticated." };
+      }
+
+      const selectResult = await selectTenantSession(firebaseUser, tenantId);
+      if (!selectResult.ok) {
+        return {
+          success: false,
+          error: selectResult.error ?? "Unable to select tenant.",
+        };
+      }
+
+      await firebaseUser.getIdToken(true);
+      const syncResult = await syncAuthSession(firebaseUser);
+
+      if (!syncResult.ok || !syncResult.user) {
+        return {
+          success: false,
+          error: syncResult.error ?? "Unable to refresh session.",
+        };
+      }
+
+      dispatch({
+        type: "TENANT_SELECTED",
+        tenantId: syncResult.user.tenantId ?? tenantId,
+        availableTenants: syncResult.user.availableTenants,
+        permissions: syncResult.user.permissions,
+        isSuperAdmin: syncResult.user.isSuperAdmin,
+      });
+
+      return { success: true };
+    },
+    [],
+  );
+
   const value: AuthContextValue = useMemo(
     () => ({
       user: state.user,
@@ -130,16 +174,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
         state.phase === "authenticated" || state.phase === "unauthenticated",
       permissions: state.permissions,
       isSuperAdmin: state.isSuperAdmin,
+      tenantId: state.tenantId,
+      availableTenants: state.availableTenants,
       loginWithGoogle,
       logout,
+      selectTenant,
     }),
     [
       loginWithGoogle,
       logout,
+      selectTenant,
+      state.availableTenants,
       state.error,
       state.isSuperAdmin,
       state.permissions,
       state.phase,
+      state.tenantId,
       state.user,
     ],
   );

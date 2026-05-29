@@ -112,6 +112,15 @@ Dynamic CRUD UI in [`apps/web/app/components/entity/`](../apps/web/app/component
 - Client validation via shared Zod schemas; API via authenticated `api-client`
 - RBAC: `useEntityPermissions` hides create/edit/delete actions
 
+### WS6 — Frontend Routing (implemented)
+
+Routing and navigation in [`apps/web/app/routing/`](../apps/web/app/routing/README.md):
+
+- Centralized guards: auth, tenant, permission (`RouteGuards.tsx`)
+- Parametric entity routes from entity catalog (`entity-routes.ts`)
+- Tenant selection via `POST /auth/select-tenant` + `/select-tenant` page + sidebar switcher
+- Permission-filtered sidebar (`useAccessibleNavItems`)
+
 ### WS3 — Firestore DAL (implemented)
 
 Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebase/src/firestore-admin-entity-repository.ts):
@@ -127,7 +136,7 @@ Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebas
 | **3 — Firestore DAL** | Done    | `schema` + `_schemaVersion`; `metadata.collection`                       |
 | **4 — RBAC**          | Done    | `metadata.permissions`; `@repo/rbac`; user `tenants` / `platformRole`    |
 | **5 — Frontend UI**   | Done    | `metadata.fields`, shared Zod schemas, `/app/{entity}` CRUD UI           |
-| **6 — Routing**       | Planned | Entity list from registry or shared-types exports                        |
+| **6 — Routing**       | Done    | Guards, tenant selection, permission-filtered nav from entity catalog    |
 | **7 — Admin roles**   | Planned | Permission strings registered from entities                              |
 
 ### Future `defineApp`

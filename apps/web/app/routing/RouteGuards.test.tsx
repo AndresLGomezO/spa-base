@@ -1,0 +1,168 @@
+import { render, screen } from "@testing-library/react";
+import { MemoryRouter, Route, Routes } from "react-router";
+import { describe, expect, it, vi } from "vitest";
+
+import { PermissionGuard, RequireAuth, RequireTenant } from "./RouteGuards";
+
+const mockUseAuth = vi.fn();
+
+vi.mock("../auth/AuthContext", () => ({
+  useAuth: () => mockUseAuth(),
+}));
+
+vi.mock("../auth/usePermission", () => ({
+  usePermission: (permission: string) => {
+    const auth = mockUseAuth();
+    if (auth.isSuperAdmin) return true;
+    return auth.permissions.includes(permission);
+  },
+}));
+
+vi.mock("react-i18next", () => ({
+  useTranslation: () => ({
+    t: (key: string) => key,
+  }),
+}));
+
+describe("RequireAuth", () => {
+  it("redirects unauthenticated users to login", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      isAuthenticated: false,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app/customer"]}>
+        <Routes>
+          <Route
+            path="/app/customer"
+            element={
+              <RequireAuth>
+                <div>Protected</div>
+              </RequireAuth>
+            }
+          />
+          <Route path="/login" element={<div>Login page</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Login page")).toBeInTheDocument();
+    expect(screen.queryByText("Protected")).not.toBeInTheDocument();
+  });
+
+  it("renders children when authenticated", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      isAuthenticated: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app/customer"]}>
+        <Routes>
+          <Route
+            path="/app/customer"
+            element={
+              <RequireAuth>
+                <div>Protected</div>
+              </RequireAuth>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Protected")).toBeInTheDocument();
+  });
+});
+
+describe("RequireTenant", () => {
+  it("redirects to select-tenant when tenant is missing", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      tenantId: null,
+      availableTenants: ["tenant_a"],
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app/customer"]}>
+        <Routes>
+          <Route
+            path="/app/customer"
+            element={
+              <RequireTenant>
+                <div>Tenant content</div>
+              </RequireTenant>
+            }
+          />
+          <Route path="/select-tenant" element={<div>Select tenant</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Select tenant")).toBeInTheDocument();
+    expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
+  });
+
+  it("renders children when tenant is selected", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      tenantId: "tenant_a",
+      availableTenants: ["tenant_a"],
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app/customer"]}>
+        <Routes>
+          <Route
+            path="/app/customer"
+            element={
+              <RequireTenant>
+                <div>Tenant content</div>
+              </RequireTenant>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Tenant content")).toBeInTheDocument();
+  });
+});
+
+describe("PermissionGuard", () => {
+  it("blocks users without permission", () => {
+    mockUseAuth.mockReturnValue({
+      isSuperAdmin: false,
+      permissions: [],
+    });
+
+    render(
+      <MemoryRouter>
+        <PermissionGuard permission="customer.read">
+          <div>Entity page</div>
+        </PermissionGuard>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("entity.forbidden")).toBeInTheDocument();
+    expect(screen.queryByText("Entity page")).not.toBeInTheDocument();
+  });
+
+  it("allows users with permission", () => {
+    mockUseAuth.mockReturnValue({
+      isSuperAdmin: false,
+      permissions: ["customer.read"],
+    });
+
+    render(
+      <MemoryRouter>
+        <PermissionGuard permission="customer.read">
+          <div>Entity page</div>
+        </PermissionGuard>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Entity page")).toBeInTheDocument();
+  });
+});

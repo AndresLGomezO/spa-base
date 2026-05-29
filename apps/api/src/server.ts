@@ -30,6 +30,7 @@ import {
   createLoadRequestPermissionsDeps,
   type LoadRequestPermissionsDeps,
 } from "./rbac/index.js";
+import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 
 interface BuildServerOptions {
@@ -75,6 +76,10 @@ export async function buildServer(options: BuildServerOptions = {}) {
       : createLoadRequestPermissionsDeps(registeredUserRepository);
 
   await server.register(authValidateRoute, {
+    firebaseAdminConfig,
+  });
+
+  await server.register(authSelectTenantRoute, {
     firebaseAdminConfig,
   });
 
