@@ -15,6 +15,10 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml ./
 COPY apps/web/package.json ./apps/web/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/entities/package.json ./packages/entities/
+COPY packages/query-engine/package.json ./packages/query-engine/
+COPY packages/ui-builder/package.json ./packages/ui-builder/
+COPY packages/firestore-converters/package.json ./packages/firestore-converters/
+COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
