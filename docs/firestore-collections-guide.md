@@ -124,14 +124,13 @@ When you introduce a breaking schema change, you may add `schema.v2.ts` alongsid
 
 ```ts
 export const USERS_COLLECTION = "users";
-export const USER_SCHEMA_VERSION = 1 as const;
-export const registeredUserSchemaV1 = z.object({ ... }).strict();
-export const persistedRegisteredUserSchemaV1 = registeredUserSchemaV1.extend({
-  _schemaVersion: z.literal(USER_SCHEMA_VERSION),
+export const USER_SCHEMA_VERSION = 2 as const;
+export const registeredUserSchemaV2 = z.object({
+  // ...profile fields...
+  role: z.enum(["admin", "member"]).default("member"),
+  lastClaimsSyncAt: isoDatetimeStringSchema.nullable(),
 }).strict();
-export type RegisteredUser = z.infer<typeof registeredUserSchemaV1>;
-export type PersistedRegisteredUser = z.infer<typeof persistedRegisteredUserSchemaV1>;
-export interface AuthUserProjection { ... }  // input from Firebase Auth, not stored as-is
+export type RegisteredUser = z.infer<typeof registeredUserSchemaV2>;
 ```
 
 ### Layer 2: `packages/firestore-converters`
@@ -142,7 +141,7 @@ export interface AuthUserProjection { ... }  // input from Firebase Auth, not st
 | `src/core/timestamps.ts` | `normalizeFirestoreTimestamps` (Firestore `Timestamp` → ISO string) |
 | `src/core/errors.ts` | `UnsupportedSchemaVersionError`, `SchemaValidationError`, etc. |
 | `src/user/schema.latest.ts` | Wires User schemas to `createVersionedConverter` |
-| `src/user/transforms/index.ts` | `registeredUserMigrations` (empty `{}` at v1) |
+| `src/user/transforms/index.ts` | `registeredUserMigrations` (v1→v2 adds `role`, `lastClaimsSyncAt`) |
 | `src/user/user-mapper.ts` | `createRegisteredUserFromAuthUser`, `mergeRegisteredUserFromAuthUser` |
 | `src/user/repository-contract.ts` | `RegisteredUserRepository` interface |
 | `src/index.ts` | Public package exports |
@@ -155,8 +154,8 @@ export const registeredUserConverter = createVersionedConverter<
   PersistedRegisteredUser
 >({
   currentVersion: registeredUserCurrentVersion,
-  domainSchema: registeredUserSchemaV1,
-  persistedSchema: persistedRegisteredUserSchemaV1,
+  domainSchema: registeredUserSchemaV2,
+  persistedSchema: persistedRegisteredUserSchemaV2,
   migrations: registeredUserMigrations,
   fromPersisted: (persisted) => {
     const domain = { ...persisted };
@@ -172,7 +171,9 @@ export const registeredUserConverter = createVersionedConverter<
 ```ts
 export interface RegisteredUserRepository {
   getByUid(uid: string): Promise<RegisteredUser | null>;
-  upsertFromAuthUser(authUser: AuthUserProjection): Promise<RegisteredUser>;
+  upsertFromAuthUser(authUser: AuthUserProjection, options?: UpsertRegisteredUserOptions): Promise<RegisteredUser>;
+  updateRole(uid: string, role: UserRole): Promise<RegisteredUser>;
+  markClaimsSynced(uid: string, syncedAtIso: string): Promise<RegisteredUser>;
 }
 ```
 
@@ -181,7 +182,7 @@ export interface RegisteredUserRepository {
 | File | Role |
 |------|------|
 | `src/firebase-admin.ts` | App initialization, `getFirestoreAdmin`, emulator env vars |
-| `src/auth.ts` | `verifyFirebaseIdToken`, `getFirebaseUserRecord` |
+| `src/auth.ts` | `verifyFirebaseIdToken`, `getFirebaseUserRecord`, `setFirebaseUserCustomClaims` |
 | `src/app-check.ts` | `verifyFirebaseAppCheckToken` |
 | `src/firestore-admin-user-repository.ts` | User repository: `getByUid`, transactional `upsertFromAuthUser`, `mapFirebaseUserRecordToAuthUserProjection` |
 | `src/index.ts` | Public exports |

@@ -10,6 +10,15 @@ import {
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 
+import { getBootstrapAdminEmails } from "../config/env.js";
+import {
+  resolveEffectiveUserRole,
+  resolveInitialUserRole,
+  resolveRoleFromTokenClaims,
+  shouldSyncRoleClaims,
+  syncUserRoleClaims,
+} from "../services/role-claims-sync.service.js";
+
 const headerSchema = z.object({
   authorization: z.string().min(1),
   "x-firebase-appcheck": z.string().min(1),
@@ -62,8 +71,43 @@ export const authValidateRoute: FastifyPluginAsync<{
         decodedIdToken.uid,
         opts.firebaseAdminConfig,
       );
-      const registeredUser = await registeredUserRepository.upsertFromAuthUser(
-        mapFirebaseUserRecordToAuthUserProjection(authUserRecord),
+      const authUserProjection =
+        mapFirebaseUserRecordToAuthUserProjection(authUserRecord);
+      const existingUser = await registeredUserRepository.getByUid(
+        authUserProjection.uid,
+      );
+      let registeredUser = await registeredUserRepository.upsertFromAuthUser(
+        authUserProjection,
+        existingUser
+          ? undefined
+          : {
+              initialRole: resolveInitialUserRole(
+                authUserProjection.email,
+                getBootstrapAdminEmails(),
+              ),
+            },
+      );
+
+      if (
+        shouldSyncRoleClaims(
+          registeredUser.role,
+          decodedIdToken as Record<string, unknown>,
+        )
+      ) {
+        registeredUser = await syncUserRoleClaims(
+          registeredUser,
+          opts.firebaseAdminConfig,
+        );
+      }
+
+      const tokenRole = resolveRoleFromTokenClaims(
+        decodedIdToken as Record<string, unknown>,
+      );
+      const effectiveRole = resolveEffectiveUserRole(
+        tokenRole,
+        registeredUser.role,
+        registeredUser.lastClaimsSyncAt,
+        decodedIdToken.auth_time,
       );
 
       return reply.send({
@@ -71,6 +115,7 @@ export const authValidateRoute: FastifyPluginAsync<{
         user: {
           uid: registeredUser.uid,
           email: registeredUser.email,
+          role: effectiveRole,
           claims: decodedIdToken,
         },
         appCheck: {

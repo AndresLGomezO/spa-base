@@ -19,22 +19,49 @@ describe("registeredUserConverter", () => {
       providers: [],
       authCreatedAt: now,
       authLastSignInAt: now,
+      role: "member",
+      lastClaimsSyncAt: null,
       createdAt: now,
       updatedAt: now,
       legacyField: "must_be_removed",
     });
 
-    expect(persisted._schemaVersion).toBe(1);
+    expect(persisted._schemaVersion).toBe(2);
     expect("legacyField" in persisted).toBe(false);
   });
 
   it("reads an existing latest document", () => {
     const now = new Date().toISOString();
     const domain = registeredUserConverter.read({
-      _schemaVersion: 1,
+      _schemaVersion: 2,
       uid: "user_2",
       email: null,
       emailVerified: false,
+      displayName: null,
+      photoURL: null,
+      phoneNumber: null,
+      disabled: false,
+      providers: [],
+      authCreatedAt: null,
+      authLastSignInAt: null,
+      role: "admin",
+      lastClaimsSyncAt: now,
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    expect(domain.uid).toBe("user_2");
+    expect(domain.role).toBe("admin");
+    expect(domain.lastClaimsSyncAt).toBe(now);
+  });
+
+  it("migrates v1 documents to v2 with defaults", () => {
+    const now = new Date().toISOString();
+    const domain = registeredUserConverter.read({
+      _schemaVersion: 1,
+      uid: "user_3",
+      email: "legacy@example.com",
+      emailVerified: true,
       displayName: null,
       photoURL: null,
       phoneNumber: null,
@@ -46,8 +73,8 @@ describe("registeredUserConverter", () => {
       updatedAt: now,
     });
 
-    expect(domain.uid).toBe("user_2");
-    expect(domain.email).toBeNull();
+    expect(domain.role).toBe("member");
+    expect(domain.lastClaimsSyncAt).toBeNull();
   });
 });
 

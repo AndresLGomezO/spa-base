@@ -1,10 +1,12 @@
 import type { User } from "./firebase";
+import type { AppRole } from "@repo/rbac-app";
 import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
 
 interface SyncedAuthUser {
   readonly uid: string;
   readonly email: string | null;
+  readonly role: AppRole;
 }
 
 interface SyncAuthSessionResult {
@@ -60,6 +62,7 @@ export async function syncAuthSession(
       user: {
         uid: payload.user.uid,
         email: payload.user.email,
+        role: payload.user.role,
       },
     };
   } catch (error) {

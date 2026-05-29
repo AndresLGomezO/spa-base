@@ -1,7 +1,8 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
 import { ChevronDown } from "lucide-react";
+import { hasPermission, type Permission } from "@repo/rbac-app";
 
 import { cn } from "@repo/theme/utils";
 import {
@@ -17,8 +18,10 @@ import {
   useSidebar,
 } from "@repo/ui";
 
+import { useAuth } from "../../auth/AuthContext";
 import {
   NAV_ITEMS,
+  filterNavItemsByPermission,
   isNavGroup,
   isPathActive,
   type NavLinkConfig,
@@ -53,7 +56,13 @@ function NavLinkItem({
   );
 }
 
-function SettingsGroup({ onNavigate }: { readonly onNavigate?: () => void }) {
+function SettingsGroup({
+  onNavigate,
+  children,
+}: {
+  readonly onNavigate?: () => void;
+  readonly children: readonly NavLinkConfig[];
+}) {
   const { t } = useTranslation("common");
   const { pathname } = useLocation();
   const { collapsed } = useSidebar();
@@ -96,7 +105,7 @@ function SettingsGroup({ onNavigate }: { readonly onNavigate?: () => void }) {
             </SidebarMenuButton>
           }
         >
-          {group.children.map((child) => {
+          {children.map((child) => {
             const ChildIcon = child.icon;
             const active = isPathActive(pathname, child.matchPath);
 
@@ -139,7 +148,7 @@ function SettingsGroup({ onNavigate }: { readonly onNavigate?: () => void }) {
       </SidebarMenuButton>
       {open ? (
         <SidebarSubMenu>
-          {group.children.map((child) => {
+          {children.map((child) => {
             const ChildIcon = child.icon;
 
             return (
@@ -167,6 +176,14 @@ function SettingsGroup({ onNavigate }: { readonly onNavigate?: () => void }) {
 
 export function NavMain() {
   const { setMobileOpen } = useSidebar();
+  const { user } = useAuth();
+
+  const visibleItems = useMemo(() => {
+    const checkPermission = (permission: Permission) =>
+      user ? hasPermission(user.role, permission) : false;
+
+    return filterNavItemsByPermission(NAV_ITEMS, checkPermission);
+  }, [user]);
 
   const closeMobile = () => {
     setMobileOpen(false);
@@ -175,9 +192,13 @@ export function NavMain() {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {NAV_ITEMS.map((item) =>
+        {visibleItems.map((item) =>
           isNavGroup(item) ? (
-            <SettingsGroup key={item.id} onNavigate={closeMobile} />
+            <SettingsGroup
+              key={item.id}
+              onNavigate={closeMobile}
+              children={item.children}
+            />
           ) : (
             <NavLinkItem key={item.id} item={item} onNavigate={closeMobile} />
           ),

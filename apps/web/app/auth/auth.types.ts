@@ -1,14 +1,11 @@
-/**
- * Keep auth types local while they are web-app specific.
- * If another app/package consumes these contracts, promote them to a shared
- * package (for example packages/shared-types) and import from there.
- */
+import type { AppRole } from "@repo/rbac-app";
+
 export interface AuthUser {
   readonly uid: string;
   readonly email: string | null;
   readonly displayName: string | null;
   readonly photoURL: string | null;
-  readonly role: string | null;
+  readonly role: AppRole;
   readonly providerId: string | null;
 }
 

@@ -3,6 +3,7 @@
   "ignoreDependencies": [
     "@repo/eslint-config",
     "@repo/shared-types",
+    "@repo/rbac-app",
     "@repo/theme",
     "@repo/ui",
     "tailwindcss"

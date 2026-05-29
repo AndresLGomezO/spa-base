@@ -1,0 +1,22 @@
+{
+  "name": "@repo/rbac-example",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run typecheck && pnpm run format:check"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "dependencies": {
+    "@repo/rbac-core": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  }
+}

@@ -1,6 +1,6 @@
 import {
-  persistedRegisteredUserSchemaV1,
-  registeredUserSchemaV1,
+  persistedRegisteredUserSchemaV2,
+  registeredUserSchemaV2,
   USER_SCHEMA_VERSION,
   type PersistedRegisteredUser,
   type RegisteredUser,
@@ -16,8 +16,8 @@ export const registeredUserConverter = createVersionedConverter<
   PersistedRegisteredUser
 >({
   currentVersion: registeredUserCurrentVersion,
-  domainSchema: registeredUserSchemaV1,
-  persistedSchema: persistedRegisteredUserSchemaV1,
+  domainSchema: registeredUserSchemaV2,
+  persistedSchema: persistedRegisteredUserSchemaV2,
   migrations: registeredUserMigrations,
   fromPersisted: (persisted) => {
     const domain = { ...persisted };

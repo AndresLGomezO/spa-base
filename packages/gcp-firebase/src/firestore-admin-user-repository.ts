@@ -2,13 +2,16 @@ import {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,
   registeredUserConverter,
+  withRegisteredUserRole,
   type RegisteredUserRepository,
+  type UpsertRegisteredUserOptions,
 } from "@repo/firestore-converters";
 import {
   USERS_COLLECTION,
-  registeredUserSchemaV1,
+  registeredUserSchemaV2,
   type AuthUserProjection,
   type RegisteredUser,
+  type UserRole,
 } from "@repo/shared-types";
 import { type UserRecord } from "firebase-admin/auth";
 
@@ -75,8 +78,9 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
 
   async upsertFromAuthUser(
     authUser: AuthUserProjection,
+    options: UpsertRegisteredUserOptions = {},
   ): Promise<RegisteredUser> {
-    const parsedAuthUser = registeredUserSchemaV1.pick({ uid: true }).parse({
+    const parsedAuthUser = registeredUserSchemaV2.pick({ uid: true }).parse({
       uid: authUser.uid,
     });
 
@@ -94,8 +98,64 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
             authUser,
             nowIso,
           )
-        : createRegisteredUserFromAuthUser(authUser, nowIso);
+        : createRegisteredUserFromAuthUser(authUser, nowIso, options);
 
+      const persisted = registeredUserConverter.write(nextUser);
+      transaction.set(userDocRef, persisted, { merge: false });
+      return nextUser;
+    });
+  }
+
+  async updateRole(uid: string, role: UserRole): Promise<RegisteredUser> {
+    const parsedUid = uid.trim();
+    if (!parsedUid) {
+      throw new Error("User uid is required.");
+    }
+
+    const firestore = getFirestoreAdmin(this.config);
+    const userDocRef = firestore.collection(USERS_COLLECTION).doc(parsedUid);
+
+    return firestore.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(userDocRef);
+      if (!snapshot.exists) {
+        throw new Error(`User ${parsedUid} was not found.`);
+      }
+
+      const nowIso = new Date().toISOString();
+      const current = registeredUserConverter.read(snapshot.data());
+      const nextUser = withRegisteredUserRole(current, role, nowIso, null);
+      const persisted = registeredUserConverter.write(nextUser);
+      transaction.set(userDocRef, persisted, { merge: false });
+      return nextUser;
+    });
+  }
+
+  async markClaimsSynced(
+    uid: string,
+    syncedAtIso: string,
+  ): Promise<RegisteredUser> {
+    const parsedUid = uid.trim();
+    if (!parsedUid) {
+      throw new Error("User uid is required.");
+    }
+
+    const firestore = getFirestoreAdmin(this.config);
+    const userDocRef = firestore.collection(USERS_COLLECTION).doc(parsedUid);
+
+    return firestore.runTransaction(async (transaction) => {
+      const snapshot = await transaction.get(userDocRef);
+      if (!snapshot.exists) {
+        throw new Error(`User ${parsedUid} was not found.`);
+      }
+
+      const nowIso = new Date().toISOString();
+      const current = registeredUserConverter.read(snapshot.data());
+      const nextUser = withRegisteredUserRole(
+        current,
+        current.role,
+        nowIso,
+        syncedAtIso,
+      );
       const persisted = registeredUserConverter.write(nextUser);
       transaction.set(userDocRef, persisted, { merge: false });
       return nextUser;

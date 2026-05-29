@@ -54,5 +54,9 @@
     "profileDescription": "Administra la configuración de tu perfil.",
     "teamDescription": "Administra miembros del equipo e invitaciones.",
     "billingDescription": "Consulta detalles de facturación e invoices."
+  },
+  "forbidden": {
+    "title": "Acceso denegado",
+    "description": "No tienes permiso para ver esta página."
   }
 }

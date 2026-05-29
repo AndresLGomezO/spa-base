@@ -1,8 +1,9 @@
 import {
   authProviderProfileSchema,
-  registeredUserSchemaV1,
+  registeredUserSchemaV2,
   type AuthUserProjection,
   type RegisteredUser,
+  type UserRole,
 } from "@repo/shared-types";
 
 function normalizeOptionalString(value: string | null): string | null {
@@ -11,11 +12,16 @@ function normalizeOptionalString(value: string | null): string | null {
   return normalized.length > 0 ? normalized : null;
 }
 
+export interface CreateRegisteredUserOptions {
+  readonly initialRole?: UserRole;
+}
+
 export function createRegisteredUserFromAuthUser(
   authUser: AuthUserProjection,
   nowIso: string,
+  options: CreateRegisteredUserOptions = {},
 ): RegisteredUser {
-  return registeredUserSchemaV1.parse({
+  return registeredUserSchemaV2.parse({
     uid: authUser.uid,
     email: normalizeOptionalString(authUser.email),
     emailVerified: authUser.emailVerified,
@@ -35,6 +41,8 @@ export function createRegisteredUserFromAuthUser(
     ),
     authCreatedAt: normalizeOptionalString(authUser.authCreatedAt),
     authLastSignInAt: normalizeOptionalString(authUser.authLastSignInAt),
+    role: options.initialRole ?? "member",
+    lastClaimsSyncAt: null,
     createdAt: nowIso,
     updatedAt: nowIso,
   });
@@ -45,7 +53,7 @@ export function mergeRegisteredUserFromAuthUser(
   authUser: AuthUserProjection,
   nowIso: string,
 ): RegisteredUser {
-  return registeredUserSchemaV1.parse({
+  return registeredUserSchemaV2.parse({
     uid: current.uid,
     email: normalizeOptionalString(authUser.email),
     emailVerified: authUser.emailVerified,
@@ -65,7 +73,23 @@ export function mergeRegisteredUserFromAuthUser(
     ),
     authCreatedAt: normalizeOptionalString(authUser.authCreatedAt),
     authLastSignInAt: normalizeOptionalString(authUser.authLastSignInAt),
+    role: current.role,
+    lastClaimsSyncAt: current.lastClaimsSyncAt,
     createdAt: current.createdAt,
+    updatedAt: nowIso,
+  });
+}
+
+export function withRegisteredUserRole(
+  user: RegisteredUser,
+  role: UserRole,
+  nowIso: string,
+  lastClaimsSyncAt: string | null = null,
+): RegisteredUser {
+  return registeredUserSchemaV2.parse({
+    ...user,
+    role,
+    lastClaimsSyncAt,
     updatedAt: nowIso,
   });
 }

@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const USER_SCHEMA_VERSION = 1 as const;
+export const USER_SCHEMA_VERSION = 2 as const;
 export const USERS_COLLECTION = "users";
 
 const isoDatetimeStringSchema = z
@@ -16,6 +16,11 @@ const nullableTrimmedString = z
   .min(1)
   .nullable()
   .transform((value) => value ?? null);
+
+/** Persisted role id; validate against the product registry (e.g. @repo/rbac-app) at runtime. */
+export const userRoleSchema = z.string().trim().min(1);
+
+export type UserRole = z.infer<typeof userRoleSchema>;
 
 export const authProviderProfileSchema = z
   .object({
@@ -45,7 +50,20 @@ export const registeredUserSchemaV1 = z
   })
   .strict();
 
+export const registeredUserSchemaV2 = registeredUserSchemaV1
+  .extend({
+    role: userRoleSchema.default("member"),
+    lastClaimsSyncAt: isoDatetimeStringSchema.nullable(),
+  })
+  .strict();
+
 export const persistedRegisteredUserSchemaV1 = registeredUserSchemaV1
+  .extend({
+    _schemaVersion: z.literal(1),
+  })
+  .strict();
+
+export const persistedRegisteredUserSchemaV2 = registeredUserSchemaV2
   .extend({
     _schemaVersion: z.literal(USER_SCHEMA_VERSION),
   })
@@ -71,7 +89,10 @@ export interface AuthUserProjection {
   readonly authLastSignInAt: string | null;
 }
 
-export type RegisteredUser = z.infer<typeof registeredUserSchemaV1>;
+export type RegisteredUser = z.infer<typeof registeredUserSchemaV2>;
 export type PersistedRegisteredUser = z.infer<
-  typeof persistedRegisteredUserSchemaV1
+  typeof persistedRegisteredUserSchemaV2
 >;
+
+/** @deprecated Use registeredUserSchemaV2. Kept for migration tests. */
+export type RegisteredUserV1 = z.infer<typeof registeredUserSchemaV1>;

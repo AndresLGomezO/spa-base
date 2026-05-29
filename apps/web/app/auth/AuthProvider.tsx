@@ -88,7 +88,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         syncedUidRef.current = firebaseUser.uid;
         dispatch({
           type: "AUTH_STATE_AUTHENTICATED",
-          user: await buildAuthUser(firebaseUser),
+          user: await buildAuthUser(firebaseUser, syncResult.user?.role),
         });
       })();
     });

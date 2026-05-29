@@ -1,4 +1,5 @@
 import type { AuthState, AuthUser } from "./auth.types";
+import { DEFAULT_APP_ROLE, isUserRole, type AppRole } from "@repo/rbac-app";
 import type { User } from "../lib/firebase";
 
 export const AUTH_INITIAL_STATE: AuthState = {
@@ -21,19 +22,26 @@ function mapFirebaseUser(user: User): AuthUser {
     email: user.email,
     displayName: user.displayName,
     photoURL: user.photoURL,
-    role: "member",
+    role: DEFAULT_APP_ROLE,
     providerId: provider,
   };
 }
 
-export async function buildAuthUser(user: User): Promise<AuthUser> {
+export async function buildAuthUser(
+  user: User,
+  sessionRole?: AppRole | null,
+): Promise<AuthUser> {
   const base = mapFirebaseUser(user);
+
+  if (sessionRole) {
+    return { ...base, role: sessionRole };
+  }
 
   try {
     const tokenResult = await user.getIdTokenResult();
     const claimRole = tokenResult.claims.role;
-    const role =
-      typeof claimRole === "string" && claimRole.length > 0
+    const role: AppRole =
+      typeof claimRole === "string" && isUserRole(claimRole)
         ? claimRole
         : base.role;
 

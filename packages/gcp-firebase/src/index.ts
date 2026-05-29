@@ -4,7 +4,11 @@ export {
   initializeFirebaseAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
-export { getFirebaseUserRecord, verifyFirebaseIdToken } from "./auth.js";
+export {
+  getFirebaseUserRecord,
+  setFirebaseUserCustomClaims,
+  verifyFirebaseIdToken,
+} from "./auth.js";
 export { verifyFirebaseAppCheckToken } from "./app-check.js";
 export {
   createFirestoreAdminRegisteredUserRepository,

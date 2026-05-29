@@ -3,6 +3,7 @@ import Fastify from "fastify";
 
 import { apiEnv } from "./config/env.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
+import { userRoleUpdateRoute } from "./routes/user-role-update.route.js";
 
 interface BuildServerOptions {
   readonly logger?: boolean;
@@ -21,13 +22,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     origin: corsOrigins,
   });
 
-  await server.register(authValidateRoute, {
-    firebaseAdminConfig: {
-      projectId: apiEnv.GCP_PROJECT_ID,
-      authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,
-      firestoreEmulatorHost: apiEnv.FIRESTORE_EMULATOR_HOST,
-    },
-  });
+  const firebaseAdminConfig = {
+    projectId: apiEnv.GCP_PROJECT_ID,
+    authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,
+    firestoreEmulatorHost: apiEnv.FIRESTORE_EMULATOR_HOST,
+  };
+
+  await server.register(authValidateRoute, { firebaseAdminConfig });
+  await server.register(userRoleUpdateRoute, { firebaseAdminConfig });
 
   return server;
 }

@@ -9,6 +9,7 @@ const ApiEnvSchema = z.object({
     .string()
     .trim()
     .default("http://localhost:5173,http://127.0.0.1:5173"),
+  API_BOOTSTRAP_ADMIN_EMAILS: z.string().trim().default(""),
   VITE_ENV: AppEnvSchema.optional(),
 });
 
@@ -26,3 +27,9 @@ if (!parsed.success) {
 }
 
 export const apiEnv = parsed.data;
+
+export function getBootstrapAdminEmails(): readonly string[] {
+  return apiEnv.API_BOOTSTRAP_ADMIN_EMAILS.split(",")
+    .map((email) => email.trim())
+    .filter((email) => email.length > 0);
+}

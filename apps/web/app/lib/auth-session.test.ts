@@ -25,7 +25,7 @@ describe("syncAuthSession", () => {
       ok: true,
       json: async () => ({
         ok: true,
-        user: { uid: "user_123", email: "demo@example.com" },
+        user: { uid: "user_123", email: "demo@example.com", role: "member" },
       }),
     });
 
@@ -37,7 +37,7 @@ describe("syncAuthSession", () => {
 
     expect(result).toEqual({
       ok: true,
-      user: { uid: "user_123", email: "demo@example.com" },
+      user: { uid: "user_123", email: "demo@example.com", role: "member" },
     });
     expect(fetchMock).toHaveBeenCalledWith(
       new URL("/auth/validate", "http://127.0.0.1:3000"),

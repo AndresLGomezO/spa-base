@@ -1,4 +1,5 @@
 import type { LucideIcon } from "lucide-react";
+import type { Permission } from "@repo/rbac-app";
 import { CreditCard, Home, Settings, User, Users } from "lucide-react";
 
 /** Keys under `nav.*` used by sidebar link labels */
@@ -10,6 +11,7 @@ export interface NavLinkConfig {
   readonly to: string;
   readonly matchPath: string;
   readonly icon: LucideIcon;
+  readonly requiredPermission?: Permission;
 }
 
 interface NavGroupConfig {
@@ -46,6 +48,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
         to: "/settings/profile",
         matchPath: "/settings/profile",
         icon: User,
+        requiredPermission: "user:update_self",
       },
       {
         id: "team",
@@ -53,6 +56,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
         to: "/settings/team",
         matchPath: "/settings/team",
         icon: Users,
+        requiredPermission: "team:view",
       },
       {
         id: "billing",
@@ -60,6 +64,7 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
         to: "/settings/billing",
         matchPath: "/settings/billing",
         icon: CreditCard,
+        requiredPermission: "billing:view",
       },
     ],
   },
@@ -71,4 +76,32 @@ export function isPathActive(pathname: string, matchPath: string): boolean {
   }
 
   return pathname === matchPath || pathname.startsWith(`${matchPath}/`);
+}
+
+export function filterNavItemsByPermission(
+  items: readonly NavItemConfig[],
+  hasPermission: (permission: Permission) => boolean,
+): NavItemConfig[] {
+  const filtered: NavItemConfig[] = [];
+
+  for (const item of items) {
+    if (isNavGroup(item)) {
+      const children = item.children.filter(
+        (child) =>
+          !child.requiredPermission || hasPermission(child.requiredPermission),
+      );
+      if (children.length > 0) {
+        filtered.push({ ...item, children });
+      }
+      continue;
+    }
+
+    if (item.requiredPermission && !hasPermission(item.requiredPermission)) {
+      continue;
+    }
+
+    filtered.push(item);
+  }
+
+  return filtered;
 }

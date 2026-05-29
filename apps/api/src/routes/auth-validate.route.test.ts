@@ -1,10 +1,18 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+const syncUserRoleClaimsMock = vi.hoisted(() =>
+  vi.fn(async (user: { uid: string; role: string }) => ({
+    ...user,
+    lastClaimsSyncAt: new Date().toISOString(),
+  })),
+);
 
 vi.mock("@repo/gcp-firebase", () => ({
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: "user_123",
     email: "demo@example.com",
-    role: "admin",
+    role: "member",
+    auth_time: 1704067200,
   })),
   verifyFirebaseAppCheckToken: vi.fn(async () => ({
     appId: "demo-app-id",
@@ -36,6 +44,7 @@ vi.mock("@repo/gcp-firebase", () => ({
     authLastSignInAt: user.metadata.lastSignInTime,
   })),
   createFirestoreAdminRegisteredUserRepository: vi.fn(() => ({
+    getByUid: vi.fn(async () => null),
     upsertFromAuthUser: vi.fn(async (authUser) => ({
       uid: authUser.uid,
       email: authUser.email,
@@ -47,15 +56,36 @@ vi.mock("@repo/gcp-firebase", () => ({
       providers: authUser.providers,
       authCreatedAt: authUser.authCreatedAt,
       authLastSignInAt: authUser.authLastSignInAt,
+      role: "member",
+      lastClaimsSyncAt: null,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })),
+    updateRole: vi.fn(),
+    markClaimsSynced: vi.fn(),
   })),
+  setFirebaseUserCustomClaims: vi.fn(),
 }));
+
+vi.mock("../services/role-claims-sync.service.js", async () => {
+  const actual = await vi.importActual<
+    typeof import("../services/role-claims-sync.service.js")
+  >("../services/role-claims-sync.service.js");
+
+  return {
+    ...actual,
+    syncUserRoleClaims: syncUserRoleClaimsMock,
+    shouldSyncRoleClaims: vi.fn(() => true),
+  };
+});
 
 import { buildServer } from "../server.js";
 
 describe("GET /auth/validate", () => {
+  beforeEach(() => {
+    syncUserRoleClaimsMock.mockClear();
+  });
+
   it("returns 401 when headers are missing", async () => {
     const server = await buildServer({ logger: false });
     const response = await server.inject({
@@ -81,8 +111,9 @@ describe("GET /auth/validate", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
       ok: true,
-      user: { uid: "user_123", email: "demo@example.com" },
+      user: { uid: "user_123", email: "demo@example.com", role: "member" },
       appCheck: { appId: "demo-app-id" },
     });
+    expect(syncUserRoleClaimsMock).toHaveBeenCalled();
   });
 });

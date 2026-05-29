@@ -16,6 +16,7 @@
   "dependencies": {
     "@fastify/cors": "catalog:",
     "@repo/gcp-firebase": "workspace:*",
+    "@repo/rbac-app": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "fastify": "catalog:",
     "zod": "catalog:"

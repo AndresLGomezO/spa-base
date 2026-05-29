@@ -3,7 +3,11 @@
   "ignoreDependencies": [
     "@repo/eslint-config",
     "@repo/gcp-firebase",
+    "@repo/rbac-app",
     "@repo/shared-types"
   ],
+  "ignoreIssues": {
+    "src/middlewares/require-permission.ts": ["exports"]
+  },
   "project": ["src/**/*.ts"]
 }
