@@ -23,7 +23,7 @@ type EntityRepositoryMap = {
   readonly order: TenantScopedEntityRepository<OrderRecord, OrderUpdate>;
 };
 
-export interface RelationRuntimeContext {
+interface RelationRuntimeContext {
   readonly deps: RelationServicesDeps;
   readonly hooksFor: (entityName: string) => EntityRelationHooks | undefined;
 }

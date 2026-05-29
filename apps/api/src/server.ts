@@ -41,7 +41,6 @@ import {
 import { createRoleCatalogLoader } from "./rbac/role-catalog.js";
 import { createRelationRuntimeContext } from "./relations/create-relation-services.js";
 import { createQueryRuntimeContext } from "./query/create-query-services.js";
-import { createInMemoryJoinCollectionRepository } from "./repositories/in-memory-join-collection-repository.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";

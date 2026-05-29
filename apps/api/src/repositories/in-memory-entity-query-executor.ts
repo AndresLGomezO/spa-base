@@ -1,6 +1,5 @@
 import type {
   EntityQueryExecutor,
-  FilterOperator,
   NormalizedEntityQuery,
   NormalizedFilter,
 } from "@repo/firestore-converters";

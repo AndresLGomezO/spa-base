@@ -1,9 +1,12 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": [
+    "@repo/entities",
+    "@repo/entity-relations",
     "@repo/eslint-config",
     "@repo/firestore-converters",
     "@repo/gcp-firebase",
+    "@repo/query-engine",
     "@repo/rbac",
     "@repo/shared-types"
   ],
