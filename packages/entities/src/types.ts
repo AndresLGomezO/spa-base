@@ -1,0 +1,151 @@
+import type { z } from "zod";
+
+import type { SystemFieldKey, SystemFieldRecord } from "./systemFields.js";
+
+export type Phase1FieldType = "string" | "number" | "boolean" | "date";
+
+export interface StringFieldConfig {
+  readonly type: "string";
+  readonly required?: boolean;
+  readonly default?: string;
+}
+
+export interface NumberFieldConfig {
+  readonly type: "number";
+  readonly required?: boolean;
+  readonly default?: number;
+}
+
+export interface BooleanFieldConfig {
+  readonly type: "boolean";
+  readonly required?: boolean;
+  readonly default?: boolean;
+}
+
+export interface DateFieldConfig {
+  readonly type: "date";
+  readonly required?: boolean;
+  readonly default?: string;
+}
+
+export type FieldConfig =
+  | StringFieldConfig
+  | NumberFieldConfig
+  | BooleanFieldConfig
+  | DateFieldConfig;
+
+export type FieldDefinitions = Readonly<Record<string, FieldConfig>>;
+
+export type InferFieldValue<F extends FieldConfig> = F["type"] extends "string"
+  ? string
+  : F["type"] extends "number"
+    ? number
+    : F["type"] extends "boolean"
+      ? boolean
+      : F["type"] extends "date"
+        ? string
+        : never;
+
+type IsRequiredInEntity<F extends FieldConfig> = F extends { required: true }
+  ? true
+  : false;
+
+type InferUserFields<TFields extends FieldDefinitions> = {
+  readonly [K in keyof TFields as IsRequiredInEntity<TFields[K]> extends true
+    ? K
+    : never]: InferFieldValue<TFields[K]>;
+} & {
+  readonly [K in keyof TFields as IsRequiredInEntity<TFields[K]> extends false
+    ? K
+    : never]?: InferFieldValue<TFields[K]>;
+};
+
+export type InferEntity<TFields extends FieldDefinitions> =
+  InferUserFields<TFields> & SystemFieldRecord;
+
+type IsRequiredOnCreate<F extends FieldConfig> = F extends { required: true }
+  ? F extends { default: unknown }
+    ? false
+    : true
+  : false;
+
+type InferCreateFields<TFields extends FieldDefinitions> = {
+  readonly [K in keyof TFields as IsRequiredOnCreate<TFields[K]> extends true
+    ? K
+    : never]: InferFieldValue<TFields[K]>;
+} & {
+  readonly [K in keyof TFields as IsRequiredOnCreate<TFields[K]> extends false
+    ? K
+    : never]?: InferFieldValue<TFields[K]>;
+};
+
+export type InferCreate<TFields extends FieldDefinitions> =
+  InferCreateFields<TFields>;
+
+export type InferUpdate<TFields extends FieldDefinitions> = Partial<
+  InferUserFields<TFields>
+>;
+
+export interface NormalizedFieldMeta {
+  readonly type: Phase1FieldType;
+  readonly required: boolean;
+  readonly optional: boolean;
+  readonly default?: string | number | boolean;
+}
+
+export interface EntityMetadata<
+  TName extends string = string,
+  TFields extends FieldDefinitions = FieldDefinitions,
+> {
+  readonly name: TName;
+  readonly collection: string;
+  readonly fields: Readonly<
+    Record<keyof TFields & string, NormalizedFieldMeta>
+  >;
+  readonly systemFields: typeof import("./systemFields.js").SYSTEM_FIELDS;
+  readonly schema: z.ZodType<InferEntity<TFields>>;
+  readonly createSchema: z.ZodType<InferCreate<TFields>>;
+  readonly updateSchema: z.ZodType<InferUpdate<TFields>>;
+  readonly permissions: EntityPermissions<TName>;
+  /** Extension point for future dynamic UI configuration. */
+  readonly ui?: Readonly<Record<string, unknown>>;
+}
+
+export type EntityPermissionAction = "read" | "create" | "update" | "delete";
+
+export type EntityPermission<TName extends string> =
+  `${TName}.${EntityPermissionAction}`;
+
+export type EntityPermissions<TName extends string> = readonly [
+  EntityPermission<TName>,
+  EntityPermission<TName>,
+  EntityPermission<TName>,
+  EntityPermission<TName>,
+];
+
+type AssertNoSystemFields<TFields extends FieldDefinitions> = SystemFieldKey &
+  keyof TFields extends never
+  ? TFields
+  : never;
+
+export type { AssertNoSystemFields };
+
+export type EntityConfig<
+  TName extends string,
+  TFields extends FieldDefinitions,
+> = {
+  readonly name: TName;
+  readonly fields: AssertNoSystemFields<TFields>;
+  readonly collection?: string;
+};
+
+export interface DefinedEntity<
+  TName extends string,
+  TFields extends FieldDefinitions,
+> {
+  readonly name: TName;
+  readonly metadata: EntityMetadata<TName, TFields>;
+  readonly schema: z.ZodType<InferEntity<TFields>>;
+  readonly createSchema: z.ZodType<InferCreate<TFields>>;
+  readonly updateSchema: z.ZodType<InferUpdate<TFields>>;
+}

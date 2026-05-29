@@ -4,6 +4,8 @@ This guide describes how Firestore collections are structured in this monorepo a
 
 The User collection is the canonical example: versioned Zod schemas, a Firestore converter with migrations, an Admin SDK repository, and an API route that orchestrates auth and persistence. Use it as a template for every new entity.
 
+**Tenant-scoped business entities** (`Customer`, `Order`, …) are defined with `defineEntity()` in `@repo/shared-types/src/entities/`. See [Entity System Guide](./entity-system-guide.md) and [@repo/entities README](../packages/entities/README.md) before adding persistence for those models.
+
 ---
 
 ## Table of contents
@@ -17,6 +19,8 @@ The User collection is the canonical example: versioned Zod schemas, a Firestore
 7. [What is optional vs required](#7-what-is-optional-vs-required)
 8. [Local development quick reference](#8-local-development-quick-reference)
 9. [PR checklist](#9-pr-checklist)
+
+Related: [Entity System Guide](./entity-system-guide.md) — tenant-scoped entities defined via `defineEntity()`.
 
 ---
 
@@ -39,6 +43,7 @@ flowchart TB
     API[apps/api]
   end
   subgraph packages [Packages]
+    Ent["@repo/entities"]
     ST["@repo/shared-types"]
     FC["@repo/firestore-converters"]
     GCP["@repo/gcp-firebase"]
@@ -47,25 +52,27 @@ flowchart TB
   API --> GCP
   GCP --> FC
   FC --> ST
+  ST --> Ent
 ```
 
-| Package | Responsibility |
-|---------|----------------|
-| `@repo/shared-types` | Zod schemas, TypeScript types, collection names, schema version constants |
+| Package                      | Responsibility                                                                                |
+| ---------------------------- | --------------------------------------------------------------------------------------------- |
+| `@repo/entities`             | `defineEntity()` — Zod schemas, metadata, permissions (no Firestore/API/UI)                   |
+| `@repo/shared-types`         | Zod schemas, TypeScript types, collection names, schema version constants                     |
 | `@repo/firestore-converters` | Versioned read/write converters, domain mappers, repository **interfaces** (no Firestore SDK) |
-| `@repo/gcp-firebase` | Firebase Admin init, auth/App Check helpers, Firestore **repository implementations** |
-| `apps/api` | HTTP routes; wires auth verification to repositories |
-| `apps/web` | UI and API clients only |
+| `@repo/gcp-firebase`         | Firebase Admin init, auth/App Check helpers, Firestore **repository implementations**         |
+| `apps/api`                   | HTTP routes; wires auth verification to repositories                                          |
+| `apps/web`                   | UI and API clients only                                                                       |
 
 ### ESLint enforcement
 
 Firestore SDK imports are restricted so persistence stays in repository adapters.
 
-| Config | Rule |
-|--------|------|
-| `apps/api/eslint.config.js` | Blocks `firebase-admin/firestore` and `firebase/firestore`. Use `@repo/gcp-firebase` instead. |
-| `packages/firestore-converters/eslint.config.js` | Blocks all Firestore SDK usage in every file. |
-| `packages/gcp-firebase/eslint.config.js` | Blocks Firestore SDK in `src/**/*.ts` **except** `src/firebase-admin.ts` and repository files (e.g. `src/firestore-admin-user-repository.ts`). |
+| Config                                           | Rule                                                                                                                                           |
+| ------------------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------------------- |
+| `apps/api/eslint.config.js`                      | Blocks `firebase-admin/firestore` and `firebase/firestore`. Use `@repo/gcp-firebase` instead.                                                  |
+| `packages/firestore-converters/eslint.config.js` | Blocks all Firestore SDK usage in every file.                                                                                                  |
+| `packages/gcp-firebase/eslint.config.js`         | Blocks Firestore SDK in `src/**/*.ts` **except** `src/firebase-admin.ts` and repository files (e.g. `src/firestore-admin-user-repository.ts`). |
 
 When you add a new repository file under `packages/gcp-firebase/src/`, add its path to the ESLint override that sets `"no-restricted-imports": "off"` for allowed adapter files.
 
@@ -79,19 +86,19 @@ When you add a new repository file under `packages/gcp-firebase/src/`, add its p
 
 Use consistent names when adding a collection. Replace `{Entity}` / `{entity}` / `{ENTITY}` with your domain name (e.g. `Project`, `project`, `PROJECT`).
 
-| Concept | User example | New collection template |
-|---------|--------------|-------------------------|
-| Collection constant | `USERS_COLLECTION = "users"` | `{ENTITY}_COLLECTION = "plural-kebab-or-snake"` |
-| Schema version | `USER_SCHEMA_VERSION = 1` | `{ENTITY}_SCHEMA_VERSION = 1` |
-| Domain Zod schema | `registeredUserSchemaV1` | `{entity}SchemaV1` |
-| Persisted Zod schema | `persistedRegisteredUserSchemaV1` | `persisted{Entity}SchemaV1` |
-| Domain type | `RegisteredUser` | `{Entity}` |
-| Persisted type | `PersistedRegisteredUser` | `Persisted{Entity}` |
-| Converter | `registeredUserConverter` | `{entity}Converter` |
-| Migrations map | `registeredUserMigrations` | `{entity}Migrations` |
-| Repository interface | `RegisteredUserRepository` | `{Entity}Repository` |
-| Repository factory | `createFirestoreAdminRegisteredUserRepository` | `createFirestoreAdmin{Entity}Repository` |
-| Package subfolder | `src/user/` | `src/{entity}/` |
+| Concept              | User example                                   | New collection template                         |
+| -------------------- | ---------------------------------------------- | ----------------------------------------------- |
+| Collection constant  | `USERS_COLLECTION = "users"`                   | `{ENTITY}_COLLECTION = "plural-kebab-or-snake"` |
+| Schema version       | `USER_SCHEMA_VERSION = 1`                      | `{ENTITY}_SCHEMA_VERSION = 1`                   |
+| Domain Zod schema    | `registeredUserSchemaV1`                       | `{entity}SchemaV1`                              |
+| Persisted Zod schema | `persistedRegisteredUserSchemaV1`              | `persisted{Entity}SchemaV1`                     |
+| Domain type          | `RegisteredUser`                               | `{Entity}`                                      |
+| Persisted type       | `PersistedRegisteredUser`                      | `Persisted{Entity}`                             |
+| Converter            | `registeredUserConverter`                      | `{entity}Converter`                             |
+| Migrations map       | `registeredUserMigrations`                     | `{entity}Migrations`                            |
+| Repository interface | `RegisteredUserRepository`                     | `{Entity}Repository`                            |
+| Repository factory   | `createFirestoreAdminRegisteredUserRepository` | `createFirestoreAdmin{Entity}Repository`        |
+| Package subfolder    | `src/user/`                                    | `src/{entity}/`                                 |
 
 **File naming**
 
@@ -108,10 +115,10 @@ When you introduce a breaking schema change, you may add `schema.v2.ts` alongsid
 
 ### Layer 1: `packages/shared-types`
 
-| File | Role |
-|------|------|
+| File                          | Role                                                                                                 |
+| ----------------------------- | ---------------------------------------------------------------------------------------------------- |
 | `src/user/registered-user.ts` | Collection constant, schema version, Zod domain + persisted schemas, `AuthUserProjection` input type |
-| `src/index.ts` | Barrel exports for the rest of the monorepo |
+| `src/index.ts`                | Barrel exports for the rest of the monorepo                                                          |
 
 **Zod patterns used in User**
 
@@ -136,16 +143,16 @@ export interface AuthUserProjection { ... }  // input from Firebase Auth, not st
 
 ### Layer 2: `packages/firestore-converters`
 
-| File | Role |
-|------|------|
-| `src/core/versioned-converter.ts` | Generic `read` / `write`, migrations, timestamp normalization |
-| `src/core/timestamps.ts` | `normalizeFirestoreTimestamps` (Firestore `Timestamp` → ISO string) |
-| `src/core/errors.ts` | `UnsupportedSchemaVersionError`, `SchemaValidationError`, etc. |
-| `src/user/schema.latest.ts` | Wires User schemas to `createVersionedConverter` |
-| `src/user/transforms/index.ts` | `registeredUserMigrations` (empty `{}` at v1) |
-| `src/user/user-mapper.ts` | `createRegisteredUserFromAuthUser`, `mergeRegisteredUserFromAuthUser` |
-| `src/user/repository-contract.ts` | `RegisteredUserRepository` interface |
-| `src/index.ts` | Public package exports |
+| File                              | Role                                                                  |
+| --------------------------------- | --------------------------------------------------------------------- |
+| `src/core/versioned-converter.ts` | Generic `read` / `write`, migrations, timestamp normalization         |
+| `src/core/timestamps.ts`          | `normalizeFirestoreTimestamps` (Firestore `Timestamp` → ISO string)   |
+| `src/core/errors.ts`              | `UnsupportedSchemaVersionError`, `SchemaValidationError`, etc.        |
+| `src/user/schema.latest.ts`       | Wires User schemas to `createVersionedConverter`                      |
+| `src/user/transforms/index.ts`    | `registeredUserMigrations` (empty `{}` at v1)                         |
+| `src/user/user-mapper.ts`         | `createRegisteredUserFromAuthUser`, `mergeRegisteredUserFromAuthUser` |
+| `src/user/repository-contract.ts` | `RegisteredUserRepository` interface                                  |
+| `src/index.ts`                    | Public package exports                                                |
 
 **Converter config (User)**
 
@@ -178,13 +185,13 @@ export interface RegisteredUserRepository {
 
 ### Layer 3: `packages/gcp-firebase`
 
-| File | Role |
-|------|------|
-| `src/firebase-admin.ts` | App initialization, `getFirestoreAdmin`, emulator env vars |
-| `src/auth.ts` | `verifyFirebaseIdToken`, `getFirebaseUserRecord` |
-| `src/app-check.ts` | `verifyFirebaseAppCheckToken` |
+| File                                     | Role                                                                                                         |
+| ---------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| `src/firebase-admin.ts`                  | App initialization, `getFirestoreAdmin`, emulator env vars                                                   |
+| `src/auth.ts`                            | `verifyFirebaseIdToken`, `getFirebaseUserRecord`                                                             |
+| `src/app-check.ts`                       | `verifyFirebaseAppCheckToken`                                                                                |
 | `src/firestore-admin-user-repository.ts` | User repository: `getByUid`, transactional `upsertFromAuthUser`, `mapFirebaseUserRecordToAuthUserProjection` |
-| `src/index.ts` | Public exports |
+| `src/index.ts`                           | Public exports                                                                                               |
 
 **Repository upsert pattern (User)**
 
@@ -197,11 +204,11 @@ export interface RegisteredUserRepository {
 
 ### Layer 4: `apps/api`
 
-| File | Role |
-|------|------|
+| File                                | Role                                                                   |
+| ----------------------------------- | ---------------------------------------------------------------------- |
 | `src/routes/auth-validate.route.ts` | `GET /auth/validate` — verifies Bearer token + App Check, upserts user |
-| `src/server.ts` | Registers routes with `firebaseAdminConfig` |
-| `src/config/env.ts` | `GCP_PROJECT_ID`, emulator hosts, CORS origins |
+| `src/server.ts`                     | Registers routes with `firebaseAdminConfig`                            |
+| `src/config/env.ts`                 | `GCP_PROJECT_ID`, emulator hosts, CORS origins                         |
 
 The route never imports Firestore. It creates the repository once at plugin registration:
 
@@ -213,13 +220,13 @@ const registeredUserRepository = createFirestoreAdminRegisteredUserRepository(
 
 ### Tests (User today)
 
-| Layer | File | Coverage |
-|-------|------|----------|
-| firestore-converters | `src/user/schema.latest.test.ts` | Converter read/write, unknown key stripping, migration behavior |
-| firestore-converters | `src/core/timestamps.test.ts` | Timestamp normalization |
-| gcp-firebase | — | No repository tests yet |
-| apps/api | `src/routes/auth-validate.route.test.ts` | 401 without headers; 200 with mocked `@repo/gcp-firebase` |
-| apps/web | `app/lib/auth-session.test.ts` | Fetch to `/auth/validate` with correct headers |
+| Layer                | File                                     | Coverage                                                        |
+| -------------------- | ---------------------------------------- | --------------------------------------------------------------- |
+| firestore-converters | `src/user/schema.latest.test.ts`         | Converter read/write, unknown key stripping, migration behavior |
+| firestore-converters | `src/core/timestamps.test.ts`            | Timestamp normalization                                         |
+| gcp-firebase         | —                                        | No repository tests yet                                         |
+| apps/api             | `src/routes/auth-validate.route.test.ts` | 401 without headers; 200 with mocked `@repo/gcp-firebase`       |
+| apps/web             | `app/lib/auth-session.test.ts`           | Fetch to `/auth/validate` with correct headers                  |
 
 ---
 
@@ -309,7 +316,7 @@ export const PROJECTS_COLLECTION = "projects";
 export const projectSchemaV1 = z
   .object({
     id: z.string().trim().min(1),
-  createdAt: isoDatetimeStringSchema,
+    createdAt: isoDatetimeStringSchema,
     updatedAt: isoDatetimeStringSchema,
     // ... entity fields
   })
@@ -401,11 +408,11 @@ async getById(id: string): Promise<Project | null> {
 
 ### Step 6 — Tests (recommended minimum)
 
-| Layer | File | What to test |
-|-------|------|----------------|
-| firestore-converters | `src/{entity}/schema.latest.test.ts` | `write` adds `_schemaVersion`; `read` round-trip; strips unknown keys; migration from v1→v2 when applicable |
-| gcp-firebase | `src/firestore-admin-{entity}-repository.test.ts` | Optional; mock Firestore or use emulator |
-| apps/api | `src/routes/{route}.test.ts` | 401/403 without auth; 200 with mocked repository |
+| Layer                | File                                              | What to test                                                                                                |
+| -------------------- | ------------------------------------------------- | ----------------------------------------------------------------------------------------------------------- |
+| firestore-converters | `src/{entity}/schema.latest.test.ts`              | `write` adds `_schemaVersion`; `read` round-trip; strips unknown keys; migration from v1→v2 when applicable |
+| gcp-firebase         | `src/firestore-admin-{entity}-repository.test.ts` | Optional; mock Firestore or use emulator                                                                    |
+| apps/api             | `src/routes/{route}.test.ts`                      | 401/403 without auth; 200 with mocked repository                                                            |
 
 User currently has converter tests but no repository tests. Prefer adding repository tests for new entities.
 
@@ -454,18 +461,18 @@ When you change the persisted shape:
 
 Not every collection needs every User artifact.
 
-| Artifact | Required for all collections? | User-specific? |
-|----------|------------------------------|----------------|
-| Domain + persisted Zod schemas | Yes | No |
-| Collection + version constants | Yes | No |
-| Versioned converter | Yes | No |
-| Repository interface | Yes (if persisted) | No |
-| Admin SDK repository | Yes (if persisted) | No |
-| Input projection interface | Only if syncing external data | User: `AuthUserProjection` from Firebase Auth |
-| create/merge mapper | When upsert logic is non-trivial | User: auth sync |
-| API route | When clients need HTTP access | User: `/auth/validate` |
-| App Check on route | When exposing public registration | User: yes |
-| Web client changes | When UI displays or mutates via API | User: `auth-session.ts` |
+| Artifact                       | Required for all collections?       | User-specific?                                |
+| ------------------------------ | ----------------------------------- | --------------------------------------------- |
+| Domain + persisted Zod schemas | Yes                                 | No                                            |
+| Collection + version constants | Yes                                 | No                                            |
+| Versioned converter            | Yes                                 | No                                            |
+| Repository interface           | Yes (if persisted)                  | No                                            |
+| Admin SDK repository           | Yes (if persisted)                  | No                                            |
+| Input projection interface     | Only if syncing external data       | User: `AuthUserProjection` from Firebase Auth |
+| create/merge mapper            | When upsert logic is non-trivial    | User: auth sync                               |
+| API route                      | When clients need HTTP access       | User: `/auth/validate`                        |
+| App Check on route             | When exposing public registration   | User: yes                                     |
+| Web client changes             | When UI displays or mutates via API | User: `auth-session.ts`                       |
 
 ---
 
