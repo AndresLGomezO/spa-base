@@ -1,7 +1,19 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 
+import {
+  Customer,
+  Order,
+  type CustomerRecord,
+  type CustomerUpdate,
+  type OrderRecord,
+  type OrderUpdate,
+} from "@repo/shared-types";
+
+import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
+import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
+import { createInMemoryEntityRepository } from "./repositories/in-memory-entity-repository.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 
 interface BuildServerOptions {
@@ -21,12 +33,30 @@ export async function buildServer(options: BuildServerOptions = {}) {
     origin: corsOrigins,
   });
 
+  const firebaseAdminConfig = {
+    projectId: apiEnv.GCP_PROJECT_ID,
+    authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,
+    firestoreEmulatorHost: apiEnv.FIRESTORE_EMULATOR_HOST,
+  };
+
+  registerCrudErrorHandler(server);
+
   await server.register(authValidateRoute, {
-    firebaseAdminConfig: {
-      projectId: apiEnv.GCP_PROJECT_ID,
-      authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,
-      firestoreEmulatorHost: apiEnv.FIRESTORE_EMULATOR_HOST,
-    },
+    firebaseAdminConfig,
+  });
+
+  const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
+
+  await registerCrudRoutes<CustomerRecord, CustomerUpdate>(server, {
+    entity: Customer,
+    repository: createInMemoryEntityRepository<CustomerRecord>(),
+    authenticate,
+  });
+
+  await registerCrudRoutes<OrderRecord, OrderUpdate>(server, {
+    entity: Order,
+    repository: createInMemoryEntityRepository<OrderRecord>(),
+    authenticate,
   });
 
   return server;

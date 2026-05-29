@@ -79,14 +79,24 @@ Every full entity record includes `tenantId` (system field). Create schemas excl
 
 ## Workstream integration map
 
-| Workstream            | Consumes from entity system                                                    |
-| --------------------- | ------------------------------------------------------------------------------ |
-| **2 — CRUD API**      | `metadata.collection`, `createSchema`, `updateSchema`, `schema`, `permissions` |
-| **3 — Firestore DAL** | `schema` extended with `_schemaVersion`; `metadata.collection`                 |
-| **4 — RBAC**          | `metadata.permissions` per entity                                              |
-| **5 — Frontend UI**   | `metadata.fields`, shared Zod schemas                                          |
-| **6 — Routing**       | Entity list from registry or shared-types exports                              |
-| **7 — Admin roles**   | Permission strings registered from entities                                    |
+### WS2 — CRUD API (implemented)
+
+Auto-generated routes in [`apps/api`](../apps/api/README.md):
+
+- `GET/POST /api/{entity}`, `GET/PUT/DELETE /api/{entity}/:id`
+- Auth: Bearer JWT + App Check + **`tenantId` custom claim**
+- Response envelope: `{ data, error }`
+- Persistence: **in-memory** repository (WS2); swap to Firestore in WS3 via [`TenantScopedEntityRepository`](../packages/firestore-converters/src/entity/README.md)
+- RBAC: `noopPreHandler` stub — wire `requirePermission` in WS4
+
+| Workstream            | Status  | Consumes from entity system                                              |
+| --------------------- | ------- | ------------------------------------------------------------------------ |
+| **2 — CRUD API**      | Done    | `createSchema`, `updateSchema`, `schema`, `permissions` (RBAC stub only) |
+| **3 — Firestore DAL** | Next    | `schema` + `_schemaVersion`; `metadata.collection`                       |
+| **4 — RBAC**          | Planned | `metadata.permissions`                                                   |
+| **5 — Frontend UI**   | Planned | `metadata.fields`, shared Zod schemas                                    |
+| **6 — Routing**       | Planned | Entity list from registry or shared-types exports                        |
+| **7 — Admin roles**   | Planned | Permission strings registered from entities                              |
 
 ### Future `defineApp`
 
@@ -105,8 +115,8 @@ Use `registerEntity()` from `@repo/entities` today to prototype entity discovery
 
 1. Add `packages/shared-types/src/entities/{entity}.ts` — [template](../packages/shared-types/src/entities/README.md#file-template)
 2. Export from `packages/shared-types/src/index.ts`
-3. Follow [Firestore collections guide](./firestore-collections-guide.md) for converter + repository
-4. Register CRUD routes and RBAC in `apps/api`
+3. Follow [Firestore collections guide](./firestore-collections-guide.md) for converter + repository (WS3)
+4. Register CRUD routes in [`apps/api/src/server.ts`](../apps/api/src/server.ts) — see [CRUD README](../apps/api/src/crud/README.md)
 5. Add dynamic UI routes in `apps/web`
 
 ---
@@ -130,7 +140,9 @@ Keep extensions in the field registry and metadata types — avoid changing `def
 
 ## Related docs
 
-- [@repo/entities package README](../packages/entities/README.md) — API, workarounds, testing
+- [@repo/entities package README](../packages/entities/README.md) — entity definition API
+- [API app README](../apps/api/README.md) — CRUD routes, auth, tenant claims
+- [CRUD generator](../apps/api/src/crud/README.md) — design and extension points
 - [Business entities folder](../packages/shared-types/src/entities/README.md) — per-entity file template
 - [Firestore collections guide](./firestore-collections-guide.md) — persistence wiring
 - [General Definitions — Phase 1](../Ecosystem%20Plan/v1/General%20Definitions.md) — full platform scope
