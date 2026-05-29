@@ -8,9 +8,40 @@ export { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
 export { BUILT_IN_ROLES, isBuiltInRoleName } from "./roles.js";
 export {
   buildRoleCatalog,
+  buildTenantRoleCatalog,
   getRoleGrants,
   type RoleCatalog,
+  type RoleCatalogEntry,
 } from "./build-role-catalog.js";
+export {
+  assertWritableFields,
+  FieldAccessError,
+  filterFields,
+  mergeFieldAccessMaps,
+  resolveFieldAccessMap,
+  type ResolveFieldAccessOptions,
+} from "./field-permissions.js";
+export {
+  createTenantRoleInputSchema,
+  patchTenantRoleInputSchema,
+  tenantRoleRecordSchema,
+  TENANT_ROLES_SUBCOLLECTION,
+  ROLE_PERMISSIONS,
+  fieldAccessSchema,
+  fieldPermissionSchema,
+  entityFieldRulesSchema,
+  SYSTEM_FIELD_KEYS,
+  isSystemFieldKey,
+} from "./tenant-role-types.js";
+export type {
+  CreateTenantRoleInput,
+  EntityFieldRules,
+  FieldAccess,
+  FieldPermission,
+  PatchTenantRoleInput,
+  SystemFieldKey,
+  TenantRoleRecord,
+} from "./tenant-role-types.js";
 export {
   resolveAccessDecision,
   resolvePermissions,

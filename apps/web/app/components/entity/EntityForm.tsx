@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState, type FormEvent } from "react";
 import {
   buildInitialValues,
   getFormSections,
+  isFieldEditable,
+  isFieldVisible,
   resolveCreateForm,
   resolveEditForm,
 } from "@repo/ui-builder";
@@ -11,6 +13,11 @@ import { useNavigate } from "react-router";
 
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import {
+  getFieldAccessLevel,
+  useFieldAccess,
+} from "../../hooks/useFieldAccess";
 import { useEntity } from "../../hooks/useEntity";
 import { EntityField } from "./EntityField";
 
@@ -24,6 +31,12 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
+  const entityPermissions = useEntityPermissions(entityName);
+  const fieldAccess = useFieldAccess(entityName);
+  const canWrite =
+    mode === "create"
+      ? entityPermissions.canCreate
+      : entityPermissions.canUpdate;
   const entityState = useEntity(entityName);
   const { getById, fieldErrors, error, isSubmitting, create, update } =
     entityState;
@@ -107,18 +120,27 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
             {section.title ? (
               <Heading level={2}>{section.title}</Heading>
             ) : null}
-            {section.fields.map((fieldName) => (
-              <EntityField
-                key={fieldName}
-                entityName={entityName}
-                fieldName={fieldName}
-                value={values[fieldName]}
-                error={fieldErrors[fieldName]}
-                onChange={(name, value) =>
-                  setValues((current) => ({ ...current, [name]: value }))
-                }
-              />
-            ))}
+            {section.fields.map((fieldName) => {
+              const fieldUI = definition.ui.fields?.[fieldName];
+              const access = getFieldAccessLevel(fieldAccess, fieldName);
+              if (!isFieldVisible(fieldUI, entityPermissions.canRead, access)) {
+                return null;
+              }
+
+              return (
+                <EntityField
+                  key={fieldName}
+                  entityName={entityName}
+                  fieldName={fieldName}
+                  value={values[fieldName]}
+                  error={fieldErrors[fieldName]}
+                  readOnly={!isFieldEditable(fieldUI, canWrite, access)}
+                  onChange={(name, value) =>
+                    setValues((current) => ({ ...current, [name]: value }))
+                  }
+                />
+              );
+            })}
           </div>
         ))}
         <div className="flex items-center gap-3">

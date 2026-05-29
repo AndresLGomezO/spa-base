@@ -12,6 +12,7 @@ import type {
 import {
   createInMemoryEntityDefinitionRepository,
   createInMemoryHookRepository,
+  createInMemoryTenantRoleRepository,
 } from "@repo/firestore-converters";
 import {
   createFirestoreAdminEntityDefinitionRepository,
@@ -19,6 +20,7 @@ import {
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
+  createFirestoreAdminTenantRoleRepository,
 } from "@repo/gcp-firebase";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
@@ -40,13 +42,14 @@ import { registerEntityDefinitionRoutes } from "./entities/register-entity-defin
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
+import { registerRoleRoutes } from "./roles/register-role-routes.js";
 import { registerModuleRoutes } from "./modules/register-module-routes.js";
 import {
   createEntityPermissionGuards,
   createLoadRequestPermissionsDeps,
   type LoadRequestPermissionsDeps,
 } from "./rbac/index.js";
-import { createRoleCatalogLoader } from "./rbac/role-catalog.js";
+import { createTenantRoleCatalogLoader } from "./rbac/role-catalog.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
@@ -66,7 +69,7 @@ interface BuildServerOptions {
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
-  readonly getRoleCatalog?: () => Promise<RoleCatalog>;
+  readonly getRoleCatalog?: (tenantId: string) => Promise<RoleCatalog>;
   readonly skipPlatformRoleSeed?: boolean;
   readonly skipPlatformTenantSeed?: boolean;
 }
@@ -76,7 +79,7 @@ function buildPermissionDeps(
   registeredUserRepository: ReturnType<
     typeof createFirestoreAdminRegisteredUserRepository
   >,
-  loadRoleCatalog: () => Promise<RoleCatalog>,
+  loadRoleCatalog: (tenantId: string) => Promise<RoleCatalog>,
   entityRuntime: EntityRuntimeContext,
 ): LoadRequestPermissionsDeps {
   const baseDeps =
@@ -132,8 +135,17 @@ export async function buildServer(options: BuildServerOptions = {}) {
     createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
   const platformRoleRepository =
     createFirestoreAdminPlatformRoleRepository(firebaseAdminConfig);
+  const tenantRoleRepository = options.repositories
+    ? createInMemoryTenantRoleRepository()
+    : createFirestoreAdminTenantRoleRepository(firebaseAdminConfig);
+  const tenantRoleCatalogLoader = createTenantRoleCatalogLoader(
+    platformRoleRepository,
+    tenantRoleRepository,
+  );
   const loadRoleCatalog =
-    options.getRoleCatalog ?? createRoleCatalogLoader(platformRoleRepository);
+    options.getRoleCatalog ??
+    ((tenantId: string) =>
+      tenantRoleCatalogLoader.loadRoleCatalogForTenant(tenantId));
 
   const entityDefinitionRepository =
     options.entityDefinitionRepository ??
@@ -215,6 +227,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     hookRuntime,
   });
 
+  await registerRoleRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    tenantRoleRepository,
+    tenantRoleCatalogLoader,
+  });
+
   await registerModuleRoutes(server, {
     authenticate,
     permissionDeps,
@@ -227,7 +247,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     }
 
     await registerCrudRoutes(server, {
-      entity,
+      entity: {
+        name: entity.name,
+        schema: entity.schema,
+        createSchema: entity.createSchema,
+        updateSchema: entity.updateSchema,
+        businessFieldNames: Object.keys(entity.metadata.fields),
+      },
       repository,
       authenticate,
       authorize: createEntityPermissionGuards(permissionDeps, entity.name),

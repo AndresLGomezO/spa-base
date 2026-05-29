@@ -4,13 +4,13 @@ import { useTranslation } from "react-i18next";
 import { Alert, Button, FieldLabel, Text } from "@repo/ui";
 
 import {
-  listAdminRoles,
   listAdminTenants,
   listAdminUsers,
   updateAdminUserAccess,
   type AdminTenant,
   type AdminUser,
 } from "../../lib/admin-client";
+import { listRoles } from "../../lib/api-client";
 
 export function UserRoleManager() {
   const { t } = useTranslation("common");
@@ -30,13 +30,11 @@ export function UserRoleManager() {
     setError(null);
 
     try {
-      const [nextUsers, nextRoles, nextTenants] = await Promise.all([
+      const [nextUsers, nextTenants] = await Promise.all([
         listAdminUsers(),
-        listAdminRoles(),
         listAdminTenants(),
       ]);
       setUsers(nextUsers);
-      setRoles(nextRoles.map((role) => role.name));
       setTenants(nextTenants);
       setSelectedUserId((current) => current || nextUsers[0]?.uid || "");
       setSelectedTenantId((current) => current || nextTenants[0]?.id || "");
@@ -52,6 +50,31 @@ export function UserRoleManager() {
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  useEffect(() => {
+    if (!selectedTenantId) {
+      setRoles([]);
+      return;
+    }
+
+    let cancelled = false;
+    void (async () => {
+      try {
+        const result = await listRoles({ tenantId: selectedTenantId });
+        if (!cancelled) {
+          setRoles(result.items.map((role) => role.name));
+        }
+      } catch {
+        if (!cancelled) {
+          setRoles([]);
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedTenantId]);
 
   useEffect(() => {
     const user = users.find((item) => item.uid === selectedUserId);

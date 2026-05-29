@@ -589,6 +589,9 @@ importers:
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
+      '@repo/rbac':
+        specifier: workspace:*
+        version: link:../rbac
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../shared-types
@@ -632,6 +635,9 @@ importers:
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
+      '@repo/rbac':
+        specifier: workspace:*
+        version: link:../rbac
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../shared-types
@@ -783,6 +789,9 @@ importers:
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*

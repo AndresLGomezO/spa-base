@@ -260,3 +260,60 @@ export async function createEntityDefinition(
     body: input,
   });
 }
+
+export interface TenantRoleRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly grants: readonly string[];
+  readonly fieldRules?: readonly {
+    readonly resource: string;
+    readonly fields: readonly {
+      readonly field: string;
+      readonly access: "read" | "write" | "none";
+    }[];
+  }[];
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listRoles(options?: {
+  readonly tenantId?: string;
+}): Promise<{ readonly items: readonly TenantRoleRecord[] }> {
+  return apiRequest<{ readonly items: readonly TenantRoleRecord[] }>(
+    "/api/roles",
+    {
+      query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+    },
+  );
+}
+
+export async function createRole(input: {
+  readonly tenantId?: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly grants: readonly string[];
+  readonly fieldRules?: TenantRoleRecord["fieldRules"];
+}): Promise<TenantRoleRecord> {
+  return apiRequest<TenantRoleRecord>("/api/roles", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function patchRole(
+  id: string,
+  input: {
+    readonly description?: string;
+    readonly grants?: readonly string[];
+    readonly fieldRules?: TenantRoleRecord["fieldRules"];
+  },
+  options?: { readonly tenantId?: string },
+): Promise<TenantRoleRecord> {
+  return apiRequest<TenantRoleRecord>(`/api/roles/${id}`, {
+    method: "PATCH",
+    body: input,
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}

@@ -5,6 +5,7 @@ import { useEntityNavItems } from "../entities/use-entity-nav-items";
 import {
   SETTINGS_ADMIN_NAV_ITEM,
   SETTINGS_DATA_MODELS_NAV_ITEM,
+  SETTINGS_ROLES_NAV_ITEM,
   STATIC_NAV_ITEMS,
   isNavGroup,
   type NavItemConfig,
@@ -36,6 +37,9 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       const settingsChildren = [...settings.children];
       if (isSuperAdmin || permissions.includes("entityDefinition.read")) {
         settingsChildren.push(SETTINGS_DATA_MODELS_NAV_ITEM);
+      }
+      if (isSuperAdmin || permissions.includes("role.read")) {
+        settingsChildren.push(SETTINGS_ROLES_NAV_ITEM);
       }
       if (isSuperAdmin) {
         settingsChildren.push(SETTINGS_ADMIN_NAV_ITEM);

@@ -44,6 +44,13 @@ export default function SettingsAdminRoute() {
         <UserRoleManager />
       </section>
       <section className="flex flex-col gap-3">
+        <Heading level={2}>{t("roles.title")}</Heading>
+        <Text>{t("roles.adminDescription")}</Text>
+        <Link to="/settings/admin/roles" className="text-primary underline">
+          {t("roles.adminTitle")}
+        </Link>
+      </section>
+      <section className="flex flex-col gap-3">
         <Heading level={2}>{t("dataModels.title")}</Heading>
         <Text>{t("dataModels.adminDescription")}</Text>
         <Link

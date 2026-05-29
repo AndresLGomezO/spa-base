@@ -17,6 +17,11 @@ import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 import { HookExecutionError } from "@repo/hooks";
 
 import type { RequestContext } from "../auth/request-context.js";
+import {
+  applyReadFieldFilter,
+  assertRequestWritableFields,
+  FieldAccessError,
+} from "../rbac/create-field-access-resolver.js";
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { runEntityHooks } from "../modules/run-entity-hooks.js";
@@ -45,6 +50,7 @@ interface CrudEntityDefinition {
   readonly schema: z.ZodTypeAny;
   readonly createSchema: z.ZodTypeAny;
   readonly updateSchema: z.ZodTypeAny;
+  readonly businessFieldNames: readonly string[];
 }
 
 type EntityResolver = (
@@ -168,6 +174,46 @@ function mapQueryErrorToResponse(reply: FastifyReply, error: QueryError): void {
         : 400;
 
   replyWithError(reply, statusCode, error.code as ApiErrorCode, error.message);
+}
+
+function handleFieldAccessError(reply: FastifyReply, error: unknown): boolean {
+  if (!(error instanceof FieldAccessError)) {
+    return false;
+  }
+
+  replyWithError(
+    reply,
+    400,
+    ApiErrorCode.VALIDATION_ERROR,
+    error.message,
+    error.fieldErrors,
+  );
+  return true;
+}
+
+function filterRecordForRead<T extends Record<string, unknown>>(
+  request: FastifyRequest,
+  entity: CrudEntityDefinition,
+  record: T,
+): T {
+  if (!request.ctx) {
+    return record;
+  }
+
+  return applyReadFieldFilter(
+    record,
+    request.ctx,
+    entity.name,
+    entity.businessFieldNames,
+  );
+}
+
+function filterPaginatedItemsForRead(
+  request: FastifyRequest,
+  entity: CrudEntityDefinition,
+  items: readonly Record<string, unknown>[],
+): Record<string, unknown>[] {
+  return items.map((item) => filterRecordForRead(request, entity, item));
 }
 
 function handleHookError(reply: FastifyReply, error: unknown): boolean {
@@ -350,7 +396,11 @@ export async function registerCrudRoutes<
 
         return reply.send(
           successEnvelope({
-            items: result.data,
+            items: filterPaginatedItemsForRead(
+              request,
+              activeEntity,
+              result.data as Record<string, unknown>[],
+            ),
             nextCursor: result.nextCursor ?? null,
           }),
         );
@@ -362,7 +412,16 @@ export async function registerCrudRoutes<
         cursor: parsedQuery.data.cursor,
       });
 
-      return reply.send(successEnvelope(result));
+      return reply.send(
+        successEnvelope({
+          ...result,
+          items: filterPaginatedItemsForRead(
+            request,
+            activeEntity,
+            result.items as Record<string, unknown>[],
+          ),
+        }),
+      );
     } catch (error) {
       if (handleQueryError(reply, error)) {
         return;
@@ -436,7 +495,15 @@ export async function registerCrudRoutes<
             recordId,
             buildQueryContext(request.ctx, tenantId),
           );
-          return reply.send(successEnvelope(record));
+          return reply.send(
+            successEnvelope(
+              filterRecordForRead(
+                request,
+                activeEntity,
+                record as Record<string, unknown>,
+              ),
+            ),
+          );
         }
 
         const record = await activeRepository.findById(recordId, tenantId);
@@ -449,7 +516,15 @@ export async function registerCrudRoutes<
           );
         }
 
-        return reply.send(successEnvelope(record));
+        return reply.send(
+          successEnvelope(
+            filterRecordForRead(
+              request,
+              activeEntity,
+              record as unknown as Record<string, unknown>,
+            ),
+          ),
+        );
       } catch (error) {
         if (handleQueryError(reply, error)) {
           return;
@@ -514,6 +589,23 @@ export async function registerCrudRoutes<
         );
       }
 
+      if (request.ctx) {
+        try {
+          assertRequestWritableFields(
+            parsedBody.data as Record<string, unknown>,
+            request.ctx,
+            activeEntity.name,
+            activeEntity.businessFieldNames,
+            "create",
+          );
+        } catch (error) {
+          if (handleFieldAccessError(reply, error)) {
+            return;
+          }
+          throw error;
+        }
+      }
+
       const now = new Date().toISOString();
       const recordId = nanoid();
 
@@ -572,8 +664,21 @@ export async function registerCrudRoutes<
           ...(entityServices ? { entityServices } : {}),
         });
 
-        return reply.status(201).send(successEnvelope(created));
+        return reply
+          .status(201)
+          .send(
+            successEnvelope(
+              filterRecordForRead(
+                request,
+                activeEntity,
+                created as unknown as Record<string, unknown>,
+              ),
+            ),
+          );
       } catch (error) {
+        if (handleFieldAccessError(reply, error)) {
+          return;
+        }
         if (handleHookError(reply, error)) {
           return;
         }
@@ -664,6 +769,23 @@ export async function registerCrudRoutes<
           "Validation failed.",
           parsedBody.details,
         );
+      }
+
+      if (request.ctx) {
+        try {
+          assertRequestWritableFields(
+            parsedBody.data as Record<string, unknown>,
+            request.ctx,
+            activeEntity.name,
+            activeEntity.businessFieldNames,
+            "update",
+          );
+        } catch (error) {
+          if (handleFieldAccessError(reply, error)) {
+            return;
+          }
+          throw error;
+        }
       }
 
       const existing = await activeRepository.findById(recordId, tenantId);
@@ -763,8 +885,19 @@ export async function registerCrudRoutes<
           ...(entityServices ? { entityServices } : {}),
         });
 
-        return reply.send(successEnvelope(validated.data));
+        return reply.send(
+          successEnvelope(
+            filterRecordForRead(
+              request,
+              activeEntity,
+              validated.data as Record<string, unknown>,
+            ),
+          ),
+        );
       } catch (error) {
+        if (handleFieldAccessError(reply, error)) {
+          return;
+        }
         if (handleHookError(reply, error)) {
           return;
         }

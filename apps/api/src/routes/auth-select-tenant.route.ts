@@ -68,13 +68,12 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
     }
 
     try {
-      const [decodedIdToken, decodedAppCheck, roleCatalog] = await Promise.all([
+      const [decodedIdToken, decodedAppCheck] = await Promise.all([
         verifyFirebaseIdToken(idToken, opts.firebaseAdminConfig),
         verifyFirebaseAppCheckToken(
           parsedHeaders.data["x-firebase-appcheck"],
           opts.firebaseAdminConfig,
         ),
-        opts.permissionDeps.getRoleCatalog(),
       ]);
       void decodedAppCheck;
 
@@ -118,6 +117,9 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
         { tenantId: requestedTenantId },
         opts.firebaseAdminConfig,
       );
+
+      const roleCatalog =
+        await opts.permissionDeps.getRoleCatalog(requestedTenantId);
 
       const permissions = resolvePermissions(
         {

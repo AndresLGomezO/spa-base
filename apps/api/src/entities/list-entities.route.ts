@@ -6,6 +6,7 @@ import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
+import { resolveRequestFieldAccessMap } from "../rbac/create-field-access-resolver.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
@@ -54,12 +55,27 @@ export async function registerListEntitiesRoute(
         .map((entity) => {
           const definition = serializeEntityDefinition(entity);
           const extensions = getUiExtensions(entity.name);
-          if (extensions.length === 0) {
-            return definition;
+          const businessFieldNames = Object.keys(entity.metadata.fields);
+          const base =
+            extensions.length === 0
+              ? definition
+              : {
+                  ...definition,
+                  ui: mergeUiExtensions(definition.ui, extensions),
+                };
+
+          if (isSuperAdmin || !request.ctx) {
+            return base;
           }
+
           return {
-            ...definition,
-            ui: mergeUiExtensions(definition.ui, extensions),
+            ...base,
+            fieldAccess: resolveRequestFieldAccessMap(
+              request.ctx,
+              entity.name,
+              businessFieldNames,
+              "read",
+            ),
           };
         })
         .filter((definition) => {

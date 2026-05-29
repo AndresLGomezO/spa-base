@@ -1,11 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
-import {
-  buildRoleCatalog,
-  isBuiltInRoleName,
-  type RoleCatalog,
-} from "@repo/rbac";
+import { isBuiltInRoleName, type RoleCatalog } from "@repo/rbac";
 import {
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminTenantRepository,
@@ -19,6 +15,7 @@ import type {
 import { tenantStatusSchema } from "@repo/shared-types";
 
 import { validateActiveTenantIds } from "../admin/list-available-tenants.js";
+import { seedTenantRolesFromTemplates } from "../admin/seed-tenant-roles-from-templates.js";
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
 import { createRequireSuperAdmin } from "../admin/require-superadmin.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
@@ -44,18 +41,19 @@ function isKnownRoleName(name: string, roleCatalog: RoleCatalog): boolean {
   return isBuiltInRoleName(name) || name in roleCatalog;
 }
 
-function validateTenantRoles(
+async function validateTenantRolesForTenants(
   tenants: Record<string, string[]>,
-  roleCatalog: RoleCatalog,
-): string | null {
+  getRoleCatalog: (tenantId: string) => Promise<RoleCatalog>,
+): Promise<string | null> {
   for (const [tenantId, roles] of Object.entries(tenants)) {
     if (tenantId.trim().length === 0) {
       return "Tenant id must not be empty.";
     }
 
+    const roleCatalog = await getRoleCatalog(tenantId);
     for (const roleName of roles) {
       if (!isKnownRoleName(roleName, roleCatalog)) {
-        return `Unknown role: ${roleName}`;
+        return `Unknown role: ${roleName} for tenant ${tenantId}.`;
       }
     }
   }
@@ -74,11 +72,6 @@ export const adminRoutes: FastifyPluginAsync<{
     createFirestoreAdminPlatformRoleRepository(opts.firebaseAdminConfig);
   const tenantRepository: TenantRepository =
     createFirestoreAdminTenantRepository(opts.firebaseAdminConfig);
-
-  async function getRoleCatalog(): Promise<RoleCatalog> {
-    const roles = await platformRoleRepository.listGlobal();
-    return buildRoleCatalog(roles);
-  }
 
   fastify.get(
     "/admin/roles",
@@ -116,6 +109,8 @@ export const adminRoutes: FastifyPluginAsync<{
           name: parsedBody.data.name,
           createdBy: request.ctx?.uid ?? null,
         });
+
+        await seedTenantRolesFromTemplates(opts.firebaseAdminConfig, tenant.id);
 
         return reply.status(201).send({ ok: true, tenant });
       } catch (error) {
@@ -229,10 +224,9 @@ export const adminRoutes: FastifyPluginAsync<{
         });
       }
 
-      const roleCatalog = await getRoleCatalog();
-      const roleValidationError = validateTenantRoles(
+      const roleValidationError = await validateTenantRolesForTenants(
         parsedBody.data.tenants,
-        roleCatalog,
+        opts.permissionDeps.getRoleCatalog,
       );
       if (roleValidationError) {
         return reply.status(400).send({

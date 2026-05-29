@@ -78,10 +78,13 @@ export interface SerializableFieldMeta {
   readonly enumValues?: readonly string[];
 }
 
+export type FieldAccessLevel = "read" | "write" | "none";
+
 export interface SerializableEntityDefinition {
   readonly name: string;
   readonly collection: string;
   readonly permissions: readonly string[];
   readonly fields: Readonly<Record<string, SerializableFieldMeta>>;
   readonly ui: EntityUIConfig;
+  readonly fieldAccess?: Readonly<Record<string, FieldAccessLevel>>;
 }

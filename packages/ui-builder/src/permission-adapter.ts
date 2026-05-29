@@ -1,5 +1,6 @@
 import type {
   FieldUIConfig,
+  FieldAccessLevel,
   SerializableEntityDefinition,
 } from "@repo/entities";
 
@@ -36,16 +37,20 @@ export function resolveEntityActionPermissions(
 export function isFieldVisible(
   fieldUI: FieldUIConfig | undefined,
   canRead: boolean,
+  fieldAccess?: FieldAccessLevel,
 ): boolean {
   if (!canRead) return false;
+  if (fieldAccess === "none") return false;
   return fieldUI?.visible !== false;
 }
 
 export function isFieldEditable(
   fieldUI: FieldUIConfig | undefined,
   canWrite: boolean,
+  fieldAccess?: FieldAccessLevel,
 ): boolean {
   if (!canWrite) return false;
+  if (fieldAccess === "none" || fieldAccess === "read") return false;
   return fieldUI?.editable !== false;
 }
 

@@ -5,6 +5,8 @@ import {
 import { HOOK_PERMISSIONS } from "@repo/hooks";
 import { getAllEntities } from "@repo/entities";
 
+import { ROLE_PERMISSIONS } from "./tenant-role-types.js";
+
 const FALLBACK_PERMISSIONS = [
   "organization.read",
   "organization.create",
@@ -26,6 +28,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
       : [...FALLBACK_PERMISSIONS]),
     ...ENTITY_DEFINITION_PERMISSIONS,
     ...HOOK_PERMISSIONS,
+    ...ROLE_PERMISSIONS,
     ...(tenantId ? getDynamicPermissionsForTenant(tenantId) : []),
   ];
   return [...new Set(permissions)];

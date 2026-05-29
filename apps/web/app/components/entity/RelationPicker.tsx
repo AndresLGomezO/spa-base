@@ -16,6 +16,7 @@ interface RelationPickerProps {
   readonly label: string;
   readonly required?: boolean;
   readonly error?: string;
+  readonly readOnly?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -32,6 +33,7 @@ export function RelationPicker({
   label,
   required,
   error,
+  readOnly = false,
   onChange,
 }: RelationPickerProps) {
   const definition = useEntityDefinition(entityName);
@@ -74,7 +76,7 @@ export function RelationPicker({
       <select
         id={inputId}
         className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm"
-        disabled={isLoading}
+        disabled={isLoading || readOnly}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onChange(fieldName, event.target.value)}
       >

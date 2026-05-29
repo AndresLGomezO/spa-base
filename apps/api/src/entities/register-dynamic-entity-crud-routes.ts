@@ -44,6 +44,7 @@ export async function registerDynamicEntityCrudRoutes(
         schema: entity.schema,
         createSchema: entity.createSchema,
         updateSchema: entity.updateSchema,
+        businessFieldNames: Object.keys(entity.metadata.fields),
       };
     },
     repository: (tenantId, entityName) => {
