@@ -1,6 +1,12 @@
-import { hasPermission } from "@repo/rbac";
+import {
+  assertWritableFields,
+  filterFields,
+  hasPermission,
+  resolveFieldAccessMap,
+} from "@repo/rbac";
 import { nanoid } from "nanoid";
 import type { HookEntityServices } from "@repo/hooks";
+import type { RoleCatalog } from "@repo/rbac";
 
 import type { EntityRuntimeForCrudHooks } from "./crud-hook-deps.types.js";
 
@@ -9,7 +15,41 @@ export function createHookEntityServices(options: {
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;
   readonly tenantId: string;
+  readonly roleCatalog?: RoleCatalog;
+  readonly platformRole?: string | null;
+  readonly tenantRoleNames?: readonly string[];
 }): HookEntityServices {
+  function resolveFieldAccess(
+    entityName: string,
+    entityFieldNames: readonly string[],
+    action: "read" | "create" | "update",
+  ) {
+    if (options.isSuperAdmin) {
+      return {};
+    }
+
+    if (!options.roleCatalog) {
+      return {};
+    }
+
+    return resolveFieldAccessMap(
+      {
+        platformRole: options.platformRole ?? null,
+        tenants:
+          options.tenantRoleNames && options.tenantRoleNames.length > 0
+            ? { [options.tenantId]: options.tenantRoleNames }
+            : {},
+        tenantId: options.tenantId,
+      },
+      entityName,
+      entityFieldNames,
+      {
+        roleCatalog: options.roleCatalog,
+        action,
+      },
+    );
+  }
+
   return {
     async create(entityName, data) {
       if (
@@ -29,6 +69,13 @@ export function createHookEntityServices(options: {
       if (!entity) {
         throw new Error(`Entity "${entityName}" is not registered.`);
       }
+
+      const businessFieldNames = Object.keys(entity.metadata.fields);
+      assertWritableFields(
+        data,
+        resolveFieldAccess(entityName, businessFieldNames, "create"),
+        businessFieldNames,
+      );
 
       const repository = options.entityRuntime.getRepository(
         options.tenantId,
@@ -52,7 +99,11 @@ export function createHookEntityServices(options: {
         options.tenantId,
         record as { readonly id: string; readonly tenantId: string },
       );
-      return created as Record<string, unknown>;
+      return filterFields(
+        created as Record<string, unknown>,
+        resolveFieldAccess(entityName, businessFieldNames, "read"),
+        businessFieldNames,
+      );
     },
 
     async update(entityName, id, data) {
@@ -73,6 +124,13 @@ export function createHookEntityServices(options: {
       if (!entity) {
         throw new Error(`Entity "${entityName}" is not registered.`);
       }
+
+      const businessFieldNames = Object.keys(entity.metadata.fields);
+      assertWritableFields(
+        data,
+        resolveFieldAccess(entityName, businessFieldNames, "update"),
+        businessFieldNames,
+      );
 
       const repository = options.entityRuntime.getRepository(
         options.tenantId,
@@ -98,7 +156,12 @@ export function createHookEntityServices(options: {
         throw new Error(`Failed to update ${entityName} record "${id}".`);
       }
 
-      return entity.schema.parse(updated) as Record<string, unknown>;
+      const validated = entity.schema.parse(updated) as Record<string, unknown>;
+      return filterFields(
+        validated,
+        resolveFieldAccess(entityName, businessFieldNames, "read"),
+        businessFieldNames,
+      );
     },
   };
 }

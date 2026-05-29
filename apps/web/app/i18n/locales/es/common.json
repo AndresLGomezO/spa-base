@@ -46,7 +46,8 @@
     "signOut": "Cerrar sesión",
     "fallbackName": "Usuario",
     "admin": "Administración",
-    "dataModels": "Modelos de datos"
+    "dataModels": "Modelos de datos",
+    "roles": "Roles"
   },
   "admin": {
     "title": "Administración de plataforma",
@@ -181,5 +182,28 @@
       "basicRequired": "El nombre y la etiqueta de la entidad son obligatorios.",
       "fieldsRequired": "Agrega al menos un campo."
     }
+  },
+  "roles": {
+    "title": "Roles",
+    "description": "Administra roles del tenant, permisos y acceso a campos.",
+    "adminTitle": "Roles multi-tenant",
+    "adminDescription": "Administra definiciones de roles para cualquier tenant.",
+    "tenant": "Tenant",
+    "name": "Nombre del rol",
+    "descriptionLabel": "Descripción",
+    "grants": "Permisos",
+    "fieldPermissions": "Permisos de campo",
+    "create": "Crear rol",
+    "createTitle": "Crear rol",
+    "editTitle": "Editar {{name}}",
+    "save": "Guardar rol",
+    "cancel": "Cancelar",
+    "selectRole": "Selecciona un rol para editar o crea uno nuevo.",
+    "builtInGrantsLocked": "Los permisos de roles integrados se gestionan con plantillas.",
+    "forbidden": "No tienes permiso para administrar roles.",
+    "forbiddenCreate": "No tienes permiso para crear roles.",
+    "forbiddenUpdate": "No tienes permiso para actualizar roles.",
+    "loadFailed": "No se pudieron cargar los roles.",
+    "saveFailed": "No se pudo guardar el rol."
   }
 }

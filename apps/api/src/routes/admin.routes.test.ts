@@ -36,6 +36,10 @@ const usersState = {
   ],
 };
 
+vi.mock("../admin/seed-tenant-roles-from-templates.js", () => ({
+  seedTenantRolesFromTemplates: vi.fn(async () => undefined),
+}));
+
 vi.mock("@repo/gcp-firebase", () => ({
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: authState.uid,

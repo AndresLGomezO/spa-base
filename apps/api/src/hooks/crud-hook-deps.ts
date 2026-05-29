@@ -18,5 +18,8 @@ export async function resolveCrudHookEntityServices(
     permissions: ctx.permissions ?? [],
     isSuperAdmin: ctx.isSuperAdmin ?? false,
     tenantId,
+    roleCatalog: ctx.roleCatalog,
+    platformRole: ctx.platformRole,
+    tenantRoleNames: ctx.tenantRoleNames,
   });
 }

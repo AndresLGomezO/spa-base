@@ -11,6 +11,8 @@ Permission-based role access control for the platform.
 | **Platform role** | Global role (e.g. superadmin bypass)                |
 | **Tenant role**   | Role scoped to one tenant via `users/{uid}.tenants` |
 
+Tenant role **definitions** live at `tenants/{tenantId}/roles/{roleId}`. Global templates at `roles/{name}` (`tenantId: null`) are seed-only. See [docs/advanced-rbac-guide.md](../../docs/advanced-rbac-guide.md).
+
 Permissions are generated automatically per entity in `@repo/entities` / `@repo/shared-types`.
 
 ## Built-in roles
@@ -78,12 +80,26 @@ hasPermission("customer.delete", permissions); // false
 
 Fastify enforcement lives in `apps/api/src/rbac/` — not in this package.
 
+## Field-level permissions (Phase B)
+
+```ts
+import {
+  resolveFieldAccessMap,
+  filterFields,
+  assertWritableFields,
+  buildTenantRoleCatalog,
+} from "@repo/rbac";
+```
+
+Roles may include optional `fieldRules` per entity. Multiple roles merge with most-permissive union per field (`write` > `read` > `none`).
+
 ## Web
 
 The API returns resolved permissions from `GET /auth/validate`. The web app stores them in auth context and exposes `usePermission("customer.read")` for WS5 UI gating.
 
 ## Related
 
+- [Advanced RBAC guide](../../docs/advanced-rbac-guide.md)
 - [Entity system guide](../../docs/entity-system-guide.md)
 - [API RBAC wiring](../../apps/api/src/rbac/)
 - [Workstream spec](<../../Ecosystem%20Plan/v1/workstreams/RBAC%20SYSTEM%20(PERMISSION-BASED).md>)

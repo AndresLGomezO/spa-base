@@ -16,13 +16,13 @@ export interface LoadRequestPermissionsDeps {
   readonly getUserAccessProfile: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
-  readonly getRoleCatalog: () => Promise<RoleCatalog>;
+  readonly getRoleCatalog: (tenantId: string) => Promise<RoleCatalog>;
   readonly getKnownPermissions?: (tenantId: string) => readonly string[];
 }
 
 export function createLoadRequestPermissionsDeps(
   registeredUserRepository: RegisteredUserRepository,
-  getRoleCatalog: () => Promise<RoleCatalog>,
+  getRoleCatalog: (tenantId: string) => Promise<RoleCatalog>,
 ): LoadRequestPermissionsDeps {
   return {
     getUserAccessProfile: async (uid) => {
@@ -49,9 +49,10 @@ export async function loadRequestPermissions(
     return currentCtx;
   }
 
+  const tenantId = currentCtx.tenantId.trim();
   const [profile, roleCatalog] = await Promise.all([
     deps.getUserAccessProfile(currentCtx.uid),
-    deps.getRoleCatalog(),
+    deps.getRoleCatalog(tenantId),
   ]);
 
   const accessProfile: UserAccessProfile = profile ?? {
@@ -62,20 +63,27 @@ export async function loadRequestPermissions(
   const permissions = resolvePermissions(
     {
       ...accessProfile,
-      tenantId: currentCtx.tenantId,
+      tenantId,
     },
     {
       roleCatalog,
       knownPermissions:
-        deps.getKnownPermissions?.(currentCtx.tenantId) ??
-        getAllKnownPermissions(currentCtx.tenantId),
+        deps.getKnownPermissions?.(tenantId) ??
+        getAllKnownPermissions(tenantId),
     },
   );
+
+  const knownPermissions =
+    deps.getKnownPermissions?.(tenantId) ?? getAllKnownPermissions(tenantId);
 
   const nextCtx: RequestContext = {
     ...currentCtx,
     permissions,
     isSuperAdmin,
+    roleCatalog,
+    platformRole: accessProfile.platformRole ?? null,
+    tenantRoleNames: accessProfile.tenants?.[tenantId] ?? [],
+    knownPermissions,
   };
   request.ctx = nextCtx;
   return nextCtx;

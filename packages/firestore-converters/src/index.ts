@@ -70,6 +70,8 @@ export { type EntityDefinitionRepository } from "./entity-definition/repository-
 export { createInMemoryEntityDefinitionRepository } from "./entity-definition/in-memory-repository.js";
 export { type HookRepository } from "./hook/repository-contract.js";
 export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
+export { type TenantRoleRepository } from "./tenant-role/repository-contract.js";
+export { createInMemoryTenantRoleRepository } from "./tenant-role/in-memory-repository.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

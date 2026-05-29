@@ -4,6 +4,7 @@ import {
   buildListQueryConfig,
   getTableColumns,
   getViewFilters,
+  isFieldVisible,
 } from "@repo/ui-builder";
 import { Alert, Button, Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
@@ -15,6 +16,10 @@ import {
 } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import {
+  getFieldAccessLevel,
+  useFieldAccess,
+} from "../../hooks/useFieldAccess";
 import type { useEntity } from "../../hooks/useEntity";
 import { formatCellValue } from "./entity-field-utils";
 
@@ -39,7 +44,18 @@ export function EntityTable({
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
-  const columns = useMemo(() => getTableColumns(definition), [definition]);
+  const fieldAccess = useFieldAccess(entityName);
+  const columns = useMemo(
+    () =>
+      getTableColumns(definition).filter((column) =>
+        isFieldVisible(
+          definition.ui.fields?.[column],
+          permissions.canRead,
+          getFieldAccessLevel(fieldAccess, column),
+        ),
+      ),
+    [definition, fieldAccess, permissions.canRead],
+  );
   const filterDefinitions = useMemo(
     () => getViewFilters(definition),
     [definition],

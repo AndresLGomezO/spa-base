@@ -27,6 +27,7 @@ describe("expandGrant", () => {
       "project.read",
       "entityDefinition.read",
       "hook.read",
+      "role.read",
     ]);
   });
 
@@ -66,6 +67,7 @@ describe("resolvePermissions", () => {
       "project.read",
       "entityDefinition.read",
       "hook.read",
+      "role.read",
     ]);
   });
 
@@ -75,7 +77,7 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(12);
+    expect(permissions).toHaveLength(15);
     expect(permissions).toEqual(
       expect.arrayContaining([
         "organization.read",
@@ -90,6 +92,9 @@ describe("resolvePermissions", () => {
         "hook.read",
         "hook.create",
         "hook.update",
+        "role.read",
+        "role.create",
+        "role.update",
       ]),
     );
     expect(permissions).not.toContain("organization.delete");
@@ -110,6 +115,7 @@ describe("resolvePermissions", () => {
       "project.read",
       "entityDefinition.read",
       "hook.read",
+      "role.read",
     ]);
   });
 
@@ -181,6 +187,7 @@ describe("expandGrants", () => {
       "project.read",
       "entityDefinition.read",
       "hook.read",
+      "role.read",
     ]);
   });
 });

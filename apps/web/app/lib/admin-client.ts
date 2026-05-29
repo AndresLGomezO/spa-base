@@ -2,11 +2,6 @@ import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
 import { auth } from "./firebase";
 
-interface AdminRole {
-  readonly name: string;
-  readonly grants: readonly string[];
-}
-
 interface AdminUser {
   readonly uid: string;
   readonly email: string | null;
@@ -66,11 +61,6 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   }
 
   return payload;
-}
-
-export async function listAdminRoles(): Promise<readonly AdminRole[]> {
-  const payload = await adminFetch<{ roles: AdminRole[] }>("/admin/roles");
-  return payload.roles;
 }
 
 export async function listAdminTenants(): Promise<readonly AdminTenant[]> {

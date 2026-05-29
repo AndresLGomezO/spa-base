@@ -27,6 +27,20 @@ vi.mock("../../hooks/useEntity", () => ({
   })),
 }));
 
+vi.mock("../../hooks/useEntityPermissions", () => ({
+  useEntityPermissions: vi.fn(() => ({
+    canRead: true,
+    canCreate: true,
+    canUpdate: true,
+    canDelete: true,
+  })),
+}));
+
+vi.mock("../../hooks/useFieldAccess", () => ({
+  useFieldAccess: vi.fn(() => ({})),
+  getFieldAccessLevel: vi.fn(() => undefined),
+}));
+
 function renderForm() {
   return render(
     <TestEntityCatalogProvider>

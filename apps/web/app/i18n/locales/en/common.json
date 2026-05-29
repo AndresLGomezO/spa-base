@@ -46,7 +46,8 @@
     "signOut": "Sign out",
     "fallbackName": "User",
     "admin": "Admin",
-    "dataModels": "Data Models"
+    "dataModels": "Data Models",
+    "roles": "Roles"
   },
   "admin": {
     "title": "Platform Admin",
@@ -181,5 +182,28 @@
       "basicRequired": "Entity name and label are required.",
       "fieldsRequired": "Add at least one field."
     }
+  },
+  "roles": {
+    "title": "Roles",
+    "description": "Manage tenant roles, grants, and field-level permissions.",
+    "adminTitle": "Cross-Tenant Roles",
+    "adminDescription": "Manage role definitions for any tenant.",
+    "tenant": "Tenant",
+    "name": "Role name",
+    "descriptionLabel": "Description",
+    "grants": "Permissions",
+    "fieldPermissions": "Field permissions",
+    "create": "Create role",
+    "createTitle": "Create role",
+    "editTitle": "Edit {{name}}",
+    "save": "Save role",
+    "cancel": "Cancel",
+    "selectRole": "Select a role to edit or create a new one.",
+    "builtInGrantsLocked": "Built-in role grants are managed by templates.",
+    "forbidden": "You do not have permission to manage roles.",
+    "forbiddenCreate": "You do not have permission to create roles.",
+    "forbiddenUpdate": "You do not have permission to update roles.",
+    "loadFailed": "Unable to load roles.",
+    "saveFailed": "Unable to save role."
   }
 }

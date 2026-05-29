@@ -48,13 +48,12 @@ export const authValidateRoute: FastifyPluginAsync<{
     }
 
     try {
-      const [decodedIdToken, decodedAppCheck, roleCatalog] = await Promise.all([
+      const [decodedIdToken, decodedAppCheck] = await Promise.all([
         verifyFirebaseIdToken(idToken, opts.firebaseAdminConfig),
         verifyFirebaseAppCheckToken(
           parsedHeaders.data["x-firebase-appcheck"],
           opts.firebaseAdminConfig,
         ),
-        opts.permissionDeps.getRoleCatalog(),
       ]);
       const authUserRecord = await getFirebaseUserRecord(
         decodedIdToken.uid,
@@ -67,6 +66,8 @@ export const authValidateRoute: FastifyPluginAsync<{
       const tenantClaim = decodedIdToken.tenantId;
       const jwtTenantId =
         typeof tenantClaim === "string" ? tenantClaim.trim() : "";
+
+      const roleCatalog = await opts.permissionDeps.getRoleCatalog(jwtTenantId);
 
       const session = await buildAuthSessionContext({
         registeredUser: upsertResult.user,

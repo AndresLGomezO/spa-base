@@ -18,6 +18,7 @@ interface EntityFieldProps {
   readonly fieldName: string;
   readonly value: unknown;
   readonly error?: string;
+  readonly readOnly?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -26,6 +27,7 @@ export function EntityField({
   fieldName,
   value,
   error,
+  readOnly = false,
   onChange,
 }: EntityFieldProps) {
   const definition = useEntityDefinition(entityName);
@@ -47,6 +49,7 @@ export function EntityField({
         label={label}
         required={meta.required}
         error={error}
+        readOnly={readOnly}
         onChange={onChange}
       />
     );
@@ -64,6 +67,7 @@ export function EntityField({
         label={label}
         required={meta.required}
         error={error}
+        readOnly={readOnly}
         onChange={onChange}
       />
     );
@@ -76,6 +80,7 @@ export function EntityField({
           id={inputId}
           label={label}
           checked={Boolean(value)}
+          disabled={readOnly}
           onChange={(event) => onChange(fieldName, event.target.checked)}
         />
         {error ? <FieldError>{error}</FieldError> : null}
@@ -93,6 +98,7 @@ export function EntityField({
           id={inputId}
           type="datetime-local"
           hasError={Boolean(error)}
+          disabled={readOnly}
           value={isoToDatetimeLocalValue(
             typeof value === "string" ? value : null,
           )}
@@ -115,6 +121,7 @@ export function EntityField({
         <select
           id={inputId}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          disabled={readOnly}
           value={typeof value === "string" ? value : ""}
           onChange={(event) => onChange(fieldName, event.target.value)}
         >
@@ -140,6 +147,7 @@ export function EntityField({
           id={inputId}
           type="number"
           hasError={Boolean(error)}
+          disabled={readOnly}
           placeholder={fieldUI?.placeholder}
           value={value === undefined || value === null ? "" : String(value)}
           onChange={(event) =>
@@ -165,6 +173,7 @@ export function EntityField({
         id={inputId}
         type="text"
         hasError={Boolean(error)}
+        disabled={readOnly}
         placeholder={fieldUI?.placeholder}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onChange(fieldName, event.target.value)}

@@ -48,6 +48,7 @@ export type {
   FormConfig,
   FormLayout,
   FormSection,
+  FieldAccessLevel,
   SerializableEntityDefinition,
   SerializableFieldMeta,
   ViewConfig,

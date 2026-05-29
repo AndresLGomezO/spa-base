@@ -17,7 +17,8 @@ export type NavLabelKey =
   | "team"
   | "billing"
   | "admin"
-  | "dataModels";
+  | "dataModels"
+  | "roles";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -37,6 +38,14 @@ export interface NavGroupConfig {
 }
 
 export type NavItemConfig = NavLinkConfig | NavGroupConfig;
+
+export const SETTINGS_ROLES_NAV_ITEM: NavLinkConfig = {
+  id: "roles",
+  labelKey: "roles",
+  to: "/settings/roles",
+  matchPath: "/settings/roles",
+  icon: Shield,
+};
 
 export const SETTINGS_DATA_MODELS_NAV_ITEM: NavLinkConfig = {
   id: "data-models",

@@ -9,6 +9,7 @@ export interface FieldComponentProps {
   readonly label: string;
   readonly required?: boolean;
   readonly error?: string;
+  readonly readOnly?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 

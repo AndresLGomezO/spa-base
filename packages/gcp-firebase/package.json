@@ -31,6 +31,7 @@
     "@repo/dynamic-entities": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/hooks": "workspace:*",
+    "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "firebase-admin": "catalog:",
     "nanoid": "catalog:",
