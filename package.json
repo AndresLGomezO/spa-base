@@ -33,7 +33,8 @@
     "emulators:prepare": "pnpm --filter web build",
     "emulators": "pnpm run emulators:prepare && firebase emulators:start --only auth,firestore,storage,hosting --project demo-project-base",
     "emulators:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up firebase-emulator --force-recreate",
-    "dev:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up --build firebase-emulator api web"
+    "dev:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up --build firebase-emulator api web",
+    "dev:docker:reset": "docker compose -f docker-compose.dev.yml down -v --rmi all --remove-orphans && docker builder prune -af && docker compose -f docker-compose.dev.yml up -d --force-recreate --build"
   },
   "devDependencies": {
     "firebase-tools": "catalog:",

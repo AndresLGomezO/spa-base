@@ -102,7 +102,15 @@ Permission resolution and enforcement:
 - User roles on Firestore `users/{uid}`: `platformRole`, `tenants`
 - API: per-action guards on CRUD routes (`customer.read`, `customer.create`, …)
 - Web foundation: `/auth/validate` returns `permissions` + `isSuperAdmin`; `usePermission` hook
-- Entity UI gating (hide buttons/routes) deferred to WS5
+
+### WS5 — Frontend Entity UI (implemented)
+
+Dynamic CRUD UI in [`apps/web/app/components/entity/`](../apps/web/app/components/entity/README.md):
+
+- `EntityTable`, `EntityForm`, `EntityPage` driven by entity metadata from `@repo/shared-types`
+- Routes: `/app/{entity}`, `/app/{entity}/new`, `/app/{entity}/:id`
+- Client validation via shared Zod schemas; API via authenticated `api-client`
+- RBAC: `useEntityPermissions` hides create/edit/delete actions
 
 ### WS3 — Firestore DAL (implemented)
 
@@ -118,7 +126,7 @@ Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebas
 | **2 — CRUD API**      | Done    | `createSchema`, `updateSchema`, `schema`, `permissions`                  |
 | **3 — Firestore DAL** | Done    | `schema` + `_schemaVersion`; `metadata.collection`                       |
 | **4 — RBAC**          | Done    | `metadata.permissions`; `@repo/rbac`; user `tenants` / `platformRole`    |
-| **5 — Frontend UI**   | Planned | `metadata.fields`, shared Zod schemas                                    |
+| **5 — Frontend UI**   | Done    | `metadata.fields`, shared Zod schemas, `/app/{entity}` CRUD UI           |
 | **6 — Routing**       | Planned | Entity list from registry or shared-types exports                        |
 | **7 — Admin roles**   | Planned | Permission strings registered from entities                              |
 

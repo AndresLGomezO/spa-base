@@ -1,8 +1,17 @@
 import type { LucideIcon } from "lucide-react";
 import { CreditCard, Home, Settings, User, Users } from "lucide-react";
 
+import { ENTITY_NAV_ITEMS } from "../../entities/entity-catalog";
+
 /** Keys under `nav.*` used by sidebar link labels */
-export type NavLabelKey = "home" | "settings" | "profile" | "team" | "billing";
+export type NavLabelKey =
+  | "home"
+  | "settings"
+  | "profile"
+  | "team"
+  | "billing"
+  | "customer"
+  | "order";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -34,6 +43,13 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     matchPath: "/",
     icon: Home,
   },
+  ...ENTITY_NAV_ITEMS.map((item) => ({
+    id: item.id,
+    labelKey: item.labelKey,
+    to: item.to,
+    matchPath: item.matchPath,
+    icon: item.icon,
+  })),
   {
     id: "settings",
     labelKey: "settings",
