@@ -1,29 +1,30 @@
 import { useMemo } from "react";
 
 import { useAuth } from "../auth/AuthContext";
-import { ENTITY_NAV_ITEMS } from "../entities/entity-catalog";
+import { useEntityNavItems } from "../entities/use-entity-nav-items";
 import {
-  NAV_ITEMS,
   SETTINGS_ADMIN_NAV_ITEM,
+  STATIC_NAV_ITEMS,
   isNavGroup,
   type NavItemConfig,
 } from "../components/sidebar/nav-config";
 
 export function useAccessibleNavItems(): readonly NavItemConfig[] {
   const { permissions, isSuperAdmin } = useAuth();
+  const entityNavItems = useEntityNavItems();
 
   return useMemo(() => {
-    const home = NAV_ITEMS.find((item) => item.id === "home");
-    const settings = NAV_ITEMS.find((item) => item.id === "settings");
-    const entityItems = ENTITY_NAV_ITEMS.filter(
-      (item) => isSuperAdmin || permissions.includes(`${item.id}.read`),
-    ).map((item) => ({
-      id: item.id,
-      labelKey: item.labelKey,
-      to: item.to,
-      matchPath: item.matchPath,
-      icon: item.icon,
-    }));
+    const home = STATIC_NAV_ITEMS.find((item) => item.id === "home");
+    const settings = STATIC_NAV_ITEMS.find((item) => item.id === "settings");
+    const entityItems = entityNavItems
+      .filter((item) => isSuperAdmin || permissions.includes(`${item.id}.read`))
+      .map((item) => ({
+        id: item.id,
+        label: item.label,
+        to: item.to,
+        matchPath: item.matchPath,
+        icon: item.icon,
+      }));
 
     const items: NavItemConfig[] = [];
     if (home && !isNavGroup(home)) {
@@ -40,5 +41,5 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     }
 
     return items;
-  }, [isSuperAdmin, permissions]);
+  }, [entityNavItems, isSuperAdmin, permissions]);
 }

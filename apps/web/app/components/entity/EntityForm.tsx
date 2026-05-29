@@ -1,13 +1,16 @@
 import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  buildInitialValues,
+  getFormSections,
+  resolveCreateForm,
+  resolveEditForm,
+} from "@repo/ui-builder";
 import { Alert, Button, Form, Heading, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
-import {
-  getEditableFieldNames,
-  getEntityDefinition,
-  type EntityName,
-} from "../../entities/entity-catalog";
+import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
+import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { EntityField } from "./EntityField";
 
@@ -17,48 +20,20 @@ interface EntityFormProps {
   readonly recordId?: string;
 }
 
-function buildInitialValues(
-  entityName: EntityName,
-  record?: Record<string, unknown>,
-): Record<string, unknown> {
-  const entity = getEntityDefinition(entityName).entity;
-  const values: Record<string, unknown> = {};
-
-  const fields = entity.metadata.fields as Record<
-    string,
-    {
-      readonly type: string;
-      readonly required: boolean;
-      readonly default?: unknown;
-    }
-  >;
-
-  for (const fieldName of getEditableFieldNames(entity)) {
-    const meta = fields[fieldName];
-    if (record && fieldName in record) {
-      values[fieldName] = record[fieldName];
-    } else if (meta.default !== undefined) {
-      values[fieldName] = meta.default;
-    } else if (meta.type === "boolean") {
-      values[fieldName] = false;
-    } else {
-      values[fieldName] = "";
-    }
-  }
-
-  return values;
-}
-
 export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
+  const definition = useEntityDefinition(entityName);
   const entityState = useEntity(entityName);
   const { getById, fieldErrors, error, isSubmitting, create, update } =
     entityState;
-  const entity = getEntityDefinition(entityName).entity;
-  const fieldNames = getEditableFieldNames(entity);
+  const layout =
+    mode === "create"
+      ? resolveCreateForm(definition)
+      : resolveEditForm(definition);
+  const sections = getFormSections(layout);
   const [values, setValues] = useState<Record<string, unknown>>(() =>
-    buildInitialValues(entityName),
+    buildInitialValues(definition, mode),
   );
   const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
 
@@ -71,7 +46,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
       const record = await getById(recordId);
       if (cancelled) return;
       if (record) {
-        setValues(buildInitialValues(entityName, record));
+        setValues(buildInitialValues(definition, "edit", record));
       }
       setIsLoadingRecord(false);
     })();
@@ -79,22 +54,24 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
     return () => {
       cancelled = true;
     };
-  }, [entityName, getById, mode, recordId]);
+  }, [definition, getById, mode, recordId]);
 
   const title = useMemo(
     () =>
       mode === "create"
-        ? t("entity.createTitle", { entity: t(`nav.${entityName}`) })
-        : t("entity.editTitle", { entity: t(`nav.${entityName}`) }),
-    [entityName, mode, t],
+        ? t("entity.createTitle", { entity: getEntityLabel(definition) })
+        : t("entity.editTitle", { entity: getEntityLabel(definition) }),
+    [definition, mode, t],
   );
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const payload = { ...values };
-    for (const fieldName of fieldNames) {
-      if (payload[fieldName] === "") {
-        delete payload[fieldName];
+    for (const section of sections) {
+      for (const fieldName of section.fields) {
+        if (payload[fieldName] === "") {
+          delete payload[fieldName];
+        }
       }
     }
 
@@ -122,17 +99,27 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
       <Heading level={1}>{title}</Heading>
       {error ? <Alert>{error}</Alert> : null}
       <Form onSubmit={(event) => void handleSubmit(event)}>
-        {fieldNames.map((fieldName) => (
-          <EntityField
-            key={fieldName}
-            entityName={entityName}
-            fieldName={fieldName}
-            value={values[fieldName]}
-            error={fieldErrors[fieldName]}
-            onChange={(name, value) =>
-              setValues((current) => ({ ...current, [name]: value }))
-            }
-          />
+        {sections.map((section, index) => (
+          <div
+            key={`${section.title ?? "section"}-${index}`}
+            className="flex flex-col gap-4"
+          >
+            {section.title ? (
+              <Heading level={2}>{section.title}</Heading>
+            ) : null}
+            {section.fields.map((fieldName) => (
+              <EntityField
+                key={fieldName}
+                entityName={entityName}
+                fieldName={fieldName}
+                value={values[fieldName]}
+                error={fieldErrors[fieldName]}
+                onChange={(name, value) =>
+                  setValues((current) => ({ ...current, [name]: value }))
+                }
+              />
+            ))}
+          </div>
         ))}
         <div className="flex items-center gap-3">
           <Button type="submit" loading={isSubmitting}>

@@ -20,6 +20,7 @@ import {
 import {
   isNavGroup,
   isPathActive,
+  resolveNavLinkLabel,
   type NavGroupConfig,
   type NavLinkConfig,
 } from "./nav-config";
@@ -48,7 +49,7 @@ function NavLinkItem({
         <SidebarMenuIcon>
           <Icon />
         </SidebarMenuIcon>
-        <SidebarLabel>{t(`nav.${item.labelKey}`)}</SidebarLabel>
+        <SidebarLabel>{resolveNavLinkLabel(item, t)}</SidebarLabel>
       </NavLink>
     </SidebarMenuItem>
   );
@@ -116,7 +117,7 @@ function SettingsGroup({
                 <SidebarMenuIcon>
                   <ChildIcon />
                 </SidebarMenuIcon>
-                <SidebarLabel>{t(`nav.${child.labelKey}`)}</SidebarLabel>
+                <SidebarLabel>{resolveNavLinkLabel(child, t)}</SidebarLabel>
               </NavLink>
             );
           })}
@@ -157,7 +158,7 @@ function SettingsGroup({
                   <SidebarMenuIcon>
                     <ChildIcon />
                   </SidebarMenuIcon>
-                  <SidebarLabel>{t(`nav.${child.labelKey}`)}</SidebarLabel>
+                  <SidebarLabel>{resolveNavLinkLabel(child, t)}</SidebarLabel>
                 </NavLink>
               </li>
             );

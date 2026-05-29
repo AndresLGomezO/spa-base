@@ -6,7 +6,7 @@ import { createInMemoryEntityRepository } from "../repositories/in-memory-entity
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
-import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
+import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 
 const authState = {
   uid: "superadmin_user",
@@ -140,12 +140,11 @@ const authHeaders = {
 };
 
 async function buildTestServer(accessProfile?: UserAccessProfile) {
+  const runtime = createInMemoryCrudRuntime();
   return buildServer({
     logger: false,
-    repositories: {
-      customer: createInMemoryEntityRepository<CustomerRecord>(),
-      order: createInMemoryEntityRepository<OrderRecord>(),
-    },
+    repositories: runtime.repositories,
+    queryExecutors: runtime.queryExecutors,
     getUserAccessProfile: async () =>
       accessProfile ?? {
         platformRole: "platform.superadmin",

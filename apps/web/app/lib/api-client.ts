@@ -1,3 +1,6 @@
+import type { SerializableEntityDefinition } from "@repo/entities";
+import type { QueryConfig } from "@repo/query-engine";
+
 import { appConfig } from "../config/app-config";
 import { getAppCheckHeaderValue } from "./app-check";
 import { auth } from "./firebase";
@@ -128,14 +131,32 @@ export async function apiRequest<T>(
   return payload.data;
 }
 
+export async function listEntities(): Promise<{
+  readonly items: readonly SerializableEntityDefinition[];
+}> {
+  return apiRequest<{
+    readonly items: readonly SerializableEntityDefinition[];
+  }>("/api/entities");
+}
+
 export async function listEntity<T>(
   entityName: string,
-  options: { readonly limit?: number; readonly cursor?: string } = {},
+  options: {
+    readonly limit?: number;
+    readonly cursor?: string;
+    readonly query?: QueryConfig;
+  } = {},
 ): Promise<PaginatedResult<T>> {
+  const query =
+    options.query && Object.keys(options.query).length > 0
+      ? JSON.stringify(options.query)
+      : undefined;
+
   return apiRequest<PaginatedResult<T>>(`/api/${entityName}`, {
     query: {
       limit: options.limit,
       cursor: options.cursor,
+      query,
     },
   });
 }

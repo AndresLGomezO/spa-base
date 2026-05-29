@@ -273,6 +273,12 @@ importers:
       '@react-router/node':
         specifier: 'catalog:'
         version: 7.15.1(react-router@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@5.9.3)
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../../packages/entities
+      '@repo/query-engine':
+        specifier: workspace:*
+        version: link:../../packages/query-engine
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
@@ -282,6 +288,9 @@ importers:
       '@repo/ui':
         specifier: workspace:*
         version: link:../../packages/ui
+      '@repo/ui-builder':
+        specifier: workspace:*
+        version: link:../../packages/ui-builder
       firebase:
         specifier: 'catalog:'
         version: 12.13.0
@@ -718,6 +727,37 @@ importers:
       vite:
         specifier: ^6.3.5
         version: 6.4.2(@types/node@22.19.19)(jiti@2.7.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
+
+  packages/ui-builder:
+    dependencies:
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../entities
+      '@repo/query-engine':
+        specifier: workspace:*
+        version: link:../query-engine
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
 
 packages:
 

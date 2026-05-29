@@ -23,6 +23,9 @@
   "dependencies": {
     "@repo/theme": "workspace:*",
     "@repo/ui": "workspace:*",
+    "@repo/entities": "workspace:*",
+    "@repo/query-engine": "workspace:*",
+    "@repo/ui-builder": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "@react-router/node": "catalog:",
     "firebase": "catalog:",

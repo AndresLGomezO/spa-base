@@ -83,6 +83,9 @@
     "//#format:check:root": {
       "inputs": [
         "*.{json,md,js,yml,yaml,mjs}",
+        "packages/**/*.{json,js,mjs,ts,md}",
+        "apps/**/*.{json,js,ts,mjs,md}",
+        ".github/**/*.{yml,md}",
         "turbo.json",
         "pnpm-workspace.yaml",
         "prettier.config.mjs",

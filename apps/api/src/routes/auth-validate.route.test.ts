@@ -4,7 +4,7 @@ import { createInMemoryEntityRepository } from "../repositories/in-memory-entity
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
-import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
+import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 
 vi.mock("@repo/gcp-firebase", () => ({
   verifyFirebaseIdToken: vi.fn(async () => ({
@@ -83,17 +83,12 @@ vi.mock("@repo/gcp-firebase", () => ({
 
 import { buildServer } from "../server.js";
 
-function createInMemoryRepositories() {
-  return {
-    customer: createInMemoryEntityRepository<CustomerRecord>(),
-    order: createInMemoryEntityRepository<OrderRecord>(),
-  };
-}
-
 async function buildTestServer() {
+  const runtime = createInMemoryCrudRuntime();
   return buildServer({
     logger: false,
-    repositories: createInMemoryRepositories(),
+    repositories: runtime.repositories,
+    queryExecutors: runtime.queryExecutors,
     skipPlatformRoleSeed: true,
     skipPlatformTenantSeed: true,
   });
@@ -129,7 +124,7 @@ describe("GET /auth/validate", () => {
         uid: "user_123",
         email: "demo@example.com",
         isSuperAdmin: false,
-        permissions: ["customer.read", "order.read"],
+        permissions: ["organization.read", "project.read"],
         tenantId: "tenant_a",
         availableTenants: ["tenant_a"],
         tenantOptions: [{ id: "tenant_a", name: "Tenant A" }],

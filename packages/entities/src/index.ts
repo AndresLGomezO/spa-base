@@ -29,6 +29,29 @@ export {
   type RelationFieldEntry,
   type RelationStorageStrategy,
 } from "./relations/relationConfig.js";
+export {
+  getDefaultEntityUI,
+  getFieldUI,
+  resolveEntityUI,
+  resolveView,
+} from "./ui/default-ui-config.js";
+export { serializeEntityDefinition } from "./ui/serialize-entity-definition.js";
+export { validateEntityUIConfig } from "./ui/validate-ui-config.js";
+export type {
+  DetailConfig,
+  EntityNavConfig,
+  EntityUIConfig,
+  FieldComponentType,
+  FieldUIConfig,
+  FilterOperatorUI,
+  FilterUIConfig,
+  FormConfig,
+  FormLayout,
+  FormSection,
+  SerializableEntityDefinition,
+  SerializableFieldMeta,
+  ViewConfig,
+} from "./ui/types.js";
 export type {
   BooleanFieldConfig,
   DateFieldConfig,

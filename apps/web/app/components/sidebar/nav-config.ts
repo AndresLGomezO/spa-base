@@ -1,8 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import { CreditCard, Home, Settings, Shield, User, Users } from "lucide-react";
 
-import { ENTITY_NAV_ITEMS } from "../../entities/entity-catalog";
-
 /** Keys under `nav.*` used by sidebar link labels */
 export type NavLabelKey =
   | "home"
@@ -10,13 +8,12 @@ export type NavLabelKey =
   | "profile"
   | "team"
   | "billing"
-  | "admin"
-  | "customer"
-  | "order";
+  | "admin";
 
 export interface NavLinkConfig {
   readonly id: string;
-  readonly labelKey: NavLabelKey;
+  readonly labelKey?: NavLabelKey;
+  readonly label?: string;
   readonly to: string;
   readonly matchPath: string;
   readonly icon: LucideIcon;
@@ -44,7 +41,7 @@ export function isNavGroup(item: NavItemConfig): item is NavGroupConfig {
   return "children" in item;
 }
 
-export const NAV_ITEMS: readonly NavItemConfig[] = [
+export const STATIC_NAV_ITEMS: readonly NavItemConfig[] = [
   {
     id: "home",
     labelKey: "home",
@@ -52,13 +49,6 @@ export const NAV_ITEMS: readonly NavItemConfig[] = [
     matchPath: "/",
     icon: Home,
   },
-  ...ENTITY_NAV_ITEMS.map((item) => ({
-    id: item.id,
-    labelKey: item.labelKey,
-    to: item.to,
-    matchPath: item.matchPath,
-    icon: item.icon,
-  })),
   {
     id: "settings",
     labelKey: "settings",
@@ -96,4 +86,19 @@ export function isPathActive(pathname: string, matchPath: string): boolean {
   }
 
   return pathname === matchPath || pathname.startsWith(`${matchPath}/`);
+}
+
+export function resolveNavLinkLabel(
+  item: Pick<NavLinkConfig, "id" | "labelKey" | "label">,
+  t: (key: `nav.${NavLabelKey}`) => string,
+): string {
+  if (item.label) {
+    return item.label;
+  }
+
+  if (item.labelKey) {
+    return t(`nav.${item.labelKey}`);
+  }
+
+  return item.id;
 }

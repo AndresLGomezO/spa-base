@@ -12,14 +12,14 @@ import { usePermission } from "../auth/usePermission";
 describe("useEntityPermissions", () => {
   it("maps entity permission strings to CRUD flags", () => {
     vi.mocked(usePermission).mockImplementation((permission) => {
-      if (permission === "customer.read") return true;
-      if (permission === "customer.create") return false;
-      if (permission === "customer.update") return true;
-      if (permission === "customer.delete") return false;
+      if (permission === "organization.read") return true;
+      if (permission === "organization.create") return false;
+      if (permission === "organization.update") return true;
+      if (permission === "organization.delete") return false;
       return false;
     });
 
-    const { result } = renderHook(() => useEntityPermissions("customer"));
+    const { result } = renderHook(() => useEntityPermissions("organization"));
 
     expect(result.current).toEqual({
       canRead: true,

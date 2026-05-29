@@ -10,17 +10,17 @@ describe("createInMemoryEntityQueryExecutor", () => {
   it("filters, sorts, and paginates tenant-scoped records", async () => {
     const store = createInMemoryEntityQueryStore();
     seedInMemoryEntityQueryStore(store, [
-      { id: "o1", tenantId: "tenant_a", customerId: "c1", total: 30 },
-      { id: "o2", tenantId: "tenant_a", customerId: "c1", total: 10 },
-      { id: "o3", tenantId: "tenant_a", customerId: "c2", total: 20 },
-      { id: "o4", tenantId: "tenant_b", customerId: "c1", total: 99 },
+      { id: "o1", tenantId: "tenant_a", organizationId: "c1", budget: 30 },
+      { id: "o2", tenantId: "tenant_a", organizationId: "c1", budget: 10 },
+      { id: "o3", tenantId: "tenant_a", organizationId: "c2", budget: 20 },
+      { id: "o4", tenantId: "tenant_b", organizationId: "c1", budget: 99 },
     ]);
 
     const executor = createInMemoryEntityQueryExecutor(() => store);
 
     const filtered = await executor.executeQuery("tenant_a", {
-      filters: [{ field: "customerId", operator: "==", value: "c1" }],
-      sort: { field: "total", direction: "desc" },
+      filters: [{ field: "organizationId", operator: "==", value: "c1" }],
+      sort: { field: "budget", direction: "desc" },
       limit: 10,
     });
 

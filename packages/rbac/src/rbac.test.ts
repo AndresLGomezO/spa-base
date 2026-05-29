@@ -13,23 +13,25 @@ describe("expandGrant", () => {
   });
 
   it("expands entity wildcard", () => {
-    expect(expandGrant("customer.*", known)).toEqual([
-      "customer.read",
-      "customer.create",
-      "customer.update",
-      "customer.delete",
+    expect(expandGrant("organization.*", known)).toEqual([
+      "organization.read",
+      "organization.create",
+      "organization.update",
+      "organization.delete",
     ]);
   });
 
   it("expands action wildcard", () => {
     expect(expandGrant("*.read", known)).toEqual([
-      "customer.read",
-      "order.read",
+      "organization.read",
+      "project.read",
     ]);
   });
 
   it("returns exact grant when not a wildcard", () => {
-    expect(expandGrant("customer.read", known)).toEqual(["customer.read"]);
+    expect(expandGrant("organization.read", known)).toEqual([
+      "organization.read",
+    ]);
   });
 });
 
@@ -57,7 +59,7 @@ describe("resolvePermissions", () => {
         tenantId: "tenant_a",
         tenants: { tenant_a: ["viewer"] },
       }),
-    ).toEqual(["customer.read", "order.read"]);
+    ).toEqual(["organization.read", "project.read"]);
   });
 
   it("resolves editor role without delete permissions", () => {
@@ -69,16 +71,16 @@ describe("resolvePermissions", () => {
     expect(permissions).toHaveLength(6);
     expect(permissions).toEqual(
       expect.arrayContaining([
-        "customer.read",
-        "customer.create",
-        "customer.update",
-        "order.read",
-        "order.create",
-        "order.update",
+        "organization.read",
+        "organization.create",
+        "organization.update",
+        "project.read",
+        "project.create",
+        "project.update",
       ]),
     );
-    expect(permissions).not.toContain("customer.delete");
-    expect(permissions).not.toContain("order.delete");
+    expect(permissions).not.toContain("organization.delete");
+    expect(permissions).not.toContain("project.delete");
   });
 
   it("scopes permissions to the active tenant", () => {
@@ -90,7 +92,7 @@ describe("resolvePermissions", () => {
           tenant_b: ["viewer"],
         },
       }),
-    ).toEqual(["customer.read", "order.read"]);
+    ).toEqual(["organization.read", "project.read"]);
   });
 
   it("returns all permissions for platform superadmin", () => {
@@ -114,17 +116,32 @@ describe("resolvePermissions", () => {
 
 describe("hasPermission", () => {
   it("allows exact permission match", () => {
-    expect(hasPermission("customer.read", ["customer.read"])).toBe(true);
+    expect(hasPermission("organization.read", ["organization.read"])).toBe(
+      true,
+    );
   });
 
   it("denies missing permission", () => {
-    expect(hasPermission("customer.delete", ["customer.read"])).toBe(false);
+    expect(hasPermission("organization.delete", ["organization.read"])).toBe(
+      false,
+    );
+  });
+
+  it("matches required action wildcards", () => {
+    expect(hasPermission("*.read", ["organization.read"])).toBe(true);
+    expect(hasPermission("*.read", ["organization.create"])).toBe(false);
+  });
+
+  it("matches required entity wildcards", () => {
+    expect(
+      hasPermission("organization.*", ["organization.read", "project.read"]),
+    ).toBe(true);
   });
 
   it("bypasses checks for superadmin", () => {
-    expect(hasPermission("customer.delete", [], { isSuperAdmin: true })).toBe(
-      true,
-    );
+    expect(
+      hasPermission("organization.delete", [], { isSuperAdmin: true }),
+    ).toBe(true);
   });
 });
 
@@ -140,7 +157,7 @@ describe("isPlatformSuperAdmin", () => {
 describe("expandGrants", () => {
   it("deduplicates overlapping grants", () => {
     expect(
-      expandGrants(["*.read", "customer.read"], ALL_KNOWN_PERMISSIONS),
-    ).toEqual(["customer.read", "order.read"]);
+      expandGrants(["*.read", "organization.read"], ALL_KNOWN_PERMISSIONS),
+    ).toEqual(["organization.read", "project.read"]);
   });
 });

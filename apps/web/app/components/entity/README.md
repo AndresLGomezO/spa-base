@@ -1,16 +1,20 @@
 # Entity UI components
 
-Schema-driven CRUD UI for business entities registered in [`entity-catalog.ts`](../../entities/entity-catalog.ts).
+Registry-driven CRUD UI built from `GET /api/entities` catalog metadata and `@repo/ui-builder`.
+
+See [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md) for the full metadata reference.
 
 ## Components
 
-| Component                 | Purpose                                           |
-| ------------------------- | ------------------------------------------------- |
-| `EntityPage`              | List view with create action, table, delete modal |
-| `EntityTable`             | Paginated table with RBAC-gated row actions       |
-| `EntityForm`              | Create/edit form with shared Zod validation       |
-| `EntityField`             | Maps entity field metadata to UI inputs           |
-| `RequireEntityPermission` | Route guard for read/create/update access         |
+| Component                 | Purpose                                                  |
+| ------------------------- | -------------------------------------------------------- |
+| `EntityPage`              | List shell: create action, table/card view, delete modal |
+| `EntityTable`             | Query Engine–backed table with sort, filters, pagination |
+| `EntityCardView`          | Card grid layout for `views[].type: "card"`              |
+| `EntityForm`              | Create/edit form from `ui.forms` sections                |
+| `EntityField`             | Maps field metadata + `ui.fields` to inputs              |
+| `RelationPicker`          | Async select for `type: "relation"` fields               |
+| `RequireEntityPermission` | Route guard for read/create/update access                |
 
 ## Routes
 
@@ -20,25 +24,30 @@ Schema-driven CRUD UI for business entities registered in [`entity-catalog.ts`](
 | `/app/{entity}/new` | `EntityForm` (create) |
 | `/app/{entity}/:id` | `EntityForm` (edit)   |
 
+Unknown `{entity}` values (not in catalog) render `entity-not-found`.
+
 ## Adding an entity to the UI
 
-1. Define the entity in `@repo/shared-types` and register API routes in `apps/api`.
-2. Add an entry to `ENTITY_CATALOG` in [`entity-catalog.ts`](../../entities/entity-catalog.ts).
-3. Add `nav.{entity}` and any labels to i18n locale files (`en` + `es`).
-4. Sidebar links are generated automatically from `ENTITY_NAV_ITEMS`.
+1. Define the entity in `@repo/shared-types` with optional `ui` metadata; register in `register-entities.ts`.
+2. Wire API CRUD + Firestore converter (generic server loop picks up registered entities).
+3. Ensure RBAC includes `{entity}.*` permissions in `@repo/rbac` known permissions.
+4. Restart API — catalog, sidebar, and routes update automatically from `GET /api/entities`.
+
+Do **not** add hardcoded entries to the web app. Nav labels come from `ui.nav.label`.
 
 ## Permissions
 
-UI actions are gated with `useEntityPermissions(entityName)`:
+UI actions use `useEntityPermissions(entityName)`:
 
 - `{entity}.read` — list/detail routes
 - `{entity}.create` — create button and `/new` route
 - `{entity}.update` — edit actions and edit route
 - `{entity}.delete` — delete button
 
-API enforcement remains the source of truth; the UI hides unauthorized controls.
+API enforcement remains the source of truth.
 
 ## Related
 
+- [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md)
 - [Entity system guide](../../../../docs/entity-system-guide.md)
 - [Web app README](../../../README.md)

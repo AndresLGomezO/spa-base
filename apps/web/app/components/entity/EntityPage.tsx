@@ -1,11 +1,15 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import type { QueryConfig } from "@repo/query-engine";
+import { resolveActiveView } from "@repo/ui-builder";
 import { Alert, Button, Heading, Modal, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
-import { type EntityName } from "../../entities/entity-catalog";
+import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
+import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { EntityCardView } from "./EntityCardView";
 import { EntityTable } from "./EntityTable";
 
 interface EntityPageProps {
@@ -14,10 +18,19 @@ interface EntityPageProps {
 
 export function EntityPage({ entityName }: EntityPageProps) {
   const { t } = useTranslation("common");
+  const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
-  const entityState = useEntity(entityName);
+  const activeView = useMemo(() => resolveActiveView(definition), [definition]);
+  const [queryConfig, setQueryConfig] = useState<QueryConfig>(() => ({
+    pagination: { limit: 20 },
+  }));
+  const entityState = useEntity(entityName, { queryConfig });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
+
+  const handleQueryConfigChange = useCallback((nextConfig: QueryConfig) => {
+    setQueryConfig(nextConfig);
+  }, []);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -28,10 +41,17 @@ export function EntityPage({ entityName }: EntityPageProps) {
     setDeleteId(null);
   };
 
+  const listViewProps = {
+    entityName,
+    entityState,
+    onQueryConfigChange: handleQueryConfigChange,
+    onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
+  };
+
   return (
     <div className="flex w-full flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
-        <Heading level={1}>{t(`nav.${entityName}`)}</Heading>
+        <Heading level={1}>{getEntityLabel(definition)}</Heading>
         {permissions.canCreate ? (
           <Link to={`/app/${entityName}/new`}>
             <Button type="button">{t("entity.create")}</Button>
@@ -45,16 +65,11 @@ export function EntityPage({ entityName }: EntityPageProps) {
         </Alert>
       ) : null}
 
-      <EntityTable
-        entityName={entityName}
-        items={entityState.items}
-        isLoading={entityState.isLoading}
-        error={entityState.error}
-        nextCursor={entityState.nextCursor}
-        isLoadingMore={entityState.isLoadingMore}
-        onLoadMore={() => void entityState.loadMore()}
-        onDelete={setDeleteId}
-      />
+      {activeView.type === "card" ? (
+        <EntityCardView {...listViewProps} />
+      ) : (
+        <EntityTable {...listViewProps} />
+      )}
 
       <Modal
         open={deleteId !== null}

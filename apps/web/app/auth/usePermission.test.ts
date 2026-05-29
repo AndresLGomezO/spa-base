@@ -33,19 +33,19 @@ function mockAuthContext(
 describe("usePermission", () => {
   it("returns true when permission is granted", () => {
     vi.mocked(useAuth).mockReturnValue(
-      mockAuthContext({ permissions: ["customer.read"] }),
+      mockAuthContext({ permissions: ["organization.read"] }),
     );
 
-    const { result } = renderHook(() => usePermission("customer.read"));
+    const { result } = renderHook(() => usePermission("organization.read"));
     expect(result.current).toBe(true);
   });
 
   it("returns false when permission is missing", () => {
     vi.mocked(useAuth).mockReturnValue(
-      mockAuthContext({ permissions: ["customer.read"] }),
+      mockAuthContext({ permissions: ["organization.read"] }),
     );
 
-    const { result } = renderHook(() => usePermission("customer.delete"));
+    const { result } = renderHook(() => usePermission("organization.delete"));
     expect(result.current).toBe(false);
   });
 
@@ -54,7 +54,7 @@ describe("usePermission", () => {
       mockAuthContext({ permissions: [], isSuperAdmin: true }),
     );
 
-    const { result } = renderHook(() => usePermission("customer.delete"));
+    const { result } = renderHook(() => usePermission("organization.delete"));
     expect(result.current).toBe(true);
   });
 });

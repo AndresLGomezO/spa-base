@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
     "lint:unused": "knip --no-progress",
     "lint:circular": "echo \"Skipping circular check for ui package\"",

@@ -1,31 +1,18 @@
 import cors from "@fastify/cors";
 import Fastify from "fastify";
 
-import {
-  customerConverter,
-  orderConverter,
-  type EntityQueryExecutor,
-  type JoinCollectionRepository,
-  type TenantScopedEntityRepository,
+import { getAllEntities } from "@repo/entities";
+import type {
+  EntityQueryExecutor,
+  JoinCollectionRepository,
+  TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import {
-  createFirestoreAdminEntityRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
-  createFirestoreEntityQueryExecutor,
 } from "@repo/gcp-firebase";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
-import {
-  CUSTOMERS_COLLECTION,
-  Customer,
-  ORDERS_COLLECTION,
-  Order,
-  type CustomerRecord,
-  type CustomerUpdate,
-  type OrderRecord,
-  type OrderUpdate,
-} from "@repo/shared-types";
 import "@repo/shared-types/register-entities";
 
 import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
@@ -33,6 +20,9 @@ import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
+import { createEntityRuntimeMaps } from "./entities/create-entity-runtime-maps.js";
+import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
+import { createQueryRuntimeContext } from "./query/create-query-services.js";
 import {
   createEntityPermissionGuards,
   createLoadRequestPermissionsDeps,
@@ -40,25 +30,20 @@ import {
 } from "./rbac/index.js";
 import { createRoleCatalogLoader } from "./rbac/role-catalog.js";
 import { createRelationRuntimeContext } from "./relations/create-relation-services.js";
-import { createQueryRuntimeContext } from "./query/create-query-services.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 
+type GenericRecord = { readonly id: string; readonly tenantId: string };
+
 interface BuildServerOptions {
   readonly logger?: boolean;
-  readonly repositories?: {
-    readonly customer?: TenantScopedEntityRepository<
-      CustomerRecord,
-      CustomerUpdate
-    >;
-    readonly order?: TenantScopedEntityRepository<OrderRecord, OrderUpdate>;
-  };
+  readonly repositories?: Record<
+    string,
+    TenantScopedEntityRepository<GenericRecord, unknown>
+  >;
   readonly joinRepository?: JoinCollectionRepository;
-  readonly queryExecutors?: {
-    readonly customer?: EntityQueryExecutor;
-    readonly order?: EntityQueryExecutor;
-  };
+  readonly queryExecutors?: Record<string, EntityQueryExecutor>;
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
@@ -131,75 +116,39 @@ export async function buildServer(options: BuildServerOptions = {}) {
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
-  const customerAuthorize = createEntityPermissionGuards(
-    permissionDeps,
-    Customer.name,
-  );
-  const orderAuthorize = createEntityPermissionGuards(
-    permissionDeps,
-    Order.name,
-  );
-
-  const customerRepository =
-    options.repositories?.customer ??
-    createFirestoreAdminEntityRepository({
-      config: firebaseAdminConfig,
-      collection: CUSTOMERS_COLLECTION,
-      converter: customerConverter,
-    });
-  const orderRepository =
-    options.repositories?.order ??
-    createFirestoreAdminEntityRepository({
-      config: firebaseAdminConfig,
-      collection: ORDERS_COLLECTION,
-      converter: orderConverter,
-    });
+  const runtimeMaps = createEntityRuntimeMaps(firebaseAdminConfig, {
+    repositories: options.repositories,
+    queryExecutors: options.queryExecutors,
+  });
   const joinRepository =
     options.joinRepository ??
     createFirestoreAdminJoinCollectionRepository(firebaseAdminConfig);
   const relationContext = createRelationRuntimeContext(
-    {
-      customer: customerRepository,
-      order: orderRepository,
-    },
+    runtimeMaps.repositories,
     joinRepository,
   );
-  const customerQueryExecutor =
-    options.queryExecutors?.customer ??
-    createFirestoreEntityQueryExecutor({
-      config: firebaseAdminConfig,
-      collection: CUSTOMERS_COLLECTION,
-      converter: customerConverter,
-    });
-  const orderQueryExecutor =
-    options.queryExecutors?.order ??
-    createFirestoreEntityQueryExecutor({
-      config: firebaseAdminConfig,
-      collection: ORDERS_COLLECTION,
-      converter: orderConverter,
-    });
-  const queryContext = createQueryRuntimeContext({
-    customer: customerQueryExecutor,
-    order: orderQueryExecutor,
+  const queryContext = createQueryRuntimeContext(runtimeMaps.queryExecutors);
+
+  await registerListEntitiesRoute(server, {
+    authenticate,
+    permissionDeps,
   });
 
-  await registerCrudRoutes<CustomerRecord, CustomerUpdate>(server, {
-    entity: Customer,
-    repository: customerRepository,
-    authenticate,
-    authorize: customerAuthorize,
-    relations: relationContext.hooksFor(Customer.name),
-    queryEngine: queryContext.queryEngine,
-  });
+  for (const entity of getAllEntities()) {
+    const repository = runtimeMaps.repositories[entity.name];
+    if (!repository) {
+      throw new Error(`Missing repository for entity "${entity.name}".`);
+    }
 
-  await registerCrudRoutes<OrderRecord, OrderUpdate>(server, {
-    entity: Order,
-    repository: orderRepository,
-    authenticate,
-    authorize: orderAuthorize,
-    relations: relationContext.hooksFor(Order.name),
-    queryEngine: queryContext.queryEngine,
-  });
+    await registerCrudRoutes(server, {
+      entity,
+      repository,
+      authenticate,
+      authorize: createEntityPermissionGuards(permissionDeps, entity.name),
+      relations: relationContext.hooksFor(entity.name),
+      queryEngine: queryContext.queryEngine,
+    });
+  }
 
   return server;
 }

@@ -4,7 +4,7 @@ import { createInMemoryEntityRepository } from "../repositories/in-memory-entity
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
-import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
+import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 
 const { setFirebaseUserCustomClaims } = vi.hoisted(() => ({
   setFirebaseUserCustomClaims: vi.fn(async () => undefined),
@@ -88,17 +88,12 @@ vi.mock("@repo/gcp-firebase", () => ({
 
 import { buildServer } from "../server.js";
 
-function createInMemoryRepositories() {
-  return {
-    customer: createInMemoryEntityRepository<CustomerRecord>(),
-    order: createInMemoryEntityRepository<OrderRecord>(),
-  };
-}
-
 async function buildTestServer() {
+  const runtime = createInMemoryCrudRuntime();
   return buildServer({
     logger: false,
-    repositories: createInMemoryRepositories(),
+    repositories: runtime.repositories,
+    queryExecutors: runtime.queryExecutors,
     skipPlatformRoleSeed: true,
     skipPlatformTenantSeed: true,
   });
@@ -182,7 +177,7 @@ describe("POST /auth/select-tenant", () => {
       expect.any(Object),
     );
     expect(response.json().permissions).toEqual(
-      expect.arrayContaining(["customer.read", "customer.create"]),
+      expect.arrayContaining(["organization.read", "organization.create"]),
     );
   });
 

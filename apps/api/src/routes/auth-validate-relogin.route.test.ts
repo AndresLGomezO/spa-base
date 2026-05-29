@@ -4,16 +4,16 @@ import { createInMemoryEntityRepository } from "../repositories/in-memory-entity
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
-import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
+import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 
 const reloginState = vi.hoisted(() => {
   const storedUser = {
     uid: "user_relogin",
     email: "admin@example.com",
     emailVerified: true,
-    displayName: "Admin",
-    photoURL: null,
-    phoneNumber: null,
+    displayName: "Admin" as string | null,
+    photoURL: null as string | null,
+    phoneNumber: null as string | null,
     disabled: false,
     providers: [] as [],
     authCreatedAt: new Date().toISOString(),
@@ -24,45 +24,78 @@ const reloginState = vi.hoisted(() => {
     updatedAt: new Date().toISOString(),
   };
 
-  let validateCount = 0;
+  let isNewUser = true;
 
-  return {
-    storedUser,
-    reset() {
-      validateCount = 0;
-      storedUser.platformRole = null;
-      storedUser.tenants = {};
-    },
-    async upsertFromAuthUser() {
-      validateCount += 1;
-      const created = validateCount === 1;
+  const upsertFromAuthUser = vi.fn(
+    async (authUser: {
+      uid: string;
+      email: string | null;
+      emailVerified: boolean;
+      displayName: string | null;
+      photoURL: string | null;
+      phoneNumber: string | null;
+      disabled: boolean;
+      providers: [];
+      authCreatedAt: string | null;
+      authLastSignInAt: string | null;
+    }) => {
+      storedUser.uid = authUser.uid;
+      storedUser.email = authUser.email ?? storedUser.email;
+      storedUser.emailVerified = authUser.emailVerified;
+      storedUser.displayName = authUser.displayName;
+      storedUser.photoURL = authUser.photoURL;
+      storedUser.phoneNumber = authUser.phoneNumber;
+      storedUser.disabled = authUser.disabled;
+      storedUser.providers = authUser.providers;
+      storedUser.authCreatedAt =
+        authUser.authCreatedAt ?? storedUser.authCreatedAt;
+      storedUser.authLastSignInAt =
+        authUser.authLastSignInAt ?? storedUser.authLastSignInAt;
+
+      const created = isNewUser;
+      isNewUser = false;
+
       return {
         created,
         user: {
           ...storedUser,
-          tenants: storedUser.tenants ?? {},
+          tenants: { ...storedUser.tenants },
         },
       };
     },
-    async updateAccess(
+  );
+
+  const updateAccess = vi.fn(
+    async (
       _uid: string,
-      data: {
+      patch: {
         platformRole?: string | null;
         tenants?: Record<string, string[]>;
       },
-    ) {
-      if (data.platformRole !== undefined) {
-        storedUser.platformRole = data.platformRole;
+    ) => {
+      if (patch.platformRole !== undefined) {
+        storedUser.platformRole = patch.platformRole;
       }
-      if (data.tenants !== undefined) {
-        storedUser.tenants = data.tenants;
+      if (patch.tenants !== undefined) {
+        storedUser.tenants = patch.tenants;
       }
       storedUser.updatedAt = new Date().toISOString();
       return {
         ...storedUser,
-        tenants: storedUser.tenants ?? {},
+        tenants: { ...storedUser.tenants },
       };
     },
+  );
+
+  return {
+    storedUser,
+    reset() {
+      isNewUser = true;
+      storedUser.platformRole = null;
+      storedUser.tenants = {};
+    },
+    upsertFromAuthUser,
+    updateAccess,
   };
 });
 
@@ -146,11 +179,8 @@ vi.mock("@repo/gcp-firebase", () => ({
 
 import { buildServer } from "../server.js";
 
-function createInMemoryRepositories() {
-  return {
-    customer: createInMemoryEntityRepository<CustomerRecord>(),
-    order: createInMemoryEntityRepository<OrderRecord>(),
-  };
+function createInMemoryRuntime() {
+  return createInMemoryCrudRuntime();
 }
 
 describe("GET /auth/validate re-login", () => {
@@ -159,9 +189,11 @@ describe("GET /auth/validate re-login", () => {
   });
 
   it("bootstraps superadmin on first login and succeeds on second login", async () => {
+    const runtime = createInMemoryRuntime();
     const server = await buildServer({
       logger: false,
-      repositories: createInMemoryRepositories(),
+      repositories: runtime.repositories,
+      queryExecutors: runtime.queryExecutors,
       skipPlatformRoleSeed: true,
       skipPlatformTenantSeed: true,
     });

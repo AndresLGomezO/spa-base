@@ -1,17 +1,20 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { TestEntityCatalogProvider } from "../../test/test-entity-catalog-provider";
 import { EntityField } from "./EntityField";
 
 describe("EntityField", () => {
   it("renders a text input for string fields", () => {
     render(
-      <EntityField
-        entityName="customer"
-        fieldName="name"
-        value="Jane"
-        onChange={vi.fn()}
-      />,
+      <TestEntityCatalogProvider>
+        <EntityField
+          entityName="organization"
+          fieldName="name"
+          value="Jane"
+          onChange={vi.fn()}
+        />
+      </TestEntityCatalogProvider>,
     );
 
     expect(screen.getByLabelText(/Name/i)).toHaveValue("Jane");
@@ -21,12 +24,14 @@ describe("EntityField", () => {
     const onChange = vi.fn();
 
     render(
-      <EntityField
-        entityName="customer"
-        fieldName="isActive"
-        value={false}
-        onChange={onChange}
-      />,
+      <TestEntityCatalogProvider>
+        <EntityField
+          entityName="organization"
+          fieldName="isActive"
+          value={false}
+          onChange={onChange}
+        />
+      </TestEntityCatalogProvider>,
     );
 
     fireEvent.click(screen.getByRole("checkbox"));

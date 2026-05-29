@@ -33,10 +33,13 @@ export {
 } from "./core/versioned-converter.js";
 
 export {
-  customerConverter,
-  customerCurrentVersion,
-} from "./customer/schema.latest.js";
-export { orderConverter, orderCurrentVersion } from "./order/schema.latest.js";
+  organizationConverter,
+  organizationCurrentVersion,
+} from "./organization/schema.latest.js";
+export {
+  projectConverter,
+  projectCurrentVersion,
+} from "./project/schema.latest.js";
 export {
   registeredUserConverter,
   registeredUserCurrentVersion,

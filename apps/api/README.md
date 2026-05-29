@@ -110,10 +110,10 @@ CRUD routes persist to Firestore via `createFirestoreAdminEntityRepository` in `
 
 **Collection path:** `tenants/{tenantId}/{collection}/{documentId}`
 
-| Entity   | Path example                              |
-| -------- | ----------------------------------------- |
-| Customer | `tenants/tenant_a/customers/{docId}`      |
-| Order    | `tenants/tenant_a/orders/{docId}`         |
+| Entity   | Path example                         |
+| -------- | ------------------------------------ |
+| Customer | `tenants/tenant_a/customers/{docId}` |
+| Order    | `tenants/tenant_a/orders/{docId}`    |
 
 ### Local development
 
@@ -169,14 +169,14 @@ See [`packages/rbac/README.md`](../../packages/rbac/README.md) for wildcard and 
 
 On startup the API seeds global roles into Firestore (`roles/{roleId}`) and dev tenants into `tenants/{tenantId}` if missing. Superadmin-only routes under `/admin/*`:
 
-| Method | Path                  | Description                                      |
-| ------ | --------------------- | ------------------------------------------------ |
-| GET    | `/admin/roles`        | List global Firestore roles                      |
-| GET    | `/admin/tenants`      | List tenant records (`id`, `name`, `status`, …)  |
-| POST   | `/admin/tenants`      | Create tenant `{ id?, name }`                    |
-| PATCH  | `/admin/tenants/:id`  | Update `{ name?, status? }`                      |
-| GET    | `/admin/users`        | Paginated user list                              |
-| PATCH  | `/admin/users/:uid`   | Update `{ tenants: Record<string, string[]> }`   |
+| Method | Path                 | Description                                     |
+| ------ | -------------------- | ----------------------------------------------- |
+| GET    | `/admin/roles`       | List global Firestore roles                     |
+| GET    | `/admin/tenants`     | List tenant records (`id`, `name`, `status`, …) |
+| POST   | `/admin/tenants`     | Create tenant `{ id?, name }`                   |
+| PATCH  | `/admin/tenants/:id` | Update `{ name?, status? }`                     |
+| GET    | `/admin/users`       | Paginated user list                             |
+| PATCH  | `/admin/users/:uid`  | Update `{ tenants: Record<string, string[]> }`  |
 
 Tenant IDs in user role assignments must exist in the tenant registry and be `active`. Auth validate/select-tenant responses include `tenantOptions: { id, name }[]` for UI display.
 

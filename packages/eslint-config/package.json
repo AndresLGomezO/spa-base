@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
     "lint:unused": "knip --no-progress",
     "lint:circular": "echo \"Skipping circular check for config-only package\"",
