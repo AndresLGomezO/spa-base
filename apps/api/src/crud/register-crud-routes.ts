@@ -5,11 +5,17 @@ import type {
   preHandlerAsyncHookHandler,
 } from "fastify";
 import { RelationError } from "@repo/entity-relations";
+import {
+  parseListQueryInput,
+  QueryError,
+  type QueryEngine,
+} from "@repo/query-engine";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 
+import type { RequestContext } from "../auth/request-context.js";
 import { ApiErrorCode } from "./errors.js";
 import { noopPreHandler } from "./noop-pre-handler.js";
 import { replyWithError, successEnvelope } from "./response.js";
@@ -18,6 +24,7 @@ import { parseOrFormatError } from "./validation.js";
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
   cursor: z.string().trim().min(1).optional(),
+  query: z.string().trim().min(1).optional(),
 });
 
 const idParamsSchema = z.object({
@@ -52,6 +59,7 @@ interface RegisterCrudRoutesOptions<
     ) => Promise<void>;
     readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
   };
+  readonly queryEngine?: QueryEngine;
   readonly prefix?: string;
 }
 
@@ -94,6 +102,42 @@ function handleRelationError(reply: FastifyReply, error: unknown): boolean {
   return false;
 }
 
+function buildQueryContext(
+  ctx: RequestContext,
+  tenantId: string,
+): {
+  userId: string;
+  tenantId: string;
+  permissions: readonly string[];
+  isSuperAdmin?: boolean;
+} {
+  return {
+    userId: ctx.uid,
+    tenantId,
+    permissions: ctx.permissions ?? [],
+    ...(ctx.isSuperAdmin ? { isSuperAdmin: true } : {}),
+  };
+}
+
+function mapQueryErrorToResponse(reply: FastifyReply, error: QueryError): void {
+  const statusCode =
+    error.code === ApiErrorCode.NOT_FOUND
+      ? 404
+      : error.code === ApiErrorCode.QUERY_FORBIDDEN
+        ? 403
+        : 400;
+
+  replyWithError(reply, statusCode, error.code as ApiErrorCode, error.message);
+}
+
+function handleQueryError(reply: FastifyReply, error: unknown): boolean {
+  if (error instanceof QueryError) {
+    mapQueryErrorToResponse(reply, error);
+    return true;
+  }
+  return false;
+}
+
 export async function registerCrudRoutes<
   TRecord extends { readonly id: string; readonly tenantId: string },
   TUpdate,
@@ -101,7 +145,14 @@ export async function registerCrudRoutes<
   app: FastifyInstance,
   options: RegisterCrudRoutesOptions<TRecord, TUpdate>,
 ): Promise<void> {
-  const { entity, repository, authenticate, authorize, relations } = options;
+  const {
+    entity,
+    repository,
+    authenticate,
+    authorize,
+    relations,
+    queryEngine,
+  } = options;
   const routePrefix = options.prefix ?? "/api";
   const basePath = `${routePrefix}/${entity.name}`;
   const listPreHandlers = [authenticate, authorize?.list ?? noopPreHandler];
@@ -125,13 +176,35 @@ export async function registerCrudRoutes<
       );
     }
 
-    const result = await repository.findAll({
-      tenantId,
-      limit: parsedQuery.data.limit,
-      cursor: parsedQuery.data.cursor,
-    });
+    try {
+      if (queryEngine && request.ctx) {
+        const result = await queryEngine.find(
+          entity.name,
+          parseListQueryInput(parsedQuery.data),
+          buildQueryContext(request.ctx, tenantId),
+        );
 
-    return reply.send(successEnvelope(result));
+        return reply.send(
+          successEnvelope({
+            items: result.data,
+            nextCursor: result.nextCursor ?? null,
+          }),
+        );
+      }
+
+      const result = await repository.findAll({
+        tenantId,
+        limit: parsedQuery.data.limit,
+        cursor: parsedQuery.data.cursor,
+      });
+
+      return reply.send(successEnvelope(result));
+    } catch (error) {
+      if (handleQueryError(reply, error)) {
+        return;
+      }
+      throw error;
+    }
   });
 
   app.get(
@@ -152,17 +225,36 @@ export async function registerCrudRoutes<
         );
       }
 
-      const record = await repository.findById(parsedParams.data.id, tenantId);
-      if (!record) {
-        return replyWithError(
-          reply,
-          404,
-          ApiErrorCode.NOT_FOUND,
-          "Record not found.",
-        );
-      }
+      try {
+        if (queryEngine && request.ctx) {
+          const record = await queryEngine.findOne(
+            entity.name,
+            parsedParams.data.id,
+            buildQueryContext(request.ctx, tenantId),
+          );
+          return reply.send(successEnvelope(record));
+        }
 
-      return reply.send(successEnvelope(record));
+        const record = await repository.findById(
+          parsedParams.data.id,
+          tenantId,
+        );
+        if (!record) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "Record not found.",
+          );
+        }
+
+        return reply.send(successEnvelope(record));
+      } catch (error) {
+        if (handleQueryError(reply, error)) {
+          return;
+        }
+        throw error;
+      }
     },
   );
 

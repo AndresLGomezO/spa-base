@@ -198,7 +198,7 @@ Designed but **not implemented** in Workstream 1:
 | Field-level permissions  | Extend `NormalizedFieldMeta`                     | Open   |
 | Dynamic UI config        | `EntityMetadata.ui` optional bag                 | Open   |
 | Enums                    | New field type or `string` + metadata constraint | Open   |
-| Query/filter engine      | New package consuming `metadata.fields` + `findByField` | Planned (10.7) |
+| Query/filter engine      | `@repo/query-engine` + `EntityQueryExecutor`       | Done — see [Query Engine Guide](./query-engine-guide.md) |
 
 Keep extensions in the field registry and metadata types — avoid changing `defineEntity` core logic for each new feature.
 
@@ -212,4 +212,5 @@ Keep extensions in the field registry and metadata types — avoid changing `def
 - [Business entities folder](../packages/shared-types/src/entities/README.md) — per-entity file template
 - [Firestore collections guide](./firestore-collections-guide.md) — persistence wiring
 - [Relational Data System Guide](./relational-data-system-guide.md) — Phase 2 relations
+- [Query Engine Guide](./query-engine-guide.md) — centralized list/get reads
 - [General Definitions — Phase 1](../Ecosystem%20Plan/v1/General%20Definitions.md) — full platform scope

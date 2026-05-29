@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
+import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
@@ -82,6 +83,7 @@ vi.mock("@repo/gcp-firebase", () => ({
     createInMemoryJoinCollectionRepository(),
   ),
   createFirestoreAdminTenantRepository: vi.fn(() => tenantRepository),
+  createFirestoreEntityQueryExecutor: mockCreateFirestoreEntityQueryExecutor,
 }));
 
 import { buildServer } from "../server.js";

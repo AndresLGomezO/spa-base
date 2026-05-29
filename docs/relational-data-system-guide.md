@@ -16,7 +16,7 @@ The relational layer adds:
 - Scalable many-to-many via join collections
 - Delete semantics (`restrict`, `nullify`, `cascade`)
 
-Relation expansion on GET and list filtering remain deferred to the Query Engine (10.7).
+Relation expansion on GET remains deferred. List filtering on FK fields (for example `customerId`) is available via the [Query Engine](./query-engine-guide.md).
 
 ---
 
@@ -153,7 +153,7 @@ findByField({
 })
 ```
 
-Used by the delete handler today; designed for the future Query Engine filter builder.
+Used by the delete handler today. The Query Engine uses the same FK fields for list filters — see [Query Engine Guide](./query-engine-guide.md).
 
 ---
 
@@ -197,9 +197,10 @@ Imported once at API startup in `apps/api/src/server.ts`.
 ## Out of scope (this deliverable)
 
 - Relation-aware UI (entity picker)
-- Query Engine list filters (`?customerId=...`)
 - Relation expansion on GET (`?expand=customer`)
 - Denormalized display fields
+
+List filters on FK fields are handled by the [Query Engine](./query-engine-guide.md) (for example `?query={"filter":[{"field":"customerId","operator":"==","value":"…"}]}`).
 
 ---
 

@@ -4,6 +4,7 @@ import Fastify from "fastify";
 import {
   customerConverter,
   orderConverter,
+  type EntityQueryExecutor,
   type JoinCollectionRepository,
   type TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
@@ -12,6 +13,7 @@ import {
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
+  createFirestoreEntityQueryExecutor,
 } from "@repo/gcp-firebase";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 import {
@@ -38,6 +40,7 @@ import {
 } from "./rbac/index.js";
 import { createRoleCatalogLoader } from "./rbac/role-catalog.js";
 import { createRelationRuntimeContext } from "./relations/create-relation-services.js";
+import { createQueryRuntimeContext } from "./query/create-query-services.js";
 import { createInMemoryJoinCollectionRepository } from "./repositories/in-memory-join-collection-repository.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
@@ -53,6 +56,10 @@ interface BuildServerOptions {
     readonly order?: TenantScopedEntityRepository<OrderRecord, OrderUpdate>;
   };
   readonly joinRepository?: JoinCollectionRepository;
+  readonly queryExecutors?: {
+    readonly customer?: EntityQueryExecutor;
+    readonly order?: EntityQueryExecutor;
+  };
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
@@ -158,6 +165,24 @@ export async function buildServer(options: BuildServerOptions = {}) {
     },
     joinRepository,
   );
+  const customerQueryExecutor =
+    options.queryExecutors?.customer ??
+    createFirestoreEntityQueryExecutor({
+      config: firebaseAdminConfig,
+      collection: CUSTOMERS_COLLECTION,
+      converter: customerConverter,
+    });
+  const orderQueryExecutor =
+    options.queryExecutors?.order ??
+    createFirestoreEntityQueryExecutor({
+      config: firebaseAdminConfig,
+      collection: ORDERS_COLLECTION,
+      converter: orderConverter,
+    });
+  const queryContext = createQueryRuntimeContext({
+    customer: customerQueryExecutor,
+    order: orderQueryExecutor,
+  });
 
   await registerCrudRoutes<CustomerRecord, CustomerUpdate>(server, {
     entity: Customer,
@@ -165,6 +190,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     authorize: customerAuthorize,
     relations: relationContext.hooksFor(Customer.name),
+    queryEngine: queryContext.queryEngine,
   });
 
   await registerCrudRoutes<OrderRecord, OrderUpdate>(server, {
@@ -173,6 +199,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     authorize: orderAuthorize,
     relations: relationContext.hooksFor(Order.name),
+    queryEngine: queryContext.queryEngine,
   });
 
   return server;

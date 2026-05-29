@@ -56,6 +56,7 @@ interface InMemoryEntityRepositoryOptions<
   TRecord extends { readonly id: string; readonly tenantId: string },
 > {
   readonly initialData?: readonly TRecord[];
+  readonly store?: Map<string, TRecord>;
 }
 
 export function createInMemoryEntityRepository<
@@ -64,7 +65,7 @@ export function createInMemoryEntityRepository<
 >(
   options: InMemoryEntityRepositoryOptions<TRecord> = {},
 ): TenantScopedEntityRepository<TRecord, TUpdate> {
-  const store = new Map<string, TRecord>();
+  const store = options.store ?? new Map<string, TRecord>();
 
   for (const record of options.initialData ?? []) {
     store.set(storageKey(record.tenantId, record.id), record);

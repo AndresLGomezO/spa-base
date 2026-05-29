@@ -5,6 +5,13 @@ export {
   type TenantScopedEntityRepository,
 } from "./entity/tenant-scoped-repository-contract.js";
 export {
+  type EntityQueryExecutor,
+  type FilterOperator,
+  type NormalizedEntityQuery,
+  type NormalizedFilter,
+  type NormalizedSort,
+} from "./entity/entity-query-contract.js";
+export {
   type FindJoinBySourceParams,
   type FindJoinByTargetParams,
   type JoinCollectionRepository,

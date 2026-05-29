@@ -4,8 +4,9 @@ import { buildRoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
+import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
+import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
-import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
 const authState = {
   uid: "user_123",
@@ -92,15 +93,13 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminTenantRepository: vi.fn(() =>
     createInMemoryTenantRepository(),
   ),
+  createFirestoreEntityQueryExecutor: mockCreateFirestoreEntityQueryExecutor,
 }));
 
 import { buildServer } from "../server.js";
 
 function createInMemoryRepositories() {
-  return {
-    customer: createInMemoryEntityRepository<CustomerRecord>(),
-    order: createInMemoryEntityRepository<OrderRecord>(),
-  };
+  return createInMemoryCrudRuntime();
 }
 
 interface BuildTestServerOptions {
@@ -109,9 +108,11 @@ interface BuildTestServerOptions {
 
 async function buildTestServer(options: BuildTestServerOptions = {}) {
   const profile = options.accessProfile ?? accessProfileState;
+  const runtime = createInMemoryRepositories();
   return buildServer({
     logger: false,
-    repositories: createInMemoryRepositories(),
+    repositories: runtime.repositories,
+    queryExecutors: runtime.queryExecutors,
     joinRepository: createInMemoryJoinCollectionRepository(),
     getUserAccessProfile: async () => profile,
     getRoleCatalog: async () => buildRoleCatalog([]),
@@ -546,6 +547,156 @@ describe("CRUD API", () => {
       });
       expect(createInTenantB.statusCode).toBe(403);
       expect(createInTenantB.json().error.code).toBe("FORBIDDEN");
+    });
+  });
+
+  describe("Query Engine", () => {
+    async function createCustomer(
+      server: Awaited<ReturnType<typeof buildTestServer>>,
+      name = "Query Customer",
+    ) {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name },
+      });
+      expect(response.statusCode).toBe(201);
+      return response.json().data as { id: string };
+    }
+
+    async function createOrder(
+      server: Awaited<ReturnType<typeof buildTestServer>>,
+      customerId: string,
+      orderNumber: string,
+      total: number,
+    ) {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/order",
+        headers: authHeaders,
+        payload: { orderNumber, total, customerId },
+      });
+      expect(response.statusCode).toBe(201);
+      return response.json().data as {
+        id: string;
+        customerId: string;
+        total: number;
+      };
+    }
+
+    it("filters orders by customerId via query JSON", async () => {
+      const server = await buildTestServer();
+      const customerA = await createCustomer(server, "Customer A");
+      const customerB = await createCustomer(server, "Customer B");
+      await createOrder(server, customerA.id, "ORD-A1", 10);
+      await createOrder(server, customerA.id, "ORD-A2", 20);
+      await createOrder(server, customerB.id, "ORD-B1", 30);
+
+      const query = encodeURIComponent(
+        JSON.stringify({
+          filter: [
+            { field: "customerId", operator: "==", value: customerA.id },
+          ],
+        }),
+      );
+
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/order?query=${query}`,
+        headers: authHeaders,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const items = response.json().data.items;
+      expect(items).toHaveLength(2);
+      expect(
+        items.every(
+          (item: { customerId: string }) => item.customerId === customerA.id,
+        ),
+      ).toBe(true);
+    });
+
+    it("sorts orders by total descending", async () => {
+      const server = await buildTestServer();
+      const customer = await createCustomer(server);
+      await createOrder(server, customer.id, "ORD-LOW", 5);
+      await createOrder(server, customer.id, "ORD-HIGH", 50);
+      await createOrder(server, customer.id, "ORD-MID", 25);
+
+      const query = encodeURIComponent(
+        JSON.stringify({
+          sort: [{ field: "total", direction: "desc" }],
+        }),
+      );
+
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/order?query=${query}`,
+        headers: authHeaders,
+      });
+
+      expect(response.statusCode).toBe(200);
+      const totals = response
+        .json()
+        .data.items.map((item: { total: number }) => item.total);
+      expect(totals).toEqual([50, 25, 5]);
+    });
+
+    it("paginates filtered results with legacy limit and cursor", async () => {
+      const server = await buildTestServer();
+      const customer = await createCustomer(server);
+      await createOrder(server, customer.id, "ORD-1", 1);
+      await createOrder(server, customer.id, "ORD-2", 2);
+      await createOrder(server, customer.id, "ORD-3", 3);
+
+      const firstPage = await server.inject({
+        method: "GET",
+        url: "/api/order?limit=2",
+        headers: authHeaders,
+      });
+      expect(firstPage.statusCode).toBe(200);
+      const firstBody = firstPage.json().data;
+      expect(firstBody.items).toHaveLength(2);
+      expect(firstBody.nextCursor).toBeTruthy();
+
+      const secondPage = await server.inject({
+        method: "GET",
+        url: `/api/order?limit=2&cursor=${firstBody.nextCursor}`,
+        headers: authHeaders,
+      });
+      expect(secondPage.statusCode).toBe(200);
+      expect(secondPage.json().data.items).toHaveLength(1);
+      expect(secondPage.json().data.nextCursor).toBeNull();
+    });
+
+    it("returns 400 for invalid query configuration", async () => {
+      const server = await buildTestServer();
+      const response = await server.inject({
+        method: "GET",
+        url: `/api/order?query=${encodeURIComponent('{"filter":[{"field":"tenantId","operator":"==","value":"tenant_a"}]}')}`,
+        headers: authHeaders,
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error.code).toBe("QUERY_VALIDATION_ERROR");
+    });
+
+    it("allows viewer to list via query engine", async () => {
+      const server = await buildTestServer({
+        accessProfile: {
+          platformRole: null,
+          tenants: { tenant_a: ["viewer"] },
+        },
+      });
+
+      const listResponse = await server.inject({
+        method: "GET",
+        url: "/api/customer",
+        headers: authHeaders,
+      });
+
+      expect(listResponse.statusCode).toBe(200);
     });
   });
 });
