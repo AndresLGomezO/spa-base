@@ -66,11 +66,15 @@ export function createFirestoreAdminTenantRoleRepository(
         id,
         tenantId,
         name: parsed.name,
-        description: parsed.description,
         grants: parsed.grants,
-        fieldRules: parsed.fieldRules,
         createdAt: now,
         updatedAt: now,
+        ...(parsed.description !== undefined
+          ? { description: parsed.description }
+          : {}),
+        ...(parsed.fieldRules !== undefined
+          ? { fieldRules: parsed.fieldRules }
+          : {}),
       });
 
       await collection(tenantId).doc(id).set(record);
@@ -110,10 +114,12 @@ export function createFirestoreAdminTenantRoleRepository(
         id: template.name,
         tenantId,
         name: template.name,
-        description: template.description,
         grants: [...template.grants],
         createdAt: now,
         updatedAt: now,
+        ...(template.description !== undefined
+          ? { description: template.description }
+          : {}),
       });
 
       await collection(tenantId).doc(record.id).set(record);

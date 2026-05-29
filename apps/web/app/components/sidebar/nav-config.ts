@@ -3,21 +3,26 @@ import {
   CreditCard,
   Database,
   Home,
+  LayoutDashboard,
   Settings,
   Shield,
   User,
   Users,
+  Workflow,
 } from "lucide-react";
 
 /** Keys under `nav.*` used by sidebar link labels */
 export type NavLabelKey =
   | "home"
+  | "dashboard"
   | "settings"
   | "profile"
   | "team"
   | "billing"
   | "admin"
+  | "controlPlane"
   | "dataModels"
+  | "automation"
   | "roles";
 
 export interface NavLinkConfig {
@@ -39,20 +44,36 @@ export interface NavGroupConfig {
 
 export type NavItemConfig = NavLinkConfig | NavGroupConfig;
 
-export const SETTINGS_ROLES_NAV_ITEM: NavLinkConfig = {
-  id: "roles",
-  labelKey: "roles",
-  to: "/settings/roles",
-  matchPath: "/settings/roles",
-  icon: Shield,
+export const CONTROL_PLANE_DASHBOARD_NAV_ITEM: NavLinkConfig = {
+  id: "dashboard",
+  labelKey: "dashboard",
+  to: "/",
+  matchPath: "/",
+  icon: LayoutDashboard,
 };
 
-export const SETTINGS_DATA_MODELS_NAV_ITEM: NavLinkConfig = {
+export const CONTROL_PLANE_DATA_MODELS_NAV_ITEM: NavLinkConfig = {
   id: "data-models",
   labelKey: "dataModels",
   to: "/settings/data-models",
   matchPath: "/settings/data-models",
   icon: Database,
+};
+
+export const CONTROL_PLANE_HOOKS_NAV_ITEM: NavLinkConfig = {
+  id: "hooks",
+  labelKey: "automation",
+  to: "/settings/hooks",
+  matchPath: "/settings/hooks",
+  icon: Workflow,
+};
+
+export const CONTROL_PLANE_ROLES_NAV_ITEM: NavLinkConfig = {
+  id: "roles",
+  labelKey: "roles",
+  to: "/settings/roles",
+  matchPath: "/settings/roles",
+  icon: Shield,
 };
 
 export const SETTINGS_ADMIN_NAV_ITEM: NavLinkConfig = {

@@ -32,10 +32,24 @@
     "signedInAs": "Conectado como",
     "unknownUser": "usuario desconocido",
     "provider": "Proveedor",
-    "logout": "Cerrar sesión"
+    "logout": "Cerrar sesión",
+    "overviewTitle": "Panel de control",
+    "overviewDescription": "Resumen de la configuración de tu tenant.",
+    "countsTitle": "Resumen",
+    "entitiesCount": "Entidades en runtime",
+    "definitionsCount": "Modelos de datos",
+    "rolesCount": "Roles",
+    "hooksCount": "Hooks de automatización",
+    "quickLinksTitle": "Accesos rápidos",
+    "manageDataModels": "Administrar modelos de datos",
+    "manageHooks": "Administrar automatización",
+    "manageRoles": "Administrar roles",
+    "loadFailed": "No se pudieron cargar los datos del resumen."
   },
   "nav": {
     "home": "Inicio",
+    "dashboard": "Panel",
+    "controlPlane": "Panel de control",
     "settings": "Configuración",
     "profile": "Perfil",
     "team": "Equipo",
@@ -47,7 +61,8 @@
     "fallbackName": "Usuario",
     "admin": "Administración",
     "dataModels": "Modelos de datos",
-    "roles": "Roles"
+    "automation": "Automatización",
+    "roles": "Roles y permisos"
   },
   "admin": {
     "title": "Administración de plataforma",
@@ -181,7 +196,11 @@
     "validation": {
       "basicRequired": "El nombre y la etiqueta de la entidad son obligatorios.",
       "fieldsRequired": "Agrega al menos un campo."
-    }
+    },
+    "editTitle": "Editar {{name}}",
+    "saveModel": "Guardar cambios",
+    "updateFailed": "No se pudo actualizar el modelo de entidad.",
+    "nameReadOnly": "El nombre de la entidad no se puede cambiar después de crearla."
   },
   "roles": {
     "title": "Roles",
@@ -205,5 +224,60 @@
     "forbiddenUpdate": "No tienes permiso para actualizar roles.",
     "loadFailed": "No se pudieron cargar los roles.",
     "saveFailed": "No se pudo guardar el rol."
+  },
+  "hooks": {
+    "title": "Automatización",
+    "description": "Configura hooks que se ejecutan antes o después de operaciones de entidad.",
+    "adminTitle": "Automatización multi-tenant",
+    "adminDescription": "Administra hooks de automatización para cualquier tenant.",
+    "openAdminHooks": "Abrir administrador de automatización",
+    "listTitle": "Hooks",
+    "create": "Crear hook",
+    "createTitle": "Crear hook",
+    "editTitle": "Editar {{name}}",
+    "save": "Guardar hook",
+    "cancel": "Cancelar",
+    "name": "Nombre del hook",
+    "entity": "Entidad",
+    "event": "Evento",
+    "enabled": "Activo",
+    "enabledOn": "Sí",
+    "enabledOff": "No",
+    "actions": "Acciones",
+    "actionCount": "Acciones",
+    "addAction": "Agregar acción",
+    "removeAction": "Eliminar acción",
+    "actionType": "Tipo de acción",
+    "actionTypes": {
+      "updateField": "Actualizar campo",
+      "createRecord": "Crear registro",
+      "sendNotification": "Enviar notificación"
+    },
+    "field": "Campo",
+    "value": "Valor",
+    "targetEntity": "Entidad destino",
+    "recordData": "Datos del registro (JSON)",
+    "message": "Mensaje",
+    "loading": "Cargando hooks...",
+    "empty": "Aún no hay hooks configurados.",
+    "tenant": "Tenant",
+    "forbidden": "No tienes permiso para administrar hooks.",
+    "forbiddenCreate": "No tienes permiso para crear hooks.",
+    "forbiddenUpdate": "No tienes permiso para actualizar hooks.",
+    "loadFailed": "No se pudieron cargar los hooks.",
+    "saveFailed": "No se pudo guardar el hook.",
+    "validation": {
+      "nameRequired": "El nombre del hook es obligatorio.",
+      "entityRequired": "La entidad es obligatoria.",
+      "actionsRequired": "Agrega al menos una acción."
+    },
+    "events": {
+      "beforeCreate": "Antes de crear",
+      "afterCreate": "Después de crear",
+      "beforeUpdate": "Antes de actualizar",
+      "afterUpdate": "Después de actualizar",
+      "beforeDelete": "Antes de eliminar",
+      "afterDelete": "Después de eliminar"
+    }
   }
 }

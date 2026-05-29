@@ -261,6 +261,114 @@ export async function createEntityDefinition(
   });
 }
 
+export async function getEntityDefinition(
+  id: string,
+  options?: { readonly tenantId?: string },
+): Promise<EntityDefinitionRecord> {
+  return apiRequest<EntityDefinitionRecord>(`/api/entity-definitions/${id}`, {
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
+interface PatchEntityDefinitionInput {
+  readonly label?: string;
+  readonly fields?: readonly FieldDefinitionInput[];
+  readonly ui?: Record<string, unknown>;
+}
+
+export async function patchEntityDefinition(
+  id: string,
+  input: PatchEntityDefinitionInput,
+  options?: { readonly tenantId?: string },
+): Promise<EntityDefinitionRecord> {
+  return apiRequest<EntityDefinitionRecord>(`/api/entity-definitions/${id}`, {
+    method: "PATCH",
+    body: input,
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
+export type HookAction =
+  | {
+      readonly type: "updateField";
+      readonly field: string;
+      readonly value: unknown;
+    }
+  | {
+      readonly type: "createRecord";
+      readonly entity: string;
+      readonly data: Record<string, unknown>;
+    }
+  | {
+      readonly type: "sendNotification";
+      readonly message: string;
+    };
+
+export interface HookRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly name: string;
+  readonly entity: string;
+  readonly event: string;
+  readonly type: "action";
+  readonly config: {
+    readonly actions: readonly HookAction[];
+  };
+  readonly enabled: boolean;
+  readonly order: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listHooks(options?: {
+  readonly tenantId?: string;
+}): Promise<{ readonly items: readonly HookRecord[] }> {
+  return apiRequest<{ readonly items: readonly HookRecord[] }>("/api/hooks", {
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
+interface CreateHookInput {
+  readonly tenantId?: string;
+  readonly name: string;
+  readonly entity: string;
+  readonly event: string;
+  readonly type: "action";
+  readonly config: {
+    readonly actions: readonly HookAction[];
+  };
+  readonly enabled?: boolean;
+  readonly order?: number;
+}
+
+export async function createHook(input: CreateHookInput): Promise<HookRecord> {
+  return apiRequest<HookRecord>("/api/hooks", {
+    method: "POST",
+    body: input,
+  });
+}
+
+interface PatchHookInput {
+  readonly name?: string;
+  readonly config?: {
+    readonly actions: readonly HookAction[];
+  };
+  readonly enabled?: boolean;
+  readonly order?: number;
+}
+
+export async function patchHook(
+  id: string,
+  input: PatchHookInput,
+  options?: { readonly tenantId?: string },
+): Promise<HookRecord> {
+  return apiRequest<HookRecord>(`/api/hooks/${id}`, {
+    method: "PATCH",
+    body: input,
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
 export interface TenantRoleRecord {
   readonly id: string;
   readonly tenantId: string;

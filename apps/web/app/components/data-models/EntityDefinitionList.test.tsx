@@ -28,11 +28,14 @@ describe("EntityDefinitionList", () => {
         isLoading={false}
         canCreate
         onCreate={vi.fn()}
+        canUpdate
+        onEdit={vi.fn()}
       />,
     );
 
     expect(screen.getByText("loan")).toBeInTheDocument();
     expect(screen.getByText("Loans")).toBeInTheDocument();
     expect(screen.getByText("dataModels.createModel")).toBeInTheDocument();
+    expect(screen.getByText("entity.edit")).toBeInTheDocument();
   });
 });

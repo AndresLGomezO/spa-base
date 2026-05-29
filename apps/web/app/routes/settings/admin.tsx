@@ -60,6 +60,13 @@ export default function SettingsAdminRoute() {
           {t("dataModels.openAdminBuilder")}
         </Link>
       </section>
+      <section className="flex flex-col gap-3">
+        <Heading level={2}>{t("hooks.title")}</Heading>
+        <Text>{t("hooks.adminDescription")}</Text>
+        <Link to="/settings/admin/hooks" className="text-primary underline">
+          {t("hooks.openAdminHooks")}
+        </Link>
+      </section>
       <Text>
         <Link to="/" className="text-primary underline">
           {t("nav.home")}

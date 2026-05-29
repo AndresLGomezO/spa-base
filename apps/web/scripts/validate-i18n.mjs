@@ -182,14 +182,13 @@ function extractUsedKeys(files, namespaces) {
   return usedKeys;
 }
 
-/** labelKey values in nav-config.ts → common:nav.{labelKey} */
-function extractNavConfigKeys(files) {
-  const navConfig = files.find((f) => f.path.endsWith("nav-config.ts"));
-  if (!navConfig) return [];
-
+/** labelKey values in source → common:nav.{labelKey} */
+function extractNavLabelKeys(files) {
   const keys = new Set();
-  for (const match of navConfig.content.matchAll(/labelKey:\s*"([^"]+)"/g)) {
-    keys.add(`${DEFAULT_NAMESPACE}:nav.${match[1]}`);
+  for (const file of files) {
+    for (const match of file.content.matchAll(/labelKey:\s*"([^"]+)"/g)) {
+      keys.add(`${DEFAULT_NAMESPACE}:nav.${match[1]}`);
+    }
   }
   return [...keys];
 }
@@ -236,6 +235,22 @@ function extractDataModelFieldTypeKeys(corpus) {
 
   return Object.keys(fieldTypes).map(
     (key) => `${DEFAULT_NAMESPACE}:dataModels.fieldTypes.${key}`,
+  );
+}
+
+/** hooks.events.${suffix} in source → all keys under hooks.events */
+function extractHookEventKeys(corpus) {
+  if (!corpus.includes("hooks.events.${")) return [];
+
+  const refHooks = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).hooks;
+
+  const events = refHooks?.events;
+  if (!events || typeof events !== "object") return [];
+
+  return Object.keys(events).map(
+    (key) => `${DEFAULT_NAMESPACE}:hooks.events.${key}`,
   );
 }
 
@@ -394,7 +409,7 @@ const { corpus, files } = loadSourceCorpus();
 const usedKeys = extractUsedKeys(files, namespaces);
 const navConfigFile =
   files.find((f) => f.path.endsWith("nav-config.ts"))?.path ?? SRC_DIR;
-mergeUsedKeys(usedKeys, extractNavConfigKeys(files), navConfigFile);
+mergeUsedKeys(usedKeys, extractNavLabelKeys(files), navConfigFile);
 const entityCatalogFile =
   files.find((f) => f.path.endsWith("entity-catalog.ts"))?.path ?? SRC_DIR;
 mergeUsedKeys(usedKeys, extractEntityNavKeys(files), entityCatalogFile);
@@ -407,6 +422,11 @@ mergeUsedKeys(
   usedKeys,
   extractDataModelFieldTypeKeys(corpus),
   path.join(SRC_DIR, "components/data-models/FieldEditor.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractHookEventKeys(corpus),
+  path.join(SRC_DIR, "components/hooks/HookEditor.tsx"),
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

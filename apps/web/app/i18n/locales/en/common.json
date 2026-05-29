@@ -32,10 +32,24 @@
     "signedInAs": "Signed in as",
     "unknownUser": "unknown user",
     "provider": "Provider",
-    "logout": "Logout"
+    "logout": "Logout",
+    "overviewTitle": "Control Plane",
+    "overviewDescription": "Overview of your tenant configuration.",
+    "countsTitle": "Summary",
+    "entitiesCount": "Runtime entities",
+    "definitionsCount": "Data models",
+    "rolesCount": "Roles",
+    "hooksCount": "Automation hooks",
+    "quickLinksTitle": "Quick links",
+    "manageDataModels": "Manage data models",
+    "manageHooks": "Manage automation",
+    "manageRoles": "Manage roles",
+    "loadFailed": "Unable to load overview data."
   },
   "nav": {
     "home": "Home",
+    "dashboard": "Dashboard",
+    "controlPlane": "Control Plane",
     "settings": "Settings",
     "profile": "Profile",
     "team": "Team",
@@ -47,7 +61,8 @@
     "fallbackName": "User",
     "admin": "Admin",
     "dataModels": "Data Models",
-    "roles": "Roles"
+    "automation": "Automation",
+    "roles": "Roles & Permissions"
   },
   "admin": {
     "title": "Platform Admin",
@@ -181,7 +196,11 @@
     "validation": {
       "basicRequired": "Entity name and label are required.",
       "fieldsRequired": "Add at least one field."
-    }
+    },
+    "editTitle": "Edit {{name}}",
+    "saveModel": "Save changes",
+    "updateFailed": "Unable to update entity model.",
+    "nameReadOnly": "Entity name cannot be changed after creation."
   },
   "roles": {
     "title": "Roles",
@@ -205,5 +224,60 @@
     "forbiddenUpdate": "You do not have permission to update roles.",
     "loadFailed": "Unable to load roles.",
     "saveFailed": "Unable to save role."
+  },
+  "hooks": {
+    "title": "Automation",
+    "description": "Configure hooks that run before or after entity operations.",
+    "adminTitle": "Cross-Tenant Automation",
+    "adminDescription": "Manage automation hooks for any tenant.",
+    "openAdminHooks": "Open Automation Manager",
+    "listTitle": "Hooks",
+    "create": "Create hook",
+    "createTitle": "Create hook",
+    "editTitle": "Edit {{name}}",
+    "save": "Save hook",
+    "cancel": "Cancel",
+    "name": "Hook name",
+    "entity": "Entity",
+    "event": "Event",
+    "enabled": "Enabled",
+    "enabledOn": "Yes",
+    "enabledOff": "No",
+    "actions": "Actions",
+    "actionCount": "Actions",
+    "addAction": "Add action",
+    "removeAction": "Remove action",
+    "actionType": "Action type",
+    "actionTypes": {
+      "updateField": "Update field",
+      "createRecord": "Create record",
+      "sendNotification": "Send notification"
+    },
+    "field": "Field",
+    "value": "Value",
+    "targetEntity": "Target entity",
+    "recordData": "Record data (JSON)",
+    "message": "Message",
+    "loading": "Loading hooks...",
+    "empty": "No hooks configured yet.",
+    "tenant": "Tenant",
+    "forbidden": "You do not have permission to manage hooks.",
+    "forbiddenCreate": "You do not have permission to create hooks.",
+    "forbiddenUpdate": "You do not have permission to update hooks.",
+    "loadFailed": "Unable to load hooks.",
+    "saveFailed": "Unable to save hook.",
+    "validation": {
+      "nameRequired": "Hook name is required.",
+      "entityRequired": "Entity is required.",
+      "actionsRequired": "Add at least one action."
+    },
+    "events": {
+      "beforeCreate": "Before create",
+      "afterCreate": "After create",
+      "beforeUpdate": "Before update",
+      "afterUpdate": "After update",
+      "beforeDelete": "Before delete",
+      "afterDelete": "After delete"
+    }
   }
 }

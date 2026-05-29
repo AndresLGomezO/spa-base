@@ -44,7 +44,14 @@ export function initializeFirebaseAdmin(config: FirebaseAdminConfig): App {
   return initializeApp(options);
 }
 
+let firestoreSettingsApplied = false;
+
 export function getFirestoreAdmin(config: FirebaseAdminConfig): Firestore {
   const app = initializeFirebaseAdmin(config);
-  return getFirestore(app);
+  const firestore = getFirestore(app);
+  if (!firestoreSettingsApplied) {
+    firestore.settings({ ignoreUndefinedProperties: true });
+    firestoreSettingsApplied = true;
+  }
+  return firestore;
 }
