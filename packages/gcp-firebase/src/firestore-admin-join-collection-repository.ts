@@ -5,10 +5,7 @@ import type {
   JoinRecord,
   LinkJoinParams,
 } from "@repo/firestore-converters";
-import type {
-  DocumentData,
-  DocumentReference,
-} from "firebase-admin/firestore";
+import type { DocumentData, DocumentReference } from "firebase-admin/firestore";
 import { nanoid } from "nanoid";
 
 import {

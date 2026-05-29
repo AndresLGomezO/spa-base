@@ -69,9 +69,7 @@ const dateFieldBuilder: FieldSchemaBuilder = {
 function isForeignKeyRelationField(
   config: FieldConfig,
 ): config is RelationFieldConfig {
-  return (
-    config.type === "relation" && usesForeignKeyStorage(config.relation)
-  );
+  return config.type === "relation" && usesForeignKeyStorage(config.relation);
 }
 
 const relationFieldBuilder: FieldSchemaBuilder = {

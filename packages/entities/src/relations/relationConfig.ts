@@ -1,4 +1,8 @@
-import type { EntityMetadata, FieldDefinitions, RelationConfig } from "../types.js";
+import type {
+  EntityMetadata,
+  FieldDefinitions,
+  RelationConfig,
+} from "../types.js";
 
 export type RelationStorageStrategy = "foreignKey" | "joinCollection" | "none";
 
@@ -29,7 +33,9 @@ export function resolveJoinCollectionName(
   return `${sourceEntity}_${targetEntity}`;
 }
 
-export function getRelationOnDelete(relation: RelationConfig): RelationConfig["onDelete"] {
+export function getRelationOnDelete(
+  relation: RelationConfig,
+): RelationConfig["onDelete"] {
   return relation.onDelete ?? "restrict";
 }
 

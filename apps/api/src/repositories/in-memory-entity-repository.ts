@@ -91,7 +91,9 @@ export function createInMemoryEntityRepository<
       return paginateRecords(tenantRecords, limit, params.cursor);
     },
 
-    async findByField(params: FindByFieldParams): Promise<PaginatedResult<TRecord>> {
+    async findByField(
+      params: FindByFieldParams,
+    ): Promise<PaginatedResult<TRecord>> {
       const limit = normalizeLimit(params.limit);
       const tenantRecords = filterTenantRecords(store, params.tenantId).filter(
         (record) =>
