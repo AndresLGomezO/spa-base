@@ -595,4 +595,24 @@ packages/firestore-converters/src/{entity}/schema.latest.test.ts
 apps/api/src/routes/....test.ts                                     (if route added)
 ```
 
+---
+
+## Relation field indexes
+
+Foreign-key relation fields used for reverse lookups require composite indexes. Example for `orders.customerId`:
+
+```json
+{
+  "collectionGroup": "orders",
+  "fields": [
+    { "fieldPath": "customerId", "order": "ASCENDING" },
+    { "fieldPath": "id", "order": "ASCENDING" }
+  ]
+}
+```
+
+Add entries to [`firestore.indexes.json`](../firestore.indexes.json) at the repo root. Join collections use equality filters on `sourceEntity`, `sourceId`, `targetEntity`, and `targetId` — add indexes when query patterns require them.
+
+See [Relational Data System Guide](./relational-data-system-guide.md) for full relation storage and validation behavior.
+
 The User implementation remains the source of truth. When in doubt, read the User files side by side with this guide.

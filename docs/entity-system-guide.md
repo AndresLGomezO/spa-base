@@ -191,14 +191,14 @@ Use `registerEntity()` from `@repo/entities` today to prototype entity discovery
 
 Designed but **not implemented** in Workstream 1:
 
-| Feature                  | Extension mechanism                              |
-| ------------------------ | ------------------------------------------------ |
-| Relations / foreign keys | New field type + `FieldTypeRegistry` handler     |
-| Custom field types       | Same registry pattern                            |
-| Field-level permissions  | Extend `NormalizedFieldMeta`                     |
-| Dynamic UI config        | `EntityMetadata.ui` optional bag                 |
-| Enums                    | New field type or `string` + metadata constraint |
-| Query/filter engine      | New package consuming `metadata.fields`          |
+| Feature                  | Extension mechanism                              | Status |
+| ------------------------ | ------------------------------------------------ | ------ |
+| Relations / foreign keys | `type: "relation"` + `@repo/entity-relations`    | Done — see [Relational Data System Guide](./relational-data-system-guide.md) |
+| Custom field types       | `FieldTypeRegistry` pattern                      | Open   |
+| Field-level permissions  | Extend `NormalizedFieldMeta`                     | Open   |
+| Dynamic UI config        | `EntityMetadata.ui` optional bag                 | Open   |
+| Enums                    | New field type or `string` + metadata constraint | Open   |
+| Query/filter engine      | New package consuming `metadata.fields` + `findByField` | Planned (10.7) |
 
 Keep extensions in the field registry and metadata types — avoid changing `defineEntity` core logic for each new feature.
 
@@ -211,4 +211,5 @@ Keep extensions in the field registry and metadata types — avoid changing `def
 - [CRUD generator](../apps/api/src/crud/README.md) — design and extension points
 - [Business entities folder](../packages/shared-types/src/entities/README.md) — per-entity file template
 - [Firestore collections guide](./firestore-collections-guide.md) — persistence wiring
+- [Relational Data System Guide](./relational-data-system-guide.md) — Phase 2 relations
 - [General Definitions — Phase 1](../Ecosystem%20Plan/v1/General%20Definitions.md) — full platform scope

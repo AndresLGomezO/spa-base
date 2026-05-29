@@ -11,6 +11,18 @@ See: [@repo/entities README](../../../entities/README.md) · [Entity System Guid
 1. Create `src/entities/{entity}.ts` following the template below.
 2. Re-export from `src/index.ts` (entity, schemas, types, collection, permissions).
 3. Wire persistence in Workstream 3 (`@repo/firestore-converters`, `@repo/gcp-firebase`) using [Firestore collections guide](../../../../docs/firestore-collections-guide.md).
+4. Register the entity in `src/register-entities.ts` for relation validation.
+5. For relation fields, add Firestore composite indexes — see [Relational Data System Guide](../../../../docs/relational-data-system-guide.md).
+
+### Relation field example
+
+```ts
+customerId: {
+  type: "relation",
+  required: true,
+  relation: { target: "customer", type: "many-to-one", onDelete: "restrict" },
+},
+```
 
 ### File template
 
@@ -78,7 +90,7 @@ See `customer.ts` and `order.ts` for the live pattern. Converters live in `@repo
 | Entity   | Collection  | File          |
 | -------- | ----------- | ------------- |
 | Customer | `customers` | `customer.ts` |
-| Order    | `orders`    | `order.ts`    |
+| Order    | `orders`    | `order.ts` — includes `customerId` → `customer` |
 
 ---
 

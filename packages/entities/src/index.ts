@@ -18,6 +18,17 @@ export {
   type SystemFieldKey,
   type SystemFieldRecord,
 } from "./systemFields.js";
+export {
+  getForeignKeyRelationFields,
+  getJoinCollectionRelations,
+  getRelationFields,
+  getRelationOnDelete,
+  getRelationStorageStrategy,
+  resolveJoinCollectionName,
+  usesForeignKeyStorage,
+  type RelationFieldEntry,
+  type RelationStorageStrategy,
+} from "./relations/relationConfig.js";
 export type {
   BooleanFieldConfig,
   DateFieldConfig,
@@ -36,5 +47,9 @@ export type {
   NormalizedFieldMeta,
   NumberFieldConfig,
   Phase1FieldType,
+  RelationConfig,
+  RelationFieldConfig,
+  RelationOnDelete,
+  RelationType,
   StringFieldConfig,
 } from "./types.js";

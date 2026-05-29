@@ -1,7 +1,8 @@
 import { z } from "zod";
 
 import type { FieldSchemaBuilder } from "../fieldTypes.js";
-import type { FieldConfig } from "../types.js";
+import type { FieldConfig, RelationFieldConfig } from "../types.js";
+import { usesForeignKeyStorage } from "../relations/relationConfig.js";
 import { isoDatetimeStringSchema } from "./isoDatetime.js";
 
 function applyDefault(schema: z.ZodTypeAny, config: FieldConfig): z.ZodTypeAny {
@@ -65,11 +66,42 @@ const dateFieldBuilder: FieldSchemaBuilder = {
   },
 };
 
+function isForeignKeyRelationField(
+  config: FieldConfig,
+): config is RelationFieldConfig {
+  return (
+    config.type === "relation" && usesForeignKeyStorage(config.relation)
+  );
+}
+
+const relationFieldBuilder: FieldSchemaBuilder = {
+  buildCreateFieldSchema(config) {
+    if (!isForeignKeyRelationField(config)) {
+      return z.never().optional();
+    }
+
+    const base = z.string().trim().min(1);
+    return applyOptional(base, config);
+  },
+  buildFullFieldSchema(config) {
+    if (!isForeignKeyRelationField(config)) {
+      return z.never().optional();
+    }
+
+    const base = z.string().trim().min(1);
+    if (config.required === true) {
+      return base;
+    }
+    return base.optional();
+  },
+};
+
 export const defaultFieldTypeRegistry = {
   string: stringFieldBuilder,
   number: numberFieldBuilder,
   boolean: booleanFieldBuilder,
   date: dateFieldBuilder,
+  relation: relationFieldBuilder,
 } as const satisfies Record<FieldConfig["type"], FieldSchemaBuilder>;
 
 export function buildFieldSchema(

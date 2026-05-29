@@ -1,3 +1,11 @@
+export interface FindByFieldParams {
+  readonly tenantId: string;
+  readonly field: string;
+  readonly value: string;
+  readonly limit?: number;
+  readonly cursor?: string;
+}
+
 export interface ListParams {
   readonly tenantId: string;
   readonly limit?: number;
@@ -15,6 +23,7 @@ export interface TenantScopedEntityRepository<
 > {
   create(tenantId: string, record: TRecord): Promise<TRecord>;
   findAll(params: ListParams): Promise<PaginatedResult<TRecord>>;
+  findByField(params: FindByFieldParams): Promise<PaginatedResult<TRecord>>;
   findById(id: string, tenantId: string): Promise<TRecord | null>;
   update(id: string, tenantId: string, data: TUpdate): Promise<TRecord | null>;
   delete(id: string, tenantId: string): Promise<boolean>;

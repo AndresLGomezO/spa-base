@@ -2,18 +2,35 @@ import type {
   FieldConfig,
   FieldDefinitions,
   NormalizedFieldMeta,
+  RelationConfig,
 } from "../types.js";
+import { getRelationOnDelete } from "../relations/relationConfig.js";
 
 export function normalizeFieldMeta(config: FieldConfig): NormalizedFieldMeta {
   const hasDefault = "default" in config && config.default !== undefined;
-  const required = config.required === true && !hasDefault;
+  const required =
+    config.type === "relation"
+      ? (config.relation.required ?? config.required === true) && !hasDefault
+      : config.required === true && !hasDefault;
 
-  return {
+  const base: NormalizedFieldMeta = {
     type: config.type,
     required,
     optional: !required,
     ...(hasDefault ? { default: config.default } : {}),
   };
+
+  if (config.type === "relation") {
+    return {
+      ...base,
+      relation: {
+        ...config.relation,
+        onDelete: getRelationOnDelete(config.relation),
+      } satisfies RelationConfig,
+    };
+  }
+
+  return base;
 }
 
 export function buildFieldMetadata<TFields extends FieldDefinitions>(

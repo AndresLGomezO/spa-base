@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildRoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
@@ -122,6 +123,9 @@ vi.mock("@repo/gcp-firebase", () => ({
   })),
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
+  ),
+  createFirestoreAdminJoinCollectionRepository: vi.fn(() =>
+    createInMemoryJoinCollectionRepository(),
   ),
   createFirestoreAdminTenantRepository: vi.fn(() => tenantRepository),
 }));

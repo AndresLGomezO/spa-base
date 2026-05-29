@@ -1,5 +1,5 @@
 {
-  "name": "@repo/gcp-firebase",
+  "name": "@repo/entity-relations",
   "private": true,
   "type": "module",
   "scripts": {
@@ -10,12 +10,7 @@
     "validate": "pnpm run typecheck && pnpm run test && pnpm run lint && pnpm run format:check"
   },
   "exports": {
-    ".": "./src/index.ts",
-    "./env": "./src/env.ts",
-    "./auth": "./src/auth.ts",
-    "./app-check": "./src/app-check.ts",
-    "./firebase-admin": "./src/firebase-admin.ts",
-    "./firestore-admin-user-repository": "./src/firestore-admin-user-repository.ts"
+    ".": "./src/index.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -27,10 +22,8 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/entities": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
-    "@repo/shared-types": "workspace:*",
-    "firebase-admin": "catalog:",
-    "nanoid": "catalog:",
-    "zod": "catalog:"
+    "nanoid": "catalog:"
   }
 }

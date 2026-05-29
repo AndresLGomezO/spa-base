@@ -91,4 +91,24 @@ describe("createInMemoryEntityRepository", () => {
     expect(secondPage.items[0]?.id).toBe("3");
     expect(secondPage.nextCursor).toBeNull();
   });
+
+  it("finds records by field value within a tenant", async () => {
+    const repo = createInMemoryEntityRepository<
+      TestRecord & { readonly customerId?: string }
+    >({
+      initialData: [
+        { ...makeRecord("1", "tenant_a", "One"), customerId: "cust_1" },
+        { ...makeRecord("2", "tenant_a", "Two"), customerId: "cust_1" },
+        { ...makeRecord("3", "tenant_a", "Three"), customerId: "cust_2" },
+      ],
+    });
+
+    const matches = await repo.findByField({
+      tenantId: "tenant_a",
+      field: "customerId",
+      value: "cust_1",
+    });
+
+    expect(matches.items.map((record) => record.id)).toEqual(["1", "2"]);
+  });
 });

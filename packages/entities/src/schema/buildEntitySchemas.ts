@@ -7,7 +7,9 @@
 import { z } from "zod";
 
 import type { FieldTypeRegistry } from "../fieldTypes.js";
+import { usesForeignKeyStorage } from "../relations/relationConfig.js";
 import type {
+  FieldConfig,
   FieldDefinitions,
   InferCreate,
   InferEntity,
@@ -25,6 +27,14 @@ const systemFieldSchemas = {
   createdAt: isoDatetimeStringSchema,
   updatedAt: isoDatetimeStringSchema,
 } as const;
+
+function shouldIncludeFieldInSchema(fieldConfig: FieldConfig): boolean {
+  if (fieldConfig.type !== "relation") {
+    return true;
+  }
+
+  return usesForeignKeyStorage(fieldConfig.relation);
+}
 
 export interface EntitySchemas<TFields extends FieldDefinitions> {
   readonly schema: z.ZodType<InferEntity<TFields>>;
@@ -45,6 +55,10 @@ export function buildEntitySchemas<TFields extends FieldDefinitions>(
   const updateShape: Record<string, z.ZodTypeAny> = {};
 
   for (const [fieldName, fieldConfig] of userFieldEntries) {
+    if (!shouldIncludeFieldInSchema(fieldConfig)) {
+      continue;
+    }
+
     createShape[fieldName] = buildFieldSchema(fieldConfig, "create", registry);
     fullUserShape[fieldName] = buildFieldSchema(fieldConfig, "full", registry);
     updateShape[fieldName] = buildFieldSchema(

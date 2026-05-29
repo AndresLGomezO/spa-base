@@ -85,7 +85,10 @@ Developers must **not** define these in `fields`. TypeScript rejects configs tha
 | `string`  | `string`                | `z.string().trim()` (+ `.min(1)` if required) |
 | `number`  | `number`                | `z.number()`                                  |
 | `boolean` | `boolean`               | `z.boolean()`                                 |
-| `date`    | ISO datetime **string** | `isoDatetimeStringSchema`                     |
+| `date`     | ISO datetime **string** | `isoDatetimeStringSchema`                     |
+| `relation` | `string` (FK id)        | `z.string().trim().min(1)` for FK relations   |
+
+See [Relational Data System Guide](../../docs/relational-data-system-guide.md) for relation config (`target`, `type`, `onDelete`, join collections).
 
 **Date convention:** `type: "date"` stores ISO strings, not `Date` objects. This matches the User model and Firestore serialization. See [workaround](#dates-are-iso-strings-not-date-objects) below.
 

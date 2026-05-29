@@ -2,7 +2,29 @@ import type { z } from "zod";
 
 import type { SystemFieldKey, SystemFieldRecord } from "./systemFields.js";
 
-export type Phase1FieldType = "string" | "number" | "boolean" | "date";
+export type Phase1FieldType =
+  | "string"
+  | "number"
+  | "boolean"
+  | "date"
+  | "relation";
+
+export type RelationType =
+  | "one-to-one"
+  | "one-to-many"
+  | "many-to-one"
+  | "many-to-many";
+
+export type RelationOnDelete = "restrict" | "cascade" | "nullify";
+
+export interface RelationConfig {
+  readonly target: string;
+  readonly type: RelationType;
+  readonly inverse?: string;
+  readonly required?: boolean;
+  readonly onDelete?: RelationOnDelete;
+  readonly joinCollection?: string;
+}
 
 export interface StringFieldConfig {
   readonly type: "string";
@@ -28,11 +50,18 @@ export interface DateFieldConfig {
   readonly default?: string;
 }
 
+export interface RelationFieldConfig {
+  readonly type: "relation";
+  readonly required?: boolean;
+  readonly relation: RelationConfig;
+}
+
 export type FieldConfig =
   | StringFieldConfig
   | NumberFieldConfig
   | BooleanFieldConfig
-  | DateFieldConfig;
+  | DateFieldConfig
+  | RelationFieldConfig;
 
 export type FieldDefinitions = Readonly<Record<string, FieldConfig>>;
 
@@ -44,7 +73,9 @@ export type InferFieldValue<F extends FieldConfig> = F["type"] extends "string"
       ? boolean
       : F["type"] extends "date"
         ? string
-        : never;
+        : F["type"] extends "relation"
+          ? string
+          : never;
 
 type IsRequiredInEntity<F extends FieldConfig> = F extends { required: true }
   ? true
@@ -91,6 +122,7 @@ export interface NormalizedFieldMeta {
   readonly required: boolean;
   readonly optional: boolean;
   readonly default?: string | number | boolean;
+  readonly relation?: RelationConfig;
 }
 
 export interface EntityMetadata<

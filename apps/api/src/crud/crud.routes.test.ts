@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildRoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
@@ -85,6 +86,9 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
   ),
+  createFirestoreAdminJoinCollectionRepository: vi.fn(() =>
+    createInMemoryJoinCollectionRepository(),
+  ),
   createFirestoreAdminTenantRepository: vi.fn(() =>
     createInMemoryTenantRepository(),
   ),
@@ -108,6 +112,7 @@ async function buildTestServer(options: BuildTestServerOptions = {}) {
   return buildServer({
     logger: false,
     repositories: createInMemoryRepositories(),
+    joinRepository: createInMemoryJoinCollectionRepository(),
     getUserAccessProfile: async () => profile,
     getRoleCatalog: async () => buildRoleCatalog([]),
     skipPlatformRoleSeed: true,
@@ -271,8 +276,20 @@ describe("CRUD API", () => {
   });
 
   describe("Order", () => {
+    async function createCustomer(server: Awaited<ReturnType<typeof buildTestServer>>) {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Order Customer" },
+      });
+      expect(response.statusCode).toBe(201);
+      return response.json().data as { id: string };
+    }
+
     it("creates and validates order records", async () => {
       const server = await buildTestServer();
+      const customer = await createCustomer(server);
       const response = await server.inject({
         method: "POST",
         url: "/api/order",
@@ -280,6 +297,7 @@ describe("CRUD API", () => {
         payload: {
           orderNumber: "ORD-1001",
           total: 42.5,
+          customerId: customer.id,
         },
       });
 
@@ -287,6 +305,7 @@ describe("CRUD API", () => {
       expect(response.json().data).toMatchObject({
         orderNumber: "ORD-1001",
         total: 42.5,
+        customerId: customer.id,
         tenantId: "tenant_a",
         isFulfilled: false,
       });
@@ -303,6 +322,50 @@ describe("CRUD API", () => {
 
       expect(response.statusCode).toBe(400);
       expect(response.json().error.code).toBe("VALIDATION_ERROR");
+    });
+
+    it("rejects orders referencing missing customers", async () => {
+      const server = await buildTestServer();
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/order",
+        headers: authHeaders,
+        payload: {
+          orderNumber: "ORD-1003",
+          total: 10,
+          customerId: "missing_customer",
+        },
+      });
+
+      expect(response.statusCode).toBe(400);
+      expect(response.json().error.code).toBe("RELATION_NOT_FOUND");
+    });
+
+    it("blocks deleting a customer referenced by orders", async () => {
+      const server = await buildTestServer();
+      const customer = await createCustomer(server);
+      const orderResponse = await server.inject({
+        method: "POST",
+        url: "/api/order",
+        headers: authHeaders,
+        payload: {
+          orderNumber: "ORD-1004",
+          total: 15,
+          customerId: customer.id,
+        },
+      });
+      expect(orderResponse.statusCode).toBe(201);
+
+      const deleteResponse = await server.inject({
+        method: "DELETE",
+        url: `/api/customer/${customer.id}`,
+        headers: authHeaders,
+      });
+
+      expect(deleteResponse.statusCode).toBe(409);
+      expect(deleteResponse.json().error.code).toBe(
+        "RELATION_DELETE_RESTRICTED",
+      );
     });
   });
 

@@ -4,6 +4,7 @@ import type {
   FastifyRequest,
   preHandlerAsyncHookHandler,
 } from "fastify";
+import { RelationError } from "@repo/entity-relations";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
@@ -44,6 +45,13 @@ interface RegisterCrudRoutesOptions<
     readonly update?: preHandlerAsyncHookHandler;
     readonly delete?: preHandlerAsyncHookHandler;
   };
+  readonly relations?: {
+    readonly validateWrite: (
+      record: Record<string, unknown>,
+      mode: "create" | "update",
+    ) => Promise<void>;
+    readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
+  };
   readonly prefix?: string;
 }
 
@@ -69,6 +77,32 @@ function requireTenant(
   return tenantId;
 }
 
+function mapRelationErrorToResponse(
+  reply: FastifyReply,
+  error: RelationError,
+): void {
+  const statusCode =
+    error.code === "RELATION_DELETE_RESTRICTED" ? 409 : 400;
+
+  replyWithError(
+    reply,
+    statusCode,
+    error.code as ApiErrorCode,
+    error.message,
+  );
+}
+
+function handleRelationError(
+  reply: FastifyReply,
+  error: unknown,
+): boolean {
+  if (error instanceof RelationError) {
+    mapRelationErrorToResponse(reply, error);
+    return true;
+  }
+  return false;
+}
+
 export async function registerCrudRoutes<
   TRecord extends { readonly id: string; readonly tenantId: string },
   TUpdate,
@@ -76,7 +110,7 @@ export async function registerCrudRoutes<
   app: FastifyInstance,
   options: RegisterCrudRoutesOptions<TRecord, TUpdate>,
 ): Promise<void> {
-  const { entity, repository, authenticate, authorize } = options;
+  const { entity, repository, authenticate, authorize, relations } = options;
   const routePrefix = options.prefix ?? "/api";
   const basePath = `${routePrefix}/${entity.name}`;
   const listPreHandlers = [authenticate, authorize?.list ?? noopPreHandler];
@@ -179,12 +213,24 @@ export async function registerCrudRoutes<
       }
 
       try {
+        if (relations) {
+          await relations.validateWrite(
+            parsedRecord.data as Record<string, unknown>,
+            "create",
+          );
+        }
+
         const created = await repository.create(
           tenantId,
           parsedRecord.data as unknown as TRecord,
         );
         return reply.status(201).send(successEnvelope(created));
       } catch (error) {
+        const relationResponse = handleRelationError(reply, error);
+        if (relationResponse) {
+          return;
+        }
+
         const message =
           error instanceof Error ? error.message : "Failed to create record.";
         return replyWithError(
@@ -259,32 +305,55 @@ export async function registerCrudRoutes<
         );
       }
 
-      const updated = await repository.update(parsedParams.data.id, tenantId, {
-        ...(parsedBody.data as Record<string, unknown>),
-        updatedAt: now,
-      } as TUpdate);
+      try {
+        if (relations) {
+          await relations.validateWrite(
+            parsedRecord.data as Record<string, unknown>,
+            "update",
+          );
+        }
 
-      if (!updated) {
-        return replyWithError(
-          reply,
-          404,
-          ApiErrorCode.NOT_FOUND,
-          "Record not found.",
-        );
-      }
+        const updated = await repository.update(parsedParams.data.id, tenantId, {
+          ...(parsedBody.data as Record<string, unknown>),
+          updatedAt: now,
+        } as TUpdate);
 
-      const validated = parseOrFormatError(entity.schema, updated);
-      if (!validated.success) {
+        if (!updated) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "Record not found.",
+          );
+        }
+
+        const validated = parseOrFormatError(entity.schema, updated);
+        if (!validated.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Validation failed.",
+            validated.details,
+          );
+        }
+
+        return reply.send(successEnvelope(validated.data));
+      } catch (error) {
+        const relationResponse = handleRelationError(reply, error);
+        if (relationResponse) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Failed to update record.";
         return replyWithError(
           reply,
           400,
           ApiErrorCode.VALIDATION_ERROR,
-          "Validation failed.",
-          validated.details,
+          message,
         );
       }
-
-      return reply.send(successEnvelope(validated.data));
     },
   );
 
@@ -306,17 +375,37 @@ export async function registerCrudRoutes<
         );
       }
 
-      const deleted = await repository.delete(parsedParams.data.id, tenantId);
-      if (!deleted) {
+      try {
+        if (relations) {
+          await relations.beforeDelete(parsedParams.data.id, tenantId);
+        }
+
+        const deleted = await repository.delete(parsedParams.data.id, tenantId);
+        if (!deleted) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "Record not found.",
+          );
+        }
+
+        return reply.send(successEnvelope({ deleted: true }));
+      } catch (error) {
+        const relationResponse = handleRelationError(reply, error);
+        if (relationResponse) {
+          return;
+        }
+
+        const message =
+          error instanceof Error ? error.message : "Failed to delete record.";
         return replyWithError(
           reply,
-          404,
-          ApiErrorCode.NOT_FOUND,
-          "Record not found.",
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          message,
         );
       }
-
-      return reply.send(successEnvelope({ deleted: true }));
     },
   );
 }
