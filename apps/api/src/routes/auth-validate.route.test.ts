@@ -129,6 +129,7 @@ describe("GET /auth/validate", () => {
           "project.read",
           "inventoryItem.read",
           "entityDefinition.read",
+          "hook.read",
         ]),
         tenantId: "tenant_a",
         availableTenants: ["tenant_a"],

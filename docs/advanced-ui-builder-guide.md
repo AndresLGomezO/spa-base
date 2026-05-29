@@ -204,7 +204,7 @@ GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","val
 
 These replace the former Customer/Order pilot fixtures. New entities are added via modules listed in `apps/platform/app.config.ts` without rewriting the UI Builder.
 
-Tenant-specific models created in the Model Builder (`/settings/data-models`) appear in the same catalog and use the same `EntityTable` / `EntityForm` components. See [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md).
+Tenant-specific models created in the Model Builder (`/settings/data-models`) appear in the same catalog and use the same `EntityTable` / `EntityForm` components. Attach action-based hooks via `POST /api/hooks` (see [Hooks System Guide](./hooks-system-guide.md)).
 
 ---
 

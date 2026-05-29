@@ -30,6 +30,7 @@
   "dependencies": {
     "@repo/dynamic-entities": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
+    "@repo/hooks": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "firebase-admin": "catalog:",
     "nanoid": "catalog:",

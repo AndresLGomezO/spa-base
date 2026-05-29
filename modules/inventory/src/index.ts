@@ -67,11 +67,11 @@ export const inventoryModule = defineModule({
   ],
   hooks: [
     {
-      event: "organization.deleted",
+      event: "organization.afterDelete",
       handler: async (hookContext) => {
-        hookContext.services.logger?.info("organization.deleted hook", {
+        hookContext.services.logger?.info("organization.afterDelete hook", {
           entityName: hookContext.entityName,
-          recordId: hookContext.record.id,
+          recordId: hookContext.current.id,
         });
       },
     },

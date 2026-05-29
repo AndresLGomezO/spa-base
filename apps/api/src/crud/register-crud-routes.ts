@@ -14,9 +14,12 @@ import { nanoid } from "nanoid";
 import { z } from "zod";
 
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
+import { HookExecutionError } from "@repo/hooks";
 
 import type { RequestContext } from "../auth/request-context.js";
-import { emitEntityLifecycleHook } from "../modules/emit-entity-hooks.js";
+import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
+import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
+import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
 import { noopPreHandler } from "./noop-pre-handler.js";
 import { replyWithError, successEnvelope } from "./response.js";
@@ -97,6 +100,7 @@ interface RegisterCrudRoutesOptions<
   readonly queryEngine?: QueryEngine;
   readonly prefix?: string;
   readonly parametricEntityName?: boolean;
+  readonly crudHooks?: CrudHookDeps;
 }
 
 function getTenantId(request: FastifyRequest): string | null {
@@ -164,6 +168,26 @@ function mapQueryErrorToResponse(reply: FastifyReply, error: QueryError): void {
         : 400;
 
   replyWithError(reply, statusCode, error.code as ApiErrorCode, error.message);
+}
+
+function handleHookError(reply: FastifyReply, error: unknown): boolean {
+  if (error instanceof HookExecutionError) {
+    replyWithError(reply, 400, ApiErrorCode.VALIDATION_ERROR, error.message);
+    return true;
+  }
+  return false;
+}
+
+async function resolveHookServices(
+  request: FastifyRequest,
+  tenantId: string,
+  crudHooks: CrudHookDeps | undefined,
+) {
+  if (!crudHooks) {
+    return undefined;
+  }
+
+  return resolveCrudHookEntityServices(request, tenantId, crudHooks);
 }
 
 function handleQueryError(reply: FastifyReply, error: unknown): boolean {
@@ -491,44 +515,68 @@ export async function registerCrudRoutes<
       }
 
       const now = new Date().toISOString();
-      const parsedRecord = parseOrFormatError(activeEntity.schema, {
-        ...(parsedBody.data as Record<string, unknown>),
-        id: nanoid(),
-        tenantId,
-        createdAt: now,
-        updatedAt: now,
-      });
-
-      if (!parsedRecord.success) {
-        return replyWithError(
-          reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "Validation failed.",
-          parsedRecord.details,
-        );
-      }
+      const recordId = nanoid();
 
       try {
+        const entityServices = await resolveHookServices(
+          request,
+          tenantId,
+          options.crudHooks,
+        );
+
+        let currentData = await runEntityHooks(app, request, {
+          entityName: activeEntity.name,
+          phase: "before",
+          operation: "create",
+          current: {
+            ...(parsedBody.data as Record<string, unknown>),
+            id: recordId,
+            tenantId,
+            createdAt: now,
+            updatedAt: now,
+          },
+          ...(entityServices ? { entityServices } : {}),
+        });
+
+        const parsedRecord = parseOrFormatError(
+          activeEntity.schema,
+          currentData,
+        );
+        if (!parsedRecord.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Validation failed.",
+            parsedRecord.details,
+          );
+        }
+
+        currentData = parsedRecord.data as Record<string, unknown>;
+
         const relationHooks = resolveRelationHooks(options, activeEntity.name);
         if (relationHooks) {
-          await relationHooks.validateWrite(
-            parsedRecord.data as Record<string, unknown>,
-            "create",
-          );
+          await relationHooks.validateWrite(currentData, "create");
         }
 
         const created = await activeRepository.create(
           tenantId,
-          parsedRecord.data as unknown as TRecord,
+          currentData as unknown as TRecord,
         );
-        await emitEntityLifecycleHook(app, request, {
-          event: "created",
+
+        await runEntityHooks(app, request, {
           entityName: activeEntity.name,
-          record: created as unknown as Record<string, unknown>,
+          phase: "after",
+          operation: "create",
+          current: created as unknown as Record<string, unknown>,
+          ...(entityServices ? { entityServices } : {}),
         });
+
         return reply.status(201).send(successEnvelope(created));
       } catch (error) {
+        if (handleHookError(reply, error)) {
+          return;
+        }
         const relationResponse = handleRelationError(reply, error);
         if (relationResponse) {
           return;
@@ -629,26 +677,42 @@ export async function registerCrudRoutes<
       }
 
       const now = new Date().toISOString();
-      const merged = {
-        ...existing,
+      const existingRecord = existing as unknown as Record<string, unknown>;
+      let merged: Record<string, unknown> = {
+        ...existingRecord,
         ...(parsedBody.data as Record<string, unknown>),
         id: existing.id,
         tenantId: existing.tenantId,
         updatedAt: now,
       };
 
-      const parsedRecord = parseOrFormatError(activeEntity.schema, merged);
-      if (!parsedRecord.success) {
-        return replyWithError(
-          reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "Validation failed.",
-          parsedRecord.details,
-        );
-      }
-
       try {
+        const entityServices = await resolveHookServices(
+          request,
+          tenantId,
+          options.crudHooks,
+        );
+
+        merged = await runEntityHooks(app, request, {
+          entityName: activeEntity.name,
+          phase: "before",
+          operation: "update",
+          current: merged,
+          previous: existingRecord,
+          ...(entityServices ? { entityServices } : {}),
+        });
+
+        const parsedRecord = parseOrFormatError(activeEntity.schema, merged);
+        if (!parsedRecord.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Validation failed.",
+            parsedRecord.details,
+          );
+        }
+
         const relationHooks = resolveRelationHooks(options, activeEntity.name);
         if (relationHooks) {
           await relationHooks.validateWrite(
@@ -657,10 +721,18 @@ export async function registerCrudRoutes<
           );
         }
 
-        const updated = await activeRepository.update(recordId, tenantId, {
-          ...(parsedBody.data as Record<string, unknown>),
-          updatedAt: now,
-        } as TUpdate);
+        const updatePayload = {
+          ...(parsedRecord.data as Record<string, unknown>),
+        };
+        delete updatePayload.id;
+        delete updatePayload.tenantId;
+        delete updatePayload.createdAt;
+
+        const updated = await activeRepository.update(
+          recordId,
+          tenantId,
+          updatePayload as TUpdate,
+        );
 
         if (!updated) {
           return replyWithError(
@@ -682,14 +754,20 @@ export async function registerCrudRoutes<
           );
         }
 
-        await emitEntityLifecycleHook(app, request, {
-          event: "updated",
+        await runEntityHooks(app, request, {
           entityName: activeEntity.name,
-          record: validated.data as Record<string, unknown>,
+          phase: "after",
+          operation: "update",
+          current: validated.data as Record<string, unknown>,
+          previous: existingRecord,
+          ...(entityServices ? { entityServices } : {}),
         });
 
         return reply.send(successEnvelope(validated.data));
       } catch (error) {
+        if (handleHookError(reply, error)) {
+          return;
+        }
         const relationResponse = handleRelationError(reply, error);
         if (relationResponse) {
           return;
@@ -767,11 +845,35 @@ export async function registerCrudRoutes<
 
       try {
         const existing = await activeRepository.findById(recordId, tenantId);
+        if (!existing) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "Record not found.",
+          );
+        }
+
+        const existingRecord = existing as unknown as Record<string, unknown>;
+        const entityServices = await resolveHookServices(
+          request,
+          tenantId,
+          options.crudHooks,
+        );
 
         const relationHooks = resolveRelationHooks(options, activeEntity.name);
         if (relationHooks) {
           await relationHooks.beforeDelete(recordId, tenantId);
         }
+
+        await runEntityHooks(app, request, {
+          entityName: activeEntity.name,
+          phase: "before",
+          operation: "delete",
+          current: existingRecord,
+          previous: existingRecord,
+          ...(entityServices ? { entityServices } : {}),
+        });
 
         const deleted = await activeRepository.delete(recordId, tenantId);
         if (!deleted) {
@@ -783,16 +885,20 @@ export async function registerCrudRoutes<
           );
         }
 
-        if (existing) {
-          await emitEntityLifecycleHook(app, request, {
-            event: "deleted",
-            entityName: activeEntity.name,
-            record: existing as unknown as Record<string, unknown>,
-          });
-        }
+        await runEntityHooks(app, request, {
+          entityName: activeEntity.name,
+          phase: "after",
+          operation: "delete",
+          current: existingRecord,
+          previous: existingRecord,
+          ...(entityServices ? { entityServices } : {}),
+        });
 
         return reply.send(successEnvelope({ deleted: true }));
       } catch (error) {
+        if (handleHookError(reply, error)) {
+          return;
+        }
         const relationResponse = handleRelationError(reply, error);
         if (relationResponse) {
           return;

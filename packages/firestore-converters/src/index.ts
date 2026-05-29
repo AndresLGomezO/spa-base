@@ -68,6 +68,8 @@ export {
 } from "./tenant/repository-contract.js";
 export { type EntityDefinitionRepository } from "./entity-definition/repository-contract.js";
 export { createInMemoryEntityDefinitionRepository } from "./entity-definition/in-memory-repository.js";
+export { type HookRepository } from "./hook/repository-contract.js";
+export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

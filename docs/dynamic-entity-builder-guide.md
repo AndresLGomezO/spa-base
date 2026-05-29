@@ -64,7 +64,7 @@ Entity **data** uses the same tenant path pattern as static entities (`tenants/{
 | `entityDefinition.create` | Create new models |
 | `entityDefinition.update` | Patch models (add optional fields, UI metadata) |
 
-Each dynamic entity also exposes standard CRUD permissions (`{name}.read`, `{name}.create`, …). Tenant admins with the `admin` role (`*` grant) receive all permissions automatically.
+Each dynamic entity also exposes standard CRUD permissions (`{name}.read`, `{name}.create`, …). Attach action-based hooks via `POST /api/hooks` targeting `{entity}.beforeCreate` etc.
 
 Platform superadmins can manage definitions for any tenant via `tenantId` query/body on the definition API and `/settings/admin/data-models`.
 
@@ -162,5 +162,6 @@ const entities = getEntitiesForTenant(tenantId);
 ## Related guides
 
 - [Entity System Guide](./entity-system-guide.md) — static vs dynamic entities
+- [Hooks System Guide](./hooks-system-guide.md)
 - [Module Extension Guide](./module-extension-guide.md) — compile-time modules complement runtime models
 - [Advanced UI Builder Guide](./advanced-ui-builder-guide.md) — catalog-driven UI for dynamic entities
