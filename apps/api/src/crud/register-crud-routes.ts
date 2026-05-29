@@ -28,7 +28,12 @@ const listQuerySchema = z.object({
   query: z.string().trim().min(1).optional(),
 });
 
-const idParamsSchema = z.object({
+const entityNameParamsSchema = z.object({
+  entityName: z.string().trim().min(1),
+});
+
+const idAndEntityParamsSchema = z.object({
+  entityName: z.string().trim().min(1),
   id: z.string().trim().min(1),
 });
 
@@ -39,12 +44,28 @@ interface CrudEntityDefinition {
   readonly updateSchema: z.ZodTypeAny;
 }
 
+type EntityResolver = (
+  tenantId: string,
+  entityName?: string,
+) => CrudEntityDefinition | null;
+
+type RepositoryResolver<
+  TRecord extends { readonly id: string; readonly tenantId: string },
+  TUpdate,
+> = (
+  tenantId: string,
+  entityName?: string,
+) => TenantScopedEntityRepository<TRecord, TUpdate> | null;
+
 interface RegisterCrudRoutesOptions<
   TRecord extends { readonly id: string; readonly tenantId: string },
   TUpdate,
 > {
-  readonly entity: CrudEntityDefinition;
-  readonly repository: TenantScopedEntityRepository<TRecord, TUpdate>;
+  readonly entityName?: string;
+  readonly entity: CrudEntityDefinition | EntityResolver;
+  readonly repository:
+    | TenantScopedEntityRepository<TRecord, TUpdate>
+    | RepositoryResolver<TRecord, TUpdate>;
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly authorize?: {
     readonly list?: preHandlerAsyncHookHandler;
@@ -53,15 +74,29 @@ interface RegisterCrudRoutesOptions<
     readonly update?: preHandlerAsyncHookHandler;
     readonly delete?: preHandlerAsyncHookHandler;
   };
-  readonly relations?: {
-    readonly validateWrite: (
-      record: Record<string, unknown>,
-      mode: "create" | "update",
-    ) => Promise<void>;
-    readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
-  };
+  readonly relations?:
+    | {
+        readonly validateWrite: (
+          record: Record<string, unknown>,
+          mode: "create" | "update",
+        ) => Promise<void>;
+        readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
+      }
+    | ((entityName: string) =>
+        | {
+            readonly validateWrite: (
+              record: Record<string, unknown>,
+              mode: "create" | "update",
+            ) => Promise<void>;
+            readonly beforeDelete: (
+              id: string,
+              tenantId: string,
+            ) => Promise<void>;
+          }
+        | undefined);
   readonly queryEngine?: QueryEngine;
   readonly prefix?: string;
+  readonly parametricEntityName?: boolean;
 }
 
 function getTenantId(request: FastifyRequest): string | null {
@@ -139,6 +174,80 @@ function handleQueryError(reply: FastifyReply, error: unknown): boolean {
   return false;
 }
 
+function resolveRouteEntityName(
+  options: Pick<
+    RegisterCrudRoutesOptions<never, never>,
+    "entity" | "entityName"
+  >,
+): string {
+  if (options.entityName) {
+    return options.entityName;
+  }
+  if (typeof options.entity === "function") {
+    throw new Error("entityName is required when entity is tenant-aware.");
+  }
+  return options.entity.name;
+}
+
+function resolveCrudRuntime<
+  TRecord extends { readonly id: string; readonly tenantId: string },
+  TUpdate,
+>(
+  options: Pick<
+    RegisterCrudRoutesOptions<TRecord, TUpdate>,
+    "entity" | "repository"
+  >,
+  tenantId: string,
+  entityName?: string,
+): {
+  readonly entity: CrudEntityDefinition;
+  readonly repository: TenantScopedEntityRepository<TRecord, TUpdate>;
+} | null {
+  const entity =
+    typeof options.entity === "function"
+      ? options.entity(tenantId, entityName)
+      : options.entity;
+  if (!entity) {
+    return null;
+  }
+
+  const repository =
+    typeof options.repository === "function"
+      ? options.repository(tenantId, entityName)
+      : options.repository;
+  if (!repository) {
+    return null;
+  }
+
+  return { entity, repository };
+}
+
+function resolveRelationHooks<
+  TRecord extends { readonly id: string; readonly tenantId: string },
+  TUpdate,
+>(
+  options: Pick<RegisterCrudRoutesOptions<TRecord, TUpdate>, "relations">,
+  entityName: string,
+):
+  | {
+      readonly validateWrite: (
+        record: Record<string, unknown>,
+        mode: "create" | "update",
+      ) => Promise<void>;
+      readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
+    }
+  | undefined {
+  if (!options.relations) {
+    return undefined;
+  }
+
+  if (typeof options.relations === "function") {
+    return options.relations(entityName);
+  }
+
+  return options.relations;
+}
+
 export async function registerCrudRoutes<
   TRecord extends { readonly id: string; readonly tenantId: string },
   TUpdate,
@@ -146,16 +255,12 @@ export async function registerCrudRoutes<
   app: FastifyInstance,
   options: RegisterCrudRoutesOptions<TRecord, TUpdate>,
 ): Promise<void> {
-  const {
-    entity,
-    repository,
-    authenticate,
-    authorize,
-    relations,
-    queryEngine,
-  } = options;
+  const { entity, repository, authenticate, authorize, queryEngine } = options;
   const routePrefix = options.prefix ?? "/api";
-  const basePath = `${routePrefix}/${entity.name}`;
+  const routeEntityName = resolveRouteEntityName(options);
+  const basePath = options.parametricEntityName
+    ? `${routePrefix}/:entityName`
+    : `${routePrefix}/${routeEntityName}`;
   const listPreHandlers = [authenticate, authorize?.list ?? noopPreHandler];
   const getPreHandlers = [authenticate, authorize?.get ?? noopPreHandler];
   const createPreHandlers = [authenticate, authorize?.create ?? noopPreHandler];
@@ -165,6 +270,40 @@ export async function registerCrudRoutes<
   app.get(basePath, { preHandler: listPreHandlers }, async (request, reply) => {
     const tenantId = requireTenant(request, reply);
     if (!tenantId) return;
+
+    let entityName: string | undefined;
+    if (options.parametricEntityName) {
+      const parsedParams = parseOrFormatError(
+        entityNameParamsSchema,
+        request.params,
+      );
+      if (!parsedParams.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid path parameters.",
+          parsedParams.details,
+        );
+      }
+      entityName = parsedParams.data.entityName;
+    }
+
+    const runtime = resolveCrudRuntime(
+      { entity, repository },
+      tenantId,
+      entityName,
+    );
+    if (!runtime) {
+      return replyWithError(
+        reply,
+        404,
+        ApiErrorCode.NOT_FOUND,
+        "Entity not found.",
+      );
+    }
+    const activeEntity = runtime.entity;
+    const activeRepository = runtime.repository;
 
     const parsedQuery = parseOrFormatError(listQuerySchema, request.query);
     if (!parsedQuery.success) {
@@ -180,7 +319,7 @@ export async function registerCrudRoutes<
     try {
       if (queryEngine && request.ctx) {
         const result = await queryEngine.find(
-          entity.name,
+          activeEntity.name,
           parseListQueryInput(parsedQuery.data),
           buildQueryContext(request.ctx, tenantId),
         );
@@ -193,7 +332,7 @@ export async function registerCrudRoutes<
         );
       }
 
-      const result = await repository.findAll({
+      const result = await activeRepository.findAll({
         tenantId,
         limit: parsedQuery.data.limit,
         cursor: parsedQuery.data.cursor,
@@ -215,31 +354,68 @@ export async function registerCrudRoutes<
       const tenantId = requireTenant(request, reply);
       if (!tenantId) return;
 
-      const parsedParams = parseOrFormatError(idParamsSchema, request.params);
-      if (!parsedParams.success) {
+      let entityName: string | undefined;
+      let recordId: string;
+      if (options.parametricEntityName) {
+        const parsedParams = parseOrFormatError(
+          idAndEntityParamsSchema,
+          request.params,
+        );
+        if (!parsedParams.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Invalid path parameters.",
+            parsedParams.details,
+          );
+        }
+        entityName = parsedParams.data.entityName;
+        recordId = parsedParams.data.id;
+      } else {
+        const parsedParams = parseOrFormatError(
+          z.object({ id: z.string().trim().min(1) }),
+          request.params,
+        );
+        if (!parsedParams.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Invalid path parameters.",
+            parsedParams.details,
+          );
+        }
+        recordId = parsedParams.data.id;
+      }
+
+      const runtime = resolveCrudRuntime(
+        { entity, repository },
+        tenantId,
+        entityName,
+      );
+      if (!runtime) {
         return replyWithError(
           reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "Invalid path parameters.",
-          parsedParams.details,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Entity not found.",
         );
       }
+      const activeEntity = runtime.entity;
+      const activeRepository = runtime.repository;
 
       try {
         if (queryEngine && request.ctx) {
           const record = await queryEngine.findOne(
-            entity.name,
-            parsedParams.data.id,
+            activeEntity.name,
+            recordId,
             buildQueryContext(request.ctx, tenantId),
           );
           return reply.send(successEnvelope(record));
         }
 
-        const record = await repository.findById(
-          parsedParams.data.id,
-          tenantId,
-        );
+        const record = await activeRepository.findById(recordId, tenantId);
         if (!record) {
           return replyWithError(
             reply,
@@ -266,7 +442,44 @@ export async function registerCrudRoutes<
       const tenantId = requireTenant(request, reply);
       if (!tenantId) return;
 
-      const parsedBody = parseOrFormatError(entity.createSchema, request.body);
+      let entityName: string | undefined;
+      if (options.parametricEntityName) {
+        const parsedParams = parseOrFormatError(
+          entityNameParamsSchema,
+          request.params,
+        );
+        if (!parsedParams.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Invalid path parameters.",
+            parsedParams.details,
+          );
+        }
+        entityName = parsedParams.data.entityName;
+      }
+
+      const runtime = resolveCrudRuntime(
+        { entity, repository },
+        tenantId,
+        entityName,
+      );
+      if (!runtime) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Entity not found.",
+        );
+      }
+      const activeEntity = runtime.entity;
+      const activeRepository = runtime.repository;
+
+      const parsedBody = parseOrFormatError(
+        activeEntity.createSchema,
+        request.body,
+      );
       if (!parsedBody.success) {
         return replyWithError(
           reply,
@@ -278,7 +491,7 @@ export async function registerCrudRoutes<
       }
 
       const now = new Date().toISOString();
-      const parsedRecord = parseOrFormatError(entity.schema, {
+      const parsedRecord = parseOrFormatError(activeEntity.schema, {
         ...(parsedBody.data as Record<string, unknown>),
         id: nanoid(),
         tenantId,
@@ -297,20 +510,21 @@ export async function registerCrudRoutes<
       }
 
       try {
-        if (relations) {
-          await relations.validateWrite(
+        const relationHooks = resolveRelationHooks(options, activeEntity.name);
+        if (relationHooks) {
+          await relationHooks.validateWrite(
             parsedRecord.data as Record<string, unknown>,
             "create",
           );
         }
 
-        const created = await repository.create(
+        const created = await activeRepository.create(
           tenantId,
           parsedRecord.data as unknown as TRecord,
         );
         await emitEntityLifecycleHook(app, request, {
           event: "created",
-          entityName: entity.name,
+          entityName: activeEntity.name,
           record: created as unknown as Record<string, unknown>,
         });
         return reply.status(201).send(successEnvelope(created));
@@ -339,18 +553,61 @@ export async function registerCrudRoutes<
       const tenantId = requireTenant(request, reply);
       if (!tenantId) return;
 
-      const parsedParams = parseOrFormatError(idParamsSchema, request.params);
-      if (!parsedParams.success) {
-        return replyWithError(
-          reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "Invalid path parameters.",
-          parsedParams.details,
+      let entityName: string | undefined;
+      let recordId: string;
+      if (options.parametricEntityName) {
+        const parsedPathParams = parseOrFormatError(
+          idAndEntityParamsSchema,
+          request.params,
         );
+        if (!parsedPathParams.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Invalid path parameters.",
+            parsedPathParams.details,
+          );
+        }
+        entityName = parsedPathParams.data.entityName;
+        recordId = parsedPathParams.data.id;
+      } else {
+        const parsedPathParams = parseOrFormatError(
+          z.object({ id: z.string().trim().min(1) }),
+          request.params,
+        );
+        if (!parsedPathParams.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Invalid path parameters.",
+            parsedPathParams.details,
+          );
+        }
+        recordId = parsedPathParams.data.id;
       }
 
-      const parsedBody = parseOrFormatError(entity.updateSchema, request.body);
+      const runtime = resolveCrudRuntime(
+        { entity, repository },
+        tenantId,
+        entityName,
+      );
+      if (!runtime) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Entity not found.",
+        );
+      }
+      const activeEntity = runtime.entity;
+      const activeRepository = runtime.repository;
+
+      const parsedBody = parseOrFormatError(
+        activeEntity.updateSchema,
+        request.body,
+      );
       if (!parsedBody.success) {
         return replyWithError(
           reply,
@@ -361,10 +618,7 @@ export async function registerCrudRoutes<
         );
       }
 
-      const existing = await repository.findById(
-        parsedParams.data.id,
-        tenantId,
-      );
+      const existing = await activeRepository.findById(recordId, tenantId);
       if (!existing) {
         return replyWithError(
           reply,
@@ -383,7 +637,7 @@ export async function registerCrudRoutes<
         updatedAt: now,
       };
 
-      const parsedRecord = parseOrFormatError(entity.schema, merged);
+      const parsedRecord = parseOrFormatError(activeEntity.schema, merged);
       if (!parsedRecord.success) {
         return replyWithError(
           reply,
@@ -395,21 +649,18 @@ export async function registerCrudRoutes<
       }
 
       try {
-        if (relations) {
-          await relations.validateWrite(
+        const relationHooks = resolveRelationHooks(options, activeEntity.name);
+        if (relationHooks) {
+          await relationHooks.validateWrite(
             parsedRecord.data as Record<string, unknown>,
             "update",
           );
         }
 
-        const updated = await repository.update(
-          parsedParams.data.id,
-          tenantId,
-          {
-            ...(parsedBody.data as Record<string, unknown>),
-            updatedAt: now,
-          } as TUpdate,
-        );
+        const updated = await activeRepository.update(recordId, tenantId, {
+          ...(parsedBody.data as Record<string, unknown>),
+          updatedAt: now,
+        } as TUpdate);
 
         if (!updated) {
           return replyWithError(
@@ -420,7 +671,7 @@ export async function registerCrudRoutes<
           );
         }
 
-        const validated = parseOrFormatError(entity.schema, updated);
+        const validated = parseOrFormatError(activeEntity.schema, updated);
         if (!validated.success) {
           return replyWithError(
             reply,
@@ -433,7 +684,7 @@ export async function registerCrudRoutes<
 
         await emitEntityLifecycleHook(app, request, {
           event: "updated",
-          entityName: entity.name,
+          entityName: activeEntity.name,
           record: validated.data as Record<string, unknown>,
         });
 
@@ -463,28 +714,66 @@ export async function registerCrudRoutes<
       const tenantId = requireTenant(request, reply);
       if (!tenantId) return;
 
-      const parsedParams = parseOrFormatError(idParamsSchema, request.params);
-      if (!parsedParams.success) {
-        return replyWithError(
-          reply,
-          400,
-          ApiErrorCode.VALIDATION_ERROR,
-          "Invalid path parameters.",
-          parsedParams.details,
+      let entityName: string | undefined;
+      let recordId: string;
+      if (options.parametricEntityName) {
+        const parsedPathParams = parseOrFormatError(
+          idAndEntityParamsSchema,
+          request.params,
         );
+        if (!parsedPathParams.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Invalid path parameters.",
+            parsedPathParams.details,
+          );
+        }
+        entityName = parsedPathParams.data.entityName;
+        recordId = parsedPathParams.data.id;
+      } else {
+        const parsedPathParams = parseOrFormatError(
+          z.object({ id: z.string().trim().min(1) }),
+          request.params,
+        );
+        if (!parsedPathParams.success) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            "Invalid path parameters.",
+            parsedPathParams.details,
+          );
+        }
+        recordId = parsedPathParams.data.id;
       }
 
-      try {
-        const existing = await repository.findById(
-          parsedParams.data.id,
-          tenantId,
+      const runtime = resolveCrudRuntime(
+        { entity, repository },
+        tenantId,
+        entityName,
+      );
+      if (!runtime) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Entity not found.",
         );
+      }
+      const activeEntity = runtime.entity;
+      const activeRepository = runtime.repository;
 
-        if (relations) {
-          await relations.beforeDelete(parsedParams.data.id, tenantId);
+      try {
+        const existing = await activeRepository.findById(recordId, tenantId);
+
+        const relationHooks = resolveRelationHooks(options, activeEntity.name);
+        if (relationHooks) {
+          await relationHooks.beforeDelete(recordId, tenantId);
         }
 
-        const deleted = await repository.delete(parsedParams.data.id, tenantId);
+        const deleted = await activeRepository.delete(recordId, tenantId);
         if (!deleted) {
           return replyWithError(
             reply,
@@ -497,7 +786,7 @@ export async function registerCrudRoutes<
         if (existing) {
           await emitEntityLifecycleHook(app, request, {
             event: "deleted",
-            entityName: entity.name,
+            entityName: activeEntity.name,
             record: existing as unknown as Record<string, unknown>,
           });
         }

@@ -43,6 +43,16 @@ export default function SettingsAdminRoute() {
         <Heading level={2}>{t("admin.users.title")}</Heading>
         <UserRoleManager />
       </section>
+      <section className="flex flex-col gap-3">
+        <Heading level={2}>{t("dataModels.title")}</Heading>
+        <Text>{t("dataModels.adminDescription")}</Text>
+        <Link
+          to="/settings/admin/data-models"
+          className="text-primary underline"
+        >
+          {t("dataModels.openAdminBuilder")}
+        </Link>
+      </section>
       <Text>
         <Link to="/" className="text-primary underline">
           {t("nav.home")}

@@ -55,6 +55,7 @@ export type {
 export type {
   BooleanFieldConfig,
   DateFieldConfig,
+  EnumFieldConfig,
   DefinedEntity,
   EntityConfig,
   EntityMetadata,

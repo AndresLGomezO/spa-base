@@ -3,11 +3,14 @@ import Fastify from "fastify";
 
 import { getAllEntities } from "@repo/entities";
 import type {
+  EntityDefinitionRepository,
   EntityQueryExecutor,
   JoinCollectionRepository,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
+import { createInMemoryEntityDefinitionRepository } from "@repo/firestore-converters";
 import {
+  createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
@@ -22,16 +25,19 @@ import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
 import { createEntityRuntimeMaps } from "./entities/create-entity-runtime-maps.js";
+import {
+  createEntityRuntimeContext,
+  type EntityRuntimeContext,
+} from "./entities/entity-runtime-context.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
+import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import { registerModuleRoutes } from "./modules/register-module-routes.js";
-import { createQueryRuntimeContext } from "./query/create-query-services.js";
 import {
   createEntityPermissionGuards,
   createLoadRequestPermissionsDeps,
   type LoadRequestPermissionsDeps,
 } from "./rbac/index.js";
 import { createRoleCatalogLoader } from "./rbac/role-catalog.js";
-import { createRelationRuntimeContext } from "./relations/create-relation-services.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
@@ -46,12 +52,39 @@ interface BuildServerOptions {
   >;
   readonly joinRepository?: JoinCollectionRepository;
   readonly queryExecutors?: Record<string, EntityQueryExecutor>;
+  readonly entityDefinitionRepository?: EntityDefinitionRepository;
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
   readonly getRoleCatalog?: () => Promise<RoleCatalog>;
   readonly skipPlatformRoleSeed?: boolean;
   readonly skipPlatformTenantSeed?: boolean;
+}
+
+function buildPermissionDeps(
+  options: BuildServerOptions,
+  registeredUserRepository: ReturnType<
+    typeof createFirestoreAdminRegisteredUserRepository
+  >,
+  loadRoleCatalog: () => Promise<RoleCatalog>,
+  entityRuntime: EntityRuntimeContext,
+): LoadRequestPermissionsDeps {
+  const baseDeps =
+    options.getUserAccessProfile != null
+      ? {
+          getUserAccessProfile: options.getUserAccessProfile,
+          getRoleCatalog: loadRoleCatalog,
+        }
+      : createLoadRequestPermissionsDeps(
+          registeredUserRepository,
+          loadRoleCatalog,
+        );
+
+  return {
+    ...baseDeps,
+    getKnownPermissions: (tenantId) =>
+      entityRuntime.getKnownPermissions(tenantId),
+  };
 }
 
 export async function buildServer(options: BuildServerOptions = {}) {
@@ -92,16 +125,35 @@ export async function buildServer(options: BuildServerOptions = {}) {
   const loadRoleCatalog =
     options.getRoleCatalog ?? createRoleCatalogLoader(platformRoleRepository);
 
-  const permissionDeps: LoadRequestPermissionsDeps =
-    options.getUserAccessProfile
-      ? {
-          getUserAccessProfile: options.getUserAccessProfile,
-          getRoleCatalog: loadRoleCatalog,
-        }
-      : createLoadRequestPermissionsDeps(
-          registeredUserRepository,
-          loadRoleCatalog,
-        );
+  const entityDefinitionRepository =
+    options.entityDefinitionRepository ??
+    (options.repositories
+      ? createInMemoryEntityDefinitionRepository()
+      : createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig));
+
+  const entityRuntime = createEntityRuntimeContext({
+    firebaseAdminConfig,
+    entityDefinitionRepository,
+    repositories: options.repositories,
+    queryExecutors: options.queryExecutors,
+  });
+
+  const permissionDeps = buildPermissionDeps(
+    options,
+    registeredUserRepository,
+    loadRoleCatalog,
+    entityRuntime,
+  );
+
+  const runtimeMaps = createEntityRuntimeMaps(firebaseAdminConfig, {
+    repositories: options.repositories,
+    queryExecutors: options.queryExecutors,
+  });
+  const joinRepository =
+    options.joinRepository ??
+    createFirestoreAdminJoinCollectionRepository(firebaseAdminConfig);
+  const relationContext = entityRuntime.createRelationContext(joinRepository);
+  const queryContext = entityRuntime.createQueryContext();
 
   await server.register(authValidateRoute, {
     firebaseAdminConfig,
@@ -120,22 +172,17 @@ export async function buildServer(options: BuildServerOptions = {}) {
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
-  const runtimeMaps = createEntityRuntimeMaps(firebaseAdminConfig, {
-    repositories: options.repositories,
-    queryExecutors: options.queryExecutors,
-  });
-  const joinRepository =
-    options.joinRepository ??
-    createFirestoreAdminJoinCollectionRepository(firebaseAdminConfig);
-  const relationContext = createRelationRuntimeContext(
-    runtimeMaps.repositories,
-    joinRepository,
-  );
-  const queryContext = createQueryRuntimeContext(runtimeMaps.queryExecutors);
 
   await registerListEntitiesRoute(server, {
     authenticate,
     permissionDeps,
+    entityRuntime,
+  });
+
+  await registerEntityDefinitionRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
   });
 
   await registerModuleRoutes(server, {
@@ -157,6 +204,22 @@ export async function buildServer(options: BuildServerOptions = {}) {
       relations: relationContext.hooksFor(entity.name),
       queryEngine: queryContext.queryEngine,
     });
+  }
+
+  await entityRuntime.registerDynamicEntityCrudRoutes(
+    server,
+    authenticate,
+    permissionDeps,
+    queryContext.queryEngine,
+    relationContext,
+  );
+
+  const dynamicDefinitions =
+    options.repositories != null
+      ? await entityDefinitionRepository.list("tenant_dev_1")
+      : [];
+  for (const record of dynamicDefinitions) {
+    await entityRuntime.syncDefinition(record);
   }
 
   return server;

@@ -1,3 +1,7 @@
+import {
+  ENTITY_DEFINITION_PERMISSIONS,
+  getDynamicPermissionsForTenant,
+} from "@repo/dynamic-entities";
 import { getAllEntities } from "@repo/entities";
 
 const FALLBACK_PERMISSIONS = [
@@ -11,14 +15,18 @@ const FALLBACK_PERMISSIONS = [
   "project.delete",
 ] as const;
 
-export function getAllKnownPermissions(): readonly string[] {
-  const permissions = getAllEntities().flatMap(
+export function getAllKnownPermissions(tenantId?: string): readonly string[] {
+  const staticPermissions = getAllEntities().flatMap(
     (entity) => entity.metadata.permissions,
   );
-  if (permissions.length > 0) {
-    return [...new Set(permissions)];
-  }
-  return [...FALLBACK_PERMISSIONS];
+  const permissions = [
+    ...(staticPermissions.length > 0
+      ? staticPermissions
+      : [...FALLBACK_PERMISSIONS]),
+    ...ENTITY_DEFINITION_PERMISSIONS,
+    ...(tenantId ? getDynamicPermissionsForTenant(tenantId) : []),
+  ];
+  return [...new Set(permissions)];
 }
 
 /** @deprecated Prefer getAllKnownPermissions() after platform bootstrap. */

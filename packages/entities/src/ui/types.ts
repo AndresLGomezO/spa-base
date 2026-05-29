@@ -3,7 +3,8 @@ export type FieldComponentType =
   | "number"
   | "toggle"
   | "date"
-  | "relation";
+  | "relation"
+  | "select";
 
 export interface FieldUIConfig {
   readonly label?: string;
@@ -74,6 +75,7 @@ export interface SerializableFieldMeta {
     readonly onDelete?: string;
     readonly joinCollection?: string;
   };
+  readonly enumValues?: readonly string[];
 }
 
 export interface SerializableEntityDefinition {

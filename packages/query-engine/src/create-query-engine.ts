@@ -16,8 +16,14 @@ import type {
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
 export interface QueryEngineDeps {
-  readonly getEntityDefinition: (name: string) => AnyDefinedEntity | undefined;
-  readonly getExecutor: (entityName: string) => EntityQueryExecutor | undefined;
+  readonly getEntityDefinition: (
+    name: string,
+    context: QueryContext,
+  ) => AnyDefinedEntity | undefined;
+  readonly getExecutor: (
+    entityName: string,
+    context: QueryContext,
+  ) => EntityQueryExecutor | undefined;
   readonly rbacQueryInjector?: RbacQueryInjector;
   readonly relationIncludeResolver?: RelationIncludeResolver;
 }
@@ -39,8 +45,11 @@ export interface QueryEngine {
 export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
   const rbacQueryInjector = deps.rbacQueryInjector;
 
-  function resolveEntity(entityName: string): AnyDefinedEntity {
-    const entity = deps.getEntityDefinition(entityName);
+  function resolveEntity(
+    entityName: string,
+    context: QueryContext,
+  ): AnyDefinedEntity {
+    const entity = deps.getEntityDefinition(entityName, context);
     if (!entity) {
       throw new QueryError(
         QueryErrorCode.QUERY_VALIDATION_ERROR,
@@ -50,8 +59,11 @@ export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
     return entity;
   }
 
-  function resolveExecutor(entityName: string): EntityQueryExecutor {
-    const executor = deps.getExecutor(entityName);
+  function resolveExecutor(
+    entityName: string,
+    context: QueryContext,
+  ): EntityQueryExecutor {
+    const executor = deps.getExecutor(entityName, context);
     if (!executor) {
       throw new QueryError(
         QueryErrorCode.QUERY_VALIDATION_ERROR,
@@ -63,8 +75,8 @@ export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
 
   return {
     async find(entityName, queryConfig, context) {
-      const entity = resolveEntity(entityName);
-      const executor = resolveExecutor(entityName);
+      const entity = resolveEntity(entityName, context);
+      const executor = resolveExecutor(entityName, context);
 
       const injectedFilters = applyRbacFilters(
         entityName,
@@ -90,8 +102,8 @@ export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
     },
 
     async findOne(entityName, id, context, select) {
-      const entity = resolveEntity(entityName);
-      const executor = resolveExecutor(entityName);
+      const entity = resolveEntity(entityName, context);
+      const executor = resolveExecutor(entityName, context);
 
       applyRbacFilters(entityName, context, rbacQueryInjector);
 

@@ -2,6 +2,7 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": [
     "@app/platform",
+    "@repo/dynamic-entities",
     "@repo/entities",
     "@repo/entity-relations",
     "@repo/eslint-config",

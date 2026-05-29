@@ -29,7 +29,7 @@ flowchart LR
 | --- | --- | --- |
 | Definition | `@repo/entities` | `EntityUIConfig`, validation, default UI fallback |
 | Serialization | `serializeEntityDefinition()` | Strips Zod; exposes fields + `ui` to clients |
-| Catalog API | `apps/api/src/entities/list-entities.route.ts` | Auth + `*.read` gate; merges module UI extensions |
+| Catalog API | `apps/api/src/entities/list-entities.route.ts` | Auth + `*.read` gate; merges module UI extensions and tenant dynamic entities |
 | Web registries | `field-component-registry.tsx`, `view-component-registry.tsx` | React component lookup for custom field/view types |
 | Interpretation | `@repo/ui-builder` | Columns, forms, filters, query config, permissions |
 | Web | `apps/web/app/components/entity/` | React components + component registry |
@@ -204,6 +204,8 @@ GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","val
 
 These replace the former Customer/Order pilot fixtures. New entities are added via modules listed in `apps/platform/app.config.ts` without rewriting the UI Builder.
 
+Tenant-specific models created in the Model Builder (`/settings/data-models`) appear in the same catalog and use the same `EntityTable` / `EntityForm` components. See [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md).
+
 ---
 
 ## Related
@@ -212,3 +214,4 @@ These replace the former Customer/Order pilot fixtures. New entities are added v
 - [Query Engine Guide](./query-engine-guide.md)
 - [Relational Data System Guide](./relational-data-system-guide.md)
 - [Module Extension Guide](./module-extension-guide.md)
+- [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md)

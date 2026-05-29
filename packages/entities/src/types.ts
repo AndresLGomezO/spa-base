@@ -9,7 +9,8 @@ export type Phase1FieldType =
   | "number"
   | "boolean"
   | "date"
-  | "relation";
+  | "relation"
+  | "enum";
 
 export type RelationType =
   | "one-to-one"
@@ -58,12 +59,20 @@ export interface RelationFieldConfig {
   readonly relation: RelationConfig;
 }
 
+export interface EnumFieldConfig {
+  readonly type: "enum";
+  readonly required?: boolean;
+  readonly default?: string;
+  readonly enumValues: readonly string[];
+}
+
 export type FieldConfig =
   | StringFieldConfig
   | NumberFieldConfig
   | BooleanFieldConfig
   | DateFieldConfig
-  | RelationFieldConfig;
+  | RelationFieldConfig
+  | EnumFieldConfig;
 
 export type FieldDefinitions = Readonly<Record<string, FieldConfig>>;
 
@@ -77,7 +86,9 @@ export type InferFieldValue<F extends FieldConfig> = F["type"] extends "string"
         ? string
         : F["type"] extends "relation"
           ? string
-          : never;
+          : F["type"] extends "enum"
+            ? string
+            : never;
 
 type IsRequiredInEntity<F extends FieldConfig> = F extends { required: true }
   ? true
@@ -125,6 +136,7 @@ export interface NormalizedFieldMeta {
   readonly optional: boolean;
   readonly default?: string | number | boolean;
   readonly relation?: RelationConfig;
+  readonly enumValues?: readonly string[];
 }
 
 export interface EntityMetadata<

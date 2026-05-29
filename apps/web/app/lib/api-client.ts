@@ -28,7 +28,7 @@ interface PaginatedResult<T> {
 }
 
 interface RequestOptions {
-  readonly method?: "GET" | "POST" | "PUT" | "DELETE";
+  readonly method?: "GET" | "POST" | "PUT" | "PATCH" | "DELETE";
   readonly body?: unknown;
   readonly query?: Record<string, string | number | undefined>;
 }
@@ -201,4 +201,62 @@ export function isApiClientError(error: unknown): error is ApiClientError {
     error.name === "ApiClientError" &&
     "fieldErrors" in error
   );
+}
+
+export interface FieldDefinitionInput {
+  readonly name: string;
+  readonly type: "string" | "number" | "boolean" | "date" | "relation" | "enum";
+  readonly required?: boolean;
+  readonly relation?: {
+    readonly target: string;
+    readonly type:
+      | "one-to-one"
+      | "one-to-many"
+      | "many-to-one"
+      | "many-to-many";
+  };
+  readonly enumValues?: readonly string[];
+  readonly ui?: {
+    readonly label?: string;
+    readonly component?: string;
+    readonly placeholder?: string;
+  };
+}
+
+export interface EntityDefinitionRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly name: string;
+  readonly label: string;
+  readonly fields: readonly FieldDefinitionInput[];
+  readonly version: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+interface CreateEntityDefinitionInput {
+  readonly tenantId?: string;
+  readonly name: string;
+  readonly label: string;
+  readonly fields: readonly FieldDefinitionInput[];
+}
+
+export async function listEntityDefinitions(options?: {
+  readonly tenantId?: string;
+}): Promise<{ readonly items: readonly EntityDefinitionRecord[] }> {
+  return apiRequest<{ readonly items: readonly EntityDefinitionRecord[] }>(
+    "/api/entity-definitions",
+    {
+      query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+    },
+  );
+}
+
+export async function createEntityDefinition(
+  input: CreateEntityDefinitionInput,
+): Promise<EntityDefinitionRecord> {
+  return apiRequest<EntityDefinitionRecord>("/api/entity-definitions", {
+    method: "POST",
+    body: input,
+  });
 }

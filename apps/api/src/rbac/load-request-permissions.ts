@@ -3,6 +3,7 @@ import type { FastifyRequest } from "fastify";
 import {
   isPlatformSuperAdmin,
   resolvePermissions,
+  getAllKnownPermissions,
   toUserAccessProfile,
   type RoleCatalog,
   type UserAccessProfile,
@@ -16,6 +17,7 @@ export interface LoadRequestPermissionsDeps {
     uid: string,
   ) => Promise<UserAccessProfile | null>;
   readonly getRoleCatalog: () => Promise<RoleCatalog>;
+  readonly getKnownPermissions?: (tenantId: string) => readonly string[];
 }
 
 export function createLoadRequestPermissionsDeps(
@@ -62,7 +64,12 @@ export async function loadRequestPermissions(
       ...accessProfile,
       tenantId: currentCtx.tenantId,
     },
-    { roleCatalog },
+    {
+      roleCatalog,
+      knownPermissions:
+        deps.getKnownPermissions?.(currentCtx.tenantId) ??
+        getAllKnownPermissions(currentCtx.tenantId),
+    },
   );
 
   const nextCtx: RequestContext = {

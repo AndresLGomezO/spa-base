@@ -25,6 +25,7 @@ describe("expandGrant", () => {
     expect(expandGrant("*.read", known)).toEqual([
       "organization.read",
       "project.read",
+      "entityDefinition.read",
     ]);
   });
 
@@ -59,7 +60,7 @@ describe("resolvePermissions", () => {
         tenantId: "tenant_a",
         tenants: { tenant_a: ["viewer"] },
       }),
-    ).toEqual(["organization.read", "project.read"]);
+    ).toEqual(["organization.read", "project.read", "entityDefinition.read"]);
   });
 
   it("resolves editor role without delete permissions", () => {
@@ -68,7 +69,7 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(6);
+    expect(permissions).toHaveLength(9);
     expect(permissions).toEqual(
       expect.arrayContaining([
         "organization.read",
@@ -77,6 +78,9 @@ describe("resolvePermissions", () => {
         "project.read",
         "project.create",
         "project.update",
+        "entityDefinition.read",
+        "entityDefinition.create",
+        "entityDefinition.update",
       ]),
     );
     expect(permissions).not.toContain("organization.delete");
@@ -92,7 +96,7 @@ describe("resolvePermissions", () => {
           tenant_b: ["viewer"],
         },
       }),
-    ).toEqual(["organization.read", "project.read"]);
+    ).toEqual(["organization.read", "project.read", "entityDefinition.read"]);
   });
 
   it("returns all permissions for platform superadmin", () => {
@@ -158,6 +162,6 @@ describe("expandGrants", () => {
   it("deduplicates overlapping grants", () => {
     expect(
       expandGrants(["*.read", "organization.read"], ALL_KNOWN_PERMISSIONS),
-    ).toEqual(["organization.read", "project.read"]);
+    ).toEqual(["organization.read", "project.read", "entityDefinition.read"]);
   });
 });

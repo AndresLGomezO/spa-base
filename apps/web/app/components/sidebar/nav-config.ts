@@ -1,5 +1,13 @@
 import type { LucideIcon } from "lucide-react";
-import { CreditCard, Home, Settings, Shield, User, Users } from "lucide-react";
+import {
+  CreditCard,
+  Database,
+  Home,
+  Settings,
+  Shield,
+  User,
+  Users,
+} from "lucide-react";
 
 /** Keys under `nav.*` used by sidebar link labels */
 export type NavLabelKey =
@@ -8,7 +16,8 @@ export type NavLabelKey =
   | "profile"
   | "team"
   | "billing"
-  | "admin";
+  | "admin"
+  | "dataModels";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -28,6 +37,14 @@ export interface NavGroupConfig {
 }
 
 export type NavItemConfig = NavLinkConfig | NavGroupConfig;
+
+export const SETTINGS_DATA_MODELS_NAV_ITEM: NavLinkConfig = {
+  id: "data-models",
+  labelKey: "dataModels",
+  to: "/settings/data-models",
+  matchPath: "/settings/data-models",
+  icon: Database,
+};
 
 export const SETTINGS_ADMIN_NAV_ITEM: NavLinkConfig = {
   id: "admin",

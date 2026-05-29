@@ -45,7 +45,8 @@
     "userMenu": "Menú de cuenta",
     "signOut": "Cerrar sesión",
     "fallbackName": "Usuario",
-    "admin": "Administración"
+    "admin": "Administración",
+    "dataModels": "Modelos de datos"
   },
   "admin": {
     "title": "Administración de plataforma",
@@ -128,5 +129,57 @@
     "profileDescription": "Administra la configuración de tu perfil.",
     "teamDescription": "Administra miembros del equipo e invitaciones.",
     "billingDescription": "Consulta detalles de facturación e invoices."
+  },
+  "dataModels": {
+    "title": "Modelos de datos",
+    "description": "Crea y administra modelos de entidades específicos del tenant.",
+    "adminTitle": "Modelos de datos multi-tenant",
+    "adminDescription": "Administra definiciones dinámicas de entidades para cualquier tenant.",
+    "openAdminBuilder": "Abrir Model Builder",
+    "listTitle": "Modelos de entidad",
+    "wizardTitle": "Crear modelo de entidad",
+    "stepIndicator": "Paso {{step}} de {{total}}",
+    "modelName": "Nombre de entidad",
+    "modelNameHint": "Usa camelCase (por ejemplo: loan, workOrder).",
+    "modelLabel": "Etiqueta visible",
+    "fieldsTitle": "Campos",
+    "fieldName": "Nombre del campo",
+    "fieldType": "Tipo de campo",
+    "fieldNumber": "Campo {{number}}",
+    "fieldTypes": {
+      "string": "Texto",
+      "number": "Número",
+      "boolean": "Sí/No",
+      "date": "Fecha",
+      "enum": "Enum",
+      "relation": "Relación"
+    },
+    "required": "Obligatorio",
+    "enumValues": "Valores enum",
+    "enumPlaceholder": "Valor de opción",
+    "addEnumValue": "Agregar valor",
+    "removeValue": "Eliminar",
+    "relationTarget": "Entidad relacionada",
+    "relationType": "Tipo de relación",
+    "selectTarget": "Seleccionar entidad",
+    "addField": "Agregar campo",
+    "removeField": "Eliminar campo",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "createModel": "Crear modelo",
+    "loading": "Cargando modelos...",
+    "empty": "Aún no hay modelos personalizados.",
+    "version": "Versión",
+    "tenant": "Tenant",
+    "forbidden": "No tienes permiso para administrar modelos de datos.",
+    "loadFailed": "No se pudieron cargar los modelos de entidad.",
+    "createFailed": "No se pudo crear el modelo de entidad.",
+    "catalogHint": "Los modelos nuevos aparecen en la barra lateral después de crearlos.",
+    "reviewTitle": "Revisar modelo",
+    "reviewDescription": "Confirma el esquema antes de crear el modelo.",
+    "validation": {
+      "basicRequired": "El nombre y la etiqueta de la entidad son obligatorios.",
+      "fieldsRequired": "Agrega al menos un campo."
+    }
   }
 }

@@ -6,7 +6,6 @@
     "@repo/eslint-config",
     "@repo/modules",
     "@repo/query-engine",
-    "@repo/shared-types",
     "@repo/theme",
     "@repo/ui",
     "@repo/ui-builder",

@@ -66,6 +66,8 @@ export {
   type TenantRepository,
   type UpdateTenantInput,
 } from "./tenant/repository-contract.js";
+export { type EntityDefinitionRepository } from "./entity-definition/repository-contract.js";
+export { createInMemoryEntityDefinitionRepository } from "./entity-definition/in-memory-repository.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

@@ -12,6 +12,10 @@ export default [
   layout("./routes/auth-only-layout.tsx", [
     route("select-tenant", "./routes/select-tenant.tsx"),
     route("settings/admin", "./routes/settings/admin.tsx"),
+    route(
+      "settings/admin/data-models",
+      "./routes/settings/admin-data-models.tsx",
+    ),
   ]),
   layout("./routes/private-layout.tsx", [
     index("./routes/home.tsx"),
@@ -19,5 +23,6 @@ export default [
     route("settings/profile", "./routes/settings/profile.tsx"),
     route("settings/team", "./routes/settings/team.tsx"),
     route("settings/billing", "./routes/settings/billing.tsx"),
+    route("settings/data-models", "./routes/settings/data-models.tsx"),
   ]),
 ] satisfies RouteConfig;
