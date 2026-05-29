@@ -1,5 +1,5 @@
 import type { EntityQueryExecutor } from "@repo/firestore-converters";
-import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
+import type { OrganizationRecord, ProjectRecord } from "@repo/shared-types";
 
 import { createInMemoryEntityQueryExecutor } from "../repositories/in-memory-entity-query-executor.js";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
@@ -23,30 +23,25 @@ function createInMemoryEntityRuntime<
 }
 
 export function createInMemoryCrudRuntime(): {
-  readonly repositories: {
-    readonly customer: ReturnType<
-      typeof createInMemoryEntityRepository<CustomerRecord>
-    >;
-    readonly order: ReturnType<
-      typeof createInMemoryEntityRepository<OrderRecord>
-    >;
-  };
-  readonly queryExecutors: {
-    readonly customer: EntityQueryExecutor;
-    readonly order: EntityQueryExecutor;
-  };
+  readonly repositories: Record<
+    string,
+    ReturnType<
+      typeof createInMemoryEntityRepository<OrganizationRecord | ProjectRecord>
+    >
+  >;
+  readonly queryExecutors: Record<string, EntityQueryExecutor>;
 } {
-  const customer = createInMemoryEntityRuntime<CustomerRecord>();
-  const order = createInMemoryEntityRuntime<OrderRecord>();
+  const organization = createInMemoryEntityRuntime<OrganizationRecord>();
+  const project = createInMemoryEntityRuntime<ProjectRecord>();
 
   return {
     repositories: {
-      customer: customer.repository,
-      order: order.repository,
+      organization: organization.repository,
+      project: project.repository,
     },
     queryExecutors: {
-      customer: customer.queryExecutor,
-      order: order.queryExecutor,
+      organization: organization.queryExecutor,
+      project: project.queryExecutor,
     },
   };
 }

@@ -1,5 +1,7 @@
 import type { z } from "zod";
 
+import type { EntityUIConfig } from "./ui/types.js";
+
 import type { SystemFieldKey, SystemFieldRecord } from "./systemFields.js";
 
 export type Phase1FieldType =
@@ -139,8 +141,7 @@ export interface EntityMetadata<
   readonly createSchema: z.ZodType<InferCreate<TFields>>;
   readonly updateSchema: z.ZodType<InferUpdate<TFields>>;
   readonly permissions: EntityPermissions<TName>;
-  /** Extension point for future dynamic UI configuration. */
-  readonly ui?: Readonly<Record<string, unknown>>;
+  readonly ui?: EntityUIConfig;
 }
 
 export type EntityPermissionAction = "read" | "create" | "update" | "delete";
@@ -169,6 +170,7 @@ export type EntityConfig<
   readonly name: TName;
   readonly fields: AssertNoSystemFields<TFields>;
   readonly collection?: string;
+  readonly ui?: EntityUIConfig;
 };
 
 export interface DefinedEntity<

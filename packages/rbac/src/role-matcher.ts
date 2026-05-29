@@ -53,5 +53,23 @@ export function hasPermission(
     return true;
   }
 
-  return resolved.includes(required);
+  if (resolved.includes(required)) {
+    return true;
+  }
+
+  if (required === "*") {
+    return resolved.length > 0;
+  }
+
+  if (required.endsWith(".*")) {
+    const prefix = required.slice(0, -2);
+    return resolved.some((permission) => permission.startsWith(`${prefix}.`));
+  }
+
+  if (required.startsWith("*.")) {
+    const suffix = required.slice(1);
+    return resolved.some((permission) => permission.endsWith(suffix));
+  }
+
+  return false;
 }

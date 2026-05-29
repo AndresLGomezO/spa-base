@@ -38,7 +38,7 @@ sequenceDiagram
 | --------- | ---------------------------------------------------------------------------- |
 | POST      | `entity.createSchema` then full `entity.schema` after system field injection |
 | PUT       | `entity.updateSchema` then full `entity.schema` after merge                  |
-| GET       | No body validation; optional list query params (see below)                 |
+| GET       | No body validation; optional list query params (see below)                   |
 
 System fields (`id`, `tenantId`, `createdAt`, `updatedAt`) are injected in handlers — never accepted from clients.
 
@@ -68,12 +68,12 @@ await registerCrudRoutes(server, {
 });
 ```
 
-| Route | Permission |
-| ----- | ---------- |
-| GET list / GET by id | `{entity}.read` |
-| POST | `{entity}.create` |
-| PUT | `{entity}.update` |
-| DELETE | `{entity}.delete` |
+| Route                | Permission        |
+| -------------------- | ----------------- |
+| GET list / GET by id | `{entity}.read`   |
+| POST                 | `{entity}.create` |
+| PUT                  | `{entity}.update` |
+| DELETE               | `{entity}.delete` |
 
 Default: `noopPreHandler` per action when `authorize` is omitted.
 
@@ -83,18 +83,18 @@ List and get routes use `@repo/query-engine` when `queryEngine` is passed to `re
 
 **List query parameters:**
 
-| Param | Description |
-| ----- | ----------- |
-| `limit` | Page size (1–100, default 20). Merged into query pagination. |
-| `cursor` | Opaque cursor from previous page (`id` of last item). |
-| `query` | Optional JSON string with `filter`, `sort`, `pagination`, `select`. |
+| Param    | Description                                                         |
+| -------- | ------------------------------------------------------------------- |
+| `limit`  | Page size (1–100, default 20). Merged into query pagination.        |
+| `cursor` | Opaque cursor from previous page (`id` of last item).               |
+| `query`  | Optional JSON string with `filter`, `sort`, `pagination`, `select`. |
 
 Examples:
 
 ```http
-GET /api/order?limit=20
-GET /api/order?query={"filter":[{"field":"customerId","operator":"==","value":"cust_123"}]}
-GET /api/order?query={"sort":[{"field":"total","direction":"desc"}]}
+GET /api/project?limit=20
+GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_123"}]}
+GET /api/project?query={"sort":[{"field":"budget","direction":"desc"}]}
 ```
 
 Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED`. See [Query Engine Guide](../../../docs/query-engine-guide.md).
@@ -104,20 +104,20 @@ Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED
 Replace the repository — handlers stay unchanged:
 
 ```ts
-repository: createFirestoreAdminEntityRepository(Customer, firebaseAdminConfig),
+repository: createFirestoreAdminEntityRepository({ collection: entity.metadata.collection, ... }),
 ```
 
 Port: [`TenantScopedEntityRepository`](../../../../packages/firestore-converters/src/entity/tenant-scoped-repository-contract.ts).
 
 ## Workarounds
 
-| Topic                   | Notes                                                     |
-| ----------------------- | --------------------------------------------------------- |
-| In-memory storage       | Resets on restart; use for dev/tests until WS3            |
-| `/auth/validate` format | Different response envelope — intentional backward compat |
-| Empty `tenantId` claim  | Returns 403 `TENANT_NOT_RESOLVED`                         |
+| Topic                   | Notes                                                             |
+| ----------------------- | ----------------------------------------------------------------- |
+| In-memory storage       | Resets on restart; use for dev/tests until WS3                    |
+| `/auth/validate` format | Different response envelope — intentional backward compat         |
+| Empty `tenantId` claim  | Returns 403 `TENANT_NOT_RESOLVED`                                 |
 | Pagination cursor       | Opaque entity `id`; sorted by query (default `id` asc) per tenant |
-| PUT semantics           | Partial update via `updateSchema`, not full replace       |
+| PUT semantics           | Partial update via `updateSchema`, not full replace               |
 
 ## Testing
 

@@ -1,10 +1,13 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": [
+    "@repo/entities",
     "@repo/eslint-config",
+    "@repo/query-engine",
     "@repo/shared-types",
     "@repo/theme",
     "@repo/ui",
+    "@repo/ui-builder",
     "tailwindcss"
   ],
   "project": ["app/**/*.{ts,tsx}"]

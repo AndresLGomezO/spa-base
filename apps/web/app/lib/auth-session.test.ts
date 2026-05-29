@@ -28,7 +28,7 @@ describe("syncAuthSession", () => {
         user: {
           uid: "user_123",
           email: "demo@example.com",
-          permissions: ["customer.read"],
+          permissions: ["organization.read"],
           isSuperAdmin: false,
           tenantId: "tenant_a",
           availableTenants: ["tenant_a", "tenant_b"],
@@ -51,7 +51,7 @@ describe("syncAuthSession", () => {
       user: {
         uid: "user_123",
         email: "demo@example.com",
-        permissions: ["customer.read"],
+        permissions: ["organization.read"],
         isSuperAdmin: false,
         tenantId: "tenant_a",
         availableTenants: ["tenant_a", "tenant_b"],
@@ -105,7 +105,7 @@ describe("syncAuthSession", () => {
           { id: "tenant_a", name: "Tenant A" },
           { id: "tenant_b", name: "Tenant B" },
         ],
-        permissions: ["customer.read", "customer.create"],
+        permissions: ["organization.read", "organization.create"],
         isSuperAdmin: false,
       }),
     });
@@ -124,7 +124,7 @@ describe("syncAuthSession", () => {
         { id: "tenant_a", name: "Tenant A" },
         { id: "tenant_b", name: "Tenant B" },
       ],
-      permissions: ["customer.read", "customer.create"],
+      permissions: ["organization.read", "organization.create"],
       isSuperAdmin: false,
     });
     expect(fetchMock).toHaveBeenCalledWith(

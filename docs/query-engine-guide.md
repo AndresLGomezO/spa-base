@@ -30,7 +30,8 @@ HTTP clients pass an optional `query` JSON string on `GET /api/{entity}`; legacy
 - `include` / relation expansion
 - Row-level RBAC query injection (`ownerId` filters)
 - OR conditions, aggregations, full-text search
-- Web client filter/sort UI
+
+**Web client (10.2):** `EntityTable` / `EntityCardView` build `QueryConfig` via `@repo/ui-builder` and pass it through `useEntity` → `api-client.listEntity(..., { query })`. See [Advanced UI Builder Guide](./advanced-ui-builder-guide.md).
 
 ---
 
@@ -109,27 +110,27 @@ Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED
 ### Legacy pagination (backward compatible)
 
 ```http
-GET /api/order?limit=20&cursor=ord_abc123
+GET /api/project?limit=20&cursor=proj_abc123
 Authorization: Bearer …
 x-firebase-appcheck: …
 ```
 
-### Filter orders by customer
+### Filter projects by organization
 
 ```http
-GET /api/order?query={"filter":[{"field":"customerId","operator":"==","value":"cust_123"}]}
+GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_123"}]}
 ```
 
-### Sort by total descending
+### Sort by budget descending
 
 ```http
-GET /api/order?query={"sort":[{"field":"total","direction":"desc"}]}
+GET /api/project?query={"sort":[{"field":"budget","direction":"desc"}]}
 ```
 
 ### Combined filter, sort, and pagination
 
 ```http
-GET /api/order?limit=10&query={"filter":[{"field":"customerId","operator":"==","value":"cust_123"}],"sort":[{"field":"total","direction":"desc"}]}
+GET /api/project?limit=10&query={"filter":[{"field":"organizationId","operator":"==","value":"org_123"}],"sort":[{"field":"budget","direction":"desc"}]}
 ```
 
 Response envelope (unchanged):
@@ -162,9 +163,9 @@ Composite indexes are required for filter + sort combinations. See [`firestore.i
 
 | Use case | Index fields |
 | --- | --- |
-| Orders by customer | `customerId ASC`, `id ASC` |
-| Orders by total | `total ASC/DESC`, `id ASC/DESC` |
-| Filter customer + sort total | `customerId ASC`, `total ASC`, `id ASC` |
+| Projects by organization | `organizationId ASC`, `id ASC` |
+| Projects by budget | `budget ASC/DESC`, `id ASC/DESC` |
+| Filter organization + sort budget | `organizationId ASC`, `budget ASC`, `id ASC` |
 
 Deploy indexes before relying on filtered/sorted queries in production.
 

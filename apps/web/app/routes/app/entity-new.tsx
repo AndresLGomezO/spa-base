@@ -2,14 +2,19 @@ import { useParams } from "react-router";
 
 import { EntityForm } from "../../components/entity/EntityForm";
 import { RequireEntityPermission } from "../../components/entity/RequireEntityPermission";
-import { isEntityName } from "../../entities/entity-catalog";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import EntityNotFoundRoute from "./entity-not-found";
 
 export default function EntityNewRoute() {
   const params = useParams();
   const entity = params.entity ?? "";
+  const { isKnownEntity, isLoading } = useEntityCatalog();
 
-  if (!isEntityName(entity)) {
+  if (isLoading) {
+    return null;
+  }
+
+  if (!isKnownEntity(entity)) {
     return <EntityNotFoundRoute />;
   }
 

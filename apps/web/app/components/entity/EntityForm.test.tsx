@@ -4,6 +4,7 @@ import { I18nextProvider } from "react-i18next";
 import { MemoryRouter } from "react-router";
 
 import { i18n } from "../../i18n";
+import { TestEntityCatalogProvider } from "../../test/test-entity-catalog-provider";
 import { EntityForm } from "./EntityForm";
 
 const createMock = vi.fn(async () => null);
@@ -28,11 +29,13 @@ vi.mock("../../hooks/useEntity", () => ({
 
 function renderForm() {
   return render(
-    <MemoryRouter>
-      <I18nextProvider i18n={i18n}>
-        <EntityForm entityName="customer" mode="create" />
-      </I18nextProvider>
-    </MemoryRouter>,
+    <TestEntityCatalogProvider>
+      <MemoryRouter>
+        <I18nextProvider i18n={i18n}>
+          <EntityForm entityName="organization" mode="create" />
+        </I18nextProvider>
+      </MemoryRouter>
+    </TestEntityCatalogProvider>,
   );
 }
 

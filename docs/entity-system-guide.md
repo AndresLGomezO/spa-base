@@ -12,7 +12,7 @@ How the schema-driven entity layer fits into the monorepo and how future workstr
 flowchart TB
   subgraph definition [Definition layer]
     Entities["@repo/entities\ndefineEntity()"]
-    SharedTypes["@repo/shared-types/src/entities/\nCustomer, Order, ..."]
+    SharedTypes["@repo/shared-types/src/entities/\nOrganization, Project, ..."]
   end
   subgraph persistence [Persistence layer - WS3]
     FC["@repo/firestore-converters"]
@@ -32,8 +32,8 @@ flowchart TB
   API --> Entities
   API --> RBAC
   RBAC --> SharedTypes
-  Web --> SharedTypes
-  Web --> Entities
+  Web --> Catalog["GET /api/entities"]
+  Catalog --> Entities
 ```
 
 | Package / path                     | Role                                                              |
@@ -44,7 +44,7 @@ flowchart TB
 | `@repo/gcp-firebase`               | Firestore repository implementations                              |
 | `@repo/rbac`                       | Role definitions, permission resolution, wildcard matching        |
 | `apps/api`                         | HTTP routes, tenant injection, RBAC enforcement                   |
-| `apps/web`                         | Dynamic UI from entity metadata                                   |
+| `apps/web`                         | Dynamic UI from `GET /api/entities` + `@repo/ui-builder`          |
 
 Dependency direction: apps → gcp-firebase → firestore-converters → shared-types → entities. **Entities never import upward.**
 
@@ -58,7 +58,7 @@ A developer defines fields once:
 
 ```ts
 defineEntity({
-  name: "customer",
+  name: "organization",
   fields: {
     name: { type: "string", required: true },
     isActive: { type: "boolean", default: true },
@@ -71,7 +71,7 @@ The system derives:
 - Full, create, and update Zod schemas
 - TypeScript types (`z.infer`)
 - UI/API field metadata
-- RBAC permission strings (`customer.read`, …)
+- RBAC permission strings (`organization.read`, …)
 
 ### Multi-tenant readiness
 
@@ -100,17 +100,20 @@ Permission resolution and enforcement:
 
 - Package: [`@repo/rbac`](../packages/rbac/README.md) — roles, wildcards, `resolvePermissions`
 - User roles on Firestore `users/{uid}`: `platformRole`, `tenants`
-- API: per-action guards on CRUD routes (`customer.read`, `customer.create`, …)
+- API: per-action guards on CRUD routes (`organization.read`, `organization.create`, …)
 - Web foundation: `/auth/validate` returns `permissions` + `isSuperAdmin`; `usePermission` hook
 
-### WS5 — Frontend Entity UI (implemented)
+### WS5 — Frontend Entity UI (Advanced UI Builder)
 
 Dynamic CRUD UI in [`apps/web/app/components/entity/`](../apps/web/app/components/entity/README.md):
 
-- `EntityTable`, `EntityForm`, `EntityPage` driven by entity metadata from `@repo/shared-types`
+- Catalog from `GET /api/entities` via `EntityCatalogProvider` / `useEntityCatalog()`
+- `EntityTable`, `EntityCardView`, `EntityForm` driven by `@repo/ui-builder` + entity `ui` metadata
 - Routes: `/app/{entity}`, `/app/{entity}/new`, `/app/{entity}/:id`
-- Client validation via shared Zod schemas; API via authenticated `api-client`
+- List reads via Query Engine `?query=` JSON; API validation on mutations
 - RBAC: `useEntityPermissions` hides create/edit/delete actions
+
+See [Advanced UI Builder Guide](./advanced-ui-builder-guide.md).
 
 ### WS6 — Frontend Routing (implemented)
 
@@ -139,7 +142,7 @@ See [`apps/api/README.md`](../apps/api/README.md), [`apps/web/README.md`](../app
 Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebase/src/firestore-admin-entity-repository.ts):
 
 - Path: `tenants/{tenantId}/{collection}/{documentId}` (collection from `metadata.collection`)
-- Converters: `customerConverter`, `orderConverter` in `@repo/firestore-converters`
+- Converters: `organizationConverter`, `projectConverter` in `@repo/firestore-converters`
 - Persisted schemas: `{ENTITY}_SCHEMA_VERSION` + `_schemaVersion` in `@repo/shared-types`
 - API tests inject in-memory repos via `buildServer({ repositories })`; production uses Firestore
 

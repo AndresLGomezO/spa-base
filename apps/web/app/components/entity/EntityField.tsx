@@ -1,14 +1,16 @@
 import { Checkbox, FieldError, FieldLabel, Input } from "@repo/ui";
+import { resolveComponentId } from "@repo/ui-builder";
 
 import {
   formatFieldLabel,
-  getEntityDefinition,
   type EntityName,
 } from "../../entities/entity-catalog";
+import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import {
   datetimeLocalValueToIso,
   isoToDatetimeLocalValue,
 } from "./entity-field-utils";
+import { RelationPicker } from "./RelationPicker";
 
 interface EntityFieldProps {
   readonly entityName: EntityName;
@@ -25,22 +27,33 @@ export function EntityField({
   error,
   onChange,
 }: EntityFieldProps) {
-  const entity = getEntityDefinition(entityName).entity;
-  const fields = entity.metadata.fields as Record<
-    string,
-    {
-      readonly type: string;
-      readonly required: boolean;
-      readonly default?: unknown;
-    }
-  >;
-  const meta = fields[fieldName];
+  const definition = useEntityDefinition(entityName);
+  const meta = definition.fields[fieldName];
   if (!meta) return null;
 
+  const fieldUI = definition.ui.fields?.[fieldName];
   const inputId = `${entityName}-${fieldName}`;
-  const label = formatFieldLabel(fieldName);
+  const label = fieldUI?.label ?? formatFieldLabel(fieldName, definition);
+  const componentId = resolveComponentId(fieldUI?.component, meta.type);
 
-  if (meta.type === "boolean") {
+  if (meta.type === "relation" || componentId === "relation") {
+    const target = meta.relation?.target;
+    if (!target) return null;
+    return (
+      <RelationPicker
+        entityName={entityName}
+        fieldName={fieldName}
+        targetEntity={target}
+        value={value}
+        label={label}
+        required={meta.required}
+        error={error}
+        onChange={onChange}
+      />
+    );
+  }
+
+  if (meta.type === "boolean" || componentId === "toggle") {
     return (
       <div className="flex flex-col gap-1">
         <Checkbox
@@ -54,7 +67,7 @@ export function EntityField({
     );
   }
 
-  if (meta.type === "date") {
+  if (meta.type === "date" || componentId === "date") {
     return (
       <div className="flex flex-col gap-1">
         <FieldLabel htmlFor={inputId} required={meta.required}>
@@ -76,7 +89,7 @@ export function EntityField({
     );
   }
 
-  if (meta.type === "number") {
+  if (meta.type === "number" || componentId === "number") {
     return (
       <div className="flex flex-col gap-1">
         <FieldLabel htmlFor={inputId} required={meta.required}>
@@ -86,6 +99,7 @@ export function EntityField({
           id={inputId}
           type="number"
           hasError={Boolean(error)}
+          placeholder={fieldUI?.placeholder}
           value={value === undefined || value === null ? "" : String(value)}
           onChange={(event) =>
             onChange(
@@ -110,6 +124,7 @@ export function EntityField({
         id={inputId}
         type="text"
         hasError={Boolean(error)}
+        placeholder={fieldUI?.placeholder}
         value={typeof value === "string" ? value : ""}
         onChange={(event) => onChange(fieldName, event.target.value)}
       />

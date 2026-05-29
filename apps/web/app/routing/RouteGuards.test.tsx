@@ -199,7 +199,7 @@ describe("PermissionGuard", () => {
 
     render(
       <MemoryRouter>
-        <PermissionGuard permission="customer.read">
+        <PermissionGuard permission="organization.read">
           <div>Entity page</div>
         </PermissionGuard>
       </MemoryRouter>,
@@ -212,12 +212,12 @@ describe("PermissionGuard", () => {
   it("allows users with permission", () => {
     mockUseAuth.mockReturnValue({
       isSuperAdmin: false,
-      permissions: ["customer.read"],
+      permissions: ["organization.read"],
     });
 
     render(
       <MemoryRouter>
-        <PermissionGuard permission="customer.read">
+        <PermissionGuard permission="organization.read">
           <div>Entity page</div>
         </PermissionGuard>
       </MemoryRouter>,

@@ -12,6 +12,8 @@ import {
   buildPermissions,
   defaultCollectionName,
 } from "./metadata/buildPermissions.js";
+import { resolveEntityUI } from "./ui/default-ui-config.js";
+import { validateEntityUIConfig } from "./ui/validate-ui-config.js";
 import { SYSTEM_FIELDS } from "./systemFields.js";
 import type {
   AssertNoSystemFields,
@@ -29,17 +31,35 @@ export function defineEntity<
 ): DefinedEntity<TName, AssertNoSystemFields<TFields>> {
   const collection = config.collection ?? defaultCollectionName(config.name);
   const fields = config.fields as AssertNoSystemFields<TFields>;
+  const normalizedFields = buildFieldMetadata(fields);
   const { schema, createSchema, updateSchema } = buildEntitySchemas(fields);
+
+  const draftEntity = {
+    name: config.name,
+    metadata: {
+      name: config.name,
+      collection,
+      fields: normalizedFields,
+    },
+  } as unknown as DefinedEntity<string, FieldDefinitions>;
+
+  const ui = config.ui
+    ? resolveEntityUI(
+        draftEntity,
+        validateEntityUIConfig(draftEntity, config.ui),
+      )
+    : undefined;
 
   const metadata: EntityMetadata<TName, AssertNoSystemFields<TFields>> = {
     name: config.name,
     collection,
-    fields: buildFieldMetadata(fields),
+    fields: normalizedFields,
     systemFields: SYSTEM_FIELDS,
     schema,
     createSchema,
     updateSchema,
     permissions: buildPermissions(config.name),
+    ...(ui ? { ui } : {}),
   };
 
   return {

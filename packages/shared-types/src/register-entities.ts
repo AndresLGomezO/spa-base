@@ -1,7 +1,7 @@
 import { registerEntity } from "@repo/entities";
 
-import { Customer } from "./entities/customer.js";
-import { Order } from "./entities/order.js";
+import { Organization } from "./entities/organization.js";
+import { Project } from "./entities/project.js";
 
-registerEntity(Customer);
-registerEntity(Order);
+registerEntity(Organization);
+registerEntity(Project);

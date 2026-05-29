@@ -1,12 +1,24 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { MOCK_ENTITY_CATALOG } from "../test/entity-catalog-fixtures";
 import { useAccessibleNavItems } from "./useAccessibleNavItems";
 
 const mockUseAuth = vi.fn();
 
 vi.mock("../auth/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
+}));
+
+vi.mock("../entities/entity-catalog-context", () => ({
+  useEntityCatalog: () => ({
+    items: MOCK_ENTITY_CATALOG,
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    getDefinition: vi.fn(),
+    isKnownEntity: vi.fn(),
+  }),
 }));
 
 describe("useAccessibleNavItems", () => {
@@ -21,13 +33,13 @@ describe("useAccessibleNavItems", () => {
       .filter((item) => "to" in item && item.to.startsWith("/app/"))
       .map((item) => item.id);
 
-    expect(entityIds).toEqual(["customer", "order"]);
+    expect(entityIds).toEqual(["organization", "project"]);
   });
 
   it("filters entities by read permission for viewers", () => {
     mockUseAuth.mockReturnValue({
       isSuperAdmin: false,
-      permissions: ["customer.read"],
+      permissions: ["organization.read"],
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
@@ -35,7 +47,7 @@ describe("useAccessibleNavItems", () => {
       .filter((item) => "to" in item && item.to.startsWith("/app/"))
       .map((item) => item.id);
 
-    expect(entityIds).toEqual(["customer"]);
+    expect(entityIds).toEqual(["organization"]);
   });
 
   it("includes admin settings link for superadmin", () => {

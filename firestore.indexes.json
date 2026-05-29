@@ -1,35 +1,35 @@
 {
   "indexes": [
     {
-      "collectionGroup": "orders",
+      "collectionGroup": "projects",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "customerId", "order": "ASCENDING" },
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
         { "fieldPath": "id", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "orders",
+      "collectionGroup": "projects",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "total", "order": "ASCENDING" },
+        { "fieldPath": "budget", "order": "ASCENDING" },
         { "fieldPath": "id", "order": "ASCENDING" }
       ]
     },
     {
-      "collectionGroup": "orders",
+      "collectionGroup": "projects",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "total", "order": "DESCENDING" },
+        { "fieldPath": "budget", "order": "DESCENDING" },
         { "fieldPath": "id", "order": "DESCENDING" }
       ]
     },
     {
-      "collectionGroup": "orders",
+      "collectionGroup": "projects",
       "queryScope": "COLLECTION",
       "fields": [
-        { "fieldPath": "customerId", "order": "ASCENDING" },
-        { "fieldPath": "total", "order": "ASCENDING" },
+        { "fieldPath": "organizationId", "order": "ASCENDING" },
+        { "fieldPath": "name", "order": "ASCENDING" },
         { "fieldPath": "id", "order": "ASCENDING" }
       ]
     }

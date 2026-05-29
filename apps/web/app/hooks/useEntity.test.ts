@@ -10,6 +10,19 @@ vi.mock("../lib/api-client", () => ({
   isApiClientError: vi.fn(() => false),
 }));
 
+vi.mock("../entities/entity-catalog-context", () => ({
+  useEntityDefinition: vi.fn(() => ({
+    name: "organization",
+    collection: "organizations",
+    permissions: [],
+    fields: {},
+    ui: {
+      views: [],
+      forms: { create: { sections: [] }, edit: { sections: [] } },
+    },
+  })),
+}));
+
 import {
   createEntity,
   deleteEntity,
@@ -27,16 +40,17 @@ describe("useEntity", () => {
   });
 
   it("loads entity list on mount", async () => {
-    const { result } = renderHook(() => useEntity("customer"));
+    const { result } = renderHook(() => useEntity("organization"));
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
     expect(result.current.items).toHaveLength(1);
-    expect(listEntity).toHaveBeenCalledWith("customer", {
+    expect(listEntity).toHaveBeenCalledWith("organization", {
       limit: 20,
       cursor: undefined,
+      query: undefined,
     });
   });
 
@@ -47,7 +61,7 @@ describe("useEntity", () => {
       name: "New",
     });
 
-    const { result } = renderHook(() => useEntity("customer"));
+    const { result } = renderHook(() => useEntity("organization"));
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -60,7 +74,7 @@ describe("useEntity", () => {
   it("deletes records through the API", async () => {
     vi.mocked(deleteEntity).mockResolvedValue({ deleted: true });
 
-    const { result } = renderHook(() => useEntity("customer"));
+    const { result } = renderHook(() => useEntity("organization"));
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 
+import type { QueryConfig } from "@repo/query-engine";
+
 import {
   createEntity,
   deleteEntity,
@@ -8,10 +10,8 @@ import {
   listEntity,
   updateEntity,
 } from "../lib/api-client";
-import {
-  getEntityDefinition,
-  type EntityName,
-} from "../entities/entity-catalog";
+import type { EntityName } from "../entities/entity-catalog";
+import { useEntityDefinition } from "../entities/entity-catalog-context";
 
 interface EntityRecord {
   readonly id: string;
@@ -19,6 +19,10 @@ interface EntityRecord {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly [key: string]: unknown;
+}
+
+interface UseEntityOptions {
+  readonly queryConfig?: QueryConfig;
 }
 
 interface UseEntityListState {
@@ -56,50 +60,12 @@ function getErrorMessage(error: unknown): string {
   return "Something went wrong.";
 }
 
-interface ParsableSchema {
-  safeParse(data: unknown):
-    | { success: true; data: unknown }
-    | {
-        success: false;
-        error: {
-          issues: ReadonlyArray<{
-            path: ReadonlyArray<PropertyKey>;
-            message: string;
-          }>;
-        };
-      };
-}
-
-function validateWithSchema(
-  schema: ParsableSchema,
-  values: Record<string, unknown>,
-):
-  | {
-      readonly success: true;
-      readonly data: Record<string, unknown>;
-    }
-  | {
-      readonly success: false;
-      readonly fieldErrors: Record<string, string>;
-    } {
-  const parsed = schema.safeParse(values);
-  if (parsed.success) {
-    return { success: true, data: parsed.data as Record<string, unknown> };
-  }
-
-  const fieldErrors: Record<string, string> = {};
-  for (const issue of parsed.error.issues) {
-    const path = issue.path.join(".");
-    if (path && !fieldErrors[path]) {
-      fieldErrors[path] = issue.message;
-    }
-  }
-
-  return { success: false, fieldErrors };
-}
-
-export function useEntity(entityName: EntityName): UseEntityResult {
-  const definition = getEntityDefinition(entityName).entity;
+export function useEntity(
+  entityName: EntityName,
+  options: UseEntityOptions = {},
+): UseEntityResult {
+  useEntityDefinition(entityName);
+  const queryConfig = options.queryConfig;
   const [items, setItems] = useState<EntityRecord[]>([]);
   const [nextCursor, setNextCursor] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
@@ -112,12 +78,13 @@ export function useEntity(entityName: EntityName): UseEntityResult {
   const fetchList = useCallback(
     async (cursor?: string) => {
       const result = await listEntity<EntityRecord>(entityName, {
-        limit: 20,
+        limit: queryConfig?.pagination?.limit ?? 20,
         cursor,
+        query: queryConfig,
       });
       return result;
     },
-    [entityName],
+    [entityName, queryConfig],
   );
 
   const refresh = useCallback(async () => {
@@ -171,18 +138,8 @@ export function useEntity(entityName: EntityName): UseEntityResult {
       setFieldErrors({});
       setMutationError(null);
 
-      const validated = validateWithSchema(definition.createSchema, values);
-      if (!validated.success) {
-        setFieldErrors(validated.fieldErrors);
-        setIsSubmitting(false);
-        return null;
-      }
-
       try {
-        const created = await createEntity<EntityRecord>(
-          entityName,
-          validated.data,
-        );
+        const created = await createEntity<EntityRecord>(entityName, values);
         setItems((current) => [created, ...current]);
         return created;
       } catch (error) {
@@ -195,7 +152,7 @@ export function useEntity(entityName: EntityName): UseEntityResult {
         setIsSubmitting(false);
       }
     },
-    [definition.createSchema, entityName],
+    [entityName],
   );
 
   const update = useCallback(
@@ -204,18 +161,11 @@ export function useEntity(entityName: EntityName): UseEntityResult {
       setFieldErrors({});
       setMutationError(null);
 
-      const validated = validateWithSchema(definition.updateSchema, values);
-      if (!validated.success) {
-        setFieldErrors(validated.fieldErrors);
-        setIsSubmitting(false);
-        return null;
-      }
-
       try {
         const updated = await updateEntity<EntityRecord>(
           entityName,
           id,
-          validated.data,
+          values,
         );
         setItems((current) =>
           current.map((item) => (item.id === id ? updated : item)),
@@ -231,7 +181,7 @@ export function useEntity(entityName: EntityName): UseEntityResult {
         setIsSubmitting(false);
       }
     },
-    [definition.updateSchema, entityName],
+    [entityName],
   );
 
   const remove = useCallback(

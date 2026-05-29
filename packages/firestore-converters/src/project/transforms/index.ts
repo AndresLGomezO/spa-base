@@ -1,3 +1,3 @@
 import type { SchemaTransform } from "../../core/versioned-converter.js";
 
-export const customerMigrations: Record<number, SchemaTransform> = {};
+export const projectMigrations: Record<number, SchemaTransform> = {};

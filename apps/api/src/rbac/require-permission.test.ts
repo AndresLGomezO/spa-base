@@ -37,7 +37,10 @@ describe("createRequirePermission", () => {
       })),
       getRoleCatalog: vi.fn(async () => roleCatalog),
     };
-    const requirePermission = createRequirePermission(deps, "customer.create");
+    const requirePermission = createRequirePermission(
+      deps,
+      "organization.create",
+    );
     const request = {
       ctx: {
         uid: "user_123",
@@ -60,7 +63,10 @@ describe("createRequirePermission", () => {
       })),
       getRoleCatalog: vi.fn(async () => roleCatalog),
     };
-    const requirePermission = createRequirePermission(deps, "customer.create");
+    const requirePermission = createRequirePermission(
+      deps,
+      "organization.create",
+    );
     const request = {
       ctx: {
         uid: "user_123",
@@ -73,6 +79,6 @@ describe("createRequirePermission", () => {
     await requirePermission(request, reply);
 
     expect(reply.statusCode).toBe(200);
-    expect(request.ctx?.permissions).toContain("customer.create");
+    expect(request.ctx?.permissions).toContain("organization.create");
   });
 });
