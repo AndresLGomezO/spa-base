@@ -100,7 +100,7 @@ describe("loadApp", () => {
           handler: async () => ({ ok: true }),
         },
       ],
-      hooks: [{ event: "sample.created", handler: hook }],
+      hooks: [{ event: "sample.afterCreate", handler: hook }],
       ui: {
         components: { badge: "BadgeField" },
         extend: {
@@ -123,7 +123,7 @@ describe("loadApp", () => {
     expect(getAllEntities().map((entity) => entity.name)).toEqual(["sample"]);
     expect(getEntityConverter("sample")).toBeDefined();
     expect(getRegisteredRoutes()).toHaveLength(1);
-    expect(getHooksForEvent("sample.created")).toHaveLength(1);
+    expect(getHooksForEvent("sample.afterCreate")).toHaveLength(1);
     expect(getUiExtensions("sample")).toHaveLength(1);
   });
 

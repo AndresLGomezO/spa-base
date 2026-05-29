@@ -5,6 +5,11 @@ import type {
   FieldUIConfig,
   ViewConfig,
 } from "@repo/entities";
+import type {
+  HookContext,
+  HookHandler,
+  RegisteredSystemHook,
+} from "@repo/hooks";
 
 export interface EntityConverter {
   read(raw: unknown): { readonly id: string; readonly tenantId: string };
@@ -37,20 +42,7 @@ export interface ModuleRouteDefinition {
   ) => Promise<unknown>;
 }
 
-export interface HookContext {
-  readonly userId: string;
-  readonly tenantId: string;
-  readonly entityName: string;
-  readonly record: Record<string, unknown>;
-  readonly services: {
-    readonly logger?: {
-      info: (message: string, meta?: Record<string, unknown>) => void;
-      error: (message: string, meta?: Record<string, unknown>) => void;
-    };
-  };
-}
-
-export type HookHandler = (context: HookContext) => Promise<void> | void;
+export type { HookContext, HookHandler };
 
 export interface HookDefinition {
   readonly event: string;
@@ -91,9 +83,6 @@ export interface RegisteredRoute extends ModuleRouteDefinition {
   readonly moduleName: string;
 }
 
-export interface RegisteredHook {
+export interface RegisteredHook extends RegisteredSystemHook {
   readonly moduleName: string;
-  readonly event: string;
-  readonly handler: HookHandler;
-  readonly order: number;
 }

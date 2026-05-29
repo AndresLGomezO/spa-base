@@ -5,12 +5,17 @@ import { getAllEntities } from "@repo/entities";
 import type {
   EntityDefinitionRepository,
   EntityQueryExecutor,
+  HookRepository,
   JoinCollectionRepository,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
-import { createInMemoryEntityDefinitionRepository } from "@repo/firestore-converters";
+import {
+  createInMemoryEntityDefinitionRepository,
+  createInMemoryHookRepository,
+} from "@repo/firestore-converters";
 import {
   createFirestoreAdminEntityDefinitionRepository,
+  createFirestoreAdminHookRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
@@ -29,8 +34,12 @@ import {
   createEntityRuntimeContext,
   type EntityRuntimeContext,
 } from "./entities/entity-runtime-context.js";
+import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-entity-crud-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
+import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
+import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
+import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerModuleRoutes } from "./modules/register-module-routes.js";
 import {
   createEntityPermissionGuards,
@@ -53,6 +62,7 @@ interface BuildServerOptions {
   readonly joinRepository?: JoinCollectionRepository;
   readonly queryExecutors?: Record<string, EntityQueryExecutor>;
   readonly entityDefinitionRepository?: EntityDefinitionRepository;
+  readonly hookRepository?: HookRepository;
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
@@ -131,6 +141,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
       ? createInMemoryEntityDefinitionRepository()
       : createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig));
 
+  const hookRepository =
+    options.hookRepository ??
+    (options.repositories
+      ? createInMemoryHookRepository()
+      : createFirestoreAdminHookRepository(firebaseAdminConfig));
+
+  const hookRuntime = createHookRuntimeContext(hookRepository);
+
   const entityRuntime = createEntityRuntimeContext({
     firebaseAdminConfig,
     entityDefinitionRepository,
@@ -154,6 +172,11 @@ export async function buildServer(options: BuildServerOptions = {}) {
     createFirestoreAdminJoinCollectionRepository(firebaseAdminConfig);
   const relationContext = entityRuntime.createRelationContext(joinRepository);
   const queryContext = entityRuntime.createQueryContext();
+  const crudHooks: CrudHookDeps = {
+    hookRuntime,
+    entityRuntime,
+    permissionDeps,
+  };
 
   await server.register(authValidateRoute, {
     firebaseAdminConfig,
@@ -185,6 +208,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
   });
 
+  await registerHookRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    hookRuntime,
+  });
+
   await registerModuleRoutes(server, {
     authenticate,
     permissionDeps,
@@ -203,15 +233,18 @@ export async function buildServer(options: BuildServerOptions = {}) {
       authorize: createEntityPermissionGuards(permissionDeps, entity.name),
       relations: relationContext.hooksFor(entity.name),
       queryEngine: queryContext.queryEngine,
+      crudHooks,
     });
   }
 
-  await entityRuntime.registerDynamicEntityCrudRoutes(
+  await registerDynamicEntityCrudRoutes(
+    entityRuntime,
     server,
     authenticate,
     permissionDeps,
     queryContext.queryEngine,
     relationContext,
+    crudHooks,
   );
 
   const dynamicDefinitions =

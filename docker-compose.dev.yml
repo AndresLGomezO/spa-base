@@ -38,6 +38,8 @@ services:
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
       - ./turbo.json:/app/turbo.json
       - ./apps/api:/app/apps/api
+      - ./apps/platform:/app/apps/platform
+      - ./modules:/app/modules
       - ./packages:/app/packages
       - /app/node_modules
       - /app/apps/api/node_modules
@@ -94,6 +96,8 @@ services:
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
       - ./apps/web:/app/apps/web
+      - ./apps/platform:/app/apps/platform
+      - ./modules:/app/modules
       - ./packages:/app/packages
       - /app/node_modules
       - /app/apps/web/node_modules

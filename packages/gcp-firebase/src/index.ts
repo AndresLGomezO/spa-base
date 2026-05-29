@@ -16,6 +16,7 @@ export { createFirestoreAdminJoinCollectionRepository } from "./firestore-admin-
 export { createFirestoreAdminPlatformRoleRepository } from "./firestore-admin-platform-role-repository.js";
 export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-repository.js";
 export { createFirestoreAdminEntityDefinitionRepository } from "./firestore-admin-entity-definition-repository.js";
+export { createFirestoreAdminHookRepository } from "./firestore-admin-hook-repository.js";
 export {
   createFirestoreAdminRegisteredUserRepository,
   mapFirebaseUserRecordToAuthUserProjection,

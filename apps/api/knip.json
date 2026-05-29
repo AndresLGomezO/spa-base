@@ -8,6 +8,7 @@
     "@repo/eslint-config",
     "@repo/firestore-converters",
     "@repo/gcp-firebase",
+    "@repo/hooks",
     "@repo/modules",
     "@repo/query-engine",
     "@repo/rbac",

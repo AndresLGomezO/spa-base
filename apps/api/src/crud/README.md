@@ -109,19 +109,20 @@ repository: createFirestoreAdminEntityRepository({ collection: entity.metadata.c
 
 Port: [`TenantScopedEntityRepository`](../../../../packages/firestore-converters/src/entity/tenant-scoped-repository-contract.ts).
 
-### Module hooks (10.3)
+### Lifecycle hooks (10.4)
 
-After successful create, update, or delete, CRUD handlers emit lifecycle hooks:
+CRUD handlers run six lifecycle hook points per operation. See [Hooks System Guide](../../../docs/hooks-system-guide.md).
 
-| Event              | When         |
-| ------------------ | ------------ |
-| `{entity}.created` | After POST   |
-| `{entity}.updated` | After PUT    |
-| `{entity}.deleted` | After DELETE |
+| Event                   | When                |
+| ----------------------- | ------------------- |
+| `{entity}.beforeCreate` | Before POST persist |
+| `{entity}.afterCreate`  | After POST          |
+| `{entity}.beforeUpdate` | Before PUT persist  |
+| `{entity}.afterUpdate`  | After PUT           |
+| `{entity}.beforeDelete` | Before DELETE       |
+| `{entity}.afterDelete`  | After DELETE        |
 
-Register handlers in `defineModule({ hooks })`. Handlers receive `{ userId, tenantId, entityName, record, services }`. Errors in hook handlers are logged and do not fail the CRUD response.
-
-See [Module Extension Guide](../../../docs/module-extension-guide.md).
+Module hooks register via `defineModule({ hooks })`. Tenant dynamic hooks register via `POST /api/hooks`.
 
 ## Workarounds
 

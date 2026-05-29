@@ -1,5 +1,5 @@
 {
-  "name": "@repo/modules",
+  "name": "@repo/hooks",
   "private": true,
   "type": "module",
   "scripts": {
@@ -23,9 +23,6 @@
     "vitest": "catalog:"
   },
   "dependencies": {
-    "@repo/entities": "workspace:*",
-    "@repo/hooks": "workspace:*",
-    "@repo/ui-builder": "workspace:*",
     "zod": "catalog:"
   }
 }

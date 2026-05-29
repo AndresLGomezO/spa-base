@@ -2,6 +2,7 @@ import {
   ENTITY_DEFINITION_PERMISSIONS,
   getDynamicPermissionsForTenant,
 } from "@repo/dynamic-entities";
+import { HOOK_PERMISSIONS } from "@repo/hooks";
 import { getAllEntities } from "@repo/entities";
 
 const FALLBACK_PERMISSIONS = [
@@ -24,6 +25,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
       ? staticPermissions
       : [...FALLBACK_PERMISSIONS]),
     ...ENTITY_DEFINITION_PERMISSIONS,
+    ...HOOK_PERMISSIONS,
     ...(tenantId ? getDynamicPermissionsForTenant(tenantId) : []),
   ];
   return [...new Set(permissions)];

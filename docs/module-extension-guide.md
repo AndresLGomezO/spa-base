@@ -96,7 +96,7 @@ export const myModule = defineModule({
 
   hooks: [
     {
-      event: "organization.deleted",
+      event: "organization.afterDelete",
       handler: async (ctx) => { /* cross-entity reaction */ },
     },
   ],
@@ -192,27 +192,32 @@ Use the Query Engine for reads inside handlers — do not query Firestore direct
 
 ### Hooks
 
-CRUD routes emit lifecycle events after successful mutations:
+CRUD routes emit lifecycle events at six hook points (`beforeCreate` … `afterDelete`):
 
 | Event | When |
 | --- | --- |
-| `{entity}.created` | After POST |
-| `{entity}.updated` | After PUT |
-| `{entity}.deleted` | After DELETE |
+| `{entity}.beforeCreate` | Before POST persist (may mutate payload) |
+| `{entity}.afterCreate` | After successful POST |
+| `{entity}.beforeUpdate` | Before PUT persist |
+| `{entity}.afterUpdate` | After successful PUT |
+| `{entity}.beforeDelete` | After relation checks, before DELETE |
+| `{entity}.afterDelete` | After successful DELETE |
 
 Hook context:
 
 ```ts
 {
-  userId: string;
-  tenantId: string;
-  entityName: string;
-  record: Record<string, unknown>;
-  services: { queryEngine, logger };
+  tenantId, entityName, event,
+  current: Record<string, unknown>,
+  previous?: Record<string, unknown>,
+  user: { uid },
+  services: { logger, entities?: { create, update } },
 }
 ```
 
-Handlers run sequentially; errors are logged and do **not** fail the CRUD response (v1).
+Module hooks register via `defineModule({ hooks })`. Tenant admins can add action-based hooks via `POST /api/hooks`. See [Hooks System Guide](./hooks-system-guide.md).
+
+`before*` failures block the operation; `after*` failures are logged only.
 
 ### UI extensions
 
@@ -237,7 +242,7 @@ Handlers run sequentially; errors are logged and do **not** fail the CRUD respon
 | New entity | `inventoryItem` with relation to `organization` |
 | Converter | `createEntityConverter(InventoryItem)` |
 | Custom route | `GET /api/modules/inventory/summary` |
-| Hook | `organization.deleted` → logs stub |
+| Hook | `organization.afterDelete` → logs stub |
 | UI | Extends `organization.views`; registers `badge` component |
 
 Adding inventory requires only listing `inventoryModule` in `app.config.ts`.
@@ -291,5 +296,6 @@ In-memory test runtime (`createInMemoryCrudRuntime`) bootstraps the platform app
 - [Entity System Guide](./entity-system-guide.md)
 - [Advanced UI Builder Guide](./advanced-ui-builder-guide.md)
 - [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md)
+- [Hooks System Guide](./hooks-system-guide.md)
 - [@repo/entities README](../packages/entities/README.md)
 - [CRUD README](../apps/api/src/crud/README.md) — hook events

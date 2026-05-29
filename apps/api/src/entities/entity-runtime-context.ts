@@ -1,5 +1,3 @@
-import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
-
 import {
   getAllEntities,
   type DefinedEntity,
@@ -12,6 +10,7 @@ import {
   resolveEntity,
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
+import { HOOK_PERMISSIONS } from "@repo/hooks";
 import type {
   EntityDefinitionRepository,
   EntityQueryExecutor,
@@ -24,13 +23,9 @@ import {
   createFirestoreEntityQueryExecutor,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
-import type { QueryEngine } from "@repo/query-engine";
 
-import { registerCrudRoutes } from "../crud/register-crud-routes.js";
 import { createInMemoryEntityQueryExecutor } from "../repositories/in-memory-entity-query-executor.js";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
-import { createParametricEntityPermissionGuards } from "../rbac/create-entity-permission-guards.js";
-import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import { createQueryRuntimeContext } from "../query/create-query-services.js";
 import { createRelationRuntimeContext } from "../relations/create-relation-services.js";
 import { getEntityConverter } from "./entity-converter-registry.js";
@@ -54,14 +49,8 @@ export class EntityRuntimeContext {
     TenantScopedEntityRepository<GenericRecord, unknown>
   >();
   private readonly queryExecutorCache = new Map<string, EntityQueryExecutor>();
-  private readonly registeredRouteNames = new Set<string>();
-  private dynamicCrudRoutesRegistered = false;
-  private readonly staticEntityNames: ReadonlySet<string>;
 
   constructor(private readonly options: EntityRuntimeContextOptions) {
-    this.staticEntityNames = new Set(
-      getAllEntities().map((entity) => entity.name),
-    );
     for (const [entityName, repository] of Object.entries(
       options.repositories ?? {},
     )) {
@@ -94,6 +83,7 @@ export class EntityRuntimeContext {
         "entityDefinition.read",
         "entityDefinition.create",
         "entityDefinition.update",
+        ...HOOK_PERMISSIONS,
       ]),
     ];
   }
@@ -204,72 +194,6 @@ export class EntityRuntimeContext {
     for (const record of records) {
       registerDynamicEntity(tenantId, record);
     }
-  }
-
-  async registerDynamicEntityCrudRoutes(
-    server: FastifyInstance,
-    authenticate: preHandlerAsyncHookHandler,
-    permissionDeps: LoadRequestPermissionsDeps,
-    queryEngine: QueryEngine,
-    relationContext: ReturnType<
-      typeof import("../relations/create-relation-services.js").createRelationRuntimeContext
-    >,
-  ): Promise<void> {
-    if (this.dynamicCrudRoutesRegistered) {
-      return;
-    }
-
-    await registerCrudRoutes(server, {
-      parametricEntityName: true,
-      entityName: "entityName",
-      entity: (tenantId, entityName) => {
-        if (!entityName || this.staticEntityNames.has(entityName)) {
-          return null;
-        }
-        const entity = this.resolveEntity(entityName, tenantId);
-        if (!entity) {
-          return null;
-        }
-        return {
-          name: entity.name,
-          schema: entity.schema,
-          createSchema: entity.createSchema,
-          updateSchema: entity.updateSchema,
-        };
-      },
-      repository: (tenantId, entityName) => {
-        if (!entityName || this.staticEntityNames.has(entityName)) {
-          return null;
-        }
-        return this.getRepository(tenantId, entityName) ?? null;
-      },
-      authenticate,
-      authorize: createParametricEntityPermissionGuards(permissionDeps),
-      relations: (entityName) => relationContext.hooksFor(entityName),
-      queryEngine,
-    });
-
-    this.dynamicCrudRoutesRegistered = true;
-  }
-
-  async ensureDynamicCrudRoutesRegistered(
-    server: FastifyInstance,
-    entityName: string,
-    authenticate: preHandlerAsyncHookHandler,
-    permissionDeps: LoadRequestPermissionsDeps,
-    queryEngine: QueryEngine,
-    relationContext: ReturnType<
-      typeof import("../relations/create-relation-services.js").createRelationRuntimeContext
-    >,
-  ): Promise<void> {
-    await this.registerDynamicEntityCrudRoutes(
-      server,
-      authenticate,
-      permissionDeps,
-      queryEngine,
-      relationContext,
-    );
-    this.registeredRouteNames.add(entityName);
   }
 }
 
