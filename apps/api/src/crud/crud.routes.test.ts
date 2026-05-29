@@ -1,11 +1,20 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import type { UserAccessProfile } from "@repo/rbac";
+
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
 const authState = {
   uid: "user_123",
   tenantId: "tenant_a",
+};
+
+const accessProfileState = {
+  platformRole: null as string | null,
+  tenants: {
+    tenant_a: ["admin"],
+  } as Record<string, string[]>,
 };
 
 vi.mock("@repo/gcp-firebase", () => ({
@@ -44,6 +53,7 @@ vi.mock("@repo/gcp-firebase", () => ({
     authLastSignInAt: user.metadata.lastSignInTime,
   })),
   createFirestoreAdminRegisteredUserRepository: vi.fn(() => ({
+    getByUid: vi.fn(async () => null),
     upsertFromAuthUser: vi.fn(async (authUser) => ({
       uid: authUser.uid,
       email: authUser.email,
@@ -73,10 +83,16 @@ function createInMemoryRepositories() {
   };
 }
 
-async function buildTestServer() {
+interface BuildTestServerOptions {
+  readonly accessProfile?: UserAccessProfile;
+}
+
+async function buildTestServer(options: BuildTestServerOptions = {}) {
+  const profile = options.accessProfile ?? accessProfileState;
   return buildServer({
     logger: false,
     repositories: createInMemoryRepositories(),
+    getUserAccessProfile: async () => profile,
   });
 }
 
@@ -89,6 +105,10 @@ describe("CRUD API", () => {
   beforeEach(() => {
     authState.uid = "user_123";
     authState.tenantId = "tenant_a";
+    accessProfileState.platformRole = null;
+    accessProfileState.tenants = {
+      tenant_a: ["admin"],
+    };
   });
 
   describe("Customer", () => {
@@ -201,7 +221,15 @@ describe("CRUD API", () => {
     });
 
     it("returns 404 for cross-tenant access", async () => {
-      const server = await buildTestServer();
+      const server = await buildTestServer({
+        accessProfile: {
+          platformRole: null,
+          tenants: {
+            tenant_a: ["admin"],
+            tenant_b: ["admin"],
+          },
+        },
+      });
 
       const createResponse = await server.inject({
         method: "POST",
@@ -282,6 +310,104 @@ describe("CRUD API", () => {
 
       expect(response.statusCode).toBe(403);
       expect(response.json().error.code).toBe("TENANT_NOT_RESOLVED");
+    });
+  });
+
+  describe("RBAC", () => {
+    it("returns 403 when user has no roles", async () => {
+      const server = await buildTestServer({
+        accessProfile: {
+          platformRole: null,
+          tenants: {},
+        },
+      });
+
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Denied User" },
+      });
+
+      expect(response.statusCode).toBe(403);
+      expect(response.json().error.code).toBe("FORBIDDEN");
+    });
+
+    it("allows viewer to read but not create", async () => {
+      const server = await buildTestServer({
+        accessProfile: {
+          platformRole: null,
+          tenants: { tenant_a: ["viewer"] },
+        },
+      });
+
+      const listResponse = await server.inject({
+        method: "GET",
+        url: "/api/customer",
+        headers: authHeaders,
+      });
+      expect(listResponse.statusCode).toBe(200);
+
+      const createResponse = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Viewer Create Attempt" },
+      });
+      expect(createResponse.statusCode).toBe(403);
+      expect(createResponse.json().error.code).toBe("FORBIDDEN");
+    });
+
+    it("allows editor to create and update but not delete", async () => {
+      const server = await buildTestServer({
+        accessProfile: {
+          platformRole: null,
+          tenants: { tenant_a: ["editor"] },
+        },
+      });
+
+      const createResponse = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Editor Record" },
+      });
+      expect(createResponse.statusCode).toBe(201);
+      const created = createResponse.json().data;
+
+      const updateResponse = await server.inject({
+        method: "PUT",
+        url: `/api/customer/${created.id}`,
+        headers: authHeaders,
+        payload: { email: "editor@example.com" },
+      });
+      expect(updateResponse.statusCode).toBe(200);
+
+      const deleteResponse = await server.inject({
+        method: "DELETE",
+        url: `/api/customer/${created.id}`,
+        headers: authHeaders,
+      });
+      expect(deleteResponse.statusCode).toBe(403);
+      expect(deleteResponse.json().error.code).toBe("FORBIDDEN");
+    });
+
+    it("allows superadmin without tenant roles", async () => {
+      const server = await buildTestServer({
+        accessProfile: {
+          platformRole: "superadmin",
+          tenants: {},
+        },
+      });
+
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Superadmin Record" },
+      });
+
+      expect(response.statusCode).toBe(201);
     });
   });
 });

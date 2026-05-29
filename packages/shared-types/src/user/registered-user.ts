@@ -40,6 +40,10 @@ export const registeredUserSchemaV1 = z
     providers: z.array(authProviderProfileSchema),
     authCreatedAt: isoDatetimeStringSchema.nullable(),
     authLastSignInAt: isoDatetimeStringSchema.nullable(),
+    platformRole: nullableTrimmedString.optional(),
+    tenants: z
+      .record(z.string().trim().min(1), z.array(z.string().trim().min(1)))
+      .optional(),
     createdAt: isoDatetimeStringSchema,
     updatedAt: isoDatetimeStringSchema,
   })

@@ -5,11 +5,18 @@ export const AUTH_INITIAL_STATE: AuthState = {
   phase: "initializing",
   user: null,
   error: null,
+  permissions: [],
+  isSuperAdmin: false,
 };
 
 type AuthAction =
   | { readonly type: "LOGIN_STARTED" }
-  | { readonly type: "AUTH_STATE_AUTHENTICATED"; readonly user: AuthUser }
+  | {
+      readonly type: "AUTH_STATE_AUTHENTICATED";
+      readonly user: AuthUser;
+      readonly permissions?: readonly string[];
+      readonly isSuperAdmin?: boolean;
+    }
   | { readonly type: "AUTH_STATE_UNAUTHENTICATED" }
   | { readonly type: "LOGIN_FAILED"; readonly error: string }
   | { readonly type: "LOGOUT_COMPLETED" };
@@ -50,30 +57,40 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         phase: "authenticating",
         user: null,
         error: null,
+        permissions: [],
+        isSuperAdmin: false,
       };
     case "AUTH_STATE_AUTHENTICATED":
       return {
         phase: "authenticated",
         user: action.user,
         error: null,
+        permissions: action.permissions ?? state.permissions,
+        isSuperAdmin: action.isSuperAdmin ?? state.isSuperAdmin,
       };
     case "AUTH_STATE_UNAUTHENTICATED":
       return {
         phase: "unauthenticated",
         user: null,
         error: null,
+        permissions: [],
+        isSuperAdmin: false,
       };
     case "LOGIN_FAILED":
       return {
         phase: "unauthenticated",
         user: null,
         error: action.error,
+        permissions: [],
+        isSuperAdmin: false,
       };
     case "LOGOUT_COMPLETED":
       return {
         phase: "unauthenticated",
         user: null,
         error: null,
+        permissions: [],
+        isSuperAdmin: false,
       };
     default: {
       const exhaustive: never = action;

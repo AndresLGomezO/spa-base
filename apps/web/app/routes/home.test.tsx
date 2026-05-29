@@ -13,6 +13,8 @@ vi.mock("../auth/AuthContext", () => ({
       role: "member",
       providerId: "password",
     },
+    permissions: [],
+    isSuperAdmin: false,
     logout: vi.fn(),
   }),
 }));

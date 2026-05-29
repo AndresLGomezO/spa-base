@@ -10,7 +10,18 @@ Fastify HTTP API for the platform. Handles auth validation and auto-generated CR
 | ------ | ---------------- | ------------------ |
 | GET    | `/auth/validate` | Bearer + App Check |
 
-Response shape: `{ ok, user, appCheck }` or `{ ok: false, code, message }` — unchanged for web app compatibility.
+Response shape: `{ ok, user, appCheck }` or `{ ok: false, code, message }`.
+
+The `user` object includes resolved RBAC fields for the active tenant (when `tenantId` is present on the ID token):
+
+```json
+{
+  "uid": "...",
+  "email": "...",
+  "permissions": ["customer.read", "order.read"],
+  "isSuperAdmin": false
+}
+```
 
 ### CRUD (standard envelope)
 
@@ -88,7 +99,44 @@ pnpm --filter api dev
 
 Ensure `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080` is set (see `apps/api/.env.dev.example`).
 
-Integration tests in `@repo/gcp-firebase` require the emulator (`FIRESTORE_EMULATOR_HOST`). API route tests use in-memory repositories via `buildServer({ repositories })`.
+Integration tests in `@repo/gcp-firebase` require the emulator (`FIRESTORE_EMULATOR_HOST`). API route tests use in-memory repositories via `buildServer({ repositories })` and mock access profiles via `buildServer({ getUserAccessProfile })`.
+
+## RBAC (WS4)
+
+CRUD routes enforce permissions via `@repo/rbac`. Users without roles for the active tenant receive **403 FORBIDDEN**.
+
+### Seeding roles in development
+
+Set tenant roles on the Firestore user document (`users/{uid}`). Auth upsert preserves existing `platformRole` and `tenants` fields on login.
+
+```json
+{
+  "platformRole": null,
+  "tenants": {
+    "tenant_dev_1": ["admin"]
+  }
+}
+```
+
+Built-in roles: `admin`, `editor`, `viewer`. Platform superadmin: `"platformRole": "superadmin"`.
+
+Example with Admin SDK:
+
+```js
+import { getFirestore } from "firebase-admin/firestore";
+
+await getFirestore()
+  .collection("users")
+  .doc(uid)
+  .set(
+    {
+      tenants: { tenant_dev_1: ["admin"] },
+    },
+    { merge: true },
+  );
+```
+
+See [`packages/rbac/README.md`](../../packages/rbac/README.md) for wildcard and permission details.
 
 ## Project layout
 
@@ -96,6 +144,7 @@ Integration tests in `@repo/gcp-firebase` require the emulator (`FIRESTORE_EMULA
 src/
   auth/              JWT + App Check preHandler, tenant claim extraction
   crud/              registerCrudRoutes, response envelope, validation
+  rbac/              Permission loading, requirePermission, entity guards
   repositories/      In-memory entity repository (tests / reference)
   routes/            Auth validate route
   server.ts          Fastify bootstrap + Firestore repo wiring

@@ -18,6 +18,9 @@ flowchart TB
     FC["@repo/firestore-converters"]
     GCP["@repo/gcp-firebase"]
   end
+  subgraph security [Security layer - WS4]
+    RBAC["@repo/rbac"]
+  end
   subgraph apps [Apps]
     API["apps/api\nCRUD generator - WS2"]
     Web["apps/web\nEntityTable/Form - WS5"]
@@ -27,6 +30,8 @@ flowchart TB
   GCP --> FC
   API --> GCP
   API --> Entities
+  API --> RBAC
+  RBAC --> SharedTypes
   Web --> SharedTypes
   Web --> Entities
 ```
@@ -37,7 +42,8 @@ flowchart TB
 | `@repo/shared-types/src/entities/` | Concrete business entity definitions                              |
 | `@repo/firestore-converters`       | Versioned converters + `_schemaVersion` (User pattern)            |
 | `@repo/gcp-firebase`               | Firestore repository implementations                              |
-| `apps/api`                         | HTTP routes, tenant injection, RBAC                               |
+| `@repo/rbac`                       | Role definitions, permission resolution, wildcard matching        |
+| `apps/api`                         | HTTP routes, tenant injection, RBAC enforcement                   |
 | `apps/web`                         | Dynamic UI from entity metadata                                   |
 
 Dependency direction: apps → gcp-firebase → firestore-converters → shared-types → entities. **Entities never import upward.**
@@ -86,7 +92,17 @@ Auto-generated routes in [`apps/api`](../apps/api/README.md):
 - `GET/POST /api/{entity}`, `GET/PUT/DELETE /api/{entity}/:id`
 - Auth: Bearer JWT + App Check + **`tenantId` custom claim**
 - Response envelope: `{ data, error }`
-- RBAC: `noopPreHandler` stub — wire `requirePermission` in WS4
+- RBAC: per-route permission guards via `@repo/rbac` (WS4)
+
+### WS4 — RBAC (implemented)
+
+Permission resolution and enforcement:
+
+- Package: [`@repo/rbac`](../packages/rbac/README.md) — roles, wildcards, `resolvePermissions`
+- User roles on Firestore `users/{uid}`: `platformRole`, `tenants`
+- API: per-action guards on CRUD routes (`customer.read`, `customer.create`, …)
+- Web foundation: `/auth/validate` returns `permissions` + `isSuperAdmin`; `usePermission` hook
+- Entity UI gating (hide buttons/routes) deferred to WS5
 
 ### WS3 — Firestore DAL (implemented)
 
@@ -99,9 +115,9 @@ Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebas
 
 | Workstream            | Status  | Consumes from entity system                                              |
 | --------------------- | ------- | ------------------------------------------------------------------------ |
-| **2 — CRUD API**      | Done    | `createSchema`, `updateSchema`, `schema`, `permissions` (RBAC stub only) |
+| **2 — CRUD API**      | Done    | `createSchema`, `updateSchema`, `schema`, `permissions`                  |
 | **3 — Firestore DAL** | Done    | `schema` + `_schemaVersion`; `metadata.collection`                       |
-| **4 — RBAC**          | Planned | `metadata.permissions`                                                   |
+| **4 — RBAC**          | Done    | `metadata.permissions`; `@repo/rbac`; user `tenants` / `platformRole`    |
 | **5 — Frontend UI**   | Planned | `metadata.fields`, shared Zod schemas                                    |
 | **6 — Routing**       | Planned | Entity list from registry or shared-types exports                        |
 | **7 — Admin roles**   | Planned | Permission strings registered from entities                              |

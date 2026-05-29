@@ -17,6 +17,7 @@
     "@fastify/cors": "catalog:",
     "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",
+    "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "fastify": "catalog:",
     "nanoid": "catalog:",
