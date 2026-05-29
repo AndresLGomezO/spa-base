@@ -2,6 +2,11 @@ import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
 import {
+  isPlatformSuperAdmin,
+  resolvePermissions,
+  toUserAccessProfile,
+} from "@repo/rbac";
+import {
   createFirestoreAdminRegisteredUserRepository,
   getFirebaseUserRecord,
   mapFirebaseUserRecordToAuthUserProjection,
@@ -10,13 +15,12 @@ import {
   verifyFirebaseIdToken,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
-import {
-  isPlatformSuperAdmin,
-  resolvePermissions,
-  toUserAccessProfile,
-} from "@repo/rbac";
 
 import { extractBearerToken } from "../auth/extract-bearer-token.js";
+import { canAccessTenant } from "../auth/build-auth-session-context.js";
+import { listAvailableTenantIds } from "../admin/list-tenant-ids.js";
+import { apiEnv } from "../config/env.js";
+import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 
 const headerSchema = z.object({
   authorization: z.string().min(1),
@@ -29,6 +33,7 @@ const bodySchema = z.object({
 
 export const authSelectTenantRoute: FastifyPluginAsync<{
   firebaseAdminConfig: FirebaseAdminConfig;
+  permissionDeps: LoadRequestPermissionsDeps;
 }> = async (fastify, opts) => {
   const registeredUserRepository = createFirestoreAdminRegisteredUserRepository(
     opts.firebaseAdminConfig,
@@ -64,12 +69,13 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
     }
 
     try {
-      const [decodedIdToken, decodedAppCheck] = await Promise.all([
+      const [decodedIdToken, decodedAppCheck, roleCatalog] = await Promise.all([
         verifyFirebaseIdToken(idToken, opts.firebaseAdminConfig),
         verifyFirebaseAppCheckToken(
           parsedHeaders.data["x-firebase-appcheck"],
           opts.firebaseAdminConfig,
         ),
+        opts.permissionDeps.getRoleCatalog(),
       ]);
       void decodedAppCheck;
 
@@ -77,14 +83,31 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
         decodedIdToken.uid,
         opts.firebaseAdminConfig,
       );
-      const registeredUser = await registeredUserRepository.upsertFromAuthUser(
+      const upsertResult = await registeredUserRepository.upsertFromAuthUser(
         mapFirebaseUserRecordToAuthUserProjection(authUserRecord),
       );
+      const registeredUser = upsertResult.user;
 
       const requestedTenantId = parsedBody.data.tenantId;
-      const availableTenants = Object.keys(registeredUser.tenants ?? {});
+      const accessProfile = toUserAccessProfile(registeredUser);
+      const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
 
-      if (!availableTenants.includes(requestedTenantId)) {
+      const userTenantIds = Object.keys(registeredUser.tenants ?? {});
+      const availableTenants = await listAvailableTenantIds({
+        config: opts.firebaseAdminConfig,
+        isSuperAdmin,
+        userTenantIds,
+        knownTenantEnv: apiEnv.PLATFORM_KNOWN_TENANTS,
+      });
+
+      if (
+        !canAccessTenant({
+          isSuperAdmin,
+          userTenantIds,
+          requestedTenantId,
+          availableTenantIds: availableTenants,
+        })
+      ) {
         return reply.status(403).send({
           ok: false,
           code: "FORBIDDEN",
@@ -98,12 +121,13 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
         opts.firebaseAdminConfig,
       );
 
-      const accessProfile = toUserAccessProfile(registeredUser);
-      const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
-      const permissions = resolvePermissions({
-        ...accessProfile,
-        tenantId: requestedTenantId,
-      });
+      const permissions = resolvePermissions(
+        {
+          ...accessProfile,
+          tenantId: requestedTenantId,
+        },
+        { roleCatalog },
+      );
 
       return reply.send({
         ok: true,

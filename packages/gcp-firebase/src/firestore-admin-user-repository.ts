@@ -3,14 +3,17 @@ import {
   mergeRegisteredUserFromAuthUser,
   registeredUserConverter,
   type RegisteredUserRepository,
+  type RegisteredUserUpsertResult,
+  type UpdateRegisteredUserAccessInput,
 } from "@repo/firestore-converters";
 import {
-  USERS_COLLECTION,
   registeredUserSchemaV1,
+  USERS_COLLECTION,
   type AuthUserProjection,
   type RegisteredUser,
 } from "@repo/shared-types";
 import { type UserRecord } from "firebase-admin/auth";
+import { FieldPath } from "firebase-admin/firestore";
 
 import {
   getFirestoreAdmin,
@@ -75,7 +78,7 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
 
   async upsertFromAuthUser(
     authUser: AuthUserProjection,
-  ): Promise<RegisteredUser> {
+  ): Promise<RegisteredUserUpsertResult> {
     const parsedAuthUser = registeredUserSchemaV1.pick({ uid: true }).parse({
       uid: authUser.uid,
     });
@@ -88,6 +91,7 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
     return firestore.runTransaction(async (transaction) => {
       const nowIso = new Date().toISOString();
       const existingSnapshot = await transaction.get(userDocRef);
+      const created = !existingSnapshot.exists;
       const nextUser = existingSnapshot.exists
         ? mergeRegisteredUserFromAuthUser(
             registeredUserConverter.read(existingSnapshot.data()),
@@ -98,6 +102,65 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
 
       const persisted = registeredUserConverter.write(nextUser);
       transaction.set(userDocRef, persisted, { merge: false });
+      return { user: nextUser, created };
+    });
+  }
+
+  async list(params: { limit?: number; cursor?: string } = {}) {
+    const limit = Math.min(Math.max(params.limit ?? 50, 1), 100);
+    const firestore = getFirestoreAdmin(this.config);
+    let query = firestore
+      .collection(USERS_COLLECTION)
+      .orderBy(FieldPath.documentId())
+      .limit(limit + 1);
+
+    const cursor = params.cursor?.trim();
+    if (cursor) {
+      query = query.startAfter(cursor);
+    }
+
+    const snapshot = await query.get();
+    const docs = snapshot.docs;
+    const hasMore = docs.length > limit;
+    const pageDocs = hasMore ? docs.slice(0, limit) : docs;
+
+    return {
+      items: pageDocs.map((doc) => registeredUserConverter.read(doc.data())),
+      nextCursor: hasMore ? (pageDocs.at(-1)?.id ?? null) : null,
+    };
+  }
+
+  async updateAccess(
+    uid: string,
+    data: UpdateRegisteredUserAccessInput,
+  ): Promise<RegisteredUser | null> {
+    const parsedUid = uid.trim();
+    if (!parsedUid) return null;
+
+    const firestore = getFirestoreAdmin(this.config);
+    const userDocRef = firestore.collection(USERS_COLLECTION).doc(parsedUid);
+
+    return firestore.runTransaction(async (transaction) => {
+      const existingSnapshot = await transaction.get(userDocRef);
+      if (!existingSnapshot.exists) {
+        return null;
+      }
+
+      const existing = registeredUserConverter.read(existingSnapshot.data());
+      const nowIso = new Date().toISOString();
+      const nextUser = registeredUserSchemaV1.parse({
+        ...existing,
+        platformRole:
+          data.platformRole !== undefined
+            ? data.platformRole
+            : (existing.platformRole ?? null),
+        tenants: data.tenants !== undefined ? data.tenants : existing.tenants,
+        updatedAt: nowIso,
+      });
+
+      transaction.set(userDocRef, registeredUserConverter.write(nextUser), {
+        merge: false,
+      });
       return nextUser;
     });
   }

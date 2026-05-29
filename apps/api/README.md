@@ -165,6 +165,31 @@ await getFirestore()
 
 See [`packages/rbac/README.md`](../../packages/rbac/README.md) for wildcard and permission details.
 
+## Admin (WS7)
+
+On startup the API seeds global roles into Firestore (`roles/{roleId}`) if missing. Superadmin-only routes under `/admin/*`:
+
+| Method | Path                | Description                          |
+| ------ | ------------------- | ------------------------------------ |
+| GET    | `/admin/roles`      | List global Firestore roles          |
+| GET    | `/admin/tenants`    | List tenant IDs                      |
+| GET    | `/admin/users`      | Paginated user list                  |
+| PATCH  | `/admin/users/:uid` | Update `{ tenants: Record<string, string[]> }` |
+
+### Superadmin bootstrap
+
+Set in API env (see `apps/api/.env.dev.example`):
+
+```
+PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
+PLATFORM_KNOWN_TENANTS=tenant_dev_1,tenant_dev_2
+```
+
+- `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`: comma-separated emails promoted to `platform.superadmin` on **first** user document creation only.
+- `PLATFORM_KNOWN_TENANTS`: optional dev fallback tenant IDs merged with Firestore `tenants` collection for superadmin tenant selection.
+
+Superadmins see all tenant IDs when selecting a tenant; regular users remain limited to keys in `users/{uid}.tenants`.
+
 ## Project layout
 
 ```
@@ -173,7 +198,7 @@ src/
   crud/              registerCrudRoutes, response envelope, validation
   rbac/              Permission loading, requirePermission, entity guards
   repositories/      In-memory entity repository (tests / reference)
-  routes/            Auth validate route
+  routes/            Auth validate, admin routes (WS7)
   server.ts          Fastify bootstrap + Firestore repo wiring
 ```
 

@@ -37,3 +37,11 @@ export {
   type PersistedRegisteredUser,
   type RegisteredUser,
 } from "./user/registered-user.js";
+export {
+  PLATFORM_ROLE_SCHEMA_VERSION,
+  ROLES_COLLECTION,
+  persistedPlatformRoleSchemaV1,
+  platformRoleSchemaV1,
+  type PersistedPlatformRole,
+  type PlatformRole,
+} from "./role/platform-role.js";

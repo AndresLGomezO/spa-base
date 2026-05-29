@@ -8,9 +8,10 @@ import {
 } from "@repo/firestore-converters";
 import {
   createFirestoreAdminEntityRepository,
+  createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
 } from "@repo/gcp-firebase";
-import type { UserAccessProfile } from "@repo/rbac";
+import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 import {
   CUSTOMERS_COLLECTION,
   Customer,
@@ -22,6 +23,7 @@ import {
   type OrderUpdate,
 } from "@repo/shared-types";
 
+import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
@@ -30,6 +32,8 @@ import {
   createLoadRequestPermissionsDeps,
   type LoadRequestPermissionsDeps,
 } from "./rbac/index.js";
+import { createRoleCatalogLoader } from "./rbac/role-catalog.js";
+import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 
@@ -45,6 +49,8 @@ interface BuildServerOptions {
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
+  readonly getRoleCatalog?: () => Promise<RoleCatalog>;
+  readonly skipPlatformRoleSeed?: boolean;
 }
 
 export async function buildServer(options: BuildServerOptions = {}) {
@@ -68,19 +74,42 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   registerCrudErrorHandler(server);
 
+  if (!options.skipPlatformRoleSeed) {
+    await seedPlatformRoles(firebaseAdminConfig);
+  }
+
   const registeredUserRepository =
     createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
+  const platformRoleRepository =
+    createFirestoreAdminPlatformRoleRepository(firebaseAdminConfig);
+  const loadRoleCatalog =
+    options.getRoleCatalog ?? createRoleCatalogLoader(platformRoleRepository);
+
   const permissionDeps: LoadRequestPermissionsDeps =
     options.getUserAccessProfile
-      ? { getUserAccessProfile: options.getUserAccessProfile }
-      : createLoadRequestPermissionsDeps(registeredUserRepository);
+      ? {
+          getUserAccessProfile: options.getUserAccessProfile,
+          getRoleCatalog: loadRoleCatalog,
+        }
+      : createLoadRequestPermissionsDeps(
+          registeredUserRepository,
+          loadRoleCatalog,
+        );
 
   await server.register(authValidateRoute, {
     firebaseAdminConfig,
+    permissionDeps,
   });
 
   await server.register(authSelectTenantRoute, {
     firebaseAdminConfig,
+    permissionDeps,
+  });
+
+  await server.register(adminRoutes, {
+    firebaseAdminConfig,
+    registeredUserRepository,
+    permissionDeps,
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);

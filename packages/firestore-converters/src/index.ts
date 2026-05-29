@@ -26,7 +26,18 @@ export {
   registeredUserConverter,
   registeredUserCurrentVersion,
 } from "./user/schema.latest.js";
-export { type RegisteredUserRepository } from "./user/repository-contract.js";
+export {
+  type RegisteredUserListParams,
+  type RegisteredUserListResult,
+  type RegisteredUserRepository,
+  type RegisteredUserUpsertResult,
+  type UpdateRegisteredUserAccessInput,
+} from "./user/repository-contract.js";
+export {
+  platformRoleConverter,
+  platformRoleCurrentVersion,
+} from "./role/schema.latest.js";
+export { type PlatformRoleRepository } from "./role/repository-contract.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

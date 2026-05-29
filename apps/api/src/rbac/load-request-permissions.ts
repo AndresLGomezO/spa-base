@@ -4,6 +4,7 @@ import {
   isPlatformSuperAdmin,
   resolvePermissions,
   toUserAccessProfile,
+  type RoleCatalog,
   type UserAccessProfile,
 } from "@repo/rbac";
 import type { RegisteredUserRepository } from "@repo/firestore-converters";
@@ -14,10 +15,12 @@ export interface LoadRequestPermissionsDeps {
   readonly getUserAccessProfile: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
+  readonly getRoleCatalog: () => Promise<RoleCatalog>;
 }
 
 export function createLoadRequestPermissionsDeps(
   registeredUserRepository: RegisteredUserRepository,
+  getRoleCatalog: () => Promise<RoleCatalog>,
 ): LoadRequestPermissionsDeps {
   return {
     getUserAccessProfile: async (uid) => {
@@ -27,6 +30,7 @@ export function createLoadRequestPermissionsDeps(
       }
       return toUserAccessProfile(user);
     },
+    getRoleCatalog,
   };
 }
 
@@ -43,16 +47,23 @@ export async function loadRequestPermissions(
     return currentCtx;
   }
 
-  const profile = await deps.getUserAccessProfile(currentCtx.uid);
+  const [profile, roleCatalog] = await Promise.all([
+    deps.getUserAccessProfile(currentCtx.uid),
+    deps.getRoleCatalog(),
+  ]);
+
   const accessProfile: UserAccessProfile = profile ?? {
     platformRole: null,
     tenants: {},
   };
   const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
-  const permissions = resolvePermissions({
-    ...accessProfile,
-    tenantId: currentCtx.tenantId,
-  });
+  const permissions = resolvePermissions(
+    {
+      ...accessProfile,
+      tenantId: currentCtx.tenantId,
+    },
+    { roleCatalog },
+  );
 
   const nextCtx: RequestContext = {
     ...currentCtx,

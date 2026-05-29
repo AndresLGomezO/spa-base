@@ -6,9 +6,15 @@ export { isPlatformSuperAdmin } from "./platform-role.js";
 export { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
 export { BUILT_IN_ROLES, isBuiltInRoleName } from "./roles.js";
 export {
+  buildRoleCatalog,
+  getRoleGrants,
+  type RoleCatalog,
+} from "./build-role-catalog.js";
+export {
   resolveAccessDecision,
   resolvePermissions,
   toUserAccessProfile,
+  type ResolvePermissionsOptions,
 } from "./resolve-permissions.js";
 export {
   BUILT_IN_ROLE_NAMES,

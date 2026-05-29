@@ -11,6 +11,7 @@ export {
 } from "./auth.js";
 export { verifyFirebaseAppCheckToken } from "./app-check.js";
 export { createFirestoreAdminEntityRepository } from "./firestore-admin-entity-repository.js";
+export { createFirestoreAdminPlatformRoleRepository } from "./firestore-admin-platform-role-repository.js";
 export {
   createFirestoreAdminRegisteredUserRepository,
   mapFirebaseUserRecordToAuthUserProjection,

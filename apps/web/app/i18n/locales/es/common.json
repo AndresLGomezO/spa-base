@@ -46,7 +46,26 @@
     "open": "Abrir menú",
     "userMenu": "Menú de cuenta",
     "signOut": "Cerrar sesión",
-    "fallbackName": "Usuario"
+    "fallbackName": "Usuario",
+    "admin": "Administración"
+  },
+  "admin": {
+    "title": "Administración de plataforma",
+    "description": "Administra roles de usuario por tenant.",
+    "loading": "Cargando datos de administración...",
+    "email": "Correo",
+    "platformRole": "Rol de plataforma",
+    "tenantRoles": "Roles por tenant",
+    "user": "Usuario",
+    "tenant": "Tenant",
+    "roles": "Roles",
+    "save": "Guardar roles",
+    "saveSuccess": "Roles actualizados. El usuario debe refrescar su sesión para aplicar los cambios.",
+    "saveFailed": "No se pudieron guardar los roles.",
+    "loadFailed": "No se pudieron cargar los datos de administración.",
+    "userNotFound": "No se encontró el usuario seleccionado.",
+    "forbidden": "Acceso denegado",
+    "forbiddenDetail": "Solo los superadministradores de plataforma pueden acceder a esta página."
   },
   "entity": {
     "create": "Crear",
