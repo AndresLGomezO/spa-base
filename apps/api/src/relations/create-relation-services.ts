@@ -1,4 +1,8 @@
-import { getAllEntities } from "@repo/entities";
+import {
+  getAllEntities,
+  type DefinedEntity,
+  type FieldDefinitions,
+} from "@repo/entities";
 import type {
   JoinCollectionRepository,
   TenantScopedEntityRepository,
@@ -10,34 +14,51 @@ import {
 } from "@repo/entity-relations";
 
 type GenericRecord = { readonly id: string; readonly tenantId: string };
+type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
+
+interface TenantEntityResolver {
+  getEntityDefinition(
+    name: string,
+    tenantId: string,
+  ): AnyDefinedEntity | undefined;
+  getAllEntityDefinitions(tenantId: string): readonly AnyDefinedEntity[];
+  getRepository(
+    tenantId: string,
+    entityName: string,
+  ): TenantScopedEntityRepository<GenericRecord, unknown> | undefined;
+}
 
 interface RelationRuntimeContext {
-  readonly deps: RelationServicesDeps;
   readonly hooksFor: (entityName: string) => EntityRelationHooks | undefined;
 }
 
-export function createRelationRuntimeContext(
+function createRelationDeps(
+  resolver: TenantEntityResolver,
   repositories: Record<
     string,
     TenantScopedEntityRepository<GenericRecord, unknown>
   >,
+  tenantId: string,
   joinRepository?: JoinCollectionRepository,
-): RelationRuntimeContext {
-  const deps: RelationServicesDeps = {
-    getEntityDefinition: (name) =>
-      getAllEntities().find((entity) => entity.name === name),
-    getAllEntityDefinitions: () => getAllEntities(),
-    findById: async (entityName, id, tenantId) => {
-      const repository = repositories[entityName];
+): RelationServicesDeps {
+  return {
+    getEntityDefinition: (name) => resolver.getEntityDefinition(name, tenantId),
+    getAllEntityDefinitions: () => resolver.getAllEntityDefinitions(tenantId),
+    findById: async (entityName, id, activeTenantId) => {
+      const repository =
+        resolver.getRepository(activeTenantId, entityName) ??
+        repositories[entityName];
       if (!repository) return null;
-      const record = await repository.findById(id, tenantId);
+      const record = await repository.findById(id, activeTenantId);
       return record ? { id: record.id, tenantId: record.tenantId } : null;
     },
-    findByField: async (entityName, field, value, tenantId) => {
-      const repository = repositories[entityName];
+    findByField: async (entityName, field, value, activeTenantId) => {
+      const repository =
+        resolver.getRepository(activeTenantId, entityName) ??
+        repositories[entityName];
       if (!repository) return [];
       const result = await repository.findByField({
-        tenantId,
+        tenantId: activeTenantId,
         field,
         value,
         limit: 100,
@@ -47,29 +68,71 @@ export function createRelationRuntimeContext(
         tenantId: record.tenantId,
       }));
     },
-    update: async (entityName, id, tenantId, data) => {
-      const repository = repositories[entityName];
+    update: async (entityName, id, activeTenantId, data) => {
+      const repository =
+        resolver.getRepository(activeTenantId, entityName) ??
+        repositories[entityName];
       if (!repository) return null;
-      const updated = await repository.update(id, tenantId, data);
+      const updated = await repository.update(id, activeTenantId, data);
       return updated ? { id: updated.id, tenantId: updated.tenantId } : null;
     },
-    delete: async (entityName, id, tenantId) => {
-      const repository = repositories[entityName];
+    delete: async (entityName, id, activeTenantId) => {
+      const repository =
+        resolver.getRepository(activeTenantId, entityName) ??
+        repositories[entityName];
       if (!repository) return false;
-      return repository.delete(id, tenantId);
+      return repository.delete(id, activeTenantId);
     },
     joinRepository,
   };
+}
 
-  const hooksByEntityName = new Map<string, EntityRelationHooks>();
+export function createRelationRuntimeContext(
+  resolver: TenantEntityResolver,
+  repositories: Record<
+    string,
+    TenantScopedEntityRepository<GenericRecord, unknown>
+  >,
+  joinRepository?: JoinCollectionRepository,
+): RelationRuntimeContext {
+  const staticHooks = new Map<string, EntityRelationHooks>();
+
   for (const entity of getAllEntities()) {
-    hooksByEntityName.set(entity.name, createEntityRelationHooks(entity, deps));
+    staticHooks.set(
+      entity.name,
+      createEntityRelationHooks(
+        entity,
+        createRelationDeps(resolver, repositories, "", joinRepository),
+      ),
+    );
   }
 
   return {
-    deps,
-    hooksFor(entityName) {
-      return hooksByEntityName.get(entityName);
-    },
+    hooksFor: (entityName) => ({
+      validateWrite: async (record, mode) => {
+        const tenantId =
+          typeof record.tenantId === "string" ? record.tenantId : "";
+        const entity = resolver.getEntityDefinition(entityName, tenantId);
+        if (!entity) {
+          return;
+        }
+        const hooks = createEntityRelationHooks(
+          entity,
+          createRelationDeps(resolver, repositories, tenantId, joinRepository),
+        );
+        return hooks.validateWrite(record, mode);
+      },
+      beforeDelete: async (id, tenantId) => {
+        const entity = resolver.getEntityDefinition(entityName, tenantId);
+        if (!entity) {
+          return;
+        }
+        const hooks = createEntityRelationHooks(
+          entity,
+          createRelationDeps(resolver, repositories, tenantId, joinRepository),
+        );
+        return hooks.beforeDelete(id, tenantId);
+      },
+    }),
   };
 }

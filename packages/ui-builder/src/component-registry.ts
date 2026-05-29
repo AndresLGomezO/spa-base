@@ -10,6 +10,7 @@ const DEFAULT_COMPONENT_IDS: Record<FieldComponentType, string> = {
   toggle: "toggle",
   date: "date",
   relation: "relation",
+  select: "select",
 };
 
 export function registerComponent(
@@ -31,6 +32,7 @@ export function resolveComponentId(
   if (fieldType === "number") return DEFAULT_COMPONENT_IDS.number;
   if (fieldType === "date") return DEFAULT_COMPONENT_IDS.date;
   if (fieldType === "relation") return DEFAULT_COMPONENT_IDS.relation;
+  if (fieldType === "enum") return DEFAULT_COMPONENT_IDS.select;
   return DEFAULT_COMPONENT_IDS.input;
 }
 

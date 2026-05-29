@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 import { useEntityNavItems } from "../entities/use-entity-nav-items";
 import {
   SETTINGS_ADMIN_NAV_ITEM,
+  SETTINGS_DATA_MODELS_NAV_ITEM,
   STATIC_NAV_ITEMS,
   isNavGroup,
   type NavItemConfig,
@@ -32,11 +33,16 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     }
     items.push(...entityItems);
     if (settings && isNavGroup(settings)) {
+      const settingsChildren = [...settings.children];
+      if (isSuperAdmin || permissions.includes("entityDefinition.read")) {
+        settingsChildren.push(SETTINGS_DATA_MODELS_NAV_ITEM);
+      }
+      if (isSuperAdmin) {
+        settingsChildren.push(SETTINGS_ADMIN_NAV_ITEM);
+      }
       items.push({
         ...settings,
-        children: isSuperAdmin
-          ? [...settings.children, SETTINGS_ADMIN_NAV_ITEM]
-          : settings.children,
+        children: settingsChildren,
       });
     }
 

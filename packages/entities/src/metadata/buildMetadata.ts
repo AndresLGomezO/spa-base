@@ -30,6 +30,13 @@ export function normalizeFieldMeta(config: FieldConfig): NormalizedFieldMeta {
     };
   }
 
+  if (config.type === "enum") {
+    return {
+      ...base,
+      enumValues: config.enumValues,
+    };
+  }
+
   return base;
 }
 

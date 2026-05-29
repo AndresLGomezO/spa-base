@@ -94,12 +94,30 @@ const relationFieldBuilder: FieldSchemaBuilder = {
   },
 };
 
+const enumFieldBuilder: FieldSchemaBuilder = {
+  buildCreateFieldSchema(config) {
+    if (config.type !== "enum") {
+      return z.never().optional();
+    }
+    const base = z.enum(config.enumValues as [string, ...string[]]);
+    return applyOptional(applyDefault(base, config), config);
+  },
+  buildFullFieldSchema(config) {
+    if (config.type !== "enum") {
+      return z.never().optional();
+    }
+    const base = z.enum(config.enumValues as [string, ...string[]]);
+    return applyDefault(base, config);
+  },
+};
+
 export const defaultFieldTypeRegistry = {
   string: stringFieldBuilder,
   number: numberFieldBuilder,
   boolean: booleanFieldBuilder,
   date: dateFieldBuilder,
   relation: relationFieldBuilder,
+  enum: enumFieldBuilder,
 } as const satisfies Record<FieldConfig["type"], FieldSchemaBuilder>;
 
 export function buildFieldSchema(

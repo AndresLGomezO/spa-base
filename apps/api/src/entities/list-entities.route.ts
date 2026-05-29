@@ -1,6 +1,6 @@
 import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 
-import { getAllEntities, serializeEntityDefinition } from "@repo/entities";
+import { serializeEntityDefinition } from "@repo/entities";
 import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
 
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
@@ -8,10 +8,12 @@ import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import type { EntityRuntimeContext } from "./entity-runtime-context.js";
 
 interface RegisterListEntitiesRouteOptions {
   readonly authenticate: ReturnType<typeof createAuthenticatePreHandler>;
   readonly permissionDeps: LoadRequestPermissionsDeps;
+  readonly entityRuntime: EntityRuntimeContext;
 }
 
 export async function registerListEntitiesRoute(
@@ -42,10 +44,13 @@ export async function registerListEntitiesRoute(
         );
       }
 
+      await options.entityRuntime.loadTenantDefinitions(tenantId);
+
       const permissions = new Set(request.ctx?.permissions ?? []);
       const isSuperAdmin = request.ctx?.isSuperAdmin === true;
 
-      const items = getAllEntities()
+      const items = options.entityRuntime
+        .getEntitiesForTenant(tenantId)
         .map((entity) => {
           const definition = serializeEntityDefinition(entity);
           const extensions = getUiExtensions(entity.name);

@@ -28,10 +28,11 @@ Unknown `{entity}` values (not in catalog) render `entity-not-found`.
 
 ## Adding an entity to the UI
 
-1. Define the entity in a module (`modules/{name}/`) with optional `ui` metadata; list the module in `apps/platform/app.config.ts`.
-2. Wire a Firestore converter (or use `createEntityConverter()` from `@repo/firestore-converters`).
-3. RBAC permissions are derived automatically from registered entities.
-4. Restart API — catalog, sidebar, and routes update automatically from `GET /api/entities`.
+1. **Static (module):** Define the entity in a module (`modules/{name}/`) with optional `ui` metadata; list the module in `apps/platform/app.config.ts`.
+2. **Dynamic (tenant):** Create the model in **Settings → Data Models** (`/settings/data-models`). The catalog refreshes automatically after save.
+3. Wire a Firestore converter for static entities (dynamic entities use `createEntityConverter()` automatically).
+4. RBAC permissions are derived automatically from registered entities.
+5. Restart API for new **modules** only — dynamic models work immediately without restart.
 
 Do **not** add hardcoded entries to the web app. Nav labels come from `ui.nav.label`.
 

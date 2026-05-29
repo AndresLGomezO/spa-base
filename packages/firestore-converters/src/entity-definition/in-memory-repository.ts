@@ -1,0 +1,77 @@
+import {
+  entityDefinitionRecordSchema,
+  type EntityDefinitionRecord,
+} from "@repo/dynamic-entities";
+import { nanoid } from "nanoid";
+
+import type { EntityDefinitionRepository } from "./repository-contract.js";
+
+export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepository & {
+  readonly store: Map<string, EntityDefinitionRecord>;
+} {
+  const store = new Map<string, EntityDefinitionRecord>();
+
+  function key(tenantId: string, id: string): string {
+    return `${tenantId}:${id}`;
+  }
+
+  return {
+    store,
+    async list(tenantId) {
+      return [...store.values()].filter(
+        (record) => record.tenantId === tenantId,
+      );
+    },
+    async getById(tenantId, id) {
+      return store.get(key(tenantId, id)) ?? null;
+    },
+    async getByName(tenantId, name) {
+      return (
+        [...store.values()].find(
+          (record) => record.tenantId === tenantId && record.name === name,
+        ) ?? null
+      );
+    },
+    async create(tenantId, input) {
+      const existing = [...store.values()].find(
+        (record) => record.tenantId === tenantId && record.name === input.name,
+      );
+      if (existing) {
+        throw new Error(`Entity definition "${input.name}" already exists.`);
+      }
+
+      const now = new Date().toISOString();
+      const record = entityDefinitionRecordSchema.parse({
+        id: `def_${nanoid(12)}`,
+        tenantId,
+        name: input.name,
+        label: input.label,
+        fields: input.fields,
+        ...(input.ui ? { ui: input.ui } : {}),
+        version: 1,
+        createdAt: now,
+        updatedAt: now,
+      });
+      store.set(key(tenantId, record.id), record);
+      return record;
+    },
+    async update(tenantId, id, input) {
+      const current = store.get(key(tenantId, id));
+      if (!current) {
+        throw new Error(`Entity definition not found: ${id}`);
+      }
+
+      const now = new Date().toISOString();
+      const next = entityDefinitionRecordSchema.parse({
+        ...current,
+        ...(input.label ? { label: input.label } : {}),
+        ...(input.fields ? { fields: input.fields } : {}),
+        ...(input.ui ? { ui: input.ui } : {}),
+        version: current.version + 1,
+        updatedAt: now,
+      });
+      store.set(key(tenantId, id), next);
+      return next;
+    },
+  };
+}

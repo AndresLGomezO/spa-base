@@ -28,6 +28,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/dynamic-entities": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "firebase-admin": "catalog:",

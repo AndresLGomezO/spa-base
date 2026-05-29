@@ -124,11 +124,12 @@ describe("GET /auth/validate", () => {
         uid: "user_123",
         email: "demo@example.com",
         isSuperAdmin: false,
-        permissions: [
+        permissions: expect.arrayContaining([
           "organization.read",
           "project.read",
           "inventoryItem.read",
-        ],
+          "entityDefinition.read",
+        ]),
         tenantId: "tenant_a",
         availableTenants: ["tenant_a"],
         tenantOptions: [{ id: "tenant_a", name: "Tenant A" }],

@@ -38,6 +38,8 @@ flowchart TB
 
 **Out of scope (v1):** third-party sandboxing, tenant module toggling, remote/marketplace loading, query-engine extensions, drag-and-drop module authoring.
 
+**Complements dynamic entities:** modules ship compile-time entities with code and converters. Tenant admins can add runtime models via the [Dynamic Entity Builder](./dynamic-entity-builder-guide.md) without creating a new module.
+
 ---
 
 ## Quick start — add a module
@@ -288,5 +290,6 @@ In-memory test runtime (`createInMemoryCrudRuntime`) bootstraps the platform app
 
 - [Entity System Guide](./entity-system-guide.md)
 - [Advanced UI Builder Guide](./advanced-ui-builder-guide.md)
+- [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md)
 - [@repo/entities README](../packages/entities/README.md)
 - [CRUD README](../apps/api/src/crud/README.md) — hook events

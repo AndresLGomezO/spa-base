@@ -23,8 +23,10 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/shared-types": "workspace:*",
+    "nanoid": "catalog:",
     "zod": "catalog:"
   }
 }

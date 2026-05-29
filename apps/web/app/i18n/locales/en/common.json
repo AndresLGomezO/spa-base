@@ -45,7 +45,8 @@
     "userMenu": "Account menu",
     "signOut": "Sign out",
     "fallbackName": "User",
-    "admin": "Admin"
+    "admin": "Admin",
+    "dataModels": "Data Models"
   },
   "admin": {
     "title": "Platform Admin",
@@ -128,5 +129,57 @@
     "profileDescription": "Manage your profile settings.",
     "teamDescription": "Manage team members and invitations.",
     "billingDescription": "View billing details and invoices."
+  },
+  "dataModels": {
+    "title": "Data Models",
+    "description": "Create and manage tenant-specific entity models.",
+    "adminTitle": "Cross-Tenant Data Models",
+    "adminDescription": "Manage dynamic entity definitions for any tenant.",
+    "openAdminBuilder": "Open Model Builder",
+    "listTitle": "Entity models",
+    "wizardTitle": "Create entity model",
+    "stepIndicator": "Step {{step}} of {{total}}",
+    "modelName": "Entity name",
+    "modelNameHint": "Use camelCase (for example: loan, workOrder).",
+    "modelLabel": "Display label",
+    "fieldsTitle": "Fields",
+    "fieldName": "Field name",
+    "fieldType": "Field type",
+    "fieldNumber": "Field {{number}}",
+    "fieldTypes": {
+      "string": "Text",
+      "number": "Number",
+      "boolean": "Yes/No",
+      "date": "Date",
+      "enum": "Enum",
+      "relation": "Relation"
+    },
+    "required": "Required",
+    "enumValues": "Enum values",
+    "enumPlaceholder": "Option value",
+    "addEnumValue": "Add value",
+    "removeValue": "Remove",
+    "relationTarget": "Related entity",
+    "relationType": "Relation type",
+    "selectTarget": "Select entity",
+    "addField": "Add field",
+    "removeField": "Remove field",
+    "next": "Next",
+    "back": "Back",
+    "createModel": "Create model",
+    "loading": "Loading models...",
+    "empty": "No custom models yet.",
+    "version": "Version",
+    "tenant": "Tenant",
+    "forbidden": "You do not have permission to manage data models.",
+    "loadFailed": "Unable to load entity models.",
+    "createFailed": "Unable to create entity model.",
+    "catalogHint": "New models appear in the sidebar after creation.",
+    "reviewTitle": "Review model",
+    "reviewDescription": "Confirm the schema before creating the model.",
+    "validation": {
+      "basicRequired": "Entity name and label are required.",
+      "fieldsRequired": "Add at least one field."
+    }
   }
 }

@@ -82,6 +82,7 @@ const OPERATORS_BY_FIELD_TYPE: Record<
   boolean: ["=="],
   date: ["==", "!=", "<", "<=", ">", ">="],
   relation: ["==", "in"],
+  enum: ["==", "!=", "in"],
 };
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;

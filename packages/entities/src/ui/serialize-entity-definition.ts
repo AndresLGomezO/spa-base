@@ -31,6 +31,7 @@ export function serializeEntityDefinition(
             },
           }
         : {}),
+      ...(meta.enumValues ? { enumValues: meta.enumValues } : {}),
     };
   }
 

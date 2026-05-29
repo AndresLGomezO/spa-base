@@ -16,6 +16,7 @@
   "dependencies": {
     "@fastify/cors": "catalog:",
     "@app/platform": "workspace:*",
+    "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/entity-relations": "workspace:*",
     "@repo/firestore-converters": "workspace:*",

@@ -53,6 +53,15 @@ flowchart TB
 
 Dependency direction: apps → gcp-firebase → firestore-converters → shared-types → entities. **Entities never import upward.**
 
+### Static vs dynamic entities
+
+| Kind | Source | Registration |
+| --- | --- | --- |
+| **Static** | Modules (`defineModule` → `defineEntity`) | At API bootstrap via `bootstrapPlatformApp()` |
+| **Dynamic** | Tenant admins via Model Builder | Stored in Firestore `entity_definitions`, hydrated at runtime |
+
+Both kinds share the same CRUD pipeline, catalog API, RBAC permission pattern, and UI Builder. See [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md).
+
 ---
 
 ## Core concepts
@@ -230,3 +239,4 @@ Keep extensions in the field registry and metadata types — avoid changing `def
 - [Relational Data System Guide](./relational-data-system-guide.md) — Phase 2 relations
 - [Query Engine Guide](./query-engine-guide.md) — centralized list/get reads
 - [Module Extension Guide](./module-extension-guide.md) — defineModule, registries, sample inventory module
+- [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md) — tenant-defined models at runtime

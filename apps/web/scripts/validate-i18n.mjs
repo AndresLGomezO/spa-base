@@ -223,6 +223,22 @@ function extractDynamicRoleKeys(corpus, namespaces) {
   );
 }
 
+/** dataModels.fieldTypes.${type} in source → all keys under dataModels.fieldTypes */
+function extractDataModelFieldTypeKeys(corpus) {
+  if (!corpus.includes("dataModels.fieldTypes.${")) return [];
+
+  const refDataModels = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).dataModels;
+
+  const fieldTypes = refDataModels?.fieldTypes;
+  if (!fieldTypes || typeof fieldTypes !== "object") return [];
+
+  return Object.keys(fieldTypes).map(
+    (key) => `${DEFAULT_NAMESPACE}:dataModels.fieldTypes.${key}`,
+  );
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -386,6 +402,11 @@ mergeUsedKeys(
   usedKeys,
   extractDynamicRoleKeys(corpus, namespaces),
   path.join(SRC_DIR, "components/sidebar/SidebarUser.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractDataModelFieldTypeKeys(corpus),
+  path.join(SRC_DIR, "components/data-models/FieldEditor.tsx"),
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

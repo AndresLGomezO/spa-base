@@ -105,6 +105,31 @@ export function EntityField({
     );
   }
 
+  if (meta.type === "enum" || componentId === "select") {
+    const enumValues = meta.enumValues ?? [];
+    return (
+      <div className="flex flex-col gap-1">
+        <FieldLabel htmlFor={inputId} required={meta.required}>
+          {label}
+        </FieldLabel>
+        <select
+          id={inputId}
+          className="rounded-md border border-border bg-background px-3 py-2 text-sm"
+          value={typeof value === "string" ? value : ""}
+          onChange={(event) => onChange(fieldName, event.target.value)}
+        >
+          <option value="">Select…</option>
+          {enumValues.map((option) => (
+            <option key={option} value={option}>
+              {option}
+            </option>
+          ))}
+        </select>
+        {error ? <FieldError>{error}</FieldError> : null}
+      </div>
+    );
+  }
+
   if (meta.type === "number" || componentId === "number") {
     return (
       <div className="flex flex-col gap-1">
