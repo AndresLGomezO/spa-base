@@ -2,7 +2,15 @@ import cors from "@fastify/cors";
 import Fastify from "fastify";
 
 import {
+  customerConverter,
+  orderConverter,
+  type TenantScopedEntityRepository,
+} from "@repo/firestore-converters";
+import { createFirestoreAdminEntityRepository } from "@repo/gcp-firebase";
+import {
+  CUSTOMERS_COLLECTION,
   Customer,
+  ORDERS_COLLECTION,
   Order,
   type CustomerRecord,
   type CustomerUpdate,
@@ -13,11 +21,17 @@ import {
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
-import { createInMemoryEntityRepository } from "./repositories/in-memory-entity-repository.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 
 interface BuildServerOptions {
   readonly logger?: boolean;
+  readonly repositories?: {
+    readonly customer?: TenantScopedEntityRepository<
+      CustomerRecord,
+      CustomerUpdate
+    >;
+    readonly order?: TenantScopedEntityRepository<OrderRecord, OrderUpdate>;
+  };
 }
 
 export async function buildServer(options: BuildServerOptions = {}) {
@@ -49,13 +63,25 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   await registerCrudRoutes<CustomerRecord, CustomerUpdate>(server, {
     entity: Customer,
-    repository: createInMemoryEntityRepository<CustomerRecord>(),
+    repository:
+      options.repositories?.customer ??
+      createFirestoreAdminEntityRepository({
+        config: firebaseAdminConfig,
+        collection: CUSTOMERS_COLLECTION,
+        converter: customerConverter,
+      }),
     authenticate,
   });
 
   await registerCrudRoutes<OrderRecord, OrderUpdate>(server, {
     entity: Order,
-    repository: createInMemoryEntityRepository<OrderRecord>(),
+    repository:
+      options.repositories?.order ??
+      createFirestoreAdminEntityRepository({
+        config: firebaseAdminConfig,
+        collection: ORDERS_COLLECTION,
+        converter: orderConverter,
+      }),
     authenticate,
   });
 

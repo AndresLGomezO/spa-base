@@ -66,11 +66,29 @@ await getAuth().setCustomUserClaims(uid, { tenantId: "tenant_dev_1" });
 
 Users must refresh their ID token after claims change (sign out/in or `getIdToken(true)` on the client).
 
-## Persistence (WS2)
+## Persistence (WS3 — Firestore)
 
-CRUD routes use **in-memory repositories** (`src/repositories/in-memory-entity-repository.ts`). Data is lost on server restart.
+CRUD routes persist to Firestore via `createFirestoreAdminEntityRepository` in `@repo/gcp-firebase`.
 
-**Workstream 3** will swap in Firestore implementations via the same `TenantScopedEntityRepository` port — see [`packages/firestore-converters/src/entity/README.md`](../../packages/firestore-converters/src/entity/README.md).
+**Collection path:** `tenants/{tenantId}/{collection}/{documentId}`
+
+| Entity   | Path example                              |
+| -------- | ----------------------------------------- |
+| Customer | `tenants/tenant_a/customers/{docId}`      |
+| Order    | `tenants/tenant_a/orders/{docId}`         |
+
+### Local development
+
+Start the Firestore emulator before using CRUD routes locally:
+
+```bash
+pnpm emulators          # from repo root
+pnpm --filter api dev
+```
+
+Ensure `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080` is set (see `apps/api/.env.dev.example`).
+
+Integration tests in `@repo/gcp-firebase` require the emulator (`FIRESTORE_EMULATOR_HOST`). API route tests use in-memory repositories via `buildServer({ repositories })`.
 
 ## Project layout
 
@@ -78,9 +96,9 @@ CRUD routes use **in-memory repositories** (`src/repositories/in-memory-entity-r
 src/
   auth/              JWT + App Check preHandler, tenant claim extraction
   crud/              registerCrudRoutes, response envelope, validation
-  repositories/      In-memory entity repository (WS2)
+  repositories/      In-memory entity repository (tests / reference)
   routes/            Auth validate route
-  server.ts          Fastify bootstrap
+  server.ts          Fastify bootstrap + Firestore repo wiring
 ```
 
 ## Commands

@@ -109,6 +109,26 @@ Use consistent names when adding a collection. Replace `{Entity}` / `{entity}` /
 
 When you introduce a breaking schema change, you may add `schema.v2.ts` alongside `schema.latest.ts` if you need to keep multiple converter bindings during a transition.
 
+### Tenant-scoped business entities
+
+Entities defined via `defineEntity()` (`Customer`, `Order`, …) use a **nested tenant path** instead of a flat top-level collection:
+
+```
+tenants/{tenantId}/{collection}/{documentId}
+```
+
+| Entity   | Collection segment | Example path                              |
+| -------- | ------------------ | ----------------------------------------- |
+| Customer | `customers`        | `tenants/tenant_123/customers/abc123`     |
+| Order    | `orders`           | `tenants/tenant_123/orders/ord_456`       |
+
+- `{collection}` comes from `entity.metadata.collection` (plural by default).
+- `{tenantId}` is also stored as a document field for defense in depth.
+- Repository: generic `createFirestoreAdminEntityRepository` in `@repo/gcp-firebase` (implements `TenantScopedEntityRepository`).
+- Converters: per-entity `schema.latest.ts` under `packages/firestore-converters/src/{entity}/`.
+
+**Auth-global entities** (e.g. `RegisteredUser`) remain at flat paths like `users/{uid}`.
+
 ---
 
 ## 3. User reference — file map

@@ -18,6 +18,11 @@ export {
 } from "./core/versioned-converter.js";
 
 export {
+  customerConverter,
+  customerCurrentVersion,
+} from "./customer/schema.latest.js";
+export { orderConverter, orderCurrentVersion } from "./order/schema.latest.js";
+export {
   registeredUserConverter,
   registeredUserCurrentVersion,
 } from "./user/schema.latest.js";

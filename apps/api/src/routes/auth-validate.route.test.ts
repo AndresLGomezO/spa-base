@@ -1,5 +1,8 @@
 import { describe, expect, it, vi } from "vitest";
 
+import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
+
 vi.mock("@repo/gcp-firebase", () => ({
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: "user_123",
@@ -51,13 +54,30 @@ vi.mock("@repo/gcp-firebase", () => ({
       updatedAt: new Date().toISOString(),
     })),
   })),
+  createFirestoreAdminEntityRepository: vi.fn(() =>
+    createInMemoryEntityRepository(),
+  ),
 }));
 
 import { buildServer } from "../server.js";
 
+function createInMemoryRepositories() {
+  return {
+    customer: createInMemoryEntityRepository<CustomerRecord>(),
+    order: createInMemoryEntityRepository<OrderRecord>(),
+  };
+}
+
+async function buildTestServer() {
+  return buildServer({
+    logger: false,
+    repositories: createInMemoryRepositories(),
+  });
+}
+
 describe("GET /auth/validate", () => {
   it("returns 401 when headers are missing", async () => {
-    const server = await buildServer({ logger: false });
+    const server = await buildTestServer();
     const response = await server.inject({
       method: "GET",
       url: "/auth/validate",
@@ -68,7 +88,7 @@ describe("GET /auth/validate", () => {
   });
 
   it("returns success when headers are present", async () => {
-    const server = await buildServer({ logger: false });
+    const server = await buildTestServer();
     const response = await server.inject({
       method: "GET",
       url: "/auth/validate",

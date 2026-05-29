@@ -26,7 +26,12 @@ export default [
     },
   },
   {
-    files: ["src/firestore-admin-user-repository.ts", "src/firebase-admin.ts"],
+    files: [
+      "src/firebase-admin.ts",
+      "src/firestore-admin-user-repository.ts",
+      "src/firestore-admin-entity-repository.ts",
+      "src/tenant-entity-path.ts",
+    ],
     rules: {
       "no-restricted-imports": "off",
     },

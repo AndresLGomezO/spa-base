@@ -6,7 +6,9 @@ export {
 } from "./firebase-admin.js";
 export { getFirebaseUserRecord, verifyFirebaseIdToken } from "./auth.js";
 export { verifyFirebaseAppCheckToken } from "./app-check.js";
+export { createFirestoreAdminEntityRepository } from "./firestore-admin-entity-repository.js";
 export {
   createFirestoreAdminRegisteredUserRepository,
   mapFirebaseUserRecordToAuthUserProjection,
 } from "./firestore-admin-user-repository.js";
+export { TENANTS_COLLECTION } from "./tenant-entity-path.js";

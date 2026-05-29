@@ -1,5 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
+
 const authState = {
   uid: "user_123",
   tenantId: "tenant_a",
@@ -56,9 +59,26 @@ vi.mock("@repo/gcp-firebase", () => ({
       updatedAt: new Date().toISOString(),
     })),
   })),
+  createFirestoreAdminEntityRepository: vi.fn(() =>
+    createInMemoryEntityRepository(),
+  ),
 }));
 
 import { buildServer } from "../server.js";
+
+function createInMemoryRepositories() {
+  return {
+    customer: createInMemoryEntityRepository<CustomerRecord>(),
+    order: createInMemoryEntityRepository<OrderRecord>(),
+  };
+}
+
+async function buildTestServer() {
+  return buildServer({
+    logger: false,
+    repositories: createInMemoryRepositories(),
+  });
+}
 
 const authHeaders = {
   authorization: "Bearer fake-token",
@@ -73,7 +93,7 @@ describe("CRUD API", () => {
 
   describe("Customer", () => {
     it("creates a valid record", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
         url: "/api/customer",
@@ -96,7 +116,7 @@ describe("CRUD API", () => {
     });
 
     it("rejects invalid create payloads", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
         url: "/api/customer",
@@ -112,7 +132,7 @@ describe("CRUD API", () => {
     });
 
     it("rejects client-provided tenantId on create", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
         url: "/api/customer",
@@ -128,7 +148,7 @@ describe("CRUD API", () => {
     });
 
     it("lists, gets, updates, and deletes a record", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
 
       const createResponse = await server.inject({
         method: "POST",
@@ -181,7 +201,7 @@ describe("CRUD API", () => {
     });
 
     it("returns 404 for cross-tenant access", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
 
       const createResponse = await server.inject({
         method: "POST",
@@ -205,7 +225,7 @@ describe("CRUD API", () => {
 
   describe("Order", () => {
     it("creates and validates order records", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
         url: "/api/order",
@@ -226,7 +246,7 @@ describe("CRUD API", () => {
     });
 
     it("rejects invalid order payloads", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
         url: "/api/order",
@@ -241,7 +261,7 @@ describe("CRUD API", () => {
 
   describe("Auth", () => {
     it("returns 401 without auth headers on CRUD routes", async () => {
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
       const response = await server.inject({
         method: "GET",
         url: "/api/customer",
@@ -253,7 +273,7 @@ describe("CRUD API", () => {
 
     it("returns 403 when tenantId claim is missing", async () => {
       authState.tenantId = "";
-      const server = await buildServer({ logger: false });
+      const server = await buildTestServer();
       const response = await server.inject({
         method: "GET",
         url: "/api/customer",
