@@ -206,9 +206,6 @@ importers:
       '@fastify/cors':
         specifier: 'catalog:'
         version: 11.2.0
-      '@repo/entities':
-        specifier: workspace:*
-        version: link:../../packages/entities
       '@repo/firestore-converters':
         specifier: workspace:*
         version: link:../../packages/firestore-converters
