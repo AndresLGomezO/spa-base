@@ -3,6 +3,10 @@ import { z } from "zod";
 
 import { createVersionedConverter } from "../core/versioned-converter.js";
 import { UnsupportedSchemaVersionError } from "../core/errors.js";
+import {
+  createRegisteredUserFromAuthUser,
+  mergeRegisteredUserFromAuthUser,
+} from "./user-mapper.js";
 import { registeredUserConverter } from "./schema.latest.js";
 
 describe("registeredUserConverter", () => {
@@ -48,6 +52,36 @@ describe("registeredUserConverter", () => {
 
     expect(domain.uid).toBe("user_2");
     expect(domain.email).toBeNull();
+  });
+
+  it("never writes undefined tenants to persisted documents", () => {
+    const now = new Date().toISOString();
+    const authUser = {
+      uid: "user_3",
+      email: "demo@example.com",
+      emailVerified: true,
+      displayName: "Demo",
+      photoURL: null,
+      phoneNumber: null,
+      disabled: false,
+      providers: [],
+      authCreatedAt: now,
+      authLastSignInAt: now,
+    };
+
+    const created = createRegisteredUserFromAuthUser(authUser, now);
+    expect(created.tenants).toEqual({});
+
+    const merged = mergeRegisteredUserFromAuthUser(
+      { ...created, tenants: undefined },
+      authUser,
+      now,
+    );
+    expect(merged.tenants).toEqual({});
+
+    const persisted = registeredUserConverter.write(merged);
+    expect(persisted.tenants).toEqual({});
+    expect(persisted.tenants).not.toBeUndefined();
   });
 });
 

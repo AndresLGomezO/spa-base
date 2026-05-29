@@ -4,16 +4,16 @@ Centralized route guards and navigation helpers for the web app.
 
 ## Guard stack
 
-| Guard             | Used in                     | Behavior                                                 |
-| ----------------- | --------------------------- | -------------------------------------------------------- |
-| `RequireAuth`     | Auth-only + private layouts | Redirects to `/login` when unauthenticated               |
-| `RequireTenant`   | Private layout              | Redirects to `/select-tenant` when JWT has no `tenantId` |
-| `PermissionGuard` | Entity routes               | Shows forbidden UI when permission missing               |
+| Guard             | Used in                     | Behavior                                                                                                          |
+| ----------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
+| `RequireAuth`     | Auth-only + private layouts | Redirects to `/login` when unauthenticated                                                                        |
+| `RequireTenant`   | Private layout              | Redirects to `/select-tenant` when JWT has no `tenantId`; superadmin with zero tenants may access platform routes |
+| `PermissionGuard` | Entity routes               | Shows forbidden UI when permission missing                                                                        |
 
 Layout hierarchy in [`routes.ts`](../routes.ts):
 
 1. `/login` — public
-2. `auth-only-layout` — `RequireAuth` only (`/select-tenant`)
+2. `auth-only-layout` — `RequireAuth` only (`/select-tenant`, `/settings/admin`)
 3. `private-layout` — `RequireAuth` + `RequireTenant` (home, entities, settings)
 
 ## Entity routes

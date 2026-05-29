@@ -44,5 +44,6 @@ export function withBootstrapPlatformRole(
   return {
     ...user,
     platformRole: PLATFORM_SUPERADMIN,
+    tenants: user.tenants ?? {},
   };
 }

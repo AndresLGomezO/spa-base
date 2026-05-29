@@ -38,21 +38,22 @@ describe("bootstrap platform role", () => {
   });
 
   it("assigns canonical platform superadmin role", () => {
-    expect(
-      withBootstrapPlatformRole({
-        uid: "user_1",
-        email: "andreslgomezo@gmail.com",
-        emailVerified: true,
-        displayName: null,
-        photoURL: null,
-        phoneNumber: null,
-        disabled: false,
-        providers: [],
-        authCreatedAt: null,
-        authLastSignInAt: null,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-      }).platformRole,
-    ).toBe(PLATFORM_SUPERADMIN);
+    const bootstrapped = withBootstrapPlatformRole({
+      uid: "user_1",
+      email: "andreslgomezo@gmail.com",
+      emailVerified: true,
+      displayName: null,
+      photoURL: null,
+      phoneNumber: null,
+      disabled: false,
+      providers: [],
+      authCreatedAt: null,
+      authLastSignInAt: null,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString(),
+    });
+
+    expect(bootstrapped.platformRole).toBe(PLATFORM_SUPERADMIN);
+    expect(bootstrapped.tenants).toEqual({});
   });
 });

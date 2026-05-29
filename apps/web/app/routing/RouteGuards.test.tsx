@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 import { PermissionGuard, RequireAuth, RequireTenant } from "./RouteGuards";
 
@@ -23,6 +23,10 @@ vi.mock("react-i18next", () => ({
     t: (key: string) => key,
   }),
 }));
+
+afterEach(() => {
+  cleanup();
+});
 
 describe("RequireAuth", () => {
   it("redirects unauthenticated users to login", () => {
@@ -82,6 +86,7 @@ describe("RequireTenant", () => {
       isReady: true,
       tenantId: null,
       availableTenants: ["tenant_a"],
+      isSuperAdmin: false,
     });
 
     render(
@@ -109,6 +114,7 @@ describe("RequireTenant", () => {
       isReady: true,
       tenantId: "tenant_a",
       availableTenants: ["tenant_a"],
+      isSuperAdmin: false,
     });
 
     render(
@@ -127,6 +133,60 @@ describe("RequireTenant", () => {
     );
 
     expect(screen.getByText("Tenant content")).toBeInTheDocument();
+  });
+
+  it("allows superadmin without tenants to access platform routes", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      tenantId: null,
+      availableTenants: [],
+      isSuperAdmin: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app/customer"]}>
+        <Routes>
+          <Route
+            path="/app/customer"
+            element={
+              <RequireTenant>
+                <div>Tenant content</div>
+              </RequireTenant>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Tenant content")).toBeInTheDocument();
+  });
+
+  it("redirects superadmin with available tenants to select-tenant", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      tenantId: null,
+      availableTenants: ["tenant_a"],
+      isSuperAdmin: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app/customer"]}>
+        <Routes>
+          <Route
+            path="/app/customer"
+            element={
+              <RequireTenant>
+                <div>Tenant content</div>
+              </RequireTenant>
+            }
+          />
+          <Route path="/select-tenant" element={<div>Select tenant</div>} />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("Select tenant")).toBeInTheDocument();
+    expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
   });
 });
 
