@@ -86,13 +86,21 @@ Auto-generated routes in [`apps/api`](../apps/api/README.md):
 - `GET/POST /api/{entity}`, `GET/PUT/DELETE /api/{entity}/:id`
 - Auth: Bearer JWT + App Check + **`tenantId` custom claim**
 - Response envelope: `{ data, error }`
-- Persistence: **in-memory** repository (WS2); swap to Firestore in WS3 via [`TenantScopedEntityRepository`](../packages/firestore-converters/src/entity/README.md)
 - RBAC: `noopPreHandler` stub — wire `requirePermission` in WS4
+
+### WS3 — Firestore DAL (implemented)
+
+Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebase/src/firestore-admin-entity-repository.ts):
+
+- Path: `tenants/{tenantId}/{collection}/{documentId}` (collection from `metadata.collection`)
+- Converters: `customerConverter`, `orderConverter` in `@repo/firestore-converters`
+- Persisted schemas: `{ENTITY}_SCHEMA_VERSION` + `_schemaVersion` in `@repo/shared-types`
+- API tests inject in-memory repos via `buildServer({ repositories })`; production uses Firestore
 
 | Workstream            | Status  | Consumes from entity system                                              |
 | --------------------- | ------- | ------------------------------------------------------------------------ |
 | **2 — CRUD API**      | Done    | `createSchema`, `updateSchema`, `schema`, `permissions` (RBAC stub only) |
-| **3 — Firestore DAL** | Next    | `schema` + `_schemaVersion`; `metadata.collection`                       |
+| **3 — Firestore DAL** | Done    | `schema` + `_schemaVersion`; `metadata.collection`                       |
 | **4 — RBAC**          | Planned | `metadata.permissions`                                                   |
 | **5 — Frontend UI**   | Planned | `metadata.fields`, shared Zod schemas                                    |
 | **6 — Routing**       | Planned | Entity list from registry or shared-types exports                        |

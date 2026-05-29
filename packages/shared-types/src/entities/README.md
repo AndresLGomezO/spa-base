@@ -54,7 +54,22 @@ export type ProductUpdate = z.infer<typeof productUpdateSchema>;
 | Create type         | `CustomerCreate`       |
 | Update type         | `CustomerUpdate`       |
 
-For Firestore persisted schemas and converters, add `{ENTITY}_SCHEMA_VERSION` when implementing the DAL layer (not in this folder yet).
+For Firestore persisted schemas and converters, add in the entity file:
+
+```ts
+export const CUSTOMER_SCHEMA_VERSION = 1 as const;
+
+const customerSchemaObject = customerSchema as unknown as z.ZodObject<
+  Record<string, z.ZodTypeAny>
+>;
+
+export const persistedCustomerSchemaV1 = customerSchemaObject
+  .extend({ _schemaVersion: z.literal(CUSTOMER_SCHEMA_VERSION) })
+  .strict();
+export type PersistedCustomer = z.infer<typeof persistedCustomerSchemaV1>;
+```
+
+See `customer.ts` and `order.ts` for the live pattern. Converters live in `@repo/firestore-converters/src/{entity}/`.
 
 ---
 

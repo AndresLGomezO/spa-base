@@ -16,17 +16,19 @@ See [`tenant-scoped-repository-contract.ts`](./tenant-scoped-repository-contract
 
 ## Implementations
 
-| Phase         | Location                                                         | Storage         |
-| ------------- | ---------------------------------------------------------------- | --------------- |
-| WS2 (current) | `apps/api/src/repositories/in-memory-entity-repository.ts`       | In-memory `Map` |
-| WS3 (planned) | `packages/gcp-firebase/src/firestore-admin-entity-repository.ts` | Firestore       |
+| Phase            | Location                                                         | Storage         |
+| ---------------- | ---------------------------------------------------------------- | --------------- |
+| WS2 (tests)      | `apps/api/src/repositories/in-memory-entity-repository.ts`       | In-memory `Map` |
+| WS3 (production) | `packages/gcp-firebase/src/firestore-admin-entity-repository.ts` | Firestore       |
 
-CRUD handlers in `apps/api` depend on this interface only — swap the implementation in `server.ts` when Firestore DAL lands.
+Firestore path: **`tenants/{tenantId}/{collection}/{documentId}`** where `{collection}` comes from `entity.metadata.collection` (e.g. `customers`, `orders`).
+
+CRUD handlers in `apps/api` depend on this interface only — production wiring uses `createFirestoreAdminEntityRepository` in [`server.ts`](../../../apps/api/src/server.ts).
 
 ## WS3 checklist
 
-- [ ] Add `{entity}SchemaV1` persisted schema + converter per entity (or generic factory)
-- [ ] Implement `createFirestoreAdminEntityRepository(entity, converter, config)`
-- [ ] All Firestore queries filter by `tenantId`
-- [ ] Use `createVersionedConverter` pattern from User reference
-- [ ] Replace in-memory repos in `apps/api/src/server.ts`
+- [x] Add `{entity}SchemaV1` persisted schema + converter per entity
+- [x] Implement `createFirestoreAdminEntityRepository(config, collection, converter)`
+- [x] All Firestore queries scoped to tenant subcollection path
+- [x] Use `createVersionedConverter` pattern from User reference
+- [x] Replace in-memory repos in `apps/api/src/server.ts` (tests override via `buildServer({ repositories })`)

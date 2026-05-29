@@ -2,24 +2,30 @@ export { AppEnvSchema, type AppEnv } from "./env.js";
 export {
   CUSTOMERS_COLLECTION,
   CUSTOMER_PERMISSIONS,
+  CUSTOMER_SCHEMA_VERSION,
   Customer,
   customerCreateSchema,
   customerSchema,
   customerUpdateSchema,
+  persistedCustomerSchemaV1,
   type CustomerCreate,
   type CustomerRecord,
   type CustomerUpdate,
+  type PersistedCustomer,
 } from "./entities/customer.js";
 export {
   ORDERS_COLLECTION,
   ORDER_PERMISSIONS,
+  ORDER_SCHEMA_VERSION,
   Order,
   orderCreateSchema,
   orderSchema,
   orderUpdateSchema,
+  persistedOrderSchemaV1,
   type OrderCreate,
   type OrderRecord,
   type OrderUpdate,
+  type PersistedOrder,
 } from "./entities/order.js";
 export {
   USERS_COLLECTION,
