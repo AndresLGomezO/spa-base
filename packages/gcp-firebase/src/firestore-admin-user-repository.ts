@@ -154,7 +154,8 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
           data.platformRole !== undefined
             ? data.platformRole
             : (existing.platformRole ?? null),
-        tenants: data.tenants !== undefined ? data.tenants : existing.tenants,
+        tenants:
+          data.tenants !== undefined ? data.tenants : (existing.tenants ?? {}),
         updatedAt: nowIso,
       });
 

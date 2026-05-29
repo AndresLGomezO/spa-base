@@ -152,6 +152,17 @@ Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebas
 | **6 — Routing**       | Done    | Guards, tenant selection, permission-filtered nav from entity catalog    |
 | **7 — Admin roles**   | Done    | Firestore `/roles`, admin API, `/settings/admin`, superadmin bootstrap |
 
+### Phase 1 closure (E2E validation)
+
+Manual checklist from the ecosystem plan:
+
+1. Superadmin bootstrap: set `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` in API env; first Google sign-in receives `platform.superadmin`.
+2. Open `/settings/admin` (auth-only route — no tenant required) and assign tenant roles.
+3. **User A (viewer)** on `tenant_dev_1`: list passes; create, edit, and delete blocked.
+4. **User B (editor)** on `tenant_dev_1`: list, create, and edit pass; delete blocked.
+
+`defineApp({ entities: [Customer, Order] })` remains Phase 2; Phase 1 equivalent is `registerEntity()` plus manual route registration (see below).
+
 ### Future `defineApp`
 
 ```ts

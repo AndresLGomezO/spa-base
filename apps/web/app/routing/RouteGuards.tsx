@@ -44,7 +44,7 @@ export function RedirectIfAuthenticated({ children }: GuardProps) {
 
 export function RequireTenant({ children }: GuardProps) {
   const { t } = useTranslation("common");
-  const { isReady, tenantId, availableTenants } = useAuth();
+  const { isReady, tenantId, availableTenants, isSuperAdmin } = useAuth();
   const location = useLocation();
 
   if (!isReady) {
@@ -52,6 +52,16 @@ export function RequireTenant({ children }: GuardProps) {
   }
 
   if (tenantId) {
+    return <>{children}</>;
+  }
+
+  if (isSuperAdmin) {
+    if (availableTenants.length > 0) {
+      return (
+        <Navigate to="/select-tenant" replace state={{ from: location }} />
+      );
+    }
+
     return <>{children}</>;
   }
 

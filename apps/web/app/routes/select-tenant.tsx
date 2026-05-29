@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, useLocation, useNavigate } from "react-router";
+import { Navigate, Link, useLocation, useNavigate } from "react-router";
 
 import { Button, Heading, Text } from "@repo/ui";
 
@@ -10,7 +10,7 @@ export default function SelectTenantRoute() {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
   const location = useLocation();
-  const { availableTenants, selectTenant, tenantId } = useAuth();
+  const { availableTenants, selectTenant, tenantId, isSuperAdmin } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [submittingTenantId, setSubmittingTenantId] = useState<string | null>(
     null,
@@ -72,6 +72,14 @@ export default function SelectTenantRoute() {
           </div>
         ))}
       </div>
+
+      {isSuperAdmin ? (
+        <Text>
+          <Link to="/settings/admin" className="text-primary underline">
+            {t("nav.admin")}
+          </Link>
+        </Text>
+      ) : null}
     </main>
   );
 }
