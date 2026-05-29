@@ -4,13 +4,14 @@ import {
   isPlatformSuperAdmin,
   resolvePermissions,
   getAllKnownPermissions,
-  toUserAccessProfile,
   type RoleCatalog,
   type UserAccessProfile,
 } from "@repo/rbac";
 import type { RegisteredUserRepository } from "@repo/firestore-converters";
 
 import type { RequestContext } from "../auth/request-context.js";
+import { measureRbacTiming } from "../observability/request-timing.js";
+import { createUserAccessCache } from "./user-access-cache.js";
 
 export interface LoadRequestPermissionsDeps {
   readonly getUserAccessProfile: (
@@ -18,21 +19,22 @@ export interface LoadRequestPermissionsDeps {
   ) => Promise<UserAccessProfile | null>;
   readonly getRoleCatalog: (tenantId: string) => Promise<RoleCatalog>;
   readonly getKnownPermissions?: (tenantId: string) => readonly string[];
+  readonly invalidateUserAccessCache?: (uid?: string) => void;
 }
 
 export function createLoadRequestPermissionsDeps(
   registeredUserRepository: RegisteredUserRepository,
   getRoleCatalog: (tenantId: string) => Promise<RoleCatalog>,
+  options?: { readonly cacheTtlMs?: number },
 ): LoadRequestPermissionsDeps {
+  const userAccessCache = createUserAccessCache(registeredUserRepository, {
+    ttlMs: options?.cacheTtlMs,
+  });
+
   return {
-    getUserAccessProfile: async (uid) => {
-      const user = await registeredUserRepository.getByUid(uid);
-      if (!user) {
-        return null;
-      }
-      return toUserAccessProfile(user);
-    },
+    getUserAccessProfile: (uid) => userAccessCache.getUserAccessProfile(uid),
     getRoleCatalog,
+    invalidateUserAccessCache: (uid) => userAccessCache.invalidate(uid),
   };
 }
 
@@ -50,10 +52,12 @@ export async function loadRequestPermissions(
   }
 
   const tenantId = currentCtx.tenantId.trim();
-  const [profile, roleCatalog] = await Promise.all([
-    deps.getUserAccessProfile(currentCtx.uid),
-    deps.getRoleCatalog(tenantId),
-  ]);
+  const [profile, roleCatalog] = await measureRbacTiming(request, async () =>
+    Promise.all([
+      deps.getUserAccessProfile(currentCtx.uid),
+      deps.getRoleCatalog(tenantId),
+    ]),
+  );
 
   const accessProfile: UserAccessProfile = profile ?? {
     platformRole: null,

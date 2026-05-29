@@ -1,4 +1,6 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { renderHook, waitFor } from "@testing-library/react";
+import type { ReactNode } from "react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 vi.mock("../lib/api-client", () => ({
@@ -31,16 +33,42 @@ import {
 } from "../lib/api-client";
 import { useEntity } from "./useEntity";
 
+function createWrapper() {
+  const queryClient = new QueryClient({
+    defaultOptions: {
+      queries: {
+        retry: false,
+      },
+    },
+  });
+
+  return function Wrapper({ children }: { readonly children: ReactNode }) {
+    return (
+      <QueryClientProvider client={queryClient}>{children}</QueryClientProvider>
+    );
+  };
+}
+
 describe("useEntity", () => {
   beforeEach(() => {
     vi.mocked(listEntity).mockResolvedValue({
-      items: [{ id: "1", tenantId: "tenant_a", name: "Jane" }],
+      items: [
+        {
+          id: "1",
+          tenantId: "tenant_a",
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+          name: "Jane",
+        },
+      ],
       nextCursor: null,
     });
   });
 
   it("loads entity list on mount", async () => {
-    const { result } = renderHook(() => useEntity("organization"));
+    const { result } = renderHook(() => useEntity("organization"), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -58,10 +86,14 @@ describe("useEntity", () => {
     vi.mocked(createEntity).mockResolvedValue({
       id: "2",
       tenantId: "tenant_a",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
       name: "New",
     });
 
-    const { result } = renderHook(() => useEntity("organization"));
+    const { result } = renderHook(() => useEntity("organization"), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -74,7 +106,9 @@ describe("useEntity", () => {
   it("deletes records through the API", async () => {
     vi.mocked(deleteEntity).mockResolvedValue({ deleted: true });
 
-    const { result } = renderHook(() => useEntity("organization"));
+    const { result } = renderHook(() => useEntity("organization"), {
+      wrapper: createWrapper(),
+    });
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);

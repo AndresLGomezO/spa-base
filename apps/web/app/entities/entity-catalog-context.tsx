@@ -2,13 +2,13 @@ import {
   createContext,
   useCallback,
   useContext,
-  useEffect,
   useMemo,
-  useState,
   type ReactNode,
 } from "react";
+import { useQuery } from "@tanstack/react-query";
 
 import { listEntities } from "../lib/api-client";
+import { entityCatalogQueryKey, queryClient } from "../query/query-client";
 import {
   getEntityDefinition,
   isEntityName,
@@ -29,6 +29,49 @@ const EntityCatalogContext = createContext<EntityCatalogContextValue | null>(
   null,
 );
 
+function EntityCatalogProviderFromQuery({
+  children,
+}: {
+  readonly children: ReactNode;
+}) {
+  const catalogQuery = useQuery({
+    queryKey: entityCatalogQueryKey,
+    queryFn: listEntities,
+    staleTime: 5 * 60_000,
+  });
+
+  const items = catalogQuery.data?.items ?? [];
+  const isLoading = catalogQuery.isLoading;
+  const error =
+    catalogQuery.error instanceof Error
+      ? catalogQuery.error.message
+      : catalogQuery.error
+        ? "Failed to load entity catalog."
+        : null;
+
+  const refresh = useCallback(async () => {
+    await queryClient.invalidateQueries({ queryKey: entityCatalogQueryKey });
+  }, []);
+
+  const value = useMemo<EntityCatalogContextValue>(
+    () => ({
+      items,
+      isLoading,
+      error,
+      refresh,
+      getDefinition: (name) => getEntityDefinition(name, items),
+      isKnownEntity: (name): name is EntityName => isEntityName(name, items),
+    }),
+    [error, isLoading, items, refresh],
+  );
+
+  return (
+    <EntityCatalogContext.Provider value={value}>
+      {children}
+    </EntityCatalogContext.Provider>
+  );
+}
+
 export function EntityCatalogProvider({
   children,
   value: valueOverride,
@@ -36,58 +79,16 @@ export function EntityCatalogProvider({
   readonly children: ReactNode;
   readonly value?: EntityCatalogContextValue;
 }) {
-  const [items, setItems] = useState<readonly EntityCatalogEntry[]>(
-    valueOverride?.items ?? [],
-  );
-  const [isLoading, setIsLoading] = useState(valueOverride ? false : true);
-  const [error, setError] = useState<string | null>(
-    valueOverride?.error ?? null,
-  );
-
-  const refresh = useCallback(async () => {
-    if (valueOverride) {
-      return;
-    }
-    setIsLoading(true);
-    setError(null);
-    try {
-      const result = await listEntities();
-      setItems(result.items);
-    } catch (loadError) {
-      setError(
-        loadError instanceof Error
-          ? loadError.message
-          : "Failed to load entity catalog.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }, [valueOverride]);
-
-  useEffect(() => {
-    if (valueOverride) {
-      return;
-    }
-    void refresh();
-  }, [refresh, valueOverride]);
-
-  const value = useMemo<EntityCatalogContextValue>(
-    () =>
-      valueOverride ?? {
-        items,
-        isLoading,
-        error,
-        refresh,
-        getDefinition: (name) => getEntityDefinition(name, items),
-        isKnownEntity: (name): name is EntityName => isEntityName(name, items),
-      },
-    [error, isLoading, items, refresh, valueOverride],
-  );
+  if (valueOverride) {
+    return (
+      <EntityCatalogContext.Provider value={valueOverride}>
+        {children}
+      </EntityCatalogContext.Provider>
+    );
+  }
 
   return (
-    <EntityCatalogContext.Provider value={value}>
-      {children}
-    </EntityCatalogContext.Provider>
+    <EntityCatalogProviderFromQuery>{children}</EntityCatalogProviderFromQuery>
   );
 }
 

@@ -72,6 +72,22 @@ describe("parseListQueryInput", () => {
       QueryError,
     );
   });
+
+  it("rejects missing pagination in strict mode", () => {
+    expect(() =>
+      parseListQueryInput({}, { strictPagination: true }),
+    ).toThrowError(
+      expect.objectContaining({ code: QueryErrorCode.QUERY_VALIDATION_ERROR }),
+    );
+  });
+
+  it("rejects excessive limits in strict mode", () => {
+    expect(() =>
+      parseListQueryInput({ limit: 500 }, { strictPagination: true }),
+    ).toThrowError(
+      expect.objectContaining({ code: QueryErrorCode.QUERY_VALIDATION_ERROR }),
+    );
+  });
 });
 
 describe("normalizeEntityQuery", () => {

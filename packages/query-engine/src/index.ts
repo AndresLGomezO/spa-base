@@ -11,6 +11,7 @@ export {
   normalizeEntityQuery,
   parseListQueryInput,
 } from "./parse-query-config.js";
+export type { ParseListQueryOptions } from "./parse-query-config.js";
 export type {
   Filter,
   ListQueryInput,

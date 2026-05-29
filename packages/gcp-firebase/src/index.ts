@@ -12,6 +12,7 @@ export {
 export { verifyFirebaseAppCheckToken } from "./app-check.js";
 export { createFirestoreAdminEntityRepository } from "./firestore-admin-entity-repository.js";
 export { createFirestoreEntityQueryExecutor } from "./firestore-entity-query-executor.js";
+export type { FirestoreIndexHint } from "./firestore-entity-query-executor.js";
 export { createFirestoreAdminJoinCollectionRepository } from "./firestore-admin-join-collection-repository.js";
 export { createFirestoreAdminPlatformRoleRepository } from "./firestore-admin-platform-role-repository.js";
 export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-repository.js";

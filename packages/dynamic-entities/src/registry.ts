@@ -63,6 +63,15 @@ export function isDynamicEntityName(tenantId: string, name: string): boolean {
   return dynamicEntities.has(cacheKey(tenantId, name));
 }
 
+export function clearDynamicEntitiesForTenant(tenantId: string): void {
+  const prefix = `${tenantId}:`;
+  for (const key of dynamicEntities.keys()) {
+    if (key.startsWith(prefix)) {
+      dynamicEntities.delete(key);
+    }
+  }
+}
+
 export function clearDynamicEntityRegistry(): void {
   dynamicEntities.clear();
 }

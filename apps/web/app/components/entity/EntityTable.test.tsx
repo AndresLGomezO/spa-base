@@ -6,6 +6,18 @@ import { i18n } from "../../i18n";
 import { TestEntityCatalogProvider } from "../../test/test-entity-catalog-provider";
 import { EntityTable } from "./EntityTable";
 
+vi.mock("@tanstack/react-virtual", () => ({
+  useVirtualizer: ({ count }: { count: number }) => ({
+    getTotalSize: () => count * 48,
+    getVirtualItems: () =>
+      Array.from({ length: count }, (_, index) => ({
+        index,
+        start: index * 48,
+        size: 48,
+      })),
+  }),
+}));
+
 vi.mock("../../hooks/useEntityPermissions", () => ({
   useEntityPermissions: vi.fn(() => ({
     canRead: true,

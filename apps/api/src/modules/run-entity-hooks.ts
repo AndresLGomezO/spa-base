@@ -8,6 +8,8 @@ import {
   type HookPhase,
 } from "@repo/hooks";
 
+import { measureHooksTiming } from "../observability/request-timing.js";
+
 interface RunEntityHooksParams {
   readonly entityName: string;
   readonly phase: HookPhase;
@@ -51,6 +53,8 @@ export async function runEntityHooks(
     },
   };
 
-  await executeHooks(event, hookContext);
+  await measureHooksTiming(request, async () =>
+    executeHooks(event, hookContext),
+  );
   return hookContext.current;
 }

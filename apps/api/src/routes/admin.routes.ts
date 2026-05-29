@@ -258,6 +258,8 @@ export const adminRoutes: FastifyPluginAsync<{
         });
       }
 
+      opts.permissionDeps.invalidateUserAccessCache?.(parsedParams.data.uid);
+
       return reply.send({
         ok: true,
         user: {

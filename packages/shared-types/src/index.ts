@@ -1,5 +1,10 @@
 export { AppEnvSchema, type AppEnv } from "./env.js";
 export {
+  createTtlCache,
+  type TtlCache,
+  type TtlCacheOptions,
+} from "./cache/create-ttl-cache.js";
+export {
   ORGANIZATIONS_COLLECTION,
   ORGANIZATION_PERMISSIONS,
   ORGANIZATION_SCHEMA_VERSION,

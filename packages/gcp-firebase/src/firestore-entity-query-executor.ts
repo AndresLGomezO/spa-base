@@ -20,12 +20,22 @@ interface EntityConverter<TRecord> {
   read(raw: unknown): TRecord;
 }
 
+export interface FirestoreIndexHint {
+  readonly collection: string;
+  readonly tenantId: string;
+  readonly filters: readonly NormalizedFilter[];
+  readonly sort: NormalizedEntityQuery["sort"];
+  readonly suggestedFields: readonly string[];
+  readonly message: string;
+}
+
 interface FirestoreEntityQueryExecutorConfig<
   TRecord extends { readonly id: string; readonly tenantId: string },
 > {
   readonly config: FirebaseAdminConfig;
   readonly collection: string;
   readonly converter: EntityConverter<TRecord>;
+  readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
 }
 
 const EQUALITY_OPERATORS = new Set<FilterOperator>([
@@ -73,6 +83,34 @@ function buildFirestoreQuery(
   return query.limit(normalizedQuery.limit);
 }
 
+function buildSuggestedIndexFields(
+  query: NormalizedEntityQuery,
+): readonly string[] {
+  const fields = new Set<string>();
+  for (const filter of query.filters) {
+    fields.add(filter.field);
+  }
+  if (query.sort?.field) {
+    fields.add(query.sort.field);
+  }
+  fields.add("id");
+  return [...fields];
+}
+
+function isMissingIndexError(error: unknown): boolean {
+  if (!error || typeof error !== "object") {
+    return false;
+  }
+
+  const code = "code" in error ? String(error.code) : "";
+  const message = "message" in error ? String(error.message) : "";
+  return (
+    code === "failed-precondition" ||
+    message.includes("FAILED_PRECONDITION") ||
+    message.includes("requires an index")
+  );
+}
+
 class FirestoreEntityQueryExecutor<
   TRecord extends { readonly id: string; readonly tenantId: string },
 > implements EntityQueryExecutor {
@@ -93,30 +131,47 @@ class FirestoreEntityQueryExecutor<
     const collectionRef = this.getCollection(tenantId);
     let firestoreQuery = buildFirestoreQuery(collectionRef, query);
 
-    if (query.cursor) {
-      const cursorDoc = await collectionRef.doc(query.cursor).get();
-      if (cursorDoc.exists) {
-        firestoreQuery = firestoreQuery.startAfter(cursorDoc);
+    try {
+      if (query.cursor) {
+        const cursorDoc = await collectionRef.doc(query.cursor).get();
+        if (cursorDoc.exists) {
+          firestoreQuery = firestoreQuery.startAfter(cursorDoc);
+        }
       }
+
+      const snapshot = await firestoreQuery.get();
+      const items = snapshot.docs.map(
+        (doc) =>
+          this.executorConfig.converter.read(doc.data()) as Record<
+            string,
+            unknown
+          >,
+      );
+
+      const hasMore = items.length === query.limit;
+      const nextCursor =
+        hasMore && items.length > 0
+          ? String(items[items.length - 1]!.id)
+          : null;
+
+      return {
+        items,
+        nextCursor,
+      };
+    } catch (error) {
+      if (isMissingIndexError(error)) {
+        this.executorConfig.onIndexHint?.({
+          collection: this.executorConfig.collection,
+          tenantId,
+          filters: query.filters,
+          sort: query.sort ?? null,
+          suggestedFields: buildSuggestedIndexFields(query),
+          message:
+            error instanceof Error ? error.message : "Missing Firestore index.",
+        });
+      }
+      throw error;
     }
-
-    const snapshot = await firestoreQuery.get();
-    const items = snapshot.docs.map(
-      (doc) =>
-        this.executorConfig.converter.read(doc.data()) as Record<
-          string,
-          unknown
-        >,
-    );
-
-    const hasMore = items.length === query.limit;
-    const nextCursor =
-      hasMore && items.length > 0 ? String(items[items.length - 1]!.id) : null;
-
-    return {
-      items,
-      nextCursor,
-    };
   }
 
   async findById(id: string, tenantId: string) {

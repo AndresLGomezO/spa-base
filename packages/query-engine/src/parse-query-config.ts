@@ -87,6 +87,35 @@ const OPERATORS_BY_FIELD_TYPE: Record<
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
+const fieldOperatorCache = new WeakMap<
+  AnyDefinedEntity,
+  Map<string, readonly FilterOperator[] | null>
+>();
+
+function getAllowedOperators(
+  entity: AnyDefinedEntity,
+  fieldName: string,
+): readonly FilterOperator[] | null {
+  let entityCache = fieldOperatorCache.get(entity);
+  if (!entityCache) {
+    entityCache = new Map();
+    fieldOperatorCache.set(entity, entityCache);
+  }
+
+  if (entityCache.has(fieldName)) {
+    return entityCache.get(fieldName) ?? null;
+  }
+
+  const fieldType = resolveFieldType(entity, fieldName);
+  const allowed = fieldType ? OPERATORS_BY_FIELD_TYPE[fieldType] : null;
+  entityCache.set(fieldName, allowed);
+  return allowed;
+}
+
+export interface ParseListQueryOptions {
+  readonly strictPagination?: boolean;
+}
+
 function normalizeLimit(limit: number | undefined): number {
   if (limit === undefined) {
     return DEFAULT_LIMIT;
@@ -178,8 +207,8 @@ function validateFilter(
     );
   }
 
-  const allowedOperators = OPERATORS_BY_FIELD_TYPE[fieldType];
-  if (!allowedOperators.includes(filter.operator)) {
+  const allowedOperators = getAllowedOperators(entity, filter.field);
+  if (!allowedOperators || !allowedOperators.includes(filter.operator)) {
     throw new QueryError(
       QueryErrorCode.QUERY_VALIDATION_ERROR,
       `Operator "${filter.operator}" is not allowed for field "${filter.field}".`,
@@ -274,7 +303,25 @@ function enforceFirestoreConstraints(
   return primarySort;
 }
 
-export function parseListQueryInput(input: ListQueryInput): QueryConfig {
+export function parseListQueryInput(
+  input: ListQueryInput,
+  options: ParseListQueryOptions = {},
+): QueryConfig {
+  if (options.strictPagination) {
+    if (input.limit !== undefined && input.limit > MAX_LIMIT) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        `Limit cannot exceed ${MAX_LIMIT}.`,
+      );
+    }
+    if (!input.query && input.limit === undefined) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        "List requests must include an explicit limit or query pagination.",
+      );
+    }
+  }
+
   let config: QueryConfig = {};
 
   if (input.query) {

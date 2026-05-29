@@ -22,6 +22,8 @@
   },
   "dependencies": {
     "@app/platform": "workspace:*",
+    "@tanstack/react-query": "catalog:",
+    "@tanstack/react-virtual": "catalog:",
     "@repo/theme": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/entities": "workspace:*",

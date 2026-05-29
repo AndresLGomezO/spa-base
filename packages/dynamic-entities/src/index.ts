@@ -8,6 +8,7 @@ export {
 } from "./define-entity-from-record.js";
 export {
   clearDynamicEntityRegistry,
+  clearDynamicEntitiesForTenant,
   getDynamicEntitiesForTenant,
   getDynamicPermissionsForTenant,
   getEntitiesForTenant,
