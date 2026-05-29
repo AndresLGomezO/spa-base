@@ -89,6 +89,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         dispatch({
           type: "AUTH_STATE_AUTHENTICATED",
           user: await buildAuthUser(firebaseUser),
+          permissions: syncResult.user?.permissions ?? [],
+          isSuperAdmin: syncResult.user?.isSuperAdmin ?? false,
         });
       })();
     });
@@ -126,10 +128,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isAuthenticated: state.phase === "authenticated",
       isReady:
         state.phase === "authenticated" || state.phase === "unauthenticated",
+      permissions: state.permissions,
+      isSuperAdmin: state.isSuperAdmin,
       loginWithGoogle,
       logout,
     }),
-    [loginWithGoogle, logout, state.error, state.phase, state.user],
+    [
+      loginWithGoogle,
+      logout,
+      state.error,
+      state.isSuperAdmin,
+      state.permissions,
+      state.phase,
+      state.user,
+    ],
   );
 
   return <AuthContext value={value}>{children}</AuthContext>;

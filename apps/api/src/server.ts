@@ -6,7 +6,11 @@ import {
   orderConverter,
   type TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
-import { createFirestoreAdminEntityRepository } from "@repo/gcp-firebase";
+import {
+  createFirestoreAdminEntityRepository,
+  createFirestoreAdminRegisteredUserRepository,
+} from "@repo/gcp-firebase";
+import type { UserAccessProfile } from "@repo/rbac";
 import {
   CUSTOMERS_COLLECTION,
   Customer,
@@ -21,6 +25,11 @@ import {
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
+import {
+  createEntityPermissionGuards,
+  createLoadRequestPermissionsDeps,
+  type LoadRequestPermissionsDeps,
+} from "./rbac/index.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 
 interface BuildServerOptions {
@@ -32,6 +41,9 @@ interface BuildServerOptions {
     >;
     readonly order?: TenantScopedEntityRepository<OrderRecord, OrderUpdate>;
   };
+  readonly getUserAccessProfile?: (
+    uid: string,
+  ) => Promise<UserAccessProfile | null>;
 }
 
 export async function buildServer(options: BuildServerOptions = {}) {
@@ -55,11 +67,26 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   registerCrudErrorHandler(server);
 
+  const registeredUserRepository =
+    createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
+  const permissionDeps: LoadRequestPermissionsDeps =
+    options.getUserAccessProfile
+      ? { getUserAccessProfile: options.getUserAccessProfile }
+      : createLoadRequestPermissionsDeps(registeredUserRepository);
+
   await server.register(authValidateRoute, {
     firebaseAdminConfig,
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
+  const customerAuthorize = createEntityPermissionGuards(
+    permissionDeps,
+    Customer.name,
+  );
+  const orderAuthorize = createEntityPermissionGuards(
+    permissionDeps,
+    Order.name,
+  );
 
   await registerCrudRoutes<CustomerRecord, CustomerUpdate>(server, {
     entity: Customer,
@@ -71,6 +98,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
         converter: customerConverter,
       }),
     authenticate,
+    authorize: customerAuthorize,
   });
 
   await registerCrudRoutes<OrderRecord, OrderUpdate>(server, {
@@ -83,6 +111,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
         converter: orderConverter,
       }),
     authenticate,
+    authorize: orderAuthorize,
   });
 
   return server;

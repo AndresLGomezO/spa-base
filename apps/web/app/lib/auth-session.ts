@@ -5,6 +5,8 @@ import { appConfig } from "../config/app-config";
 interface SyncedAuthUser {
   readonly uid: string;
   readonly email: string | null;
+  readonly permissions: readonly string[];
+  readonly isSuperAdmin: boolean;
 }
 
 interface SyncAuthSessionResult {
@@ -15,7 +17,12 @@ interface SyncAuthSessionResult {
 
 interface AuthValidateSuccessResponse {
   readonly ok: true;
-  readonly user: SyncedAuthUser;
+  readonly user: {
+    readonly uid: string;
+    readonly email: string | null;
+    readonly permissions?: readonly string[];
+    readonly isSuperAdmin?: boolean;
+  };
 }
 
 interface AuthValidateErrorResponse {
@@ -60,6 +67,8 @@ export async function syncAuthSession(
       user: {
         uid: payload.user.uid,
         email: payload.user.email,
+        permissions: payload.user.permissions ?? [],
+        isSuperAdmin: payload.user.isSuperAdmin ?? false,
       },
     };
   } catch (error) {

@@ -1,0 +1,20 @@
+export {
+  ALL_KNOWN_PERMISSIONS,
+  type KnownPermission,
+} from "./known-permissions.js";
+export { isPlatformSuperAdmin } from "./platform-role.js";
+export { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
+export { BUILT_IN_ROLES, isBuiltInRoleName } from "./roles.js";
+export {
+  resolveAccessDecision,
+  resolvePermissions,
+  toUserAccessProfile,
+} from "./resolve-permissions.js";
+export {
+  BUILT_IN_ROLE_NAMES,
+  PLATFORM_SUPERADMIN,
+  type BuiltInRoleName,
+  type ResolvePermissionsInput,
+  type RoleDefinition,
+  type UserAccessProfile,
+} from "./types.js";

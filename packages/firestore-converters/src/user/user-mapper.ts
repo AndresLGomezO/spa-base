@@ -65,6 +65,8 @@ export function mergeRegisteredUserFromAuthUser(
     ),
     authCreatedAt: normalizeOptionalString(authUser.authCreatedAt),
     authLastSignInAt: normalizeOptionalString(authUser.authLastSignInAt),
+    platformRole: current.platformRole ?? null,
+    tenants: current.tenants,
     createdAt: current.createdAt,
     updatedAt: nowIso,
   });

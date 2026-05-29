@@ -37,7 +37,13 @@ interface RegisterCrudRoutesOptions<
   readonly entity: CrudEntityDefinition;
   readonly repository: TenantScopedEntityRepository<TRecord, TUpdate>;
   readonly authenticate: preHandlerAsyncHookHandler;
-  readonly requirePermission?: preHandlerAsyncHookHandler;
+  readonly authorize?: {
+    readonly list?: preHandlerAsyncHookHandler;
+    readonly get?: preHandlerAsyncHookHandler;
+    readonly create?: preHandlerAsyncHookHandler;
+    readonly update?: preHandlerAsyncHookHandler;
+    readonly delete?: preHandlerAsyncHookHandler;
+  };
   readonly prefix?: string;
 }
 
@@ -70,12 +76,16 @@ export async function registerCrudRoutes<
   app: FastifyInstance,
   options: RegisterCrudRoutesOptions<TRecord, TUpdate>,
 ): Promise<void> {
-  const { entity, repository, authenticate, requirePermission } = options;
+  const { entity, repository, authenticate, authorize } = options;
   const routePrefix = options.prefix ?? "/api";
   const basePath = `${routePrefix}/${entity.name}`;
-  const preHandlers = [authenticate, requirePermission ?? noopPreHandler];
+  const listPreHandlers = [authenticate, authorize?.list ?? noopPreHandler];
+  const getPreHandlers = [authenticate, authorize?.get ?? noopPreHandler];
+  const createPreHandlers = [authenticate, authorize?.create ?? noopPreHandler];
+  const updatePreHandlers = [authenticate, authorize?.update ?? noopPreHandler];
+  const deletePreHandlers = [authenticate, authorize?.delete ?? noopPreHandler];
 
-  app.get(basePath, { preHandler: preHandlers }, async (request, reply) => {
+  app.get(basePath, { preHandler: listPreHandlers }, async (request, reply) => {
     const tenantId = requireTenant(request, reply);
     if (!tenantId) return;
 
@@ -101,7 +111,7 @@ export async function registerCrudRoutes<
 
   app.get(
     `${basePath}/:id`,
-    { preHandler: preHandlers },
+    { preHandler: getPreHandlers },
     async (request, reply) => {
       const tenantId = requireTenant(request, reply);
       if (!tenantId) return;
@@ -131,56 +141,65 @@ export async function registerCrudRoutes<
     },
   );
 
-  app.post(basePath, { preHandler: preHandlers }, async (request, reply) => {
-    const tenantId = requireTenant(request, reply);
-    if (!tenantId) return;
+  app.post(
+    basePath,
+    { preHandler: createPreHandlers },
+    async (request, reply) => {
+      const tenantId = requireTenant(request, reply);
+      if (!tenantId) return;
 
-    const parsedBody = parseOrFormatError(entity.createSchema, request.body);
-    if (!parsedBody.success) {
-      return replyWithError(
-        reply,
-        400,
-        ApiErrorCode.VALIDATION_ERROR,
-        "Validation failed.",
-        parsedBody.details,
-      );
-    }
+      const parsedBody = parseOrFormatError(entity.createSchema, request.body);
+      if (!parsedBody.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Validation failed.",
+          parsedBody.details,
+        );
+      }
 
-    const now = new Date().toISOString();
-    const parsedRecord = parseOrFormatError(entity.schema, {
-      ...(parsedBody.data as Record<string, unknown>),
-      id: nanoid(),
-      tenantId,
-      createdAt: now,
-      updatedAt: now,
-    });
-
-    if (!parsedRecord.success) {
-      return replyWithError(
-        reply,
-        400,
-        ApiErrorCode.VALIDATION_ERROR,
-        "Validation failed.",
-        parsedRecord.details,
-      );
-    }
-
-    try {
-      const created = await repository.create(
+      const now = new Date().toISOString();
+      const parsedRecord = parseOrFormatError(entity.schema, {
+        ...(parsedBody.data as Record<string, unknown>),
+        id: nanoid(),
         tenantId,
-        parsedRecord.data as unknown as TRecord,
-      );
-      return reply.status(201).send(successEnvelope(created));
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "Failed to create record.";
-      return replyWithError(reply, 400, ApiErrorCode.VALIDATION_ERROR, message);
-    }
-  });
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      if (!parsedRecord.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Validation failed.",
+          parsedRecord.details,
+        );
+      }
+
+      try {
+        const created = await repository.create(
+          tenantId,
+          parsedRecord.data as unknown as TRecord,
+        );
+        return reply.status(201).send(successEnvelope(created));
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Failed to create record.";
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          message,
+        );
+      }
+    },
+  );
 
   app.put(
     `${basePath}/:id`,
-    { preHandler: preHandlers },
+    { preHandler: updatePreHandlers },
     async (request, reply) => {
       const tenantId = requireTenant(request, reply);
       if (!tenantId) return;
@@ -271,7 +290,7 @@ export async function registerCrudRoutes<
 
   app.delete(
     `${basePath}/:id`,
-    { preHandler: preHandlers },
+    { preHandler: deletePreHandlers },
     async (request, reply) => {
       const tenantId = requireTenant(request, reply);
       if (!tenantId) return;

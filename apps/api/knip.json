@@ -4,6 +4,7 @@
     "@repo/eslint-config",
     "@repo/firestore-converters",
     "@repo/gcp-firebase",
+    "@repo/rbac",
     "@repo/shared-types"
   ],
   "project": ["src/**/*.ts"]

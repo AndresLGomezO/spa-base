@@ -20,6 +20,8 @@ export interface AuthState {
     | "unauthenticated";
   readonly user: AuthUser | null;
   readonly error: string | null;
+  readonly permissions: readonly string[];
+  readonly isSuperAdmin: boolean;
 }
 
 export interface LoginResult {
@@ -32,6 +34,8 @@ export interface AuthContextValue {
   readonly isAuthenticated: boolean;
   readonly isReady: boolean;
   readonly error: string | null;
+  readonly permissions: readonly string[];
+  readonly isSuperAdmin: boolean;
   readonly loginWithGoogle: () => Promise<LoginResult>;
   readonly logout: () => Promise<void>;
 }

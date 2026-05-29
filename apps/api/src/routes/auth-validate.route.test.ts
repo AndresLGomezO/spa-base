@@ -6,8 +6,8 @@ import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 vi.mock("@repo/gcp-firebase", () => ({
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: "user_123",
+    tenantId: "tenant_a",
     email: "demo@example.com",
-    role: "admin",
   })),
   verifyFirebaseAppCheckToken: vi.fn(async () => ({
     appId: "demo-app-id",
@@ -50,6 +50,8 @@ vi.mock("@repo/gcp-firebase", () => ({
       providers: authUser.providers,
       authCreatedAt: authUser.authCreatedAt,
       authLastSignInAt: authUser.authLastSignInAt,
+      platformRole: null,
+      tenants: { tenant_a: ["viewer"] },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })),
@@ -101,7 +103,12 @@ describe("GET /auth/validate", () => {
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
       ok: true,
-      user: { uid: "user_123", email: "demo@example.com" },
+      user: {
+        uid: "user_123",
+        email: "demo@example.com",
+        isSuperAdmin: false,
+        permissions: ["customer.read", "order.read"],
+      },
       appCheck: { appId: "demo-app-id" },
     });
   });

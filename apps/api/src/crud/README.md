@@ -55,18 +55,27 @@ System fields (`id`, `tenantId`, `createdAt`, `updatedAt`) are injected in handl
 
 ### RBAC (Workstream 4)
 
-Pass `requirePermission` preHandler to `registerCrudRoutes`:
+Pass per-action `authorize` guards to `registerCrudRoutes`:
 
 ```ts
+const authorize = createEntityPermissionGuards(permissionDeps, Customer.name);
+
 await registerCrudRoutes(server, {
   entity: Customer,
   repository,
   authenticate,
-  requirePermission: createRequirePermission("customer.read"), // future
+  authorize,
 });
 ```
 
-Default: `noopPreHandler` (no enforcement).
+| Route | Permission |
+| ----- | ---------- |
+| GET list / GET by id | `{entity}.read` |
+| POST | `{entity}.create` |
+| PUT | `{entity}.update` |
+| DELETE | `{entity}.delete` |
+
+Default: `noopPreHandler` per action when `authorize` is omitted.
 
 ### Firestore (Workstream 3)
 

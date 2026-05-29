@@ -9,6 +9,11 @@ import {
   verifyFirebaseIdToken,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
+import {
+  isPlatformSuperAdmin,
+  resolvePermissions,
+  toUserAccessProfile,
+} from "@repo/rbac";
 
 import { extractBearerToken } from "../auth/extract-bearer-token.js";
 
@@ -60,12 +65,26 @@ export const authValidateRoute: FastifyPluginAsync<{
         mapFirebaseUserRecordToAuthUserProjection(authUserRecord),
       );
 
+      const tenantClaim = decodedIdToken.tenantId;
+      const tenantId =
+        typeof tenantClaim === "string" ? tenantClaim.trim() : "";
+      const accessProfile = toUserAccessProfile(registeredUser);
+      const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
+      const permissions =
+        tenantId.length > 0
+          ? resolvePermissions({
+              ...accessProfile,
+              tenantId,
+            })
+          : [];
+
       return reply.send({
         ok: true,
         user: {
           uid: registeredUser.uid,
           email: registeredUser.email,
-          claims: decodedIdToken,
+          permissions,
+          isSuperAdmin,
         },
         appCheck: {
           appId: decodedAppCheck.appId,
