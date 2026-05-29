@@ -1,4 +1,6 @@
 import cors from "@fastify/cors";
+import compress from "@fastify/compress";
+import rateLimit from "@fastify/rate-limit";
 import Fastify from "fastify";
 
 import { getAllEntities } from "@repo/entities";
@@ -30,6 +32,7 @@ import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
 import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
+import { registerRequestTiming } from "./observability/request-timing.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
 import { createEntityRuntimeMaps } from "./entities/create-entity-runtime-maps.js";
 import {
@@ -91,6 +94,7 @@ function buildPermissionDeps(
       : createLoadRequestPermissionsDeps(
           registeredUserRepository,
           loadRoleCatalog,
+          { cacheTtlMs: apiEnv.CACHE_TTL_MS },
         );
 
   return {
@@ -114,6 +118,30 @@ export async function buildServer(options: BuildServerOptions = {}) {
   await server.register(cors, {
     origin: corsOrigins,
   });
+
+  await server.register(compress, {
+    global: true,
+    encodings: ["gzip", "deflate"],
+  });
+
+  if (apiEnv.API_RATE_LIMIT_MAX > 0 && process.env.NODE_ENV !== "test") {
+    await server.register(rateLimit, {
+      max: apiEnv.API_RATE_LIMIT_MAX,
+      timeWindow: apiEnv.API_RATE_LIMIT_TIME_WINDOW_MS,
+      keyGenerator: (request) => {
+        const ctx = request.ctx;
+        if (ctx?.uid && ctx.tenantId) {
+          return `${ctx.uid}:${ctx.tenantId}`;
+        }
+        if (ctx?.uid) {
+          return ctx.uid;
+        }
+        return request.ip;
+      },
+    });
+  }
+
+  registerRequestTiming(server, { enabled: apiEnv.ENABLE_PERF_LOGS });
 
   const firebaseAdminConfig = {
     projectId: apiEnv.GCP_PROJECT_ID,
@@ -141,6 +169,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
   const tenantRoleCatalogLoader = createTenantRoleCatalogLoader(
     platformRoleRepository,
     tenantRoleRepository,
+    { ttlMs: apiEnv.CACHE_TTL_MS },
   );
   const loadRoleCatalog =
     options.getRoleCatalog ??
@@ -164,6 +193,19 @@ export async function buildServer(options: BuildServerOptions = {}) {
   const entityRuntime = createEntityRuntimeContext({
     firebaseAdminConfig,
     entityDefinitionRepository,
+    definitionCacheTtlMs: apiEnv.CACHE_TTL_MS,
+    onIndexHint: (hint) => {
+      server.log.warn(
+        {
+          collection: hint.collection,
+          tenantId: hint.tenantId,
+          filters: hint.filters,
+          sort: hint.sort,
+          suggestedFields: hint.suggestedFields,
+        },
+        hint.message,
+      );
+    },
     repositories: options.repositories,
     queryExecutors: options.queryExecutors,
   });

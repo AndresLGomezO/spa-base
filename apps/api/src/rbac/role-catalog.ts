@@ -3,19 +3,16 @@ import type {
   PlatformRoleRepository,
   TenantRoleRepository,
 } from "@repo/firestore-converters";
-
-const CACHE_TTL_MS = 60_000;
-
-interface CacheEntry {
-  readonly catalog: RoleCatalog;
-  readonly expiresAt: number;
-}
+import { createTtlCache } from "@repo/shared-types";
 
 export function createTenantRoleCatalogLoader(
   platformRoleRepository: PlatformRoleRepository,
   tenantRoleRepository: TenantRoleRepository,
+  options?: { readonly ttlMs?: number },
 ) {
-  const cache = new Map<string, CacheEntry>();
+  const cache = createTtlCache<string, RoleCatalog>({
+    ttlMs: options?.ttlMs ?? 60_000,
+  });
 
   return {
     invalidate(tenantId?: string): void {
@@ -31,10 +28,9 @@ export function createTenantRoleCatalogLoader(
         return {};
       }
 
-      const now = Date.now();
       const cached = cache.get(parsedTenantId);
-      if (cached && now < cached.expiresAt) {
-        return cached.catalog;
+      if (cached) {
+        return cached;
       }
 
       const [globalTemplates, tenantRoles] = await Promise.all([
@@ -43,11 +39,7 @@ export function createTenantRoleCatalogLoader(
       ]);
 
       const catalog = buildTenantRoleCatalog(tenantRoles, globalTemplates);
-      cache.set(parsedTenantId, {
-        catalog,
-        expiresAt: now + CACHE_TTL_MS,
-      });
-
+      cache.set(parsedTenantId, catalog);
       return catalog;
     },
   };

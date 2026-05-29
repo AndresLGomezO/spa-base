@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import {
+  useInfiniteQuery,
+  useMutation,
+  useQueryClient,
+} from "@tanstack/react-query";
 
 import type { QueryConfig } from "@repo/query-engine";
 
@@ -12,6 +17,10 @@ import {
 } from "../lib/api-client";
 import type { EntityName } from "../entities/entity-catalog";
 import { useEntityDefinition } from "../entities/entity-catalog-context";
+import {
+  entityListQueryKey,
+  entityRecordQueryKey,
+} from "../query/query-client";
 
 interface EntityRecord {
   readonly id: string;
@@ -66,149 +75,159 @@ export function useEntity(
 ): UseEntityResult {
   useEntityDefinition(entityName);
   const queryConfig = options.queryConfig;
-  const [items, setItems] = useState<EntityRecord[]>([]);
-  const [nextCursor, setNextCursor] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingMore, setIsLoadingMore] = useState(false);
-  const [listError, setListError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
-  const [mutationError, setMutationError] = useState<string | null>(null);
+  const queryClient = useQueryClient();
+  const listQueryKey = entityListQueryKey(entityName, queryConfig);
 
-  const fetchList = useCallback(
-    async (cursor?: string) => {
-      const result = await listEntity<EntityRecord>(entityName, {
+  const listQuery = useInfiniteQuery({
+    queryKey: listQueryKey,
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) =>
+      listEntity<EntityRecord>(entityName, {
         limit: queryConfig?.pagination?.limit ?? 20,
-        cursor,
+        cursor: pageParam,
         query: queryConfig,
-      });
-      return result;
-    },
-    [entityName, queryConfig],
+      }),
+    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
+  });
+
+  const items = useMemo(
+    () => listQuery.data?.pages.flatMap((page) => page.items) ?? [],
+    [listQuery.data],
   );
+
+  const lastPage = listQuery.data?.pages.at(-1);
+  const nextCursor = lastPage?.nextCursor ?? null;
 
   const refresh = useCallback(async () => {
-    setIsLoading(true);
-    setListError(null);
-    try {
-      const result = await fetchList();
-      setItems([...result.items]);
-      setNextCursor(result.nextCursor);
-    } catch (error) {
-      setListError(getErrorMessage(error));
-    } finally {
-      setIsLoading(false);
-    }
-  }, [fetchList]);
+    await listQuery.refetch();
+  }, [listQuery]);
 
   const loadMore = useCallback(async () => {
-    if (!nextCursor || isLoadingMore) return;
-    setIsLoadingMore(true);
-    setListError(null);
-    try {
-      const result = await fetchList(nextCursor);
-      setItems((current) => [...current, ...result.items]);
-      setNextCursor(result.nextCursor);
-    } catch (error) {
-      setListError(getErrorMessage(error));
-    } finally {
-      setIsLoadingMore(false);
+    if (!listQuery.hasNextPage || listQuery.isFetchingNextPage) {
+      return;
     }
-  }, [fetchList, isLoadingMore, nextCursor]);
+    await listQuery.fetchNextPage();
+  }, [listQuery]);
 
-  useEffect(() => {
-    void refresh();
-  }, [refresh]);
+  const [mutationError, setMutationError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
 
-  const getById = useCallback(
-    async (id: string) => {
-      try {
-        return await getEntity<EntityRecord>(entityName, id);
-      } catch (error) {
-        setMutationError(getErrorMessage(error));
-        return null;
-      }
+  const invalidateLists = useCallback(async () => {
+    await queryClient.invalidateQueries({
+      queryKey: ["entity", entityName],
+    });
+  }, [entityName, queryClient]);
+
+  const createMutation = useMutation({
+    mutationFn: (values: Record<string, unknown>) =>
+      createEntity<EntityRecord>(entityName, values),
+    onSuccess: async () => {
+      await invalidateLists();
     },
-    [entityName],
-  );
+  });
+
+  const updateMutation = useMutation({
+    mutationFn: ({
+      id,
+      values,
+    }: {
+      id: string;
+      values: Record<string, unknown>;
+    }) => updateEntity<EntityRecord>(entityName, id, values),
+    onSuccess: async (_data, variables) => {
+      await Promise.all([
+        invalidateLists(),
+        queryClient.invalidateQueries({
+          queryKey: entityRecordQueryKey(entityName, variables.id),
+        }),
+      ]);
+    },
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: string) => deleteEntity(entityName, id),
+    onSuccess: async () => {
+      await invalidateLists();
+    },
+  });
+
+  const isSubmitting =
+    createMutation.isPending ||
+    updateMutation.isPending ||
+    deleteMutation.isPending;
 
   const create = useCallback(
     async (values: Record<string, unknown>) => {
-      setIsSubmitting(true);
       setFieldErrors({});
       setMutationError(null);
-
       try {
-        const created = await createEntity<EntityRecord>(entityName, values);
-        setItems((current) => [created, ...current]);
-        return created;
+        return await createMutation.mutateAsync(values);
       } catch (error) {
         if (isApiClientError(error)) {
           setFieldErrors(error.fieldErrors);
         }
         setMutationError(getErrorMessage(error));
         return null;
-      } finally {
-        setIsSubmitting(false);
       }
     },
-    [entityName],
+    [createMutation],
   );
 
   const update = useCallback(
     async (id: string, values: Record<string, unknown>) => {
-      setIsSubmitting(true);
       setFieldErrors({});
       setMutationError(null);
-
       try {
-        const updated = await updateEntity<EntityRecord>(
-          entityName,
-          id,
-          values,
-        );
-        setItems((current) =>
-          current.map((item) => (item.id === id ? updated : item)),
-        );
-        return updated;
+        return await updateMutation.mutateAsync({ id, values });
       } catch (error) {
         if (isApiClientError(error)) {
           setFieldErrors(error.fieldErrors);
         }
         setMutationError(getErrorMessage(error));
         return null;
-      } finally {
-        setIsSubmitting(false);
       }
     },
-    [entityName],
+    [updateMutation],
   );
 
   const remove = useCallback(
     async (id: string) => {
-      setIsSubmitting(true);
       setMutationError(null);
       try {
-        await deleteEntity(entityName, id);
-        setItems((current) => current.filter((item) => item.id !== id));
+        await deleteMutation.mutateAsync(id);
         return true;
       } catch (error) {
         setMutationError(getErrorMessage(error));
         return false;
-      } finally {
-        setIsSubmitting(false);
       }
     },
-    [entityName],
+    [deleteMutation],
+  );
+
+  const getById = useCallback(
+    async (id: string) => {
+      try {
+        return await queryClient.fetchQuery({
+          queryKey: entityRecordQueryKey(entityName, id),
+          queryFn: () => getEntity<EntityRecord>(entityName, id),
+        });
+      } catch (error) {
+        setMutationError(getErrorMessage(error));
+        return null;
+      }
+    },
+    [entityName, queryClient],
   );
 
   return useMemo(
     () => ({
       items,
       nextCursor,
-      isLoading,
-      isLoadingMore,
-      error: listError ?? mutationError,
+      isLoading: listQuery.isLoading,
+      isLoadingMore: listQuery.isFetchingNextPage,
+      error:
+        (listQuery.error ? getErrorMessage(listQuery.error) : null) ??
+        mutationError,
       refresh,
       loadMore,
       isSubmitting,
@@ -222,16 +241,16 @@ export function useEntity(
       create,
       fieldErrors,
       getById,
-      isLoading,
-      isLoadingMore,
-      isSubmitting,
       items,
-      listError,
+      listQuery.error,
+      listQuery.isFetchingNextPage,
+      listQuery.isLoading,
       loadMore,
       mutationError,
       nextCursor,
       refresh,
       remove,
+      isSubmitting,
       update,
     ],
   );

@@ -8,6 +8,7 @@ import {
   getEntitiesForTenant,
   registerDynamicEntity,
   resolveEntity,
+  clearDynamicEntitiesForTenant,
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
 import { HOOK_PERMISSIONS } from "@repo/hooks";
@@ -22,6 +23,7 @@ import { createEntityConverter } from "@repo/firestore-converters";
 import {
   createFirestoreAdminEntityRepository,
   createFirestoreEntityQueryExecutor,
+  type FirestoreIndexHint,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 
@@ -37,6 +39,8 @@ type GenericRecord = { readonly id: string; readonly tenantId: string };
 interface EntityRuntimeContextOptions {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly entityDefinitionRepository: EntityDefinitionRepository;
+  readonly definitionCacheTtlMs?: number;
+  readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
   readonly repositories?: Record<
     string,
     TenantScopedEntityRepository<GenericRecord, unknown>
@@ -50,8 +54,11 @@ export class EntityRuntimeContext {
     TenantScopedEntityRepository<GenericRecord, unknown>
   >();
   private readonly queryExecutorCache = new Map<string, EntityQueryExecutor>();
+  private readonly definitionsLoadedAt = new Map<string, number>();
+  private readonly definitionCacheTtlMs: number;
 
   constructor(private readonly options: EntityRuntimeContextOptions) {
+    this.definitionCacheTtlMs = options.definitionCacheTtlMs ?? 60_000;
     for (const [entityName, repository] of Object.entries(
       options.repositories ?? {},
     )) {
@@ -153,6 +160,7 @@ export class EntityRuntimeContext {
           collection: entity.metadata.collection,
           converter:
             getEntityConverter(entity.name) ?? createEntityConverter(entity),
+          onIndexHint: this.options.onIndexHint,
         });
     this.queryExecutorCache.set(key, executor);
     return executor;
@@ -188,14 +196,40 @@ export class EntityRuntimeContext {
 
   async syncDefinition(record: EntityDefinitionRecord): Promise<void> {
     registerDynamicEntity(record.tenantId, record);
+    this.definitionsLoadedAt.set(record.tenantId, Date.now());
   }
 
-  async loadTenantDefinitions(tenantId: string): Promise<void> {
-    const records =
-      await this.options.entityDefinitionRepository.list(tenantId);
-    for (const record of records) {
-      registerDynamicEntity(tenantId, record);
+  invalidateTenantDefinitions(tenantId: string): void {
+    clearDynamicEntitiesForTenant(tenantId);
+    this.definitionsLoadedAt.delete(tenantId);
+  }
+
+  async loadTenantDefinitions(
+    tenantId: string,
+    options?: { readonly force?: boolean },
+  ): Promise<void> {
+    const parsedTenantId = tenantId.trim();
+    if (parsedTenantId.length === 0) {
+      return;
     }
+
+    const now = Date.now();
+    const loadedAt = this.definitionsLoadedAt.get(parsedTenantId);
+    if (
+      !options?.force &&
+      loadedAt !== undefined &&
+      now - loadedAt < this.definitionCacheTtlMs
+    ) {
+      return;
+    }
+
+    clearDynamicEntitiesForTenant(parsedTenantId);
+    const records =
+      await this.options.entityDefinitionRepository.list(parsedTenantId);
+    for (const record of records) {
+      registerDynamicEntity(parsedTenantId, record);
+    }
+    this.definitionsLoadedAt.set(parsedTenantId, now);
   }
 }
 

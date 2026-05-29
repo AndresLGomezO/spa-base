@@ -377,7 +377,7 @@ describe("CRUD API", () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "GET",
-        url: "/api/organization",
+        url: "/api/organization?limit=10",
       });
 
       expect(response.statusCode).toBe(401);
@@ -389,7 +389,7 @@ describe("CRUD API", () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "GET",
-        url: "/api/organization",
+        url: "/api/organization?limit=10",
         headers: authHeaders,
       });
 
@@ -428,7 +428,7 @@ describe("CRUD API", () => {
 
       const listResponse = await server.inject({
         method: "GET",
-        url: "/api/organization",
+        url: "/api/organization?limit=10",
         headers: authHeaders,
       });
       expect(listResponse.statusCode).toBe(200);
@@ -512,7 +512,7 @@ describe("CRUD API", () => {
 
       const listResponse = await server.inject({
         method: "GET",
-        url: "/api/organization",
+        url: "/api/organization?limit=10",
         headers: authHeaders,
       });
 
@@ -697,7 +697,7 @@ describe("CRUD API", () => {
 
       const listResponse = await server.inject({
         method: "GET",
-        url: "/api/organization",
+        url: "/api/organization?limit=10",
         headers: authHeaders,
       });
 

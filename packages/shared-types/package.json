@@ -4,19 +4,22 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
     "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
-    "validate": "pnpm run typecheck && pnpm run format:check"
+    "validate": "pnpm run typecheck && pnpm run test && pnpm run format:check"
   },
   "exports": {
     ".": "./src/index.ts",
-    "./register-entities": "./src/register-entities.ts"
+    "./register-entities": "./src/register-entities.ts",
+    "./cache": "./src/cache/create-ttl-cache.ts"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "prettier": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   },
   "dependencies": {
     "@repo/entities": "workspace:*",

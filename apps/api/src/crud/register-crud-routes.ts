@@ -23,6 +23,8 @@ import {
   FieldAccessError,
 } from "../rbac/create-field-access-resolver.js";
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
+import { measureQueryTiming } from "../observability/request-timing.js";
+import { apiEnv } from "../config/env.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
@@ -388,10 +390,15 @@ export async function registerCrudRoutes<
 
     try {
       if (queryEngine && request.ctx) {
-        const result = await queryEngine.find(
-          activeEntity.name,
-          parseListQueryInput(parsedQuery.data),
-          buildQueryContext(request.ctx, tenantId),
+        const ctx = request.ctx;
+        const result = await measureQueryTiming(request, async () =>
+          queryEngine.find(
+            activeEntity.name,
+            parseListQueryInput(parsedQuery.data, {
+              strictPagination: apiEnv.STRICT_QUERY_PAGINATION,
+            }),
+            buildQueryContext(ctx, tenantId),
+          ),
         );
 
         return reply.send(
@@ -490,10 +497,11 @@ export async function registerCrudRoutes<
 
       try {
         if (queryEngine && request.ctx) {
+          const ctx = request.ctx;
           const record = await queryEngine.findOne(
             activeEntity.name,
             recordId,
-            buildQueryContext(request.ctx, tenantId),
+            buildQueryContext(ctx, tenantId),
           );
           return reply.send(
             successEnvelope(

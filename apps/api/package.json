@@ -14,7 +14,9 @@
     "lint:circular": "madge --circular --extensions ts src/"
   },
   "dependencies": {
+    "@fastify/compress": "catalog:",
     "@fastify/cors": "catalog:",
+    "@fastify/rate-limit": "catalog:",
     "@app/platform": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
