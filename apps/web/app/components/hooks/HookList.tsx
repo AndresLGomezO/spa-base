@@ -2,10 +2,10 @@ import { useTranslation } from "react-i18next";
 
 import { Button, Heading, Text } from "@repo/ui";
 
-import type { EntityDefinitionRecord } from "../../lib/api-client";
+import type { HookRecord } from "../../lib/api-client";
 
-interface EntityDefinitionListProps {
-  readonly items: readonly EntityDefinitionRecord[];
+interface HookListProps {
+  readonly items: readonly HookRecord[];
   readonly isLoading: boolean;
   readonly canCreate: boolean;
   readonly canUpdate?: boolean;
@@ -13,42 +13,43 @@ interface EntityDefinitionListProps {
   readonly onEdit?: (id: string) => void;
 }
 
-export function EntityDefinitionList({
+export function HookList({
   items,
   isLoading,
   canCreate,
   canUpdate = false,
   onCreate,
   onEdit,
-}: EntityDefinitionListProps) {
+}: HookListProps) {
   const { t } = useTranslation("common");
 
   if (isLoading) {
-    return <Text>{t("dataModels.loading")}</Text>;
+    return <Text>{t("hooks.loading")}</Text>;
   }
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between gap-3">
-        <Heading level={2}>{t("dataModels.listTitle")}</Heading>
+        <Heading level={2}>{t("hooks.listTitle")}</Heading>
         {canCreate ? (
           <Button type="button" onClick={onCreate}>
-            {t("dataModels.createModel")}
+            {t("hooks.create")}
           </Button>
         ) : null}
       </div>
 
       {items.length === 0 ? (
-        <Text>{t("dataModels.empty")}</Text>
+        <Text>{t("hooks.empty")}</Text>
       ) : (
         <div className="overflow-x-auto">
           <table className="w-full min-w-[640px] border-collapse text-sm">
             <thead>
               <tr className="border-border border-b text-left">
-                <th className="px-3 py-2">{t("dataModels.modelName")}</th>
-                <th className="px-3 py-2">{t("dataModels.modelLabel")}</th>
-                <th className="px-3 py-2">{t("dataModels.fieldsTitle")}</th>
-                <th className="px-3 py-2">{t("dataModels.version")}</th>
+                <th className="px-3 py-2">{t("hooks.name")}</th>
+                <th className="px-3 py-2">{t("hooks.entity")}</th>
+                <th className="px-3 py-2">{t("hooks.event")}</th>
+                <th className="px-3 py-2">{t("hooks.enabled")}</th>
+                <th className="px-3 py-2">{t("hooks.actionCount")}</th>
                 {canUpdate ? (
                   <th className="px-3 py-2">{t("entity.actions")}</th>
                 ) : null}
@@ -57,10 +58,15 @@ export function EntityDefinitionList({
             <tbody>
               {items.map((item) => (
                 <tr key={item.id} className="border-border border-b">
-                  <td className="px-3 py-2 font-mono">{item.name}</td>
-                  <td className="px-3 py-2">{item.label}</td>
-                  <td className="px-3 py-2">{item.fields.length}</td>
-                  <td className="px-3 py-2">{item.version}</td>
+                  <td className="px-3 py-2">{item.name}</td>
+                  <td className="px-3 py-2 font-mono">{item.entity}</td>
+                  <td className="px-3 py-2 font-mono">{item.event}</td>
+                  <td className="px-3 py-2">
+                    {item.enabled
+                      ? t("hooks.enabledOn")
+                      : t("hooks.enabledOff")}
+                  </td>
+                  <td className="px-3 py-2">{item.config.actions.length}</td>
                   {canUpdate ? (
                     <td className="px-3 py-2">
                       <Button

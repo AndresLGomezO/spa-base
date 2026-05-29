@@ -9,10 +9,12 @@ import {
 } from "../../lib/api-client";
 import { EntityDefinitionList } from "./EntityDefinitionList";
 import { EntityDefinitionWizard } from "./EntityDefinitionWizard";
+import { EntityDefinitionEditor } from "./EntityDefinitionEditor";
 
 interface DataModelManagerProps {
   readonly tenantId: string;
   readonly canCreate?: boolean;
+  readonly canUpdate?: boolean;
   readonly showTenantPicker?: boolean;
   readonly tenantOptions?: readonly {
     readonly id: string;
@@ -24,6 +26,7 @@ interface DataModelManagerProps {
 export function DataModelManager({
   tenantId,
   canCreate = true,
+  canUpdate = true,
   showTenantPicker = false,
   tenantOptions = [],
   onTenantChange,
@@ -33,6 +36,7 @@ export function DataModelManager({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const loadDefinitions = useCallback(async () => {
     if (!tenantId) {
@@ -95,16 +99,29 @@ export function DataModelManager({
             void loadDefinitions();
           }}
         />
+      ) : editingId ? (
+        <EntityDefinitionEditor
+          definitionId={editingId}
+          tenantId={tenantId}
+          canUpdate={canUpdate}
+          onCancel={() => setEditingId(null)}
+          onSaved={() => {
+            setEditingId(null);
+            void loadDefinitions();
+          }}
+        />
       ) : (
         <EntityDefinitionList
           items={items}
           isLoading={isLoading}
           canCreate={canCreate}
+          canUpdate={canUpdate}
           onCreate={() => setShowWizard(true)}
+          onEdit={(id) => setEditingId(id)}
         />
       )}
 
-      {!showWizard && !isLoading && items.length > 0 ? (
+      {!showWizard && !editingId && !isLoading && items.length > 0 ? (
         <Text className="text-muted-foreground text-sm">
           {t("dataModels.catalogHint")}
         </Text>

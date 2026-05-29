@@ -50,6 +50,27 @@ describe("useAccessibleNavItems", () => {
     expect(entityIds).toEqual(["organization"]);
   });
 
+  it("includes control plane nav for tenant admins", () => {
+    mockUseAuth.mockReturnValue({
+      isSuperAdmin: false,
+      permissions: ["entityDefinition.read", "hook.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const controlPlane = result.current.find(
+      (item) => item.id === "control-plane",
+    );
+    expect(controlPlane && "children" in controlPlane).toBe(true);
+    if (controlPlane && "children" in controlPlane) {
+      expect(controlPlane.children.some((child) => child.id === "hooks")).toBe(
+        true,
+      );
+      expect(
+        controlPlane.children.some((child) => child.id === "data-models"),
+      ).toBe(true);
+    }
+  });
+
   it("includes admin settings link for superadmin", () => {
     mockUseAuth.mockReturnValue({
       isSuperAdmin: true,

@@ -4,10 +4,10 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
 import { useAuth } from "../../auth/AuthContext";
-import { DataModelManager } from "../../components/data-models/DataModelManager";
+import { HookManager } from "../../components/hooks/HookManager";
 import { listAdminTenants } from "../../lib/admin-client";
 
-export default function SettingsAdminDataModelsRoute() {
+export default function SettingsAdminHooksRoute() {
   const { t } = useTranslation("common");
   const { isReady, isSuperAdmin } = useAuth();
   const [tenantId, setTenantId] = useState("");
@@ -52,7 +52,7 @@ export default function SettingsAdminDataModelsRoute() {
   if (!isSuperAdmin) {
     return (
       <main className="mx-auto flex min-h-dvh max-w-4xl flex-col justify-center gap-3 p-6">
-        <Heading level={1}>{t("dataModels.title")}</Heading>
+        <Heading level={1}>{t("hooks.title")}</Heading>
         <Text>{t("admin.forbidden")}</Text>
         <Alert>{t("admin.forbiddenDetail")}</Alert>
       </main>
@@ -62,13 +62,13 @@ export default function SettingsAdminDataModelsRoute() {
   return (
     <main className="mx-auto flex min-h-dvh max-w-4xl flex-col gap-6 p-6">
       <div className="space-y-2">
-        <Heading level={1}>{t("dataModels.adminTitle")}</Heading>
-        <Text>{t("dataModels.adminDescription")}</Text>
+        <Heading level={1}>{t("hooks.adminTitle")}</Heading>
+        <Text>{t("hooks.adminDescription")}</Text>
       </div>
 
       {error ? <Alert>{error}</Alert> : null}
 
-      <DataModelManager
+      <HookManager
         tenantId={tenantId}
         canCreate
         canUpdate

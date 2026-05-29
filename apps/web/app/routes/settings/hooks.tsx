@@ -2,18 +2,15 @@ import { Alert, Heading, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
-import { DataModelManager } from "../../components/data-models/DataModelManager";
+import { HookManager } from "../../components/hooks/HookManager";
 
-export default function SettingsDataModelsRoute() {
+export default function SettingsHooksRoute() {
   const { t } = useTranslation("common");
   const { isReady, tenantId, permissions, isSuperAdmin } = useAuth();
 
-  const canAccess =
-    isSuperAdmin || permissions.includes("entityDefinition.read");
-  const canCreate =
-    isSuperAdmin || permissions.includes("entityDefinition.create");
-  const canUpdate =
-    isSuperAdmin || permissions.includes("entityDefinition.update");
+  const canAccess = isSuperAdmin || permissions.includes("hook.read");
+  const canCreate = isSuperAdmin || permissions.includes("hook.create");
+  const canUpdate = isSuperAdmin || permissions.includes("hook.update");
 
   if (!isReady) {
     return <Text>{t("loading")}</Text>;
@@ -22,8 +19,8 @@ export default function SettingsDataModelsRoute() {
   if (!canAccess) {
     return (
       <div className="space-y-3">
-        <Heading level={1}>{t("dataModels.title")}</Heading>
-        <Alert>{t("dataModels.forbidden")}</Alert>
+        <Heading level={1}>{t("hooks.title")}</Heading>
+        <Alert>{t("hooks.forbidden")}</Alert>
       </div>
     );
   }
@@ -31,7 +28,7 @@ export default function SettingsDataModelsRoute() {
   if (!tenantId) {
     return (
       <div className="space-y-3">
-        <Heading level={1}>{t("dataModels.title")}</Heading>
+        <Heading level={1}>{t("hooks.title")}</Heading>
         <Text>{t("tenant.selectDescription")}</Text>
       </div>
     );
@@ -40,10 +37,10 @@ export default function SettingsDataModelsRoute() {
   return (
     <div className="space-y-4">
       <div className="space-y-2">
-        <Heading level={1}>{t("dataModels.title")}</Heading>
-        <Text>{t("dataModels.description")}</Text>
+        <Heading level={1}>{t("hooks.title")}</Heading>
+        <Text>{t("hooks.description")}</Text>
       </div>
-      <DataModelManager
+      <HookManager
         tenantId={tenantId}
         canCreate={canCreate}
         canUpdate={canUpdate}

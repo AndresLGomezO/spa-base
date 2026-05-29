@@ -2,10 +2,18 @@ import { Button, Heading, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../auth/AuthContext";
+import {
+  AdminOverview,
+  hasControlPlaneAccess,
+} from "../components/admin/AdminOverview";
 
 export function HomePage() {
   const { t } = useTranslation("common");
-  const { user, logout } = useAuth();
+  const { user, logout, permissions, isSuperAdmin } = useAuth();
+
+  if (hasControlPlaneAccess(permissions, isSuperAdmin)) {
+    return <AdminOverview />;
+  }
 
   return (
     <>

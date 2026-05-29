@@ -17,6 +17,7 @@ export default [
       "./routes/settings/admin-data-models.tsx",
     ),
     route("settings/admin/roles", "./routes/settings/admin-roles.tsx"),
+    route("settings/admin/hooks", "./routes/settings/admin-hooks.tsx"),
   ]),
   layout("./routes/private-layout.tsx", [
     index("./routes/home.tsx"),
@@ -25,6 +26,7 @@ export default [
     route("settings/team", "./routes/settings/team.tsx"),
     route("settings/billing", "./routes/settings/billing.tsx"),
     route("settings/data-models", "./routes/settings/data-models.tsx"),
+    route("settings/hooks", "./routes/settings/hooks.tsx"),
     route("settings/roles", "./routes/settings/roles.tsx"),
   ]),
 ] satisfies RouteConfig;
