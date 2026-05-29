@@ -15,6 +15,15 @@ interface AdminUser {
   readonly tenants: Readonly<Record<string, readonly string[]>>;
 }
 
+interface AdminTenant {
+  readonly id: string;
+  readonly name: string;
+  readonly status: "active" | "suspended";
+  readonly createdBy: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
 async function getAuthHeaders() {
   const user = auth.currentUser;
   if (!user) {
@@ -64,9 +73,41 @@ export async function listAdminRoles(): Promise<readonly AdminRole[]> {
   return payload.roles;
 }
 
-export async function listAdminTenants(): Promise<readonly string[]> {
-  const payload = await adminFetch<{ tenants: string[] }>("/admin/tenants");
+export async function listAdminTenants(): Promise<readonly AdminTenant[]> {
+  const payload = await adminFetch<{ tenants: AdminTenant[] }>(
+    "/admin/tenants",
+  );
   return payload.tenants;
+}
+
+export async function createAdminTenant(input: {
+  readonly id?: string;
+  readonly name: string;
+}): Promise<AdminTenant> {
+  const payload = await adminFetch<{ tenant: AdminTenant }>("/admin/tenants", {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+
+  return payload.tenant;
+}
+
+export async function updateAdminTenant(
+  id: string,
+  input: {
+    readonly name?: string;
+    readonly status?: "active" | "suspended";
+  },
+): Promise<AdminTenant> {
+  const payload = await adminFetch<{ tenant: AdminTenant }>(
+    `/admin/tenants/${encodeURIComponent(id)}`,
+    {
+      method: "PATCH",
+      body: JSON.stringify(input),
+    },
+  );
+
+  return payload.tenant;
 }
 
 export async function listAdminUsers(): Promise<readonly AdminUser[]> {
@@ -89,4 +130,4 @@ export async function updateAdminUserAccess(
   return payload.user;
 }
 
-export type { AdminUser };
+export type { AdminTenant, AdminUser };

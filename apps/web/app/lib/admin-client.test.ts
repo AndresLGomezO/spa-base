@@ -18,7 +18,11 @@ vi.mock("./firebase", () => ({
   },
 }));
 
-import { listAdminUsers } from "./admin-client";
+import {
+  listAdminUsers,
+  listAdminTenants,
+  createAdminTenant,
+} from "./admin-client";
 
 describe("admin-client", () => {
   const fetchMock = vi.fn();
@@ -54,6 +58,58 @@ describe("admin-client", () => {
         headers: expect.objectContaining({
           Authorization: "Bearer id-token",
         }),
+      }),
+    );
+  });
+
+  it("loads admin tenants with auth headers", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        tenants: [
+          {
+            id: "tenant_a",
+            name: "Tenant A",
+            status: "active",
+            createdBy: null,
+            createdAt: "2026-01-01T00:00:00.000Z",
+            updatedAt: "2026-01-01T00:00:00.000Z",
+          },
+        ],
+      }),
+    });
+
+    const tenants = await listAdminTenants();
+
+    expect(tenants).toHaveLength(1);
+    expect(tenants[0]?.name).toBe("Tenant A");
+  });
+
+  it("creates an admin tenant", async () => {
+    fetchMock.mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        ok: true,
+        tenant: {
+          id: "tenant_new",
+          name: "New Tenant",
+          status: "active",
+          createdBy: "superadmin",
+          createdAt: "2026-01-02T00:00:00.000Z",
+          updatedAt: "2026-01-02T00:00:00.000Z",
+        },
+      }),
+    });
+
+    const tenant = await createAdminTenant({ name: "New Tenant" });
+
+    expect(tenant.id).toBe("tenant_new");
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL("/admin/tenants", "http://127.0.0.1:3000"),
+      expect.objectContaining({
+        method: "POST",
+        body: JSON.stringify({ name: "New Tenant" }),
       }),
     );
   });

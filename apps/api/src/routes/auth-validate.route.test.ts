@@ -1,6 +1,7 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
 vi.mock("@repo/gcp-firebase", () => ({
@@ -69,6 +70,9 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
   ),
+  createFirestoreAdminTenantRepository: vi.fn(() =>
+    createInMemoryTenantRepository(),
+  ),
 }));
 
 import { buildServer } from "../server.js";
@@ -85,6 +89,7 @@ async function buildTestServer() {
     logger: false,
     repositories: createInMemoryRepositories(),
     skipPlatformRoleSeed: true,
+    skipPlatformTenantSeed: true,
   });
 }
 
@@ -121,6 +126,7 @@ describe("GET /auth/validate", () => {
         permissions: ["customer.read", "order.read"],
         tenantId: "tenant_a",
         availableTenants: ["tenant_a"],
+        tenantOptions: [{ id: "tenant_a", name: "Tenant A" }],
       },
       appCheck: { appId: "demo-app-id" },
     });

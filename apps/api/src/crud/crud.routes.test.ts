@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildRoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
 const authState = {
@@ -84,6 +85,9 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
   ),
+  createFirestoreAdminTenantRepository: vi.fn(() =>
+    createInMemoryTenantRepository(),
+  ),
 }));
 
 import { buildServer } from "../server.js";
@@ -107,6 +111,7 @@ async function buildTestServer(options: BuildTestServerOptions = {}) {
     getUserAccessProfile: async () => profile,
     getRoleCatalog: async () => buildRoleCatalog([]),
     skipPlatformRoleSeed: true,
+    skipPlatformTenantSeed: true,
   });
 }
 
@@ -422,6 +427,60 @@ describe("CRUD API", () => {
       });
 
       expect(response.statusCode).toBe(201);
+    });
+  });
+
+  describe("Tenant isolation", () => {
+    it("returns only records for the authenticated tenant", async () => {
+      const server = await buildTestServer();
+      const createResponse = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Tenant A Customer" },
+      });
+      expect(createResponse.statusCode).toBe(201);
+
+      authState.tenantId = "tenant_b";
+      accessProfileState.tenants = { tenant_b: ["admin"] };
+
+      const listResponse = await server.inject({
+        method: "GET",
+        url: "/api/customer",
+        headers: authHeaders,
+      });
+
+      expect(listResponse.statusCode).toBe(200);
+      expect(listResponse.json().data.items).toEqual([]);
+    });
+
+    it("applies different permissions per tenant selection for the same user", async () => {
+      accessProfileState.tenants = {
+        tenant_a: ["admin"],
+        tenant_b: ["viewer"],
+      };
+
+      const server = await buildTestServer();
+      authState.tenantId = "tenant_a";
+
+      const createInTenantA = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Created in tenant A" },
+      });
+      expect(createInTenantA.statusCode).toBe(201);
+
+      authState.tenantId = "tenant_b";
+
+      const createInTenantB = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Blocked in tenant B" },
+      });
+      expect(createInTenantB.statusCode).toBe(403);
+      expect(createInTenantB.json().error.code).toBe("FORBIDDEN");
     });
   });
 });

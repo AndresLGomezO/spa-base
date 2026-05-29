@@ -12,6 +12,11 @@ export interface AuthUser {
   readonly providerId: string | null;
 }
 
+export interface TenantOption {
+  readonly id: string;
+  readonly name: string;
+}
+
 export interface AuthState {
   readonly phase:
     | "initializing"
@@ -24,6 +29,7 @@ export interface AuthState {
   readonly isSuperAdmin: boolean;
   readonly tenantId: string | null;
   readonly availableTenants: readonly string[];
+  readonly tenantOptions: readonly TenantOption[];
 }
 
 export interface LoginResult {
@@ -45,6 +51,7 @@ export interface AuthContextValue {
   readonly isSuperAdmin: boolean;
   readonly tenantId: string | null;
   readonly availableTenants: readonly string[];
+  readonly tenantOptions: readonly TenantOption[];
   readonly loginWithGoogle: () => Promise<LoginResult>;
   readonly logout: () => Promise<void>;
   readonly selectTenant: (tenantId: string) => Promise<SelectTenantResult>;

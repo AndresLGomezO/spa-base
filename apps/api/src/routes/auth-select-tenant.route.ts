@@ -18,8 +18,7 @@ import {
 
 import { extractBearerToken } from "../auth/extract-bearer-token.js";
 import { canAccessTenant } from "../auth/build-auth-session-context.js";
-import { listAvailableTenantIds } from "../admin/list-tenant-ids.js";
-import { apiEnv } from "../config/env.js";
+import { listAvailableTenants } from "../admin/list-available-tenants.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 
 const headerSchema = z.object({
@@ -93,11 +92,10 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
       const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
 
       const userTenantIds = Object.keys(registeredUser.tenants ?? {});
-      const availableTenants = await listAvailableTenantIds({
+      const tenantAccess = await listAvailableTenants({
         config: opts.firebaseAdminConfig,
         isSuperAdmin,
         userTenantIds,
-        knownTenantEnv: apiEnv.PLATFORM_KNOWN_TENANTS,
       });
 
       if (
@@ -105,7 +103,7 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
           isSuperAdmin,
           userTenantIds,
           requestedTenantId,
-          availableTenantIds: availableTenants,
+          availableTenantIds: tenantAccess.availableTenants,
         })
       ) {
         return reply.status(403).send({
@@ -132,7 +130,8 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
       return reply.send({
         ok: true,
         tenantId: requestedTenantId,
-        availableTenants,
+        availableTenants: tenantAccess.availableTenants,
+        tenantOptions: tenantAccess.tenantOptions,
         permissions,
         isSuperAdmin,
       });

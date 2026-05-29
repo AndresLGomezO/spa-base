@@ -32,6 +32,10 @@ describe("syncAuthSession", () => {
           isSuperAdmin: false,
           tenantId: "tenant_a",
           availableTenants: ["tenant_a", "tenant_b"],
+          tenantOptions: [
+            { id: "tenant_a", name: "Tenant A" },
+            { id: "tenant_b", name: "Tenant B" },
+          ],
         },
       }),
     });
@@ -51,6 +55,10 @@ describe("syncAuthSession", () => {
         isSuperAdmin: false,
         tenantId: "tenant_a",
         availableTenants: ["tenant_a", "tenant_b"],
+        tenantOptions: [
+          { id: "tenant_a", name: "Tenant A" },
+          { id: "tenant_b", name: "Tenant B" },
+        ],
       },
     });
     expect(fetchMock).toHaveBeenCalledWith(
@@ -93,6 +101,10 @@ describe("syncAuthSession", () => {
         ok: true,
         tenantId: "tenant_b",
         availableTenants: ["tenant_a", "tenant_b"],
+        tenantOptions: [
+          { id: "tenant_a", name: "Tenant A" },
+          { id: "tenant_b", name: "Tenant B" },
+        ],
         permissions: ["customer.read", "customer.create"],
         isSuperAdmin: false,
       }),
@@ -108,6 +120,10 @@ describe("syncAuthSession", () => {
       ok: true,
       tenantId: "tenant_b",
       availableTenants: ["tenant_a", "tenant_b"],
+      tenantOptions: [
+        { id: "tenant_a", name: "Tenant A" },
+        { id: "tenant_b", name: "Tenant B" },
+      ],
       permissions: ["customer.read", "customer.create"],
       isSuperAdmin: false,
     });

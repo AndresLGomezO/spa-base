@@ -2,6 +2,8 @@ import type { User } from "./firebase";
 import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
 
+import type { TenantOption } from "../auth/auth.types";
+
 interface SyncedAuthUser {
   readonly uid: string;
   readonly email: string | null;
@@ -9,6 +11,7 @@ interface SyncedAuthUser {
   readonly isSuperAdmin: boolean;
   readonly tenantId: string | null;
   readonly availableTenants: readonly string[];
+  readonly tenantOptions: readonly TenantOption[];
 }
 
 interface SyncAuthSessionResult {
@@ -21,6 +24,7 @@ interface SelectTenantSessionResult {
   readonly ok: boolean;
   readonly tenantId?: string;
   readonly availableTenants?: readonly string[];
+  readonly tenantOptions?: readonly TenantOption[];
   readonly permissions?: readonly string[];
   readonly isSuperAdmin?: boolean;
   readonly error?: string;
@@ -35,6 +39,7 @@ interface AuthValidateSuccessResponse {
     readonly isSuperAdmin?: boolean;
     readonly tenantId?: string | null;
     readonly availableTenants?: readonly string[];
+    readonly tenantOptions?: readonly TenantOption[];
   };
 }
 
@@ -47,6 +52,7 @@ interface AuthSelectTenantSuccessResponse {
   readonly ok: true;
   readonly tenantId: string;
   readonly availableTenants: readonly string[];
+  readonly tenantOptions: readonly TenantOption[];
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;
 }
@@ -78,6 +84,7 @@ function mapValidateUser(
     isSuperAdmin: user.isSuperAdmin ?? false,
     tenantId: user.tenantId ?? null,
     availableTenants: user.availableTenants ?? [],
+    tenantOptions: user.tenantOptions ?? [],
   };
 }
 
@@ -155,6 +162,7 @@ export async function selectTenantSession(
       ok: true,
       tenantId: payload.tenantId,
       availableTenants: payload.availableTenants,
+      tenantOptions: payload.tenantOptions,
       permissions: payload.permissions,
       isSuperAdmin: payload.isSuperAdmin,
     };

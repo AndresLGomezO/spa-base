@@ -1,4 +1,4 @@
-import type { AuthState, AuthUser } from "./auth.types";
+import type { AuthState, AuthUser, TenantOption } from "./auth.types";
 import type { User } from "../lib/firebase";
 
 export const AUTH_INITIAL_STATE: AuthState = {
@@ -9,6 +9,7 @@ export const AUTH_INITIAL_STATE: AuthState = {
   isSuperAdmin: false,
   tenantId: null,
   availableTenants: [],
+  tenantOptions: [],
 };
 
 type AuthAction =
@@ -20,11 +21,13 @@ type AuthAction =
       readonly isSuperAdmin?: boolean;
       readonly tenantId?: string | null;
       readonly availableTenants?: readonly string[];
+      readonly tenantOptions?: readonly TenantOption[];
     }
   | {
       readonly type: "TENANT_SELECTED";
       readonly tenantId: string;
       readonly availableTenants: readonly string[];
+      readonly tenantOptions: readonly TenantOption[];
       readonly permissions: readonly string[];
       readonly isSuperAdmin: boolean;
     }
@@ -63,13 +66,18 @@ export async function buildAuthUser(user: User): Promise<AuthUser> {
 
 function clearSessionFields(): Pick<
   AuthState,
-  "permissions" | "isSuperAdmin" | "tenantId" | "availableTenants"
+  | "permissions"
+  | "isSuperAdmin"
+  | "tenantId"
+  | "availableTenants"
+  | "tenantOptions"
 > {
   return {
     permissions: [],
     isSuperAdmin: false,
     tenantId: null,
     availableTenants: [],
+    tenantOptions: [],
   };
 }
 
@@ -91,6 +99,7 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         isSuperAdmin: action.isSuperAdmin ?? state.isSuperAdmin,
         tenantId: action.tenantId ?? state.tenantId,
         availableTenants: action.availableTenants ?? state.availableTenants,
+        tenantOptions: action.tenantOptions ?? state.tenantOptions,
       };
     case "TENANT_SELECTED":
       return {
@@ -99,6 +108,7 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         error: null,
         tenantId: action.tenantId,
         availableTenants: action.availableTenants,
+        tenantOptions: action.tenantOptions,
         permissions: action.permissions,
         isSuperAdmin: action.isSuperAdmin,
       };

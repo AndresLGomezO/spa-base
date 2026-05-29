@@ -6,14 +6,14 @@ import {
 } from "@repo/rbac";
 import type { RegisteredUserRepository } from "@repo/firestore-converters";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
-import type { RegisteredUser } from "@repo/shared-types";
+import type { RegisteredUser, TenantOption } from "@repo/shared-types";
 
 import {
   parseBootstrapSuperAdminEmails,
   shouldBootstrapSuperAdmin,
   withBootstrapPlatformRole,
 } from "../admin/bootstrap-platform-role.js";
-import { listAvailableTenantIds } from "../admin/list-tenant-ids.js";
+import { listAvailableTenants } from "../admin/list-available-tenants.js";
 import { apiEnv } from "../config/env.js";
 
 interface AuthSessionContext {
@@ -22,6 +22,7 @@ interface AuthSessionContext {
   readonly isSuperAdmin: boolean;
   readonly tenantId: string | null;
   readonly availableTenants: readonly string[];
+  readonly tenantOptions: readonly TenantOption[];
 }
 
 export async function buildAuthSessionContext(params: {
@@ -69,11 +70,10 @@ export async function buildAuthSessionContext(params: {
         )
       : [];
 
-  const availableTenants = await listAvailableTenantIds({
+  const tenantAccess = await listAvailableTenants({
     config: params.firebaseAdminConfig,
     isSuperAdmin,
     userTenantIds: Object.keys(user.tenants ?? {}),
-    knownTenantEnv: apiEnv.PLATFORM_KNOWN_TENANTS,
   });
 
   return {
@@ -81,7 +81,8 @@ export async function buildAuthSessionContext(params: {
     permissions,
     isSuperAdmin,
     tenantId,
-    availableTenants,
+    availableTenants: tenantAccess.availableTenants,
+    tenantOptions: tenantAccess.tenantOptions,
   };
 }
 
@@ -91,8 +92,12 @@ export function canAccessTenant(params: {
   readonly requestedTenantId: string;
   readonly availableTenantIds: readonly string[];
 }): boolean {
+  if (!params.availableTenantIds.includes(params.requestedTenantId)) {
+    return false;
+  }
+
   if (params.isSuperAdmin) {
-    return params.availableTenantIds.includes(params.requestedTenantId);
+    return true;
   }
 
   return params.userTenantIds.includes(params.requestedTenantId);

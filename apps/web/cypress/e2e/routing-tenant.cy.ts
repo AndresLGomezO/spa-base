@@ -11,6 +11,7 @@ describe("Routing tenant guard", () => {
           isSuperAdmin: false,
           tenantId: null,
           availableTenants: ["tenant_a"],
+          tenantOptions: [{ id: "tenant_a", name: "Tenant A" }],
         },
         appCheck: { appId: "demo-app" },
       },

@@ -10,7 +10,13 @@ export default function SelectTenantRoute() {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
   const location = useLocation();
-  const { availableTenants, selectTenant, tenantId, isSuperAdmin } = useAuth();
+  const {
+    availableTenants,
+    tenantOptions,
+    selectTenant,
+    tenantId,
+    isSuperAdmin,
+  } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [submittingTenantId, setSubmittingTenantId] = useState<string | null>(
     null,
@@ -46,6 +52,11 @@ export default function SelectTenantRoute() {
     navigate(fromPath, { replace: true });
   }
 
+  function tenantLabel(id: string): string {
+    const option = tenantOptions.find((item) => item.id === id);
+    return option?.name ? `${option.name} (${id})` : id;
+  }
+
   return (
     <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 p-6">
       <div className="flex flex-col gap-2">
@@ -61,7 +72,7 @@ export default function SelectTenantRoute() {
             key={id}
             className="border-border flex items-center justify-between gap-4 rounded-lg border p-4"
           >
-            <Text>{id}</Text>
+            <Text>{tenantLabel(id)}</Text>
             <Button
               type="button"
               onClick={() => void handleSelect(id)}

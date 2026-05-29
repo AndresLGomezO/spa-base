@@ -1,11 +1,14 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
 const { setFirebaseUserCustomClaims } = vi.hoisted(() => ({
   setFirebaseUserCustomClaims: vi.fn(async () => undefined),
 }));
+
+const tenantRepository = createInMemoryTenantRepository();
 
 vi.mock("@repo/gcp-firebase", () => ({
   verifyFirebaseIdToken: vi.fn(async () => ({
@@ -74,6 +77,7 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
   ),
+  createFirestoreAdminTenantRepository: vi.fn(() => tenantRepository),
 }));
 
 import { buildServer } from "../server.js";
@@ -90,6 +94,7 @@ async function buildTestServer() {
     logger: false,
     repositories: createInMemoryRepositories(),
     skipPlatformRoleSeed: true,
+    skipPlatformTenantSeed: true,
   });
 }
 
@@ -99,6 +104,10 @@ const authHeaders = {
 };
 
 describe("POST /auth/select-tenant", () => {
+  beforeEach(async () => {
+    await tenantRepository.update("tenant_b", { status: "active" });
+  });
+
   it("returns 401 when headers are missing", async () => {
     const server = await buildTestServer();
     const response = await server.inject({
@@ -155,6 +164,10 @@ describe("POST /auth/select-tenant", () => {
       ok: true,
       tenantId: "tenant_b",
       availableTenants: ["tenant_a", "tenant_b"],
+      tenantOptions: [
+        { id: "tenant_a", name: "Tenant A" },
+        { id: "tenant_b", name: "Tenant B" },
+      ],
       isSuperAdmin: false,
     });
     expect(setFirebaseUserCustomClaims).toHaveBeenCalledWith(
@@ -165,5 +178,23 @@ describe("POST /auth/select-tenant", () => {
     expect(response.json().permissions).toEqual(
       expect.arrayContaining(["customer.read", "customer.create"]),
     );
+  });
+
+  it("returns 403 when tenant is suspended", async () => {
+    await tenantRepository.update("tenant_b", { status: "suspended" });
+
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/auth/select-tenant",
+      headers: authHeaders,
+      payload: { tenantId: "tenant_b" },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({
+      ok: false,
+      code: "FORBIDDEN",
+    });
   });
 });
