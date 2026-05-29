@@ -22,6 +22,7 @@ function mockAuthContext(
     isSuperAdmin: false,
     tenantId: "tenant_a",
     availableTenants: ["tenant_a"],
+    tenantOptions: [],
     loginWithGoogle: vi.fn(),
     logout: vi.fn(),
     selectTenant: vi.fn(),

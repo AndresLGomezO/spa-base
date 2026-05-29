@@ -51,7 +51,7 @@
   },
   "admin": {
     "title": "Platform Admin",
-    "description": "Manage user roles per tenant.",
+    "description": "Manage tenants and user roles.",
     "loading": "Loading admin data...",
     "email": "Email",
     "platformRole": "Platform role",
@@ -65,7 +65,30 @@
     "loadFailed": "Unable to load admin data.",
     "userNotFound": "Selected user was not found.",
     "forbidden": "Access denied",
-    "forbiddenDetail": "Only platform superadmins can access this page."
+    "forbiddenDetail": "Only platform superadmins can access this page.",
+    "users": {
+      "title": "User roles"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "description": "Create tenants and suspend or activate access.",
+      "loading": "Loading tenants...",
+      "name": "Name",
+      "id": "ID",
+      "idOptional": "Tenant ID (optional)",
+      "idPlaceholder": "Auto-generated if empty",
+      "status": "Status",
+      "active": "Active",
+      "actions": "Actions",
+      "suspend": "Suspend",
+      "activate": "Activate",
+      "loadFailed": "Unable to load tenants.",
+      "createFailed": "Unable to create tenant.",
+      "createSuccess": "Tenant created.",
+      "updateFailed": "Unable to update tenant.",
+      "suspendSuccess": "Tenant suspended.",
+      "activateSuccess": "Tenant activated."
+    }
   },
   "entity": {
     "create": "Create",
@@ -95,7 +118,9 @@
     "currentTenant": "Tenant: {{tenant}}",
     "none": "None",
     "noTenants": "No tenant access",
-    "noTenantsDetail": "Your account is not assigned to any tenant. Contact an administrator."
+    "noTenantsDetail": "Your account is not assigned to any tenant. Contact an administrator.",
+    "create": "Create tenant",
+    "suspended": "Suspended"
   },
   "roles": {
     "member": "Member",

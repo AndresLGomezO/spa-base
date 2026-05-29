@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
 const reloginState = vi.hoisted(() => {
@@ -69,7 +70,6 @@ vi.mock("../config/env.js", () => ({
     API_PORT: 3000,
     API_CORS_ORIGINS: "http://localhost:5173",
     PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS: "admin@example.com",
-    PLATFORM_KNOWN_TENANTS: "tenant_dev_1",
   },
 }));
 
@@ -124,14 +124,18 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
   ),
-  getFirestoreAdmin: vi.fn(() => ({
-    collection: vi.fn(() => ({
-      select: vi.fn(() => ({
-        get: vi.fn(async () => ({ docs: [] })),
-      })),
-    })),
-  })),
-  TENANTS_COLLECTION: "tenants",
+  createFirestoreAdminTenantRepository: vi.fn(() =>
+    createInMemoryTenantRepository([
+      {
+        id: "tenant_dev_1",
+        name: "Dev Tenant 1",
+        status: "active",
+        createdBy: null,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
+    ]),
+  ),
 }));
 
 import { buildServer } from "../server.js";
@@ -153,6 +157,7 @@ describe("GET /auth/validate re-login", () => {
       logger: false,
       repositories: createInMemoryRepositories(),
       skipPlatformRoleSeed: true,
+      skipPlatformTenantSeed: true,
     });
 
     const headers = {
@@ -172,6 +177,7 @@ describe("GET /auth/validate re-login", () => {
       user: {
         isSuperAdmin: true,
         availableTenants: ["tenant_dev_1"],
+        tenantOptions: [{ id: "tenant_dev_1", name: "Dev Tenant 1" }],
       },
     });
     expect(reloginState.storedUser.tenants).toEqual({});
@@ -189,6 +195,7 @@ describe("GET /auth/validate re-login", () => {
       user: {
         isSuperAdmin: true,
         availableTenants: ["tenant_dev_1"],
+        tenantOptions: [{ id: "tenant_dev_1", name: "Dev Tenant 1" }],
       },
     });
     expect(reloginState.storedUser.tenants).toEqual({});

@@ -8,6 +8,7 @@ import {
   listAdminTenants,
   listAdminUsers,
   updateAdminUserAccess,
+  type AdminTenant,
   type AdminUser,
 } from "../../lib/admin-client";
 
@@ -15,7 +16,7 @@ export function UserRoleManager() {
   const { t } = useTranslation("common");
   const [users, setUsers] = useState<readonly AdminUser[]>([]);
   const [roles, setRoles] = useState<readonly string[]>([]);
-  const [tenants, setTenants] = useState<readonly string[]>([]);
+  const [tenants, setTenants] = useState<readonly AdminTenant[]>([]);
   const [selectedUserId, setSelectedUserId] = useState("");
   const [selectedTenantId, setSelectedTenantId] = useState("");
   const [selectedRoles, setSelectedRoles] = useState<string[]>([]);
@@ -38,7 +39,7 @@ export function UserRoleManager() {
       setRoles(nextRoles.map((role) => role.name));
       setTenants(nextTenants);
       setSelectedUserId((current) => current || nextUsers[0]?.uid || "");
-      setSelectedTenantId((current) => current || nextTenants[0] || "");
+      setSelectedTenantId((current) => current || nextTenants[0]?.id || "");
     } catch (loadError) {
       setError(
         loadError instanceof Error ? loadError.message : t("admin.loadFailed"),
@@ -124,10 +125,13 @@ export function UserRoleManager() {
                 <td className="px-4 py-3">{user.platformRole ?? "—"}</td>
                 <td className="px-4 py-3">
                   {Object.entries(user.tenants)
-                    .map(
-                      ([tenantId, tenantRoles]) =>
-                        `${tenantId}: ${tenantRoles.join(", ")}`,
-                    )
+                    .map(([tenantId, tenantRoles]) => {
+                      const tenant = tenants.find(
+                        (item) => item.id === tenantId,
+                      );
+                      const label = tenant?.name ?? tenantId;
+                      return `${label}: ${tenantRoles.join(", ")}`;
+                    })
                     .join(" · ") || "—"}
                 </td>
               </tr>
@@ -161,9 +165,9 @@ export function UserRoleManager() {
             value={selectedTenantId}
             onChange={(event) => setSelectedTenantId(event.target.value)}
           >
-            {tenants.map((tenantId) => (
-              <option key={tenantId} value={tenantId}>
-                {tenantId}
+            {tenants.map((tenant) => (
+              <option key={tenant.id} value={tenant.id}>
+                {tenant.name} ({tenant.id})
               </option>
             ))}
           </select>

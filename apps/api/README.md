@@ -167,14 +167,18 @@ See [`packages/rbac/README.md`](../../packages/rbac/README.md) for wildcard and 
 
 ## Admin (WS7)
 
-On startup the API seeds global roles into Firestore (`roles/{roleId}`) if missing. Superadmin-only routes under `/admin/*`:
+On startup the API seeds global roles into Firestore (`roles/{roleId}`) and dev tenants into `tenants/{tenantId}` if missing. Superadmin-only routes under `/admin/*`:
 
-| Method | Path                | Description                          |
-| ------ | ------------------- | ------------------------------------ |
-| GET    | `/admin/roles`      | List global Firestore roles          |
-| GET    | `/admin/tenants`    | List tenant IDs                      |
-| GET    | `/admin/users`      | Paginated user list                  |
-| PATCH  | `/admin/users/:uid` | Update `{ tenants: Record<string, string[]> }` |
+| Method | Path                  | Description                                      |
+| ------ | --------------------- | ------------------------------------------------ |
+| GET    | `/admin/roles`        | List global Firestore roles                      |
+| GET    | `/admin/tenants`      | List tenant records (`id`, `name`, `status`, …)  |
+| POST   | `/admin/tenants`      | Create tenant `{ id?, name }`                    |
+| PATCH  | `/admin/tenants/:id`  | Update `{ name?, status? }`                      |
+| GET    | `/admin/users`        | Paginated user list                              |
+| PATCH  | `/admin/users/:uid`   | Update `{ tenants: Record<string, string[]> }`   |
+
+Tenant IDs in user role assignments must exist in the tenant registry and be `active`. Auth validate/select-tenant responses include `tenantOptions: { id, name }[]` for UI display.
 
 ### Superadmin bootstrap
 
@@ -182,13 +186,11 @@ Set in API env (see `apps/api/.env.dev.example`):
 
 ```
 PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
-PLATFORM_KNOWN_TENANTS=tenant_dev_1,tenant_dev_2
 ```
 
 - `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`: comma-separated emails promoted to `platform.superadmin` on **first** user document creation only.
-- `PLATFORM_KNOWN_TENANTS`: optional dev fallback tenant IDs merged with Firestore `tenants` collection for superadmin tenant selection.
 
-Superadmins see all tenant IDs when selecting a tenant; regular users remain limited to keys in `users/{uid}.tenants`.
+Dev tenants `tenant_dev_1` and `tenant_dev_2` are seeded into Firestore on API startup. Superadmins see all active registry tenants when selecting a tenant; regular users remain limited to keys in `users/{uid}.tenants` that are also active.
 
 ## Project layout
 

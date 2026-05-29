@@ -7,13 +7,18 @@ import { useAuth } from "../auth/AuthContext";
 
 export function TenantSwitcher() {
   const { t } = useTranslation("common");
-  const { tenantId, availableTenants, selectTenant } = useAuth();
+  const { tenantId, availableTenants, tenantOptions, selectTenant } = useAuth();
   const [open, setOpen] = useState(false);
+
+  function tenantLabel(id: string): string {
+    const option = tenantOptions.find((item) => item.id === id);
+    return option?.name ?? id;
+  }
 
   if (availableTenants.length <= 1) {
     return tenantId ? (
       <Text className="text-muted-foreground truncate px-2 text-xs">
-        {t("tenant.currentTenant", { tenant: tenantId })}
+        {t("tenant.currentTenant", { tenant: tenantLabel(tenantId) })}
       </Text>
     ) : null;
   }
@@ -30,7 +35,8 @@ export function TenantSwitcher() {
           variant="ghost"
           className="w-full justify-start truncate px-2 text-xs"
         >
-          {t("tenant.switchTenant")}: {tenantId ?? t("tenant.none")}
+          {t("tenant.switchTenant")}:{" "}
+          {tenantId ? tenantLabel(tenantId) : t("tenant.none")}
         </Button>
       }
     >
@@ -46,7 +52,7 @@ export function TenantSwitcher() {
               setOpen(false);
             }}
           >
-            {id}
+            {tenantLabel(id)}
           </Button>
         ))}
       </div>

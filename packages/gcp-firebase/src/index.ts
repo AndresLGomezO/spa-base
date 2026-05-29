@@ -12,8 +12,9 @@ export {
 export { verifyFirebaseAppCheckToken } from "./app-check.js";
 export { createFirestoreAdminEntityRepository } from "./firestore-admin-entity-repository.js";
 export { createFirestoreAdminPlatformRoleRepository } from "./firestore-admin-platform-role-repository.js";
+export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-repository.js";
 export {
   createFirestoreAdminRegisteredUserRepository,
   mapFirebaseUserRecordToAuthUserProjection,
 } from "./firestore-admin-user-repository.js";
-export { TENANTS_COLLECTION } from "./tenant-entity-path.js";
+export { TENANTS_COLLECTION } from "@repo/shared-types";

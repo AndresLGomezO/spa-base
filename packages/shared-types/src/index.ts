@@ -45,3 +45,14 @@ export {
   type PersistedPlatformRole,
   type PlatformRole,
 } from "./role/platform-role.js";
+export {
+  TENANT_SCHEMA_VERSION,
+  TENANTS_COLLECTION,
+  persistedTenantSchemaV1,
+  tenantSchemaV1,
+  tenantStatusSchema,
+  type PersistedTenant,
+  type Tenant,
+  type TenantOption,
+  type TenantStatus,
+} from "./tenant/tenant.js";

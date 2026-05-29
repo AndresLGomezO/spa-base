@@ -86,6 +86,7 @@ export const authValidateRoute: FastifyPluginAsync<{
           isSuperAdmin: session.isSuperAdmin,
           tenantId: session.tenantId,
           availableTenants: session.availableTenants,
+          tenantOptions: session.tenantOptions,
         },
         appCheck: {
           appId: decodedAppCheck.appId,

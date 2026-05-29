@@ -97,6 +97,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           isSuperAdmin: syncResult.user?.isSuperAdmin ?? false,
           tenantId: syncResult.user?.tenantId ?? null,
           availableTenants: syncResult.user?.availableTenants ?? [],
+          tenantOptions: syncResult.user?.tenantOptions ?? [],
         });
       })();
     });
@@ -156,6 +157,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         type: "TENANT_SELECTED",
         tenantId: syncResult.user.tenantId ?? tenantId,
         availableTenants: syncResult.user.availableTenants,
+        tenantOptions: syncResult.user.tenantOptions,
         permissions: syncResult.user.permissions,
         isSuperAdmin: syncResult.user.isSuperAdmin,
       });
@@ -176,6 +178,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       isSuperAdmin: state.isSuperAdmin,
       tenantId: state.tenantId,
       availableTenants: state.availableTenants,
+      tenantOptions: state.tenantOptions,
       loginWithGoogle,
       logout,
       selectTenant,
@@ -185,6 +188,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       selectTenant,
       state.availableTenants,
+      state.tenantOptions,
       state.error,
       state.isSuperAdmin,
       state.permissions,

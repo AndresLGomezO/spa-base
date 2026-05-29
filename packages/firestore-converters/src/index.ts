@@ -39,6 +39,15 @@ export {
 } from "./role/schema.latest.js";
 export { type PlatformRoleRepository } from "./role/repository-contract.js";
 export {
+  tenantConverter,
+  tenantCurrentVersion,
+} from "./tenant/schema.latest.js";
+export {
+  type CreateTenantInput,
+  type TenantRepository,
+  type UpdateTenantInput,
+} from "./tenant/repository-contract.js";
+export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,
 } from "./user/user-mapper.js";

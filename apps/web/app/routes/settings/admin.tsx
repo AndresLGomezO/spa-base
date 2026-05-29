@@ -4,6 +4,7 @@ import { Link } from "react-router";
 
 import { useAuth } from "../../auth/AuthContext";
 import { UserRoleManager } from "../../components/admin/UserRoleManager";
+import { TenantManager } from "../../components/admin/TenantManager";
 
 export default function SettingsAdminRoute() {
   const { t } = useTranslation("common");
@@ -33,7 +34,15 @@ export default function SettingsAdminRoute() {
         <Heading level={1}>{t("admin.title")}</Heading>
         <Text>{t("admin.description")}</Text>
       </div>
-      <UserRoleManager />
+      <section className="flex flex-col gap-3">
+        <Heading level={2}>{t("admin.tenants.title")}</Heading>
+        <Text>{t("admin.tenants.description")}</Text>
+        <TenantManager />
+      </section>
+      <section className="flex flex-col gap-3">
+        <Heading level={2}>{t("admin.users.title")}</Heading>
+        <UserRoleManager />
+      </section>
       <Text>
         <Link to="/" className="text-primary underline">
           {t("nav.home")}

@@ -11,7 +11,6 @@ const ApiEnvSchema = z.object({
     .default("http://localhost:5173,http://127.0.0.1:5173"),
   VITE_ENV: AppEnvSchema.optional(),
   PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS: z.string().trim().default(""),
-  PLATFORM_KNOWN_TENANTS: z.string().trim().default(""),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

@@ -24,6 +24,7 @@ import {
 } from "@repo/shared-types";
 
 import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
+import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
@@ -51,6 +52,7 @@ interface BuildServerOptions {
   ) => Promise<UserAccessProfile | null>;
   readonly getRoleCatalog?: () => Promise<RoleCatalog>;
   readonly skipPlatformRoleSeed?: boolean;
+  readonly skipPlatformTenantSeed?: boolean;
 }
 
 export async function buildServer(options: BuildServerOptions = {}) {
@@ -76,6 +78,10 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   if (!options.skipPlatformRoleSeed) {
     await seedPlatformRoles(firebaseAdminConfig);
+  }
+
+  if (!options.skipPlatformTenantSeed) {
+    await seedPlatformTenants(firebaseAdminConfig);
   }
 
   const registeredUserRepository =

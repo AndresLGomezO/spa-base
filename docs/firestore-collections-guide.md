@@ -129,6 +129,24 @@ tenants/{tenantId}/{collection}/{documentId}
 
 **Auth-global entities** (e.g. `RegisteredUser`) remain at flat paths like `users/{uid}`.
 
+### Tenant registry (`tenants/{tenantId}`)
+
+Platform tenants are first-class Firestore documents (not env vars):
+
+| Field       | Type                              | Notes                          |
+| ----------- | --------------------------------- | ------------------------------ |
+| `id`        | string                            | Same as document ID            |
+| `name`      | string                            | Display name in admin UI       |
+| `status`    | `"active"` \| `"suspended"`       | Suspended tenants are blocked  |
+| `createdBy` | string \| null                    | UID of creating superadmin     |
+| `createdAt` | ISO string                        |                                |
+| `updatedAt` | ISO string                        |                                |
+
+- Collection constant: `TENANTS_COLLECTION` in `@repo/shared-types`.
+- Repository: `createFirestoreAdminTenantRepository` in `@repo/gcp-firebase`.
+- Dev seed on API startup: `tenant_dev_1`, `tenant_dev_2` (idempotent).
+- Business entity data remains under `tenants/{tenantId}/{collection}/{documentId}`.
+
 ---
 
 ## 3. User reference — file map

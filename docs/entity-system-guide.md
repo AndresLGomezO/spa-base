@@ -128,9 +128,9 @@ Platform role management in Firestore and a superadmin-only admin UI:
 - Firestore `roles/{roleId}` collection with idempotent seed on API startup (`admin`, `editor`, `viewer`)
 - Dynamic RBAC resolution: Firestore role catalog + built-in fallback in `@repo/rbac`
 - Superadmin bootstrap via `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` on first user creation only
-- Superadmin tenant visibility: all tenant IDs from Firestore `tenants` collection (+ optional `PLATFORM_KNOWN_TENANTS`)
-- Admin API: `GET /admin/roles|tenants|users`, `PATCH /admin/users/:uid` (superadmin only)
-- Web UI: `/settings/admin` for tenant role assignment
+- Superadmin tenant visibility: all **active** tenants from Firestore `tenants/{tenantId}` registry (dev tenants seeded on API startup)
+- Admin API: `GET|POST|PATCH /admin/tenants`, `GET /admin/roles|users`, `PATCH /admin/users/:uid` (superadmin only)
+- Web UI: `/settings/admin` for tenant CRUD and tenant role assignment
 
 See [`apps/api/README.md`](../apps/api/README.md), [`apps/web/README.md`](../apps/web/README.md), and [`packages/rbac/README.md`](../packages/rbac/README.md).
 
@@ -151,6 +151,7 @@ Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebas
 | **5 — Frontend UI**   | Done    | `metadata.fields`, shared Zod schemas, `/app/{entity}` CRUD UI           |
 | **6 — Routing**       | Done    | Guards, tenant selection, permission-filtered nav from entity catalog    |
 | **7 — Admin roles**   | Done    | Firestore `/roles`, admin API, `/settings/admin`, superadmin bootstrap |
+| **Tenants management**| Done    | Firestore `tenants/{id}` metadata, admin tenant CRUD, auth `tenantOptions` |
 
 ### Phase 1 closure (E2E validation)
 

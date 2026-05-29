@@ -3,12 +3,15 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildRoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
 const authState = {
   uid: "superadmin_user",
   tenantId: "tenant_a",
 };
+
+const tenantRepository = createInMemoryTenantRepository();
 
 const usersState = {
   items: [
@@ -120,15 +123,7 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
   ),
-  getFirestoreAdmin: vi.fn(() => ({
-    collection: vi.fn(() => ({
-      select: vi.fn(() => ({
-        get: vi.fn(async () => ({
-          docs: [{ id: "tenant_a" }, { id: "tenant_b" }],
-        })),
-      })),
-    })),
-  })),
+  createFirestoreAdminTenantRepository: vi.fn(() => tenantRepository),
 }));
 
 import { buildServer } from "../server.js";
@@ -152,6 +147,7 @@ async function buildTestServer(accessProfile?: UserAccessProfile) {
       },
     getRoleCatalog: async () => buildRoleCatalog([]),
     skipPlatformRoleSeed: true,
+    skipPlatformTenantSeed: true,
   });
 }
 
@@ -217,5 +213,102 @@ describe("Admin routes", () => {
         tenants: { tenant_a: ["editor"] },
       },
     });
+  });
+
+  it("lists tenant records for superadmin", async () => {
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "GET",
+      url: "/admin/tenants",
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      ok: true,
+      tenants: expect.arrayContaining([
+        expect.objectContaining({ id: "tenant_a", name: "Tenant A" }),
+      ]),
+    });
+  });
+
+  it("creates a tenant", async () => {
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/admin/tenants",
+      headers: authHeaders,
+      payload: { name: "Acme Corp", id: "tenant_acme" },
+    });
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toMatchObject({
+      ok: true,
+      tenant: {
+        id: "tenant_acme",
+        name: "Acme Corp",
+        status: "active",
+      },
+    });
+  });
+
+  it("suspends a tenant", async () => {
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/admin/tenants/tenant_a",
+      headers: authHeaders,
+      payload: { status: "suspended" },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json()).toMatchObject({
+      ok: true,
+      tenant: {
+        id: "tenant_a",
+        status: "suspended",
+      },
+    });
+  });
+
+  it("returns 400 when assigning roles for unknown tenant", async () => {
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/admin/users/user_target",
+      headers: authHeaders,
+      payload: {
+        tenants: {
+          tenant_unknown: ["viewer"],
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().message).toContain("Unknown tenant");
+  });
+
+  it("returns 400 when assigning roles for suspended tenant", async () => {
+    const server = await buildTestServer();
+    await server.inject({
+      method: "PATCH",
+      url: "/admin/tenants/tenant_a",
+      headers: authHeaders,
+      payload: { status: "suspended" },
+    });
+
+    const response = await server.inject({
+      method: "PATCH",
+      url: "/admin/users/user_target",
+      headers: authHeaders,
+      payload: {
+        tenants: {
+          tenant_a: ["viewer"],
+        },
+      },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().message).toContain("not active");
   });
 });

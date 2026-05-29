@@ -1,6 +1,8 @@
 import type { Firestore } from "firebase-admin/firestore";
 
-export const TENANTS_COLLECTION = "tenants";
+import { TENANTS_COLLECTION } from "@repo/shared-types";
+
+export { TENANTS_COLLECTION };
 
 export function tenantEntityCollectionRef(
   firestore: Firestore,

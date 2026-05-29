@@ -51,7 +51,7 @@
   },
   "admin": {
     "title": "Administración de plataforma",
-    "description": "Administra roles de usuario por tenant.",
+    "description": "Administra tenants y roles de usuario.",
     "loading": "Cargando datos de administración...",
     "email": "Correo",
     "platformRole": "Rol de plataforma",
@@ -65,7 +65,30 @@
     "loadFailed": "No se pudieron cargar los datos de administración.",
     "userNotFound": "No se encontró el usuario seleccionado.",
     "forbidden": "Acceso denegado",
-    "forbiddenDetail": "Solo los superadministradores de plataforma pueden acceder a esta página."
+    "forbiddenDetail": "Solo los superadministradores de plataforma pueden acceder a esta página.",
+    "users": {
+      "title": "Roles de usuario"
+    },
+    "tenants": {
+      "title": "Tenants",
+      "description": "Crea tenants y suspende o activa el acceso.",
+      "loading": "Cargando tenants...",
+      "name": "Nombre",
+      "id": "ID",
+      "idOptional": "ID de tenant (opcional)",
+      "idPlaceholder": "Se genera automáticamente si está vacío",
+      "status": "Estado",
+      "active": "Activo",
+      "actions": "Acciones",
+      "suspend": "Suspender",
+      "activate": "Activar",
+      "loadFailed": "No se pudieron cargar los tenants.",
+      "createFailed": "No se pudo crear el tenant.",
+      "createSuccess": "Tenant creado.",
+      "updateFailed": "No se pudo actualizar el tenant.",
+      "suspendSuccess": "Tenant suspendido.",
+      "activateSuccess": "Tenant activado."
+    }
   },
   "entity": {
     "create": "Crear",
@@ -95,7 +118,9 @@
     "currentTenant": "Tenant: {{tenant}}",
     "none": "Ninguno",
     "noTenants": "Sin acceso a tenants",
-    "noTenantsDetail": "Tu cuenta no está asignada a ningún tenant. Contacta a un administrador."
+    "noTenantsDetail": "Tu cuenta no está asignada a ningún tenant. Contacta a un administrador.",
+    "create": "Crear tenant",
+    "suspended": "Suspendido"
   },
   "roles": {
     "member": "Miembro",
