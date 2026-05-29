@@ -80,11 +80,11 @@ Developers must **not** define these in `fields`. TypeScript rejects configs tha
 
 ### Phase-1 field types
 
-| `type`    | TS value                | Zod                                           |
-| --------- | ----------------------- | --------------------------------------------- |
-| `string`  | `string`                | `z.string().trim()` (+ `.min(1)` if required) |
-| `number`  | `number`                | `z.number()`                                  |
-| `boolean` | `boolean`               | `z.boolean()`                                 |
+| `type`     | TS value                | Zod                                           |
+| ---------- | ----------------------- | --------------------------------------------- |
+| `string`   | `string`                | `z.string().trim()` (+ `.min(1)` if required) |
+| `number`   | `number`                | `z.number()`                                  |
+| `boolean`  | `boolean`               | `z.boolean()`                                 |
 | `date`     | ISO datetime **string** | `isoDatetimeStringSchema`                     |
 | `relation` | `string` (FK id)        | `z.string().trim().min(1)` for FK relations   |
 

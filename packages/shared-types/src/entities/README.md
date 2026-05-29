@@ -87,9 +87,9 @@ See `customer.ts` and `order.ts` for the live pattern. Converters live in `@repo
 
 ## Current entities
 
-| Entity   | Collection  | File          |
-| -------- | ----------- | ------------- |
-| Customer | `customers` | `customer.ts` |
+| Entity   | Collection  | File                                            |
+| -------- | ----------- | ----------------------------------------------- |
+| Customer | `customers` | `customer.ts`                                   |
 | Order    | `orders`    | `order.ts` — includes `customerId` → `customer` |
 
 ---

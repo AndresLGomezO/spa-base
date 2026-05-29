@@ -30,6 +30,8 @@ export default [
       "src/firebase-admin.ts",
       "src/firestore-admin-user-repository.ts",
       "src/firestore-admin-entity-repository.ts",
+      "src/firestore-admin-join-collection-repository.ts",
+      "src/firestore-entity-query-executor.ts",
       "src/tenant-entity-path.ts",
     ],
     rules: {

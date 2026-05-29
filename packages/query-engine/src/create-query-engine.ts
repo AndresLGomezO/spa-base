@@ -6,7 +6,6 @@ import { QueryError, QueryErrorCode } from "./errors.js";
 import { applySelectProjection } from "./format-results.js";
 import { normalizeEntityQuery } from "./parse-query-config.js";
 import type {
-  ListQueryInput,
   QueryConfig,
   QueryContext,
   QueryResult,

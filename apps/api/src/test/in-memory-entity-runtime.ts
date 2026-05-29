@@ -4,7 +4,7 @@ import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 import { createInMemoryEntityQueryExecutor } from "../repositories/in-memory-entity-query-executor.js";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 
-export function createInMemoryEntityRuntime<
+function createInMemoryEntityRuntime<
   TRecord extends { readonly id: string; readonly tenantId: string },
 >(): {
   readonly store: Map<string, TRecord>;

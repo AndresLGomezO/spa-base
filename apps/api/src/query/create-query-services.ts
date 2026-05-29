@@ -2,7 +2,7 @@ import { getAllEntities } from "@repo/entities";
 import type { EntityQueryExecutor } from "@repo/firestore-converters";
 import { createQueryEngine, type QueryEngine } from "@repo/query-engine";
 
-export interface EntityQueryRuntimeContext {
+interface EntityQueryRuntimeContext {
   readonly queryEngine: QueryEngine;
   readonly executorsByEntityName: Readonly<
     Record<string, EntityQueryExecutor | undefined>
