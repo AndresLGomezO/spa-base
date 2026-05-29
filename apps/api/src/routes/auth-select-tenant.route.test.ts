@@ -45,21 +45,31 @@ vi.mock("@repo/gcp-firebase", () => ({
   setFirebaseUserCustomClaims,
   createFirestoreAdminRegisteredUserRepository: vi.fn(() => ({
     upsertFromAuthUser: vi.fn(async (authUser) => ({
-      uid: authUser.uid,
-      email: authUser.email,
-      emailVerified: authUser.emailVerified,
-      displayName: authUser.displayName,
-      photoURL: authUser.photoURL,
-      phoneNumber: authUser.phoneNumber,
-      disabled: authUser.disabled,
-      providers: authUser.providers,
-      authCreatedAt: authUser.authCreatedAt,
-      authLastSignInAt: authUser.authLastSignInAt,
-      platformRole: null,
-      tenants: { tenant_a: ["viewer"], tenant_b: ["admin"] },
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
+      created: false,
+      user: {
+        uid: authUser.uid,
+        email: authUser.email,
+        emailVerified: authUser.emailVerified,
+        displayName: authUser.displayName,
+        photoURL: authUser.photoURL,
+        phoneNumber: authUser.phoneNumber,
+        disabled: authUser.disabled,
+        providers: authUser.providers,
+        authCreatedAt: authUser.authCreatedAt,
+        authLastSignInAt: authUser.authLastSignInAt,
+        platformRole: null,
+        tenants: { tenant_a: ["viewer"], tenant_b: ["admin"] },
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      },
     })),
+    list: vi.fn(async () => ({ items: [], nextCursor: null })),
+    updateAccess: vi.fn(async () => null),
+  })),
+  createFirestoreAdminPlatformRoleRepository: vi.fn(() => ({
+    listGlobal: vi.fn(async () => []),
+    getByName: vi.fn(async () => null),
+    ensureGlobalRole: vi.fn(async () => undefined),
   })),
   createFirestoreAdminEntityRepository: vi.fn(() =>
     createInMemoryEntityRepository(),
@@ -79,6 +89,7 @@ async function buildTestServer() {
   return buildServer({
     logger: false,
     repositories: createInMemoryRepositories(),
+    skipPlatformRoleSeed: true,
   });
 }
 

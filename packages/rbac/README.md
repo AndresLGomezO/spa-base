@@ -15,11 +15,15 @@ Permissions are generated automatically per entity in `@repo/entities` / `@repo/
 
 ## Built-in roles
 
+Built-in roles are seeded into Firestore `roles/{roleId}` on API startup (idempotent). `resolvePermissions` loads the Firestore catalog first and falls back to in-code definitions:
+
 | Role     | Grants                           |
 | -------- | -------------------------------- |
 | `admin`  | `*` (all permissions)            |
 | `editor` | `*.read`, `*.create`, `*.update` |
 | `viewer` | `*.read`                         |
+
+Use `buildRoleCatalog(firestoreRoles)` to merge Firestore documents with built-in fallback. Pass the catalog via `resolvePermissions(input, { roleCatalog })`.
 
 ## Wildcards
 
@@ -48,6 +52,10 @@ Firestore document `users/{uid}`:
 - `platformRole: "superadmin"` or `"platform.superadmin"` bypasses all checks
 - Permissions are evaluated **within tenant context** (from JWT `tenantId` claim)
 - **Deny by default** — users without roles for the active tenant get no permissions
+
+### Superadmin bootstrap (WS7)
+
+On first user creation, emails in `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (comma-separated, API env) receive `platformRole: "platform.superadmin"`. Existing users are never promoted or demoted on later logins. Do not hardcode production emails in source — use deployment secrets only.
 
 ## API
 

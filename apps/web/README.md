@@ -71,3 +71,16 @@ await getAuth().setCustomUserClaims(uid, { tenantId: "tenant_dev_1" });
 | `/app/order`        | Order list (same pattern)    |
 
 See [`app/components/entity/README.md`](app/components/entity/README.md) for adding new entities to the UI.
+
+## Admin (WS7)
+
+Superadmins can assign tenant roles at `/settings/admin`. The link appears in Settings navigation only when `isSuperAdmin` is true (from `GET /auth/validate`).
+
+### Local superadmin setup
+
+1. Set `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=your-email@example.com` in API env (`apps/api/.env.dev`).
+2. Sign in with Google — first registration sets `platformRole: platform.superadmin`.
+3. Open `/settings/admin` to assign tenant roles to other users.
+4. Superadmin tenant switcher lists all tenants from Firestore `tenants` (+ optional `PLATFORM_KNOWN_TENANTS`).
+
+See [`app/components/admin/README.md`](app/components/admin/README.md) and [`apps/api/README.md`](../api/README.md).

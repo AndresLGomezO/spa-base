@@ -121,6 +121,19 @@ Routing and navigation in [`apps/web/app/routing/`](../apps/web/app/routing/READ
 - Tenant selection via `POST /auth/select-tenant` + `/select-tenant` page + sidebar switcher
 - Permission-filtered sidebar (`useAccessibleNavItems`)
 
+### WS7 — Basic Admin (implemented)
+
+Platform role management in Firestore and a superadmin-only admin UI:
+
+- Firestore `roles/{roleId}` collection with idempotent seed on API startup (`admin`, `editor`, `viewer`)
+- Dynamic RBAC resolution: Firestore role catalog + built-in fallback in `@repo/rbac`
+- Superadmin bootstrap via `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` on first user creation only
+- Superadmin tenant visibility: all tenant IDs from Firestore `tenants` collection (+ optional `PLATFORM_KNOWN_TENANTS`)
+- Admin API: `GET /admin/roles|tenants|users`, `PATCH /admin/users/:uid` (superadmin only)
+- Web UI: `/settings/admin` for tenant role assignment
+
+See [`apps/api/README.md`](../apps/api/README.md), [`apps/web/README.md`](../apps/web/README.md), and [`packages/rbac/README.md`](../packages/rbac/README.md).
+
 ### WS3 — Firestore DAL (implemented)
 
 Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebase/src/firestore-admin-entity-repository.ts):
@@ -137,7 +150,7 @@ Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebas
 | **4 — RBAC**          | Done    | `metadata.permissions`; `@repo/rbac`; user `tenants` / `platformRole`    |
 | **5 — Frontend UI**   | Done    | `metadata.fields`, shared Zod schemas, `/app/{entity}` CRUD UI           |
 | **6 — Routing**       | Done    | Guards, tenant selection, permission-filtered nav from entity catalog    |
-| **7 — Admin roles**   | Planned | Permission strings registered from entities                              |
+| **7 — Admin roles**   | Done    | Firestore `/roles`, admin API, `/settings/admin`, superadmin bootstrap |
 
 ### Future `defineApp`
 

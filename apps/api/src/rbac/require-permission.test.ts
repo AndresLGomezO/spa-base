@@ -2,6 +2,8 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { FastifyReply, FastifyRequest } from "fastify";
 
+import { buildRoleCatalog } from "@repo/rbac";
+
 import { createRequirePermission } from "./create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "./load-request-permissions.js";
 
@@ -25,12 +27,15 @@ function createMockReply() {
 }
 
 describe("createRequirePermission", () => {
+  const roleCatalog = buildRoleCatalog([]);
+
   it("returns 403 when permission is missing", async () => {
     const deps: LoadRequestPermissionsDeps = {
       getUserAccessProfile: vi.fn(async () => ({
         platformRole: null,
         tenants: { tenant_a: ["viewer"] },
       })),
+      getRoleCatalog: vi.fn(async () => roleCatalog),
     };
     const requirePermission = createRequirePermission(deps, "customer.create");
     const request = {
@@ -53,6 +58,7 @@ describe("createRequirePermission", () => {
         platformRole: null,
         tenants: { tenant_a: ["admin"] },
       })),
+      getRoleCatalog: vi.fn(async () => roleCatalog),
     };
     const requirePermission = createRequirePermission(deps, "customer.create");
     const request = {

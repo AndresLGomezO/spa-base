@@ -46,7 +46,26 @@
     "open": "Open menu",
     "userMenu": "Account menu",
     "signOut": "Sign out",
-    "fallbackName": "User"
+    "fallbackName": "User",
+    "admin": "Admin"
+  },
+  "admin": {
+    "title": "Platform Admin",
+    "description": "Manage user roles per tenant.",
+    "loading": "Loading admin data...",
+    "email": "Email",
+    "platformRole": "Platform role",
+    "tenantRoles": "Tenant roles",
+    "user": "User",
+    "tenant": "Tenant",
+    "roles": "Roles",
+    "save": "Save roles",
+    "saveSuccess": "Roles updated. The user must refresh their session to apply changes.",
+    "saveFailed": "Unable to save roles.",
+    "loadFailed": "Unable to load admin data.",
+    "userNotFound": "Selected user was not found.",
+    "forbidden": "Access denied",
+    "forbiddenDetail": "Only platform superadmins can access this page."
   },
   "entity": {
     "create": "Create",

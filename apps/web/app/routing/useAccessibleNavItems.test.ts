@@ -37,4 +37,20 @@ describe("useAccessibleNavItems", () => {
 
     expect(entityIds).toEqual(["customer"]);
   });
+
+  it("includes admin settings link for superadmin", () => {
+    mockUseAuth.mockReturnValue({
+      isSuperAdmin: true,
+      permissions: [],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const settings = result.current.find((item) => item.id === "settings");
+    expect(settings && "children" in settings).toBe(true);
+    if (settings && "children" in settings) {
+      expect(settings.children.some((child) => child.id === "admin")).toBe(
+        true,
+      );
+    }
+  });
 });

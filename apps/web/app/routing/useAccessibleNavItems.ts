@@ -4,6 +4,7 @@ import { useAuth } from "../auth/AuthContext";
 import { ENTITY_NAV_ITEMS } from "../entities/entity-catalog";
 import {
   NAV_ITEMS,
+  SETTINGS_ADMIN_NAV_ITEM,
   isNavGroup,
   type NavItemConfig,
 } from "../components/sidebar/nav-config";
@@ -30,7 +31,12 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     }
     items.push(...entityItems);
     if (settings && isNavGroup(settings)) {
-      items.push(settings);
+      items.push({
+        ...settings,
+        children: isSuperAdmin
+          ? [...settings.children, SETTINGS_ADMIN_NAV_ITEM]
+          : settings.children,
+      });
     }
 
     return items;

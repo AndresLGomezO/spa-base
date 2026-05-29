@@ -18,5 +18,6 @@ export default [
     route("settings/profile", "./routes/settings/profile.tsx"),
     route("settings/team", "./routes/settings/team.tsx"),
     route("settings/billing", "./routes/settings/billing.tsx"),
+    route("settings/admin", "./routes/settings/admin.tsx"),
   ]),
 ] satisfies RouteConfig;

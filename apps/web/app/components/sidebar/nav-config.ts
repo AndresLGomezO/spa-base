@@ -1,5 +1,5 @@
 import type { LucideIcon } from "lucide-react";
-import { CreditCard, Home, Settings, User, Users } from "lucide-react";
+import { CreditCard, Home, Settings, Shield, User, Users } from "lucide-react";
 
 import { ENTITY_NAV_ITEMS } from "../../entities/entity-catalog";
 
@@ -10,6 +10,7 @@ export type NavLabelKey =
   | "profile"
   | "team"
   | "billing"
+  | "admin"
   | "customer"
   | "order";
 
@@ -30,6 +31,14 @@ export interface NavGroupConfig {
 }
 
 export type NavItemConfig = NavLinkConfig | NavGroupConfig;
+
+export const SETTINGS_ADMIN_NAV_ITEM: NavLinkConfig = {
+  id: "admin",
+  labelKey: "admin",
+  to: "/settings/admin",
+  matchPath: "/settings/admin",
+  icon: Shield,
+};
 
 export function isNavGroup(item: NavItemConfig): item is NavGroupConfig {
   return "children" in item;

@@ -9,13 +9,10 @@ import {
   verifyFirebaseIdToken,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
-import {
-  isPlatformSuperAdmin,
-  resolvePermissions,
-  toUserAccessProfile,
-} from "@repo/rbac";
 
 import { extractBearerToken } from "../auth/extract-bearer-token.js";
+import { buildAuthSessionContext } from "../auth/build-auth-session-context.js";
+import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 
 const headerSchema = z.object({
   authorization: z.string().min(1),
@@ -24,6 +21,7 @@ const headerSchema = z.object({
 
 export const authValidateRoute: FastifyPluginAsync<{
   firebaseAdminConfig: FirebaseAdminConfig;
+  permissionDeps: LoadRequestPermissionsDeps;
 }> = async (fastify, opts) => {
   const registeredUserRepository = createFirestoreAdminRegisteredUserRepository(
     opts.firebaseAdminConfig,
@@ -50,44 +48,44 @@ export const authValidateRoute: FastifyPluginAsync<{
     }
 
     try {
-      const [decodedIdToken, decodedAppCheck] = await Promise.all([
+      const [decodedIdToken, decodedAppCheck, roleCatalog] = await Promise.all([
         verifyFirebaseIdToken(idToken, opts.firebaseAdminConfig),
         verifyFirebaseAppCheckToken(
           parsedHeaders.data["x-firebase-appcheck"],
           opts.firebaseAdminConfig,
         ),
+        opts.permissionDeps.getRoleCatalog(),
       ]);
       const authUserRecord = await getFirebaseUserRecord(
         decodedIdToken.uid,
         opts.firebaseAdminConfig,
       );
-      const registeredUser = await registeredUserRepository.upsertFromAuthUser(
+      const upsertResult = await registeredUserRepository.upsertFromAuthUser(
         mapFirebaseUserRecordToAuthUserProjection(authUserRecord),
       );
 
       const tenantClaim = decodedIdToken.tenantId;
-      const tenantId =
+      const jwtTenantId =
         typeof tenantClaim === "string" ? tenantClaim.trim() : "";
-      const availableTenants = Object.keys(registeredUser.tenants ?? {});
-      const accessProfile = toUserAccessProfile(registeredUser);
-      const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
-      const permissions =
-        tenantId.length > 0
-          ? resolvePermissions({
-              ...accessProfile,
-              tenantId,
-            })
-          : [];
+
+      const session = await buildAuthSessionContext({
+        registeredUser: upsertResult.user,
+        created: upsertResult.created,
+        jwtTenantId,
+        roleCatalog,
+        firebaseAdminConfig: opts.firebaseAdminConfig,
+        registeredUserRepository,
+      });
 
       return reply.send({
         ok: true,
         user: {
-          uid: registeredUser.uid,
-          email: registeredUser.email,
-          permissions,
-          isSuperAdmin,
-          tenantId: tenantId.length > 0 ? tenantId : null,
-          availableTenants,
+          uid: session.user.uid,
+          email: session.user.email,
+          permissions: session.permissions,
+          isSuperAdmin: session.isSuperAdmin,
+          tenantId: session.tenantId,
+          availableTenants: session.availableTenants,
         },
         appCheck: {
           appId: decodedAppCheck.appId,
