@@ -65,7 +65,11 @@ export function createRelationValidator(deps: RelationServicesDeps) {
           );
         }
 
-        const referenced = await deps.findById(relation.target, value, tenantId);
+        const referenced = await deps.findById(
+          relation.target,
+          value,
+          tenantId,
+        );
         if (!referenced) {
           throw new RelationError(
             RelationErrorCode.RELATION_NOT_FOUND,
@@ -123,11 +127,7 @@ export function createRelationDeleteHandler(deps: RelationServicesDeps) {
             }
 
             if (onDelete === "cascade") {
-              await deps.delete(
-                referencingEntity.name,
-                reference.id,
-                tenantId,
-              );
+              await deps.delete(referencingEntity.name, reference.id, tenantId);
             }
           }
         }

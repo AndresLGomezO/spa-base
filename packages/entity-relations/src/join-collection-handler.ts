@@ -89,14 +89,10 @@ export function createJoinCollectionHandler(deps: RelationServicesDeps) {
     ): Promise<readonly JoinRecord[]> {
       const resolvedJoinCollection =
         joinCollection ??
-        resolveJoinCollectionName(
-          sourceEntity.name,
-          targetEntity.name,
-          {
-            target: targetEntity.name,
-            type: "many-to-many",
-          },
-        );
+        resolveJoinCollectionName(sourceEntity.name, targetEntity.name, {
+          target: targetEntity.name,
+          type: "many-to-many",
+        });
 
       return joinRepository.findBySource(tenantId, {
         joinCollection: resolvedJoinCollection,
@@ -115,14 +111,10 @@ export function createJoinCollectionHandler(deps: RelationServicesDeps) {
     ): Promise<readonly JoinRecord[]> {
       const resolvedJoinCollection =
         joinCollection ??
-        resolveJoinCollectionName(
-          sourceEntity.name,
-          targetEntity.name,
-          {
-            target: targetEntity.name,
-            type: "many-to-many",
-          },
-        );
+        resolveJoinCollectionName(sourceEntity.name, targetEntity.name, {
+          target: targetEntity.name,
+          type: "many-to-many",
+        });
 
       return joinRepository.findByTarget(tenantId, {
         joinCollection: resolvedJoinCollection,

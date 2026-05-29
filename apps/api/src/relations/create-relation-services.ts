@@ -8,10 +8,18 @@ import {
   type EntityRelationHooks,
   type RelationServicesDeps,
 } from "@repo/entity-relations";
-import type { CustomerRecord, CustomerUpdate, OrderRecord, OrderUpdate } from "@repo/shared-types";
+import type {
+  CustomerRecord,
+  CustomerUpdate,
+  OrderRecord,
+  OrderUpdate,
+} from "@repo/shared-types";
 
 type EntityRepositoryMap = {
-  readonly customer: TenantScopedEntityRepository<CustomerRecord, CustomerUpdate>;
+  readonly customer: TenantScopedEntityRepository<
+    CustomerRecord,
+    CustomerUpdate
+  >;
   readonly order: TenantScopedEntityRepository<OrderRecord, OrderUpdate>;
 };
 
@@ -26,7 +34,10 @@ export function createRelationRuntimeContext(
 ): RelationRuntimeContext {
   const repositoryByEntityName: Record<
     string,
-    TenantScopedEntityRepository<{ readonly id: string; readonly tenantId: string }, unknown>
+    TenantScopedEntityRepository<
+      { readonly id: string; readonly tenantId: string },
+      unknown
+    >
   > = {
     customer: repositories.customer,
     order: repositories.order,
@@ -72,10 +83,7 @@ export function createRelationRuntimeContext(
 
   const hooksByEntityName = new Map<string, EntityRelationHooks>();
   for (const entity of getAllEntities()) {
-    hooksByEntityName.set(
-      entity.name,
-      createEntityRelationHooks(entity, deps),
-    );
+    hooksByEntityName.set(entity.name, createEntityRelationHooks(entity, deps));
   }
 
   return {

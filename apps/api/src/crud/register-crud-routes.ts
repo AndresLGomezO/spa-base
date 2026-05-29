@@ -81,21 +81,12 @@ function mapRelationErrorToResponse(
   reply: FastifyReply,
   error: RelationError,
 ): void {
-  const statusCode =
-    error.code === "RELATION_DELETE_RESTRICTED" ? 409 : 400;
+  const statusCode = error.code === "RELATION_DELETE_RESTRICTED" ? 409 : 400;
 
-  replyWithError(
-    reply,
-    statusCode,
-    error.code as ApiErrorCode,
-    error.message,
-  );
+  replyWithError(reply, statusCode, error.code as ApiErrorCode, error.message);
 }
 
-function handleRelationError(
-  reply: FastifyReply,
-  error: unknown,
-): boolean {
+function handleRelationError(reply: FastifyReply, error: unknown): boolean {
   if (error instanceof RelationError) {
     mapRelationErrorToResponse(reply, error);
     return true;
@@ -313,10 +304,14 @@ export async function registerCrudRoutes<
           );
         }
 
-        const updated = await repository.update(parsedParams.data.id, tenantId, {
-          ...(parsedBody.data as Record<string, unknown>),
-          updatedAt: now,
-        } as TUpdate);
+        const updated = await repository.update(
+          parsedParams.data.id,
+          tenantId,
+          {
+            ...(parsedBody.data as Record<string, unknown>),
+            updatedAt: now,
+          } as TUpdate,
+        );
 
         if (!updated) {
           return replyWithError(

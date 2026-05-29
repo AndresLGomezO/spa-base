@@ -1,4 +1,8 @@
-import { defineEntity, type DefinedEntity, type FieldDefinitions } from "@repo/entities";
+import {
+  defineEntity,
+  type DefinedEntity,
+  type FieldDefinitions,
+} from "@repo/entities";
 import type {
   FindByFieldParams,
   JoinCollectionRepository,
@@ -81,7 +85,9 @@ function createMemoryEntityRepository(): TenantScopedEntityRepository<TestRecord
       );
       return { items, nextCursor: null };
     },
-    async findByField(params: FindByFieldParams): Promise<PaginatedResult<TestRecord>> {
+    async findByField(
+      params: FindByFieldParams,
+    ): Promise<PaginatedResult<TestRecord>> {
       const items = [...store.values()].filter(
         (record) =>
           record.tenantId === params.tenantId &&
@@ -183,10 +189,9 @@ function createTestDeps() {
     getAllEntityDefinitions: () =>
       [Customer, Order, User, Project] as AnyDefinedEntity[],
     findById: async (entityName, id, tenantId) => {
-      const record = await repositories[entityName as keyof typeof repositories]?.findById(
-        id,
-        tenantId,
-      );
+      const record = await repositories[
+        entityName as keyof typeof repositories
+      ]?.findById(id, tenantId);
       return record ? { id: record.id, tenantId: record.tenantId } : null;
     },
     findByField: async (entityName, field, value, tenantId) => {

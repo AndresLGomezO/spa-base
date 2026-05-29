@@ -9,9 +9,7 @@ export interface EntityRecordRef {
 }
 
 export interface RelationServicesDeps {
-  readonly getEntityDefinition: (
-    name: string,
-  ) => AnyDefinedEntity | undefined;
+  readonly getEntityDefinition: (name: string) => AnyDefinedEntity | undefined;
   readonly getAllEntityDefinitions: () => readonly AnyDefinedEntity[];
   readonly findById: (
     entityName: string,

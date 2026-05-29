@@ -276,7 +276,9 @@ describe("CRUD API", () => {
   });
 
   describe("Order", () => {
-    async function createCustomer(server: Awaited<ReturnType<typeof buildTestServer>>) {
+    async function createCustomer(
+      server: Awaited<ReturnType<typeof buildTestServer>>,
+    ) {
       const response = await server.inject({
         method: "POST",
         url: "/api/customer",
