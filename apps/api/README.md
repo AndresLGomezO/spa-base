@@ -1,87 +1,125 @@
 # API (`apps/api`)
 
-Fastify HTTP API for the platform. Handles auth validation and auto-generated CRUD routes for tenant-scoped business entities.
+Fastify HTTP API for the multi-tenant platform. Handles auth validation, auto-generated CRUD, query engine, entity definitions, hooks, roles, modules, and platform admin.
 
-## Routes
+**Handoff:** [docs/phase-2-platform-handoff.md](../../docs/phase-2-platform-handoff.md)
 
-### Auth (legacy envelope)
+---
 
-| Method | Path                  | Auth               |
-| ------ | --------------------- | ------------------ |
-| GET    | `/auth/validate`      | Bearer + App Check |
-| POST   | `/auth/select-tenant` | Bearer + App Check |
+## Routes overview
 
-Response shape: `{ ok, user, appCheck }` or `{ ok: false, code, message }`.
+### Auth
 
-The `user` object includes resolved RBAC fields for the active tenant (when `tenantId` is present on the ID token):
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/auth/validate` | Bearer + App Check | Session + resolved permissions |
+| POST | `/auth/select-tenant` | Bearer + App Check | Set `tenantId` custom claim |
+
+Auth response includes RBAC fields when tenant is active:
 
 ```json
 {
   "uid": "...",
   "email": "...",
-  "permissions": ["customer.read", "order.read"],
+  "permissions": ["organization.read", "project.read"],
   "isSuperAdmin": false,
   "tenantId": "tenant_dev_1",
-  "availableTenants": ["tenant_dev_1", "tenant_dev_2"]
+  "availableTenants": ["tenant_dev_1"]
 }
 ```
 
-When `tenantId` is missing from the JWT, `permissions` is empty and `tenantId` is `null`. The web app redirects to tenant selection.
+After `POST /auth/select-tenant`, client must call `getIdToken(true)` to refresh the JWT.
 
-### `POST /auth/select-tenant`
+### Entity catalog
 
-Request body:
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/entities` | Any `*.read` |
 
-```json
-{ "tenantId": "tenant_dev_1" }
+Returns serialized entity definitions (static modules + tenant dynamic entities) with UI metadata and field access maps.
+
+### CRUD (per entity)
+
+Static entities: `organization`, `project`, `inventoryItem`, plus tenant dynamic entities registered at runtime.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/{entity}` | List — `?limit=&cursor=` or `?query=` JSON |
+| GET | `/api/{entity}/:id` | Get one |
+| POST | `/api/{entity}` | Create |
+| PUT | `/api/{entity}/:id` | Update |
+| DELETE | `/api/{entity}/:id` | Delete |
+
+Query JSON example:
+
+```http
+GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_1"}],"pagination":{"limit":20}}
 ```
 
-Verifies the user has the tenant in Firestore `users/{uid}.tenants`, sets the Firebase custom claim, and returns:
-
-```json
-{
-  "ok": true,
-  "tenantId": "tenant_dev_1",
-  "availableTenants": ["tenant_dev_1", "tenant_dev_2"],
-  "permissions": ["..."],
-  "isSuperAdmin": false
-}
-```
-
-The client must call `getIdToken(true)` after a successful response to pick up the new claim.
-
-### CRUD (standard envelope)
-
-For each entity defined in `@repo/shared-types` (currently `customer`, `order`):
-
-| Method | Path                | Description                     |
-| ------ | ------------------- | ------------------------------- |
-| GET    | `/api/{entity}`     | List (query: `limit`, `cursor`) |
-| GET    | `/api/{entity}/:id` | Get one                         |
-| POST   | `/api/{entity}`     | Create                          |
-| PUT    | `/api/{entity}/:id` | Partial update                  |
-| DELETE | `/api/{entity}/:id` | Hard delete                     |
-
-Response shape:
+Response envelope:
 
 ```json
 { "data": ..., "error": null }
 ```
 
-Error shape:
+Errors:
 
 ```json
-{
-  "data": null,
-  "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} }
-}
+{ "data": null, "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }
 ```
 
-See [`docs/crud-api.http`](./docs/crud-api.http) for example requests.
+See [docs/crud-api.http](./docs/crud-api.http) for examples.
+
+### Entity definitions (Model Builder)
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/entity-definitions` | `entityDefinition.read` |
+| POST | `/api/entity-definitions` | `entityDefinition.create` |
+| PATCH | `/api/entity-definitions/:id` | `entityDefinition.update` |
+
+Superadmin may pass `?tenantId=` query param for cross-tenant operations.
+
+### Hooks
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/hooks` | `hook.read` |
+| POST | `/api/hooks` | `hook.create` |
+| PATCH | `/api/hooks/:id` | `hook.update` |
+
+### Tenant roles
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/roles` | `role.read` |
+| POST | `/api/roles` | `role.create` |
+| PATCH | `/api/roles/:id` | `role.update` |
+
+### Module routes
+
+Registered from `@repo/modules` at bootstrap. Example:
+
+| Method | Path | Permission |
+|--------|------|------------|
+| GET | `/api/modules/inventory/summary` | `inventoryItem.read` |
+
+### Platform admin (superadmin)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/admin/roles` | Global role templates |
+| GET | `/admin/tenants` | Tenant registry |
+| POST | `/admin/tenants` | Create tenant |
+| PATCH | `/admin/tenants/:id` | Update tenant |
+| GET | `/admin/users` | Paginated users |
+| PATCH | `/admin/users/:uid` | Update `{ tenants: Record<string, string[]> }` |
+
+---
 
 ## Authentication
 
-All CRUD routes require:
+All `/api/*` and `/admin/*` routes require:
 
 ```
 Authorization: Bearer <Firebase ID token>
@@ -90,119 +128,107 @@ X-Firebase-AppCheck: <App Check token>
 
 ### Tenant isolation
 
-CRUD routes require a **`tenantId` custom claim** on the Firebase ID token. The API injects this value on writes and filters all reads by it. Clients must never send `tenantId` in the body.
+CRUD requires **`tenantId` custom claim** on the JWT. API injects tenant on writes; all reads filtered by tenant. Clients must never send `tenantId` in request body.
 
-#### Setting `tenantId` in development
-
-Use Firebase Admin SDK (or emulator tooling) to set a custom claim before CRUD will work:
+Set claim in development:
 
 ```js
 import { getAuth } from "firebase-admin/auth";
-
 await getAuth().setCustomUserClaims(uid, { tenantId: "tenant_dev_1" });
 ```
 
-Users must refresh their ID token after claims change (sign out/in or `getIdToken(true)` on the client).
+---
 
-## Persistence (WS3 — Firestore)
+## Persistence
 
-CRUD routes persist to Firestore via `createFirestoreAdminEntityRepository` in `@repo/gcp-firebase`.
+Collection path: `tenants/{tenantId}/{collection}/{documentId}`
 
-**Collection path:** `tenants/{tenantId}/{collection}/{documentId}`
-
-| Entity   | Path example                         |
-| -------- | ------------------------------------ |
-| Customer | `tenants/tenant_a/customers/{docId}` |
-| Order    | `tenants/tenant_a/orders/{docId}`    |
+| Entity | Collection example |
+|--------|-------------------|
+| organization | `tenants/tenant_a/organizations/{id}` |
+| project | `tenants/tenant_a/projects/{id}` |
+| entity_definitions | `tenants/tenant_a/entity_definitions/{id}` |
 
 ### Local development
-
-Start the Firestore emulator before using CRUD routes locally:
 
 ```bash
 pnpm emulators          # from repo root
 pnpm --filter api dev
 ```
 
-Ensure `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080` is set (see `apps/api/.env.dev.example`).
+Set `FIRESTORE_EMULATOR_HOST=127.0.0.1:8080` (see `.env.dev.example`).
 
-Integration tests in `@repo/gcp-firebase` require the emulator (`FIRESTORE_EMULATOR_HOST`). API route tests use in-memory repositories via `buildServer({ repositories })` and mock access profiles via `buildServer({ getUserAccessProfile })`.
+Integration tests use in-memory repositories via `buildServer({ repositories })`. Firestore integration tests require the emulator.
 
-## RBAC (WS4)
+---
 
-CRUD routes enforce permissions via `@repo/rbac`. Users without roles for the active tenant receive **403 FORBIDDEN**.
+## RBAC
 
-### Seeding roles in development
+Permissions: `{entity}.{action}` (`read`, `create`, `update`, `delete`).
 
-Set tenant roles on the Firestore user document (`users/{uid}`). Auth upsert preserves existing `platformRole` and `tenants` fields on login.
+Built-in tenant roles: `admin` (`*`), `editor`, `viewer`. Custom tenant roles at `tenants/{tenantId}/roles/{roleId}` with optional field rules.
+
+Seed user roles on Firestore `users/{uid}`:
 
 ```json
 {
   "platformRole": null,
-  "tenants": {
-    "tenant_dev_1": ["admin"]
-  }
+  "tenants": { "tenant_dev_1": ["admin"] }
 }
 ```
 
-Built-in roles: `admin`, `editor`, `viewer`. Platform superadmin: `"platformRole": "superadmin"`.
+Superadmin: `"platformRole": "superadmin"`.
 
-Example with Admin SDK:
+See [packages/rbac/README.md](../../packages/rbac/README.md) and [docs/advanced-rbac-guide.md](../../docs/advanced-rbac-guide.md).
 
-```js
-import { getFirestore } from "firebase-admin/firestore";
+User access profiles cached 60s (`CACHE_TTL_MS`); invalidated on admin user PATCH.
 
-await getFirestore()
-  .collection("users")
-  .doc(uid)
-  .set(
-    {
-      tenants: { tenant_dev_1: ["admin"] },
-    },
-    { merge: true },
-  );
-```
+---
 
-See [`packages/rbac/README.md`](../../packages/rbac/README.md) for wildcard and permission details.
+## Performance and middleware
 
-## Admin (WS7)
+| Feature | Config |
+|---------|--------|
+| Gzip | `@fastify/compress` (global) |
+| Rate limit | `API_RATE_LIMIT_MAX`, `API_RATE_LIMIT_TIME_WINDOW_MS` (disabled in `NODE_ENV=test`) |
+| Timing logs | `ENABLE_PERF_LOGS` — logs `rbacMs`, `queryMs`, `hooksMs`, `totalMs` |
+| Strict pagination | `STRICT_QUERY_PAGINATION` (default `true` in test) |
+| Cache TTL | `CACHE_TTL_MS` (default 60000) |
 
-On startup the API seeds global roles into Firestore (`roles/{roleId}`) and dev tenants into `tenants/{tenantId}` if missing. Superadmin-only routes under `/admin/*`:
+See [docs/performance-scaling-guide.md](../../docs/performance-scaling-guide.md).
 
-| Method | Path                 | Description                                     |
-| ------ | -------------------- | ----------------------------------------------- |
-| GET    | `/admin/roles`       | List global Firestore roles                     |
-| GET    | `/admin/tenants`     | List tenant records (`id`, `name`, `status`, …) |
-| POST   | `/admin/tenants`     | Create tenant `{ id?, name }`                   |
-| PATCH  | `/admin/tenants/:id` | Update `{ name?, status? }`                     |
-| GET    | `/admin/users`       | Paginated user list                             |
-| PATCH  | `/admin/users/:uid`  | Update `{ tenants: Record<string, string[]> }`  |
+---
 
-Tenant IDs in user role assignments must exist in the tenant registry and be `active`. Auth validate/select-tenant responses include `tenantOptions: { id, name }[]` for UI display.
-
-### Superadmin bootstrap
-
-Set in API env (see `apps/api/.env.dev.example`):
+## Superadmin bootstrap
 
 ```
 PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 ```
 
-- `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`: comma-separated emails promoted to `platform.superadmin` on **first** user document creation only.
+Promotes email to superadmin on **first** user document creation. Dev tenants `tenant_dev_1` and `tenant_dev_2` seeded on startup.
 
-Dev tenants `tenant_dev_1` and `tenant_dev_2` are seeded into Firestore on API startup. Superadmins see all active registry tenants when selecting a tenant; regular users remain limited to keys in `users/{uid}.tenants` that are also active.
+---
 
 ## Project layout
 
 ```
 src/
-  auth/              JWT + App Check preHandler, tenant claim extraction
-  crud/              registerCrudRoutes, response envelope, validation
-  rbac/              Permission loading, requirePermission, entity guards
-  repositories/      In-memory entity repository (tests / reference)
-  routes/            Auth validate, admin routes (WS7)
-  server.ts          Fastify bootstrap + Firestore repo wiring
+  auth/              JWT + App Check, tenant claim
+  config/env.ts      Environment schema
+  crud/              CRUD generator, response envelope
+  entities/          Catalog, definitions, runtime context
+  hooks/             Hook routes + runtime
+  modules/           Module route registration, entity hooks
+  observability/     Request timing
+  query/             Query engine wiring
+  rbac/              Permissions, caches, guards
+  relations/         FK + join validation
+  roles/             Tenant role CRUD
+  routes/            Auth, admin
+  server.ts          Fastify bootstrap
 ```
+
+---
 
 ## Commands
 
@@ -212,8 +238,11 @@ pnpm --filter api test
 pnpm --filter api typecheck
 ```
 
+---
+
 ## Related docs
 
-- [CRUD generator design](./src/crud/README.md)
-- [Entity system guide](../../docs/entity-system-guide.md)
-- [Repository port](../../packages/firestore-converters/src/entity/README.md)
+- [src/crud/README.md](./src/crud/README.md)
+- [docs/entity-system-guide.md](../../docs/entity-system-guide.md)
+- [docs/query-engine-guide.md](../../docs/query-engine-guide.md)
+- [docs/e2e-validation-runbook.md](../../docs/e2e-validation-runbook.md)
