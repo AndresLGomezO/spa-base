@@ -18,11 +18,12 @@ import {
 } from "@repo/ui";
 
 import {
-  NAV_ITEMS,
   isNavGroup,
   isPathActive,
+  type NavGroupConfig,
   type NavLinkConfig,
 } from "./nav-config";
+import { useAccessibleNavItems } from "../../routing/useAccessibleNavItems";
 
 function NavLinkItem({
   item,
@@ -53,15 +54,17 @@ function NavLinkItem({
   );
 }
 
-function SettingsGroup({ onNavigate }: { readonly onNavigate?: () => void }) {
+function SettingsGroup({
+  onNavigate,
+  group,
+}: {
+  readonly onNavigate?: () => void;
+  readonly group: NavGroupConfig;
+}) {
   const { t } = useTranslation("common");
   const { pathname } = useLocation();
   const { collapsed } = useSidebar();
-  const group = NAV_ITEMS.find((item) => item.id === "settings");
-  const isSettingsGroup = group != null && isNavGroup(group);
-  const groupActive = isSettingsGroup
-    ? isPathActive(pathname, group.matchPath)
-    : false;
+  const groupActive = isPathActive(pathname, group.matchPath);
   const [open, setOpen] = useState(groupActive);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
@@ -71,7 +74,7 @@ function SettingsGroup({ onNavigate }: { readonly onNavigate?: () => void }) {
     }
   }, [groupActive]);
 
-  if (!isSettingsGroup) {
+  if (!isNavGroup(group)) {
     return null;
   }
 
@@ -167,6 +170,7 @@ function SettingsGroup({ onNavigate }: { readonly onNavigate?: () => void }) {
 
 export function NavMain() {
   const { setMobileOpen } = useSidebar();
+  const navItems = useAccessibleNavItems();
 
   const closeMobile = () => {
     setMobileOpen(false);
@@ -175,9 +179,13 @@ export function NavMain() {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {NAV_ITEMS.map((item) =>
+        {navItems.map((item) =>
           isNavGroup(item) ? (
-            <SettingsGroup key={item.id} onNavigate={closeMobile} />
+            <SettingsGroup
+              key={item.id}
+              group={item}
+              onNavigate={closeMobile}
+            />
           ) : (
             <NavLinkItem key={item.id} item={item} onNavigate={closeMobile} />
           ),

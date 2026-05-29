@@ -18,6 +18,7 @@ import {
 
 import { NavMain } from "./NavMain";
 import { SidebarUser } from "./SidebarUser";
+import { TenantSwitcher } from "../TenantSwitcher";
 
 function SidebarBody({
   showCollapse = true,
@@ -61,6 +62,9 @@ function SidebarBody({
       <SidebarSeparator />
       <SidebarFooter>
         <SidebarMenu>
+          <SidebarMenuItem>
+            <TenantSwitcher />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarUser />
           </SidebarMenuItem>

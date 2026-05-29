@@ -5,6 +5,7 @@ import {
   createFirestoreAdminRegisteredUserRepository,
   getFirebaseUserRecord,
   mapFirebaseUserRecordToAuthUserProjection,
+  setFirebaseUserCustomClaims,
   verifyFirebaseAppCheckToken,
   verifyFirebaseIdToken,
   type FirebaseAdminConfig,
@@ -22,14 +23,18 @@ const headerSchema = z.object({
   "x-firebase-appcheck": z.string().min(1),
 });
 
-export const authValidateRoute: FastifyPluginAsync<{
+const bodySchema = z.object({
+  tenantId: z.string().trim().min(1),
+});
+
+export const authSelectTenantRoute: FastifyPluginAsync<{
   firebaseAdminConfig: FirebaseAdminConfig;
 }> = async (fastify, opts) => {
   const registeredUserRepository = createFirestoreAdminRegisteredUserRepository(
     opts.firebaseAdminConfig,
   );
 
-  fastify.get("/auth/validate", async (request, reply) => {
+  fastify.post("/auth/select-tenant", async (request, reply) => {
     const parsedHeaders = headerSchema.safeParse(request.headers);
 
     if (!parsedHeaders.success) {
@@ -49,6 +54,15 @@ export const authValidateRoute: FastifyPluginAsync<{
       });
     }
 
+    const parsedBody = bodySchema.safeParse(request.body);
+    if (!parsedBody.success) {
+      return reply.status(400).send({
+        ok: false,
+        code: "INVALID_BODY",
+        message: "Request body must include a valid tenantId.",
+      });
+    }
+
     try {
       const [decodedIdToken, decodedAppCheck] = await Promise.all([
         verifyFirebaseIdToken(idToken, opts.firebaseAdminConfig),
@@ -57,6 +71,8 @@ export const authValidateRoute: FastifyPluginAsync<{
           opts.firebaseAdminConfig,
         ),
       ]);
+      void decodedAppCheck;
+
       const authUserRecord = await getFirebaseUserRecord(
         decodedIdToken.uid,
         opts.firebaseAdminConfig,
@@ -65,33 +81,36 @@ export const authValidateRoute: FastifyPluginAsync<{
         mapFirebaseUserRecordToAuthUserProjection(authUserRecord),
       );
 
-      const tenantClaim = decodedIdToken.tenantId;
-      const tenantId =
-        typeof tenantClaim === "string" ? tenantClaim.trim() : "";
+      const requestedTenantId = parsedBody.data.tenantId;
       const availableTenants = Object.keys(registeredUser.tenants ?? {});
+
+      if (!availableTenants.includes(requestedTenantId)) {
+        return reply.status(403).send({
+          ok: false,
+          code: "FORBIDDEN",
+          message: "You do not have access to the requested tenant.",
+        });
+      }
+
+      await setFirebaseUserCustomClaims(
+        decodedIdToken.uid,
+        { tenantId: requestedTenantId },
+        opts.firebaseAdminConfig,
+      );
+
       const accessProfile = toUserAccessProfile(registeredUser);
       const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
-      const permissions =
-        tenantId.length > 0
-          ? resolvePermissions({
-              ...accessProfile,
-              tenantId,
-            })
-          : [];
+      const permissions = resolvePermissions({
+        ...accessProfile,
+        tenantId: requestedTenantId,
+      });
 
       return reply.send({
         ok: true,
-        user: {
-          uid: registeredUser.uid,
-          email: registeredUser.email,
-          permissions,
-          isSuperAdmin,
-          tenantId: tenantId.length > 0 ? tenantId : null,
-          availableTenants,
-        },
-        appCheck: {
-          appId: decodedAppCheck.appId,
-        },
+        tenantId: requestedTenantId,
+        availableTenants,
+        permissions,
+        isSuperAdmin,
       });
     } catch (error) {
       const message =

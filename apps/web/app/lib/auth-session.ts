@@ -7,11 +7,22 @@ interface SyncedAuthUser {
   readonly email: string | null;
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;
+  readonly tenantId: string | null;
+  readonly availableTenants: readonly string[];
 }
 
 interface SyncAuthSessionResult {
   readonly ok: boolean;
   readonly user?: SyncedAuthUser;
+  readonly error?: string;
+}
+
+interface SelectTenantSessionResult {
+  readonly ok: boolean;
+  readonly tenantId?: string;
+  readonly availableTenants?: readonly string[];
+  readonly permissions?: readonly string[];
+  readonly isSuperAdmin?: boolean;
   readonly error?: string;
 }
 
@@ -22,6 +33,8 @@ interface AuthValidateSuccessResponse {
     readonly email: string | null;
     readonly permissions?: readonly string[];
     readonly isSuperAdmin?: boolean;
+    readonly tenantId?: string | null;
+    readonly availableTenants?: readonly string[];
   };
 }
 
@@ -30,23 +43,55 @@ interface AuthValidateErrorResponse {
   readonly message?: string;
 }
 
+interface AuthSelectTenantSuccessResponse {
+  readonly ok: true;
+  readonly tenantId: string;
+  readonly availableTenants: readonly string[];
+  readonly permissions: readonly string[];
+  readonly isSuperAdmin: boolean;
+}
+
+interface AuthSelectTenantErrorResponse {
+  readonly ok: false;
+  readonly message?: string;
+}
+
+async function getAuthRequestHeaders(firebaseUser: User) {
+  const [idToken, appCheckToken] = await Promise.all([
+    firebaseUser.getIdToken(),
+    getAppCheckHeaderValue(),
+  ]);
+
+  return {
+    Authorization: `Bearer ${idToken}`,
+    "X-Firebase-AppCheck": appCheckToken,
+  };
+}
+
+function mapValidateUser(
+  user: AuthValidateSuccessResponse["user"],
+): SyncedAuthUser {
+  return {
+    uid: user.uid,
+    email: user.email,
+    permissions: user.permissions ?? [],
+    isSuperAdmin: user.isSuperAdmin ?? false,
+    tenantId: user.tenantId ?? null,
+    availableTenants: user.availableTenants ?? [],
+  };
+}
+
 export async function syncAuthSession(
   firebaseUser: User,
 ): Promise<SyncAuthSessionResult> {
   try {
-    const [idToken, appCheckToken] = await Promise.all([
-      firebaseUser.getIdToken(),
-      getAppCheckHeaderValue(),
-    ]);
+    const headers = await getAuthRequestHeaders(firebaseUser);
 
     const response = await fetch(
       new URL("/auth/validate", appConfig.apiBaseUrl),
       {
         method: "GET",
-        headers: {
-          Authorization: `Bearer ${idToken}`,
-          "X-Firebase-AppCheck": appCheckToken,
-        },
+        headers,
       },
     );
 
@@ -64,18 +109,60 @@ export async function syncAuthSession(
 
     return {
       ok: true,
-      user: {
-        uid: payload.user.uid,
-        email: payload.user.email,
-        permissions: payload.user.permissions ?? [],
-        isSuperAdmin: payload.user.isSuperAdmin ?? false,
-      },
+      user: mapValidateUser(payload.user),
     };
   } catch (error) {
     const message =
       error instanceof Error
         ? error.message
         : "Unable to register session with the server.";
+    return { ok: false, error: message };
+  }
+}
+
+export async function selectTenantSession(
+  firebaseUser: User,
+  tenantId: string,
+): Promise<SelectTenantSessionResult> {
+  try {
+    const headers = await getAuthRequestHeaders(firebaseUser);
+
+    const response = await fetch(
+      new URL("/auth/select-tenant", appConfig.apiBaseUrl),
+      {
+        method: "POST",
+        headers: {
+          ...headers,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ tenantId }),
+      },
+    );
+
+    const payload = (await response.json()) as
+      | AuthSelectTenantSuccessResponse
+      | AuthSelectTenantErrorResponse;
+
+    if (!response.ok || !payload.ok) {
+      const message =
+        "message" in payload && payload.message
+          ? payload.message
+          : "Unable to select tenant.";
+      return { ok: false, error: message };
+    }
+
+    return {
+      ok: true,
+      tenantId: payload.tenantId,
+      availableTenants: payload.availableTenants,
+      permissions: payload.permissions,
+      isSuperAdmin: payload.isSuperAdmin,
+    };
+  } catch (error) {
+    const message =
+      error instanceof Error
+        ? error.message
+        : "Unable to select tenant with the server.";
     return { ok: false, error: message };
   }
 }

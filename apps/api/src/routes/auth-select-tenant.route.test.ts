@@ -3,6 +3,10 @@ import { describe, expect, it, vi } from "vitest";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 import type { CustomerRecord, OrderRecord } from "@repo/shared-types";
 
+const { setFirebaseUserCustomClaims } = vi.hoisted(() => ({
+  setFirebaseUserCustomClaims: vi.fn(async () => undefined),
+}));
+
 vi.mock("@repo/gcp-firebase", () => ({
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: "user_123",
@@ -38,6 +42,7 @@ vi.mock("@repo/gcp-firebase", () => ({
     authCreatedAt: user.metadata.creationTime,
     authLastSignInAt: user.metadata.lastSignInTime,
   })),
+  setFirebaseUserCustomClaims,
   createFirestoreAdminRegisteredUserRepository: vi.fn(() => ({
     upsertFromAuthUser: vi.fn(async (authUser) => ({
       uid: authUser.uid,
@@ -51,7 +56,7 @@ vi.mock("@repo/gcp-firebase", () => ({
       authCreatedAt: authUser.authCreatedAt,
       authLastSignInAt: authUser.authLastSignInAt,
       platformRole: null,
-      tenants: { tenant_a: ["viewer"] },
+      tenants: { tenant_a: ["viewer"], tenant_b: ["admin"] },
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
     })),
@@ -77,41 +82,77 @@ async function buildTestServer() {
   });
 }
 
-describe("GET /auth/validate", () => {
+const authHeaders = {
+  authorization: "Bearer fake-token",
+  "x-firebase-appcheck": "fake-appcheck",
+};
+
+describe("POST /auth/select-tenant", () => {
   it("returns 401 when headers are missing", async () => {
     const server = await buildTestServer();
     const response = await server.inject({
-      method: "GET",
-      url: "/auth/validate",
+      method: "POST",
+      url: "/auth/select-tenant",
+      payload: { tenantId: "tenant_a" },
     });
 
     expect(response.statusCode).toBe(401);
     expect(response.json().ok).toBe(false);
   });
 
-  it("returns success when headers are present", async () => {
+  it("returns 400 when tenantId is missing from body", async () => {
     const server = await buildTestServer();
     const response = await server.inject({
-      method: "GET",
-      url: "/auth/validate",
-      headers: {
-        authorization: "Bearer fake-token",
-        "x-firebase-appcheck": "fake-appcheck",
-      },
+      method: "POST",
+      url: "/auth/select-tenant",
+      headers: authHeaders,
+      payload: {},
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().ok).toBe(false);
+  });
+
+  it("returns 403 when tenant is not assigned to user", async () => {
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/auth/select-tenant",
+      headers: authHeaders,
+      payload: { tenantId: "tenant_unknown" },
+    });
+
+    expect(response.statusCode).toBe(403);
+    expect(response.json()).toMatchObject({
+      ok: false,
+      code: "FORBIDDEN",
+    });
+  });
+
+  it("sets custom claims and returns permissions for authorized tenant", async () => {
+    setFirebaseUserCustomClaims.mockClear();
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/auth/select-tenant",
+      headers: authHeaders,
+      payload: { tenantId: "tenant_b" },
     });
 
     expect(response.statusCode).toBe(200);
     expect(response.json()).toMatchObject({
       ok: true,
-      user: {
-        uid: "user_123",
-        email: "demo@example.com",
-        isSuperAdmin: false,
-        permissions: ["customer.read", "order.read"],
-        tenantId: "tenant_a",
-        availableTenants: ["tenant_a"],
-      },
-      appCheck: { appId: "demo-app-id" },
+      tenantId: "tenant_b",
+      availableTenants: ["tenant_a", "tenant_b"],
+      isSuperAdmin: false,
     });
+    expect(setFirebaseUserCustomClaims).toHaveBeenCalledWith(
+      "user_123",
+      { tenantId: "tenant_b" },
+      expect.any(Object),
+    );
+    expect(response.json().permissions).toEqual(
+      expect.arrayContaining(["customer.read", "customer.create"]),
+    );
   });
 });

@@ -67,6 +67,17 @@
     "editTitle": "Editar {{entity}}",
     "deleteSuccess": "Registro eliminado correctamente."
   },
+  "tenant": {
+    "selectTitle": "Seleccionar un tenant",
+    "selectDescription": "Elige en qué tenant deseas trabajar.",
+    "select": "Seleccionar",
+    "selectFailed": "No se pudo seleccionar el tenant. Inténtalo de nuevo.",
+    "switchTenant": "Tenant",
+    "currentTenant": "Tenant: {{tenant}}",
+    "none": "Ninguno",
+    "noTenants": "Sin acceso a tenants",
+    "noTenantsDetail": "Tu cuenta no está asignada a ningún tenant. Contacta a un administrador."
+  },
   "roles": {
     "member": "Miembro",
     "admin": "Administrador"

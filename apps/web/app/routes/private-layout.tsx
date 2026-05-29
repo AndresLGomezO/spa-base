@@ -2,23 +2,28 @@ import { Outlet } from "react-router";
 
 import { SidebarProvider } from "@repo/ui";
 
-import { RequireAuth } from "../auth/AuthGuards";
+import { useAuth } from "../auth/AuthContext";
+import { RequireAuth, RequireTenant } from "../routing/RouteGuards";
 import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
 
 export default function PrivateLayoutRoute() {
+  const { tenantId } = useAuth();
+
   return (
     <RequireAuth>
-      <SidebarProvider>
-        <div className="flex min-h-dvh">
-          <AppSidebar />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <AppHeader />
-            <main className="flex-1 p-6">
-              <Outlet />
-            </main>
+      <RequireTenant>
+        <SidebarProvider>
+          <div className="flex min-h-dvh">
+            <AppSidebar />
+            <div className="flex min-w-0 flex-1 flex-col">
+              <AppHeader />
+              <main className="flex-1 p-6">
+                <Outlet key={tenantId ?? "no-tenant"} />
+              </main>
+            </div>
           </div>
-        </div>
-      </SidebarProvider>
+        </SidebarProvider>
+      </RequireTenant>
     </RequireAuth>
   );
 }

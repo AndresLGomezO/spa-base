@@ -21,7 +21,7 @@ export interface NavLinkConfig {
   readonly icon: LucideIcon;
 }
 
-interface NavGroupConfig {
+export interface NavGroupConfig {
   readonly id: string;
   readonly labelKey: NavLabelKey;
   readonly matchPath: string;
@@ -29,7 +29,7 @@ interface NavGroupConfig {
   readonly children: readonly NavLinkConfig[];
 }
 
-type NavItemConfig = NavLinkConfig | NavGroupConfig;
+export type NavItemConfig = NavLinkConfig | NavGroupConfig;
 
 export function isNavGroup(item: NavItemConfig): item is NavGroupConfig {
   return "children" in item;

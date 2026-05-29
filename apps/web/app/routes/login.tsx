@@ -1,4 +1,4 @@
-import { RedirectIfAuthenticated } from "../auth/AuthGuards";
+import { RedirectIfAuthenticated } from "../routing/RouteGuards";
 import { LoginPage } from "./login-page";
 
 export function meta() {
