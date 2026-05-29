@@ -1,0 +1,51 @@
+### Variables (set in REST Client / Postman)
+@baseUrl = http://localhost:3000
+@token = YOUR_FIREBASE_ID_TOKEN
+@appCheck = YOUR_APP_CHECK_TOKEN
+
+### List customers
+GET {{baseUrl}}/api/customer?limit=20
+Authorization: Bearer {{token}}
+X-Firebase-AppCheck: {{appCheck}}
+
+### Create customer
+POST {{baseUrl}}/api/customer
+Authorization: Bearer {{token}}
+X-Firebase-AppCheck: {{appCheck}}
+Content-Type: application/json
+
+{
+  "name": "Acme Corp",
+  "email": "ops@acme.test"
+}
+
+### Get customer by id
+GET {{baseUrl}}/api/customer/{{customerId}}
+Authorization: Bearer {{token}}
+X-Firebase-AppCheck: {{appCheck}}
+
+### Update customer (partial)
+PUT {{baseUrl}}/api/customer/{{customerId}}
+Authorization: Bearer {{token}}
+X-Firebase-AppCheck: {{appCheck}}
+Content-Type: application/json
+
+{
+  "email": "updated@acme.test"
+}
+
+### Delete customer
+DELETE {{baseUrl}}/api/customer/{{customerId}}
+Authorization: Bearer {{token}}
+X-Firebase-AppCheck: {{appCheck}}
+
+### Create order
+POST {{baseUrl}}/api/order
+Authorization: Bearer {{token}}
+X-Firebase-AppCheck: {{appCheck}}
+Content-Type: application/json
+
+{
+  "orderNumber": "ORD-1001",
+  "total": 99.5
+}

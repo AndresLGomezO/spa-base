@@ -206,6 +206,12 @@ importers:
       '@fastify/cors':
         specifier: 'catalog:'
         version: 11.2.0
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../../packages/entities
+      '@repo/firestore-converters':
+        specifier: workspace:*
+        version: link:../../packages/firestore-converters
       '@repo/gcp-firebase':
         specifier: workspace:*
         version: link:../../packages/gcp-firebase
@@ -215,6 +221,9 @@ importers:
       fastify:
         specifier: 'catalog:'
         version: 5.8.5
+      nanoid:
+        specifier: 'catalog:'
+        version: 5.1.11
       zod:
         specifier: 'catalog:'
         version: 4.4.3

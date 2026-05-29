@@ -1,4 +1,9 @@
 export {
+  type ListParams,
+  type PaginatedResult,
+  type TenantScopedEntityRepository,
+} from "./entity/tenant-scoped-repository-contract.js";
+export {
   ConverterError,
   MissingSchemaTransformError,
   MissingSchemaVersionError,

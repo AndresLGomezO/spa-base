@@ -10,18 +10,12 @@ import {
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 
+import { extractBearerToken } from "../auth/extract-bearer-token.js";
+
 const headerSchema = z.object({
   authorization: z.string().min(1),
   "x-firebase-appcheck": z.string().min(1),
 });
-
-const bearerSchema = z.string().regex(/^Bearer\s+(.+)$/i);
-
-function extractBearerToken(value: string): string | null {
-  const parsed = bearerSchema.safeParse(value);
-  if (!parsed.success) return null;
-  return parsed.data.replace(/^Bearer\s+/i, "");
-}
 
 export const authValidateRoute: FastifyPluginAsync<{
   firebaseAdminConfig: FirebaseAdminConfig;
