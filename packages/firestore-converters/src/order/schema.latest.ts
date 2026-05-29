@@ -1,7 +1,7 @@
 import {
   ORDER_SCHEMA_VERSION,
   orderSchema,
-  persistedOrderSchemaV1,
+  persistedOrderSchemaV2,
   type OrderRecord,
   type PersistedOrder,
 } from "@repo/shared-types";
@@ -19,7 +19,7 @@ export const orderConverter = createVersionedConverter<
   currentVersion: orderCurrentVersion,
   domainSchema: orderSchema,
   persistedSchema:
-    persistedOrderSchemaV1 as unknown as z.ZodType<PersistedOrder>,
+    persistedOrderSchemaV2 as unknown as z.ZodType<PersistedOrder>,
   migrations: orderMigrations,
   fromPersisted: (persisted) => {
     const domain = { ...persisted };

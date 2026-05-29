@@ -111,6 +111,43 @@ class FirestoreAdminEntityRepository<
     };
   }
 
+  async findByField(params: {
+    readonly tenantId: string;
+    readonly field: string;
+    readonly value: string;
+    readonly limit?: number;
+    readonly cursor?: string;
+  }) {
+    const limit = normalizeLimit(params.limit);
+    const collectionRef = this.getCollection(params.tenantId);
+
+    let query = collectionRef
+      .where(params.field, "==", params.value)
+      .orderBy("id")
+      .limit(limit);
+
+    if (params.cursor) {
+      const cursorDoc = await collectionRef.doc(params.cursor).get();
+      if (cursorDoc.exists) {
+        query = query.startAfter(cursorDoc);
+      }
+    }
+
+    const snapshot = await query.get();
+    const items = snapshot.docs.map((doc) =>
+      this.repositoryConfig.converter.read(doc.data()),
+    );
+
+    const hasMore = items.length === limit;
+    const nextCursor =
+      hasMore && items.length > 0 ? items[items.length - 1]!.id : null;
+
+    return {
+      items,
+      nextCursor,
+    };
+  }
+
   async findById(id: string, tenantId: string): Promise<TRecord | null> {
     const parsedId = id.trim();
     if (!parsedId) return null;

@@ -7,6 +7,15 @@ export const Order = defineEntity({
   fields: {
     orderNumber: { type: "string", required: true },
     total: { type: "number", required: true },
+    customerId: {
+      type: "relation",
+      required: true,
+      relation: {
+        target: "customer",
+        type: "many-to-one",
+        onDelete: "restrict",
+      },
+    },
     placedAt: { type: "date" },
     isFulfilled: { type: "boolean", default: false },
   },
@@ -20,15 +29,22 @@ export const orderUpdateSchema = Order.updateSchema;
 
 export const ORDER_PERMISSIONS = Order.metadata.permissions;
 
-export const ORDER_SCHEMA_VERSION = 1 as const;
+export const ORDER_SCHEMA_VERSION = 2 as const;
 
 const orderSchemaObject = orderSchema as unknown as z.ZodObject<
   Record<string, z.ZodTypeAny>
 >;
 
-export const persistedOrderSchemaV1 = orderSchemaObject
+export const persistedOrderSchemaV2 = orderSchemaObject
   .extend({
     _schemaVersion: z.literal(ORDER_SCHEMA_VERSION),
+  })
+  .strict();
+
+/** @deprecated Use persistedOrderSchemaV2 */
+export const persistedOrderSchemaV1 = orderSchemaObject
+  .extend({
+    _schemaVersion: z.literal(1),
   })
   .strict();
 

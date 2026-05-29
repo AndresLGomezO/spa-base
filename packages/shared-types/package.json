@@ -9,7 +9,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./env": "./src/env.ts"
+    "./register-entities": "./src/register-entities.ts"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

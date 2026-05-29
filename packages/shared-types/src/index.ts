@@ -22,6 +22,7 @@ export {
   orderSchema,
   orderUpdateSchema,
   persistedOrderSchemaV1,
+  persistedOrderSchemaV2,
   type OrderCreate,
   type OrderRecord,
   type OrderUpdate,

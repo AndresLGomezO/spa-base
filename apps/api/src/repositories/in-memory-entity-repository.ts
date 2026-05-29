@@ -1,4 +1,5 @@
 import type {
+  FindByFieldParams,
   ListParams,
   PaginatedResult,
   TenantScopedEntityRepository,
@@ -19,6 +20,36 @@ function normalizeLimit(limit: number | undefined): number {
     return DEFAULT_LIMIT;
   }
   return Math.min(Math.floor(limit), MAX_LIMIT);
+}
+
+function filterTenantRecords<
+  TRecord extends { readonly id: string; readonly tenantId: string },
+>(store: Map<string, TRecord>, tenantId: string): TRecord[] {
+  return [...store.values()]
+    .filter((record) => record.tenantId === tenantId)
+    .sort((left, right) => left.id.localeCompare(right.id));
+}
+
+function paginateRecords<TRecord extends { readonly id: string }>(
+  records: readonly TRecord[],
+  limit: number,
+  cursor?: string,
+): PaginatedResult<TRecord> {
+  let startIndex = 0;
+  if (cursor) {
+    const cursorIndex = records.findIndex((record) => record.id === cursor);
+    startIndex = cursorIndex >= 0 ? cursorIndex + 1 : 0;
+  }
+
+  const page = records.slice(startIndex, startIndex + limit);
+  const hasMore = startIndex + limit < records.length;
+  const nextCursor =
+    hasMore && page.length > 0 ? page[page.length - 1]!.id : null;
+
+  return {
+    items: page,
+    nextCursor,
+  };
 }
 
 interface InMemoryEntityRepositoryOptions<
@@ -56,27 +87,18 @@ export function createInMemoryEntityRepository<
 
     async findAll(params: ListParams): Promise<PaginatedResult<TRecord>> {
       const limit = normalizeLimit(params.limit);
-      const tenantRecords = [...store.values()]
-        .filter((record) => record.tenantId === params.tenantId)
-        .sort((left, right) => left.id.localeCompare(right.id));
+      const tenantRecords = filterTenantRecords(store, params.tenantId);
+      return paginateRecords(tenantRecords, limit, params.cursor);
+    },
 
-      let startIndex = 0;
-      if (params.cursor) {
-        const cursorIndex = tenantRecords.findIndex(
-          (record) => record.id === params.cursor,
-        );
-        startIndex = cursorIndex >= 0 ? cursorIndex + 1 : 0;
-      }
-
-      const page = tenantRecords.slice(startIndex, startIndex + limit);
-      const hasMore = startIndex + limit < tenantRecords.length;
-      const nextCursor =
-        hasMore && page.length > 0 ? page[page.length - 1]!.id : null;
-
-      return {
-        items: page,
-        nextCursor,
-      };
+    async findByField(params: FindByFieldParams): Promise<PaginatedResult<TRecord>> {
+      const limit = normalizeLimit(params.limit);
+      const tenantRecords = filterTenantRecords(store, params.tenantId).filter(
+        (record) =>
+          String((record as Record<string, unknown>)[params.field]) ===
+          params.value,
+      );
+      return paginateRecords(tenantRecords, limit, params.cursor);
     },
 
     async findById(id: string, tenantId: string): Promise<TRecord | null> {

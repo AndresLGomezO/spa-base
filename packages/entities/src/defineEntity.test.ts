@@ -222,6 +222,99 @@ describe("field type coverage", () => {
   });
 });
 
+describe("relation fields", () => {
+  const OrderWithCustomer = defineEntity({
+    name: "order",
+    fields: {
+      orderNumber: { type: "string", required: true },
+      customerId: {
+        type: "relation",
+        required: true,
+        relation: { target: "customer", type: "many-to-one" },
+      },
+    },
+  });
+
+  it("normalizes relation field metadata", () => {
+    expect(OrderWithCustomer.metadata.fields.customerId).toEqual({
+      type: "relation",
+      required: true,
+      optional: false,
+      relation: {
+        target: "customer",
+        type: "many-to-one",
+        onDelete: "restrict",
+      },
+    });
+  });
+
+  it("validates foreign key relation fields in create and full schemas", () => {
+    const now = new Date().toISOString();
+    const createResult = OrderWithCustomer.createSchema.safeParse({
+      orderNumber: "ORD-1",
+      customerId: "cust_1",
+    });
+    const fullResult = OrderWithCustomer.schema.safeParse({
+      id: "ord_1",
+      tenantId: "tenant_1",
+      orderNumber: "ORD-1",
+      customerId: "cust_1",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    expect(createResult.success).toBe(true);
+    expect(fullResult.success).toBe(true);
+  });
+
+  it("rejects empty relation foreign keys", () => {
+    const result = OrderWithCustomer.createSchema.safeParse({
+      orderNumber: "ORD-1",
+      customerId: "",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("excludes join-collection relations from zod schemas", () => {
+    const UserWithProjects = defineEntity({
+      name: "user",
+      fields: {
+        name: { type: "string", required: true },
+        projects: {
+          type: "relation",
+          relation: {
+            target: "project",
+            type: "many-to-many",
+            joinCollection: "user_projects",
+          },
+        },
+      },
+    });
+
+    const now = new Date().toISOString();
+    const createResult = UserWithProjects.createSchema.safeParse({
+      name: "Jane",
+    });
+    const fullResult = UserWithProjects.schema.safeParse({
+      id: "user_1",
+      tenantId: "tenant_1",
+      name: "Jane",
+      createdAt: now,
+      updatedAt: now,
+    });
+
+    expect(createResult.success).toBe(true);
+    expect(fullResult.success).toBe(true);
+    expect(UserWithProjects.metadata.fields.projects.relation).toEqual({
+      target: "project",
+      type: "many-to-many",
+      joinCollection: "user_projects",
+      onDelete: "restrict",
+    });
+  });
+});
+
 describe("buildPermissions", () => {
   it("generates CRUD permissions for an entity name", () => {
     expect(buildPermissions("order")).toEqual([

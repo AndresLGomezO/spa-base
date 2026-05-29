@@ -1,8 +1,16 @@
 export {
+  type FindByFieldParams,
   type ListParams,
   type PaginatedResult,
   type TenantScopedEntityRepository,
 } from "./entity/tenant-scoped-repository-contract.js";
+export {
+  type FindJoinBySourceParams,
+  type FindJoinByTargetParams,
+  type JoinCollectionRepository,
+  type JoinRecord,
+  type LinkJoinParams,
+} from "./entity/join-collection-repository-contract.js";
 export {
   ConverterError,
   MissingSchemaTransformError,
