@@ -16,6 +16,7 @@ import { z } from "zod";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 
 import type { RequestContext } from "../auth/request-context.js";
+import { emitEntityLifecycleHook } from "../modules/emit-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
 import { noopPreHandler } from "./noop-pre-handler.js";
 import { replyWithError, successEnvelope } from "./response.js";
@@ -307,6 +308,11 @@ export async function registerCrudRoutes<
           tenantId,
           parsedRecord.data as unknown as TRecord,
         );
+        await emitEntityLifecycleHook(app, request, {
+          event: "created",
+          entityName: entity.name,
+          record: created as unknown as Record<string, unknown>,
+        });
         return reply.status(201).send(successEnvelope(created));
       } catch (error) {
         const relationResponse = handleRelationError(reply, error);
@@ -425,6 +431,12 @@ export async function registerCrudRoutes<
           );
         }
 
+        await emitEntityLifecycleHook(app, request, {
+          event: "updated",
+          entityName: entity.name,
+          record: validated.data as Record<string, unknown>,
+        });
+
         return reply.send(successEnvelope(validated.data));
       } catch (error) {
         const relationResponse = handleRelationError(reply, error);
@@ -463,6 +475,11 @@ export async function registerCrudRoutes<
       }
 
       try {
+        const existing = await repository.findById(
+          parsedParams.data.id,
+          tenantId,
+        );
+
         if (relations) {
           await relations.beforeDelete(parsedParams.data.id, tenantId);
         }
@@ -475,6 +492,14 @@ export async function registerCrudRoutes<
             ApiErrorCode.NOT_FOUND,
             "Record not found.",
           );
+        }
+
+        if (existing) {
+          await emitEntityLifecycleHook(app, request, {
+            event: "deleted",
+            entityName: entity.name,
+            record: existing as unknown as Record<string, unknown>,
+          });
         }
 
         return reply.send(successEnvelope({ deleted: true }));

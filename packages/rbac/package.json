@@ -23,6 +23,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/entities": "workspace:*",
     "@repo/shared-types": "workspace:*"
   }
 }

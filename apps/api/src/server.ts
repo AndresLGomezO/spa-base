@@ -13,8 +13,9 @@ import {
   createFirestoreAdminRegisteredUserRepository,
 } from "@repo/gcp-firebase";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
-import "@repo/shared-types/register-entities";
 
+import { platformApp } from "@app/platform/app.config.js";
+import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
 import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
 import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
@@ -22,6 +23,7 @@ import { apiEnv } from "./config/env.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
 import { createEntityRuntimeMaps } from "./entities/create-entity-runtime-maps.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
+import { registerModuleRoutes } from "./modules/register-module-routes.js";
 import { createQueryRuntimeContext } from "./query/create-query-services.js";
 import {
   createEntityPermissionGuards,
@@ -53,6 +55,8 @@ interface BuildServerOptions {
 }
 
 export async function buildServer(options: BuildServerOptions = {}) {
+  bootstrapPlatformApp(platformApp);
+
   const server = Fastify({
     logger: options.logger ?? true,
   });
@@ -130,6 +134,11 @@ export async function buildServer(options: BuildServerOptions = {}) {
   const queryContext = createQueryRuntimeContext(runtimeMaps.queryExecutors);
 
   await registerListEntitiesRoute(server, {
+    authenticate,
+    permissionDeps,
+  });
+
+  await registerModuleRoutes(server, {
     authenticate,
     permissionDeps,
   });

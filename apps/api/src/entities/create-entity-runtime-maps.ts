@@ -3,6 +3,7 @@ import type {
   EntityQueryExecutor,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
+import { createEntityConverter } from "@repo/firestore-converters";
 import {
   createFirestoreAdminEntityRepository,
   createFirestoreEntityQueryExecutor,
@@ -40,7 +41,8 @@ export function createEntityRuntimeMaps(
   };
 
   for (const entity of getAllEntities()) {
-    const converter = getEntityConverter(entity.name);
+    const converter =
+      getEntityConverter(entity.name) ?? createEntityConverter(entity);
     if (!converter) {
       throw new Error(
         `No Firestore converter registered for entity "${entity.name}".`,

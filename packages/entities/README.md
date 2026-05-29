@@ -30,7 +30,7 @@ Customer.metadata.collection; // "customers"
 Customer.metadata.permissions; // ["customer.read", "customer.create", ...]
 ```
 
-Concrete business entities (`Customer`, `Order`, …) live in `@repo/shared-types/src/entities/` and are re-exported from `@repo/shared-types` for apps.
+Concrete business entities live in **modules** (e.g. `modules/core`) and are re-exported from `@repo/shared-types` for apps. Register entities via `defineModule()` — see [Module Extension Guide](../../docs/module-extension-guide.md).
 
 ---
 
@@ -50,7 +50,7 @@ src/
     buildMetadata.ts       Normalized field metadata for UI/API
     buildPermissions.ts    CRUD permission tuple + collection naming
   registry/
-    entityRegistry.ts      registerEntity / getEntity (future defineApp)
+    entityRegistry.ts      registerEntity / getAllEntities (populated by loadApp)
 ```
 
 ---
@@ -110,7 +110,7 @@ Exposed on `entity.metadata.permissions` as a typed `as const` tuple for RBAC (W
 
 ### Entity registry
 
-`registerEntity(entity)` / `getEntity(name)` / `getAllEntities()` hold defined entities for a future `defineApp({ entities: [...] })`. Registry values are intentionally widened to `AnyDefinedEntity` — see [registry workaround](#entity-registry-type-widening).
+`registerEntity(entity)` / `getEntity(name)` / `getAllEntities()` hold defined entities. Modules register entities via `loadApp()` from `@repo/modules` at platform bootstrap — see [Module Extension Guide](../../docs/module-extension-guide.md). Registry values are intentionally widened to `AnyDefinedEntity` — see [registry workaround](#entity-registry-type-widening).
 
 ---
 
@@ -209,7 +209,7 @@ Default pluralization: append `s`, or `es` when name ends in `s` (`status` → `
 
 ## Recommendations
 
-1. **Define business entities in `@repo/shared-types/src/entities/`** — apps import from `@repo/shared-types`, not `@repo/entities` directly.
+1. **Define business entities in modules** (e.g. `modules/core`) — register via `defineModule()` in `@app/platform/app.config.ts`.
 2. **Keep `RegisteredUser` separate** — auth-global, not tenant-scoped; uses the hand-written User stack until a deliberate migration.
 3. **Validate with the correct schema** — `createSchema` for POST, `updateSchema` for PATCH, full `schema` after merging system fields.
 4. **Inject `tenantId` in API middleware** — never trust client-supplied tenant IDs.

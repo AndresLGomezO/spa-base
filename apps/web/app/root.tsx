@@ -13,6 +13,7 @@ import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import { I18nSync } from "./components/I18nSync";
+import { bootstrapWebPlatform } from "./platform/bootstrap";
 import "./i18n";
 import { i18n } from "./i18n";
 import "./app.css";
@@ -63,6 +64,7 @@ function AppShell() {
 }
 
 export default function App() {
+  bootstrapWebPlatform();
   return (
     <ThemeProvider>
       <AuthProvider>

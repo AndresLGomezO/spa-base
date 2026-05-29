@@ -163,6 +163,9 @@ describe("GET /api/entities", () => {
           name: "project",
           collection: "projects",
         }),
+        expect.objectContaining({
+          name: "inventoryItem",
+        }),
       ]),
     );
   });

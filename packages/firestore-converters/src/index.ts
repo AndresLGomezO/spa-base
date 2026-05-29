@@ -32,6 +32,7 @@ export {
   type VersionedConverterConfig,
 } from "./core/versioned-converter.js";
 
+export { createEntityConverter } from "./entity/create-entity-converter.js";
 export {
   organizationConverter,
   organizationCurrentVersion,
