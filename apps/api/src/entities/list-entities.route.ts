@@ -1,6 +1,7 @@
 import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 
 import { getAllEntities, serializeEntityDefinition } from "@repo/entities";
+import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
 
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
 import { ApiErrorCode } from "../crud/errors.js";
@@ -45,7 +46,17 @@ export async function registerListEntitiesRoute(
       const isSuperAdmin = request.ctx?.isSuperAdmin === true;
 
       const items = getAllEntities()
-        .map((entity) => serializeEntityDefinition(entity))
+        .map((entity) => {
+          const definition = serializeEntityDefinition(entity);
+          const extensions = getUiExtensions(entity.name);
+          if (extensions.length === 0) {
+            return definition;
+          }
+          return {
+            ...definition,
+            ui: mergeUiExtensions(definition.ui, extensions),
+          };
+        })
         .filter((definition) => {
           if (isSuperAdmin) return true;
           return permissions.has(`${definition.name}.read`);

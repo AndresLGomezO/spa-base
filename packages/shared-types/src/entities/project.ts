@@ -1,4 +1,3 @@
-/** Seed entity: Project. See src/entities/README.md for the add-entity template. */
 import { defineEntity } from "@repo/entities";
 import { z } from "zod";
 
@@ -71,12 +70,11 @@ export const Project = defineEntity({
 });
 
 export const PROJECTS_COLLECTION = Project.metadata.collection;
+export const PROJECT_PERMISSIONS = Project.metadata.permissions;
 
 export const projectSchema = Project.schema;
 export const projectCreateSchema = Project.createSchema;
 export const projectUpdateSchema = Project.updateSchema;
-
-export const PROJECT_PERMISSIONS = Project.metadata.permissions;
 
 export const PROJECT_SCHEMA_VERSION = 1 as const;
 

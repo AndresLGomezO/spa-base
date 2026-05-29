@@ -124,7 +124,11 @@ describe("GET /auth/validate", () => {
         uid: "user_123",
         email: "demo@example.com",
         isSuperAdmin: false,
-        permissions: ["organization.read", "project.read"],
+        permissions: [
+          "organization.read",
+          "project.read",
+          "inventoryItem.read",
+        ],
         tenantId: "tenant_a",
         availableTenants: ["tenant_a"],
         tenantOptions: [{ id: "tenant_a", name: "Tenant A" }],

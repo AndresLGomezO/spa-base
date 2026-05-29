@@ -28,9 +28,9 @@ Unknown `{entity}` values (not in catalog) render `entity-not-found`.
 
 ## Adding an entity to the UI
 
-1. Define the entity in `@repo/shared-types` with optional `ui` metadata; register in `register-entities.ts`.
-2. Wire API CRUD + Firestore converter (generic server loop picks up registered entities).
-3. Ensure RBAC includes `{entity}.*` permissions in `@repo/rbac` known permissions.
+1. Define the entity in a module (`modules/{name}/`) with optional `ui` metadata; list the module in `apps/platform/app.config.ts`.
+2. Wire a Firestore converter (or use `createEntityConverter()` from `@repo/firestore-converters`).
+3. RBAC permissions are derived automatically from registered entities.
 4. Restart API — catalog, sidebar, and routes update automatically from `GET /api/entities`.
 
 Do **not** add hardcoded entries to the web app. Nav labels come from `ui.nav.label`.

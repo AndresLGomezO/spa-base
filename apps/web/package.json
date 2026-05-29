@@ -21,12 +21,13 @@
     "cypress:open": "cypress open"
   },
   "dependencies": {
+    "@app/platform": "workspace:*",
     "@repo/theme": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/entities": "workspace:*",
+    "@repo/modules": "workspace:*",
     "@repo/query-engine": "workspace:*",
     "@repo/ui-builder": "workspace:*",
-    "@repo/shared-types": "workspace:*",
     "@react-router/node": "catalog:",
     "firebase": "catalog:",
     "isbot": "catalog:",

@@ -15,10 +15,12 @@
   },
   "dependencies": {
     "@fastify/cors": "catalog:",
+    "@app/platform": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/entity-relations": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",
+    "@repo/modules": "workspace:*",
     "@repo/query-engine": "workspace:*",
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",

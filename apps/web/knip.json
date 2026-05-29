@@ -1,8 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": [
+    "@app/platform",
     "@repo/entities",
     "@repo/eslint-config",
+    "@repo/modules",
     "@repo/query-engine",
     "@repo/shared-types",
     "@repo/theme",

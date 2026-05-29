@@ -10,13 +10,15 @@ Registry-driven entity UI for the web app. Entity definitions (including optiona
 
 ```mermaid
 flowchart LR
-  Registry["register-entities.ts\norganization + project seeds"]
-  API["GET /api/entities"]
+  Modules["modules/core + extensions\ndefineModule()"]
+  Bootstrap["bootstrapPlatformApp()"]
+  API["GET /api/entities\n+ UI extension merge"]
   Catalog["EntityCatalogProvider\nuseEntityCatalog()"]
   Builder["@repo/ui-builder\nViewEngine / FormEngine"]
-  Web["EntityTable / EntityForm\nRelationPicker"]
+  Web["EntityTable / EntityForm\nfield + view registries"]
 
-  Registry --> API
+  Modules --> Bootstrap
+  Bootstrap --> API
   API --> Catalog
   Catalog --> Builder
   Builder --> Web
@@ -27,7 +29,8 @@ flowchart LR
 | --- | --- | --- |
 | Definition | `@repo/entities` | `EntityUIConfig`, validation, default UI fallback |
 | Serialization | `serializeEntityDefinition()` | Strips Zod; exposes fields + `ui` to clients |
-| Catalog API | `apps/api/src/entities/list-entities.route.ts` | Auth + `*.read` gate; filters by entity read permission |
+| Catalog API | `apps/api/src/entities/list-entities.route.ts` | Auth + `*.read` gate; merges module UI extensions |
+| Web registries | `field-component-registry.tsx`, `view-component-registry.tsx` | React component lookup for custom field/view types |
 | Interpretation | `@repo/ui-builder` | Columns, forms, filters, query config, permissions |
 | Web | `apps/web/app/components/entity/` | React components + component registry |
 | Data | `useEntity` + `api-client` | List reads via Query Engine `?query=` JSON |
@@ -140,13 +143,34 @@ Pure interpretation helpers (no React):
 
 ### Extending components
 
-Register overrides in `apps/web/app/components/entity/component-registry.tsx`:
+**Built-in field types** (`input`, `number`, `toggle`, `date`, `relation`) render without registration.
+
+**Custom field components** — register in the web field registry during `bootstrapWebPlatform()`:
 
 ```ts
-registerComponent("custom-widget", CustomWidget);
+// apps/web/app/platform/bootstrap.ts
+registerFieldComponent("BadgeField", BadgeField);
 ```
 
-Map field metadata `component: "custom-widget"` after registering the key.
+Modules declare metadata ids in `defineModule({ ui: { components: { badge: "BadgeField" } } })`. Map field metadata `component: "badge"` — `EntityField` resolves via `@repo/ui-builder` → web registry → built-in fallback.
+
+**Custom view types** — register in `view-component-registry.tsx` and reference `type` in entity or module UI extensions.
+
+**Module UI extensions** — append views and merge field/nav overrides without editing core entity definitions:
+
+```ts
+defineModule({
+  ui: {
+    extend: {
+      organization: {
+        views: [{ type: "table", name: "inventory-context", fields: ["name", "isActive"] }],
+      },
+    },
+  },
+});
+```
+
+Merged server-side in `GET /api/entities` via `mergeUiExtensions()`.
 
 ---
 
@@ -174,10 +198,11 @@ GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","val
 
 | Entity | Relation | Purpose |
 | --- | --- | --- |
-| `organization` | — | Generic tenant-scoped record |
-| `project` | `organizationId` → `organization` | Exercises relation picker + FK filters |
+| `organization` | — | Core module — generic tenant-scoped record |
+| `project` | `organizationId` → `organization` | Core module — relation picker + FK filters |
+| `inventoryItem` | `organizationId` → `organization` | Inventory module — sample extension entity |
 
-These replace the former Customer/Order pilot fixtures. Product domain entities will be added via registry (later: Firestore-published definitions) without rewriting the UI Builder.
+These replace the former Customer/Order pilot fixtures. New entities are added via modules listed in `apps/platform/app.config.ts` without rewriting the UI Builder.
 
 ---
 
@@ -186,4 +211,4 @@ These replace the former Customer/Order pilot fixtures. Product domain entities 
 - [Entity System Guide](./entity-system-guide.md)
 - [Query Engine Guide](./query-engine-guide.md)
 - [Relational Data System Guide](./relational-data-system-guide.md)
-- [Web entity components README](../apps/web/app/components/entity/README.md)
+- [Module Extension Guide](./module-extension-guide.md)

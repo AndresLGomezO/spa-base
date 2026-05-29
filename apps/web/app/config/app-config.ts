@@ -1,4 +1,4 @@
-import { AppEnvSchema, type AppEnv } from "@repo/shared-types";
+type AppEnv = "dev" | "pr" | "prod";
 
 interface FirebaseConfig {
   readonly apiKey: string;
@@ -17,8 +17,10 @@ interface AppConfig {
 }
 
 function normalizeEnvMode(value: string | undefined): AppEnv {
-  const parsed = AppEnvSchema.safeParse(value);
-  return parsed.success ? parsed.data : "dev";
+  if (value === "dev" || value === "pr" || value === "prod") {
+    return value;
+  }
+  return "dev";
 }
 
 function readEnv(name: string, fallback: string): string {

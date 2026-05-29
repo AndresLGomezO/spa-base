@@ -1,0 +1,20 @@
+{
+  "name": "@app/platform",
+  "private": true,
+  "type": "module",
+  "exports": {
+    "./app.config": "./app.config.ts",
+    "./app.config.js": "./app.config.ts",
+    "./bootstrap": "./bootstrap.ts",
+    "./bootstrap.js": "./bootstrap.ts"
+  },
+  "dependencies": {
+    "@modules/core": "workspace:*",
+    "@modules/inventory": "workspace:*",
+    "@repo/modules": "workspace:*"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

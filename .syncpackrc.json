@@ -2,7 +2,7 @@
   "versionGroups": [
     {
       "label": "Ignore internal workspace packages",
-      "dependencies": ["@repo/**"],
+      "dependencies": ["@repo/**", "@app/**", "@modules/**"],
       "isIgnored": true
     },
     {

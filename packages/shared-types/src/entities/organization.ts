@@ -1,4 +1,3 @@
-/** Seed entity: Organization. See src/entities/README.md for the add-entity template. */
 import { defineEntity } from "@repo/entities";
 import { z } from "zod";
 
@@ -43,12 +42,11 @@ export const Organization = defineEntity({
 });
 
 export const ORGANIZATIONS_COLLECTION = Organization.metadata.collection;
+export const ORGANIZATION_PERMISSIONS = Organization.metadata.permissions;
 
 export const organizationSchema = Organization.schema;
 export const organizationCreateSchema = Organization.createSchema;
 export const organizationUpdateSchema = Organization.updateSchema;
-
-export const ORGANIZATION_PERMISSIONS = Organization.metadata.permissions;
 
 export const ORGANIZATION_SCHEMA_VERSION = 1 as const;
 

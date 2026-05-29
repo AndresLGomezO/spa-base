@@ -1,3 +1,4 @@
+import { getEntityConverter as getModuleEntityConverter } from "@repo/modules";
 import {
   organizationConverter,
   projectConverter,
@@ -16,5 +17,7 @@ const SEED_ENTITY_CONVERTERS: Record<string, EntityConverter> = {
 export function getEntityConverter(
   entityName: string,
 ): EntityConverter | undefined {
-  return SEED_ENTITY_CONVERTERS[entityName];
+  return (
+    getModuleEntityConverter(entityName) ?? SEED_ENTITY_CONVERTERS[entityName]
+  );
 }

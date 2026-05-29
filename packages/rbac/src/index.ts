@@ -1,5 +1,6 @@
 export {
   ALL_KNOWN_PERMISSIONS,
+  getAllKnownPermissions,
   type KnownPermission,
 } from "./known-permissions.js";
 export { isPlatformSuperAdmin } from "./platform-role.js";

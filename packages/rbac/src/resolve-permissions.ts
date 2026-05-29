@@ -1,4 +1,4 @@
-import { ALL_KNOWN_PERMISSIONS } from "./known-permissions.js";
+import { getAllKnownPermissions } from "./known-permissions.js";
 import { isPlatformSuperAdmin } from "./platform-role.js";
 import { expandGrants, hasPermission } from "./role-matcher.js";
 import {
@@ -33,7 +33,7 @@ export function resolvePermissions(
   input: ResolvePermissionsInput,
   options?: ResolvePermissionsOptions | readonly string[],
 ): readonly string[] {
-  const { knownPermissions = ALL_KNOWN_PERMISSIONS, roleCatalog = {} } =
+  const { knownPermissions = getAllKnownPermissions(), roleCatalog = {} } =
     normalizeOptions(options);
 
   if (isPlatformSuperAdmin(input.platformRole)) {

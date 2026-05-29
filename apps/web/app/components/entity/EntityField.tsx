@@ -10,6 +10,7 @@ import {
   datetimeLocalValueToIso,
   isoToDatetimeLocalValue,
 } from "./entity-field-utils";
+import { resolveFieldComponent } from "./field-component-registry";
 import { RelationPicker } from "./RelationPicker";
 
 interface EntityFieldProps {
@@ -35,6 +36,21 @@ export function EntityField({
   const inputId = `${entityName}-${fieldName}`;
   const label = fieldUI?.label ?? formatFieldLabel(fieldName, definition);
   const componentId = resolveComponentId(fieldUI?.component, meta.type);
+  const CustomField = resolveFieldComponent(componentId);
+
+  if (CustomField) {
+    return (
+      <CustomField
+        entityName={entityName}
+        fieldName={fieldName}
+        value={value}
+        label={label}
+        required={meta.required}
+        error={error}
+        onChange={onChange}
+      />
+    );
+  }
 
   if (meta.type === "relation" || componentId === "relation") {
     const target = meta.relation?.target;

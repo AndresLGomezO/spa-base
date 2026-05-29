@@ -1,0 +1,20 @@
+{
+  "name": "@modules/core",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./src/index.ts",
+    "./entities/organization": "./src/entities/organization.ts",
+    "./entities/project": "./src/entities/project.ts"
+  },
+  "dependencies": {
+    "@repo/firestore-converters": "workspace:*",
+    "@repo/modules": "workspace:*",
+    "@repo/shared-types": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "catalog:"
+  }
+}

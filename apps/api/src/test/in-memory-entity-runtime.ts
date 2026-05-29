@@ -1,6 +1,8 @@
+import { getAllEntities } from "@repo/entities";
 import type { EntityQueryExecutor } from "@repo/firestore-converters";
-import type { OrganizationRecord, ProjectRecord } from "@repo/shared-types";
 
+import { platformApp } from "@app/platform/app.config.js";
+import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
 import { createInMemoryEntityQueryExecutor } from "../repositories/in-memory-entity-query-executor.js";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 
@@ -26,22 +28,32 @@ export function createInMemoryCrudRuntime(): {
   readonly repositories: Record<
     string,
     ReturnType<
-      typeof createInMemoryEntityRepository<OrganizationRecord | ProjectRecord>
+      typeof createInMemoryEntityRepository<{
+        readonly id: string;
+        readonly tenantId: string;
+      }>
     >
   >;
   readonly queryExecutors: Record<string, EntityQueryExecutor>;
 } {
-  const organization = createInMemoryEntityRuntime<OrganizationRecord>();
-  const project = createInMemoryEntityRuntime<ProjectRecord>();
+  bootstrapPlatformApp(platformApp);
 
-  return {
-    repositories: {
-      organization: organization.repository,
-      project: project.repository,
-    },
-    queryExecutors: {
-      organization: organization.queryExecutor,
-      project: project.queryExecutor,
-    },
-  };
+  const repositories: Record<
+    string,
+    ReturnType<
+      typeof createInMemoryEntityRepository<{
+        readonly id: string;
+        readonly tenantId: string;
+      }>
+    >
+  > = {};
+  const queryExecutors: Record<string, EntityQueryExecutor> = {};
+
+  for (const entity of getAllEntities()) {
+    const runtime = createInMemoryEntityRuntime();
+    repositories[entity.name] = runtime.repository;
+    queryExecutors[entity.name] = runtime.queryExecutor;
+  }
+
+  return { repositories, queryExecutors };
 }

@@ -9,8 +9,8 @@ import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
-import { EntityCardView } from "./EntityCardView";
 import { EntityTable } from "./EntityTable";
+import { resolveViewComponent } from "./view-component-registry";
 
 interface EntityPageProps {
   readonly entityName: EntityName;
@@ -21,6 +21,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
   const activeView = useMemo(() => resolveActiveView(definition), [definition]);
+  const ViewComponent = resolveViewComponent(activeView.type) ?? EntityTable;
   const [queryConfig, setQueryConfig] = useState<QueryConfig>(() => ({
     pagination: { limit: 20 },
   }));
@@ -65,11 +66,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
         </Alert>
       ) : null}
 
-      {activeView.type === "card" ? (
-        <EntityCardView {...listViewProps} />
-      ) : (
-        <EntityTable {...listViewProps} />
-      )}
+      <ViewComponent {...listViewProps} />
 
       <Modal
         open={deleteId !== null}

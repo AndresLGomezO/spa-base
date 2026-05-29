@@ -11,8 +11,9 @@ How the schema-driven entity layer fits into the monorepo and how future workstr
 ```mermaid
 flowchart TB
   subgraph definition [Definition layer]
+    Modules["modules/core + extensions\ndefineModule()"]
     Entities["@repo/entities\ndefineEntity()"]
-    SharedTypes["@repo/shared-types/src/entities/\nOrganization, Project, ..."]
+    SharedTypes["@repo/shared-types\npersisted schemas + re-exports"]
   end
   subgraph persistence [Persistence layer - WS3]
     FC["@repo/firestore-converters"]
@@ -26,6 +27,7 @@ flowchart TB
     Web["apps/web\nEntityTable/Form - WS5"]
   end
   SharedTypes --> Entities
+  Modules --> Entities
   FC --> SharedTypes
   GCP --> FC
   API --> GCP
@@ -39,7 +41,10 @@ flowchart TB
 | Package / path                     | Role                                                              |
 | ---------------------------------- | ----------------------------------------------------------------- |
 | `@repo/entities`                   | Pure `defineEntity()` — Zod schemas, types, metadata, permissions |
-| `@repo/shared-types/src/entities/` | Concrete business entity definitions                              |
+| `@repo/shared-types`               | Persisted schema types; re-exports entity definitions from modules |
+| `@repo/modules`                    | `defineModule`, `defineApp`, registries, dependency resolver     |
+| `@app/platform`                    | Shared app config + `bootstrapPlatformApp()` for API and web     |
+| `modules/core`                     | Seed entities (`organization`, `project`) and converters         |
 | `@repo/firestore-converters`       | Versioned converters + `_schemaVersion` (User pattern)            |
 | `@repo/gcp-firebase`               | Firestore repository implementations                              |
 | `@repo/rbac`                       | Role definitions, permission resolution, wildcard matching        |
@@ -165,28 +170,36 @@ Manual checklist from the ecosystem plan:
 3. **User A (viewer)** on `tenant_dev_1`: list passes; create, edit, and delete blocked.
 4. **User B (editor)** on `tenant_dev_1`: list, create, and edit pass; delete blocked.
 
-`defineApp({ entities: [Customer, Order] })` remains Phase 2; Phase 1 equivalent is `registerEntity()` plus manual route registration (see below).
-
-### Future `defineApp`
+`defineApp({ modules: [coreModule, ...] })` is implemented via `@app/platform`. Bootstrap runs once at API/web startup and registers all module entities into the global registry.
 
 ```ts
-// Planned — not implemented yet
-defineApp({
-  entities: [Customer, Order],
+// apps/platform/app.config.ts
+import { defineApp } from "@repo/modules";
+import { coreModule } from "@modules/core";
+
+export const platformApp = defineApp({
+  modules: [coreModule],
 });
 ```
 
-Use `registerEntity()` from `@repo/entities` today to prototype entity discovery. See entity registry notes in the package README.
+See [Module Extension Guide](./module-extension-guide.md) for adding new modules.
 
 ---
 
 ## Adding a new business entity
 
+**Preferred (module system):**
+
+1. Create or extend a module under `modules/{name}/` with `defineEntity()` — see [Module Extension Guide](./module-extension-guide.md)
+2. Add persisted schema types in `@repo/shared-types` if using a custom converter (or use `createEntityConverter()`)
+3. List the module in `apps/platform/app.config.ts` — CRUD routes, RBAC, and catalog registration happen automatically
+
+**Legacy path (direct registration):**
+
 1. Add `packages/shared-types/src/entities/{entity}.ts` — [template](../packages/shared-types/src/entities/README.md#file-template)
 2. Export from `packages/shared-types/src/index.ts`
 3. Follow [Firestore collections guide](./firestore-collections-guide.md) for converter + repository (WS3)
-4. Register CRUD routes in [`apps/api/src/server.ts`](../apps/api/src/server.ts) — see [CRUD README](../apps/api/src/crud/README.md)
-5. Add dynamic UI routes in `apps/web`
+4. Register via a module or `registerEntity()` at bootstrap
 
 ---
 
@@ -216,4 +229,4 @@ Keep extensions in the field registry and metadata types — avoid changing `def
 - [Firestore collections guide](./firestore-collections-guide.md) — persistence wiring
 - [Relational Data System Guide](./relational-data-system-guide.md) — Phase 2 relations
 - [Query Engine Guide](./query-engine-guide.md) — centralized list/get reads
-- [General Definitions — Phase 1](../Ecosystem%20Plan/v1/General%20Definitions.md) — full platform scope
+- [Module Extension Guide](./module-extension-guide.md) — defineModule, registries, sample inventory module
