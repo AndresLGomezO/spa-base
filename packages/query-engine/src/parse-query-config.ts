@@ -1,0 +1,334 @@
+import {
+  SYSTEM_FIELD_KEYS,
+  usesForeignKeyStorage,
+  type DefinedEntity,
+  type FieldDefinitions,
+  type NormalizedFieldMeta,
+  type Phase1FieldType,
+} from "@repo/entities";
+import type {
+  FilterOperator,
+  NormalizedEntityQuery,
+  NormalizedFilter,
+  NormalizedSort,
+} from "@repo/firestore-converters";
+import { z } from "zod";
+
+import { QueryError, QueryErrorCode } from "./errors.js";
+import type { Filter, ListQueryInput, QueryConfig, Sort } from "./types.js";
+
+const DEFAULT_LIMIT = 20;
+const MAX_LIMIT = 100;
+
+const filterOperatorSchema = z.enum([
+  "==",
+  "!=",
+  ">",
+  "<",
+  ">=",
+  "<=",
+  "in",
+  "array-contains",
+]);
+
+const filterSchema = z
+  .object({
+    field: z.string().trim().min(1),
+    operator: filterOperatorSchema,
+    value: z.unknown(),
+  })
+  .strict();
+
+const sortSchema = z
+  .object({
+    field: z.string().trim().min(1),
+    direction: z.enum(["asc", "desc"]),
+  })
+  .strict();
+
+const queryConfigSchema = z
+  .object({
+    filter: z.array(filterSchema).optional(),
+    sort: z.array(sortSchema).max(1).optional(),
+    pagination: z
+      .object({
+        limit: z.number().int().positive().max(MAX_LIMIT),
+        cursor: z.string().trim().min(1).optional(),
+      })
+      .strict()
+      .optional(),
+    select: z.array(z.string().trim().min(1)).optional(),
+  })
+  .strict();
+
+const QUERYABLE_SYSTEM_FIELDS = new Set<string>(
+  SYSTEM_FIELD_KEYS.filter((key) => key !== "tenantId" && key !== "updatedAt"),
+);
+
+const INEQUALITY_OPERATORS = new Set<FilterOperator>([
+  "!=",
+  ">",
+  "<",
+  ">=",
+  "<=",
+]);
+
+const OPERATORS_BY_FIELD_TYPE: Record<
+  Phase1FieldType,
+  readonly FilterOperator[]
+> = {
+  string: ["==", "!=", "in"],
+  number: ["==", "!=", "<", "<=", ">", ">=", "in"],
+  boolean: ["=="],
+  date: ["==", "!=", "<", "<=", ">", ">="],
+  relation: ["==", "in"],
+};
+
+type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
+
+function normalizeLimit(limit: number | undefined): number {
+  if (limit === undefined) {
+    return DEFAULT_LIMIT;
+  }
+  if (!Number.isFinite(limit) || limit < 1) {
+    return DEFAULT_LIMIT;
+  }
+  return Math.min(Math.floor(limit), MAX_LIMIT);
+}
+
+function getFieldMeta(
+  entity: AnyDefinedEntity,
+  fieldName: string,
+): NormalizedFieldMeta | null {
+  if (QUERYABLE_SYSTEM_FIELDS.has(fieldName)) {
+    if (fieldName === "id") {
+      return { type: "string", required: true, optional: false };
+    }
+    if (fieldName === "createdAt") {
+      return { type: "date", required: true, optional: false };
+    }
+    return null;
+  }
+
+  const meta = entity.metadata.fields[fieldName];
+  return meta ?? null;
+}
+
+function resolveFieldType(
+  entity: AnyDefinedEntity,
+  fieldName: string,
+): Phase1FieldType | null {
+  const meta = getFieldMeta(entity, fieldName);
+  if (!meta) {
+    return null;
+  }
+
+  if (meta.type === "relation") {
+    if (!meta.relation || !usesForeignKeyStorage(meta.relation)) {
+      return null;
+    }
+    return "relation";
+  }
+
+  return meta.type;
+}
+
+function validateFilterValue(operator: FilterOperator, value: unknown): void {
+  if (operator === "in") {
+    if (!Array.isArray(value) || value.length === 0) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        'Operator "in" requires a non-empty array value.',
+      );
+    }
+    return;
+  }
+
+  if (operator === "array-contains") {
+    if (
+      typeof value !== "string" &&
+      typeof value !== "number" &&
+      typeof value !== "boolean"
+    ) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        'Operator "array-contains" requires a scalar value.',
+      );
+    }
+  }
+}
+
+function validateFilter(
+  entity: AnyDefinedEntity,
+  filter: Filter,
+): NormalizedFilter {
+  if (filter.field === "tenantId") {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      'Filtering on "tenantId" is not allowed.',
+    );
+  }
+
+  const fieldType = resolveFieldType(entity, filter.field);
+  if (!fieldType) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      `Unknown or non-queryable field "${filter.field}".`,
+    );
+  }
+
+  const allowedOperators = OPERATORS_BY_FIELD_TYPE[fieldType];
+  if (!allowedOperators.includes(filter.operator)) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      `Operator "${filter.operator}" is not allowed for field "${filter.field}".`,
+    );
+  }
+
+  validateFilterValue(filter.operator, filter.value);
+
+  return {
+    field: filter.field,
+    operator: filter.operator,
+    value: filter.value,
+  };
+}
+
+function validateSort(entity: AnyDefinedEntity, sort: Sort): NormalizedSort {
+  if (sort.field === "tenantId") {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      'Sorting on "tenantId" is not allowed.',
+    );
+  }
+
+  if (resolveFieldType(entity, sort.field) === null) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      `Unknown or non-queryable sort field "${sort.field}".`,
+    );
+  }
+
+  return {
+    field: sort.field,
+    direction: sort.direction,
+  };
+}
+
+function validateSelect(
+  entity: AnyDefinedEntity,
+  select: readonly string[],
+): readonly string[] {
+  for (const fieldName of select) {
+    if (fieldName === "tenantId") {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        'Selecting "tenantId" is not allowed.',
+      );
+    }
+
+    if (resolveFieldType(entity, fieldName) === null) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        `Unknown or non-queryable select field "${fieldName}".`,
+      );
+    }
+  }
+
+  return select;
+}
+
+function enforceFirestoreConstraints(
+  filters: readonly NormalizedFilter[],
+  sort: NormalizedSort | null,
+): NormalizedSort {
+  const inequalityFilters = filters.filter((filter) =>
+    INEQUALITY_OPERATORS.has(filter.operator),
+  );
+
+  if (inequalityFilters.length > 1) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_UNSUPPORTED,
+      "Only one inequality filter is supported per query.",
+    );
+  }
+
+  const inequalityFilter = inequalityFilters[0];
+  if (!inequalityFilter) {
+    return sort ?? { field: "id", direction: "asc" };
+  }
+
+  const primarySort = sort ?? {
+    field: inequalityFilter.field,
+    direction: "asc" as const,
+  };
+
+  if (primarySort.field !== inequalityFilter.field) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_UNSUPPORTED,
+      "When using an inequality filter, the primary sort field must match the filtered field.",
+    );
+  }
+
+  return primarySort;
+}
+
+export function parseListQueryInput(input: ListQueryInput): QueryConfig {
+  let config: QueryConfig = {};
+
+  if (input.query) {
+    let parsedJson: unknown;
+    try {
+      parsedJson = JSON.parse(input.query);
+    } catch {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        "Query parameter must be valid JSON.",
+      );
+    }
+
+    const parsedConfig = queryConfigSchema.safeParse(parsedJson);
+    if (!parsedConfig.success) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        "Invalid query configuration.",
+      );
+    }
+
+    config = parsedConfig.data;
+  }
+
+  const limit = normalizeLimit(config.pagination?.limit ?? input.limit);
+  const cursor = config.pagination?.cursor ?? input.cursor;
+
+  return {
+    ...config,
+    pagination: {
+      limit,
+      ...(cursor ? { cursor } : {}),
+    },
+  };
+}
+
+export function normalizeEntityQuery(
+  entity: AnyDefinedEntity,
+  config: QueryConfig,
+): NormalizedEntityQuery {
+  const filters = (config.filter ?? []).map((filter) =>
+    validateFilter(entity, filter),
+  );
+  const sortEntry = config.sort?.[0] ?? null;
+  const sort = sortEntry ? validateSort(entity, sortEntry) : null;
+  const primarySort = enforceFirestoreConstraints(filters, sort);
+  const select = config.select
+    ? validateSelect(entity, config.select)
+    : undefined;
+
+  return {
+    filters,
+    sort: primarySort,
+    limit: normalizeLimit(config.pagination?.limit),
+    ...(config.pagination?.cursor ? { cursor: config.pagination.cursor } : {}),
+    ...(select ? { select } : {}),
+  };
+}

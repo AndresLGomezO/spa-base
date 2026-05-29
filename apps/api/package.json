@@ -19,6 +19,7 @@
     "@repo/entity-relations": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",
+    "@repo/query-engine": "workspace:*",
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "fastify": "catalog:",
