@@ -24,7 +24,7 @@
     "waiting": "Waiting...",
     "signInGoogle": "Sign in with Google",
     "googleFailed": "Google login failed.",
-    "rightsReserved": "© {{year}} Project Base. All rights reserved."
+    "rightsReserved": "© {{year}} Entity System - ESP. All rights reserved."
   },
   "home": {
     "title": "Home",

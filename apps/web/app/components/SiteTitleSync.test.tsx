@@ -61,7 +61,7 @@ describe("getPageTitleFromMatches", () => {
   it("returns the deepest route title", () => {
     expect(
       getPageTitleFromMatches([
-        { meta: [{ title: "Project Base" }] },
+        { meta: [{ title: "Entity System - ESP" }] },
         { meta: [{ title: "Home" }] },
       ] as never),
     ).toBe("Home");

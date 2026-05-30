@@ -24,7 +24,7 @@
     "waiting": "Esperando...",
     "signInGoogle": "Iniciar sesión con Google",
     "googleFailed": "Error al iniciar sesión con Google.",
-    "rightsReserved": "© {{year}} Project Base. Todos los derechos reservados."
+    "rightsReserved": "© {{year}} Entity System - ESP. Todos los derechos reservados."
   },
   "home": {
     "title": "Inicio",

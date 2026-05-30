@@ -17,6 +17,7 @@ import {
 } from "@repo/ui";
 
 import { useAuth } from "../../auth/AuthContext";
+import { DEFAULT_SITE_NAME } from "../SiteTitleSync";
 import { NavMain } from "./NavMain";
 import { SidebarUser } from "./SidebarUser";
 import { TenantSwitcher } from "../TenantSwitcher";
@@ -24,7 +25,7 @@ import { TenantSwitcher } from "../TenantSwitcher";
 function SidebarBrand() {
   const { activeTenantName, tenantAppearance } = useAuth();
   const logoUrl = tenantAppearance?.logoUrl;
-  const title = activeTenantName ?? "Project Base";
+  const title = activeTenantName ?? DEFAULT_SITE_NAME;
 
   return (
     <Link

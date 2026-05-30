@@ -1,4 +1,4 @@
-# project-base
+# Entity System - ESP
 
 Multi-tenant ecosystem builder: schema-driven entities, auto-generated CRUD APIs, RBAC, dynamic UI, optional modules, and hooks.
 

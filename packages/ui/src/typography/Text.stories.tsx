@@ -30,6 +30,6 @@ export const Muted: Story = {
 export const Caption: Story = {
   args: {
     variant: "caption",
-    children: "© 2026 Project Base. All rights reserved.",
+    children: "© 2026 Entity System - ESP. All rights reserved.",
   },
 };

@@ -3,7 +3,7 @@ import { useMatches, type UIMatch } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
 
-export const DEFAULT_SITE_NAME = "Project Base";
+export const DEFAULT_SITE_NAME = "Entity System - ESP";
 
 type MetaDescriptor = {
   readonly title?: string;
