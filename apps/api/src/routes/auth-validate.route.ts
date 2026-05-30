@@ -1,6 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
+import type { TenantUserInviteRepository } from "@repo/firestore-converters";
 import {
   createFirestoreAdminRegisteredUserRepository,
   getFirebaseUserRecord,
@@ -10,6 +11,7 @@ import {
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 
+import { applyPendingUserInvites } from "../admin/tenant-user-service.js";
 import { extractBearerToken } from "../auth/extract-bearer-token.js";
 import { buildAuthSessionContext } from "../auth/build-auth-session-context.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
@@ -22,6 +24,7 @@ const headerSchema = z.object({
 export const authValidateRoute: FastifyPluginAsync<{
   firebaseAdminConfig: FirebaseAdminConfig;
   permissionDeps: LoadRequestPermissionsDeps;
+  tenantUserInviteRepository: TenantUserInviteRepository;
 }> = async (fastify, opts) => {
   const registeredUserRepository = createFirestoreAdminRegisteredUserRepository(
     opts.firebaseAdminConfig,
@@ -63,6 +66,12 @@ export const authValidateRoute: FastifyPluginAsync<{
         mapFirebaseUserRecordToAuthUserProjection(authUserRecord),
       );
 
+      const userWithInvites = await applyPendingUserInvites({
+        registeredUserRepository,
+        tenantUserInviteRepository: opts.tenantUserInviteRepository,
+        user: upsertResult.user,
+      });
+
       const tenantClaim = decodedIdToken.tenantId;
       const jwtTenantId =
         typeof tenantClaim === "string" ? tenantClaim.trim() : "";
@@ -70,7 +79,7 @@ export const authValidateRoute: FastifyPluginAsync<{
       const roleCatalog = await opts.permissionDeps.getRoleCatalog(jwtTenantId);
 
       const session = await buildAuthSessionContext({
-        registeredUser: upsertResult.user,
+        registeredUser: userWithInvites,
         created: upsertResult.created,
         jwtTenantId,
         roleCatalog,
@@ -86,8 +95,11 @@ export const authValidateRoute: FastifyPluginAsync<{
           permissions: session.permissions,
           isSuperAdmin: session.isSuperAdmin,
           tenantId: session.tenantId,
+          tenantRoleNames: session.tenantRoleNames,
           availableTenants: session.availableTenants,
           tenantOptions: session.tenantOptions,
+          activeTenantName: session.activeTenantName,
+          tenantAppearance: session.tenantAppearance,
         },
         appCheck: {
           appId: decodedAppCheck.appId,

@@ -13,7 +13,7 @@ import {
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
-import { requireTargetTenant } from "../auth/resolve-target-tenant-id.js";
+import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
@@ -61,11 +61,7 @@ export async function registerEntityDefinitionRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedQuery.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       await options.entityRuntime.loadTenantDefinitions(tenantId);
@@ -94,11 +90,7 @@ export async function registerEntityDefinitionRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedQuery.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       const item =
@@ -138,11 +130,7 @@ export async function registerEntityDefinitionRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedBody.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       if (parsedBody.data.tenantId && request.ctx?.isSuperAdmin !== true) {
@@ -226,11 +214,7 @@ export async function registerEntityDefinitionRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedQuery.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       const current =

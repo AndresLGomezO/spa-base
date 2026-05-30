@@ -14,3 +14,8 @@ export function bootstrapPlatformApp(app: AppDefinition): void {
 export function resetPlatformBootstrapForTests(): void {
   bootstrapped = false;
 }
+
+/** Test helper — prevent buildServer from re-loading the default platform app. */
+export function markPlatformBootstrappedForTests(): void {
+  bootstrapped = true;
+}

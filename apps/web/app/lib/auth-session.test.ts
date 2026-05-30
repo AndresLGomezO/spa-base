@@ -28,7 +28,7 @@ describe("syncAuthSession", () => {
         user: {
           uid: "user_123",
           email: "demo@example.com",
-          permissions: ["organization.read"],
+          permissions: ["widget.read"],
           isSuperAdmin: false,
           tenantId: "tenant_a",
           availableTenants: ["tenant_a", "tenant_b"],
@@ -51,7 +51,7 @@ describe("syncAuthSession", () => {
       user: {
         uid: "user_123",
         email: "demo@example.com",
-        permissions: ["organization.read"],
+        permissions: ["widget.read"],
         isSuperAdmin: false,
         tenantId: "tenant_a",
         availableTenants: ["tenant_a", "tenant_b"],
@@ -59,6 +59,9 @@ describe("syncAuthSession", () => {
           { id: "tenant_a", name: "Tenant A" },
           { id: "tenant_b", name: "Tenant B" },
         ],
+        tenantRoleNames: [],
+        activeTenantName: null,
+        tenantAppearance: null,
       },
     });
     expect(fetchMock).toHaveBeenCalledWith(
@@ -105,7 +108,7 @@ describe("syncAuthSession", () => {
           { id: "tenant_a", name: "Tenant A" },
           { id: "tenant_b", name: "Tenant B" },
         ],
-        permissions: ["organization.read", "organization.create"],
+        permissions: ["widget.read", "widget.create"],
         isSuperAdmin: false,
       }),
     });
@@ -124,8 +127,11 @@ describe("syncAuthSession", () => {
         { id: "tenant_a", name: "Tenant A" },
         { id: "tenant_b", name: "Tenant B" },
       ],
-      permissions: ["organization.read", "organization.create"],
+      permissions: ["widget.read", "widget.create"],
       isSuperAdmin: false,
+      tenantRoleNames: [],
+      activeTenantName: null,
+      tenantAppearance: null,
     });
     expect(fetchMock).toHaveBeenCalledWith(
       new URL("/auth/select-tenant", "http://127.0.0.1:3000"),

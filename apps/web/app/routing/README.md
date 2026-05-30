@@ -4,17 +4,29 @@ Centralized route guards and navigation helpers for the web app.
 
 ## Guard stack
 
-| Guard             | Used in                     | Behavior                                                                                                          |
-| ----------------- | --------------------------- | ----------------------------------------------------------------------------------------------------------------- |
-| `RequireAuth`     | Auth-only + private layouts | Redirects to `/login` when unauthenticated                                                                        |
-| `RequireTenant`   | Private layout              | Redirects to `/select-tenant` when JWT has no `tenantId`; superadmin with zero tenants may access platform routes |
-| `PermissionGuard` | Entity routes               | Shows forbidden UI when permission missing                                                                        |
+| Guard               | Used in           | Behavior                                                                                        |
+| ------------------- | ----------------- | ----------------------------------------------------------------------------------------------- |
+| `RequireAuth`       | Private layout    | Redirects to `/login` when unauthenticated                                                      |
+| `RequireTenant`     | Tenant layout     | Superadmin without JWT `tenantId` → `/select-tenant`; members show loading while auto-bind runs |
+| `RequireSuperAdmin` | Superadmin layout | Forbidden UI for non-superadmins (Platform routes)                                              |
+| `PermissionGuard`   | Entity routes     | Shows forbidden UI when permission missing                                                      |
 
 Layout hierarchy in [`routes.ts`](../routes.ts):
 
 1. `/login` — public
-2. `auth-only-layout` — `RequireAuth` only (`/select-tenant`, `/settings/admin`)
-3. `private-layout` — `RequireAuth` + `RequireTenant` (home, entities, settings)
+2. `private-layout` — `RequireAuth` + sidebar for all authenticated routes
+3. `superadmin-layout` — `RequireSuperAdmin` (`/settings/tenant`, `/settings/appearance`, `/platform/create-tenant`)
+4. `tenant-layout` — `RequireTenant` (home, `/app/:entity` only)
+5. Settings routes (`/settings/*`) — no tenant guard; all users operate on JWT `tenantId`
+
+## Sidebar groups
+
+[`useAccessibleNavItems.ts`](useAccessibleNavItems.ts):
+
+- **Home** — `/`
+- **Data Models** — dynamic entity links from catalog (`/app/:entity`)
+- **Settings** — user management, roles, model builder, automation
+- **Platform** (superadmin) — current tenant, appearance
 
 ## Entity routes
 
@@ -26,16 +38,8 @@ Entity pages use parametric routes from [`entity-routes.ts`](entity-routes.ts):
 
 Unknown `:entity` values render the entity not-found page.
 
-## Sidebar navigation
-
-[`useAccessibleNavItems.ts`](useAccessibleNavItems.ts) builds nav items from [`entity-catalog.ts`](../entities/entity-catalog.ts), filtering entities by `{entity}.read` permission.
-
-## Adding a new entity
-
-1. Register in [`entity-catalog.ts`](../entities/entity-catalog.ts)
-2. Add `nav.{entity}` i18n keys (en + es)
-3. No route changes needed — parametric routes pick up new catalog entries automatically
-
 ## Tenant switching
 
-Users with multiple tenants in Firestore `users/{uid}.tenants` can select a tenant at `/select-tenant` or via the sidebar `TenantSwitcher`. Selection calls `POST /auth/select-tenant`, refreshes the ID token, and re-syncs permissions.
+**Superadmins** choose a tenant at `/select-tenant` or via the sidebar `TenantSwitcher`. Selection calls `POST /auth/select-tenant`, refreshes the ID token, and re-syncs permissions, `tenantRoleNames`, and tenant branding. Superadmins create new tenants from the switcher or `/platform/create-tenant`.
+
+**Tenant members** do not see tenant selection UI. On sign-in, the first available assigned tenant is auto-bound via `POST /auth/select-tenant`. The active tenant name appears in the user profile popover.

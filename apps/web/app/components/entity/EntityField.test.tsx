@@ -9,7 +9,7 @@ describe("EntityField", () => {
     render(
       <TestEntityCatalogProvider>
         <EntityField
-          entityName="organization"
+          entityName="widget"
           fieldName="name"
           value="Jane"
           onChange={vi.fn()}
@@ -26,7 +26,7 @@ describe("EntityField", () => {
     render(
       <TestEntityCatalogProvider>
         <EntityField
-          entityName="organization"
+          entityName="widget"
           fieldName="isActive"
           value={false}
           onChange={onChange}

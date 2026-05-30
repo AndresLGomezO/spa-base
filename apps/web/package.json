@@ -29,6 +29,7 @@
     "@repo/entities": "workspace:*",
     "@repo/modules": "workspace:*",
     "@repo/query-engine": "workspace:*",
+    "@repo/shared-types": "workspace:*",
     "@repo/ui-builder": "workspace:*",
     "@react-router/node": "catalog:",
     "firebase": "catalog:",

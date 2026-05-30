@@ -79,7 +79,7 @@ export function RoleManager({
     setError(null);
 
     try {
-      const result = await listRoles({ tenantId });
+      const result = await listRoles();
       setItems(result.items);
     } catch (loadError) {
       setError(
@@ -168,7 +168,6 @@ export function RoleManager({
 
         {isCreating || selectedRole ? (
           <RoleEditor
-            tenantId={tenantId}
             role={isCreating ? null : selectedRole}
             knownGrants={knownGrants}
             canCreate={canCreate}

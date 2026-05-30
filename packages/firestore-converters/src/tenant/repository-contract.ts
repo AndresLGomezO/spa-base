@@ -1,4 +1,8 @@
-import type { Tenant, TenantStatus } from "@repo/shared-types";
+import type {
+  Tenant,
+  TenantAppearance,
+  TenantStatus,
+} from "@repo/shared-types";
 
 export interface CreateTenantInput {
   readonly id?: string;
@@ -9,6 +13,7 @@ export interface CreateTenantInput {
 export interface UpdateTenantInput {
   readonly name?: string;
   readonly status?: TenantStatus;
+  readonly appearance?: TenantAppearance | null;
 }
 
 export interface TenantRepository {

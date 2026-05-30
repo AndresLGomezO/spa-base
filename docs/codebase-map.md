@@ -13,10 +13,8 @@ project-base/
 ├── apps/
 │   ├── api/                 Fastify HTTP server
 │   ├── web/                 React Router 7 SPA
-│   └── platform/            defineApp + module list
-├── modules/
-│   ├── core/                customer, organization, project
-│   └── inventory/           inventoryItem + module route
+│   └── platform/            defineApp (empty modules — dynamic entities only)
+├── modules/                 (reserved for optional extension modules)
 ├── packages/                Shared libraries (see below)
 ├── docs/                    Guides + handoff set
 └── Ecosystem Plan/          Original planning specs
@@ -152,7 +150,9 @@ project-base/
 
 | File | Purpose |
 |------|---------|
-| [apps/web/app/components/admin/AdminOverview.tsx](../apps/web/app/components/admin/AdminOverview.tsx) | Dashboard counts |
+| [apps/web/app/components/settings/UserManagement.tsx](../apps/web/app/components/settings/UserManagement.tsx) | Tenant user invites + role assignment |
+| [apps/web/app/components/platform/CurrentTenantPanel.tsx](../apps/web/app/components/platform/CurrentTenantPanel.tsx) | Active tenant management |
+| [apps/web/app/components/platform/TenantAppearanceEditor.tsx](../apps/web/app/components/platform/TenantAppearanceEditor.tsx) | Tenant branding editor |
 | [apps/web/app/lib/admin-client.ts](../apps/web/app/lib/admin-client.ts) | Admin API client |
 | [apps/api/src/routes/admin.routes.ts](../apps/api/src/routes/admin.routes.ts) | `/admin/*` superadmin routes |
 | [apps/web/app/routes/settings/](../apps/web/app/routes/settings/) | Control Plane pages |

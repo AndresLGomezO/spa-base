@@ -23,4 +23,8 @@ export {
   createFirestoreAdminRegisteredUserRepository,
   mapFirebaseUserRecordToAuthUserProjection,
 } from "./firestore-admin-user-repository.js";
-export { TENANTS_COLLECTION } from "@repo/shared-types";
+export {
+  createFirestoreAdminTenantUserInviteRepository,
+  TENANT_USER_INVITES_SUBCOLLECTION,
+} from "./firestore-admin-tenant-user-invite-repository.js";
+export { uploadTenantLogo } from "./tenant-storage.js";

@@ -13,8 +13,6 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
 COPY apps/api/package.json ./apps/api/
 COPY apps/platform/package.json ./apps/platform/
-COPY modules/core/package.json ./modules/core/
-COPY modules/inventory/package.json ./modules/inventory/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/entity-relations/package.json ./packages/entity-relations/

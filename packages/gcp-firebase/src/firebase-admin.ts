@@ -11,6 +11,8 @@ export interface FirebaseAdminConfig {
   readonly projectId: string;
   readonly authEmulatorHost?: string;
   readonly firestoreEmulatorHost?: string;
+  readonly storageEmulatorHost?: string;
+  readonly storageBucket?: string;
   readonly serviceAccountJson?: string;
 }
 
@@ -31,17 +33,27 @@ export function initializeFirebaseAdmin(config: FirebaseAdminConfig): App {
   if (config.firestoreEmulatorHost) {
     process.env.FIRESTORE_EMULATOR_HOST = config.firestoreEmulatorHost;
   }
+  if (config.storageEmulatorHost) {
+    process.env.FIREBASE_STORAGE_EMULATOR_HOST = config.storageEmulatorHost;
+  }
 
   const existing = getApps()[0];
   if (existing) return existing;
 
   const credential = resolveCredential(config.serviceAccountJson);
+  const storageBucket =
+    config.storageBucket?.trim() || `${config.projectId}.appspot.com`;
   const options: AppOptions = {
     projectId: config.projectId,
+    storageBucket,
     ...(credential ? { credential } : {}),
   };
 
   return initializeApp(options);
+}
+
+export function getFirebaseAdminApp(config: FirebaseAdminConfig): App {
+  return initializeFirebaseAdmin(config);
 }
 
 let firestoreSettingsApplied = false;

@@ -61,11 +61,11 @@ describe("apiRequest", () => {
       }),
     });
 
-    const result = await listEntity("customer");
+    const result = await listEntity("widget");
 
     expect(result).toEqual({ items: [], nextCursor: null });
     expect(fetchMock).toHaveBeenCalledWith(
-      new URL("/api/customer", "http://127.0.0.1:3000"),
+      new URL("/api/widget", "http://127.0.0.1:3000"),
       expect.objectContaining({
         method: "GET",
         headers: expect.objectContaining({
@@ -91,7 +91,7 @@ describe("apiRequest", () => {
     });
 
     await expect(
-      createEntity("customer", { email: "invalid@example.com" }),
+      createEntity("widget", { email: "invalid@example.com" }),
     ).rejects.toMatchObject({
       name: "ApiClientError",
       code: "VALIDATION_ERROR",
@@ -109,12 +109,12 @@ describe("apiRequest", () => {
       }),
     });
 
-    await apiRequest("/api/customer", {
+    await apiRequest("/api/widget", {
       query: { limit: 10, cursor: "abc" },
     });
 
     expect(fetchMock.mock.calls[0]?.[0]?.toString()).toBe(
-      "http://127.0.0.1:3000/api/customer?limit=10&cursor=abc",
+      "http://127.0.0.1:3000/api/widget?limit=10&cursor=abc",
     );
   });
 });

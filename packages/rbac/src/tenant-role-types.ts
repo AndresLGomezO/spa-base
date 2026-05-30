@@ -8,6 +8,13 @@ export const ROLE_PERMISSIONS = [
   "role.update",
 ] as const;
 
+export const TENANT_USER_PERMISSIONS = [
+  "tenantUser.read",
+  "tenantUser.create",
+  "tenantUser.update",
+  "tenantUser.remove",
+] as const;
+
 export const fieldAccessSchema = z.enum(["read", "write", "none"]);
 export type FieldAccess = z.infer<typeof fieldAccessSchema>;
 

@@ -72,6 +72,9 @@ catalogs:
     clsx:
       specifier: ^2.1.1
       version: 2.1.1
+    culori:
+      specifier: ^4.0.2
+      version: 4.0.2
     cypress:
       specifier: ^14.5.0
       version: 14.5.4
@@ -300,12 +303,6 @@ importers:
 
   apps/platform:
     dependencies:
-      '@modules/core':
-        specifier: workspace:*
-        version: link:../../modules/core
-      '@modules/inventory':
-        specifier: workspace:*
-        version: link:../../modules/inventory
       '@repo/modules':
         specifier: workspace:*
         version: link:../../packages/modules
@@ -334,6 +331,9 @@ importers:
       '@repo/query-engine':
         specifier: workspace:*
         version: link:../../packages/query-engine
+      '@repo/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@repo/theme':
         specifier: workspace:*
         version: link:../../packages/theme
@@ -440,47 +440,6 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
-
-  modules/core:
-    dependencies:
-      '@repo/firestore-converters':
-        specifier: workspace:*
-        version: link:../../packages/firestore-converters
-      '@repo/modules':
-        specifier: workspace:*
-        version: link:../../packages/modules
-      '@repo/shared-types':
-        specifier: workspace:*
-        version: link:../../packages/shared-types
-      zod:
-        specifier: 'catalog:'
-        version: 4.4.3
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
-
-  modules/inventory:
-    dependencies:
-      '@repo/entities':
-        specifier: workspace:*
-        version: link:../../packages/entities
-      '@repo/firestore-converters':
-        specifier: workspace:*
-        version: link:../../packages/firestore-converters
-      '@repo/modules':
-        specifier: workspace:*
-        version: link:../../packages/modules
-    devDependencies:
-      '@repo/typescript-config':
-        specifier: workspace:*
-        version: link:../../packages/typescript-config
-      typescript:
-        specifier: 'catalog:'
-        version: 5.9.3
 
   packages/dynamic-entities:
     dependencies:
@@ -869,6 +828,9 @@ importers:
       clsx:
         specifier: 'catalog:'
         version: 2.1.1
+      culori:
+        specifier: 'catalog:'
+        version: 4.0.2
       tailwind-merge:
         specifier: 'catalog:'
         version: 3.6.0
@@ -891,6 +853,9 @@ importers:
       typescript:
         specifier: 'catalog:'
         version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
 
   packages/typescript-config:
     devDependencies:
@@ -3742,6 +3707,10 @@ packages:
 
   csv-parse@5.6.0:
     resolution: {integrity: sha512-l3nz3euub2QMg5ouu5U09Ew9Wf6/wQ8I++ch1loQ0ljmzhmfZYrH9fflS22i/PQEvsPvxCwxgz5q7UB8K1JO4Q==}
+
+  culori@4.0.2:
+    resolution: {integrity: sha512-1+BhOB8ahCn4O0cep0Sh2l9KCOfOdY+BXJnKMHFFzDEouSr/el18QwXEMRlOj9UY5nCeA8UN3a/82rUWRBeyBw==}
+    engines: {node: ^12.20.0 || ^14.13.1 || >=16.0.0}
 
   cypress@14.5.4:
     resolution: {integrity: sha512-0Dhm4qc9VatOcI1GiFGVt8osgpPdqJLHzRwcAB5MSD/CAAts3oybvPUPawHyvJZUd8osADqZe/xzMsZ8sDTjXw==}
@@ -10290,6 +10259,8 @@ snapshots:
   csstype@3.2.3: {}
 
   csv-parse@5.6.0: {}
+
+  culori@4.0.2: {}
 
   cypress@14.5.4:
     dependencies:

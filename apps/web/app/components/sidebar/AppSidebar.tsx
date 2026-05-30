@@ -16,9 +16,42 @@ import {
   SidebarTrigger,
 } from "@repo/ui";
 
+import { useAuth } from "../../auth/AuthContext";
 import { NavMain } from "./NavMain";
 import { SidebarUser } from "./SidebarUser";
 import { TenantSwitcher } from "../TenantSwitcher";
+
+function SidebarBrand() {
+  const { activeTenantName, tenantAppearance } = useAuth();
+  const logoUrl = tenantAppearance?.logoUrl;
+  const title = activeTenantName ?? "Project Base";
+
+  return (
+    <Link
+      to="/"
+      className={cn(
+        "hover:bg-sidebar-accent flex w-full min-w-0 items-center gap-2 rounded-md p-2 transition-colors",
+        "group-data-[collapsible=icon]/sidebar:justify-center group-data-[collapsible=icon]/sidebar:gap-0 group-data-[collapsible=icon]/sidebar:px-1.5",
+      )}
+    >
+      {logoUrl ? (
+        <img
+          src={logoUrl}
+          alt={title}
+          className="size-8 shrink-0 rounded object-contain group-data-[collapsible=icon]/sidebar:!size-8"
+        />
+      ) : (
+        <Logo
+          size="sm"
+          className="shrink-0 group-data-[collapsible=icon]/sidebar:!size-8"
+        />
+      )}
+      <span className="truncate font-semibold group-data-[collapsible=icon]/sidebar:sr-only">
+        {title}
+      </span>
+    </Link>
+  );
+}
 
 function SidebarBody({
   showCollapse = true,
@@ -26,27 +59,14 @@ function SidebarBody({
   readonly showCollapse?: boolean;
 }) {
   const { t } = useTranslation("common");
+  const { isSuperAdmin } = useAuth();
 
   return (
     <>
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <Link
-              to="/"
-              className={cn(
-                "hover:bg-sidebar-accent flex w-full min-w-0 items-center gap-2 rounded-md p-2 transition-colors",
-                "group-data-[collapsible=icon]/sidebar:justify-center group-data-[collapsible=icon]/sidebar:gap-0 group-data-[collapsible=icon]/sidebar:px-1.5",
-              )}
-            >
-              <Logo
-                size="sm"
-                className="shrink-0 group-data-[collapsible=icon]/sidebar:!size-8"
-              />
-              <span className="truncate font-semibold group-data-[collapsible=icon]/sidebar:sr-only">
-                Project Base
-              </span>
-            </Link>
+            <SidebarBrand />
           </SidebarMenuItem>
         </SidebarMenu>
         {showCollapse ? (
@@ -62,9 +82,11 @@ function SidebarBody({
       <SidebarSeparator />
       <SidebarFooter>
         <SidebarMenu>
-          <SidebarMenuItem>
-            <TenantSwitcher />
-          </SidebarMenuItem>
+          {isSuperAdmin ? (
+            <SidebarMenuItem>
+              <TenantSwitcher />
+            </SidebarMenuItem>
+          ) : null}
           <SidebarMenuItem>
             <SidebarUser />
           </SidebarMenuItem>

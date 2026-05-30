@@ -99,7 +99,7 @@ vi.mock("@repo/gcp-firebase", () => ({
 import { buildServer } from "../server.js";
 
 function createInMemoryRepositories() {
-  return createInMemoryCrudRuntime();
+  return createInMemoryCrudRuntime({ withTestEntities: true });
 }
 
 interface BuildTestServerOptions {
@@ -136,12 +136,12 @@ describe("CRUD API", () => {
     };
   });
 
-  describe("Organization", () => {
+  describe("Widget", () => {
     it("creates a valid record", async () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Jane Doe", email: "jane@example.com" },
       });
@@ -164,7 +164,7 @@ describe("CRUD API", () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { email: "missing-name@example.com" },
       });
@@ -180,7 +180,7 @@ describe("CRUD API", () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: {
           name: "Jane Doe",
@@ -197,7 +197,7 @@ describe("CRUD API", () => {
 
       const createResponse = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "List Me" },
       });
@@ -205,7 +205,7 @@ describe("CRUD API", () => {
 
       const listResponse = await server.inject({
         method: "GET",
-        url: "/api/organization?limit=10",
+        url: "/api/widget?limit=10",
         headers: authHeaders,
       });
       expect(listResponse.statusCode).toBe(200);
@@ -213,7 +213,7 @@ describe("CRUD API", () => {
 
       const getResponse = await server.inject({
         method: "GET",
-        url: `/api/organization/${created.id}`,
+        url: `/api/widget/${created.id}`,
         headers: authHeaders,
       });
       expect(getResponse.statusCode).toBe(200);
@@ -221,7 +221,7 @@ describe("CRUD API", () => {
 
       const updateResponse = await server.inject({
         method: "PUT",
-        url: `/api/organization/${created.id}`,
+        url: `/api/widget/${created.id}`,
         headers: authHeaders,
         payload: { email: "updated@example.com" },
       });
@@ -231,7 +231,7 @@ describe("CRUD API", () => {
 
       const deleteResponse = await server.inject({
         method: "DELETE",
-        url: `/api/organization/${created.id}`,
+        url: `/api/widget/${created.id}`,
         headers: authHeaders,
       });
       expect(deleteResponse.statusCode).toBe(200);
@@ -239,7 +239,7 @@ describe("CRUD API", () => {
 
       const missingResponse = await server.inject({
         method: "GET",
-        url: `/api/organization/${created.id}`,
+        url: `/api/widget/${created.id}`,
         headers: authHeaders,
       });
       expect(missingResponse.statusCode).toBe(404);
@@ -258,7 +258,7 @@ describe("CRUD API", () => {
 
       const createResponse = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Tenant A Only" },
       });
@@ -267,7 +267,7 @@ describe("CRUD API", () => {
       authState.tenantId = "tenant_b";
       const crossTenantResponse = await server.inject({
         method: "GET",
-        url: `/api/organization/${created.id}`,
+        url: `/api/widget/${created.id}`,
         headers: authHeaders,
       });
 
@@ -276,31 +276,31 @@ describe("CRUD API", () => {
     });
   });
 
-  describe("Project", () => {
-    async function createOrganization(
+  describe("TestItem", () => {
+    async function createWidget(
       server: Awaited<ReturnType<typeof buildTestServer>>,
     ) {
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
-        payload: { name: "Project Organization" },
+        payload: { name: "TestItem Widget" },
       });
       expect(response.statusCode).toBe(201);
       return response.json().data as { id: string };
     }
 
-    it("creates and validates project records", async () => {
+    it("creates and validates testItem records", async () => {
       const server = await buildTestServer();
-      const organization = await createOrganization(server);
+      const widget = await createWidget(server);
       const response = await server.inject({
         method: "POST",
-        url: "/api/project",
+        url: "/api/testItem",
         headers: authHeaders,
         payload: {
           name: "PRJ-1001",
           budget: 42.5,
-          organizationId: organization.id,
+          widgetId: widget.id,
         },
       });
 
@@ -308,17 +308,17 @@ describe("CRUD API", () => {
       expect(response.json().data).toMatchObject({
         name: "PRJ-1001",
         budget: 42.5,
-        organizationId: organization.id,
+        widgetId: widget.id,
         tenantId: "tenant_a",
         isCompleted: false,
       });
     });
 
-    it("rejects invalid project payloads", async () => {
+    it("rejects invalid testItem payloads", async () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
-        url: "/api/project",
+        url: "/api/testItem",
         headers: authHeaders,
         payload: { name: "PRJ-1002" },
       });
@@ -327,16 +327,16 @@ describe("CRUD API", () => {
       expect(response.json().error.code).toBe("VALIDATION_ERROR");
     });
 
-    it("rejects projects referencing missing organizations", async () => {
+    it("rejects testItems referencing missing widgets", async () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
-        url: "/api/project",
+        url: "/api/testItem",
         headers: authHeaders,
         payload: {
           name: "PRJ-1003",
           budget: 10,
-          organizationId: "missing_organization",
+          widgetId: "missing_widget",
         },
       });
 
@@ -344,24 +344,24 @@ describe("CRUD API", () => {
       expect(response.json().error.code).toBe("RELATION_NOT_FOUND");
     });
 
-    it("blocks deleting an organization referenced by projects", async () => {
+    it("blocks deleting a widget referenced by testItems", async () => {
       const server = await buildTestServer();
-      const organization = await createOrganization(server);
-      const projectResponse = await server.inject({
+      const widget = await createWidget(server);
+      const testItemResponse = await server.inject({
         method: "POST",
-        url: "/api/project",
+        url: "/api/testItem",
         headers: authHeaders,
         payload: {
           name: "PRJ-1004",
           budget: 15,
-          organizationId: organization.id,
+          widgetId: widget.id,
         },
       });
-      expect(projectResponse.statusCode).toBe(201);
+      expect(testItemResponse.statusCode).toBe(201);
 
       const deleteResponse = await server.inject({
         method: "DELETE",
-        url: `/api/organization/${organization.id}`,
+        url: `/api/widget/${widget.id}`,
         headers: authHeaders,
       });
 
@@ -377,7 +377,7 @@ describe("CRUD API", () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "GET",
-        url: "/api/organization?limit=10",
+        url: "/api/widget?limit=10",
       });
 
       expect(response.statusCode).toBe(401);
@@ -389,7 +389,7 @@ describe("CRUD API", () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "GET",
-        url: "/api/organization?limit=10",
+        url: "/api/widget?limit=10",
         headers: authHeaders,
       });
 
@@ -409,7 +409,7 @@ describe("CRUD API", () => {
 
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Denied User" },
       });
@@ -428,14 +428,14 @@ describe("CRUD API", () => {
 
       const listResponse = await server.inject({
         method: "GET",
-        url: "/api/organization?limit=10",
+        url: "/api/widget?limit=10",
         headers: authHeaders,
       });
       expect(listResponse.statusCode).toBe(200);
 
       const createResponse = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Viewer Create Attempt" },
       });
@@ -453,7 +453,7 @@ describe("CRUD API", () => {
 
       const createResponse = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Editor Record" },
       });
@@ -462,7 +462,7 @@ describe("CRUD API", () => {
 
       const updateResponse = await server.inject({
         method: "PUT",
-        url: `/api/organization/${created.id}`,
+        url: `/api/widget/${created.id}`,
         headers: authHeaders,
         payload: { email: "editor@example.com" },
       });
@@ -470,7 +470,7 @@ describe("CRUD API", () => {
 
       const deleteResponse = await server.inject({
         method: "DELETE",
-        url: `/api/organization/${created.id}`,
+        url: `/api/widget/${created.id}`,
         headers: authHeaders,
       });
       expect(deleteResponse.statusCode).toBe(403);
@@ -487,7 +487,7 @@ describe("CRUD API", () => {
 
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Superadmin Record" },
       });
@@ -507,7 +507,7 @@ describe("CRUD API", () => {
 
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization?tenantId=tenant_b",
+        url: "/api/widget?tenantId=tenant_b",
         headers: authHeaders,
         payload: { name: "Tenant B Organization" },
       });
@@ -521,7 +521,7 @@ describe("CRUD API", () => {
 
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization?tenantId=tenant_b",
+        url: "/api/widget?tenantId=tenant_b",
         headers: authHeaders,
         payload: { name: "Still Tenant A" },
       });
@@ -531,32 +531,12 @@ describe("CRUD API", () => {
     });
   });
 
-  describe("Customer", () => {
-    it("creates a valid customer record", async () => {
-      const server = await buildTestServer();
-      const response = await server.inject({
-        method: "POST",
-        url: "/api/customer",
-        headers: authHeaders,
-        payload: { name: "Jane Doe", email: "jane@example.com" },
-      });
-
-      expect(response.statusCode).toBe(201);
-      expect(response.json().data).toMatchObject({
-        name: "Jane Doe",
-        email: "jane@example.com",
-        tenantId: "tenant_a",
-        isActive: true,
-      });
-    });
-  });
-
   describe("Tenant isolation", () => {
     it("returns only records for the authenticated tenant", async () => {
       const server = await buildTestServer();
       const createResponse = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Tenant A Organization" },
       });
@@ -567,7 +547,7 @@ describe("CRUD API", () => {
 
       const listResponse = await server.inject({
         method: "GET",
-        url: "/api/organization?limit=10",
+        url: "/api/widget?limit=10",
         headers: authHeaders,
       });
 
@@ -586,7 +566,7 @@ describe("CRUD API", () => {
 
       const createInTenantA = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Created in tenant A" },
       });
@@ -596,7 +576,7 @@ describe("CRUD API", () => {
 
       const createInTenantB = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name: "Blocked in tenant B" },
       });
@@ -606,13 +586,13 @@ describe("CRUD API", () => {
   });
 
   describe("Query Engine", () => {
-    async function createOrganization(
+    async function createWidget(
       server: Awaited<ReturnType<typeof buildTestServer>>,
-      name = "Query Organization",
+      name = "Query Widget",
     ) {
       const response = await server.inject({
         method: "POST",
-        url: "/api/organization",
+        url: "/api/widget",
         headers: authHeaders,
         payload: { name },
       });
@@ -620,41 +600,41 @@ describe("CRUD API", () => {
       return response.json().data as { id: string };
     }
 
-    async function createProject(
+    async function createTestItem(
       server: Awaited<ReturnType<typeof buildTestServer>>,
-      organizationId: string,
+      widgetId: string,
       name: string,
       budget: number,
     ) {
       const response = await server.inject({
         method: "POST",
-        url: "/api/project",
+        url: "/api/testItem",
         headers: authHeaders,
-        payload: { name, budget, organizationId },
+        payload: { name, budget, widgetId },
       });
       expect(response.statusCode).toBe(201);
       return response.json().data as {
         id: string;
-        organizationId: string;
+        widgetId: string;
         budget: number;
       };
     }
 
-    it("filters orders by organizationId via query JSON", async () => {
+    it("filters testItems by widgetId via query JSON", async () => {
       const server = await buildTestServer();
-      const organizationA = await createOrganization(server, "Organization A");
-      const organizationB = await createOrganization(server, "Organization B");
-      await createProject(server, organizationA.id, "PRJ-A1", 10);
-      await createProject(server, organizationA.id, "PRJ-A2", 20);
-      await createProject(server, organizationB.id, "PRJ-B1", 30);
+      const widgetA = await createWidget(server, "Widget A");
+      const widgetB = await createWidget(server, "Widget B");
+      await createTestItem(server, widgetA.id, "PRJ-A1", 10);
+      await createTestItem(server, widgetA.id, "PRJ-A2", 20);
+      await createTestItem(server, widgetB.id, "PRJ-B1", 30);
 
       const query = encodeURIComponent(
         JSON.stringify({
           filter: [
             {
-              field: "organizationId",
+              field: "widgetId",
               operator: "==",
-              value: organizationA.id,
+              value: widgetA.id,
             },
           ],
         }),
@@ -662,7 +642,7 @@ describe("CRUD API", () => {
 
       const response = await server.inject({
         method: "GET",
-        url: `/api/project?query=${query}`,
+        url: `/api/testItem?query=${query}`,
         headers: authHeaders,
       });
 
@@ -671,18 +651,17 @@ describe("CRUD API", () => {
       expect(items).toHaveLength(2);
       expect(
         items.every(
-          (item: { organizationId: string }) =>
-            item.organizationId === organizationA.id,
+          (item: { widgetId: string }) => item.widgetId === widgetA.id,
         ),
       ).toBe(true);
     });
 
-    it("sorts orders by budget descending", async () => {
+    it("sorts testItems by budget descending", async () => {
       const server = await buildTestServer();
-      const organization = await createOrganization(server);
-      await createProject(server, organization.id, "PRJ-LOW", 5);
-      await createProject(server, organization.id, "PRJ-HIGH", 50);
-      await createProject(server, organization.id, "PRJ-MID", 25);
+      const widget = await createWidget(server);
+      await createTestItem(server, widget.id, "PRJ-LOW", 5);
+      await createTestItem(server, widget.id, "PRJ-HIGH", 50);
+      await createTestItem(server, widget.id, "PRJ-MID", 25);
 
       const query = encodeURIComponent(
         JSON.stringify({
@@ -692,7 +671,7 @@ describe("CRUD API", () => {
 
       const response = await server.inject({
         method: "GET",
-        url: `/api/project?query=${query}`,
+        url: `/api/testItem?query=${query}`,
         headers: authHeaders,
       });
 
@@ -705,14 +684,14 @@ describe("CRUD API", () => {
 
     it("paginates filtered results with legacy limit and cursor", async () => {
       const server = await buildTestServer();
-      const organization = await createOrganization(server);
-      await createProject(server, organization.id, "PRJ-1", 1);
-      await createProject(server, organization.id, "PRJ-2", 2);
-      await createProject(server, organization.id, "PRJ-3", 3);
+      const widget = await createWidget(server);
+      await createTestItem(server, widget.id, "PRJ-1", 1);
+      await createTestItem(server, widget.id, "PRJ-2", 2);
+      await createTestItem(server, widget.id, "PRJ-3", 3);
 
       const firstPage = await server.inject({
         method: "GET",
-        url: "/api/project?limit=2",
+        url: "/api/testItem?limit=2",
         headers: authHeaders,
       });
       expect(firstPage.statusCode).toBe(200);
@@ -722,7 +701,7 @@ describe("CRUD API", () => {
 
       const secondPage = await server.inject({
         method: "GET",
-        url: `/api/project?limit=2&cursor=${firstBody.nextCursor}`,
+        url: `/api/testItem?limit=2&cursor=${firstBody.nextCursor}`,
         headers: authHeaders,
       });
       expect(secondPage.statusCode).toBe(200);
@@ -734,7 +713,7 @@ describe("CRUD API", () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "GET",
-        url: `/api/project?query=${encodeURIComponent('{"filter":[{"field":"tenantId","operator":"==","value":"tenant_a"}]}')}`,
+        url: `/api/testItem?query=${encodeURIComponent('{"filter":[{"field":"tenantId","operator":"==","value":"tenant_a"}]}')}`,
         headers: authHeaders,
       });
 
@@ -752,7 +731,7 @@ describe("CRUD API", () => {
 
       const listResponse = await server.inject({
         method: "GET",
-        url: "/api/organization?limit=10",
+        url: "/api/widget?limit=10",
         headers: authHeaders,
       });
 

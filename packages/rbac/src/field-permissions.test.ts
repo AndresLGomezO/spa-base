@@ -40,7 +40,7 @@ describe("resolveFieldAccessMap", () => {
             id: "role_viewer",
             tenantId,
             name: "viewer",
-            grants: ["organization.read"],
+            grants: ["entityDefinition.read"],
             createdAt: "2020-01-01T00:00:00.000Z",
             updatedAt: "2020-01-01T00:00:00.000Z",
           },

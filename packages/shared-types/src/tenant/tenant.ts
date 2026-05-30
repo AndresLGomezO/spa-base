@@ -1,7 +1,9 @@
 import { z } from "zod";
 
+import { tenantAppearanceSchema } from "./tenant-appearance.js";
+
 export const TENANTS_COLLECTION = "tenants";
-export const TENANT_SCHEMA_VERSION = 1 as const;
+export const TENANT_SCHEMA_VERSION = 2 as const;
 
 const isoDatetimeStringSchema = z
   .string()
@@ -23,15 +25,27 @@ export const tenantSchemaV1 = z
   })
   .strict();
 
+export const tenantSchemaV2 = tenantSchemaV1
+  .extend({
+    appearance: tenantAppearanceSchema.optional(),
+  })
+  .strict();
+
 export const persistedTenantSchemaV1 = tenantSchemaV1
+  .extend({
+    _schemaVersion: z.literal(1),
+  })
+  .strict();
+
+export const persistedTenantSchemaV2 = tenantSchemaV2
   .extend({
     _schemaVersion: z.literal(TENANT_SCHEMA_VERSION),
   })
   .strict();
 
 export type TenantStatus = z.infer<typeof tenantStatusSchema>;
-export type Tenant = z.infer<typeof tenantSchemaV1>;
-export type PersistedTenant = z.infer<typeof persistedTenantSchemaV1>;
+export type Tenant = z.infer<typeof tenantSchemaV2>;
+export type PersistedTenant = z.infer<typeof persistedTenantSchemaV2>;
 
 export interface TenantOption {
   readonly id: string;

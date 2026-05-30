@@ -15,6 +15,7 @@ import {
   createInMemoryEntityDefinitionRepository,
   createInMemoryHookRepository,
   createInMemoryTenantRoleRepository,
+  createInMemoryTenantUserInviteRepository,
 } from "@repo/firestore-converters";
 import {
   createFirestoreAdminEntityDefinitionRepository,
@@ -23,12 +24,12 @@ import {
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRoleRepository,
+  createFirestoreAdminTenantUserInviteRepository,
 } from "@repo/gcp-firebase";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { platformApp } from "@app/platform/app.config.js";
 import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
-import { seedPlatformCustomers } from "./admin/seed-platform-customers.js";
 import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
 import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
@@ -57,6 +58,7 @@ import { createTenantRoleCatalogLoader } from "./rbac/role-catalog.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
+import { registerTenantUserRoutes } from "./routes/tenant-users.routes.js";
 
 type GenericRecord = { readonly id: string; readonly tenantId: string };
 
@@ -76,7 +78,7 @@ interface BuildServerOptions {
   readonly getRoleCatalog?: (tenantId: string) => Promise<RoleCatalog>;
   readonly skipPlatformRoleSeed?: boolean;
   readonly skipPlatformTenantSeed?: boolean;
-  readonly skipPlatformCustomerSeed?: boolean;
+  readonly tenantUserInviteRepository?: import("@repo/firestore-converters").TenantUserInviteRepository;
 }
 
 function buildPermissionDeps(
@@ -119,6 +121,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   await server.register(cors, {
     origin: corsOrigins,
+    methods: ["GET", "HEAD", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
   });
 
   await server.register(compress, {
@@ -149,6 +152,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     projectId: apiEnv.GCP_PROJECT_ID,
     authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,
     firestoreEmulatorHost: apiEnv.FIRESTORE_EMULATOR_HOST,
+    storageEmulatorHost: apiEnv.FIREBASE_STORAGE_EMULATOR_HOST,
+    storageBucket: apiEnv.GCP_STORAGE_BUCKET,
   };
 
   registerCrudErrorHandler(server);
@@ -159,10 +164,6 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   if (!options.skipPlatformTenantSeed) {
     await seedPlatformTenants(firebaseAdminConfig);
-  }
-
-  if (!options.skipPlatformCustomerSeed && !options.repositories) {
-    await seedPlatformCustomers(firebaseAdminConfig);
   }
 
   const registeredUserRepository =
@@ -193,6 +194,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryHookRepository()
       : createFirestoreAdminHookRepository(firebaseAdminConfig));
+
+  const tenantUserInviteRepository =
+    options.tenantUserInviteRepository ??
+    (options.repositories
+      ? createInMemoryTenantUserInviteRepository()
+      : createFirestoreAdminTenantUserInviteRepository(firebaseAdminConfig));
 
   const hookRuntime = createHookRuntimeContext(hookRepository);
 
@@ -241,6 +248,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
   await server.register(authValidateRoute, {
     firebaseAdminConfig,
     permissionDeps,
+    tenantUserInviteRepository,
   });
 
   await server.register(authSelectTenantRoute, {
@@ -255,6 +263,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
+
+  await registerTenantUserRoutes(server, {
+    authenticate,
+    permissionDeps,
+    registeredUserRepository,
+    tenantUserInviteRepository,
+    getRoleCatalog: loadRoleCatalog,
+  });
 
   await registerListEntitiesRoute(server, {
     authenticate,

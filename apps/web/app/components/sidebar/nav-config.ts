@@ -1,27 +1,24 @@
 import type { LucideIcon } from "lucide-react";
 import {
-  CreditCard,
+  Building2,
   Database,
   Home,
-  LayoutDashboard,
+  Palette,
   Settings,
   Shield,
-  User,
   Users,
   Workflow,
 } from "lucide-react";
 
-/** Keys under `nav.*` used by sidebar link labels */
 export type NavLabelKey =
   | "home"
-  | "dashboard"
   | "settings"
-  | "profile"
-  | "team"
-  | "billing"
-  | "admin"
-  | "controlPlane"
+  | "userManagement"
+  | "platform"
+  | "currentTenant"
+  | "appearance"
   | "dataModels"
+  | "dataModelBuilder"
   | "automation"
   | "roles";
 
@@ -44,31 +41,23 @@ export interface NavGroupConfig {
 
 export type NavItemConfig = NavLinkConfig | NavGroupConfig;
 
-export const CONTROL_PLANE_DASHBOARD_NAV_ITEM: NavLinkConfig = {
-  id: "dashboard",
-  labelKey: "dashboard",
+export const HOME_NAV_ITEM: NavLinkConfig = {
+  id: "home",
+  labelKey: "home",
   to: "/",
   matchPath: "/",
-  icon: LayoutDashboard,
+  icon: Home,
 };
 
-export const CONTROL_PLANE_DATA_MODELS_NAV_ITEM: NavLinkConfig = {
-  id: "data-models",
-  labelKey: "dataModels",
-  to: "/settings/data-models",
-  matchPath: "/settings/data-models",
-  icon: Database,
+export const SETTINGS_USER_MANAGEMENT_NAV_ITEM: NavLinkConfig = {
+  id: "user-management",
+  labelKey: "userManagement",
+  to: "/settings/users",
+  matchPath: "/settings/users",
+  icon: Users,
 };
 
-export const CONTROL_PLANE_HOOKS_NAV_ITEM: NavLinkConfig = {
-  id: "hooks",
-  labelKey: "automation",
-  to: "/settings/hooks",
-  matchPath: "/settings/hooks",
-  icon: Workflow,
-};
-
-export const CONTROL_PLANE_ROLES_NAV_ITEM: NavLinkConfig = {
+export const SETTINGS_ROLES_NAV_ITEM: NavLinkConfig = {
   id: "roles",
   labelKey: "roles",
   to: "/settings/roles",
@@ -76,56 +65,43 @@ export const CONTROL_PLANE_ROLES_NAV_ITEM: NavLinkConfig = {
   icon: Shield,
 };
 
-export const SETTINGS_ADMIN_NAV_ITEM: NavLinkConfig = {
-  id: "admin",
-  labelKey: "admin",
-  to: "/settings/admin",
-  matchPath: "/settings/admin",
-  icon: Shield,
+export const SETTINGS_DATA_MODEL_BUILDER_NAV_ITEM: NavLinkConfig = {
+  id: "data-model-builder",
+  labelKey: "dataModelBuilder",
+  to: "/settings/data-models",
+  matchPath: "/settings/data-models",
+  icon: Database,
 };
+
+export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
+  id: "automation",
+  labelKey: "automation",
+  to: "/settings/hooks",
+  matchPath: "/settings/hooks",
+  icon: Workflow,
+};
+
+export const PLATFORM_CURRENT_TENANT_NAV_ITEM: NavLinkConfig = {
+  id: "current-tenant",
+  labelKey: "currentTenant",
+  to: "/settings/tenant",
+  matchPath: "/settings/tenant",
+  icon: Building2,
+};
+
+export const PLATFORM_APPEARANCE_NAV_ITEM: NavLinkConfig = {
+  id: "appearance",
+  labelKey: "appearance",
+  to: "/settings/appearance",
+  matchPath: "/settings/appearance",
+  icon: Palette,
+};
+
+export const SETTINGS_GROUP_ICON = Settings;
 
 export function isNavGroup(item: NavItemConfig): item is NavGroupConfig {
   return "children" in item;
 }
-
-export const STATIC_NAV_ITEMS: readonly NavItemConfig[] = [
-  {
-    id: "home",
-    labelKey: "home",
-    to: "/",
-    matchPath: "/",
-    icon: Home,
-  },
-  {
-    id: "settings",
-    labelKey: "settings",
-    matchPath: "/settings",
-    icon: Settings,
-    children: [
-      {
-        id: "profile",
-        labelKey: "profile",
-        to: "/settings/profile",
-        matchPath: "/settings/profile",
-        icon: User,
-      },
-      {
-        id: "team",
-        labelKey: "team",
-        to: "/settings/team",
-        matchPath: "/settings/team",
-        icon: Users,
-      },
-      {
-        id: "billing",
-        labelKey: "billing",
-        to: "/settings/billing",
-        matchPath: "/settings/billing",
-        icon: CreditCard,
-      },
-    ],
-  },
-];
 
 export function isPathActive(pathname: string, matchPath: string): boolean {
   if (matchPath === "/") {

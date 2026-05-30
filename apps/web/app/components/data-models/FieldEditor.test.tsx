@@ -40,14 +40,14 @@ describe("FieldEditor", () => {
     render(
       <FieldEditor
         field={{
-          name: "organizationId",
+          name: "widgetId",
           type: "relation",
-          relation: { target: "organization", type: "many-to-one" },
+          relation: { target: "widget", type: "many-to-one" },
         }}
         index={0}
         relationTargets={[
-          { name: "organization", label: "Organizations" },
-          { name: "project", label: "Projects" },
+          { name: "widget", label: "Widgets" },
+          { name: "testItem", label: "Test Items" },
         ]}
         onChange={vi.fn()}
         onRemove={vi.fn()}
@@ -58,9 +58,7 @@ describe("FieldEditor", () => {
     expect(
       screen.getByLabelText("dataModels.relationTarget"),
     ).toBeInTheDocument();
-    expect(
-      screen.getByRole("option", { name: "Organizations" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("option", { name: "Widgets" })).toBeInTheDocument();
   });
 
   it("calls onChange when field name is edited", () => {

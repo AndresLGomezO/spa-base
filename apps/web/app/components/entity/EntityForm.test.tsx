@@ -46,7 +46,7 @@ function renderForm() {
     <TestEntityCatalogProvider>
       <MemoryRouter>
         <I18nextProvider i18n={i18n}>
-          <EntityForm entityName="organization" mode="create" />
+          <EntityForm entityName="widget" mode="create" />
         </I18nextProvider>
       </MemoryRouter>
     </TestEntityCatalogProvider>,

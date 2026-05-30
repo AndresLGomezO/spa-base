@@ -130,6 +130,21 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
     };
   }
 
+  async findByEmail(email: string): Promise<RegisteredUser | null> {
+    const normalized = email.trim().toLowerCase();
+    if (!normalized) return null;
+
+    const firestore = getFirestoreAdmin(this.config);
+    const snapshot = await firestore
+      .collection(USERS_COLLECTION)
+      .where("email", "==", normalized)
+      .limit(1)
+      .get();
+    const doc = snapshot.docs[0];
+    if (!doc) return null;
+    return registeredUserConverter.read(doc.data());
+  }
+
   async updateAccess(
     uid: string,
     data: UpdateRegisteredUserAccessInput,

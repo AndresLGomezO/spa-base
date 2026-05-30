@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
     "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
     "lint:unused": "knip --no-progress",
@@ -17,6 +18,8 @@
     "./base.css": "./src/base.css",
     "./index.css": "./src/index.css",
     "./react": "./src/react/index.ts",
+    "./tenant-overrides": "./src/tenant-overrides.ts",
+    "./palette": "./src/palette/generate-scale.ts",
     "./utils": "./src/utils/cn.ts"
   },
   "sideEffects": [
@@ -27,6 +30,7 @@
   },
   "dependencies": {
     "clsx": "catalog:",
+    "culori": "catalog:",
     "tailwind-merge": "catalog:"
   },
   "devDependencies": {
@@ -35,6 +39,7 @@
     "knip": "catalog:",
     "prettier": "catalog:",
     "react": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

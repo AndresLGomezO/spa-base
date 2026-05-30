@@ -66,7 +66,7 @@ export function RequireTenant({ children }: GuardProps) {
   }
 
   if (availableTenants.length > 0) {
-    return <Navigate to="/select-tenant" replace state={{ from: location }} />;
+    return <Text>{t("loading")}</Text>;
   }
 
   return (
@@ -94,6 +94,26 @@ export function PermissionGuard({
       <div className="flex w-full flex-col gap-3">
         <Text>{t("entity.forbidden")}</Text>
         <Alert>{t("entity.forbiddenDetail")}</Alert>
+      </div>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+export function RequireSuperAdmin({ children }: GuardProps) {
+  const { t } = useTranslation("common");
+  const { isReady, isSuperAdmin } = useAuth();
+
+  if (!isReady) {
+    return <Text>{t("loading")}</Text>;
+  }
+
+  if (!isSuperAdmin) {
+    return (
+      <div className="flex w-full flex-col gap-3">
+        <Text>{t("admin.forbidden")}</Text>
+        <Alert>{t("admin.forbiddenDetail")}</Alert>
       </div>
     );
   }

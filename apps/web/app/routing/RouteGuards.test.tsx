@@ -36,10 +36,10 @@ describe("RequireAuth", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/app/customer"]}>
+      <MemoryRouter initialEntries={["/app/widget"]}>
         <Routes>
           <Route
-            path="/app/customer"
+            path="/app/widget"
             element={
               <RequireAuth>
                 <div>Protected</div>
@@ -62,10 +62,10 @@ describe("RequireAuth", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/app/customer"]}>
+      <MemoryRouter initialEntries={["/app/widget"]}>
         <Routes>
           <Route
-            path="/app/customer"
+            path="/app/widget"
             element={
               <RequireAuth>
                 <div>Protected</div>
@@ -81,7 +81,7 @@ describe("RequireAuth", () => {
 });
 
 describe("RequireTenant", () => {
-  it("redirects to select-tenant when tenant is missing", () => {
+  it("shows loading while tenant member auto-bind is pending", () => {
     mockUseAuth.mockReturnValue({
       isReady: true,
       tenantId: null,
@@ -90,10 +90,10 @@ describe("RequireTenant", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/app/customer"]}>
+      <MemoryRouter initialEntries={["/app/widget"]}>
         <Routes>
           <Route
-            path="/app/customer"
+            path="/app/widget"
             element={
               <RequireTenant>
                 <div>Tenant content</div>
@@ -105,7 +105,8 @@ describe("RequireTenant", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Select tenant")).toBeInTheDocument();
+    expect(screen.getByText("loading")).toBeInTheDocument();
+    expect(screen.queryByText("Select tenant")).not.toBeInTheDocument();
     expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
   });
 
@@ -118,10 +119,10 @@ describe("RequireTenant", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/app/customer"]}>
+      <MemoryRouter initialEntries={["/app/widget"]}>
         <Routes>
           <Route
-            path="/app/customer"
+            path="/app/widget"
             element={
               <RequireTenant>
                 <div>Tenant content</div>
@@ -144,10 +145,10 @@ describe("RequireTenant", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/app/customer"]}>
+      <MemoryRouter initialEntries={["/app/widget"]}>
         <Routes>
           <Route
-            path="/app/customer"
+            path="/app/widget"
             element={
               <RequireTenant>
                 <div>Tenant content</div>
@@ -170,10 +171,10 @@ describe("RequireTenant", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/app/customer"]}>
+      <MemoryRouter initialEntries={["/app/widget"]}>
         <Routes>
           <Route
-            path="/app/customer"
+            path="/app/widget"
             element={
               <RequireTenant>
                 <div>Tenant content</div>
@@ -199,7 +200,7 @@ describe("PermissionGuard", () => {
 
     render(
       <MemoryRouter>
-        <PermissionGuard permission="organization.read">
+        <PermissionGuard permission="widget.read">
           <div>Entity page</div>
         </PermissionGuard>
       </MemoryRouter>,
@@ -212,12 +213,12 @@ describe("PermissionGuard", () => {
   it("allows users with permission", () => {
     mockUseAuth.mockReturnValue({
       isSuperAdmin: false,
-      permissions: ["organization.read"],
+      permissions: ["widget.read"],
     });
 
     render(
       <MemoryRouter>
-        <PermissionGuard permission="organization.read">
+        <PermissionGuard permission="widget.read">
           <div>Entity page</div>
         </PermissionGuard>
       </MemoryRouter>,

@@ -9,7 +9,7 @@ import type { TenantRoleRepository } from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
-import { requireTargetTenant } from "../auth/resolve-target-tenant-id.js";
+import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
@@ -77,11 +77,7 @@ export async function registerRoleRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedQuery.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       const items = await options.tenantRoleRepository.list(tenantId);
@@ -106,11 +102,7 @@ export async function registerRoleRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedQuery.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       const item = await options.tenantRoleRepository.getById(
@@ -145,11 +137,7 @@ export async function registerRoleRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedBody.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       if (parsedBody.data.tenantId && request.ctx?.isSuperAdmin !== true) {
@@ -244,11 +232,7 @@ export async function registerRoleRoutes(
         );
       }
 
-      const tenantId = requireTargetTenant(
-        request,
-        reply,
-        parsedQuery.data.tenantId,
-      );
+      const tenantId = requireJwtTenant(request, reply);
       if (!tenantId) return;
 
       const current = await options.tenantRoleRepository.getById(

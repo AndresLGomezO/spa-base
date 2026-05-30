@@ -63,7 +63,7 @@ export function EntityDefinitionEditor({
       setError(null);
 
       try {
-        const loaded = await getEntityDefinition(definitionId, { tenantId });
+        const loaded = await getEntityDefinition(definitionId);
         if (cancelled) {
           return;
         }
@@ -91,7 +91,7 @@ export function EntityDefinitionEditor({
     return () => {
       cancelled = true;
     };
-  }, [definitionId, tenantId]);
+  }, [definitionId, t, tenantId]);
 
   function updateField(index: number, field: FieldDefinitionInput) {
     setFields((current) =>
@@ -118,24 +118,20 @@ export function EntityDefinitionEditor({
     setIsSubmitting(true);
 
     try {
-      const updated = await patchEntityDefinition(
-        definitionId,
-        {
-          label: label.trim(),
-          fields: validFields.map((field) => ({
-            ...field,
-            name: field.name.trim(),
-            ...(field.type === "enum"
-              ? {
-                  enumValues: (field.enumValues ?? [])
-                    .map((value) => value.trim())
-                    .filter(Boolean),
-                }
-              : {}),
-          })),
-        },
-        { tenantId },
-      );
+      const updated = await patchEntityDefinition(definitionId, {
+        label: label.trim(),
+        fields: validFields.map((field) => ({
+          ...field,
+          name: field.name.trim(),
+          ...(field.type === "enum"
+            ? {
+                enumValues: (field.enumValues ?? [])
+                  .map((value) => value.trim())
+                  .filter(Boolean),
+              }
+            : {}),
+        })),
+      });
       await refresh();
       onSaved(updated);
     } catch (submitError) {

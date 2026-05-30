@@ -84,7 +84,7 @@ vi.mock("@repo/gcp-firebase", () => ({
 import { buildServer } from "../server.js";
 
 async function buildTestServer() {
-  const runtime = createInMemoryCrudRuntime();
+  const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
   return buildServer({
     logger: false,
     repositories: runtime.repositories,
@@ -125,11 +125,10 @@ describe("GET /auth/validate", () => {
         email: "demo@example.com",
         isSuperAdmin: false,
         permissions: expect.arrayContaining([
-          "organization.read",
-          "project.read",
-          "inventoryItem.read",
           "entityDefinition.read",
           "hook.read",
+          "role.read",
+          "tenantUser.read",
         ]),
         tenantId: "tenant_a",
         availableTenants: ["tenant_a"],

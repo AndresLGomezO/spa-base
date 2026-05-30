@@ -1,6 +1,6 @@
 # Web App
 
-React Router 7 SPA with Firebase Auth, schema-driven entity UI, Control Plane admin, and TanStack Query caching.
+React Router 7 SPA with Firebase Auth, schema-driven entity UI, tenant settings, and TanStack Query caching.
 
 **Handoff:** [docs/phase-2-platform-handoff.md](../../docs/phase-2-platform-handoff.md)
 
@@ -45,11 +45,14 @@ See [app/routing/README.md](app/routing/README.md).
 
 ### Layouts
 
-| Layout    | Routes                                |
-| --------- | ------------------------------------- |
-| Public    | `/login`                              |
-| Auth-only | `/select-tenant`, `/settings/admin/*` |
-| Private   | `/`, `/app/*`, `/settings/*`          |
+| Layout     | Routes                                                                |
+| ---------- | --------------------------------------------------------------------- |
+| Public     | `/login`                                                              |
+| Private    | All authenticated routes (with sidebar)                               |
+| Tenant     | `/`, `/app/*` (requires tenant claim)                                 |
+| Superadmin | `/settings/tenant`, `/settings/appearance`, `/platform/create-tenant` |
+
+Settings routes (`/settings/users`, `/settings/data-models`, etc.) live in the private layout without a tenant guard. All users operate on the active JWT `tenantId`. Superadmins switch tenants via the sidebar `TenantSwitcher` or `/select-tenant`; tenant members are auto-bound to their first assigned tenant.
 
 ### Entity routes (dynamic)
 
@@ -63,20 +66,16 @@ Sidebar lists entities from catalog filtered by `{entity}.read` permission.
 
 ---
 
-## Control Plane (tenant admin)
+## Settings (tenant admin)
 
-Visible in sidebar when user has admin permissions (`entityDefinition.read`, `role.read`, or `hook.read`).
+| Path                    | Description                                     |
+| ----------------------- | ----------------------------------------------- |
+| `/settings/users`       | User management — invite by email, assign roles |
+| `/settings/data-models` | Model Builder — create/edit entity definitions  |
+| `/settings/hooks`       | Automation hooks                                |
+| `/settings/roles`       | Tenant roles + field permissions                |
 
-| Path                    | Description                                                |
-| ----------------------- | ---------------------------------------------------------- |
-| `/`                     | Admin overview dashboard (counts + quick links) when admin |
-| `/settings/data-models` | Model Builder — create/edit entity definitions             |
-| `/settings/hooks`       | Automation hooks                                           |
-| `/settings/roles`       | Tenant roles + field permissions                           |
-
-Platform superadmin cross-tenant admin: `/settings/admin`, `/settings/admin/data-models`, `/settings/admin/hooks`, `/settings/admin/roles`.
-
-See [docs/admin-dashboard-guide.md](../../docs/admin-dashboard-guide.md).
+Platform superadmin: **Platform → Current Tenant** at `/settings/tenant`, **Appearance** at `/settings/appearance`, and **Create tenant** via the tenant switcher or `/platform/create-tenant`.
 
 ---
 
@@ -117,7 +116,7 @@ Storybook: `pnpm storybook` from repo root.
 
 1. Set `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=your-email@example.com` in API env
 2. Sign in — first registration sets superadmin
-3. Open `/settings/admin` for tenant and user management
+3. Switch tenant via the sidebar switcher; open **Platform → Current Tenant** (`/settings/tenant`) to manage the active tenant; use **Settings → User Management** for tenant-scoped roles
 
 Seed tenant roles on `users/{uid}` in Firestore (see [apps/api/README.md](../api/README.md)).
 

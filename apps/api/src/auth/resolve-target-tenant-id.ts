@@ -31,6 +31,23 @@ export function parseQueryTenantId(
   return trimmed.length > 0 ? trimmed : undefined;
 }
 
+export function requireJwtTenant(
+  request: FastifyRequest,
+  reply: FastifyReply,
+): string | null {
+  const tenantId = request.ctx?.tenantId?.trim();
+  if (!tenantId) {
+    replyWithError(
+      reply,
+      403,
+      ApiErrorCode.TENANT_NOT_RESOLVED,
+      "Tenant context is required.",
+    );
+    return null;
+  }
+  return tenantId;
+}
+
 export function requireTargetTenant(
   request: FastifyRequest,
   reply: FastifyReply,

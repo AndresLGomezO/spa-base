@@ -5,8 +5,15 @@ import {
   type RoleCatalog,
 } from "@repo/rbac";
 import type { RegisteredUserRepository } from "@repo/firestore-converters";
-import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
-import type { RegisteredUser, TenantOption } from "@repo/shared-types";
+import {
+  createFirestoreAdminTenantRepository,
+  type FirebaseAdminConfig,
+} from "@repo/gcp-firebase";
+import type {
+  RegisteredUser,
+  TenantAppearance,
+  TenantOption,
+} from "@repo/shared-types";
 
 import {
   parseBootstrapSuperAdminEmails,
@@ -21,8 +28,11 @@ interface AuthSessionContext {
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;
   readonly tenantId: string | null;
+  readonly tenantRoleNames: readonly string[];
   readonly availableTenants: readonly string[];
   readonly tenantOptions: readonly TenantOption[];
+  readonly activeTenantName: string | null;
+  readonly tenantAppearance: TenantAppearance | null;
 }
 
 export async function buildAuthSessionContext(params: {
@@ -76,13 +86,31 @@ export async function buildAuthSessionContext(params: {
     userTenantIds: Object.keys(user.tenants ?? {}),
   });
 
+  const tenantRoleNames =
+    tenantId !== null ? (user.tenants?.[tenantId] ?? []) : [];
+
+  let activeTenantName: string | null = null;
+  let tenantAppearance: TenantAppearance | null = null;
+
+  if (tenantId) {
+    const tenantRepository = createFirestoreAdminTenantRepository(
+      params.firebaseAdminConfig,
+    );
+    const tenant = await tenantRepository.getById(tenantId);
+    activeTenantName = tenant?.name ?? null;
+    tenantAppearance = tenant?.appearance ?? null;
+  }
+
   return {
     user,
     permissions,
     isSuperAdmin,
     tenantId,
+    tenantRoleNames,
     availableTenants: tenantAccess.availableTenants,
     tenantOptions: tenantAccess.tenantOptions,
+    activeTenantName,
+    tenantAppearance,
   };
 }
 

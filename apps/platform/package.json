@@ -9,8 +9,6 @@
     "./bootstrap.js": "./bootstrap.ts"
   },
   "dependencies": {
-    "@modules/core": "workspace:*",
-    "@modules/inventory": "workspace:*",
     "@repo/modules": "workspace:*"
   },
   "devDependencies": {

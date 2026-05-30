@@ -8,6 +8,7 @@ import {
 } from "@repo/rbac";
 import {
   createFirestoreAdminRegisteredUserRepository,
+  createFirestoreAdminTenantRepository,
   getFirebaseUserRecord,
   mapFirebaseUserRecordToAuthUserProjection,
   setFirebaseUserCustomClaims,
@@ -129,6 +130,11 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
         { roleCatalog },
       );
 
+      const tenantRepository = createFirestoreAdminTenantRepository(
+        opts.firebaseAdminConfig,
+      );
+      const activeTenant = await tenantRepository.getById(requestedTenantId);
+
       return reply.send({
         ok: true,
         tenantId: requestedTenantId,
@@ -136,6 +142,9 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
         tenantOptions: tenantAccess.tenantOptions,
         permissions,
         isSuperAdmin,
+        tenantRoleNames: registeredUser.tenants?.[requestedTenantId] ?? [],
+        activeTenantName: activeTenant?.name ?? null,
+        tenantAppearance: activeTenant?.appearance ?? null,
       });
     } catch (error) {
       const message =

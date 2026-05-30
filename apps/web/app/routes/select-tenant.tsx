@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Navigate, Link, useLocation, useNavigate } from "react-router";
+import { Navigate, useLocation, useNavigate } from "react-router";
 
 import { Button, Heading, Text } from "@repo/ui";
 
@@ -11,6 +11,7 @@ export default function SelectTenantRoute() {
   const navigate = useNavigate();
   const location = useLocation();
   const {
+    isReady,
     availableTenants,
     tenantOptions,
     selectTenant,
@@ -32,6 +33,18 @@ export default function SelectTenantRoute() {
     typeof location.state.from.pathname === "string"
       ? location.state.from.pathname
       : "/";
+
+  if (!isReady) {
+    return (
+      <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 p-6">
+        <Text>{t("loading")}</Text>
+      </main>
+    );
+  }
+
+  if (!isSuperAdmin) {
+    return <Navigate to="/" replace />;
+  }
 
   if (tenantId) {
     return <Navigate to={fromPath} replace />;
@@ -84,13 +97,13 @@ export default function SelectTenantRoute() {
         ))}
       </div>
 
-      {isSuperAdmin ? (
-        <Text>
-          <Link to="/settings/admin" className="text-primary underline">
-            {t("nav.admin")}
-          </Link>
-        </Text>
-      ) : null}
+      <Button
+        type="button"
+        variant="outline"
+        onClick={() => navigate("/platform/create-tenant")}
+      >
+        {t("tenant.createNew")}
+      </Button>
     </main>
   );
 }

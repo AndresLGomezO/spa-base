@@ -1,11 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
+import { defineEntity } from "@repo/entities";
 import { buildRoleCatalog, type UserAccessProfile } from "@repo/rbac";
+import {
+  clearModuleRegistries,
+  defineApp,
+  defineModule,
+  loadApp,
+} from "@repo/modules";
 
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
+import {
+  resetPlatformBootstrapForTests,
+  markPlatformBootstrappedForTests,
+} from "@app/platform/bootstrap.js";
+
+const SampleEntity = defineEntity({
+  name: "sample",
+  fields: {
+    name: { type: "string", required: true },
+  },
+});
 
 const authState = {
   uid: "user_123",
@@ -95,13 +113,45 @@ vi.mock("@repo/gcp-firebase", () => ({
 
 import { buildServer } from "../server.js";
 
+function bootstrapTestModuleApp() {
+  resetPlatformBootstrapForTests();
+  clearModuleRegistries();
+  const demoModule = defineModule({
+    name: "demo",
+    version: "1.0.0",
+    entities: [SampleEntity],
+    routes: [
+      {
+        method: "GET",
+        path: "/api/modules/demo/summary",
+        handler: async () => ({ module: "demo" }),
+      },
+    ],
+    ui: {
+      extend: {
+        sample: {
+          views: [
+            {
+              type: "table",
+              name: "demo-context",
+              fields: ["name"],
+            },
+          ],
+        },
+      },
+    },
+  });
+  loadApp(defineApp({ modules: [demoModule] }), { force: true });
+  markPlatformBootstrappedForTests();
+}
+
 async function buildTestServer(
   options: {
     readonly accessProfile?: UserAccessProfile;
   } = {},
 ) {
   const profile = options.accessProfile ?? accessProfileState;
-  const runtime = createInMemoryCrudRuntime();
+  const runtime = createInMemoryCrudRuntime({ skipBootstrap: true });
   return buildServer({
     logger: false,
     repositories: runtime.repositories,
@@ -121,6 +171,7 @@ const authHeaders = {
 
 describe("module system integration", () => {
   beforeEach(() => {
+    bootstrapTestModuleApp();
     authState.uid = "user_123";
     authState.tenantId = "tenant_a";
     accessProfileState.platformRole = null;
@@ -129,7 +180,7 @@ describe("module system integration", () => {
     };
   });
 
-  it("registers inventory module entity in GET /api/entities", async () => {
+  it("registers module entity in GET /api/entities", async () => {
     const server = await buildTestServer();
     const response = await server.inject({
       method: "GET",
@@ -141,10 +192,10 @@ describe("module system integration", () => {
     const names = response
       .json()
       .data.items.map((item: { name: string }) => item.name);
-    expect(names).toContain("inventoryItem");
+    expect(names).toContain("sample");
   });
 
-  it("merges module UI extensions into organization catalog entry", async () => {
+  it("merges module UI extensions into sample catalog entry", async () => {
     const server = await buildTestServer();
     const response = await server.inject({
       method: "GET",
@@ -152,49 +203,35 @@ describe("module system integration", () => {
       headers: authHeaders,
     });
 
-    const organization = response
+    const sample = response
       .json()
-      .data.items.find(
-        (item: { name: string }) => item.name === "organization",
-      );
+      .data.items.find((item: { name: string }) => item.name === "sample");
     expect(
-      organization.ui.views.some(
-        (view: { name: string }) => view.name === "inventory-context",
+      sample.ui.views.some(
+        (view: { name: string }) => view.name === "demo-context",
       ),
     ).toBe(true);
   });
 
-  it("serves inventory module custom route", async () => {
+  it("serves module custom route", async () => {
     const server = await buildTestServer();
     const response = await server.inject({
       method: "GET",
-      url: "/api/modules/inventory/summary",
+      url: "/api/modules/demo/summary",
       headers: authHeaders,
     });
 
     expect(response.statusCode).toBe(200);
-    expect(response.json().data.module).toBe("inventory");
+    expect(response.json().data.module).toBe("demo");
   });
 
-  it("creates inventoryItem records via generic CRUD", async () => {
+  it("creates sample records via generic CRUD", async () => {
     const server = await buildTestServer();
-    const orgResponse = await server.inject({
-      method: "POST",
-      url: "/api/organization",
-      headers: authHeaders,
-      payload: { name: "Acme" },
-    });
-    const organizationId = orgResponse.json().data.id as string;
-
     const createResponse = await server.inject({
       method: "POST",
-      url: "/api/inventoryItem",
+      url: "/api/sample",
       headers: authHeaders,
-      payload: {
-        name: "Widget",
-        quantity: 5,
-        organizationId,
-      },
+      payload: { name: "Widget" },
     });
 
     expect(createResponse.statusCode).toBe(201);

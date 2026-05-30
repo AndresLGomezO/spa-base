@@ -254,6 +254,22 @@ function extractHookEventKeys(corpus) {
   );
 }
 
+/** platform.appearance.groups.${groupKey} in source → all keys under platform.appearance.groups */
+function extractAppearanceGroupKeys(corpus) {
+  if (!corpus.includes("platform.appearance.groups.${")) return [];
+
+  const refPlatform = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).platform;
+
+  const groups = refPlatform?.appearance?.groups;
+  if (!groups || typeof groups !== "object") return [];
+
+  return Object.keys(groups).map(
+    (key) => `${DEFAULT_NAMESPACE}:platform.appearance.groups.${key}`,
+  );
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -427,6 +443,11 @@ mergeUsedKeys(
   usedKeys,
   extractHookEventKeys(corpus),
   path.join(SRC_DIR, "components/hooks/HookEditor.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractAppearanceGroupKeys(corpus),
+  path.join(SRC_DIR, "components/platform/TenantAppearanceEditor.tsx"),
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

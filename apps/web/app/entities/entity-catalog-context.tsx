@@ -40,7 +40,6 @@ function EntityCatalogProviderFromQuery({
     staleTime: 5 * 60_000,
   });
 
-  const items = catalogQuery.data?.items ?? [];
   const isLoading = catalogQuery.isLoading;
   const error =
     catalogQuery.error instanceof Error
@@ -53,17 +52,18 @@ function EntityCatalogProviderFromQuery({
     await queryClient.invalidateQueries({ queryKey: entityCatalogQueryKey });
   }, []);
 
-  const value = useMemo<EntityCatalogContextValue>(
-    () => ({
+  const value = useMemo<EntityCatalogContextValue>(() => {
+    const items = catalogQuery.data?.items ?? [];
+
+    return {
       items,
       isLoading,
       error,
       refresh,
       getDefinition: (name) => getEntityDefinition(name, items),
       isKnownEntity: (name): name is EntityName => isEntityName(name, items),
-    }),
-    [error, isLoading, items, refresh],
-  );
+    };
+  }, [catalogQuery.data?.items, error, isLoading, refresh]);
 
   return (
     <EntityCatalogContext.Provider value={value}>

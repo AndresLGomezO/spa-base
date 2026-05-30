@@ -12,12 +12,13 @@ describe("Routing tenant guard", () => {
           tenantId: null,
           availableTenants: ["tenant_a"],
           tenantOptions: [{ id: "tenant_a", name: "Tenant A" }],
+          tenantRoleNames: [],
         },
         appCheck: { appId: "demo-app" },
       },
     }).as("validate");
 
-    cy.visit("/app/customer");
+    cy.visit("/");
     cy.location("pathname", { timeout: 10000 }).should("eq", "/login");
   });
 });

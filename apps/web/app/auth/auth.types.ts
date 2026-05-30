@@ -1,8 +1,8 @@
 /**
  * Keep auth types local while they are web-app specific.
- * If another app/package consumes these contracts, promote them to a shared
- * package (for example packages/shared-types) and import from there.
  */
+import type { TenantAppearance } from "@repo/shared-types";
+
 export interface AuthUser {
   readonly uid: string;
   readonly email: string | null;
@@ -30,6 +30,9 @@ export interface AuthState {
   readonly tenantId: string | null;
   readonly availableTenants: readonly string[];
   readonly tenantOptions: readonly TenantOption[];
+  readonly tenantRoleNames: readonly string[];
+  readonly activeTenantName: string | null;
+  readonly tenantAppearance: TenantAppearance | null;
 }
 
 export interface LoginResult {
@@ -52,6 +55,9 @@ export interface AuthContextValue {
   readonly tenantId: string | null;
   readonly availableTenants: readonly string[];
   readonly tenantOptions: readonly TenantOption[];
+  readonly tenantRoleNames: readonly string[];
+  readonly activeTenantName: string | null;
+  readonly tenantAppearance: TenantAppearance | null;
   readonly loginWithGoogle: () => Promise<LoginResult>;
   readonly logout: () => Promise<void>;
   readonly selectTenant: (tenantId: string) => Promise<SelectTenantResult>;

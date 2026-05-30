@@ -14,8 +14,8 @@ vi.mock("../lib/api-client", () => ({
 
 vi.mock("../entities/entity-catalog-context", () => ({
   useEntityDefinition: vi.fn(() => ({
-    name: "organization",
-    collection: "organizations",
+    name: "widget",
+    collection: "widgets",
     permissions: [],
     fields: {},
     ui: {
@@ -66,7 +66,7 @@ describe("useEntity", () => {
   });
 
   it("loads entity list on mount", async () => {
-    const { result } = renderHook(() => useEntity("organization"), {
+    const { result } = renderHook(() => useEntity("widget"), {
       wrapper: createWrapper(),
     });
 
@@ -75,7 +75,7 @@ describe("useEntity", () => {
     });
 
     expect(result.current.items).toHaveLength(1);
-    expect(listEntity).toHaveBeenCalledWith("organization", {
+    expect(listEntity).toHaveBeenCalledWith("widget", {
       limit: 20,
       cursor: undefined,
       query: undefined,
@@ -91,7 +91,7 @@ describe("useEntity", () => {
       name: "New",
     });
 
-    const { result } = renderHook(() => useEntity("organization"), {
+    const { result } = renderHook(() => useEntity("widget"), {
       wrapper: createWrapper(),
     });
 
@@ -106,7 +106,7 @@ describe("useEntity", () => {
   it("deletes records through the API", async () => {
     vi.mocked(deleteEntity).mockResolvedValue({ deleted: true });
 
-    const { result } = renderHook(() => useEntity("organization"), {
+    const { result } = renderHook(() => useEntity("widget"), {
       wrapper: createWrapper(),
     });
 

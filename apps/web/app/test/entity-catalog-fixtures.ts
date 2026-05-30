@@ -1,13 +1,13 @@
 import type { EntityCatalogEntry } from "../entities/entity-catalog";
 
-const MOCK_ORGANIZATION_DEFINITION: EntityCatalogEntry = {
-  name: "organization",
-  collection: "organizations",
+const MOCK_WIDGET_DEFINITION: EntityCatalogEntry = {
+  name: "widget",
+  collection: "widgets",
   permissions: [
-    "organization.read",
-    "organization.create",
-    "organization.update",
-    "organization.delete",
+    "widget.read",
+    "widget.create",
+    "widget.update",
+    "widget.delete",
   ],
   fields: {
     name: { type: "string", required: true, optional: false },
@@ -20,7 +20,7 @@ const MOCK_ORGANIZATION_DEFINITION: EntityCatalogEntry = {
     },
   },
   ui: {
-    nav: { label: "Organizations", icon: "building" },
+    nav: { label: "Widgets", icon: "box" },
     views: [
       {
         type: "table",
@@ -44,24 +44,24 @@ const MOCK_ORGANIZATION_DEFINITION: EntityCatalogEntry = {
   },
 };
 
-const MOCK_PROJECT_DEFINITION: EntityCatalogEntry = {
-  name: "project",
-  collection: "projects",
+const MOCK_TEST_ITEM_DEFINITION: EntityCatalogEntry = {
+  name: "testItem",
+  collection: "testItems",
   permissions: [
-    "project.read",
-    "project.create",
-    "project.update",
-    "project.delete",
+    "testItem.read",
+    "testItem.create",
+    "testItem.update",
+    "testItem.delete",
   ],
   fields: {
     name: { type: "string", required: true, optional: false },
     budget: { type: "number", required: true, optional: false },
-    organizationId: {
+    widgetId: {
       type: "relation",
       required: true,
       optional: false,
       relation: {
-        target: "organization",
+        target: "widget",
         type: "many-to-one",
         onDelete: "restrict",
       },
@@ -74,32 +74,32 @@ const MOCK_PROJECT_DEFINITION: EntityCatalogEntry = {
     },
   },
   ui: {
-    nav: { label: "Projects", icon: "folder" },
+    nav: { label: "Test Items", icon: "folder" },
     views: [
       {
         type: "table",
         name: "default",
-        fields: ["name", "budget", "organizationId", "isCompleted"],
+        fields: ["name", "budget", "widgetId", "isCompleted"],
       },
     ],
     forms: {
       create: {
-        sections: [{ fields: ["name", "budget", "organizationId"] }],
+        sections: [{ fields: ["name", "budget", "widgetId"] }],
       },
       edit: {
-        sections: [{ fields: ["name", "budget", "organizationId"] }],
+        sections: [{ fields: ["name", "budget", "widgetId"] }],
       },
     },
     fields: {
       name: { label: "Name", component: "input" },
       budget: { label: "Budget", component: "number" },
-      organizationId: { label: "Organization", component: "relation" },
+      widgetId: { label: "Widget", component: "relation" },
       isCompleted: { label: "Completed", component: "toggle" },
     },
   },
 };
 
 export const MOCK_ENTITY_CATALOG: readonly EntityCatalogEntry[] = [
-  MOCK_ORGANIZATION_DEFINITION,
-  MOCK_PROJECT_DEFINITION,
+  MOCK_WIDGET_DEFINITION,
+  MOCK_TEST_ITEM_DEFINITION,
 ];
