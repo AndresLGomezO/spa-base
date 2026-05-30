@@ -35,7 +35,11 @@ interface EntityFormProps {
   readonly recordId?: string;
   readonly onCancel: () => void;
   readonly onSuccess?: () => void;
+  readonly hideActions?: boolean;
+  readonly onSubmittingChange?: (isSubmitting: boolean) => void;
 }
+
+export const ENTITY_FORM_ID = "entity-form";
 
 function cleanFormValues(
   sections: ReturnType<typeof getFormSections>,
@@ -58,6 +62,8 @@ export function EntityForm({
   recordId,
   onCancel,
   onSuccess,
+  hideActions = false,
+  onSubmittingChange,
 }: EntityFormProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
@@ -74,7 +80,7 @@ export function EntityForm({
     mode === "create"
       ? resolveCreateForm(definition)
       : resolveEditForm(definition);
-  const sections = getFormSections(layout);
+  const sections = getFormSections(layout, definition.ui.fields);
   const joinRelationFieldNames = useMemo(
     () => getJoinRelationFieldNames(definition),
     [definition],
@@ -135,6 +141,10 @@ export function EntityForm({
     lastToastedError.current = error;
     toast.error(error);
   }, [error]);
+
+  useEffect(() => {
+    onSubmittingChange?.(isSubmitting);
+  }, [isSubmitting, onSubmittingChange]);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -201,7 +211,11 @@ export function EntityForm({
   }
 
   return (
-    <Form className="px-1" onSubmit={(event) => void handleSubmit(event)}>
+    <Form
+      id={ENTITY_FORM_ID}
+      className="px-1"
+      onSubmit={(event) => void handleSubmit(event)}
+    >
       {sections.map((section, index) => (
         <div
           key={`${section.title ?? "section"}-${index}`}
@@ -231,14 +245,16 @@ export function EntityForm({
           })}
         </div>
       ))}
-      <div className="flex items-center gap-3">
-        <Button type="submit" loading={isSubmitting}>
-          {t("entity.save")}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          {t("entity.cancel")}
-        </Button>
-      </div>
+      {!hideActions ? (
+        <div className="flex items-center gap-3">
+          <Button type="submit" loading={isSubmitting}>
+            {t("entity.save")}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {t("entity.cancel")}
+          </Button>
+        </div>
+      ) : null}
     </Form>
   );
 }

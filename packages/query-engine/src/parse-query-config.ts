@@ -54,6 +54,7 @@ const queryConfigSchema = z
       .object({
         limit: z.number().int().positive().max(MAX_LIMIT),
         cursor: z.string().trim().min(1).optional(),
+        offset: z.number().int().nonnegative().optional(),
       })
       .strict()
       .optional(),
@@ -348,12 +349,14 @@ export function parseListQueryInput(
 
   const limit = normalizeLimit(config.pagination?.limit ?? input.limit);
   const cursor = config.pagination?.cursor ?? input.cursor;
+  const offset = config.pagination?.offset;
 
   return {
     ...config,
     pagination: {
       limit,
       ...(cursor ? { cursor } : {}),
+      ...(offset !== undefined ? { offset } : {}),
     },
   };
 }
@@ -372,11 +375,18 @@ export function normalizeEntityQuery(
     ? validateSelect(entity, config.select)
     : undefined;
 
+  const offset = config.pagination?.offset;
+  const useOffset = offset !== undefined;
+
   return {
     filters,
     sort: primarySort,
     limit: normalizeLimit(config.pagination?.limit),
-    ...(config.pagination?.cursor ? { cursor: config.pagination.cursor } : {}),
+    ...(useOffset
+      ? { offset }
+      : config.pagination?.cursor
+        ? { cursor: config.pagination.cursor }
+        : {}),
     ...(select ? { select } : {}),
   };
 }

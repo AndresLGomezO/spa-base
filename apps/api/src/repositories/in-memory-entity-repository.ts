@@ -49,6 +49,7 @@ function paginateRecords<TRecord extends { readonly id: string }>(
   return {
     items: page,
     nextCursor,
+    totalCount: records.length,
   };
 }
 

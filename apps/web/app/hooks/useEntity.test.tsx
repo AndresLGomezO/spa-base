@@ -62,6 +62,7 @@ describe("useEntity", () => {
         },
       ],
       nextCursor: null,
+      totalCount: 1,
     });
   });
 
@@ -76,8 +77,6 @@ describe("useEntity", () => {
 
     expect(result.current.items).toHaveLength(1);
     expect(listEntity).toHaveBeenCalledWith("widget", {
-      limit: 20,
-      cursor: undefined,
       query: undefined,
     });
   });

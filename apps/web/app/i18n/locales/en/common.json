@@ -68,6 +68,16 @@
       "activateSuccess": "Tenant activated."
     }
   },
+  "table": {
+    "loading": "Loading…",
+    "booleanYes": "Yes",
+    "booleanNo": "No",
+    "paginationFirst": "First page",
+    "paginationPrevious": "Previous page",
+    "paginationNext": "Next page",
+    "paginationLast": "Last page",
+    "paginationPage": "Page {{page}}"
+  },
   "entity": {
     "create": "Create",
     "edit": "Edit",
@@ -75,7 +85,6 @@
     "save": "Save",
     "cancel": "Cancel",
     "empty": "No records available.",
-    "loadMore": "Load more",
     "actions": "Actions",
     "forbidden": "Access denied",
     "forbiddenDetail": "You do not have permission to view this entity.",
@@ -202,7 +211,8 @@
     "saveFailed": "Unable to save changes.",
     "saveSuccess": "User updated.",
     "inviteSuccess": "User invited. Roles apply on first sign-in.",
-    "removeSuccess": "User removed from tenant."
+    "removeSuccess": "User removed from tenant.",
+    "empty": "No users or pending invites."
   },
   "dataModels": {
     "title": "Data Models",
@@ -216,7 +226,6 @@
     "fieldsTitle": "Fields",
     "fieldName": "Field name",
     "fieldType": "Field type",
-    "fieldNumber": "Field {{number}}",
     "fieldTypes": {
       "string": "Text",
       "number": "Number",
@@ -226,6 +235,19 @@
       "relation": "Relation"
     },
     "required": "Required",
+    "displayOrder": "Display order",
+    "displayOrderHint": "Lower numbers appear first in tables and forms.",
+    "numberDisplayFormat": "Number display",
+    "numberDisplayFormats": {
+      "plain": "Plain number",
+      "currency": "Currency"
+    },
+    "dateDisplayFormat": "Date display",
+    "dateDisplayFormats": {
+      "date": "Date only",
+      "datetime": "Date and time",
+      "time": "Time only"
+    },
     "enumValues": "Enum values",
     "enumPlaceholder": "Option value",
     "addEnumValue": "Add value",
@@ -261,6 +283,20 @@
       }
     },
     "addField": "Add field",
+    "addFieldTitle": "Add field",
+    "editFieldTitle": "Edit field",
+    "editField": "Edit field",
+    "selectFieldType": "Choose the type of field you want to add.",
+    "fieldsTableEmpty": "No fields yet. Add a field to define this model.",
+    "fieldOrderColumn": "Order",
+    "fieldNameColumn": "Name",
+    "fieldTypeColumn": "Type",
+    "fieldRequiredColumn": "Required",
+    "fieldDetailsColumn": "Details",
+    "fieldTypeStep": "Step 1 — Select field type",
+    "fieldDetailsStep": "Step 2 — Configure field",
+    "fieldDetailsEnumCount": "{{count}} options",
+    "fieldDetailsRelation": "→ {{target}} ({{type}})",
     "removeField": "Remove field",
     "next": "Next",
     "back": "Back",
@@ -288,6 +324,7 @@
     "description": "Manage tenant roles, grants, and field-level permissions.",
     "tenant": "Tenant",
     "name": "Role name",
+    "grantCount": "Permissions",
     "descriptionLabel": "Description",
     "grants": "Permissions",
     "fieldPermissions": "Field permissions",

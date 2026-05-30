@@ -15,6 +15,7 @@ export interface ListParams {
 export interface PaginatedResult<T> {
   readonly items: readonly T[];
   readonly nextCursor: string | null;
+  readonly totalCount: number;
 }
 
 export interface TenantScopedEntityRepository<

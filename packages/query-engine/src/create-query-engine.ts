@@ -97,6 +97,7 @@ export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
 
       return {
         data,
+        totalCount: result.totalCount,
         ...(result.nextCursor ? { nextCursor: result.nextCursor } : {}),
       };
     },

@@ -55,6 +55,56 @@ describe("@repo/dynamic-entities", () => {
     ]);
   });
 
+  it("builds field UI without defaulting labels to raw field names", () => {
+    const entity = defineEntityFromRecord(baseRecord);
+    expect(entity.metadata.ui?.fields?.amount?.label).toBeUndefined();
+    expect(entity.metadata.ui?.fields?.amount?.component).toBe("number");
+  });
+
+  it("passes display metadata from field ui config", () => {
+    const entity = defineEntityFromRecord({
+      ...baseRecord,
+      fields: [
+        {
+          name: "amount",
+          type: "number",
+          required: true,
+          ui: { displayFormat: "currency" },
+        },
+        {
+          name: "openDate",
+          type: "date",
+          ui: { dateDisplayFormat: "date" },
+        },
+        ...baseRecord.fields.slice(1),
+      ],
+    });
+
+    expect(entity.metadata.ui?.fields?.amount?.displayFormat).toBe("currency");
+    expect(entity.metadata.ui?.fields?.openDate?.dateDisplayFormat).toBe(
+      "date",
+    );
+  });
+
+  it("assigns field order from field ui config or array index", () => {
+    const entity = defineEntityFromRecord({
+      ...baseRecord,
+      fields: [
+        { name: "amount", type: "number", required: true, ui: { order: 2 } },
+        {
+          name: "status",
+          type: "enum",
+          enumValues: ["Pending", "Approved"],
+          required: true,
+          ui: { order: 0 },
+        },
+      ],
+    });
+
+    expect(entity.metadata.ui?.fields?.status?.order).toBe(0);
+    expect(entity.metadata.ui?.fields?.amount?.order).toBe(2);
+  });
+
   it("registers and resolves tenant dynamic entities", () => {
     registerDynamicEntity("tenant_a", baseRecord);
     expect(resolveEntity("loan", "tenant_a")?.name).toBe("loan");

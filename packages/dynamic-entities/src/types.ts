@@ -27,6 +27,9 @@ export const fieldDefinitionSchema = z
         label: z.string().optional(),
         component: z.string().optional(),
         placeholder: z.string().optional(),
+        displayFormat: z.enum(["currency", "plain"]).optional(),
+        dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
+        order: z.number().int().nonnegative().optional(),
       })
       .optional(),
   })

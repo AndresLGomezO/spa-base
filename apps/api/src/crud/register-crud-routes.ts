@@ -395,6 +395,7 @@ export async function registerCrudRoutes<
               result.data as Record<string, unknown>[],
             ),
             nextCursor: result.nextCursor ?? null,
+            totalCount: result.totalCount,
           }),
         );
       }

@@ -5,6 +5,7 @@ import {
   buildInitialValues,
   buildListQueryConfig,
   filterNavEntities,
+  getFormSections,
   getTableColumns,
   registerComponent,
   resolveComponentId,
@@ -22,6 +23,10 @@ const Widget = defineEntity({
     forms: {
       create: { sections: [{ fields: ["name", "isActive"] }] },
       edit: { sections: [{ fields: ["name", "isActive"] }] },
+    },
+    fields: {
+      isActive: { order: 0 },
+      name: { order: 1 },
     },
   },
 });
@@ -49,7 +54,13 @@ const definition = {
 
 describe("@repo/ui-builder", () => {
   it("resolves table columns from view config", () => {
-    expect(getTableColumns(definition)).toEqual(["name", "isActive"]);
+    expect(getTableColumns(definition)).toEqual(["isActive", "name"]);
+  });
+
+  it("sorts form sections by field order metadata", () => {
+    expect(
+      getFormSections(definition.ui.forms.create, definition.ui.fields),
+    ).toEqual([{ fields: ["isActive", "name"] }]);
   });
 
   it("builds initial form values from metadata", () => {

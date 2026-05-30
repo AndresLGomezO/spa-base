@@ -207,6 +207,7 @@ describe("createQueryEngine", () => {
           return {
             items: [{ id: "1", name: "Jane", tenantId: "tenant_a" }],
             nextCursor: null,
+            totalCount: 1,
           };
         },
         async findById() {
@@ -234,7 +235,7 @@ describe("createQueryEngine", () => {
         name === "widget" ? (Widget as unknown as AnyDefinedEntity) : undefined,
       getExecutor: () => ({
         async executeQuery() {
-          return { items: [], nextCursor: null };
+          return { items: [], nextCursor: null, totalCount: 0 };
         },
         async findById() {
           return null;

@@ -6,9 +6,16 @@ export type FieldComponentType =
   | "relation"
   | "select";
 
+export type FieldDisplayFormat = "currency" | "plain";
+
+export type FieldDateDisplayFormat = "date" | "datetime" | "time";
+
 export interface FieldUIConfig {
   readonly label?: string;
   readonly component?: FieldComponentType;
+  readonly displayFormat?: FieldDisplayFormat;
+  readonly dateDisplayFormat?: FieldDateDisplayFormat;
+  readonly order?: number;
   readonly placeholder?: string;
   readonly visible?: boolean;
   readonly editable?: boolean;

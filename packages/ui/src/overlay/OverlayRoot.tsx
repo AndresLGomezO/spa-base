@@ -10,10 +10,27 @@ import {
   useOverlayTransition,
 } from "./useOverlayTransition";
 
+type OverlayLayer = "default" | "nested";
+
+const overlayLayerClasses: Record<
+  OverlayLayer,
+  { readonly backdrop: string; readonly content: string }
+> = {
+  default: {
+    backdrop: "z-50 bg-backdrop",
+    content: "z-50",
+  },
+  nested: {
+    backdrop: "z-[60] bg-backdrop/80",
+    content: "z-[60]",
+  },
+};
+
 interface OverlayRootProps {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly closeLabel?: string;
+  readonly layer?: OverlayLayer;
   readonly overlayClassName?: string;
   readonly contentClassName?: string;
   readonly focusPanel?: () => void;
@@ -23,6 +40,7 @@ interface OverlayRootProps {
 export function OverlayRoot({
   open,
   onClose,
+  layer = "default",
   overlayClassName,
   contentClassName,
   focusPanel,
@@ -30,6 +48,7 @@ export function OverlayRoot({
 }: OverlayRootProps) {
   const { mounted, visible, durationMs } = useOverlayTransition(open);
   useOverlayLock(mounted, open, onClose, focusPanel);
+  const layerClasses = overlayLayerClasses[layer];
 
   if (!mounted || typeof document === "undefined") return null;
 
@@ -39,15 +58,18 @@ export function OverlayRoot({
         role="presentation"
         aria-hidden
         className={cn(
-          "fixed inset-0 z-50 cursor-default bg-backdrop",
+          "fixed inset-0 cursor-default",
+          layerClasses.backdrop,
           visible ? "opacity-100" : "opacity-0",
+          overlayClassName,
         )}
         style={overlayTransitionStyle(durationMs, "opacity")}
         onClick={onClose}
       />
       <div
         className={cn(
-          "pointer-events-none fixed inset-0 z-50",
+          "pointer-events-none fixed inset-0",
+          layerClasses.content,
           overlayClassName,
         )}
         role="presentation"

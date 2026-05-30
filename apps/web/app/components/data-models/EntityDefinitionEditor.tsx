@@ -1,4 +1,11 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -22,7 +29,9 @@ import {
   type FieldDefinitionInput,
 } from "../../lib/api-client";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
-import { FieldEditor } from "./FieldEditor";
+import { EntityFieldsManager } from "./EntityFieldsManager";
+
+const ENTITY_DEFINITION_EDITOR_FORM_ID = "entity-definition-editor-form";
 
 interface EntityDefinitionEditorProps {
   readonly definitionId: string;
@@ -30,6 +39,7 @@ interface EntityDefinitionEditorProps {
   readonly canUpdate?: boolean;
   readonly onSaved: (record: EntityDefinitionRecord) => void;
   readonly onCancel: () => void;
+  readonly onFooterChange?: (footer: ReactNode | null) => void;
 }
 
 export function EntityDefinitionEditor({
@@ -38,6 +48,7 @@ export function EntityDefinitionEditor({
   canUpdate = true,
   onSaved,
   onCancel,
+  onFooterChange,
 }: EntityDefinitionEditorProps) {
   const { t } = useTranslation("common");
   const { items, refresh } = useEntityCatalog();
@@ -96,13 +107,42 @@ export function EntityDefinitionEditor({
     };
   }, [definitionId, t, tenantId]);
 
-  function updateField(index: number, field: FieldDefinitionInput) {
-    setFields((current) =>
-      current.map((entry, entryIndex) =>
-        entryIndex === index ? field : entry,
-      ),
+  const useModalFooter = Boolean(onFooterChange);
+  const onCancelRef = useRef(onCancel);
+  onCancelRef.current = onCancel;
+
+  useEffect(() => {
+    if (!onFooterChange) {
+      return;
+    }
+
+    onFooterChange(
+      <div className="flex gap-2">
+        <Button
+          type="button"
+          variant="ghost"
+          onClick={() => onCancelRef.current()}
+        >
+          {t("entity.cancel")}
+        </Button>
+        {canUpdate && record && !isLoading ? (
+          <Button
+            type="submit"
+            form={ENTITY_DEFINITION_EDITOR_FORM_ID}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? t("loading") : t("dataModels.saveModel")}
+          </Button>
+        ) : null}
+      </div>,
     );
-  }
+  }, [canUpdate, isLoading, isSubmitting, onFooterChange, record, t]);
+
+  useEffect(() => {
+    return () => {
+      onFooterChange?.(null);
+    };
+  }, [onFooterChange]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -168,7 +208,11 @@ export function EntityDefinitionEditor({
 
       {validationError ? <Alert>{validationError}</Alert> : null}
 
-      <Form onSubmit={handleSubmit} className="space-y-4">
+      <Form
+        id={ENTITY_DEFINITION_EDITOR_FORM_ID}
+        onSubmit={handleSubmit}
+        className="space-y-4"
+      >
         <div>
           <FieldLabel htmlFor="edit-model-name">
             {t("dataModels.modelName")}
@@ -191,49 +235,25 @@ export function EntityDefinitionEditor({
           />
         </div>
 
-        <div className="space-y-4">
-          <Heading level={3}>{t("dataModels.fieldsTitle")}</Heading>
-          {fields.map((field, index) => (
-            <FieldEditor
-              key={`${field.name}-${index}`}
-              field={field}
-              index={index}
-              relationTargets={relationTargets}
-              onChange={updateField}
-              onRemove={(removeIndex) =>
-                setFields((current) =>
-                  current.filter((_, entryIndex) => entryIndex !== removeIndex),
-                )
-              }
-              canRemove={fields.length > 1 && canUpdate}
-            />
-          ))}
-          {canUpdate ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() =>
-                setFields((current) => [
-                  ...current,
-                  { name: "", type: "string", required: false },
-                ])
-              }
-            >
-              {t("dataModels.addField")}
-            </Button>
-          ) : null}
-        </div>
+        <EntityFieldsManager
+          fields={fields}
+          onChange={setFields}
+          canEdit={canUpdate}
+          relationTargets={relationTargets}
+        />
 
-        <div className="flex gap-2">
-          <Button type="button" variant="ghost" onClick={onCancel}>
-            {t("entity.cancel")}
-          </Button>
-          {canUpdate ? (
-            <Button type="submit" disabled={isSubmitting}>
-              {isSubmitting ? t("loading") : t("dataModels.saveModel")}
+        {!useModalFooter ? (
+          <div className="flex gap-2">
+            <Button type="button" variant="ghost" onClick={onCancel}>
+              {t("entity.cancel")}
             </Button>
-          ) : null}
-        </div>
+            {canUpdate ? (
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting ? t("loading") : t("dataModels.saveModel")}
+              </Button>
+            ) : null}
+          </div>
+        ) : null}
       </Form>
     </div>
   );

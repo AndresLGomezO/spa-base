@@ -6,7 +6,7 @@ import {
   getViewFilters,
   resolveActiveView,
 } from "@repo/ui-builder";
-import { Alert, Button, Input, Text } from "@repo/ui";
+import { Alert, Button, Input, Pagination, SchemaCell, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -21,16 +21,21 @@ import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
 import type { useEntity } from "../../hooks/useEntity";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
-import { resolveEntityCellValue } from "./resolve-entity-cell-value";
+import {
+  getEntityCellDisplayMeta,
+  getEntityCellRawValue,
+} from "./resolve-entity-cell-value";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
-  "items" | "isLoading" | "error" | "nextCursor" | "isLoadingMore" | "loadMore"
+  "items" | "totalCount" | "isLoading" | "error"
 >;
 
 interface EntityCardViewProps {
   readonly entityName: EntityName;
   readonly entityState: EntityListState;
+  readonly page: number;
+  readonly onPageChange: (page: number) => void;
   readonly onQueryConfigChange: (queryConfig: QueryConfig) => void;
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
@@ -39,11 +44,13 @@ interface EntityCardViewProps {
 export function EntityCardView({
   entityName,
   entityState,
+  page,
+  onPageChange,
   onQueryConfigChange,
   onRequestDelete,
   onRequestEdit,
 }: EntityCardViewProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
   const { getDefinition } = useEntityCatalog();
   const permissions = useEntityPermissions(entityName);
@@ -76,8 +83,7 @@ export function EntityCardView({
     onQueryConfigChange(queryConfig);
   }, [onQueryConfigChange, queryConfig]);
 
-  const { items, isLoading, error, nextCursor, isLoadingMore, loadMore } =
-    entityState;
+  const { items, isLoading, error, totalCount } = entityState;
 
   const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
     useOneToManyColumnData(definition, items, getDefinition);
@@ -122,21 +128,33 @@ export function EntityCardView({
               key={item.id}
               className="border-border flex flex-col gap-3 rounded-lg border p-4"
             >
-              {columns.map((column) => (
-                <div key={column} className="flex flex-col gap-1">
-                  <Text className="text-muted-foreground text-xs">
-                    {formatFieldLabel(column, definition)}
-                  </Text>
-                  <Text>
-                    {resolveEntityCellValue(
-                      item,
-                      column,
-                      definition,
-                      getOneToManyCellValue,
-                    )}
-                  </Text>
-                </div>
-              ))}
+              {columns.map((column) => {
+                const { fieldType, displayFormat, dateDisplayFormat } =
+                  getEntityCellDisplayMeta(column, definition);
+
+                return (
+                  <div key={column} className="flex flex-col gap-1">
+                    <Text className="text-muted-foreground text-xs">
+                      {formatFieldLabel(column, definition)}
+                    </Text>
+                    <SchemaCell
+                      value={getEntityCellRawValue(
+                        item,
+                        column,
+                        definition,
+                        getOneToManyCellValue,
+                      )}
+                      fieldType={fieldType}
+                      displayFormat={displayFormat}
+                      dateDisplayFormat={dateDisplayFormat}
+                      fieldName={column}
+                      locale={i18n.language}
+                      trueLabel={t("table.booleanYes")}
+                      falseLabel={t("table.booleanNo")}
+                    />
+                  </div>
+                );
+              })}
               {permissions.canUpdate || permissions.canDelete ? (
                 <div className="flex items-center gap-2 pt-2">
                   {permissions.canUpdate && onRequestEdit ? (
@@ -168,16 +186,18 @@ export function EntityCardView({
         </div>
       )}
 
-      {nextCursor ? (
-        <Button
-          type="button"
-          variant="outline"
-          loading={isLoadingMore}
-          onClick={() => void loadMore()}
-        >
-          {t("entity.loadMore")}
-        </Button>
-      ) : null}
+      <Pagination
+        page={page}
+        totalCount={totalCount}
+        onPageChange={onPageChange}
+        labels={{
+          firstPage: t("table.paginationFirst"),
+          previousPage: t("table.paginationPrevious"),
+          nextPage: t("table.paginationNext"),
+          lastPage: t("table.paginationLast"),
+          page: (pageNumber) => t("table.paginationPage", { page: pageNumber }),
+        }}
+      />
     </div>
   );
 }

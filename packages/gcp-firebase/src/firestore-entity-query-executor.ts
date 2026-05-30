@@ -80,7 +80,18 @@ function buildFirestoreQuery(
     query = query.orderBy("id", primarySort.direction);
   }
 
-  return query.limit(normalizedQuery.limit);
+  return query;
+}
+
+function applyPagination(
+  query: Query,
+  normalizedQuery: NormalizedEntityQuery,
+): Query {
+  let paginated = query;
+  if (normalizedQuery.offset !== undefined && normalizedQuery.offset > 0) {
+    paginated = paginated.offset(normalizedQuery.offset);
+  }
+  return paginated.limit(normalizedQuery.limit);
 }
 
 function buildSuggestedIndexFields(
@@ -129,10 +140,15 @@ class FirestoreEntityQueryExecutor<
 
   async executeQuery(tenantId: string, query: NormalizedEntityQuery) {
     const collectionRef = this.getCollection(tenantId);
-    let firestoreQuery = buildFirestoreQuery(collectionRef, query);
+    const filteredQuery = buildFirestoreQuery(collectionRef, query);
 
     try {
-      if (query.cursor) {
+      const countSnapshot = await filteredQuery.count().get();
+      const totalCount = countSnapshot.data().count;
+
+      let firestoreQuery = applyPagination(filteredQuery, query);
+
+      if (query.offset === undefined && query.cursor) {
         const cursorDoc = await collectionRef.doc(query.cursor).get();
         if (cursorDoc.exists) {
           firestoreQuery = firestoreQuery.startAfter(cursorDoc);
@@ -148,15 +164,19 @@ class FirestoreEntityQueryExecutor<
           >,
       );
 
-      const hasMore = items.length === query.limit;
+      const hasMore =
+        query.offset !== undefined
+          ? (query.offset ?? 0) + items.length < totalCount
+          : items.length === query.limit;
       const nextCursor =
-        hasMore && items.length > 0
+        query.offset === undefined && hasMore && items.length > 0
           ? String(items[items.length - 1]!.id)
           : null;
 
       return {
         items,
         nextCursor,
+        totalCount,
       };
     } catch (error) {
       if (isMissingIndexError(error)) {

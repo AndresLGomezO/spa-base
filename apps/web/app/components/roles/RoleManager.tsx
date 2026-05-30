@@ -1,10 +1,20 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button, FieldLabel, Text, toast } from "@repo/ui";
+import {
+  Button,
+  DataTable,
+  FieldLabel,
+  IconButton,
+  Text,
+  toast,
+} from "@repo/ui";
+import { Pencil } from "lucide-react";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import { useClientPagination } from "../../hooks/useClientPagination";
 import { listRoles, type TenantRoleRecord } from "../../lib/api-client";
+import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
 import { FormModal } from "../forms/FormModal";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { RoleEditor } from "./RoleEditor";
@@ -30,11 +40,14 @@ export function RoleManager({
   onTenantChange,
 }: RoleManagerProps) {
   const { t } = useTranslation("common");
+  const paginationLabels = useTablePaginationLabels();
   const { items: entities } = useEntityCatalog();
   const [items, setItems] = useState<readonly TenantRoleRecord[]>([]);
   const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+
+  const { page, pageItems, totalCount, setPage } = useClientPagination(items);
 
   const knownGrants = useMemo(() => {
     const grants = new Set<string>([
@@ -161,24 +174,50 @@ export function RoleManager({
       {items.length === 0 ? (
         <Text>{t("roles.selectRole")}</Text>
       ) : (
-        <div className="grid max-w-md gap-2">
-          {items.map((role) => (
-            <Button
-              key={role.id}
-              type="button"
-              variant="outline"
-              className="w-full justify-start"
-              onClick={() => {
-                if (!canUpdate) return;
-                setEditingRoleId(role.id);
-                setIsCreating(false);
-              }}
-              disabled={!canUpdate}
-            >
-              {role.name}
-            </Button>
-          ))}
-        </div>
+        <DataTable
+          columns={[
+            {
+              id: "name",
+              header: t("roles.name"),
+              cell: (role) => role.name,
+            },
+            {
+              id: "grants",
+              header: t("roles.grantCount"),
+              cell: (role) => role.grants.length,
+            },
+          ]}
+          rows={pageItems}
+          getRowId={(role) => role.id}
+          page={page}
+          totalCount={totalCount}
+          onPageChange={setPage}
+          emptyMessage={t("roles.selectRole")}
+          loadingMessage={t("table.loading")}
+          scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
+          paginationLabels={paginationLabels}
+          actionsColumn={
+            canUpdate
+              ? {
+                  id: "actions",
+                  header: t("entity.actions"),
+                  headerClassName: "text-center",
+                  cell: (role) => (
+                    <IconButton
+                      type="button"
+                      label={t("entity.edit")}
+                      onClick={() => {
+                        setEditingRoleId(role.id);
+                        setIsCreating(false);
+                      }}
+                    >
+                      <Pencil className="size-4" />
+                    </IconButton>
+                  ),
+                }
+              : undefined
+          }
+        />
       )}
 
       <FormModal

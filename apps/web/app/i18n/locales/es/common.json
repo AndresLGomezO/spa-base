@@ -68,6 +68,16 @@
       "activateSuccess": "Tenant activado."
     }
   },
+  "table": {
+    "loading": "Cargando…",
+    "booleanYes": "Sí",
+    "booleanNo": "No",
+    "paginationFirst": "Primera página",
+    "paginationPrevious": "Página anterior",
+    "paginationNext": "Página siguiente",
+    "paginationLast": "Última página",
+    "paginationPage": "Página {{page}}"
+  },
   "entity": {
     "create": "Crear",
     "edit": "Editar",
@@ -75,7 +85,6 @@
     "save": "Guardar",
     "cancel": "Cancelar",
     "empty": "No hay registros disponibles.",
-    "loadMore": "Cargar más",
     "actions": "Acciones",
     "forbidden": "Acceso denegado",
     "forbiddenDetail": "No tienes permiso para ver esta entidad.",
@@ -202,7 +211,8 @@
     "saveFailed": "No se pudieron guardar los cambios.",
     "saveSuccess": "Usuario actualizado.",
     "inviteSuccess": "Usuario invitado. Los roles se aplican al primer inicio de sesión.",
-    "removeSuccess": "Usuario eliminado del tenant."
+    "removeSuccess": "Usuario eliminado del tenant.",
+    "empty": "No hay usuarios ni invitaciones pendientes."
   },
   "dataModels": {
     "title": "Modelos de datos",
@@ -216,7 +226,6 @@
     "fieldsTitle": "Campos",
     "fieldName": "Nombre del campo",
     "fieldType": "Tipo de campo",
-    "fieldNumber": "Campo {{number}}",
     "fieldTypes": {
       "string": "Texto",
       "number": "Número",
@@ -226,6 +235,19 @@
       "relation": "Relación"
     },
     "required": "Obligatorio",
+    "displayOrder": "Orden de visualización",
+    "displayOrderHint": "Los números más bajos aparecen primero en tablas y formularios.",
+    "numberDisplayFormat": "Formato numérico",
+    "numberDisplayFormats": {
+      "plain": "Número simple",
+      "currency": "Moneda"
+    },
+    "dateDisplayFormat": "Formato de fecha",
+    "dateDisplayFormats": {
+      "date": "Solo fecha",
+      "datetime": "Fecha y hora",
+      "time": "Solo hora"
+    },
     "enumValues": "Valores enum",
     "enumPlaceholder": "Valor de opción",
     "addEnumValue": "Agregar valor",
@@ -261,6 +283,20 @@
       }
     },
     "addField": "Agregar campo",
+    "addFieldTitle": "Agregar campo",
+    "editFieldTitle": "Editar campo",
+    "editField": "Editar campo",
+    "selectFieldType": "Elige el tipo de campo que deseas agregar.",
+    "fieldsTableEmpty": "Aún no hay campos. Agrega un campo para definir este modelo.",
+    "fieldOrderColumn": "Orden",
+    "fieldNameColumn": "Nombre",
+    "fieldTypeColumn": "Tipo",
+    "fieldRequiredColumn": "Obligatorio",
+    "fieldDetailsColumn": "Detalles",
+    "fieldTypeStep": "Paso 1 — Seleccionar tipo de campo",
+    "fieldDetailsStep": "Paso 2 — Configurar campo",
+    "fieldDetailsEnumCount": "{{count}} opciones",
+    "fieldDetailsRelation": "→ {{target}} ({{type}})",
     "removeField": "Eliminar campo",
     "next": "Siguiente",
     "back": "Atrás",
@@ -288,6 +324,7 @@
     "description": "Administra roles del tenant, permisos y acceso a campos.",
     "tenant": "Tenant",
     "name": "Nombre del rol",
+    "grantCount": "Permisos",
     "descriptionLabel": "Descripción",
     "grants": "Permisos",
     "fieldPermissions": "Permisos de campo",

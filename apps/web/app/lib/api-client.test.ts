@@ -56,14 +56,14 @@ describe("apiRequest", () => {
       ok: true,
       status: 200,
       json: async () => ({
-        data: { items: [], nextCursor: null },
+        data: { items: [], nextCursor: null, totalCount: 0 },
         error: null,
       }),
     });
 
     const result = await listEntity("widget");
 
-    expect(result).toEqual({ items: [], nextCursor: null });
+    expect(result).toEqual({ items: [], nextCursor: null, totalCount: 0 });
     expect(fetchMock).toHaveBeenCalledWith(
       new URL("/api/widget", "http://127.0.0.1:3000"),
       expect.objectContaining({
@@ -104,7 +104,7 @@ describe("apiRequest", () => {
       ok: true,
       status: 200,
       json: async () => ({
-        data: { items: [], nextCursor: "abc" },
+        data: { items: [], nextCursor: "abc", totalCount: 1 },
         error: null,
       }),
     });

@@ -1,5 +1,7 @@
 import type { SerializableEntityDefinition, ViewConfig } from "@repo/entities";
 
+import { sortFieldsByUiOrder } from "./sort-fields-by-order.js";
+
 export function resolveActiveView(
   definition: SerializableEntityDefinition,
   viewName?: string,
@@ -25,7 +27,8 @@ export function getTableColumns(
   definition: SerializableEntityDefinition,
   viewName?: string,
 ): readonly string[] {
-  return resolveActiveView(definition, viewName).fields;
+  const fields = resolveActiveView(definition, viewName).fields;
+  return sortFieldsByUiOrder(fields, definition.ui.fields);
 }
 
 export function getDefaultSort(

@@ -51,6 +51,8 @@ export type {
   EntityNavConfig,
   EntityUIConfig,
   FieldComponentType,
+  FieldDateDisplayFormat,
+  FieldDisplayFormat,
   FieldUIConfig,
   FilterOperatorUI,
   FilterUIConfig,

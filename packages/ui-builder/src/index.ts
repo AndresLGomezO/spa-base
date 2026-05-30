@@ -32,3 +32,4 @@ export {
   getViewFilters,
   resolveActiveView,
 } from "./view-engine.js";
+export { sortFieldsByUiOrder } from "./sort-fields-by-order.js";

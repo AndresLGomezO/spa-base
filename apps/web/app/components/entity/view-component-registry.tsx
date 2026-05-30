@@ -6,12 +6,14 @@ import type { useEntity } from "../../hooks/useEntity";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
-  "items" | "isLoading" | "error" | "nextCursor" | "isLoadingMore" | "loadMore"
+  "items" | "totalCount" | "isLoading" | "error"
 >;
 
 interface EntityViewProps {
   readonly entityName: EntityName;
   readonly entityState: EntityListState;
+  readonly page: number;
+  readonly onPageChange: (page: number) => void;
   readonly onQueryConfigChange: (queryConfig: QueryConfig) => void;
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
