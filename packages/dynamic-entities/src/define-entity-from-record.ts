@@ -122,6 +122,12 @@ function buildUiFromRecord(
           ...(field.ui?.dateDisplayFormat
             ? { dateDisplayFormat: field.ui.dateDisplayFormat }
             : {}),
+          ...(field.ui?.filterable !== undefined
+            ? { filterable: field.ui.filterable }
+            : {}),
+          ...(field.ui?.sortable !== undefined
+            ? { sortable: field.ui.sortable }
+            : {}),
           order: field.ui?.order ?? index,
         },
       ]),

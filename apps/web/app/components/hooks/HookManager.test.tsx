@@ -1,4 +1,5 @@
 import { render, screen, waitFor } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { HookManager } from "./HookManager";
@@ -48,7 +49,11 @@ describe("HookManager", () => {
       ],
     });
 
-    render(<HookManager tenantId="tenant_a" canCreate canUpdate />);
+    render(
+      <MemoryRouter>
+        <HookManager tenantId="tenant_a" canCreate canUpdate />
+      </MemoryRouter>,
+    );
 
     await waitFor(() => {
       expect(screen.getByText("Set status")).toBeInTheDocument();

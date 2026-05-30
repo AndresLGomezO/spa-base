@@ -10,12 +10,15 @@ import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { FormModal } from "../forms/FormModal";
+import { DataViewToolbar } from "../data-view";
 import { RequireEntityPermission } from "./RequireEntityPermission";
 import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
 import { resolveViewComponent } from "./view-component-registry";
+import { useEntityListDataView } from "./useEntityListDataView";
 
-const DEFAULT_PAGE_SIZE = 20;
+const ENTITY_LIST_LIMIT = 100;
+const CLIENT_PAGE_SIZE = 20;
 
 type EntityFormModalState =
   | null
@@ -33,23 +36,21 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const activeView = useMemo(() => resolveActiveView(definition), [definition]);
   const ViewComponent = resolveViewComponent(activeView.type) ?? EntityTable;
   const [searchParams, setSearchParams] = useSearchParams();
-  const [page, setPage] = useState(1);
-  const [baseQueryConfig, setBaseQueryConfig] = useState<QueryConfig>(() => ({
-    pagination: { limit: DEFAULT_PAGE_SIZE, offset: 0 },
-  }));
 
   const queryConfig = useMemo<QueryConfig>(
     () => ({
-      ...baseQueryConfig,
-      pagination: {
-        limit: DEFAULT_PAGE_SIZE,
-        offset: (page - 1) * DEFAULT_PAGE_SIZE,
-      },
+      pagination: { limit: ENTITY_LIST_LIMIT, offset: 0 },
     }),
-    [baseQueryConfig, page],
+    [],
   );
 
-  const entityState = useEntity(entityName, { queryConfig, page });
+  const entityState = useEntity(entityName, { queryConfig });
+  const { dataView, columnDescriptors, isLoadingRelations } =
+    useEntityListDataView({
+      entityName,
+      items: entityState.items as readonly Record<string, unknown>[],
+    });
+
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
@@ -76,15 +77,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
     }
   }, [permissions.canCreate, permissions.canUpdate, searchParams]);
 
-  const handleQueryConfigChange = useCallback((nextConfig: QueryConfig) => {
-    setBaseQueryConfig(nextConfig);
-    setPage(1);
-  }, []);
-
-  const handlePageChange = useCallback((nextPage: number) => {
-    setPage(nextPage);
-  }, []);
-
   const handleDelete = async () => {
     if (!deleteId) return;
     const deleted = await entityState.remove(deleteId);
@@ -102,12 +94,22 @@ export function EntityPage({ entityName }: EntityPageProps) {
       : t("entity.editTitle", { entity });
   }, [definition, formModal, t]);
 
+  const warningMessage =
+    entityState.totalCount > ENTITY_LIST_LIMIT
+      ? t("dataView.truncatedDatasetWarning")
+      : undefined;
+
   const listViewProps = {
     entityName,
-    entityState,
-    page,
-    onPageChange: handlePageChange,
-    onQueryConfigChange: handleQueryConfigChange,
+    entityState: {
+      ...entityState,
+      items: dataView.pageItems as typeof entityState.items,
+      totalCount: dataView.totalCount,
+      isLoading: entityState.isLoading || isLoadingRelations,
+    },
+    page: dataView.page,
+    pageSize: CLIENT_PAGE_SIZE,
+    onPageChange: dataView.setPage,
     onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
     onRequestEdit: permissions.canUpdate
       ? (id: string) => setFormModal({ mode: "edit", recordId: id })
@@ -127,6 +129,16 @@ export function EntityPage({ entityName }: EntityPageProps) {
           </Button>
         ) : null}
       </div>
+
+      {!entityState.isLoading && !isLoadingRelations ? (
+        <DataViewToolbar
+          {...dataView}
+          columns={columnDescriptors}
+          filtersOpen={dataView.filtersOpen}
+          onFiltersOpenChange={dataView.setFiltersOpen}
+          warningMessage={warningMessage}
+        />
+      ) : null}
 
       <ViewComponent {...listViewProps} />
 

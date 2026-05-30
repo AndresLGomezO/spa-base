@@ -5,9 +5,11 @@ const DEFAULT_PAGE_SIZE = 20;
 interface UseClientPaginationOptions {
   readonly pageSize?: number;
   readonly initialPage?: number;
+  readonly controlledPage?: number;
+  readonly onPageChange?: (page: number) => void;
 }
 
-interface UseClientPaginationResult<T> {
+export interface UseClientPaginationResult<T> {
   readonly page: number;
   readonly pageSize: number;
   readonly totalCount: number;
@@ -20,11 +22,14 @@ export function useClientPagination<T>(
   options: UseClientPaginationOptions = {},
 ): UseClientPaginationResult<T> {
   const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
-  const [page, setPageState] = useState(options.initialPage ?? 1);
+  const isControlled =
+    options.controlledPage !== undefined && options.onPageChange !== undefined;
+  const [internalPage, setInternalPage] = useState(options.initialPage ?? 1);
+  const page = isControlled ? options.controlledPage : internalPage;
   const totalCount = items.length;
   const totalPages = totalCount === 0 ? 0 : Math.ceil(totalCount / pageSize);
   const safePage =
-    totalPages === 0 ? 1 : Math.min(Math.max(page, 1), totalPages);
+    totalPages === 0 ? 1 : Math.min(Math.max(page ?? 1, 1), totalPages);
 
   const pageItems = useMemo(() => {
     const start = (safePage - 1) * pageSize;
@@ -32,7 +37,12 @@ export function useClientPagination<T>(
   }, [items, pageSize, safePage]);
 
   const setPage = (nextPage: number) => {
-    setPageState(Math.max(1, nextPage));
+    const normalizedPage = Math.max(1, nextPage);
+    if (isControlled) {
+      options.onPageChange?.(normalizedPage);
+      return;
+    }
+    setInternalPage(normalizedPage);
   };
 
   return {

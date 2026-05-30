@@ -237,6 +237,10 @@
     "required": "Required",
     "displayOrder": "Display order",
     "displayOrderHint": "Lower numbers appear first in tables and forms.",
+    "fieldFilterable": "Filterable in list views",
+    "fieldFilterableHint": "When enabled, this field appears as a filter option on entity list pages.",
+    "fieldSortable": "Sortable in list views",
+    "fieldSortableHint": "When enabled, this field can be selected for sorting on entity list pages.",
     "numberDisplayFormat": "Number display",
     "numberDisplayFormats": {
       "plain": "Plain number",
@@ -391,5 +395,20 @@
       "beforeDelete": "Before delete",
       "afterDelete": "After delete"
     }
+  },
+  "dataView": {
+    "searchPlaceholder": "Search…",
+    "filtersTrigger": "Filters",
+    "filtersClearAll": "Clear all filters",
+    "filterPlaceholder": "Select values…",
+    "filterSearchPlaceholder": "Search options…",
+    "filterSelectedCount": "{{count}} selected",
+    "sortBy": "Sort by",
+    "sortDefault": "Default",
+    "sortAscending": "Ascending",
+    "sortDescending": "Descending",
+    "removeBadge": "Remove filter {{label}}",
+    "noFilterResults": "No matching options",
+    "truncatedDatasetWarning": "Search and filters apply to the first 100 records."
   }
 }

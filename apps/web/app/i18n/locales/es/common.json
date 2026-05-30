@@ -237,6 +237,10 @@
     "required": "Obligatorio",
     "displayOrder": "Orden de visualización",
     "displayOrderHint": "Los números más bajos aparecen primero en tablas y formularios.",
+    "fieldFilterable": "Filtrable en vistas de lista",
+    "fieldFilterableHint": "Si está activado, este campo aparece como opción de filtro en las páginas de listado de la entidad.",
+    "fieldSortable": "Ordenable en vistas de lista",
+    "fieldSortableHint": "Si está activado, este campo puede seleccionarse para ordenar en las páginas de listado de la entidad.",
     "numberDisplayFormat": "Formato numérico",
     "numberDisplayFormats": {
       "plain": "Número simple",
@@ -391,5 +395,20 @@
       "beforeDelete": "Antes de eliminar",
       "afterDelete": "Después de eliminar"
     }
+  },
+  "dataView": {
+    "searchPlaceholder": "Buscar…",
+    "filtersTrigger": "Filtros",
+    "filtersClearAll": "Limpiar filtros",
+    "filterPlaceholder": "Seleccionar valores…",
+    "filterSearchPlaceholder": "Buscar opciones…",
+    "filterSelectedCount": "{{count}} seleccionados",
+    "sortBy": "Ordenar por",
+    "sortDefault": "Predeterminado",
+    "sortAscending": "Ascendente",
+    "sortDescending": "Descendente",
+    "removeBadge": "Quitar filtro {{label}}",
+    "noFilterResults": "No hay opciones coincidentes",
+    "truncatedDatasetWarning": "La búsqueda y los filtros se aplican a los primeros 100 registros."
   }
 }

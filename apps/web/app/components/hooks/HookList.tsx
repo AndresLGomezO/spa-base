@@ -1,10 +1,12 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { BooleanCell, Button, DataTable, Heading } from "@repo/ui";
 
 import type { HookRecord } from "../../lib/api-client";
-import { useClientPagination } from "../../hooks/useClientPagination";
+import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
+import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
 import { HookListSkeleton } from "../loading/HookListSkeleton";
 
 interface HookListProps {
@@ -26,7 +28,43 @@ export function HookList({
 }: HookListProps) {
   const { t } = useTranslation("common");
   const paginationLabels = useTablePaginationLabels();
-  const { page, pageItems, totalCount, setPage } = useClientPagination(items);
+
+  const columns = useMemo<readonly DataViewColumnDescriptor<HookRecord>[]>(
+    () => [
+      {
+        id: "name",
+        label: t("hooks.name"),
+        getValue: (item) => item.name,
+      },
+      {
+        id: "entity",
+        label: t("hooks.entity"),
+        getValue: (item) => item.entity,
+      },
+      {
+        id: "event",
+        label: t("hooks.event"),
+        getValue: (item) => item.event,
+      },
+      {
+        id: "enabled",
+        label: t("hooks.enabled"),
+        getValue: (item) => item.enabled,
+        filterKind: "boolean",
+        formatValue: (value) =>
+          value ? t("hooks.enabledOn") : t("hooks.enabledOff"),
+      },
+      {
+        id: "actions",
+        label: t("hooks.actionCount"),
+        getValue: (item) => item.config.actions.length,
+        filterable: false,
+      },
+    ],
+    [t],
+  );
+
+  const dataView = useDataViewWithPagination(items, columns);
 
   if (isLoading) {
     return <HookListSkeleton />;
@@ -42,6 +80,13 @@ export function HookList({
           </Button>
         ) : null}
       </div>
+
+      <DataViewToolbar
+        {...dataView}
+        columns={columns}
+        filtersOpen={dataView.filtersOpen}
+        onFiltersOpenChange={dataView.setFiltersOpen}
+      />
 
       <DataTable
         columns={[
@@ -77,11 +122,11 @@ export function HookList({
             cell: (item) => item.config.actions.length,
           },
         ]}
-        rows={pageItems}
+        rows={dataView.pageItems}
         getRowId={(item) => item.id}
-        page={page}
-        totalCount={totalCount}
-        onPageChange={setPage}
+        page={dataView.page}
+        totalCount={dataView.totalCount}
+        onPageChange={dataView.setPage}
         emptyMessage={t("hooks.empty")}
         loadingMessage={t("table.loading")}
         scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"

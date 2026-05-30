@@ -17,7 +17,7 @@ export function createEmptyField(
     name: "",
     type,
     required: false,
-    ui: { order },
+    ui: { order, filterable: true, sortable: true },
     ...(type === "enum" ? { enumValues: [""] } : {}),
     ...(type === "relation"
       ? { relation: { target: "", type: "many-to-one" } }

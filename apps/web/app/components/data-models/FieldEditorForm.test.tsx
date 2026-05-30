@@ -92,4 +92,28 @@ describe("FieldEditorForm", () => {
       relation: { target: "loan", type: "many-to-one" },
     });
   });
+
+  it("updates filterable and sortable ui flags", () => {
+    const onChange = vi.fn();
+
+    render(
+      <FieldEditorForm
+        field={{
+          name: "status",
+          type: "string",
+          ui: { filterable: true, sortable: true },
+        }}
+        relationTargets={[]}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("dataModels.fieldFilterable"));
+
+    expect(onChange).toHaveBeenCalledWith({
+      name: "status",
+      type: "string",
+      ui: { filterable: false, sortable: true },
+    });
+  });
 });
