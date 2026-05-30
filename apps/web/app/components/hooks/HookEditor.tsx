@@ -10,6 +10,7 @@ import {
   Heading,
   Input,
   Text,
+  toast,
 } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -66,24 +67,24 @@ export function HookEditor({
     useState<HookEventSuffix>(initialSuffix);
   const [enabled, setEnabled] = useState(hook?.enabled ?? true);
   const [actions, setActions] = useState(hook?.config.actions ?? []);
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const event = entity ? buildHookEvent(entity, eventSuffix) : "";
 
   async function handleSave() {
-    setError(null);
+    setValidationError(null);
 
     if (!name.trim()) {
-      setError(t("hooks.validation.nameRequired"));
+      setValidationError(t("hooks.validation.nameRequired"));
       return;
     }
     if (!entity.trim()) {
-      setError(t("hooks.validation.entityRequired"));
+      setValidationError(t("hooks.validation.entityRequired"));
       return;
     }
     if (actions.length === 0) {
-      setError(t("hooks.validation.actionsRequired"));
+      setValidationError(t("hooks.validation.actionsRequired"));
       return;
     }
 
@@ -118,9 +119,9 @@ export function HookEditor({
       onSaved(updated);
     } catch (saveError) {
       if (isApiClientError(saveError)) {
-        setError(saveError.message);
+        toast.error(saveError.message);
       } else {
-        setError(
+        toast.error(
           saveError instanceof Error
             ? saveError.message
             : t("hooks.saveFailed"),
@@ -141,7 +142,7 @@ export function HookEditor({
           : t("hooks.editTitle", { name: hook.name })}
       </Heading>
 
-      {error ? <Alert>{error}</Alert> : null}
+      {validationError ? <Alert>{validationError}</Alert> : null}
 
       <Form
         onSubmit={(event) => {

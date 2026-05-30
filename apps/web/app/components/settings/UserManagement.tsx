@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, FieldLabel, Input, Text } from "@repo/ui";
+import { Button, FieldLabel, Input, Text, toast } from "@repo/ui";
 
 import {
   createTenantUser,
@@ -35,15 +35,12 @@ export function UserManagement({
   const [selectedRoles, setSelectedRoles] = useState<string[]>(["viewer"]);
   const [selectedMemberId, setSelectedMemberId] = useState("");
   const [memberRoles, setMemberRoles] = useState<string[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const loadData = useCallback(async () => {
     if (!tenantId) return;
     setIsLoading(true);
-    setError(null);
     try {
       const [usersResult, rolesResult] = await Promise.all([
         listTenantUsers(),
@@ -56,7 +53,7 @@ export function UserManagement({
         (current) => current || usersResult.members[0]?.uid || "",
       );
     } catch (loadError) {
-      setError(
+      toast.error(
         loadError instanceof Error
           ? loadError.message
           : t("userManagement.loadFailed"),
@@ -78,15 +75,13 @@ export function UserManagement({
   async function handleInvite() {
     if (!email.trim()) return;
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       await createTenantUser({ email: email.trim(), roles: selectedRoles });
       setEmail("");
-      setSuccess(t("userManagement.inviteSuccess"));
+      toast.success(t("userManagement.inviteSuccess"));
       await loadData();
     } catch (saveError) {
-      setError(
+      toast.error(
         saveError instanceof Error
           ? saveError.message
           : t("userManagement.saveFailed"),
@@ -99,14 +94,12 @@ export function UserManagement({
   async function handleUpdateMember() {
     if (!selectedMemberId) return;
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       await updateTenantUserRoles(selectedMemberId, memberRoles);
-      setSuccess(t("userManagement.saveSuccess"));
+      toast.success(t("userManagement.saveSuccess"));
       await loadData();
     } catch (saveError) {
-      setError(
+      toast.error(
         saveError instanceof Error
           ? saveError.message
           : t("userManagement.saveFailed"),
@@ -119,15 +112,13 @@ export function UserManagement({
   async function handleRemoveMember() {
     if (!selectedMemberId) return;
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       await removeTenantUser(selectedMemberId);
       setSelectedMemberId("");
-      setSuccess(t("userManagement.removeSuccess"));
+      toast.success(t("userManagement.removeSuccess"));
       await loadData();
     } catch (saveError) {
-      setError(
+      toast.error(
         saveError instanceof Error
           ? saveError.message
           : t("userManagement.saveFailed"),
@@ -147,9 +138,6 @@ export function UserManagement({
 
   return (
     <div className="flex w-full flex-col gap-6">
-      {error ? <Alert>{error}</Alert> : null}
-      {success ? <Alert>{success}</Alert> : null}
-
       <div className="overflow-x-auto rounded-lg border">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b">

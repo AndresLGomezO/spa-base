@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, FieldLabel, Text } from "@repo/ui";
+import { FieldLabel, Text, toast } from "@repo/ui";
 
 import {
   listEntityDefinitions,
@@ -34,7 +34,6 @@ export function DataModelManager({
   const { t } = useTranslation("common");
   const [items, setItems] = useState<readonly EntityDefinitionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
   const [showWizard, setShowWizard] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
@@ -46,13 +45,12 @@ export function DataModelManager({
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const result = await listEntityDefinitions();
       setItems(result.items);
     } catch (loadError) {
-      setError(
+      toast.error(
         loadError instanceof Error
           ? loadError.message
           : t("dataModels.loadFailed"),
@@ -87,8 +85,6 @@ export function DataModelManager({
           </select>
         </div>
       ) : null}
-
-      {error ? <Alert>{error}</Alert> : null}
 
       {showWizard ? (
         <EntityDefinitionWizard

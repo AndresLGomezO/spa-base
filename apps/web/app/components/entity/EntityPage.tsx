@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 import type { QueryConfig } from "@repo/query-engine";
 import { resolveActiveView } from "@repo/ui-builder";
-import { Alert, Button, Heading, Modal, Text } from "@repo/ui";
+import { Button, Heading, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 
@@ -27,7 +27,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
   }));
   const entityState = useEntity(entityName, { queryConfig });
   const [deleteId, setDeleteId] = useState<string | null>(null);
-  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleQueryConfigChange = useCallback((nextConfig: QueryConfig) => {
     setQueryConfig(nextConfig);
@@ -37,7 +36,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
     if (!deleteId) return;
     const deleted = await entityState.remove(deleteId);
     if (deleted) {
-      setSuccessMessage(t("entity.deleteSuccess"));
+      toast.success(t("entity.deleteSuccess"));
     }
     setDeleteId(null);
   };
@@ -59,12 +58,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
           </Link>
         ) : null}
       </div>
-
-      {successMessage ? (
-        <Alert className="border-success-200 bg-success-50 text-success-800 dark:border-success-800 dark:bg-success-950/40 dark:text-success-300">
-          {successMessage}
-        </Alert>
-      ) : null}
 
       <ViewComponent {...listViewProps} />
 
