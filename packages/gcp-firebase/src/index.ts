@@ -27,4 +27,4 @@ export {
   createFirestoreAdminTenantUserInviteRepository,
   TENANT_USER_INVITES_SUBCOLLECTION,
 } from "./firestore-admin-tenant-user-invite-repository.js";
-export { uploadTenantLogo } from "./tenant-storage.js";
+export { uploadTenantLogo, validateStorageObjectId } from "./tenant-storage.js";

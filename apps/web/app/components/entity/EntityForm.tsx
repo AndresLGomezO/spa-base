@@ -19,12 +19,35 @@ import {
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
 import { useEntity } from "../../hooks/useEntity";
+import {
+  getEntityRelationTargets,
+  syncEntityRelationTargets,
+} from "../../lib/api-client";
 import { EntityField } from "./EntityField";
+import {
+  getJoinRelationFieldNames,
+  splitEntityFormPayload,
+} from "./entity-form-payload";
 
 interface EntityFormProps {
   readonly entityName: EntityName;
   readonly mode: "create" | "edit";
   readonly recordId?: string;
+}
+
+function cleanFormValues(
+  sections: ReturnType<typeof getFormSections>,
+  values: Record<string, unknown>,
+): Record<string, unknown> {
+  const payload = { ...values };
+  for (const section of sections) {
+    for (const fieldName of section.fields) {
+      if (payload[fieldName] === "") {
+        delete payload[fieldName];
+      }
+    }
+  }
+  return payload;
 }
 
 export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
@@ -45,10 +68,19 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
       ? resolveCreateForm(definition)
       : resolveEditForm(definition);
   const sections = getFormSections(layout);
-  const [values, setValues] = useState<Record<string, unknown>>(() =>
-    buildInitialValues(definition, mode),
+  const joinRelationFieldNames = useMemo(
+    () => getJoinRelationFieldNames(definition),
+    [definition],
   );
+  const [values, setValues] = useState<Record<string, unknown>>(() => {
+    const initial = buildInitialValues(definition, mode);
+    for (const fieldName of getJoinRelationFieldNames(definition)) {
+      initial[fieldName] = [];
+    }
+    return initial;
+  });
   const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (mode !== "edit" || !recordId) return;
@@ -58,16 +90,36 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
       setIsLoadingRecord(true);
       const record = await getById(recordId);
       if (cancelled) return;
+
+      const nextValues = record
+        ? buildInitialValues(definition, "edit", record)
+        : buildInitialValues(definition, "edit");
+
       if (record) {
-        setValues(buildInitialValues(definition, "edit", record));
+        const relationEntries = await Promise.all(
+          joinRelationFieldNames.map(async (fieldName) => {
+            const targetIds = await getEntityRelationTargets(
+              entityName,
+              recordId,
+              fieldName,
+            );
+            return [fieldName, targetIds] as const;
+          }),
+        );
+
+        for (const [fieldName, targetIds] of relationEntries) {
+          nextValues[fieldName] = targetIds;
+        }
       }
+
+      setValues(nextValues);
       setIsLoadingRecord(false);
     })();
 
     return () => {
       cancelled = true;
     };
-  }, [definition, getById, mode, recordId]);
+  }, [definition, entityName, getById, joinRelationFieldNames, mode, recordId]);
 
   const title = useMemo(
     () =>
@@ -79,27 +131,63 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const payload = { ...values };
-    for (const section of sections) {
-      for (const fieldName of section.fields) {
-        if (payload[fieldName] === "") {
-          delete payload[fieldName];
-        }
-      }
-    }
+    setSubmitError(null);
+
+    const cleanedValues = cleanFormValues(sections, values);
+    const { documentPayload, joinRelations } = splitEntityFormPayload(
+      definition,
+      cleanedValues,
+    );
 
     if (mode === "create") {
-      const created = await create(payload);
-      if (created) {
+      const created = await create(documentPayload);
+      if (!created) {
+        return;
+      }
+
+      try {
+        for (const [fieldName, targetIds] of Object.entries(joinRelations)) {
+          await syncEntityRelationTargets(
+            entityName,
+            created.id,
+            fieldName,
+            targetIds,
+          );
+        }
         navigate(`/app/${entityName}`);
+      } catch (syncError) {
+        setSubmitError(
+          syncError instanceof Error
+            ? syncError.message
+            : t("entity.relationSyncFailed"),
+        );
       }
       return;
     }
 
     if (!recordId) return;
-    const updated = await update(recordId, payload);
-    if (updated) {
+
+    const updated = await update(recordId, documentPayload);
+    if (!updated) {
+      return;
+    }
+
+    try {
+      for (const [fieldName, targetIds] of Object.entries(joinRelations)) {
+        await syncEntityRelationTargets(
+          entityName,
+          recordId,
+          fieldName,
+          targetIds,
+        );
+      }
       navigate(`/app/${entityName}`);
+    } catch (syncError) {
+      setSubmitError(
+        syncError instanceof Error
+          ? syncError.message
+          : t("entity.relationSyncFailed"),
+      );
     }
   };
 
@@ -111,6 +199,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
     <div className="flex w-full max-w-xl flex-col gap-4">
       <Heading level={1}>{title}</Heading>
       {error ? <Alert>{error}</Alert> : null}
+      {submitError ? <Alert>{submitError}</Alert> : null}
       <Form onSubmit={(event) => void handleSubmit(event)}>
         {sections.map((section, index) => (
           <div

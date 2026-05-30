@@ -65,4 +65,53 @@ describe("EntityRuntimeContext", () => {
     expect(knownPermissions).toContain("widget.create");
     expect(knownPermissions).toContain("lead.read");
   });
+
+  it("invalidates cached repository after syncDefinition updates fields", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+    const entityRuntime = createEntityRuntimeContext({
+      firebaseAdminConfig: {
+        projectId: "demo",
+      },
+      entityDefinitionRepository,
+      definitionCacheTtlMs: 60_000,
+      repositories: {},
+    });
+
+    const created = await entityDefinitionRepository.create("tenant_a", {
+      name: "workItem",
+      label: "Work Item",
+      fields: [{ name: "title", type: "string", required: true }],
+    });
+    await entityRuntime.syncDefinition(created);
+
+    const repositoryBeforePatch = entityRuntime.getRepository(
+      "tenant_a",
+      "workItem",
+    );
+    expect(repositoryBeforePatch).toBeDefined();
+
+    const updated = await entityDefinitionRepository.update(
+      "tenant_a",
+      created.id,
+      {
+        fields: [
+          { name: "title", type: "string", required: true },
+          {
+            name: "batchId",
+            type: "relation",
+            relation: { target: "batch", type: "many-to-one" },
+          },
+        ],
+      },
+    );
+    await entityRuntime.syncDefinition(updated);
+
+    const repositoryAfterPatch = entityRuntime.getRepository(
+      "tenant_a",
+      "workItem",
+    );
+    expect(repositoryAfterPatch).toBeDefined();
+    expect(repositoryAfterPatch).not.toBe(repositoryBeforePatch);
+  });
 });

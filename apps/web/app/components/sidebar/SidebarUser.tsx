@@ -64,16 +64,16 @@ export function SidebarUser() {
   const initials = getInitials(displayName);
 
   const profileBlock = (
-    <div className="flex items-center gap-3">
+    <div className="flex items-start gap-3">
       <Avatar src={user?.photoURL} alt={displayName} fallback={initials} />
-      <div className="min-w-0 flex-1">
+      <div className="min-w-0 flex-1 space-y-1">
         <Text className="truncate font-medium">{displayName}</Text>
         <Text variant="caption" className="truncate">
           {displayEmail}
         </Text>
         {tenantLabel ? (
-          <Text variant="caption" className="truncate">
-            {t("profile.tenant")}: {tenantLabel}
+          <Text variant="caption" className="truncate font-medium">
+            {tenantLabel}
           </Text>
         ) : null}
         <Text variant="caption" className="truncate capitalize">
@@ -89,6 +89,7 @@ export function SidebarUser() {
       onOpenChange={setOpen}
       placement="right-end"
       title={t("nav.userMenu")}
+      panelClassName="w-72"
       className="block w-full"
       trigger={
         <Button
@@ -111,11 +112,6 @@ export function SidebarUser() {
           <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]/sidebar:hidden">
             <span className="truncate font-medium">{displayName}</span>
             <span className="text-muted truncate text-xs">{displayEmail}</span>
-            {tenantLabel ? (
-              <span className="text-muted truncate text-xs">
-                {t("profile.tenant")}: {tenantLabel}
-              </span>
-            ) : null}
             <span className="text-muted truncate text-xs capitalize">
               {roleLabel}
             </span>

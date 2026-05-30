@@ -85,7 +85,9 @@
     "confirmDelete": "¿Seguro que deseas eliminar este registro?",
     "createTitle": "Crear {{entity}}",
     "editTitle": "Editar {{entity}}",
-    "deleteSuccess": "Registro eliminado correctamente."
+    "deleteSuccess": "Registro eliminado correctamente.",
+    "relationOneToManyReadOnly": "Esta relación uno a muchos se administra en la entidad relacionada. Agrega un campo muchos a uno en la entidad hija.",
+    "relationSyncFailed": "El registro se guardó, pero no se pudieron actualizar los vínculos relacionados. Intenta guardar de nuevo."
   },
   "tenant": {
     "selectTitle": "Seleccionar un tenant",
@@ -101,8 +103,7 @@
   },
   "profile": {
     "platformSuperadmin": "Superadmin de plataforma",
-    "noRole": "Sin rol",
-    "tenant": "Tenant"
+    "noRole": "Sin rol"
   },
   "platform": {
     "createTenant": {
@@ -125,6 +126,14 @@
       "logo": "Logo",
       "logoPreview": "Logo del tenant",
       "logoSuccess": "Logo subido.",
+      "photoSelect": "Seleccionar logo",
+      "photoChange": "Cambiar logo",
+      "photoCropTitle": "Recortar logo",
+      "photoCropDescription": "Arrastra la imagen para posicionar el área de recorte.",
+      "photoUpload": "Subir",
+      "photoCancel": "Cancelar",
+      "photoReset": "Restablecer",
+      "photoExpand": "Vista previa del logo",
       "typography": "Tipografía",
       "fontFamily": "Familia de fuente",
       "bodySize": "Tamaño de texto",
@@ -207,8 +216,35 @@
     "addEnumValue": "Agregar valor",
     "removeValue": "Eliminar",
     "relationTarget": "Entidad relacionada",
+    "relationTargetHint": "Elige otro modelo de datos por nombre. El modelo destino debe existir ya en Modelos de datos.",
     "relationType": "Tipo de relación",
     "selectTarget": "Seleccionar entidad",
+    "oneToManyInlineWarning": "Este campo es solo metadatos en los registros de este modelo. Agrega un campo muchos-a-uno en {{target}} para guardar los vínculos.",
+    "customRelationFieldName": "Usar nombre de campo personalizado",
+    "relationTypeInfoLabel": "Detalles del tipo de relación",
+    "relationTypes": {
+      "exampleLabel": "Ejemplo",
+      "oneToOne": {
+        "title": "Uno a uno",
+        "description": "Almacena el ID de un registro vinculado en esta entidad.",
+        "example": "profileId en User → Profile"
+      },
+      "oneToMany": {
+        "title": "Uno a muchos",
+        "description": "Solo búsqueda inversa — no se guarda nada en los registros de este modelo. Agrega un campo muchos-a-uno en el modelo relacionado para almacenar el vínculo.",
+        "example": "batch.workItems en Batch — define workItem.batchId en cada Work Item"
+      },
+      "manyToOne": {
+        "title": "Muchos a uno",
+        "description": "Almacena un ID de referencia en esta entidad.",
+        "example": "customerId en Order → Customer"
+      },
+      "manyToMany": {
+        "title": "Muchos a muchos",
+        "description": "Se vincula mediante una colección de unión, no se almacena en este documento.",
+        "example": "projects en User ↔ Project"
+      }
+    },
     "addField": "Agregar campo",
     "removeField": "Eliminar campo",
     "next": "Siguiente",

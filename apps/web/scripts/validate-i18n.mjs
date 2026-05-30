@@ -254,6 +254,30 @@ function extractHookEventKeys(corpus) {
   );
 }
 
+/** dataModels.relationTypes.${key}.* in source → nested keys under dataModels.relationTypes */
+function extractDataModelRelationTypeKeys(corpus) {
+  if (!corpus.includes("dataModels.relationTypes.${")) return [];
+
+  const refDataModels = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).dataModels;
+
+  const relationTypes = refDataModels?.relationTypes;
+  if (!relationTypes || typeof relationTypes !== "object") return [];
+
+  const keys = [];
+  for (const [typeKey, value] of Object.entries(relationTypes)) {
+    if (typeKey === "exampleLabel") continue;
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    for (const subKey of Object.keys(value)) {
+      keys.push(
+        `${DEFAULT_NAMESPACE}:dataModels.relationTypes.${typeKey}.${subKey}`,
+      );
+    }
+  }
+  return keys;
+}
+
 /** platform.appearance.groups.${groupKey} in source → all keys under platform.appearance.groups */
 function extractAppearanceGroupKeys(corpus) {
   if (!corpus.includes("platform.appearance.groups.${")) return [];
@@ -438,6 +462,11 @@ mergeUsedKeys(
   usedKeys,
   extractDataModelFieldTypeKeys(corpus),
   path.join(SRC_DIR, "components/data-models/FieldEditor.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractDataModelRelationTypeKeys(corpus),
+  path.join(SRC_DIR, "components/data-models/RelationTypeInfo.tsx"),
 );
 mergeUsedKeys(
   usedKeys,

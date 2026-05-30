@@ -4,11 +4,12 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
     "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
     "lint:unused": "knip --no-progress",
     "lint:circular": "echo \"Skipping circular check for ui package\"",
-    "validate": "pnpm run typecheck && pnpm run format:check && pnpm run lint:unused",
+    "validate": "pnpm run typecheck && pnpm run test && pnpm run format:check && pnpm run lint:unused",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
     "test:visual:install": "playwright install chromium",
@@ -43,6 +44,7 @@
     "storybook": "catalog:",
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "vitest": "catalog:"
   }
 }

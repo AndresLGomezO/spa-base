@@ -30,6 +30,15 @@ export {
   type RelationStorageStrategy,
 } from "./relations/relationConfig.js";
 export {
+  isDocumentStoredField,
+  isDocumentStoredFieldConfig,
+  isJoinCollectionRelationField,
+} from "./relations/is-document-stored-field.js";
+export {
+  isOneToManyRelationField,
+  resolveOneToManyForeignKeyField,
+} from "./relations/resolve-one-to-many-foreign-key.js";
+export {
   getDefaultEntityUI,
   getFieldUI,
   resolveEntityUI,

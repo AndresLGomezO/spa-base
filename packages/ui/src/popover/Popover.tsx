@@ -75,6 +75,7 @@ export interface PopoverProps {
   readonly title?: string;
   readonly placement?: PopoverPlacement;
   readonly className?: string;
+  readonly panelClassName?: string;
   readonly fullWidth?: boolean;
 }
 
@@ -88,6 +89,7 @@ export function Popover({
   title,
   placement = "top-start",
   className,
+  panelClassName,
   fullWidth = false,
 }: PopoverProps) {
   const titleId = useId();
@@ -188,8 +190,9 @@ export function Popover({
       })
     : trigger;
 
-  const panelClassName = cn(
+  const resolvedPanelClassName = cn(
     "border-border bg-background/95 z-50 w-56 rounded-xl border p-4 shadow-lg ring-1 ring-primary-500/10 backdrop-blur-md transition-all duration-200 ease-out",
+    panelClassName,
     useSidePortal ? "fixed" : "absolute",
     !useSidePortal && placementClasses[placement],
     visible
@@ -208,7 +211,7 @@ export function Popover({
       aria-modal="false"
       aria-label={title}
       style={useSidePortal ? sidePanelStyle : undefined}
-      className={panelClassName}
+      className={resolvedPanelClassName}
     >
       {title ? (
         <p className="text-foreground mb-3 text-sm font-semibold">{title}</p>

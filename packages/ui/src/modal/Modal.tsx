@@ -1,78 +1,82 @@
-import { useCallback, useEffect, useId, useRef, type ReactNode } from "react";
+import { useCallback, useId, useRef, type ReactNode } from "react";
 
 import { cn } from "@repo/theme/utils";
+
+import { IconButton } from "../icon-button/IconButton";
+import { OverlayRoot } from "../overlay/OverlayRoot";
 
 export interface ModalProps {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly title: string;
   readonly children: ReactNode;
+  readonly size?: "sm" | "lg";
+  readonly showCloseButton?: boolean;
+  readonly closeLabel?: string;
 }
 
-export function Modal({ open, onClose, title, children }: ModalProps) {
+const panelSizeClasses = {
+  sm: "max-w-sm",
+  lg: "max-w-3xl",
+} as const;
+
+export function Modal({
+  open,
+  onClose,
+  title,
+  children,
+  size = "sm",
+  showCloseButton = true,
+  closeLabel = "Close dialog",
+}: ModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
 
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    },
-    [onClose],
-  );
-
-  useEffect(() => {
-    if (!open) return;
-
-    document.addEventListener("keydown", handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
-
-    const focusTimer = window.setTimeout(() => {
-      const focusable = panelRef.current?.querySelector<HTMLElement>(
-        "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
-      );
-      focusable?.focus();
-    }, 0);
-
-    return () => {
-      document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
-      window.clearTimeout(focusTimer);
-    };
-  }, [handleKeyDown, open]);
-
-  if (!open) return null;
+  const focusPanel = useCallback(() => {
+    const focusable = panelRef.current?.querySelector<HTMLElement>(
+      "button, [href], input, select, textarea, [tabindex]:not([tabindex='-1'])",
+    );
+    focusable?.focus();
+  }, []);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      <button
-        type="button"
-        aria-label="Close dialog"
-        className={cn(
-          "absolute inset-0 bg-black/40 transition-opacity duration-200",
-          open ? "opacity-100" : "opacity-0",
-        )}
-        onClick={onClose}
-      />
+    <OverlayRoot
+      open={open}
+      onClose={onClose}
+      closeLabel={closeLabel}
+      contentClassName="flex items-center justify-center p-4"
+      focusPanel={focusPanel}
+    >
       <div
         ref={panelRef}
         role="dialog"
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "border-border bg-background relative z-10 w-full max-w-sm rounded-xl border p-5 shadow-xl transition-all duration-200",
-          open
-            ? "translate-y-0 scale-100 opacity-100"
-            : "translate-y-2 scale-95 opacity-0",
+          "border-border bg-background pointer-events-auto relative w-full rounded-xl border p-5 shadow-xl",
+          panelSizeClasses[size],
         )}
+        onClick={(event) => event.stopPropagation()}
       >
-        <h2 id={titleId} className="text-foreground mb-4 text-lg font-semibold">
-          {title}
-        </h2>
+        <div className="mb-4 flex items-start justify-between gap-3">
+          <h2 id={titleId} className="text-foreground text-lg font-semibold">
+            {title}
+          </h2>
+          {showCloseButton ? (
+            <IconButton
+              label={closeLabel}
+              size="sm"
+              className="shrink-0"
+              onClick={onClose}
+            >
+              <span aria-hidden className="text-lg leading-none">
+                ×
+              </span>
+            </IconButton>
+          ) : null}
+        </div>
         <div className="flex flex-col gap-4">{children}</div>
       </div>
-    </div>
+    </OverlayRoot>
   );
 }

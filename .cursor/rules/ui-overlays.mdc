@@ -1,0 +1,34 @@
+---
+description: Use @repo/ui Modal/Sheet for overlays; never build custom dialogs in apps
+globs: apps/web/**/*.{tsx,jsx}
+alwaysApply: false
+---
+
+# UI overlay primitives
+
+In `apps/web`, all modal and overlay UI must come from `@repo/ui`.
+
+## Approved components
+
+| Use case | Component | Import |
+|----------|-----------|--------|
+| Centered dialogs (confirm, forms, previews) | `Modal` | `@repo/ui` |
+| Slide-over panels (mobile nav drawer) | `Sheet` | `@repo/ui` |
+| Image select, crop, upload, expand | `PhotoUpload` | `@repo/ui` |
+
+Storybook reference: `Components/Modal`, `Components/PhotoUpload`.
+
+## Do not
+
+- Use `createPortal` from `react-dom` in app code
+- Add `aria-modal` on raw JSX elements
+- Import `@radix-ui/react-dialog`, `@headlessui/react`, or similar overlay libraries
+- Build custom fixed/backdrop/dialog markup in `apps/web`
+
+ESLint enforces this via `@repo/eslint-config/ui-primitives`.
+
+## When adding a new overlay
+
+1. Check if `Modal` or `Sheet` fits the UX
+2. If reusable across apps, add or extend a composite in `packages/ui/src/`
+3. Keep low-level dialog wrappers internal to `@repo/ui` (not exported from the package root)

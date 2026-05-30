@@ -18,6 +18,11 @@ export { IconButton, type IconButtonProps } from "./icon-button/IconButton";
 export { Logo, type LogoProps } from "./logo/Logo";
 export { Modal, type ModalProps } from "./modal/Modal";
 export {
+  PhotoUpload,
+  type PhotoUploadLabels,
+  type PhotoUploadProps,
+} from "./photo-upload";
+export {
   Popover,
   type PopoverPlacement,
   type PopoverProps,

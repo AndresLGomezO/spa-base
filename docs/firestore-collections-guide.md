@@ -545,13 +545,21 @@ pnpm dev:docker
 
 Do **not** use Docker service names (`api`, `firebase-emulator`) in `VITE_*` vars.
 
-The API container uses Docker service names for server-side emulator hosts (`firebase-emulator:9099`, `firebase-emulator:8080`) — see `apps/api/.env.dev.example`.
+The API container uses Docker service names for server-side emulator hosts (`firebase-emulator:9099`, `firebase-emulator:8080`, `firebase-emulator:9199`) — see `apps/api/.env.dev.example`.
+
+For Storage logo uploads, the API also sets `FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=127.0.0.1:9199` so URLs saved to Firestore are browser-accessible. See [gcs-storage-guide.md](./gcs-storage-guide.md).
 
 ### Verify User flow
 
 1. Open `http://localhost:5173` and sign in with Google.
 2. Network tab: `GET http://127.0.0.1:3000/auth/validate` → **200**.
 3. Firestore emulator UI: document at `users/{uid}`.
+
+### Verify logo upload (Storage emulator)
+
+1. As superadmin, open **Platform → Appearance** (`/settings/appearance`).
+2. Upload a logo image → expect success (not "The specified bucket does not exist").
+3. Sidebar shows the logo; Storage emulator UI lists `tenants/{tenantId}/logo.*`.
 
 ---
 

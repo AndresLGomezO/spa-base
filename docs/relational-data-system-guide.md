@@ -85,6 +85,35 @@ tenants/{tenantId}/{joinCollection}/{joinId}
 
 Use `createJoinCollectionHandler` from `@repo/entity-relations` to link/unlink and query both directions.
 
+Entity forms sync many-to-many links through the API after document create/update:
+
+| Method | Path | Description |
+| --- | --- | --- |
+| `GET` | `/api/{entity}/{recordId}/relations/{fieldName}` | List linked target IDs |
+| `PUT` | `/api/{entity}/{recordId}/relations/{fieldName}` | Replace linked targets (`{ "targetIds": ["..."] }`) |
+
+Many-to-many and one-to-many (parent-side) fields are **not** stored on entity documents. Document CRUD strips those keys before validation. One-to-many parent fields are read-only in forms — define the foreign key on the child entity as `many-to-one` instead.
+
+### Dynamic models: batch and workItem
+
+When using Data Models (not code-defined entities):
+
+1. Create the **child** model first (e.g. `workItem`)
+2. Create the **parent** model (e.g. `batch`); an optional `workItems` one-to-many → `workItem` field is metadata only
+3. Edit the child model; add `batchId` many-to-one → `batch`
+4. Link records by setting `batchId` on each workItem — not via the parent's `workItems` field
+
+Relation targets in the schema builder are **entity model names** from Data Models, not individual records.
+
+### Record `_schemaVersion` vs definition `version`
+
+| Field | Location | Meaning |
+| --- | --- | --- |
+| `version` on definition | `entity_definitions/{id}` | Increments when the schema is edited in Data Models |
+| `_schemaVersion` on records | Entity collection documents | Firestore converter persistence version (currently `1`; unrelated to definition version) |
+
+After PATCHing a definition to add fields (e.g. `batchId`), the API refreshes its entity runtime cache so new fields persist on create/update.
+
 ### Relation config
 
 | Property | Description |

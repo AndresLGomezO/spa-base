@@ -139,4 +139,90 @@ describe("entity definitions integration", () => {
     expect(createRecord.statusCode).toBe(201);
     expect(createRecord.json().data.amount).toBe(1000);
   });
+
+  it("persists a relation field added after PATCHing the entity definition", async () => {
+    const server = await buildTestServer();
+    const headers = {
+      authorization: "Bearer fake-token",
+      "x-firebase-appcheck": "fake-appcheck",
+    };
+
+    const createBatchDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "batch",
+        label: "Batches",
+        fields: [{ name: "name", type: "string", required: true }],
+      },
+    });
+    expect(createBatchDefinition.statusCode).toBe(201);
+
+    const createWorkItemDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "workItem",
+        label: "Work Items",
+        fields: [{ name: "title", type: "string", required: true }],
+      },
+    });
+    expect(createWorkItemDefinition.statusCode).toBe(201);
+    const workItemDefinitionId = createWorkItemDefinition.json().data.id;
+
+    const createWorkItem = await server.inject({
+      method: "POST",
+      url: "/api/workItem",
+      headers,
+      payload: { title: "First item" },
+    });
+    expect(createWorkItem.statusCode).toBe(201);
+    const workItemId = createWorkItem.json().data.id;
+
+    const patchDefinition = await server.inject({
+      method: "PATCH",
+      url: `/api/entity-definitions/${workItemDefinitionId}`,
+      headers,
+      payload: {
+        fields: [
+          { name: "title", type: "string", required: true },
+          {
+            name: "batchId",
+            type: "relation",
+            relation: { target: "batch", type: "many-to-one" },
+          },
+        ],
+      },
+    });
+    expect(patchDefinition.statusCode).toBe(200);
+    expect(patchDefinition.json().data.version).toBe(2);
+
+    const createBatch = await server.inject({
+      method: "POST",
+      url: "/api/batch",
+      headers,
+      payload: { name: "Batch A" },
+    });
+    expect(createBatch.statusCode).toBe(201);
+    const batchId = createBatch.json().data.id;
+
+    const updateWorkItem = await server.inject({
+      method: "PUT",
+      url: `/api/workItem/${workItemId}`,
+      headers,
+      payload: { title: "First item", batchId },
+    });
+    expect(updateWorkItem.statusCode).toBe(200);
+    expect(updateWorkItem.json().data.batchId).toBe(batchId);
+
+    const getWorkItem = await server.inject({
+      method: "GET",
+      url: `/api/workItem/${workItemId}`,
+      headers,
+    });
+    expect(getWorkItem.statusCode).toBe(200);
+    expect(getWorkItem.json().data.batchId).toBe(batchId);
+  });
 });

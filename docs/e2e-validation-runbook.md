@@ -17,7 +17,7 @@ Reproducible validation for Phase 1 criteria ([General Definitions §7](../Ecosy
 
 ```bash
 pnpm install
-pnpm emulators          # Terminal 1: Auth + Firestore emulators
+pnpm emulators          # Terminal 1: Auth + Firestore + Storage emulators
 pnpm --filter api dev   # Terminal 2: API :3000
 pnpm --filter web dev   # Terminal 3: Web :5173
 ```
@@ -34,6 +34,11 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=your-email@example.com
 ```
 
 3. Copy `apps/web/.env.dev.example` → `apps/web/.env.dev` if customizing Firebase config
+4. For native dev (host-only), set in `apps/api/.env.dev`:
+   - `FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199`
+   - `GCP_STORAGE_BUCKET=demo-project-base.appspot.com`
+
+See [gcs-storage-guide.md](./gcs-storage-guide.md) for Storage emulator and production setup.
 
 ### Verify automated tests pass
 
@@ -119,6 +124,23 @@ GET /api/entities
 
 Response should include `loan` as a dynamic entity with fields and permissions.
 
+### Batch / workItem relation workflow (recommended)
+
+Use this to validate one-to-many and many-to-one together:
+
+1. Create **`workItem`** model first (`title` string, required)
+2. Create **`batch`** model (`name` string, required); optionally add `workItems` one-to-many → `workItem` (metadata only on batch records)
+3. Edit **`workItem`**; add `batchId` many-to-one → `batch`
+4. Create a **batch** record, then create or edit a **workItem** record and pick the batch in `batchId`
+5. In Firestore, confirm `batchId` on the workItem document — **not** `workItems` on the batch document
+
+| Concept | Where | Meaning |
+| --- | --- | --- |
+| Definition `version: 2` | `entity_definitions` doc | Schema was edited once in Data Models |
+| Record `_schemaVersion: 1` | e.g. `batches/{id}`, `workItems/{id}` | Firestore converter format version (expected to stay `1` until platform migrations) |
+
+After editing a model schema, open entity list/create forms (`/app/{entity}`) so the catalog refreshes and new fields appear in forms.
+
 ---
 
 ## 6. Configure tenant role with field rules
@@ -163,7 +185,20 @@ Open the account menu in the sidebar. Confirm:
 
 ---
 
-## 10. Automated Cypress (optional)
+## 10. Appearance logo upload (superadmin)
+
+**At `/settings/appearance`:**
+
+1. Upload a logo image (PNG, WebP, SVG, or JPG)
+2. Confirm success message and preview update
+3. Sidebar shows the logo on reload
+4. Firestore tenant doc has `appearance.logoUrl` (emulator: `http://127.0.0.1:9199/...`; production: `https://storage.googleapis.com/...`)
+
+Requires Storage emulator in local dev (`FIREBASE_STORAGE_EMULATOR_HOST`). See [gcs-storage-guide.md](./gcs-storage-guide.md).
+
+---
+
+## 11. Automated Cypress (optional)
 
 ```bash
 pnpm --filter web cypress:run

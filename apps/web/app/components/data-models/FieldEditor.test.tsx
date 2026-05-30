@@ -84,4 +84,169 @@ describe("FieldEditor", () => {
       type: "number",
     });
   });
+
+  it("auto-sets relation field name and disables input when target is selected", () => {
+    const onChange = vi.fn();
+
+    render(
+      <FieldEditor
+        field={{
+          name: "",
+          type: "relation",
+          relation: { target: "", type: "many-to-one" },
+        }}
+        index={0}
+        relationTargets={[{ name: "loan", label: "Loans" }]}
+        onChange={onChange}
+        onRemove={vi.fn()}
+        canRemove={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("dataModels.relationTarget"), {
+      target: { value: "loan" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith(0, {
+      name: "loanId",
+      type: "relation",
+      relation: { target: "loan", type: "many-to-one" },
+    });
+
+    render(
+      <FieldEditor
+        field={{
+          name: "loanId",
+          type: "relation",
+          relation: { target: "loan", type: "many-to-one" },
+        }}
+        index={0}
+        relationTargets={[{ name: "loan", label: "Loans" }]}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+        canRemove={false}
+      />,
+    );
+
+    expect(screen.getByDisplayValue("loanId")).toBeDisabled();
+  });
+
+  it("allows custom relation field name via override checkbox", () => {
+    const onChange = vi.fn();
+
+    render(
+      <FieldEditor
+        field={{
+          name: "loanId",
+          type: "relation",
+          relation: { target: "loan", type: "many-to-one" },
+        }}
+        index={0}
+        relationTargets={[{ name: "loan", label: "Loans" }]}
+        onChange={onChange}
+        onRemove={vi.fn()}
+        canRemove={false}
+      />,
+    );
+
+    const nameInput = screen.getByDisplayValue("loanId");
+    expect(nameInput).toBeDisabled();
+
+    fireEvent.click(
+      screen.getByLabelText("dataModels.customRelationFieldName"),
+    );
+
+    expect(nameInput).not.toBeDisabled();
+
+    fireEvent.change(nameInput, { target: { value: "borrowedLoanId" } });
+    expect(onChange).toHaveBeenCalledWith(0, {
+      name: "borrowedLoanId",
+      type: "relation",
+      relation: { target: "loan", type: "many-to-one" },
+    });
+  });
+
+  it("restores generated name when override checkbox is unchecked", () => {
+    const onChange = vi.fn();
+
+    render(
+      <FieldEditor
+        field={{
+          name: "customRef",
+          type: "relation",
+          relation: { target: "loan", type: "many-to-one" },
+        }}
+        index={0}
+        relationTargets={[{ name: "loan", label: "Loans" }]}
+        onChange={onChange}
+        onRemove={vi.fn()}
+        canRemove={false}
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByLabelText("dataModels.customRelationFieldName"),
+    );
+
+    expect(onChange).toHaveBeenCalledWith(0, {
+      name: "loanId",
+      type: "relation",
+      relation: { target: "loan", type: "many-to-one" },
+    });
+  });
+
+  it("updates name to plural form when relation type changes to many-to-many", () => {
+    const onChange = vi.fn();
+
+    render(
+      <FieldEditor
+        field={{
+          name: "loanId",
+          type: "relation",
+          relation: { target: "loan", type: "many-to-one" },
+        }}
+        index={0}
+        relationTargets={[{ name: "loan", label: "Loans" }]}
+        onChange={onChange}
+        onRemove={vi.fn()}
+        canRemove={false}
+      />,
+    );
+
+    fireEvent.change(screen.getByLabelText("dataModels.relationType"), {
+      target: { value: "many-to-many" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith(0, {
+      name: "loans",
+      type: "relation",
+      relation: { target: "loan", type: "many-to-many" },
+    });
+  });
+
+  it("shows relation type help popover for the selected type", () => {
+    render(
+      <FieldEditor
+        field={{
+          name: "loanId",
+          type: "relation",
+          relation: { target: "loan", type: "many-to-one" },
+        }}
+        index={0}
+        relationTargets={[{ name: "loan", label: "Loans" }]}
+        onChange={vi.fn()}
+        onRemove={vi.fn()}
+        canRemove={false}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("dataModels.relationTypeInfoLabel"));
+
+    expect(
+      screen.getByText("dataModels.relationTypes.manyToOne.description"),
+    ).toBeInTheDocument();
+    expect(
+      screen.getByText(/dataModels\.relationTypes\.manyToOne\.example/),
+    ).toBeInTheDocument();
+  });
 });

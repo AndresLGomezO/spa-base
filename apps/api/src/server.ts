@@ -42,6 +42,7 @@ import {
   type EntityRuntimeContext,
 } from "./entities/entity-runtime-context.js";
 import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-entity-crud-routes.js";
+import { registerEntityRelationRoutes } from "./entities/register-entity-relation-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
@@ -153,6 +154,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,
     firestoreEmulatorHost: apiEnv.FIRESTORE_EMULATOR_HOST,
     storageEmulatorHost: apiEnv.FIREBASE_STORAGE_EMULATOR_HOST,
+    storageEmulatorPublicHost: apiEnv.FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST,
     storageBucket: apiEnv.GCP_STORAGE_BUCKET,
   };
 
@@ -336,6 +338,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     relationContext,
     crudHooks,
   );
+
+  await registerEntityRelationRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    relationContext,
+  });
 
   const dynamicDefinitions =
     options.repositories != null

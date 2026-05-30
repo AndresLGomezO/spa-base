@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import { z } from "zod";
 
 function formatZodError(error: z.ZodError): Record<string, string[]> {
   const fieldErrors: Record<string, string[]> = {};
@@ -11,6 +11,30 @@ function formatZodError(error: z.ZodError): Record<string, string[]> {
   }
 
   return fieldErrors;
+}
+
+export function stripToSchemaKeys(
+  schema: z.ZodTypeAny,
+  input: unknown,
+): unknown {
+  if (!input || typeof input !== "object" || Array.isArray(input)) {
+    return input;
+  }
+
+  if (!(schema instanceof z.ZodObject)) {
+    return input;
+  }
+
+  const allowedKeys = new Set(Object.keys(schema.shape));
+  const stripped: Record<string, unknown> = {};
+
+  for (const [key, value] of Object.entries(input as Record<string, unknown>)) {
+    if (allowedKeys.has(key)) {
+      stripped[key] = value;
+    }
+  }
+
+  return stripped;
 }
 
 export function parseOrFormatError<T>(
