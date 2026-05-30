@@ -1,10 +1,10 @@
 export const buttonVariants = {
   primary:
-    "bg-primary-600 text-white hover:bg-primary-700 focus-visible:ring-primary-500/50",
+    "bg-primary text-primary-foreground hover:bg-primary-hover active:bg-primary-active focus-visible:ring-focus/50",
   outline:
-    "border-border bg-background text-foreground border hover:bg-neutral-50 dark:hover:bg-neutral-900 focus-visible:ring-primary-500/30",
+    "border-border bg-background text-foreground border hover:bg-hover active:bg-active focus-visible:ring-focus/30",
   ghost:
-    "text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 focus-visible:ring-primary-500/30",
+    "text-foreground hover:bg-hover active:bg-active focus-visible:ring-focus/30",
 } as const;
 
 export const buttonSizes = {

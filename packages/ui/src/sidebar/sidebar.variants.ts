@@ -18,8 +18,8 @@ export function sidebarMenuButtonClassName({
 } = {}): string {
   return cn(
     "box-border flex !w-full min-w-0 max-w-full items-center gap-2 overflow-hidden rounded-md p-2 text-left font-normal transition-colors",
-    "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40",
+    "text-sidebar-foreground hover:bg-sidebar-highlight hover:text-sidebar-foreground",
+    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40",
     "group-data-[collapsible=icon]/sidebar:justify-center group-data-[collapsible=icon]/sidebar:gap-0 group-data-[collapsible=icon]/sidebar:px-2",
     isActive && "bg-sidebar-accent font-medium text-sidebar-accent-foreground",
     sidebarMenuButtonSizes[size],

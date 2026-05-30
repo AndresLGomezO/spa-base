@@ -294,6 +294,22 @@ function extractAppearanceGroupKeys(corpus) {
   );
 }
 
+/** platform.appearance.presets.${presetId} in source → all keys under platform.appearance.presets */
+function extractAppearancePresetKeys(corpus) {
+  if (!corpus.includes("platform.appearance.presets.${")) return [];
+
+  const refPlatform = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).platform;
+
+  const presets = refPlatform?.appearance?.presets;
+  if (!presets || typeof presets !== "object") return [];
+
+  return Object.keys(presets).map(
+    (key) => `${DEFAULT_NAMESPACE}:platform.appearance.presets.${key}`,
+  );
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -473,10 +489,19 @@ mergeUsedKeys(
   extractHookEventKeys(corpus),
   path.join(SRC_DIR, "components/hooks/HookEditor.tsx"),
 );
+const appearanceEditorFile = path.join(
+  SRC_DIR,
+  "components/platform/TenantAppearanceEditor.tsx",
+);
 mergeUsedKeys(
   usedKeys,
   extractAppearanceGroupKeys(corpus),
-  path.join(SRC_DIR, "components/platform/TenantAppearanceEditor.tsx"),
+  appearanceEditorFile,
+);
+mergeUsedKeys(
+  usedKeys,
+  extractAppearancePresetKeys(corpus),
+  appearanceEditorFile,
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

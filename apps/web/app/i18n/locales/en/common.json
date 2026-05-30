@@ -121,7 +121,7 @@
     },
     "appearance": {
       "title": "Appearance",
-      "description": "Customize logo and theme for the active tenant.",
+      "description": "Customize logo, theme preset, color palettes, semantic tokens, sidebar, and typography for the active tenant.",
       "logo": "Logo",
       "logoPreview": "Tenant logo",
       "logoSuccess": "Logo uploaded.",
@@ -150,10 +150,25 @@
       "preview": "Preview",
       "previewBody": "Sample body text for this tenant theme.",
       "previewButton": "Primary button",
+      "preset": "Theme preset",
+      "presetHint": "Applies starter primary and neutral palettes. You can still adjust palettes and semantics below.",
+      "presetDefault": "Default",
+      "presets": {
+        "soft": "Soft — light surfaces",
+        "bold": "Bold — high contrast",
+        "elegant": "Elegant — warm ivory & refined accent",
+        "sophisticated": "Sophisticated — cool slate & teal",
+        "professional": "Professional — corporate blue",
+        "business": "Business — conservative navy",
+        "frutigerAero": "Frutiger Aero — glossy aqua & sky"
+      },
+      "semantics": "Advanced semantics",
+      "semanticsHint": "Optional light-mode semantic overrides. In dark mode, surfaces and text follow dark.css remaps from your palettes instead of these values.",
       "groups": {
         "primary": "Primary palette",
         "neutral": "Neutral palette",
         "sidebar": "Sidebar",
+        "semantics": "Semantic colors",
         "typography": "Typography tokens",
         "layout": "Layout tokens"
       },

@@ -121,7 +121,7 @@
     },
     "appearance": {
       "title": "Apariencia",
-      "description": "Personaliza el logo y el tema del tenant activo.",
+      "description": "Personaliza el logo, preset de tema, paletas, tokens semánticos, barra lateral y tipografía del tenant activo.",
       "logo": "Logo",
       "logoPreview": "Logo del tenant",
       "logoSuccess": "Logo subido.",
@@ -150,10 +150,25 @@
       "preview": "Vista previa",
       "previewBody": "Texto de ejemplo para el tema de este tenant.",
       "previewButton": "Botón primario",
+      "preset": "Preset de tema",
+      "presetHint": "Aplica paletas primaria y neutra de ejemplo. Puedes ajustar paletas y semántica debajo.",
+      "presetDefault": "Predeterminado",
+      "presets": {
+        "soft": "Suave — superficies claras",
+        "bold": "Intenso — alto contraste",
+        "elegant": "Elegante — marfil cálido y acento refinado",
+        "sophisticated": "Sofisticado — pizarra fría y verde azulado",
+        "professional": "Profesional — azul corporativo",
+        "business": "Empresarial — azul marino conservador",
+        "frutigerAero": "Frutiger Aero — agua brillante y cielo"
+      },
+      "semantics": "Semántica avanzada",
+      "semanticsHint": "Sobrescritura opcional en modo claro. En modo oscuro, superficies y texto usan los remapeos de dark.css a partir de tus paletas, no estos valores.",
       "groups": {
         "primary": "Paleta primaria",
         "neutral": "Paleta neutra",
         "sidebar": "Barra lateral",
+        "semantics": "Colores semánticos",
         "typography": "Tokens de tipografía",
         "layout": "Tokens de diseño"
       },

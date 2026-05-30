@@ -18,6 +18,19 @@ import {
   normalizeHexColor,
   type ColorPaletteConfig,
 } from "./palette/generate-scale.js";
+import {
+  applyAppearancePreset,
+  type AppearancePreset,
+} from "./presets/index.js";
+import {
+  expandAppearanceSemantics,
+  type AppearanceColorScheme,
+} from "./semantics/resolve-semantics.js";
+import {
+  hasPaletteScaleVariables,
+  resolveSemanticsFromPalette,
+} from "./semantics/resolve-from-palette.js";
+import { SEMANTIC_OVERRIDABLE_CSS_VARS } from "./semantics/semantic-vars.js";
 
 export const PRIMARY_SCALE_STEPS = COLOR_SCALE_STEPS;
 export const NEUTRAL_SCALE_STEPS = COLOR_SCALE_STEPS;
@@ -37,9 +50,12 @@ const NEUTRAL_CSS_VARS = COLOR_SCALE_STEPS.map(
 export const TENANT_OVERRIDABLE_CSS_VARS = [
   ...PRIMARY_CSS_VARS,
   ...NEUTRAL_CSS_VARS,
+  ...SEMANTIC_OVERRIDABLE_CSS_VARS,
   "--color-sidebar",
   "--color-sidebar-foreground",
   "--color-sidebar-border",
+  "--color-sidebar-highlight",
+  "--color-sidebar-hover",
   "--color-sidebar-accent",
   "--color-sidebar-accent-foreground",
   "--font-sans",
@@ -58,10 +74,13 @@ export type TenantOverridableCssVar =
 export const TENANT_OVERRIDE_GROUPS = {
   primary: PRIMARY_CSS_VARS,
   neutral: NEUTRAL_CSS_VARS,
+  semantics: SEMANTIC_OVERRIDABLE_CSS_VARS,
   sidebar: [
     "--color-sidebar",
     "--color-sidebar-foreground",
     "--color-sidebar-border",
+    "--color-sidebar-highlight",
+    "--color-sidebar-hover",
     "--color-sidebar-accent",
     "--color-sidebar-accent-foreground",
     "--sidebar-width",
@@ -77,11 +96,13 @@ export const TENANT_OVERRIDE_GROUPS = {
 } as const satisfies Record<string, readonly TenantOverridableCssVar[]>;
 
 export interface TenantAppearanceLike {
+  readonly preset?: AppearancePreset;
   readonly colors?: Readonly<Record<string, string>>;
   readonly palettes?: {
     readonly primary?: ColorPaletteConfig;
     readonly neutral?: ColorPaletteConfig;
   };
+  readonly semantics?: Readonly<Record<string, string>>;
   readonly fontFamily?: string;
   readonly fontSizes?: {
     readonly body?: string;
@@ -91,31 +112,76 @@ export interface TenantAppearanceLike {
   readonly spacing?: string;
 }
 
+export interface AppearanceToCssVariablesOptions {
+  readonly colorScheme?: AppearanceColorScheme;
+}
+
 export function appearanceToCssVariables(
   appearance: TenantAppearanceLike,
+  options?: AppearanceToCssVariablesOptions,
 ): Record<string, string> {
-  const vars = expandAppearancePalettes(appearance);
+  const colorScheme = options?.colorScheme ?? "light";
+  const resolved = applyAppearancePreset(appearance);
+  const vars = expandAppearancePalettes(resolved);
 
-  if (appearance.fontFamily) {
-    vars["--font-sans"] = appearance.fontFamily;
+  if (hasPaletteScaleVariables(vars)) {
+    Object.assign(vars, resolveSemanticsFromPalette(vars, colorScheme));
   }
 
-  if (appearance.fontSizes?.body) {
-    vars["--text-body"] = appearance.fontSizes.body;
+  Object.assign(vars, expandAppearanceSemantics(resolved, { colorScheme }));
+
+  if (resolved.fontFamily) {
+    vars["--font-sans"] = resolved.fontFamily;
   }
-  if (appearance.fontSizes?.heading) {
-    vars["--text-heading"] = appearance.fontSizes.heading;
+
+  if (resolved.fontSizes?.body) {
+    vars["--text-body"] = resolved.fontSizes.body;
   }
-  if (appearance.radius) {
-    vars["--radius-md"] = appearance.radius;
+  if (resolved.fontSizes?.heading) {
+    vars["--text-heading"] = resolved.fontSizes.heading;
   }
-  if (appearance.spacing) {
-    vars["--spacing"] = appearance.spacing;
+  if (resolved.radius) {
+    vars["--radius-md"] = resolved.radius;
+  }
+  if (resolved.spacing) {
+    vars["--spacing"] = resolved.spacing;
   }
 
   return vars;
 }
 
+export {
+  APPEARANCE_PRESET_CATALOG,
+  APPEARANCE_PRESETS,
+  applyAppearancePreset,
+  BOLD_APPEARANCE_PRESET,
+  BUSINESS_APPEARANCE_PRESET,
+  ELEGANT_APPEARANCE_PRESET,
+  FRUTIGER_AERO_APPEARANCE_PRESET,
+  NAMED_APPEARANCE_PRESETS,
+  normalizeAppearancePreset,
+  PROFESSIONAL_APPEARANCE_PRESET,
+  SOFT_APPEARANCE_PRESET,
+  SOPHISTICATED_APPEARANCE_PRESET,
+  isAppearancePreset,
+  type AppearancePreset,
+  type NamedAppearancePreset,
+} from "./presets/index.js";
+export {
+  DARK_MODE_REMAPPED_SEMANTIC_VARS,
+  expandAppearanceSemantics,
+  filterSemanticsForColorScheme,
+  isSemanticCssVar,
+  SEMANTIC_OVERRIDABLE_CSS_VARS,
+  type AppearanceColorScheme,
+  type SemanticOverridableCssVar,
+} from "./semantics/resolve-semantics.js";
+export {
+  hasPaletteScaleVariables,
+  resolveDarkSemanticsFromPalette,
+  resolveLightSemanticsFromPalette,
+  resolveSemanticsFromPalette,
+} from "./semantics/resolve-from-palette.js";
 export {
   COLOR_SCALE_STEPS,
   DEFAULT_NEUTRAL_SCALE,

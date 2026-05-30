@@ -185,9 +185,13 @@ Open the account menu in the sidebar. Confirm:
 
 ---
 
-## 10. Appearance logo upload (superadmin)
+## 10. Appearance and tenant branding (superadmin)
 
 **At `/settings/appearance`:**
+
+See [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md) for the full token model.
+
+### Logo
 
 1. Upload a logo image (PNG, WebP, SVG, or JPG)
 2. Confirm success message and preview update
@@ -195,6 +199,22 @@ Open the account menu in the sidebar. Confirm:
 4. Firestore tenant doc has `appearance.logoUrl` (emulator: `http://127.0.0.1:9199/...`; production: `https://storage.googleapis.com/...`)
 
 Requires Storage emulator in local dev (`FIREBASE_STORAGE_EMULATOR_HOST`). See [gcs-storage-guide.md](./gcs-storage-guide.md).
+
+### Theme preset and palettes
+
+1. Select a named preset (e.g. **Soft**, **Elegant**, **Frutiger Aero**) — primary/neutral editors populate; preview panel updates
+2. Change primary anchor color — preview **Primary button** and preview card background shift (semantic chain, not sidebar-only)
+3. Save appearance → reload app — branding persists on `:root` via `TenantBrandingProvider`
+4. Firestore `appearance` includes `preset`, `palettes`, and/or `semantics` as saved
+
+### Advanced semantics (optional)
+
+1. Expand **Advanced semantics** — set e.g. `--color-card` to a custom hex
+2. Confirm preview panel reflects override before save
+
+### Dark mode
+
+1. Toggle theme (sidebar) to dark — surfaces use `dark.css` semantic remaps; tenant scale overrides still apply
 
 **Layout:** The appearance form is long — confirm only the main content area scrolls (sidebar stays fixed). See scroll-contained layout in [phase-2-platform-handoff.md §8](./phase-2-platform-handoff.md).
 

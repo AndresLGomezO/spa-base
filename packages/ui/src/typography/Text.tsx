@@ -10,8 +10,8 @@ export interface TextProps extends HTMLAttributes<HTMLParagraphElement> {
 
 const variantStyles = {
   default: "text-foreground text-sm",
-  muted: "text-muted text-sm",
-  caption: "text-muted text-xs",
+  muted: "text-muted-foreground text-sm",
+  caption: "text-muted-foreground text-xs",
 } as const;
 
 export function Text({

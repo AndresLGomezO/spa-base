@@ -155,6 +155,10 @@ project-base/
 | [apps/web/app/components/settings/UserManagement.tsx](../apps/web/app/components/settings/UserManagement.tsx) | Tenant user invites + role assignment |
 | [apps/web/app/components/platform/CurrentTenantPanel.tsx](../apps/web/app/components/platform/CurrentTenantPanel.tsx) | Active tenant management |
 | [apps/web/app/components/platform/TenantAppearanceEditor.tsx](../apps/web/app/components/platform/TenantAppearanceEditor.tsx) | Tenant branding editor |
+| [apps/web/app/theme/TenantBrandingProvider.tsx](../apps/web/app/theme/TenantBrandingProvider.tsx) | Applies `appearance` CSS vars to `:root` |
+| [packages/theme/src/tenant-overrides.ts](../packages/theme/src/tenant-overrides.ts) | `appearanceToCssVariables`, presets, override groups |
+| [packages/theme/src/semantics.css](../packages/theme/src/semantics.css) | Palette → semantic token mappings |
+| [packages/theme/README.md](../packages/theme/README.md) | Theme package API; links to full branding guide |
 | [apps/web/app/lib/admin-client.ts](../apps/web/app/lib/admin-client.ts) | Admin API client |
 | [apps/api/src/routes/admin.routes.ts](../apps/api/src/routes/admin.routes.ts) | `/admin/*` superadmin routes |
 | [apps/web/app/routes/settings/](../apps/web/app/routes/settings/) | Control Plane pages |
@@ -198,6 +202,8 @@ project-base/
 | Add Firestore collection | `packages/firestore-converters`, `packages/gcp-firebase`, guide |
 | Change cache TTL | `CACHE_TTL_MS` env, `createTtlCache` call sites |
 | Add admin page | `apps/web/app/routes/settings/`, Control Plane nav in private layout |
+| Change tenant colors / theme | `packages/theme` semantics + `TenantAppearanceEditor`; guide: [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md) |
+| Add semantic color token | `packages/theme/src/semantics.css`, `dark.css`, `@repo/ui` components |
 
 ---
 
@@ -222,5 +228,7 @@ Run: `pnpm test` from repo root.
 | [apps/web/README.md](../apps/web/README.md) | Web dev, routing, Control Plane |
 | [apps/api/src/crud/README.md](../apps/api/src/crud/README.md) | CRUD generator design |
 | [apps/web/app/routing/README.md](../apps/web/app/routing/README.md) | Route guards |
+| [docs/theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md) | Tenant theme tokens and Appearance editor |
+| [packages/theme/README.md](../packages/theme/README.md) | `@repo/theme` exports and file layout |
 | [apps/web/app/components/entity/README.md](../apps/web/app/components/entity/README.md) | Entity UI extension |
 | [apps/web/app/components/admin/README.md](../apps/web/app/components/admin/README.md) | Admin components |

@@ -46,5 +46,6 @@ Describe the steps to verify the changes. Include any relevant environment setup
 - [ ] In `apps/web`, I used `@repo/ui` primitives (`Button`, `Heading`, `Text`, etc.) instead of raw `<button>`, `<h1>`–`<h3>`, or `<p>` (enforced by ESLint).
 - [ ] If I changed `packages/ui`, I added/updated Storybook stories and confirmed `pnpm build-storybook` passes (or `pnpm storybook` for local review).
 - [ ] If UI appearance changed, I ran `pnpm build-storybook && pnpm test:visual` (or `pnpm test:visual:update` and committed snapshot PNGs when intentional).
+- [ ] If I changed tenant theme tokens or semantics, I consulted [docs/theme-and-tenant-branding-guide.md](docs/theme-and-tenant-branding-guide.md) and used semantic utilities in `@repo/ui` (not raw `primary-600` / `neutral-*` scale classes).
 - [ ] My changes generate no new warnings.
 - [ ] I have added tests that prove my fix is effective or that my feature works.

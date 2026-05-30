@@ -33,15 +33,12 @@ function readOklch(hex: string): Oklch {
     throw new Error(`Invalid color: ${hex}`);
   }
   const oklch = toOklch(color);
-  if (
-    !oklch ||
-    typeof oklch.l !== "number" ||
-    typeof oklch.c !== "number" ||
-    typeof oklch.h !== "number"
-  ) {
+  if (!oklch || typeof oklch.l !== "number" || typeof oklch.c !== "number") {
     throw new Error(`Unable to convert color to OKLCH: ${hex}`);
   }
-  return oklch;
+  const hue =
+    typeof oklch.h === "number" && !Number.isNaN(oklch.h) ? oklch.h : 0;
+  return { ...oklch, h: hue };
 }
 
 export function normalizeHexColor(value: string): string {

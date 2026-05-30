@@ -37,6 +37,7 @@ Commit the updated PNG files under `stories.visual.spec.ts-snapshots/`.
 ## Notes
 
 - CI uses Chromium on `ubuntu-latest` with `globals=theme:light`.
+- Storybook loads `@repo/theme/tokens.css`, `semantics.css`, and `dark.css` via [src/styles/storybook.css](../../src/styles/storybook.css). Visual baselines reflect the semantic token layer (`bg-primary`, `bg-card`, etc.).
 - Visual tests serve `storybook-static` on port **6007** (dev Storybook stays on **6006**).
 - Visual tests run in the GitHub `storybook` job, not in `pnpm validate`.
 - Baselines are authoritative for **Linux CI**; use `test:visual:update:ci` before committing snapshot changes.

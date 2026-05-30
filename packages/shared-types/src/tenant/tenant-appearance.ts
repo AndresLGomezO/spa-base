@@ -49,10 +49,29 @@ export const tenantFontSizesSchema = z
 
 export type TenantFontSizes = z.infer<typeof tenantFontSizesSchema>;
 
+export const APPEARANCE_PRESETS = [
+  "default",
+  "soft",
+  "bold",
+  "elegant",
+  "sophisticated",
+  "professional",
+  "business",
+  "frutigerAero",
+] as const;
+
+export const appearancePresetSchema = z
+  .union([z.enum(APPEARANCE_PRESETS), z.literal("instagram")])
+  .transform((value) => (value === "instagram" ? "soft" : value));
+
+export type AppearancePreset = z.infer<typeof appearancePresetSchema>;
+
 export const tenantAppearanceSchema = z
   .object({
     logoUrl: z.string().url().optional(),
+    preset: appearancePresetSchema.optional(),
     palettes: tenantColorPalettesSchema.optional(),
+    semantics: z.record(z.string(), z.string()).optional(),
     colors: z.record(z.string(), z.string()).optional(),
     fontFamily: z.string().trim().min(1).optional(),
     fontSizes: tenantFontSizesSchema.optional(),

@@ -36,7 +36,7 @@ export function SegmentedSwitch<T extends string>({
       role="group"
       aria-label={ariaLabel}
       className={cn(
-        "bg-neutral-100/90 ring-border/40 relative flex rounded-lg p-1 ring-1 ring-inset dark:bg-neutral-900/35",
+        "bg-muted/90 ring-border/40 relative flex rounded-lg p-1 ring-1 ring-inset",
         fullWidth ? "w-full" : "inline-flex w-auto",
         className,
       )}
@@ -62,10 +62,8 @@ export function SegmentedSwitch<T extends string>({
             aria-label={option.ariaLabel}
             onClick={() => onChange(option.value)}
             className={cn(
-              "relative z-10 box-border flex min-h-10 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 rounded-md border-0 bg-transparent px-3 py-1.5 text-xs font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
-              isActive
-                ? "text-foreground"
-                : "text-neutral-400 dark:text-neutral-500",
+              "relative z-10 box-border flex min-h-10 min-w-0 flex-1 basis-0 items-center justify-center gap-1.5 rounded-md border-0 bg-transparent px-3 py-1.5 text-xs font-medium transition-colors duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background",
+              isActive ? "text-foreground" : "text-text-tertiary",
             )}
           >
             {option.label}

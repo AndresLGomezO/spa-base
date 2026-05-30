@@ -1,18 +1,64 @@
 @custom-variant dark (&:where(.dark, .dark *));
 
+/* Explicit html.dark selectors so remaps win when palette scales are inlined on :root. */
 @layer theme {
-  :root,
-  :host {
-    @variant dark {
-      --color-background: var(--color-neutral-950);
-      --color-foreground: var(--color-neutral-50);
-      --color-muted: var(--color-neutral-400);
-      --color-border: var(--color-neutral-800);
-      --color-sidebar: var(--color-neutral-900);
-      --color-sidebar-foreground: var(--color-neutral-50);
-      --color-sidebar-border: var(--color-neutral-800);
-      --color-sidebar-accent: var(--color-neutral-800);
-      --color-sidebar-accent-foreground: var(--color-neutral-50);
-    }
+  html.dark,
+  html.dark :host {
+    --color-background: var(--color-neutral-950);
+    --color-foreground: var(--color-neutral-50);
+    --color-surface: var(--color-background);
+    --color-surface-foreground: var(--color-foreground);
+
+    --color-card: var(--color-neutral-900);
+    --color-card-foreground: var(--color-neutral-50);
+    --color-popover: var(--color-neutral-900);
+    --color-popover-foreground: var(--color-neutral-50);
+
+    --color-muted: var(--color-neutral-900);
+    --color-muted-foreground: var(--color-neutral-400);
+
+    --color-secondary: var(--color-neutral-800);
+    --color-secondary-foreground: var(--color-neutral-50);
+
+    --color-accent: var(--color-neutral-800);
+    --color-accent-foreground: var(--color-neutral-50);
+    --color-accent-hover: var(--color-neutral-700);
+    --color-accent-active: var(--color-neutral-600);
+
+    --color-border: var(--color-neutral-800);
+    --color-border-muted: var(--color-neutral-900);
+    --color-border-strong: var(--color-neutral-700);
+    --color-divider: var(--color-neutral-800);
+
+    --color-text-primary: var(--color-foreground);
+    --color-text-secondary: var(--color-neutral-400);
+    --color-text-tertiary: var(--color-neutral-500);
+    --color-text-inverse: var(--color-neutral-950);
+    --color-text-disabled: var(--color-neutral-600);
+
+    --color-hover: var(--color-neutral-800);
+    --color-active: var(--color-neutral-700);
+
+    --color-primary-hover: var(--color-primary-500);
+    --color-primary-active: var(--color-primary-400);
+
+    --color-backdrop: color-mix(in oklch, var(--color-black) 60%, transparent);
+
+    --color-input-background: var(--color-neutral-950);
+    --color-input-border: var(--color-border);
+
+    --color-skeleton: var(--color-muted);
+
+    --color-sidebar: var(--color-neutral-900);
+    --color-sidebar-foreground: var(--color-neutral-50);
+    --color-sidebar-border: var(--color-neutral-800);
+    --color-sidebar-highlight: color-mix(
+      in oklch,
+      var(--color-sidebar-accent) 35%,
+      var(--color-sidebar)
+    );
+    --color-sidebar-hover: var(--color-sidebar-highlight);
+    --color-sidebar-accent: var(--color-neutral-800);
+    --color-sidebar-accent-foreground: var(--color-neutral-50);
   }
 }

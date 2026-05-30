@@ -1,5 +1,6 @@
 import type { TenantAppearance } from "@repo/shared-types";
 import { appearanceToCssVariables } from "@repo/theme/tenant-overrides";
+import { useColorScheme } from "@repo/theme/react";
 import { useEffect, type ReactNode } from "react";
 
 import { useAuth } from "../auth/AuthContext";
@@ -16,11 +17,12 @@ function clearAppliedVars(root: HTMLElement) {
 function applyAppearance(
   root: HTMLElement,
   appearance: TenantAppearance | null,
+  colorScheme: "light" | "dark",
 ) {
   clearAppliedVars(root);
   if (!appearance) return;
 
-  const vars = appearanceToCssVariables(appearance);
+  const vars = appearanceToCssVariables(appearance, { colorScheme });
   for (const [cssVar, value] of Object.entries(vars)) {
     if (value.trim()) {
       root.style.setProperty(cssVar, value);
@@ -35,14 +37,15 @@ export function TenantBrandingProvider({
   readonly children: ReactNode;
 }) {
   const { tenantAppearance } = useAuth();
+  const { colorScheme } = useColorScheme();
 
   useEffect(() => {
     const root = document.documentElement;
-    applyAppearance(root, tenantAppearance);
+    applyAppearance(root, tenantAppearance, colorScheme);
     return () => {
       clearAppliedVars(root);
     };
-  }, [tenantAppearance]);
+  }, [tenantAppearance, colorScheme]);
 
   return <>{children}</>;
 }

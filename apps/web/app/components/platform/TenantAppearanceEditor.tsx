@@ -19,11 +19,19 @@ import {
   toast,
 } from "@repo/ui";
 
-import type { ColorPaletteConfig, TenantAppearance } from "@repo/shared-types";
 import {
+  APPEARANCE_PRESETS,
+  type AppearancePreset,
+  type ColorPaletteConfig,
+  type TenantAppearance,
+} from "@repo/shared-types";
+import { useColorScheme } from "@repo/theme/react";
+import {
+  applyAppearancePreset,
   appearanceToCssVariables,
   inferPaletteFromLegacyColors,
-  isPaletteCssVar,
+  normalizeAppearancePreset,
+  normalizeHexColor,
   TENANT_OVERRIDE_GROUPS,
 } from "@repo/theme/tenant-overrides";
 
@@ -62,6 +70,16 @@ function readFileAsBase64(file: File): Promise<string> {
   });
 }
 
+const SIDEBAR_CSS_VARS = new Set<string>(TENANT_OVERRIDE_GROUPS.sidebar);
+
+const SELECTABLE_THEME_PRESETS = APPEARANCE_PRESETS.filter(
+  (id): id is Exclude<AppearancePreset, "default"> => id !== "default",
+);
+
+function normalizeCssVarKey(key: string): string {
+  return key.startsWith("--") ? key : `--${key}`;
+}
+
 function extractSidebarColors(
   colors: Record<string, string> | undefined,
 ): Record<string, string> {
@@ -70,7 +88,71 @@ function extractSidebarColors(
   }
 
   return Object.fromEntries(
-    Object.entries(colors).filter(([key]) => !isPaletteCssVar(key)),
+    Object.entries(colors).filter(([key]) =>
+      SIDEBAR_CSS_VARS.has(normalizeCssVarKey(key)),
+    ),
+  );
+}
+
+function toSemanticColorInputValue(hex: string): string {
+  try {
+    return normalizeHexColor(hex);
+  } catch {
+    return "#000000";
+  }
+}
+
+interface SemanticColorFieldProps {
+  readonly cssVar: string;
+  readonly value: string;
+  readonly placeholder: string;
+  readonly onChange: (value: string) => void;
+}
+
+function SemanticColorField({
+  cssVar,
+  value,
+  placeholder,
+  onChange,
+}: SemanticColorFieldProps) {
+  const colorPickerValue = value.trim()
+    ? toSemanticColorInputValue(value)
+    : "#000000";
+
+  const colorInputId = `${cssVar}-picker`;
+  const textInputId = `${cssVar}-hex`;
+
+  return (
+    <div className="flex flex-col gap-1">
+      <FieldLabel htmlFor={textInputId}>{cssVar}</FieldLabel>
+      <div className="flex items-center gap-2">
+        <Input
+          id={colorInputId}
+          type="color"
+          aria-label={`${cssVar} picker`}
+          className="h-10 w-14 shrink-0 cursor-pointer p-1"
+          value={colorPickerValue}
+          onChange={(event) => onChange(event.target.value)}
+        />
+        <Input
+          id={textInputId}
+          value={value}
+          placeholder={placeholder}
+          onChange={(event) => onChange(event.target.value)}
+          onBlur={(event) => {
+            const next = event.target.value.trim();
+            if (!next) {
+              return;
+            }
+            try {
+              onChange(normalizeHexColor(next));
+            } catch {
+              // Keep partial input until valid hex.
+            }
+          }}
+        />
+      </div>
+    </div>
   );
 }
 
@@ -92,6 +174,7 @@ export function TenantAppearanceEditor({
   tenantId,
 }: TenantAppearanceEditorProps) {
   const { t } = useTranslation("common");
+  const { colorScheme } = useColorScheme();
   const { selectTenant } = useAuth();
   const [tenant, setTenant] = useState<AdminTenant | null>(null);
   const [primaryPalette, setPrimaryPalette] = useState<
@@ -110,6 +193,8 @@ export function TenantAppearanceEditor({
   const [headingSize, setHeadingSize] = useState("");
   const [radius, setRadius] = useState("");
   const [spacing, setSpacing] = useState("");
+  const [preset, setPreset] = useState<AppearancePreset>("default");
+  const [semantics, setSemantics] = useState<Record<string, string>>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
@@ -117,10 +202,17 @@ export function TenantAppearanceEditor({
   const draftAppearance = useMemo(
     (): TenantAppearance => ({
       logoUrl: logoPreview ?? undefined,
+      preset: preset === "default" ? undefined : preset,
       palettes: {
         ...(primaryPalette ? { primary: primaryPalette } : {}),
         ...(neutralPalette ? { neutral: neutralPalette } : {}),
       },
+      semantics: (() => {
+        const next = Object.fromEntries(
+          Object.entries(semantics).filter(([, value]) => value.trim()),
+        );
+        return Object.keys(next).length > 0 ? next : undefined;
+      })(),
       colors: sidebarColors,
       fontFamily: fontFamily.trim() || undefined,
       fontSizes: {
@@ -136,16 +228,18 @@ export function TenantAppearanceEditor({
       headingSize,
       logoPreview,
       neutralPalette,
+      preset,
       primaryPalette,
       radius,
+      semantics,
       sidebarColors,
       spacing,
     ],
   );
 
   const previewVars = useMemo(
-    () => appearanceToCssVariables(draftAppearance),
-    [draftAppearance],
+    () => appearanceToCssVariables(draftAppearance, { colorScheme }),
+    [colorScheme, draftAppearance],
   );
 
   const applyAppearance = useCallback(
@@ -161,10 +255,33 @@ export function TenantAppearanceEditor({
       setHeadingSize(appearance?.fontSizes?.heading ?? "");
       setRadius(appearance?.radius ?? "");
       setSpacing(appearance?.spacing ?? "");
+      setPreset(normalizeAppearancePreset(appearance?.preset));
+      setSemantics(appearance?.semantics ?? {});
       setLogoPreview(appearance?.logoUrl ?? null);
     },
     [],
   );
+
+  function handlePresetChange(nextPreset: AppearancePreset) {
+    setPreset(nextPreset);
+    if (nextPreset === "default") {
+      return;
+    }
+
+    const merged = applyAppearancePreset({ preset: nextPreset });
+    const palettes = resolveLoadedPalettes(merged);
+    if (palettes.primary) {
+      setPrimaryPalette(palettes.primary);
+      setPrimaryTouched(true);
+    }
+    if (palettes.neutral) {
+      setNeutralPalette(palettes.neutral);
+      setNeutralTouched(true);
+    }
+    if (merged.semantics) {
+      setSemantics(merged.semantics);
+    }
+  }
 
   const loadTenant = useCallback(async () => {
     setIsLoading(true);
@@ -228,9 +345,16 @@ export function TenantAppearanceEditor({
           }
         : undefined;
 
+    const semanticsToSave = Object.fromEntries(
+      Object.entries(semantics).filter(([, value]) => value.trim()),
+    );
+
     return {
       logoUrl: logoPreview ?? undefined,
+      preset: preset === "default" ? undefined : preset,
       palettes,
+      semantics:
+        Object.keys(semanticsToSave).length > 0 ? semanticsToSave : undefined,
       colors: Object.fromEntries(
         Object.entries(sidebarColors).filter(([, value]) => value.trim()),
       ),
@@ -321,6 +445,35 @@ export function TenantAppearanceEditor({
           />
         </section>
 
+        <section className="border-border grid gap-3 rounded-lg border p-4">
+          <Text className="font-medium">{t("platform.appearance.preset")}</Text>
+          <Text className="text-muted-foreground text-sm">
+            {t("platform.appearance.presetHint")}
+          </Text>
+          <div className="flex max-w-md flex-col gap-1">
+            <FieldLabel htmlFor="appearance-preset">
+              {t("platform.appearance.preset")}
+            </FieldLabel>
+            <select
+              id="appearance-preset"
+              className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm shadow-sm"
+              value={preset}
+              onChange={(event) =>
+                handlePresetChange(event.target.value as AppearancePreset)
+              }
+            >
+              <option value="default">
+                {t("platform.appearance.presetDefault")}
+              </option>
+              {SELECTABLE_THEME_PRESETS.map((presetId) => (
+                <option key={presetId} value={presetId}>
+                  {t(`platform.appearance.presets.${presetId}` as never)}
+                </option>
+              ))}
+            </select>
+          </div>
+        </section>
+
         <ColorPaletteEditor
           kind="primary"
           value={primaryPalette}
@@ -338,6 +491,29 @@ export function TenantAppearanceEditor({
             setNeutralTouched(true);
           }}
         />
+
+        <section className="border-border grid gap-3 rounded-lg border p-4">
+          <Text className="font-medium">
+            {t("platform.appearance.semantics")}
+          </Text>
+          <Text className="text-muted-foreground text-sm">
+            {t("platform.appearance.semanticsHint")}
+          </Text>
+          {TENANT_OVERRIDE_GROUPS.semantics.map((cssVar) => (
+            <SemanticColorField
+              key={cssVar}
+              cssVar={cssVar}
+              value={semantics[cssVar] ?? ""}
+              placeholder={t("platform.appearance.placeholder")}
+              onChange={(nextValue) =>
+                setSemantics((current) => ({
+                  ...current,
+                  [cssVar]: nextValue,
+                }))
+              }
+            />
+          ))}
+        </section>
 
         {(["sidebar"] as const).map((groupKey) => {
           const vars = TENANT_OVERRIDE_GROUPS[groupKey];
@@ -446,7 +622,7 @@ export function TenantAppearanceEditor({
         style={previewVars as CSSProperties}
       >
         <Text className="font-medium">{t("platform.appearance.preview")}</Text>
-        <div className="bg-background text-foreground mt-4 space-y-2 rounded-md border p-4">
+        <div className="bg-card text-card-foreground mt-4 space-y-2 rounded-md border p-4">
           <Text className="text-heading font-semibold">{tenant.name}</Text>
           <Text className="text-body">
             {t("platform.appearance.previewBody")}

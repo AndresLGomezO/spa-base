@@ -559,7 +559,8 @@ For Storage logo uploads, the API also sets `FIREBASE_STORAGE_EMULATOR_PUBLIC_HO
 
 1. As superadmin, open **Platform → Appearance** (`/settings/appearance`).
 2. Upload a logo image → expect success (not "The specified bucket does not exist").
-3. Sidebar shows the logo; Storage emulator UI lists `tenants/{tenantId}/logo.*`.
+3. Sidebar shows the logo; Storage emulator UI lists `tenants/{tenantId}/images/{objectId}.*`.
+4. Optional: save a theme preset or palette — Firestore `tenants/{id}.appearance` stores `preset`, `palettes`, `semantics` (see [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md)).
 
 ---
 

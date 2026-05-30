@@ -43,9 +43,21 @@ Superadmin only. View and edit the **active** tenant (name, status). Suspend or 
 
 ### Platform — Appearance (`/settings/appearance`)
 
-Superadmin only. Upload tenant logo and override theme CSS variables for the active tenant. Branding applies at runtime via `TenantBrandingProvider`.
+Superadmin only. Customize the **active** tenant’s look and feel.
 
-Logo upload uses Firebase Admin Storage (GCS in production, Storage emulator locally). Requires `FIREBASE_STORAGE_EMULATOR_HOST` in local API env. See [gcs-storage-guide.md](./gcs-storage-guide.md).
+| Control | Effect |
+| --- | --- |
+| Logo | Sidebar branding (GCS / Storage emulator) |
+| Theme preset | **Default** or a named style (Soft, Bold, Elegant, Sophisticated, Professional, Business, Frutiger Aero) — seeds palettes and sample semantics |
+| Primary / neutral palette | Anchor color + optional per-shade overrides; regenerates `--color-primary-*` and `--color-neutral-*` |
+| Advanced semantics | Optional overrides for `--color-card`, `--color-hover`, `--color-primary`, etc. |
+| Sidebar / typography / layout | Direct CSS variable overrides |
+
+Branding applies at runtime via `TenantBrandingProvider` (`appearanceToCssVariables` from `@repo/theme`). UI components use **semantic** tokens (`bg-primary`, `bg-card`, `hover:bg-hover`), so palette changes affect buttons, inputs, and surfaces—not only the sidebar.
+
+**Documentation:** [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md) · [packages/theme/README.md](../packages/theme/README.md)
+
+Logo upload uses Firebase Admin Storage. See [gcs-storage-guide.md](./gcs-storage-guide.md).
 
 ### Create tenant (`/platform/create-tenant`)
 
@@ -62,5 +74,6 @@ Superadmin only. Create a new tenant and switch into it. Linked from the tenant 
 
 ## Related
 
+- [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md)
 - [apps/web/README.md](../apps/web/README.md)
 - [docs/e2e-validation-runbook.md](./e2e-validation-runbook.md)

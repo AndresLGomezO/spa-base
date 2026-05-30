@@ -1,0 +1,87 @@
+@theme {
+  /* Core semantics (palette → meaning) */
+  --color-primary: var(--color-primary-600);
+  --color-primary-foreground: var(--color-white);
+  --color-primary-hover: var(--color-primary-700);
+  --color-primary-active: var(--color-primary-800);
+
+  --color-secondary: var(--color-neutral-100);
+  --color-secondary-foreground: var(--color-neutral-900);
+
+  --color-accent: var(--color-primary-50);
+  --color-accent-foreground: var(--color-primary-900);
+  --color-accent-hover: var(--color-primary-100);
+  --color-accent-active: var(--color-primary-200);
+
+  --color-muted: var(--color-neutral-100);
+  --color-muted-foreground: var(--color-neutral-500);
+
+  --color-background: var(--color-neutral-50);
+  --color-foreground: var(--color-neutral-950);
+
+  --color-destructive: var(--color-danger-600);
+  --color-destructive-foreground: var(--color-white);
+
+  --color-success: var(--color-success-600);
+  --color-success-foreground: var(--color-white);
+
+  --color-warning: var(--color-warning-600);
+  --color-warning-foreground: var(--color-neutral-950);
+
+  --color-info: var(--color-primary-600);
+  --color-info-foreground: var(--color-white);
+
+  /* Surfaces */
+  --color-surface: var(--color-background);
+  --color-surface-foreground: var(--color-foreground);
+
+  --color-card: var(--color-white);
+  --color-card-foreground: var(--color-foreground);
+
+  --color-popover: var(--color-white);
+  --color-popover-foreground: var(--color-foreground);
+
+  --color-backdrop: color-mix(
+    in oklch,
+    var(--color-neutral-950) 50%,
+    transparent
+  );
+
+  /* Text hierarchy */
+  --color-text-primary: var(--color-foreground);
+  --color-text-secondary: var(--color-neutral-600);
+  --color-text-tertiary: var(--color-neutral-400);
+  --color-text-inverse: var(--color-white);
+  --color-text-disabled: var(--color-neutral-400);
+
+  /* Interactive */
+  --color-hover: var(--color-neutral-100);
+  --color-active: var(--color-neutral-200);
+  --color-focus: var(--color-primary-500);
+
+  /* Borders */
+  --color-border: var(--color-neutral-200);
+  --color-border-muted: var(--color-neutral-100);
+  --color-border-strong: var(--color-neutral-300);
+  --color-divider: var(--color-neutral-200);
+
+  /* Effects */
+  --opacity-disabled: 0.6;
+  --opacity-hover: 0.08;
+  --opacity-overlay: 0.5;
+
+  --color-skeleton: var(--color-muted);
+
+  /* Component shortcuts */
+  --color-input-background: var(--color-background);
+  --color-input-border: var(--color-border);
+  --color-input-focus: var(--color-focus);
+
+  --color-button-background: var(--color-primary);
+  --color-button-foreground: var(--color-primary-foreground);
+
+  --color-badge-background: var(--color-muted);
+  --color-badge-foreground: var(--color-foreground);
+
+  --color-avatar-border: var(--color-border);
+}

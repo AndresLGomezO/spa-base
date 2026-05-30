@@ -45,3 +45,5 @@ Entity routes call `useRefreshEntityCatalogOnMount` so Model Builder changes app
 **Superadmins** choose a tenant at `/select-tenant` or via the sidebar `TenantSwitcher`. Selection calls `POST /auth/select-tenant`, refreshes the ID token, and re-syncs permissions, `tenantRoleNames`, and tenant branding. Superadmins create new tenants from the switcher or `/platform/create-tenant`.
 
 **Tenant members** do not see tenant selection UI. On sign-in, the first available assigned tenant is auto-bound via `POST /auth/select-tenant`. The active tenant name appears in the user profile popover.
+
+Branding from `tenantAppearance` is applied globally by [`TenantBrandingProvider`](../theme/TenantBrandingProvider.tsx). See [theme-and-tenant-branding-guide.md](../../../docs/theme-and-tenant-branding-guide.md).

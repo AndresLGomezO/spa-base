@@ -26,7 +26,7 @@ export function Spinner({
       role="status"
       aria-label={ariaLabel}
       className={cn(
-        "border-primary-600 inline-block shrink-0 animate-spin rounded-full border-t-transparent",
+        "border-primary inline-block shrink-0 animate-spin rounded-full border-t-transparent",
         sizeClasses[size],
         className,
       )}
