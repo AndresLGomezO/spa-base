@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, Checkbox, FieldLabel, Input, Text } from "@repo/ui";
+import { Button, Checkbox, FieldLabel, Input, Text, toast } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import {
@@ -44,7 +44,6 @@ export function RoleEditor({
   const [fieldRules, setFieldRules] = useState<readonly FieldRuleDraft[]>(
     role?.fieldRules ?? [],
   );
-  const [error, setError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
 
   const grantOptions = useMemo(() => {
@@ -61,7 +60,6 @@ export function RoleEditor({
   };
 
   async function handleSave() {
-    setError(null);
     setIsSaving(true);
 
     try {
@@ -90,7 +88,7 @@ export function RoleEditor({
       });
       onSaved(updated);
     } catch (saveError) {
-      setError(
+      toast.error(
         saveError instanceof Error ? saveError.message : t("roles.saveFailed"),
       );
     } finally {
@@ -105,8 +103,6 @@ export function RoleEditor({
           ? t("roles.createTitle")
           : t("roles.editTitle", { name: role?.name })}
       </Text>
-      {error ? <Alert>{error}</Alert> : null}
-
       {isCreate ? (
         <div className="space-y-1">
           <FieldLabel htmlFor="role-name">{t("roles.name")}</FieldLabel>

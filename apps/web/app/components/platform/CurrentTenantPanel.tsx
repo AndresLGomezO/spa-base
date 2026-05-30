@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, FieldLabel, Form, Input } from "@repo/ui";
+import { Alert, Button, FieldLabel, Form, Input, toast } from "@repo/ui";
 
 import {
   getAdminTenant,
@@ -18,20 +18,17 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   const { t } = useTranslation("common");
   const [tenant, setTenant] = useState<AdminTenant | null>(null);
   const [name, setName] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
   const loadTenant = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
     try {
       const nextTenant = await getAdminTenant(tenantId);
       setTenant(nextTenant);
       setName(nextTenant.name);
     } catch (loadError) {
-      setError(
+      toast.error(
         loadError instanceof Error
           ? loadError.message
           : t("platform.currentTenant.loadFailed"),
@@ -51,14 +48,12 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
     if (!trimmedName || !tenant) return;
 
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       const updated = await updateAdminTenant(tenant.id, { name: trimmedName });
       setTenant(updated);
-      setSuccess(t("platform.currentTenant.saveSuccess"));
+      toast.success(t("platform.currentTenant.saveSuccess"));
     } catch (saveError) {
-      setError(
+      toast.error(
         saveError instanceof Error
           ? saveError.message
           : t("platform.currentTenant.saveFailed"),
@@ -72,20 +67,18 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
     if (!tenant) return;
     const nextStatus = tenant.status === "active" ? "suspended" : "active";
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       const updated = await updateAdminTenant(tenant.id, {
         status: nextStatus,
       });
       setTenant(updated);
-      setSuccess(
+      toast.success(
         nextStatus === "suspended"
           ? t("admin.tenants.suspendSuccess")
           : t("admin.tenants.activateSuccess"),
       );
     } catch (updateError) {
-      setError(
+      toast.error(
         updateError instanceof Error
           ? updateError.message
           : t("admin.tenants.updateFailed"),
@@ -105,9 +98,6 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
 
   return (
     <div className="flex w-full max-w-xl flex-col gap-6">
-      {error ? <Alert>{error}</Alert> : null}
-      {success ? <Alert>{success}</Alert> : null}
-
       <dl className="grid gap-3 text-sm">
         <div>
           <dt className="text-muted font-medium">{t("admin.tenants.id")}</dt>

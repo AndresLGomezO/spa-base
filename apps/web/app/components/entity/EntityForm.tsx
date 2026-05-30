@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import {
   buildInitialValues,
   getFormSections,
@@ -7,7 +7,7 @@ import {
   resolveCreateForm,
   resolveEditForm,
 } from "@repo/ui-builder";
-import { Alert, Button, Form, Heading } from "@repo/ui";
+import { Button, Form, Heading, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
@@ -81,7 +81,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
     return initial;
   });
   const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
-  const [submitError, setSubmitError] = useState<string | null>(null);
+  const lastToastedError = useRef<string | null>(null);
 
   useEffect(() => {
     if (mode !== "edit" || !recordId) return;
@@ -122,6 +122,14 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
     };
   }, [definition, entityName, getById, joinRelationFieldNames, mode, recordId]);
 
+  useEffect(() => {
+    if (!error || error === lastToastedError.current) {
+      return;
+    }
+    lastToastedError.current = error;
+    toast.error(error);
+  }, [error]);
+
   const title = useMemo(
     () =>
       mode === "create"
@@ -132,8 +140,6 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    setSubmitError(null);
-
     const cleanedValues = cleanFormValues(sections, values);
     const { documentPayload, joinRelations } = splitEntityFormPayload(
       definition,
@@ -157,7 +163,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
         }
         navigate(`/app/${entityName}`);
       } catch (syncError) {
-        setSubmitError(
+        toast.error(
           syncError instanceof Error
             ? syncError.message
             : t("entity.relationSyncFailed"),
@@ -184,7 +190,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
       }
       navigate(`/app/${entityName}`);
     } catch (syncError) {
-      setSubmitError(
+      toast.error(
         syncError instanceof Error
           ? syncError.message
           : t("entity.relationSyncFailed"),
@@ -199,8 +205,6 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
   return (
     <div className="flex w-full max-w-xl flex-col gap-4">
       <Heading level={1}>{title}</Heading>
-      {error ? <Alert>{error}</Alert> : null}
-      {submitError ? <Alert>{submitError}</Alert> : null}
       <Form onSubmit={(event) => void handleSubmit(event)}>
         {sections.map((section, index) => (
           <div

@@ -16,6 +16,7 @@ import {
   Input,
   PhotoUpload,
   Text,
+  toast,
 } from "@repo/ui";
 
 import type { ColorPaletteConfig, TenantAppearance } from "@repo/shared-types";
@@ -110,8 +111,6 @@ export function TenantAppearanceEditor({
   const [radius, setRadius] = useState("");
   const [spacing, setSpacing] = useState("");
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -169,13 +168,12 @@ export function TenantAppearanceEditor({
 
   const loadTenant = useCallback(async () => {
     setIsLoading(true);
-    setError(null);
     try {
       const nextTenant = await getAdminTenant(tenantId);
       setTenant(nextTenant);
       applyAppearance(nextTenant.appearance);
     } catch (loadError) {
-      setError(
+      toast.error(
         loadError instanceof Error
           ? loadError.message
           : t("platform.appearance.loadFailed"),
@@ -194,8 +192,6 @@ export function TenantAppearanceEditor({
     readonly uploadId: string;
   }) {
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       const data = await readFileAsBase64(params.file);
       const result = await uploadTenantLogo(tenantId, {
@@ -205,10 +201,10 @@ export function TenantAppearanceEditor({
       });
       setLogoPreview(result.logoUrl);
       setTenant(result.tenant);
-      setSuccess(t("platform.appearance.logoSuccess"));
+      toast.success(t("platform.appearance.logoSuccess"));
       await selectTenant(tenantId);
     } catch (uploadError) {
-      setError(
+      toast.error(
         uploadError instanceof Error
           ? uploadError.message
           : t("platform.appearance.saveFailed"),
@@ -251,17 +247,15 @@ export function TenantAppearanceEditor({
   async function handleSave(event: FormEvent) {
     event.preventDefault();
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       const appearance = buildAppearanceForSave();
       const updated = await updateAdminTenant(tenantId, { appearance });
       setTenant(updated);
       applyAppearance(updated.appearance);
-      setSuccess(t("platform.appearance.saveSuccess"));
+      toast.success(t("platform.appearance.saveSuccess"));
       await selectTenant(tenantId);
     } catch (saveError) {
-      setError(
+      toast.error(
         saveError instanceof Error
           ? saveError.message
           : t("platform.appearance.saveFailed"),
@@ -273,16 +267,14 @@ export function TenantAppearanceEditor({
 
   async function handleReset() {
     setIsSaving(true);
-    setError(null);
-    setSuccess(null);
     try {
       const updated = await updateAdminTenant(tenantId, { appearance: null });
       setTenant(updated);
       applyAppearance(undefined);
-      setSuccess(t("platform.appearance.resetSuccess"));
+      toast.success(t("platform.appearance.resetSuccess"));
       await selectTenant(tenantId);
     } catch (resetError) {
-      setError(
+      toast.error(
         resetError instanceof Error
           ? resetError.message
           : t("platform.appearance.saveFailed"),
@@ -306,9 +298,6 @@ export function TenantAppearanceEditor({
         className="grid max-w-3xl flex-1 gap-6"
         onSubmit={(event) => void handleSave(event)}
       >
-        {error ? <Alert>{error}</Alert> : null}
-        {success ? <Alert>{success}</Alert> : null}
-
         <section className="grid gap-3">
           <Text className="font-medium">{t("platform.appearance.logo")}</Text>
           <PhotoUpload
@@ -328,7 +317,7 @@ export function TenantAppearanceEditor({
               expand: t("platform.appearance.photoExpand"),
             }}
             onUpload={handleLogoUpload}
-            onError={(message) => setError(message)}
+            onError={(message) => toast.error(message)}
           />
         </section>
 

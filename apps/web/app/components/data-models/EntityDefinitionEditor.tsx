@@ -9,6 +9,7 @@ import {
   Heading,
   Input,
   Text,
+  toast,
 } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -44,7 +45,8 @@ export function EntityDefinitionEditor({
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const relationTargets = useMemo(
@@ -61,7 +63,7 @@ export function EntityDefinitionEditor({
 
     async function loadDefinition() {
       setIsLoading(true);
-      setError(null);
+      setLoadError(null);
 
       try {
         const loaded = await getEntityDefinition(definitionId);
@@ -75,7 +77,7 @@ export function EntityDefinitionEditor({
         if (cancelled) {
           return;
         }
-        setError(
+        setLoadError(
           loadError instanceof Error
             ? loadError.message
             : t("dataModels.loadFailed"),
@@ -108,11 +110,11 @@ export function EntityDefinitionEditor({
       return;
     }
 
-    setError(null);
+    setValidationError(null);
 
     const validFields = fields.filter((field) => field.name.trim());
     if (validFields.length === 0) {
-      setError(t("dataModels.validation.fieldsRequired"));
+      setValidationError(t("dataModels.validation.fieldsRequired"));
       return;
     }
 
@@ -137,9 +139,9 @@ export function EntityDefinitionEditor({
       onSaved(updated);
     } catch (submitError) {
       if (isApiClientError(submitError)) {
-        setError(submitError.message);
+        toast.error(submitError.message);
       } else {
-        setError(
+        toast.error(
           submitError instanceof Error
             ? submitError.message
             : t("dataModels.updateFailed"),
@@ -155,7 +157,7 @@ export function EntityDefinitionEditor({
   }
 
   if (!record) {
-    return error ? <Alert>{error}</Alert> : null;
+    return loadError ? <Alert>{loadError}</Alert> : null;
   }
 
   return (
@@ -164,7 +166,7 @@ export function EntityDefinitionEditor({
         {t("dataModels.editTitle", { name: record.name })}
       </Heading>
 
-      {error ? <Alert>{error}</Alert> : null}
+      {validationError ? <Alert>{validationError}</Alert> : null}
 
       <Form onSubmit={handleSubmit} className="space-y-4">
         <div>

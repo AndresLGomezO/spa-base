@@ -9,6 +9,7 @@ import {
   Heading,
   Input,
   Text,
+  toast,
 } from "@repo/ui";
 
 import {
@@ -44,7 +45,7 @@ export function EntityDefinitionWizard({
   const [fields, setFields] = useState<FieldDefinitionInput[]>([
     { ...EMPTY_FIELD },
   ]);
-  const [error, setError] = useState<string | null>(null);
+  const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   const relationTargets = useMemo(
@@ -66,11 +67,11 @@ export function EntityDefinitionWizard({
 
   async function handleNext(event: FormEvent) {
     event.preventDefault();
-    setError(null);
+    setValidationError(null);
 
     if (step === 1) {
       if (!name.trim() || !label.trim()) {
-        setError(t("dataModels.validation.basicRequired"));
+        setValidationError(t("dataModels.validation.basicRequired"));
         return;
       }
       await refresh();
@@ -81,7 +82,7 @@ export function EntityDefinitionWizard({
     if (step === 2) {
       const validFields = fields.filter((field) => field.name.trim());
       if (validFields.length === 0) {
-        setError(t("dataModels.validation.fieldsRequired"));
+        setValidationError(t("dataModels.validation.fieldsRequired"));
         return;
       }
       setStep(3);
@@ -91,7 +92,7 @@ export function EntityDefinitionWizard({
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    setError(null);
+    setValidationError(null);
     setIsSubmitting(true);
 
     try {
@@ -118,9 +119,9 @@ export function EntityDefinitionWizard({
       onCreated();
     } catch (submitError) {
       if (isApiClientError(submitError)) {
-        setError(submitError.message);
+        toast.error(submitError.message);
       } else {
-        setError(
+        toast.error(
           submitError instanceof Error
             ? submitError.message
             : t("dataModels.createFailed"),
@@ -138,7 +139,7 @@ export function EntityDefinitionWizard({
         <Text>{t("dataModels.stepIndicator", { step, total: 3 })}</Text>
       </div>
 
-      {error ? <Alert>{error}</Alert> : null}
+      {validationError ? <Alert>{validationError}</Alert> : null}
 
       {step === 1 ? (
         <Form onSubmit={handleNext} className="space-y-4">

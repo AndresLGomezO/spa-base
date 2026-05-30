@@ -14,9 +14,24 @@ In `apps/web`, all transient notifications must use the global Sonner setup from
 |----------|-----|--------|
 | Success / error / info after actions | `toast.success`, `toast.error`, etc. | `toast` from `@repo/ui` |
 | Global toast host (once) | `<Toaster />` | `@repo/ui` in `app/root.tsx` only |
-| Persistent inline messages (forms, forbidden pages) | `Alert` | `@repo/ui` |
+| Persistent inline messages | `Alert` | `@repo/ui` |
 
 Storybook reference: `Components/Toaster`.
+
+## Keep `Alert` (inline, not toast)
+
+- Permission / policy denial on a page (with heading context)
+- Resource not found (empty panel state)
+- List/query failure that replaces table content (`EntityTable`, `EntityCardView`)
+- Form validation before submit (missing fields, wizard step guards)
+- Load failure with no form to show (`EntityDefinitionEditor` when record missing)
+
+## Use `toast` (not `Alert`)
+
+- Save / create / delete / invite / upload success
+- API or action failures after user interaction (save, load in forms where inline state is not needed)
+- Login failures
+- Entity form hook errors and relation sync failures
 
 ## Do not
 
@@ -24,10 +39,11 @@ Storybook reference: `Components/Toaster`.
 - Mount a second `<Toaster />` in layouts or routes
 - Use `window.alert` / `alert()` for user feedback
 - Use `react-hot-toast`, `react-toastify`, `notistack`, or similar libraries
+- Use `Alert` with custom success styling (use `toast.success` instead)
 
-ESLint enforces this via `@repo/eslint-config/ui-toasts` (wired in `apps/web/eslint.config.js`).
+ESLint enforces imports via `@repo/eslint-config/ui-toasts` (wired in `apps/web/eslint.config.js`).
 
 ## When adding feedback
 
 1. **Transient** (save succeeded, action failed) → `toast` from `@repo/ui`
-2. **Inline / persistent** (validation banner, forbidden detail) → `Alert` from `@repo/ui`
+2. **Inline / persistent** (validation banner, forbidden detail, blocking list error) → `Alert` from `@repo/ui`

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, FieldLabel, Text } from "@repo/ui";
+import { Button, FieldLabel, Text, toast } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { listRoles, type TenantRoleRecord } from "../../lib/api-client";
@@ -34,7 +34,6 @@ export function RoleManager({
   const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const knownGrants = useMemo(() => {
     const grants = new Set<string>([
@@ -77,13 +76,12 @@ export function RoleManager({
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const result = await listRoles();
       setItems(result.items);
     } catch (loadError) {
-      setError(
+      toast.error(
         loadError instanceof Error ? loadError.message : t("roles.loadFailed"),
       );
     } finally {
@@ -132,8 +130,6 @@ export function RoleManager({
           </select>
         </div>
       ) : null}
-
-      {error ? <Alert>{error}</Alert> : null}
 
       <div className="flex items-center gap-3">
         {canCreate ? (

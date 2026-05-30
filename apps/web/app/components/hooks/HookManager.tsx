@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, FieldLabel } from "@repo/ui";
+import { FieldLabel, toast } from "@repo/ui";
 
 import { listHooks, type HookRecord } from "../../lib/api-client";
 import { HookEditor } from "./HookEditor";
@@ -32,7 +32,6 @@ export function HookManager({
   const [editingId, setEditingId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   const editingHook =
     editingId === null
@@ -47,13 +46,12 @@ export function HookManager({
     }
 
     setIsLoading(true);
-    setError(null);
 
     try {
       const result = await listHooks();
       setItems(result.items);
     } catch (loadError) {
-      setError(
+      toast.error(
         loadError instanceof Error ? loadError.message : t("hooks.loadFailed"),
       );
     } finally {
@@ -98,8 +96,6 @@ export function HookManager({
           </select>
         </div>
       ) : null}
-
-      {error ? <Alert>{error}</Alert> : null}
 
       {isCreating || editingHook ? (
         <HookEditor

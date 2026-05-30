@@ -2,7 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
-import { Alert, Button, FieldLabel, Form, Input, Text } from "@repo/ui";
+import { Button, FieldLabel, Form, Input, Text, toast } from "@repo/ui";
 
 import { useAuth } from "../../auth/AuthContext";
 import { createAdminTenant } from "../../lib/admin-client";
@@ -13,7 +13,6 @@ export function CreateTenantForm() {
   const { selectTenant } = useAuth();
   const [name, setName] = useState("");
   const [id, setId] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
 
   async function handleCreate(event: FormEvent<HTMLFormElement>) {
@@ -22,7 +21,6 @@ export function CreateTenantForm() {
     if (!trimmedName) return;
 
     setIsCreating(true);
-    setError(null);
     try {
       const tenant = await createAdminTenant({
         name: trimmedName,
@@ -34,7 +32,7 @@ export function CreateTenantForm() {
       }
       navigate("/settings/tenant", { replace: true });
     } catch (createError) {
-      setError(
+      toast.error(
         createError instanceof Error
           ? createError.message
           : t("admin.tenants.createFailed"),
@@ -47,7 +45,6 @@ export function CreateTenantForm() {
   return (
     <div className="max-w-xl space-y-4">
       <Text>{t("platform.createTenant.description")}</Text>
-      {error ? <Alert>{error}</Alert> : null}
       <Form
         className="grid gap-4"
         onSubmit={(event) => void handleCreate(event)}

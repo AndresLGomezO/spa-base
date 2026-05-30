@@ -1,7 +1,7 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, Card, Heading, Logo, Text } from "@repo/ui";
+import { Button, Card, Heading, Logo, Text, toast } from "@repo/ui";
 
 import { useAuth } from "../auth/AuthContext";
 import { LoginSettings } from "../components/LoginSettings";
@@ -39,6 +39,12 @@ export function LoginPage() {
   const activeError = error ?? authError;
   const year = new Date().getFullYear();
 
+  useEffect(() => {
+    if (activeError) {
+      toast.error(activeError);
+    }
+  }, [activeError]);
+
   async function handleGoogleLogin() {
     setSubmitting(true);
     setError(null);
@@ -60,8 +66,6 @@ export function LoginPage() {
             <Heading level={1}>{t("login.title")}</Heading>
             <Text variant="muted">{t("login.subtitle")}</Text>
           </div>
-
-          {activeError ? <Alert>{activeError}</Alert> : null}
 
           <Button
             type="button"
