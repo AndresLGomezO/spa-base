@@ -1,0 +1,33 @@
+---
+description: Use @repo/ui toast + Toaster for transient feedback; never alert() or other toast libs in apps/web
+globs: apps/web/**/*.{tsx,jsx}
+alwaysApply: false
+---
+
+# UI toast primitives
+
+In `apps/web`, all transient notifications must use the global Sonner setup from `@repo/ui`.
+
+## Approved
+
+| Use case | API | Import |
+|----------|-----|--------|
+| Success / error / info after actions | `toast.success`, `toast.error`, etc. | `toast` from `@repo/ui` |
+| Global toast host (once) | `<Toaster />` | `@repo/ui` in `app/root.tsx` only |
+| Persistent inline messages (forms, forbidden pages) | `Alert` | `@repo/ui` |
+
+Storybook reference: `Components/Toaster`.
+
+## Do not
+
+- Import `sonner` directly in `apps/web`
+- Mount a second `<Toaster />` in layouts or routes
+- Use `window.alert` / `alert()` for user feedback
+- Use `react-hot-toast`, `react-toastify`, `notistack`, or similar libraries
+
+ESLint enforces this via `@repo/eslint-config/ui-toasts` (wired in `apps/web/eslint.config.js`).
+
+## When adding feedback
+
+1. **Transient** (save succeeded, action failed) → `toast` from `@repo/ui`
+2. **Inline / persistent** (validation banner, forbidden detail) → `Alert` from `@repo/ui`

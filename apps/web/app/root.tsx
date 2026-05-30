@@ -8,7 +8,7 @@ import {
   type LinksFunction,
 } from "react-router";
 
-import { Heading, Text } from "@repo/ui";
+import { Heading, Text, Toaster } from "@repo/ui";
 import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 
 import { AuthProvider } from "./auth/AuthProvider";
@@ -71,6 +71,7 @@ export default function App() {
     <ThemeProvider>
       <AuthProvider>
         <AppShell />
+        <Toaster />
       </AuthProvider>
     </ThemeProvider>
   );

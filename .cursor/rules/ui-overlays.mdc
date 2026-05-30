@@ -25,7 +25,7 @@ Storybook reference: `Components/Modal`, `Components/PhotoUpload`.
 - Import `@radix-ui/react-dialog`, `@headlessui/react`, or similar overlay libraries
 - Build custom fixed/backdrop/dialog markup in `apps/web`
 
-ESLint enforces this via `@repo/eslint-config/ui-primitives`.
+ESLint enforces this via `@repo/eslint-config/ui-overlays` (wired in `apps/web/eslint.config.js`).
 
 ## When adding a new overlay
 
