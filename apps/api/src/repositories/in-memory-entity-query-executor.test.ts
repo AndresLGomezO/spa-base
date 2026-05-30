@@ -42,6 +42,29 @@ describe("createInMemoryEntityQueryExecutor", () => {
     });
     expect(pageTwo.items.map((item) => item.id)).toEqual(["o3"]);
     expect(pageTwo.nextCursor).toBeNull();
+    expect(pageOne.totalCount).toBe(3);
+  });
+
+  it("paginates with offset and returns totalCount", async () => {
+    const store = createInMemoryEntityQueryStore();
+    seedInMemoryEntityQueryStore(store, [
+      { id: "o1", tenantId: "tenant_a", name: "One" },
+      { id: "o2", tenantId: "tenant_a", name: "Two" },
+      { id: "o3", tenantId: "tenant_a", name: "Three" },
+    ]);
+
+    const executor = createInMemoryEntityQueryExecutor(() => store);
+
+    const page = await executor.executeQuery("tenant_a", {
+      filters: [],
+      sort: { field: "id", direction: "asc" },
+      limit: 2,
+      offset: 2,
+    });
+
+    expect(page.items.map((item) => item.id)).toEqual(["o3"]);
+    expect(page.totalCount).toBe(3);
+    expect(page.nextCursor).toBeNull();
   });
 
   it("finds records by id within tenant scope", async () => {

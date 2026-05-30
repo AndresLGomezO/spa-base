@@ -106,16 +106,23 @@ function buildUiFromRecord(
       },
     },
     fields: Object.fromEntries(
-      record.fields.map((field) => [
+      record.fields.map((field, index) => [
         field.name,
         {
-          label: field.ui?.label ?? field.name,
+          ...(field.ui?.label ? { label: field.ui.label } : {}),
           component:
             (field.ui?.component as FieldComponentType | undefined) ??
             componentForType(field.type),
           ...(field.ui?.placeholder
             ? { placeholder: field.ui.placeholder }
             : {}),
+          ...(field.ui?.displayFormat
+            ? { displayFormat: field.ui.displayFormat }
+            : {}),
+          ...(field.ui?.dateDisplayFormat
+            ? { dateDisplayFormat: field.ui.dateDisplayFormat }
+            : {}),
+          order: field.ui?.order ?? index,
         },
       ]),
     ) as EntityUIConfig["fields"],

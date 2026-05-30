@@ -1,9 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import {
-  useInfiniteQuery,
-  useMutation,
-  useQueryClient,
-} from "@tanstack/react-query";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type { QueryConfig } from "@repo/query-engine";
 
@@ -32,16 +28,16 @@ interface EntityRecord {
 
 interface UseEntityOptions {
   readonly queryConfig?: QueryConfig;
+  readonly page?: number;
 }
 
 interface UseEntityListState {
   readonly items: readonly EntityRecord[];
-  readonly nextCursor: string | null;
+  readonly totalCount: number;
+  readonly page: number;
   readonly isLoading: boolean;
-  readonly isLoadingMore: boolean;
   readonly error: string | null;
   readonly refresh: () => Promise<void>;
-  readonly loadMore: () => Promise<void>;
 }
 
 interface UseEntityMutationsState {
@@ -75,38 +71,23 @@ export function useEntity(
 ): UseEntityResult {
   useEntityDefinition(entityName);
   const queryConfig = options.queryConfig;
+  const page = options.page ?? 1;
   const queryClient = useQueryClient();
-  const listQueryKey = entityListQueryKey(entityName, queryConfig);
+  const listQueryKey = entityListQueryKey(entityName, queryConfig, page);
 
-  const listQuery = useInfiniteQuery({
+  const listQuery = useQuery({
     queryKey: listQueryKey,
-    initialPageParam: undefined as string | undefined,
-    queryFn: ({ pageParam }) =>
+    queryFn: () =>
       listEntity<EntityRecord>(entityName, {
-        limit: queryConfig?.pagination?.limit ?? 20,
-        cursor: pageParam,
         query: queryConfig,
       }),
-    getNextPageParam: (lastPage) => lastPage.nextCursor ?? undefined,
   });
 
-  const items = useMemo(
-    () => listQuery.data?.pages.flatMap((page) => page.items) ?? [],
-    [listQuery.data],
-  );
-
-  const lastPage = listQuery.data?.pages.at(-1);
-  const nextCursor = lastPage?.nextCursor ?? null;
+  const items = listQuery.data?.items ?? [];
+  const totalCount = listQuery.data?.totalCount ?? 0;
 
   const refresh = useCallback(async () => {
     await listQuery.refetch();
-  }, [listQuery]);
-
-  const loadMore = useCallback(async () => {
-    if (!listQuery.hasNextPage || listQuery.isFetchingNextPage) {
-      return;
-    }
-    await listQuery.fetchNextPage();
   }, [listQuery]);
 
   const [mutationError, setMutationError] = useState<string | null>(null);
@@ -222,14 +203,13 @@ export function useEntity(
   return useMemo(
     () => ({
       items,
-      nextCursor,
+      totalCount,
+      page,
       isLoading: listQuery.isLoading,
-      isLoadingMore: listQuery.isFetchingNextPage,
       error:
         (listQuery.error ? getErrorMessage(listQuery.error) : null) ??
         mutationError,
       refresh,
-      loadMore,
       isSubmitting,
       fieldErrors,
       create,
@@ -243,14 +223,13 @@ export function useEntity(
       getById,
       items,
       listQuery.error,
-      listQuery.isFetchingNextPage,
       listQuery.isLoading,
-      loadMore,
       mutationError,
-      nextCursor,
+      page,
       refresh,
       remove,
       isSubmitting,
+      totalCount,
       update,
     ],
   );

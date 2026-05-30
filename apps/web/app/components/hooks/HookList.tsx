@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next";
 
-import { Button, Heading, Text } from "@repo/ui";
+import { BooleanCell, Button, DataTable, Heading } from "@repo/ui";
 
 import type { HookRecord } from "../../lib/api-client";
+import { useClientPagination } from "../../hooks/useClientPagination";
+import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
 import { HookListSkeleton } from "../loading/HookListSkeleton";
 
 interface HookListProps {
@@ -23,6 +25,8 @@ export function HookList({
   onEdit,
 }: HookListProps) {
   const { t } = useTranslation("common");
+  const paginationLabels = useTablePaginationLabels();
+  const { page, pageItems, totalCount, setPage } = useClientPagination(items);
 
   if (isLoading) {
     return <HookListSkeleton />;
@@ -39,52 +43,68 @@ export function HookList({
         ) : null}
       </div>
 
-      {items.length === 0 ? (
-        <Text>{t("hooks.empty")}</Text>
-      ) : (
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[640px] border-collapse text-sm">
-            <thead>
-              <tr className="border-border border-b text-left">
-                <th className="px-3 py-2">{t("hooks.name")}</th>
-                <th className="px-3 py-2">{t("hooks.entity")}</th>
-                <th className="px-3 py-2">{t("hooks.event")}</th>
-                <th className="px-3 py-2">{t("hooks.enabled")}</th>
-                <th className="px-3 py-2">{t("hooks.actionCount")}</th>
-                {canUpdate ? (
-                  <th className="px-3 py-2">{t("entity.actions")}</th>
-                ) : null}
-              </tr>
-            </thead>
-            <tbody>
-              {items.map((item) => (
-                <tr key={item.id} className="border-border border-b">
-                  <td className="px-3 py-2">{item.name}</td>
-                  <td className="px-3 py-2 font-mono">{item.entity}</td>
-                  <td className="px-3 py-2 font-mono">{item.event}</td>
-                  <td className="px-3 py-2">
-                    {item.enabled
-                      ? t("hooks.enabledOn")
-                      : t("hooks.enabledOff")}
-                  </td>
-                  <td className="px-3 py-2">{item.config.actions.length}</td>
-                  {canUpdate ? (
-                    <td className="px-3 py-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => onEdit?.(item.id)}
-                      >
-                        {t("entity.edit")}
-                      </Button>
-                    </td>
-                  ) : null}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      )}
+      <DataTable
+        columns={[
+          {
+            id: "name",
+            header: t("hooks.name"),
+            cell: (item) => item.name,
+          },
+          {
+            id: "entity",
+            header: t("hooks.entity"),
+            cell: (item) => <span className="font-mono">{item.entity}</span>,
+          },
+          {
+            id: "event",
+            header: t("hooks.event"),
+            cell: (item) => <span className="font-mono">{item.event}</span>,
+          },
+          {
+            id: "enabled",
+            header: t("hooks.enabled"),
+            cell: (item) => (
+              <BooleanCell
+                value={item.enabled}
+                trueLabel={t("hooks.enabledOn")}
+                falseLabel={t("hooks.enabledOff")}
+              />
+            ),
+          },
+          {
+            id: "actions",
+            header: t("hooks.actionCount"),
+            cell: (item) => item.config.actions.length,
+          },
+        ]}
+        rows={pageItems}
+        getRowId={(item) => item.id}
+        page={page}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        emptyMessage={t("hooks.empty")}
+        loadingMessage={t("table.loading")}
+        scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
+        paginationLabels={paginationLabels}
+        actionsColumn={
+          canUpdate
+            ? {
+                id: "edit",
+                header: t("entity.actions"),
+                cell: (item) => (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={() => onEdit?.(item.id)}
+                  >
+                    {t("entity.edit")}
+                  </Button>
+                ),
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

@@ -1,7 +1,8 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button, Text, toast } from "@repo/ui";
+import { Button, DataTable, IconButton, Text, toast } from "@repo/ui";
+import { Pencil } from "lucide-react";
 
 import {
   createTenantUser,
@@ -12,6 +13,8 @@ import {
   type TenantUserInvite,
   type TenantUserMember,
 } from "../../lib/api-client";
+import { useClientPagination } from "../../hooks/useClientPagination";
+import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { EditMemberModal } from "./EditMemberModal";
 import { InviteUserModal } from "./InviteUserModal";
@@ -23,6 +26,23 @@ interface UserManagementProps {
   readonly canRemove: boolean;
 }
 
+type UserTableRow =
+  | {
+      readonly kind: "member";
+      readonly id: string;
+      readonly email: string;
+      readonly roles: readonly string[];
+      readonly statusLabel: string;
+      readonly member: TenantUserMember;
+    }
+  | {
+      readonly kind: "invite";
+      readonly id: string;
+      readonly email: string;
+      readonly roles: readonly string[];
+      readonly statusLabel: string;
+    };
+
 export function UserManagement({
   tenantId,
   canCreate,
@@ -30,6 +50,7 @@ export function UserManagement({
   canRemove,
 }: UserManagementProps) {
   const { t } = useTranslation("common");
+  const paginationLabels = useTablePaginationLabels();
   const [members, setMembers] = useState<readonly TenantUserMember[]>([]);
   const [invites, setInvites] = useState<readonly TenantUserInvite[]>([]);
   const [roles, setRoles] = useState<readonly string[]>([]);
@@ -65,6 +86,27 @@ export function UserManagement({
   useEffect(() => {
     void loadData();
   }, [loadData]);
+
+  const allRows = useMemo<readonly UserTableRow[]>(() => {
+    const memberRows: UserTableRow[] = members.map((member) => ({
+      kind: "member",
+      id: member.uid,
+      email: member.email ?? member.uid,
+      roles: member.roles,
+      statusLabel: t("userManagement.active"),
+      member,
+    }));
+    const inviteRows: UserTableRow[] = invites.map((invite) => ({
+      kind: "invite",
+      id: invite.id,
+      email: invite.email,
+      roles: invite.roles,
+      statusLabel: t("userManagement.pending"),
+    }));
+    return [...memberRows, ...inviteRows];
+  }, [invites, members, t]);
+
+  const { page, pageItems, totalCount, setPage } = useClientPagination(allRows);
 
   async function handleInvite(payload: {
     readonly email: string;
@@ -148,50 +190,56 @@ export function UserManagement({
         ) : null}
       </div>
 
-      <div className="overflow-x-auto rounded-lg border">
-        <table className="min-w-full text-left text-sm">
-          <thead className="border-b">
-            <tr>
-              <th className="px-4 py-3">{t("userManagement.email")}</th>
-              <th className="px-4 py-3">{t("userManagement.roles")}</th>
-              <th className="px-4 py-3">{t("userManagement.status")}</th>
-              {canUpdate ? (
-                <th className="px-4 py-3">{t("entity.actions")}</th>
-              ) : null}
-            </tr>
-          </thead>
-          <tbody>
-            {members.map((member) => (
-              <tr key={member.uid} className="border-b last:border-b-0">
-                <td className="px-4 py-3">{member.email ?? member.uid}</td>
-                <td className="px-4 py-3">{member.roles.join(", ") || "—"}</td>
-                <td className="px-4 py-3">{t("userManagement.active")}</td>
-                {canUpdate ? (
-                  <td className="px-4 py-3">
-                    <Button
+      <DataTable
+        columns={[
+          {
+            id: "email",
+            header: t("userManagement.email"),
+            cell: (row) => row.email,
+          },
+          {
+            id: "roles",
+            header: t("userManagement.roles"),
+            cell: (row) => row.roles.join(", ") || "—",
+          },
+          {
+            id: "status",
+            header: t("userManagement.status"),
+            cell: (row) => row.statusLabel,
+          },
+        ]}
+        rows={pageItems}
+        getRowId={(row) => row.id}
+        page={page}
+        totalCount={totalCount}
+        onPageChange={setPage}
+        isLoading={isLoading}
+        emptyMessage={t("userManagement.empty")}
+        loadingMessage={t("table.loading")}
+        scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
+        paginationLabels={paginationLabels}
+        actionsColumn={
+          canUpdate
+            ? {
+                id: "actions",
+                header: t("entity.actions"),
+                headerClassName: "text-center",
+                cell: (row) =>
+                  row.kind === "member" ? (
+                    <IconButton
                       type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="text-primary hover:underline h-auto px-0 py-0"
-                      onClick={() => setEditingMember(member)}
+                      label={t("entity.edit")}
+                      onClick={() => setEditingMember(row.member)}
                     >
-                      {t("entity.edit")}
-                    </Button>
-                  </td>
-                ) : null}
-              </tr>
-            ))}
-            {invites.map((invite) => (
-              <tr key={invite.id} className="border-b last:border-b-0">
-                <td className="px-4 py-3">{invite.email}</td>
-                <td className="px-4 py-3">{invite.roles.join(", ")}</td>
-                <td className="px-4 py-3">{t("userManagement.pending")}</td>
-                {canUpdate ? <td className="px-4 py-3">—</td> : null}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+                      <Pencil className="size-4" />
+                    </IconButton>
+                  ) : (
+                    "—"
+                  ),
+              }
+            : undefined
+        }
+      />
 
       <InviteUserModal
         open={inviteOpen}

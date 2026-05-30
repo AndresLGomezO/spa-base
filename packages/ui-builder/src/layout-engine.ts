@@ -1,5 +1,13 @@
-import type { FormLayout } from "@repo/entities";
+import type { FieldUIConfig, FormLayout } from "@repo/entities";
 
-export function getFormSections(layout: FormLayout) {
-  return layout.sections;
+import { sortFieldsByUiOrder } from "./sort-fields-by-order.js";
+
+export function getFormSections(
+  layout: FormLayout,
+  fieldUi?: Readonly<Record<string, FieldUIConfig>>,
+) {
+  return layout.sections.map((section) => ({
+    ...section,
+    fields: sortFieldsByUiOrder(section.fields, fieldUi),
+  }));
 }

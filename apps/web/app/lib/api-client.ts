@@ -25,6 +25,7 @@ interface ApiClientError extends Error {
 interface PaginatedResult<T> {
   readonly items: readonly T[];
   readonly nextCursor: string | null;
+  readonly totalCount: number;
 }
 
 interface RequestOptions {
@@ -247,6 +248,9 @@ export interface FieldDefinitionInput {
     readonly label?: string;
     readonly component?: string;
     readonly placeholder?: string;
+    readonly displayFormat?: "currency" | "plain";
+    readonly dateDisplayFormat?: "date" | "datetime" | "time";
+    readonly order?: number;
   };
 }
 

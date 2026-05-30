@@ -12,12 +12,11 @@ const createMock = vi.fn(async () => null);
 vi.mock("../../hooks/useEntity", () => ({
   useEntity: vi.fn(() => ({
     items: [],
-    nextCursor: null,
+    totalCount: 0,
+    page: 1,
     isLoading: false,
-    isLoadingMore: false,
     error: null,
     refresh: vi.fn(),
-    loadMore: vi.fn(),
     isSubmitting: false,
     fieldErrors: { name: "Name is required." },
     create: createMock,

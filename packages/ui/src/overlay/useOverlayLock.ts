@@ -1,4 +1,4 @@
-import { useCallback, useEffect } from "react";
+import { useCallback, useEffect, useRef } from "react";
 
 export function useOverlayLock(
   mounted: boolean,
@@ -6,14 +6,14 @@ export function useOverlayLock(
   onClose: () => void,
   focusPanel?: () => void,
 ) {
-  const handleKeyDown = useCallback(
-    (event: KeyboardEvent) => {
-      if (event.key === "Escape") {
-        onClose();
-      }
-    },
-    [onClose],
-  );
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
+
+  const handleKeyDown = useCallback((event: KeyboardEvent) => {
+    if (event.key === "Escape") {
+      onCloseRef.current();
+    }
+  }, []);
 
   useEffect(() => {
     if (!mounted) return;
@@ -31,13 +31,27 @@ export function useOverlayLock(
 
     document.addEventListener("keydown", handleKeyDown);
 
-    const focusTimer = window.setTimeout(() => {
-      focusPanel?.();
-    }, 0);
-
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      window.clearTimeout(focusTimer);
     };
-  }, [focusPanel, handleKeyDown, open]);
+  }, [handleKeyDown, open]);
+
+  const wasOpenRef = useRef(false);
+
+  useEffect(() => {
+    if (open && !wasOpenRef.current) {
+      wasOpenRef.current = true;
+      const focusTimer = window.setTimeout(() => {
+        focusPanel?.();
+      }, 0);
+
+      return () => {
+        window.clearTimeout(focusTimer);
+      };
+    }
+
+    if (!open) {
+      wasOpenRef.current = false;
+    }
+  }, [focusPanel, open]);
 }

@@ -16,6 +16,9 @@ const fieldUISchema = z
   .object({
     label: z.string().trim().min(1).optional(),
     component: fieldComponentSchema.optional(),
+    displayFormat: z.enum(["currency", "plain"]).optional(),
+    dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
+    order: z.number().int().nonnegative().optional(),
     placeholder: z.string().optional(),
     visible: z.boolean().optional(),
     editable: z.boolean().optional(),

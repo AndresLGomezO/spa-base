@@ -7,18 +7,6 @@ import { i18n } from "../../i18n";
 import { TestEntityCatalogProvider } from "../../test/test-entity-catalog-provider";
 import { EntityTable } from "./EntityTable";
 
-vi.mock("@tanstack/react-virtual", () => ({
-  useVirtualizer: ({ count }: { count: number }) => ({
-    getTotalSize: () => count * 48,
-    getVirtualItems: () =>
-      Array.from({ length: count }, (_, index) => ({
-        index,
-        start: index * 48,
-        size: 48,
-      })),
-  }),
-}));
-
 vi.mock("../../hooks/useEntityPermissions", () => ({
   useEntityPermissions: vi.fn(() => ({
     canRead: true,
@@ -39,6 +27,8 @@ function renderTable() {
         <I18nextProvider i18n={i18n}>
           <EntityTable
             entityName="widget"
+            page={1}
+            onPageChange={vi.fn()}
             entityState={{
               items: [
                 {
@@ -51,13 +41,10 @@ function renderTable() {
                   isActive: true,
                 },
               ],
+              totalCount: 1,
               isLoading: false,
               error: null,
-              nextCursor: null,
-              isLoadingMore: false,
-              loadMore: vi.fn(),
             }}
-            onQueryConfigChange={vi.fn()}
           />
         </I18nextProvider>
       </TestEntityCatalogProvider>
@@ -70,7 +57,7 @@ describe("EntityTable", () => {
     renderTable();
 
     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
-    expect(screen.queryByText("Edit")).not.toBeInTheDocument();
-    expect(screen.queryByText("Delete")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Edit")).not.toBeInTheDocument();
+    expect(screen.queryByLabelText("Delete")).not.toBeInTheDocument();
   });
 });

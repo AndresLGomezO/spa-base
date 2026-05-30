@@ -1,4 +1,10 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import { useTranslation } from "react-i18next";
 
 import { FieldLabel, Text, toast } from "@repo/ui";
@@ -37,6 +43,7 @@ export function DataModelManager({
   const [isLoading, setIsLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [modalFooter, setModalFooter] = useState<ReactNode | null>(null);
 
   const editingRecord =
     editingId === null
@@ -70,10 +77,11 @@ export function DataModelManager({
     void loadDefinitions();
   }, [loadDefinitions]);
 
-  function closeModal() {
+  const closeModal = useCallback(() => {
     setShowWizard(false);
     setEditingId(null);
-  }
+    setModalFooter(null);
+  }, []);
 
   const modalOpen = showWizard || editingId !== null;
   const modalTitle = useMemo(() => {
@@ -125,10 +133,12 @@ export function DataModelManager({
         onClose={closeModal}
         title={modalTitle}
         size="xl"
+        footer={modalFooter}
       >
         {showWizard ? (
           <EntityDefinitionWizard
             onCancel={closeModal}
+            onFooterChange={setModalFooter}
             onCreated={() => {
               closeModal();
               void loadDefinitions();
@@ -141,6 +151,7 @@ export function DataModelManager({
             tenantId={tenantId}
             canUpdate={canUpdate}
             onCancel={closeModal}
+            onFooterChange={setModalFooter}
             onSaved={() => {
               closeModal();
               void loadDefinitions();

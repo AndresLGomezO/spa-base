@@ -96,9 +96,10 @@ export function createInMemoryEntityQueryExecutor(
       );
 
       const sorted = sortRecords(filtered, query.sort);
+      const totalCount = sorted.length;
 
-      let startIndex = 0;
-      if (query.cursor) {
+      let startIndex = query.offset ?? 0;
+      if (query.offset === undefined && query.cursor) {
         const cursorIndex = sorted.findIndex(
           (record) => String(record.id) === query.cursor,
         );
@@ -108,11 +109,14 @@ export function createInMemoryEntityQueryExecutor(
       const page = sorted.slice(startIndex, startIndex + limit);
       const hasMore = startIndex + limit < sorted.length;
       const nextCursor =
-        hasMore && page.length > 0 ? String(page[page.length - 1]!.id) : null;
+        query.offset === undefined && hasMore && page.length > 0
+          ? String(page[page.length - 1]!.id)
+          : null;
 
       return {
         items: page,
         nextCursor,
+        totalCount,
       };
     },
 

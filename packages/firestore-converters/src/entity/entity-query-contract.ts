@@ -24,6 +24,7 @@ export interface NormalizedEntityQuery {
   readonly sort: NormalizedSort | null;
   readonly limit: number;
   readonly cursor?: string;
+  readonly offset?: number;
   readonly select?: readonly string[];
 }
 
@@ -34,6 +35,7 @@ export interface EntityQueryExecutor {
   ): Promise<{
     readonly items: readonly Record<string, unknown>[];
     readonly nextCursor: string | null;
+    readonly totalCount: number;
   }>;
   findById(
     id: string,

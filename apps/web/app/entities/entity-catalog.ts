@@ -4,6 +4,15 @@ export type EntityName = string;
 
 export type EntityCatalogEntry = SerializableEntityDefinition;
 
+function titleCaseFieldName(fieldName: string): string {
+  return fieldName
+    .replace(/([A-Z])/g, " $1")
+    .trim()
+    .split(/\s+/)
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
+}
+
 export function formatFieldLabel(
   fieldName: string,
   definition?: EntityCatalogEntry,
@@ -13,10 +22,7 @@ export function formatFieldLabel(
     return fieldUI.label;
   }
 
-  return fieldName
-    .replace(/([A-Z])/g, " $1")
-    .replace(/^./, (char) => char.toUpperCase())
-    .trim();
+  return titleCaseFieldName(fieldName);
 }
 
 export function getEntityLabel(definition: EntityCatalogEntry): string {

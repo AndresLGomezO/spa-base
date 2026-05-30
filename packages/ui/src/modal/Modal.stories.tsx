@@ -19,11 +19,13 @@ function ModalDemo({
   title = "Settings",
   size,
   scrollable,
+  footer,
   children,
 }: {
   readonly title?: string;
   readonly size?: "sm" | "md" | "lg" | "xl";
   readonly scrollable?: boolean;
+  readonly footer?: ReactNode;
   readonly children: ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -39,6 +41,7 @@ function ModalDemo({
         title={title}
         size={size}
         scrollable={scrollable}
+        footer={footer}
       >
         {children}
       </Modal>
@@ -61,7 +64,17 @@ export const Default: StoryObj = {
 
 export const ScrollableLarge: StoryObj = {
   render: () => (
-    <ModalDemo title="Edit record" size="lg" scrollable>
+    <ModalDemo
+      title="Edit record"
+      size="lg"
+      scrollable
+      footer={
+        <>
+          <Button variant="ghost">Cancel</Button>
+          <Button>Save</Button>
+        </>
+      }
+    >
       {Array.from({ length: 24 }, (_, index) => (
         <p key={index} className="text-muted-foreground text-sm">
           Form field block {index + 1}

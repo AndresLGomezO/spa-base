@@ -96,6 +96,9 @@ class FirestoreAdminEntityRepository<
       }
     }
 
+    const countSnapshot = await collectionRef.count().get();
+    const totalCount = countSnapshot.data().count;
+
     const snapshot = await query.get();
     const items = snapshot.docs.map((doc) =>
       this.repositoryConfig.converter.read(doc.data()),
@@ -108,6 +111,7 @@ class FirestoreAdminEntityRepository<
     return {
       items,
       nextCursor,
+      totalCount,
     };
   }
 
@@ -133,6 +137,10 @@ class FirestoreAdminEntityRepository<
       }
     }
 
+    const countQuery = collectionRef.where(params.field, "==", params.value);
+    const countSnapshot = await countQuery.count().get();
+    const totalCount = countSnapshot.data().count;
+
     const snapshot = await query.get();
     const items = snapshot.docs.map((doc) =>
       this.repositoryConfig.converter.read(doc.data()),
@@ -145,6 +153,7 @@ class FirestoreAdminEntityRepository<
     return {
       items,
       nextCursor,
+      totalCount,
     };
   }
 

@@ -15,8 +15,9 @@ export const entityCatalogQueryKey = ["entities"] as const;
 export function entityListQueryKey(
   entityName: string,
   queryConfig?: unknown,
-): readonly ["entity", string, unknown] {
-  return ["entity", entityName, queryConfig ?? null];
+  page?: number,
+): readonly ["entity", string, unknown, number | null] {
+  return ["entity", entityName, queryConfig ?? null, page ?? null];
 }
 
 export function entityRecordQueryKey(

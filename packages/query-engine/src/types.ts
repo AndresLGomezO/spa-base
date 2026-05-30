@@ -19,6 +19,7 @@ export interface QueryConfig {
   readonly pagination?: {
     readonly limit: number;
     readonly cursor?: string;
+    readonly offset?: number;
   };
   readonly select?: readonly string[];
 }
@@ -33,6 +34,7 @@ export interface QueryContext {
 export interface QueryResult {
   readonly data: readonly Record<string, unknown>[];
   readonly nextCursor?: string;
+  readonly totalCount: number;
 }
 
 export interface ListQueryInput {

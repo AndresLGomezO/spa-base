@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next";
 
-import { Heading, Text } from "@repo/ui";
+import { Heading, TableCard, Text } from "@repo/ui";
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
+
+import { FieldDefinitionTable } from "./FieldDefinitionTable";
 
 interface ModelReviewProps {
   readonly name: string;
@@ -35,31 +37,13 @@ export function ModelReview({ name, label, fields }: ModelReviewProps) {
 
       <div className="space-y-2">
         <Text className="font-medium">{t("dataModels.fieldsTitle")}</Text>
-        <ul className="space-y-2">
-          {fields.map((field) => (
-            <li
-              key={field.name}
-              className="border-border rounded-md border px-3 py-2 text-sm"
-            >
-              <span className="font-medium">{field.name}</span>
-              <span className="text-muted-foreground">
-                {" "}
-                — {t(`dataModels.fieldTypes.${field.type}`)}
-                {field.required ? ` (${t("dataModels.required")})` : ""}
-              </span>
-              {field.type === "enum" && field.enumValues?.length ? (
-                <Text className="text-muted-foreground mt-1">
-                  {field.enumValues.join(", ")}
-                </Text>
-              ) : null}
-              {field.type === "relation" && field.relation ? (
-                <Text className="text-muted-foreground mt-1">
-                  → {field.relation.target} ({field.relation.type})
-                </Text>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <TableCard>
+          <FieldDefinitionTable
+            fields={fields}
+            canEdit={false}
+            onEdit={() => undefined}
+          />
+        </TableCard>
       </div>
     </div>
   );

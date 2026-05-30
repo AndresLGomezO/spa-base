@@ -83,7 +83,7 @@ function createMemoryEntityRepository(): TenantScopedEntityRepository<TestRecord
       const items = [...store.values()].filter(
         (record) => record.tenantId === params.tenantId,
       );
-      return { items, nextCursor: null };
+      return { items, nextCursor: null, totalCount: items.length };
     },
     async findByField(
       params: FindByFieldParams,
@@ -93,7 +93,7 @@ function createMemoryEntityRepository(): TenantScopedEntityRepository<TestRecord
           record.tenantId === params.tenantId &&
           String(record[params.field]) === params.value,
       );
-      return { items, nextCursor: null };
+      return { items, nextCursor: null, totalCount: items.length };
     },
     async findById(id, tenantId) {
       return store.get(`${tenantId}:${id}`) ?? null;

@@ -11,9 +11,11 @@ import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { FormModal } from "../forms/FormModal";
 import { RequireEntityPermission } from "./RequireEntityPermission";
-import { EntityForm } from "./EntityForm";
+import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
 import { resolveViewComponent } from "./view-component-registry";
+
+const DEFAULT_PAGE_SIZE = 20;
 
 type EntityFormModalState =
   | null
@@ -31,15 +33,30 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const activeView = useMemo(() => resolveActiveView(definition), [definition]);
   const ViewComponent = resolveViewComponent(activeView.type) ?? EntityTable;
   const [searchParams, setSearchParams] = useSearchParams();
-  const [queryConfig, setQueryConfig] = useState<QueryConfig>(() => ({
-    pagination: { limit: 20 },
+  const [page, setPage] = useState(1);
+  const [baseQueryConfig, setBaseQueryConfig] = useState<QueryConfig>(() => ({
+    pagination: { limit: DEFAULT_PAGE_SIZE, offset: 0 },
   }));
-  const entityState = useEntity(entityName, { queryConfig });
+
+  const queryConfig = useMemo<QueryConfig>(
+    () => ({
+      ...baseQueryConfig,
+      pagination: {
+        limit: DEFAULT_PAGE_SIZE,
+        offset: (page - 1) * DEFAULT_PAGE_SIZE,
+      },
+    }),
+    [baseQueryConfig, page],
+  );
+
+  const entityState = useEntity(entityName, { queryConfig, page });
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
+  const [isFormSubmitting, setIsFormSubmitting] = useState(false);
 
   const closeFormModal = useCallback(() => {
     setFormModal(null);
+    setIsFormSubmitting(false);
     if (searchParams.has("create") || searchParams.has("edit")) {
       const next = new URLSearchParams(searchParams);
       next.delete("create");
@@ -60,7 +77,12 @@ export function EntityPage({ entityName }: EntityPageProps) {
   }, [permissions.canCreate, permissions.canUpdate, searchParams]);
 
   const handleQueryConfigChange = useCallback((nextConfig: QueryConfig) => {
-    setQueryConfig(nextConfig);
+    setBaseQueryConfig(nextConfig);
+    setPage(1);
+  }, []);
+
+  const handlePageChange = useCallback((nextPage: number) => {
+    setPage(nextPage);
   }, []);
 
   const handleDelete = async () => {
@@ -83,6 +105,8 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const listViewProps = {
     entityName,
     entityState,
+    page,
+    onPageChange: handlePageChange,
     onQueryConfigChange: handleQueryConfigChange,
     onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
     onRequestEdit: permissions.canUpdate
@@ -91,7 +115,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
   };
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex w-full min-h-0 flex-col gap-6">
       <div className="flex items-center justify-between gap-4">
         <Heading level={1}>{getEntityLabel(definition)}</Heading>
         {permissions.canCreate ? (
@@ -112,12 +136,28 @@ export function EntityPage({ entityName }: EntityPageProps) {
           onClose={closeFormModal}
           title={formModalTitle}
           size="lg"
+          footer={
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={closeFormModal}>
+                {t("entity.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                form={ENTITY_FORM_ID}
+                loading={isFormSubmitting}
+              >
+                {t("entity.save")}
+              </Button>
+            </div>
+          }
         >
           {formModal.mode === "create" ? (
             <RequireEntityPermission entityName={entityName} action="create">
               <EntityForm
                 entityName={entityName}
                 mode="create"
+                hideActions
+                onSubmittingChange={setIsFormSubmitting}
                 onCancel={closeFormModal}
                 onSuccess={closeFormModal}
               />
@@ -129,6 +169,8 @@ export function EntityPage({ entityName }: EntityPageProps) {
                 entityName={entityName}
                 mode="edit"
                 recordId={formModal.recordId}
+                hideActions
+                onSubmittingChange={setIsFormSubmitting}
                 onCancel={closeFormModal}
                 onSuccess={closeFormModal}
               />

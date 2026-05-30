@@ -90,4 +90,45 @@ describe("EntityDefinitionEditor", () => {
     expect(mockRefresh).toHaveBeenCalled();
     expect(onSaved).toHaveBeenCalled();
   });
+
+  it("keeps label edits when footer updates via onFooterChange", async () => {
+    mockGetEntityDefinition.mockResolvedValue({
+      id: "def_1",
+      tenantId: "tenant_a",
+      name: "loan",
+      label: "Loans",
+      fields: [{ name: "amount", type: "number", required: true }],
+      version: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+
+    const onFooterChange = vi.fn();
+    render(
+      <EntityDefinitionEditor
+        definitionId="def_1"
+        tenantId="tenant_a"
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+        onFooterChange={onFooterChange}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("dataModels.modelLabel"),
+      ).toBeInTheDocument();
+    });
+
+    const initialFooterCalls = onFooterChange.mock.calls.length;
+
+    fireEvent.change(screen.getByLabelText("dataModels.modelLabel"), {
+      target: { value: "Updated Label" },
+    });
+
+    expect(screen.getByLabelText("dataModels.modelLabel")).toHaveValue(
+      "Updated Label",
+    );
+    expect(onFooterChange.mock.calls.length).toBe(initialFooterCalls);
+  });
 });

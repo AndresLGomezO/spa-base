@@ -72,6 +72,32 @@ describe("validateEntityUIConfig", () => {
       }),
     ).toThrow(/unknown field "unknown"/);
   });
+
+  it("accepts display and date display format metadata", () => {
+    expect(() =>
+      validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
+        ...Widget.metadata.ui!,
+        fields: {
+          email: {
+            displayFormat: "currency",
+            dateDisplayFormat: "datetime",
+          },
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it("accepts field order metadata", () => {
+    expect(() =>
+      validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
+        ...Widget.metadata.ui!,
+        fields: {
+          name: { order: 0 },
+          email: { order: 1 },
+        },
+      }),
+    ).not.toThrow();
+  });
 });
 
 describe("getDefaultEntityUI", () => {
