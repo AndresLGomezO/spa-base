@@ -69,17 +69,17 @@
   --color-white: #ffffff;
   --color-black: #0e0e11;
 
-  /* Semantic aliases */
-  --color-background: var(--color-neutral-50);
-  --color-foreground: var(--color-neutral-950);
-  --color-muted: var(--color-neutral-500);
-  --color-border: var(--color-neutral-200);
-  --color-destructive: var(--color-danger-600);
-
   /* Sidebar */
   --color-sidebar: var(--color-neutral-100);
   --color-sidebar-foreground: var(--color-neutral-950);
   --color-sidebar-border: var(--color-border);
+  /* "highlight" avoids clashing with Tailwind's hover: variant (hover:bg-sidebar-hover). */
+  --color-sidebar-highlight: color-mix(
+    in oklch,
+    var(--color-sidebar-accent) 30%,
+    var(--color-sidebar)
+  );
+  --color-sidebar-hover: var(--color-sidebar-highlight);
   --color-sidebar-accent: var(--color-primary-50);
   --color-sidebar-accent-foreground: var(--color-primary-900);
   --sidebar-width: 16rem;

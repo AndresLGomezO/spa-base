@@ -126,7 +126,7 @@ export function SidebarRail({
       className={cn(
         "absolute inset-y-0 -right-1.5 z-20 hidden w-3 cursor-col-resize sm:block",
         "before:bg-sidebar-border before:absolute before:inset-y-0 before:left-1/2 before:w-px before:-translate-x-1/2 before:transition-colors",
-        "hover:before:bg-neutral-400 dark:hover:before:bg-neutral-500",
+        "hover:before:bg-text-tertiary",
         className,
       )}
       {...props}
@@ -225,7 +225,7 @@ export function SidebarCollapseButton({
       aria-label={label}
       onClick={toggleSidebar}
       className={cn(
-        "text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground hidden size-8 shrink-0 items-center justify-center rounded-md transition-colors sm:flex",
+        "text-sidebar-foreground hover:bg-sidebar-highlight hover:text-sidebar-foreground hidden size-8 shrink-0 items-center justify-center rounded-md transition-colors sm:flex",
         className,
       )}
       {...props}
@@ -264,7 +264,7 @@ export function SidebarTrigger({
       aria-label={label}
       onClick={() => setMobileOpen(true)}
       className={cn(
-        "text-foreground hover:bg-neutral-100 dark:hover:bg-neutral-800 inline-flex size-9 items-center justify-center rounded-md border border-border transition-colors md:hidden",
+        "text-foreground hover:bg-hover inline-flex size-9 items-center justify-center rounded-md border border-border transition-colors md:hidden",
         className,
       )}
       {...props}

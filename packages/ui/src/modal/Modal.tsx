@@ -53,7 +53,7 @@ export function Modal({
         aria-modal="true"
         aria-labelledby={titleId}
         className={cn(
-          "border-border bg-background pointer-events-auto relative w-full rounded-xl border p-5 shadow-xl",
+          "border-border bg-popover text-popover-foreground pointer-events-auto relative w-full rounded-xl border p-5 shadow-xl",
           panelSizeClasses[size],
         )}
         onClick={(event) => event.stopPropagation()}

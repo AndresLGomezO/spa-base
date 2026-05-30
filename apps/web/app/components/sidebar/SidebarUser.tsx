@@ -109,10 +109,12 @@ export function SidebarUser() {
             fallback={initials}
             size="md"
           />
-          <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]/sidebar:hidden">
+          <div className="text-sidebar-foreground grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]/sidebar:hidden">
             <span className="truncate font-medium">{displayName}</span>
-            <span className="text-muted truncate text-xs">{displayEmail}</span>
-            <span className="text-muted truncate text-xs capitalize">
+            <span className="text-muted-foreground truncate text-xs">
+              {displayEmail}
+            </span>
+            <span className="text-muted-foreground truncate text-xs capitalize">
               {roleLabel}
             </span>
           </div>

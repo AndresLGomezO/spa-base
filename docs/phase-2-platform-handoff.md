@@ -428,6 +428,7 @@ Full index: [docs/README.md](./README.md).
 | [e2e-validation-runbook.md](./e2e-validation-runbook.md) | Manual validation steps |
 | [next-phase-backlog.md](./next-phase-backlog.md) | Prioritized deferred work |
 | [codebase-map.md](./codebase-map.md) | Annotated file index |
+| [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md) | Palette → semantic tokens, Appearance editor, `@repo/theme` |
 | Capability guides (10.0–10.8) | Deep dives per feature area |
 
 ---

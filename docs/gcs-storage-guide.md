@@ -2,7 +2,7 @@
 
 Tenant logo uploads (Platform → Appearance) use **Firebase Admin Storage**, backed by Google Cloud Storage in production and the **Firebase Storage emulator** locally.
 
-**Related:** [admin-dashboard-guide.md](./admin-dashboard-guide.md), [firestore-collections-guide.md](./firestore-collections-guide.md)
+**Related:** [admin-dashboard-guide.md](./admin-dashboard-guide.md), [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md), [firestore-collections-guide.md](./firestore-collections-guide.md)
 
 ---
 
@@ -54,6 +54,8 @@ Copy from [`apps/api/.env.dev.example`](../apps/api/.env.dev.example) or rely on
 3. Upload a logo image
 4. Confirm sidebar shows the logo
 5. Emulator UI (`http://127.0.0.1:4000`) → Storage tab shows `tenants/{tenantId}/images/{objectId}.*`
+
+For palette presets, semantic overrides, and CSS variable application, see [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md).
 
 ---
 

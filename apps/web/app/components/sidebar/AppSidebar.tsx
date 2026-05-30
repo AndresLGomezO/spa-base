@@ -31,7 +31,7 @@ function SidebarBrand() {
     <Link
       to="/"
       className={cn(
-        "hover:bg-sidebar-accent flex w-full min-w-0 items-center gap-2 rounded-md p-2 transition-colors",
+        "hover:bg-sidebar-highlight hover:text-sidebar-foreground flex w-full min-w-0 items-center gap-2 rounded-md p-2 transition-colors",
         "group-data-[collapsible=icon]/sidebar:justify-center group-data-[collapsible=icon]/sidebar:gap-0 group-data-[collapsible=icon]/sidebar:px-1.5",
       )}
     >

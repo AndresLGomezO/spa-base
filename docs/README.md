@@ -41,6 +41,7 @@ After validation ([e2e-validation-runbook.md](./e2e-validation-runbook.md)), pla
 | [entity-system-guide.md](./entity-system-guide.md) | `defineEntity()`, static vs dynamic entities, package dependencies |
 | [firestore-collections-guide.md](./firestore-collections-guide.md) | Firestore paths, converters, adding collections |
 | [gcs-storage-guide.md](./gcs-storage-guide.md) | GCS / Firebase Storage (logo uploads, emulator, production) |
+| [theme-and-tenant-branding-guide.md](./theme-and-tenant-branding-guide.md) | Palette → semantic → component tokens, presets, Appearance editor, `@repo/theme` |
 
 ---
 
@@ -87,5 +88,6 @@ After validation ([e2e-validation-runbook.md](./e2e-validation-runbook.md)), pla
 | [../packages/hooks/README.md](../packages/hooks/README.md) | Lifecycle hook engine |
 | [../packages/rbac/README.md](../packages/rbac/README.md) | Permission-based RBAC |
 | [../packages/gcp-firebase/README.md](../packages/gcp-firebase/README.md) | Firebase Admin adapters |
+| [../packages/theme/README.md](../packages/theme/README.md) | Design tokens, semantics, tenant branding API |
 | [../packages/firestore-converters/src/entity/README.md](../packages/firestore-converters/src/entity/README.md) | Repository port contract |
 | [../packages/shared-types/src/entities/README.md](../packages/shared-types/src/entities/README.md) | Adding static entities |

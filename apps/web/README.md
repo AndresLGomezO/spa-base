@@ -104,6 +104,25 @@ pnpm i18n:validate -- --strict
 
 ---
 
+## Theming and tenant branding
+
+Tenant colors and typography are applied at runtime from Firestore `appearance` via [`TenantBrandingProvider`](app/theme/TenantBrandingProvider.tsx).
+
+| Topic                                | Location                                                                                              |
+| ------------------------------------ | ----------------------------------------------------------------------------------------------------- |
+| Full guide (palette → semantic → UI) | [docs/theme-and-tenant-branding-guide.md](../../docs/theme-and-tenant-branding-guide.md)              |
+| Theme package API                    | [packages/theme/README.md](../../packages/theme/README.md)                                            |
+| Appearance editor                    | `/settings/appearance` — [TenantAppearanceEditor](app/components/platform/TenantAppearanceEditor.tsx) |
+| Light / dark mode                    | `ThemeProvider` in [app/root.tsx](app/root.tsx), toggle in sidebar                                    |
+
+**Rules for app code:**
+
+- Import theme CSS in [app/app.css](app/app.css) (`tokens.css` → `semantics.css` → `dark.css`).
+- Use semantic Tailwind classes (`bg-primary`, `text-muted-foreground`, `bg-card`) — not raw scale steps like `bg-primary-600`.
+- Do not hardcode tenant-specific hex in components; use the Appearance editor or `appearance.semantics`.
+
+---
+
 ## UI components
 
 Use `@repo/ui` primitives. ESLint enforces via `@repo/eslint-config/ui-primitives`, `ui-overlays`, and `ui-toasts` (see `apps/web/eslint.config.js`).
@@ -146,5 +165,6 @@ pnpm --filter web typecheck
 ## Related docs
 
 - [apps/api/README.md](../api/README.md)
+- [docs/theme-and-tenant-branding-guide.md](../../docs/theme-and-tenant-branding-guide.md)
 - [docs/e2e-validation-runbook.md](../../docs/e2e-validation-runbook.md)
 - [docs/codebase-map.md](../../docs/codebase-map.md)

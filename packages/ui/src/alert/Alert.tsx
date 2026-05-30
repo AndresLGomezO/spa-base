@@ -11,7 +11,7 @@ export function Alert({ className, children, ...props }: AlertProps) {
     <div
       role="alert"
       className={cn(
-        "border-danger-200 bg-danger-50 text-danger-700 dark:border-danger-800 dark:bg-danger-950/40 dark:text-danger-300 w-full rounded-md border px-3 py-2 text-sm",
+        "border-destructive/25 bg-destructive/10 text-destructive w-full rounded-md border px-3 py-2 text-sm",
         className,
       )}
       {...props}

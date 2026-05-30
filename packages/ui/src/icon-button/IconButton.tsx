@@ -21,7 +21,7 @@ export function IconButton({
       type={type}
       aria-label={label}
       className={cn(
-        "text-muted-foreground hover:text-foreground inline-flex items-center justify-center rounded-full transition-all duration-200 hover:scale-105 hover:bg-neutral-100/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary-500/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60 dark:hover:bg-neutral-800/80",
+        "text-muted-foreground hover:text-foreground inline-flex items-center justify-center rounded-full transition-all duration-200 hover:scale-105 hover:bg-hover/80 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60",
         size === "sm" ? "size-9" : "size-11",
         className,
       )}

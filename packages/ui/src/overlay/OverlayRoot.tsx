@@ -33,7 +33,7 @@ export function OverlayRoot({
       <button
         type="button"
         aria-label={closeLabel}
-        className="fixed inset-0 z-50 bg-neutral-950/50 transition-opacity"
+        className="fixed inset-0 z-50 bg-backdrop transition-opacity"
         onClick={onClose}
       />
       <div

@@ -37,11 +37,14 @@ export {
 } from "./tenant/tenant.js";
 export {
   COLOR_SCALE_STEPS,
+  APPEARANCE_PRESETS,
+  appearancePresetSchema,
   colorPaletteSchema,
   colorScaleStepSchema,
   tenantAppearanceSchema,
   tenantColorPalettesSchema,
   tenantFontSizesSchema,
+  type AppearancePreset,
   type ColorPaletteConfig,
   type ColorScaleStep,
   type TenantAppearance,

@@ -1,7 +1,16 @@
 import { render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { ThemeProvider } from "@repo/theme/react";
 
 import { TenantAppearanceEditor } from "./TenantAppearanceEditor";
+
+function renderEditor() {
+  return render(
+    <ThemeProvider defaultColorScheme="light">
+      <TenantAppearanceEditor tenantId="tenant_a" />
+    </ThemeProvider>,
+  );
+}
 
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
@@ -68,12 +77,28 @@ describe("TenantAppearanceEditor", () => {
   });
 
   it("renders PhotoUpload with logo labels after tenant loads", async () => {
-    render(<TenantAppearanceEditor tenantId="tenant_a" />);
+    renderEditor();
 
     await waitFor(() => {
       expect(
         screen.getByRole("button", { name: "platform.appearance.photoSelect" }),
       ).toBeInTheDocument();
     });
+  });
+
+  it("renders theme preset and semantic token fields", async () => {
+    renderEditor();
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("platform.appearance.preset"),
+      ).toBeInTheDocument();
+    });
+
+    expect(
+      screen.getByText("platform.appearance.semantics"),
+    ).toBeInTheDocument();
+    expect(document.getElementById("--color-primary-hex")).toBeInTheDocument();
+    expect(document.getElementById("--color-card-hex")).toBeInTheDocument();
   });
 });

@@ -1,6 +1,11 @@
 import { describe, expect, it } from "vitest";
 
-import { clamp, computeLayout, validateFile } from "./photo-upload.utils";
+import {
+  clamp,
+  computeLayout,
+  outputFormatForSourceFile,
+  validateFile,
+} from "./photo-upload.utils";
 
 describe("photo-upload.utils", () => {
   it("validateFile rejects unsupported mime types", () => {
@@ -26,6 +31,36 @@ describe("photo-upload.utils", () => {
     expect(layout.displayH).toBe(320);
     expect(layout.x).toBe(-160);
     expect(layout.y).toBe(0);
+  });
+
+  it("outputFormatForSourceFile preserves alpha-capable formats", () => {
+    expect(
+      outputFormatForSourceFile(
+        new File(["x"], "logo.png", { type: "image/png" }),
+      ),
+    ).toEqual({
+      mime: "image/png",
+      extension: "png",
+      supportsAlpha: true,
+    });
+    expect(
+      outputFormatForSourceFile(
+        new File(["x"], "logo.webp", { type: "image/webp" }),
+      ),
+    ).toEqual({
+      mime: "image/webp",
+      extension: "webp",
+      supportsAlpha: true,
+    });
+    expect(
+      outputFormatForSourceFile(
+        new File(["x"], "photo.jpg", { type: "image/jpeg" }),
+      ),
+    ).toEqual({
+      mime: "image/jpeg",
+      extension: "jpg",
+      supportsAlpha: false,
+    });
   });
 
   it("clamp keeps image edges inside crop bounds", () => {

@@ -41,6 +41,21 @@ export function clamp(
   };
 }
 
+export function outputFormatForSourceFile(file: File): {
+  readonly mime: string;
+  readonly extension: string;
+  readonly supportsAlpha: boolean;
+} {
+  switch (file.type) {
+    case "image/png":
+      return { mime: "image/png", extension: "png", supportsAlpha: true };
+    case "image/webp":
+      return { mime: "image/webp", extension: "webp", supportsAlpha: true };
+    default:
+      return { mime: "image/jpeg", extension: "jpg", supportsAlpha: false };
+  }
+}
+
 export function cropImageToBlob(params: {
   readonly img: HTMLImageElement;
   readonly file: File;
@@ -62,6 +77,11 @@ export function cropImageToBlob(params: {
     return Promise.reject(new Error("Failed to initialize canvas."));
   }
 
+  const output = outputFormatForSourceFile(file);
+  if (output.supportsAlpha) {
+    ctx.clearRect(0, 0, outputSize, outputSize);
+  }
+
   ctx.drawImage(img, sx, sy, size, size, 0, 0, outputSize, outputSize);
 
   return new Promise((resolve, reject) => {
@@ -72,10 +92,14 @@ export function cropImageToBlob(params: {
           return;
         }
         const baseName = file.name.replace(/\.[^.]+$/, "") || "photo";
-        resolve(new File([blob], `${baseName}.jpg`, { type: "image/jpeg" }));
+        resolve(
+          new File([blob], `${baseName}.${output.extension}`, {
+            type: output.mime,
+          }),
+        );
       },
-      "image/jpeg",
-      JPEG_QUALITY,
+      output.mime,
+      output.mime === "image/jpeg" ? JPEG_QUALITY : undefined,
     );
   });
 }

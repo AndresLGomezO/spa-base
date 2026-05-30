@@ -14,6 +14,7 @@
   "exports": {
     "./fonts.css": "./src/fonts.css",
     "./tokens.css": "./src/tokens.css",
+    "./semantics.css": "./src/semantics.css",
     "./dark.css": "./src/dark.css",
     "./base.css": "./src/base.css",
     "./index.css": "./src/index.css",

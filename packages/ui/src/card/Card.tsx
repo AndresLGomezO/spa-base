@@ -20,7 +20,7 @@ export function Card({
       className={cn(
         "relative overflow-hidden rounded-2xl border p-8",
         variant === "glass" &&
-          "before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary-500/5 before:to-transparent",
+          "before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent",
         cardVariants[variant],
         className,
       )}
