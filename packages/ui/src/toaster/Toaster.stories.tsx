@@ -19,7 +19,7 @@ type Story = StoryObj<typeof meta>;
 
 export const Variants: Story = {
   render: () => (
-    <div className="flex flex-wrap gap-2">
+    <div className="flex w-[492px] flex-wrap gap-2">
       <Button type="button" onClick={() => toast.success("Saved successfully")}>
         Success
       </Button>
