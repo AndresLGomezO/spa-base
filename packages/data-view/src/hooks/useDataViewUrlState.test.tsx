@@ -3,7 +3,7 @@ import { renderHook, act } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
 import type { ReactNode } from "react";
 
-import type { DataViewColumnDescriptor } from "../components/data-view/types";
+import type { DataViewColumnDescriptor } from "../types";
 import { useDataViewUrlState } from "./useDataViewUrlState";
 
 interface SampleRow {

@@ -104,4 +104,35 @@ describe("FieldEditorModal", () => {
       "amountDue",
     );
   });
+
+  it("saves relation fields with auto-generated names", () => {
+    const onSave = vi.fn();
+
+    render(
+      <FieldEditorModal
+        open
+        mode="add"
+        field={{ name: "", type: "string", required: true, ui: { order: 0 } }}
+        orderDefault={0}
+        relationTargets={[{ name: "loan", label: "Loans" }]}
+        canRemove={false}
+        onSave={onSave}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("dataModels.fieldTypes.relation"));
+    fireEvent.change(screen.getByLabelText("dataModels.relationTarget"), {
+      target: { value: "loan" },
+    });
+    fireEvent.click(screen.getByText("entity.save"));
+
+    expect(onSave).toHaveBeenCalledWith(
+      expect.objectContaining({
+        name: "loanId",
+        type: "relation",
+        relation: { target: "loan", type: "many-to-one" },
+      }),
+    );
+  });
 });

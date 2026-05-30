@@ -12,10 +12,13 @@ import {
 import { Pencil } from "lucide-react";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
-import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
+import { useDataViewWithPagination } from "@repo/data-view";
 import { listRoles, type TenantRoleRecord } from "../../lib/api-client";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
-import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
+import {
+  WebDataViewToolbar,
+  type DataViewColumnDescriptor,
+} from "../data-view";
 import { FormModal } from "../forms/FormModal";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { RoleEditor } from "./RoleEditor";
@@ -195,7 +198,7 @@ export function RoleManager({
         <Text>{t("roles.selectRole")}</Text>
       ) : (
         <>
-          <DataViewToolbar
+          <WebDataViewToolbar
             {...dataView}
             columns={columns}
             filtersOpen={dataView.filtersOpen}

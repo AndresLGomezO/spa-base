@@ -6,7 +6,7 @@ import { Button, Text } from "@repo/ui";
 import type { FieldDefinitionInput } from "../../lib/api-client";
 import { FormModal } from "../forms/FormModal";
 
-import { createEmptyField } from "./field-types";
+import { createEmptyField, resolveFieldDefinitionName } from "./field-types";
 import { FieldEditorForm } from "./FieldEditorForm";
 import { FieldTypePicker } from "./FieldTypePicker";
 
@@ -64,12 +64,13 @@ export function FieldEditorModal({
   }
 
   function handleSave() {
-    if (!draft.name.trim()) {
+    const resolvedName = resolveFieldDefinitionName(draft);
+    if (!resolvedName) {
       return;
     }
     onSave({
       ...draft,
-      name: draft.name.trim(),
+      name: resolvedName,
       ...(draft.type === "enum"
         ? {
             enumValues: (draft.enumValues ?? [])
@@ -113,7 +114,7 @@ export function FieldEditorModal({
         <Button
           type="button"
           onClick={handleSave}
-          disabled={!draft.name.trim()}
+          disabled={!resolveFieldDefinitionName(draft)}
         >
           {t("entity.save")}
         </Button>

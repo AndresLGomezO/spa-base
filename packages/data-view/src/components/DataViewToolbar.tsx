@@ -1,13 +1,10 @@
-import { useTranslation } from "react-i18next";
+import { FilterPanel, SearchField, SortControls } from "@repo/ui";
 
-import type { UseDataViewControlsResult } from "../../hooks/useDataViewControls";
+import type { UseDataViewControlsResult } from "../hooks/useDataViewControls";
+import type { DataViewColumnDescriptor, DataViewToolbarLabels } from "../types";
 import { DynamicFilterFields } from "./DynamicFilterFields";
-import { FilterPanel } from "./FilterPanel";
-import { SearchField } from "./SearchField";
-import { SortControls } from "./SortControls";
-import type { DataViewColumnDescriptor } from "./types";
 
-interface DataViewToolbarProps<T> extends Pick<
+export interface DataViewToolbarProps<T> extends Pick<
   UseDataViewControlsResult<T>,
   | "search"
   | "setSearch"
@@ -21,6 +18,7 @@ interface DataViewToolbarProps<T> extends Pick<
   | "clearAll"
 > {
   readonly columns: readonly DataViewColumnDescriptor<T>[];
+  readonly labels: DataViewToolbarLabels;
   readonly filtersOpen: boolean;
   readonly onFiltersOpenChange: (open: boolean) => void;
   readonly warningMessage?: string;
@@ -38,19 +36,22 @@ export function DataViewToolbar<T>({
   activeBadges,
   clearAll,
   columns,
+  labels,
   filtersOpen,
   onFiltersOpenChange,
   warningMessage,
 }: DataViewToolbarProps<T>) {
-  const { t } = useTranslation("common");
+  const sortableColumns = columns
+    .filter((column) => column.sortable !== false)
+    .map((column) => ({ id: column.id, label: column.label }));
 
   return (
     <div className="flex flex-col gap-4">
       <SearchField
         value={search}
         onChange={setSearch}
-        placeholder={t("dataView.searchPlaceholder")}
-        ariaLabel={t("dataView.searchPlaceholder")}
+        placeholder={labels.searchPlaceholder}
+        ariaLabel={labels.searchPlaceholder}
       />
 
       {warningMessage ? (
@@ -61,15 +62,19 @@ export function DataViewToolbar<T>({
         open={filtersOpen}
         onOpenChange={onFiltersOpenChange}
         activeBadges={activeBadges}
-        triggerLabel={t("dataView.filtersTrigger")}
-        clearAllLabel={t("dataView.filtersClearAll")}
-        removeAriaLabel={(label) => t("dataView.removeBadge", { label })}
+        triggerLabel={labels.filtersTrigger}
+        clearAllLabel={labels.filtersClearAll}
+        removeAriaLabel={labels.removeBadge}
         onClearAll={clearAll}
         badgesBelowToolbar
         sibling={
           <SortControls
-            columns={columns}
+            options={sortableColumns}
             sort={sort}
+            sortByLabel={labels.sortBy}
+            sortDefaultLabel={labels.sortDefault}
+            sortAscendingLabel={labels.sortAscending}
+            sortDescendingLabel={labels.sortDescending}
             onColumnChange={setSortColumn}
             onDirectionToggle={toggleSortDirection}
           />
@@ -80,6 +85,7 @@ export function DataViewToolbar<T>({
           filterOptions={filterOptions}
           filters={filters}
           onFilterChange={setFilter}
+          labels={labels}
         />
       </FilterPanel>
     </div>

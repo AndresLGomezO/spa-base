@@ -1,13 +1,13 @@
 import { useCallback, useMemo, useState } from "react";
 
+import { deriveDataViewFilterOptions } from "../lib/derive-data-view-filter-options";
+import { matchesDataViewSearch } from "../lib/matches-data-view-search";
 import type {
   DataViewColumnDescriptor,
   DataViewFilterBadge,
   DataViewSortDirection,
   DataViewSortState,
-} from "../components/data-view/types";
-import { deriveDataViewFilterOptions } from "../lib/derive-data-view-filter-options";
-import { matchesDataViewSearch } from "../lib/matches-data-view-search";
+} from "../types";
 
 function formatColumnValue<T>(
   column: DataViewColumnDescriptor<T>,

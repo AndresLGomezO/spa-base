@@ -191,9 +191,9 @@ export function Popover({
     : trigger;
 
   const resolvedPanelClassName = cn(
-    "border-border bg-popover/95 text-popover-foreground z-50 w-56 rounded-xl border p-4 shadow-lg ring-1 ring-focus/10 backdrop-blur-md transition-all duration-200 ease-out",
+    "border-border bg-popover/95 text-popover-foreground w-56 rounded-xl border p-4 shadow-lg ring-1 ring-focus/10 backdrop-blur-md transition-all duration-200 ease-out",
+    useSidePortal ? "fixed z-[70]" : "absolute z-50",
     panelClassName,
-    useSidePortal ? "fixed" : "absolute",
     !useSidePortal && placementClasses[placement],
     visible
       ? "pointer-events-auto translate-x-0 translate-y-0 scale-100 opacity-100"

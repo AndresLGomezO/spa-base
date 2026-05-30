@@ -1,7 +1,7 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
 
 import { formatFieldLabel } from "../../entities/entity-catalog";
-import type { DataViewColumnDescriptor } from "../data-view/types";
+import type { DataViewColumnDescriptor } from "@repo/data-view";
 import {
   getEntityCellRawValue,
   resolveEntityCellValue,

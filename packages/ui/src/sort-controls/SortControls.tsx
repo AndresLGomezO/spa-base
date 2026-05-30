@@ -1,30 +1,43 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useCallback } from "react";
-import { useTranslation } from "react-i18next";
 
-import { IconButton } from "@repo/ui";
+import { IconButton } from "../icon-button/IconButton";
 
-import type { DataViewColumnDescriptor, DataViewSortState } from "./types";
+export interface SortControlsOption {
+  readonly id: string;
+  readonly label: string;
+}
 
-interface SortControlsProps<T> {
-  readonly columns: readonly DataViewColumnDescriptor<T>[];
-  readonly sort: DataViewSortState;
+export type SortControlsDirection = "asc" | "desc";
+
+export interface SortControlsSortState {
+  readonly columnId: string | null;
+  readonly direction: SortControlsDirection;
+}
+
+export interface SortControlsProps {
+  readonly options: readonly SortControlsOption[];
+  readonly sort: SortControlsSortState;
+  readonly sortByLabel: string;
+  readonly sortDefaultLabel: string;
+  readonly sortAscendingLabel: string;
+  readonly sortDescendingLabel: string;
   readonly onColumnChange: (columnId: string | null) => void;
   readonly onDirectionToggle: () => void;
   readonly disabled?: boolean;
 }
 
-export function SortControls<T>({
-  columns,
+export function SortControls({
+  options,
   sort,
+  sortByLabel,
+  sortDefaultLabel,
+  sortAscendingLabel,
+  sortDescendingLabel,
   onColumnChange,
   onDirectionToggle,
   disabled = false,
-}: SortControlsProps<T>) {
-  const { t } = useTranslation("common");
-
-  const sortableColumns = columns.filter((column) => column.sortable !== false);
-
+}: SortControlsProps) {
   const handleSelectChange = useCallback(
     (event: React.ChangeEvent<HTMLSelectElement>) => {
       const value = event.target.value;
@@ -34,9 +47,7 @@ export function SortControls<T>({
   );
 
   const directionLabel =
-    sort.direction === "asc"
-      ? t("dataView.sortAscending")
-      : t("dataView.sortDescending");
+    sort.direction === "asc" ? sortAscendingLabel : sortDescendingLabel;
 
   return (
     <div
@@ -44,21 +55,21 @@ export function SortControls<T>({
       data-testid="data-view-sort-controls"
     >
       <span className="text-sm font-medium whitespace-nowrap">
-        {t("dataView.sortBy")}:
+        {sortByLabel}:
       </span>
 
       <select
         value={sort.columnId ?? ""}
         onChange={handleSelectChange}
-        disabled={disabled || sortableColumns.length === 0}
+        disabled={disabled || options.length === 0}
         className="border-input bg-transparent focus:ring-ring h-9 min-w-[140px] rounded-xl border px-3 py-1.5 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none"
-        aria-label={t("dataView.sortBy")}
+        aria-label={sortByLabel}
         data-testid="data-view-sort-select"
       >
-        <option value="">{t("dataView.sortDefault")}</option>
-        {sortableColumns.map((column) => (
-          <option key={column.id} value={column.id}>
-            {column.label}
+        <option value="">{sortDefaultLabel}</option>
+        {options.map((option) => (
+          <option key={option.id} value={option.id}>
+            {option.label}
           </option>
         ))}
       </select>

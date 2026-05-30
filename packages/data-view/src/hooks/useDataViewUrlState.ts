@@ -1,15 +1,15 @@
 import { useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router";
 
-import type { DataViewColumnDescriptor } from "../components/data-view/types";
 import {
   applyDataViewStateToSearchParams,
   clearDataViewParamsFromSearchParams,
   dataViewStateFromSearchParams,
   getDataViewColumnIds,
 } from "../lib/data-view-search-params";
+import type { DataViewColumnDescriptor } from "../types";
 
-interface UseDataViewUrlStateResult {
+export interface UseDataViewUrlStateResult {
   readonly search: string;
   readonly filters: Readonly<Record<string, readonly string[]>>;
   readonly sort: {

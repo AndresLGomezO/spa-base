@@ -40,7 +40,7 @@ export function EntityFieldsManager({
       return {
         name: "",
         type: "string" as const,
-        required: false,
+        required: true,
         ui: { order: fields.length },
       };
     }

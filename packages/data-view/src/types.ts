@@ -30,3 +30,18 @@ export interface DataViewFilterOption {
   readonly value: string;
   readonly label: string;
 }
+
+export interface DataViewToolbarLabels {
+  readonly searchPlaceholder: string;
+  readonly filtersTrigger: string;
+  readonly filtersClearAll: string;
+  readonly removeBadge: (label: string) => string;
+  readonly filterPlaceholder: string;
+  readonly filterSearchPlaceholder: string;
+  readonly filterSelectedCount: (count: number) => string;
+  readonly noFilterResults: string;
+  readonly sortBy: string;
+  readonly sortDefault: string;
+  readonly sortAscending: string;
+  readonly sortDescending: string;
+}

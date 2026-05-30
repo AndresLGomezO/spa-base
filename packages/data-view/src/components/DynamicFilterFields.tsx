@@ -1,11 +1,8 @@
-import { useTranslation } from "react-i18next";
+import { FieldLabel, SearchableMultiSelectDropdown } from "@repo/ui";
 
-import { FieldLabel } from "@repo/ui";
+import type { DataViewColumnDescriptor, DataViewToolbarLabels } from "../types";
 
-import { SearchableMultiSelectDropdown } from "./SearchableMultiSelectDropdown";
-import type { DataViewColumnDescriptor } from "./types";
-
-interface DynamicFilterFieldsProps<T> {
+export interface DynamicFilterFieldsProps<T> {
   readonly columns: readonly DataViewColumnDescriptor<T>[];
   readonly filterOptions: Readonly<
     Record<string, readonly { value: string; label: string }[]>
@@ -15,6 +12,14 @@ interface DynamicFilterFieldsProps<T> {
     columnId: string,
     values: readonly string[],
   ) => void;
+  readonly labels: Pick<
+    DataViewToolbarLabels,
+    | "filterPlaceholder"
+    | "filterSearchPlaceholder"
+    | "filterSelectedCount"
+    | "noFilterResults"
+    | "removeBadge"
+  >;
 }
 
 export function DynamicFilterFields<T>({
@@ -22,8 +27,8 @@ export function DynamicFilterFields<T>({
   filterOptions,
   filters,
   onFilterChange,
+  labels,
 }: DynamicFilterFieldsProps<T>) {
-  const { t } = useTranslation("common");
   const filterableColumns = columns.filter(
     (column) => column.filterable !== false,
   );
@@ -47,15 +52,11 @@ export function DynamicFilterFields<T>({
               options={options}
               selected={filters[column.id] ?? []}
               onChange={(values) => onFilterChange(column.id, values)}
-              placeholder={t("dataView.filterPlaceholder")}
-              selectedCountLabel={(count) =>
-                t("dataView.filterSelectedCount", { count })
-              }
-              searchPlaceholder={t("dataView.filterSearchPlaceholder")}
-              noResultsLabel={t("dataView.noFilterResults")}
-              removeAriaLabel={(value) =>
-                t("dataView.removeBadge", { label: value })
-              }
+              placeholder={labels.filterPlaceholder}
+              selectedCountLabel={labels.filterSelectedCount}
+              searchPlaceholder={labels.filterSearchPlaceholder}
+              noResultsLabel={labels.noFilterResults}
+              removeAriaLabel={labels.removeBadge}
               ariaLabel={column.label}
               data-testid={`data-view-filter-${column.id}`}
             />

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import type { DataViewColumnDescriptor } from "../types";
 import { matchesDataViewSearch } from "./matches-data-view-search";
-import type { DataViewColumnDescriptor } from "../components/data-view/types";
 
 interface SampleRow {
   readonly id: string;

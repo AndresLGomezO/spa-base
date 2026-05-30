@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 
-import type { DataViewColumnDescriptor } from "../components/data-view/types";
+import type { DataViewColumnDescriptor } from "../types";
 import {
   useDataViewControls,
   type UseDataViewControlsOptions,
@@ -12,7 +12,7 @@ import {
   type UseClientPaginationResult,
 } from "./useClientPagination";
 
-interface UseDataViewWithPaginationOptions extends UseDataViewControlsOptions {
+export interface UseDataViewWithPaginationOptions extends UseDataViewControlsOptions {
   readonly pageSize?: number;
   readonly urlSync?: boolean;
 }

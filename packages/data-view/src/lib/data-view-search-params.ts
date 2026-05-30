@@ -2,7 +2,7 @@ import type {
   DataViewSortDirection,
   DataViewSortState,
   DataViewColumnDescriptor,
-} from "../components/data-view/types";
+} from "../types";
 
 const Q_PARAM = "q";
 const SORT_PARAM = "sort";

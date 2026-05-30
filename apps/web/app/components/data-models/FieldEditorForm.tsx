@@ -30,6 +30,9 @@ function isCustomRelationName(
   if (field.type !== "relation" || !field.relation?.target) {
     return false;
   }
+  if (!field.name.trim()) {
+    return false;
+  }
   return (
     field.name !==
     generateRelationFieldName(field.relation.target, relationType)
@@ -112,12 +115,13 @@ export function FieldEditorForm({
           disabled={typeReadOnly}
           onChange={(event) => {
             const type = event.target.value as FieldDefinitionInput["type"];
-            if (type !== "relation") {
-              setUseCustomRelationName(false);
-            }
+            setUseCustomRelationName(false);
             update({
               type,
-              relation: type === "relation" ? field.relation : undefined,
+              relation:
+                type === "relation"
+                  ? (field.relation ?? { target: "", type: "many-to-one" })
+                  : undefined,
               enumValues:
                 type === "enum" ? (field.enumValues ?? [""]) : undefined,
             });

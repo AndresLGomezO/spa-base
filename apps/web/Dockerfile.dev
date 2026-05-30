@@ -25,6 +25,7 @@ COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/ui/package.json ./packages/ui/
+COPY packages/data-view/package.json ./packages/data-view/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/ ./packages/typescript-config/
 

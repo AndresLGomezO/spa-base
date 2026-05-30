@@ -116,4 +116,16 @@ describe("FieldEditorForm", () => {
       ui: { filterable: false, sortable: true },
     });
   });
+
+  it("defaults required checkbox to checked for new fields", () => {
+    render(
+      <FieldEditorForm
+        field={{ name: "amount", type: "number", required: true }}
+        relationTargets={[]}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(screen.getByLabelText("dataModels.required")).toBeChecked();
+  });
 });
