@@ -62,3 +62,5 @@ export {
 } from "./segmented-switch/SegmentedSwitch";
 export { Heading, type HeadingProps } from "./typography/Heading";
 export { Text, type TextProps } from "./typography/Text";
+export { Toaster, type ToasterProps } from "./toaster";
+export { toast } from "sonner";

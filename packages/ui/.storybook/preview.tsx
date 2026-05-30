@@ -2,6 +2,7 @@ import type { Preview } from "@storybook/react";
 import { withThemeByClassName } from "@storybook/addon-themes";
 import { ThemeProvider } from "@repo/theme/react";
 
+import { Toaster } from "../src/toaster/Toaster";
 import "../src/styles/storybook.css";
 
 const preview: Preview = {
@@ -27,6 +28,7 @@ const preview: Preview = {
         <div className="bg-background text-foreground min-w-[20rem] p-4">
           <Story />
         </div>
+        <Toaster />
       </ThemeProvider>
     ),
   ],

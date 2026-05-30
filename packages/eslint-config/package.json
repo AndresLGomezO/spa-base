@@ -12,7 +12,9 @@
   "exports": {
     "./base": "./base.js",
     "./react": "./react.js",
-    "./ui-primitives": "./ui-primitives.js"
+    "./ui-primitives": "./ui-primitives.js",
+    "./ui-overlays": "./ui-overlays.js",
+    "./ui-toasts": "./ui-toasts.js"
   },
   "devDependencies": {
     "@eslint/js": "catalog:",

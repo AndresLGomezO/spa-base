@@ -23,7 +23,9 @@
     "react": "catalog:"
   },
   "dependencies": {
-    "@repo/theme": "workspace:*"
+    "@repo/theme": "workspace:*",
+    "lucide-react": "catalog:",
+    "sonner": "catalog:"
   },
   "devDependencies": {
     "@repo/typescript-config": "workspace:*",

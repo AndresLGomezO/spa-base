@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { Meta, StoryObj } from "@storybook/react";
+import { toast } from "sonner";
 
 import { Text } from "../typography/Text";
 import { PhotoUpload } from "./PhotoUpload";
@@ -49,7 +50,7 @@ function PhotoUploadDemo({
           setUploading(false);
         }}
         onError={(message) => {
-          alert(message);
+          toast.error(message);
         }}
       />
       {value ? (

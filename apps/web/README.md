@@ -106,13 +106,18 @@ pnpm i18n:validate -- --strict
 
 ## UI components
 
-Use `@repo/ui` primitives. ESLint enforces via `@repo/eslint-config/ui-primitives`.
+Use `@repo/ui` primitives. ESLint enforces via `@repo/eslint-config/ui-primitives`, `ui-overlays`, and `ui-toasts` (see `apps/web/eslint.config.js`).
 
 **Overlay primitives** (never build custom dialogs in app code):
 
 - `Modal` — centered dialogs (confirmations, forms, previews)
 - `Sheet` — slide-over panels (mobile sidebar via `SidebarMobile`)
 - `PhotoUpload` — image select, crop, upload, and expand preview
+
+**Toasts** (transient feedback only; mount `<Toaster />` once in `app/root.tsx`):
+
+- `toast` — `toast.success`, `toast.error`, etc. from `@repo/ui`
+- Keep `Alert` for inline/persistent form and page messages
 
 Storybook: `pnpm storybook` from repo root.
 
