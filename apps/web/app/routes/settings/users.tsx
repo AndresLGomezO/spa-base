@@ -2,16 +2,17 @@ import { Alert, Heading, PageLoader, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
+import { usePermission } from "../../auth/usePermission";
 import { UserManagement } from "../../components/settings/UserManagement";
 
 export default function SettingsUsersRoute() {
   const { t } = useTranslation("common");
-  const { isReady, tenantId, permissions, isSuperAdmin } = useAuth();
+  const { isReady, tenantId } = useAuth();
 
-  const canRead = isSuperAdmin || permissions.includes("tenantUser.read");
-  const canCreate = isSuperAdmin || permissions.includes("tenantUser.create");
-  const canUpdate = isSuperAdmin || permissions.includes("tenantUser.update");
-  const canRemove = isSuperAdmin || permissions.includes("tenantUser.remove");
+  const canRead = usePermission("tenantUser.read");
+  const canCreate = usePermission("tenantUser.create");
+  const canUpdate = usePermission("tenantUser.update");
+  const canRemove = usePermission("tenantUser.remove");
 
   if (!isReady) {
     return <PageLoader ariaLabel={t("loading")} />;

@@ -35,7 +35,11 @@ Use `buildRoleCatalog(firestoreRoles)` to merge Firestore documents with built-i
 | `loan.*` | All loan permissions                 |
 | `*.read` | All read permissions across entities |
 
-Known permissions are aggregated in `ALL_KNOWN_PERMISSIONS` from entity exports in `@repo/shared-types`. Add new entity permissions there when introducing entities.
+Wildcard grants are **expanded at resolve time** via `expandGrants(grants, knownPermissions)`. The `knownPermissions` list must include every permission that should match — static entity permissions from `@repo/entities`, plus tenant-specific dynamic entity permissions after definitions are loaded. If the catalog is incomplete, patterns like `loan.*` expand to nothing while exact grants such as `loan.read` may still resolve (passthrough).
+
+Use `getAllKnownPermissions(tenantId)` or the API’s `prepareKnownPermissions` helper (loads tenant definitions, then aggregates permissions) before calling `resolvePermissions`. Runtime checks should use `hasPermission(required, resolvedPermissions)` on the **expanded** list returned to clients, not raw role grant strings.
+
+Known permissions are aggregated in `getAllKnownPermissions()` / `ALL_KNOWN_PERMISSIONS` from entity exports and dynamic tenant definitions.
 
 ## User role storage
 
@@ -95,7 +99,7 @@ Roles may include optional `fieldRules` per entity. Multiple roles merge with mo
 
 ## Web
 
-The API returns resolved permissions from `GET /auth/validate`. The web app stores them in auth context and exposes `usePermission("loan.read")` for UI gating.
+The API returns **expanded** permissions from `GET /auth/validate`. The web app stores them in auth context and exposes `usePermission("loan.read")`, which delegates to `hasPermission` from this package.
 
 ## Related
 

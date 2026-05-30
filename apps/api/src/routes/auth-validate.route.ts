@@ -83,6 +83,7 @@ export const authValidateRoute: FastifyPluginAsync<{
         created: upsertResult.created,
         jwtTenantId,
         roleCatalog,
+        permissionDeps: opts.permissionDeps,
         firebaseAdminConfig: opts.firebaseAdminConfig,
         registeredUserRepository,
       });

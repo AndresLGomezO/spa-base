@@ -1,6 +1,5 @@
 import {
   isPlatformSuperAdmin,
-  resolvePermissions,
   toUserAccessProfile,
   type RoleCatalog,
 } from "@repo/rbac";
@@ -22,6 +21,8 @@ import {
 } from "../admin/bootstrap-platform-role.js";
 import { listAvailableTenants } from "../admin/list-available-tenants.js";
 import { apiEnv } from "../config/env.js";
+import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import { resolveTenantPermissions } from "../rbac/resolve-tenant-permissions.js";
 
 interface AuthSessionContext {
   readonly user: RegisteredUser;
@@ -40,6 +41,7 @@ export async function buildAuthSessionContext(params: {
   readonly created: boolean;
   readonly jwtTenantId: string;
   readonly roleCatalog: RoleCatalog;
+  readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly registeredUserRepository: RegisteredUserRepository;
 }): Promise<AuthSessionContext> {
@@ -71,11 +73,12 @@ export async function buildAuthSessionContext(params: {
   const tenantId = params.jwtTenantId.length > 0 ? params.jwtTenantId : null;
   const permissions =
     tenantId !== null
-      ? resolvePermissions(
+      ? await resolveTenantPermissions(
           {
             ...accessProfile,
             tenantId,
           },
+          params.permissionDeps,
           { roleCatalog: params.roleCatalog },
         )
       : [];
