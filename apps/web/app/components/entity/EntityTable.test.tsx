@@ -32,7 +32,7 @@ function renderTable() {
     <TestEntityCatalogProvider>
       <I18nextProvider i18n={i18n}>
         <EntityTable
-          entityName="organization"
+          entityName="widget"
           entityState={{
             items: [
               {

@@ -22,7 +22,6 @@ import { FieldEditor } from "./FieldEditor";
 import { ModelReview } from "./ModelReview";
 
 interface EntityDefinitionWizardProps {
-  readonly tenantId?: string;
   readonly onCreated: () => void;
   readonly onCancel: () => void;
 }
@@ -34,7 +33,6 @@ const EMPTY_FIELD: FieldDefinitionInput = {
 };
 
 export function EntityDefinitionWizard({
-  tenantId,
   onCreated,
   onCancel,
 }: EntityDefinitionWizardProps) {
@@ -112,7 +110,6 @@ export function EntityDefinitionWizard({
                 }
               : {}),
           })),
-        ...(tenantId ? { tenantId } : {}),
       };
 
       await createEntityDefinition(payload);

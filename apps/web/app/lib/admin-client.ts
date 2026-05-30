@@ -1,14 +1,8 @@
+import type { TenantAppearance } from "@repo/shared-types";
+
 import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
 import { auth } from "./firebase";
-
-interface AdminUser {
-  readonly uid: string;
-  readonly email: string | null;
-  readonly displayName: string | null;
-  readonly platformRole: string | null;
-  readonly tenants: Readonly<Record<string, readonly string[]>>;
-}
 
 interface AdminTenant {
   readonly id: string;
@@ -17,6 +11,7 @@ interface AdminTenant {
   readonly createdBy: string | null;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly appearance?: TenantAppearance;
 }
 
 async function getAuthHeaders() {
@@ -63,11 +58,11 @@ async function adminFetch<T>(path: string, init?: RequestInit): Promise<T> {
   return payload;
 }
 
-export async function listAdminTenants(): Promise<readonly AdminTenant[]> {
-  const payload = await adminFetch<{ tenants: AdminTenant[] }>(
-    "/admin/tenants",
+export async function getAdminTenant(id: string): Promise<AdminTenant> {
+  const payload = await adminFetch<{ tenant: AdminTenant }>(
+    `/admin/tenants/${encodeURIComponent(id)}`,
   );
-  return payload.tenants;
+  return payload.tenant;
 }
 
 export async function createAdminTenant(input: {
@@ -87,6 +82,7 @@ export async function updateAdminTenant(
   input: {
     readonly name?: string;
     readonly status?: "active" | "suspended";
+    readonly appearance?: TenantAppearance | null;
   },
 ): Promise<AdminTenant> {
   const payload = await adminFetch<{ tenant: AdminTenant }>(
@@ -100,24 +96,14 @@ export async function updateAdminTenant(
   return payload.tenant;
 }
 
-export async function listAdminUsers(): Promise<readonly AdminUser[]> {
-  const payload = await adminFetch<{ items: AdminUser[] }>("/admin/users");
-  return payload.items;
+export async function uploadTenantLogo(
+  id: string,
+  input: { readonly contentType: string; readonly data: string },
+): Promise<{ readonly logoUrl: string; readonly tenant: AdminTenant }> {
+  return adminFetch(`/admin/tenants/${encodeURIComponent(id)}/logo`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
 }
 
-export async function updateAdminUserAccess(
-  uid: string,
-  tenants: Record<string, string[]>,
-): Promise<AdminUser> {
-  const payload = await adminFetch<{ user: AdminUser }>(
-    `/admin/users/${encodeURIComponent(uid)}`,
-    {
-      method: "PATCH",
-      body: JSON.stringify({ tenants }),
-    },
-  );
-
-  return payload.user;
-}
-
-export type { AdminTenant, AdminUser };
+export type { AdminTenant };

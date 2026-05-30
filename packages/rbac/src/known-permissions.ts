@@ -5,30 +5,21 @@ import {
 import { HOOK_PERMISSIONS } from "@repo/hooks";
 import { getAllEntities } from "@repo/entities";
 
-import { ROLE_PERMISSIONS } from "./tenant-role-types.js";
-
-const FALLBACK_PERMISSIONS = [
-  "organization.read",
-  "organization.create",
-  "organization.update",
-  "organization.delete",
-  "project.read",
-  "project.create",
-  "project.update",
-  "project.delete",
-] as const;
+import {
+  ROLE_PERMISSIONS,
+  TENANT_USER_PERMISSIONS,
+} from "./tenant-role-types.js";
 
 export function getAllKnownPermissions(tenantId?: string): readonly string[] {
   const staticPermissions = getAllEntities().flatMap(
     (entity) => entity.metadata.permissions,
   );
   const permissions = [
-    ...(staticPermissions.length > 0
-      ? staticPermissions
-      : [...FALLBACK_PERMISSIONS]),
+    ...staticPermissions,
     ...ENTITY_DEFINITION_PERMISSIONS,
     ...HOOK_PERMISSIONS,
     ...ROLE_PERMISSIONS,
+    ...TENANT_USER_PERMISSIONS,
     ...(tenantId ? getDynamicPermissionsForTenant(tenantId) : []),
   ];
   return [...new Set(permissions)];

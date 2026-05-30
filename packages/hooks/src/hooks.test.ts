@@ -159,7 +159,7 @@ describe("interpretActions", () => {
       [
         {
           type: "createRecord",
-          entity: "project",
+          entity: "task",
           data: { name: "Follow up" },
         },
       ],
@@ -171,6 +171,6 @@ describe("interpretActions", () => {
       }),
     );
 
-    expect(create).toHaveBeenCalledWith("project", { name: "Follow up" });
+    expect(create).toHaveBeenCalledWith("task", { name: "Follow up" });
   });
 });

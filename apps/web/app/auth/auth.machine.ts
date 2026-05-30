@@ -1,3 +1,5 @@
+import type { TenantAppearance } from "@repo/shared-types";
+
 import type { AuthState, AuthUser, TenantOption } from "./auth.types";
 import type { User } from "../lib/firebase";
 
@@ -10,6 +12,9 @@ export const AUTH_INITIAL_STATE: AuthState = {
   tenantId: null,
   availableTenants: [],
   tenantOptions: [],
+  tenantRoleNames: [],
+  activeTenantName: null,
+  tenantAppearance: null,
 };
 
 type AuthAction =
@@ -22,6 +27,9 @@ type AuthAction =
       readonly tenantId?: string | null;
       readonly availableTenants?: readonly string[];
       readonly tenantOptions?: readonly TenantOption[];
+      readonly tenantRoleNames?: readonly string[];
+      readonly activeTenantName?: string | null;
+      readonly tenantAppearance?: TenantAppearance | null;
     }
   | {
       readonly type: "TENANT_SELECTED";
@@ -30,6 +38,9 @@ type AuthAction =
       readonly tenantOptions: readonly TenantOption[];
       readonly permissions: readonly string[];
       readonly isSuperAdmin: boolean;
+      readonly tenantRoleNames: readonly string[];
+      readonly activeTenantName: string | null;
+      readonly tenantAppearance: TenantAppearance | null;
     }
   | { readonly type: "AUTH_STATE_UNAUTHENTICATED" }
   | { readonly type: "LOGIN_FAILED"; readonly error: string }
@@ -71,6 +82,9 @@ function clearSessionFields(): Pick<
   | "tenantId"
   | "availableTenants"
   | "tenantOptions"
+  | "tenantRoleNames"
+  | "activeTenantName"
+  | "tenantAppearance"
 > {
   return {
     permissions: [],
@@ -78,6 +92,9 @@ function clearSessionFields(): Pick<
     tenantId: null,
     availableTenants: [],
     tenantOptions: [],
+    tenantRoleNames: [],
+    activeTenantName: null,
+    tenantAppearance: null,
   };
 }
 
@@ -100,6 +117,9 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         tenantId: action.tenantId ?? state.tenantId,
         availableTenants: action.availableTenants ?? state.availableTenants,
         tenantOptions: action.tenantOptions ?? state.tenantOptions,
+        tenantRoleNames: action.tenantRoleNames ?? state.tenantRoleNames,
+        activeTenantName: action.activeTenantName ?? state.activeTenantName,
+        tenantAppearance: action.tenantAppearance ?? state.tenantAppearance,
       };
     case "TENANT_SELECTED":
       return {
@@ -111,6 +131,9 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
         tenantOptions: action.tenantOptions,
         permissions: action.permissions,
         isSuperAdmin: action.isSuperAdmin,
+        tenantRoleNames: action.tenantRoleNames,
+        activeTenantName: action.activeTenantName,
+        tenantAppearance: action.tenantAppearance,
       };
     case "AUTH_STATE_UNAUTHENTICATED":
       return {

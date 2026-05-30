@@ -7,15 +7,15 @@ import { validateEntityUIConfig } from "./validate-ui-config.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
-const Organization = defineEntity({
-  name: "organization",
+const Widget = defineEntity({
+  name: "widget",
   fields: {
     name: { type: "string", required: true },
     email: { type: "string" },
     isActive: { type: "boolean", default: true },
   },
   ui: {
-    nav: { label: "Organizations", icon: "building" },
+    nav: { label: "Widgets", icon: "box" },
     views: [
       {
         type: "table",
@@ -41,16 +41,16 @@ describe("validateEntityUIConfig", () => {
   it("accepts valid UI metadata", () => {
     expect(() =>
       validateEntityUIConfig(
-        Organization as unknown as AnyDefinedEntity,
-        Organization.metadata.ui!,
+        Widget as unknown as AnyDefinedEntity,
+        Widget.metadata.ui!,
       ),
     ).not.toThrow();
   });
 
   it("rejects unknown view fields", () => {
     expect(() =>
-      validateEntityUIConfig(Organization as unknown as AnyDefinedEntity, {
-        ...Organization.metadata.ui!,
+      validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
+        ...Widget.metadata.ui!,
         views: [
           {
             type: "table",
@@ -64,8 +64,8 @@ describe("validateEntityUIConfig", () => {
 
   it("rejects unknown field UI config keys", () => {
     expect(() =>
-      validateEntityUIConfig(Organization as unknown as AnyDefinedEntity, {
-        ...Organization.metadata.ui!,
+      validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
+        ...Widget.metadata.ui!,
         fields: {
           unknown: { label: "Bad" },
         },

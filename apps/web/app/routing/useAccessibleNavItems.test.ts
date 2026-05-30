@@ -1,6 +1,7 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
+import { isNavGroup } from "../components/sidebar/nav-config";
 import { MOCK_ENTITY_CATALOG } from "../test/entity-catalog-fixtures";
 import { useAccessibleNavItems } from "./useAccessibleNavItems";
 
@@ -21,6 +22,16 @@ vi.mock("../entities/entity-catalog-context", () => ({
   }),
 }));
 
+function getDataModelEntityIds(
+  items: ReturnType<typeof useAccessibleNavItems>,
+): string[] {
+  const dataModels = items.find((item) => item.id === "data-models");
+  if (dataModels && isNavGroup(dataModels)) {
+    return dataModels.children.map((child) => child.id);
+  }
+  return [];
+}
+
 describe("useAccessibleNavItems", () => {
   it("shows all entities for superadmin", () => {
     mockUseAuth.mockReturnValue({
@@ -29,59 +40,60 @@ describe("useAccessibleNavItems", () => {
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
-    const entityIds = result.current
-      .filter((item) => "to" in item && item.to.startsWith("/app/"))
-      .map((item) => item.id);
 
-    expect(entityIds).toEqual(["organization", "project"]);
+    expect(getDataModelEntityIds(result.current)).toEqual([
+      "widget",
+      "testItem",
+    ]);
   });
 
   it("filters entities by read permission for viewers", () => {
     mockUseAuth.mockReturnValue({
       isSuperAdmin: false,
-      permissions: ["organization.read"],
+      permissions: ["widget.read"],
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
-    const entityIds = result.current
-      .filter((item) => "to" in item && item.to.startsWith("/app/"))
-      .map((item) => item.id);
 
-    expect(entityIds).toEqual(["organization"]);
+    expect(getDataModelEntityIds(result.current)).toEqual(["widget"]);
   });
 
-  it("includes control plane nav for tenant admins", () => {
+  it("includes settings nav for tenant admins without profile or billing", () => {
     mockUseAuth.mockReturnValue({
       isSuperAdmin: false,
       permissions: ["entityDefinition.read", "hook.read"],
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
-    const controlPlane = result.current.find(
-      (item) => item.id === "control-plane",
-    );
-    expect(controlPlane && "children" in controlPlane).toBe(true);
-    if (controlPlane && "children" in controlPlane) {
-      expect(controlPlane.children.some((child) => child.id === "hooks")).toBe(
+    const settings = result.current.find((item) => item.id === "settings");
+    expect(settings && isNavGroup(settings)).toBe(true);
+    if (settings && isNavGroup(settings)) {
+      expect(settings.children.some((child) => child.id === "profile")).toBe(
+        false,
+      );
+      expect(settings.children.some((child) => child.id === "billing")).toBe(
+        false,
+      );
+      expect(settings.children.some((child) => child.id === "automation")).toBe(
         true,
       );
-      expect(
-        controlPlane.children.some((child) => child.id === "data-models"),
-      ).toBe(true);
     }
   });
 
-  it("includes admin settings link for superadmin", () => {
+  it("includes platform current tenant and appearance for superadmin", () => {
     mockUseAuth.mockReturnValue({
       isSuperAdmin: true,
       permissions: [],
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
-    const settings = result.current.find((item) => item.id === "settings");
-    expect(settings && "children" in settings).toBe(true);
-    if (settings && "children" in settings) {
-      expect(settings.children.some((child) => child.id === "admin")).toBe(
+    const platform = result.current.find((item) => item.id === "platform");
+    expect(platform && isNavGroup(platform)).toBe(true);
+    if (platform && isNavGroup(platform)) {
+      expect(
+        platform.children.some((child) => child.id === "current-tenant"),
+      ).toBe(true);
+      expect(platform.children.some((child) => child.id === "appearance")).toBe(
         true,
       );
     }

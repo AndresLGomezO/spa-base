@@ -27,12 +27,14 @@ vi.mock("../../lib/api-client", () => ({
     error instanceof Error && error.name === "ApiClientError",
 }));
 
+const mockT = (key: string, options?: { name?: string }) =>
+  key === "dataModels.editTitle" && options?.name
+    ? `Edit ${options.name}`
+    : key;
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string, options?: { name?: string }) =>
-      key === "dataModels.editTitle" && options?.name
-        ? `Edit ${options.name}`
-        : key,
+    t: mockT,
   }),
 }));
 
@@ -82,7 +84,6 @@ describe("EntityDefinitionEditor", () => {
       expect(mockPatchEntityDefinition).toHaveBeenCalledWith(
         "def_1",
         expect.objectContaining({ label: "Loan Records" }),
-        { tenantId: "tenant_a" },
       );
     });
 

@@ -67,11 +67,11 @@ describe("@repo/dynamic-entities", () => {
   it("rejects static name collisions", () => {
     registerEntity(
       defineEntity({
-        name: "organization",
+        name: "widget",
         fields: { name: { type: "string", required: true } },
       }),
     );
-    expect(() => assertDynamicNameAvailable("organization")).toThrow(
+    expect(() => assertDynamicNameAvailable("widget")).toThrow(
       DynamicEntityError,
     );
   });

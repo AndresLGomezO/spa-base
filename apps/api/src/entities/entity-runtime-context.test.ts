@@ -1,6 +1,10 @@
 import { beforeEach, describe, expect, it } from "vitest";
 
-import { Customer } from "@repo/shared-types";
+import {
+  clearEntityRegistry,
+  defineEntity,
+  registerEntity,
+} from "@repo/entities";
 import { createInMemoryEntityDefinitionRepository } from "@repo/firestore-converters";
 import { platformApp } from "@app/platform/app.config.js";
 import {
@@ -10,13 +14,22 @@ import {
 
 import { createEntityRuntimeContext } from "./entity-runtime-context.js";
 
+const WidgetEntity = defineEntity({
+  name: "widget",
+  fields: {
+    name: { type: "string", required: true },
+  },
+});
+
 describe("EntityRuntimeContext", () => {
   beforeEach(() => {
     resetPlatformBootstrapForTests();
+    clearEntityRegistry();
     bootstrapPlatformApp(platformApp);
+    registerEntity(WidgetEntity);
   });
 
-  it("merges static Customer with dynamic tenant definitions", async () => {
+  it("merges static widget with dynamic tenant definitions", async () => {
     const entityDefinitionRepository =
       createInMemoryEntityDefinitionRepository();
     const entityRuntime = createEntityRuntimeContext({
@@ -39,17 +52,17 @@ describe("EntityRuntimeContext", () => {
     const entities = entityRuntime.getEntitiesForTenant("tenant_a");
     const entityNames = entities.map((entity) => entity.name);
 
-    expect(entityNames).toContain("customer");
+    expect(entityNames).toContain("widget");
     expect(entityNames).toContain("lead");
 
-    const customer = entityRuntime.resolveEntity("customer", "tenant_a");
-    expect(customer?.metadata.permissions).toEqual(
-      Customer.metadata.permissions,
+    const widget = entityRuntime.resolveEntity("widget", "tenant_a");
+    expect(widget?.metadata.permissions).toEqual(
+      WidgetEntity.metadata.permissions,
     );
 
     const knownPermissions = entityRuntime.getKnownPermissions("tenant_a");
-    expect(knownPermissions).toContain("customer.read");
-    expect(knownPermissions).toContain("customer.create");
+    expect(knownPermissions).toContain("widget.read");
+    expect(knownPermissions).toContain("widget.create");
     expect(knownPermissions).toContain("lead.read");
   });
 });

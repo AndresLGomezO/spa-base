@@ -89,7 +89,7 @@ vi.mock("@repo/gcp-firebase", () => ({
 import { buildServer } from "../server.js";
 
 async function buildTestServer() {
-  const runtime = createInMemoryCrudRuntime();
+  const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
   return buildServer({
     logger: false,
     repositories: runtime.repositories,
@@ -177,7 +177,10 @@ describe("POST /auth/select-tenant", () => {
       expect.any(Object),
     );
     expect(response.json().permissions).toEqual(
-      expect.arrayContaining(["organization.read", "organization.create"]),
+      expect.arrayContaining([
+        "entityDefinition.read",
+        "entityDefinition.create",
+      ]),
     );
   });
 

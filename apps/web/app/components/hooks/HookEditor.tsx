@@ -29,7 +29,6 @@ import {
 } from "./HookActionEditor";
 
 interface HookEditorProps {
-  readonly tenantId: string;
   readonly hook: HookRecord | null;
   readonly canCreate: boolean;
   readonly canUpdate: boolean;
@@ -38,7 +37,6 @@ interface HookEditorProps {
 }
 
 export function HookEditor({
-  tenantId,
   hook,
   canCreate,
   canUpdate,
@@ -97,7 +95,6 @@ export function HookEditor({
           throw new Error(t("hooks.forbiddenCreate"));
         }
         const created = await createHook({
-          tenantId,
           name: name.trim(),
           entity: entity.trim(),
           event,
@@ -113,15 +110,11 @@ export function HookEditor({
         throw new Error(t("hooks.forbiddenUpdate"));
       }
 
-      const updated = await patchHook(
-        hook.id,
-        {
-          name: name.trim(),
-          config: { actions },
-          enabled,
-        },
-        { tenantId },
-      );
+      const updated = await patchHook(hook.id, {
+        name: name.trim(),
+        config: { actions },
+        enabled,
+      });
       onSaved(updated);
     } catch (saveError) {
       if (isApiClientError(saveError)) {

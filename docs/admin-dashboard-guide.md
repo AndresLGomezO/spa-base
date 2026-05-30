@@ -1,77 +1,64 @@
 # Admin Dashboard Guide (Phase B)
 
-The tenant admin control plane provides a unified interface for configuring data models, automation hooks, and roles without leaving the private app layout.
+Settings and platform administration for data models, automation, roles, and user management — all within the single authenticated sidebar layout.
 
 ## Audience
 
-- **Tenant admins** use the Control Plane sidebar group and routes under `/settings/*` within the tenant-scoped private layout.
-- **Platform superadmins** use `/settings/admin` (auth-only layout) for cross-tenant tenant/user management, with links to cross-tenant data models, hooks, and roles.
+- **Tenant admins** use the **Settings** sidebar group (`/settings/*`) scoped to their JWT tenant.
+- **Platform superadmins** switch tenants via the sidebar `TenantSwitcher` (same UX as tenant admins) and use **Platform** routes to manage the active tenant only.
 
 ## Sections
 
-### Dashboard (`/`)
+### Home (`/`)
 
-Visible when the user has any of `entityDefinition.read`, `role.read`, or `hook.read`.
+Simple authenticated welcome page for all users.
 
-Shows summary counts for:
+### User Management (`/settings/users`)
 
-- Runtime entities (from entity catalog)
-- Data model definitions
-- Roles
-- Automation hooks
-
-Quick links navigate to permitted admin sections.
-
-Users without admin permissions see the standard session home page.
+- **Read:** `tenantUser.read`
+- **Create:** `tenantUser.create` (invite by email; roles apply on first sign-in)
+- **Update / remove:** `tenantUser.update`, `tenantUser.remove`
 
 ### Data Models (`/settings/data-models`)
 
 - **Read:** `entityDefinition.read`
 - **Create:** `entityDefinition.create`
-- **Edit:** `entityDefinition.update`
+- **Update:** `entityDefinition.update`
 
-Lists tenant entity definitions, supports create wizard and edit flow (label + fields). Entity names are immutable after creation; field changes follow server-side evolution rules.
-
-Superadmin cross-tenant: `/settings/admin/data-models`
+Creates dynamic entities that appear under **Data Models** in the sidebar (`/app/:entity`).
 
 ### Automation (`/settings/hooks`)
 
 - **Read:** `hook.read`
-- **Create:** `hook.create`
-- **Update:** `hook.update`
-
-Manage action hooks bound to entity events (e.g. `loan.beforeCreate`) with structured actions:
-
-- `updateField`
-- `createRecord`
-- `sendNotification`
-
-Superadmin cross-tenant: `/settings/admin/hooks`
+- **Create / update:** `hook.create`, `hook.update`
 
 ### Roles & Permissions (`/settings/roles`)
 
-Reuses the RBAC UI from Advanced RBAC (10.5). Nav moved from Settings to Control Plane.
+- **Read:** `role.read`
+- **Create / update:** `role.create`, `role.update`
 
-Superadmin cross-tenant: `/settings/admin/roles`
+### Platform — Current Tenant (`/settings/tenant`)
 
-## Navigation
+Superadmin only. View and edit the **active** tenant (name, status). Suspend or activate via `CurrentTenantPanel`. Requires a selected tenant in the JWT.
 
-The **Control Plane** sidebar group appears between Home and entity data links when the user has admin permissions. Settings retains profile, team, billing, and (for superadmin) platform admin.
+### Platform — Appearance (`/settings/appearance`)
 
-## Out of scope (Phase B)
+Superadmin only. Upload tenant logo and override theme CSS variables for the active tenant. Branding applies at runtime via `TenantBrandingProvider`.
 
-- Users / teams management UI
-- Modules UI
-- UI Builder admin
-- Advanced analytics and audit logs
+### Create tenant (`/platform/create-tenant`)
 
-## API dependencies
+Superadmin only. Create a new tenant and switch into it. Linked from the tenant switcher and `/select-tenant`.
 
-The dashboard UI calls existing API routes:
+## Navigation structure
 
-- `GET /api/entity-definitions`, `GET/PATCH /api/entity-definitions/:id`
-- `GET/POST/PATCH /api/hooks`
-- `GET /api/roles`
-- `GET /api/entities` (catalog)
+| Group | Items |
+| --- | --- |
+| Home | `/` |
+| Data Models | Dynamic `/app/:entity` links from catalog |
+| Settings | User Management, Roles, Model Builder, Automation |
+| Platform | Current Tenant, Appearance (superadmin) |
 
-No new backend routes were added for Phase B.
+## Related
+
+- [apps/web/README.md](../apps/web/README.md)
+- [docs/e2e-validation-runbook.md](./e2e-validation-runbook.md)

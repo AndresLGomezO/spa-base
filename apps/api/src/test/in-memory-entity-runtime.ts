@@ -5,6 +5,7 @@ import { platformApp } from "@app/platform/app.config.js";
 import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
 import { createInMemoryEntityQueryExecutor } from "../repositories/in-memory-entity-query-executor.js";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
+import { registerCrudTestEntities } from "./crud-test-entities.js";
 
 function createInMemoryEntityRuntime<
   TRecord extends { readonly id: string; readonly tenantId: string },
@@ -24,7 +25,10 @@ function createInMemoryEntityRuntime<
   return { store, repository, queryExecutor };
 }
 
-export function createInMemoryCrudRuntime(): {
+export function createInMemoryCrudRuntime(options?: {
+  readonly withTestEntities?: boolean;
+  readonly skipBootstrap?: boolean;
+}): {
   readonly repositories: Record<
     string,
     ReturnType<
@@ -36,7 +40,13 @@ export function createInMemoryCrudRuntime(): {
   >;
   readonly queryExecutors: Record<string, EntityQueryExecutor>;
 } {
-  bootstrapPlatformApp(platformApp);
+  if (!options?.skipBootstrap) {
+    if (options?.withTestEntities) {
+      registerCrudTestEntities();
+    } else {
+      bootstrapPlatformApp(platformApp);
+    }
+  }
 
   const repositories: Record<
     string,

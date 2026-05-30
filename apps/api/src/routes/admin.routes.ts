@@ -12,7 +12,8 @@ import type {
   RegisteredUserRepository,
   TenantRepository,
 } from "@repo/firestore-converters";
-import { tenantStatusSchema } from "@repo/shared-types";
+import { tenantStatusSchema, tenantAppearanceSchema } from "@repo/shared-types";
+import { uploadTenantLogo } from "@repo/gcp-firebase";
 
 import { validateActiveTenantIds } from "../admin/list-available-tenants.js";
 import { seedTenantRolesFromTemplates } from "../admin/seed-tenant-roles-from-templates.js";
@@ -35,6 +36,12 @@ const createTenantBodySchema = z.object({
 const updateTenantBodySchema = z.object({
   name: z.string().trim().min(1).optional(),
   status: tenantStatusSchema.optional(),
+  appearance: tenantAppearanceSchema.nullable().optional(),
+});
+
+const uploadLogoBodySchema = z.object({
+  contentType: z.string().trim().min(1),
+  data: z.string().trim().min(1),
 });
 
 function isKnownRoleName(name: string, roleCatalog: RoleCatalog): boolean {
@@ -88,6 +95,33 @@ export const adminRoutes: FastifyPluginAsync<{
     async (_request, reply) => {
       const tenants = await tenantRepository.list();
       return reply.send({ ok: true, tenants });
+    },
+  );
+
+  fastify.get(
+    "/admin/tenants/:id",
+    { preHandler: [authenticate, requireSuperAdmin] },
+    async (request, reply) => {
+      const paramsSchema = z.object({
+        id: z.string().trim().min(1),
+      });
+      const parsedParams = paramsSchema.safeParse(request.params);
+      if (!parsedParams.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Invalid tenant id.",
+        });
+      }
+
+      const tenant = await tenantRepository.getById(parsedParams.data.id);
+      if (!tenant) {
+        return reply.status(404).send({
+          ok: false,
+          message: "Tenant not found.",
+        });
+      }
+
+      return reply.send({ ok: true, tenant });
     },
   );
 
@@ -146,17 +180,19 @@ export const adminRoutes: FastifyPluginAsync<{
 
       if (
         parsedBody.data.name === undefined &&
-        parsedBody.data.status === undefined
+        parsedBody.data.status === undefined &&
+        parsedBody.data.appearance === undefined
       ) {
         return reply.status(400).send({
           ok: false,
-          message: "Request body must include name and/or status.",
+          message: "Request body must include name, status, and/or appearance.",
         });
       }
 
       const updated = await tenantRepository.update(parsedParams.data.id, {
         name: parsedBody.data.name,
         status: parsedBody.data.status,
+        appearance: parsedBody.data.appearance,
       });
 
       if (!updated) {
@@ -167,6 +203,62 @@ export const adminRoutes: FastifyPluginAsync<{
       }
 
       return reply.send({ ok: true, tenant: updated });
+    },
+  );
+
+  fastify.post(
+    "/admin/tenants/:id/logo",
+    { preHandler: [authenticate, requireSuperAdmin] },
+    async (request, reply) => {
+      const paramsSchema = z.object({
+        id: z.string().trim().min(1),
+      });
+      const parsedParams = paramsSchema.safeParse(request.params);
+      if (!parsedParams.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Invalid tenant id.",
+        });
+      }
+
+      const parsedBody = uploadLogoBodySchema.safeParse(request.body);
+      if (!parsedBody.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Request body must include contentType and base64 data.",
+        });
+      }
+
+      const tenant = await tenantRepository.getById(parsedParams.data.id);
+      if (!tenant) {
+        return reply.status(404).send({
+          ok: false,
+          message: "Tenant not found.",
+        });
+      }
+
+      try {
+        const buffer = Buffer.from(parsedBody.data.data, "base64");
+        const logoUrl = await uploadTenantLogo({
+          config: opts.firebaseAdminConfig,
+          tenantId: parsedParams.data.id,
+          buffer,
+          contentType: parsedBody.data.contentType,
+        });
+
+        const updated = await tenantRepository.update(parsedParams.data.id, {
+          appearance: {
+            ...tenant.appearance,
+            logoUrl,
+          },
+        });
+
+        return reply.send({ ok: true, logoUrl, tenant: updated });
+      } catch (error) {
+        const message =
+          error instanceof Error ? error.message : "Unable to upload logo.";
+        return reply.status(400).send({ ok: false, message });
+      }
     },
   );
 

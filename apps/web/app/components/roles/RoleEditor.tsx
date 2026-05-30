@@ -17,7 +17,6 @@ import {
 const BUILT_IN_ROLE_NAMES = new Set(["admin", "editor", "viewer"]);
 
 interface RoleEditorProps {
-  readonly tenantId: string;
   readonly role: TenantRoleRecord | null;
   readonly knownGrants: readonly string[];
   readonly canCreate: boolean;
@@ -27,7 +26,6 @@ interface RoleEditorProps {
 }
 
 export function RoleEditor({
-  tenantId,
   role,
   knownGrants,
   canCreate,
@@ -72,7 +70,6 @@ export function RoleEditor({
           throw new Error(t("roles.forbiddenCreate"));
         }
         const created = await createRole({
-          tenantId,
           name: name.trim(),
           description: description.trim() || undefined,
           grants,
@@ -86,15 +83,11 @@ export function RoleEditor({
         throw new Error(t("roles.forbiddenUpdate"));
       }
 
-      const updated = await patchRole(
-        role.id,
-        {
-          description: description.trim() || undefined,
-          ...(isBuiltIn ? {} : { grants }),
-          fieldRules,
-        },
-        { tenantId },
-      );
+      const updated = await patchRole(role.id, {
+        description: description.trim() || undefined,
+        ...(isBuiltIn ? {} : { grants }),
+        fieldRules,
+      });
       onSaved(updated);
     } catch (saveError) {
       setError(

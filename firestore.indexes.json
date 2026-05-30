@@ -1,38 +1,4 @@
 {
-  "indexes": [
-    {
-      "collectionGroup": "projects",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "organizationId", "order": "ASCENDING" },
-        { "fieldPath": "id", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "projects",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "budget", "order": "ASCENDING" },
-        { "fieldPath": "id", "order": "ASCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "projects",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "budget", "order": "DESCENDING" },
-        { "fieldPath": "id", "order": "DESCENDING" }
-      ]
-    },
-    {
-      "collectionGroup": "projects",
-      "queryScope": "COLLECTION",
-      "fields": [
-        { "fieldPath": "organizationId", "order": "ASCENDING" },
-        { "fieldPath": "name", "order": "ASCENDING" },
-        { "fieldPath": "id", "order": "ASCENDING" }
-      ]
-    }
-  ],
+  "indexes": [],
   "fieldOverrides": []
 }

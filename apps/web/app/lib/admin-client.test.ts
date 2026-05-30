@@ -18,11 +18,7 @@ vi.mock("./firebase", () => ({
   },
 }));
 
-import {
-  listAdminUsers,
-  listAdminTenants,
-  createAdminTenant,
-} from "./admin-client";
+import { createAdminTenant, getAdminTenant } from "./admin-client";
 
 describe("admin-client", () => {
   const fetchMock = vi.fn();
@@ -32,58 +28,33 @@ describe("admin-client", () => {
     vi.stubGlobal("fetch", fetchMock);
   });
 
-  it("loads admin users with auth headers", async () => {
+  it("loads a tenant by id", async () => {
     fetchMock.mockResolvedValue({
       ok: true,
       json: async () => ({
         ok: true,
-        items: [
-          {
-            uid: "user_1",
-            email: "demo@example.com",
-            displayName: "Demo",
-            platformRole: null,
-            tenants: { tenant_a: ["viewer"] },
-          },
-        ],
+        tenant: {
+          id: "tenant_a",
+          name: "Tenant A",
+          status: "active",
+          createdBy: null,
+          createdAt: "2026-01-01T00:00:00.000Z",
+          updatedAt: "2026-01-01T00:00:00.000Z",
+        },
       }),
     });
 
-    const users = await listAdminUsers();
+    const tenant = await getAdminTenant("tenant_a");
 
-    expect(users).toHaveLength(1);
+    expect(tenant.name).toBe("Tenant A");
     expect(fetchMock).toHaveBeenCalledWith(
-      new URL("/admin/users", "http://127.0.0.1:3000"),
+      new URL("/admin/tenants/tenant_a", "http://127.0.0.1:3000"),
       expect.objectContaining({
         headers: expect.objectContaining({
           Authorization: "Bearer id-token",
         }),
       }),
     );
-  });
-
-  it("loads admin tenants with auth headers", async () => {
-    fetchMock.mockResolvedValue({
-      ok: true,
-      json: async () => ({
-        ok: true,
-        tenants: [
-          {
-            id: "tenant_a",
-            name: "Tenant A",
-            status: "active",
-            createdBy: null,
-            createdAt: "2026-01-01T00:00:00.000Z",
-            updatedAt: "2026-01-01T00:00:00.000Z",
-          },
-        ],
-      }),
-    });
-
-    const tenants = await listAdminTenants();
-
-    expect(tenants).toHaveLength(1);
-    expect(tenants[0]?.name).toBe("Tenant A");
   });
 
   it("creates an admin tenant", async () => {

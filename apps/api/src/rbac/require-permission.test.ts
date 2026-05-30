@@ -39,7 +39,7 @@ describe("createRequirePermission", () => {
     };
     const requirePermission = createRequirePermission(
       deps,
-      "organization.create",
+      "entityDefinition.create",
     );
     const request = {
       ctx: {
@@ -65,7 +65,7 @@ describe("createRequirePermission", () => {
     };
     const requirePermission = createRequirePermission(
       deps,
-      "organization.create",
+      "entityDefinition.create",
     );
     const request = {
       ctx: {
@@ -79,6 +79,6 @@ describe("createRequirePermission", () => {
     await requirePermission(request, reply);
 
     expect(reply.statusCode).toBe(200);
-    expect(request.ctx?.permissions).toContain("organization.create");
+    expect(request.ctx?.permissions).toContain("entityDefinition.create");
   });
 });

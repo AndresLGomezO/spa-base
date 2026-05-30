@@ -24,7 +24,15 @@ function getInitials(name: string): string {
 
 export function SidebarUser() {
   const { t } = useTranslation("common");
-  const { user, logout } = useAuth();
+  const {
+    user,
+    logout,
+    tenantRoleNames,
+    isSuperAdmin,
+    activeTenantName,
+    tenantId,
+    tenantOptions,
+  } = useAuth();
   const [open, setOpen] = useState(false);
 
   const displayName = useMemo(
@@ -33,8 +41,26 @@ export function SidebarUser() {
     [t, user?.displayName, user?.email],
   );
   const displayEmail = user?.email ?? "";
-  const roleKey = user?.role ?? "member";
-  const roleLabel = t(`roles.${roleKey}`, { defaultValue: roleKey });
+  const tenantLabel = useMemo(() => {
+    if (activeTenantName) {
+      return activeTenantName;
+    }
+    if (!tenantId) {
+      return null;
+    }
+    const option = tenantOptions.find((item) => item.id === tenantId);
+    return option?.name ?? tenantId;
+  }, [activeTenantName, tenantId, tenantOptions]);
+  const roleLabel = useMemo(() => {
+    const parts: string[] = [];
+    if (isSuperAdmin) {
+      parts.push(t("profile.platformSuperadmin"));
+    }
+    if (tenantRoleNames.length > 0) {
+      parts.push(tenantRoleNames.join(", "));
+    }
+    return parts.length > 0 ? parts.join(" · ") : t("profile.noRole");
+  }, [isSuperAdmin, t, tenantRoleNames]);
   const initials = getInitials(displayName);
 
   const profileBlock = (
@@ -45,6 +71,11 @@ export function SidebarUser() {
         <Text variant="caption" className="truncate">
           {displayEmail}
         </Text>
+        {tenantLabel ? (
+          <Text variant="caption" className="truncate">
+            {t("profile.tenant")}: {tenantLabel}
+          </Text>
+        ) : null}
         <Text variant="caption" className="truncate capitalize">
           {roleLabel}
         </Text>
@@ -80,6 +111,11 @@ export function SidebarUser() {
           <div className="grid min-w-0 flex-1 text-left leading-tight group-data-[collapsible=icon]/sidebar:hidden">
             <span className="truncate font-medium">{displayName}</span>
             <span className="text-muted truncate text-xs">{displayEmail}</span>
+            {tenantLabel ? (
+              <span className="text-muted truncate text-xs">
+                {t("profile.tenant")}: {tenantLabel}
+              </span>
+            ) : null}
             <span className="text-muted truncate text-xs capitalize">
               {roleLabel}
             </span>

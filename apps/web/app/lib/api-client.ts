@@ -425,3 +425,68 @@ export async function patchRole(
     query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
   });
 }
+
+export interface TenantUserMember {
+  readonly uid: string;
+  readonly email: string | null;
+  readonly displayName: string | null;
+  readonly roles: readonly string[];
+}
+
+export interface TenantUserInvite {
+  readonly id: string;
+  readonly email: string;
+  readonly roles: readonly string[];
+  readonly createdAt: string;
+}
+
+export async function listTenantUsers(options?: {
+  readonly tenantId?: string;
+}): Promise<{
+  readonly members: readonly TenantUserMember[];
+  readonly invites: readonly TenantUserInvite[];
+}> {
+  return apiRequest<{
+    members: readonly TenantUserMember[];
+    invites: readonly TenantUserInvite[];
+  }>("/api/tenant-users", {
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
+export async function createTenantUser(
+  input: { readonly email: string; readonly roles: readonly string[] },
+  options?: { readonly tenantId?: string },
+): Promise<{
+  readonly kind: "member" | "invite";
+  readonly uid?: string;
+  readonly id?: string;
+}> {
+  return apiRequest("/api/tenant-users", {
+    method: "POST",
+    body: input,
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
+export async function updateTenantUserRoles(
+  uid: string,
+  roles: readonly string[],
+  options?: { readonly tenantId?: string },
+): Promise<void> {
+  await apiRequest(`/api/tenant-users/${encodeURIComponent(uid)}`, {
+    method: "PATCH",
+    body: { roles },
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
+export async function removeTenantUser(
+  uid: string,
+  options?: { readonly tenantId?: string },
+): Promise<void> {
+  await apiRequest(`/api/tenant-users/${encodeURIComponent(uid)}`, {
+    method: "DELETE",
+    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}

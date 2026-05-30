@@ -11,8 +11,8 @@ import {
   resolveEntityActionPermissions,
 } from "./index.js";
 
-const Organization = defineEntity({
-  name: "organization",
+const Widget = defineEntity({
+  name: "widget",
   fields: {
     name: { type: "string", required: true },
     isActive: { type: "boolean", default: true },
@@ -27,13 +27,13 @@ const Organization = defineEntity({
 });
 
 const definition = {
-  name: "organization",
-  collection: "organizations",
+  name: "widget",
+  collection: "widgets",
   permissions: [
-    "organization.read",
-    "organization.create",
-    "organization.update",
-    "organization.delete",
+    "widget.read",
+    "widget.create",
+    "widget.update",
+    "widget.delete",
   ],
   fields: {
     name: { type: "string", required: true, optional: false },
@@ -44,7 +44,7 @@ const definition = {
       default: true,
     },
   },
-  ui: Organization.metadata.ui!,
+  ui: Widget.metadata.ui!,
 };
 
 describe("@repo/ui-builder", () => {
@@ -71,16 +71,16 @@ describe("@repo/ui-builder", () => {
   });
 
   it("filters nav entities by read permission", () => {
-    const visible = filterNavEntities([definition], ["organization.read"]);
+    const visible = filterNavEntities([definition], ["widget.read"]);
     expect(visible).toHaveLength(1);
     expect(filterNavEntities([definition], [])).toHaveLength(0);
   });
 
   it("resolves entity action permissions", () => {
     expect(
-      resolveEntityActionPermissions("organization", [
-        "organization.read",
-        "organization.create",
+      resolveEntityActionPermissions("widget", [
+        "widget.read",
+        "widget.create",
       ]),
     ).toMatchObject({
       canRead: true,

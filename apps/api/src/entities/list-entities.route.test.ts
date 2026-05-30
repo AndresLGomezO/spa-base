@@ -101,7 +101,7 @@ async function buildTestServer(
   } = {},
 ) {
   const profile = options.accessProfile ?? accessProfileState;
-  const runtime = createInMemoryCrudRuntime();
+  const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
   return buildServer({
     logger: false,
     repositories: runtime.repositories,
@@ -153,18 +153,15 @@ describe("GET /api/entities", () => {
     expect(body.data.items).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: "organization",
-          collection: "organizations",
+          name: "widget",
+          collection: "widgets",
           ui: expect.objectContaining({
-            nav: expect.objectContaining({ label: "Organizations" }),
+            nav: expect.objectContaining({ label: "Widgets" }),
           }),
         }),
         expect.objectContaining({
-          name: "project",
-          collection: "projects",
-        }),
-        expect.objectContaining({
-          name: "inventoryItem",
+          name: "testItem",
+          collection: "testItems",
         }),
       ]),
     );
@@ -190,11 +187,11 @@ describe("GET /api/entities", () => {
     const names = response
       .json()
       .data.items.map((item: { name: string }) => item.name);
-    expect(names).toEqual(expect.arrayContaining(["organization", "project"]));
+    expect(names).toEqual(expect.arrayContaining(["widget", "testItem"]));
   });
 
   it("returns only readable entities for partial viewers", async () => {
-    const runtime = createInMemoryCrudRuntime();
+    const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
     const server = await buildServer({
       logger: false,
       repositories: runtime.repositories,
@@ -202,10 +199,10 @@ describe("GET /api/entities", () => {
       joinRepository: createInMemoryJoinCollectionRepository(),
       getUserAccessProfile: async () => ({
         platformRole: null,
-        tenants: { tenant_a: ["org_viewer"] },
+        tenants: { tenant_a: ["widget_viewer"] },
       }),
       getRoleCatalog: async () => ({
-        org_viewer: { grants: ["organization.read"] },
+        widget_viewer: { grants: ["widget.read"] },
       }),
       skipPlatformRoleSeed: true,
       skipPlatformTenantSeed: true,
@@ -221,11 +218,11 @@ describe("GET /api/entities", () => {
     const names = response
       .json()
       .data.items.map((item: { name: string }) => item.name);
-    expect(names).toEqual(["organization"]);
+    expect(names).toEqual(["widget"]);
   });
 
   it("returns 403 when user has no read permissions", async () => {
-    const runtime = createInMemoryCrudRuntime();
+    const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
     const server = await buildServer({
       logger: false,
       repositories: runtime.repositories,
@@ -236,7 +233,7 @@ describe("GET /api/entities", () => {
         tenants: { tenant_a: ["no_access"] },
       }),
       getRoleCatalog: async () => ({
-        no_access: { grants: ["organization.create"] },
+        no_access: { grants: ["widget.create"] },
       }),
       skipPlatformRoleSeed: true,
       skipPlatformTenantSeed: true,

@@ -23,6 +23,9 @@ function mockAuthContext(
     tenantId: "tenant_a",
     availableTenants: ["tenant_a"],
     tenantOptions: [],
+    tenantRoleNames: [],
+    activeTenantName: null,
+    tenantAppearance: null,
     loginWithGoogle: vi.fn(),
     logout: vi.fn(),
     selectTenant: vi.fn(),
@@ -33,19 +36,19 @@ function mockAuthContext(
 describe("usePermission", () => {
   it("returns true when permission is granted", () => {
     vi.mocked(useAuth).mockReturnValue(
-      mockAuthContext({ permissions: ["organization.read"] }),
+      mockAuthContext({ permissions: ["widget.read"] }),
     );
 
-    const { result } = renderHook(() => usePermission("organization.read"));
+    const { result } = renderHook(() => usePermission("widget.read"));
     expect(result.current).toBe(true);
   });
 
   it("returns false when permission is missing", () => {
     vi.mocked(useAuth).mockReturnValue(
-      mockAuthContext({ permissions: ["organization.read"] }),
+      mockAuthContext({ permissions: ["widget.read"] }),
     );
 
-    const { result } = renderHook(() => usePermission("organization.delete"));
+    const { result } = renderHook(() => usePermission("widget.delete"));
     expect(result.current).toBe(false);
   });
 
@@ -54,7 +57,7 @@ describe("usePermission", () => {
       mockAuthContext({ permissions: [], isSuperAdmin: true }),
     );
 
-    const { result } = renderHook(() => usePermission("organization.delete"));
+    const { result } = renderHook(() => usePermission("widget.delete"));
     expect(result.current).toBe(true);
   });
 });

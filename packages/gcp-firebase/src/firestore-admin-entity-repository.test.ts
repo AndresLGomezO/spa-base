@@ -1,10 +1,7 @@
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
+import { z } from "zod";
 
-import { organizationConverter } from "@repo/firestore-converters";
-import {
-  ORGANIZATIONS_COLLECTION,
-  type OrganizationRecord,
-} from "@repo/shared-types";
+import { createVersionedConverter } from "@repo/firestore-converters";
 
 import { createFirestoreAdminEntityRepository } from "./firestore-admin-entity-repository.js";
 import { getFirestoreAdmin } from "./firebase-admin.js";
@@ -12,19 +9,47 @@ import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 const emulatorConfigured = Boolean(process.env.FIRESTORE_EMULATOR_HOST);
 
+const widgetSchema = z.object({
+  id: z.string(),
+  tenantId: z.string(),
+  name: z.string(),
+  email: z.string().optional(),
+  isActive: z.boolean().default(true),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+});
+
+type WidgetRecord = z.infer<typeof widgetSchema>;
+
+const WIDGETS_COLLECTION = "widgets";
+const widgetConverter = createVersionedConverter({
+  currentVersion: 1,
+  domainSchema: widgetSchema,
+  persistedSchema: widgetSchema
+    .extend({ _schemaVersion: z.literal(1) })
+    .strict(),
+  migrations: {},
+  fromPersisted: (persisted) => {
+    const domain = { ...persisted } as Record<string, unknown>;
+    Reflect.deleteProperty(domain, "_schemaVersion");
+    return domain as WidgetRecord;
+  },
+  toPersisted: (domain) => domain,
+});
+
 const firebaseConfig = {
   projectId: process.env.GCP_PROJECT_ID ?? "demo-project-base",
   firestoreEmulatorHost: process.env.FIRESTORE_EMULATOR_HOST,
 };
 
-function createOrganizationRecord(
-  overrides: Partial<OrganizationRecord> = {},
-): OrganizationRecord {
+function createWidgetRecord(
+  overrides: Partial<WidgetRecord> = {},
+): WidgetRecord {
   const now = new Date().toISOString();
   return {
-    id: `org_${Math.random().toString(36).slice(2, 10)}`,
+    id: `widget_${Math.random().toString(36).slice(2, 10)}`,
     tenantId: "tenant_a",
-    name: "Test Organization",
+    name: "Test Widget",
     email: "test@example.com",
     isActive: true,
     createdAt: now,
@@ -37,14 +62,14 @@ describe.skipIf(!emulatorConfigured)(
   "createFirestoreAdminEntityRepository (Firestore emulator)",
   () => {
     let repository: ReturnType<
-      typeof createFirestoreAdminEntityRepository<OrganizationRecord>
+      typeof createFirestoreAdminEntityRepository<WidgetRecord>
     >;
 
     beforeEach(async () => {
       repository = createFirestoreAdminEntityRepository({
         config: firebaseConfig,
-        collection: ORGANIZATIONS_COLLECTION,
-        converter: organizationConverter,
+        collection: WIDGETS_COLLECTION,
+        converter: widgetConverter,
       });
 
       const firestore = getFirestoreAdmin(firebaseConfig);
@@ -53,7 +78,7 @@ describe.skipIf(!emulatorConfigured)(
         const collectionRef = tenantEntityCollectionRef(
           firestore,
           tenantId,
-          ORGANIZATIONS_COLLECTION,
+          WIDGETS_COLLECTION,
         );
         const snapshot = await collectionRef.get();
         await Promise.all(snapshot.docs.map((doc) => doc.ref.delete()));
@@ -67,7 +92,7 @@ describe.skipIf(!emulatorConfigured)(
         const collectionRef = tenantEntityCollectionRef(
           firestore,
           tenantId,
-          ORGANIZATIONS_COLLECTION,
+          WIDGETS_COLLECTION,
         );
         const snapshot = await collectionRef.get();
         await Promise.all(snapshot.docs.map((doc) => doc.ref.delete()));
@@ -75,10 +100,10 @@ describe.skipIf(!emulatorConfigured)(
     });
 
     it("creates a record with id, tenantId, and timestamps", async () => {
-      const record = createOrganizationRecord({ id: "org_create_test" });
+      const record = createWidgetRecord({ id: "widget_create_test" });
       const created = await repository.create("tenant_a", record);
 
-      expect(created.id).toBe("org_create_test");
+      expect(created.id).toBe("widget_create_test");
       expect(created.tenantId).toBe("tenant_a");
       expect(created.createdAt).toBeTruthy();
       expect(created.updatedAt).toBeTruthy();
@@ -87,9 +112,9 @@ describe.skipIf(!emulatorConfigured)(
       const snapshot = await tenantEntityCollectionRef(
         firestore,
         "tenant_a",
-        ORGANIZATIONS_COLLECTION,
+        WIDGETS_COLLECTION,
       )
-        .doc("org_create_test")
+        .doc("widget_create_test")
         .get();
 
       expect(snapshot.exists).toBe(true);
@@ -99,12 +124,12 @@ describe.skipIf(!emulatorConfigured)(
     it("findAll returns only tenant-scoped records", async () => {
       await repository.create(
         "tenant_a",
-        createOrganizationRecord({ id: "org_a1", name: "Tenant A" }),
+        createWidgetRecord({ id: "widget_a1", name: "Tenant A" }),
       );
       await repository.create(
         "tenant_b",
-        createOrganizationRecord({
-          id: "org_b1",
+        createWidgetRecord({
+          id: "widget_b1",
           tenantId: "tenant_b",
           name: "Tenant B",
         }),
@@ -119,18 +144,21 @@ describe.skipIf(!emulatorConfigured)(
     it("findById returns null for wrong tenant path", async () => {
       await repository.create(
         "tenant_a",
-        createOrganizationRecord({ id: "org_isolated" }),
+        createWidgetRecord({ id: "widget_isolated" }),
       );
 
-      const wrongTenant = await repository.findById("org_isolated", "tenant_b");
+      const wrongTenant = await repository.findById(
+        "widget_isolated",
+        "tenant_b",
+      );
       expect(wrongTenant).toBeNull();
     });
 
     it("updates a record and refreshes updatedAt", async () => {
-      const record = createOrganizationRecord({ id: "org_update" });
+      const record = createWidgetRecord({ id: "widget_update" });
       await repository.create("tenant_a", record);
 
-      const updated = await repository.update("org_update", "tenant_a", {
+      const updated = await repository.update("widget_update", "tenant_a", {
         email: "updated@example.com",
         updatedAt: new Date(Date.now() + 1000).toISOString(),
       });
@@ -142,13 +170,13 @@ describe.skipIf(!emulatorConfigured)(
     it("deletes a record", async () => {
       await repository.create(
         "tenant_a",
-        createOrganizationRecord({ id: "org_delete" }),
+        createWidgetRecord({ id: "widget_delete" }),
       );
 
-      const deleted = await repository.delete("org_delete", "tenant_a");
+      const deleted = await repository.delete("widget_delete", "tenant_a");
       expect(deleted).toBe(true);
 
-      const missing = await repository.findById("org_delete", "tenant_a");
+      const missing = await repository.findById("widget_delete", "tenant_a");
       expect(missing).toBeNull();
     });
   },

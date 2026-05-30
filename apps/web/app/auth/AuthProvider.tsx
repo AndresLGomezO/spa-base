@@ -21,6 +21,7 @@ import {
   onAuthStateChanged,
   signInWithPopup,
   signOut,
+  type User,
 } from "../lib/firebase";
 
 interface AuthProviderProps {
@@ -38,6 +39,47 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [state, dispatch] = useReducer(authReducer, AUTH_INITIAL_STATE);
   const syncedUidRef = useRef<string | null>(null);
   const syncInFlightRef = useRef(false);
+  const autoBindAttemptedRef = useRef<string | null>(null);
+
+  const applyTenantSelection = useCallback(
+    async (
+      firebaseUser: User,
+      tenantId: string,
+    ): Promise<SelectTenantResult> => {
+      const selectResult = await selectTenantSession(firebaseUser, tenantId);
+      if (!selectResult.ok) {
+        return {
+          success: false,
+          error: selectResult.error ?? "Unable to select tenant.",
+        };
+      }
+
+      await firebaseUser.getIdToken(true);
+      const syncResult = await syncAuthSession(firebaseUser);
+
+      if (!syncResult.ok || !syncResult.user) {
+        return {
+          success: false,
+          error: syncResult.error ?? "Unable to refresh session.",
+        };
+      }
+
+      dispatch({
+        type: "TENANT_SELECTED",
+        tenantId: syncResult.user.tenantId ?? tenantId,
+        availableTenants: syncResult.user.availableTenants,
+        tenantOptions: syncResult.user.tenantOptions,
+        permissions: syncResult.user.permissions,
+        isSuperAdmin: syncResult.user.isSuperAdmin,
+        tenantRoleNames: syncResult.user.tenantRoleNames,
+        activeTenantName: syncResult.user.activeTenantName,
+        tenantAppearance: syncResult.user.tenantAppearance,
+      });
+
+      return { success: true };
+    },
+    [],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -47,6 +89,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
         if (!firebaseUser) {
           syncedUidRef.current = null;
           syncInFlightRef.current = false;
+          autoBindAttemptedRef.current = null;
           if (!cancelled) {
             dispatch({ type: "AUTH_STATE_UNAUTHENTICATED" });
           }
@@ -90,15 +133,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         syncedUidRef.current = firebaseUser.uid;
+        const isSuperAdmin = syncResult.user?.isSuperAdmin ?? false;
+        const tenantId = syncResult.user?.tenantId ?? null;
+        const availableTenants = syncResult.user?.availableTenants ?? [];
+
         dispatch({
           type: "AUTH_STATE_AUTHENTICATED",
           user: await buildAuthUser(firebaseUser),
           permissions: syncResult.user?.permissions ?? [],
-          isSuperAdmin: syncResult.user?.isSuperAdmin ?? false,
-          tenantId: syncResult.user?.tenantId ?? null,
-          availableTenants: syncResult.user?.availableTenants ?? [],
+          isSuperAdmin,
+          tenantId,
+          availableTenants,
           tenantOptions: syncResult.user?.tenantOptions ?? [],
+          tenantRoleNames: syncResult.user?.tenantRoleNames ?? [],
+          activeTenantName: syncResult.user?.activeTenantName ?? null,
+          tenantAppearance: syncResult.user?.tenantAppearance ?? null,
         });
+
+        if (
+          !isSuperAdmin &&
+          !tenantId &&
+          availableTenants.length > 0 &&
+          autoBindAttemptedRef.current !== firebaseUser.uid
+        ) {
+          autoBindAttemptedRef.current = firebaseUser.uid;
+          const firstTenant = availableTenants[0];
+          if (firstTenant) {
+            const bindResult = await applyTenantSelection(
+              firebaseUser,
+              firstTenant,
+            );
+            if (!bindResult.success && !cancelled) {
+              syncedUidRef.current = null;
+              autoBindAttemptedRef.current = null;
+              await signOut();
+              dispatch({
+                type: "LOGIN_FAILED",
+                error:
+                  bindResult.error ??
+                  "Unable to assign your tenant. Please try again.",
+              });
+            }
+          }
+        }
       })();
     });
 
@@ -106,7 +183,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       cancelled = true;
       unsubscribe();
     };
-  }, []);
+  }, [applyTenantSelection]);
 
   const loginWithGoogle = useCallback(async (): Promise<LoginResult> => {
     dispatch({ type: "LOGIN_STARTED" });
@@ -135,36 +212,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
         return { success: false, error: "Not authenticated." };
       }
 
-      const selectResult = await selectTenantSession(firebaseUser, tenantId);
-      if (!selectResult.ok) {
-        return {
-          success: false,
-          error: selectResult.error ?? "Unable to select tenant.",
-        };
-      }
-
-      await firebaseUser.getIdToken(true);
-      const syncResult = await syncAuthSession(firebaseUser);
-
-      if (!syncResult.ok || !syncResult.user) {
-        return {
-          success: false,
-          error: syncResult.error ?? "Unable to refresh session.",
-        };
-      }
-
-      dispatch({
-        type: "TENANT_SELECTED",
-        tenantId: syncResult.user.tenantId ?? tenantId,
-        availableTenants: syncResult.user.availableTenants,
-        tenantOptions: syncResult.user.tenantOptions,
-        permissions: syncResult.user.permissions,
-        isSuperAdmin: syncResult.user.isSuperAdmin,
-      });
-
-      return { success: true };
+      return applyTenantSelection(firebaseUser, tenantId);
     },
-    [],
+    [applyTenantSelection],
   );
 
   const value: AuthContextValue = useMemo(
@@ -179,6 +229,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       tenantId: state.tenantId,
       availableTenants: state.availableTenants,
       tenantOptions: state.tenantOptions,
+      tenantRoleNames: state.tenantRoleNames,
+      activeTenantName: state.activeTenantName,
+      tenantAppearance: state.tenantAppearance,
       loginWithGoogle,
       logout,
       selectTenant,
@@ -194,6 +247,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       state.permissions,
       state.phase,
       state.tenantId,
+      state.tenantRoleNames,
+      state.activeTenantName,
+      state.tenantAppearance,
       state.user,
     ],
   );

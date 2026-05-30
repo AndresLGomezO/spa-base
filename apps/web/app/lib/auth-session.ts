@@ -1,3 +1,5 @@
+import type { TenantAppearance } from "@repo/shared-types";
+
 import type { User } from "./firebase";
 import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
@@ -12,6 +14,9 @@ interface SyncedAuthUser {
   readonly tenantId: string | null;
   readonly availableTenants: readonly string[];
   readonly tenantOptions: readonly TenantOption[];
+  readonly tenantRoleNames: readonly string[];
+  readonly activeTenantName: string | null;
+  readonly tenantAppearance: TenantAppearance | null;
 }
 
 interface SyncAuthSessionResult {
@@ -28,6 +33,9 @@ interface SelectTenantSessionResult {
   readonly permissions?: readonly string[];
   readonly isSuperAdmin?: boolean;
   readonly error?: string;
+  readonly tenantRoleNames?: readonly string[];
+  readonly activeTenantName?: string | null;
+  readonly tenantAppearance?: TenantAppearance | null;
 }
 
 interface AuthValidateSuccessResponse {
@@ -40,6 +48,9 @@ interface AuthValidateSuccessResponse {
     readonly tenantId?: string | null;
     readonly availableTenants?: readonly string[];
     readonly tenantOptions?: readonly TenantOption[];
+    readonly tenantRoleNames?: readonly string[];
+    readonly activeTenantName?: string | null;
+    readonly tenantAppearance?: TenantAppearance | null;
   };
 }
 
@@ -55,6 +66,9 @@ interface AuthSelectTenantSuccessResponse {
   readonly tenantOptions: readonly TenantOption[];
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;
+  readonly tenantRoleNames: readonly string[];
+  readonly activeTenantName: string | null;
+  readonly tenantAppearance: TenantAppearance | null;
 }
 
 interface AuthSelectTenantErrorResponse {
@@ -85,6 +99,9 @@ function mapValidateUser(
     tenantId: user.tenantId ?? null,
     availableTenants: user.availableTenants ?? [],
     tenantOptions: user.tenantOptions ?? [],
+    tenantRoleNames: user.tenantRoleNames ?? [],
+    activeTenantName: user.activeTenantName ?? null,
+    tenantAppearance: user.tenantAppearance ?? null,
   };
 }
 
@@ -165,6 +182,9 @@ export async function selectTenantSession(
       tenantOptions: payload.tenantOptions,
       permissions: payload.permissions,
       isSuperAdmin: payload.isSuperAdmin,
+      tenantRoleNames: payload.tenantRoleNames ?? [],
+      activeTenantName: payload.activeTenantName ?? null,
+      tenantAppearance: payload.tenantAppearance ?? null,
     };
   } catch (error) {
     const message =

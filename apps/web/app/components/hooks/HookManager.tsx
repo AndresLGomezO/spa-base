@@ -50,7 +50,7 @@ export function HookManager({
     setError(null);
 
     try {
-      const result = await listHooks({ tenantId });
+      const result = await listHooks();
       setItems(result.items);
     } catch (loadError) {
       setError(
@@ -103,7 +103,6 @@ export function HookManager({
 
       {isCreating || editingHook ? (
         <HookEditor
-          tenantId={tenantId}
           hook={isCreating ? null : editingHook}
           canCreate={canCreate}
           canUpdate={canUpdate}

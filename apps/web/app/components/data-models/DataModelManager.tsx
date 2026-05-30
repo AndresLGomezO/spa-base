@@ -49,7 +49,7 @@ export function DataModelManager({
     setError(null);
 
     try {
-      const result = await listEntityDefinitions({ tenantId });
+      const result = await listEntityDefinitions();
       setItems(result.items);
     } catch (loadError) {
       setError(
@@ -92,7 +92,6 @@ export function DataModelManager({
 
       {showWizard ? (
         <EntityDefinitionWizard
-          tenantId={tenantId}
           onCancel={() => setShowWizard(false)}
           onCreated={() => {
             setShowWizard(false);

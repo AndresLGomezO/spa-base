@@ -42,8 +42,6 @@ pnpm test
 pnpm typecheck
 ```
 
-Expected: all turbo test tasks green (api ~69 tests, web ~52 tests, packages additional).
-
 ---
 
 ## 2. Create test tenant
@@ -51,7 +49,7 @@ Expected: all turbo test tasks green (api ~69 tests, web ~52 tests, packages add
 **As superadmin:**
 
 1. Sign in at `http://localhost:5173/login` (Google auth against emulator)
-2. Navigate to `/settings/admin`
+2. Open the tenant switcher → **Create tenant**, or go to `/platform/create-tenant`
 3. Create tenant: name e.g. `Validation Tenant`, note the generated `id` (e.g. `tenant_abc`)
 
 **Alternative (Firestore seed):** Dev tenants `tenant_dev_1` and `tenant_dev_2` are seeded on API startup.
@@ -60,75 +58,44 @@ Expected: all turbo test tasks green (api ~69 tests, web ~52 tests, packages add
 
 ## 3. Assign user roles
 
-**As superadmin at `/settings/admin`:**
+**As tenant admin at Settings → User Management (`/settings/users`):**
 
-1. Open user management
-2. Assign your test user tenants and roles, e.g.:
+1. Add user by email with roles, e.g. `editor@example.com` → `editor`
+2. Pending invites apply on first sign-in
 
-```json
-{
-  "tenants": {
-    "tenant_dev_1": ["admin"]
-  }
-}
-```
-
-3. Sign out and sign in, or use tenant switcher after selecting tenant
+**As superadmin:** switch tenant via the sidebar switcher, then manage users at `/settings/users` for that tenant.
 
 **Verify auth:**
 
-```bash
-# After selecting tenant in UI, GET /auth/validate should return permissions array
-```
+After selecting a tenant, `GET /auth/validate` should return `permissions`, `tenantRoleNames`, and `tenantId`.
 
 ---
 
 ## 3a. Superadmin tenant context
 
-Superadmins resolve tenant context as follows:
-
 | Surface | Behavior |
 | --- | --- |
-| **JWT claim** | Primary tenant for RBAC and CRUD when no override |
-| **`/settings/admin`** | Accessible without a tenant claim (platform management) |
-| **`/app/:entity`** | Requires tenant selection via `/select-tenant` when tenants exist |
-| **API `?tenantId=`** | Superadmin only — overrides target tenant on CRUD, roles, hooks, and entity-definition routes |
+| **JWT claim** | Primary tenant for RBAC, settings, and CRUD |
+| **Settings pages** | Same UI as tenant admin — no cross-tenant scope picker |
+| **Platform routes** | `/settings/tenant`, `/settings/appearance` — manage active tenant only |
+| **`/platform/create-tenant`** | Create tenant and switch into it |
+| **`/select-tenant`** | Superadmin only — pick active tenant when JWT has no `tenantId` |
+| **`/app/:entity`** | Requires tenant JWT claim (superadmin selects first; members auto-bind) |
 
-**Cross-tenant CRUD (superadmin):**
-
-```http
-POST /api/customer?tenantId=tenant_dev_2
-Authorization: Bearer <token>
-X-Firebase-AppCheck: <token>
-Content-Type: application/json
-
-{ "name": "Cross-tenant Customer" }
-```
-
-Non-superadmin users ignore `?tenantId=`; records always use the JWT claim tenant.
-
-**Dev seed data:** API startup seeds sample `customer` records under `tenant_dev_1` and `tenant_dev_2` (see `apps/api/src/admin/seed-platform-customers.ts`).
+Tenant members auto-bind their first available tenant on login and cannot switch tenants. Tenant name appears in the account profile popover.
 
 ---
 
-## 4. Phase 1 vertical slice — Customer (static entity)
+## 4. Sidebar navigation
 
-**As tenant admin on `tenant_dev_1`:**
+**Fresh tenant with no dynamic models:**
 
-1. Select tenant at `/select-tenant`
-2. Open **Customers** in sidebar (`/app/customer`)
-3. Confirm seeded rows appear (Acme Corp, Globex Industries, Inactive Co)
-4. Create a customer — appears in table
-5. Edit and delete (requires `editor`/`admin` role)
+- **Home** (`/`) — welcome page
+- **Data Models** group — empty until Model Builder creates an entity
+- **Settings** — User Management, Roles & Permissions, Data Model Builder, Automation
+- **Platform** (superadmin only) — Current Tenant, Appearance
 
-**Verify API:**
-
-```http
-GET /api/customer?limit=10
-GET /api/entities
-```
-
-`GET /api/entities` must list `customer` with fields and permissions.
+There are no static demo entity links (customer, organization, project, inventory).
 
 ---
 
@@ -137,165 +104,69 @@ GET /api/entities
 **As tenant admin with `entityDefinition.create`:**
 
 1. Select tenant at `/select-tenant` if needed
-2. Open **Control Plane → Data Models** (`/settings/data-models`)
+2. Open **Settings → Data Model Builder** (`/settings/data-models`)
 3. Create entity e.g. `loan`:
    - Label: `Loan`
    - Fields: `amount` (number, required), `status` (string)
-   - Optional: relation field to `organization`
-4. Save and confirm it appears in the definition list
+4. Save and confirm it appears in the definition list and under **Data Models** in the sidebar (`/app/loan`)
 
 **Verify API:**
 
 ```http
 GET /api/entity-definitions
-Authorization: Bearer <token>
-X-Firebase-AppCheck: <token>
-```
-
-**Verify catalog:**
-
-```http
 GET /api/entities
 ```
 
-Response should include `loan` alongside static entities (`organization`, `project`, `inventoryItem`).
+Response should include `loan` as a dynamic entity with fields and permissions.
 
 ---
 
-## 6. Configure tenant role with field rules (optional Phase 2 check)
+## 6. Configure tenant role with field rules
 
 **At `/settings/roles`:**
 
 1. Create custom role e.g. `loan_viewer`
 2. Grant `loan.read` only
 3. Add field rule: `amount` → read-only or hidden for a test role
-4. Assign role to a second test user (via superadmin user PATCH)
+4. Assign role via **Settings → User Management**
 
 ---
 
-## 7. Create automation hook (optional Phase 2 check)
+## 7. Create automation hook
 
 **At `/settings/hooks`:**
 
 1. Create hook: entity `loan`, event `beforeCreate`
-2. Action: `updateField` — set `status` to `"pending"`
-3. Save
+2. Add action (e.g. update field stub)
+3. Save and confirm hook appears in list
 
 ---
 
-## 8. CRUD via UI
+## 8. RBAC smoke checks
 
-Navigate to `/app/loan` (or your entity name).
+| Action | Expected |
+| --- | --- |
+| Viewer opens `/settings/data-models` | Forbidden or read-only UI |
+| Admin opens `/settings/users` | Can invite and edit roles |
+| Non-superadmin opens `/settings/tenant` | Forbidden |
+| Profile menu | Shows assigned tenant roles (not generic "Member") |
 
-| Step | Action | Expected |
-|------|--------|----------|
-| List | Open entity list | Table renders; filters debounced (~300ms) |
-| Create | `/app/loan/new` | Form from schema; submit creates record |
-| Read | Click record or `/app/loan/:id` | Detail/edit form loads |
-| Update | Change field, save | Record updated; `updatedAt` changes |
-| Delete | Delete (if permitted) | Record removed |
-| Hook | Create with hook configured | `status` auto-set to `pending` |
+---
 
-**Query filters (optional):**
+## 9. Profile roles
 
-Use table filter inputs or API directly:
+Open the account menu in the sidebar. Confirm:
 
-```http
-GET /api/loan?query={"filter":[{"field":"status","operator":"==","value":"pending"}],"pagination":{"limit":20}}
+- Tenant admins see assigned role names (e.g. `admin`, `editor`)
+- Superadmins see `Platform Superadmin` plus tenant roles when a tenant is active
+- Empty access shows `No role`
+
+---
+
+## 10. Automated Cypress (optional)
+
+```bash
+pnpm --filter web cypress:run
 ```
 
----
-
-## 9. Validate permissions
-
-Use three role scenarios (different users or reassign roles between runs):
-
-### Viewer (`viewer` or custom read-only)
-
-| Action | Expected |
-|--------|----------|
-| List `/app/organization` | 200, data visible |
-| Create `/app/organization/new` | Forbidden UI or 403 on submit |
-| Edit existing | Forbidden or read-only fields |
-| Delete | No delete action |
-
-### Editor (`editor`)
-
-| Action | Expected |
-|--------|----------|
-| Create | Allowed |
-| Update | Allowed |
-| Delete | Forbidden (403) |
-
-### Admin (`admin`)
-
-| Action | Expected |
-|--------|----------|
-| Full CRUD | All operations allowed |
-| Control Plane | Visible when admin permissions present |
-
-### Tenant isolation
-
-1. Create record in `tenant_dev_1`
-2. Switch to `tenant_dev_2`
-3. List same entity — record from tenant A must **not** appear
-4. Direct GET by ID from tenant B — **404**
-
----
-
-## 10. Optional extension checks
-
-### Module route
-
-```http
-GET /api/modules/inventory/summary
-```
-
-Requires `inventoryItem.read` and returns module-specific payload.
-
-### Static relation entity
-
-1. Create `organization`
-2. Create `project` referencing `organizationId`
-3. Filter projects by organization via query JSON
-
-### Performance smoke
-
-- Repeat list requests — TanStack Query should cache (no duplicate network spam within staleTime)
-- Scroll long entity list — virtualized rows (DOM node count << item count)
-
----
-
-## 11. Pass / fail criteria
-
-### Phase 1 (all required)
-
-- [ ] New entity definable without code deploy (Model Builder)
-- [ ] CRUD works for static and dynamic entities without new routes
-- [ ] Permissions enforced on API (403/404) and UI (hidden actions)
-- [ ] UI reflects field-level rules when configured
-- [ ] Tenant data isolation verified
-- [ ] Role change affects next request (allow up to 60s cache TTL for user profile)
-
-### Phase 2 (recommended)
-
-- [ ] Control Plane accessible to tenant admins
-- [ ] Hooks fire on configured lifecycle event
-- [ ] Query engine filters/sorts paginated lists
-- [ ] Module entity (`inventoryItem`) in catalog and CRUD works
-- [ ] Relation FK validated on create (invalid org → 400)
-
----
-
-## 12. Troubleshooting
-
-| Symptom | Check |
-|---------|-------|
-| 401 on API | Bearer token + App Check header |
-| 403 TENANT_NOT_RESOLVED | Select tenant or set `tenantId` claim |
-| 403 FORBIDDEN | User lacks role for tenant |
-| 400 on list in tests | Add `?limit=10` when `STRICT_QUERY_PAGINATION=true` |
-| Entity not in nav | User needs `{entity}.read`; refresh catalog |
-| Emulator connection | `FIRESTORE_EMULATOR_HOST`, `FIREBASE_AUTH_EMULATOR_HOST` in API env |
-
-See [apps/api/README.md](../apps/api/README.md) and [phase-2-platform-handoff.md](./phase-2-platform-handoff.md) §9.
+Specs cover auth redirects, navigation guards, and platform admin route protection.

@@ -1,16 +1,13 @@
 import { useMemo } from "react";
 import type { LucideIcon } from "lucide-react";
-import { Building2, Folder, Package } from "lucide-react";
+import { Database } from "lucide-react";
 
 import { getEntityIconName, getEntityLabel } from "../entities/entity-catalog";
 import { useEntityCatalog } from "../entities/entity-catalog-context";
 
-const ICONS: Record<string, LucideIcon> = {
-  building: Building2,
-  folder: Folder,
-};
+const ICONS: Record<string, LucideIcon> = {};
 
-const DEFAULT_ICON = Package;
+const DEFAULT_ICON = Database;
 
 interface EntityNavItem {
   readonly id: string;

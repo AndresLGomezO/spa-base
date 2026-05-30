@@ -26,6 +26,7 @@ export interface RegisteredUserRepository {
     authUser: AuthUserProjection,
   ): Promise<RegisteredUserUpsertResult>;
   list(params?: RegisteredUserListParams): Promise<RegisteredUserListResult>;
+  findByEmail(email: string): Promise<RegisteredUser | null>;
   updateAccess(
     uid: string,
     data: UpdateRegisteredUserAccessInput,

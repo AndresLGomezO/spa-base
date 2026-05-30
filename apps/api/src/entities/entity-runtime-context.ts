@@ -12,7 +12,7 @@ import {
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
 import { HOOK_PERMISSIONS } from "@repo/hooks";
-import { ROLE_PERMISSIONS } from "@repo/rbac";
+import { ROLE_PERMISSIONS, TENANT_USER_PERMISSIONS } from "@repo/rbac";
 import type {
   EntityDefinitionRepository,
   EntityQueryExecutor,
@@ -93,6 +93,7 @@ export class EntityRuntimeContext {
         "entityDefinition.update",
         ...HOOK_PERMISSIONS,
         ...ROLE_PERMISSIONS,
+        ...TENANT_USER_PERMISSIONS,
       ]),
     ];
   }

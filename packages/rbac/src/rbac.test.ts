@@ -13,27 +13,25 @@ describe("expandGrant", () => {
   });
 
   it("expands entity wildcard", () => {
-    expect(expandGrant("organization.*", known)).toEqual([
-      "organization.read",
-      "organization.create",
-      "organization.update",
-      "organization.delete",
+    expect(expandGrant("entityDefinition.*", known)).toEqual([
+      "entityDefinition.read",
+      "entityDefinition.create",
+      "entityDefinition.update",
     ]);
   });
 
   it("expands action wildcard", () => {
     expect(expandGrant("*.read", known)).toEqual([
-      "organization.read",
-      "project.read",
       "entityDefinition.read",
       "hook.read",
       "role.read",
+      "tenantUser.read",
     ]);
   });
 
   it("returns exact grant when not a wildcard", () => {
-    expect(expandGrant("organization.read", known)).toEqual([
-      "organization.read",
+    expect(expandGrant("entityDefinition.read", known)).toEqual([
+      "entityDefinition.read",
     ]);
   });
 });
@@ -63,11 +61,10 @@ describe("resolvePermissions", () => {
         tenants: { tenant_a: ["viewer"] },
       }),
     ).toEqual([
-      "organization.read",
-      "project.read",
       "entityDefinition.read",
       "hook.read",
       "role.read",
+      "tenantUser.read",
     ]);
   });
 
@@ -77,15 +74,9 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(15);
+    expect(permissions).toHaveLength(12);
     expect(permissions).toEqual(
       expect.arrayContaining([
-        "organization.read",
-        "organization.create",
-        "organization.update",
-        "project.read",
-        "project.create",
-        "project.update",
         "entityDefinition.read",
         "entityDefinition.create",
         "entityDefinition.update",
@@ -95,10 +86,13 @@ describe("resolvePermissions", () => {
         "role.read",
         "role.create",
         "role.update",
+        "tenantUser.read",
+        "tenantUser.create",
+        "tenantUser.update",
       ]),
     );
-    expect(permissions).not.toContain("organization.delete");
-    expect(permissions).not.toContain("project.delete");
+    expect(permissions).not.toContain("entityDefinition.delete");
+    expect(permissions).not.toContain("tenantUser.remove");
   });
 
   it("scopes permissions to the active tenant", () => {
@@ -111,11 +105,10 @@ describe("resolvePermissions", () => {
         },
       }),
     ).toEqual([
-      "organization.read",
-      "project.read",
       "entityDefinition.read",
       "hook.read",
       "role.read",
+      "tenantUser.read",
     ]);
   });
 
@@ -140,31 +133,34 @@ describe("resolvePermissions", () => {
 
 describe("hasPermission", () => {
   it("allows exact permission match", () => {
-    expect(hasPermission("organization.read", ["organization.read"])).toBe(
-      true,
-    );
+    expect(
+      hasPermission("entityDefinition.read", ["entityDefinition.read"]),
+    ).toBe(true);
   });
 
   it("denies missing permission", () => {
-    expect(hasPermission("organization.delete", ["organization.read"])).toBe(
-      false,
-    );
+    expect(
+      hasPermission("entityDefinition.update", ["entityDefinition.read"]),
+    ).toBe(false);
   });
 
   it("matches required action wildcards", () => {
-    expect(hasPermission("*.read", ["organization.read"])).toBe(true);
-    expect(hasPermission("*.read", ["organization.create"])).toBe(false);
+    expect(hasPermission("*.read", ["entityDefinition.read"])).toBe(true);
+    expect(hasPermission("*.read", ["entityDefinition.create"])).toBe(false);
   });
 
   it("matches required entity wildcards", () => {
     expect(
-      hasPermission("organization.*", ["organization.read", "project.read"]),
+      hasPermission("entityDefinition.*", [
+        "entityDefinition.read",
+        "hook.read",
+      ]),
     ).toBe(true);
   });
 
   it("bypasses checks for superadmin", () => {
     expect(
-      hasPermission("organization.delete", [], { isSuperAdmin: true }),
+      hasPermission("entityDefinition.update", [], { isSuperAdmin: true }),
     ).toBe(true);
   });
 });
@@ -181,13 +177,12 @@ describe("isPlatformSuperAdmin", () => {
 describe("expandGrants", () => {
   it("deduplicates overlapping grants", () => {
     expect(
-      expandGrants(["*.read", "organization.read"], ALL_KNOWN_PERMISSIONS),
+      expandGrants(["*.read", "entityDefinition.read"], ALL_KNOWN_PERMISSIONS),
     ).toEqual([
-      "organization.read",
-      "project.read",
       "entityDefinition.read",
       "hook.read",
       "role.read",
+      "tenantUser.read",
     ]);
   });
 });

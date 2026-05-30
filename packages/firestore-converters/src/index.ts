@@ -34,18 +34,6 @@ export {
 
 export { createEntityConverter } from "./entity/create-entity-converter.js";
 export {
-  customerConverter,
-  customerCurrentVersion,
-} from "./customer/schema.latest.js";
-export {
-  organizationConverter,
-  organizationCurrentVersion,
-} from "./organization/schema.latest.js";
-export {
-  projectConverter,
-  projectCurrentVersion,
-} from "./project/schema.latest.js";
-export {
   registeredUserConverter,
   registeredUserCurrentVersion,
 } from "./user/schema.latest.js";
@@ -76,6 +64,13 @@ export { type HookRepository } from "./hook/repository-contract.js";
 export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
 export { type TenantRoleRepository } from "./tenant-role/repository-contract.js";
 export { createInMemoryTenantRoleRepository } from "./tenant-role/in-memory-repository.js";
+export {
+  TENANT_USER_INVITES_SUBCOLLECTION,
+  tenantUserInviteRecordSchema,
+  type TenantUserInviteRepository,
+  type TenantUserInviteRecord,
+} from "./tenant-user-invite/repository-contract.js";
+export { createInMemoryTenantUserInviteRepository } from "./tenant-user-invite/in-memory-repository.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

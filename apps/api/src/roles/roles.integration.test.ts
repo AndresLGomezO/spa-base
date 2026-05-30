@@ -6,14 +6,11 @@ import { clearEntityRegistry } from "@repo/entities";
 import { clearHookRegistry } from "@repo/hooks";
 import { clearModuleRegistries } from "@repo/modules";
 
-import { platformApp } from "@app/platform/app.config.js";
-import {
-  bootstrapPlatformApp,
-  resetPlatformBootstrapForTests,
-} from "@app/platform/bootstrap.js";
+import { resetPlatformBootstrapForTests } from "@app/platform/bootstrap.js";
 
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
+import { registerCrudTestEntities } from "../test/crud-test-entities.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
 import { buildServer } from "../server.js";
 
@@ -76,10 +73,10 @@ function buildViewerCatalogWithHiddenEmail() {
       id: "viewer",
       tenantId: "tenant_a",
       name: "viewer",
-      grants: ["organization.read"],
+      grants: ["widget.read"],
       fieldRules: [
         {
-          resource: "organization",
+          resource: "widget",
           fields: [{ field: "email", access: "none" }],
         },
       ],
@@ -90,7 +87,7 @@ function buildViewerCatalogWithHiddenEmail() {
 }
 
 async function buildTestServer(roleCatalog = buildTenantRoleCatalog([])) {
-  const runtime = createInMemoryCrudRuntime();
+  const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
   return buildServer({
     logger: false,
     repositories: runtime.repositories,
@@ -110,7 +107,7 @@ describe("roles integration", () => {
     clearEntityRegistry();
     clearDynamicEntityRegistry();
     clearHookRegistry();
-    bootstrapPlatformApp(platformApp);
+    registerCrudTestEntities();
     authState.tenantId = "tenant_a";
     userProfile.platformRole = null;
     userProfile.tenants = { tenant_a: ["admin"] };
@@ -139,7 +136,7 @@ describe("roles integration", () => {
       },
       payload: {
         name: "finance",
-        grants: ["organization.read", "organization.update"],
+        grants: ["widget.read", "widget.update"],
       },
     });
 
@@ -147,12 +144,12 @@ describe("roles integration", () => {
     expect(createResponse.json().data.name).toBe("finance");
   });
 
-  it("strips forbidden fields from organization GET responses", async () => {
+  it("strips forbidden fields from widget GET responses", async () => {
     const server = await buildTestServer(buildViewerCatalogWithHiddenEmail());
 
     const createRecord = await server.inject({
       method: "POST",
-      url: "/api/organization",
+      url: "/api/widget",
       headers: {
         authorization: "Bearer fake-token",
         "x-firebase-appcheck": "fake-appcheck",
@@ -168,7 +165,7 @@ describe("roles integration", () => {
     userProfile.tenants = { tenant_a: ["viewer"] };
     const getRecord = await server.inject({
       method: "GET",
-      url: `/api/organization/${recordId}`,
+      url: `/api/widget/${recordId}`,
       headers: {
         authorization: "Bearer fake-token",
         "x-firebase-appcheck": "fake-appcheck",
@@ -187,10 +184,10 @@ describe("roles integration", () => {
           id: "editor",
           tenantId: "tenant_a",
           name: "editor",
-          grants: ["organization.read", "organization.update"],
+          grants: ["widget.read", "widget.update"],
           fieldRules: [
             {
-              resource: "organization",
+              resource: "widget",
               fields: [{ field: "name", access: "read" }],
             },
           ],
@@ -203,7 +200,7 @@ describe("roles integration", () => {
     userProfile.tenants = { tenant_a: ["admin"] };
     const createRecord = await server.inject({
       method: "POST",
-      url: "/api/organization",
+      url: "/api/widget",
       headers: {
         authorization: "Bearer fake-token",
         "x-firebase-appcheck": "fake-appcheck",
@@ -216,7 +213,7 @@ describe("roles integration", () => {
     userProfile.tenants = { tenant_a: ["editor"] };
     const patchResponse = await server.inject({
       method: "PUT",
-      url: `/api/organization/${recordId}`,
+      url: `/api/widget/${recordId}`,
       headers: {
         authorization: "Bearer fake-token",
         "x-firebase-appcheck": "fake-appcheck",

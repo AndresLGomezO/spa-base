@@ -48,6 +48,7 @@ catalog:
   tailwindcss: ^4.3.0
   "@tailwindcss/vite": ^4.3.0
   clsx: ^2.1.1
+  culori: ^4.0.2
   tailwind-merge: ^3.3.1
   i18next: ^24.2.0
   react-i18next: ^15.1.0

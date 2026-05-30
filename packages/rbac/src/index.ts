@@ -27,6 +27,7 @@ export {
   tenantRoleRecordSchema,
   TENANT_ROLES_SUBCOLLECTION,
   ROLE_PERMISSIONS,
+  TENANT_USER_PERMISSIONS,
   fieldAccessSchema,
   fieldPermissionSchema,
   entityFieldRulesSchema,

@@ -72,6 +72,12 @@ export function createInMemoryTenantRepository(
         ...existing,
         name: input.name?.trim() ?? existing.name,
         status: input.status ?? existing.status,
+        appearance:
+          input.appearance === null
+            ? undefined
+            : input.appearance !== undefined
+              ? { ...existing.appearance, ...input.appearance }
+              : existing.appearance,
         updatedAt: nowIso(),
       };
       tenants.set(id, updated);

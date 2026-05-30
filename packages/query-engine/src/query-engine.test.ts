@@ -18,8 +18,8 @@ import {
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
-const Organization = defineEntity({
-  name: "organization",
+const Widget = defineEntity({
+  name: "widget",
   fields: {
     name: { type: "string", required: true },
     score: { type: "number" },
@@ -27,16 +27,16 @@ const Organization = defineEntity({
   },
 });
 
-const Project = defineEntity({
-  name: "project",
+const TestItem = defineEntity({
+  name: "testItem",
   fields: {
     name: { type: "string", required: true },
     budget: { type: "number", required: true },
-    organizationId: {
+    widgetId: {
       type: "relation",
       required: true,
       relation: {
-        target: "organization",
+        target: "widget",
         type: "many-to-one",
         onDelete: "restrict",
       },
@@ -44,8 +44,8 @@ const Project = defineEntity({
   },
 });
 
-registerEntity(Organization as unknown as AnyDefinedEntity);
-registerEntity(Project as unknown as AnyDefinedEntity);
+registerEntity(Widget as unknown as AnyDefinedEntity);
+registerEntity(TestItem as unknown as AnyDefinedEntity);
 
 describe("parseListQueryInput", () => {
   it("merges legacy limit and cursor into pagination", () => {
@@ -93,7 +93,7 @@ describe("parseListQueryInput", () => {
 describe("normalizeEntityQuery", () => {
   it("rejects unknown fields", () => {
     expect(() =>
-      normalizeEntityQuery(Project as unknown as AnyDefinedEntity, {
+      normalizeEntityQuery(TestItem as unknown as AnyDefinedEntity, {
         filter: [{ field: "missing", operator: "==", value: "x" }],
       }),
     ).toThrowError(
@@ -103,7 +103,7 @@ describe("normalizeEntityQuery", () => {
 
   it("rejects tenantId filters", () => {
     expect(() =>
-      normalizeEntityQuery(Organization as unknown as AnyDefinedEntity, {
+      normalizeEntityQuery(Widget as unknown as AnyDefinedEntity, {
         filter: [{ field: "tenantId", operator: "==", value: "tenant_a" }],
       }),
     ).toThrow(/tenantId/);
@@ -111,7 +111,7 @@ describe("normalizeEntityQuery", () => {
 
   it("rejects invalid operators for field types", () => {
     expect(() =>
-      normalizeEntityQuery(Organization as unknown as AnyDefinedEntity, {
+      normalizeEntityQuery(Widget as unknown as AnyDefinedEntity, {
         filter: [{ field: "name", operator: ">", value: "a" }],
       }),
     ).toThrow(/not allowed/);
@@ -119,20 +119,20 @@ describe("normalizeEntityQuery", () => {
 
   it("allows relation field equality filters", () => {
     const normalized = normalizeEntityQuery(
-      Project as unknown as AnyDefinedEntity,
+      TestItem as unknown as AnyDefinedEntity,
       {
-        filter: [{ field: "organizationId", operator: "==", value: "org_1" }],
+        filter: [{ field: "widgetId", operator: "==", value: "org_1" }],
       },
     );
 
     expect(normalized.filters).toEqual([
-      { field: "organizationId", operator: "==", value: "org_1" },
+      { field: "widgetId", operator: "==", value: "org_1" },
     ]);
   });
 
   it("rejects multiple inequality filters", () => {
     expect(() =>
-      normalizeEntityQuery(Project as unknown as AnyDefinedEntity, {
+      normalizeEntityQuery(TestItem as unknown as AnyDefinedEntity, {
         filter: [
           { field: "budget", operator: ">", value: 10 },
           { field: "budget", operator: "<", value: 100 },
@@ -145,7 +145,7 @@ describe("normalizeEntityQuery", () => {
 
   it("requires sort field to match inequality filter", () => {
     expect(() =>
-      normalizeEntityQuery(Project as unknown as AnyDefinedEntity, {
+      normalizeEntityQuery(TestItem as unknown as AnyDefinedEntity, {
         filter: [{ field: "budget", operator: ">", value: 10 }],
         sort: [{ field: "name", direction: "asc" }],
       }),
@@ -154,7 +154,7 @@ describe("normalizeEntityQuery", () => {
 
   it("defaults sort to id ascending when no sort or inequality", () => {
     const normalized = normalizeEntityQuery(
-      Organization as unknown as AnyDefinedEntity,
+      Widget as unknown as AnyDefinedEntity,
       {},
     );
     expect(normalized.sort).toEqual({ field: "id", direction: "asc" });
@@ -164,10 +164,10 @@ describe("normalizeEntityQuery", () => {
 describe("applyRbacFilters", () => {
   it("denies reads without entity permission", () => {
     expect(() =>
-      applyRbacFilters("organization", {
+      applyRbacFilters("widget", {
         userId: "user_1",
         tenantId: "tenant_a",
-        permissions: ["project.read"],
+        permissions: ["testItem.read"],
       }),
     ).toThrowError(
       expect.objectContaining({ code: QueryErrorCode.QUERY_FORBIDDEN }),
@@ -176,7 +176,7 @@ describe("applyRbacFilters", () => {
 
   it("allows superadmin without explicit entity permission", () => {
     expect(
-      applyRbacFilters("organization", {
+      applyRbacFilters("widget", {
         userId: "user_1",
         tenantId: "tenant_a",
         permissions: [],
@@ -201,9 +201,7 @@ describe("createQueryEngine", () => {
   it("executes find through the injected executor", async () => {
     const engine = createQueryEngine({
       getEntityDefinition: (name) =>
-        name === "organization"
-          ? (Organization as unknown as AnyDefinedEntity)
-          : undefined,
+        name === "widget" ? (Widget as unknown as AnyDefinedEntity) : undefined,
       getExecutor: () => ({
         async executeQuery() {
           return {
@@ -218,12 +216,12 @@ describe("createQueryEngine", () => {
     });
 
     const result = await engine.find(
-      "organization",
+      "widget",
       {},
       {
         userId: "user_1",
         tenantId: "tenant_a",
-        permissions: ["organization.read"],
+        permissions: ["widget.read"],
       },
     );
 
@@ -233,9 +231,7 @@ describe("createQueryEngine", () => {
   it("throws NOT_FOUND when findOne misses", async () => {
     const engine = createQueryEngine({
       getEntityDefinition: (name) =>
-        name === "organization"
-          ? (Organization as unknown as AnyDefinedEntity)
-          : undefined,
+        name === "widget" ? (Widget as unknown as AnyDefinedEntity) : undefined,
       getExecutor: () => ({
         async executeQuery() {
           return { items: [], nextCursor: null };
@@ -247,10 +243,10 @@ describe("createQueryEngine", () => {
     });
 
     await expect(
-      engine.findOne("organization", "missing", {
+      engine.findOne("widget", "missing", {
         userId: "user_1",
         tenantId: "tenant_a",
-        permissions: ["organization.read"],
+        permissions: ["widget.read"],
       }),
     ).rejects.toMatchObject({ code: QueryErrorCode.NOT_FOUND });
   });
