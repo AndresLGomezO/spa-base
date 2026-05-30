@@ -18,7 +18,7 @@ button {
   @apply rounded-md border border-border p-2 font-[inherit];
 }
 
-button {
+button:not([data-overlay-backdrop]) {
   @apply cursor-pointer;
 }
 

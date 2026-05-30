@@ -46,7 +46,7 @@ function renderForm() {
     <TestEntityCatalogProvider>
       <MemoryRouter>
         <I18nextProvider i18n={i18n}>
-          <EntityForm entityName="widget" mode="create" />
+          <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
         </I18nextProvider>
       </MemoryRouter>
     </TestEntityCatalogProvider>,

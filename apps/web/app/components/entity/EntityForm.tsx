@@ -9,9 +9,8 @@ import {
 } from "@repo/ui-builder";
 import { Button, Form, Heading, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 
-import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
+import { type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
@@ -34,6 +33,8 @@ interface EntityFormProps {
   readonly entityName: EntityName;
   readonly mode: "create" | "edit";
   readonly recordId?: string;
+  readonly onCancel: () => void;
+  readonly onSuccess?: () => void;
 }
 
 function cleanFormValues(
@@ -51,9 +52,14 @@ function cleanFormValues(
   return payload;
 }
 
-export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
+export function EntityForm({
+  entityName,
+  mode,
+  recordId,
+  onCancel,
+  onSuccess,
+}: EntityFormProps) {
   const { t } = useTranslation("common");
-  const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const entityPermissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
@@ -130,14 +136,6 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
     toast.error(error);
   }, [error]);
 
-  const title = useMemo(
-    () =>
-      mode === "create"
-        ? t("entity.createTitle", { entity: getEntityLabel(definition) })
-        : t("entity.editTitle", { entity: getEntityLabel(definition) }),
-    [definition, mode, t],
-  );
-
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const cleanedValues = cleanFormValues(sections, values);
@@ -161,7 +159,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
             targetIds,
           );
         }
-        navigate(`/app/${entityName}`);
+        onSuccess?.();
       } catch (syncError) {
         toast.error(
           syncError instanceof Error
@@ -188,7 +186,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
           targetIds,
         );
       }
-      navigate(`/app/${entityName}`);
+      onSuccess?.();
     } catch (syncError) {
       toast.error(
         syncError instanceof Error
@@ -203,53 +201,44 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
   }
 
   return (
-    <div className="flex w-full max-w-xl flex-col gap-4">
-      <Heading level={1}>{title}</Heading>
-      <Form onSubmit={(event) => void handleSubmit(event)}>
-        {sections.map((section, index) => (
-          <div
-            key={`${section.title ?? "section"}-${index}`}
-            className="flex flex-col gap-4"
-          >
-            {section.title ? (
-              <Heading level={2}>{section.title}</Heading>
-            ) : null}
-            {section.fields.map((fieldName) => {
-              const fieldUI = definition.ui.fields?.[fieldName];
-              const access = getFieldAccessLevel(fieldAccess, fieldName);
-              if (!isFieldVisible(fieldUI, entityPermissions.canRead, access)) {
-                return null;
-              }
+    <Form className="px-1" onSubmit={(event) => void handleSubmit(event)}>
+      {sections.map((section, index) => (
+        <div
+          key={`${section.title ?? "section"}-${index}`}
+          className="flex flex-col gap-4"
+        >
+          {section.title ? <Heading level={2}>{section.title}</Heading> : null}
+          {section.fields.map((fieldName) => {
+            const fieldUI = definition.ui.fields?.[fieldName];
+            const access = getFieldAccessLevel(fieldAccess, fieldName);
+            if (!isFieldVisible(fieldUI, entityPermissions.canRead, access)) {
+              return null;
+            }
 
-              return (
-                <EntityField
-                  key={fieldName}
-                  entityName={entityName}
-                  fieldName={fieldName}
-                  value={values[fieldName]}
-                  error={fieldErrors[fieldName]}
-                  readOnly={!isFieldEditable(fieldUI, canWrite, access)}
-                  onChange={(name, value) =>
-                    setValues((current) => ({ ...current, [name]: value }))
-                  }
-                />
-              );
-            })}
-          </div>
-        ))}
-        <div className="flex items-center gap-3">
-          <Button type="submit" loading={isSubmitting}>
-            {t("entity.save")}
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => navigate(`/app/${entityName}`)}
-          >
-            {t("entity.cancel")}
-          </Button>
+            return (
+              <EntityField
+                key={fieldName}
+                entityName={entityName}
+                fieldName={fieldName}
+                value={values[fieldName]}
+                error={fieldErrors[fieldName]}
+                readOnly={!isFieldEditable(fieldUI, canWrite, access)}
+                onChange={(name, value) =>
+                  setValues((current) => ({ ...current, [name]: value }))
+                }
+              />
+            );
+          })}
         </div>
-      </Form>
-    </div>
+      ))}
+      <div className="flex items-center gap-3">
+        <Button type="submit" loading={isSubmitting}>
+          {t("entity.save")}
+        </Button>
+        <Button type="button" variant="outline" onClick={onCancel}>
+          {t("entity.cancel")}
+        </Button>
+      </div>
+    </Form>
   );
 }

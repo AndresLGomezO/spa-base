@@ -5,6 +5,7 @@ import { Navigate, useLocation, useNavigate } from "react-router";
 import { Button, Heading, PageLoader, Text } from "@repo/ui";
 
 import { useAuth } from "../auth/AuthContext";
+import { useCreateTenantModal } from "../components/platform/create-tenant-modal-context";
 
 export default function SelectTenantRoute() {
   const { t } = useTranslation("common");
@@ -22,6 +23,7 @@ export default function SelectTenantRoute() {
   const [submittingTenantId, setSubmittingTenantId] = useState<string | null>(
     null,
   );
+  const { openCreateTenantModal } = useCreateTenantModal();
 
   const fromPath =
     typeof location.state === "object" &&
@@ -93,11 +95,7 @@ export default function SelectTenantRoute() {
         ))}
       </div>
 
-      <Button
-        type="button"
-        variant="outline"
-        onClick={() => navigate("/platform/create-tenant")}
-      >
+      <Button type="button" variant="outline" onClick={openCreateTenantModal}>
         {t("tenant.createNew")}
       </Button>
     </main>

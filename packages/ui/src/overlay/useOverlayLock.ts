@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react";
 
 export function useOverlayLock(
+  mounted: boolean,
   open: boolean,
   onClose: () => void,
   focusPanel?: () => void,
@@ -15,11 +16,20 @@ export function useOverlayLock(
   );
 
   useEffect(() => {
+    if (!mounted) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [mounted]);
+
+  useEffect(() => {
     if (!open) return;
 
     document.addEventListener("keydown", handleKeyDown);
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
 
     const focusTimer = window.setTimeout(() => {
       focusPanel?.();
@@ -27,7 +37,6 @@ export function useOverlayLock(
 
     return () => {
       document.removeEventListener("keydown", handleKeyDown);
-      document.body.style.overflow = previousOverflow;
       window.clearTimeout(focusTimer);
     };
   }, [focusPanel, handleKeyDown, open]);

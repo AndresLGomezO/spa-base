@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 import { Building2 } from "lucide-react";
 
 import { Button, Popover, sidebarMenuButtonClassName } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { useAuth } from "../auth/AuthContext";
+import { useCreateTenantModal } from "./platform/create-tenant-modal-context";
 
 export function TenantSwitcher() {
   const { t } = useTranslation("common");
-  const navigate = useNavigate();
+  const { openCreateTenantModal } = useCreateTenantModal();
   const {
     tenantId,
     availableTenants,
@@ -81,7 +81,7 @@ export function TenantSwitcher() {
           className="justify-start"
           onClick={() => {
             setOpen(false);
-            navigate("/platform/create-tenant");
+            openCreateTenantModal();
           }}
         >
           {t("tenant.createNew")}

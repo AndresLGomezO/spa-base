@@ -54,7 +54,7 @@ pnpm typecheck
 **As superadmin:**
 
 1. Sign in at `http://localhost:5173/login` (Google auth against emulator)
-2. Open the tenant switcher → **Create tenant**, or go to `/platform/create-tenant`
+2. Open the tenant switcher → **Create tenant**, or use **Create new tenant** on `/select-tenant` (legacy `/platform/create-tenant` also opens the modal)
 3. Create tenant: name e.g. `Validation Tenant`, note the generated `id` (e.g. `tenant_abc`)
 
 **Alternative (Firestore seed):** Dev tenants `tenant_dev_1` and `tenant_dev_2` are seeded on API startup.
@@ -83,7 +83,7 @@ After selecting a tenant, `GET /auth/validate` should return `permissions`, `ten
 | **JWT claim** | Primary tenant for RBAC, settings, and CRUD |
 | **Settings pages** | Same UI as tenant admin — no cross-tenant scope picker |
 | **Platform routes** | `/settings/tenant`, `/settings/appearance` — manage active tenant only |
-| **`/platform/create-tenant`** | Create tenant and switch into it |
+| **Create tenant modal** | From tenant switcher or `/select-tenant`; legacy `/platform/create-tenant` redirects and opens modal |
 | **`/select-tenant`** | Superadmin only — pick active tenant when JWT has no `tenantId` |
 | **`/app/:entity`** | Requires tenant JWT claim (superadmin selects first; members auto-bind) |
 

@@ -9,7 +9,6 @@ import {
 import { useVirtualizer } from "@tanstack/react-virtual";
 import { Alert, Button, Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 
 import {
   formatFieldLabel,
@@ -40,6 +39,7 @@ interface EntityTableProps {
   readonly entityState: EntityListState;
   readonly onQueryConfigChange: (queryConfig: QueryConfig) => void;
   readonly onRequestDelete?: (id: string) => void;
+  readonly onRequestEdit?: (id: string) => void;
 }
 
 const ROW_HEIGHT_PX = 48;
@@ -49,6 +49,7 @@ export function EntityTable({
   entityState,
   onQueryConfigChange,
   onRequestDelete,
+  onRequestEdit,
 }: EntityTableProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
@@ -231,13 +232,16 @@ export function EntityTable({
                       {permissions.canUpdate || permissions.canDelete ? (
                         <td className="border-border border-b px-4 py-3">
                           <div className="flex items-center gap-2">
-                            {permissions.canUpdate ? (
-                              <Link
-                                to={`/app/${entityName}/${item.id}`}
-                                className="text-primary hover:underline"
+                            {permissions.canUpdate && onRequestEdit ? (
+                              <Button
+                                type="button"
+                                variant="ghost"
+                                size="sm"
+                                className="text-primary hover:underline h-auto px-0 py-0"
+                                onClick={() => onRequestEdit(item.id)}
                               >
                                 {t("entity.edit")}
-                              </Link>
+                              </Button>
                             ) : null}
                             {permissions.canDelete && onRequestDelete ? (
                               <Button

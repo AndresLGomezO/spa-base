@@ -50,17 +50,17 @@ See [app/routing/README.md](app/routing/README.md).
 | Public     | `/login`                                                                       |
 | Private    | All authenticated routes — **fixed viewport** (`h-dvh`); only `<main>` scrolls |
 | Tenant     | `/`, `/app/*` (requires tenant claim)                                          |
-| Superadmin | `/settings/tenant`, `/settings/appearance`, `/platform/create-tenant`          |
+| Superadmin | `/settings/tenant`, `/settings/appearance`                                     |
 
 Settings routes (`/settings/users`, `/settings/data-models`, etc.) live in the private layout without a tenant guard. All users operate on the active JWT `tenantId`. Superadmins switch tenants via the sidebar `TenantSwitcher` or `/select-tenant`; tenant members are auto-bound to their first assigned tenant.
 
 ### Entity routes (dynamic)
 
-| Path               | Description                             |
-| ------------------ | --------------------------------------- |
-| `/app/:entity`     | Entity list (table/card via UI builder) |
-| `/app/:entity/new` | Create record                           |
-| `/app/:entity/:id` | Edit record                             |
+| Path               | Description                           |
+| ------------------ | ------------------------------------- |
+| `/app/:entity`     | Entity list; create/edit in modals    |
+| `/app/:entity/new` | Legacy redirect → `?create` on list   |
+| `/app/:entity/:id` | Legacy redirect → `?edit=:id` on list |
 
 Sidebar lists entities from catalog filtered by `{entity}.read` permission.
 
@@ -75,7 +75,7 @@ Sidebar lists entities from catalog filtered by `{entity}.read` permission.
 | `/settings/hooks`       | Automation hooks                                |
 | `/settings/roles`       | Tenant roles + field permissions                |
 
-Platform superadmin: **Platform → Current Tenant** at `/settings/tenant`, **Appearance** at `/settings/appearance`, and **Create tenant** via the tenant switcher or `/platform/create-tenant`.
+Platform superadmin: **Platform → Current Tenant** at `/settings/tenant`, **Appearance** at `/settings/appearance`, and **Create tenant** via modal from the tenant switcher or `/select-tenant`.
 
 ---
 

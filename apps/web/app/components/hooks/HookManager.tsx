@@ -1,9 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FieldLabel, toast } from "@repo/ui";
 
 import { listHooks, type HookRecord } from "../../lib/api-client";
+import { FormModal } from "../forms/FormModal";
 import { HookEditor } from "./HookEditor";
 import { HookList } from "./HookList";
 
@@ -63,6 +64,11 @@ export function HookManager({
     void loadHooks();
   }, [loadHooks]);
 
+  function closeModal() {
+    setIsCreating(false);
+    setEditingId(null);
+  }
+
   function handleSaved(hook: HookRecord) {
     setItems((current) => {
       const index = current.findIndex((item) => item.id === hook.id);
@@ -73,9 +79,16 @@ export function HookManager({
       }
       return current.map((item) => (item.id === hook.id ? hook : item));
     });
-    setEditingId(null);
-    setIsCreating(false);
+    closeModal();
   }
+
+  const modalOpen = isCreating || editingId !== null;
+  const modalTitle = useMemo(() => {
+    if (isCreating) {
+      return t("hooks.createTitle");
+    }
+    return t("hooks.editTitle", { name: editingHook?.name ?? "" });
+  }, [editingHook?.name, isCreating, t]);
 
   return (
     <div className="space-y-6">
@@ -97,27 +110,32 @@ export function HookManager({
         </div>
       ) : null}
 
-      {isCreating || editingHook ? (
-        <HookEditor
-          hook={isCreating ? null : editingHook}
-          canCreate={canCreate}
-          canUpdate={canUpdate}
-          onSaved={handleSaved}
-          onCancel={() => {
-            setIsCreating(false);
-            setEditingId(null);
-          }}
-        />
-      ) : (
-        <HookList
-          items={items}
-          isLoading={isLoading}
-          canCreate={canCreate}
-          canUpdate={canUpdate}
-          onCreate={() => setIsCreating(true)}
-          onEdit={(id) => setEditingId(id)}
-        />
-      )}
+      <HookList
+        items={items}
+        isLoading={isLoading}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        onCreate={() => setIsCreating(true)}
+        onEdit={(id) => setEditingId(id)}
+      />
+
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={modalTitle}
+        size="lg"
+      >
+        {modalOpen ? (
+          <HookEditor
+            key={isCreating ? "create" : (editingId ?? "edit")}
+            hook={isCreating ? null : editingHook}
+            canCreate={canCreate}
+            canUpdate={canUpdate}
+            onSaved={handleSaved}
+            onCancel={closeModal}
+          />
+        ) : null}
+      </FormModal>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FieldLabel, Text, toast } from "@repo/ui";
@@ -7,6 +7,7 @@ import {
   listEntityDefinitions,
   type EntityDefinitionRecord,
 } from "../../lib/api-client";
+import { FormModal } from "../forms/FormModal";
 import { EntityDefinitionList } from "./EntityDefinitionList";
 import { EntityDefinitionWizard } from "./EntityDefinitionWizard";
 import { EntityDefinitionEditor } from "./EntityDefinitionEditor";
@@ -37,6 +38,11 @@ export function DataModelManager({
   const [showWizard, setShowWizard] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  const editingRecord =
+    editingId === null
+      ? null
+      : (items.find((item) => item.id === editingId) ?? null);
+
   const loadDefinitions = useCallback(async () => {
     if (!tenantId) {
       setItems([]);
@@ -64,6 +70,19 @@ export function DataModelManager({
     void loadDefinitions();
   }, [loadDefinitions]);
 
+  function closeModal() {
+    setShowWizard(false);
+    setEditingId(null);
+  }
+
+  const modalOpen = showWizard || editingId !== null;
+  const modalTitle = useMemo(() => {
+    if (showWizard) {
+      return t("dataModels.createModel");
+    }
+    return t("dataModels.editTitle", { name: editingRecord?.name ?? "" });
+  }, [editingRecord?.name, showWizard, t]);
+
   return (
     <div className="space-y-6">
       {showTenantPicker ? (
@@ -86,41 +105,49 @@ export function DataModelManager({
         </div>
       ) : null}
 
-      {showWizard ? (
-        <EntityDefinitionWizard
-          onCancel={() => setShowWizard(false)}
-          onCreated={() => {
-            setShowWizard(false);
-            void loadDefinitions();
-          }}
-        />
-      ) : editingId ? (
-        <EntityDefinitionEditor
-          definitionId={editingId}
-          tenantId={tenantId}
-          canUpdate={canUpdate}
-          onCancel={() => setEditingId(null)}
-          onSaved={() => {
-            setEditingId(null);
-            void loadDefinitions();
-          }}
-        />
-      ) : (
-        <EntityDefinitionList
-          items={items}
-          isLoading={isLoading}
-          canCreate={canCreate}
-          canUpdate={canUpdate}
-          onCreate={() => setShowWizard(true)}
-          onEdit={(id) => setEditingId(id)}
-        />
-      )}
+      <EntityDefinitionList
+        items={items}
+        isLoading={isLoading}
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        onCreate={() => setShowWizard(true)}
+        onEdit={(id) => setEditingId(id)}
+      />
 
-      {!showWizard && !editingId && !isLoading && items.length > 0 ? (
+      {!modalOpen && !isLoading && items.length > 0 ? (
         <Text className="text-muted-foreground text-sm">
           {t("dataModels.catalogHint")}
         </Text>
       ) : null}
+
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={modalTitle}
+        size="xl"
+      >
+        {showWizard ? (
+          <EntityDefinitionWizard
+            onCancel={closeModal}
+            onCreated={() => {
+              closeModal();
+              void loadDefinitions();
+            }}
+          />
+        ) : editingId ? (
+          <EntityDefinitionEditor
+            key={editingId}
+            definitionId={editingId}
+            tenantId={tenantId}
+            canUpdate={canUpdate}
+            onCancel={closeModal}
+            onSaved={() => {
+              closeModal();
+              void loadDefinitions();
+            }}
+          />
+        ) : null}
+      </FormModal>
     </div>
   );
 }

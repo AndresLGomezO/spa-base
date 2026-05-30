@@ -5,6 +5,7 @@ import { Button, FieldLabel, Text, toast } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { listRoles, type TenantRoleRecord } from "../../lib/api-client";
+import { FormModal } from "../forms/FormModal";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { RoleEditor } from "./RoleEditor";
 
@@ -31,7 +32,7 @@ export function RoleManager({
   const { t } = useTranslation("common");
   const { items: entities } = useEntityCatalog();
   const [items, setItems] = useState<readonly TenantRoleRecord[]>([]);
-  const [selectedRoleId, setSelectedRoleId] = useState<string | null>(null);
+  const [editingRoleId, setEditingRoleId] = useState<string | null>(null);
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -63,10 +64,10 @@ export function RoleManager({
     return [...grants].sort();
   }, [entities]);
 
-  const selectedRole =
-    selectedRoleId === null
+  const editingRole =
+    editingRoleId === null
       ? null
-      : (items.find((item) => item.id === selectedRoleId) ?? null);
+      : (items.find((item) => item.id === editingRoleId) ?? null);
 
   const loadRoles = useCallback(async () => {
     if (!tenantId) {
@@ -93,6 +94,11 @@ export function RoleManager({
     void loadRoles();
   }, [loadRoles]);
 
+  function closeModal() {
+    setIsCreating(false);
+    setEditingRoleId(null);
+  }
+
   function handleSaved(role: TenantRoleRecord) {
     setItems((current) => {
       const index = current.findIndex((item) => item.id === role.id);
@@ -103,9 +109,16 @@ export function RoleManager({
       }
       return current.map((item) => (item.id === role.id ? role : item));
     });
-    setSelectedRoleId(role.id);
-    setIsCreating(false);
+    closeModal();
   }
+
+  const modalOpen = isCreating || editingRoleId !== null;
+  const modalTitle = useMemo(() => {
+    if (isCreating) {
+      return t("roles.createTitle");
+    }
+    return t("roles.editTitle", { name: editingRole?.name ?? "" });
+  }, [editingRole?.name, isCreating, t]);
 
   if (isLoading) {
     return <SettingsPanelSkeleton />;
@@ -137,7 +150,7 @@ export function RoleManager({
             type="button"
             onClick={() => {
               setIsCreating(true);
-              setSelectedRoleId(null);
+              setEditingRoleId(null);
             }}
           >
             {t("roles.create")}
@@ -145,40 +158,47 @@ export function RoleManager({
         ) : null}
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <div className="space-y-2">
+      {items.length === 0 ? (
+        <Text>{t("roles.selectRole")}</Text>
+      ) : (
+        <div className="grid max-w-md gap-2">
           {items.map((role) => (
             <Button
               key={role.id}
               type="button"
-              variant={selectedRoleId === role.id ? "primary" : "outline"}
+              variant="outline"
               className="w-full justify-start"
               onClick={() => {
-                setSelectedRoleId(role.id);
+                if (!canUpdate) return;
+                setEditingRoleId(role.id);
                 setIsCreating(false);
               }}
+              disabled={!canUpdate}
             >
               {role.name}
             </Button>
           ))}
         </div>
+      )}
 
-        {isCreating || selectedRole ? (
+      <FormModal
+        open={modalOpen}
+        onClose={closeModal}
+        title={modalTitle}
+        size="lg"
+      >
+        {modalOpen ? (
           <RoleEditor
-            role={isCreating ? null : selectedRole}
+            key={isCreating ? "create" : (editingRoleId ?? "edit")}
+            role={isCreating ? null : editingRole}
             knownGrants={knownGrants}
             canCreate={canCreate}
             canUpdate={canUpdate}
             onSaved={handleSaved}
-            onCancel={() => {
-              setIsCreating(false);
-              setSelectedRoleId(null);
-            }}
+            onCancel={closeModal}
           />
-        ) : (
-          <Text>{t("roles.selectRole")}</Text>
-        )}
-      </div>
+        ) : null}
+      </FormModal>
     </div>
   );
 }

@@ -8,7 +8,6 @@ import {
 } from "@repo/ui-builder";
 import { Alert, Button, Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
-import { Link } from "react-router";
 
 import {
   formatFieldLabel,
@@ -34,6 +33,7 @@ interface EntityCardViewProps {
   readonly entityState: EntityListState;
   readonly onQueryConfigChange: (queryConfig: QueryConfig) => void;
   readonly onRequestDelete?: (id: string) => void;
+  readonly onRequestEdit?: (id: string) => void;
 }
 
 export function EntityCardView({
@@ -41,6 +41,7 @@ export function EntityCardView({
   entityState,
   onQueryConfigChange,
   onRequestDelete,
+  onRequestEdit,
 }: EntityCardViewProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
@@ -138,13 +139,16 @@ export function EntityCardView({
               ))}
               {permissions.canUpdate || permissions.canDelete ? (
                 <div className="flex items-center gap-2 pt-2">
-                  {permissions.canUpdate ? (
-                    <Link
-                      to={`/app/${entityName}/${item.id}`}
-                      className="text-primary hover:underline text-sm"
+                  {permissions.canUpdate && onRequestEdit ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:underline h-auto px-0 py-0"
+                      onClick={() => onRequestEdit(item.id)}
                     >
                       {t("entity.edit")}
-                    </Link>
+                    </Button>
                   ) : null}
                   {permissions.canDelete && onRequestDelete ? (
                     <Button
