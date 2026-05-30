@@ -9,7 +9,7 @@ export default function SettingsAppearanceRoute() {
   const { tenantId } = useAuth();
 
   return (
-    <div className="space-y-4">
+    <div className="min-w-0 w-full space-y-4">
       <div className="space-y-2">
         <Heading level={1}>{t("platform.appearance.title")}</Heading>
         <Text>{t("platform.appearance.description")}</Text>

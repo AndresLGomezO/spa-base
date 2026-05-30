@@ -37,7 +37,7 @@ function EntityCatalogProviderFromQuery({
   const catalogQuery = useQuery({
     queryKey: entityCatalogQueryKey,
     queryFn: listEntities,
-    staleTime: 5 * 60_000,
+    staleTime: 30_000,
   });
 
   const isLoading = catalogQuery.isLoading;

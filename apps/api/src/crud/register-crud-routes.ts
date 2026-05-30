@@ -31,7 +31,7 @@ import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
 import { noopPreHandler } from "./noop-pre-handler.js";
 import { replyWithError, successEnvelope } from "./response.js";
-import { parseOrFormatError } from "./validation.js";
+import { parseOrFormatError, stripToSchemaKeys } from "./validation.js";
 
 const listQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
@@ -571,7 +571,7 @@ export async function registerCrudRoutes<
 
       const parsedBody = parseOrFormatError(
         activeEntity.createSchema,
-        request.body,
+        stripToSchemaKeys(activeEntity.createSchema, request.body),
       );
       if (!parsedBody.success) {
         return replyWithError(
@@ -753,7 +753,7 @@ export async function registerCrudRoutes<
 
       const parsedBody = parseOrFormatError(
         activeEntity.updateSchema,
-        request.body,
+        stripToSchemaKeys(activeEntity.updateSchema, request.body),
       );
       if (!parsedBody.success) {
         return replyWithError(

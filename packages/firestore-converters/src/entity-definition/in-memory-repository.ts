@@ -62,13 +62,18 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
       }
 
       const now = new Date().toISOString();
-      const next = entityDefinitionRecordSchema.parse({
+      const base = {
         ...current,
         ...(input.label ? { label: input.label } : {}),
         ...(input.fields ? { fields: input.fields } : {}),
-        ...(input.ui ? { ui: input.ui } : {}),
         version: current.version + 1,
         updatedAt: now,
+      };
+      const { ui: _droppedUi, ...withoutUi } = base;
+      void _droppedUi;
+      const next = entityDefinitionRecordSchema.parse({
+        ...(input.fields && !input.ui ? withoutUi : base),
+        ...(input.ui ? { ui: input.ui } : {}),
       });
       store.set(key(tenantId, id), next);
       return next;

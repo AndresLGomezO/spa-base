@@ -45,6 +45,8 @@ Superadmin only. View and edit the **active** tenant (name, status). Suspend or 
 
 Superadmin only. Upload tenant logo and override theme CSS variables for the active tenant. Branding applies at runtime via `TenantBrandingProvider`.
 
+Logo upload uses Firebase Admin Storage (GCS in production, Storage emulator locally). Requires `FIREBASE_STORAGE_EMULATOR_HOST` in local API env. See [gcs-storage-guide.md](./gcs-storage-guide.md).
+
 ### Create tenant (`/platform/create-tenant`)
 
 Superadmin only. Create a new tenant and switch into it. Linked from the tenant switcher and `/select-tenant`.

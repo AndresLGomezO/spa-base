@@ -21,6 +21,7 @@ Index of all platform documentation. Start with the [Phase 2 handoff](./phase-2-
 |----------|-------------|
 | [entity-system-guide.md](./entity-system-guide.md) | `defineEntity()`, static vs dynamic entities, package dependencies |
 | [firestore-collections-guide.md](./firestore-collections-guide.md) | Firestore paths, converters, adding collections |
+| [gcs-storage-guide.md](./gcs-storage-guide.md) | GCS / Firebase Storage (logo uploads, emulator, production) |
 
 ---
 

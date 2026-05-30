@@ -12,6 +12,7 @@ export interface FirebaseAdminConfig {
   readonly authEmulatorHost?: string;
   readonly firestoreEmulatorHost?: string;
   readonly storageEmulatorHost?: string;
+  readonly storageEmulatorPublicHost?: string;
   readonly storageBucket?: string;
   readonly serviceAccountJson?: string;
 }

@@ -22,6 +22,7 @@ services:
       - ./firebase.json:/home/node/firebase.json
       - ./firestore.rules:/home/node/firestore.rules
       - ./firestore.indexes.json:/home/node/firestore.indexes.json
+      - ./storage.rules:/home/node/storage.rules
       - ./apps/web/build/client:/home/node/apps/web/build/client
 
   api:
@@ -49,6 +50,9 @@ services:
       - NODE_ENV=development
       - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
       - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+      - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+      - FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=127.0.0.1:9199
+      - GCP_STORAGE_BUCKET=demo-project-base.appspot.com
     depends_on:
       firebase-emulator:
         condition: service_started

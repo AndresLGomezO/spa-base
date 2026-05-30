@@ -19,17 +19,28 @@ function extensionForContentType(contentType: string): string {
   return "jpg";
 }
 
+const STORAGE_OBJECT_ID_PATTERN = /^[a-zA-Z0-9_-]{1,128}$/;
+
+export function validateStorageObjectId(objectId: string): boolean {
+  return STORAGE_OBJECT_ID_PATTERN.test(objectId);
+}
+
 export async function uploadTenantLogo(params: {
   readonly config: FirebaseAdminConfig;
   readonly tenantId: string;
+  readonly objectId: string;
   readonly buffer: Buffer;
   readonly contentType: string;
 }): Promise<string> {
+  if (!validateStorageObjectId(params.objectId)) {
+    throw new Error("Invalid storage object id.");
+  }
+
   const bucketName = resolveStorageBucket(params.config);
   const app = getFirebaseAdminApp(params.config);
   const bucket = getStorage(app).bucket(bucketName);
   const extension = extensionForContentType(params.contentType);
-  const objectPath = `tenants/${params.tenantId}/logo.${extension}`;
+  const objectPath = `tenants/${params.tenantId}/images/${params.objectId}.${extension}`;
   const file = bucket.file(objectPath);
 
   await file.save(params.buffer, {
@@ -41,8 +52,11 @@ export async function uploadTenantLogo(params: {
   });
 
   if (params.config.storageEmulatorHost) {
+    const publicHost =
+      params.config.storageEmulatorPublicHost?.trim() ||
+      params.config.storageEmulatorHost;
     const encodedPath = encodeURIComponent(objectPath);
-    return `http://${params.config.storageEmulatorHost}/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
+    return `http://${publicHost}/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
   }
 
   await file.makePublic();

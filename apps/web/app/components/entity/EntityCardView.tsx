@@ -14,10 +14,14 @@ import {
   formatFieldLabel,
   type EntityName,
 } from "../../entities/entity-catalog";
-import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import {
+  useEntityCatalog,
+  useEntityDefinition,
+} from "../../entities/entity-catalog-context";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
 import type { useEntity } from "../../hooks/useEntity";
-import { formatCellValue } from "./entity-field-utils";
+import { resolveEntityCellValue } from "./resolve-entity-cell-value";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
@@ -39,6 +43,7 @@ export function EntityCardView({
 }: EntityCardViewProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
+  const { getDefinition } = useEntityCatalog();
   const permissions = useEntityPermissions(entityName);
   const view = useMemo(() => resolveActiveView(definition), [definition]);
   const columns = useMemo(() => getTableColumns(definition), [definition]);
@@ -72,7 +77,10 @@ export function EntityCardView({
   const { items, isLoading, error, nextCursor, isLoadingMore, loadMore } =
     entityState;
 
-  if (isLoading) {
+  const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
+    useOneToManyColumnData(definition, items, getDefinition);
+
+  if (isLoading || isLoadingRelations) {
     return <Text>{t("entity.loading")}</Text>;
   }
 
@@ -117,7 +125,14 @@ export function EntityCardView({
                   <Text className="text-muted-foreground text-xs">
                     {formatFieldLabel(column, definition)}
                   </Text>
-                  <Text>{formatCellValue(item[column])}</Text>
+                  <Text>
+                    {resolveEntityCellValue(
+                      item,
+                      column,
+                      definition,
+                      getOneToManyCellValue,
+                    )}
+                  </Text>
                 </div>
               ))}
               {permissions.canUpdate || permissions.canDelete ? (

@@ -81,13 +81,18 @@ export function createFirestoreAdminEntityDefinitionRepository(
       }
 
       const now = new Date().toISOString();
-      const next = entityDefinitionRecordSchema.parse({
+      const base = {
         ...current,
         ...(input.label ? { label: input.label } : {}),
         ...(input.fields ? { fields: input.fields } : {}),
-        ...(input.ui ? { ui: input.ui } : {}),
         version: current.version + 1,
         updatedAt: now,
+      };
+      const withoutUi = { ...base };
+      Reflect.deleteProperty(withoutUi, "ui");
+      const next = entityDefinitionRecordSchema.parse({
+        ...(input.fields && !input.ui ? withoutUi : base),
+        ...(input.ui ? { ui: input.ui } : {}),
       });
 
       await collection(tenantId).doc(id).set(next);

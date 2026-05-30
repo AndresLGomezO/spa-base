@@ -13,6 +13,7 @@ import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import { I18nSync } from "./components/I18nSync";
+import { SiteTitleSync } from "./components/SiteTitleSync";
 import { bootstrapWebPlatform } from "./platform/bootstrap";
 import "./i18n";
 import { i18n } from "./i18n";
@@ -48,7 +49,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
 export function HydrateFallback() {
   return (
-    <main aria-busy="true">
+    <main aria-busy="true" className="mx-auto max-w-2xl px-4 py-8">
       <Text>{i18n.t("loading")}</Text>
     </main>
   );
@@ -58,6 +59,7 @@ function AppShell() {
   return (
     <>
       <I18nSync />
+      <SiteTitleSync />
       <Outlet />
     </>
   );
@@ -92,7 +94,7 @@ export function ErrorBoundary({ error }: { error: unknown }) {
   }
 
   return (
-    <main>
+    <main className="mx-auto max-w-2xl px-4 py-8">
       <Heading level={1}>{message}</Heading>
       <Text>{details}</Text>
       {stack && (

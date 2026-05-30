@@ -8,7 +8,15 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, FieldLabel, Form, Input, Text } from "@repo/ui";
+import {
+  Alert,
+  Button,
+  FieldLabel,
+  Form,
+  Input,
+  PhotoUpload,
+  Text,
+} from "@repo/ui";
 
 import type { ColorPaletteConfig, TenantAppearance } from "@repo/shared-types";
 import {
@@ -180,15 +188,19 @@ export function TenantAppearanceEditor({
     void loadTenant();
   }, [loadTenant]);
 
-  async function handleLogoUpload(file: File) {
+  async function handleLogoUpload(params: {
+    readonly file: File;
+    readonly uploadId: string;
+  }) {
     setIsSaving(true);
     setError(null);
     setSuccess(null);
     try {
-      const data = await readFileAsBase64(file);
+      const data = await readFileAsBase64(params.file);
       const result = await uploadTenantLogo(tenantId, {
-        contentType: file.type || "image/png",
+        contentType: params.file.type || "image/jpeg",
         data,
+        objectId: params.uploadId,
       });
       setLogoPreview(result.logoUrl);
       setTenant(result.tenant);
@@ -200,6 +212,7 @@ export function TenantAppearanceEditor({
           ? uploadError.message
           : t("platform.appearance.saveFailed"),
       );
+      throw uploadError;
     } finally {
       setIsSaving(false);
     }
@@ -297,20 +310,24 @@ export function TenantAppearanceEditor({
 
         <section className="grid gap-3">
           <Text className="font-medium">{t("platform.appearance.logo")}</Text>
-          {logoPreview ? (
-            <img
-              src={logoPreview}
-              alt={t("platform.appearance.logoPreview")}
-              className="h-16 w-auto object-contain"
-            />
-          ) : null}
-          <Input
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/svg+xml"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
-              if (file) void handleLogoUpload(file);
+          <PhotoUpload
+            value={logoPreview}
+            alt={t("platform.appearance.logoPreview")}
+            cropShape="rect"
+            uploading={isSaving}
+            disabled={isSaving}
+            labels={{
+              select: t("platform.appearance.photoSelect"),
+              change: t("platform.appearance.photoChange"),
+              cropTitle: t("platform.appearance.photoCropTitle"),
+              cropDescription: t("platform.appearance.photoCropDescription"),
+              upload: t("platform.appearance.photoUpload"),
+              cancel: t("platform.appearance.photoCancel"),
+              reset: t("platform.appearance.photoReset"),
+              expand: t("platform.appearance.photoExpand"),
             }}
+            onUpload={handleLogoUpload}
+            onError={(message) => setError(message)}
           />
         </section>
 

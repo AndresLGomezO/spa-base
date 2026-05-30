@@ -64,7 +64,7 @@ export function EntityDefinitionWizard({
     );
   }
 
-  function handleNext(event: FormEvent) {
+  async function handleNext(event: FormEvent) {
     event.preventDefault();
     setError(null);
 
@@ -73,6 +73,7 @@ export function EntityDefinitionWizard({
         setError(t("dataModels.validation.basicRequired"));
         return;
       }
+      await refresh();
       setStep(2);
       return;
     }

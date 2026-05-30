@@ -1,5 +1,10 @@
-import { Checkbox, FieldError, FieldLabel, Input } from "@repo/ui";
+import { Checkbox, FieldError, FieldLabel, Input, Text } from "@repo/ui";
 import { resolveComponentId } from "@repo/ui-builder";
+import {
+  isDocumentStoredField,
+  isJoinCollectionRelationField,
+} from "@repo/entities";
+import { useTranslation } from "react-i18next";
 
 import {
   formatFieldLabel,
@@ -12,6 +17,7 @@ import {
 } from "./entity-field-utils";
 import { resolveFieldComponent } from "./field-component-registry";
 import { RelationPicker } from "./RelationPicker";
+import { ManyToManyRelationPicker } from "./ManyToManyRelationPicker";
 
 interface EntityFieldProps {
   readonly entityName: EntityName;
@@ -30,6 +36,7 @@ export function EntityField({
   readOnly = false,
   onChange,
 }: EntityFieldProps) {
+  const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
   const meta = definition.fields[fieldName];
   if (!meta) return null;
@@ -58,6 +65,36 @@ export function EntityField({
   if (meta.type === "relation" || componentId === "relation") {
     const target = meta.relation?.target;
     if (!target) return null;
+
+    if (isJoinCollectionRelationField(meta)) {
+      return (
+        <ManyToManyRelationPicker
+          entityName={entityName}
+          fieldName={fieldName}
+          targetEntity={target}
+          value={value}
+          label={label}
+          required={meta.required}
+          error={error}
+          readOnly={readOnly}
+          onChange={onChange}
+        />
+      );
+    }
+
+    if (!isDocumentStoredField(meta)) {
+      return (
+        <div className="flex flex-col gap-1">
+          <FieldLabel>
+            {label || formatFieldLabel(fieldName, definition)}
+          </FieldLabel>
+          <Text className="text-muted-foreground text-sm">
+            {t("entity.relationOneToManyReadOnly")}
+          </Text>
+        </div>
+      );
+    }
+
     return (
       <RelationPicker
         entityName={entityName}

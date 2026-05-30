@@ -5,6 +5,7 @@ export const FirebaseRuntimeEnvSchema = z.object({
   FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
   FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
   FIREBASE_STORAGE_EMULATOR_HOST: z.string().trim().optional(),
+  FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST: z.string().trim().optional(),
   GCP_STORAGE_BUCKET: z.string().trim().optional(),
 });
 

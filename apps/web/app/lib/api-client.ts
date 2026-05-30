@@ -195,6 +195,33 @@ export async function deleteEntity(
   });
 }
 
+export async function getEntityRelationTargets(
+  entityName: string,
+  recordId: string,
+  fieldName: string,
+): Promise<readonly string[]> {
+  const result = await apiRequest<{ readonly targetIds: readonly string[] }>(
+    `/api/${entityName}/${recordId}/relations/${fieldName}`,
+  );
+  return result.targetIds;
+}
+
+export async function syncEntityRelationTargets(
+  entityName: string,
+  recordId: string,
+  fieldName: string,
+  targetIds: readonly string[],
+): Promise<readonly string[]> {
+  const result = await apiRequest<{ readonly targetIds: readonly string[] }>(
+    `/api/${entityName}/${recordId}/relations/${fieldName}`,
+    {
+      method: "PUT",
+      body: { targetIds },
+    },
+  );
+  return result.targetIds;
+}
+
 export function isApiClientError(error: unknown): error is ApiClientError {
   return (
     error instanceof Error &&

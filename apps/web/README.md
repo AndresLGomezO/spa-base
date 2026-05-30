@@ -108,6 +108,12 @@ pnpm i18n:validate -- --strict
 
 Use `@repo/ui` primitives. ESLint enforces via `@repo/eslint-config/ui-primitives`.
 
+**Overlay primitives** (never build custom dialogs in app code):
+
+- `Modal` — centered dialogs (confirmations, forms, previews)
+- `Sheet` — slide-over panels (mobile sidebar via `SidebarMobile`)
+- `PhotoUpload` — image select, crop, upload, and expand preview
+
 Storybook: `pnpm storybook` from repo root.
 
 ---

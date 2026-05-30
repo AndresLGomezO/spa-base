@@ -1,4 +1,5 @@
 import type { FastifyPluginAsync } from "fastify";
+import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 import { isBuiltInRoleName, type RoleCatalog } from "@repo/rbac";
@@ -13,7 +14,7 @@ import type {
   TenantRepository,
 } from "@repo/firestore-converters";
 import { tenantStatusSchema, tenantAppearanceSchema } from "@repo/shared-types";
-import { uploadTenantLogo } from "@repo/gcp-firebase";
+import { uploadTenantLogo, validateStorageObjectId } from "@repo/gcp-firebase";
 
 import { validateActiveTenantIds } from "../admin/list-available-tenants.js";
 import { seedTenantRolesFromTemplates } from "../admin/seed-tenant-roles-from-templates.js";
@@ -42,6 +43,11 @@ const updateTenantBodySchema = z.object({
 const uploadLogoBodySchema = z.object({
   contentType: z.string().trim().min(1),
   data: z.string().trim().min(1),
+  objectId: z
+    .string()
+    .trim()
+    .regex(/^[a-zA-Z0-9_-]{1,128}$/)
+    .optional(),
 });
 
 function isKnownRoleName(name: string, roleCatalog: RoleCatalog): boolean {
@@ -239,9 +245,18 @@ export const adminRoutes: FastifyPluginAsync<{
 
       try {
         const buffer = Buffer.from(parsedBody.data.data, "base64");
+        const objectId = parsedBody.data.objectId ?? randomUUID();
+        if (!validateStorageObjectId(objectId)) {
+          return reply.status(400).send({
+            ok: false,
+            message: "Invalid storage object id.",
+          });
+        }
+
         const logoUrl = await uploadTenantLogo({
           config: opts.firebaseAdminConfig,
           tenantId: parsedParams.data.id,
+          objectId,
           buffer,
           contentType: parsedBody.data.contentType,
         });

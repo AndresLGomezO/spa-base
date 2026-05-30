@@ -15,15 +15,19 @@ import {
   formatFieldLabel,
   type EntityName,
 } from "../../entities/entity-catalog";
-import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import {
+  useEntityCatalog,
+  useEntityDefinition,
+} from "../../entities/entity-catalog-context";
 import { useDebouncedValue } from "../../hooks/useDebouncedValue";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
 import {
   getFieldAccessLevel,
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
 import type { useEntity } from "../../hooks/useEntity";
-import { formatCellValue } from "./entity-field-utils";
+import { resolveEntityCellValue } from "./resolve-entity-cell-value";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
@@ -47,6 +51,7 @@ export function EntityTable({
 }: EntityTableProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
+  const { getDefinition } = useEntityCatalog();
   const permissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
   const columns = useMemo(
@@ -94,6 +99,9 @@ export function EntityTable({
   const { items, isLoading, error, nextCursor, isLoadingMore, loadMore } =
     entityState;
 
+  const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
+    useOneToManyColumnData(definition, items, getDefinition);
+
   const rowVirtualizer = useVirtualizer({
     count: items.length,
     getScrollElement: () => scrollContainerRef.current,
@@ -113,7 +121,7 @@ export function EntityTable({
     });
   };
 
-  if (isLoading) {
+  if (isLoading || isLoadingRelations) {
     return <Text>{t("entity.loading")}</Text>;
   }
 
@@ -211,7 +219,12 @@ export function EntityTable({
                           key={column}
                           className="text-foreground border-border border-b px-4 py-3"
                         >
-                          {formatCellValue(item[column])}
+                          {resolveEntityCellValue(
+                            item,
+                            column,
+                            definition,
+                            getOneToManyCellValue,
+                          )}
                         </td>
                       ))}
                       {permissions.canUpdate || permissions.canDelete ? (

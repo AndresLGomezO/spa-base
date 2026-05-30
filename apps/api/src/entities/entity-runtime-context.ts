@@ -54,6 +54,10 @@ export class EntityRuntimeContext {
     TenantScopedEntityRepository<GenericRecord, unknown>
   >();
   private readonly queryExecutorCache = new Map<string, EntityQueryExecutor>();
+  private readonly inMemoryRecordStores = new Map<
+    string,
+    Map<string, GenericRecord>
+  >();
   private readonly definitionsLoadedAt = new Map<string, number>();
   private readonly definitionCacheTtlMs: number;
 
@@ -102,6 +106,36 @@ export class EntityRuntimeContext {
     return `${tenantId}:${entityName}`;
   }
 
+  invalidateEntityRuntime(tenantId: string, entityName: string): void {
+    const key = this.cacheKey(tenantId, entityName);
+    this.repositoryCache.delete(key);
+    this.queryExecutorCache.delete(key);
+  }
+
+  private invalidateTenantRuntime(tenantId: string): void {
+    const prefix = `${tenantId}:`;
+    for (const key of this.repositoryCache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.repositoryCache.delete(key);
+      }
+    }
+    for (const key of this.queryExecutorCache.keys()) {
+      if (key.startsWith(prefix)) {
+        this.queryExecutorCache.delete(key);
+      }
+    }
+  }
+
+  private getInMemoryRecordStore(key: string): Map<string, GenericRecord> {
+    const existing = this.inMemoryRecordStores.get(key);
+    if (existing) {
+      return existing;
+    }
+    const store = new Map<string, GenericRecord>();
+    this.inMemoryRecordStores.set(key, store);
+    return store;
+  }
+
   getRepository(
     tenantId: string,
     entityName: string,
@@ -123,7 +157,9 @@ export class EntityRuntimeContext {
     }
 
     const repository = this.options.repositories
-      ? createInMemoryEntityRepository<GenericRecord>()
+      ? createInMemoryEntityRepository<GenericRecord>({
+          store: this.getInMemoryRecordStore(key),
+        })
       : createFirestoreAdminEntityRepository({
           config: this.options.firebaseAdminConfig,
           collection: entity.metadata.collection,
@@ -155,7 +191,13 @@ export class EntityRuntimeContext {
     }
 
     const executor = this.options.repositories
-      ? createInMemoryEntityQueryExecutor(() => new Map())
+      ? createInMemoryEntityQueryExecutor(
+          () =>
+            this.getInMemoryRecordStore(key) as Map<
+              string,
+              Record<string, unknown>
+            >,
+        )
       : createFirestoreEntityQueryExecutor({
           config: this.options.firebaseAdminConfig,
           collection: entity.metadata.collection,
@@ -197,11 +239,13 @@ export class EntityRuntimeContext {
 
   async syncDefinition(record: EntityDefinitionRecord): Promise<void> {
     registerDynamicEntity(record.tenantId, record);
+    this.invalidateEntityRuntime(record.tenantId, record.name);
     this.definitionsLoadedAt.set(record.tenantId, Date.now());
   }
 
   invalidateTenantDefinitions(tenantId: string): void {
     clearDynamicEntitiesForTenant(tenantId);
+    this.invalidateTenantRuntime(tenantId);
     this.definitionsLoadedAt.delete(tenantId);
   }
 
@@ -225,6 +269,7 @@ export class EntityRuntimeContext {
     }
 
     clearDynamicEntitiesForTenant(parsedTenantId);
+    this.invalidateTenantRuntime(parsedTenantId);
     const records =
       await this.options.entityDefinitionRepository.list(parsedTenantId);
     for (const record of records) {

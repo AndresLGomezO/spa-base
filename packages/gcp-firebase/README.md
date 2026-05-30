@@ -11,6 +11,7 @@ Firebase Admin SDK integrations: Firestore repositories, query executor, auth he
 - `createFirestoreAdminHookRepository()` — dynamic hooks
 - `createFirestoreAdminJoinCollectionRepository()` — many-to-many joins
 - `verifyFirebaseIdToken()` / `verifyFirebaseAppCheckToken()` — auth
+- `uploadTenantLogo()` — tenant logo upload to GCS / Storage emulator
 
 ## Configuration
 
@@ -19,6 +20,9 @@ Uses env from `@repo/gcp-firebase/env` merged in `apps/api/src/config/env.ts`:
 - `GCP_PROJECT_ID`
 - `FIRESTORE_EMULATOR_HOST`
 - `FIREBASE_AUTH_EMULATOR_HOST`
+- `FIREBASE_STORAGE_EMULATOR_HOST` — Admin SDK Storage emulator connection (local dev)
+- `FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST` — browser-accessible host for saved logo URLs (Docker dev)
+- `GCP_STORAGE_BUCKET` — bucket name (defaults to `{GCP_PROJECT_ID}.appspot.com`)
 
 ## Dependencies
 
@@ -31,8 +35,9 @@ pnpm --filter @repo/gcp-firebase test
 pnpm --filter @repo/gcp-firebase typecheck
 ```
 
-Requires Firestore emulator for integration tests.
+Requires Firestore emulator for integration tests. Storage integration tests require `FIREBASE_STORAGE_EMULATOR_HOST`.
 
-## Guide
+## Guides
 
-[docs/firestore-collections-guide.md](../../docs/firestore-collections-guide.md)
+- [docs/firestore-collections-guide.md](../../docs/firestore-collections-guide.md)
+- [docs/gcs-storage-guide.md](../../docs/gcs-storage-guide.md)

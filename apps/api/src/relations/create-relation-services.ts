@@ -9,6 +9,7 @@ import type {
 } from "@repo/firestore-converters";
 import {
   createEntityRelationHooks,
+  createJoinCollectionHandler,
   type EntityRelationHooks,
   type RelationServicesDeps,
 } from "@repo/entity-relations";
@@ -30,6 +31,9 @@ interface TenantEntityResolver {
 
 interface RelationRuntimeContext {
   readonly hooksFor: (entityName: string) => EntityRelationHooks | undefined;
+  readonly joinHandlerFor: (
+    tenantId: string,
+  ) => ReturnType<typeof createJoinCollectionHandler>;
 }
 
 function createRelationDeps(
@@ -134,5 +138,9 @@ export function createRelationRuntimeContext(
         return hooks.beforeDelete(id, tenantId);
       },
     }),
+    joinHandlerFor: (tenantId) =>
+      createJoinCollectionHandler(
+        createRelationDeps(resolver, repositories, tenantId, joinRepository),
+      ),
   };
 }

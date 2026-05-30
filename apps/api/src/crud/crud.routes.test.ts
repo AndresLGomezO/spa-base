@@ -176,7 +176,7 @@ describe("CRUD API", () => {
       });
     });
 
-    it("rejects client-provided tenantId on create", async () => {
+    it("ignores client-provided tenantId on create", async () => {
       const server = await buildTestServer();
       const response = await server.inject({
         method: "POST",
@@ -188,8 +188,8 @@ describe("CRUD API", () => {
         },
       });
 
-      expect(response.statusCode).toBe(400);
-      expect(response.json().error.code).toBe("VALIDATION_ERROR");
+      expect(response.statusCode).toBe(201);
+      expect(response.json().data.tenantId).toBe("tenant_a");
     });
 
     it("lists, gets, updates, and deletes a record", async () => {

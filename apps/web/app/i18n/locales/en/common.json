@@ -85,7 +85,9 @@
     "confirmDelete": "Are you sure you want to delete this record?",
     "createTitle": "Create {{entity}}",
     "editTitle": "Edit {{entity}}",
-    "deleteSuccess": "Record deleted successfully."
+    "deleteSuccess": "Record deleted successfully.",
+    "relationOneToManyReadOnly": "This one-to-many relation is managed on the related entity. Add a many-to-one field on the child entity instead.",
+    "relationSyncFailed": "The record was saved, but related links could not be updated. Try saving again."
   },
   "tenant": {
     "selectTitle": "Select a tenant",
@@ -101,8 +103,7 @@
   },
   "profile": {
     "platformSuperadmin": "Platform Superadmin",
-    "noRole": "No role",
-    "tenant": "Tenant"
+    "noRole": "No role"
   },
   "platform": {
     "createTenant": {
@@ -125,6 +126,14 @@
       "logo": "Logo",
       "logoPreview": "Tenant logo",
       "logoSuccess": "Logo uploaded.",
+      "photoSelect": "Select logo",
+      "photoChange": "Change logo",
+      "photoCropTitle": "Crop logo",
+      "photoCropDescription": "Drag the image to position the crop area.",
+      "photoUpload": "Upload",
+      "photoCancel": "Cancel",
+      "photoReset": "Reset",
+      "photoExpand": "Logo preview",
       "typography": "Typography",
       "fontFamily": "Font family",
       "bodySize": "Body text size",
@@ -207,8 +216,35 @@
     "addEnumValue": "Add value",
     "removeValue": "Remove",
     "relationTarget": "Related entity",
+    "relationTargetHint": "Choose another data model by name. The target model must already exist in Data Models.",
     "relationType": "Relation type",
     "selectTarget": "Select entity",
+    "oneToManyInlineWarning": "This field is metadata only on this model's records. Add a many-to-one field on {{target}} to store links.",
+    "customRelationFieldName": "Use custom field name",
+    "relationTypeInfoLabel": "Relation type details",
+    "relationTypes": {
+      "exampleLabel": "Example",
+      "oneToOne": {
+        "title": "One-to-one",
+        "description": "Stores one linked record ID on this entity.",
+        "example": "profileId on User → Profile"
+      },
+      "oneToMany": {
+        "title": "One-to-many",
+        "description": "Reverse lookup only — nothing is saved on this model's records. Add a many-to-one field on the related model to store the link.",
+        "example": "batch.workItems on Batch — set workItem.batchId on each Work Item instead"
+      },
+      "manyToOne": {
+        "title": "Many-to-one",
+        "description": "Stores a single reference ID on this entity.",
+        "example": "customerId on Order → Customer"
+      },
+      "manyToMany": {
+        "title": "Many-to-many",
+        "description": "Links via a join collection, not stored on this document.",
+        "example": "projects on User ↔ Project"
+      }
+    },
     "addField": "Add field",
     "removeField": "Remove field",
     "next": "Next",

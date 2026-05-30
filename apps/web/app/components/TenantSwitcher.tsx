@@ -1,8 +1,10 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { Building2 } from "lucide-react";
 
-import { Button, Popover } from "@repo/ui";
+import { Button, Popover, sidebarMenuButtonClassName } from "@repo/ui";
+import { cn } from "@repo/theme/utils";
 
 import { useAuth } from "../auth/AuthContext";
 
@@ -27,19 +29,34 @@ export function TenantSwitcher() {
     return option?.name ?? id;
   }
 
+  const activeLabel = tenantId ? tenantLabel(tenantId) : t("tenant.none");
+
   return (
     <Popover
       open={open}
       onOpenChange={setOpen}
-      placement="top-start"
+      placement="right-end"
+      title={t("tenant.selectTitle")}
       className="block w-full"
       trigger={
         <Button
           type="button"
           variant="ghost"
-          className="w-full justify-start truncate px-2 text-xs"
+          fullWidth
+          aria-label={activeLabel}
+          className={cn(
+            sidebarMenuButtonClassName(),
+            "justify-start border-0 text-xs font-normal shadow-none focus-visible:ring-offset-0",
+            open && "bg-sidebar-accent text-sidebar-accent-foreground",
+          )}
         >
-          {tenantId ? tenantLabel(tenantId) : t("tenant.none")}
+          <Building2
+            className="size-4 shrink-0 group-data-[collapsible=icon]/sidebar:size-5"
+            aria-hidden
+          />
+          <span className="truncate group-data-[collapsible=icon]/sidebar:sr-only">
+            {activeLabel}
+          </span>
         </Button>
       }
     >
