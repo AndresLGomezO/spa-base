@@ -1,4 +1,4 @@
-import { Alert, Heading, Text } from "@repo/ui";
+import { Alert, Heading, PageLoader, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
@@ -14,7 +14,7 @@ export default function SettingsUsersRoute() {
   const canRemove = isSuperAdmin || permissions.includes("tenantUser.remove");
 
   if (!isReady) {
-    return <Text>{t("loading")}</Text>;
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   if (!canRead) {

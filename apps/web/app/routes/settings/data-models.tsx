@@ -1,4 +1,4 @@
-import { Alert, Heading, Text } from "@repo/ui";
+import { Alert, Heading, PageLoader, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
@@ -16,7 +16,7 @@ export default function SettingsDataModelsRoute() {
     isSuperAdmin || permissions.includes("entityDefinition.update");
 
   if (!isReady) {
-    return <Text>{t("loading")}</Text>;
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   if (!canAccess) {

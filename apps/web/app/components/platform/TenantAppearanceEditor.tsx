@@ -27,6 +27,7 @@ import {
 } from "@repo/theme/tenant-overrides";
 
 import { useAuth } from "../../auth/AuthContext";
+import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import {
   getAdminTenant,
   updateAdminTenant,
@@ -292,7 +293,7 @@ export function TenantAppearanceEditor({
   }
 
   if (isLoading) {
-    return <Text>{t("loading")}</Text>;
+    return <SettingsPanelSkeleton variant="appearance" />;
   }
 
   if (!tenant) {

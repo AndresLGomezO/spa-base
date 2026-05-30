@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation, useNavigate } from "react-router";
 
-import { Button, Heading, Text } from "@repo/ui";
+import { Button, Heading, PageLoader, Text } from "@repo/ui";
 
 import { useAuth } from "../auth/AuthContext";
 
@@ -35,11 +35,7 @@ export default function SelectTenantRoute() {
       : "/";
 
   if (!isReady) {
-    return (
-      <main className="mx-auto flex min-h-dvh max-w-lg flex-col justify-center gap-6 p-6">
-        <Text>{t("loading")}</Text>
-      </main>
-    );
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   if (!isSuperAdmin) {

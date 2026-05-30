@@ -21,6 +21,7 @@ import {
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
 import type { useEntity } from "../../hooks/useEntity";
+import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { resolveEntityCellValue } from "./resolve-entity-cell-value";
 
 type EntityListState = Pick<
@@ -81,7 +82,7 @@ export function EntityCardView({
     useOneToManyColumnData(definition, items, getDefinition);
 
   if (isLoading || isLoadingRelations) {
-    return <Text>{t("entity.loading")}</Text>;
+    return <EntityPageSkeleton />;
   }
 
   if (error) {

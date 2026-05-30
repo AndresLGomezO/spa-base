@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@repo/ui";
 
 import type { EntityDefinitionRecord } from "../../lib/api-client";
+import { DataModelsListSkeleton } from "../loading/DataModelsListSkeleton";
 
 interface EntityDefinitionListProps {
   readonly items: readonly EntityDefinitionRecord[];
@@ -24,7 +25,7 @@ export function EntityDefinitionList({
   const { t } = useTranslation("common");
 
   if (isLoading) {
-    return <Text>{t("dataModels.loading")}</Text>;
+    return <DataModelsListSkeleton />;
   }
 
   return (

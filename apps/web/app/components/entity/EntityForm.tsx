@@ -7,12 +7,13 @@ import {
   resolveCreateForm,
   resolveEditForm,
 } from "@repo/ui-builder";
-import { Alert, Button, Form, Heading, Text } from "@repo/ui";
+import { Alert, Button, Form, Heading } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
 
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import {
   getFieldAccessLevel,
@@ -192,7 +193,7 @@ export function EntityForm({ entityName, mode, recordId }: EntityFormProps) {
   };
 
   if (isLoadingRecord) {
-    return <Text>{t("entity.loading")}</Text>;
+    return <EntityFormSkeleton />;
   }
 
   return (
