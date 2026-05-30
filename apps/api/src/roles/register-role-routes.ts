@@ -1,9 +1,4 @@
-import type {
-  FastifyInstance,
-  FastifyReply,
-  FastifyRequest,
-  preHandlerAsyncHookHandler,
-} from "fastify";
+import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 import { z } from "zod";
 
 import {
@@ -14,6 +9,7 @@ import type { TenantRoleRepository } from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
+import { requireTargetTenant } from "../auth/resolve-target-tenant-id.js";
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
@@ -36,35 +32,6 @@ interface RegisterRoleRoutesOptions {
 const tenantIdQuerySchema = z.object({
   tenantId: z.string().trim().min(1).optional(),
 });
-
-function resolveTargetTenantId(
-  request: FastifyRequest,
-  queryTenantId?: string,
-): string | null {
-  const ctxTenantId = request.ctx?.tenantId?.trim();
-  if (request.ctx?.isSuperAdmin && queryTenantId) {
-    return queryTenantId;
-  }
-  return ctxTenantId && ctxTenantId.length > 0 ? ctxTenantId : null;
-}
-
-function requireTargetTenant(
-  request: FastifyRequest,
-  reply: FastifyReply,
-  queryTenantId?: string,
-): string | null {
-  const tenantId = resolveTargetTenantId(request, queryTenantId);
-  if (!tenantId) {
-    replyWithError(
-      reply,
-      403,
-      ApiErrorCode.TENANT_NOT_RESOLVED,
-      "Tenant context is required.",
-    );
-    return null;
-  }
-  return tenantId;
-}
 
 function getAvailableEntities(
   entityRuntime: EntityRuntimeContext,

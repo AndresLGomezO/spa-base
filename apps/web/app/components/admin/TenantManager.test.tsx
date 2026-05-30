@@ -63,5 +63,11 @@ describe("TenantManager", () => {
         status: "suspended",
       });
     });
+
+    await waitFor(() => {
+      expect(
+        scope.getByText("admin.tenants.suspendSuccess"),
+      ).toBeInTheDocument();
+    });
   });
 });

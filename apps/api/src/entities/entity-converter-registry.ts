@@ -1,5 +1,6 @@
 import { getEntityConverter as getModuleEntityConverter } from "@repo/modules";
 import {
+  customerConverter,
   organizationConverter,
   projectConverter,
 } from "@repo/firestore-converters";
@@ -10,6 +11,7 @@ interface EntityConverter {
 }
 
 const SEED_ENTITY_CONVERTERS: Record<string, EntityConverter> = {
+  customer: customerConverter,
   organization: organizationConverter,
   project: projectConverter,
 };

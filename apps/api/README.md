@@ -10,10 +10,10 @@ Fastify HTTP API for the multi-tenant platform. Handles auth validation, auto-ge
 
 ### Auth
 
-| Method | Path | Auth | Description |
-|--------|------|------|-------------|
-| GET | `/auth/validate` | Bearer + App Check | Session + resolved permissions |
-| POST | `/auth/select-tenant` | Bearer + App Check | Set `tenantId` custom claim |
+| Method | Path                  | Auth               | Description                    |
+| ------ | --------------------- | ------------------ | ------------------------------ |
+| GET    | `/auth/validate`      | Bearer + App Check | Session + resolved permissions |
+| POST   | `/auth/select-tenant` | Bearer + App Check | Set `tenantId` custom claim    |
 
 Auth response includes RBAC fields when tenant is active:
 
@@ -32,9 +32,9 @@ After `POST /auth/select-tenant`, client must call `getIdToken(true)` to refresh
 
 ### Entity catalog
 
-| Method | Path | Permission |
-|--------|------|------------|
-| GET | `/api/entities` | Any `*.read` |
+| Method | Path            | Permission   |
+| ------ | --------------- | ------------ |
+| GET    | `/api/entities` | Any `*.read` |
 
 Returns serialized entity definitions (static modules + tenant dynamic entities) with UI metadata and field access maps.
 
@@ -42,13 +42,13 @@ Returns serialized entity definitions (static modules + tenant dynamic entities)
 
 Static entities: `organization`, `project`, `inventoryItem`, plus tenant dynamic entities registered at runtime.
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/api/{entity}` | List — `?limit=&cursor=` or `?query=` JSON |
-| GET | `/api/{entity}/:id` | Get one |
-| POST | `/api/{entity}` | Create |
-| PUT | `/api/{entity}/:id` | Update |
-| DELETE | `/api/{entity}/:id` | Delete |
+| Method | Path                | Description                                |
+| ------ | ------------------- | ------------------------------------------ |
+| GET    | `/api/{entity}`     | List — `?limit=&cursor=` or `?query=` JSON |
+| GET    | `/api/{entity}/:id` | Get one                                    |
+| POST   | `/api/{entity}`     | Create                                     |
+| PUT    | `/api/{entity}/:id` | Update                                     |
+| DELETE | `/api/{entity}/:id` | Delete                                     |
 
 Query JSON example:
 
@@ -65,55 +65,58 @@ Response envelope:
 Errors:
 
 ```json
-{ "data": null, "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} } }
+{
+  "data": null,
+  "error": { "code": "VALIDATION_ERROR", "message": "...", "details": {} }
+}
 ```
 
 See [docs/crud-api.http](./docs/crud-api.http) for examples.
 
 ### Entity definitions (Model Builder)
 
-| Method | Path | Permission |
-|--------|------|------------|
-| GET | `/api/entity-definitions` | `entityDefinition.read` |
-| POST | `/api/entity-definitions` | `entityDefinition.create` |
-| PATCH | `/api/entity-definitions/:id` | `entityDefinition.update` |
+| Method | Path                          | Permission                |
+| ------ | ----------------------------- | ------------------------- |
+| GET    | `/api/entity-definitions`     | `entityDefinition.read`   |
+| POST   | `/api/entity-definitions`     | `entityDefinition.create` |
+| PATCH  | `/api/entity-definitions/:id` | `entityDefinition.update` |
 
 Superadmin may pass `?tenantId=` query param for cross-tenant operations.
 
 ### Hooks
 
-| Method | Path | Permission |
-|--------|------|------------|
-| GET | `/api/hooks` | `hook.read` |
-| POST | `/api/hooks` | `hook.create` |
-| PATCH | `/api/hooks/:id` | `hook.update` |
+| Method | Path             | Permission    |
+| ------ | ---------------- | ------------- |
+| GET    | `/api/hooks`     | `hook.read`   |
+| POST   | `/api/hooks`     | `hook.create` |
+| PATCH  | `/api/hooks/:id` | `hook.update` |
 
 ### Tenant roles
 
-| Method | Path | Permission |
-|--------|------|------------|
-| GET | `/api/roles` | `role.read` |
-| POST | `/api/roles` | `role.create` |
-| PATCH | `/api/roles/:id` | `role.update` |
+| Method | Path             | Permission    |
+| ------ | ---------------- | ------------- |
+| GET    | `/api/roles`     | `role.read`   |
+| POST   | `/api/roles`     | `role.create` |
+| PATCH  | `/api/roles/:id` | `role.update` |
 
 ### Module routes
 
 Registered from `@repo/modules` at bootstrap. Example:
 
-| Method | Path | Permission |
-|--------|------|------------|
-| GET | `/api/modules/inventory/summary` | `inventoryItem.read` |
+| Method | Path                             | Permission           |
+| ------ | -------------------------------- | -------------------- |
+| GET    | `/api/modules/inventory/summary` | `inventoryItem.read` |
 
 ### Platform admin (superadmin)
 
-| Method | Path | Description |
-|--------|------|-------------|
-| GET | `/admin/roles` | Global role templates |
-| GET | `/admin/tenants` | Tenant registry |
-| POST | `/admin/tenants` | Create tenant |
-| PATCH | `/admin/tenants/:id` | Update tenant |
-| GET | `/admin/users` | Paginated users |
-| PATCH | `/admin/users/:uid` | Update `{ tenants: Record<string, string[]> }` |
+| Method | Path                 | Description                                    |
+| ------ | -------------------- | ---------------------------------------------- |
+| GET    | `/admin/roles`       | Global role templates                          |
+| GET    | `/admin/tenants`     | Tenant registry                                |
+| POST   | `/admin/tenants`     | Create tenant                                  |
+| PATCH  | `/admin/tenants/:id` | Update tenant                                  |
+| GET    | `/admin/users`       | Paginated users                                |
+| PATCH  | `/admin/users/:uid`  | Update `{ tenants: Record<string, string[]> }` |
 
 ---
 
@@ -143,10 +146,10 @@ await getAuth().setCustomUserClaims(uid, { tenantId: "tenant_dev_1" });
 
 Collection path: `tenants/{tenantId}/{collection}/{documentId}`
 
-| Entity | Collection example |
-|--------|-------------------|
-| organization | `tenants/tenant_a/organizations/{id}` |
-| project | `tenants/tenant_a/projects/{id}` |
+| Entity             | Collection example                         |
+| ------------------ | ------------------------------------------ |
+| organization       | `tenants/tenant_a/organizations/{id}`      |
+| project            | `tenants/tenant_a/projects/{id}`           |
 | entity_definitions | `tenants/tenant_a/entity_definitions/{id}` |
 
 ### Local development
@@ -187,13 +190,13 @@ User access profiles cached 60s (`CACHE_TTL_MS`); invalidated on admin user PATC
 
 ## Performance and middleware
 
-| Feature | Config |
-|---------|--------|
-| Gzip | `@fastify/compress` (global) |
-| Rate limit | `API_RATE_LIMIT_MAX`, `API_RATE_LIMIT_TIME_WINDOW_MS` (disabled in `NODE_ENV=test`) |
-| Timing logs | `ENABLE_PERF_LOGS` — logs `rbacMs`, `queryMs`, `hooksMs`, `totalMs` |
-| Strict pagination | `STRICT_QUERY_PAGINATION` (default `true` in test) |
-| Cache TTL | `CACHE_TTL_MS` (default 60000) |
+| Feature           | Config                                                                              |
+| ----------------- | ----------------------------------------------------------------------------------- |
+| Gzip              | `@fastify/compress` (global)                                                        |
+| Rate limit        | `API_RATE_LIMIT_MAX`, `API_RATE_LIMIT_TIME_WINDOW_MS` (disabled in `NODE_ENV=test`) |
+| Timing logs       | `ENABLE_PERF_LOGS` — logs `rbacMs`, `queryMs`, `hooksMs`, `totalMs`                 |
+| Strict pagination | `STRICT_QUERY_PAGINATION` (default `true` in test)                                  |
+| Cache TTL         | `CACHE_TTL_MS` (default 60000)                                                      |
 
 See [docs/performance-scaling-guide.md](../../docs/performance-scaling-guide.md).
 

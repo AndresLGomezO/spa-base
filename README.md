@@ -11,13 +11,13 @@ Multi-tenant ecosystem builder: schema-driven entities, auto-generated CRUD APIs
 
 **Start here for handoff to the next team:**
 
-| Document | Description |
-|----------|-------------|
+| Document                                                             | Description                                              |
+| -------------------------------------------------------------------- | -------------------------------------------------------- |
 | [docs/phase-2-platform-handoff.md](docs/phase-2-platform-handoff.md) | Master handoff — architecture, capabilities, API summary |
-| [docs/e2e-validation-runbook.md](docs/e2e-validation-runbook.md) | Manual validation steps |
-| [docs/next-phase-backlog.md](docs/next-phase-backlog.md) | Prioritized deferred work |
-| [docs/codebase-map.md](docs/codebase-map.md) | Annotated file index |
-| [docs/README.md](docs/README.md) | Full documentation index |
+| [docs/e2e-validation-runbook.md](docs/e2e-validation-runbook.md)     | Manual validation steps                                  |
+| [docs/next-phase-backlog.md](docs/next-phase-backlog.md)             | Prioritized deferred work                                |
+| [docs/codebase-map.md](docs/codebase-map.md)                         | Annotated file index                                     |
+| [docs/README.md](docs/README.md)                                     | Full documentation index                                 |
 
 ---
 
@@ -56,22 +56,22 @@ Seed entities: `organization`, `project` (core), `inventoryItem` (inventory). Te
 
 ## Commands
 
-| Command | Description |
-|---------|-------------|
-| `pnpm dev` | Start all apps (turbo) |
-| `pnpm test` | Run all test suites |
-| `pnpm typecheck` | TypeScript check all packages |
-| `pnpm lint` | Lint all packages |
-| `pnpm emulators` | Firebase emulators (auth, firestore) |
-| `pnpm storybook` | UI component docs (`@repo/ui`) |
-| `pnpm i18n:validate` | Validate translation keys |
+| Command              | Description                          |
+| -------------------- | ------------------------------------ |
+| `pnpm dev`           | Start all apps (turbo)               |
+| `pnpm test`          | Run all test suites                  |
+| `pnpm typecheck`     | TypeScript check all packages        |
+| `pnpm lint`          | Lint all packages                    |
+| `pnpm emulators`     | Firebase emulators (auth, firestore) |
+| `pnpm storybook`     | UI component docs (`@repo/ui`)       |
+| `pnpm i18n:validate` | Validate translation keys            |
 
 ---
 
 ## Apps
 
-| App | README |
-|-----|--------|
+| App | README                                   |
+| --- | ---------------------------------------- |
 | API | [apps/api/README.md](apps/api/README.md) |
 | Web | [apps/web/README.md](apps/web/README.md) |
 

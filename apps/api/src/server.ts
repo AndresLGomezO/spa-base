@@ -28,6 +28,7 @@ import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { platformApp } from "@app/platform/app.config.js";
 import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
+import { seedPlatformCustomers } from "./admin/seed-platform-customers.js";
 import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
 import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
@@ -75,6 +76,7 @@ interface BuildServerOptions {
   readonly getRoleCatalog?: (tenantId: string) => Promise<RoleCatalog>;
   readonly skipPlatformRoleSeed?: boolean;
   readonly skipPlatformTenantSeed?: boolean;
+  readonly skipPlatformCustomerSeed?: boolean;
 }
 
 function buildPermissionDeps(
@@ -157,6 +159,10 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   if (!options.skipPlatformTenantSeed) {
     await seedPlatformTenants(firebaseAdminConfig);
+  }
+
+  if (!options.skipPlatformCustomerSeed && !options.repositories) {
+    await seedPlatformCustomers(firebaseAdminConfig);
   }
 
   const registeredUserRepository =

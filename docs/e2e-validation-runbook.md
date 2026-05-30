@@ -83,7 +83,56 @@ Expected: all turbo test tasks green (api ~69 tests, web ~52 tests, packages add
 
 ---
 
-## 4. Define a dynamic entity (Model Builder)
+## 3a. Superadmin tenant context
+
+Superadmins resolve tenant context as follows:
+
+| Surface | Behavior |
+| --- | --- |
+| **JWT claim** | Primary tenant for RBAC and CRUD when no override |
+| **`/settings/admin`** | Accessible without a tenant claim (platform management) |
+| **`/app/:entity`** | Requires tenant selection via `/select-tenant` when tenants exist |
+| **API `?tenantId=`** | Superadmin only — overrides target tenant on CRUD, roles, hooks, and entity-definition routes |
+
+**Cross-tenant CRUD (superadmin):**
+
+```http
+POST /api/customer?tenantId=tenant_dev_2
+Authorization: Bearer <token>
+X-Firebase-AppCheck: <token>
+Content-Type: application/json
+
+{ "name": "Cross-tenant Customer" }
+```
+
+Non-superadmin users ignore `?tenantId=`; records always use the JWT claim tenant.
+
+**Dev seed data:** API startup seeds sample `customer` records under `tenant_dev_1` and `tenant_dev_2` (see `apps/api/src/admin/seed-platform-customers.ts`).
+
+---
+
+## 4. Phase 1 vertical slice — Customer (static entity)
+
+**As tenant admin on `tenant_dev_1`:**
+
+1. Select tenant at `/select-tenant`
+2. Open **Customers** in sidebar (`/app/customer`)
+3. Confirm seeded rows appear (Acme Corp, Globex Industries, Inactive Co)
+4. Create a customer — appears in table
+5. Edit and delete (requires `editor`/`admin` role)
+
+**Verify API:**
+
+```http
+GET /api/customer?limit=10
+GET /api/entities
+```
+
+`GET /api/entities` must list `customer` with fields and permissions.
+
+---
+
+## 5. Define a dynamic entity (Model Builder)
 
 **As tenant admin with `entityDefinition.create`:**
 
@@ -113,7 +162,7 @@ Response should include `loan` alongside static entities (`organization`, `proje
 
 ---
 
-## 5. Configure tenant role with field rules (optional Phase 2 check)
+## 6. Configure tenant role with field rules (optional Phase 2 check)
 
 **At `/settings/roles`:**
 
@@ -124,7 +173,7 @@ Response should include `loan` alongside static entities (`organization`, `proje
 
 ---
 
-## 6. Create automation hook (optional Phase 2 check)
+## 7. Create automation hook (optional Phase 2 check)
 
 **At `/settings/hooks`:**
 
@@ -134,7 +183,7 @@ Response should include `loan` alongside static entities (`organization`, `proje
 
 ---
 
-## 7. CRUD via UI
+## 8. CRUD via UI
 
 Navigate to `/app/loan` (or your entity name).
 
@@ -157,7 +206,7 @@ GET /api/loan?query={"filter":[{"field":"status","operator":"==","value":"pendin
 
 ---
 
-## 8. Validate permissions
+## 9. Validate permissions
 
 Use three role scenarios (different users or reassign roles between runs):
 
@@ -194,7 +243,7 @@ Use three role scenarios (different users or reassign roles between runs):
 
 ---
 
-## 9. Optional extension checks
+## 10. Optional extension checks
 
 ### Module route
 
@@ -217,7 +266,7 @@ Requires `inventoryItem.read` and returns module-specific payload.
 
 ---
 
-## 10. Pass / fail criteria
+## 11. Pass / fail criteria
 
 ### Phase 1 (all required)
 
@@ -238,7 +287,7 @@ Requires `inventoryItem.read` and returns module-specific payload.
 
 ---
 
-## 11. Troubleshooting
+## 12. Troubleshooting
 
 | Symptom | Check |
 |---------|-------|
