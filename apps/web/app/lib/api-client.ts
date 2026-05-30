@@ -251,6 +251,8 @@ export interface FieldDefinitionInput {
     readonly displayFormat?: "currency" | "plain";
     readonly dateDisplayFormat?: "date" | "datetime" | "time";
     readonly order?: number;
+    readonly filterable?: boolean;
+    readonly sortable?: boolean;
   };
 }
 

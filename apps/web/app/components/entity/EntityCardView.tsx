@@ -1,12 +1,6 @@
-import { useEffect, useMemo, useState } from "react";
-import type { QueryConfig } from "@repo/query-engine";
-import {
-  buildListQueryConfig,
-  getTableColumns,
-  getViewFilters,
-  resolveActiveView,
-} from "@repo/ui-builder";
-import { Alert, Button, Input, Pagination, SchemaCell, Text } from "@repo/ui";
+import { useMemo } from "react";
+import { getTableColumns, isFieldVisible } from "@repo/ui-builder";
+import { Alert, Button, Pagination, SchemaCell, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -19,6 +13,10 @@ import {
 } from "../../entities/entity-catalog-context";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
+import {
+  getFieldAccessLevel,
+  useFieldAccess,
+} from "../../hooks/useFieldAccess";
 import type { useEntity } from "../../hooks/useEntity";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import {
@@ -36,7 +34,7 @@ interface EntityCardViewProps {
   readonly entityState: EntityListState;
   readonly page: number;
   readonly onPageChange: (page: number) => void;
-  readonly onQueryConfigChange: (queryConfig: QueryConfig) => void;
+  readonly pageSize?: number;
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
 }
@@ -46,7 +44,6 @@ export function EntityCardView({
   entityState,
   page,
   onPageChange,
-  onQueryConfigChange,
   onRequestDelete,
   onRequestEdit,
 }: EntityCardViewProps) {
@@ -54,34 +51,18 @@ export function EntityCardView({
   const definition = useEntityDefinition(entityName);
   const { getDefinition } = useEntityCatalog();
   const permissions = useEntityPermissions(entityName);
-  const view = useMemo(() => resolveActiveView(definition), [definition]);
-  const columns = useMemo(() => getTableColumns(definition), [definition]);
-  const filterDefinitions = useMemo(
-    () => getViewFilters(definition),
-    [definition],
-  );
-  const [filterValues, setFilterValues] = useState<Record<string, string>>({});
-  const sort = view.defaultSort ?? null;
-
-  const queryConfig = useMemo<QueryConfig>(
+  const fieldAccess = useFieldAccess(entityName);
+  const columns = useMemo(
     () =>
-      buildListQueryConfig({
-        filters: filterDefinitions
-          .filter((filter) => filterValues[filter.field]?.trim())
-          .map((filter) => ({
-            field: filter.field,
-            operator: filter.operator ?? "==",
-            value: filterValues[filter.field],
-          })),
-        sort,
-        limit: 20,
-      }),
-    [filterDefinitions, filterValues, sort],
+      getTableColumns(definition).filter((column) =>
+        isFieldVisible(
+          definition.ui.fields?.[column],
+          permissions.canRead,
+          getFieldAccessLevel(fieldAccess, column),
+        ),
+      ),
+    [definition, fieldAccess, permissions.canRead],
   );
-
-  useEffect(() => {
-    onQueryConfigChange(queryConfig);
-  }, [onQueryConfigChange, queryConfig]);
 
   const { items, isLoading, error, totalCount } = entityState;
 
@@ -98,27 +79,6 @@ export function EntityCardView({
 
   return (
     <div className="flex w-full flex-col gap-4">
-      {filterDefinitions.length > 0 ? (
-        <div className="flex flex-wrap gap-3">
-          {filterDefinitions.map((filter) => (
-            <div key={filter.field} className="min-w-48 flex-1">
-              <Input
-                placeholder={
-                  filter.label ?? formatFieldLabel(filter.field, definition)
-                }
-                value={filterValues[filter.field] ?? ""}
-                onChange={(event) =>
-                  setFilterValues((current) => ({
-                    ...current,
-                    [filter.field]: event.target.value,
-                  }))
-                }
-              />
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       {items.length === 0 ? (
         <Text>{t("entity.empty")}</Text>
       ) : (

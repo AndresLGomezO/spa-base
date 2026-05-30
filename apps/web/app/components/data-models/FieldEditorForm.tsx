@@ -193,6 +193,30 @@ export function FieldEditorForm({
         </Text>
       </div>
 
+      <div className="space-y-2">
+        <Checkbox
+          id={`${idPrefix}-field-filterable`}
+          label={t("dataModels.fieldFilterable")}
+          checked={field.ui?.filterable !== false}
+          onChange={(event) => updateUi({ filterable: event.target.checked })}
+        />
+        <Text className="text-muted-foreground text-sm">
+          {t("dataModels.fieldFilterableHint")}
+        </Text>
+      </div>
+
+      <div className="space-y-2">
+        <Checkbox
+          id={`${idPrefix}-field-sortable`}
+          label={t("dataModels.fieldSortable")}
+          checked={field.ui?.sortable !== false}
+          onChange={(event) => updateUi({ sortable: event.target.checked })}
+        />
+        <Text className="text-muted-foreground text-sm">
+          {t("dataModels.fieldSortableHint")}
+        </Text>
+      </div>
+
       {field.type === "enum" ? (
         <div className="space-y-2">
           <FieldLabel>{t("dataModels.enumValues")}</FieldLabel>

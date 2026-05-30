@@ -19,6 +19,8 @@ export interface FieldUIConfig {
   readonly placeholder?: string;
   readonly visible?: boolean;
   readonly editable?: boolean;
+  readonly filterable?: boolean;
+  readonly sortable?: boolean;
 }
 
 export type FilterOperatorUI = "==" | "!=" | "<" | "<=" | ">" | ">=" | "in";

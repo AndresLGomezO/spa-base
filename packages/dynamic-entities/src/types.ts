@@ -30,6 +30,8 @@ export const fieldDefinitionSchema = z
         displayFormat: z.enum(["currency", "plain"]).optional(),
         dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
         order: z.number().int().nonnegative().optional(),
+        filterable: z.boolean().optional(),
+        sortable: z.boolean().optional(),
       })
       .optional(),
   })

@@ -12,9 +12,10 @@ import {
 import { Pencil } from "lucide-react";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
-import { useClientPagination } from "../../hooks/useClientPagination";
+import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
 import { listRoles, type TenantRoleRecord } from "../../lib/api-client";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
+import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
 import { FormModal } from "../forms/FormModal";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { RoleEditor } from "./RoleEditor";
@@ -47,7 +48,26 @@ export function RoleManager({
   const [isCreating, setIsCreating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
 
-  const { page, pageItems, totalCount, setPage } = useClientPagination(items);
+  const columns = useMemo<
+    readonly DataViewColumnDescriptor<TenantRoleRecord>[]
+  >(
+    () => [
+      {
+        id: "name",
+        label: t("roles.name"),
+        getValue: (role) => role.name,
+      },
+      {
+        id: "grants",
+        label: t("roles.grantCount"),
+        getValue: (role) => role.grants.length,
+        filterable: false,
+      },
+    ],
+    [t],
+  );
+
+  const dataView = useDataViewWithPagination(items, columns);
 
   const knownGrants = useMemo(() => {
     const grants = new Set<string>([
@@ -174,50 +194,59 @@ export function RoleManager({
       {items.length === 0 ? (
         <Text>{t("roles.selectRole")}</Text>
       ) : (
-        <DataTable
-          columns={[
-            {
-              id: "name",
-              header: t("roles.name"),
-              cell: (role) => role.name,
-            },
-            {
-              id: "grants",
-              header: t("roles.grantCount"),
-              cell: (role) => role.grants.length,
-            },
-          ]}
-          rows={pageItems}
-          getRowId={(role) => role.id}
-          page={page}
-          totalCount={totalCount}
-          onPageChange={setPage}
-          emptyMessage={t("roles.selectRole")}
-          loadingMessage={t("table.loading")}
-          scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
-          paginationLabels={paginationLabels}
-          actionsColumn={
-            canUpdate
-              ? {
-                  id: "actions",
-                  header: t("entity.actions"),
-                  headerClassName: "text-center",
-                  cell: (role) => (
-                    <IconButton
-                      type="button"
-                      label={t("entity.edit")}
-                      onClick={() => {
-                        setEditingRoleId(role.id);
-                        setIsCreating(false);
-                      }}
-                    >
-                      <Pencil className="size-4" />
-                    </IconButton>
-                  ),
-                }
-              : undefined
-          }
-        />
+        <>
+          <DataViewToolbar
+            {...dataView}
+            columns={columns}
+            filtersOpen={dataView.filtersOpen}
+            onFiltersOpenChange={dataView.setFiltersOpen}
+          />
+
+          <DataTable
+            columns={[
+              {
+                id: "name",
+                header: t("roles.name"),
+                cell: (role) => role.name,
+              },
+              {
+                id: "grants",
+                header: t("roles.grantCount"),
+                cell: (role) => role.grants.length,
+              },
+            ]}
+            rows={dataView.pageItems}
+            getRowId={(role) => role.id}
+            page={dataView.page}
+            totalCount={dataView.totalCount}
+            onPageChange={dataView.setPage}
+            emptyMessage={t("roles.selectRole")}
+            loadingMessage={t("table.loading")}
+            scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
+            paginationLabels={paginationLabels}
+            actionsColumn={
+              canUpdate
+                ? {
+                    id: "actions",
+                    header: t("entity.actions"),
+                    headerClassName: "text-center",
+                    cell: (role) => (
+                      <IconButton
+                        type="button"
+                        label={t("entity.edit")}
+                        onClick={() => {
+                          setEditingRoleId(role.id);
+                          setIsCreating(false);
+                        }}
+                      >
+                        <Pencil className="size-4" />
+                      </IconButton>
+                    ),
+                  }
+                : undefined
+            }
+          />
+        </>
       )}
 
       <FormModal

@@ -13,8 +13,9 @@ import {
   type TenantUserInvite,
   type TenantUserMember,
 } from "../../lib/api-client";
-import { useClientPagination } from "../../hooks/useClientPagination";
+import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
+import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { EditMemberModal } from "./EditMemberModal";
 import { InviteUserModal } from "./InviteUserModal";
@@ -106,7 +107,30 @@ export function UserManagement({
     return [...memberRows, ...inviteRows];
   }, [invites, members, t]);
 
-  const { page, pageItems, totalCount, setPage } = useClientPagination(allRows);
+  const columns = useMemo<readonly DataViewColumnDescriptor<UserTableRow>[]>(
+    () => [
+      {
+        id: "email",
+        label: t("userManagement.email"),
+        getValue: (row) => row.email,
+      },
+      {
+        id: "roles",
+        label: t("userManagement.roles"),
+        getValue: (row) => row.roles,
+        formatValue: (value) =>
+          Array.isArray(value) ? value.join(", ") : String(value ?? ""),
+      },
+      {
+        id: "status",
+        label: t("userManagement.status"),
+        getValue: (row) => row.statusLabel,
+      },
+    ],
+    [t],
+  );
+
+  const dataView = useDataViewWithPagination(allRows, columns);
 
   async function handleInvite(payload: {
     readonly email: string;
@@ -190,6 +214,13 @@ export function UserManagement({
         ) : null}
       </div>
 
+      <DataViewToolbar
+        {...dataView}
+        columns={columns}
+        filtersOpen={dataView.filtersOpen}
+        onFiltersOpenChange={dataView.setFiltersOpen}
+      />
+
       <DataTable
         columns={[
           {
@@ -208,11 +239,11 @@ export function UserManagement({
             cell: (row) => row.statusLabel,
           },
         ]}
-        rows={pageItems}
+        rows={dataView.pageItems}
         getRowId={(row) => row.id}
-        page={page}
-        totalCount={totalCount}
-        onPageChange={setPage}
+        page={dataView.page}
+        totalCount={dataView.totalCount}
+        onPageChange={dataView.setPage}
         isLoading={isLoading}
         emptyMessage={t("userManagement.empty")}
         loadingMessage={t("table.loading")}

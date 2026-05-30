@@ -1,5 +1,4 @@
 import type { ComponentType } from "react";
-import type { QueryConfig } from "@repo/query-engine";
 
 import type { EntityName } from "../../entities/entity-catalog";
 import type { useEntity } from "../../hooks/useEntity";
@@ -14,7 +13,7 @@ interface EntityViewProps {
   readonly entityState: EntityListState;
   readonly page: number;
   readonly onPageChange: (page: number) => void;
-  readonly onQueryConfigChange: (queryConfig: QueryConfig) => void;
+  readonly pageSize?: number;
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
 }

@@ -1,10 +1,12 @@
+import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { Button, DataTable, Heading } from "@repo/ui";
 
 import type { EntityDefinitionRecord } from "../../lib/api-client";
-import { useClientPagination } from "../../hooks/useClientPagination";
+import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
+import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
 import { DataModelsListSkeleton } from "../loading/DataModelsListSkeleton";
 
 interface EntityDefinitionListProps {
@@ -26,7 +28,36 @@ export function EntityDefinitionList({
 }: EntityDefinitionListProps) {
   const { t } = useTranslation("common");
   const paginationLabels = useTablePaginationLabels();
-  const { page, pageItems, totalCount, setPage } = useClientPagination(items);
+
+  const columns = useMemo<
+    readonly DataViewColumnDescriptor<EntityDefinitionRecord>[]
+  >(
+    () => [
+      {
+        id: "name",
+        label: t("dataModels.modelName"),
+        getValue: (item) => item.name,
+      },
+      {
+        id: "label",
+        label: t("dataModels.modelLabel"),
+        getValue: (item) => item.label,
+      },
+      {
+        id: "fields",
+        label: t("dataModels.fieldsTitle"),
+        getValue: (item) => item.fields.length,
+      },
+      {
+        id: "version",
+        label: t("dataModels.version"),
+        getValue: (item) => item.version,
+      },
+    ],
+    [t],
+  );
+
+  const dataView = useDataViewWithPagination(items, columns);
 
   if (isLoading) {
     return <DataModelsListSkeleton />;
@@ -42,6 +73,13 @@ export function EntityDefinitionList({
           </Button>
         ) : null}
       </div>
+
+      <DataViewToolbar
+        {...dataView}
+        columns={columns}
+        filtersOpen={dataView.filtersOpen}
+        onFiltersOpenChange={dataView.setFiltersOpen}
+      />
 
       <DataTable
         columns={[
@@ -66,11 +104,11 @@ export function EntityDefinitionList({
             cell: (item) => item.version,
           },
         ]}
-        rows={pageItems}
+        rows={dataView.pageItems}
         getRowId={(item) => item.id}
-        page={page}
-        totalCount={totalCount}
-        onPageChange={setPage}
+        page={dataView.page}
+        totalCount={dataView.totalCount}
+        onPageChange={dataView.setPage}
         emptyMessage={t("dataModels.empty")}
         loadingMessage={t("table.loading")}
         scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
