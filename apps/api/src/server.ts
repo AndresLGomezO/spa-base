@@ -106,6 +106,10 @@ function buildPermissionDeps(
     ...baseDeps,
     getKnownPermissions: (tenantId) =>
       entityRuntime.getKnownPermissions(tenantId),
+    prepareKnownPermissions: async (tenantId) => {
+      await entityRuntime.loadTenantDefinitions(tenantId);
+      return entityRuntime.getKnownPermissions(tenantId);
+    },
   };
 }
 

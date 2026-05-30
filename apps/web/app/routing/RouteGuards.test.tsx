@@ -2,6 +2,8 @@ import { cleanup, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { afterEach, describe, expect, it, vi } from "vitest";
 
+import { hasPermission } from "@repo/rbac";
+
 import { PermissionGuard, RequireAuth, RequireTenant } from "./RouteGuards";
 
 const mockUseAuth = vi.fn();
@@ -13,8 +15,9 @@ vi.mock("../auth/AuthContext", () => ({
 vi.mock("../auth/usePermission", () => ({
   usePermission: (permission: string) => {
     const auth = mockUseAuth();
-    if (auth.isSuperAdmin) return true;
-    return auth.permissions.includes(permission);
+    return hasPermission(permission, auth.permissions ?? [], {
+      isSuperAdmin: auth.isSuperAdmin,
+    });
   },
 }));
 

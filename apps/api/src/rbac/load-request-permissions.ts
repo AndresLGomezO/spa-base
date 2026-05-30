@@ -2,8 +2,6 @@ import type { FastifyRequest } from "fastify";
 
 import {
   isPlatformSuperAdmin,
-  resolvePermissions,
-  getAllKnownPermissions,
   type RoleCatalog,
   type UserAccessProfile,
 } from "@repo/rbac";
@@ -11,16 +9,14 @@ import type { RegisteredUserRepository } from "@repo/firestore-converters";
 
 import type { RequestContext } from "../auth/request-context.js";
 import { measureRbacTiming } from "../observability/request-timing.js";
+import type { LoadRequestPermissionsDeps } from "./permission-deps.js";
+import {
+  getTenantKnownPermissions,
+  resolveTenantPermissions,
+} from "./resolve-tenant-permissions.js";
 import { createUserAccessCache } from "./user-access-cache.js";
 
-export interface LoadRequestPermissionsDeps {
-  readonly getUserAccessProfile: (
-    uid: string,
-  ) => Promise<UserAccessProfile | null>;
-  readonly getRoleCatalog: (tenantId: string) => Promise<RoleCatalog>;
-  readonly getKnownPermissions?: (tenantId: string) => readonly string[];
-  readonly invalidateUserAccessCache?: (uid?: string) => void;
-}
+export type { LoadRequestPermissionsDeps } from "./permission-deps.js";
 
 export function createLoadRequestPermissionsDeps(
   registeredUserRepository: RegisteredUserRepository,
@@ -64,21 +60,16 @@ export async function loadRequestPermissions(
     tenants: {},
   };
   const isSuperAdmin = isPlatformSuperAdmin(accessProfile.platformRole);
-  const permissions = resolvePermissions(
+  const permissions = await resolveTenantPermissions(
     {
       ...accessProfile,
       tenantId,
     },
-    {
-      roleCatalog,
-      knownPermissions:
-        deps.getKnownPermissions?.(tenantId) ??
-        getAllKnownPermissions(tenantId),
-    },
+    deps,
+    { roleCatalog },
   );
 
-  const knownPermissions =
-    deps.getKnownPermissions?.(tenantId) ?? getAllKnownPermissions(tenantId);
+  const knownPermissions = await getTenantKnownPermissions(deps, tenantId);
 
   const nextCtx: RequestContext = {
     ...currentCtx,

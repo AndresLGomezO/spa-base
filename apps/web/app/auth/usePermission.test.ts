@@ -60,4 +60,50 @@ describe("usePermission", () => {
     const { result } = renderHook(() => usePermission("widget.delete"));
     expect(result.current).toBe(true);
   });
+
+  it("matches expanded permissions from action wildcards", () => {
+    vi.mocked(useAuth).mockReturnValue(
+      mockAuthContext({
+        permissions: [
+          "entityDefinition.read",
+          "hook.read",
+          "role.read",
+          "tenantUser.read",
+          "widget.read",
+        ],
+      }),
+    );
+
+    const { result } = renderHook(() => usePermission("widget.read"));
+    expect(result.current).toBe(true);
+  });
+
+  it("matches entity wildcard grants in resolved permissions", () => {
+    vi.mocked(useAuth).mockReturnValue(
+      mockAuthContext({
+        permissions: [
+          "widget.read",
+          "widget.create",
+          "widget.update",
+          "widget.delete",
+        ],
+      }),
+    );
+
+    expect(renderHook(() => usePermission("widget.read")).result.current).toBe(
+      true,
+    );
+    expect(
+      renderHook(() => usePermission("widget.delete")).result.current,
+    ).toBe(true);
+  });
+
+  it("does not treat unexpanded wildcard strings as granted permissions", () => {
+    vi.mocked(useAuth).mockReturnValue(
+      mockAuthContext({ permissions: ["widget.*"] }),
+    );
+
+    const { result } = renderHook(() => usePermission("widget.read"));
+    expect(result.current).toBe(false);
+  });
 });

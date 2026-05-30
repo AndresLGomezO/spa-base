@@ -2,15 +2,16 @@ import { Alert, Heading, PageLoader, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
+import { usePermission } from "../../auth/usePermission";
 import { HookManager } from "../../components/hooks/HookManager";
 
 export default function SettingsHooksRoute() {
   const { t } = useTranslation("common");
-  const { isReady, tenantId, permissions, isSuperAdmin } = useAuth();
+  const { isReady, tenantId } = useAuth();
 
-  const canAccess = isSuperAdmin || permissions.includes("hook.read");
-  const canCreate = isSuperAdmin || permissions.includes("hook.create");
-  const canUpdate = isSuperAdmin || permissions.includes("hook.update");
+  const canAccess = usePermission("hook.read");
+  const canCreate = usePermission("hook.create");
+  const canUpdate = usePermission("hook.update");
 
   if (!isReady) {
     return <PageLoader ariaLabel={t("loading")} />;

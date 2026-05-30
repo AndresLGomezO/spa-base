@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Database } from "lucide-react";
+import { hasPermission } from "@repo/rbac";
 
 import { useAuth } from "../auth/AuthContext";
 import { useEntityNavItems } from "../entities/use-entity-nav-items";
@@ -24,7 +25,9 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     const items: NavItemConfig[] = [HOME_NAV_ITEM];
 
     const dataModelChildren: NavLinkConfig[] = entityNavItems
-      .filter((item) => isSuperAdmin || permissions.includes(`${item.id}.read`))
+      .filter((item) =>
+        hasPermission(`${item.id}.read`, permissions, { isSuperAdmin }),
+      )
       .map((item) => ({
         id: item.id,
         label: item.label,
@@ -45,16 +48,16 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     const settingsChildren: NavLinkConfig[] = [];
 
-    if (isSuperAdmin || permissions.includes("tenantUser.read")) {
+    if (hasPermission("tenantUser.read", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_USER_MANAGEMENT_NAV_ITEM);
     }
-    if (isSuperAdmin || permissions.includes("role.read")) {
+    if (hasPermission("role.read", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_ROLES_NAV_ITEM);
     }
-    if (isSuperAdmin || permissions.includes("entityDefinition.read")) {
+    if (hasPermission("entityDefinition.read", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_DATA_MODEL_BUILDER_NAV_ITEM);
     }
-    if (isSuperAdmin || permissions.includes("hook.read")) {
+    if (hasPermission("hook.read", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_AUTOMATION_NAV_ITEM);
     }
 

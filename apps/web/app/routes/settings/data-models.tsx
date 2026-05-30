@@ -2,18 +2,16 @@ import { Alert, Heading, PageLoader, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
+import { usePermission } from "../../auth/usePermission";
 import { DataModelManager } from "../../components/data-models/DataModelManager";
 
 export default function SettingsDataModelsRoute() {
   const { t } = useTranslation("common");
-  const { isReady, tenantId, permissions, isSuperAdmin } = useAuth();
+  const { isReady, tenantId } = useAuth();
 
-  const canAccess =
-    isSuperAdmin || permissions.includes("entityDefinition.read");
-  const canCreate =
-    isSuperAdmin || permissions.includes("entityDefinition.create");
-  const canUpdate =
-    isSuperAdmin || permissions.includes("entityDefinition.update");
+  const canAccess = usePermission("entityDefinition.read");
+  const canCreate = usePermission("entityDefinition.create");
+  const canUpdate = usePermission("entityDefinition.update");
 
   if (!isReady) {
     return <PageLoader ariaLabel={t("loading")} />;

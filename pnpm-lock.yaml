@@ -331,6 +331,9 @@ importers:
       '@repo/query-engine':
         specifier: workspace:*
         version: link:../../packages/query-engine
+      '@repo/rbac':
+        specifier: workspace:*
+        version: link:../../packages/rbac
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types

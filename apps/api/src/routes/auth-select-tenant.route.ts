@@ -1,11 +1,7 @@
 import type { FastifyPluginAsync } from "fastify";
 import { z } from "zod";
 
-import {
-  isPlatformSuperAdmin,
-  resolvePermissions,
-  toUserAccessProfile,
-} from "@repo/rbac";
+import { isPlatformSuperAdmin, toUserAccessProfile } from "@repo/rbac";
 import {
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRepository,
@@ -21,6 +17,7 @@ import { extractBearerToken } from "../auth/extract-bearer-token.js";
 import { canAccessTenant } from "../auth/build-auth-session-context.js";
 import { listAvailableTenants } from "../admin/list-available-tenants.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import { resolveTenantPermissions } from "../rbac/resolve-tenant-permissions.js";
 
 const headerSchema = z.object({
   authorization: z.string().min(1),
@@ -122,11 +119,12 @@ export const authSelectTenantRoute: FastifyPluginAsync<{
       const roleCatalog =
         await opts.permissionDeps.getRoleCatalog(requestedTenantId);
 
-      const permissions = resolvePermissions(
+      const permissions = await resolveTenantPermissions(
         {
           ...accessProfile,
           tenantId: requestedTenantId,
         },
+        opts.permissionDeps,
         { roleCatalog },
       );
 
