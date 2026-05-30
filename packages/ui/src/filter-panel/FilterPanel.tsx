@@ -1,15 +1,19 @@
 import type { ReactNode } from "react";
 import { ChevronDown, Filter } from "lucide-react";
 
-import { Button } from "@repo/ui";
+import { Button } from "../button/Button";
+import { FilterValueBadge } from "../filter-value-badge/FilterValueBadge";
 
-import { FilterValueBadge } from "./FilterValueBadge";
-import type { DataViewFilterBadge } from "./types";
+export interface FilterBadge {
+  readonly id: string;
+  readonly label: string;
+  readonly onRemove: () => void;
+}
 
-interface FilterPanelProps {
+export interface FilterPanelProps {
   readonly open: boolean;
   readonly onOpenChange: (open: boolean) => void;
-  readonly activeBadges: readonly DataViewFilterBadge[];
+  readonly activeBadges: readonly FilterBadge[];
   readonly children: ReactNode;
   readonly triggerLabel: string;
   readonly clearAllLabel: string;

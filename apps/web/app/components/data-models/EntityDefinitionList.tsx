@@ -4,9 +4,12 @@ import { useTranslation } from "react-i18next";
 import { Button, DataTable, Heading } from "@repo/ui";
 
 import type { EntityDefinitionRecord } from "../../lib/api-client";
-import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
+import { useDataViewWithPagination } from "@repo/data-view";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
-import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
+import {
+  WebDataViewToolbar,
+  type DataViewColumnDescriptor,
+} from "../data-view";
 import { DataModelsListSkeleton } from "../loading/DataModelsListSkeleton";
 
 interface EntityDefinitionListProps {
@@ -74,7 +77,7 @@ export function EntityDefinitionList({
         ) : null}
       </div>
 
-      <DataViewToolbar
+      <WebDataViewToolbar
         {...dataView}
         columns={columns}
         filtersOpen={dataView.filtersOpen}

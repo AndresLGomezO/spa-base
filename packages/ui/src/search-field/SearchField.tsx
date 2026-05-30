@@ -2,11 +2,12 @@ import { Search } from "lucide-react";
 import { startTransition, useEffect, useRef, useState } from "react";
 
 import { cn } from "@repo/theme/utils";
-import { Input } from "@repo/ui";
+
+import { Input } from "../input/Input";
 
 const DEFAULT_DEBOUNCE_MS = 300;
 
-interface SearchFieldProps {
+export interface SearchFieldProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
   readonly placeholder?: string;

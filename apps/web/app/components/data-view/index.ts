@@ -1,2 +1,2 @@
-export type { DataViewColumnDescriptor } from "./types";
-export { DataViewToolbar } from "./DataViewToolbar";
+export type { DataViewColumnDescriptor } from "@repo/data-view";
+export { WebDataViewToolbar } from "./WebDataViewToolbar";

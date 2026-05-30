@@ -10,7 +10,7 @@ import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { FormModal } from "../forms/FormModal";
-import { DataViewToolbar } from "../data-view";
+import { WebDataViewToolbar } from "../data-view";
 import { RequireEntityPermission } from "./RequireEntityPermission";
 import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
@@ -131,7 +131,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
       </div>
 
       {!entityState.isLoading && !isLoadingRelations ? (
-        <DataViewToolbar
+        <WebDataViewToolbar
           {...dataView}
           columns={columnDescriptors}
           filtersOpen={dataView.filtersOpen}

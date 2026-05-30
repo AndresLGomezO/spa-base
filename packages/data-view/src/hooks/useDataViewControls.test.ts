@@ -1,7 +1,7 @@
 import { renderHook, act } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import type { DataViewColumnDescriptor } from "../components/data-view/types";
+import type { DataViewColumnDescriptor } from "../types";
 import { useDataViewControls } from "./useDataViewControls";
 
 interface SampleRow {

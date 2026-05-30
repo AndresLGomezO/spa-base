@@ -1,15 +1,18 @@
 import { useCallback, useMemo, useState } from "react";
 import { ChevronDown, Search } from "lucide-react";
 
-import { Button, Input, Popover } from "@repo/ui";
+import { Button } from "../button/Button";
+import { FilterValueBadge } from "../filter-value-badge/FilterValueBadge";
+import { Input } from "../input/Input";
+import { Popover } from "../popover/Popover";
 
-import { FilterValueBadge } from "./FilterValueBadge";
+export interface SearchableMultiSelectOption {
+  readonly value: string;
+  readonly label: string;
+}
 
-interface SearchableMultiSelectDropdownProps {
-  readonly options: readonly {
-    readonly value: string;
-    readonly label: string;
-  }[];
+export interface SearchableMultiSelectDropdownProps {
+  readonly options: readonly SearchableMultiSelectOption[];
   readonly selected: readonly string[];
   readonly onChange: (selected: readonly string[]) => void;
   readonly placeholder: string;
@@ -108,7 +111,7 @@ export function SearchableMultiSelectDropdown({
             value={searchTerm}
             onChange={(event) => setSearchTerm(event.target.value)}
             placeholder={searchPlaceholder}
-            className="pl-8"
+            className="!pl-8 shadow-none"
             aria-label={searchPlaceholder}
           />
         </div>

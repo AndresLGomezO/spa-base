@@ -4,9 +4,12 @@ import { useTranslation } from "react-i18next";
 import { BooleanCell, Button, DataTable, Heading } from "@repo/ui";
 
 import type { HookRecord } from "../../lib/api-client";
-import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
+import { useDataViewWithPagination } from "@repo/data-view";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
-import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
+import {
+  WebDataViewToolbar,
+  type DataViewColumnDescriptor,
+} from "../data-view";
 import { HookListSkeleton } from "../loading/HookListSkeleton";
 
 interface HookListProps {
@@ -81,7 +84,7 @@ export function HookList({
         ) : null}
       </div>
 
-      <DataViewToolbar
+      <WebDataViewToolbar
         {...dataView}
         columns={columns}
         filtersOpen={dataView.filtersOpen}

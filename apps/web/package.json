@@ -23,6 +23,7 @@
   "dependencies": {
     "@app/platform": "workspace:*",
     "@tanstack/react-query": "catalog:",
+    "@repo/data-view": "workspace:*",
     "@repo/theme": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/entities": "workspace:*",

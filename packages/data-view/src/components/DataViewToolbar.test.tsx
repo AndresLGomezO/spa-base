@@ -1,11 +1,9 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import type { ComponentProps } from "react";
 import { describe, expect, it, vi } from "vitest";
-import { I18nextProvider } from "react-i18next";
 
-import { i18n } from "../../i18n";
 import { DataViewToolbar } from "./DataViewToolbar";
-import type { DataViewColumnDescriptor } from "./types";
+import type { DataViewColumnDescriptor, DataViewToolbarLabels } from "../types";
 
 interface SampleRow {
   readonly id: string;
@@ -19,6 +17,21 @@ const columns: readonly DataViewColumnDescriptor<SampleRow>[] = [
     getValue: (row) => row.name,
   },
 ];
+
+const labels: DataViewToolbarLabels = {
+  searchPlaceholder: "Search",
+  filtersTrigger: "Filters",
+  filtersClearAll: "Clear all",
+  removeBadge: (label) => `Remove ${label}`,
+  filterPlaceholder: "Select values",
+  filterSearchPlaceholder: "Search options",
+  filterSelectedCount: (count) => `${count} selected`,
+  noFilterResults: "No results",
+  sortBy: "Sort by",
+  sortDefault: "Default",
+  sortAscending: "Ascending",
+  sortDescending: "Descending",
+};
 
 function renderToolbar(
   overrides: Partial<ComponentProps<typeof DataViewToolbar<SampleRow>>> = {},
@@ -35,16 +48,13 @@ function renderToolbar(
     activeBadges: [],
     clearAll: vi.fn(),
     columns,
+    labels,
     filtersOpen: false,
     onFiltersOpenChange: vi.fn(),
     ...overrides,
   };
 
-  return render(
-    <I18nextProvider i18n={i18n}>
-      <DataViewToolbar {...props} />
-    </I18nextProvider>,
-  );
+  return render(<DataViewToolbar {...props} />);
 }
 
 describe("DataViewToolbar", () => {

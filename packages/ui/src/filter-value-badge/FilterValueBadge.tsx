@@ -1,6 +1,6 @@
 import { X } from "lucide-react";
 
-interface FilterValueBadgeProps {
+export interface FilterValueBadgeProps {
   readonly label: string;
   readonly onRemove: () => void;
   readonly removeAriaLabel: string;

@@ -1,4 +1,4 @@
-import type { DataViewColumnDescriptor } from "../components/data-view/types";
+import type { DataViewColumnDescriptor } from "../types";
 
 function formatColumnValue<T>(
   column: DataViewColumnDescriptor<T>,

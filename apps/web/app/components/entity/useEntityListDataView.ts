@@ -7,16 +7,18 @@ import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
-import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
+import {
+  useDataViewWithPagination,
+  type DataViewColumnDescriptor,
+  type UseDataViewWithPaginationResult,
+} from "@repo/data-view";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import {
   getFieldAccessLevel,
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
 import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
-import type { DataViewColumnDescriptor } from "../data-view/types";
 import { buildEntityColumnDescriptors } from "./build-entity-column-descriptors";
-import type { UseDataViewWithPaginationResult } from "../../hooks/useDataViewWithPagination";
 
 interface UseEntityListDataViewParams {
   readonly entityName: EntityName;

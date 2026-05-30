@@ -13,9 +13,12 @@ import {
   type TenantUserInvite,
   type TenantUserMember,
 } from "../../lib/api-client";
-import { useDataViewWithPagination } from "../../hooks/useDataViewWithPagination";
+import { useDataViewWithPagination } from "@repo/data-view";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
-import { DataViewToolbar, type DataViewColumnDescriptor } from "../data-view";
+import {
+  WebDataViewToolbar,
+  type DataViewColumnDescriptor,
+} from "../data-view";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { EditMemberModal } from "./EditMemberModal";
 import { InviteUserModal } from "./InviteUserModal";
@@ -214,7 +217,7 @@ export function UserManagement({
         ) : null}
       </div>
 
-      <DataViewToolbar
+      <WebDataViewToolbar
         {...dataView}
         columns={columns}
         filtersOpen={dataView.filtersOpen}
