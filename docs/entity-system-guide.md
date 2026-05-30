@@ -44,7 +44,7 @@ flowchart TB
 | `@repo/shared-types`               | Persisted schema types; re-exports entity definitions from modules |
 | `@repo/modules`                    | `defineModule`, `defineApp`, registries, dependency resolver     |
 | `@app/platform`                    | Shared app config + `bootstrapPlatformApp()` for API and web     |
-| `modules/core`                     | Seed entities (`organization`, `project`) and converters         |
+| `modules/core`                     | Seed entities (`customer`, `organization`, `project`) and converters |
 | `@repo/firestore-converters`       | Versioned converters + `_schemaVersion` (User pattern)            |
 | `@repo/gcp-firebase`               | Firestore repository implementations                              |
 | `@repo/rbac`                       | Role definitions, permission resolution, wildcard matching        |
@@ -55,12 +55,13 @@ Dependency direction: apps → gcp-firebase → firestore-converters → shared-
 
 ### Static vs dynamic entities
 
-| Kind | Source | Registration |
-| --- | --- | --- |
-| **Static** | Modules (`defineModule` → `defineEntity`) | At API bootstrap via `bootstrapPlatformApp()` |
-| **Dynamic** | Tenant admins via Model Builder | Stored in Firestore `entity_definitions`, hydrated at runtime |
+| Kind | Source | Registration | Firestore path |
+| --- | --- | --- | --- |
+| **Static** | Modules (`defineModule` → `defineEntity`) | At API bootstrap via `bootstrapPlatformApp()` → `packages/entities/src/registry/entityRegistry.ts` | Entity **data** at `tenants/{tenantId}/{collection}/{id}` |
+| **Dynamic** | Tenant admins via Model Builder | Stored in Firestore, hydrated at runtime via `EntityRuntimeContext.loadTenantDefinitions()` (60s TTL) | `tenants/{tenantId}/entity_definitions/{id}` |
+| **Merged view** | `resolveEntity(name, tenantId)` in `@repo/dynamic-entities` | Static wins on name collision | — |
 
-Both kinds share the same CRUD pipeline, catalog API, RBAC permission pattern, and UI Builder. See [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md).
+Both kinds share the same CRUD pipeline, catalog API, RBAC permission pattern, and UI Builder. The primary Phase 1 vertical slice entity is **`customer`** (see `modules/core`). See [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md).
 
 ---
 

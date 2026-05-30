@@ -34,6 +34,10 @@ export {
 
 export { createEntityConverter } from "./entity/create-entity-converter.js";
 export {
+  customerConverter,
+  customerCurrentVersion,
+} from "./customer/schema.latest.js";
+export {
   organizationConverter,
   organizationCurrentVersion,
 } from "./organization/schema.latest.js";

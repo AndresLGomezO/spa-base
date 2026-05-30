@@ -17,6 +17,7 @@ import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 import { HookExecutionError } from "@repo/hooks";
 
 import type { RequestContext } from "../auth/request-context.js";
+import { requireRequestTenant } from "../auth/resolve-target-tenant-id.js";
 import {
   applyReadFieldFilter,
   assertRequestWritableFields,
@@ -111,26 +112,11 @@ interface RegisterCrudRoutesOptions<
   readonly crudHooks?: CrudHookDeps;
 }
 
-function getTenantId(request: FastifyRequest): string | null {
-  const tenantId = request.ctx?.tenantId?.trim();
-  return tenantId && tenantId.length > 0 ? tenantId : null;
-}
-
 function requireTenant(
   request: FastifyRequest,
   reply: FastifyReply,
 ): string | null {
-  const tenantId = getTenantId(request);
-  if (!tenantId) {
-    replyWithError(
-      reply,
-      403,
-      ApiErrorCode.TENANT_NOT_RESOLVED,
-      "Tenant context is required.",
-    );
-    return null;
-  }
-  return tenantId;
+  return requireRequestTenant(request, reply);
 }
 
 function mapRelationErrorToResponse(

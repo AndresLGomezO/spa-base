@@ -5,6 +5,20 @@ export {
   type TtlCacheOptions,
 } from "./cache/create-ttl-cache.js";
 export {
+  CUSTOMERS_COLLECTION,
+  CUSTOMER_PERMISSIONS,
+  CUSTOMER_SCHEMA_VERSION,
+  Customer,
+  customerCreateSchema,
+  customerSchema,
+  customerUpdateSchema,
+  persistedCustomerSchemaV1,
+  type CustomerCreate,
+  type CustomerRecord,
+  type CustomerUpdate,
+  type PersistedCustomer,
+} from "./entities/customer.js";
+export {
   ORGANIZATIONS_COLLECTION,
   ORGANIZATION_PERMISSIONS,
   ORGANIZATION_SCHEMA_VERSION,

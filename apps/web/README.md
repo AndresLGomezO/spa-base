@@ -21,13 +21,13 @@ Auth uses Firebase with `browserLocalPersistence` and the Auth emulator (`127.0.
 
 ## Architecture highlights
 
-| Concern | Location |
-|---------|----------|
-| TanStack Query | `app/query/query-client.ts`, provider in `app/routes/private-layout.tsx` |
-| Entity catalog | `app/entities/entity-catalog-context.tsx` → `GET /api/entities` |
-| Entity data | `app/hooks/useEntity.ts` (infinite query + mutations) |
-| Route guards | `app/routing/RouteGuards.tsx` |
-| Dynamic entity routes | `app/routing/entity-routes.ts` |
+| Concern               | Location                                                                 |
+| --------------------- | ------------------------------------------------------------------------ |
+| TanStack Query        | `app/query/query-client.ts`, provider in `app/routes/private-layout.tsx` |
+| Entity catalog        | `app/entities/entity-catalog-context.tsx` → `GET /api/entities`          |
+| Entity data           | `app/hooks/useEntity.ts` (infinite query + mutations)                    |
+| Route guards          | `app/routing/RouteGuards.tsx`                                            |
+| Dynamic entity routes | `app/routing/entity-routes.ts`                                           |
 
 React Router 7 automatically code-splits each route module file into separate browser chunks.
 
@@ -37,27 +37,27 @@ React Router 7 automatically code-splits each route module file into separate br
 
 See [app/routing/README.md](app/routing/README.md).
 
-| Guard | Behavior |
-|-------|----------|
-| Auth | Unauthenticated → `/login` |
-| Tenant | No `tenantId` claim → `/select-tenant` |
+| Guard      | Behavior                                   |
+| ---------- | ------------------------------------------ |
+| Auth       | Unauthenticated → `/login`                 |
+| Tenant     | No `tenantId` claim → `/select-tenant`     |
 | Permission | Missing `{entity}.{action}` → forbidden UI |
 
 ### Layouts
 
-| Layout | Routes |
-|--------|--------|
-| Public | `/login` |
+| Layout    | Routes                                |
+| --------- | ------------------------------------- |
+| Public    | `/login`                              |
 | Auth-only | `/select-tenant`, `/settings/admin/*` |
-| Private | `/`, `/app/*`, `/settings/*` |
+| Private   | `/`, `/app/*`, `/settings/*`          |
 
 ### Entity routes (dynamic)
 
-| Path | Description |
-|------|-------------|
-| `/app/:entity` | Entity list (table/card via UI builder) |
-| `/app/:entity/new` | Create record |
-| `/app/:entity/:id` | Edit record |
+| Path               | Description                             |
+| ------------------ | --------------------------------------- |
+| `/app/:entity`     | Entity list (table/card via UI builder) |
+| `/app/:entity/new` | Create record                           |
+| `/app/:entity/:id` | Edit record                             |
 
 Sidebar lists entities from catalog filtered by `{entity}.read` permission.
 
@@ -67,12 +67,12 @@ Sidebar lists entities from catalog filtered by `{entity}.read` permission.
 
 Visible in sidebar when user has admin permissions (`entityDefinition.read`, `role.read`, or `hook.read`).
 
-| Path | Description |
-|------|-------------|
-| `/` | Admin overview dashboard (counts + quick links) when admin |
-| `/settings/data-models` | Model Builder — create/edit entity definitions |
-| `/settings/hooks` | Automation hooks |
-| `/settings/roles` | Tenant roles + field permissions |
+| Path                    | Description                                                |
+| ----------------------- | ---------------------------------------------------------- |
+| `/`                     | Admin overview dashboard (counts + quick links) when admin |
+| `/settings/data-models` | Model Builder — create/edit entity definitions             |
+| `/settings/hooks`       | Automation hooks                                           |
+| `/settings/roles`       | Tenant roles + field permissions                           |
 
 Platform superadmin cross-tenant admin: `/settings/admin`, `/settings/admin/data-models`, `/settings/admin/hooks`, `/settings/admin/roles`.
 

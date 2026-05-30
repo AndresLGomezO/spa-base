@@ -496,6 +496,61 @@ describe("CRUD API", () => {
     });
   });
 
+  describe("Superadmin tenant override", () => {
+    it("creates records in the query tenant for superadmin", async () => {
+      const server = await buildTestServer({
+        accessProfile: {
+          platformRole: "superadmin",
+          tenants: {},
+        },
+      });
+
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/organization?tenantId=tenant_b",
+        headers: authHeaders,
+        payload: { name: "Tenant B Organization" },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.json().data.tenantId).toBe("tenant_b");
+    });
+
+    it("ignores query tenant override for non-superadmin users", async () => {
+      const server = await buildTestServer();
+
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/organization?tenantId=tenant_b",
+        headers: authHeaders,
+        payload: { name: "Still Tenant A" },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.json().data.tenantId).toBe("tenant_a");
+    });
+  });
+
+  describe("Customer", () => {
+    it("creates a valid customer record", async () => {
+      const server = await buildTestServer();
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/customer",
+        headers: authHeaders,
+        payload: { name: "Jane Doe", email: "jane@example.com" },
+      });
+
+      expect(response.statusCode).toBe(201);
+      expect(response.json().data).toMatchObject({
+        name: "Jane Doe",
+        email: "jane@example.com",
+        tenantId: "tenant_a",
+        isActive: true,
+      });
+    });
+  });
+
   describe("Tenant isolation", () => {
     it("returns only records for the authenticated tenant", async () => {
       const server = await buildTestServer();

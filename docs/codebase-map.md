@@ -15,7 +15,7 @@ project-base/
 │   ├── web/                 React Router 7 SPA
 │   └── platform/            defineApp + module list
 ├── modules/
-│   ├── core/                organization, project
+│   ├── core/                customer, organization, project
 │   └── inventory/           inventoryItem + module route
 ├── packages/                Shared libraries (see below)
 ├── docs/                    Guides + handoff set
