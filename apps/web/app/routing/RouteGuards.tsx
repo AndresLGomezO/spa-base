@@ -2,7 +2,7 @@ import type { ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 import { Navigate, useLocation } from "react-router";
 
-import { Alert, Text } from "@repo/ui";
+import { Alert, PageLoader, Text } from "@repo/ui";
 
 import { useAuth } from "../auth/AuthContext";
 import { usePermission } from "../auth/usePermission";
@@ -17,7 +17,7 @@ export function RequireAuth({ children }: GuardProps) {
   const location = useLocation();
 
   if (!isReady) {
-    return <Text>{t("loading")}</Text>;
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   if (!isAuthenticated) {
@@ -32,7 +32,7 @@ export function RedirectIfAuthenticated({ children }: GuardProps) {
   const { isReady, isAuthenticated } = useAuth();
 
   if (!isReady) {
-    return <Text>{t("loading")}</Text>;
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   if (isAuthenticated) {
@@ -48,7 +48,7 @@ export function RequireTenant({ children }: GuardProps) {
   const location = useLocation();
 
   if (!isReady) {
-    return <Text>{t("loading")}</Text>;
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   if (tenantId) {
@@ -66,7 +66,7 @@ export function RequireTenant({ children }: GuardProps) {
   }
 
   if (availableTenants.length > 0) {
-    return <Text>{t("loading")}</Text>;
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   return (
@@ -106,7 +106,7 @@ export function RequireSuperAdmin({ children }: GuardProps) {
   const { isReady, isSuperAdmin } = useAuth();
 
   if (!isReady) {
-    return <Text>{t("loading")}</Text>;
+    return <PageLoader ariaLabel={t("loading")} />;
   }
 
   if (!isSuperAdmin) {

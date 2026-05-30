@@ -7,6 +7,7 @@ import {
 } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { listEntity } from "../../lib/api-client";
+import { RelationPickerSkeleton } from "../loading/RelationPickerSkeleton";
 
 interface ManyToManyRelationPickerProps {
   readonly entityName: EntityName;
@@ -91,7 +92,7 @@ export function ManyToManyRelationPicker({
         {label || formatFieldLabel(fieldName, definition)}
       </FieldLabel>
       {isLoading ? (
-        <Text className="text-muted-foreground text-sm">Loading...</Text>
+        <RelationPickerSkeleton />
       ) : options.length === 0 ? (
         <Text className="text-muted-foreground text-sm">
           No related records available.

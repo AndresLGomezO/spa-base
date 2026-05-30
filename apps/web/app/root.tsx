@@ -8,7 +8,7 @@ import {
   type LinksFunction,
 } from "react-router";
 
-import { Heading, Text, Toaster } from "@repo/ui";
+import { Heading, PageLoader, Text, Toaster } from "@repo/ui";
 import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 
 import { AuthProvider } from "./auth/AuthProvider";
@@ -48,11 +48,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function HydrateFallback() {
-  return (
-    <main aria-busy="true" className="mx-auto max-w-2xl px-4 py-8">
-      <Text>{i18n.t("loading")}</Text>
-    </main>
-  );
+  return <PageLoader ariaLabel={i18n.t("loading")} />;
 }
 
 function AppShell() {

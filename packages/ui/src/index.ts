@@ -62,5 +62,12 @@ export {
 } from "./segmented-switch/SegmentedSwitch";
 export { Heading, type HeadingProps } from "./typography/Heading";
 export { Text, type TextProps } from "./typography/Text";
+export { PageLoader, type PageLoaderProps } from "./loading/PageLoader";
+export { Skeleton, type SkeletonProps } from "./skeleton/Skeleton";
+export {
+  Spinner,
+  type SpinnerProps,
+  type SpinnerSize,
+} from "./spinner/Spinner";
 export { Toaster, type ToasterProps } from "./toaster";
 export { toast } from "sonner";

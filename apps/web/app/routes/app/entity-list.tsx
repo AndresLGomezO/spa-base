@@ -4,6 +4,7 @@ import { EntityPage } from "../../components/entity/EntityPage";
 import { RequireEntityPermission } from "../../components/entity/RequireEntityPermission";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useRefreshEntityCatalogOnMount } from "../../entities/use-refresh-entity-catalog-on-mount";
+import { EntityPageSkeleton } from "../../components/loading/EntityPageSkeleton";
 import EntityNotFoundRoute from "./entity-not-found";
 
 export default function EntityListRoute() {
@@ -13,7 +14,7 @@ export default function EntityListRoute() {
   useRefreshEntityCatalogOnMount();
 
   if (isLoading) {
-    return null;
+    return <EntityPageSkeleton />;
   }
 
   if (!isKnownEntity(entity)) {

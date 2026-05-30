@@ -105,7 +105,7 @@ describe("RequireTenant", () => {
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("loading")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
     expect(screen.queryByText("Select tenant")).not.toBeInTheDocument();
     expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
   });

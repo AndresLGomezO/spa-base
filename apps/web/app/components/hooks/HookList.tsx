@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Button, Heading, Text } from "@repo/ui";
 
 import type { HookRecord } from "../../lib/api-client";
+import { HookListSkeleton } from "../loading/HookListSkeleton";
 
 interface HookListProps {
   readonly items: readonly HookRecord[];
@@ -24,7 +25,7 @@ export function HookList({
   const { t } = useTranslation("common");
 
   if (isLoading) {
-    return <Text>{t("hooks.loading")}</Text>;
+    return <HookListSkeleton />;
   }
 
   return (

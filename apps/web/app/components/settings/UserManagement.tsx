@@ -12,6 +12,7 @@ import {
   type TenantUserInvite,
   type TenantUserMember,
 } from "../../lib/api-client";
+import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 
 interface UserManagementProps {
   readonly tenantId: string;
@@ -141,7 +142,7 @@ export function UserManagement({
   }
 
   if (isLoading) {
-    return <Text>{t("loading")}</Text>;
+    return <SettingsPanelSkeleton />;
   }
 
   return (

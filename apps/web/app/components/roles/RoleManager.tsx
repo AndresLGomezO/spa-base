@@ -5,6 +5,7 @@ import { Alert, Button, FieldLabel, Text } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { listRoles, type TenantRoleRecord } from "../../lib/api-client";
+import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { RoleEditor } from "./RoleEditor";
 
 interface RoleManagerProps {
@@ -109,7 +110,7 @@ export function RoleManager({
   }
 
   if (isLoading) {
-    return <Text>{t("loading")}</Text>;
+    return <SettingsPanelSkeleton />;
   }
 
   return (

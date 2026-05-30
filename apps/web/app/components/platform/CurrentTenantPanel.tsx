@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useState, type FormEvent } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, FieldLabel, Form, Input, Text } from "@repo/ui";
+import { Alert, Button, FieldLabel, Form, Input } from "@repo/ui";
 
 import {
   getAdminTenant,
   updateAdminTenant,
   type AdminTenant,
 } from "../../lib/admin-client";
+import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 
 interface CurrentTenantPanelProps {
   readonly tenantId: string;
@@ -95,7 +96,7 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   }
 
   if (isLoading) {
-    return <Text>{t("loading")}</Text>;
+    return <SettingsPanelSkeleton />;
   }
 
   if (!tenant) {

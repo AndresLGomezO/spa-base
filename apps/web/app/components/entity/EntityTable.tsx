@@ -27,6 +27,7 @@ import {
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
 import type { useEntity } from "../../hooks/useEntity";
+import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { resolveEntityCellValue } from "./resolve-entity-cell-value";
 
 type EntityListState = Pick<
@@ -122,7 +123,7 @@ export function EntityTable({
   };
 
   if (isLoading || isLoadingRelations) {
-    return <Text>{t("entity.loading")}</Text>;
+    return <EntityPageSkeleton />;
   }
 
   if (error) {

@@ -20,6 +20,7 @@ import {
   type EntityDefinitionRecord,
   type FieldDefinitionInput,
 } from "../../lib/api-client";
+import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { FieldEditor } from "./FieldEditor";
 
 interface EntityDefinitionEditorProps {
@@ -150,7 +151,7 @@ export function EntityDefinitionEditor({
   }
 
   if (isLoading) {
-    return <Text>{t("dataModels.loading")}</Text>;
+    return <EntityFormSkeleton />;
   }
 
   if (!record) {
