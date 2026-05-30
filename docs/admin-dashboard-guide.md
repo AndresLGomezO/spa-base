@@ -59,9 +59,9 @@ Branding applies at runtime via `TenantBrandingProvider` (`appearanceToCssVariab
 
 Logo upload uses Firebase Admin Storage. See [gcs-storage-guide.md](./gcs-storage-guide.md).
 
-### Create tenant (`/platform/create-tenant`)
+### Create tenant (modal)
 
-Superadmin only. Create a new tenant and switch into it. Linked from the tenant switcher and `/select-tenant`.
+Superadmin only. Opens a centered modal from the tenant switcher or `/select-tenant`. Creates a new tenant and switches into it. Legacy URL `/platform/create-tenant` redirects to `/select-tenant` and opens the same modal.
 
 ## Navigation structure
 

@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Alert, Button, FieldLabel, Form, Input, toast } from "@repo/ui";
+import { Alert, Button, toast } from "@repo/ui";
 
 import {
   getAdminTenant,
@@ -9,6 +9,7 @@ import {
   type AdminTenant,
 } from "../../lib/admin-client";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
+import { EditTenantNameModal } from "./EditTenantNameModal";
 
 interface CurrentTenantPanelProps {
   readonly tenantId: string;
@@ -17,7 +18,7 @@ interface CurrentTenantPanelProps {
 export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   const { t } = useTranslation("common");
   const [tenant, setTenant] = useState<AdminTenant | null>(null);
-  const [name, setName] = useState("");
+  const [editOpen, setEditOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -26,7 +27,6 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
     try {
       const nextTenant = await getAdminTenant(tenantId);
       setTenant(nextTenant);
-      setName(nextTenant.name);
     } catch (loadError) {
       toast.error(
         loadError instanceof Error
@@ -41,27 +41,6 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   useEffect(() => {
     void loadTenant();
   }, [loadTenant]);
-
-  async function handleSaveName(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    const trimmedName = name.trim();
-    if (!trimmedName || !tenant) return;
-
-    setIsSaving(true);
-    try {
-      const updated = await updateAdminTenant(tenant.id, { name: trimmedName });
-      setTenant(updated);
-      toast.success(t("platform.currentTenant.saveSuccess"));
-    } catch (saveError) {
-      toast.error(
-        saveError instanceof Error
-          ? saveError.message
-          : t("platform.currentTenant.saveFailed"),
-      );
-    } finally {
-      setIsSaving(false);
-    }
-  }
 
   async function handleToggleStatus() {
     if (!tenant) return;
@@ -100,6 +79,20 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
     <div className="flex w-full max-w-xl flex-col gap-6">
       <dl className="grid gap-3 text-sm">
         <div>
+          <dt className="text-muted font-medium">{t("admin.tenants.name")}</dt>
+          <dd className="flex items-center gap-3">
+            <span>{tenant.name}</span>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() => setEditOpen(true)}
+            >
+              {t("entity.edit")}
+            </Button>
+          </dd>
+        </div>
+        <div>
           <dt className="text-muted font-medium">{t("admin.tenants.id")}</dt>
           <dd>{tenant.id}</dd>
         </div>
@@ -121,26 +114,6 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
         </div>
       </dl>
 
-      <Form
-        className="grid gap-4"
-        onSubmit={(event) => void handleSaveName(event)}
-      >
-        <div className="flex flex-col gap-2">
-          <FieldLabel htmlFor="tenant-name">
-            {t("admin.tenants.name")}
-          </FieldLabel>
-          <Input
-            id="tenant-name"
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            required
-          />
-        </div>
-        <Button type="submit" disabled={isSaving}>
-          {isSaving ? t("loading") : t("platform.currentTenant.save")}
-        </Button>
-      </Form>
-
       <Button
         type="button"
         variant="outline"
@@ -151,6 +124,13 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
           ? t("admin.tenants.suspend")
           : t("admin.tenants.activate")}
       </Button>
+
+      <EditTenantNameModal
+        open={editOpen}
+        tenant={tenant}
+        onClose={() => setEditOpen(false)}
+        onSaved={setTenant}
+      />
     </div>
   );
 }

@@ -17,9 +17,13 @@ export default meta;
 
 function ModalDemo({
   title = "Settings",
+  size,
+  scrollable,
   children,
 }: {
   readonly title?: string;
+  readonly size?: "sm" | "md" | "lg" | "xl";
+  readonly scrollable?: boolean;
   readonly children: ReactNode;
 }) {
   const [open, setOpen] = useState(true);
@@ -29,7 +33,13 @@ function ModalDemo({
       <Button type="button" onClick={() => setOpen(true)}>
         Open modal
       </Button>
-      <Modal open={open} onClose={() => setOpen(false)} title={title}>
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={title}
+        size={size}
+        scrollable={scrollable}
+      >
         {children}
       </Modal>
     </>
@@ -45,6 +55,18 @@ export const Default: StoryObj = {
       <Button variant="outline" fullWidth>
         Dark mode
       </Button>
+    </ModalDemo>
+  ),
+};
+
+export const ScrollableLarge: StoryObj = {
+  render: () => (
+    <ModalDemo title="Edit record" size="lg" scrollable>
+      {Array.from({ length: 24 }, (_, index) => (
+        <p key={index} className="text-muted-foreground text-sm">
+          Form field block {index + 1}
+        </p>
+      ))}
     </ModalDemo>
   ),
 };

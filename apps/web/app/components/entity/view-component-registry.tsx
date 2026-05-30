@@ -14,6 +14,7 @@ interface EntityViewProps {
   readonly entityState: EntityListState;
   readonly onQueryConfigChange: (queryConfig: QueryConfig) => void;
   readonly onRequestDelete?: (id: string) => void;
+  readonly onRequestEdit?: (id: string) => void;
 }
 
 const viewComponents = new Map<string, ComponentType<EntityViewProps>>();

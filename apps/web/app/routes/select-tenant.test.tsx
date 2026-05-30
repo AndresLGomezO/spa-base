@@ -2,6 +2,7 @@ import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
+import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
 import SelectTenantRoute from "./select-tenant";
 
 const mockUseAuth = vi.fn();
@@ -28,12 +29,14 @@ describe("SelectTenantRoute", () => {
     });
 
     render(
-      <MemoryRouter initialEntries={["/select-tenant"]}>
-        <Routes>
-          <Route path="/select-tenant" element={<SelectTenantRoute />} />
-          <Route path="/" element={<div>Home</div>} />
-        </Routes>
-      </MemoryRouter>,
+      <CreateTenantModalProvider>
+        <MemoryRouter initialEntries={["/select-tenant"]}>
+          <Routes>
+            <Route path="/select-tenant" element={<SelectTenantRoute />} />
+            <Route path="/" element={<div>Home</div>} />
+          </Routes>
+        </MemoryRouter>
+      </CreateTenantModalProvider>,
     );
 
     expect(screen.getByText("Home")).toBeInTheDocument();

@@ -96,7 +96,7 @@ export function FieldEditor({
     Boolean(field.relation?.target);
 
   return (
-    <div className="border-border space-y-3 rounded-md border p-4">
+    <div className="border-border mx-0.5 space-y-3 rounded-md border p-4">
       <div className="flex items-center justify-between gap-2">
         <Text className="font-medium">
           {t("dataModels.fieldNumber", { number: index + 1 })}

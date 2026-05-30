@@ -1,15 +1,14 @@
-import { Heading } from "@repo/ui";
-import { useTranslation } from "react-i18next";
+import { useEffect } from "react";
+import { Navigate } from "react-router";
 
-import { CreateTenantForm } from "../../components/platform/CreateTenantForm";
+import { useCreateTenantModal } from "../../components/platform/create-tenant-modal-context";
 
-export default function CreateTenantRoute() {
-  const { t } = useTranslation("common");
+export default function CreateTenantRedirectRoute() {
+  const { openCreateTenantModal } = useCreateTenantModal();
 
-  return (
-    <div className="space-y-4">
-      <Heading level={1}>{t("platform.createTenant.title")}</Heading>
-      <CreateTenantForm />
-    </div>
-  );
+  useEffect(() => {
+    openCreateTenantModal();
+  }, [openCreateTenantModal]);
+
+  return <Navigate to="/select-tenant" replace />;
 }

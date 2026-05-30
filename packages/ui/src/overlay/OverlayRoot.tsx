@@ -4,6 +4,11 @@ import { createPortal } from "react-dom";
 import { cn } from "@repo/theme/utils";
 
 import { useOverlayLock } from "./useOverlayLock";
+import { overlayTransitionStyle } from "./overlay-motion";
+import {
+  OverlayTransitionVisibleProvider,
+  useOverlayTransition,
+} from "./useOverlayTransition";
 
 interface OverlayRootProps {
   readonly open: boolean;
@@ -18,22 +23,26 @@ interface OverlayRootProps {
 export function OverlayRoot({
   open,
   onClose,
-  closeLabel = "Close dialog",
   overlayClassName,
   contentClassName,
   focusPanel,
   children,
 }: OverlayRootProps) {
-  useOverlayLock(open, onClose, focusPanel);
+  const { mounted, visible, durationMs } = useOverlayTransition(open);
+  useOverlayLock(mounted, open, onClose, focusPanel);
 
-  if (!open || typeof document === "undefined") return null;
+  if (!mounted || typeof document === "undefined") return null;
 
   return createPortal(
-    <>
-      <button
-        type="button"
-        aria-label={closeLabel}
-        className="fixed inset-0 z-50 bg-backdrop transition-opacity"
+    <OverlayTransitionVisibleProvider visible={visible} durationMs={durationMs}>
+      <div
+        role="presentation"
+        aria-hidden
+        className={cn(
+          "fixed inset-0 z-50 cursor-default bg-backdrop",
+          visible ? "opacity-100" : "opacity-0",
+        )}
+        style={overlayTransitionStyle(durationMs, "opacity")}
         onClick={onClose}
       />
       <div
@@ -45,7 +54,7 @@ export function OverlayRoot({
       >
         <div className={cn("h-full w-full", contentClassName)}>{children}</div>
       </div>
-    </>,
+    </OverlayTransitionVisibleProvider>,
     document.body,
   );
 }

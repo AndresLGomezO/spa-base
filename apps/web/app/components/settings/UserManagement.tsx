@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button, FieldLabel, Input, Text, toast } from "@repo/ui";
+import { Button, Text, toast } from "@repo/ui";
 
 import {
   createTenantUser,
@@ -13,6 +13,8 @@ import {
   type TenantUserMember,
 } from "../../lib/api-client";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
+import { EditMemberModal } from "./EditMemberModal";
+import { InviteUserModal } from "./InviteUserModal";
 
 interface UserManagementProps {
   readonly tenantId: string;
@@ -31,10 +33,10 @@ export function UserManagement({
   const [members, setMembers] = useState<readonly TenantUserMember[]>([]);
   const [invites, setInvites] = useState<readonly TenantUserInvite[]>([]);
   const [roles, setRoles] = useState<readonly string[]>([]);
-  const [email, setEmail] = useState("");
-  const [selectedRoles, setSelectedRoles] = useState<string[]>(["viewer"]);
-  const [selectedMemberId, setSelectedMemberId] = useState("");
-  const [memberRoles, setMemberRoles] = useState<string[]>([]);
+  const [editingMember, setEditingMember] = useState<TenantUserMember | null>(
+    null,
+  );
+  const [inviteOpen, setInviteOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
@@ -49,9 +51,6 @@ export function UserManagement({
       setMembers(usersResult.members);
       setInvites(usersResult.invites);
       setRoles(rolesResult.items.map((role) => role.name));
-      setSelectedMemberId(
-        (current) => current || usersResult.members[0]?.uid || "",
-      );
     } catch (loadError) {
       toast.error(
         loadError instanceof Error
@@ -67,18 +66,19 @@ export function UserManagement({
     void loadData();
   }, [loadData]);
 
-  useEffect(() => {
-    const member = members.find((item) => item.uid === selectedMemberId);
-    setMemberRoles(member ? [...member.roles] : []);
-  }, [members, selectedMemberId]);
-
-  async function handleInvite() {
-    if (!email.trim()) return;
+  async function handleInvite(payload: {
+    readonly email: string;
+    readonly roles: string[];
+  }) {
+    if (!payload.email) return;
     setIsSaving(true);
     try {
-      await createTenantUser({ email: email.trim(), roles: selectedRoles });
-      setEmail("");
+      await createTenantUser({
+        email: payload.email,
+        roles: payload.roles,
+      });
       toast.success(t("userManagement.inviteSuccess"));
+      setInviteOpen(false);
       await loadData();
     } catch (saveError) {
       toast.error(
@@ -91,12 +91,15 @@ export function UserManagement({
     }
   }
 
-  async function handleUpdateMember() {
-    if (!selectedMemberId) return;
+  async function handleUpdateMember(payload: {
+    readonly uid: string;
+    readonly roles: string[];
+  }) {
     setIsSaving(true);
     try {
-      await updateTenantUserRoles(selectedMemberId, memberRoles);
+      await updateTenantUserRoles(payload.uid, payload.roles);
       toast.success(t("userManagement.saveSuccess"));
+      setEditingMember(null);
       await loadData();
     } catch (saveError) {
       toast.error(
@@ -109,13 +112,12 @@ export function UserManagement({
     }
   }
 
-  async function handleRemoveMember() {
-    if (!selectedMemberId) return;
+  async function handleRemoveMember(uid: string) {
     setIsSaving(true);
     try {
-      await removeTenantUser(selectedMemberId);
-      setSelectedMemberId("");
+      await removeTenantUser(uid);
       toast.success(t("userManagement.removeSuccess"));
+      setEditingMember(null);
       await loadData();
     } catch (saveError) {
       toast.error(
@@ -138,6 +140,14 @@ export function UserManagement({
 
   return (
     <div className="flex w-full flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-3">
+        {canCreate ? (
+          <Button type="button" onClick={() => setInviteOpen(true)}>
+            {t("userManagement.addUser")}
+          </Button>
+        ) : null}
+      </div>
+
       <div className="overflow-x-auto rounded-lg border">
         <table className="min-w-full text-left text-sm">
           <thead className="border-b">
@@ -145,6 +155,9 @@ export function UserManagement({
               <th className="px-4 py-3">{t("userManagement.email")}</th>
               <th className="px-4 py-3">{t("userManagement.roles")}</th>
               <th className="px-4 py-3">{t("userManagement.status")}</th>
+              {canUpdate ? (
+                <th className="px-4 py-3">{t("entity.actions")}</th>
+              ) : null}
             </tr>
           </thead>
           <tbody>
@@ -153,6 +166,19 @@ export function UserManagement({
                 <td className="px-4 py-3">{member.email ?? member.uid}</td>
                 <td className="px-4 py-3">{member.roles.join(", ") || "—"}</td>
                 <td className="px-4 py-3">{t("userManagement.active")}</td>
+                {canUpdate ? (
+                  <td className="px-4 py-3">
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      className="text-primary hover:underline h-auto px-0 py-0"
+                      onClick={() => setEditingMember(member)}
+                    >
+                      {t("entity.edit")}
+                    </Button>
+                  </td>
+                ) : null}
               </tr>
             ))}
             {invites.map((invite) => (
@@ -160,127 +186,31 @@ export function UserManagement({
                 <td className="px-4 py-3">{invite.email}</td>
                 <td className="px-4 py-3">{invite.roles.join(", ")}</td>
                 <td className="px-4 py-3">{t("userManagement.pending")}</td>
+                {canUpdate ? <td className="px-4 py-3">—</td> : null}
               </tr>
             ))}
           </tbody>
         </table>
       </div>
 
-      {canCreate ? (
-        <div className="grid max-w-xl gap-4">
-          <HeadingBlock title={t("userManagement.addUser")} />
-          <div className="flex flex-col gap-2">
-            <FieldLabel htmlFor="invite-email">
-              {t("userManagement.email")}
-            </FieldLabel>
-            <Input
-              id="invite-email"
-              type="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-            />
-          </div>
-          <RoleSelect
-            id="invite-roles"
-            roles={roles}
-            value={selectedRoles}
-            onChange={setSelectedRoles}
-            label={t("userManagement.roles")}
-          />
-          <Button
-            type="button"
-            disabled={isSaving}
-            onClick={() => void handleInvite()}
-          >
-            {isSaving ? t("loading") : t("userManagement.addUser")}
-          </Button>
-        </div>
-      ) : null}
+      <InviteUserModal
+        open={inviteOpen}
+        roles={roles}
+        isSaving={isSaving}
+        onClose={() => setInviteOpen(false)}
+        onInvite={handleInvite}
+      />
 
-      {canUpdate ? (
-        <div className="grid max-w-xl gap-4">
-          <HeadingBlock title={t("userManagement.editUser")} />
-          <div className="flex flex-col gap-2">
-            <FieldLabel htmlFor="member-select">
-              {t("userManagement.member")}
-            </FieldLabel>
-            <select
-              id="member-select"
-              className="border-border rounded-md border px-3 py-2"
-              value={selectedMemberId}
-              onChange={(event) => setSelectedMemberId(event.target.value)}
-            >
-              {members.map((member) => (
-                <option key={member.uid} value={member.uid}>
-                  {member.email ?? member.uid}
-                </option>
-              ))}
-            </select>
-          </div>
-          <RoleSelect
-            id="member-roles"
-            roles={roles}
-            value={memberRoles}
-            onChange={setMemberRoles}
-            label={t("userManagement.roles")}
-          />
-          <div className="flex gap-2">
-            <Button
-              type="button"
-              disabled={isSaving || !selectedMemberId}
-              onClick={() => void handleUpdateMember()}
-            >
-              {isSaving ? t("loading") : t("userManagement.save")}
-            </Button>
-            {canRemove ? (
-              <Button
-                type="button"
-                variant="ghost"
-                disabled={isSaving || !selectedMemberId}
-                onClick={() => void handleRemoveMember()}
-              >
-                {t("userManagement.remove")}
-              </Button>
-            ) : null}
-          </div>
-        </div>
-      ) : null}
-    </div>
-  );
-}
-
-function HeadingBlock({ title }: { readonly title: string }) {
-  return <Text className="font-medium">{title}</Text>;
-}
-
-function RoleSelect(props: {
-  readonly id: string;
-  readonly label: string;
-  readonly roles: readonly string[];
-  readonly value: readonly string[];
-  readonly onChange: (roles: string[]) => void;
-}) {
-  return (
-    <div className="flex flex-col gap-2">
-      <FieldLabel htmlFor={props.id}>{props.label}</FieldLabel>
-      <select
-        id={props.id}
-        multiple
-        className="border-border min-h-28 rounded-md border px-3 py-2"
-        value={[...props.value]}
-        onChange={(event) => {
-          const values = Array.from(event.target.selectedOptions).map(
-            (option) => option.value,
-          );
-          props.onChange(values);
-        }}
-      >
-        {props.roles.map((roleName) => (
-          <option key={roleName} value={roleName}>
-            {roleName}
-          </option>
-        ))}
-      </select>
+      <EditMemberModal
+        open={editingMember !== null}
+        member={editingMember}
+        roles={roles}
+        isSaving={isSaving}
+        canRemove={canRemove}
+        onClose={() => setEditingMember(null)}
+        onSave={handleUpdateMember}
+        onRemove={handleRemoveMember}
+      />
     </div>
   );
 }

@@ -128,7 +128,7 @@ export function RoleEditor({
       {!isBuiltIn || isCreate ? (
         <div className="space-y-2">
           <FieldLabel>{t("roles.grants")}</FieldLabel>
-          <div className="grid max-h-48 gap-2 overflow-y-auto rounded-md border p-3 md:grid-cols-2">
+          <div className="grid max-h-48 gap-2 overflow-y-auto rounded-md border px-4 py-3 md:grid-cols-2">
             {grantOptions.map((grant) => (
               <Checkbox
                 key={grant}

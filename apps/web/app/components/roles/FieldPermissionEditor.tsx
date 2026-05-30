@@ -76,7 +76,10 @@ export function FieldPermissionEditor({
         if (!entity) return null;
 
         return (
-          <div key={entityName} className="space-y-2 rounded-md border p-4">
+          <div
+            key={entityName}
+            className="mx-0.5 space-y-2 rounded-md border p-4"
+          >
             <FieldLabel>{entityName}</FieldLabel>
             <div className="space-y-2">
               {Object.keys(entity.fields).map((fieldName) => (

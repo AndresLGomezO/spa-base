@@ -36,6 +36,7 @@ import {
 } from "@repo/theme/tenant-overrides";
 
 import { useAuth } from "../../auth/AuthContext";
+import { FormModal } from "../forms/FormModal";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import {
   getAdminTenant,
@@ -198,6 +199,7 @@ export function TenantAppearanceEditor({
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [formOpen, setFormOpen] = useState(false);
 
   const draftAppearance = useMemo(
     (): TenantAppearance => ({
@@ -237,7 +239,12 @@ export function TenantAppearanceEditor({
     ],
   );
 
-  const previewVars = useMemo(
+  const savedPreviewVars = useMemo(
+    () => appearanceToCssVariables(tenant?.appearance ?? {}, { colorScheme }),
+    [colorScheme, tenant?.appearance],
+  );
+
+  const draftPreviewVars = useMemo(
     () => appearanceToCssVariables(draftAppearance, { colorScheme }),
     [colorScheme, draftAppearance],
   );
@@ -378,6 +385,7 @@ export function TenantAppearanceEditor({
       applyAppearance(updated.appearance);
       toast.success(t("platform.appearance.saveSuccess"));
       await selectTenant(tenantId);
+      setFormOpen(false);
     } catch (saveError) {
       toast.error(
         saveError instanceof Error
@@ -416,222 +424,298 @@ export function TenantAppearanceEditor({
     return <Alert>{t("platform.currentTenant.notFound")}</Alert>;
   }
 
+  const savedPreset = normalizeAppearancePreset(tenant.appearance?.preset);
+  const presetLabel =
+    savedPreset === "default"
+      ? t("platform.appearance.presetDefault")
+      : t(`platform.appearance.presets.${savedPreset}` as never);
+
   return (
-    <div className="flex w-full flex-col gap-6 xl:flex-row">
-      <Form
-        className="grid max-w-3xl flex-1 gap-6"
-        onSubmit={(event) => void handleSave(event)}
-      >
-        <section className="grid gap-3">
-          <Text className="font-medium">{t("platform.appearance.logo")}</Text>
-          <PhotoUpload
-            value={logoPreview}
-            alt={t("platform.appearance.logoPreview")}
-            cropShape="rect"
-            uploading={isSaving}
-            disabled={isSaving}
-            labels={{
-              select: t("platform.appearance.photoSelect"),
-              change: t("platform.appearance.photoChange"),
-              cropTitle: t("platform.appearance.photoCropTitle"),
-              cropDescription: t("platform.appearance.photoCropDescription"),
-              upload: t("platform.appearance.photoUpload"),
-              cancel: t("platform.appearance.photoCancel"),
-              reset: t("platform.appearance.photoReset"),
-              expand: t("platform.appearance.photoExpand"),
-            }}
-            onUpload={handleLogoUpload}
-            onError={(message) => toast.error(message)}
-          />
-        </section>
+    <div className="flex w-full flex-col gap-6">
+      <div className="flex flex-wrap items-center gap-3">
+        <Button type="button" onClick={() => setFormOpen(true)}>
+          {t("platform.appearance.customize")}
+        </Button>
+      </div>
 
-        <section className="border-border grid gap-3 rounded-lg border p-4">
-          <Text className="font-medium">{t("platform.appearance.preset")}</Text>
-          <Text className="text-muted-foreground text-sm">
-            {t("platform.appearance.presetHint")}
-          </Text>
-          <div className="flex max-w-md flex-col gap-1">
-            <FieldLabel htmlFor="appearance-preset">
+      <div className="grid gap-4 text-sm md:grid-cols-2">
+        <dl className="grid gap-2">
+          <div>
+            <dt className="text-muted-foreground font-medium">
+              {t("platform.appearance.logo")}
+            </dt>
+            <dd>
+              {tenant.appearance?.logoUrl ? (
+                <img
+                  src={tenant.appearance.logoUrl}
+                  alt={t("platform.appearance.logoPreview")}
+                  className="mt-1 h-12 w-auto max-w-full object-contain"
+                />
+              ) : (
+                "—"
+              )}
+            </dd>
+          </div>
+          <div>
+            <dt className="text-muted-foreground font-medium">
               {t("platform.appearance.preset")}
-            </FieldLabel>
-            <select
-              id="appearance-preset"
-              className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm shadow-sm"
-              value={preset}
-              onChange={(event) =>
-                handlePresetChange(event.target.value as AppearancePreset)
-              }
-            >
-              <option value="default">
-                {t("platform.appearance.presetDefault")}
-              </option>
-              {SELECTABLE_THEME_PRESETS.map((presetId) => (
-                <option key={presetId} value={presetId}>
-                  {t(`platform.appearance.presets.${presetId}` as never)}
-                </option>
-              ))}
-            </select>
+            </dt>
+            <dd>{presetLabel}</dd>
           </div>
-        </section>
+        </dl>
 
-        <ColorPaletteEditor
-          kind="primary"
-          value={primaryPalette}
-          onChange={(value) => {
-            setPrimaryPalette(value);
-            setPrimaryTouched(true);
-          }}
-        />
-
-        <ColorPaletteEditor
-          kind="neutral"
-          value={neutralPalette}
-          onChange={(value) => {
-            setNeutralPalette(value);
-            setNeutralTouched(true);
-          }}
-        />
-
-        <section className="border-border grid gap-3 rounded-lg border p-4">
+        <div
+          className="border-border rounded-lg border p-6"
+          style={savedPreviewVars as CSSProperties}
+        >
           <Text className="font-medium">
-            {t("platform.appearance.semantics")}
+            {t("platform.appearance.preview")}
           </Text>
-          <Text className="text-muted-foreground text-sm">
-            {t("platform.appearance.semanticsHint")}
-          </Text>
-          {TENANT_OVERRIDE_GROUPS.semantics.map((cssVar) => (
-            <SemanticColorField
-              key={cssVar}
-              cssVar={cssVar}
-              value={semantics[cssVar] ?? ""}
-              placeholder={t("platform.appearance.placeholder")}
-              onChange={(nextValue) =>
-                setSemantics((current) => ({
-                  ...current,
-                  [cssVar]: nextValue,
-                }))
-              }
-            />
-          ))}
-        </section>
-
-        {(["sidebar"] as const).map((groupKey) => {
-          const vars = TENANT_OVERRIDE_GROUPS[groupKey];
-          return (
-            <section key={groupKey} className="grid gap-3">
-              <Text className="font-medium">
-                {t(`platform.appearance.groups.${groupKey}` as never)}
-              </Text>
-              {vars.map((cssVar) => (
-                <div key={cssVar} className="flex flex-col gap-1">
-                  <FieldLabel htmlFor={cssVar}>{cssVar}</FieldLabel>
-                  <Input
-                    id={cssVar}
-                    value={sidebarColors[cssVar] ?? ""}
-                    placeholder={t("platform.appearance.placeholder")}
-                    onChange={(event) =>
-                      setSidebarColors((current) => ({
-                        ...current,
-                        [cssVar]: event.target.value,
-                      }))
-                    }
-                  />
-                </div>
-              ))}
-            </section>
-          );
-        })}
-
-        <section className="grid gap-3">
-          <Text className="font-medium">
-            {t("platform.appearance.typography")}
-          </Text>
-          <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="font-family">
-              {t("platform.appearance.fontFamily")}
-            </FieldLabel>
-            <Input
-              id="font-family"
-              value={fontFamily}
-              onChange={(event) => setFontFamily(event.target.value)}
-            />
+          <div className="bg-card text-card-foreground mt-4 space-y-2 rounded-md border p-4">
+            <Text className="text-heading font-semibold">{tenant.name}</Text>
+            <Text className="text-body">
+              {t("platform.appearance.previewBody")}
+            </Text>
+            <Button type="button">
+              {t("platform.appearance.previewButton")}
+            </Button>
           </div>
-          <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="body-size">
-              {t("platform.appearance.bodySize")}
-            </FieldLabel>
-            <Input
-              id="body-size"
-              value={bodySize}
-              onChange={(event) => setBodySize(event.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="heading-size">
-              {t("platform.appearance.headingSize")}
-            </FieldLabel>
-            <Input
-              id="heading-size"
-              value={headingSize}
-              onChange={(event) => setHeadingSize(event.target.value)}
-            />
-          </div>
-        </section>
-
-        <section className="grid gap-3">
-          <Text className="font-medium">{t("platform.appearance.layout")}</Text>
-          <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="radius">
-              {t("platform.appearance.radius")}
-            </FieldLabel>
-            <Input
-              id="radius"
-              value={radius}
-              onChange={(event) => setRadius(event.target.value)}
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <FieldLabel htmlFor="spacing">
-              {t("platform.appearance.spacing")}
-            </FieldLabel>
-            <Input
-              id="spacing"
-              value={spacing}
-              onChange={(event) => setSpacing(event.target.value)}
-            />
-          </div>
-        </section>
-
-        <div className="flex gap-2">
-          <Button type="submit" disabled={isSaving}>
-            {isSaving ? t("loading") : t("platform.appearance.save")}
-          </Button>
-          <Button
-            type="button"
-            variant="ghost"
-            disabled={isSaving}
-            onClick={() => void handleReset()}
-          >
-            {t("platform.appearance.reset")}
-          </Button>
-        </div>
-      </Form>
-
-      <div
-        className="border-border flex-1 rounded-lg border p-6"
-        style={previewVars as CSSProperties}
-      >
-        <Text className="font-medium">{t("platform.appearance.preview")}</Text>
-        <div className="bg-card text-card-foreground mt-4 space-y-2 rounded-md border p-4">
-          <Text className="text-heading font-semibold">{tenant.name}</Text>
-          <Text className="text-body">
-            {t("platform.appearance.previewBody")}
-          </Text>
-          <Button type="button">
-            {t("platform.appearance.previewButton")}
-          </Button>
         </div>
       </div>
+
+      <FormModal
+        open={formOpen}
+        onClose={() => setFormOpen(false)}
+        title={t("platform.appearance.customize")}
+        size="xl"
+      >
+        <div className="flex flex-col gap-6 xl:flex-row">
+          <Form
+            className="grid min-w-0 flex-1 gap-6"
+            onSubmit={(event) => void handleSave(event)}
+          >
+            <section className="grid gap-3">
+              <Text className="font-medium">
+                {t("platform.appearance.logo")}
+              </Text>
+              <PhotoUpload
+                value={logoPreview}
+                alt={t("platform.appearance.logoPreview")}
+                cropShape="rect"
+                uploading={isSaving}
+                disabled={isSaving}
+                labels={{
+                  select: t("platform.appearance.photoSelect"),
+                  change: t("platform.appearance.photoChange"),
+                  cropTitle: t("platform.appearance.photoCropTitle"),
+                  cropDescription: t(
+                    "platform.appearance.photoCropDescription",
+                  ),
+                  upload: t("platform.appearance.photoUpload"),
+                  cancel: t("platform.appearance.photoCancel"),
+                  reset: t("platform.appearance.photoReset"),
+                  expand: t("platform.appearance.photoExpand"),
+                }}
+                onUpload={handleLogoUpload}
+                onError={(message) => toast.error(message)}
+              />
+            </section>
+
+            <section className="border-border grid gap-3 rounded-lg border p-4">
+              <Text className="font-medium">
+                {t("platform.appearance.preset")}
+              </Text>
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.appearance.presetHint")}
+              </Text>
+              <div className="flex max-w-md flex-col gap-1">
+                <FieldLabel htmlFor="appearance-preset">
+                  {t("platform.appearance.preset")}
+                </FieldLabel>
+                <select
+                  id="appearance-preset"
+                  className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm shadow-sm"
+                  value={preset}
+                  onChange={(event) =>
+                    handlePresetChange(event.target.value as AppearancePreset)
+                  }
+                >
+                  <option value="default">
+                    {t("platform.appearance.presetDefault")}
+                  </option>
+                  {SELECTABLE_THEME_PRESETS.map((presetId) => (
+                    <option key={presetId} value={presetId}>
+                      {t(`platform.appearance.presets.${presetId}` as never)}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </section>
+
+            <ColorPaletteEditor
+              kind="primary"
+              value={primaryPalette}
+              onChange={(value) => {
+                setPrimaryPalette(value);
+                setPrimaryTouched(true);
+              }}
+            />
+
+            <ColorPaletteEditor
+              kind="neutral"
+              value={neutralPalette}
+              onChange={(value) => {
+                setNeutralPalette(value);
+                setNeutralTouched(true);
+              }}
+            />
+
+            <section className="border-border grid gap-3 rounded-lg border p-4">
+              <Text className="font-medium">
+                {t("platform.appearance.semantics")}
+              </Text>
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.appearance.semanticsHint")}
+              </Text>
+              {TENANT_OVERRIDE_GROUPS.semantics.map((cssVar) => (
+                <SemanticColorField
+                  key={cssVar}
+                  cssVar={cssVar}
+                  value={semantics[cssVar] ?? ""}
+                  placeholder={t("platform.appearance.placeholder")}
+                  onChange={(nextValue) =>
+                    setSemantics((current) => ({
+                      ...current,
+                      [cssVar]: nextValue,
+                    }))
+                  }
+                />
+              ))}
+            </section>
+
+            {(["sidebar"] as const).map((groupKey) => {
+              const vars = TENANT_OVERRIDE_GROUPS[groupKey];
+              return (
+                <section key={groupKey} className="grid gap-3">
+                  <Text className="font-medium">
+                    {t(`platform.appearance.groups.${groupKey}` as never)}
+                  </Text>
+                  {vars.map((cssVar) => (
+                    <div key={cssVar} className="flex flex-col gap-1">
+                      <FieldLabel htmlFor={cssVar}>{cssVar}</FieldLabel>
+                      <Input
+                        id={cssVar}
+                        value={sidebarColors[cssVar] ?? ""}
+                        placeholder={t("platform.appearance.placeholder")}
+                        onChange={(event) =>
+                          setSidebarColors((current) => ({
+                            ...current,
+                            [cssVar]: event.target.value,
+                          }))
+                        }
+                      />
+                    </div>
+                  ))}
+                </section>
+              );
+            })}
+
+            <section className="grid gap-3">
+              <Text className="font-medium">
+                {t("platform.appearance.typography")}
+              </Text>
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="font-family">
+                  {t("platform.appearance.fontFamily")}
+                </FieldLabel>
+                <Input
+                  id="font-family"
+                  value={fontFamily}
+                  onChange={(event) => setFontFamily(event.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="body-size">
+                  {t("platform.appearance.bodySize")}
+                </FieldLabel>
+                <Input
+                  id="body-size"
+                  value={bodySize}
+                  onChange={(event) => setBodySize(event.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="heading-size">
+                  {t("platform.appearance.headingSize")}
+                </FieldLabel>
+                <Input
+                  id="heading-size"
+                  value={headingSize}
+                  onChange={(event) => setHeadingSize(event.target.value)}
+                />
+              </div>
+            </section>
+
+            <section className="grid gap-3">
+              <Text className="font-medium">
+                {t("platform.appearance.layout")}
+              </Text>
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="radius">
+                  {t("platform.appearance.radius")}
+                </FieldLabel>
+                <Input
+                  id="radius"
+                  value={radius}
+                  onChange={(event) => setRadius(event.target.value)}
+                />
+              </div>
+              <div className="flex flex-col gap-1">
+                <FieldLabel htmlFor="spacing">
+                  {t("platform.appearance.spacing")}
+                </FieldLabel>
+                <Input
+                  id="spacing"
+                  value={spacing}
+                  onChange={(event) => setSpacing(event.target.value)}
+                />
+              </div>
+            </section>
+
+            <div className="flex gap-2">
+              <Button type="submit" disabled={isSaving}>
+                {isSaving ? t("loading") : t("platform.appearance.save")}
+              </Button>
+              <Button
+                type="button"
+                variant="ghost"
+                disabled={isSaving}
+                onClick={() => void handleReset()}
+              >
+                {t("platform.appearance.reset")}
+              </Button>
+            </div>
+          </Form>
+
+          <div
+            className="border-border min-w-0 flex-1 rounded-lg border p-6"
+            style={draftPreviewVars as CSSProperties}
+          >
+            <Text className="font-medium">
+              {t("platform.appearance.preview")}
+            </Text>
+            <div className="bg-card text-card-foreground mt-4 space-y-2 rounded-md border p-4">
+              <Text className="text-heading font-semibold">{tenant.name}</Text>
+              <Text className="text-body">
+                {t("platform.appearance.previewBody")}
+              </Text>
+              <Button type="button">
+                {t("platform.appearance.previewButton")}
+              </Button>
+            </div>
+          </div>
+        </div>
+      </FormModal>
     </div>
   );
 }

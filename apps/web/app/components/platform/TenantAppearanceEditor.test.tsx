@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeProvider } from "@repo/theme/react";
 
@@ -76,8 +76,30 @@ describe("TenantAppearanceEditor", () => {
     });
   });
 
-  it("renders PhotoUpload with logo labels after tenant loads", async () => {
+  async function openCustomizeModal() {
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "platform.appearance.customize" }),
+      ).toBeInTheDocument();
+    });
+    fireEvent.click(
+      screen.getByRole("button", { name: "platform.appearance.customize" }),
+    );
+  }
+
+  it("renders customize control after tenant loads", async () => {
     renderEditor();
+
+    await waitFor(() => {
+      expect(
+        screen.getByRole("button", { name: "platform.appearance.customize" }),
+      ).toBeInTheDocument();
+    });
+  });
+
+  it("renders PhotoUpload with logo labels inside the customize modal", async () => {
+    renderEditor();
+    await openCustomizeModal();
 
     await waitFor(() => {
       expect(
@@ -86,8 +108,9 @@ describe("TenantAppearanceEditor", () => {
     });
   });
 
-  it("renders theme preset and semantic token fields", async () => {
+  it("renders theme preset and semantic token fields inside the customize modal", async () => {
     renderEditor();
+    await openCustomizeModal();
 
     await waitFor(() => {
       expect(
