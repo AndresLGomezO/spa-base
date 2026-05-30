@@ -27,7 +27,7 @@ Phase 1 delivered a working end-to-end platform. All seven workstreams are **com
 
 | Workstream | What it does | Primary locations | Guide |
 |------------|--------------|-------------------|-------|
-| Entity system | `defineEntity()`, field types, permissions | `packages/entities`, `modules/core` | [entity-system-guide.md](./entity-system-guide.md) |
+| Entity system | `defineEntity()`, field types, permissions | `packages/entities`, `packages/dynamic-entities` | [entity-system-guide.md](./entity-system-guide.md) |
 | DAL | Firestore converters, tenant-scoped repos | `packages/firestore-converters`, `packages/gcp-firebase` | [firestore-collections-guide.md](./firestore-collections-guide.md) |
 | CRUD API generator | Auto routes per entity | `apps/api/src/crud/` | [apps/api/src/crud/README.md](../apps/api/src/crud/README.md) |
 | RBAC | `entity.action` permissions, middleware | `packages/rbac`, `apps/api/src/rbac/` | [packages/rbac/README.md](../packages/rbac/README.md) |
@@ -55,8 +55,8 @@ Reproduce manually: [e2e-validation-runbook.md](./e2e-validation-runbook.md).
 | Outcome | Evidence in codebase |
 |---------|---------------------|
 | **Businesses can fully configure their systems** | Model Builder (`/settings/data-models`), tenant role editor with field rules (`/settings/roles`), hook manager (`/settings/hooks`), Control Plane dashboard |
-| **Platform supports real-world SaaS use cases** | Multi-tenant auth + tenant switcher, query engine (filter/sort/pagination), relations (FK + join collections), inventory sample module |
-| **Extensions without touching core** | `@repo/modules` compile-time modules (`core`, `inventory`); Firestore-backed dynamic hooks; dynamic entity definitions at runtime |
+| **Platform supports real-world SaaS use cases** | Multi-tenant auth + tenant switcher, query engine (filter/sort/pagination), relations (FK + join collections + M2M sync API), Model Builder workflows |
+| **Extensions without touching core** | `@repo/modules` compile-time module framework (optional); Firestore-backed dynamic hooks; runtime entity definitions via Model Builder |
 | **UI customizable and composable** | `@repo/ui-builder` view/form engines, module UI extensions, field/view registries, virtualized table + debounced filters |
 
 Phase 2 is **functionally complete for v1** of each capability. Several areas remain **partial** (deferred items documented in capability guides and [next-phase-backlog.md](./next-phase-backlog.md)).
@@ -90,24 +90,13 @@ project-base/
 ├── apps/
 │   ├── api/          Fastify HTTP API
 │   ├── web/          React Router 7 SPA
-│   └── platform/     Shared app config (module bootstrap)
-├── modules/
-│   ├── core/         organization, project entities
-│   └── inventory/    inventoryItem + module route
-├── packages/
-│   ├── entities/           defineEntity, UI config types
-│   ├── dynamic-entities/   runtime model CRUD
-│   ├── query-engine/       parse, validate, execute queries
-│   ├── entity-relations/   FK + join validation
-│   ├── rbac/               permissions, roles, field access
-│   ├── hooks/              hook execution engine
-│   ├── modules/            defineModule, registries
-│   ├── ui-builder/         view/form/query resolution
-│   ├── firestore-converters/
-│   ├── gcp-firebase/       Firestore admin repos + query executor
-│   └── shared-types/       persisted schemas, TTL cache util
-└── docs/               guides + this handoff set
+│   └── platform/     defineApp bootstrap (modules: [] by default)
+├── packages/         Shared libraries (@repo/*)
+├── docs/             Guides + handoff set
+└── Ecosystem Plan/   Original planning specs
 ```
+
+Optional top-level `modules/` folder for compile-time extensions — not shipped in default bootstrap. See [module-extension-guide.md](./module-extension-guide.md).
 
 Dependency direction: **apps → gcp-firebase → firestore-converters → shared-types → entities**. Entity packages never import upward.
 
@@ -165,7 +154,7 @@ sequenceDiagram
   participant Hooks
   participant FS as Firestore
 
-  Web->>API: GET /api/project?query=...
+  Web->>API: GET /api/workItem?query=...
   API->>Auth: Verify JWT + App Check
   Auth->>RBAC: Load permissions (cached 60s)
   RBAC->>Query: parseListQueryInput + apply security
@@ -180,8 +169,10 @@ sequenceDiagram
 
 | Kind | Source | Registration |
 |------|--------|--------------|
-| **Static** | Modules in `apps/platform/app.config.ts` | Bootstrap at API start via `bootstrapPlatformApp()` |
+| **Static** | Optional modules in `apps/platform/app.config.ts` | Bootstrap at API start via `bootstrapPlatformApp()` |
 | **Dynamic** | Tenant admins via Model Builder | Firestore `entity_definitions`; hydrated in `EntityRuntimeContext` |
+
+**Default bootstrap:** `modules: []` — fresh tenants use dynamic entities only. Static modules are an optional extension path.
 
 Both share the same CRUD pipeline, `GET /api/entities` catalog, RBAC pattern, and UI components.
 
@@ -245,8 +236,17 @@ All CRUD routes use envelope: `{ data, error }`. Auth routes use `{ ok, ... }`.
 Query JSON example:
 
 ```http
-GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_1"}],"pagination":{"limit":20}}
+GET /api/workItem?query={"filter":[{"field":"batchId","operator":"==","value":"batch_1"}],"pagination":{"limit":20}}
 ```
+
+### Entity relations (many-to-many)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/{entity}/:id/relations/:fieldName` | List linked target IDs (M2M) |
+| PUT | `/api/{entity}/:id/relations/:fieldName` | Replace linked targets (`{ "targetIds": [...] }`) |
+
+One-to-many parent fields use reverse lookup on the child FK (e.g. `workItem.batchId`); see [relational-data-system-guide.md](./relational-data-system-guide.md).
 
 ### Entity definitions (Model Builder)
 
@@ -272,11 +272,9 @@ GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","val
 | POST | `/api/roles` | `role.create` |
 | PATCH | `/api/roles/:id` | `role.update` |
 
-### Module routes (example)
+### Module routes (optional)
 
-| Method | Path | Permission |
-|--------|------|------------|
-| GET | `/api/modules/inventory/summary` | `inventoryItem.read` |
+When a compile-time module registers custom routes, they appear under `/api/modules/{moduleName}/...`. Default bootstrap ships with no modules.
 
 ### Platform admin (superadmin)
 
@@ -298,24 +296,20 @@ HTTP examples: [apps/api/docs/crud-api.http](../apps/api/docs/crud-api.http).
 |--------|--------|---------|
 | Public | `/login` | Authentication |
 | Auth-only | `/select-tenant`, `/settings/admin/*` | Tenant selection, platform admin |
-| Private | `/`, `/app/*`, `/settings/*` | Authenticated app + Control Plane |
+| Private | `/`, `/app/*`, `/settings/*` | Authenticated app + Control Plane (fixed viewport; main body scrolls) |
 
 ### Key integrations
 
 - **TanStack Query** — provider in `apps/web/app/routes/private-layout.tsx`; entity lists, catalog, record detail
-- **Entity catalog** — `EntityCatalogProvider` reads `GET /api/entities`
+- **Scroll-contained layout** — `private-layout.tsx` uses `h-dvh` shell; only `<main>` scrolls (sidebar pinned)
+- **Entity catalog** — `EntityCatalogProvider` reads `GET /api/entities`; refreshes on entity routes and after schema edits
 - **Dynamic routes** — `/app/:entity`, `/app/:entity/new`, `/app/:entity/:id` (React Router auto code-splits each route file)
-- **Control Plane** — data models, hooks, roles (permission-gated sidebar group)
+- **Relations UI** — `RelationPicker` (FK), `ManyToManyRelationPicker` (M2M sync API), one-to-many reverse lookup in entity tables
+- **Control Plane** — data models, hooks, roles, users, appearance (permission-gated sidebar group)
 
-### Seed entities (static modules)
+### Entity strategy
 
-| Entity | Module | Notes |
-|--------|--------|-------|
-| `organization` | core | Base tenant-scoped record |
-| `project` | core | FK to `organizationId` |
-| `inventoryItem` | inventory | Sample extension entity |
-
-Dynamic entities from Model Builder appear in the same catalog and use the same UI components.
+No static seed entities in default bootstrap. Tenants create models via **Settings → Data Model Builder** (`/settings/data-models`). Models appear in the sidebar under **Data Models** and use the same CRUD UI as compile-time entities would.
 
 ---
 
@@ -340,7 +334,7 @@ Cross-layer conventions and known sharp edges for operators and extenders.
 |-------|---------|--------------|
 | Role catalog | `CACHE_TTL_MS` (60s) | Role CRUD |
 | User access profile | `CACHE_TTL_MS` | Admin user PATCH |
-| Tenant entity definitions | `CACHE_TTL_MS` | Definition create/PATCH |
+| Tenant entity definitions | `CACHE_TTL_MS` | Definition create/PATCH; `invalidateEntityRuntime()` on sync |
 
 **Multi-instance deployments:** caches are per-process. Phase B Redis required for shared cache (see performance guide).
 
@@ -373,25 +367,19 @@ pnpm typecheck
 pnpm lint
 ```
 
-Representative suite results (May 2026, `pnpm test`):
+Representative suite results — run `pnpm test` for current counts:
 
-| Package / app | Tests | Notes |
-|---------------|-------|-------|
-| `apps/api` | 69 | CRUD, auth, admin, hooks, roles, modules, entity-definitions |
-| `apps/web` | 52 | Entity UI, routing, admin, data models |
-| `@repo/rbac` | 30 | Permissions, field rules, role catalog |
-| `@repo/entities` | 31 | defineEntity, UI config |
-| `@repo/query-engine` | 17 | Parser, strict pagination |
-| `@repo/firestore-converters` | 11 | Schema converters |
-| `@repo/hooks` | 8 | Hook execution |
-| `@repo/modules` | 7 | Module resolution |
-| `@repo/ui-builder` | 6 | View/form resolution |
-| `@repo/entity-relations` | 5 | Relation validation |
-| `@repo/dynamic-entities` | 5 | Runtime definitions |
-| `@repo/shared-types` | 4 | TTL cache |
-| `@repo/gcp-firebase` | 2 (+5 skipped) | Emulator tests skipped without Firestore |
+| Package / app | Notes |
+|---------------|-------|
+| `apps/api` | CRUD, auth, admin, hooks, roles, entity-definitions, relations |
+| `apps/web` | Entity UI, routing, data models, layout |
+| `@repo/rbac` | Permissions, field rules, role catalog |
+| `@repo/entities` | defineEntity, UI config, relation helpers |
+| `@repo/query-engine` | Parser, strict pagination |
+| `@repo/dynamic-entities` | Runtime definitions |
+| Other packages | firestore-converters, hooks, modules, ui-builder, entity-relations, gcp-firebase |
 
-**Total:** ~247 tests across 13 turbo tasks; all passing.
+All turbo tasks should pass before handoff.
 
 Integration tests use in-memory repositories; Firestore emulator required for `@repo/gcp-firebase` integration tests.
 

@@ -10,7 +10,8 @@ Registry-driven entity UI for the web app. Entity definitions (including optiona
 
 ```mermaid
 flowchart LR
-  Modules["modules/core + extensions\ndefineModule()"]
+  Modules["Optional modules\ndefineModule()"]
+  Dynamic["Model Builder\n@repo/dynamic-entities"]
   Bootstrap["bootstrapPlatformApp()"]
   API["GET /api/entities\n+ UI extension merge"]
   Catalog["EntityCatalogProvider\nuseEntityCatalog()"]
@@ -42,11 +43,11 @@ flowchart LR
 Attach an optional `ui` block to `defineEntity()`:
 
 ```ts
-export const Organization = defineEntity({
-  name: "organization",
+export const Loan = defineEntity({
+  name: "loan",
   fields: { /* ... */ },
   ui: {
-    nav: { label: "Organizations", icon: "building" },
+    nav: { label: "Loans", icon: "folder" },
     views: [
       {
         type: "table",
@@ -123,7 +124,8 @@ Pure interpretation helpers (no React):
 
 ### Entity catalog
 
-- `EntityCatalogProvider` (private layout) fetches `GET /api/entities` on mount.
+- `EntityCatalogProvider` (private layout) fetches `GET /api/entities`; refreshes on entity routes after schema edits.
+- **Scroll-contained layout** — `private-layout.tsx` pins sidebar; only `<main>` scrolls (long forms like Appearance).
 - `useEntityCatalog()` — `items`, `getDefinition`, `isKnownEntity`.
 - Route guards use `isKnownEntity` for `/app/:entity` param validation.
 - Sidebar: `useEntityNavItems()` + `useAccessibleNavItems()` (RBAC-filtered).
@@ -138,7 +140,7 @@ Pure interpretation helpers (no React):
 ### Forms
 
 - `EntityForm` resolves sections from `FormEngine`; `EntityField` reads field UI metadata.
-- `RelationPicker` loads target entity options via `listEntity(target, { query })`.
+- `RelationPicker` / `ManyToManyRelationPicker` load targets via `listEntity` or relation sync API.
 - Validation errors come from API responses (`fieldErrors` on `useEntity`).
 
 ### Extending components
@@ -162,8 +164,8 @@ Modules declare metadata ids in `defineModule({ ui: { components: { badge: "Badg
 defineModule({
   ui: {
     extend: {
-      organization: {
-        views: [{ type: "table", name: "inventory-context", fields: ["name", "isActive"] }],
+      batch: {
+        views: [{ type: "table", name: "inventory-context", fields: ["name"] }],
       },
     },
   },
@@ -178,10 +180,10 @@ Merged server-side in `GET /api/entities` via `mergeUiExtensions()`.
 
 `api-client.listEntity(name, { limit, cursor, query })` serializes `query` as a JSON search param (matches API `parseListQueryInput`).
 
-Example filter from UI filter bar (`organizationId` on projects):
+Example filter from UI filter bar (`batchId` on workItem):
 
 ```http
-GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_123"}],"sort":[{"field":"name","direction":"asc"}],"pagination":{"limit":20}}
+GET /api/workItem?query={"filter":[{"field":"batchId","operator":"==","value":"batch_123"}],"sort":[{"field":"title","direction":"asc"}],"pagination":{"limit":20}}
 ```
 
 ---
@@ -194,17 +196,13 @@ GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","val
 
 ---
 
-## Seed entities (dev/test)
+## Dynamic entities (default)
 
-| Entity | Relation | Purpose |
-| --- | --- | --- |
-| `organization` | — | Core module — generic tenant-scoped record |
-| `project` | `organizationId` → `organization` | Core module — relation picker + FK filters |
-| `inventoryItem` | `organizationId` → `organization` | Inventory module — sample extension entity |
+Tenant models from **Settings → Data Model Builder** appear in the same catalog and use `EntityTable` / `EntityForm`. Auto-generated `ui` metadata is built from field lists when `ui` is not persisted.
 
-These replace the former Customer/Order pilot fixtures. New entities are added via modules listed in `apps/platform/app.config.ts` without rewriting the UI Builder.
+Example validation flow: create `loan` model → open `/app/loan` → table/form render from catalog. Attach hooks via `POST /api/hooks` ([Hooks System Guide](./hooks-system-guide.md)).
 
-Tenant-specific models created in the Model Builder (`/settings/data-models`) appear in the same catalog and use the same `EntityTable` / `EntityForm` components. Attach action-based hooks via `POST /api/hooks` (see [Hooks System Guide](./hooks-system-guide.md)).
+Compile-time modules (optional) follow the same UI pipeline when registered in `app.config.ts`.
 
 ---
 

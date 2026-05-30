@@ -128,11 +128,11 @@ Source: [hooks-system-guide.md](./hooks-system-guide.md)
 
 | | |
 |---|---|
-| **Problem** | User role assignment only via superadmin API/UI; no tenant team management |
-| **Current state** | `PATCH /admin/users/:uid` for superadmin; profile/team settings placeholders |
-| **Suggested approach** | Tenant-scoped user invite + role assignment UI |
-| **Depends on** | Auth invite flow |
-| **Risk if deferred** | Tenant admins depend on platform ops |
+| **Problem** | Team management beyond basic invite + role assignment |
+| **Current state** | Tenant-scoped user invite + role assignment at `/settings/users` (`UserManagement.tsx`); superadmin cross-tenant user PATCH at `/admin/users` |
+| **Suggested approach** | Teams/groups, bulk invite, audit log |
+| **Depends on** | Auth invite flow enhancements |
+| **Risk if deferred** | Large tenants lack org structure in UI |
 
 Source: [admin-dashboard-guide.md](./admin-dashboard-guide.md)
 

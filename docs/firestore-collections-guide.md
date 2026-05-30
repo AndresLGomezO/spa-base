@@ -4,7 +4,7 @@ This guide describes how Firestore collections are structured in this monorepo a
 
 The User collection is the canonical example: versioned Zod schemas, a Firestore converter with migrations, an Admin SDK repository, and an API route that orchestrates auth and persistence. Use it as a template for every new entity.
 
-**Tenant-scoped business entities** (`Customer`, `Order`, …) are defined with `defineEntity()` in `@repo/shared-types/src/entities/`. See [Entity System Guide](./entity-system-guide.md) and [@repo/entities README](../packages/entities/README.md) before adding persistence for those models.
+**Tenant-scoped business entities** are defined dynamically via Model Builder or statically with `defineEntity()` in optional modules. See [Entity System Guide](./entity-system-guide.md) and [@repo/entities README](../packages/entities/README.md).
 
 ---
 
@@ -111,7 +111,7 @@ When you introduce a breaking schema change, you may add `schema.v2.ts` alongsid
 
 ### Tenant-scoped business entities
 
-Entities defined via `defineEntity()` (`Customer`, `Order`, …) use a **nested tenant path** instead of a flat top-level collection:
+Entities defined via `defineEntity()` (`batch`, `workItem`, …) use a **nested tenant path** instead of a flat top-level collection:
 
 ```
 tenants/{tenantId}/{collection}/{documentId}
@@ -119,8 +119,8 @@ tenants/{tenantId}/{collection}/{documentId}
 
 | Entity   | Collection segment | Example path                              |
 | -------- | ------------------ | ----------------------------------------- |
-| Customer | `customers`        | `tenants/tenant_123/customers/abc123`     |
-| Order    | `orders`           | `tenants/tenant_123/orders/ord_456`       |
+| Batch    | `batches`          | `tenants/tenant_123/batches/batch_abc`     |
+| WorkItem | `workItems`        | `tenants/tenant_123/workItems/item_456`    |
 
 - `{collection}` comes from `entity.metadata.collection` (plural by default).
 - `{tenantId}` is also stored as a document field for defense in depth.
@@ -607,13 +607,13 @@ apps/api/src/routes/....test.ts                                     (if route ad
 
 ## Relation field indexes
 
-Foreign-key relation fields used for reverse lookups require composite indexes. Example for `orders.customerId`:
+Foreign-key relation fields used for reverse lookups require composite indexes. Example for `workItems.batchId`:
 
 ```json
 {
-  "collectionGroup": "orders",
+  "collectionGroup": "workItems",
   "fields": [
-    { "fieldPath": "customerId", "order": "ASCENDING" },
+    { "fieldPath": "batchId", "order": "ASCENDING" },
     { "fieldPath": "id", "order": "ASCENDING" }
   ]
 }

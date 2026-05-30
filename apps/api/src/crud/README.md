@@ -8,11 +8,15 @@ Automatically registers REST endpoints for entities defined with `defineEntity()
 
 ```ts
 await registerCrudRoutes(server, {
-  entity: Customer,
-  repository: createInMemoryEntityRepository<CustomerRecord>(),
+  entity: Loan,
+  repository: createFirestoreAdminEntityRepository({
+    /* ... */
+  }),
   authenticate: createAuthenticatePreHandler(firebaseAdminConfig),
 });
 ```
+
+Dynamic entities use parametric registration via [`register-dynamic-entity-crud-routes.ts`](../entities/register-dynamic-entity-crud-routes.ts).
 
 ## Design
 
@@ -53,19 +57,12 @@ System fields (`id`, `tenantId`, `createdAt`, `updatedAt`) are injected in handl
 
 ## Extension points
 
-### RBAC (Workstream 4)
+### RBAC
 
 Pass per-action `authorize` guards to `registerCrudRoutes`:
 
 ```ts
-const authorize = createEntityPermissionGuards(permissionDeps, Customer.name);
-
-await registerCrudRoutes(server, {
-  entity: Customer,
-  repository,
-  authenticate,
-  authorize,
-});
+const authorize = createEntityPermissionGuards(permissionDeps, Loan.name);
 ```
 
 | Route                | Permission        |
@@ -92,14 +89,14 @@ List and get routes use `@repo/query-engine` when `queryEngine` is passed to `re
 Examples:
 
 ```http
-GET /api/project?limit=20
-GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_123"}]}
-GET /api/project?query={"sort":[{"field":"budget","direction":"desc"}]}
+GET /api/workItem?limit=20
+GET /api/workItem?query={"filter":[{"field":"batchId","operator":"==","value":"batch_123"}]}
+GET /api/workItem?query={"sort":[{"field":"createdAt","direction":"desc"}]}
 ```
 
 Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED`. See [Query Engine Guide](../../../docs/query-engine-guide.md).
 
-### Firestore (Workstream 3)
+### Firestore (production)
 
 Replace the repository — handlers stay unchanged:
 
@@ -128,7 +125,7 @@ Module hooks register via `defineModule({ hooks })`. Tenant dynamic hooks regist
 
 | Topic                   | Notes                                                             |
 | ----------------------- | ----------------------------------------------------------------- |
-| In-memory storage       | Resets on restart; use for dev/tests until WS3                    |
+| In-memory storage       | Resets on restart; use for dev/tests only                         |
 | `/auth/validate` format | Different response envelope — intentional backward compat         |
 | Empty `tenantId` claim  | Returns 403 `TENANT_NOT_RESOLVED`                                 |
 | Pagination cursor       | Opaque entity `id`; sorted by query (default `id` asc) per tenant |

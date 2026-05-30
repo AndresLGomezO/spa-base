@@ -1,7 +1,9 @@
 # Admin components
 
-Legacy admin UI components. Platform tenant management lives in [`../platform/`](../platform/).
+Platform admin UI lives in [`../platform/`](../platform/) (tenant settings, appearance).
 
 ## TenantUserManager
 
 [`TenantUserManager.tsx`](TenantUserManager.tsx) — invite and manage tenant users. Rendered at **Settings → User Management** (`/settings/users`).
+
+See [admin-dashboard-guide.md](../../../../docs/admin-dashboard-guide.md).

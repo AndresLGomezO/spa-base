@@ -29,4 +29,4 @@ pnpm --filter @repo/ui-builder typecheck
 
 ## Guide
 
-[docs/advanced-ui-builder-guide.md](../../docs/advanced-ui-builder-guide.md)
+[docs/advanced-ui-builder-guide.md](../../docs/advanced-ui-builder-guide.md) · [master-plans.md](../../docs/master-plans.md)

@@ -1,6 +1,8 @@
 # @repo/modules
 
-Compile-time module system for extending the platform: entities, routes, hooks, UI extensions, and converters without modifying core.
+Compile-time module system for optional platform extensions: entities, routes, hooks, UI extensions, and converters without modifying core.
+
+**Default bootstrap:** [`apps/platform/app.config.ts`](../../apps/platform/app.config.ts) uses `modules: []`. Tenants use Model Builder for entities; add modules when you need code-defined entities or custom routes.
 
 ## Key exports
 
@@ -9,16 +11,9 @@ Compile-time module system for extending the platform: entities, routes, hooks, 
 - Registries: entities, routes, hooks, uiExtensions, converters
 - `getRegisteredRoutes()` — module HTTP routes for API wiring
 
-## Sample modules
+## Used by
 
-- `modules/core` — `organization`, `project`
-- `modules/inventory` — `inventoryItem`, summary route
-
-Configured in [apps/platform/app.config.ts](../../apps/platform/app.config.ts).
-
-## Dependencies
-
-Depends on `@repo/entities`, `@repo/hooks`. Consumed by `apps/api` and `apps/web` via `@app/platform`.
+`apps/api` and `apps/web` via `@app/platform`.
 
 ## Commands
 
@@ -29,4 +24,4 @@ pnpm --filter @repo/modules typecheck
 
 ## Guide
 
-[docs/module-extension-guide.md](../../docs/module-extension-guide.md)
+[docs/module-extension-guide.md](../../docs/module-extension-guide.md) · [master-plans.md](../../docs/master-plans.md)

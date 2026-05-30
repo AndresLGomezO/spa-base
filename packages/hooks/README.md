@@ -29,4 +29,4 @@ pnpm --filter @repo/hooks typecheck
 
 ## Guide
 
-[docs/hooks-system-guide.md](../../docs/hooks-system-guide.md)
+[docs/hooks-system-guide.md](../../docs/hooks-system-guide.md) · [master-plans.md](../../docs/master-plans.md)

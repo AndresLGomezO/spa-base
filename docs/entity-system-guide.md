@@ -1,8 +1,8 @@
 # Entity System Guide
 
-How the schema-driven entity layer fits into the monorepo and how future workstreams integrate with it.
+How the schema-driven entity layer fits into the monorepo.
 
-**Workstream:** [ENTITY SYSTEM (CORE FOUNDATION)](<../Ecosystem%20Plan/v1/workstreams/ENTITY%20SYSTEM%20(CORE%20FOUNDATION).md>)
+**Phase 1 workstream:** [ENTITY SYSTEM](../Ecosystem%20Plan/v1/workstreams/ENTITY%20SYSTEM%20(CORE%20FOUNDATION).md) · **Master plans:** [master-plans.md](./master-plans.md)
 
 ---
 
@@ -11,57 +11,54 @@ How the schema-driven entity layer fits into the monorepo and how future workstr
 ```mermaid
 flowchart TB
   subgraph definition [Definition layer]
-    Modules["modules/core + extensions\ndefineModule()"]
+    Dynamic["@repo/dynamic-entities\nModel Builder records"]
+    Modules["Optional modules\ndefineModule()"]
     Entities["@repo/entities\ndefineEntity()"]
-    SharedTypes["@repo/shared-types\npersisted schemas + re-exports"]
   end
-  subgraph persistence [Persistence layer - WS3]
+  subgraph persistence [Persistence]
     FC["@repo/firestore-converters"]
     GCP["@repo/gcp-firebase"]
   end
-  subgraph security [Security layer - WS4]
+  subgraph security [Security]
     RBAC["@repo/rbac"]
   end
   subgraph apps [Apps]
-    API["apps/api\nCRUD generator - WS2"]
-    Web["apps/web\nEntityTable/Form - WS5"]
+    API["apps/api\nCRUD + definitions"]
+    Web["apps/web\nEntityTable/Form"]
   end
-  SharedTypes --> Entities
+  Dynamic --> Entities
   Modules --> Entities
-  FC --> SharedTypes
   GCP --> FC
   API --> GCP
   API --> Entities
   API --> RBAC
-  RBAC --> SharedTypes
   Web --> Catalog["GET /api/entities"]
   Catalog --> Entities
 ```
 
-| Package / path                     | Role                                                              |
-| ---------------------------------- | ----------------------------------------------------------------- |
-| `@repo/entities`                   | Pure `defineEntity()` — Zod schemas, types, metadata, permissions |
-| `@repo/shared-types`               | Persisted schema types; re-exports entity definitions from modules |
-| `@repo/modules`                    | `defineModule`, `defineApp`, registries, dependency resolver     |
-| `@app/platform`                    | Shared app config + `bootstrapPlatformApp()` for API and web     |
-| `modules/core`                     | Seed entities (`customer`, `organization`, `project`) and converters |
-| `@repo/firestore-converters`       | Versioned converters + `_schemaVersion` (User pattern)            |
-| `@repo/gcp-firebase`               | Firestore repository implementations                              |
-| `@repo/rbac`                       | Role definitions, permission resolution, wildcard matching        |
-| `apps/api`                         | HTTP routes, tenant injection, RBAC enforcement                   |
-| `apps/web`                         | Dynamic UI from `GET /api/entities` + `@repo/ui-builder`          |
+| Package / path | Role |
+| --- | --- |
+| `@repo/entities` | Pure `defineEntity()` — Zod schemas, types, metadata, permissions |
+| `@repo/dynamic-entities` | Runtime definitions from Firestore; `resolveEntity(name, tenantId)` |
+| `@repo/modules` | `defineModule`, `defineApp`, registries (optional compile-time extensions) |
+| `@app/platform` | Shared app config — **`modules: []` by default** |
+| `@repo/firestore-converters` | Versioned converters + `_schemaVersion` |
+| `@repo/gcp-firebase` | Firestore repository implementations |
+| `@repo/rbac` | Permission resolution |
+| `apps/api` | HTTP routes, tenant injection, RBAC, definition sync |
+| `apps/web` | Dynamic UI from catalog + `@repo/ui-builder` |
 
-Dependency direction: apps → gcp-firebase → firestore-converters → shared-types → entities. **Entities never import upward.**
+Dependency direction: apps → gcp-firebase → firestore-converters → entities. **Entities never import upward.**
 
 ### Static vs dynamic entities
 
-| Kind | Source | Registration | Firestore path |
-| --- | --- | --- | --- |
-| **Static** | Modules (`defineModule` → `defineEntity`) | At API bootstrap via `bootstrapPlatformApp()` → `packages/entities/src/registry/entityRegistry.ts` | Entity **data** at `tenants/{tenantId}/{collection}/{id}` |
-| **Dynamic** | Tenant admins via Model Builder | Stored in Firestore, hydrated at runtime via `EntityRuntimeContext.loadTenantDefinitions()` (60s TTL) | `tenants/{tenantId}/entity_definitions/{id}` |
-| **Merged view** | `resolveEntity(name, tenantId)` in `@repo/dynamic-entities` | Static wins on name collision | — |
+| Kind | Source | Registration |
+| --- | --- | --- |
+| **Dynamic** (default) | Tenant admins via Model Builder | Firestore `entity_definitions`; hydrated by `EntityRuntimeContext` |
+| **Static** (optional) | Compile-time modules | Bootstrap via `bootstrapPlatformApp()` when listed in `app.config.ts` |
+| **Merged view** | `resolveEntity(name, tenantId)` | Static wins on name collision |
 
-Both kinds share the same CRUD pipeline, catalog API, RBAC permission pattern, and UI Builder. The primary Phase 1 vertical slice entity is **`customer`** (see `modules/core`). See [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md).
+Both share the same CRUD pipeline, catalog API, RBAC pattern, and UI components. See [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md).
 
 ---
 
@@ -69,175 +66,80 @@ Both kinds share the same CRUD pipeline, catalog API, RBAC permission pattern, a
 
 ### Single source of truth
 
-A developer defines fields once:
-
 ```ts
 defineEntity({
-  name: "organization",
+  name: "loan",
   fields: {
-    name: { type: "string", required: true },
-    isActive: { type: "boolean", default: true },
+    amount: { type: "number", required: true },
+    status: { type: "enum", enumValues: ["Pending", "Approved"], required: true },
   },
 });
 ```
 
-The system derives:
-
-- Full, create, and update Zod schemas
-- TypeScript types (`z.infer`)
-- UI/API field metadata
-- RBAC permission strings (`organization.read`, …)
+The system derives full/create/update Zod schemas, TypeScript types, UI metadata, and RBAC permission strings (`loan.read`, …).
 
 ### Multi-tenant readiness
 
-Every full entity record includes `tenantId` (system field). Create schemas exclude it — the API middleware injects it from authenticated tenant context. Repositories must filter all reads/writes by `tenantId`.
+Every record includes `tenantId` (system field). The API injects it from the authenticated tenant context. Repositories filter all reads/writes by `tenantId`.
 
-### Dates
+### Record `_schemaVersion` vs definition `version`
 
-`type: "date"` uses **ISO datetime strings**, not native `Date` objects. Aligns with Firestore and the existing User model. See [@repo/entities README](../packages/entities/README.md#dates-are-iso-strings-not-date-objects).
-
----
-
-## Workstream integration map
-
-### WS2 — CRUD API (implemented)
-
-Auto-generated routes in [`apps/api`](../apps/api/README.md):
-
-- `GET/POST /api/{entity}`, `GET/PUT/DELETE /api/{entity}/:id`
-- Auth: Bearer JWT + App Check + **`tenantId` custom claim**
-- Response envelope: `{ data, error }`
-- RBAC: per-route permission guards via `@repo/rbac` (WS4)
-
-### WS4 — RBAC (implemented)
-
-Permission resolution and enforcement:
-
-- Package: [`@repo/rbac`](../packages/rbac/README.md) — roles, wildcards, `resolvePermissions`
-- User roles on Firestore `users/{uid}`: `platformRole`, `tenants`
-- API: per-action guards on CRUD routes (`organization.read`, `organization.create`, …)
-- Web foundation: `/auth/validate` returns `permissions` + `isSuperAdmin`; `usePermission` hook
-
-### WS5 — Frontend Entity UI (Advanced UI Builder)
-
-Dynamic CRUD UI in [`apps/web/app/components/entity/`](../apps/web/app/components/entity/README.md):
-
-- Catalog from `GET /api/entities` via `EntityCatalogProvider` / `useEntityCatalog()`
-- `EntityTable`, `EntityCardView`, `EntityForm` driven by `@repo/ui-builder` + entity `ui` metadata
-- Routes: `/app/{entity}`, `/app/{entity}/new`, `/app/{entity}/:id`
-- List reads via Query Engine `?query=` JSON; API validation on mutations
-- RBAC: `useEntityPermissions` hides create/edit/delete actions
-
-See [Advanced UI Builder Guide](./advanced-ui-builder-guide.md).
-
-### WS6 — Frontend Routing (implemented)
-
-Routing and navigation in [`apps/web/app/routing/`](../apps/web/app/routing/README.md):
-
-- Centralized guards: auth, tenant, permission (`RouteGuards.tsx`)
-- Parametric entity routes from entity catalog (`entity-routes.ts`)
-- Tenant selection via `POST /auth/select-tenant` + `/select-tenant` page + sidebar switcher
-- Permission-filtered sidebar (`useAccessibleNavItems`)
-
-### WS7 — Basic Admin (implemented)
-
-Platform role management in Firestore and a superadmin-only admin UI:
-
-- Firestore `roles/{roleId}` collection with idempotent seed on API startup (`admin`, `editor`, `viewer`)
-- Dynamic RBAC resolution: Firestore role catalog + built-in fallback in `@repo/rbac`
-- Superadmin bootstrap via `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` on first user creation only
-- Superadmin tenant visibility: all **active** tenants from Firestore `tenants/{tenantId}` registry (dev tenants seeded on API startup)
-- Admin API: `GET|POST|PATCH /admin/tenants`, `GET /admin/roles|users`, `PATCH /admin/users/:uid` (superadmin only)
-- Web UI: `/settings/admin` for tenant CRUD and tenant role assignment
-
-See [`apps/api/README.md`](../apps/api/README.md), [`apps/web/README.md`](../apps/web/README.md), and [`packages/rbac/README.md`](../packages/rbac/README.md).
-
-### WS3 — Firestore DAL (implemented)
-
-Persistence via [`createFirestoreAdminEntityRepository`](../packages/gcp-firebase/src/firestore-admin-entity-repository.ts):
-
-- Path: `tenants/{tenantId}/{collection}/{documentId}` (collection from `metadata.collection`)
-- Converters: `organizationConverter`, `projectConverter` in `@repo/firestore-converters`
-- Persisted schemas: `{ENTITY}_SCHEMA_VERSION` + `_schemaVersion` in `@repo/shared-types`
-- API tests inject in-memory repos via `buildServer({ repositories })`; production uses Firestore
-
-| Workstream            | Status  | Consumes from entity system                                              |
-| --------------------- | ------- | ------------------------------------------------------------------------ |
-| **2 — CRUD API**      | Done    | `createSchema`, `updateSchema`, `schema`, `permissions`                  |
-| **3 — Firestore DAL** | Done    | `schema` + `_schemaVersion`; `metadata.collection`                       |
-| **4 — RBAC**          | Done    | `metadata.permissions`; `@repo/rbac`; user `tenants` / `platformRole`    |
-| **5 — Frontend UI**   | Done    | `metadata.fields`, shared Zod schemas, `/app/{entity}` CRUD UI           |
-| **6 — Routing**       | Done    | Guards, tenant selection, permission-filtered nav from entity catalog    |
-| **7 — Admin roles**   | Done    | Firestore `/roles`, admin API, `/settings/admin`, superadmin bootstrap |
-| **Tenants management**| Done    | Firestore `tenants/{id}` metadata, admin tenant CRUD, auth `tenantOptions` |
-
-### Phase 1 closure (E2E validation)
-
-Manual checklist from the ecosystem plan:
-
-1. Superadmin bootstrap: set `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` in API env; first Google sign-in receives `platform.superadmin`.
-2. Open `/settings/admin` (auth-only route — no tenant required) and assign tenant roles.
-3. **User A (viewer)** on `tenant_dev_1`: list passes; create, edit, and delete blocked.
-4. **User B (editor)** on `tenant_dev_1`: list, create, and edit pass; delete blocked.
-
-`defineApp({ modules: [coreModule, ...] })` is implemented via `@app/platform`. Bootstrap runs once at API/web startup and registers all module entities into the global registry.
-
-```ts
-// apps/platform/app.config.ts
-import { defineApp } from "@repo/modules";
-import { coreModule } from "@modules/core";
-
-export const platformApp = defineApp({
-  modules: [coreModule],
-});
-```
-
-See [Module Extension Guide](./module-extension-guide.md) for adding new modules.
+| Field | Location | Meaning |
+| --- | --- | --- |
+| Definition `version` | `entity_definitions/{id}` | Increments when schema is edited in Data Models |
+| Record `_schemaVersion` | Entity collection documents | Firestore converter format version (currently `1`) |
 
 ---
 
-## Adding a new business entity
+## Phase 1 integration (complete)
 
-**Preferred (module system):**
+| Workstream | Status | Guide |
+| --- | --- | --- |
+| CRUD API | Done | [apps/api/src/crud/README.md](../apps/api/src/crud/README.md) |
+| Firestore DAL | Done | [firestore-collections-guide.md](./firestore-collections-guide.md) |
+| RBAC | Done | [packages/rbac/README.md](../packages/rbac/README.md) |
+| Frontend entity UI | Done | [entity README](../apps/web/app/components/entity/README.md) |
+| Routing | Done | [routing README](../apps/web/app/routing/README.md) |
+| Basic admin | Done | [admin-dashboard-guide.md](./admin-dashboard-guide.md) |
 
-1. Create or extend a module under `modules/{name}/` with `defineEntity()` — see [Module Extension Guide](./module-extension-guide.md)
-2. Add persisted schema types in `@repo/shared-types` if using a custom converter (or use `createEntityConverter()`)
-3. List the module in `apps/platform/app.config.ts` — CRUD routes, RBAC, and catalog registration happen automatically
-
-**Legacy path (direct registration):**
-
-1. Add `packages/shared-types/src/entities/{entity}.ts` — [template](../packages/shared-types/src/entities/README.md#file-template)
-2. Export from `packages/shared-types/src/index.ts`
-3. Follow [Firestore collections guide](./firestore-collections-guide.md) for converter + repository (WS3)
-4. Register via a module or `registerEntity()` at bootstrap
+Validate manually: [e2e-validation-runbook.md](./e2e-validation-runbook.md).
 
 ---
 
-## Extension points (Phase 2+)
+## Adding entities
 
-Designed but **not implemented** in Workstream 1:
+### Preferred: Model Builder (dynamic)
 
-| Feature                  | Extension mechanism                              | Status |
-| ------------------------ | ------------------------------------------------ | ------ |
-| Relations / foreign keys | `type: "relation"` + `@repo/entity-relations`    | Done — see [Relational Data System Guide](./relational-data-system-guide.md) |
-| Custom field types       | `FieldTypeRegistry` pattern                      | Open   |
-| Field-level permissions  | Extend `NormalizedFieldMeta`                     | Open   |
-| Dynamic UI config        | `EntityMetadata.ui` optional bag                 | Open   |
-| Enums                    | New field type or `string` + metadata constraint | Open   |
-| Query/filter engine      | `@repo/query-engine` + `EntityQueryExecutor`       | Done — see [Query Engine Guide](./query-engine-guide.md) |
+1. Open **Settings → Data Model Builder** (`/settings/data-models`)
+2. Create models (e.g. `workItem`, then `batch`, then add `batchId` on `workItem`)
+3. CRUD routes and sidebar links appear automatically
 
-Keep extensions in the field registry and metadata types — avoid changing `defineEntity` core logic for each new feature.
+See [dynamic-entity-builder-guide.md](./dynamic-entity-builder-guide.md) and [relational-data-system-guide.md](./relational-data-system-guide.md) for relations.
+
+### Optional: compile-time module
+
+1. Create `modules/{name}/` with `defineModule()` — [module-extension-guide.md](./module-extension-guide.md)
+2. Add module to [`apps/platform/app.config.ts`](../apps/platform/app.config.ts)
+3. Restart API and web
+
+---
+
+## Phase 2 extensions (delivered at v1 / partial)
+
+| Feature | Guide |
+| --- | --- |
+| Relations / FK | [relational-data-system-guide.md](./relational-data-system-guide.md) |
+| Query / filter engine | [query-engine-guide.md](./query-engine-guide.md) |
+| UI builder | [advanced-ui-builder-guide.md](./advanced-ui-builder-guide.md) |
+| Hooks | [hooks-system-guide.md](./hooks-system-guide.md) |
+
+Deferred items: [next-phase-backlog.md](./next-phase-backlog.md).
 
 ---
 
 ## Related docs
 
-- [@repo/entities package README](../packages/entities/README.md) — entity definition API
-- [API app README](../apps/api/README.md) — CRUD routes, auth, tenant claims
-- [CRUD generator](../apps/api/src/crud/README.md) — design and extension points
-- [Business entities folder](../packages/shared-types/src/entities/README.md) — per-entity file template
-- [Firestore collections guide](./firestore-collections-guide.md) — persistence wiring
-- [Relational Data System Guide](./relational-data-system-guide.md) — Phase 2 relations
-- [Query Engine Guide](./query-engine-guide.md) — centralized list/get reads
-- [Module Extension Guide](./module-extension-guide.md) — defineModule, registries, sample inventory module
-- [Dynamic Entity Builder Guide](./dynamic-entity-builder-guide.md) — tenant-defined models at runtime
+- [@repo/entities README](../packages/entities/README.md)
+- [API README](../apps/api/README.md)
+- [Module Extension Guide](./module-extension-guide.md)
+- [master-plans.md](./master-plans.md)

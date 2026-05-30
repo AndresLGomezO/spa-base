@@ -23,7 +23,7 @@ Canonical format (Answer Q hybrid):
 | `{entity}.beforeDelete` | After relation checks, before delete |
 | `{entity}.afterDelete` | After successful delete |
 
-Examples: `loan.beforeCreate`, `organization.afterDelete`.
+Examples: `loan.beforeCreate`, `workItem.afterDelete`.
 
 ---
 
@@ -69,13 +69,13 @@ Relation validation runs before hook `beforeDelete`.
 
 ```ts
 defineModule({
-  name: "inventory",
+  name: "workflows",
   hooks: [
     {
-      event: "organization.afterDelete",
+      event: "batch.afterDelete",
       order: 0,
       handler: async (ctx) => {
-        ctx.services.logger?.info("Deleted org", {
+        ctx.services.logger?.info("Deleted batch", {
           id: ctx.current.id,
         });
       },

@@ -6,7 +6,7 @@ Permission-based role access control for the platform.
 
 | Concept           | Description                                         |
 | ----------------- | --------------------------------------------------- |
-| **Permission**    | Concrete action on a resource, e.g. `customer.read` |
+| **Permission**    | Concrete action on a resource, e.g. `loan.read`     |
 | **Role**          | Named grant list with wildcard support              |
 | **Platform role** | Global role (e.g. superadmin bypass)                |
 | **Tenant role**   | Role scoped to one tenant via `users/{uid}.tenants` |
@@ -29,11 +29,11 @@ Use `buildRoleCatalog(firestoreRoles)` to merge Firestore documents with built-i
 
 ## Wildcards
 
-| Pattern      | Matches                              |
-| ------------ | ------------------------------------ |
-| `*`          | All known permissions                |
-| `customer.*` | All customer permissions             |
-| `*.read`     | All read permissions across entities |
+| Pattern  | Matches                              |
+| -------- | ------------------------------------ |
+| `*`      | All known permissions                |
+| `loan.*` | All loan permissions                 |
+| `*.read` | All read permissions across entities |
 
 Known permissions are aggregated in `ALL_KNOWN_PERMISSIONS` from entity exports in `@repo/shared-types`. Add new entity permissions there when introducing entities.
 
@@ -74,8 +74,8 @@ const permissions = resolvePermissions({
   tenantId: "tenant_a",
 });
 
-hasPermission("customer.create", permissions); // true
-hasPermission("customer.delete", permissions); // false
+hasPermission("loan.create", permissions); // true
+hasPermission("loan.delete", permissions); // false
 ```
 
 Fastify enforcement lives in `apps/api/src/rbac/` — not in this package.
@@ -95,11 +95,11 @@ Roles may include optional `fieldRules` per entity. Multiple roles merge with mo
 
 ## Web
 
-The API returns resolved permissions from `GET /auth/validate`. The web app stores them in auth context and exposes `usePermission("customer.read")` for WS5 UI gating.
+The API returns resolved permissions from `GET /auth/validate`. The web app stores them in auth context and exposes `usePermission("loan.read")` for UI gating.
 
 ## Related
 
 - [Advanced RBAC guide](../../docs/advanced-rbac-guide.md)
 - [Entity system guide](../../docs/entity-system-guide.md)
 - [API RBAC wiring](../../apps/api/src/rbac/)
-- [Workstream spec](<../../Ecosystem%20Plan/v1/workstreams/RBAC%20SYSTEM%20(PERMISSION-BASED).md>)
+- [master-plans.md](../../docs/master-plans.md)

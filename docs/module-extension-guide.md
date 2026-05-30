@@ -30,15 +30,13 @@ flowchart TB
 | Package / path | Role |
 | --- | --- |
 | `@repo/modules` | `defineModule`, `defineApp`, `loadApp`, registries, dependency resolver |
-| `@app/platform` | Shared `platformApp` config + `bootstrapPlatformApp()` |
-| `modules/core` | Seed entities (`organization`, `project`) and converters |
-| `modules/inventory` | Sample extension module (acceptance proof) |
-| `apps/api` | CRUD loop over `getAllEntities()`, module routes, hook emission |
+| `@app/platform` | Shared `platformApp` config + `bootstrapPlatformApp()` — **`modules: []` by default** |
+| `apps/api` | CRUD loop over registered entities, module routes when modules exist, hook emission |
 | `apps/web` | Field/view React registries + UI extension merge via catalog API |
 
-**Out of scope (v1):** third-party sandboxing, tenant module toggling, remote/marketplace loading, query-engine extensions, drag-and-drop module authoring.
+**Default bootstrap:** No compile-time modules are shipped. Tenants use the Model Builder for entities. Add modules when you need custom routes, converters, or code-defined entities.
 
-**Complements dynamic entities:** modules ship compile-time entities with code and converters. Tenant admins can add runtime models via the [Dynamic Entity Builder](./dynamic-entity-builder-guide.md) without creating a new module.
+**Out of scope (v1):** third-party sandboxing, tenant module toggling, remote/marketplace loading, drag-and-drop module authoring.
 
 ---
 
@@ -49,15 +47,16 @@ flowchart TB
 3. Restart API and web — no edits to `server.ts`, `EntityTable`, or nav code.
 
 ```ts
-// apps/platform/app.config.ts
+// apps/platform/app.config.ts — default
 import { defineApp } from "@repo/modules";
-import { coreModule } from "@modules/core";
-import { inventoryModule } from "@modules/inventory";
-import { myModule } from "@modules/my-module";
 
 export const platformApp = defineApp({
-  modules: [coreModule, inventoryModule, myModule],
+  modules: [],
 });
+
+// When adding a module:
+// import { myModule } from "@modules/my-module";
+// export const platformApp = defineApp({ modules: [myModule] });
 ```
 
 Both API and web call the same bootstrap:
@@ -96,17 +95,17 @@ export const myModule = defineModule({
 
   hooks: [
     {
-      event: "organization.afterDelete",
+      event: "batch.afterDelete",
       handler: async (ctx) => { /* cross-entity reaction */ },
     },
   ],
 
   ui: {
     components: {
-      "custom-badge": "BadgeField", // metadata id → web implementation id
+      "custom-badge": "BadgeField",
     },
     extend: {
-      organization: {
+      batch: {
         views: [{ type: "table", name: "extra", fields: ["name"] }],
       },
     },
@@ -124,9 +123,7 @@ export const myModule = defineModule({
 import { defineApp } from "@repo/modules";
 
 export const platformApp = defineApp({
-  modules: [coreModule, inventoryModule],
-  // Legacy compat (deprecated — use modules/core instead):
-  // entities: [LegacyEntity],
+  modules: [myModule],
 });
 ```
 
@@ -142,20 +139,15 @@ export const platformApp = defineApp({
 
 ```
 modules/
-  core/
-    package.json          @modules/core
+  my-module/
+    package.json          @modules/my-module
     src/
       index.ts            defineModule export
       entities/
-        organization.ts
-        project.ts
-  inventory/
-    package.json          @modules/inventory
-    src/
-      index.ts            entity + module definition
+        myEntity.ts
 ```
 
-Each module is a workspace package (`modules/*` in `pnpm-workspace.yaml`). Modules must **not** import each other directly — communicate via hooks and shared entity names in registries.
+Add `modules/*` to `pnpm-workspace.yaml` when creating the first module. Modules must **not** import each other directly — communicate via hooks and shared entity names in registries.
 
 ---
 
@@ -178,7 +170,7 @@ const converter = createEntityConverter(MyEntity);
 // Uses entity.schema + persistedSchemaV1 (_schemaVersion: 1)
 ```
 
-The API [`entity-converter-registry`](../apps/api/src/entities/entity-converter-registry.ts) delegates to `@repo/modules` with seed fallbacks for core entities.
+The API [`entity-converter-registry`](../apps/api/src/entities/entity-converter-registry.ts) delegates to `@repo/modules` when modules register custom converters; dynamic entities use `createEntityConverter()` at runtime.
 
 ### Routes
 
@@ -186,7 +178,7 @@ Module routes are mounted by [`registerModuleRoutes`](../apps/api/src/modules/re
 
 - Auth + tenant context required
 - RBAC via declared `permission` on each route definition
-- Default prefix: declared `path` (e.g. `/api/modules/inventory/summary`)
+- Default prefix: declared `path` (e.g. `/api/modules/my-module/summary`)
 
 Use the Query Engine for reads inside handlers — do not query Firestore directly.
 
@@ -233,19 +225,19 @@ Module hooks register via `defineModule({ hooks })`. Tenant admins can add actio
 
 ---
 
-## Sample module: inventory
+## Example module pattern
 
-[`modules/inventory`](../modules/inventory/src/index.ts) demonstrates all extension points:
+A module typically provides:
 
-| Feature | Implementation |
+| Feature | Example |
 | --- | --- |
-| New entity | `inventoryItem` with relation to `organization` |
-| Converter | `createEntityConverter(InventoryItem)` |
-| Custom route | `GET /api/modules/inventory/summary` |
-| Hook | `organization.afterDelete` → logs stub |
-| UI | Extends `organization.views`; registers `badge` component |
+| New entity | `badge` with fields defined via `defineEntity()` |
+| Converter | `createEntityConverter(Badge)` |
+| Custom route | `GET /api/modules/my-module/summary` |
+| Hook | `batch.afterDelete` → cleanup stub |
+| UI | Extends `batch.views`; registers custom field component |
 
-Adding inventory requires only listing `inventoryModule` in `app.config.ts`.
+See [Ecosystem Plan 10.3](../Ecosystem%20Plan/v2/Key%20Capabilitues/10.3%20MODULE%20EXTENSION%20SYSTEM.md) for full vision. No sample module ships in the default repo bootstrap.
 
 ---
 
@@ -258,16 +250,15 @@ Adding inventory requires only listing `inventoryModule` in `app.config.ts`.
 
 ---
 
-## Staged migration (Answer Q)
+## Migration status
 
 | Phase | Status | Notes |
 | --- | --- | --- |
-| 1 — `@repo/modules` + bootstrap | Done | `defineApp`, registries, API/web bootstrap |
-| 2 — `modules/core` | Done | Organization + project moved from shared-types |
-| 3 — Sample extension | Done | `modules/inventory` |
-| 4 — Deprecate legacy | Deferred | Remove `entities: []` compat path when all tests migrated |
+| `@repo/modules` + bootstrap | Done | `defineApp`, registries, API/web bootstrap |
+| Default empty modules | Done | `app.config.ts` uses `modules: []`; dynamic entities primary |
+| Optional compile-time modules | Supported | Add under `modules/` when needed |
 
-[`register-entities.ts`](../packages/shared-types/src/register-entities.ts) is a deprecated no-op shim. Entity definitions live in `modules/core` and are re-exported from `@repo/shared-types` for backward compatibility.
+[`register-entities.ts`](../packages/shared-types/src/register-entities.ts) is a deprecated no-op shim for legacy imports.
 
 ---
 

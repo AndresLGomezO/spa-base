@@ -2,19 +2,20 @@
 
 Registry-driven CRUD UI built from `GET /api/entities` catalog metadata and `@repo/ui-builder`.
 
-See [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md) for the full metadata reference.
+See [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md).
 
 ## Components
 
-| Component                 | Purpose                                                  |
-| ------------------------- | -------------------------------------------------------- |
-| `EntityPage`              | List shell: create action, table/card view, delete modal |
-| `EntityTable`             | Query Engine–backed table with sort, filters, pagination |
-| `EntityCardView`          | Card grid layout for `views[].type: "card"`              |
-| `EntityForm`              | Create/edit form from `ui.forms` sections                |
-| `EntityField`             | Maps field metadata + `ui.fields` to inputs              |
-| `RelationPicker`          | Async select for `type: "relation"` fields               |
-| `RequireEntityPermission` | Route guard for read/create/update access                |
+| Component                  | Purpose                                                    |
+| -------------------------- | ---------------------------------------------------------- |
+| `EntityPage`               | List shell: create action, table/card view, delete modal   |
+| `EntityTable`              | Query Engine table; one-to-many columns via reverse lookup |
+| `EntityCardView`           | Card grid for `views[].type: "card"`                       |
+| `EntityForm`               | Create/edit; syncs M2M via relation API after save         |
+| `EntityField`              | Field rendering; routes to pickers by relation type        |
+| `RelationPicker`           | FK many-to-one / one-to-one                                |
+| `ManyToManyRelationPicker` | M2M via `GET/PUT .../relations/:fieldName`                 |
+| `RequireEntityPermission`  | Route guard for read/create/update                         |
 
 ## Routes
 
@@ -24,31 +25,16 @@ See [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md) f
 | `/app/{entity}/new` | `EntityForm` (create) |
 | `/app/{entity}/:id` | `EntityForm` (edit)   |
 
-Unknown `{entity}` values (not in catalog) render `entity-not-found`.
+Catalog refreshes on entity routes (`useRefreshEntityCatalogOnMount`).
 
-## Adding an entity to the UI
+## Adding an entity
 
-1. **Static (module):** Define the entity in a module (`modules/{name}/`) with optional `ui` metadata; list the module in `apps/platform/app.config.ts`.
-2. **Dynamic (tenant):** Create the model in **Settings → Data Models** (`/settings/data-models`). The catalog refreshes automatically after save.
-3. Wire a Firestore converter for static entities (dynamic entities use `createEntityConverter()` automatically).
-4. RBAC permissions are derived automatically from registered entities.
-5. Restart API for new **modules** only — dynamic models work immediately without restart.
+1. **Dynamic (default):** **Settings → Data Model Builder** — no web code changes.
+2. **Static (optional module):** Define in `modules/{name}/`, add to `app.config.ts`, restart API.
 
-Do **not** add hardcoded entries to the web app. Nav labels come from `ui.nav.label`.
-
-## Permissions
-
-UI actions use `useEntityPermissions(entityName)`:
-
-- `{entity}.read` — list/detail routes
-- `{entity}.create` — create button and `/new` route
-- `{entity}.update` — edit actions and edit route
-- `{entity}.delete` — delete button
-
-API enforcement remains the source of truth.
+Nav labels come from `ui.nav.label`. Do not hardcode entity links in the web app.
 
 ## Related
 
-- [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md)
-- [Entity system guide](../../../../docs/entity-system-guide.md)
+- [relational-data-system-guide.md](../../../../docs/relational-data-system-guide.md)
 - [Web app README](../../../README.md)

@@ -21,7 +21,7 @@ Auth response includes RBAC fields when tenant is active:
 {
   "uid": "...",
   "email": "...",
-  "permissions": ["organization.read", "project.read"],
+  "permissions": ["loan.read", "loan.create"],
   "isSuperAdmin": false,
   "tenantId": "tenant_dev_1",
   "availableTenants": ["tenant_dev_1"]
@@ -40,7 +40,7 @@ Returns serialized entity definitions (static modules + tenant dynamic entities)
 
 ### CRUD (per entity)
 
-Static entities: `organization`, `project`, `inventoryItem`, plus tenant dynamic entities registered at runtime.
+Dynamic entities from Model Builder plus any compile-time module entities registered at bootstrap. Default bootstrap: `modules: []`.
 
 | Method | Path                | Description                                |
 | ------ | ------------------- | ------------------------------------------ |
@@ -50,10 +50,17 @@ Static entities: `organization`, `project`, `inventoryItem`, plus tenant dynamic
 | PUT    | `/api/{entity}/:id` | Update                                     |
 | DELETE | `/api/{entity}/:id` | Delete                                     |
 
+### Entity relations (many-to-many)
+
+| Method | Path                                     | Description                              |
+| ------ | ---------------------------------------- | ---------------------------------------- |
+| GET    | `/api/{entity}/:id/relations/:fieldName` | List linked target IDs                   |
+| PUT    | `/api/{entity}/:id/relations/:fieldName` | Replace targets `{ "targetIds": [...] }` |
+
 Query JSON example:
 
 ```http
-GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_1"}],"pagination":{"limit":20}}
+GET /api/workItem?query={"filter":[{"field":"batchId","operator":"==","value":"batch_1"}],"pagination":{"limit":20}}
 ```
 
 Response envelope:
@@ -99,13 +106,9 @@ Superadmin may pass `?tenantId=` query param for cross-tenant operations.
 | POST   | `/api/roles`     | `role.create` |
 | PATCH  | `/api/roles/:id` | `role.update` |
 
-### Module routes
+### Module routes (optional)
 
-Registered from `@repo/modules` at bootstrap. Example:
-
-| Method | Path                             | Permission           |
-| ------ | -------------------------------- | -------------------- |
-| GET    | `/api/modules/inventory/summary` | `inventoryItem.read` |
+When modules are registered in `app.config.ts`, custom routes mount under `/api/modules/{moduleName}/...`. Default bootstrap ships with no modules.
 
 ### Platform admin (superadmin)
 
@@ -146,11 +149,10 @@ await getAuth().setCustomUserClaims(uid, { tenantId: "tenant_dev_1" });
 
 Collection path: `tenants/{tenantId}/{collection}/{documentId}`
 
-| Entity             | Collection example                         |
-| ------------------ | ------------------------------------------ |
-| organization       | `tenants/tenant_a/organizations/{id}`      |
-| project            | `tenants/tenant_a/projects/{id}`           |
-| entity_definitions | `tenants/tenant_a/entity_definitions/{id}` |
+| Entity               | Collection example                         |
+| -------------------- | ------------------------------------------ |
+| Dynamic `loan`       | `tenants/tenant_a/loans/{id}`              |
+| `entity_definitions` | `tenants/tenant_a/entity_definitions/{id}` |
 
 ### Local development
 
@@ -219,7 +221,7 @@ src/
   auth/              JWT + App Check, tenant claim
   config/env.ts      Environment schema
   crud/              CRUD generator, response envelope
-  entities/          Catalog, definitions, runtime context
+  entities/          Catalog, definitions, runtime context, relation routes
   hooks/             Hook routes + runtime
   modules/           Module route registration, entity hooks
   observability/     Request timing

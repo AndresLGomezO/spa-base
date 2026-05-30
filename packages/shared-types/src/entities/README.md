@@ -6,22 +6,23 @@ See: [@repo/entities README](../../../entities/README.md) · [Entity System Guid
 
 ---
 
-## Adding a new entity
+## Adding a new static entity (optional module path)
 
-1. Create `src/entities/{entity}.ts` following the template below.
-2. Re-export from `src/index.ts` (entity, schemas, types, collection, permissions).
-3. Wire persistence in Workstream 3 (`@repo/firestore-converters`, `@repo/gcp-firebase`) using [Firestore collections guide](../../../../docs/firestore-collections-guide.md).
-4. Register the entity in `src/register-entities.ts` for relation validation and generic API wiring.
-5. For relation fields, add Firestore composite indexes — see [Relational Data System Guide](../../../../docs/relational-data-system-guide.md).
-6. Add optional `ui` block for list/form/nav metadata (see Advanced UI Builder Guide).
+For tenant-defined models, use **Model Builder** — [dynamic-entity-builder-guide.md](../../../../docs/dynamic-entity-builder-guide.md).
+
+For compile-time entities:
+
+1. Create entity in `modules/{name}/src/entities/{entity}.ts` (or legacy `shared-types` path).
+2. Register via module in `apps/platform/app.config.ts`.
+3. Wire Firestore converter — [firestore-collections-guide.md](../../../../docs/firestore-collections-guide.md).
+4. Add composite indexes for FK fields if needed.
 
 ### Relation field example
 
 ```ts
-organizationId: {
+batchId: {
   type: "relation",
-  required: true,
-  relation: { target: "organization", type: "many-to-one", onDelete: "restrict" },
+  relation: { target: "batch", type: "many-to-one", onDelete: "restrict" },
 },
 ```
 
@@ -65,47 +66,45 @@ export type ProductUpdate = z.infer<typeof productUpdateSchema>;
 
 ### Naming conventions
 
-| Export              | Example                    |
-| ------------------- | -------------------------- |
-| Entity instance     | `Organization`             |
-| Collection constant | `ORGANIZATIONS_COLLECTION` |
-| Domain schema       | `organizationSchema`       |
-| Create schema       | `organizationCreateSchema` |
-| Update schema       | `organizationUpdateSchema` |
-| Permissions tuple   | `ORGANIZATION_PERMISSIONS` |
-| Record type         | `OrganizationRecord`       |
-| Create type         | `OrganizationCreate`       |
-| Update type         | `OrganizationUpdate`       |
+| Export              | Example              |
+| ------------------- | -------------------- |
+| Entity instance     | `Batch`              |
+| Collection constant | `BATCHES_COLLECTION` |
+| Domain schema       | `batchSchema`        |
+| Create schema       | `batchCreateSchema`  |
+| Update schema       | `batchUpdateSchema`  |
+| Permissions tuple   | `BATCH_PERMISSIONS`  |
+| Record type         | `BatchRecord`        |
+| Create type         | `BatchCreate`        |
+| Update type         | `BatchUpdate`        |
 
 For Firestore persisted schemas and converters, add in the entity file:
 
 ```ts
-export const ORGANIZATION_SCHEMA_VERSION = 1 as const;
+export const BATCH_SCHEMA_VERSION = 1 as const;
 
-const organizationSchemaObject = organizationSchema as unknown as z.ZodObject<
+const batchSchemaObject = batchSchema as unknown as z.ZodObject<
   Record<string, z.ZodTypeAny>
 >;
 
-export const persistedOrganizationSchemaV1 = organizationSchemaObject
-  .extend({ _schemaVersion: z.literal(ORGANIZATION_SCHEMA_VERSION) })
+export const persistedBatchSchemaV1 = batchSchemaObject
+  .extend({ _schemaVersion: z.literal(BATCH_SCHEMA_VERSION) })
   .strict();
-export type PersistedOrganization = z.infer<
-  typeof persistedOrganizationSchemaV1
->;
+export type PersistedBatch = z.infer<typeof persistedBatchSchemaV1>;
 ```
 
-See `organization.ts` and `project.ts` for the live pattern. Converters live in `@repo/firestore-converters/src/{entity}/`.
+Dynamic entities skip hand-written files here — converters are created at runtime via `createEntityConverter()`.
 
 ---
 
-## Current seed entities
+## Static vs dynamic
 
-| Entity       | Collection      | File                                             |
-| ------------ | --------------- | ------------------------------------------------ |
-| Organization | `organizations` | `organization.ts`                                |
-| Project      | `projects`      | `project.ts` — `organizationId` → `organization` |
+| Path        | Where defined                         | When to use                           |
+| ----------- | ------------------------------------- | ------------------------------------- |
+| **Dynamic** | Model Builder → `entity_definitions`  | Default tenant experience             |
+| **Static**  | Module entity file + `defineModule()` | Compile-time entities, custom modules |
 
-These are **dev/test fixtures**, not product domain. The web app loads definitions from `GET /api/entities`; it does not import these modules.
+The web app loads definitions from `GET /api/entities`; it does not import entity modules directly.
 
 ---
 

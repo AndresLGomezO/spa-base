@@ -1,5 +1,7 @@
 # PLATFORM ECOSYSTEM — MASTER PLAN (PHASE 1 + PHASE 2)
 
+> **Implementation status (May 2026):** Phase 1 workstreams and Phase 2 capabilities 10.0–10.8 are **partially delivered (v1)**. This document is the **vision spec**. For as-built behavior see [docs/phase-2-platform-handoff.md](../../docs/phase-2-platform-handoff.md), [docs/master-plans.md](../../docs/master-plans.md), and capability guides under `docs/`. Forward work: [docs/next-phase-backlog.md](../../docs/next-phase-backlog.md).
+
 ---
 
 ## 1. PURPOSE

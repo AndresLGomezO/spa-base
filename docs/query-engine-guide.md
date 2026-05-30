@@ -110,27 +110,27 @@ Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED
 ### Legacy pagination (backward compatible)
 
 ```http
-GET /api/project?limit=20&cursor=proj_abc123
+GET /api/loan?limit=20&cursor=loan_abc123
 Authorization: Bearer …
 x-firebase-appcheck: …
 ```
 
-### Filter projects by organization
+### Filter workItems by batch
 
 ```http
-GET /api/project?query={"filter":[{"field":"organizationId","operator":"==","value":"org_123"}]}
+GET /api/workItem?query={"filter":[{"field":"batchId","operator":"==","value":"batch_123"}]}
 ```
 
-### Sort by budget descending
+### Sort by amount descending
 
 ```http
-GET /api/project?query={"sort":[{"field":"budget","direction":"desc"}]}
+GET /api/loan?query={"sort":[{"field":"amount","direction":"desc"}]}
 ```
 
 ### Combined filter, sort, and pagination
 
 ```http
-GET /api/project?limit=10&query={"filter":[{"field":"organizationId","operator":"==","value":"org_123"}],"sort":[{"field":"budget","direction":"desc"}]}
+GET /api/workItem?limit=10&query={"filter":[{"field":"batchId","operator":"==","value":"batch_123"}],"sort":[{"field":"title","direction":"asc"}]}
 ```
 
 Response envelope (unchanged):
@@ -163,9 +163,9 @@ Composite indexes are required for filter + sort combinations. See [`firestore.i
 
 | Use case | Index fields |
 | --- | --- |
-| Projects by organization | `organizationId ASC`, `id ASC` |
-| Projects by budget | `budget ASC/DESC`, `id ASC/DESC` |
-| Filter organization + sort budget | `organizationId ASC`, `budget ASC`, `id ASC` |
+| FK filter (e.g. workItem by batch) | `batchId ASC`, `id ASC` |
+| Sort by numeric field | `amount ASC/DESC`, `id ASC/DESC` |
+| Filter FK + sort another field | Match Firestore inequality rules — see parse-time validation |
 
 Deploy indexes before relying on filtered/sorted queries in production.
 
@@ -173,22 +173,13 @@ Deploy indexes before relying on filtered/sorted queries in production.
 
 ## Wiring a new entity
 
-1. Register entity in `@repo/shared-types/register-entities.ts`
-2. Create Firestore query executor in `apps/api/src/server.ts`:
+**Dynamic (Model Builder):** No code wiring — indexes may be needed for FK filters. See [firestore.indexes.json](../firestore.indexes.json).
 
-```ts
-const myQueryExecutor = createFirestoreEntityQueryExecutor({
-  config: firebaseAdminConfig,
-  collection: MY_COLLECTION,
-  converter: myConverter,
-});
-```
+**Static module:**
 
-3. Add to `createQueryRuntimeContext({ …, myEntity: myQueryExecutor })`
-4. Pass shared `queryEngine` to `registerCrudRoutes`
-5. Add composite indexes for expected filter/sort pairs
-
-For tests, use `createInMemoryCrudRuntime()` or `createInMemoryEntityRuntime()` from `apps/api/src/test/in-memory-entity-runtime.ts` so repositories and query executors share the same store.
+1. Register entity in module + `app.config.ts`
+2. Wire Firestore query executor in `apps/api/src/server.ts` (or rely on dynamic CRUD path for module entities registered at bootstrap)
+3. Add composite indexes for expected filter/sort pairs
 
 ---
 

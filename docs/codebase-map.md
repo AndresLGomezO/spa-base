@@ -44,8 +44,8 @@ project-base/
 |------|---------|
 | [packages/entities/src/define-entity.ts](../packages/entities/src/define-entity.ts) | Core `defineEntity()` |
 | [packages/entities/src/ui/](../packages/entities/src/ui/) | UI config types |
-| [modules/core/src/entities/](../modules/core/src/entities/) | Seed entities |
-| [packages/shared-types/src/entities/](../packages/shared-types/src/entities/) | Persisted entity exports |
+| [packages/dynamic-entities/src/](../packages/dynamic-entities/src/) | Runtime entity definitions |
+| [packages/shared-types/src/entities/](../packages/shared-types/src/entities/) | Static entity exports (optional modules) |
 
 ### DAL / Firestore
 
@@ -107,7 +107,10 @@ project-base/
 |------|---------|
 | [packages/entity-relations/src/](../packages/entity-relations/src/) | Relation validation, join handler |
 | [apps/api/src/relations/create-relation-services.ts](../apps/api/src/relations/create-relation-services.ts) | CRUD relation hooks |
+| [apps/api/src/entities/register-entity-relation-routes.ts](../apps/api/src/entities/register-entity-relation-routes.ts) | M2M relation sync API |
 | [apps/web/app/components/entity/RelationPicker.tsx](../apps/web/app/components/entity/RelationPicker.tsx) | FK picker UI |
+| [apps/web/app/components/entity/ManyToManyRelationPicker.tsx](../apps/web/app/components/entity/ManyToManyRelationPicker.tsx) | M2M picker UI |
+| [apps/web/app/hooks/useOneToManyColumnData.ts](../apps/web/app/hooks/useOneToManyColumnData.ts) | One-to-many reverse lookup in tables |
 
 ### 10.2 Advanced UI Builder
 
@@ -124,8 +127,7 @@ project-base/
 |------|---------|
 | [packages/modules/src/define-module.ts](../packages/modules/src/define-module.ts) | Module definition |
 | [packages/modules/src/registries/](../packages/modules/src/registries/) | Entity, route, hook, UI registries |
-| [modules/inventory/src/index.ts](../modules/inventory/src/index.ts) | Sample module |
-| [apps/api/src/modules/register-module-routes.ts](../apps/api/src/modules/register-module-routes.ts) | Module HTTP routes |
+| [apps/api/src/modules/register-module-routes.ts](../apps/api/src/modules/register-module-routes.ts) | Module HTTP routes (when modules registered) |
 
 ### 10.4 Hooks
 
@@ -163,9 +165,11 @@ project-base/
 |------|---------|
 | [packages/shared-types/src/cache/create-ttl-cache.ts](../packages/shared-types/src/cache/create-ttl-cache.ts) | TTL cache utility |
 | [apps/api/src/rbac/role-catalog.ts](../apps/api/src/rbac/role-catalog.ts) | Role catalog cache |
-| [apps/api/src/entities/entity-runtime-context.ts](../apps/api/src/entities/entity-runtime-context.ts) | Definition load cache |
+| [apps/api/src/entities/entity-runtime-context.ts](../apps/api/src/entities/entity-runtime-context.ts) | Definition load cache + repository invalidation on schema sync |
 | [apps/api/src/observability/request-timing.ts](../apps/api/src/observability/request-timing.ts) | Timing logs |
+| [apps/web/app/routes/private-layout.tsx](../apps/web/app/routes/private-layout.tsx) | Fixed viewport shell; scrollable main body |
 | [apps/web/app/hooks/useDebouncedValue.ts](../apps/web/app/hooks/useDebouncedValue.ts) | Filter debounce |
+| [apps/web/app/entities/use-refresh-entity-catalog-on-mount.ts](../apps/web/app/entities/use-refresh-entity-catalog-on-mount.ts) | Catalog refresh on entity routes |
 
 ### 10.8 Dynamic Entity Builder
 
@@ -183,8 +187,8 @@ project-base/
 
 | Task | Primary files |
 |------|---------------|
-| Add static entity | `modules/*/src/entities/`, register in module, add to `app.config.ts` |
-| Add module | `modules/new-module/`, `defineModule()`, add to `platformApp` |
+| Add static entity | Optional: `modules/*/src/entities/`, register in module, add to `app.config.ts` |
+| Add module | Create `modules/new-module/`, `defineModule()`, add to `platformApp.modules` |
 | Add API route (non-entity) | Module `routes` registry or new Fastify plugin in `server.ts` |
 | Add hook action type | `packages/hooks/src/actions/`, `validateHookActions` |
 | Add UI field component | `field-component-registry.tsx`, optionally module UI extension |

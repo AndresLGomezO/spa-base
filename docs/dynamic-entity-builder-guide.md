@@ -80,7 +80,7 @@ Platform superadmins can manage definitions for any tenant via `tenantId` query/
 The wizard flow:
 
 1. **Basic info** — entity name (camelCase) and display label
-2. **Fields** — type picker, required toggle, enum values, relation target
+2. **Fields** — type picker, required toggle, enum values, relation target (entity **model names**, not records). Relation fields auto-name FK columns; one-to-many shows a warning that links are saved on the child via many-to-one.
 3. **Review** — confirm schema, then create
 
 After save, `useEntityCatalog().refresh()` runs so the new entity appears in the sidebar without a page reload.

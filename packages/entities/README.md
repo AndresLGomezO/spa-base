@@ -2,9 +2,9 @@
 
 Pure **entity definition layer** for the platform. Declares business data models once and derives Zod schemas, TypeScript types, metadata, and RBAC permission strings.
 
-This package has **no dependencies on Firestore, Fastify, or React**. Downstream workstreams (CRUD API, DAL, RBAC, dynamic UI) consume its outputs without this package knowing about them.
+This package has **no dependencies on Firestore, Fastify, or React**. Downstream layers (CRUD API, DAL, RBAC, dynamic UI) consume its outputs without this package knowing about them.
 
-See also: [Entity System Guide](../../docs/entity-system-guide.md) · [Business entities in shared-types](../shared-types/src/entities/README.md) · [Firestore collections guide](../../docs/firestore-collections-guide.md)
+See also: [Entity System Guide](../../docs/entity-system-guide.md) · [master-plans.md](../../docs/master-plans.md)
 
 ---
 
@@ -13,24 +13,21 @@ See also: [Entity System Guide](../../docs/entity-system-guide.md) · [Business 
 ```ts
 import { defineEntity } from "@repo/entities";
 
-export const Customer = defineEntity({
-  name: "customer",
+export const Loan = defineEntity({
+  name: "loan",
   fields: {
-    name: { type: "string", required: true },
-    email: { type: "string" },
-    isActive: { type: "boolean", default: true },
+    amount: { type: "number", required: true },
+    status: { type: "string" },
   },
 });
 
-// Validate create input (shared by API + UI)
-Customer.createSchema.safeParse({ name: "Acme" });
+Loan.createSchema.safeParse({ amount: 1000 });
 
-// Metadata for CRUD, UI, RBAC
-Customer.metadata.collection; // "customers"
-Customer.metadata.permissions; // ["customer.read", "customer.create", ...]
+Loan.metadata.collection; // "loans"
+Loan.metadata.permissions; // ["loan.read", "loan.create", ...]
 ```
 
-Concrete business entities live in **modules** (e.g. `modules/core`) and are re-exported from `@repo/shared-types` for apps. Register entities via `defineModule()` — see [Module Extension Guide](../../docs/module-extension-guide.md).
+**Static entities** are defined in optional compile-time modules (`defineModule()`). **Dynamic entities** are created per tenant via Model Builder — see [Dynamic Entity Builder Guide](../../docs/dynamic-entity-builder-guide.md). Default bootstrap uses `modules: []` in `apps/platform/app.config.ts`.
 
 ---
 
@@ -106,7 +103,7 @@ Auto-generated from `name`:
 {name}.read | {name}.create | {name}.update | {name}.delete
 ```
 
-Exposed on `entity.metadata.permissions` as a typed `as const` tuple for RBAC (Workstream 4).
+Exposed on `entity.metadata.permissions` as a typed `as const` tuple for RBAC.
 
 ### Entity registry
 
@@ -114,65 +111,22 @@ Exposed on `entity.metadata.permissions` as a typed `as const` tuple for RBAC (W
 
 ---
 
-## Integration guide (next workstreams)
+## Integration (delivered)
 
-### Workstream 2 — CRUD API generator
+CRUD, Firestore DAL, RBAC, Query Engine, relations, and dynamic UI all consume this package today. See [entity-system-guide.md](../../docs/entity-system-guide.md) and [master-plans.md](../../docs/master-plans.md).
 
 ```ts
-// POST /api/{collection}
-const parsed = entity.createSchema.safeParse(request.body);
-// Inject: id, tenantId, createdAt, updatedAt before persistence
+// POST — validate with createSchema; inject system fields before persist
+entity.createSchema.safeParse(request.body);
 
-// PUT /api/{collection}/:id
-const parsed = entity.updateSchema.safeParse(request.body);
-
-// GET response validation (optional)
-entity.schema.parse(recordFromDb);
+// PUT — partial update
+entity.updateSchema.safeParse(request.body);
 
 // Route permission checks
-entity.metadata.permissions; // pass to RBAC middleware
+entity.metadata.permissions;
 ```
 
-Use `entity.metadata.collection` for Firestore collection name and URL segment.
-
-### Workstream 3 — Firestore DAL
-
-Extend the full domain schema with `_schemaVersion` in `@repo/firestore-converters` (same pattern as User):
-
-```ts
-import { customerSchema } from "@repo/shared-types";
-
-export const persistedCustomerSchemaV1 = customerSchema.extend({
-  _schemaVersion: z.literal(CUSTOMER_SCHEMA_VERSION),
-});
-```
-
-All tenant-scoped queries must filter by `tenantId`. The entity system declares the field; enforcement belongs in repository/API middleware.
-
-### Workstream 4 — RBAC
-
-Register permissions from each entity:
-
-```ts
-for (const entity of getAllEntities()) {
-  registerPermissions(entity.metadata.permissions);
-}
-```
-
-### Workstream 5 — Dynamic UI
-
-Read generic metadata (no React in this package):
-
-```ts
-Object.entries(entity.metadata.fields).map(([name, meta]) => ({
-  name,
-  type: meta.type,
-  required: meta.required,
-  default: meta.default,
-}));
-```
-
-Use the same `createSchema` / `updateSchema` in forms for client-side validation.
+Persisted records add `_schemaVersion` in `@repo/firestore-converters` (see [firestore-collections-guide.md](../../docs/firestore-collections-guide.md)).
 
 ---
 
@@ -209,7 +163,7 @@ Default pluralization: append `s`, or `es` when name ends in `s` (`status` → `
 
 ## Recommendations
 
-1. **Define business entities in modules** (e.g. `modules/core`) — register via `defineModule()` in `@app/platform/app.config.ts`.
+1. **Optional static entities** — define in a module and register via `defineModule()` in `@app/platform/app.config.ts` when compile-time entities are needed.
 2. **Keep `RegisteredUser` separate** — auth-global, not tenant-scoped; uses the hand-written User stack until a deliberate migration.
 3. **Validate with the correct schema** — `createSchema` for POST, `updateSchema` for PATCH, full `schema` after merging system fields.
 4. **Inject `tenantId` in API middleware** — never trust client-supplied tenant IDs.
@@ -225,7 +179,7 @@ The workstream spec shows `Date` in examples; this platform uses ISO datetime st
 
 ### Entity registry type widening
 
-`registerEntity` stores entities as `AnyDefinedEntity` because TypeScript cannot preserve per-entity generic field maps in a heterogeneous `Map`. Consumers that need precise types should import the concrete entity (`Customer`) rather than `getEntity("customer")`.
+`registerEntity` stores entities as `AnyDefinedEntity` because TypeScript cannot preserve per-entity generic field maps in a heterogeneous `Map`. Consumers that need precise types should import the concrete entity (`Loan`) rather than `getEntity("loan")`.
 
 ### Optional fields on full schema vs create schema
 
@@ -241,7 +195,7 @@ Both work. `InferEntity<TFields>` is for library internals; exported types in sh
 
 ### Schema version constant
 
-Entity definitions do not include `_schemaVersion`. Add `{ENTITY}_SCHEMA_VERSION = 1` in shared-types when wiring Firestore converters (Workstream 3).
+Entity definitions do not include `_schemaVersion`. Add version constants in converters when wiring Firestore persistence.
 
 ---
 

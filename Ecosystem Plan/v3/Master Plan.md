@@ -1,5 +1,7 @@
 ## 🧭 Phase 1 Execution Plan (Multi-Tenant Aware)
 
+> **Status (May 2026):** Steps 0–1 and all Phase 1 workstreams are **complete**. Default bootstrap uses **dynamic entities only** (`modules: []` in `apps/platform/app.config.ts`); the `Customer` vertical-slice narrative below is historical. See [Phase 2 handoff](../../docs/phase-2-platform-handoff.md), [master-plans bridge](../../docs/master-plans.md), and [next-phase backlog](../../docs/next-phase-backlog.md).
+
 We'll work through the workstreams in dependency order, building **one full vertical slice early** (e.g., a `Customer` entity for one tenant), then generalizing.
 
 ### Step 0 – Foundation Setup (Prerequisites)
@@ -240,3 +242,15 @@ graph TD
 ## ✅ Recommended Next Action
 
 Steps 0 and 1 are complete. Continue with Phase 2 backlog items in [docs/next-phase-backlog.md](../../docs/next-phase-backlog.md) or run the [E2E validation runbook](../../docs/e2e-validation-runbook.md) to verify the platform end-to-end.
+
+---
+
+## Appendix — Phase 2 completion pointer (May 2026)
+
+| Resource | Purpose |
+| --- | --- |
+| [docs/phase-2-platform-handoff.md](../../docs/phase-2-platform-handoff.md) | As-built capability matrix and evidence |
+| [docs/master-plans.md](../../docs/master-plans.md) | Phase 1 + Phase 2 status bridge |
+| [docs/next-phase-backlog.md](../../docs/next-phase-backlog.md) | P0–P2 forward work |
+
+**Entity strategy:** Tenant models are created via **Model Builder** (dynamic entities). Compile-time modules are optional extensions — no shipped `modules/core` seed. Validation: [e2e-validation-runbook.md](../../docs/e2e-validation-runbook.md) (batch/workItem workflow).

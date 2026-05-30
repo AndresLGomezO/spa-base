@@ -1,9 +1,9 @@
 # project-base
 
-Multi-tenant ecosystem builder: schema-driven entities, auto-generated CRUD APIs, RBAC, dynamic UI, modules, and hooks.
+Multi-tenant ecosystem builder: schema-driven entities, auto-generated CRUD APIs, RBAC, dynamic UI, optional modules, and hooks.
 
 **Phase 1 (engine):** complete — entity system, DAL, CRUD generator, RBAC, entity UI, routing, basic admin.  
-**Phase 2 (ecosystem):** v1 delivered — query engine, relations, UI builder, modules, hooks, advanced RBAC, admin control plane, performance Phase A, dynamic entity builder.
+**Phase 2 (ecosystem):** v1 delivered — query engine, relations, UI builder, modules framework, hooks, advanced RBAC, admin control plane, performance Phase A, dynamic entity builder.
 
 ---
 
@@ -14,8 +14,9 @@ Multi-tenant ecosystem builder: schema-driven entities, auto-generated CRUD APIs
 | Document                                                             | Description                                              |
 | -------------------------------------------------------------------- | -------------------------------------------------------- |
 | [docs/phase-2-platform-handoff.md](docs/phase-2-platform-handoff.md) | Master handoff — architecture, capabilities, API summary |
+| [docs/master-plans.md](docs/master-plans.md)                         | Phase 1 + 2 master plans mapped to the codebase          |
 | [docs/e2e-validation-runbook.md](docs/e2e-validation-runbook.md)     | Manual validation steps                                  |
-| [docs/next-phase-backlog.md](docs/next-phase-backlog.md)             | Prioritized deferred work                                |
+| [docs/next-phase-backlog.md](docs/next-phase-backlog.md)             | **Next steps** — prioritized deferred work (P0–P2)       |
 | [docs/codebase-map.md](docs/codebase-map.md)                         | Annotated file index                                     |
 | [docs/README.md](docs/README.md)                                     | Full documentation index                                 |
 
@@ -42,15 +43,12 @@ Set `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com` in `apps/api/.env.dev
 apps/
   api/        Fastify HTTP API
   web/        React Router 7 SPA
-  platform/   Shared module bootstrap config
-modules/
-  core/       organization, project entities
-  inventory/  Sample extension module
+  platform/   defineApp bootstrap (modules: [] by default)
 packages/     Shared libraries (@repo/*)
 docs/         Guides and handoff documentation
 ```
 
-Seed entities: `organization`, `project` (core), `inventoryItem` (inventory). Tenants can add dynamic entities via the Model Builder UI.
+**Entity strategy:** Bootstrap ships with **no compile-time modules** ([`apps/platform/app.config.ts`](apps/platform/app.config.ts)). Tenants create data models via **Settings → Data Model Builder** (`/settings/data-models`). Optional extension modules can be added under a top-level `modules/` folder — see [module-extension-guide.md](docs/module-extension-guide.md).
 
 ---
 
@@ -77,6 +75,12 @@ Seed entities: `organization`, `project` (core), `inventoryItem` (inventory). Te
 
 ---
 
-## Ecosystem plan
+## Master plans (source specs)
 
-Original specs: [Ecosystem Plan/v2/General Definitions.md](Ecosystem%20Plan/v2/General%20Definitions.md)
+| Plan                  | Document                                                                                 |
+| --------------------- | ---------------------------------------------------------------------------------------- |
+| Phase 1 + 2 vision    | [Ecosystem Plan/v2/General Definitions.md](Ecosystem%20Plan/v2/General%20Definitions.md) |
+| Phase 1 execution log | [Ecosystem Plan/v3/Master Plan.md](Ecosystem%20Plan/v3/Master%20Plan.md)                 |
+| Mapped to codebase    | [docs/master-plans.md](docs/master-plans.md)                                             |
+
+**Next implementation phase:** [docs/next-phase-backlog.md](docs/next-phase-backlog.md)

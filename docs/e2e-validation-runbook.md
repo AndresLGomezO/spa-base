@@ -196,6 +196,8 @@ Open the account menu in the sidebar. Confirm:
 
 Requires Storage emulator in local dev (`FIREBASE_STORAGE_EMULATOR_HOST`). See [gcs-storage-guide.md](./gcs-storage-guide.md).
 
+**Layout:** The appearance form is long — confirm only the main content area scrolls (sidebar stays fixed). See scroll-contained layout in [phase-2-platform-handoff.md §8](./phase-2-platform-handoff.md).
+
 ---
 
 ## 11. Automated Cypress (optional)

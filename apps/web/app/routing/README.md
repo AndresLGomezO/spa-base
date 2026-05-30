@@ -38,6 +38,8 @@ Entity pages use parametric routes from [`entity-routes.ts`](entity-routes.ts):
 
 Unknown `:entity` values render the entity not-found page.
 
+Entity routes call `useRefreshEntityCatalogOnMount` so Model Builder changes appear without a full reload.
+
 ## Tenant switching
 
 **Superadmins** choose a tenant at `/select-tenant` or via the sidebar `TenantSwitcher`. Selection calls `POST /auth/select-tenant`, refreshes the ID token, and re-syncs permissions, `tenantRoleNames`, and tenant branding. Superadmins create new tenants from the switcher or `/platform/create-tenant`.

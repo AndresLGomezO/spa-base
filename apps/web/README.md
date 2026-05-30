@@ -21,13 +21,13 @@ Auth uses Firebase with `browserLocalPersistence` and the Auth emulator (`127.0.
 
 ## Architecture highlights
 
-| Concern               | Location                                                                 |
-| --------------------- | ------------------------------------------------------------------------ |
-| TanStack Query        | `app/query/query-client.ts`, provider in `app/routes/private-layout.tsx` |
-| Entity catalog        | `app/entities/entity-catalog-context.tsx` → `GET /api/entities`          |
-| Entity data           | `app/hooks/useEntity.ts` (infinite query + mutations)                    |
-| Route guards          | `app/routing/RouteGuards.tsx`                                            |
-| Dynamic entity routes | `app/routing/entity-routes.ts`                                           |
+| Concern               | Location                                                                                      |
+| --------------------- | --------------------------------------------------------------------------------------------- |
+| TanStack Query        | `app/query/query-client.ts`, provider in `app/routes/private-layout.tsx`                      |
+| Entity catalog        | `app/entities/entity-catalog-context.tsx` — 30s staleTime; refreshes on `/app/:entity` routes |
+| Entity data           | `app/hooks/useEntity.ts` (infinite query + mutations)                                         |
+| Route guards          | `app/routing/RouteGuards.tsx`                                                                 |
+| Dynamic entity routes | `app/routing/entity-routes.ts`                                                                |
 
 React Router 7 automatically code-splits each route module file into separate browser chunks.
 
@@ -45,12 +45,12 @@ See [app/routing/README.md](app/routing/README.md).
 
 ### Layouts
 
-| Layout     | Routes                                                                |
-| ---------- | --------------------------------------------------------------------- |
-| Public     | `/login`                                                              |
-| Private    | All authenticated routes (with sidebar)                               |
-| Tenant     | `/`, `/app/*` (requires tenant claim)                                 |
-| Superadmin | `/settings/tenant`, `/settings/appearance`, `/platform/create-tenant` |
+| Layout     | Routes                                                                         |
+| ---------- | ------------------------------------------------------------------------------ |
+| Public     | `/login`                                                                       |
+| Private    | All authenticated routes — **fixed viewport** (`h-dvh`); only `<main>` scrolls |
+| Tenant     | `/`, `/app/*` (requires tenant claim)                                          |
+| Superadmin | `/settings/tenant`, `/settings/appearance`, `/platform/create-tenant`          |
 
 Settings routes (`/settings/users`, `/settings/data-models`, etc.) live in the private layout without a tenant guard. All users operate on the active JWT `tenantId`. Superadmins switch tenants via the sidebar `TenantSwitcher` or `/select-tenant`; tenant members are auto-bound to their first assigned tenant.
 
@@ -83,9 +83,9 @@ Platform superadmin: **Platform → Current Tenant** at `/settings/tenant`, **Ap
 
 Components in [app/components/entity/](app/components/entity/README.md):
 
-- **EntityTable** — virtualized rows, debounced filters, query engine integration
-- **EntityForm** — schema-driven create/edit
-- **EntityField** — field type rendering via registry
+- **EntityTable** — virtualized rows, debounced filters, query engine, one-to-many reverse lookup columns
+- **EntityForm** — schema-driven create/edit; strips non-document relation keys from payload
+- **EntityField** — `RelationPicker` (FK), `ManyToManyRelationPicker` (M2M sync API)
 
 Permissions via `useEntityPermissions` and `useFieldAccess`. No hardcoded entity imports — catalog from API.
 

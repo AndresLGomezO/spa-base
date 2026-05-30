@@ -42,7 +42,7 @@ Provider in `apps/web/app/routes/private-layout.tsx`.
 
 | Query key | Data | staleTime |
 |-----------|------|-----------|
-| `["entities"]` | Entity catalog | 5 min |
+| `["entities"]` | Entity catalog | 30s (+ refresh on entity routes) |
 | `["entity", name, queryConfig]` | Paginated lists | 30s default |
 | `["entity", name, "record", id]` | Single record | 30s default |
 

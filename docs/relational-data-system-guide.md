@@ -16,7 +16,7 @@ The relational layer adds:
 - Scalable many-to-many via join collections
 - Delete semantics (`restrict`, `nullify`, `cascade`)
 
-Relation expansion on GET remains deferred. List filtering on FK fields (for example `customerId`) is available via the [Query Engine](./query-engine-guide.md).
+Relation expansion on GET remains deferred. List filtering on FK fields (for example `batchId`) is available via the [Query Engine](./query-engine-guide.md).
 
 ---
 
@@ -51,11 +51,11 @@ flowchart LR
 ### Many-to-one (foreign key)
 
 ```ts
-customerId: {
+batchId: {
   type: "relation",
-  required: true,
+  required: false,
   relation: {
-    target: "customer",
+    target: "batch",
     type: "many-to-one",
     onDelete: "restrict",
   },
@@ -67,12 +67,12 @@ Stored as a string ID on the entity document. Validated on create/update.
 ### Many-to-many (join collection)
 
 ```ts
-projects: {
+tags: {
   type: "relation",
   relation: {
-    target: "project",
+    target: "tag",
     type: "many-to-many",
-    joinCollection: "user_projects",
+    joinCollection: "workItem_tags",
   },
 }
 ```
@@ -93,6 +93,8 @@ Entity forms sync many-to-many links through the API after document create/updat
 | `PUT` | `/api/{entity}/{recordId}/relations/{fieldName}` | Replace linked targets (`{ "targetIds": ["..."] }`) |
 
 Many-to-many and one-to-many (parent-side) fields are **not** stored on entity documents. Document CRUD strips those keys before validation. One-to-many parent fields are read-only in forms — define the foreign key on the child entity as `many-to-one` instead.
+
+**List/table display:** One-to-many columns (e.g. `batch.workItems`) use reverse lookup via the child FK (`workItem.batchId`) in `EntityTable` / `EntityCardView` — see `useOneToManyColumnData` in the web app.
 
 ### Dynamic models: batch and workItem
 
@@ -118,7 +120,7 @@ After PATCHing a definition to add fields (e.g. `batchId`), the API refreshes it
 
 | Property | Description |
 | --- | --- |
-| `target` | Target entity name (e.g. `"customer"`) |
+| `target` | Target entity name (e.g. `"batch"`) |
 | `type` | `one-to-one` · `one-to-many` · `many-to-one` · `many-to-many` |
 | `inverse` | Optional reverse field name on target entity |
 | `required` | Whether the reference must be present on create |
@@ -135,7 +137,7 @@ After PATCHing a definition to add fields (e.g. `batchId`), the API refreshes it
 | `one-to-many` | FK on the "many" side (define as `many-to-one` on child) |
 | `many-to-many` | Join collection under tenant |
 
-Default join collection name: `{sourceEntity}_{targetEntity}` (e.g. `user_project`).
+Default join collection name: `{sourceEntity}_{targetEntity}` (e.g. `workItem_tag`).
 
 ---
 
@@ -175,26 +177,26 @@ Repository contract extension:
 ```ts
 findByField({
   tenantId,
-  field: "customerId",
-  value: customerId,
+  field: "batchId",
+  value: batchId,
   limit?,
   cursor?,
 })
 ```
 
-Used by the delete handler today. The Query Engine uses the same FK fields for list filters — see [Query Engine Guide](./query-engine-guide.md).
+Used by delete handler and one-to-many table reverse lookup (`useOneToManyColumnData`). The Query Engine uses FK fields for list filters — see [Query Engine Guide](./query-engine-guide.md).
 
 ---
 
 ## Firestore indexes
 
-Composite indexes are required for FK reverse lookups. Example for orders by customer:
+Composite indexes are required for FK reverse lookups. Example for work items by batch:
 
 ```json
 {
-  "collectionGroup": "orders",
+  "collectionGroup": "workItems",
   "fields": [
-    { "fieldPath": "customerId", "order": "ASCENDING" },
+    { "fieldPath": "batchId", "order": "ASCENDING" },
     { "fieldPath": "id", "order": "ASCENDING" }
   ]
 }
@@ -217,26 +219,24 @@ Imported once at API startup in `apps/api/src/server.ts`.
 
 ---
 
-## Pilot: Order → Customer
+## Example: WorkItem → Batch
 
-`Order` includes required `customerId` referencing `customer` with `onDelete: restrict`. Schema version bumped to `2` with v1→v2 migration in the order converter.
+`workItem` includes optional `batchId` referencing `batch` with `onDelete: restrict`. Create both models in Model Builder or define statically in a module. Parent list views show linked children via reverse lookup on the one-to-many side.
 
 ---
 
-## Out of scope (this deliverable)
+## Out of scope (deferred)
 
-- Relation-aware UI (entity picker)
-- Relation expansion on GET (`?expand=customer`)
+- Relation expansion on GET (`?expand=batch`)
 - Denormalized display fields
 
-List filters on FK fields are handled by the [Query Engine](./query-engine-guide.md) (for example `?query={"filter":[{"field":"customerId","operator":"==","value":"…"}]}`).
+List filters on FK fields are handled by the [Query Engine](./query-engine-guide.md) (for example `?query={"filter":[{"field":"batchId","operator":"==","value":"…"}]}`).
 
 ---
 
 ## Adding relations to a new entity
 
-1. Add `type: "relation"` fields in `@repo/shared-types`
-2. Register entity in `register-entities.ts`
-3. Wire repository in `apps/api/src/server.ts` and extend `createRelationRuntimeContext` repository map
-4. Add Firestore composite indexes for FK fields used in reverse lookups
-5. Bump persisted schema version if changing stored shape
+1. Add `type: "relation"` fields in Model Builder or in a static entity definition
+2. For static entities: register via module in `app.config.ts`
+3. Add Firestore composite indexes for FK fields used in reverse lookups
+4. Bump persisted schema version if changing stored shape on static entities

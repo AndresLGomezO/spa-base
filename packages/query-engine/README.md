@@ -16,7 +16,7 @@ Depends on `@repo/entities`, `@repo/firestore-converters`. Used by `apps/api` CR
 ## HTTP usage
 
 ```http
-GET /api/project?query={"filter":[...],"sort":[...],"pagination":{"limit":20}}
+GET /api/workItem?query={"filter":[...],"sort":[...],"pagination":{"limit":20}}
 ```
 
 Legacy: `?limit=20&cursor=...`
@@ -30,4 +30,4 @@ pnpm --filter @repo/query-engine typecheck
 
 ## Guide
 
-[docs/query-engine-guide.md](../../docs/query-engine-guide.md)
+[docs/query-engine-guide.md](../../docs/query-engine-guide.md) · [master-plans.md](../../docs/master-plans.md)
