@@ -84,6 +84,7 @@ export const entityDefinitionRecordSchema = z.object({
     .regex(/^[a-z][a-zA-Z0-9]*$/, "Name must be camelCase."),
   label: z.string().trim().min(1),
   fields: z.array(fieldDefinitionSchema).min(1),
+  tenantWideRead: z.boolean().optional(),
   ui: z.custom<EntityUIConfig>().optional(),
   version: z.number().int().positive(),
   createdAt: z.string().trim().min(1),
@@ -114,6 +115,7 @@ export type CreateEntityDefinitionInput = z.infer<
 export const patchEntityDefinitionInputSchema = z.object({
   label: z.string().trim().min(1).optional(),
   fields: z.array(fieldDefinitionSchema).min(1).optional(),
+  tenantWideRead: z.boolean().optional(),
   ui: z.custom<EntityUIConfig>().optional(),
 });
 

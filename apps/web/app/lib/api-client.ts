@@ -300,6 +300,7 @@ export interface EntityDefinitionRecord {
   readonly name: string;
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
+  readonly tenantWideRead?: boolean;
   readonly version: number;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -310,6 +311,7 @@ interface CreateEntityDefinitionInput {
   readonly name: string;
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
+  readonly tenantWideRead?: boolean;
 }
 
 export async function listEntityDefinitions(options?: {
@@ -344,6 +346,7 @@ export async function getEntityDefinition(
 interface PatchEntityDefinitionInput {
   readonly label?: string;
   readonly fields?: readonly FieldDefinitionInput[];
+  readonly tenantWideRead?: boolean;
   readonly ui?: Record<string, unknown>;
 }
 

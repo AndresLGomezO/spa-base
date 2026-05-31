@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Button,
+  Checkbox,
   FieldLabel,
   Form,
   Heading,
@@ -55,6 +56,7 @@ export function EntityDefinitionEditor({
   const [record, setRecord] = useState<EntityDefinitionRecord | null>(null);
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
+  const [tenantWideRead, setTenantWideRead] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -84,6 +86,7 @@ export function EntityDefinitionEditor({
         setRecord(loaded);
         setLabel(loaded.label);
         setFields([...loaded.fields]);
+        setTenantWideRead(loaded.tenantWideRead ?? false);
       } catch (loadError) {
         if (cancelled) {
           return;
@@ -163,6 +166,7 @@ export function EntityDefinitionEditor({
     try {
       const updated = await patchEntityDefinition(definitionId, {
         label: label.trim(),
+        tenantWideRead,
         fields: validFields.map((field) => ({
           ...field,
           name: field.name.trim(),
@@ -233,6 +237,19 @@ export function EntityDefinitionEditor({
             onChange={(event) => setLabel(event.target.value)}
             disabled={!canUpdate}
           />
+        </div>
+
+        <div className="space-y-2">
+          <Checkbox
+            id="edit-tenant-wide-read"
+            label={t("dataModels.tenantWideRead")}
+            checked={tenantWideRead}
+            disabled={!canUpdate}
+            onChange={(event) => setTenantWideRead(event.target.checked)}
+          />
+          <Text className="text-muted-foreground text-sm">
+            {t("dataModels.tenantWideReadHint")}
+          </Text>
         </div>
 
         <EntityFieldsManager

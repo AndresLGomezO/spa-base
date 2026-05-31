@@ -74,6 +74,17 @@ echo -n 'you@company.com' | gcloud secrets versions add PLATFORM_BOOTSTRAP_SUPER
   --project=entitysystem-development --data-file=-
 ```
 
+- [ ] Secret `TENANT_ENCRYPTION_MASTER_KEY` exists (created by Terraform on first apply)
+- [ ] At least one secret **version** added before Cloud Run deploy:
+
+```bash
+node -e "console.log(require('crypto').randomBytes(32).toString('base64'))" | \
+  gcloud secrets versions add TENANT_ENCRYPTION_MASTER_KEY \
+    --project=entitysystem-development --data-file=-
+```
+
+> **Warning:** changing the encryption master key invalidates all previously encrypted field data.
+
 ## Terraform brownfield (if apply failed with 409)
 
 ```bash

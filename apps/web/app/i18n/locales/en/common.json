@@ -237,6 +237,8 @@
     "required": "Required",
     "sensitive": "Sensitive (encrypted)",
     "sensitiveHint": "Sensitive fields are encrypted at rest. They cannot be filtered or sorted in list views.",
+    "tenantWideRead": "Tenant-wide read access",
+    "tenantWideReadHint": "When enabled, all tenant members can read records of this entity. Write and delete still require ownership.",
     "displayOrder": "Display order",
     "displayOrderHint": "Lower numbers appear first in tables and forms.",
     "fieldFilterable": "Filterable in list views",

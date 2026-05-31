@@ -143,6 +143,7 @@ export function defineEntityFromRecord(
     name: record.name,
     fields,
     ...(ui ? { ui } : {}),
+    ...(record.tenantWideRead ? { tenantWideRead: true } : {}),
   } as Parameters<typeof defineEntity>[0]) as DefinedEntity<
     string,
     FieldDefinitions
