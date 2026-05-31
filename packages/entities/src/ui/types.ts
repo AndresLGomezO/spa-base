@@ -97,4 +97,5 @@ export interface SerializableEntityDefinition {
   readonly fields: Readonly<Record<string, SerializableFieldMeta>>;
   readonly ui: EntityUIConfig;
   readonly fieldAccess?: Readonly<Record<string, FieldAccessLevel>>;
+  readonly displayField?: string;
 }

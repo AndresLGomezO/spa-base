@@ -63,6 +63,7 @@ export function FieldEditorForm({
     const nextRelation = {
       target: field.relation?.target ?? "",
       type: field.relation?.type ?? "many-to-one",
+      onDelete: field.relation?.onDelete,
       ...partial,
     };
     const generatedName = generateRelationFieldName(
@@ -328,6 +329,48 @@ export function FieldEditorForm({
               </Text>
             ) : null}
           </div>
+          {relationType === "many-to-one" || relationType === "one-to-one" ? (
+            <div>
+              <FieldLabel htmlFor={`${idPrefix}-relation-ondelete`}>
+                {t("dataModels.onDelete", { defaultValue: "On Delete" })}
+              </FieldLabel>
+              <select
+                id={`${idPrefix}-relation-ondelete`}
+                className={selectClassName}
+                value={field.relation?.onDelete ?? "restrict"}
+                onChange={(event) =>
+                  updateRelation({
+                    onDelete: event.target.value as
+                      | "restrict"
+                      | "cascade"
+                      | "nullify",
+                  })
+                }
+              >
+                <option value="restrict">
+                  {t("dataModels.onDeleteOptions.restrict", {
+                    defaultValue: "Restrict (block delete)",
+                  })}
+                </option>
+                <option value="cascade">
+                  {t("dataModels.onDeleteOptions.cascade", {
+                    defaultValue: "Cascade (delete referencing records)",
+                  })}
+                </option>
+                <option value="nullify">
+                  {t("dataModels.onDeleteOptions.nullify", {
+                    defaultValue: "Set null (clear reference)",
+                  })}
+                </option>
+              </select>
+              <Text className="text-muted-foreground mt-1 text-sm">
+                {t("dataModels.onDeleteHint", {
+                  defaultValue:
+                    "What happens to this record when the referenced record is deleted.",
+                })}
+              </Text>
+            </div>
+          ) : null}
         </div>
       ) : null}
 

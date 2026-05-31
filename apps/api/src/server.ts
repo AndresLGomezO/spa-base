@@ -342,6 +342,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
       authorize: createEntityPermissionGuards(permissionDeps, entity.name),
       relations: relationContext.hooksFor(entity.name),
       queryEngine: queryContext.queryEngine,
+      referencePopulator: {
+        getEntityDefinition: (name, tenantId) =>
+          entityRuntime.getEntityDefinition(name, tenantId),
+        getRepository: (tenantId, entityName) =>
+          entityRuntime.getRepository(tenantId, entityName),
+      },
       crudHooks,
     });
   }

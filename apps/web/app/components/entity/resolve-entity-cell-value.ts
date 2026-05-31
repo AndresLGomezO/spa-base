@@ -6,6 +6,20 @@ import {
   type DisplayFormat,
 } from "@repo/ui";
 
+import { formatRecordDisplayLabel } from "./format-record-display-label";
+
+function getPopulatedDisplayValue(
+  item: Record<string, unknown>,
+  column: string,
+): string | null {
+  const populated = item._populated as
+    | Record<string, Record<string, unknown> | null>
+    | undefined;
+  if (!populated || !populated[column]) return null;
+  const target = populated[column];
+  return formatRecordDisplayLabel(target);
+}
+
 export function getEntityCellRawValue(
   item: Record<string, unknown>,
   column: string,
@@ -20,6 +34,16 @@ export function getEntityCellRawValue(
     const relatedValue = getOneToManyCellValue(String(item.id), column);
     if (relatedValue !== null) {
       return relatedValue;
+    }
+  }
+
+  if (
+    fieldMeta?.relation?.type === "many-to-one" ||
+    fieldMeta?.relation?.type === "one-to-one"
+  ) {
+    const displayLabel = getPopulatedDisplayValue(item, column);
+    if (displayLabel !== null) {
+      return displayLabel;
     }
   }
 

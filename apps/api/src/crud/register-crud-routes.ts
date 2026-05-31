@@ -24,6 +24,10 @@ import {
   FieldAccessError,
 } from "../rbac/create-field-access-resolver.js";
 import { checkRecordAccess } from "../access/record-access.js";
+import {
+  parsePopulateParam,
+  type ReferencePopulatorDeps,
+} from "../access/reference-populator.js";
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
 import { measureQueryTiming } from "../observability/request-timing.js";
 import { apiEnv } from "../config/env.js";
@@ -38,6 +42,7 @@ const listQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
   cursor: z.string().trim().min(1).optional(),
   query: z.string().trim().min(1).optional(),
+  populate: z.string().trim().min(1).optional(),
 });
 
 const entityNameParamsSchema = z.object({
@@ -92,22 +97,30 @@ interface RegisterCrudRoutesOptions<
         readonly validateWrite: (
           record: Record<string, unknown>,
           mode: "create" | "update",
+          userId?: string,
         ) => Promise<void>;
-        readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
+        readonly beforeDelete: (
+          id: string,
+          tenantId: string,
+          userId?: string,
+        ) => Promise<void>;
       }
     | ((entityName: string) =>
         | {
             readonly validateWrite: (
               record: Record<string, unknown>,
               mode: "create" | "update",
+              userId?: string,
             ) => Promise<void>;
             readonly beforeDelete: (
               id: string,
               tenantId: string,
+              userId?: string,
             ) => Promise<void>;
           }
         | undefined);
   readonly queryEngine?: QueryEngine;
+  readonly referencePopulator?: ReferencePopulatorDeps;
   readonly prefix?: string;
   readonly parametricEntityName?: boolean;
   readonly crudHooks?: CrudHookDeps;
@@ -124,7 +137,9 @@ function mapRelationErrorToResponse(
   reply: FastifyReply,
   error: RelationError,
 ): void {
-  const statusCode = error.code === "RELATION_DELETE_RESTRICTED" ? 409 : 400;
+  let statusCode = 400;
+  if (error.code === "RELATION_DELETE_RESTRICTED") statusCode = 409;
+  if (error.code === "REFERENCE_ACCESS_DENIED") statusCode = 400;
 
   replyWithError(reply, statusCode, error.code as ApiErrorCode, error.message);
 }
@@ -292,8 +307,13 @@ function resolveRelationHooks<
       readonly validateWrite: (
         record: Record<string, unknown>,
         mode: "create" | "update",
+        userId?: string,
       ) => Promise<void>;
-      readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
+      readonly beforeDelete: (
+        id: string,
+        tenantId: string,
+        userId?: string,
+      ) => Promise<void>;
     }
   | undefined {
   if (!options.relations) {
@@ -305,6 +325,38 @@ function resolveRelationHooks<
   }
 
   return options.relations;
+}
+
+async function maybePopulate(
+  entity: CrudEntityDefinition,
+  records: readonly Record<string, unknown>[],
+  request: FastifyRequest,
+  tenantId: string,
+  populatorDeps?: ReferencePopulatorDeps,
+): Promise<readonly Record<string, unknown>[]> {
+  const populateFields = parsePopulateParam(
+    (request.query ?? {}) as Record<string, unknown>,
+  );
+  if (populateFields.length === 0 || !populatorDeps || !request.ctx) {
+    return records;
+  }
+
+  const { createReferencePopulator } =
+    await import("../access/reference-populator.js");
+  const populator = createReferencePopulator(populatorDeps);
+
+  const entityDef = populatorDeps.getEntityDefinition(entity.name, tenantId);
+  if (!entityDef) {
+    return records;
+  }
+
+  return populator.populateRecords(
+    entityDef,
+    records,
+    populateFields,
+    tenantId,
+    request.ctx.uid,
+  );
 }
 
 export async function registerCrudRoutes<
@@ -388,13 +440,22 @@ export async function registerCrudRoutes<
           ),
         );
 
+        const filteredItems = filterPaginatedItemsForRead(
+          request,
+          activeEntity,
+          result.data as Record<string, unknown>[],
+        );
+        const populatedItems = await maybePopulate(
+          activeEntity,
+          filteredItems,
+          request,
+          tenantId,
+          options.referencePopulator,
+        );
+
         return reply.send(
           successEnvelope({
-            items: filterPaginatedItemsForRead(
-              request,
-              activeEntity,
-              result.data as Record<string, unknown>[],
-            ),
+            items: populatedItems,
             nextCursor: result.nextCursor ?? null,
             totalCount: result.totalCount,
           }),
@@ -407,14 +468,23 @@ export async function registerCrudRoutes<
         cursor: parsedQuery.data.cursor,
       });
 
+      const filteredFallback = filterPaginatedItemsForRead(
+        request,
+        activeEntity,
+        result.items as Record<string, unknown>[],
+      );
+      const populatedFallback = await maybePopulate(
+        activeEntity,
+        filteredFallback,
+        request,
+        tenantId,
+        options.referencePopulator,
+      );
+
       return reply.send(
         successEnvelope({
           ...result,
-          items: filterPaginatedItemsForRead(
-            request,
-            activeEntity,
-            result.items as Record<string, unknown>[],
-          ),
+          items: populatedFallback,
         }),
       );
     } catch (error) {
@@ -505,11 +575,19 @@ export async function registerCrudRoutes<
             }
           }
 
-          return reply.send(
-            successEnvelope(
-              filterRecordForRead(request, activeEntity, recordData),
-            ),
+          const filtered = filterRecordForRead(
+            request,
+            activeEntity,
+            recordData,
           );
+          const [populated] = await maybePopulate(
+            activeEntity,
+            [filtered],
+            request,
+            tenantId,
+            options.referencePopulator,
+          );
+          return reply.send(successEnvelope(populated ?? filtered));
         }
 
         const record = await activeRepository.findById(recordId, tenantId);
@@ -535,11 +613,19 @@ export async function registerCrudRoutes<
           }
         }
 
-        return reply.send(
-          successEnvelope(
-            filterRecordForRead(request, activeEntity, recordData),
-          ),
+        const filteredById = filterRecordForRead(
+          request,
+          activeEntity,
+          recordData,
         );
+        const [populatedById] = await maybePopulate(
+          activeEntity,
+          [filteredById],
+          request,
+          tenantId,
+          options.referencePopulator,
+        );
+        return reply.send(successEnvelope(populatedById ?? filteredById));
       } catch (error) {
         if (handleQueryError(reply, error)) {
           return;
@@ -668,7 +754,11 @@ export async function registerCrudRoutes<
 
         const relationHooks = resolveRelationHooks(options, activeEntity.name);
         if (relationHooks) {
-          await relationHooks.validateWrite(currentData, "create");
+          await relationHooks.validateWrite(
+            currentData,
+            "create",
+            request.ctx?.uid,
+          );
         }
 
         const created = await activeRepository.create(
@@ -873,6 +963,7 @@ export async function registerCrudRoutes<
           await relationHooks.validateWrite(
             parsedRecord.data as Record<string, unknown>,
             "update",
+            request.ctx?.uid,
           );
         }
 
@@ -1042,7 +1133,11 @@ export async function registerCrudRoutes<
 
         const relationHooks = resolveRelationHooks(options, activeEntity.name);
         if (relationHooks) {
-          await relationHooks.beforeDelete(recordId, tenantId);
+          await relationHooks.beforeDelete(
+            recordId,
+            tenantId,
+            request.ctx?.uid,
+          );
         }
 
         await runEntityHooks(app, request, {

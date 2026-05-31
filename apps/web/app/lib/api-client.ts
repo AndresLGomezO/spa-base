@@ -146,6 +146,7 @@ export async function listEntity<T>(
     readonly limit?: number;
     readonly cursor?: string;
     readonly query?: QueryConfig;
+    readonly populate?: string;
   } = {},
 ): Promise<PaginatedResult<T>> {
   const query =
@@ -158,12 +159,19 @@ export async function listEntity<T>(
       limit: options.limit,
       cursor: options.cursor,
       query,
+      populate: options.populate,
     },
   });
 }
 
-export async function getEntity<T>(entityName: string, id: string): Promise<T> {
-  return apiRequest<T>(`/api/${entityName}/${id}`);
+export async function getEntity<T>(
+  entityName: string,
+  id: string,
+  options?: { readonly populate?: string },
+): Promise<T> {
+  return apiRequest<T>(`/api/${entityName}/${id}`, {
+    query: options?.populate ? { populate: options.populate } : undefined,
+  });
 }
 
 export async function createEntity<T>(
@@ -280,6 +288,7 @@ export interface FieldDefinitionInput {
       | "one-to-many"
       | "many-to-one"
       | "many-to-many";
+    readonly onDelete?: "restrict" | "cascade" | "nullify";
   };
   readonly enumValues?: readonly string[];
   readonly ui?: {
@@ -301,6 +310,7 @@ export interface EntityDefinitionRecord {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly displayField?: string;
   readonly version: number;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -312,6 +322,7 @@ interface CreateEntityDefinitionInput {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly displayField?: string;
 }
 
 export async function listEntityDefinitions(options?: {

@@ -6,6 +6,7 @@ type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 export interface EntityRecordRef {
   readonly id: string;
   readonly tenantId: string;
+  readonly [key: string]: unknown;
 }
 
 export interface RelationServicesDeps {

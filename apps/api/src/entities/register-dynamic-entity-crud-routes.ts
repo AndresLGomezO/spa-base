@@ -57,6 +57,12 @@ export async function registerDynamicEntityCrudRoutes(
     authorize: createParametricEntityPermissionGuards(permissionDeps),
     relations: (entityName) => relationContext.hooksFor(entityName),
     queryEngine,
+    referencePopulator: {
+      getEntityDefinition: (name, tenantId) =>
+        entityRuntime.getEntityDefinition(name, tenantId),
+      getRepository: (tenantId, entityName) =>
+        entityRuntime.getRepository(tenantId, entityName),
+    },
     ...(crudHooks ? { crudHooks } : {}),
   });
 

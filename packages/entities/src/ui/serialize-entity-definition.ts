@@ -42,5 +42,8 @@ export function serializeEntityDefinition(
     permissions: [...entity.metadata.permissions],
     fields,
     ui,
+    ...(entity.metadata.displayField
+      ? { displayField: entity.metadata.displayField }
+      : {}),
   };
 }

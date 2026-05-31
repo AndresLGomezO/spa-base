@@ -13,6 +13,7 @@ export const ENTITY_DEFINITION_PERMISSIONS = [
 export const relationDefinitionSchema = z.object({
   target: z.string().trim().min(1),
   type: z.enum(["one-to-one", "one-to-many", "many-to-one", "many-to-many"]),
+  onDelete: z.enum(["restrict", "cascade", "nullify"]).optional(),
 });
 
 export const fieldDefinitionSchema = z
@@ -85,6 +86,7 @@ export const entityDefinitionRecordSchema = z.object({
   label: z.string().trim().min(1),
   fields: z.array(fieldDefinitionSchema).min(1),
   tenantWideRead: z.boolean().optional(),
+  displayField: z.string().trim().min(1).optional(),
   ui: z.custom<EntityUIConfig>().optional(),
   version: z.number().int().positive(),
   createdAt: z.string().trim().min(1),
@@ -116,6 +118,7 @@ export const patchEntityDefinitionInputSchema = z.object({
   label: z.string().trim().min(1).optional(),
   fields: z.array(fieldDefinitionSchema).min(1).optional(),
   tenantWideRead: z.boolean().optional(),
+  displayField: z.string().trim().min(1).optional(),
   ui: z.custom<EntityUIConfig>().optional(),
 });
 

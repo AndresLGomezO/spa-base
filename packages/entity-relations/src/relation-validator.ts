@@ -16,12 +16,27 @@ function isMissingRelationValue(value: unknown): boolean {
   return value === undefined || value === null || value === "";
 }
 
+function canUserReadRecord(
+  record: Record<string, unknown>,
+  userId: string,
+): boolean {
+  if (record.ownerId === userId) return true;
+  const sharedWith = record.sharedWith as
+    | Readonly<Record<string, string>>
+    | undefined;
+  if (sharedWith && typeof sharedWith === "object" && sharedWith[userId]) {
+    return true;
+  }
+  return false;
+}
+
 export function createRelationValidator(deps: RelationServicesDeps) {
   return {
     async validateWrite(
       entity: AnyDefinedEntity,
       record: Record<string, unknown>,
       mode: "create" | "update",
+      userId?: string,
     ): Promise<void> {
       for (const { fieldName, relation } of getForeignKeyRelationFields(
         entity.metadata,
@@ -76,6 +91,15 @@ export function createRelationValidator(deps: RelationServicesDeps) {
             `Referenced ${relation.target} "${value}" was not found in this tenant.`,
           );
         }
+
+        if (userId && !targetEntity.metadata.tenantWideRead) {
+          if (!canUserReadRecord(referenced, userId)) {
+            throw new RelationError(
+              RelationErrorCode.REFERENCE_ACCESS_DENIED,
+              `You do not have access to the referenced ${relation.target} record "${value}".`,
+            );
+          }
+        }
       }
     },
   };
@@ -87,6 +111,7 @@ export function createRelationDeleteHandler(deps: RelationServicesDeps) {
       entity: AnyDefinedEntity,
       id: string,
       tenantId: string,
+      userId?: string,
     ): Promise<void> {
       for (const referencingEntity of deps.getAllEntityDefinitions()) {
         for (const { fieldName, relation } of getForeignKeyRelationFields(
@@ -108,14 +133,22 @@ export function createRelationDeleteHandler(deps: RelationServicesDeps) {
           }
 
           const onDelete = getRelationOnDelete(relation);
+
+          const ownedRefs = userId
+            ? references.filter((ref) => ref.ownerId === userId)
+            : references;
+
           if (onDelete === "restrict") {
-            throw new RelationError(
-              RelationErrorCode.RELATION_DELETE_RESTRICTED,
-              `Cannot delete ${entity.name} "${id}" because ${referencingEntity.name} records reference it.`,
-            );
+            if (ownedRefs.length > 0) {
+              throw new RelationError(
+                RelationErrorCode.RELATION_DELETE_RESTRICTED,
+                `Cannot delete ${entity.name} "${id}" because ${referencingEntity.name} records reference it.`,
+              );
+            }
+            continue;
           }
 
-          for (const reference of references) {
+          for (const reference of ownedRefs) {
             if (onDelete === "nullify") {
               await deps.update(
                 referencingEntity.name,
