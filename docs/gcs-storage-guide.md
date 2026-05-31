@@ -19,7 +19,7 @@ flowchart LR
 
 - Uploads go **server-side only** (`packages/gcp-firebase/src/tenant-storage.ts`); the web app never writes to Storage directly.
 - Object path: `tenants/{tenantId}/images/{objectId}.{png|webp|jpg}` (unique per upload; tenant `logoUrl` points to the latest)
-- Production URLs: `https://storage.googleapis.com/{bucket}/tenants/{tenantId}/images/{objectId}.{ext}` (public via `file.makePublic()`)
+- Production URLs: `https://firebasestorage.googleapis.com/v0/b/{bucket}/o/{path}?alt=media&token=...` (Firebase download token; compatible with uniform bucket-level access — no per-object ACLs)
 - Emulator URLs: `http://127.0.0.1:9199/v0/b/{bucket}/o/{path}?alt=media`
 
 ---
@@ -70,7 +70,7 @@ For palette presets, semantic overrides, and CSS variable application, see [them
 
 ### API runtime credentials
 
-The API needs a service account with permission to write objects and set public ACLs:
+The API needs a service account with permission to write objects (no legacy object ACLs; default Firebase buckets use uniform bucket-level access):
 
 - Firebase Admin SDK default credentials (Cloud Run / GKE workload identity), or
 - `roles/storage.objectAdmin` on the bucket

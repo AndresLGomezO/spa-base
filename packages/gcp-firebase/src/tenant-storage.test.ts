@@ -1,6 +1,23 @@
 import { describe, expect, it } from "vitest";
 
-import { uploadTenantLogo, validateStorageObjectId } from "./tenant-storage.js";
+import {
+  buildTenantLogoDownloadUrl,
+  uploadTenantLogo,
+  validateStorageObjectId,
+} from "./tenant-storage.js";
+
+describe("buildTenantLogoDownloadUrl", () => {
+  it("builds a Firebase Storage download URL with token", () => {
+    const url = buildTenantLogoDownloadUrl(
+      "entitysystem-development.appspot.com",
+      "tenants/tenant_a/images/logo.png",
+      "abc-123",
+    );
+    expect(url).toBe(
+      "https://firebasestorage.googleapis.com/v0/b/entitysystem-development.appspot.com/o/tenants%2Ftenant_a%2Fimages%2Flogo.png?alt=media&token=abc-123",
+    );
+  });
+});
 
 describe("validateStorageObjectId", () => {
   it("accepts alphanumeric ids with dashes and underscores", () => {

@@ -1,3 +1,5 @@
+import { randomUUID } from "node:crypto";
+
 import { getStorage } from "firebase-admin/storage";
 
 import {
@@ -25,6 +27,15 @@ export function validateStorageObjectId(objectId: string): boolean {
   return STORAGE_OBJECT_ID_PATTERN.test(objectId);
 }
 
+export function buildTenantLogoDownloadUrl(
+  bucketName: string,
+  objectPath: string,
+  downloadToken: string,
+): string {
+  const encodedPath = encodeURIComponent(objectPath);
+  return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+}
+
 export async function uploadTenantLogo(params: {
   readonly config: FirebaseAdminConfig;
   readonly tenantId: string;
@@ -43,15 +54,15 @@ export async function uploadTenantLogo(params: {
   const objectPath = `tenants/${params.tenantId}/images/${params.objectId}.${extension}`;
   const file = bucket.file(objectPath);
 
-  await file.save(params.buffer, {
-    metadata: {
-      contentType: params.contentType,
-      cacheControl: "public,max-age=3600",
-    },
-    resumable: false,
-  });
-
   if (params.config.storageEmulatorHost) {
+    await file.save(params.buffer, {
+      metadata: {
+        contentType: params.contentType,
+        cacheControl: "public,max-age=3600",
+      },
+      resumable: false,
+    });
+
     const publicHost =
       params.config.storageEmulatorPublicHost?.trim() ||
       params.config.storageEmulatorHost;
@@ -59,6 +70,17 @@ export async function uploadTenantLogo(params: {
     return `http://${publicHost}/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
   }
 
-  await file.makePublic();
-  return `https://storage.googleapis.com/${bucketName}/${objectPath}`;
+  const downloadToken = randomUUID();
+  await file.save(params.buffer, {
+    metadata: {
+      contentType: params.contentType,
+      cacheControl: "public,max-age=3600",
+      metadata: {
+        firebaseStorageDownloadTokens: downloadToken,
+      },
+    },
+    resumable: false,
+  });
+
+  return buildTenantLogoDownloadUrl(bucketName, objectPath, downloadToken);
 }

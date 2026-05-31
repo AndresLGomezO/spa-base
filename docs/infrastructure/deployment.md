@@ -125,6 +125,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Dev still on `esd-*.web.app` | Run Terraform apply (removes dedicated `google_firebase_hosting_site.dev`); redeploy web so `firebase target:apply hosting live entitysystem-development` deploys to the default site |
 | `COLLECTION_GROUP_ASC index for user_invites` | Ensure `user_invites` / `email` is in `fieldOverrides` in [`firestore.indexes.json`](../../firestore.indexes.json); run Terraform apply (`google_firestore_field`); wait for index **Enabled** in Console |
 | Terraform 400 `single field index controls` | Single-field indexes must use `fieldOverrides`, not the `indexes` array — see [terraform-state.md](./terraform-state.md) |
+| Logo upload `uniform bucket-level access` | API uses Firebase download tokens, not `makePublic()` — redeploy API after pulling latest `@repo/gcp-firebase` |
 | Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
 
 ## PR preview environments (phase 1b)
