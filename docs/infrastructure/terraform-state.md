@@ -53,9 +53,25 @@ After pulling this change, run `terraform apply` in the dev workspace. Terraform
 
 ## Drift and Firestore indexes
 
-- Firestore **rules** and **indexes** are managed by Terraform from repo root `firestore.rules` and `firestore.indexes.json`.
+- Firestore **rules** and **indexes** are managed by Terraform from repo root `firestore.rules` and [`firestore.indexes.json`](../../firestore.indexes.json).
+- **Multi-field** composite indexes: `indexes` array → `google_firestore_index` (include `queryScope` when not collection-scoped).
+- **Single-field** indexes (especially `COLLECTION_GROUP`, e.g. `user_invites` / `email`): `fieldOverrides` array → `google_firestore_field` — not `google_firestore_index` (API returns 400: "configure using single field index controls").
 - If apply fails with `index already exists`, wait for index deletion to propagate (~2 minutes) and re-apply (deploy workflow retries once).
-- `COLLECTION_GROUP` queries (e.g. `user_invites` by `email`) require `queryScope: COLLECTION_GROUP` in [`firestore.indexes.json`](../../firestore.indexes.json) and `query_scope` on `google_firestore_index` in Terraform. If you see `FAILED_PRECONDITION` for a collection group index, run `terraform apply` and wait until the index shows **Enabled** in the Firebase Console (can take several minutes).
+- If you see `FAILED_PRECONDITION` for a collection group index, run `terraform apply` and wait until the index shows **Enabled** in the Firebase Console (can take several minutes).
+
+### Migrating off a bad `google_firestore_index` for `user_invites`
+
+If state still holds a single-field composite index resource from an earlier revision:
+
+```bash
+cd packages/infrastructure/terraform
+terraform workspace select dev
+terraform state list | grep firestore_index
+terraform state rm 'google_firestore_index.from_json["user_invites_COLLECTION_GROUP_bc9759e501a346b8c0107e00b8d1ac3b"]'  # use exact key from list
+terraform apply ...
+```
+
+Apply should create `google_firestore_field.from_json["user_invites_email"]` instead.
 
 ## Optional project override
 

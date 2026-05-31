@@ -620,7 +620,7 @@ Foreign-key relation fields used for reverse lookups require composite indexes. 
 }
 ```
 
-Add entries to [`firestore.indexes.json`](../firestore.indexes.json) at the repo root. Join collections use equality filters on `sourceEntity`, `sourceId`, `targetEntity`, and `targetId` — add indexes when query patterns require them.
+Add entries to [`firestore.indexes.json`](../firestore.indexes.json) at the repo root. Use `indexes` for **multi-field** composite indexes; use `fieldOverrides` for **single-field** indexes (required for `collectionGroup()` queries such as `user_invites` by `email`). Join collections use equality filters on `sourceEntity`, `sourceId`, `targetEntity`, and `targetId` — add indexes when query patterns require them.
 
 See [Relational Data System Guide](./relational-data-system-guide.md) for full relation storage and validation behavior.
 

@@ -123,7 +123,8 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | `Cannot find package 'firebase-admin'` | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
 | Hosting target `live` not detected | [`firebase.json`](../../firebase.json) must use `"hosting": [{ "target": "live", ... }]`; run `firebase target:apply hosting live SITE_ID` before deploy |
 | Dev still on `esd-*.web.app` | Run Terraform apply (removes dedicated `google_firebase_hosting_site.dev`); redeploy web so `firebase target:apply hosting live entitysystem-development` deploys to the default site |
-| `COLLECTION_GROUP_ASC index for user_invites` | Run Terraform apply so `query_scope = COLLECTION_GROUP` is created; wait for index build in Firebase Console |
+| `COLLECTION_GROUP_ASC index for user_invites` | Ensure `user_invites` / `email` is in `fieldOverrides` in [`firestore.indexes.json`](../../firestore.indexes.json); run Terraform apply (`google_firestore_field`); wait for index **Enabled** in Console |
+| Terraform 400 `single field index controls` | Single-field indexes must use `fieldOverrides`, not the `indexes` array — see [terraform-state.md](./terraform-state.md) |
 | Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
 
 ## PR preview environments (phase 1b)

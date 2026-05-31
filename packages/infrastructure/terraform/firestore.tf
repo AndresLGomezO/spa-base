@@ -31,14 +31,29 @@ resource "google_firebaserules_release" "primary" {
 
 locals {
   firestore_indexes_file = jsondecode(file("${path.module}/../../../firestore.indexes.json"))
-  firestore_indexes_list = local.firestore_indexes_file["indexes"]
   firestore_index_prefix = var.firestore_collection_prefix
+
+  # Composite indexes only (multi-field). Single-field collection-group indexes use fieldOverrides.
+  firestore_composite_indexes_list = [
+    for idx in try(local.firestore_indexes_file["indexes"], []) : idx
+    if length(idx.fields) > 1
+  ]
   firestore_indexes_map = {
-    for idx in local.firestore_indexes_list :
+    for idx in local.firestore_composite_indexes_list :
     "${idx.collectionGroup}_${try(idx.queryScope, "COLLECTION")}_${md5(jsonencode(idx.fields))}" => {
       collection  = local.firestore_index_prefix == null ? idx.collectionGroup : "${local.firestore_index_prefix}_${idx.collectionGroup}"
       query_scope = try(idx.queryScope, "COLLECTION")
       fields      = idx.fields
+    }
+  }
+
+  firestore_field_overrides_list = try(local.firestore_indexes_file["fieldOverrides"], [])
+  firestore_field_overrides_map = {
+    for fo in local.firestore_field_overrides_list :
+    "${fo.collectionGroup}_${fo.fieldPath}" => {
+      collection = local.firestore_index_prefix == null ? fo.collectionGroup : "${local.firestore_index_prefix}_${fo.collectionGroup}"
+      field_path = fo.fieldPath
+      indexes    = fo.indexes
     }
   }
 }
@@ -58,6 +73,27 @@ resource "google_firestore_index" "from_json" {
     content {
       field_path = fields.value.fieldPath
       order      = fields.value.order
+    }
+  }
+}
+
+resource "google_firestore_field" "from_json" {
+  for_each = local.firestore_field_overrides_map
+
+  project    = local.gcp_project_id
+  database   = "(default)"
+  collection = each.value.collection
+  field      = each.value.field_path
+
+  depends_on = [google_firestore_database.database]
+
+  index_config {
+    dynamic "indexes" {
+      for_each = each.value.indexes
+      content {
+        query_scope = try(indexes.value.queryScope, "COLLECTION")
+        order       = indexes.value.order
+      }
     }
   }
 }
