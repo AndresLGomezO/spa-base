@@ -60,7 +60,7 @@ Example values (development):
 
 ---
 
-## Manual setup (reference)
+## Manual setup
 
 Use these steps if you prefer to run commands yourself, or need to debug a single project.
 
@@ -133,6 +133,14 @@ gcloud iam service-accounts add-iam-policy-binding "$DEPLOYER_EMAIL" \
 
 ### 4. Record provider for GitHub
 
+Use the **numeric** resource name (not the project id):
+
+```bash
+bash scripts/print-gcp-wif-provider.sh "$PROJECT_ID"
+```
+
+Or:
+
 ```bash
 gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
   --project="$PROJECT_ID" \
@@ -140,6 +148,8 @@ gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
   --workload-identity-pool="$POOL_ID" \
   --format='value(name)'
 ```
+
+Copy into **repository** secrets for `verify.yml`. Copy the same values into each **Environment** for `deploy.yml`.
 
 Repeat steps 1–4 for `entitysystem-staging` and `entitysystem-production`.
 
@@ -160,8 +170,9 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 
 | Error                                    | Fix                                                                        |
 | ---------------------------------------- | -------------------------------------------------------------------------- |
+| `invalid_target` / invalid `audience`    | Provider secret must be `projects/PROJECT_NUMBER/...` from `print-gcp-wif-provider.sh` for **that** GCP project — not a project id string in the path |
 | `Permission denied` on `terraform apply` | Add missing project role to deployer SA (step 2)                           |
 | `iam.serviceAccounts.actAs` denied       | Re-apply Terraform with `ci_deployer_sa_email` set; check `ci_deployer.tf` |
-| WIF auth fails in Actions                | Verify `attribute.repository` matches `owner/repo` exactly                 |
+| WIF auth fails in Actions                | Verify `attribute.repository` matches `owner/repo` exactly (`setup-github-wif.sh --repo`) |
 | Firebase deploy 403                      | Ensure `roles/firebase.admin` and appspot/compute `actAs` bindings exist   |
 

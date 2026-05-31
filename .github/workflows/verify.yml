@@ -1,5 +1,8 @@
 name: Terraform Verification
 
+# Terraform verify uses repository secrets for WIF (not GitHub Environment secrets).
+# Per-environment Firebase secrets stay on GitHub Environments for deploy.yml only.
+
 on:
   pull_request:
     branches:
@@ -10,49 +13,16 @@ on:
       - "packages/infrastructure/terraform/**"
       - ".github/workflows/verify.yml"
       - ".github/scripts/terraform-comment.js"
+      - ".github/scripts/validate-gcp-wif-secrets.sh"
 
 env:
   REGION: ${{ vars.GCP_REGION || 'us-central1' }}
   REPO_NAME: ${{ vars.GCP_REPOSITORY_NAME || 'entitysystem-repo' }}
 
 jobs:
-  # Format + validate — no GCP credentials required.
-  verify-terraform-static:
+  verify-terraform:
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
 
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Terraform
-        uses: hashicorp/setup-terraform@v3
-        with:
-          terraform_version: "1.5.0"
-
-      - name: Terraform Format Check
-        working-directory: ./packages/infrastructure/terraform
-        run: |
-          echo "Checking Terraform formatting..."
-          terraform fmt -check -recursive -diff
-
-      - name: Terraform Init (local backend)
-        working-directory: ./packages/infrastructure/terraform
-        run: terraform init -backend=false -input=false
-
-      - name: Terraform Validate
-        working-directory: ./packages/infrastructure/terraform
-        run: |
-          echo "Validating Terraform configuration..."
-          terraform validate
-
-  # Remote plan — requires WIF secrets on the matching GitHub Environment.
-  verify-terraform-plan:
-    runs-on: ubuntu-latest
-    needs: [verify-terraform-static]
-    # Environment secrets (development / staging) are only visible when `environment` is set.
-    environment: ${{ github.base_ref == 'main' && 'staging' || 'development' }}
     permissions:
       contents: read
       id-token: write
@@ -68,56 +38,80 @@ jobs:
             echo "WORKSPACE=staging" >> $GITHUB_ENV
             echo "BACKEND_CONFIG=staging" >> $GITHUB_ENV
             echo "TARGET_PROJECT_ID=entitysystem-staging" >> $GITHUB_ENV
-            echo "GH_ENVIRONMENT=staging" >> $GITHUB_ENV
           else
             echo "WORKSPACE=dev" >> $GITHUB_ENV
             echo "BACKEND_CONFIG=dev" >> $GITHUB_ENV
             echo "TARGET_PROJECT_ID=entitysystem-development" >> $GITHUB_ENV
-            echo "GH_ENVIRONMENT=development" >> $GITHUB_ENV
           fi
 
       - name: Show target
         run: |
           echo "Using workspace: $WORKSPACE (PR base: ${{ github.base_ref }}) project: $TARGET_PROJECT_ID"
-          echo "GitHub Environment: $GH_ENVIRONMENT (secrets must be defined here or at repo level)"
+          echo "Repository: ${{ github.repository }} (must match WIF attribute-condition in setup-github-wif.sh)"
 
       - name: Skip remote plan for fork PRs
         if: github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::warning::Skipping Terraform remote plan — secrets are not available to workflows from forks."
-          echo "Static fmt/validate already passed in verify-terraform-static."
+          echo "::warning::Skipping GCP auth and remote plan — secrets are not available to fork workflows."
 
-      - name: Require GCP WIF secrets
+      - name: Select WIF secrets for target project
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]; then
-            echo "::error::GCP_WORKLOAD_IDENTITY_PROVIDER is empty."
-            echo "Add it to GitHub Environment \"$GH_ENVIRONMENT\" (Settings → Environments → $GH_ENVIRONMENT → Environment secrets), or as a repository secret."
-            echo "See docs/infrastructure/github-secrets-checklist.md"
+          if [ "${{ github.base_ref }}" = "main" ]; then
+            WIF="${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_STAGING }}"
+            SA="${{ secrets.GCP_SERVICE_ACCOUNT_STAGING }}"
+            if [ -z "$WIF" ]; then
+              WIF="${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+              SA="${{ secrets.GCP_SERVICE_ACCOUNT }}"
+              echo "::notice::Using GCP_WORKLOAD_IDENTITY_PROVIDER for staging PR; set GCP_*_STAGING repository secrets for clarity."
+            fi
+          else
+            WIF="${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+            SA="${{ secrets.GCP_SERVICE_ACCOUNT }}"
+          fi
+          if [ -z "$WIF" ] || [ -z "$SA" ]; then
+            echo "::error::WIF repository secrets are empty for project $TARGET_PROJECT_ID."
+            echo "Run: bash scripts/print-gcp-wif-provider.sh $TARGET_PROJECT_ID"
+            echo "Add output to Settings → Secrets and variables → Actions (repository secrets)."
             exit 1
           fi
-          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT }}" ]; then
-            echo "::error::GCP_SERVICE_ACCOUNT is empty."
-            echo "Add it to GitHub Environment \"$GH_ENVIRONMENT\" or repository secrets."
-            exit 1
-          fi
+          echo "WIF_PROVIDER=$WIF" >> $GITHUB_ENV
+          echo "WIF_SA=$SA" >> $GITHUB_ENV
+
+      - name: Validate WIF secret format
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          bash .github/scripts/validate-gcp-wif-secrets.sh \
+            "$WIF_PROVIDER" \
+            "$WIF_SA" \
+            "$TARGET_PROJECT_ID"
 
       - name: Authenticate to Google Cloud
         if: github.event.pull_request.head.repo.full_name == github.repository
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SA }}
 
       - name: Set up Cloud SDK
         if: github.event.pull_request.head.repo.full_name == github.repository
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Setup Terraform
-        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.0"
+
+      - name: Terraform Format Check
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          echo "Checking Terraform formatting..."
+          terraform fmt -check -recursive -diff
+
+      - name: Terraform Init (local backend) for validate
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        working-directory: ./packages/infrastructure/terraform
+        run: terraform init -backend=false -input=false
 
       - name: Ensure Terraform state bucket exists
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -137,6 +131,12 @@ jobs:
           terraform init -input=false -backend-config="backend-configs/${BACKEND_CONFIG}.hcl"
           terraform workspace select -or-create "$WORKSPACE"
 
+      - name: Terraform Validate
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          echo "Validating Terraform configuration..."
+          terraform validate
+
       - name: Terraform Plan
         if: github.event.pull_request.head.repo.full_name == github.repository
         working-directory: ./packages/infrastructure/terraform
@@ -146,7 +146,7 @@ jobs:
           terraform plan \
             -var="region=${{ env.REGION }}" \
             -var="api_image=${{ env.REGISTRY }}/api:placeholder" \
-            -var="ci_deployer_sa_email=${{ secrets.GCP_SERVICE_ACCOUNT }}" \
+            -var="ci_deployer_sa_email=${{ env.WIF_SA }}" \
             -no-color -out=tfplan
 
           terraform show -no-color tfplan > plan_output.txt
