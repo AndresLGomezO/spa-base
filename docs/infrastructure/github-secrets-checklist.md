@@ -2,6 +2,8 @@
 
 Use this checklist after completing [bootstrap-new-gcp-account.md](./bootstrap-new-gcp-account.md). Check each item before running **Deploy to GCP** → `dev`.
 
+**WIF secrets must be on the GitHub Environment** (`development`, `staging`, `production`), not only under repository secrets. Workflows set `environment:` so Environment secrets are injected; repository-only secrets leave `workload_identity_provider` empty and `google-github-actions/auth` fails.
+
 ## Repository variables
 
 - [ ] `GCP_REGION` = `us-central1`
@@ -51,6 +53,14 @@ First apply only — initial secret placeholder (not stored in GitHub):
 ```bash
 -var='bootstrap_superadmin_emails_placeholder=you@company.com'
 ```
+
+## Troubleshooting `google-github-actions/auth` errors
+
+| Error | Fix |
+| ----- | --- |
+| `must specify exactly one of workload_identity_provider or credentials_json` | Secret is **empty** — not missing from GitHub, but not visible to the job. Add `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT` to the **GitHub Environment** that the job uses (`development` for dev, `staging` for staging, `production` for prod). |
+| Same error on **Terraform Verification** PR | `verify.yml` uses environment `development` (PR → `develop`) or `staging` (PR → `main`). Secrets must exist on that environment. |
+| Fork PR | Remote plan is skipped; fmt/validate still run. |
 
 ## First run
 

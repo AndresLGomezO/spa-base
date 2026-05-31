@@ -118,6 +118,21 @@ jobs:
         with:
           ref: ${{ needs.resolve-target.outputs.checkout_ref }}
 
+      - name: Require GCP WIF secrets
+        run: |
+          WIF="${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_PROD || secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          SA="${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_SERVICE_ACCOUNT_PROD || secrets.GCP_SERVICE_ACCOUNT }}"
+          if [ -z "$WIF" ]; then
+            echo "::error::GCP Workload Identity Provider secret is empty for environment '${{ needs.resolve-target.outputs.gh_environment }}'."
+            echo "Set GCP_WORKLOAD_IDENTITY_PROVIDER (or GCP_WORKLOAD_IDENTITY_PROVIDER_PROD for production) on that GitHub Environment. See docs/infrastructure/github-secrets-checklist.md"
+            exit 1
+          fi
+          if [ -z "$SA" ]; then
+            echo "::error::GCP service account secret is empty for environment '${{ needs.resolve-target.outputs.gh_environment }}'."
+            echo "Set GCP_SERVICE_ACCOUNT (or GCP_SERVICE_ACCOUNT_PROD for production). See docs/infrastructure/github-secrets-checklist.md"
+            exit 1
+          fi
+
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
         with:
@@ -169,6 +184,21 @@ jobs:
       - name: Show target
         run: |
           echo "workspace=$WORKSPACE project=$TARGET_PROJECT_ID backend=$BACKEND_CONFIG tag=$IMAGE_TAG vite_env=$VITE_ENV"
+
+      - name: Require GCP WIF secrets
+        run: |
+          WIF="${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_PROD || secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
+          SA="${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_SERVICE_ACCOUNT_PROD || secrets.GCP_SERVICE_ACCOUNT }}"
+          if [ -z "$WIF" ]; then
+            echo "::error::GCP Workload Identity Provider secret is empty for environment '${{ needs.resolve-target.outputs.gh_environment }}'."
+            echo "Set GCP_WORKLOAD_IDENTITY_PROVIDER (or GCP_WORKLOAD_IDENTITY_PROVIDER_PROD for production) on that GitHub Environment. See docs/infrastructure/github-secrets-checklist.md"
+            exit 1
+          fi
+          if [ -z "$SA" ]; then
+            echo "::error::GCP service account secret is empty for environment '${{ needs.resolve-target.outputs.gh_environment }}'."
+            echo "Set GCP_SERVICE_ACCOUNT (or GCP_SERVICE_ACCOUNT_PROD for production). See docs/infrastructure/github-secrets-checklist.md"
+            exit 1
+          fi
 
       - name: Authenticate to Google Cloud
         uses: google-github-actions/auth@v2
