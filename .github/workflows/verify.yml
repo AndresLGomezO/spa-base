@@ -1,7 +1,6 @@
 name: Terraform Verification
 
-# Terraform verify uses repository secrets for WIF (not GitHub Environment secrets).
-# Per-environment Firebase secrets stay on GitHub Environments for deploy.yml only.
+# WIF secrets are read from GitHub Environments (development / staging), same as deploy.yml.
 
 on:
   pull_request:
@@ -22,6 +21,7 @@ env:
 jobs:
   verify-terraform:
     runs-on: ubuntu-latest
+    environment: ${{ github.base_ref == 'main' && 'staging' || 'development' }}
 
     permissions:
       contents: read
@@ -38,15 +38,18 @@ jobs:
             echo "WORKSPACE=staging" >> $GITHUB_ENV
             echo "BACKEND_CONFIG=staging" >> $GITHUB_ENV
             echo "TARGET_PROJECT_ID=entitysystem-staging" >> $GITHUB_ENV
+            echo "GH_ENVIRONMENT=staging" >> $GITHUB_ENV
           else
             echo "WORKSPACE=dev" >> $GITHUB_ENV
             echo "BACKEND_CONFIG=dev" >> $GITHUB_ENV
             echo "TARGET_PROJECT_ID=entitysystem-development" >> $GITHUB_ENV
+            echo "GH_ENVIRONMENT=development" >> $GITHUB_ENV
           fi
 
       - name: Show target
         run: |
           echo "Using workspace: $WORKSPACE (PR base: ${{ github.base_ref }}) project: $TARGET_PROJECT_ID"
+          echo "GitHub Environment: $GH_ENVIRONMENT"
           echo "Repository: ${{ github.repository }} (must match WIF attribute-condition in setup-github-wif.sh)"
 
       - name: Skip remote plan for fork PRs
@@ -54,44 +57,34 @@ jobs:
         run: |
           echo "::warning::Skipping GCP auth and remote plan — secrets are not available to fork workflows."
 
-      - name: Select WIF secrets for target project
+      - name: Require GCP WIF secrets
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
-          if [ "${{ github.base_ref }}" = "main" ]; then
-            WIF="${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_STAGING }}"
-            SA="${{ secrets.GCP_SERVICE_ACCOUNT_STAGING }}"
-            if [ -z "$WIF" ]; then
-              WIF="${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-              SA="${{ secrets.GCP_SERVICE_ACCOUNT }}"
-              echo "::notice::Using GCP_WORKLOAD_IDENTITY_PROVIDER for staging PR; set GCP_*_STAGING repository secrets for clarity."
-            fi
-          else
-            WIF="${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}"
-            SA="${{ secrets.GCP_SERVICE_ACCOUNT }}"
-          fi
-          if [ -z "$WIF" ] || [ -z "$SA" ]; then
-            echo "::error::WIF repository secrets are empty for project $TARGET_PROJECT_ID."
-            echo "Run: bash scripts/print-gcp-wif-provider.sh $TARGET_PROJECT_ID"
-            echo "Add output to Settings → Secrets and variables → Actions (repository secrets)."
+          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]; then
+            echo "::error::GCP_WORKLOAD_IDENTITY_PROVIDER is empty for GitHub Environment \"$GH_ENVIRONMENT\"."
+            echo "Add it under Settings → Environments → $GH_ENVIRONMENT → Environment secrets."
+            echo "Value: bash scripts/print-gcp-wif-provider.sh $TARGET_PROJECT_ID"
             exit 1
           fi
-          echo "WIF_PROVIDER=$WIF" >> $GITHUB_ENV
-          echo "WIF_SA=$SA" >> $GITHUB_ENV
+          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT }}" ]; then
+            echo "::error::GCP_SERVICE_ACCOUNT is empty for GitHub Environment \"$GH_ENVIRONMENT\"."
+            exit 1
+          fi
 
       - name: Validate WIF secret format
         if: github.event.pull_request.head.repo.full_name == github.repository
         run: |
           bash .github/scripts/validate-gcp-wif-secrets.sh \
-            "$WIF_PROVIDER" \
-            "$WIF_SA" \
+            "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" \
+            "${{ secrets.GCP_SERVICE_ACCOUNT }}" \
             "$TARGET_PROJECT_ID"
 
       - name: Authenticate to Google Cloud
         if: github.event.pull_request.head.repo.full_name == github.repository
         uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.WIF_SA }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
         if: github.event.pull_request.head.repo.full_name == github.repository
@@ -146,7 +139,7 @@ jobs:
           terraform plan \
             -var="region=${{ env.REGION }}" \
             -var="api_image=${{ env.REGISTRY }}/api:placeholder" \
-            -var="ci_deployer_sa_email=${{ env.WIF_SA }}" \
+            -var="ci_deployer_sa_email=${{ secrets.GCP_SERVICE_ACCOUNT }}" \
             -no-color -out=tfplan
 
           terraform show -no-color tfplan > plan_output.txt

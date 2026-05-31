@@ -20,7 +20,7 @@ flowchart LR
 | Workflow | When | What it does |
 | -------- | ---- | ------------- |
 | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | PR / push to `develop` / `main` | App lint, tests, format (includes `pnpm terraform:fmt:check` on every run) |
-| [.github/workflows/verify.yml](../../.github/workflows/verify.yml) | PR touching `packages/infrastructure/terraform/**` | **Repository** WIF secrets, fmt, validate, remote plan (no apply), PR comment |
+| [.github/workflows/verify.yml](../../.github/workflows/verify.yml) | PR touching `packages/infrastructure/terraform/**` | Environment WIF secrets (`development` / `staging`), fmt, validate, remote plan, PR comment |
 | [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml) | Merge, tag `v*`, or manual | Build API image, **apply**, deploy Hosting |
 
 ### Deploy workflow — triggers
