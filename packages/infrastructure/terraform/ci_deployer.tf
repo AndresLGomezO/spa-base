@@ -13,6 +13,8 @@ resource "google_service_account_iam_member" "ci_deployer_act_as_appspot_default
   service_account_id = "projects/${local.gcp_project_id}/serviceAccounts/${local.gcp_project_id}@appspot.gserviceaccount.com"
   role               = "roles/iam.serviceAccountUser"
   member             = "serviceAccount:${var.ci_deployer_sa_email}"
+
+  depends_on = [google_app_engine_application.default]
 }
 
 resource "google_service_account_iam_member" "ci_deployer_act_as_default_compute" {

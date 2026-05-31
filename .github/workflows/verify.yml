@@ -115,6 +115,13 @@ jobs:
           terraform init -input=false -backend-config="backend-configs/${BACKEND_CONFIG}.hcl"
           terraform workspace select -or-create "$WORKSPACE"
 
+      - name: Import brownfield GCP resources
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          bash "${GITHUB_WORKSPACE}/scripts/terraform-import-brownfield.sh" \
+            "$TARGET_PROJECT_ID" "${{ env.REGION }}" "${{ env.REPO_NAME }}"
+
       - name: Terraform Validate
         working-directory: ./packages/infrastructure/terraform
         run: |

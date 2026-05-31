@@ -115,21 +115,35 @@ See [environment-variables.md](./environment-variables.md). Minimum per environm
 
 ### Bootstrap superadmin (Secret Manager)
 
-Terraform creates secret **`PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`** and wires it to Cloud Run. Set the **initial** value on first apply only:
-
-```bash
-# Local apply or CI (sensitive — prefer env var, not committed files)
-terraform apply ... -var='bootstrap_superadmin_emails_placeholder=you@company.com'
-```
-
-After the first apply, change emails in GCP (Terraform will not overwrite):
+Terraform creates the secret **`PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`** (no version). Add at least one version **before** the first deploy that updates Cloud Run:
 
 ```bash
 echo -n 'you@company.com,other@company.com' | gcloud secrets versions add PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS \
   --project=entitysystem-development --data-file=-
 ```
 
-Or use Secret Manager in the Cloud Console. Cloud Run uses the **latest** version; existing instances refresh on cold start.
+Repeat for staging and production when you deploy those environments. Cloud Run mounts **latest**; update emails anytime with another `gcloud secrets versions add`.
+
+---
+
+## Step 5b — Brownfield import (if Console or CI created resources first)
+
+If Firebase Console, Artifact Registry (`ensure-artifact-registry-repo.sh`), or a failed apply already created resources, import them before apply:
+
+```bash
+cd packages/infrastructure/terraform
+terraform init -backend-config=backend-configs/dev.hcl
+terraform workspace select -or-create dev
+bash ../../../scripts/terraform-import-brownfield.sh entitysystem-development us-central1 entitysystem-repo
+```
+
+CI runs the same script automatically in **Deploy to GCP** and **Terraform Verification**.
+
+Re-run WIF setup after pulling latest `setup-github-wif.sh` so `github-deployer` has `roles/iam.serviceAccountAdmin`:
+
+```bash
+bash scripts/setup-github-wif.sh entitysystem --repo AndresLGomezO/spa-base
+```
 
 ---
 

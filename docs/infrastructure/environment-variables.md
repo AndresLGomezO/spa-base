@@ -62,7 +62,7 @@ Example: [`apps/web/.env.dev.example`](../../apps/web/.env.dev.example).
 | `db_location_id` | Optional | `nam5` (Firestore multi-region) |
 | `api_image` | **Required** in CI | Artifact Registry image URI |
 | `ci_deployer_sa_email` | CI | GitHub deployer SA; grants `actAs` for Cloud Run + Firebase CLI |
-| `bootstrap_superadmin_emails_placeholder` | First `terraform apply` only | Initial secret version; ignored on later applies — update secret in GCP instead |
+| `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (Secret Manager) | Before first Cloud Run deploy | Add versions with `gcloud secrets versions add` (Terraform creates the secret only) |
 
 ### Secret Manager (API runtime)
 

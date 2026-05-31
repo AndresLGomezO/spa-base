@@ -91,11 +91,13 @@ BOOTSTRAP_APIS=(
   firebaserules.googleapis.com
   firebasehosting.googleapis.com
   firebase.googleapis.com
+  appengine.googleapis.com
 )
 
 DEPLOYER_ROLES=(
   roles/run.admin
   roles/artifactregistry.admin
+  roles/iam.serviceAccountAdmin
   roles/iam.serviceAccountUser
   roles/storage.admin
   roles/firebase.admin

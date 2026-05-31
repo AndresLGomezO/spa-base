@@ -57,21 +57,32 @@ Project: `entitysystem-production`
 
 - [ ] Billing linked
 - [ ] Firebase project + Web app registered
-- [ ] Deployer SA created with roles from [github-wif-setup.md](./github-wif-setup.md)
+- [ ] Deployer SA created with roles from [github-wif-setup.md](./github-wif-setup.md) (includes `roles/iam.serviceAccountAdmin`)
 - [ ] WIF pool + provider bound to `ORG/REPO`
 - [ ] Terraform state bucket exists (`entitysystem-*-terraform-state`)
 
-## Secret Manager (per project, after first Terraform apply)
+## Secret Manager (per project)
 
-- [ ] Secret `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` exists (created by Terraform)
-- [ ] Latest version contains comma-separated superadmin emails (set via first apply `-var='bootstrap_superadmin_emails_placeholder=...'` or `gcloud secrets versions add`)
-
-## Terraform (optional before CI)
-
-First apply only — initial secret placeholder (not stored in GitHub):
+- [ ] Secret `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` exists (created by Terraform on first apply)
+- [ ] At least one secret **version** added before Cloud Run deploy:
 
 ```bash
--var='bootstrap_superadmin_emails_placeholder=you@company.com'
+echo -n 'you@company.com' | gcloud secrets versions add PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS \
+  --project=entitysystem-development --data-file=-
+```
+
+## Terraform brownfield (if apply failed with 409)
+
+```bash
+cd packages/infrastructure/terraform && terraform init -backend-config=backend-configs/dev.hcl
+terraform workspace select dev
+bash ../../../scripts/terraform-import-brownfield.sh entitysystem-development us-central1 entitysystem-repo
+```
+
+Re-run WIF setup if apply failed with `serviceAccounts.create` or `getIamPolicy` denied:
+
+```bash
+bash scripts/setup-github-wif.sh entitysystem --repo AndresLGomezO/spa-base
 ```
 
 ## Troubleshooting `google-github-actions/auth` errors

@@ -76,11 +76,16 @@ docker buildx bake -f docker-bake.hcl --set "*.args.REGISTRY=${REGISTRY}" --set 
 cd packages/infrastructure/terraform
 terraform init -backend-config=backend-configs/dev.hcl
 terraform workspace select -or-create dev
+bash ../../../scripts/terraform-import-brownfield.sh "$PROJECT_ID" "$REGION" "$REPO"
+
+# Required before Cloud Run can mount PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS (latest)
+echo -n 'you@example.com' | gcloud secrets versions add PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS \
+  --project="$PROJECT_ID" --data-file=- 2>/dev/null || true
+
 terraform apply \
   -var="region=${REGION}" \
   -var="api_image=${REGISTRY}/api:${TAG}" \
-  -var="ci_deployer_sa_email=github-deployer@${PROJECT_ID}.iam.gserviceaccount.com" \
-  -var='bootstrap_superadmin_emails_placeholder=you@example.com'
+  -var="ci_deployer_sa_email=github-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
 
 export BACKEND_URL=$(terraform output -raw backend_url)
 export SITE_ID=$(terraform output -raw firebase_hosting_site_id)
@@ -105,7 +110,10 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | CORS errors | `API_CORS_ORIGINS` includes Hosting `.web.app` and `.firebaseapp.com` URLs |
 | 401 on API | Firebase Auth / App Check (MVP uses emulator header stub in web) |
 | Terraform 409 on index | Wait and re-apply (see [terraform-state.md](./terraform-state.md)) |
-| Firebase deploy permission | WIF + `ci_deployer.tf` appspot/compute actAs |
+| Terraform 409 Artifact Registry / Firestore / rules release | Run `scripts/terraform-import-brownfield.sh` (CI runs it automatically) |
+| Terraform 403 `serviceAccounts.create` | Re-run `setup-github-wif.sh` (`roles/iam.serviceAccountAdmin` on deployer) |
+| Secret version `payload required` | Terraform no longer creates versions — use `gcloud secrets versions add` |
+| Firebase deploy permission | WIF + `ci_deployer.tf` appspot/compute actAs (App Engine app creates appspot SA) |
 
 ## PR preview environments (phase 1b)
 

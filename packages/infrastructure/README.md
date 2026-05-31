@@ -24,6 +24,7 @@ cd packages/infrastructure/terraform
 # Dev (entitysystem-development)
 terraform init -backend-config=backend-configs/dev.hcl
 terraform workspace select -or-create dev
+bash ../../../scripts/terraform-import-brownfield.sh entitysystem-development us-central1 entitysystem-repo
 terraform plan \
   -var="api_image=us-central1-docker.pkg.dev/entitysystem-development/entitysystem-repo/api:latest" \
   -var="ci_deployer_sa_email=github-deployer@entitysystem-development.iam.gserviceaccount.com"

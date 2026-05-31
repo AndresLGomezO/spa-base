@@ -8,7 +8,7 @@ resource "google_cloud_run_v2_service" "backend" {
   depends_on = [
     google_firebase_project.default,
     google_project_service.run_api,
-    google_secret_manager_secret_version.bootstrap_superadmin_emails,
+    google_secret_manager_secret.bootstrap_superadmin_emails,
   ]
 
   template {

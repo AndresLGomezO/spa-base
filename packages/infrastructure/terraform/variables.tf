@@ -34,13 +34,6 @@ variable "ci_deployer_sa_email" {
   default     = ""
 }
 
-variable "bootstrap_superadmin_emails_placeholder" {
-  description = "Initial Secret Manager value for PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS (comma-separated emails). Replaced via Console or `gcloud secrets versions add` later; Terraform ignores secret_data after create."
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "firestore_collection_prefix" {
   description = "Override Firestore collection prefix for composite indexes (PR previews). When null, no prefix is applied."
   type        = string

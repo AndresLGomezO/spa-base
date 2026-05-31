@@ -83,3 +83,8 @@ resource "google_project_service" "firebase_api" {
   service            = "firebase.googleapis.com"
   disable_on_destroy = false
 }
+
+resource "google_project_service" "appengine_api" {
+  service            = "appengine.googleapis.com"
+  disable_on_destroy = false
+}
