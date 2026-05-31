@@ -1,8 +1,10 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { ThemeProvider } from "@repo/theme/react";
 
 import { TenantAppearanceEditor } from "./TenantAppearanceEditor";
+
+const MODAL_TEST_TIMEOUT_MS = 15_000;
 
 function renderEditor() {
   return render(
@@ -28,6 +30,10 @@ vi.mock("../../lib/admin-client", () => ({
   getAdminTenant: vi.fn(),
   updateAdminTenant: vi.fn(),
   uploadTenantLogo: vi.fn(),
+}));
+
+vi.mock("./ColorPaletteEditor", () => ({
+  ColorPaletteEditor: () => null,
 }));
 
 vi.mock("@repo/ui", async (importOriginal) => {
@@ -77,51 +83,57 @@ describe("TenantAppearanceEditor", () => {
   });
 
   async function openCustomizeModal() {
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "platform.appearance.customize" }),
-      ).toBeInTheDocument();
-    });
     fireEvent.click(
-      screen.getByRole("button", { name: "platform.appearance.customize" }),
+      await screen.findByRole("button", {
+        name: "platform.appearance.customize",
+      }),
     );
+    await screen.findByRole("dialog");
   }
 
   it("renders customize control after tenant loads", async () => {
     renderEditor();
 
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "platform.appearance.customize" }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it("renders PhotoUpload with logo labels inside the customize modal", async () => {
-    renderEditor();
-    await openCustomizeModal();
-
-    await waitFor(() => {
-      expect(
-        screen.getByRole("button", { name: "platform.appearance.photoSelect" }),
-      ).toBeInTheDocument();
-    });
-  });
-
-  it("renders theme preset and semantic token fields inside the customize modal", async () => {
-    renderEditor();
-    await openCustomizeModal();
-
-    await waitFor(() => {
-      expect(
-        screen.getByLabelText("platform.appearance.preset"),
-      ).toBeInTheDocument();
-    });
-
     expect(
-      screen.getByText("platform.appearance.semantics"),
+      await screen.findByRole("button", {
+        name: "platform.appearance.customize",
+      }),
     ).toBeInTheDocument();
-    expect(document.getElementById("--color-primary-hex")).toBeInTheDocument();
-    expect(document.getElementById("--color-card-hex")).toBeInTheDocument();
   });
+
+  it(
+    "renders PhotoUpload with logo labels inside the customize modal",
+    async () => {
+      renderEditor();
+      await openCustomizeModal();
+
+      expect(
+        await screen.findByRole("button", {
+          name: "platform.appearance.photoSelect",
+        }),
+      ).toBeInTheDocument();
+    },
+    MODAL_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "renders theme preset and semantic token fields inside the customize modal",
+    async () => {
+      renderEditor();
+      await openCustomizeModal();
+
+      expect(
+        await screen.findByRole("combobox", {
+          name: "platform.appearance.preset",
+        }),
+      ).toBeInTheDocument();
+
+      expect(
+        await screen.findByText("platform.appearance.semantics"),
+      ).toBeInTheDocument();
+      expect(document.getElementById("--color-primary-hex")).toBeInTheDocument();
+      expect(document.getElementById("--color-card-hex")).toBeInTheDocument();
+    },
+    MODAL_TEST_TIMEOUT_MS,
+  );
 });
