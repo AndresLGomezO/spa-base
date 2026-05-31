@@ -5,6 +5,7 @@ import type {
   preHandlerAsyncHookHandler,
 } from "fastify";
 import { z } from "zod";
+import { hasPermission } from "@repo/rbac";
 
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import { requireRequestTenant } from "../auth/resolve-target-tenant-id.js";
@@ -82,6 +83,20 @@ export function registerShareRoutes(
         );
       }
 
+      const callerPermissions = request.ctx?.permissions ?? [];
+      if (
+        !hasPermission(`${params.data.entityName}.share`, [
+          ...callerPermissions,
+        ])
+      ) {
+        return replyWithError(
+          reply,
+          403,
+          ApiErrorCode.FORBIDDEN,
+          "You do not have permission to share this entity.",
+        );
+      }
+
       try {
         await options.shareService.grantShare({
           tenantId,
@@ -89,7 +104,7 @@ export function registerShareRoutes(
           entityName: params.data.entityName,
           recordId: params.data.id,
           callerUserId: request.ctx?.uid ?? "",
-          callerPermissions: request.ctx?.permissions ?? [],
+          callerPermissions,
           targetUserId: body.data.userId,
           permission: body.data.permission,
         });
@@ -139,6 +154,20 @@ export function registerShareRoutes(
         );
       }
 
+      const callerPermissions = request.ctx?.permissions ?? [];
+      if (
+        !hasPermission(`${params.data.entityName}.share`, [
+          ...callerPermissions,
+        ])
+      ) {
+        return replyWithError(
+          reply,
+          403,
+          ApiErrorCode.FORBIDDEN,
+          "You do not have permission to share this entity.",
+        );
+      }
+
       try {
         await options.shareService.revokeShare({
           tenantId,
@@ -146,7 +175,7 @@ export function registerShareRoutes(
           entityName: params.data.entityName,
           recordId: params.data.id,
           callerUserId: request.ctx?.uid ?? "",
-          callerPermissions: request.ctx?.permissions ?? [],
+          callerPermissions,
           targetUserId: params.data.userId,
         });
 
@@ -195,6 +224,20 @@ export function registerShareRoutes(
         );
       }
 
+      const callerPermissions = request.ctx?.permissions ?? [];
+      if (
+        !hasPermission(`${params.data.entityName}.share`, [
+          ...callerPermissions,
+        ])
+      ) {
+        return replyWithError(
+          reply,
+          403,
+          ApiErrorCode.FORBIDDEN,
+          "You do not have permission to share this entity.",
+        );
+      }
+
       try {
         const shares = await options.shareService.listShares({
           tenantId,
@@ -202,7 +245,7 @@ export function registerShareRoutes(
           entityName: params.data.entityName,
           recordId: params.data.id,
           callerUserId: request.ctx?.uid ?? "",
-          callerPermissions: request.ctx?.permissions ?? [],
+          callerPermissions,
         });
 
         return reply.status(200).send(successEnvelope(shares));

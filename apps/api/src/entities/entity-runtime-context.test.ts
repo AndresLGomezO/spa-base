@@ -66,6 +66,28 @@ describe("EntityRuntimeContext", () => {
     expect(knownPermissions).toContain("lead.read");
   });
 
+  it("persists tenantWideRead on create and update", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+
+    const created = await entityDefinitionRepository.create("tenant_a", {
+      name: "project",
+      label: "Project",
+      tenantWideRead: true,
+      fields: [{ name: "title", type: "string", required: true }],
+    });
+
+    expect(created.tenantWideRead).toBe(true);
+
+    const updated = await entityDefinitionRepository.update(
+      "tenant_a",
+      created.id,
+      { tenantWideRead: false },
+    );
+
+    expect(updated.tenantWideRead).toBeUndefined();
+  });
+
   it("invalidates cached repository after syncDefinition updates fields", async () => {
     const entityDefinitionRepository =
       createInMemoryEntityDefinitionRepository();

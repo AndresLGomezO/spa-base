@@ -98,8 +98,7 @@ export function EntityTable({
   }
 
   function canShareRow(item: Record<string, unknown>): boolean {
-    if (permissions.canManageShares) return true;
-    return item.ownerId === currentUserId;
+    return permissions.canShare && item.ownerId === currentUserId;
   }
 
   return (

@@ -237,6 +237,9 @@ export async function registerEntityDefinitionRoutes(
           ...(parsedBody.data.label ? { label: parsedBody.data.label } : {}),
           ...(parsedBody.data.fields ? { fields: parsedBody.data.fields } : {}),
           ...(parsedBody.data.ui ? { ui: parsedBody.data.ui } : {}),
+          ...(parsedBody.data.tenantWideRead !== undefined
+            ? { tenantWideRead: parsedBody.data.tenantWideRead }
+            : {}),
         };
         validateDefinitionEvolution(current, next);
         await options.entityRuntime.loadTenantDefinitions(tenantId);

@@ -168,6 +168,7 @@ export type EntityPermissionAction =
   | "create"
   | "update"
   | "delete"
+  | "share"
   | "manage_shares";
 
 export type EntityPermission<TName extends string> =

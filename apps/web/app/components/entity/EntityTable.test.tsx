@@ -13,6 +13,7 @@ vi.mock("../../hooks/useEntityPermissions", () => ({
     canCreate: false,
     canUpdate: false,
     canDelete: false,
+    canShare: false,
     canManageShares: false,
   })),
 }));

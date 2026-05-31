@@ -52,6 +52,7 @@ describe("@repo/dynamic-entities", () => {
       "loan.create",
       "loan.update",
       "loan.delete",
+      "loan.share",
       "loan.manage_shares",
     ]);
   });
@@ -151,6 +152,7 @@ describe("@repo/dynamic-entities", () => {
       "loan.create",
       "loan.update",
       "loan.delete",
+      "loan.share",
       "loan.manage_shares",
     ]);
   });
