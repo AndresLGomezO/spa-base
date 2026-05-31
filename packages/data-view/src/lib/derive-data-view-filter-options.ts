@@ -1,4 +1,5 @@
 import type { DataViewColumnDescriptor, DataViewFilterOption } from "../types";
+import { serializeDataViewFilterValue } from "./serialize-data-view-filter-value";
 
 function formatColumnValue<T>(
   column: DataViewColumnDescriptor<T>,
@@ -19,21 +20,6 @@ function formatColumnValue<T>(
   return String(value);
 }
 
-function inferFilterKind<T>(
-  column: DataViewColumnDescriptor<T>,
-  values: readonly unknown[],
-): "multi-select" | "boolean" {
-  if (column.filterKind) {
-    return column.filterKind;
-  }
-
-  if (values.every((value) => typeof value === "boolean")) {
-    return "boolean";
-  }
-
-  return "multi-select";
-}
-
 export function deriveDataViewFilterOptions<T>(
   items: readonly T[],
   columns: readonly DataViewColumnDescriptor<T>[],
@@ -45,38 +31,30 @@ export function deriveDataViewFilterOptions<T>(
       continue;
     }
 
-    const rawValues = items.flatMap((item) => {
-      if (column.getDisplayValue) {
-        const displayValue = column.getDisplayValue(item);
-        return displayValue ? [displayValue] : [];
-      }
-
-      const value = column.getValue(item);
-      if (Array.isArray(value)) {
-        return value;
-      }
-      return [value];
-    });
-    const filterKind = inferFilterKind(column, rawValues);
     const uniqueValues = new Map<string, string>();
 
-    for (const rawValue of rawValues) {
-      if (rawValue === null || rawValue === undefined || rawValue === "") {
-        continue;
-      }
+    for (const item of items) {
+      const rawValue = column.getValue(item);
+      const valuesToProcess = Array.isArray(rawValue) ? rawValue : [rawValue];
 
-      const formatted = formatColumnValue(column, rawValue);
-      if (!formatted) {
-        continue;
-      }
+      for (const entry of valuesToProcess) {
+        if (entry === null || entry === undefined || entry === "") {
+          continue;
+        }
 
-      const key =
-        filterKind === "boolean"
-          ? rawValue === true
-            ? "true"
-            : "false"
-          : formatted;
-      uniqueValues.set(key, formatted);
+        const filterValue = column.getFilterValue
+          ? column.getFilterValue(entry)
+          : serializeDataViewFilterValue(entry);
+        if (!filterValue) {
+          continue;
+        }
+
+        const label = column.getDisplayValue
+          ? column.getDisplayValue(item)
+          : formatColumnValue(column, entry);
+
+        uniqueValues.set(filterValue, label);
+      }
     }
 
     options[column.id] = [...uniqueValues.entries()]

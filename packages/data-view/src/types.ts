@@ -12,6 +12,7 @@ export interface DataViewColumnDescriptor<T> {
   readonly label: string;
   readonly getValue: (item: T) => unknown;
   readonly getDisplayValue?: (item: T) => string;
+  readonly getFilterValue?: (value: unknown) => string;
   readonly formatValue?: (value: unknown) => string;
   readonly filterable?: boolean;
   readonly sortable?: boolean;
