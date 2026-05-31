@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { getTableColumns, isFieldVisible } from "@repo/ui-builder";
 import { Alert, DataTable, IconButton, SchemaCell } from "@repo/ui";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Share2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -12,6 +12,7 @@ import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
+import { useAuth } from "../../auth/AuthContext";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
 import {
@@ -38,6 +39,7 @@ interface EntityTableProps {
   readonly pageSize?: number;
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
+  readonly onRequestShare?: (id: string) => void;
 }
 
 export function EntityTable({
@@ -48,10 +50,12 @@ export function EntityTable({
   pageSize = 20,
   onRequestDelete,
   onRequestEdit,
+  onRequestShare,
 }: EntityTableProps) {
   const { t, i18n } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
   const { getDefinition } = useEntityCatalog();
+  const { user } = useAuth();
   const permissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
   const columns = useMemo(
@@ -79,7 +83,26 @@ export function EntityTable({
     return <Alert>{error}</Alert>;
   }
 
-  const showActions = permissions.canUpdate || permissions.canDelete;
+  const currentUserId = user?.uid ?? "";
+  const showActions =
+    permissions.canUpdate || permissions.canDelete || !!onRequestShare;
+
+  function canEditRow(item: Record<string, unknown>): boolean {
+    if (permissions.canWriteAll) return true;
+    if (item.ownerId === currentUserId) return true;
+    const sharedWith = item.sharedWith as Record<string, string> | undefined;
+    return sharedWith?.[currentUserId] === "write";
+  }
+
+  function canDeleteRow(item: Record<string, unknown>): boolean {
+    if (permissions.canDeleteAll) return true;
+    return item.ownerId === currentUserId;
+  }
+
+  function canShareRow(item: Record<string, unknown>): boolean {
+    if (permissions.canManageShares) return true;
+    return item.ownerId === currentUserId;
+  }
 
   return (
     <DataTable
@@ -131,28 +154,47 @@ export function EntityTable({
               id: "actions",
               header: t("entity.actions"),
               headerClassName: "text-center",
-              cell: (item) => (
-                <div className="flex items-center justify-center gap-1">
-                  {permissions.canUpdate && onRequestEdit ? (
-                    <IconButton
-                      type="button"
-                      label={t("entity.edit")}
-                      onClick={() => onRequestEdit(String(item.id))}
-                    >
-                      <Pencil className="size-4" />
-                    </IconButton>
-                  ) : null}
-                  {permissions.canDelete && onRequestDelete ? (
-                    <IconButton
-                      type="button"
-                      label={t("entity.delete")}
-                      onClick={() => onRequestDelete(String(item.id))}
-                    >
-                      <Trash2 className="text-destructive size-4" />
-                    </IconButton>
-                  ) : null}
-                </div>
-              ),
+              cell: (item) => {
+                const row = item as Record<string, unknown>;
+                const hasOwnership = row.ownerId !== undefined;
+                const rowEditable = !hasOwnership || canEditRow(row);
+                const rowDeletable = !hasOwnership || canDeleteRow(row);
+                const rowShareable = hasOwnership && canShareRow(row);
+
+                return (
+                  <div className="flex items-center justify-center gap-1">
+                    {permissions.canUpdate && rowEditable && onRequestEdit ? (
+                      <IconButton
+                        type="button"
+                        label={t("entity.edit")}
+                        onClick={() => onRequestEdit(String(item.id))}
+                      >
+                        <Pencil className="size-4" />
+                      </IconButton>
+                    ) : null}
+                    {rowShareable && onRequestShare ? (
+                      <IconButton
+                        type="button"
+                        label={t("share.title")}
+                        onClick={() => onRequestShare(String(item.id))}
+                      >
+                        <Share2 className="size-4" />
+                      </IconButton>
+                    ) : null}
+                    {permissions.canDelete &&
+                    rowDeletable &&
+                    onRequestDelete ? (
+                      <IconButton
+                        type="button"
+                        label={t("entity.delete")}
+                        onClick={() => onRequestDelete(String(item.id))}
+                      >
+                        <Trash2 className="text-destructive size-4" />
+                      </IconButton>
+                    ) : null}
+                  </div>
+                );
+              },
             }
           : undefined
       }

@@ -26,6 +26,10 @@ describe("useEntityPermissions", () => {
       canCreate: false,
       canUpdate: true,
       canDelete: false,
+      canReadAll: false,
+      canWriteAll: false,
+      canDeleteAll: false,
+      canManageShares: false,
     });
   });
 });

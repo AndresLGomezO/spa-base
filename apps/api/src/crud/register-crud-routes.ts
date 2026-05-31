@@ -23,6 +23,7 @@ import {
   assertRequestWritableFields,
   FieldAccessError,
 } from "../rbac/create-field-access-resolver.js";
+import { checkRecordAccess } from "../access/record-access.js";
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
 import { measureQueryTiming } from "../observability/request-timing.js";
 import { apiEnv } from "../config/env.js";
@@ -490,13 +491,29 @@ export async function registerCrudRoutes<
             recordId,
             buildQueryContext(ctx, tenantId),
           );
+
+          const recordData = record as Record<string, unknown>;
+          if (recordData.ownerId !== undefined) {
+            const access = checkRecordAccess(
+              recordData,
+              ctx.uid,
+              ctx.permissions ?? [],
+              activeEntity.name,
+              ctx.isSuperAdmin,
+            );
+            if (!access.canRead) {
+              return replyWithError(
+                reply,
+                404,
+                ApiErrorCode.NOT_FOUND,
+                "Record not found.",
+              );
+            }
+          }
+
           return reply.send(
             successEnvelope(
-              filterRecordForRead(
-                request,
-                activeEntity,
-                record as Record<string, unknown>,
-              ),
+              filterRecordForRead(request, activeEntity, recordData),
             ),
           );
         }
@@ -511,13 +528,28 @@ export async function registerCrudRoutes<
           );
         }
 
+        const recordData = record as unknown as Record<string, unknown>;
+        if (request.ctx && recordData.ownerId !== undefined) {
+          const access = checkRecordAccess(
+            recordData,
+            request.ctx.uid,
+            request.ctx.permissions ?? [],
+            activeEntity.name,
+            request.ctx.isSuperAdmin,
+          );
+          if (!access.canRead) {
+            return replyWithError(
+              reply,
+              404,
+              ApiErrorCode.NOT_FOUND,
+              "Record not found.",
+            );
+          }
+        }
+
         return reply.send(
           successEnvelope(
-            filterRecordForRead(
-              request,
-              activeEntity,
-              record as unknown as Record<string, unknown>,
-            ),
+            filterRecordForRead(request, activeEntity, recordData),
           ),
         );
       } catch (error) {
@@ -611,6 +643,8 @@ export async function registerCrudRoutes<
           options.crudHooks,
         );
 
+        const ownerId = request.ctx?.uid ?? "";
+
         let currentData = await runEntityHooks(app, request, {
           entityName: activeEntity.name,
           phase: "before",
@@ -621,6 +655,9 @@ export async function registerCrudRoutes<
             tenantId,
             createdAt: now,
             updatedAt: now,
+            ownerId,
+            accessUserIds: [ownerId],
+            sharedWith: {},
           },
           ...(entityServices ? { entityServices } : {}),
         });
@@ -793,8 +830,27 @@ export async function registerCrudRoutes<
         );
       }
 
-      const now = new Date().toISOString();
       const existingRecord = existing as unknown as Record<string, unknown>;
+
+      if (request.ctx && existingRecord.ownerId !== undefined) {
+        const access = checkRecordAccess(
+          existingRecord,
+          request.ctx.uid,
+          request.ctx.permissions ?? [],
+          activeEntity.name,
+          request.ctx.isSuperAdmin,
+        );
+        if (!access.canWrite) {
+          return replyWithError(
+            reply,
+            404,
+            ApiErrorCode.NOT_FOUND,
+            "Record not found.",
+          );
+        }
+      }
+
+      const now = new Date().toISOString();
       let merged: Record<string, unknown> = {
         ...existingRecord,
         ...(parsedBody.data as Record<string, unknown>),
@@ -983,6 +1039,25 @@ export async function registerCrudRoutes<
         }
 
         const existingRecord = existing as unknown as Record<string, unknown>;
+
+        if (request.ctx && existingRecord.ownerId !== undefined) {
+          const access = checkRecordAccess(
+            existingRecord,
+            request.ctx.uid,
+            request.ctx.permissions ?? [],
+            activeEntity.name,
+            request.ctx.isSuperAdmin,
+          );
+          if (!access.canDelete) {
+            return replyWithError(
+              reply,
+              404,
+              ApiErrorCode.NOT_FOUND,
+              "Record not found.",
+            );
+          }
+        }
+
         const entityServices = await resolveHookServices(
           request,
           tenantId,

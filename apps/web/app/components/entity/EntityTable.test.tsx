@@ -13,6 +13,19 @@ vi.mock("../../hooks/useEntityPermissions", () => ({
     canCreate: false,
     canUpdate: false,
     canDelete: false,
+    canReadAll: false,
+    canWriteAll: false,
+    canDeleteAll: false,
+    canManageShares: false,
+  })),
+}));
+
+vi.mock("../../auth/AuthContext", () => ({
+  useAuth: vi.fn(() => ({
+    user: { uid: "test_user" },
+    isAuthenticated: true,
+    permissions: [],
+    isSuperAdmin: false,
   })),
 }));
 

@@ -1,5 +1,6 @@
 export { FirebaseRuntimeEnvSchema, type FirebaseRuntimeEnv } from "./env.js";
 export {
+  FieldValue,
   getFirestoreAdmin,
   initializeFirebaseAdmin,
   type FirebaseAdminConfig,

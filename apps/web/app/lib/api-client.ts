@@ -231,6 +231,43 @@ export function isApiClientError(error: unknown): error is ApiClientError {
   );
 }
 
+export interface ShareEntry {
+  readonly userId: string;
+  readonly permission: "read" | "write";
+}
+
+export async function shareEntity(
+  entityName: string,
+  recordId: string,
+  userId: string,
+  permission: "read" | "write",
+): Promise<{ readonly shared: boolean }> {
+  return apiRequest<{ readonly shared: boolean }>(
+    `/api/${entityName}/${recordId}/share`,
+    { method: "POST", body: { userId, permission } },
+  );
+}
+
+export async function unshareEntity(
+  entityName: string,
+  recordId: string,
+  userId: string,
+): Promise<{ readonly revoked: boolean }> {
+  return apiRequest<{ readonly revoked: boolean }>(
+    `/api/${entityName}/${recordId}/share/${encodeURIComponent(userId)}`,
+    { method: "DELETE" },
+  );
+}
+
+export async function listShares(
+  entityName: string,
+  recordId: string,
+): Promise<readonly ShareEntry[]> {
+  return apiRequest<readonly ShareEntry[]>(
+    `/api/${entityName}/${recordId}/share`,
+  );
+}
+
 export interface FieldDefinitionInput {
   readonly name: string;
   readonly type: "string" | "number" | "boolean" | "date" | "relation" | "enum";

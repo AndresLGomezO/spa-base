@@ -5,7 +5,13 @@ import {
   type App,
   type AppOptions,
 } from "firebase-admin/app";
-import { getFirestore, type Firestore } from "firebase-admin/firestore";
+import {
+  FieldValue,
+  getFirestore,
+  type Firestore,
+} from "firebase-admin/firestore";
+
+export { FieldValue };
 
 export interface FirebaseAdminConfig {
   readonly projectId: string;
