@@ -33,7 +33,7 @@ Or: `pnpm dev:docker` for all three.
 PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=your-email@example.com
 ```
 
-3. Copy `apps/web/.env.dev.example` → `apps/web/.env.dev` if customizing Firebase config
+3. Copy `apps/web/.env.development.example` → `apps/web/.env.development` for emulator Auth (optional)
 4. For native dev (host-only), set in `apps/api/.env.dev`:
    - `FIREBASE_STORAGE_EMULATOR_HOST=127.0.0.1:9199`
    - `GCP_STORAGE_BUCKET=demo-project-base.appspot.com`

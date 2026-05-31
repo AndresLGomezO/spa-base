@@ -7,7 +7,7 @@ How **localhost**, **development**, **staging**, and **production** differ, and 
 | Environment | Web URL | API URL | Firebase | Real GCP billing |
 | ----------- | ------- | ------- | -------- | ---------------- |
 | Localhost | `http://localhost:5173` or Hosting emulator `:5002` | `http://127.0.0.1:3000` | Emulators (`demo-project-base`) | No |
-| Development | `https://es-dev-<hash>.web.app` (dedicated site) | `https://es-backend-service-dev-....run.app` | `entitysystem-development` | Yes |
+| Development | `https://entitysystem-development.web.app` | `https://es-backend-service-dev-....run.app` | `entitysystem-development` | Yes |
 | Staging | `https://entitysystem-staging.web.app` | `https://es-backend-service-stg-....run.app` | `entitysystem-staging` | Yes |
 | Production | `https://entitysystem-production.web.app` | `https://es-backend-service-prod-....run.app` | `entitysystem-production` | Yes |
 
@@ -38,14 +38,15 @@ Or: `pnpm dev:docker` (see [firestore-collections-guide.md](../firestore-collect
 | `FIREBASE_STORAGE_EMULATOR_HOST` | `127.0.0.1:9199` |
 | `API_CORS_ORIGINS` | `http://localhost:5173,http://127.0.0.1:5173` |
 
-### Web (`apps/web/.env.dev`)
+### Web (`apps/web/.env.development`)
 
 | Variable | Typical value |
 | -------- | ------------- |
 | `VITE_ENV` | `dev` |
 | `VITE_API_URL` | `http://127.0.0.1:3000` |
-| `VITE_FIREBASE_*` | Emulator defaults in `.env.dev.example` |
-| `VITE_FIREBASE_AUTH_EMULATOR_HOST` | `127.0.0.1:9099` |
+| `VITE_FIREBASE_*` | Emulator defaults in `.env.development.example` |
+| `VITE_FIREBASE_AUTH_EMULATOR_HOST` | `127.0.0.1:9099` (opt-in; omit for real GCP Auth locally) |
+| `VITE_APP_CHECK_RECAPTCHA_SITE_KEY` | unset with emulator; required for deployed builds |
 
 ### Bootstrap superadmin locally
 
@@ -59,7 +60,7 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 
 - **Deploy:** merge to `develop` or workflow_dispatch → dev.
 - **Cloud Run:** min instances `0`, 250m CPU / 256Mi (cold starts expected).
-- **Hosting:** dedicated site id `es-dev-...` (see Terraform `locals.tf`).
+- **Hosting:** default site (`entitysystem-development.web.app` / `.firebaseapp.com`).
 - **CORS:** Terraform sets `API_CORS_ORIGINS` to dev Hosting URLs.
 - **GitHub Environment:** `development` with secrets for `entitysystem-development`.
 

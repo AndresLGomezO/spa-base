@@ -317,10 +317,15 @@ jobs:
           VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+          VITE_APP_CHECK_RECAPTCHA_SITE_KEY: ${{ secrets.FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY }}
         run: |
           set -euo pipefail
           if [ -z "${VITE_API_URL:-}" ]; then
             echo "::error::VITE_API_URL (backend_url from Terraform) is empty"
+            exit 1
+          fi
+          if [ -z "${VITE_APP_CHECK_RECAPTCHA_SITE_KEY:-}" ]; then
+            echo "::error::FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY is empty (GitHub Environment secret required for web build)"
             exit 1
           fi
           echo "Building web with API URL: ${VITE_API_URL}"

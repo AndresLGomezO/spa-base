@@ -4,6 +4,7 @@ dist/
 build/
 .react-router/
 .env*
+!.env.development.example
 .DS_Store
 pnpm-debug.log*
 .pnpm-store/

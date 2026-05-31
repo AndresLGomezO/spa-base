@@ -168,7 +168,7 @@ terraform state rm google_app_engine_application.default
 curl -sS "https://es-backend-service-dev-PROJECT_NUMBER.us-central1.run.app/health"
 ```
 
-Open `frontend_url` from Terraform output (dev uses dedicated Hosting site `es-dev-...web.app`).
+Open `frontend_url` from Terraform output (`https://entitysystem-development.web.app` for dev).
 
 Sign in with a user whose email is listed in the `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` secret (latest version).
 

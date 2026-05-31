@@ -44,7 +44,7 @@ Auth: **Workload Identity Federation** only (`GCP_WORKLOAD_IDENTITY_PROVIDER`, `
 
 - `VITE_API_URL` = Terraform output `backend_url`.
 - `VITE_ENV` = `dev` for dev/staging workspaces, `prod` for prod workspace.
-- Firebase Web SDK values from environment secrets (no emulator hosts).
+- Firebase Web SDK values from environment secrets (no Auth emulator host; `VITE_APP_CHECK_RECAPTCHA_SITE_KEY` from `FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY`).
 
 ### Dry run
 
@@ -110,7 +110,8 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | ------- | ----- |
 | Cloud Run unhealthy | `GET /health` on API; logs in Cloud Logging |
 | CORS errors | `API_CORS_ORIGINS` includes Hosting `.web.app` and `.firebaseapp.com` URLs |
-| 401 on API | Firebase Auth / App Check (MVP uses emulator header stub in web) |
+| 401 on API | Real Firebase ID token + App Check token; verify App Check registered in Console and `FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY` in GitHub Environment |
+| Auth opens `127.0.0.1:9099` | Redeploy web after fix; ensure `VITE_FIREBASE_AUTH_EMULATOR_HOST` is not set in CI build |
 | Terraform 409 on index | Wait and re-apply (see [terraform-state.md](./terraform-state.md)) |
 | Terraform 409 Artifact Registry / Firestore / rules release | Run `scripts/terraform-import-brownfield.sh` (CI runs it automatically) |
 | Terraform 403 `serviceAccounts.create` | Re-run `setup-github-wif.sh` (`roles/iam.serviceAccountAdmin` on deployer) |
@@ -121,6 +122,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. Deploy sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so `/health` is available before Firestore seeds |
 | `Cannot find package 'firebase-admin'` | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
 | Hosting target `live` not detected | [`firebase.json`](../../firebase.json) must use `"hosting": [{ "target": "live", ... }]`; run `firebase target:apply hosting live SITE_ID` before deploy |
+| Dev still on `esd-*.web.app` | Run Terraform apply (removes dedicated `google_firebase_hosting_site.dev`); redeploy web so `firebase target:apply hosting live entitysystem-development` deploys to the default site |
 | Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
 
 ## PR preview environments (phase 1b)

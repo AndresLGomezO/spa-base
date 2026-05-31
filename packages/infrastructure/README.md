@@ -52,7 +52,6 @@ terraform/
   locals.tf            # Cloud Run scaling, Hosting URLs
   cloudrun.tf          # API service
   firestore.tf         # DB, rules, indexes (repo root JSON)
-  firebase_hosting.tf
   firebase_project.tf
   backend-secrets.tf    # PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS (Secret Manager)
   iam.tf / ci_deployer.tf

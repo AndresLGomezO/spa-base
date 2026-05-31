@@ -11,11 +11,11 @@ React Router 7 SPA with Firebase Auth, schema-driven entity UI, tenant settings,
 1. Start Firebase emulators from repo root: `pnpm emulators`
 2. Start API: `pnpm --filter api dev`
 3. Start web: `pnpm --filter web dev`
-4. Copy `.env.dev.example` → `.env.dev` if customizing Firebase values
+4. Copy [`.env.development.example`](./.env.development.example) → `.env.development` to opt in to Firebase emulators (Auth at `127.0.0.1:9099`).
 
 Or: `pnpm dev:docker` for emulators + api + web together.
 
-Auth uses Firebase with `browserLocalPersistence` and the Auth emulator (`127.0.0.1:9099`) by default.
+Deployed builds use real Firebase Auth and App Check (reCAPTCHA v3). Local emulator mode is **opt-in** via `VITE_FIREBASE_AUTH_EMULATOR_HOST` in `.env.development`.
 
 ---
 

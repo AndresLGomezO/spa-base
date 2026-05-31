@@ -19,8 +19,8 @@ output "firebase_hosting_url" {
 }
 
 output "firebase_hosting_site_id" {
-  description = "Firebase Hosting site ID for firebase target:apply hosting live"
-  value       = contains(["dev", "default"], local.workspace) ? google_firebase_hosting_site.dev[0].site_id : local.gcp_project_id
+  description = "Firebase Hosting site ID for firebase target:apply hosting live (default site = project_id)"
+  value       = local.gcp_project_id
 }
 
 output "artifact_registry_url" {

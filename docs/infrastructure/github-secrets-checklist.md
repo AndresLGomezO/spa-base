@@ -35,6 +35,7 @@ Project: `entitysystem-development`
 - [ ] `FIREBASE_STORAGE_BUCKET` — typically `entitysystem-development.appspot.com`
 - [ ] `FIREBASE_MESSAGING_SENDER_ID`
 - [ ] `FIREBASE_APP_ID`
+- [ ] `FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY` — reCAPTCHA v3 site key from Firebase Console → App Check (Web app)
 
 ## GitHub Environment: `staging`
 
@@ -44,19 +45,21 @@ Project: `entitysystem-staging` — same secret **names**, values from `print-gc
 
 - [ ] `GCP_WORKLOAD_IDENTITY_PROVIDER`
 - [ ] `GCP_SERVICE_ACCOUNT`
-- [ ] All `FIREBASE_*` secrets for staging Web app
+- [ ] All `FIREBASE_*` secrets for staging Web app (including `FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY`)
 
 ## GitHub Environment: `production` (before prod deploy)
 
 Project: `entitysystem-production`
 
-- [ ] All Firebase secrets for production Web app
+- [ ] All Firebase secrets for production Web app (including `FIREBASE_APPCHECK_RECAPTCHA_SITE_KEY`)
 - [ ] Optional: `GCP_WORKLOAD_IDENTITY_PROVIDER_PROD` and `GCP_SERVICE_ACCOUNT_PROD`
 
 ## GCP (per project)
 
 - [ ] Billing linked
 - [ ] Firebase project + Web app registered
+- [ ] App Check registered for Web app (reCAPTCHA v3); enforcement **Monitor** until login works
+- [ ] Auth authorized domains include Hosting `*.web.app` / `*.firebaseapp.com`
 - [ ] Deployer SA created with roles from [github-wif-setup.md](./github-wif-setup.md) (includes `roles/iam.serviceAccountAdmin`)
 - [ ] WIF pool + provider bound to `ORG/REPO`
 - [ ] Terraform state bucket exists (`entitysystem-*-terraform-state`)

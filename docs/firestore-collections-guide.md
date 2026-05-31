@@ -528,7 +528,7 @@ Copy env files from examples:
 
 ```bash
 cp apps/api/.env.dev.example apps/api/.env.dev
-cp apps/web/.env.dev.example apps/web/.env.dev
+cp apps/web/.env.development.example apps/web/.env.development
 ```
 
 ### Docker Compose (emulator + API + web)

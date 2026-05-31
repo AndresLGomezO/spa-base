@@ -45,6 +45,12 @@ terraform init -reconfigure -backend-config=backend-configs/staging.hcl
 terraform workspace select -or-create staging
 ```
 
+## Firebase Hosting site change (dev)
+
+Dev no longer creates a dedicated Hosting site (`esd-...`). Deploys target the **default** site (`site_id` = GCP project id, e.g. `entitysystem-development`).
+
+After pulling this change, run `terraform apply` in the dev workspace. Terraform will **destroy** `google_firebase_hosting_site.dev` if it exists in state. Then run **Deploy to GCP** so Hosting publishes to `https://entitysystem-development.web.app`.
+
 ## Drift and Firestore indexes
 
 - Firestore **rules** and **indexes** are managed by Terraform from repo root `firestore.rules` and `firestore.indexes.json`.

@@ -14,6 +14,8 @@ interface AppConfig {
   readonly env: AppEnv;
   readonly apiBaseUrl: string;
   readonly firebase: FirebaseConfig;
+  readonly appCheckRecaptchaSiteKey: string;
+  readonly appCheckDebugToken: string;
 }
 
 function normalizeEnvMode(value: string | undefined): AppEnv {
@@ -46,9 +48,8 @@ export const appConfig: Readonly<AppConfig> = Object.freeze({
       "123456789",
     ),
     appId: readEnv("VITE_FIREBASE_APP_ID", "1:123456789:web:abcdef"),
-    authEmulatorHost: readEnv(
-      "VITE_FIREBASE_AUTH_EMULATOR_HOST",
-      "127.0.0.1:9099",
-    ),
+    authEmulatorHost: readEnv("VITE_FIREBASE_AUTH_EMULATOR_HOST", ""),
   },
+  appCheckRecaptchaSiteKey: readEnv("VITE_APP_CHECK_RECAPTCHA_SITE_KEY", ""),
+  appCheckDebugToken: readEnv("VITE_FIREBASE_APPCHECK_DEBUG_TOKEN", ""),
 });
