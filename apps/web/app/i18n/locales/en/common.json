@@ -436,7 +436,6 @@
     "sortAscending": "Ascending",
     "sortDescending": "Descending",
     "removeBadge": "Remove filter {{label}}",
-    "noFilterResults": "No matching options",
-    "truncatedDatasetWarning": "Search and filters apply to the first 100 records."
+    "noFilterResults": "No matching options"
   }
 }

@@ -1,4 +1,4 @@
-export type FilterOperator =
+export type FirestoreNativeOperator =
   | "=="
   | "!="
   | ">"
@@ -7,6 +7,22 @@ export type FilterOperator =
   | "<="
   | "in"
   | "array-contains";
+
+export type PostFilterOperator = "contains" | "startsWith" | "endsWith";
+
+export type FilterOperator = FirestoreNativeOperator | PostFilterOperator;
+
+export const POST_FILTER_OPERATORS = new Set<FilterOperator>([
+  "contains",
+  "startsWith",
+  "endsWith",
+]);
+
+export function isPostFilterOperator(
+  op: FilterOperator,
+): op is PostFilterOperator {
+  return POST_FILTER_OPERATORS.has(op);
+}
 
 export interface NormalizedFilter {
   readonly field: string;
@@ -21,11 +37,14 @@ export interface NormalizedSort {
 
 export interface NormalizedEntityQuery {
   readonly filters: readonly NormalizedFilter[];
+  readonly postFilters: readonly NormalizedFilter[];
   readonly sort: NormalizedSort | null;
   readonly limit: number;
   readonly cursor?: string;
   readonly offset?: number;
   readonly select?: readonly string[];
+  readonly search?: string;
+  readonly searchField?: string;
 }
 
 export interface EntityQueryExecutor {

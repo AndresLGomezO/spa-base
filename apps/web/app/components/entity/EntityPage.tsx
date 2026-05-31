@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type { QueryConfig } from "@repo/query-engine";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveActiveView } from "@repo/ui-builder";
 import { Button, Heading, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
@@ -9,6 +8,7 @@ import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { useServerQueryConfig } from "../../hooks/useServerQueryConfig";
 import { FormModal } from "../forms/FormModal";
 import { WebDataViewToolbar } from "../data-view";
 import { RequireEntityPermission } from "./RequireEntityPermission";
@@ -18,8 +18,7 @@ import { ShareDialog } from "./ShareDialog";
 import { resolveViewComponent } from "./view-component-registry";
 import { useEntityListDataView } from "./useEntityListDataView";
 
-const ENTITY_LIST_LIMIT = 100;
-const CLIENT_PAGE_SIZE = 20;
+const SERVER_PAGE_SIZE = 25;
 
 type EntityFormModalState =
   | null
@@ -38,19 +37,72 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const ViewComponent = resolveViewComponent(activeView.type) ?? EntityTable;
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const queryConfig = useMemo<QueryConfig>(
-    () => ({
-      pagination: { limit: ENTITY_LIST_LIMIT, offset: 0 },
-    }),
-    [],
-  );
-
-  const entityState = useEntity(entityName, { queryConfig });
   const { dataView, columnDescriptors, isLoadingRelations } =
     useEntityListDataView({
       entityName,
-      items: entityState.items as readonly Record<string, unknown>[],
+      items: [],
     });
+
+  const [cursorStack, setCursorStack] = useState<string[]>([]);
+  const currentCursor =
+    cursorStack.length > 0 ? cursorStack[cursorStack.length - 1] : undefined;
+
+  const prevControlsRef = useRef({
+    search: dataView.search,
+    filters: dataView.filters,
+    sortColumnId: dataView.sort.columnId,
+    sortDirection: dataView.sort.direction,
+  });
+
+  useEffect(() => {
+    const prev = prevControlsRef.current;
+    const changed =
+      prev.search !== dataView.search ||
+      prev.filters !== dataView.filters ||
+      prev.sortColumnId !== dataView.sort.columnId ||
+      prev.sortDirection !== dataView.sort.direction;
+
+    if (changed) {
+      setCursorStack([]);
+      prevControlsRef.current = {
+        search: dataView.search,
+        filters: dataView.filters,
+        sortColumnId: dataView.sort.columnId,
+        sortDirection: dataView.sort.direction,
+      };
+    }
+  }, [
+    dataView.search,
+    dataView.filters,
+    dataView.sort.columnId,
+    dataView.sort.direction,
+  ]);
+
+  const queryConfig = useServerQueryConfig({
+    search: dataView.search,
+    filters: dataView.filters,
+    sort: dataView.sort,
+    limit: SERVER_PAGE_SIZE,
+    cursor: currentCursor,
+  });
+
+  const entityState = useEntity(entityName, { queryConfig });
+
+  const serverPage = cursorStack.length + 1;
+  const hasNextPage = !!entityState.nextCursor;
+
+  const goToNextPage = useCallback(() => {
+    if (entityState.nextCursor) {
+      setCursorStack((prev) => [...prev, entityState.nextCursor!]);
+    }
+  }, [entityState.nextCursor]);
+
+  const goToPreviousPage = useCallback(() => {
+    setCursorStack((prev) => {
+      if (prev.length === 0) return prev;
+      return prev.slice(0, -1);
+    });
+  }, []);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [shareRecordId, setShareRecordId] = useState<string | null>(null);
@@ -96,22 +148,23 @@ export function EntityPage({ entityName }: EntityPageProps) {
       : t("entity.editTitle", { entity });
   }, [definition, formModal, t]);
 
-  const warningMessage =
-    entityState.totalCount > ENTITY_LIST_LIMIT
-      ? t("dataView.truncatedDatasetWarning")
-      : undefined;
-
   const listViewProps = {
     entityName,
     entityState: {
       ...entityState,
-      items: dataView.pageItems as typeof entityState.items,
-      totalCount: dataView.totalCount,
       isLoading: entityState.isLoading || isLoadingRelations,
     },
-    page: dataView.page,
-    pageSize: CLIENT_PAGE_SIZE,
-    onPageChange: dataView.setPage,
+    page: serverPage,
+    pageSize: SERVER_PAGE_SIZE,
+    onPageChange: (page: number) => {
+      if (page > serverPage) {
+        goToNextPage();
+      } else if (page < serverPage) {
+        goToPreviousPage();
+      }
+    },
+    hasNextPage,
+    hasPreviousPage: cursorStack.length > 0,
     onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
     onRequestEdit: permissions.canUpdate
       ? (id: string) => setFormModal({ mode: "edit", recordId: id })
@@ -139,7 +192,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
           columns={columnDescriptors}
           filtersOpen={dataView.filtersOpen}
           onFiltersOpenChange={dataView.setFiltersOpen}
-          warningMessage={warningMessage}
         />
       ) : null}
 

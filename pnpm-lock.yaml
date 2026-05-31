@@ -703,6 +703,9 @@ importers:
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
+      '@repo/query-engine':
+        specifier: workspace:*
+        version: link:../query-engine
       '@repo/rbac':
         specifier: workspace:*
         version: link:../rbac

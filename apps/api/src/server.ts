@@ -219,6 +219,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     firebaseAdminConfig,
     entityDefinitionRepository,
     definitionCacheTtlMs: apiEnv.CACHE_TTL_MS,
+    cursorSecret: apiEnv.QUERY_CURSOR_SECRET,
     onIndexHint: (hint) => {
       server.log.warn(
         {
