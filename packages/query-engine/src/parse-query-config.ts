@@ -6,11 +6,12 @@ import {
   type NormalizedFieldMeta,
   type Phase1FieldType,
 } from "@repo/entities";
-import type {
-  FilterOperator,
-  NormalizedEntityQuery,
-  NormalizedFilter,
-  NormalizedSort,
+import {
+  isPostFilterOperator,
+  type FilterOperator,
+  type NormalizedEntityQuery,
+  type NormalizedFilter,
+  type NormalizedSort,
 } from "@repo/firestore-converters";
 import { z } from "zod";
 
@@ -29,6 +30,9 @@ const filterOperatorSchema = z.enum([
   "<=",
   "in",
   "array-contains",
+  "contains",
+  "startsWith",
+  "endsWith",
 ]);
 
 const filterSchema = z
@@ -50,6 +54,7 @@ const queryConfigSchema = z
   .object({
     filter: z.array(filterSchema).optional(),
     sort: z.array(sortSchema).max(1).optional(),
+    search: z.string().trim().optional(),
     pagination: z
       .object({
         limit: z.number().int().positive().max(MAX_LIMIT),
@@ -84,7 +89,7 @@ const OPERATORS_BY_FIELD_TYPE: Record<
   Phase1FieldType,
   readonly FilterOperator[]
 > = {
-  string: ["==", "!=", "in"],
+  string: ["==", "!=", "in", "contains", "startsWith", "endsWith"],
   number: ["==", "!=", "<", "<=", ">", ">=", "in"],
   boolean: ["=="],
   date: ["==", "!=", "<", "<=", ">", ">="],
@@ -196,6 +201,15 @@ function validateFilterValue(operator: FilterOperator, value: unknown): void {
       );
     }
   }
+
+  if (isPostFilterOperator(operator)) {
+    if (typeof value !== "string") {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        `Operator "${operator}" requires a string value.`,
+      );
+    }
+  }
 }
 
 const SYSTEM_ARRAY_FIELDS = new Set(["accessUserIds"]);
@@ -214,8 +228,8 @@ function validateFilter(
   const fieldMeta = getFieldMeta(entity, filter.field);
   if (fieldMeta?.sensitive) {
     throw new QueryError(
-      QueryErrorCode.QUERY_VALIDATION_ERROR,
-      `Cannot filter on encrypted field "${filter.field}".`,
+      QueryErrorCode.QUERY_ON_ENCRYPTED_FIELD,
+      `Filtering on encrypted fields is not supported.`,
     );
   }
 
@@ -270,8 +284,8 @@ function validateSort(entity: AnyDefinedEntity, sort: Sort): NormalizedSort {
   const sortFieldMeta = getFieldMeta(entity, sort.field);
   if (sortFieldMeta?.sensitive) {
     throw new QueryError(
-      QueryErrorCode.QUERY_VALIDATION_ERROR,
-      `Cannot sort on encrypted field "${sort.field}".`,
+      QueryErrorCode.QUERY_ON_ENCRYPTED_FIELD,
+      `Sorting on encrypted fields is not supported.`,
     );
   }
 
@@ -319,10 +333,11 @@ function enforceFirestoreConstraints(
     INEQUALITY_OPERATORS.has(filter.operator),
   );
 
-  if (inequalityFilters.length > 1) {
+  const inequalityFields = new Set(inequalityFilters.map((f) => f.field));
+  if (inequalityFields.size > 1) {
     throw new QueryError(
       QueryErrorCode.QUERY_UNSUPPORTED,
-      "Only one inequality filter is supported per query.",
+      "Inequality filters on multiple fields are not supported. All range filters must target the same field.",
     );
   }
 
@@ -344,6 +359,23 @@ function enforceFirestoreConstraints(
   }
 
   return primarySort;
+}
+
+export function resolveSearchField(entity: AnyDefinedEntity): string | null {
+  if (entity.metadata.displayField) {
+    const meta = getFieldMeta(entity, entity.metadata.displayField);
+    if (meta && meta.type === "string" && !meta.sensitive) {
+      return entity.metadata.displayField;
+    }
+  }
+
+  for (const [fieldName, meta] of Object.entries(entity.metadata.fields)) {
+    if (meta.type === "string" && !meta.sensitive) {
+      return fieldName;
+    }
+  }
+
+  return null;
 }
 
 export function parseListQueryInput(
@@ -392,9 +424,11 @@ export function parseListQueryInput(
   const limit = normalizeLimit(config.pagination?.limit ?? input.limit);
   const cursor = config.pagination?.cursor ?? input.cursor;
   const offset = config.pagination?.offset;
+  const search = config.search ?? input.search;
 
   return {
     ...config,
+    ...(search ? { search } : {}),
     pagination: {
       limit,
       ...(cursor ? { cursor } : {}),
@@ -407,12 +441,50 @@ export function normalizeEntityQuery(
   entity: AnyDefinedEntity,
   config: QueryConfig,
 ): NormalizedEntityQuery {
-  const filters = (config.filter ?? []).map((filter) =>
+  const allFilters = (config.filter ?? []).map((filter) =>
     validateFilter(entity, filter),
   );
+
+  const firestoreFilters = allFilters.filter(
+    (f) => !isPostFilterOperator(f.operator),
+  );
+  const postFilters = allFilters.filter((f) =>
+    isPostFilterOperator(f.operator),
+  );
+
+  let searchField: string | undefined;
+  let search: string | undefined;
+  const searchFilters: NormalizedFilter[] = [];
+
+  if (config.search && config.search.length > 0) {
+    const field = resolveSearchField(entity);
+    if (!field) {
+      throw new QueryError(
+        QueryErrorCode.SEARCH_NOT_CONFIGURED,
+        `Search is not available for entity "${entity.name}". No searchable string field found.`,
+      );
+    }
+    searchField = field;
+    search = config.search;
+    const lowerTerm = config.search.toLowerCase();
+    searchFilters.push(
+      { field, operator: ">=", value: lowerTerm },
+      { field, operator: "<", value: lowerTerm + "\uf8ff" },
+    );
+  }
+
+  const nativeFilters = [...firestoreFilters, ...searchFilters];
+
   const sortEntry = config.sort?.[0] ?? null;
-  const sort = sortEntry ? validateSort(entity, sortEntry) : null;
-  const primarySort = enforceFirestoreConstraints(filters, sort);
+  let sort = sortEntry ? validateSort(entity, sortEntry) : null;
+
+  if (searchField && sort && sort.field !== searchField) {
+    sort = { field: searchField, direction: "asc" };
+  } else if (searchField && !sort) {
+    sort = { field: searchField, direction: "asc" };
+  }
+
+  const primarySort = enforceFirestoreConstraints(nativeFilters, sort);
   const select = config.select
     ? validateSelect(entity, config.select)
     : undefined;
@@ -421,7 +493,8 @@ export function normalizeEntityQuery(
   const useOffset = offset !== undefined;
 
   return {
-    filters,
+    filters: nativeFilters,
+    postFilters,
     sort: primarySort,
     limit: normalizeLimit(config.pagination?.limit),
     ...(useOffset
@@ -430,5 +503,6 @@ export function normalizeEntityQuery(
         ? { cursor: config.pagination.cursor }
         : {}),
     ...(select ? { select } : {}),
+    ...(search ? { search, searchField } : {}),
   };
 }

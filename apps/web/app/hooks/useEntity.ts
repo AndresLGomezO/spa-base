@@ -34,6 +34,7 @@ interface UseEntityOptions {
 interface UseEntityListState {
   readonly items: readonly EntityRecord[];
   readonly totalCount: number;
+  readonly nextCursor: string | null;
   readonly page: number;
   readonly isLoading: boolean;
   readonly error: string | null;
@@ -101,6 +102,7 @@ export function useEntity(
     [listQuery.data?.items],
   );
   const totalCount = listQuery.data?.totalCount ?? 0;
+  const nextCursor = listQuery.data?.nextCursor ?? null;
 
   const refresh = useCallback(async () => {
     await listQuery.refetch();
@@ -220,6 +222,7 @@ export function useEntity(
     () => ({
       items,
       totalCount,
+      nextCursor,
       page,
       isLoading: listQuery.isLoading,
       error:
@@ -241,6 +244,7 @@ export function useEntity(
       listQuery.error,
       listQuery.isLoading,
       mutationError,
+      nextCursor,
       page,
       refresh,
       remove,

@@ -43,6 +43,7 @@ interface EntityRuntimeContextOptions {
   readonly entityDefinitionRepository: EntityDefinitionRepository;
   readonly definitionCacheTtlMs?: number;
   readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
+  readonly cursorSecret?: string;
   readonly repositories?: Record<
     string,
     TenantScopedEntityRepository<GenericRecord, unknown>
@@ -218,6 +219,7 @@ export class EntityRuntimeContext {
             getEntityConverter(entity.name) ??
             createEntityConverter(entity, encryption),
           onIndexHint: this.options.onIndexHint,
+          cursorSecret: this.options.cursorSecret,
         });
     this.queryExecutorCache.set(key, executor);
     return executor;

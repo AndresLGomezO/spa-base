@@ -79,6 +79,11 @@ export {
   type PaginationProps,
 } from "./pagination/Pagination";
 export {
+  CursorPagination,
+  type CursorPaginationLabels,
+  type CursorPaginationProps,
+} from "./pagination/CursorPagination";
+export {
   buildPageWindow,
   totalPagesFromCount,
   type PageEntry,

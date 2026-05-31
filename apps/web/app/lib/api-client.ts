@@ -146,6 +146,7 @@ export async function listEntity<T>(
     readonly limit?: number;
     readonly cursor?: string;
     readonly query?: QueryConfig;
+    readonly search?: string;
     readonly populate?: string;
   } = {},
 ): Promise<PaginatedResult<T>> {
@@ -159,6 +160,7 @@ export async function listEntity<T>(
       limit: options.limit,
       cursor: options.cursor,
       query,
+      search: options.search,
       populate: options.populate,
     },
   });

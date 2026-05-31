@@ -7,6 +7,10 @@ export {
 export {
   type EntityQueryExecutor,
   type FilterOperator,
+  type FirestoreNativeOperator,
+  type PostFilterOperator,
+  POST_FILTER_OPERATORS,
+  isPostFilterOperator,
   type NormalizedEntityQuery,
   type NormalizedFilter,
   type NormalizedSort,

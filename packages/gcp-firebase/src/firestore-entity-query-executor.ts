@@ -1,9 +1,17 @@
 import type {
   EntityQueryExecutor,
-  FilterOperator,
+  FirestoreNativeOperator,
   NormalizedEntityQuery,
   NormalizedFilter,
 } from "@repo/firestore-converters";
+import {
+  applyPostFilters,
+  computeOverfetchLimit,
+  decodeCursor,
+  encodeCursor,
+  QueryError,
+  QueryErrorCode,
+} from "@repo/query-engine";
 import type {
   CollectionReference,
   DocumentData,
@@ -36,9 +44,10 @@ interface FirestoreEntityQueryExecutorConfig<
   readonly collection: string;
   readonly converter: EntityConverter<TRecord>;
   readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
+  readonly cursorSecret?: string;
 }
 
-const EQUALITY_OPERATORS = new Set<FilterOperator>([
+const EQUALITY_OPERATORS = new Set<FirestoreNativeOperator>([
   "==",
   "in",
   "array-contains",
@@ -49,7 +58,11 @@ function applyFilter(query: Query, filter: NormalizedFilter): Query {
     return query.where(filter.field, "in", filter.value as unknown[]);
   }
 
-  return query.where(filter.field, filter.operator, filter.value);
+  return query.where(
+    filter.field,
+    filter.operator as FirebaseFirestore.WhereFilterOp,
+    filter.value,
+  );
 }
 
 function buildFirestoreQuery(
@@ -57,10 +70,11 @@ function buildFirestoreQuery(
   normalizedQuery: NormalizedEntityQuery,
 ): Query {
   const equalityFilters = normalizedQuery.filters.filter((filter) =>
-    EQUALITY_OPERATORS.has(filter.operator),
+    EQUALITY_OPERATORS.has(filter.operator as FirestoreNativeOperator),
   );
   const inequalityFilters = normalizedQuery.filters.filter(
-    (filter) => !EQUALITY_OPERATORS.has(filter.operator),
+    (filter) =>
+      !EQUALITY_OPERATORS.has(filter.operator as FirestoreNativeOperator),
   );
 
   let query: Query = collectionRef;
@@ -83,15 +97,12 @@ function buildFirestoreQuery(
   return query;
 }
 
-function applyPagination(
-  query: Query,
-  normalizedQuery: NormalizedEntityQuery,
-): Query {
+function applyPagination(query: Query, limit: number, offset?: number): Query {
   let paginated = query;
-  if (normalizedQuery.offset !== undefined && normalizedQuery.offset > 0) {
-    paginated = paginated.offset(normalizedQuery.offset);
+  if (offset !== undefined && offset > 0) {
+    paginated = paginated.offset(offset);
   }
-  return paginated.limit(normalizedQuery.limit);
+  return paginated.limit(limit);
 }
 
 function buildSuggestedIndexFields(
@@ -122,6 +133,15 @@ function isMissingIndexError(error: unknown): boolean {
   );
 }
 
+function extractIndexLink(error: unknown): string | undefined {
+  if (!error || typeof error !== "object" || !("message" in error)) {
+    return undefined;
+  }
+  const message = String(error.message);
+  const match = message.match(/https:\/\/console\.firebase\.google\.com[^\s]*/);
+  return match?.[0];
+}
+
 class FirestoreEntityQueryExecutor<
   TRecord extends { readonly id: string; readonly tenantId: string },
 > implements EntityQueryExecutor {
@@ -141,22 +161,37 @@ class FirestoreEntityQueryExecutor<
   async executeQuery(tenantId: string, query: NormalizedEntityQuery) {
     const collectionRef = this.getCollection(tenantId);
     const filteredQuery = buildFirestoreQuery(collectionRef, query);
+    const hasPostFilters = query.postFilters.length > 0;
+    const fetchLimit = computeOverfetchLimit(query.limit, hasPostFilters);
 
     try {
       const countSnapshot = await filteredQuery.count().get();
       const totalCount = countSnapshot.data().count;
 
-      let firestoreQuery = applyPagination(filteredQuery, query);
+      let firestoreQuery = applyPagination(
+        filteredQuery,
+        fetchLimit,
+        query.offset,
+      );
 
       if (query.offset === undefined && query.cursor) {
-        const cursorDoc = await collectionRef.doc(query.cursor).get();
-        if (cursorDoc.exists) {
-          firestoreQuery = firestoreQuery.startAfter(cursorDoc);
+        const secret = this.executorConfig.cursorSecret;
+        if (secret) {
+          const cursorPayload = decodeCursor(query.cursor, secret);
+          const cursorDoc = await collectionRef.doc(cursorPayload.id).get();
+          if (cursorDoc.exists) {
+            firestoreQuery = firestoreQuery.startAfter(cursorDoc);
+          }
+        } else {
+          const cursorDoc = await collectionRef.doc(query.cursor).get();
+          if (cursorDoc.exists) {
+            firestoreQuery = firestoreQuery.startAfter(cursorDoc);
+          }
         }
       }
 
       const snapshot = await firestoreQuery.get();
-      const items = snapshot.docs.map(
+      let items = snapshot.docs.map(
         (doc) =>
           this.executorConfig.converter.read(doc.data()) as Record<
             string,
@@ -164,22 +199,36 @@ class FirestoreEntityQueryExecutor<
           >,
       );
 
+      if (hasPostFilters) {
+        items = applyPostFilters(items, query.postFilters);
+        items = items.slice(0, query.limit);
+      }
+
       const hasMore =
         query.offset !== undefined
           ? (query.offset ?? 0) + items.length < totalCount
-          : items.length === query.limit;
-      const nextCursor =
-        query.offset === undefined && hasMore && items.length > 0
-          ? String(items[items.length - 1]!.id)
-          : null;
+          : hasPostFilters
+            ? snapshot.docs.length === fetchLimit
+            : items.length === query.limit;
+
+      const sortField = query.sort?.field ?? "id";
+      const secret = this.executorConfig.cursorSecret;
+      let nextCursor: string | null = null;
+      if (query.offset === undefined && hasMore && items.length > 0) {
+        const lastItem = items[items.length - 1]!;
+        nextCursor = secret
+          ? encodeCursor(lastItem, sortField, secret)
+          : String(lastItem.id);
+      }
 
       return {
         items,
         nextCursor,
-        totalCount,
+        totalCount: hasPostFilters ? -1 : totalCount,
       };
     } catch (error) {
       if (isMissingIndexError(error)) {
+        const indexLink = extractIndexLink(error);
         this.executorConfig.onIndexHint?.({
           collection: this.executorConfig.collection,
           tenantId,
@@ -189,6 +238,10 @@ class FirestoreEntityQueryExecutor<
           message:
             error instanceof Error ? error.message : "Missing Firestore index.",
         });
+        throw new QueryError(
+          QueryErrorCode.COMPOSITE_INDEX_REQUIRED,
+          `This query requires a composite index.${indexLink ? ` Create it here: ${indexLink}` : ""}`,
+        );
       }
       throw error;
     }

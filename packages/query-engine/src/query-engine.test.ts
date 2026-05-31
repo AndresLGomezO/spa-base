@@ -130,17 +130,18 @@ describe("normalizeEntityQuery", () => {
     ]);
   });
 
-  it("rejects multiple inequality filters", () => {
-    expect(() =>
-      normalizeEntityQuery(TestItem as unknown as AnyDefinedEntity, {
+  it("allows multiple inequality filters on the same field", () => {
+    const normalized = normalizeEntityQuery(
+      TestItem as unknown as AnyDefinedEntity,
+      {
         filter: [
           { field: "budget", operator: ">", value: 10 },
           { field: "budget", operator: "<", value: 100 },
         ],
-      }),
-    ).toThrowError(
-      expect.objectContaining({ code: QueryErrorCode.QUERY_UNSUPPORTED }),
+      },
     );
+    expect(normalized.filters).toHaveLength(2);
+    expect(normalized.sort?.field).toBe("budget");
   });
 
   it("requires sort field to match inequality filter", () => {

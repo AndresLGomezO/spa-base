@@ -436,7 +436,6 @@
     "sortAscending": "Ascendente",
     "sortDescending": "Descendente",
     "removeBadge": "Quitar filtro {{label}}",
-    "noFilterResults": "No hay opciones coincidentes",
-    "truncatedDatasetWarning": "La búsqueda y los filtros se aplican a los primeros 100 registros."
+    "noFilterResults": "No hay opciones coincidentes"
   }
 }

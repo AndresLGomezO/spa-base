@@ -20,6 +20,7 @@ describe("createInMemoryEntityQueryExecutor", () => {
 
     const filtered = await executor.executeQuery("tenant_a", {
       filters: [{ field: "organizationId", operator: "==", value: "c1" }],
+      postFilters: [],
       sort: { field: "budget", direction: "desc" },
       limit: 10,
     });
@@ -28,6 +29,7 @@ describe("createInMemoryEntityQueryExecutor", () => {
 
     const pageOne = await executor.executeQuery("tenant_a", {
       filters: [],
+      postFilters: [],
       sort: { field: "id", direction: "asc" },
       limit: 2,
     });
@@ -36,6 +38,7 @@ describe("createInMemoryEntityQueryExecutor", () => {
 
     const pageTwo = await executor.executeQuery("tenant_a", {
       filters: [],
+      postFilters: [],
       sort: { field: "id", direction: "asc" },
       limit: 2,
       cursor: pageOne.nextCursor ?? undefined,
@@ -57,6 +60,7 @@ describe("createInMemoryEntityQueryExecutor", () => {
 
     const page = await executor.executeQuery("tenant_a", {
       filters: [],
+      postFilters: [],
       sort: { field: "id", direction: "asc" },
       limit: 2,
       offset: 2,

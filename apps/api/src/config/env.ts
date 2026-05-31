@@ -27,6 +27,11 @@ const ApiEnvSchema = z.object({
     .default(process.env.NODE_ENV === "test" ? "true" : "false")
     .transform((value) => value === "true"),
   TENANT_ENCRYPTION_MASTER_KEY: z.string().trim().min(1).optional(),
+  QUERY_CURSOR_SECRET: z
+    .string()
+    .trim()
+    .min(16)
+    .default("dev-cursor-secret-change-in-prod"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

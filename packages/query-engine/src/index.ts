@@ -7,9 +7,12 @@ export { createQueryEngine } from "./create-query-engine.js";
 export type { QueryEngine, QueryEngineDeps } from "./create-query-engine.js";
 export { QueryError, QueryErrorCode } from "./errors.js";
 export { applySelectProjection } from "./format-results.js";
+export { applyPostFilters, computeOverfetchLimit } from "./post-filters.js";
+export { decodeCursor, encodeCursor } from "./cursor.js";
 export {
   normalizeEntityQuery,
   parseListQueryInput,
+  resolveSearchField,
 } from "./parse-query-config.js";
 export type { ParseListQueryOptions } from "./parse-query-config.js";
 export type {

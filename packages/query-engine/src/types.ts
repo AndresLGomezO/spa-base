@@ -16,6 +16,7 @@ export interface Sort {
 export interface QueryConfig {
   readonly filter?: readonly Filter[];
   readonly sort?: readonly Sort[];
+  readonly search?: string;
   readonly pagination?: {
     readonly limit: number;
     readonly cursor?: string;
@@ -41,6 +42,7 @@ export interface ListQueryInput {
   readonly limit?: number;
   readonly cursor?: string;
   readonly query?: string;
+  readonly search?: string;
 }
 
 export interface RbacQueryInjector {

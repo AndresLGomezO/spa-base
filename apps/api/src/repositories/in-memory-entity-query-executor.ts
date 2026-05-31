@@ -3,6 +3,7 @@ import type {
   NormalizedEntityQuery,
   NormalizedFilter,
 } from "@repo/firestore-converters";
+import { applyPostFilters } from "@repo/query-engine";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
@@ -95,7 +96,9 @@ export function createInMemoryEntityQueryExecutor(
         query.filters.every((filter) => matchesFilter(record, filter)),
       );
 
-      const sorted = sortRecords(filtered, query.sort);
+      const results = applyPostFilters(filtered, query.postFilters);
+
+      const sorted = sortRecords(results, query.sort);
       const totalCount = sorted.length;
 
       let startIndex = query.offset ?? 0;

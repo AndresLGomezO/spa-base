@@ -42,6 +42,7 @@ const listQuerySchema = z.object({
   limit: z.coerce.number().int().positive().max(100).optional(),
   cursor: z.string().trim().min(1).optional(),
   query: z.string().trim().min(1).optional(),
+  search: z.string().trim().min(1).optional(),
   populate: z.string().trim().min(1).optional(),
 });
 
