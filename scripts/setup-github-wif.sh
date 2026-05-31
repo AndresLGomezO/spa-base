@@ -19,6 +19,9 @@ DEPLOYER_SA="github-deployer"
 POOL_ID="github-pool"
 PROVIDER_ID="github-provider"
 REPO="AndresLGomezO/spa-base"
+ARTIFACT_REPO_ID="entitysystem-repo"
+GCP_REGION="us-central1"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ENV_SUFFIXES=(development staging production)
 
 WIF_ATTRIBUTE_MAPPING="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository"
@@ -72,12 +75,22 @@ for suffix in "${ENV_SUFFIXES[@]}"; do
   PROJECT_IDS+=("${PROJECT_PREFIX}-${suffix}")
 done
 
-# Required for google-github-actions/auth to impersonate the deployer SA (generateAccessToken).
-WIF_REQUIRED_APIS=(
-  iamcredentials.googleapis.com
-  iam.googleapis.com
-  sts.googleapis.com
+# APIs CI uses before the first successful terraform apply (keep in sync with terraform/main.tf).
+BOOTSTRAP_APIS=(
+  serviceusage.googleapis.com
   cloudresourcemanager.googleapis.com
+  storage.googleapis.com
+  run.googleapis.com
+  firestore.googleapis.com
+  iam.googleapis.com
+  iamcredentials.googleapis.com
+  sts.googleapis.com
+  artifactregistry.googleapis.com
+  secretmanager.googleapis.com
+  identitytoolkit.googleapis.com
+  firebaserules.googleapis.com
+  firebasehosting.googleapis.com
+  firebase.googleapis.com
 )
 
 DEPLOYER_ROLES=(
@@ -131,10 +144,10 @@ ensure_service_account() {
   echo "$deployer_email"
 }
 
-enable_wif_apis() {
+enable_bootstrap_apis() {
   local project_id="$1"
-  log "Enabling APIs for WIF + SA impersonation on ${project_id}"
-  gcloud services enable "${WIF_REQUIRED_APIS[@]}" --project="$project_id" --quiet
+  log "Enabling project APIs (CI + Terraform MVP) on ${project_id}"
+  gcloud services enable "${BOOTSTRAP_APIS[@]}" --project="$project_id" --quiet
 }
 
 grant_deployer_roles() {
@@ -228,9 +241,10 @@ setup_project() {
   echo "=== ${project_id} ==="
   gcloud config set project "$project_id" >/dev/null
 
-  enable_wif_apis "$project_id"
+  enable_bootstrap_apis "$project_id"
   deployer_email="$(ensure_service_account "$project_id")"
   grant_deployer_roles "$project_id" "$deployer_email"
+  bash "${SCRIPT_DIR}/ensure-artifact-registry-repo.sh" "$project_id" "$GCP_REGION" "$ARTIFACT_REPO_ID"
   ensure_wif_pool "$project_id"
   ensure_wif_provider "$project_id"
 

@@ -62,7 +62,7 @@ Terraform also runs `google_firebase_project` to link Firebase programmatically;
 
 ## Step 3 — Deployer SA and WIF (per project)
 
-Follow [github-wif-setup.md](./github-wif-setup.md) for each of:
+Follow [github-wif-setup.md](./github-wif-setup.md) for each of (enables GCP APIs, creates the Docker Artifact Registry repo `entitysystem-repo`, and configures WIF):
 
 - `entitysystem-development` → GitHub Environment **development**
 - `entitysystem-staging` → GitHub Environment **staging**

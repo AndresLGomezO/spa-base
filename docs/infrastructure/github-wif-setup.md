@@ -34,7 +34,7 @@ bash scripts/setup-github-wif.sh entitysystem --repo ORG/REPO
 The script:
 
 1. Derives project IDs from the prefix: `entitysystem-development`, `entitysystem-staging`, `entitysystem-production`
-2. Enables APIs required for WIF impersonation (`iamcredentials.googleapis.com`, `sts.googleapis.com`, etc.)
+2. Enables APIs required before first CI deploy / Terraform apply (Artifact Registry, Storage, Run, WIF impersonation, Firebase subset — same set as `terraform/main.tf`)
 3. Creates the `github-deployer` service account in each project (if missing)
 4. Grants deployer IAM roles
 5. Creates the WIF pool and OIDC provider bound to your GitHub repo
@@ -172,7 +172,8 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 | Error                                    | Fix                                                                        |
 | ---------------------------------------- | -------------------------------------------------------------------------- |
 | `invalid_target` / invalid `audience`    | Re-run `setup-github-wif.sh` (fixes provider attribute-condition) and refresh `GCP_WORKLOAD_IDENTITY_PROVIDER` from `print-gcp-wif-provider.sh` |
-| `iamcredentials.googleapis.com` disabled | Re-run `setup-github-wif.sh` or `gcloud services enable iamcredentials.googleapis.com --project=PROJECT_ID`; wait ~2 min and retry CI |
+| `iamcredentials.googleapis.com` disabled | Re-run `setup-github-wif.sh` or enable that API on the project; wait ~2 min and retry CI |
+| `artifactregistry.googleapis.com` disabled | Re-run `setup-github-wif.sh` (enables all bootstrap APIs) or enable Artifact Registry manually; wait ~2 min and retry deploy |
 | Auth works but 403 on later steps        | Wrong `attribute-condition` on provider — must be `assertion.repository=='owner/repo'`, not repo name alone |
 | `Permission denied` on `terraform apply` | Add missing project role to deployer SA (step 2)                           |
 | `iam.serviceAccounts.actAs` denied       | Re-apply Terraform with `ci_deployer_sa_email` set; check `ci_deployer.tf` |

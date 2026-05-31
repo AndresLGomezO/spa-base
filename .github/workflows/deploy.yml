@@ -145,6 +145,13 @@ jobs:
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
 
+      - name: Ensure Artifact Registry repository exists
+        run: |
+          bash "${GITHUB_WORKSPACE}/scripts/ensure-artifact-registry-repo.sh" \
+            "${{ needs.resolve-target.outputs.target_project_id }}" \
+            "${{ env.REGION }}" \
+            "${{ env.REPO_NAME }}"
+
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 

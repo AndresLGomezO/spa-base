@@ -81,7 +81,8 @@ First apply only — initial secret placeholder (not stored in GitHub):
 | `must specify exactly one of workload_identity_provider or credentials_json` | Secret empty — add `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT` on the GitHub **Environment** for that job (`development` or `staging`). |
 | `invalid_target` / invalid `audience` | Re-run `bash scripts/setup-github-wif.sh entitysystem --repo OWNER/spa-base` to fix pool/provider attribute rules, then refresh secrets from `print-gcp-wif-provider.sh`. |
 | `gsutil` / “credentials are invalid” after auth | WIF does not work with `gsutil`; state bucket script uses `gcloud storage`. Re-run the workflow after pulling latest `ensure-terraform-state-bucket.sh`. |
-| `IAM Service Account Credentials API has not been used` / `SERVICE_DISABLED` | Enable `iamcredentials.googleapis.com` on that project (re-run `setup-github-wif.sh` or `gcloud services enable iamcredentials.googleapis.com --project=PROJECT_ID`). Wait 1–2 minutes, then retry CI. |
+| `IAM Service Account Credentials API has not been used` / `SERVICE_DISABLED` | Re-run `setup-github-wif.sh` (enables `iamcredentials.googleapis.com`) or enable that API manually; wait 1–2 minutes, retry CI. |
+| `Artifact Registry API has not been used` / push denied | Re-run `setup-github-wif.sh` or `gcloud services enable artifactregistry.googleapis.com --project=PROJECT_ID`; wait 1–2 minutes, retry deploy. |
 | Provider from another GCP project | Each environment needs the provider from **that** GCP project (`print-gcp-wif-provider.sh entitysystem-development`, etc.). |
 | Fork PR | Remote plan skipped; fmt/validate still run. |
 
