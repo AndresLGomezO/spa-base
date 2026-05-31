@@ -83,7 +83,10 @@ export function useEntity(
       }),
   });
 
-  const items = listQuery.data?.items ?? [];
+  const items = useMemo(
+    () => listQuery.data?.items ?? [],
+    [listQuery.data?.items],
+  );
   const totalCount = listQuery.data?.totalCount ?? 0;
 
   const refresh = useCallback(async () => {

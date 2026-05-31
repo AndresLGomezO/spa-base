@@ -41,9 +41,6 @@ describe("defineEntity", () => {
       "customer.create",
       "customer.update",
       "customer.delete",
-      "customer.read_all",
-      "customer.write_all",
-      "customer.delete_all",
       "customer.manage_shares",
     ]);
   });
@@ -180,6 +177,16 @@ describe("entity schemas", () => {
       orderNumber: "ORD-1",
       total: 99.5,
       placedAt: "not-a-date",
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it("rejects loose date parses such as text with numbers", () => {
+    const result = Order.createSchema.safeParse({
+      orderNumber: "ORD-1",
+      total: 99.5,
+      placedAt: "test 1",
     });
 
     expect(result.success).toBe(false);
@@ -326,9 +333,6 @@ describe("buildPermissions", () => {
       "order.create",
       "order.update",
       "order.delete",
-      "order.read_all",
-      "order.write_all",
-      "order.delete_all",
       "order.manage_shares",
     ]);
   });

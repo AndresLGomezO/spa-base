@@ -32,6 +32,10 @@ import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
 import { noopPreHandler } from "./noop-pre-handler.js";
 import { replyWithError, successEnvelope } from "./response.js";
+import {
+  encryptSensitiveFields,
+  decryptSensitiveFields,
+} from "./sensitive-fields.js";
 import { parseOrFormatError, stripToSchemaKeys } from "./validation.js";
 
 const listQuerySchema = z.object({
@@ -55,6 +59,9 @@ interface CrudEntityDefinition {
   readonly createSchema: z.ZodTypeAny;
   readonly updateSchema: z.ZodTypeAny;
   readonly businessFieldNames: readonly string[];
+  readonly metadata: {
+    readonly fields: Readonly<Record<string, { readonly sensitive?: boolean }>>;
+  };
 }
 
 type EntityResolver = (
@@ -184,13 +191,20 @@ function filterRecordForRead<T extends Record<string, unknown>>(
   request: FastifyRequest,
   entity: CrudEntityDefinition,
   record: T,
+  tenantId: string,
 ): T {
+  const decrypted = decryptSensitiveFields(
+    record,
+    entity.metadata.fields,
+    tenantId,
+  ) as T;
+
   if (!request.ctx) {
-    return record;
+    return decrypted;
   }
 
   return applyReadFieldFilter(
-    record,
+    decrypted,
     request.ctx,
     entity.name,
     entity.businessFieldNames,
@@ -201,8 +215,11 @@ function filterPaginatedItemsForRead(
   request: FastifyRequest,
   entity: CrudEntityDefinition,
   items: readonly Record<string, unknown>[],
+  tenantId: string,
 ): Record<string, unknown>[] {
-  return items.map((item) => filterRecordForRead(request, entity, item));
+  return items.map((item) =>
+    filterRecordForRead(request, entity, item, tenantId),
+  );
 }
 
 function handleHookError(reply: FastifyReply, error: unknown): boolean {
@@ -394,6 +411,7 @@ export async function registerCrudRoutes<
               request,
               activeEntity,
               result.data as Record<string, unknown>[],
+              tenantId,
             ),
             nextCursor: result.nextCursor ?? null,
             totalCount: result.totalCount,
@@ -414,6 +432,7 @@ export async function registerCrudRoutes<
             request,
             activeEntity,
             result.items as Record<string, unknown>[],
+            tenantId,
           ),
         }),
       );
@@ -494,13 +513,7 @@ export async function registerCrudRoutes<
 
           const recordData = record as Record<string, unknown>;
           if (recordData.ownerId !== undefined) {
-            const access = checkRecordAccess(
-              recordData,
-              ctx.uid,
-              ctx.permissions ?? [],
-              activeEntity.name,
-              ctx.isSuperAdmin,
-            );
+            const access = checkRecordAccess(recordData, ctx.uid);
             if (!access.canRead) {
               return replyWithError(
                 reply,
@@ -513,7 +526,7 @@ export async function registerCrudRoutes<
 
           return reply.send(
             successEnvelope(
-              filterRecordForRead(request, activeEntity, recordData),
+              filterRecordForRead(request, activeEntity, recordData, tenantId),
             ),
           );
         }
@@ -530,13 +543,7 @@ export async function registerCrudRoutes<
 
         const recordData = record as unknown as Record<string, unknown>;
         if (request.ctx && recordData.ownerId !== undefined) {
-          const access = checkRecordAccess(
-            recordData,
-            request.ctx.uid,
-            request.ctx.permissions ?? [],
-            activeEntity.name,
-            request.ctx.isSuperAdmin,
-          );
+          const access = checkRecordAccess(recordData, request.ctx.uid);
           if (!access.canRead) {
             return replyWithError(
               reply,
@@ -549,7 +556,7 @@ export async function registerCrudRoutes<
 
         return reply.send(
           successEnvelope(
-            filterRecordForRead(request, activeEntity, recordData),
+            filterRecordForRead(request, activeEntity, recordData, tenantId),
           ),
         );
       } catch (error) {
@@ -683,6 +690,12 @@ export async function registerCrudRoutes<
           await relationHooks.validateWrite(currentData, "create");
         }
 
+        currentData = encryptSensitiveFields(
+          currentData,
+          activeEntity.metadata.fields,
+          tenantId,
+        );
+
         const created = await activeRepository.create(
           tenantId,
           currentData as unknown as TRecord,
@@ -704,6 +717,7 @@ export async function registerCrudRoutes<
                 request,
                 activeEntity,
                 created as unknown as Record<string, unknown>,
+                tenantId,
               ),
             ),
           );
@@ -833,13 +847,7 @@ export async function registerCrudRoutes<
       const existingRecord = existing as unknown as Record<string, unknown>;
 
       if (request.ctx && existingRecord.ownerId !== undefined) {
-        const access = checkRecordAccess(
-          existingRecord,
-          request.ctx.uid,
-          request.ctx.permissions ?? [],
-          activeEntity.name,
-          request.ctx.isSuperAdmin,
-        );
+        const access = checkRecordAccess(existingRecord, request.ctx.uid);
         if (!access.canWrite) {
           return replyWithError(
             reply,
@@ -894,12 +902,18 @@ export async function registerCrudRoutes<
           );
         }
 
-        const updatePayload = {
+        let updatePayload: Record<string, unknown> = {
           ...(parsedRecord.data as Record<string, unknown>),
         };
         delete updatePayload.id;
         delete updatePayload.tenantId;
         delete updatePayload.createdAt;
+
+        updatePayload = encryptSensitiveFields(
+          updatePayload,
+          activeEntity.metadata.fields,
+          tenantId,
+        );
 
         const updated = await activeRepository.update(
           recordId,
@@ -942,6 +956,7 @@ export async function registerCrudRoutes<
               request,
               activeEntity,
               validated.data as Record<string, unknown>,
+              tenantId,
             ),
           ),
         );
@@ -1041,13 +1056,7 @@ export async function registerCrudRoutes<
         const existingRecord = existing as unknown as Record<string, unknown>;
 
         if (request.ctx && existingRecord.ownerId !== undefined) {
-          const access = checkRecordAccess(
-            existingRecord,
-            request.ctx.uid,
-            request.ctx.permissions ?? [],
-            activeEntity.name,
-            request.ctx.isSuperAdmin,
-          );
+          const access = checkRecordAccess(existingRecord, request.ctx.uid);
           if (!access.canDelete) {
             return replyWithError(
               reply,

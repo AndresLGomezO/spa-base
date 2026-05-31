@@ -55,4 +55,28 @@ describe("resolveEntityCellValue", () => {
       ),
     ).toBe("Batch A");
   });
+
+  it("keeps plain text with numbers as-is for string fields", () => {
+    const definition = {
+      name: "batch",
+      collection: "batches",
+      permissions: [],
+      fields: {
+        name: { type: "string", required: true, optional: false },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+      },
+    };
+
+    expect(
+      resolveEntityCellValue(
+        { id: "batch_1", name: "test 1" },
+        "name",
+        definition,
+        () => null,
+      ),
+    ).toBe("test 1");
+  });
 });

@@ -1,3 +1,5 @@
+import { isIsoDatetimeString } from "./is-iso-datetime-string.js";
+
 export type DisplayFieldType =
   | "string"
   | "number"
@@ -17,6 +19,17 @@ export interface FormatDisplayOptions {
   readonly displayFormat?: DisplayFormat;
   readonly dateDisplayFormat?: DateDisplayFormat;
   readonly fieldName?: string;
+}
+
+function parseIsoDatetimeValue(value: unknown): Date | null {
+  if (value instanceof Date) {
+    return Number.isNaN(value.getTime()) ? null : value;
+  }
+  if (typeof value !== "string" || !isIsoDatetimeString(value)) {
+    return null;
+  }
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
 }
 
 function formatTimezoneShort(
@@ -125,15 +138,9 @@ export function formatDisplayValue(
     return typeof value === "boolean" ? String(value) : "—";
   }
 
-  if (
-    fieldType === "date" ||
-    (typeof value === "string" && value.includes("T"))
-  ) {
-    const parsed =
-      typeof value === "string" || value instanceof Date
-        ? new Date(value)
-        : new Date(String(value));
-    if (!Number.isNaN(parsed.getTime())) {
+  if (fieldType === "date") {
+    const parsed = parseIsoDatetimeValue(value);
+    if (parsed) {
       return formatDateDisplayValue(parsed, {
         locale,
         timeZone,

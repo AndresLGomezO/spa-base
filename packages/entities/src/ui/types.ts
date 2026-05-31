@@ -85,6 +85,7 @@ export interface SerializableFieldMeta {
     readonly joinCollection?: string;
   };
   readonly enumValues?: readonly string[];
+  readonly sensitive?: boolean;
 }
 
 export type FieldAccessLevel = "read" | "write" | "none";

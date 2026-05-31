@@ -1,5 +1,5 @@
 import { useTranslation } from "react-i18next";
-import { Pencil, Trash2 } from "lucide-react";
+import { Lock, Pencil, Trash2 } from "lucide-react";
 
 import {
   IconButton,
@@ -72,7 +72,14 @@ export function FieldDefinitionTable({
           return (
             <TableRow key={`${field.name}-${index}`}>
               <TableCell>{field.ui?.order ?? index}</TableCell>
-              <TableCell className="font-mono">{field.name || "—"}</TableCell>
+              <TableCell className="font-mono">
+                <span className="inline-flex items-center gap-1">
+                  {field.name || "—"}
+                  {field.sensitive ? (
+                    <Lock className="text-muted-foreground size-3.5" />
+                  ) : null}
+                </span>
+              </TableCell>
               <TableCell>{t(`dataModels.fieldTypes.${field.type}`)}</TableCell>
               <TableCell>
                 {field.required ? t("table.booleanYes") : t("table.booleanNo")}
