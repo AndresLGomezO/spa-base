@@ -69,6 +69,11 @@ export type PatchTenantRoleInput = z.infer<typeof patchTenantRoleInputSchema>;
 export const SYSTEM_FIELD_KEYS = [
   "id",
   "tenantId",
+  "ownerId",
+  "createdBy",
+  "updatedBy",
+  "accessUserIds",
+  "sharedWith",
   "createdAt",
   "updatedAt",
 ] as const;

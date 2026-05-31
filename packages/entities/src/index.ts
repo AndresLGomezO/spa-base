@@ -15,6 +15,8 @@ export {
 export {
   SYSTEM_FIELD_KEYS,
   SYSTEM_FIELDS,
+  SERVER_INJECTED_CREATE_FIELD_KEYS,
+  type SharePermission,
   type SystemFieldKey,
   type SystemFieldRecord,
 } from "./systemFields.js";

@@ -2,7 +2,7 @@ import type { preHandlerAsyncHookHandler } from "fastify";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError } from "../crud/response.js";
-import { createRequirePermission } from "./create-require-permission.js";
+import { createRequireAnyPermission } from "./create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "./load-request-permissions.js";
 
 interface EntityPermissionGuards {
@@ -18,18 +18,33 @@ export function createEntityPermissionGuards(
   entityName: string,
 ): EntityPermissionGuards {
   return {
-    list: createRequirePermission(deps, `${entityName}.read`),
-    get: createRequirePermission(deps, `${entityName}.read`),
-    create: createRequirePermission(deps, `${entityName}.create`),
-    update: createRequirePermission(deps, `${entityName}.update`),
-    delete: createRequirePermission(deps, `${entityName}.delete`),
+    list: createRequireAnyPermission(deps, [
+      `${entityName}.read`,
+      `${entityName}.read_all`,
+    ]),
+    get: createRequireAnyPermission(deps, [
+      `${entityName}.read`,
+      `${entityName}.read_all`,
+    ]),
+    create: createRequireAnyPermission(deps, [`${entityName}.create`]),
+    update: createRequireAnyPermission(deps, [
+      `${entityName}.update`,
+      `${entityName}.write_all`,
+    ]),
+    delete: createRequireAnyPermission(deps, [
+      `${entityName}.delete`,
+      `${entityName}.delete_all`,
+    ]),
   };
 }
 
 export function createParametricEntityPermissionGuards(
   deps: LoadRequestPermissionsDeps,
 ): EntityPermissionGuards {
-  function guardFor(action: "read" | "create" | "update" | "delete") {
+  function guardFor(
+    action: "read" | "create" | "update" | "delete",
+    alternate?: string,
+  ) {
     return async function requireEntityPermission(
       request: Parameters<preHandlerAsyncHookHandler>[0],
       reply: Parameters<preHandlerAsyncHookHandler>[1],
@@ -52,18 +67,20 @@ export function createParametricEntityPermissionGuards(
         return;
       }
 
-      return createRequirePermission(deps, `${entityName}.${action}`)(
-        request,
-        reply,
-      );
+      const permissions = [`${entityName}.${action}`];
+      if (alternate) {
+        permissions.push(`${entityName}.${alternate}`);
+      }
+
+      return createRequireAnyPermission(deps, permissions)(request, reply);
     };
   }
 
   return {
-    list: guardFor("read"),
-    get: guardFor("read"),
+    list: guardFor("read", "read_all"),
+    get: guardFor("read", "read_all"),
     create: guardFor("create"),
-    update: guardFor("update"),
-    delete: guardFor("delete"),
+    update: guardFor("update", "write_all"),
+    delete: guardFor("delete", "delete_all"),
   };
 }

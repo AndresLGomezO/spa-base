@@ -475,6 +475,7 @@ export interface TenantUserInvite {
 
 export async function listTenantUsers(options?: {
   readonly tenantId?: string;
+  readonly search?: string;
 }): Promise<{
   readonly members: readonly TenantUserMember[];
   readonly invites: readonly TenantUserInvite[];
@@ -483,7 +484,10 @@ export async function listTenantUsers(options?: {
     members: readonly TenantUserMember[];
     invites: readonly TenantUserInvite[];
   }>("/api/tenant-users", {
-    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+    query: {
+      ...(options?.tenantId ? { tenantId: options.tenantId } : {}),
+      ...(options?.search ? { search: options.search } : {}),
+    },
   });
 }
 
@@ -522,4 +526,45 @@ export async function removeTenantUser(
     method: "DELETE",
     query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
   });
+}
+
+export interface EntityShareEntry {
+  readonly userId: string;
+  readonly permission: "read" | "write";
+}
+
+export async function listEntityShares(
+  entityName: string,
+  recordId: string,
+): Promise<{ readonly shares: readonly EntityShareEntry[] }> {
+  return apiRequest<{ shares: readonly EntityShareEntry[] }>(
+    `/api/${encodeURIComponent(entityName)}/${encodeURIComponent(recordId)}/share`,
+  );
+}
+
+export async function grantEntityShare(
+  entityName: string,
+  recordId: string,
+  input: { readonly userId: string; readonly permission: "read" | "write" },
+): Promise<{ readonly shares: readonly EntityShareEntry[] }> {
+  return apiRequest<{ shares: readonly EntityShareEntry[] }>(
+    `/api/${encodeURIComponent(entityName)}/${encodeURIComponent(recordId)}/share`,
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export async function revokeEntityShare(
+  entityName: string,
+  recordId: string,
+  userId: string,
+): Promise<{ readonly shares: readonly EntityShareEntry[] }> {
+  return apiRequest<{ shares: readonly EntityShareEntry[] }>(
+    `/api/${encodeURIComponent(entityName)}/${encodeURIComponent(recordId)}/share/${encodeURIComponent(userId)}`,
+    {
+      method: "DELETE",
+    },
+  );
 }

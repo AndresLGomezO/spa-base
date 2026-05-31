@@ -7,7 +7,7 @@ import {
   resolveCreateForm,
   resolveEditForm,
 } from "@repo/ui-builder";
-import { Button, Form, Heading, toast } from "@repo/ui";
+import { Button, Form, Heading, toast, Alert } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { type EntityName } from "../../entities/entity-catalog";
@@ -19,6 +19,7 @@ import {
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
 import { useEntity } from "../../hooks/useEntity";
+import { getRecordAccess } from "../../hooks/useRecordAccess";
 import {
   getEntityRelationTargets,
   syncEntityRelationTargets,
@@ -37,6 +38,7 @@ interface EntityFormProps {
   readonly onSuccess?: () => void;
   readonly hideActions?: boolean;
   readonly onSubmittingChange?: (isSubmitting: boolean) => void;
+  readonly onRecordLoaded?: (record: Record<string, unknown>) => void;
 }
 
 export const ENTITY_FORM_ID = "entity-form";
@@ -64,15 +66,12 @@ export function EntityForm({
   onSuccess,
   hideActions = false,
   onSubmittingChange,
+  onRecordLoaded,
 }: EntityFormProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
   const entityPermissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
-  const canWrite =
-    mode === "create"
-      ? entityPermissions.canCreate
-      : entityPermissions.canUpdate;
   const entityState = useEntity(entityName);
   const { getById, fieldErrors, error, isSubmitting, create, update } =
     entityState;
@@ -93,6 +92,10 @@ export function EntityForm({
     return initial;
   });
   const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
+  const [loadedRecord, setLoadedRecord] = useState<Record<
+    string,
+    unknown
+  > | null>(null);
   const lastToastedError = useRef<string | null>(null);
 
   useEffect(() => {
@@ -109,6 +112,8 @@ export function EntityForm({
         : buildInitialValues(definition, "edit");
 
       if (record) {
+        setLoadedRecord(record);
+        onRecordLoaded?.(record);
         const relationEntries = await Promise.all(
           joinRelationFieldNames.map(async (fieldName) => {
             const targetIds = await getEntityRelationTargets(
@@ -132,7 +137,26 @@ export function EntityForm({
     return () => {
       cancelled = true;
     };
-  }, [definition, entityName, getById, joinRelationFieldNames, mode, recordId]);
+  }, [
+    definition,
+    entityName,
+    getById,
+    joinRelationFieldNames,
+    mode,
+    onRecordLoaded,
+    recordId,
+  ]);
+
+  const recordAccess = loadedRecord ? getRecordAccess(loadedRecord) : null;
+  const isSharedEditor =
+    mode === "edit" &&
+    recordAccess != null &&
+    !recordAccess.isOwner &&
+    recordAccess.sharePermission != null;
+  const canWrite =
+    mode === "create"
+      ? entityPermissions.canCreate
+      : (recordAccess?.canWrite ?? entityPermissions.canUpdate);
 
   useEffect(() => {
     if (!error || error === lastToastedError.current) {
@@ -216,6 +240,9 @@ export function EntityForm({
       className="px-1"
       onSubmit={(event) => void handleSubmit(event)}
     >
+      {isSharedEditor ? (
+        <Alert className="mb-4">{t("entity.sharedRecordBanner")}</Alert>
+      ) : null}
       {sections.map((section, index) => (
         <div
           key={`${section.title ?? "section"}-${index}`}

@@ -49,9 +49,13 @@ describe("@repo/dynamic-entities", () => {
     expect(entity.name).toBe("loan");
     expect(entity.metadata.permissions).toEqual([
       "loan.read",
+      "loan.read_all",
       "loan.create",
       "loan.update",
+      "loan.write_all",
       "loan.delete",
+      "loan.delete_all",
+      "loan.manage_shares",
     ]);
   });
 
@@ -147,9 +151,13 @@ describe("@repo/dynamic-entities", () => {
     registerDynamicEntity("tenant_a", baseRecord);
     expect(getDynamicPermissionsForTenant("tenant_a")).toEqual([
       "loan.read",
+      "loan.read_all",
       "loan.create",
       "loan.update",
+      "loan.write_all",
       "loan.delete",
+      "loan.delete_all",
+      "loan.manage_shares",
     ]);
   });
 });

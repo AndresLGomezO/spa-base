@@ -2,9 +2,15 @@ import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
 import type { EntityQueryExecutor } from "@repo/firestore-converters";
 import { createQueryEngine, type QueryEngine } from "@repo/query-engine";
 
+import {
+  createOwnershipQueryInjector,
+  createRecordAccessChecker,
+  type EntityDefinitionResolver,
+} from "../access/ownership-query-injector.js";
+
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
-interface TenantEntityResolver {
+interface TenantEntityResolver extends EntityDefinitionResolver {
   getEntityDefinition(
     name: string,
     tenantId: string,
@@ -26,6 +32,9 @@ export function createQueryRuntimeContext(
   resolver: TenantEntityResolver,
   executorsByEntityName: Record<string, EntityQueryExecutor>,
 ): EntityQueryRuntimeContext {
+  const rbacQueryInjector = createOwnershipQueryInjector(resolver);
+  const recordAccessChecker = createRecordAccessChecker(resolver);
+
   return {
     queryEngine: createQueryEngine({
       getEntityDefinition: (name, context) =>
@@ -33,6 +42,8 @@ export function createQueryRuntimeContext(
       getExecutor: (entityName, context) =>
         resolver.getQueryExecutor(context.tenantId, entityName) ??
         executorsByEntityName[entityName],
+      rbacQueryInjector,
+      recordAccessChecker,
     }),
     executorsByEntityName,
   };

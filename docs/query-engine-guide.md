@@ -159,15 +159,22 @@ Extension point: `RbacQueryInjector` for future row-level filters (Advanced RBAC
 
 ## Firestore indexes
 
-Composite indexes are required for filter + sort combinations. See [`firestore.indexes.json`](../firestore.indexes.json):
+Composite indexes are required when a query combines **filters and sort** (Firestore rule). User isolation adds `accessUserIds` `array-contains` on every scoped list, and the default sort is `id`, so each **entity collection** needs an index like:
 
 | Use case | Index fields |
 | --- | --- |
+| User-scoped list (default) | `accessUserIds CONTAINS`, `id ASC` |
 | FK filter (e.g. workItem by batch) | `batchId ASC`, `id ASC` |
 | Sort by numeric field | `amount ASC/DESC`, `id ASC/DESC` |
 | Filter FK + sort another field | Match Firestore inequality rules — see parse-time validation |
 
-Deploy indexes before relying on filtered/sorted queries in production.
+**Do not** pre-populate [`firestore.indexes.json`](../firestore.indexes.json) with example collection names (`customers`, `widgets`, etc.). Entity collections are defined per tenant/module/dynamic model — add indexes **when you introduce an entity or query shape**, using:
+
+1. The link in Firestore’s `FAILED_PRECONDITION` error when a query first runs in dev/staging
+2. API `onIndexHint` logs from `createFirestoreEntityQueryExecutor`
+3. A targeted entry in `firestore.indexes.json` for that collection, then `firebase deploy --only firestore:indexes`
+
+The emulator is lenient; production Firestore is not. Deploy indexes before relying on filtered/sorted lists in a hosted environment.
 
 ---
 

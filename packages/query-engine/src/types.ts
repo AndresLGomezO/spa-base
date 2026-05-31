@@ -47,6 +47,14 @@ export interface RbacQueryInjector {
   injectFilters(entityName: string, context: QueryContext): readonly Filter[];
 }
 
+export interface RecordAccessChecker {
+  assertCanRead(
+    entityName: string,
+    record: Record<string, unknown>,
+    context: QueryContext,
+  ): void;
+}
+
 export interface RelationIncludeResolver {
   expand(
     entityName: string,

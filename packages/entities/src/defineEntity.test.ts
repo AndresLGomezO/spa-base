@@ -38,9 +38,13 @@ describe("defineEntity", () => {
     expect(Customer.metadata.collection).toBe("customers");
     expect(Customer.metadata.permissions).toEqual([
       "customer.read",
+      "customer.read_all",
       "customer.create",
       "customer.update",
+      "customer.write_all",
       "customer.delete",
+      "customer.delete_all",
+      "customer.manage_shares",
     ]);
   });
 
@@ -79,10 +83,19 @@ describe("defineEntity", () => {
 describe("entity schemas", () => {
   const now = new Date().toISOString();
 
+  const ownershipFields = {
+    ownerId: "user_1",
+    createdBy: "user_1",
+    updatedBy: "user_1",
+    accessUserIds: ["user_1"],
+    sharedWith: {},
+  };
+
   it("validates a full entity document with system fields", () => {
     const result = Customer.schema.safeParse({
       id: "cust_1",
       tenantId: "tenant_1",
+      ...ownershipFields,
       name: "Jane Doe",
       email: "jane@example.com",
       age: 30,
@@ -98,6 +111,7 @@ describe("entity schemas", () => {
     const result = Customer.schema.safeParse({
       id: "cust_1",
       tenantId: "tenant_1",
+      ...ownershipFields,
       email: "jane@example.com",
       isActive: true,
       createdAt: now,
@@ -120,6 +134,7 @@ describe("entity schemas", () => {
     const result = Customer.schema.safeParse({
       id: "cust_1",
       tenantId: "tenant_1",
+      ...ownershipFields,
       name: "Jane Doe",
       isActive: true,
       createdAt: now,
@@ -211,6 +226,11 @@ describe("field type coverage", () => {
     const fullResult = AllTypes.schema.safeParse({
       id: "1",
       tenantId: "t1",
+      ownerId: "user_1",
+      createdBy: "user_1",
+      updatedBy: "user_1",
+      accessUserIds: ["user_1"],
+      sharedWith: {},
       label: "Test",
       enabled: false,
       createdAt: now,
@@ -257,6 +277,11 @@ describe("relation fields", () => {
     const fullResult = OrderWithCustomer.schema.safeParse({
       id: "ord_1",
       tenantId: "tenant_1",
+      ownerId: "user_1",
+      createdBy: "user_1",
+      updatedBy: "user_1",
+      accessUserIds: ["user_1"],
+      sharedWith: {},
       orderNumber: "ORD-1",
       customerId: "cust_1",
       createdAt: now,
@@ -299,6 +324,11 @@ describe("relation fields", () => {
     const fullResult = UserWithProjects.schema.safeParse({
       id: "user_1",
       tenantId: "tenant_1",
+      ownerId: "user_1",
+      createdBy: "user_1",
+      updatedBy: "user_1",
+      accessUserIds: ["user_1"],
+      sharedWith: {},
       name: "Jane",
       createdAt: now,
       updatedAt: now,
@@ -319,9 +349,13 @@ describe("buildPermissions", () => {
   it("generates CRUD permissions for an entity name", () => {
     expect(buildPermissions("order")).toEqual([
       "order.read",
+      "order.read_all",
       "order.create",
       "order.update",
+      "order.write_all",
       "order.delete",
+      "order.delete_all",
+      "order.manage_shares",
     ]);
   });
 });
@@ -393,6 +427,11 @@ describe("type inference", () => {
     const record: CustomerRecord = {
       id: "1",
       tenantId: "t1",
+      ownerId: "user_1",
+      createdBy: "user_1",
+      updatedBy: "user_1",
+      accessUserIds: ["user_1"],
+      sharedWith: {},
       name: "Jane",
       isActive: true,
       createdAt: new Date().toISOString(),

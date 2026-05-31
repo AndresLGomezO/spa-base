@@ -59,6 +59,7 @@ export function defineEntity<
     createSchema,
     updateSchema,
     permissions: buildPermissions(config.name),
+    ...(config.tenantWideRead ? { tenantWideRead: true } : {}),
     ...(ui ? { ui } : {}),
   };
 

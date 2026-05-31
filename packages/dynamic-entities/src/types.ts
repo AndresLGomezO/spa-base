@@ -77,6 +77,7 @@ export const entityDefinitionRecordSchema = z.object({
   label: z.string().trim().min(1),
   fields: z.array(fieldDefinitionSchema).min(1),
   ui: z.custom<EntityUIConfig>().optional(),
+  tenantWideRead: z.boolean().optional(),
   version: z.number().int().positive(),
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),

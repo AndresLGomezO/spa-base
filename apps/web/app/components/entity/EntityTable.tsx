@@ -13,6 +13,7 @@ import {
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { getRecordAccess } from "../../hooks/useRecordAccess";
 import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
 import {
   getFieldAccessLevel,
@@ -81,6 +82,18 @@ export function EntityTable({
 
   const showActions = permissions.canUpdate || permissions.canDelete;
 
+  const rowHasActions = (item: Record<string, unknown>) => {
+    const access = getRecordAccess(item);
+    return (
+      (permissions.canUpdate && access.canWrite) ||
+      (permissions.canDelete && access.canDelete)
+    );
+  };
+
+  const visibleActions = (items as readonly Record<string, unknown>[]).some(
+    rowHasActions,
+  );
+
   return (
     <DataTable
       columns={columns.map((column) => {
@@ -126,33 +139,41 @@ export function EntityTable({
         page: (pageNumber) => t("table.paginationPage", { page: pageNumber }),
       }}
       actionsColumn={
-        showActions
+        showActions && visibleActions
           ? {
               id: "actions",
               header: t("entity.actions"),
               headerClassName: "text-center",
-              cell: (item) => (
-                <div className="flex items-center justify-center gap-1">
-                  {permissions.canUpdate && onRequestEdit ? (
-                    <IconButton
-                      type="button"
-                      label={t("entity.edit")}
-                      onClick={() => onRequestEdit(String(item.id))}
-                    >
-                      <Pencil className="size-4" />
-                    </IconButton>
-                  ) : null}
-                  {permissions.canDelete && onRequestDelete ? (
-                    <IconButton
-                      type="button"
-                      label={t("entity.delete")}
-                      onClick={() => onRequestDelete(String(item.id))}
-                    >
-                      <Trash2 className="text-destructive size-4" />
-                    </IconButton>
-                  ) : null}
-                </div>
-              ),
+              cell: (item) => {
+                const access = getRecordAccess(item as Record<string, unknown>);
+
+                return (
+                  <div className="flex items-center justify-center gap-1">
+                    {permissions.canUpdate &&
+                    access.canWrite &&
+                    onRequestEdit ? (
+                      <IconButton
+                        type="button"
+                        label={t("entity.edit")}
+                        onClick={() => onRequestEdit(String(item.id))}
+                      >
+                        <Pencil className="size-4" />
+                      </IconButton>
+                    ) : null}
+                    {permissions.canDelete &&
+                    access.canDelete &&
+                    onRequestDelete ? (
+                      <IconButton
+                        type="button"
+                        label={t("entity.delete")}
+                        onClick={() => onRequestDelete(String(item.id))}
+                      >
+                        <Trash2 className="text-destructive size-4" />
+                      </IconButton>
+                    ) : null}
+                  </div>
+                );
+              },
             }
           : undefined
       }

@@ -92,7 +92,17 @@ const entityUISchema = z
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
-const SYSTEM_FIELDS = new Set(["id", "tenantId", "createdAt", "updatedAt"]);
+const SYSTEM_FIELDS = new Set([
+  "id",
+  "tenantId",
+  "ownerId",
+  "createdBy",
+  "updatedBy",
+  "accessUserIds",
+  "sharedWith",
+  "createdAt",
+  "updatedAt",
+]);
 
 function isQueryableField(
   entity: AnyDefinedEntity,
