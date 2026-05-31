@@ -261,6 +261,29 @@ describe("Admin routes", () => {
     });
   });
 
+  it("creates a tenant when JWT has no tenantId claim", async () => {
+    authState.tenantId = "";
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/admin/tenants",
+      headers: authHeaders,
+      payload: { name: "No Claim Tenant", id: "tenant_no_claim" },
+    });
+
+    authState.tenantId = "tenant_a";
+
+    expect(response.statusCode).toBe(201);
+    expect(response.json()).toMatchObject({
+      ok: true,
+      tenant: {
+        id: "tenant_no_claim",
+        name: "No Claim Tenant",
+        status: "active",
+      },
+    });
+  });
+
   it("suspends a tenant", async () => {
     const server = await buildTestServer();
     const response = await server.inject({

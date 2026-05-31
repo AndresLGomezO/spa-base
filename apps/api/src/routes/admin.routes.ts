@@ -79,7 +79,9 @@ export const adminRoutes: FastifyPluginAsync<{
   registeredUserRepository: RegisteredUserRepository;
   permissionDeps: LoadRequestPermissionsDeps;
 }> = async (fastify, opts) => {
-  const authenticate = createAuthenticatePreHandler(opts.firebaseAdminConfig);
+  const authenticate = createAuthenticatePreHandler(opts.firebaseAdminConfig, {
+    requireTenant: false,
+  });
   const requireSuperAdmin = createRequireSuperAdmin(opts.permissionDeps);
   const platformRoleRepository: PlatformRoleRepository =
     createFirestoreAdminPlatformRoleRepository(opts.firebaseAdminConfig);
