@@ -1,47 +1,33 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { getTableColumns, isFieldVisible } from "@repo/ui-builder";
 import { useTranslation } from "react-i18next";
 
 import type { EntityName } from "../../entities/entity-catalog";
-import {
-  useEntityCatalog,
-  useEntityDefinition,
-} from "../../entities/entity-catalog-context";
-import {
-  useDataViewWithPagination,
-  type DataViewColumnDescriptor,
-  type UseDataViewWithPaginationResult,
-} from "@repo/data-view";
+import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import {
   getFieldAccessLevel,
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
-import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
+import type { DataViewColumnDescriptor } from "@repo/data-view";
 import { buildEntityColumnDescriptors } from "./build-entity-column-descriptors";
 
-interface UseEntityListDataViewParams {
-  readonly entityName: EntityName;
-  readonly items: readonly Record<string, unknown>[];
-}
-
-interface UseEntityListDataViewResult {
-  readonly dataView: UseDataViewWithPaginationResult<Record<string, unknown>>;
-  readonly columnDescriptors: readonly DataViewColumnDescriptor<
-    Record<string, unknown>
-  >[];
-  readonly isLoadingRelations: boolean;
-}
-
-export function useEntityListDataView({
-  entityName,
-  items,
-}: UseEntityListDataViewParams): UseEntityListDataViewResult {
+export function useEntityColumnDescriptors(
+  entityName: EntityName,
+): readonly DataViewColumnDescriptor<Record<string, unknown>>[] {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
-  const { getDefinition } = useEntityCatalog();
   const permissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
+
+  const noopOneToManyCellValue = useCallback(
+    (_recordId: string, _columnName: string) => {
+      void _recordId;
+      void _columnName;
+      return null;
+    },
+    [],
+  );
 
   const columns = useMemo(
     () =>
@@ -55,18 +41,11 @@ export function useEntityListDataView({
     [definition, fieldAccess, permissions.canRead],
   );
 
-  const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
-    useOneToManyColumnData(
-      definition,
-      items as readonly { readonly id: string }[],
-      getDefinition,
-    );
-
-  const columnDescriptors = useMemo(() => {
+  return useMemo(() => {
     const base = buildEntityColumnDescriptors({
       definition,
       columns,
-      getOneToManyCellValue,
+      getOneToManyCellValue: noopOneToManyCellValue,
     });
 
     return base.map((column) => {
@@ -89,13 +68,5 @@ export function useEntityListDataView({
         },
       };
     });
-  }, [columns, definition, getOneToManyCellValue, t]);
-
-  const dataView = useDataViewWithPagination(items, columnDescriptors);
-
-  return {
-    dataView,
-    columnDescriptors,
-    isLoadingRelations,
-  };
+  }, [columns, definition, noopOneToManyCellValue, t]);
 }

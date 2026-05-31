@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useQueries } from "@tanstack/react-query";
 import type { SerializableEntityDefinition } from "@repo/entities";
 import {
@@ -141,9 +141,8 @@ export function useOneToManyColumnData(
 
   const isLoading = columnQueries.some((query) => query.isLoading);
 
-  return {
-    isLoading,
-    getCellValue: (recordId, columnName) => {
+  const getCellValue = useCallback(
+    (recordId: string, columnName: string) => {
       const columnValues = valuesByColumn.get(columnName);
       if (!columnValues) {
         return null;
@@ -154,5 +153,11 @@ export function useOneToManyColumnData(
       }
       return labels.join(", ");
     },
+    [valuesByColumn],
+  );
+
+  return {
+    isLoading,
+    getCellValue,
   };
 }
