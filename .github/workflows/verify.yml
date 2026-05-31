@@ -16,9 +16,43 @@ env:
   REPO_NAME: ${{ vars.GCP_REPOSITORY_NAME || 'entitysystem-repo' }}
 
 jobs:
-  verify-terraform:
+  # Format + validate — no GCP credentials required.
+  verify-terraform-static:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
 
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform Format Check
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          echo "Checking Terraform formatting..."
+          terraform fmt -check -recursive -diff
+
+      - name: Terraform Init (local backend)
+        working-directory: ./packages/infrastructure/terraform
+        run: terraform init -backend=false -input=false
+
+      - name: Terraform Validate
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          echo "Validating Terraform configuration..."
+          terraform validate
+
+  # Remote plan — requires WIF secrets on the matching GitHub Environment.
+  verify-terraform-plan:
+    runs-on: ubuntu-latest
+    needs: [verify-terraform-static]
+    # Environment secrets (development / staging) are only visible when `environment` is set.
+    environment: ${{ github.base_ref == 'main' && 'staging' || 'development' }}
     permissions:
       contents: read
       id-token: write
@@ -34,37 +68,59 @@ jobs:
             echo "WORKSPACE=staging" >> $GITHUB_ENV
             echo "BACKEND_CONFIG=staging" >> $GITHUB_ENV
             echo "TARGET_PROJECT_ID=entitysystem-staging" >> $GITHUB_ENV
+            echo "GH_ENVIRONMENT=staging" >> $GITHUB_ENV
           else
             echo "WORKSPACE=dev" >> $GITHUB_ENV
             echo "BACKEND_CONFIG=dev" >> $GITHUB_ENV
             echo "TARGET_PROJECT_ID=entitysystem-development" >> $GITHUB_ENV
+            echo "GH_ENVIRONMENT=development" >> $GITHUB_ENV
           fi
 
       - name: Show target
         run: |
           echo "Using workspace: $WORKSPACE (PR base: ${{ github.base_ref }}) project: $TARGET_PROJECT_ID"
+          echo "GitHub Environment: $GH_ENVIRONMENT (secrets must be defined here or at repo level)"
+
+      - name: Skip remote plan for fork PRs
+        if: github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::warning::Skipping Terraform remote plan — secrets are not available to workflows from forks."
+          echo "Static fmt/validate already passed in verify-terraform-static."
+
+      - name: Require GCP WIF secrets
+        if: github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          if [ -z "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" ]; then
+            echo "::error::GCP_WORKLOAD_IDENTITY_PROVIDER is empty."
+            echo "Add it to GitHub Environment \"$GH_ENVIRONMENT\" (Settings → Environments → $GH_ENVIRONMENT → Environment secrets), or as a repository secret."
+            echo "See docs/infrastructure/github-secrets-checklist.md"
+            exit 1
+          fi
+          if [ -z "${{ secrets.GCP_SERVICE_ACCOUNT }}" ]; then
+            echo "::error::GCP_SERVICE_ACCOUNT is empty."
+            echo "Add it to GitHub Environment \"$GH_ENVIRONMENT\" or repository secrets."
+            exit 1
+          fi
 
       - name: Authenticate to Google Cloud
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: google-github-actions/auth@v2
         with:
           workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
           service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
 
       - name: Set up Cloud SDK
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: google-github-actions/setup-gcloud@v2
 
       - name: Setup Terraform
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: "1.5.0"
 
-      - name: Terraform Format Check
-        working-directory: ./packages/infrastructure/terraform
-        run: |
-          echo "Checking Terraform formatting..."
-          terraform fmt -check -recursive -diff
-
       - name: Ensure Terraform state bucket exists
+        if: github.event.pull_request.head.repo.full_name == github.repository
         working-directory: ./packages/infrastructure/terraform
         run: |
           BUCKET=$(sed -n 's/^bucket *= *"\(.*\)"/\1/p' "backend-configs/${BACKEND_CONFIG}.hcl")
@@ -75,18 +131,14 @@ jobs:
           bash "${GITHUB_WORKSPACE}/scripts/ensure-terraform-state-bucket.sh" "$BUCKET" "$TARGET_PROJECT_ID" "${{ env.REGION }}"
 
       - name: Terraform Init and Workspace
+        if: github.event.pull_request.head.repo.full_name == github.repository
         working-directory: ./packages/infrastructure/terraform
         run: |
           terraform init -input=false -backend-config="backend-configs/${BACKEND_CONFIG}.hcl"
           terraform workspace select -or-create "$WORKSPACE"
 
-      - name: Terraform Validate
-        working-directory: ./packages/infrastructure/terraform
-        run: |
-          echo "Validating Terraform configuration..."
-          terraform validate
-
       - name: Terraform Plan
+        if: github.event.pull_request.head.repo.full_name == github.repository
         working-directory: ./packages/infrastructure/terraform
         env:
           REGISTRY: ${{ env.REGION }}-docker.pkg.dev/${{ env.TARGET_PROJECT_ID }}/${{ env.REPO_NAME }}
@@ -105,7 +157,7 @@ jobs:
           echo '```' >> $GITHUB_STEP_SUMMARY
 
       - name: Comment Plan Summary
-        if: github.event_name == 'pull_request'
+        if: github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/github-script@v7
         env:
           WORKSPACE: ${{ env.WORKSPACE }}
