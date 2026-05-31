@@ -300,9 +300,6 @@ importers:
       knip:
         specifier: 'catalog:'
         version: 5.88.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@22.19.19)(typescript@5.9.3)
-      madge:
-        specifier: 'catalog:'
-        version: 8.0.0(typescript@5.9.3)
       tsx:
         specifier: 'catalog:'
         version: 4.22.3
@@ -434,9 +431,6 @@ importers:
       knip:
         specifier: 'catalog:'
         version: 5.88.1(@emnapi/core@1.10.0)(@emnapi/runtime@1.10.0)(@types/node@22.19.19)(typescript@5.9.3)
-      madge:
-        specifier: 'catalog:'
-        version: 8.0.0(typescript@5.9.3)
       prettier:
         specifier: 'catalog:'
         version: 3.8.3
