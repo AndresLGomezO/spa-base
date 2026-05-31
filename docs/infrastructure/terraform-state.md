@@ -34,7 +34,7 @@ bash scripts/ensure-terraform-state-bucket.sh \
 
 Repeat for `entitysystem-staging` and `entitysystem-production` with their bucket names.
 
-CI runs the same script before `terraform init` in the deploy workflow.
+CI runs the same script before `terraform init` (deploy and verify workflows). The script uses **`gcloud storage`**, not `gsutil`, because GitHub WIF credentials from `google-github-actions/auth` are not compatible with `gsutil`.
 
 ## Switching environments locally
 
