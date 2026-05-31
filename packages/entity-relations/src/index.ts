@@ -17,8 +17,13 @@ export interface EntityRelationHooks {
   readonly validateWrite: (
     record: Record<string, unknown>,
     mode: "create" | "update",
+    userId?: string,
   ) => Promise<void>;
-  readonly beforeDelete: (id: string, tenantId: string) => Promise<void>;
+  readonly beforeDelete: (
+    id: string,
+    tenantId: string,
+    userId?: string,
+  ) => Promise<void>;
 }
 
 export function createEntityRelationHooks(
@@ -29,11 +34,11 @@ export function createEntityRelationHooks(
   const deleteHandler = createRelationDeleteHandler(deps);
 
   return {
-    validateWrite(record, mode) {
-      return validator.validateWrite(entity, record, mode);
+    validateWrite(record, mode, userId) {
+      return validator.validateWrite(entity, record, mode, userId);
     },
-    beforeDelete(id, tenantId) {
-      return deleteHandler.beforeDelete(entity, id, tenantId);
+    beforeDelete(id, tenantId, userId) {
+      return deleteHandler.beforeDelete(entity, id, tenantId, userId);
     },
   };
 }

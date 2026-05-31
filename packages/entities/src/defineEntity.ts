@@ -61,6 +61,7 @@ export function defineEntity<
     permissions: buildPermissions(config.name),
     ...(ui ? { ui } : {}),
     ...(config.tenantWideRead ? { tenantWideRead: true } : {}),
+    ...(config.displayField ? { displayField: config.displayField } : {}),
   };
 
   return {

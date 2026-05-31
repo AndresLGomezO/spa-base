@@ -192,7 +192,7 @@ function createTestDeps() {
       const record = await repositories[
         entityName as keyof typeof repositories
       ]?.findById(id, tenantId);
-      return record ? { id: record.id, tenantId: record.tenantId } : null;
+      return record ? { ...record } : null;
     },
     findByField: async (entityName, field, value, tenantId) => {
       const result = await repositories[
@@ -203,12 +203,7 @@ function createTestDeps() {
         value,
         limit: 100,
       });
-      return (
-        result?.items.map((record) => ({
-          id: record.id,
-          tenantId: record.tenantId,
-        })) ?? []
-      );
+      return result?.items.map((record) => ({ ...record })) ?? [];
     },
     update: async (entityName, id, tenantId, data) => {
       const updated = await repositories[

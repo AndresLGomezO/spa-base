@@ -50,6 +50,7 @@ export function EntityDefinitionWizard({
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
+  const [displayField, setDisplayField] = useState<string>("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -151,6 +152,7 @@ export function EntityDefinitionWizard({
         name: name.trim(),
         label: label.trim(),
         ...(tenantWideRead ? { tenantWideRead: true } : {}),
+        ...(displayField ? { displayField } : {}),
         fields: fields
           .filter((field) => field.name.trim())
           .map((field) => ({
@@ -258,6 +260,40 @@ export function EntityDefinitionWizard({
             canEdit
             relationTargets={relationTargets}
           />
+          {fields.some((f) => f.type === "string" && f.name.trim()) ? (
+            <div>
+              <FieldLabel htmlFor="wizard-display-field">
+                {t("dataModels.displayField", {
+                  defaultValue: "Display Field",
+                })}
+              </FieldLabel>
+              <select
+                id="wizard-display-field"
+                className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+                value={displayField}
+                onChange={(event) => setDisplayField(event.target.value)}
+              >
+                <option value="">
+                  {t("dataModels.displayFieldAuto", {
+                    defaultValue: "Auto (name → title → label → id)",
+                  })}
+                </option>
+                {fields
+                  .filter((f) => f.type === "string" && f.name.trim())
+                  .map((f) => (
+                    <option key={f.name} value={f.name}>
+                      {f.name}
+                    </option>
+                  ))}
+              </select>
+              <Text className="text-muted-foreground mt-1 text-sm">
+                {t("dataModels.displayFieldHint", {
+                  defaultValue:
+                    "Which field is shown when this entity is referenced by others.",
+                })}
+              </Text>
+            </div>
+          ) : null}
           {!useModalFooter ? (
             <div className="flex gap-2">
               <Button type="button" variant="ghost" onClick={() => setStep(1)}>

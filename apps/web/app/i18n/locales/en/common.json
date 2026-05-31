@@ -95,7 +95,9 @@
     "editTitle": "Edit {{entity}}",
     "deleteSuccess": "Record deleted successfully.",
     "relationOneToManyReadOnly": "This one-to-many relation is managed on the related entity. Add a many-to-one field on the child entity instead.",
-    "relationSyncFailed": "The record was saved, but related links could not be updated. Try saving again."
+    "relationSyncFailed": "The record was saved, but related links could not be updated. Try saving again.",
+    "noRelatedRecords": "No related records found.",
+    "view": "View"
   },
   "tenant": {
     "selectTitle": "Select a tenant",
@@ -239,6 +241,9 @@
     "sensitiveHint": "Sensitive fields are encrypted at rest. They cannot be filtered or sorted in list views.",
     "tenantWideRead": "Tenant-wide read access",
     "tenantWideReadHint": "When enabled, all tenant members can read records of this entity. Write and delete still require ownership.",
+    "displayField": "Display field",
+    "displayFieldAuto": "Auto (name → title → label → id)",
+    "displayFieldHint": "Which field is shown when this entity is referenced by others.",
     "displayOrder": "Display order",
     "displayOrderHint": "Lower numbers appear first in tables and forms.",
     "fieldFilterable": "Filterable in list views",
@@ -263,6 +268,13 @@
     "relationTarget": "Related entity",
     "relationTargetHint": "Choose another data model by name. The target model must already exist in Data Models.",
     "relationType": "Relation type",
+    "onDelete": "On delete",
+    "onDeleteOptions": {
+      "restrict": "Restrict (block delete)",
+      "cascade": "Cascade (delete referencing records)",
+      "nullify": "Set null (clear reference)"
+    },
+    "onDeleteHint": "What happens to this record when the referenced record is deleted.",
     "selectTarget": "Select entity",
     "oneToManyInlineWarning": "This field is metadata only on this model's records. Add a many-to-one field on {{target}} to store links.",
     "customRelationFieldName": "Use custom field name",

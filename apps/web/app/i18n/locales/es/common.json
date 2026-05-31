@@ -95,7 +95,9 @@
     "editTitle": "Editar {{entity}}",
     "deleteSuccess": "Registro eliminado correctamente.",
     "relationOneToManyReadOnly": "Esta relación uno a muchos se administra en la entidad relacionada. Agrega un campo muchos a uno en la entidad hija.",
-    "relationSyncFailed": "El registro se guardó, pero no se pudieron actualizar los vínculos relacionados. Intenta guardar de nuevo."
+    "relationSyncFailed": "El registro se guardó, pero no se pudieron actualizar los vínculos relacionados. Intenta guardar de nuevo.",
+    "noRelatedRecords": "No se encontraron registros relacionados.",
+    "view": "Ver"
   },
   "tenant": {
     "selectTitle": "Seleccionar un tenant",
@@ -239,6 +241,9 @@
     "sensitiveHint": "Los campos sensibles se cifran en reposo. No se pueden filtrar ni ordenar en vistas de lista.",
     "tenantWideRead": "Lectura para todo el tenant",
     "tenantWideReadHint": "Cuando está activado, todos los miembros del tenant pueden leer los registros de esta entidad. Escritura y eliminación siguen requiriendo propiedad.",
+    "displayField": "Campo de visualización",
+    "displayFieldAuto": "Automático (name → title → label → id)",
+    "displayFieldHint": "Qué campo se muestra cuando otra entidad hace referencia a este modelo.",
     "displayOrder": "Orden de visualización",
     "displayOrderHint": "Los números más bajos aparecen primero en tablas y formularios.",
     "fieldFilterable": "Filtrable en vistas de lista",
@@ -263,6 +268,13 @@
     "relationTarget": "Entidad relacionada",
     "relationTargetHint": "Elige otro modelo de datos por nombre. El modelo destino debe existir ya en Modelos de datos.",
     "relationType": "Tipo de relación",
+    "onDelete": "Al eliminar",
+    "onDeleteOptions": {
+      "restrict": "Restringir (bloquear eliminación)",
+      "cascade": "En cascada (eliminar registros referenciados)",
+      "nullify": "Establecer null (limpiar referencia)"
+    },
+    "onDeleteHint": "Qué ocurre con este registro cuando se elimina el registro referenciado.",
     "selectTarget": "Seleccionar entidad",
     "oneToManyInlineWarning": "Este campo es solo metadatos en los registros de este modelo. Agrega un campo muchos-a-uno en {{target}} para guardar los vínculos.",
     "customRelationFieldName": "Usar nombre de campo personalizado",

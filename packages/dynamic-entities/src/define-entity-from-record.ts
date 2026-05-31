@@ -48,7 +48,7 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
         relation: {
           target: field.relation!.target,
           type: field.relation!.type,
-          onDelete: "restrict",
+          onDelete: field.relation!.onDelete ?? "restrict",
         },
       };
     default:
@@ -144,6 +144,7 @@ export function defineEntityFromRecord(
     fields,
     ...(ui ? { ui } : {}),
     ...(record.tenantWideRead ? { tenantWideRead: true } : {}),
+    ...(record.displayField ? { displayField: record.displayField } : {}),
   } as Parameters<typeof defineEntity>[0]) as DefinedEntity<
     string,
     FieldDefinitions

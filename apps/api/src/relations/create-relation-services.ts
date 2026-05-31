@@ -54,7 +54,9 @@ function createRelationDeps(
         repositories[entityName];
       if (!repository) return null;
       const record = await repository.findById(id, activeTenantId);
-      return record ? { id: record.id, tenantId: record.tenantId } : null;
+      return record
+        ? ({ ...(record as Record<string, unknown>) } as GenericRecord)
+        : null;
     },
     findByField: async (entityName, field, value, activeTenantId) => {
       const repository =
@@ -67,10 +69,10 @@ function createRelationDeps(
         value,
         limit: 100,
       });
-      return result.items.map((record) => ({
-        id: record.id,
-        tenantId: record.tenantId,
-      }));
+      return result.items.map(
+        (record) =>
+          ({ ...(record as Record<string, unknown>) }) as GenericRecord,
+      );
     },
     update: async (entityName, id, activeTenantId, data) => {
       const repository =
@@ -113,7 +115,7 @@ export function createRelationRuntimeContext(
 
   return {
     hooksFor: (entityName) => ({
-      validateWrite: async (record, mode) => {
+      validateWrite: async (record, mode, userId) => {
         const tenantId =
           typeof record.tenantId === "string" ? record.tenantId : "";
         const entity = resolver.getEntityDefinition(entityName, tenantId);
@@ -124,9 +126,9 @@ export function createRelationRuntimeContext(
           entity,
           createRelationDeps(resolver, repositories, tenantId, joinRepository),
         );
-        return hooks.validateWrite(record, mode);
+        return hooks.validateWrite(record, mode, userId);
       },
-      beforeDelete: async (id, tenantId) => {
+      beforeDelete: async (id, tenantId, userId) => {
         const entity = resolver.getEntityDefinition(entityName, tenantId);
         if (!entity) {
           return;
@@ -135,7 +137,7 @@ export function createRelationRuntimeContext(
           entity,
           createRelationDeps(resolver, repositories, tenantId, joinRepository),
         );
-        return hooks.beforeDelete(id, tenantId);
+        return hooks.beforeDelete(id, tenantId, userId);
       },
     }),
     joinHandlerFor: (tenantId) =>

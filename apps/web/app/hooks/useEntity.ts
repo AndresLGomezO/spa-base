@@ -69,17 +69,30 @@ export function useEntity(
   entityName: EntityName,
   options: UseEntityOptions = {},
 ): UseEntityResult {
-  useEntityDefinition(entityName);
+  const definition = useEntityDefinition(entityName);
   const queryConfig = options.queryConfig;
   const page = options.page ?? 1;
   const queryClient = useQueryClient();
   const listQueryKey = entityListQueryKey(entityName, queryConfig, page);
+
+  const populateParam = useMemo(() => {
+    const fkFields = Object.entries(definition.fields)
+      .filter(
+        ([, meta]) =>
+          meta.relation &&
+          (meta.relation.type === "many-to-one" ||
+            meta.relation.type === "one-to-one"),
+      )
+      .map(([name]) => name);
+    return fkFields.length > 0 ? fkFields.join(",") : undefined;
+  }, [definition.fields]);
 
   const listQuery = useQuery({
     queryKey: listQueryKey,
     queryFn: () =>
       listEntity<EntityRecord>(entityName, {
         query: queryConfig,
+        populate: populateParam,
       }),
   });
 

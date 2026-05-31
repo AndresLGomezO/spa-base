@@ -57,6 +57,7 @@ export function EntityDefinitionEditor({
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
+  const [displayField, setDisplayField] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
@@ -87,6 +88,7 @@ export function EntityDefinitionEditor({
         setLabel(loaded.label);
         setFields([...loaded.fields]);
         setTenantWideRead(loaded.tenantWideRead ?? false);
+        setDisplayField(loaded.displayField ?? "");
       } catch (loadError) {
         if (cancelled) {
           return;
@@ -167,6 +169,7 @@ export function EntityDefinitionEditor({
       const updated = await patchEntityDefinition(definitionId, {
         label: label.trim(),
         tenantWideRead,
+        ...(displayField ? { displayField } : {}),
         fields: validFields.map((field) => ({
           ...field,
           name: field.name.trim(),
@@ -251,6 +254,42 @@ export function EntityDefinitionEditor({
             {t("dataModels.tenantWideReadHint")}
           </Text>
         </div>
+
+        {fields.some((f) => f.type === "string") ? (
+          <div>
+            <FieldLabel htmlFor="edit-display-field">
+              {t("dataModels.displayField", {
+                defaultValue: "Display Field",
+              })}
+            </FieldLabel>
+            <select
+              id="edit-display-field"
+              className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
+              value={displayField}
+              disabled={!canUpdate}
+              onChange={(event) => setDisplayField(event.target.value)}
+            >
+              <option value="">
+                {t("dataModels.displayFieldAuto", {
+                  defaultValue: "Auto (name → title → label → id)",
+                })}
+              </option>
+              {fields
+                .filter((f) => f.type === "string" && f.name.trim())
+                .map((f) => (
+                  <option key={f.name} value={f.name}>
+                    {f.name}
+                  </option>
+                ))}
+            </select>
+            <Text className="text-muted-foreground mt-1 text-sm">
+              {t("dataModels.displayFieldHint", {
+                defaultValue:
+                  "Which field is shown when this entity is referenced by others.",
+              })}
+            </Text>
+          </div>
+        ) : null}
 
         <EntityFieldsManager
           fields={fields}

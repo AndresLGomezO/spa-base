@@ -161,6 +161,7 @@ export interface EntityMetadata<
   readonly permissions: EntityPermissions<TName>;
   readonly ui?: EntityUIConfig;
   readonly tenantWideRead?: boolean;
+  readonly displayField?: string;
 }
 
 export type EntityPermissionAction =
@@ -193,6 +194,7 @@ export type EntityConfig<
   readonly collection?: string;
   readonly ui?: EntityUIConfig;
   readonly tenantWideRead?: boolean;
+  readonly displayField?: string;
 };
 
 export interface DefinedEntity<
