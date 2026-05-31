@@ -131,7 +131,9 @@ describe("TenantAppearanceEditor", () => {
       expect(
         await screen.findByText("platform.appearance.semantics"),
       ).toBeInTheDocument();
-      expect(document.getElementById("--color-primary-hex")).toBeInTheDocument();
+      expect(
+        document.getElementById("--color-primary-hex"),
+      ).toBeInTheDocument();
       expect(document.getElementById("--color-card-hex")).toBeInTheDocument();
     },
     MODAL_TEST_TIMEOUT_MS,
