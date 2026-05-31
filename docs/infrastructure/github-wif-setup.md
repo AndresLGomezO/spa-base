@@ -34,10 +34,11 @@ bash scripts/setup-github-wif.sh entitysystem --repo ORG/REPO
 The script:
 
 1. Derives project IDs from the prefix: `entitysystem-development`, `entitysystem-staging`, `entitysystem-production`
-2. Creates the `github-deployer` service account in each project (if missing)
-3. Grants deployer IAM roles
-4. Creates the WIF pool and OIDC provider bound to your GitHub repo
-5. Prints `GCP_WORKLOAD_IDENTITY_PROVIDER` / `GCP_SERVICE_ACCOUNT` values for each GitHub Environment
+2. Enables APIs required for WIF impersonation (`iamcredentials.googleapis.com`, `sts.googleapis.com`, etc.)
+3. Creates the `github-deployer` service account in each project (if missing)
+4. Grants deployer IAM roles
+5. Creates the WIF pool and OIDC provider bound to your GitHub repo
+6. Prints `GCP_WORKLOAD_IDENTITY_PROVIDER` / `GCP_SERVICE_ACCOUNT` values for each GitHub Environment
 
 ### GitHub secrets to set
 
@@ -171,6 +172,7 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 | Error                                    | Fix                                                                        |
 | ---------------------------------------- | -------------------------------------------------------------------------- |
 | `invalid_target` / invalid `audience`    | Re-run `setup-github-wif.sh` (fixes provider attribute-condition) and refresh `GCP_WORKLOAD_IDENTITY_PROVIDER` from `print-gcp-wif-provider.sh` |
+| `iamcredentials.googleapis.com` disabled | Re-run `setup-github-wif.sh` or `gcloud services enable iamcredentials.googleapis.com --project=PROJECT_ID`; wait ~2 min and retry CI |
 | Auth works but 403 on later steps        | Wrong `attribute-condition` on provider — must be `assertion.repository=='owner/repo'`, not repo name alone |
 | `Permission denied` on `terraform apply` | Add missing project role to deployer SA (step 2)                           |
 | `iam.serviceAccounts.actAs` denied       | Re-apply Terraform with `ci_deployer_sa_email` set; check `ci_deployer.tf` |
