@@ -336,7 +336,6 @@ export async function buildServer(options: BuildServerOptions = {}) {
         createSchema: entity.createSchema,
         updateSchema: entity.updateSchema,
         businessFieldNames: Object.keys(entity.metadata.fields),
-        metadata: entity.metadata,
       },
       repository,
       authenticate,
