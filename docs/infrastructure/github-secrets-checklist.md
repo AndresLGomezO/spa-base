@@ -2,18 +2,39 @@
 
 Use this checklist after completing [bootstrap-new-gcp-account.md](./bootstrap-new-gcp-account.md). Check each item before running **Deploy to GCP** → `dev`.
 
-**WIF secrets must be on the GitHub Environment** (`development`, `staging`, `production`), not only under repository secrets. Workflows set `environment:` so Environment secrets are injected; repository-only secrets leave `workload_identity_provider` empty and `google-github-actions/auth` fails.
+**WIF for Terraform verify (PRs):** use **repository secrets** (`Settings → Secrets and variables → Actions`). The verify workflow does not set `environment:`, so Environment-only secrets are not visible to that job.
+
+**WIF for deploy:** use **GitHub Environment** secrets (`development` / `staging` / `production`) because `deploy.yml` sets `environment:`.
+
+**Provider value must use the project number** (digits), not project id:
+
+```text
+# Correct (from print-gcp-wif-provider.sh)
+projects/123456789012/locations/global/workloadIdentityPools/github-pool/providers/github-provider
+
+# Wrong — causes invalid_target
+projects/entitysystem-development/locations/global/...
+```
 
 ## Repository variables
 
 - [ ] `GCP_REGION` = `us-central1`
 - [ ] `GCP_REPOSITORY_NAME` = `entitysystem-repo`
 
-## GitHub Environment: `development`
+## Repository secrets (Terraform verify + optional deploy fallback)
+
+| Secret | Value source |
+| ------ | ------------- |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER` | `bash scripts/print-gcp-wif-provider.sh entitysystem-development` |
+| `GCP_SERVICE_ACCOUNT` | `github-deployer@entitysystem-development.iam.gserviceaccount.com` |
+| `GCP_WORKLOAD_IDENTITY_PROVIDER_STAGING` | (optional) output for `entitysystem-staging` — used on PRs to `main` |
+| `GCP_SERVICE_ACCOUNT_STAGING` | (optional) `github-deployer@entitysystem-staging.iam.gserviceaccount.com` |
+
+## GitHub Environment: `development` (deploy workflow)
 
 Project: `entitysystem-development`
 
-- [ ] `GCP_WORKLOAD_IDENTITY_PROVIDER` — full WIF provider resource name
+- [ ] `GCP_WORKLOAD_IDENTITY_PROVIDER` — same **numeric** provider string as repository secret above
 - [ ] `GCP_SERVICE_ACCOUNT` — `github-deployer@entitysystem-development.iam.gserviceaccount.com`
 - [ ] `FIREBASE_API_KEY`
 - [ ] `FIREBASE_AUTH_DOMAIN`
@@ -58,9 +79,10 @@ First apply only — initial secret placeholder (not stored in GitHub):
 
 | Error | Fix |
 | ----- | --- |
-| `must specify exactly one of workload_identity_provider or credentials_json` | Secret is **empty** — not missing from GitHub, but not visible to the job. Add `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT` to the **GitHub Environment** that the job uses (`development` for dev, `staging` for staging, `production` for prod). |
-| Same error on **Terraform Verification** PR | `verify.yml` uses environment `development` (PR → `develop`) or `staging` (PR → `main`). Secrets must exist on that environment. |
-| Fork PR | Remote plan is skipped; fmt/validate still run. |
+| `must specify exactly one of workload_identity_provider or credentials_json` | Secret empty for that job. **Verify:** repository secrets. **Deploy:** Environment secrets. |
+| `invalid_target` / invalid `audience` | Almost always **wrong provider string**: use project **number** (from `print-gcp-wif-provider.sh`), provider must exist in **same GCP project** as Terraform (`entitysystem-development` for PR → `develop`). Re-run `bash scripts/setup-github-wif.sh entitysystem --repo OWNER/spa-base`. |
+| Provider from another GCP project | Each project has its own pool; copy provider from `print-gcp-wif-provider.sh` for **that** project only. |
+| Fork PR | Remote plan skipped; fmt/validate still run. |
 
 ## First run
 

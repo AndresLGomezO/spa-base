@@ -20,7 +20,7 @@ flowchart LR
 | Workflow | When | What it does |
 | -------- | ---- | ------------- |
 | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | PR / push to `develop` / `main` | App lint, tests, format (includes `pnpm terraform:fmt:check` on every run) |
-| [.github/workflows/verify.yml](../../.github/workflows/verify.yml) | PR touching `packages/infrastructure/terraform/**` | `terraform fmt -check`, `validate`, remote **plan** (no apply), PR comment |
+| [.github/workflows/verify.yml](../../.github/workflows/verify.yml) | PR touching `packages/infrastructure/terraform/**` | **Repository** WIF secrets, fmt, validate, remote plan (no apply), PR comment |
 | [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml) | Merge, tag `v*`, or manual | Build API image, **apply**, deploy Hosting |
 
 ### Deploy workflow — triggers
@@ -56,7 +56,7 @@ Auth: **Workload Identity Federation** only (`GCP_WORKLOAD_IDENTITY_PROVIDER`, `
 pnpm precommit
 ```
 
-Runs `i18n:validate --strict`, `terraform fmt -check`, and `validate:ci` (same idea as the reference repo).
+Runs `i18n:validate --strict`, `terraform fmt -check`, and `validate:ci`.
 
 ## Manual deploy (local)
 
@@ -109,7 +109,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 
 ## PR preview environments (phase 1b)
 
-Not included in MVP. To add later, port from reference repo:
+Not included in MVP. To add later:
 
 - `pr-environment-deploy.yml`, `cleanup.yml`, `reactivate.yml`, `maintenance.yml`
 - Terraform workspace `pr` and `firestore_collection_prefix` variable
