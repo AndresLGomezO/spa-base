@@ -1,5 +1,6 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import type { ReactNode } from "react";
 import { ThemeProvider } from "@repo/theme/react";
 
 import { TenantAppearanceEditor } from "./TenantAppearanceEditor";
@@ -34,6 +35,23 @@ vi.mock("../../lib/admin-client", () => ({
 
 vi.mock("./ColorPaletteEditor", () => ({
   ColorPaletteEditor: () => null,
+}));
+
+vi.mock("../forms/FormModal", () => ({
+  FormModal: ({
+    open,
+    title,
+    children,
+  }: {
+    readonly open: boolean;
+    readonly title: string;
+    readonly children: ReactNode;
+  }) =>
+    open ? (
+      <div role="dialog" aria-label={title}>
+        {children}
+      </div>
+    ) : null,
 }));
 
 vi.mock("@repo/ui", async (importOriginal) => {
@@ -88,7 +106,7 @@ describe("TenantAppearanceEditor", () => {
         name: "platform.appearance.customize",
       }),
     );
-    await screen.findByRole("dialog");
+    return screen.findByRole("dialog");
   }
 
   it("renders customize control after tenant loads", async () => {
@@ -105,10 +123,10 @@ describe("TenantAppearanceEditor", () => {
     "renders PhotoUpload with logo labels inside the customize modal",
     async () => {
       renderEditor();
-      await openCustomizeModal();
+      const dialog = await openCustomizeModal();
 
       expect(
-        await screen.findByRole("button", {
+        within(dialog).getByRole("button", {
           name: "platform.appearance.photoSelect",
         }),
       ).toBeInTheDocument();
@@ -120,21 +138,17 @@ describe("TenantAppearanceEditor", () => {
     "renders theme preset and semantic token fields inside the customize modal",
     async () => {
       renderEditor();
-      await openCustomizeModal();
+      const dialog = await openCustomizeModal();
 
       expect(
-        await screen.findByRole("combobox", {
+        within(dialog).getByRole("combobox", {
           name: "platform.appearance.preset",
         }),
       ).toBeInTheDocument();
-
       expect(
-        await screen.findByText("platform.appearance.semantics"),
+        within(dialog).getByLabelText("--color-primary"),
       ).toBeInTheDocument();
-      expect(
-        document.getElementById("--color-primary-hex"),
-      ).toBeInTheDocument();
-      expect(document.getElementById("--color-card-hex")).toBeInTheDocument();
+      expect(within(dialog).getByLabelText("--color-card")).toBeInTheDocument();
     },
     MODAL_TEST_TIMEOUT_MS,
   );
