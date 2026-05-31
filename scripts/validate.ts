@@ -23,7 +23,8 @@ const CI = process.argv.includes("--ci");
 const VALIDATE_STEPS: ValidateStep[] = [
   {
     label: "Build, lint, typecheck, test, format check, cypress",
-    command: "turbo run build lint typecheck test format:check cypress",
+    command:
+      "turbo run build typecheck test format:check cypress && turbo run lint -- --max-warnings 0",
   },
   {
     label: "Storybook build (@repo/ui)",
@@ -50,7 +51,8 @@ const VALIDATE_STEPS: ValidateStep[] = [
 const VALIDATE_CI_STEPS: ValidateStep[] = [
   {
     label: "Build, lint, typecheck, test:coverage, format check, cypress",
-    command: "turbo run build lint typecheck test:coverage format:check cypress",
+    command:
+      "turbo run build typecheck test:coverage format:check cypress && turbo run lint -- --max-warnings 0",
     env: { CI: "true" },
   },
   {

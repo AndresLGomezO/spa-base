@@ -15,7 +15,7 @@
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest",
     "lint:unused": "knip --no-progress",
-    "lint:circular": "madge --circular --ts-config tsconfig.madge.json --extensions ts,tsx app/",
+    "lint:circular": "node ../../scripts/lint-circular.mjs --circular --ts-config tsconfig.madge.json --extensions ts,tsx app/",
     "i18n:validate": "node scripts/validate-i18n.mjs",
     "cypress": "start-server-and-test 'pnpm preview' http://localhost:4173 'env -u ELECTRON_RUN_AS_NODE pnpm exec cypress run'",
     "cypress:open": "cypress open"
@@ -57,7 +57,6 @@
     "eslint": "catalog:",
     "jsdom": "catalog:",
     "knip": "catalog:",
-    "madge": "catalog:",
     "prettier": "catalog:",
     "start-server-and-test": "catalog:",
     "tailwindcss": "catalog:",

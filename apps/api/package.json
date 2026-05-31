@@ -11,7 +11,7 @@
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "lint:unused": "knip --no-progress",
-    "lint:circular": "madge --circular --extensions ts src/"
+    "lint:circular": "node ../../scripts/lint-circular.mjs --circular --extensions ts src/"
   },
   "dependencies": {
     "@fastify/compress": "catalog:",
@@ -41,7 +41,6 @@
     "esbuild": "catalog:",
     "eslint": "catalog:",
     "knip": "catalog:",
-    "madge": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",
     "@vitest/coverage-v8": "catalog:",
