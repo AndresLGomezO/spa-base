@@ -23,7 +23,7 @@ export default function EntityListRoute() {
 
   return (
     <RequireEntityPermission entityName={entity}>
-      <EntityPage entityName={entity} />
+      <EntityPage key={entity} entityName={entity} />
     </RequireEntityPermission>
   );
 }

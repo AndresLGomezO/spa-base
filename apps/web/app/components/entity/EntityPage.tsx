@@ -1,5 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveActiveView } from "@repo/ui-builder";
+import {
+  deriveDataViewFilterOptions,
+  useDataViewControls,
+  useDataViewUrlState,
+} from "@repo/data-view";
 import { Button, Heading, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
@@ -16,7 +21,8 @@ import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
 import { ShareDialog } from "./ShareDialog";
 import { resolveViewComponent } from "./view-component-registry";
-import { useEntityListDataView } from "./useEntityListDataView";
+import { mergeEnumFilterOptions } from "./merge-enum-filter-options";
+import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
 
 const SERVER_PAGE_SIZE = 25;
 
@@ -29,6 +35,17 @@ interface EntityPageProps {
   readonly entityName: EntityName;
 }
 
+function serializeFilters(
+  filters: Readonly<Record<string, readonly string[]>>,
+): string {
+  return JSON.stringify(
+    Object.entries(filters)
+      .filter(([, values]) => values.length > 0)
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([key, values]) => [key, [...values].sort()]),
+  );
+}
+
 export function EntityPage({ entityName }: EntityPageProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
@@ -36,57 +53,76 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const activeView = useMemo(() => resolveActiveView(definition), [definition]);
   const ViewComponent = resolveViewComponent(activeView.type) ?? EntityTable;
   const [searchParams, setSearchParams] = useSearchParams();
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
-  const { dataView, columnDescriptors, isLoadingRelations } =
-    useEntityListDataView({
-      entityName,
-      items: [],
-    });
+  const columnDescriptors = useEntityColumnDescriptors(entityName);
+  const urlState = useDataViewUrlState(columnDescriptors);
 
   const [cursorStack, setCursorStack] = useState<string[]>([]);
   const currentCursor =
     cursorStack.length > 0 ? cursorStack[cursorStack.length - 1] : undefined;
 
+  const filtersKey = serializeFilters(urlState.filters);
   const prevControlsRef = useRef({
-    search: dataView.search,
-    filters: dataView.filters,
-    sortColumnId: dataView.sort.columnId,
-    sortDirection: dataView.sort.direction,
+    search: urlState.search,
+    filtersKey,
+    sortColumnId: urlState.sort.columnId,
+    sortDirection: urlState.sort.direction,
   });
 
   useEffect(() => {
     const prev = prevControlsRef.current;
     const changed =
-      prev.search !== dataView.search ||
-      prev.filters !== dataView.filters ||
-      prev.sortColumnId !== dataView.sort.columnId ||
-      prev.sortDirection !== dataView.sort.direction;
+      prev.search !== urlState.search ||
+      prev.filtersKey !== filtersKey ||
+      prev.sortColumnId !== urlState.sort.columnId ||
+      prev.sortDirection !== urlState.sort.direction;
 
     if (changed) {
       setCursorStack([]);
       prevControlsRef.current = {
-        search: dataView.search,
-        filters: dataView.filters,
-        sortColumnId: dataView.sort.columnId,
-        sortDirection: dataView.sort.direction,
+        search: urlState.search,
+        filtersKey,
+        sortColumnId: urlState.sort.columnId,
+        sortDirection: urlState.sort.direction,
       };
     }
   }, [
-    dataView.search,
-    dataView.filters,
-    dataView.sort.columnId,
-    dataView.sort.direction,
+    urlState.search,
+    filtersKey,
+    urlState.sort.columnId,
+    urlState.sort.direction,
   ]);
 
   const queryConfig = useServerQueryConfig({
-    search: dataView.search,
-    filters: dataView.filters,
-    sort: dataView.sort,
+    search: urlState.search,
+    filters: urlState.filters,
+    sort: urlState.sort,
     limit: SERVER_PAGE_SIZE,
     cursor: currentCursor,
   });
 
   const entityState = useEntity(entityName, { queryConfig });
+
+  const listItems = entityState.items as readonly Record<string, unknown>[];
+
+  const dataViewControls = useDataViewControls(listItems, columnDescriptors, {
+    controlled: {
+      search: urlState.search,
+      filters: urlState.filters,
+      sort: urlState.sort,
+      onSearchChange: urlState.setSearch,
+      onFilterChange: urlState.setFilter,
+      onSortColumnChange: urlState.setSortColumn,
+      onToggleSortDirection: urlState.toggleSortDirection,
+      onClearAll: urlState.clearAll,
+    },
+  });
+
+  const filterOptions = useMemo(() => {
+    const fromItems = deriveDataViewFilterOptions(listItems, columnDescriptors);
+    return mergeEnumFilterOptions(definition, fromItems);
+  }, [columnDescriptors, definition, listItems]);
 
   const serverPage = cursorStack.length + 1;
   const hasNextPage = !!entityState.nextCursor;
@@ -150,10 +186,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
 
   const listViewProps = {
     entityName,
-    entityState: {
-      ...entityState,
-      isLoading: entityState.isLoading || isLoadingRelations,
-    },
+    entityState,
     page: serverPage,
     pageSize: SERVER_PAGE_SIZE,
     onPageChange: (page: number) => {
@@ -186,14 +219,21 @@ export function EntityPage({ entityName }: EntityPageProps) {
         ) : null}
       </div>
 
-      {!entityState.isLoading && !isLoadingRelations ? (
-        <WebDataViewToolbar
-          {...dataView}
-          columns={columnDescriptors}
-          filtersOpen={dataView.filtersOpen}
-          onFiltersOpenChange={dataView.setFiltersOpen}
-        />
-      ) : null}
+      <WebDataViewToolbar
+        search={urlState.search}
+        setSearch={urlState.setSearch}
+        filters={urlState.filters}
+        setFilter={urlState.setFilter}
+        sort={urlState.sort}
+        setSortColumn={urlState.setSortColumn}
+        toggleSortDirection={urlState.toggleSortDirection}
+        filterOptions={filterOptions}
+        activeBadges={dataViewControls.activeBadges}
+        clearAll={urlState.clearAll}
+        columns={columnDescriptors}
+        filtersOpen={filtersOpen}
+        onFiltersOpenChange={setFiltersOpen}
+      />
 
       <ViewComponent {...listViewProps} />
 
