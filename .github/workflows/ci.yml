@@ -136,6 +136,14 @@ jobs:
         id: turbo
         run: CI=true pnpm turbo run format:check lint typecheck test:coverage --concurrency=4
 
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.5.0"
+
+      - name: Terraform format check
+        run: pnpm terraform:fmt:check
+
       - name: Validate shared packages
         run: |
           pnpm --filter @repo/shared-types run validate

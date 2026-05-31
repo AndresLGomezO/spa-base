@@ -1,0 +1,294 @@
+name: Deploy to GCP
+
+on:
+  pull_request:
+    types:
+      - closed
+    branches:
+      - develop
+      - main
+
+  push:
+    tags:
+      - "v*"
+
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: "Environment to deploy to"
+        required: true
+        default: "dev"
+        type: choice
+        options:
+          - dev
+          - staging
+          - prod
+      dry_run:
+        description: "Dry Run Only (Plan but do not apply)"
+        required: true
+        type: boolean
+        default: false
+
+env:
+  REGION: ${{ vars.GCP_REGION || 'us-central1' }}
+  REPO_NAME: ${{ vars.GCP_REPOSITORY_NAME || 'entitysystem-repo' }}
+
+jobs:
+  resolve-target:
+    runs-on: ubuntu-latest
+    outputs:
+      workspace: ${{ steps.resolve.outputs.workspace }}
+      backend_config: ${{ steps.resolve.outputs.backend_config }}
+      target_project_id: ${{ steps.resolve.outputs.target_project_id }}
+      gh_environment: ${{ steps.resolve.outputs.gh_environment }}
+      vite_env: ${{ steps.resolve.outputs.vite_env }}
+      checkout_ref: ${{ steps.resolve.outputs.checkout_ref }}
+      image_tag: ${{ steps.resolve.outputs.image_tag }}
+    steps:
+      - name: Resolve deploy target
+        id: resolve
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
+            case "${{ github.event.inputs.environment }}" in
+              dev)
+                echo "workspace=dev" >> $GITHUB_OUTPUT
+                echo "backend_config=dev" >> $GITHUB_OUTPUT
+                echo "target_project_id=entitysystem-development" >> $GITHUB_OUTPUT
+                echo "gh_environment=development" >> $GITHUB_OUTPUT
+                echo "vite_env=dev" >> $GITHUB_OUTPUT
+                ;;
+              staging)
+                echo "workspace=staging" >> $GITHUB_OUTPUT
+                echo "backend_config=staging" >> $GITHUB_OUTPUT
+                echo "target_project_id=entitysystem-staging" >> $GITHUB_OUTPUT
+                echo "gh_environment=staging" >> $GITHUB_OUTPUT
+                echo "vite_env=dev" >> $GITHUB_OUTPUT
+                ;;
+              prod)
+                echo "workspace=prod" >> $GITHUB_OUTPUT
+                echo "backend_config=prod" >> $GITHUB_OUTPUT
+                echo "target_project_id=entitysystem-production" >> $GITHUB_OUTPUT
+                echo "gh_environment=production" >> $GITHUB_OUTPUT
+                echo "vite_env=prod" >> $GITHUB_OUTPUT
+                ;;
+            esac
+            echo "checkout_ref=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "image_tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "push" ]; then
+            echo "workspace=prod" >> $GITHUB_OUTPUT
+            echo "backend_config=prod" >> $GITHUB_OUTPUT
+            echo "target_project_id=entitysystem-production" >> $GITHUB_OUTPUT
+            echo "gh_environment=production" >> $GITHUB_OUTPUT
+            echo "vite_env=prod" >> $GITHUB_OUTPUT
+            echo "checkout_ref=${{ github.sha }}" >> $GITHUB_OUTPUT
+            echo "image_tag=${GITHUB_REF_NAME}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" = "pull_request" ]; then
+            echo "checkout_ref=${{ github.event.pull_request.merge_commit_sha }}" >> $GITHUB_OUTPUT
+            echo "image_tag=${{ github.event.pull_request.merge_commit_sha }}" >> $GITHUB_OUTPUT
+            if [ "${{ github.event.pull_request.base.ref }}" = "main" ]; then
+              echo "workspace=staging" >> $GITHUB_OUTPUT
+              echo "backend_config=staging" >> $GITHUB_OUTPUT
+              echo "target_project_id=entitysystem-staging" >> $GITHUB_OUTPUT
+              echo "gh_environment=staging" >> $GITHUB_OUTPUT
+              echo "vite_env=dev" >> $GITHUB_OUTPUT
+            else
+              echo "workspace=dev" >> $GITHUB_OUTPUT
+              echo "backend_config=dev" >> $GITHUB_OUTPUT
+              echo "target_project_id=entitysystem-development" >> $GITHUB_OUTPUT
+              echo "gh_environment=development" >> $GITHUB_OUTPUT
+              echo "vite_env=dev" >> $GITHUB_OUTPUT
+            fi
+          fi
+
+  build:
+    name: Build and push API image
+    runs-on: ubuntu-latest
+    needs: [resolve-target]
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    environment: ${{ needs.resolve-target.outputs.gh_environment }}
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      REGISTRY: ${{ vars.GCP_REGION || 'us-central1' }}-docker.pkg.dev/${{ needs.resolve-target.outputs.target_project_id }}/${{ vars.GCP_REPOSITORY_NAME || 'entitysystem-repo' }}
+      TAG: ${{ needs.resolve-target.outputs.image_tag }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-target.outputs.checkout_ref }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_PROD || secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_SERVICE_ACCOUNT_PROD || secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push API image
+        uses: docker/bake-action@v5
+        with:
+          push: true
+          files: docker-bake.hcl
+          targets: api
+        env:
+          REGISTRY: ${{ env.REGISTRY }}
+          TAG: ${{ env.TAG }}
+
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    needs: [resolve-target, build]
+    if: github.event_name == 'workflow_dispatch' || (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+    environment: ${{ needs.resolve-target.outputs.gh_environment }}
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve-target.outputs.checkout_ref }}
+
+      - name: Apply resolved deploy target
+        run: |
+          echo "WORKSPACE=${{ needs.resolve-target.outputs.workspace }}" >> $GITHUB_ENV
+          echo "TARGET_PROJECT_ID=${{ needs.resolve-target.outputs.target_project_id }}" >> $GITHUB_ENV
+          echo "BACKEND_CONFIG=${{ needs.resolve-target.outputs.backend_config }}" >> $GITHUB_ENV
+          echo "IMAGE_TAG=${{ needs.resolve-target.outputs.image_tag }}" >> $GITHUB_ENV
+          echo "VITE_ENV=${{ needs.resolve-target.outputs.vite_env }}" >> $GITHUB_ENV
+
+      - name: Show target
+        run: |
+          echo "workspace=$WORKSPACE project=$TARGET_PROJECT_ID backend=$BACKEND_CONFIG tag=$IMAGE_TAG vite_env=$VITE_ENV"
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_WORKLOAD_IDENTITY_PROVIDER_PROD || secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_SERVICE_ACCOUNT_PROD || secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+
+      - name: Install dependencies
+        env:
+          CYPRESS_INSTALL_BINARY: "0"
+        run: pnpm install --frozen-lockfile
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+
+      - name: Ensure Terraform state bucket exists
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          BUCKET=$(sed -n 's/^bucket *= *"\(.*\)"/\1/p' "backend-configs/${BACKEND_CONFIG}.hcl")
+          if [ -z "$BUCKET" ]; then
+            echo "::error::Could not read bucket from backend-configs/${BACKEND_CONFIG}.hcl"
+            exit 1
+          fi
+          bash "${GITHUB_WORKSPACE}/scripts/ensure-terraform-state-bucket.sh" "$BUCKET" "$TARGET_PROJECT_ID" "${{ env.REGION }}"
+
+      - name: Terraform Init and Workspace
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          terraform init -input=false -backend-config="backend-configs/${BACKEND_CONFIG}.hcl"
+          terraform workspace select -or-create "$WORKSPACE"
+
+      - name: Terraform Plan Preview
+        working-directory: ./packages/infrastructure/terraform
+        env:
+          TAG: ${{ env.IMAGE_TAG }}
+          REGISTRY: ${{ env.REGION }}-docker.pkg.dev/${{ env.TARGET_PROJECT_ID }}/${{ env.REPO_NAME }}
+          CI_DEPLOYER_SA: ${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_SERVICE_ACCOUNT_PROD || secrets.GCP_SERVICE_ACCOUNT }}
+        run: |
+          terraform plan \
+            -var="region=${{ env.REGION }}" \
+            -var="api_image=$REGISTRY/api:$TAG" \
+            -var="ci_deployer_sa_email=$CI_DEPLOYER_SA" \
+            -no-color -out=tfplan
+
+          terraform show -no-color tfplan > plan_output.txt
+
+          echo "### Terraform Plan Preview ($WORKSPACE)" >> $GITHUB_STEP_SUMMARY
+          echo '```hcl' >> $GITHUB_STEP_SUMMARY
+          cat plan_output.txt >> $GITHUB_STEP_SUMMARY
+          echo '```' >> $GITHUB_STEP_SUMMARY
+
+      - name: Terraform Apply
+        if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false') || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+        working-directory: ./packages/infrastructure/terraform
+        env:
+          TAG: ${{ env.IMAGE_TAG }}
+          REGISTRY: ${{ env.REGION }}-docker.pkg.dev/${{ env.TARGET_PROJECT_ID }}/${{ env.REPO_NAME }}
+          CI_DEPLOYER_SA: ${{ needs.resolve-target.outputs.gh_environment == 'production' && secrets.GCP_SERVICE_ACCOUNT_PROD || secrets.GCP_SERVICE_ACCOUNT }}
+        run: |
+          set +e
+          terraform apply -auto-approve tfplan 2>&1 | tee apply_output.txt
+          exitcode=${PIPESTATUS[0]}
+          if [ $exitcode -ne 0 ] && grep -qE '409|index already exists' apply_output.txt; then
+            echo "::notice::Firestore index 409 — waiting 120s for deletion to propagate, then re-applying..."
+            sleep 120
+            terraform apply -auto-approve \
+              -var="region=${{ env.REGION }}" \
+              -var="api_image=$REGISTRY/api:$TAG" \
+              -var="ci_deployer_sa_email=$CI_DEPLOYER_SA"
+            exit $?
+          fi
+          exit $exitcode
+
+      - name: Get URLs from Terraform
+        id: terraform_urls
+        if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false') || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+        working-directory: ./packages/infrastructure/terraform
+        run: |
+          echo "backend_url=$(terraform output -raw backend_url)" >> $GITHUB_OUTPUT
+          echo "frontend_url=$(terraform output -raw frontend_url)" >> $GITHUB_OUTPUT
+          echo "firebase_hosting_site_id=$(terraform output -raw firebase_hosting_site_id)" >> $GITHUB_OUTPUT
+
+      - name: Build and deploy web to Firebase Hosting
+        if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false') || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+        env:
+          VITE_API_URL: ${{ steps.terraform_urls.outputs.backend_url }}
+          VITE_ENV: ${{ env.VITE_ENV }}
+          VITE_FIREBASE_API_KEY: ${{ secrets.FIREBASE_API_KEY }}
+          VITE_FIREBASE_AUTH_DOMAIN: ${{ secrets.FIREBASE_AUTH_DOMAIN }}
+          VITE_FIREBASE_PROJECT_ID: ${{ secrets.FIREBASE_PROJECT_ID }}
+          VITE_FIREBASE_STORAGE_BUCKET: ${{ secrets.FIREBASE_STORAGE_BUCKET }}
+          VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.FIREBASE_MESSAGING_SENDER_ID }}
+          VITE_FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
+        run: |
+          set -euo pipefail
+          if [ -z "${VITE_API_URL:-}" ]; then
+            echo "::error::VITE_API_URL (backend_url from Terraform) is empty"
+            exit 1
+          fi
+          echo "Building web with API URL: ${VITE_API_URL}"
+          pnpm --filter web build
+          pnpm exec firebase use "${{ env.TARGET_PROJECT_ID }}"
+          pnpm exec firebase target:apply hosting live "${{ steps.terraform_urls.outputs.firebase_hosting_site_id }}"
+          pnpm exec firebase deploy --only hosting:live,storage --non-interactive
+
+      - name: Deployment summary
+        if: (github.event_name == 'pull_request' && github.event.pull_request.merged == true) || (github.event_name == 'workflow_dispatch' && github.event.inputs.dry_run == 'false') || (github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v'))
+        run: |
+          echo "### Deployed ($WORKSPACE)" >> $GITHUB_STEP_SUMMARY
+          echo "- API: ${{ steps.terraform_urls.outputs.backend_url }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Web: ${{ steps.terraform_urls.outputs.frontend_url }}" >> $GITHUB_STEP_SUMMARY

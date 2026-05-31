@@ -4,6 +4,18 @@ Index of all platform documentation. Start with the [Phase 2 handoff](./phase-2-
 
 ---
 
+## Infrastructure and deployment (GCP)
+
+| Document | Description |
+|----------|-------------|
+| [infrastructure/bootstrap-new-gcp-account.md](./infrastructure/bootstrap-new-gcp-account.md) | New GCP account → projects → WIF → first deploy |
+| [infrastructure/github-secrets-checklist.md](./infrastructure/github-secrets-checklist.md) | Pre-flight checklist before first workflow run |
+| [infrastructure/deployment.md](./infrastructure/deployment.md) | CI/CD, branch → environment mapping |
+| [infrastructure/environment-variables.md](./infrastructure/environment-variables.md) | All vars, secrets, and env keys |
+| [infrastructure/per-environment.md](./infrastructure/per-environment.md) | Localhost vs dev / staging / prod |
+
+---
+
 ## Handoff and planning
 
 | Document | Description |

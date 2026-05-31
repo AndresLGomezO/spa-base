@@ -16,6 +16,14 @@ coverage/
 **/cypress/downloads/
 **/cypress/results/
 
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+.terraform.lock.hcl
+**/terraform.tfplan
+**/tfplan
+
 .firebase/
 firebase-debug.log
 firestore-debug.log

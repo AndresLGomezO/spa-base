@@ -11,15 +11,16 @@ Multi-tenant ecosystem builder: schema-driven entities, auto-generated CRUD APIs
 
 **Start here for handoff to the next team:**
 
-| Document                                                                           | Description                                              |
-| ---------------------------------------------------------------------------------- | -------------------------------------------------------- |
-| [docs/phase-2-platform-handoff.md](docs/phase-2-platform-handoff.md)               | Master handoff — architecture, capabilities, API summary |
-| [docs/master-plans.md](docs/master-plans.md)                                       | Phase 1 + 2 master plans mapped to the codebase          |
-| [docs/e2e-validation-runbook.md](docs/e2e-validation-runbook.md)                   | Manual validation steps                                  |
-| [docs/next-phase-backlog.md](docs/next-phase-backlog.md)                           | **Next steps** — prioritized deferred work (P0–P2)       |
-| [docs/codebase-map.md](docs/codebase-map.md)                                       | Annotated file index                                     |
-| [docs/README.md](docs/README.md)                                                   | Full documentation index                                 |
-| [docs/theme-and-tenant-branding-guide.md](docs/theme-and-tenant-branding-guide.md) | Theme tokens, tenant Appearance, `@repo/theme` usage     |
+| Document                                                                                             | Description                                              |
+| ---------------------------------------------------------------------------------------------------- | -------------------------------------------------------- |
+| [docs/phase-2-platform-handoff.md](docs/phase-2-platform-handoff.md)                                 | Master handoff — architecture, capabilities, API summary |
+| [docs/master-plans.md](docs/master-plans.md)                                                         | Phase 1 + 2 master plans mapped to the codebase          |
+| [docs/e2e-validation-runbook.md](docs/e2e-validation-runbook.md)                                     | Manual validation steps                                  |
+| [docs/next-phase-backlog.md](docs/next-phase-backlog.md)                                             | **Next steps** — prioritized deferred work (P0–P2)       |
+| [docs/codebase-map.md](docs/codebase-map.md)                                                         | Annotated file index                                     |
+| [docs/README.md](docs/README.md)                                                                     | Full documentation index                                 |
+| [docs/infrastructure/bootstrap-new-gcp-account.md](docs/infrastructure/bootstrap-new-gcp-account.md) | **GCP deploy** — new account, WIF, first release         |
+| [docs/theme-and-tenant-branding-guide.md](docs/theme-and-tenant-branding-guide.md)                   | Theme tokens, tenant Appearance, `@repo/theme` usage     |
 
 ---
 
