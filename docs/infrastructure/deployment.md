@@ -100,6 +100,8 @@ pnpm exec firebase target:apply hosting live "$SITE_ID"
 pnpm exec firebase deploy --only hosting:live,storage --non-interactive
 ```
 
+`firebase.json` must declare hosting target `live` (repo root). `target:apply` maps `live` → the Terraform site id in `.firebaserc`.
+
 Fill `VITE_FIREBASE_*` from Firebase Console.
 
 ## Troubleshooting
@@ -118,6 +120,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Stale App Engine in Terraform state | `terraform state rm google_app_engine_application.default` if a prior apply added it |
 | Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. Deploy sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so `/health` is available before Firestore seeds |
 | `Cannot find package 'firebase-admin'` | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
+| Hosting target `live` not detected | [`firebase.json`](../../firebase.json) must use `"hosting": [{ "target": "live", ... }]`; run `firebase target:apply hosting live SITE_ID` before deploy |
 | Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
 
 ## PR preview environments (phase 1b)

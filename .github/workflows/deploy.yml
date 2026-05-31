@@ -325,8 +325,13 @@ jobs:
           fi
           echo "Building web with API URL: ${VITE_API_URL}"
           pnpm --filter web build
+          SITE_ID="${{ steps.terraform_urls.outputs.firebase_hosting_site_id }}"
+          if [ -z "$SITE_ID" ]; then
+            echo "::error::firebase_hosting_site_id from Terraform is empty"
+            exit 1
+          fi
           pnpm exec firebase use "${{ env.TARGET_PROJECT_ID }}"
-          pnpm exec firebase target:apply hosting live "${{ steps.terraform_urls.outputs.firebase_hosting_site_id }}"
+          pnpm exec firebase target:apply hosting live "$SITE_ID"
           pnpm exec firebase deploy --only hosting:live,storage --non-interactive
 
       - name: Deployment summary
