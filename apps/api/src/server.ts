@@ -56,6 +56,10 @@ import {
   type LoadRequestPermissionsDeps,
 } from "./rbac/index.js";
 import { createTenantRoleCatalogLoader } from "./rbac/role-catalog.js";
+import { createOwnershipQueryInjector } from "./access/ownership-query-injector.js";
+import { createShareService } from "./access/share-service.js";
+import { registerShareRoutes } from "./access/register-share-routes.js";
+import { createAuditLogger } from "./audit/audit-log.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
@@ -246,7 +250,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     options.joinRepository ??
     createFirestoreAdminJoinCollectionRepository(firebaseAdminConfig);
   const relationContext = entityRuntime.createRelationContext(joinRepository);
-  const queryContext = entityRuntime.createQueryContext();
+  const ownershipQueryInjector = createOwnershipQueryInjector(
+    (entityName, tenantId) => {
+      const entity = entityRuntime.resolveEntity(entityName, tenantId);
+      if (!entity) return undefined;
+      return { tenantWideRead: entity.metadata.tenantWideRead };
+    },
+  );
+  const queryContext = entityRuntime.createQueryContext(ownershipQueryInjector);
   const crudHooks: CrudHookDeps = {
     hookRuntime,
     entityRuntime,
@@ -351,6 +362,19 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     relationContext,
   });
+
+  if (!options.repositories) {
+    const auditLogger = createAuditLogger(firebaseAdminConfig);
+    const shareService = createShareService({
+      firebaseAdminConfig,
+      auditLogger,
+    });
+    registerShareRoutes(server, {
+      authenticate,
+      shareService,
+      entityRuntime,
+    });
+  }
 
   const dynamicDefinitions =
     options.repositories != null

@@ -396,6 +396,18 @@
       "afterDelete": "After delete"
     }
   },
+  "share": {
+    "title": "Share Record",
+    "userId": "User ID",
+    "userIdPlaceholder": "Enter user ID",
+    "permission": "Permission",
+    "read": "Read",
+    "write": "Write",
+    "grant": "Share",
+    "currentShares": "Current shares",
+    "loading": "Loading shares…",
+    "noShares": "This record is not shared with anyone."
+  },
   "dataView": {
     "searchPlaceholder": "Search…",
     "filtersTrigger": "Filters",

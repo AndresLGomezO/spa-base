@@ -3,12 +3,16 @@
  * Must not appear in developer field configs (enforced by AssertNoSystemFields).
  *
  * tenantId is excluded from createSchema — API middleware injects it server-side.
+ * ownerId, accessUserIds, sharedWith are ownership/sharing fields injected on create.
  */
 export const SYSTEM_FIELD_KEYS = [
   "id",
   "tenantId",
   "createdAt",
   "updatedAt",
+  "ownerId",
+  "accessUserIds",
+  "sharedWith",
 ] as const;
 
 export type SystemFieldKey = (typeof SYSTEM_FIELD_KEYS)[number];
@@ -34,6 +38,21 @@ export const SYSTEM_FIELDS = {
     required: true,
     system: true,
   },
+  ownerId: {
+    type: "string" as const,
+    required: false,
+    system: true,
+  },
+  accessUserIds: {
+    type: "string" as const,
+    required: false,
+    system: true,
+  },
+  sharedWith: {
+    type: "string" as const,
+    required: false,
+    system: true,
+  },
 } as const;
 
 export interface SystemFieldRecord {
@@ -41,4 +60,7 @@ export interface SystemFieldRecord {
   readonly tenantId: string;
   readonly createdAt: string;
   readonly updatedAt: string;
+  readonly ownerId?: string;
+  readonly accessUserIds?: readonly string[];
+  readonly sharedWith?: Readonly<Record<string, string>>;
 }

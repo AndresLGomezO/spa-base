@@ -26,6 +26,9 @@ const systemFieldSchemas = {
   tenantId: z.string().trim().min(1),
   createdAt: isoDatetimeStringSchema,
   updatedAt: isoDatetimeStringSchema,
+  ownerId: z.string().trim().min(1).optional(),
+  accessUserIds: z.array(z.string().trim().min(1)).optional(),
+  sharedWith: z.record(z.string().trim().min(1), z.string()).optional(),
 } as const;
 
 function shouldIncludeFieldInSchema(fieldConfig: FieldConfig): boolean {

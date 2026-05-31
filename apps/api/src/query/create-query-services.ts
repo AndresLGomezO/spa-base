@@ -1,6 +1,10 @@
 import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
 import type { EntityQueryExecutor } from "@repo/firestore-converters";
-import { createQueryEngine, type QueryEngine } from "@repo/query-engine";
+import {
+  createQueryEngine,
+  type QueryEngine,
+  type RbacQueryInjector,
+} from "@repo/query-engine";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
@@ -25,6 +29,7 @@ interface EntityQueryRuntimeContext {
 export function createQueryRuntimeContext(
   resolver: TenantEntityResolver,
   executorsByEntityName: Record<string, EntityQueryExecutor>,
+  rbacQueryInjector?: RbacQueryInjector,
 ): EntityQueryRuntimeContext {
   return {
     queryEngine: createQueryEngine({
@@ -33,6 +38,7 @@ export function createQueryRuntimeContext(
       getExecutor: (entityName, context) =>
         resolver.getQueryExecutor(context.tenantId, entityName) ??
         executorsByEntityName[entityName],
+      rbacQueryInjector,
     }),
     executorsByEntityName,
   };

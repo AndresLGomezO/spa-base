@@ -41,6 +41,10 @@ describe("defineEntity", () => {
       "customer.create",
       "customer.update",
       "customer.delete",
+      "customer.read_all",
+      "customer.write_all",
+      "customer.delete_all",
+      "customer.manage_shares",
     ]);
   });
 
@@ -316,12 +320,16 @@ describe("relation fields", () => {
 });
 
 describe("buildPermissions", () => {
-  it("generates CRUD permissions for an entity name", () => {
+  it("generates CRUD and ownership permissions for an entity name", () => {
     expect(buildPermissions("order")).toEqual([
       "order.read",
       "order.create",
       "order.update",
       "order.delete",
+      "order.read_all",
+      "order.write_all",
+      "order.delete_all",
+      "order.manage_shares",
     ]);
   });
 });

@@ -62,8 +62,14 @@ const queryConfigSchema = z
   })
   .strict();
 
+const NON_QUERYABLE_SYSTEM_FIELDS = new Set([
+  "tenantId",
+  "updatedAt",
+  "sharedWith",
+]);
+
 const QUERYABLE_SYSTEM_FIELDS = new Set<string>(
-  SYSTEM_FIELD_KEYS.filter((key) => key !== "tenantId" && key !== "updatedAt"),
+  SYSTEM_FIELD_KEYS.filter((key) => !NON_QUERYABLE_SYSTEM_FIELDS.has(key)),
 );
 
 const INEQUALITY_OPERATORS = new Set<FilterOperator>([
@@ -132,11 +138,14 @@ function getFieldMeta(
   fieldName: string,
 ): NormalizedFieldMeta | null {
   if (QUERYABLE_SYSTEM_FIELDS.has(fieldName)) {
-    if (fieldName === "id") {
+    if (fieldName === "id" || fieldName === "ownerId") {
       return { type: "string", required: true, optional: false };
     }
     if (fieldName === "createdAt") {
       return { type: "date", required: true, optional: false };
+    }
+    if (fieldName === "accessUserIds") {
+      return { type: "string", required: false, optional: true };
     }
     return null;
   }
@@ -189,6 +198,8 @@ function validateFilterValue(operator: FilterOperator, value: unknown): void {
   }
 }
 
+const SYSTEM_ARRAY_FIELDS = new Set(["accessUserIds"]);
+
 function validateFilter(
   entity: AnyDefinedEntity,
   filter: Filter,
@@ -198,6 +209,21 @@ function validateFilter(
       QueryErrorCode.QUERY_VALIDATION_ERROR,
       'Filtering on "tenantId" is not allowed.',
     );
+  }
+
+  if (SYSTEM_ARRAY_FIELDS.has(filter.field)) {
+    if (filter.operator !== "array-contains") {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        `Only "array-contains" is allowed for field "${filter.field}".`,
+      );
+    }
+    validateFilterValue(filter.operator, filter.value);
+    return {
+      field: filter.field,
+      operator: filter.operator,
+      value: filter.value,
+    };
   }
 
   const fieldType = resolveFieldType(entity, filter.field);

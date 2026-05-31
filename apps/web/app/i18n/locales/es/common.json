@@ -396,6 +396,18 @@
       "afterDelete": "Después de eliminar"
     }
   },
+  "share": {
+    "title": "Compartir Registro",
+    "userId": "ID de Usuario",
+    "userIdPlaceholder": "Ingrese ID de usuario",
+    "permission": "Permiso",
+    "read": "Lectura",
+    "write": "Escritura",
+    "grant": "Compartir",
+    "currentShares": "Compartidos actualmente",
+    "loading": "Cargando compartidos…",
+    "noShares": "Este registro no está compartido con nadie."
+  },
   "dataView": {
     "searchPlaceholder": "Buscar…",
     "filtersTrigger": "Filtros",

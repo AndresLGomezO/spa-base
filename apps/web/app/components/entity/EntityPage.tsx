@@ -14,6 +14,7 @@ import { WebDataViewToolbar } from "../data-view";
 import { RequireEntityPermission } from "./RequireEntityPermission";
 import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
+import { ShareDialog } from "./ShareDialog";
 import { resolveViewComponent } from "./view-component-registry";
 import { useEntityListDataView } from "./useEntityListDataView";
 
@@ -52,6 +53,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
     });
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
+  const [shareRecordId, setShareRecordId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
 
@@ -114,6 +116,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
     onRequestEdit: permissions.canUpdate
       ? (id: string) => setFormModal({ mode: "edit", recordId: id })
       : undefined,
+    onRequestShare: setShareRecordId,
   };
 
   return (
@@ -215,6 +218,13 @@ export function EntityPage({ entityName }: EntityPageProps) {
           </Button>
         </div>
       </Modal>
+
+      <ShareDialog
+        entityName={entityName}
+        recordId={shareRecordId ?? ""}
+        open={shareRecordId !== null}
+        onClose={() => setShareRecordId(null)}
+      />
     </div>
   );
 }

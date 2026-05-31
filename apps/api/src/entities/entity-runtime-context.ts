@@ -26,6 +26,7 @@ import {
   type FirestoreIndexHint,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
+import type { RbacQueryInjector } from "@repo/query-engine";
 
 import { createInMemoryEntityQueryExecutor } from "../repositories/in-memory-entity-query-executor.js";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
@@ -209,11 +210,17 @@ export class EntityRuntimeContext {
     return executor;
   }
 
-  createQueryContext(): ReturnType<typeof createQueryRuntimeContext> {
+  createQueryContext(
+    rbacQueryInjector?: RbacQueryInjector,
+  ): ReturnType<typeof createQueryRuntimeContext> {
     const executorsByEntityName: Record<string, EntityQueryExecutor> = {
       ...(this.options.queryExecutors ?? {}),
     };
-    return createQueryRuntimeContext(this, executorsByEntityName);
+    return createQueryRuntimeContext(
+      this,
+      executorsByEntityName,
+      rbacQueryInjector,
+    );
   }
 
   createRelationContext(
