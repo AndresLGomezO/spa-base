@@ -14,8 +14,6 @@ import { WebDataViewToolbar } from "../data-view";
 import { RequireEntityPermission } from "./RequireEntityPermission";
 import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
-import { ShareDialog } from "./ShareDialog";
-import { getRecordAccess } from "../../hooks/useRecordAccess";
 import { resolveViewComponent } from "./view-component-registry";
 import { useEntityListDataView } from "./useEntityListDataView";
 
@@ -56,16 +54,10 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
-  const [shareOpen, setShareOpen] = useState(false);
-  const [editRecordAccess, setEditRecordAccess] = useState<ReturnType<
-    typeof getRecordAccess
-  > | null>(null);
 
   const closeFormModal = useCallback(() => {
     setFormModal(null);
     setIsFormSubmitting(false);
-    setShareOpen(false);
-    setEditRecordAccess(null);
     if (searchParams.has("create") || searchParams.has("edit")) {
       const next = new URLSearchParams(searchParams);
       next.delete("create");
@@ -157,35 +149,17 @@ export function EntityPage({ entityName }: EntityPageProps) {
           title={formModalTitle}
           size="lg"
           footer={
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                {formModal.mode === "edit" &&
-                editRecordAccess?.canManageShares ? (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => setShareOpen(true)}
-                  >
-                    {t("entity.share")}
-                  </Button>
-                ) : null}
-              </div>
-              <div className="flex gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={closeFormModal}
-                >
-                  {t("entity.cancel")}
-                </Button>
-                <Button
-                  type="submit"
-                  form={ENTITY_FORM_ID}
-                  loading={isFormSubmitting}
-                >
-                  {t("entity.save")}
-                </Button>
-              </div>
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={closeFormModal}>
+                {t("entity.cancel")}
+              </Button>
+              <Button
+                type="submit"
+                form={ENTITY_FORM_ID}
+                loading={isFormSubmitting}
+              >
+                {t("entity.save")}
+              </Button>
             </div>
           }
         >
@@ -211,22 +185,10 @@ export function EntityPage({ entityName }: EntityPageProps) {
                 onSubmittingChange={setIsFormSubmitting}
                 onCancel={closeFormModal}
                 onSuccess={closeFormModal}
-                onRecordLoaded={(record) =>
-                  setEditRecordAccess(getRecordAccess(record))
-                }
               />
             </RequireEntityPermission>
           )}
         </FormModal>
-      ) : null}
-
-      {formModal?.mode === "edit" ? (
-        <ShareDialog
-          entityName={entityName}
-          recordId={formModal.recordId}
-          open={shareOpen}
-          onClose={() => setShareOpen(false)}
-        />
       ) : null}
 
       <Modal

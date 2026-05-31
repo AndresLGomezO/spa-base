@@ -107,11 +107,6 @@ function getAllowedOperators(
     return entityCache.get(fieldName) ?? null;
   }
 
-  if (fieldName === "accessUserIds") {
-    entityCache.set(fieldName, ["array-contains"]);
-    return ["array-contains"];
-  }
-
   const fieldType = resolveFieldType(entity, fieldName);
   const allowed = fieldType ? OPERATORS_BY_FIELD_TYPE[fieldType] : null;
   entityCache.set(fieldName, allowed);
@@ -142,9 +137,6 @@ function getFieldMeta(
     }
     if (fieldName === "createdAt") {
       return { type: "date", required: true, optional: false };
-    }
-    if (fieldName === "accessUserIds") {
-      return { type: "string", required: true, optional: false };
     }
     return null;
   }

@@ -13,13 +13,6 @@ export function createRequirePermission(
   deps: LoadRequestPermissionsDeps,
   permission: string,
 ) {
-  return createRequireAnyPermission(deps, [permission]);
-}
-
-export function createRequireAnyPermission(
-  deps: LoadRequestPermissionsDeps,
-  permissions: readonly string[],
-) {
   return async function requirePermission(
     request: FastifyRequest,
     reply: FastifyReply,
@@ -36,11 +29,9 @@ export function createRequireAnyPermission(
     }
 
     const resolvedCtx = await loadRequestPermissions(request, deps);
-    const allowed = permissions.some((permission) =>
-      hasPermission(permission, resolvedCtx.permissions ?? [], {
-        isSuperAdmin: resolvedCtx.isSuperAdmin,
-      }),
-    );
+    const allowed = hasPermission(permission, resolvedCtx.permissions ?? [], {
+      isSuperAdmin: resolvedCtx.isSuperAdmin,
+    });
 
     if (!allowed) {
       replyWithError(

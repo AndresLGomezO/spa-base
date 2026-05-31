@@ -41,10 +41,6 @@ const updateBodySchema = z.object({
   roles: z.array(z.string().trim().min(1)).min(1),
 });
 
-const listQuerySchema = z.object({
-  search: z.string().trim().min(1).optional(),
-});
-
 function resolveTenantId(
   request: FastifyRequest,
   reply: FastifyReply,
@@ -98,11 +94,6 @@ export async function registerTenantUserRoutes(
       const tenantId = resolveTenantId(request, reply);
       if (!tenantId) return;
 
-      const parsedQuery = listQuerySchema.safeParse(request.query);
-      const search = parsedQuery.success
-        ? parsedQuery.data.search?.trim().toLowerCase()
-        : undefined;
-
       const [members, invites] = await Promise.all([
         listTenantMembers({
           registeredUserRepository: options.registeredUserRepository,
@@ -111,22 +102,9 @@ export async function registerTenantUserRoutes(
         options.tenantUserInviteRepository.list(tenantId),
       ]);
 
-      const filteredMembers = search
-        ? members.filter((member) => {
-            const email = member.email?.toLowerCase() ?? "";
-            const displayName = member.displayName?.toLowerCase() ?? "";
-            const uid = member.uid.toLowerCase();
-            return (
-              email.includes(search) ||
-              displayName.includes(search) ||
-              uid.includes(search)
-            );
-          })
-        : members;
-
       return reply.send(
         successEnvelope({
-          members: filteredMembers,
+          members,
           invites: invites.map((invite) => ({
             id: invite.id,
             email: invite.email,

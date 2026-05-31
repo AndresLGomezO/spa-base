@@ -34,11 +34,6 @@ function renderTable() {
                 {
                   id: "org_1",
                   tenantId: "tenant_a",
-                  ownerId: "user_1",
-                  createdBy: "user_1",
-                  updatedBy: "user_1",
-                  accessUserIds: ["user_1"],
-                  sharedWith: {},
                   createdAt: "2024-01-01T00:00:00.000Z",
                   updatedAt: "2024-01-01T00:00:00.000Z",
                   name: "Jane Doe",

@@ -17,15 +17,11 @@ export function assertQueryReadPermission(
     return;
   }
 
-  const readPermission = `${entityName}.read`;
-  const readAllPermission = `${entityName}.read_all`;
-  if (
-    !hasPermission(readPermission, [...context.permissions]) &&
-    !hasPermission(readAllPermission, [...context.permissions])
-  ) {
+  const permission = `${entityName}.read`;
+  if (!hasPermission(permission, [...context.permissions])) {
     throw new QueryError(
       QueryErrorCode.QUERY_FORBIDDEN,
-      `Missing permission: ${readPermission}`,
+      `Missing permission: ${permission}`,
     );
   }
 }

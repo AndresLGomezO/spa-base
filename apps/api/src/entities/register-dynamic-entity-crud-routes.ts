@@ -4,7 +4,6 @@ import { getAllEntities } from "@repo/entities";
 import type { QueryEngine } from "@repo/query-engine";
 
 import { registerCrudRoutes } from "../crud/register-crud-routes.js";
-import type { CrudAccessOptions } from "../access/create-crud-access-options.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { createParametricEntityPermissionGuards } from "../rbac/create-entity-permission-guards.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
@@ -23,7 +22,6 @@ export async function registerDynamicEntityCrudRoutes(
   permissionDeps: LoadRequestPermissionsDeps,
   queryEngine: QueryEngine,
   relationContext: ReturnType<typeof createRelationRuntimeContext>,
-  crudAccessOptions: CrudAccessOptions,
   crudHooks?: CrudHookDeps,
 ): Promise<void> {
   if (registeredContexts.get(entityRuntime)) {
@@ -59,8 +57,6 @@ export async function registerDynamicEntityCrudRoutes(
     authorize: createParametricEntityPermissionGuards(permissionDeps),
     relations: (entityName) => relationContext.hooksFor(entityName),
     queryEngine,
-    getEntityAccessConfig: crudAccessOptions.getEntityAccessConfig,
-    shareService: crudAccessOptions.shareService,
     ...(crudHooks ? { crudHooks } : {}),
   });
 
