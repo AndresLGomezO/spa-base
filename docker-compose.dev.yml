@@ -20,6 +20,7 @@ services:
     volumes:
       # Hosting emulator serves apps/web/build/client — run `pnpm --filter web build` before start
       - ./firebase.json:/home/node/firebase.json
+      - ./.firebaserc:/home/node/.firebaserc
       - ./firestore.rules:/home/node/firestore.rules
       - ./firestore.indexes.json:/home/node/firestore.indexes.json
       - ./storage.rules:/home/node/storage.rules

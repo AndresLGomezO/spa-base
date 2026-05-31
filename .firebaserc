@@ -1,5 +1,14 @@
 {
   "projects": {
     "default": "demo-project-base"
+  },
+  "targets": {
+    "demo-project-base": {
+      "hosting": {
+        "live": [
+          "demo-project-base"
+        ]
+      }
+    }
   }
 }
