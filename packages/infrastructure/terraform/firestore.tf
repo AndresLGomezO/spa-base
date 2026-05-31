@@ -35,9 +35,10 @@ locals {
   firestore_index_prefix = var.firestore_collection_prefix
   firestore_indexes_map = {
     for idx in local.firestore_indexes_list :
-    "${idx.collectionGroup}_${md5(jsonencode(idx.fields))}" => {
-      collection = local.firestore_index_prefix == null ? idx.collectionGroup : "${local.firestore_index_prefix}_${idx.collectionGroup}"
-      fields     = idx.fields
+    "${idx.collectionGroup}_${try(idx.queryScope, "COLLECTION")}_${md5(jsonencode(idx.fields))}" => {
+      collection  = local.firestore_index_prefix == null ? idx.collectionGroup : "${local.firestore_index_prefix}_${idx.collectionGroup}"
+      query_scope = try(idx.queryScope, "COLLECTION")
+      fields      = idx.fields
     }
   }
 }
@@ -45,9 +46,10 @@ locals {
 resource "google_firestore_index" "from_json" {
   for_each = local.firestore_indexes_map
 
-  project    = local.gcp_project_id
-  database   = "(default)"
-  collection = each.value.collection
+  project     = local.gcp_project_id
+  database    = "(default)"
+  collection  = each.value.collection
+  query_scope = each.value.query_scope
 
   depends_on = [google_firestore_database.database]
 

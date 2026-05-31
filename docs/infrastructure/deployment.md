@@ -123,6 +123,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | `Cannot find package 'firebase-admin'` | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
 | Hosting target `live` not detected | [`firebase.json`](../../firebase.json) must use `"hosting": [{ "target": "live", ... }]`; run `firebase target:apply hosting live SITE_ID` before deploy |
 | Dev still on `esd-*.web.app` | Run Terraform apply (removes dedicated `google_firebase_hosting_site.dev`); redeploy web so `firebase target:apply hosting live entitysystem-development` deploys to the default site |
+| `COLLECTION_GROUP_ASC index for user_invites` | Run Terraform apply so `query_scope = COLLECTION_GROUP` is created; wait for index build in Firebase Console |
 | Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
 
 ## PR preview environments (phase 1b)

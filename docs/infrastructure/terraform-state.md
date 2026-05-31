@@ -55,6 +55,7 @@ After pulling this change, run `terraform apply` in the dev workspace. Terraform
 
 - Firestore **rules** and **indexes** are managed by Terraform from repo root `firestore.rules` and `firestore.indexes.json`.
 - If apply fails with `index already exists`, wait for index deletion to propagate (~2 minutes) and re-apply (deploy workflow retries once).
+- `COLLECTION_GROUP` queries (e.g. `user_invites` by `email`) require `queryScope: COLLECTION_GROUP` in [`firestore.indexes.json`](../../firestore.indexes.json) and `query_scope` on `google_firestore_index` in Terraform. If you see `FAILED_PRECONDITION` for a collection group index, run `terraform apply` and wait until the index shows **Enabled** in the Firebase Console (can take several minutes).
 
 ## Optional project override
 
