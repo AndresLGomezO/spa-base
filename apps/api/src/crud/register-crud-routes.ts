@@ -19,6 +19,19 @@ import { HookExecutionError } from "@repo/hooks";
 import type { RequestContext } from "../auth/request-context.js";
 import { requireRequestTenant } from "../auth/resolve-target-tenant-id.js";
 import {
+  assertCanDeleteRecordOrNotFound,
+  assertCanReadRecordOrNotFound,
+  assertCanWriteRecordOrNotFound,
+  injectOwnershipOnCreate,
+  prepareRecordForResponse,
+  RecordAccessDeniedError,
+  setUpdatedBy,
+  stripProtectedOwnershipFields,
+} from "../access/crud-access.js";
+import { registerShareRoutes } from "../access/register-share-routes.js";
+import type { EntityAccessConfig } from "../access/record-access.js";
+import type { ShareService } from "../access/share-service.js";
+import {
   applyReadFieldFilter,
   assertRequestWritableFields,
   FieldAccessError,
@@ -110,6 +123,11 @@ interface RegisterCrudRoutesOptions<
   readonly prefix?: string;
   readonly parametricEntityName?: boolean;
   readonly crudHooks?: CrudHookDeps;
+  readonly getEntityAccessConfig?: (
+    tenantId: string,
+    entityName: string,
+  ) => EntityAccessConfig | undefined;
+  readonly shareService?: ShareService;
 }
 
 function requireTenant(
@@ -179,20 +197,41 @@ function handleFieldAccessError(reply: FastifyReply, error: unknown): boolean {
   return true;
 }
 
+function resolveEntityAccessConfig(
+  options: Pick<
+    RegisterCrudRoutesOptions<never, never>,
+    "getEntityAccessConfig"
+  >,
+  tenantId: string,
+  entityName: string,
+): EntityAccessConfig | undefined {
+  return options.getEntityAccessConfig?.(tenantId, entityName);
+}
+
 function filterRecordForRead<T extends Record<string, unknown>>(
   request: FastifyRequest,
   entity: CrudEntityDefinition,
   record: T,
-): T {
-  if (!request.ctx) {
-    return record;
-  }
+  tenantId: string,
+  options: Pick<
+    RegisterCrudRoutesOptions<never, never>,
+    "getEntityAccessConfig"
+  >,
+): Record<string, unknown> {
+  const filtered = request.ctx
+    ? applyReadFieldFilter(
+        record,
+        request.ctx,
+        entity.name,
+        entity.businessFieldNames,
+      )
+    : record;
 
-  return applyReadFieldFilter(
-    record,
-    request.ctx,
+  return prepareRecordForResponse(
+    filtered,
     entity.name,
-    entity.businessFieldNames,
+    request.ctx,
+    resolveEntityAccessConfig(options, tenantId, entity.name),
   );
 }
 
@@ -200,8 +239,15 @@ function filterPaginatedItemsForRead(
   request: FastifyRequest,
   entity: CrudEntityDefinition,
   items: readonly Record<string, unknown>[],
+  tenantId: string,
+  options: Pick<
+    RegisterCrudRoutesOptions<never, never>,
+    "getEntityAccessConfig"
+  >,
 ): Record<string, unknown>[] {
-  return items.map((item) => filterRecordForRead(request, entity, item));
+  return items.map((item) =>
+    filterRecordForRead(request, entity, item, tenantId, options),
+  );
 }
 
 function handleHookError(reply: FastifyReply, error: unknown): boolean {
@@ -393,6 +439,8 @@ export async function registerCrudRoutes<
               request,
               activeEntity,
               result.data as Record<string, unknown>[],
+              tenantId,
+              options,
             ),
             nextCursor: result.nextCursor ?? null,
             totalCount: result.totalCount,
@@ -413,6 +461,8 @@ export async function registerCrudRoutes<
             request,
             activeEntity,
             result.items as Record<string, unknown>[],
+            tenantId,
+            options,
           ),
         }),
       );
@@ -496,6 +546,8 @@ export async function registerCrudRoutes<
                 request,
                 activeEntity,
                 record as Record<string, unknown>,
+                tenantId,
+                options,
               ),
             ),
           );
@@ -511,12 +563,36 @@ export async function registerCrudRoutes<
           );
         }
 
+        const existingRecord = record as unknown as Record<string, unknown>;
+        if (request.ctx) {
+          try {
+            assertCanReadRecordOrNotFound(
+              existingRecord,
+              activeEntity.name,
+              request.ctx,
+              resolveEntityAccessConfig(options, tenantId, activeEntity.name),
+            );
+          } catch (error) {
+            if (error instanceof RecordAccessDeniedError) {
+              return replyWithError(
+                reply,
+                404,
+                ApiErrorCode.NOT_FOUND,
+                error.message,
+              );
+            }
+            throw error;
+          }
+        }
+
         return reply.send(
           successEnvelope(
             filterRecordForRead(
               request,
               activeEntity,
-              record as unknown as Record<string, unknown>,
+              existingRecord,
+              tenantId,
+              options,
             ),
           ),
         );
@@ -601,6 +677,15 @@ export async function registerCrudRoutes<
         }
       }
 
+      if (!request.ctx) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
       const now = new Date().toISOString();
       const recordId = nanoid();
 
@@ -615,13 +700,16 @@ export async function registerCrudRoutes<
           entityName: activeEntity.name,
           phase: "before",
           operation: "create",
-          current: {
-            ...(parsedBody.data as Record<string, unknown>),
-            id: recordId,
-            tenantId,
-            createdAt: now,
-            updatedAt: now,
-          },
+          current: injectOwnershipOnCreate(
+            {
+              ...(parsedBody.data as Record<string, unknown>),
+              id: recordId,
+              tenantId,
+              createdAt: now,
+              updatedAt: now,
+            },
+            request.ctx,
+          ),
           ...(entityServices ? { entityServices } : {}),
         });
 
@@ -667,6 +755,8 @@ export async function registerCrudRoutes<
                 request,
                 activeEntity,
                 created as unknown as Record<string, unknown>,
+                tenantId,
+                options,
               ),
             ),
           );
@@ -793,15 +883,49 @@ export async function registerCrudRoutes<
         );
       }
 
-      const now = new Date().toISOString();
       const existingRecord = existing as unknown as Record<string, unknown>;
-      let merged: Record<string, unknown> = {
-        ...existingRecord,
-        ...(parsedBody.data as Record<string, unknown>),
-        id: existing.id,
-        tenantId: existing.tenantId,
-        updatedAt: now,
-      };
+      if (request.ctx) {
+        try {
+          assertCanWriteRecordOrNotFound(
+            existingRecord,
+            activeEntity.name,
+            request.ctx,
+          );
+        } catch (error) {
+          if (error instanceof RecordAccessDeniedError) {
+            return replyWithError(
+              reply,
+              404,
+              ApiErrorCode.NOT_FOUND,
+              error.message,
+            );
+          }
+          throw error;
+        }
+      }
+
+      if (!request.ctx) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
+      const now = new Date().toISOString();
+      let merged: Record<string, unknown> = setUpdatedBy(
+        {
+          ...existingRecord,
+          ...stripProtectedOwnershipFields(
+            parsedBody.data as Record<string, unknown>,
+          ),
+          id: existing.id,
+          tenantId: existing.tenantId,
+          updatedAt: now,
+        },
+        request.ctx,
+      );
 
       try {
         const entityServices = await resolveHookServices(
@@ -886,6 +1010,8 @@ export async function registerCrudRoutes<
               request,
               activeEntity,
               validated.data as Record<string, unknown>,
+              tenantId,
+              options,
             ),
           ),
         );
@@ -983,6 +1109,26 @@ export async function registerCrudRoutes<
         }
 
         const existingRecord = existing as unknown as Record<string, unknown>;
+        if (request.ctx) {
+          try {
+            assertCanDeleteRecordOrNotFound(
+              existingRecord,
+              activeEntity.name,
+              request.ctx,
+            );
+          } catch (error) {
+            if (error instanceof RecordAccessDeniedError) {
+              return replyWithError(
+                reply,
+                404,
+                ApiErrorCode.NOT_FOUND,
+                error.message,
+              );
+            }
+            throw error;
+          }
+        }
+
         const entityServices = await resolveHookServices(
           request,
           tenantId,
@@ -1043,4 +1189,25 @@ export async function registerCrudRoutes<
       }
     },
   );
+
+  if (options.shareService) {
+    await registerShareRoutes(app, {
+      routeEntityName: routeEntityName,
+      parametricEntityName: options.parametricEntityName,
+      prefix: routePrefix,
+      authenticate,
+      authorize: authorize?.update ?? noopPreHandler,
+      shareService: options.shareService,
+      resolveEntityName: (request) => {
+        if (options.parametricEntityName) {
+          const parsed = parseOrFormatError(
+            entityNameParamsSchema,
+            request.params,
+          );
+          return parsed.success ? parsed.data.entityName : null;
+        }
+        return routeEntityName;
+      },
+    });
+  }
 }

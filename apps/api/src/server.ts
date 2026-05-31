@@ -60,6 +60,7 @@ import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 import { registerTenantUserRoutes } from "./routes/tenant-users.routes.js";
+import { createCrudAccessOptions } from "./access/create-crud-access-options.js";
 
 type GenericRecord = { readonly id: string; readonly tenantId: string };
 
@@ -252,6 +253,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     permissionDeps,
   };
+  const crudAccessOptions = createCrudAccessOptions({
+    firebaseAdminConfig,
+    entityRuntime,
+    registeredUserRepository,
+    repositories: runtimeMaps.repositories,
+    useInMemoryAudit: options.repositories != null,
+  });
 
   await server.register(authValidateRoute, {
     firebaseAdminConfig,
@@ -332,6 +340,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
       relations: relationContext.hooksFor(entity.name),
       queryEngine: queryContext.queryEngine,
       crudHooks,
+      getEntityAccessConfig: crudAccessOptions.getEntityAccessConfig,
+      shareService: crudAccessOptions.shareService,
     });
   }
 
@@ -342,6 +352,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     queryContext.queryEngine,
     relationContext,
+    crudAccessOptions,
     crudHooks,
   );
 

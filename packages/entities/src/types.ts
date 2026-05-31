@@ -153,19 +153,32 @@ export interface EntityMetadata<
   readonly createSchema: z.ZodType<InferCreate<TFields>>;
   readonly updateSchema: z.ZodType<InferUpdate<TFields>>;
   readonly permissions: EntityPermissions<TName>;
+  readonly tenantWideRead?: boolean;
   readonly ui?: EntityUIConfig;
 }
 
-export type EntityPermissionAction = "read" | "create" | "update" | "delete";
+export type EntityPermissionAction =
+  | "read"
+  | "read_all"
+  | "create"
+  | "update"
+  | "write_all"
+  | "delete"
+  | "delete_all"
+  | "manage_shares";
 
 export type EntityPermission<TName extends string> =
   `${TName}.${EntityPermissionAction}`;
 
 export type EntityPermissions<TName extends string> = readonly [
-  EntityPermission<TName>,
-  EntityPermission<TName>,
-  EntityPermission<TName>,
-  EntityPermission<TName>,
+  `${TName}.read`,
+  `${TName}.read_all`,
+  `${TName}.create`,
+  `${TName}.update`,
+  `${TName}.write_all`,
+  `${TName}.delete`,
+  `${TName}.delete_all`,
+  `${TName}.manage_shares`,
 ];
 
 type AssertNoSystemFields<TFields extends FieldDefinitions> = SystemFieldKey &
@@ -182,6 +195,7 @@ export type EntityConfig<
   readonly name: TName;
   readonly fields: AssertNoSystemFields<TFields>;
   readonly collection?: string;
+  readonly tenantWideRead?: boolean;
   readonly ui?: EntityUIConfig;
 };
 

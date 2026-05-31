@@ -3,7 +3,17 @@ import type { EntityUIConfig, FormLayout, ViewConfig } from "./types.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
-const SYSTEM_FIELD_KEYS = new Set(["id", "tenantId", "createdAt", "updatedAt"]);
+const SYSTEM_FIELD_KEYS = new Set([
+  "id",
+  "tenantId",
+  "ownerId",
+  "createdBy",
+  "updatedBy",
+  "accessUserIds",
+  "sharedWith",
+  "createdAt",
+  "updatedAt",
+]);
 
 function getEditableFieldNames(entity: AnyDefinedEntity): string[] {
   return Object.keys(entity.metadata.fields).filter(

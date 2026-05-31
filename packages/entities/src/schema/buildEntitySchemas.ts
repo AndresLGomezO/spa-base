@@ -21,9 +21,16 @@ import {
 } from "./buildFieldSchema.js";
 import { isoDatetimeStringSchema } from "./isoDatetime.js";
 
+const sharePermissionSchema = z.enum(["read", "write"]);
+
 const systemFieldSchemas = {
   id: z.string().trim().min(1),
   tenantId: z.string().trim().min(1),
+  ownerId: z.string().trim().min(1),
+  createdBy: z.string().trim().min(1),
+  updatedBy: z.string().trim().min(1),
+  accessUserIds: z.array(z.string().trim().min(1)).min(1),
+  sharedWith: z.record(z.string().trim().min(1), sharePermissionSchema),
   createdAt: isoDatetimeStringSchema,
   updatedAt: isoDatetimeStringSchema,
 } as const;

@@ -18,6 +18,7 @@ export type {
   QueryConfig,
   QueryContext,
   QueryResult,
+  RecordAccessChecker,
   RelationIncludeResolver,
   Sort,
 } from "./types.js";

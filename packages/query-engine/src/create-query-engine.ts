@@ -10,6 +10,7 @@ import type {
   QueryContext,
   QueryResult,
   RbacQueryInjector,
+  RecordAccessChecker,
   RelationIncludeResolver,
 } from "./types.js";
 
@@ -25,6 +26,7 @@ export interface QueryEngineDeps {
     context: QueryContext,
   ) => EntityQueryExecutor | undefined;
   readonly rbacQueryInjector?: RbacQueryInjector;
+  readonly recordAccessChecker?: RecordAccessChecker;
   readonly relationIncludeResolver?: RelationIncludeResolver;
 }
 
@@ -44,6 +46,7 @@ export interface QueryEngine {
 
 export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
   const rbacQueryInjector = deps.rbacQueryInjector;
+  const recordAccessChecker = deps.recordAccessChecker;
 
   function resolveEntity(
     entityName: string,
@@ -120,6 +123,8 @@ export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
       if (!record) {
         throw new QueryError(QueryErrorCode.NOT_FOUND, "Record not found.");
       }
+
+      recordAccessChecker?.assertCanRead(entityName, record, context);
 
       if (select && select.length > 0) {
         normalizeEntityQuery(entity, { select: [...select] });

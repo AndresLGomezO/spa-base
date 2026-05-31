@@ -5,9 +5,13 @@ export function buildPermissions<TName extends string>(
 ): EntityPermissions<TName> {
   return [
     `${name}.read`,
+    `${name}.read_all`,
     `${name}.create`,
     `${name}.update`,
+    `${name}.write_all`,
     `${name}.delete`,
+    `${name}.delete_all`,
+    `${name}.manage_shares`,
   ] as EntityPermissions<TName>;
 }
 
