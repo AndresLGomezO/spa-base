@@ -29,6 +29,7 @@
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "fastify": "catalog:",
+    "firebase-admin": "catalog:",
     "nanoid": "catalog:",
     "zod": "catalog:"
   },

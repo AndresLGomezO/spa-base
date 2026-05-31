@@ -117,6 +117,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Cloud Run `reserved env PORT` | Remove `PORT` from Terraform env; `container_port` sets it automatically |
 | Stale App Engine in Terraform state | `terraform state rm google_app_engine_application.default` if a prior apply added it |
 | Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. Deploy sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so `/health` is available before Firestore seeds |
+| `Cannot find package 'firebase-admin'` | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
 | Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
 
 ## PR preview environments (phase 1b)

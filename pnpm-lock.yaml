@@ -266,6 +266,9 @@ importers:
       fastify:
         specifier: 'catalog:'
         version: 5.8.5
+      firebase-admin:
+        specifier: 'catalog:'
+        version: 13.10.0
       nanoid:
         specifier: 'catalog:'
         version: 5.1.11

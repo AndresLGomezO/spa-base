@@ -216,6 +216,16 @@ Promotes email to superadmin on **first** user document creation. Dev tenants `t
 
 ---
 
+## Production build (Cloud Run / Docker)
+
+CI builds with [`esbuild.mjs`](esbuild.mjs): workspace packages are bundled into `dist/index.js`; packages in the `external` array stay as runtime `import`s.
+
+**Rule:** every name in `external` must be a **direct** dependency in [`package.json`](package.json) (e.g. `firebase-admin`), or pnpm will not link it under `apps/api/node_modules` and Cloud Run will crash with `ERR_MODULE_NOT_FOUND`.
+
+The [`Dockerfile`](Dockerfile) runs `pnpm --filter=api deploy --prod --legacy` to produce a flat prod layout (`dist/`, `package.json`, `node_modules/`).
+
+---
+
 ## Project layout
 
 ```

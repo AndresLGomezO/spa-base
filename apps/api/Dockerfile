@@ -31,6 +31,9 @@ COPY --from=builder /app/out/full/ ./
 
 RUN pnpm exec turbo run build --filter=api
 
+# Portable prod layout: dist + package.json + node_modules (esbuild externals resolve here).
+RUN pnpm --filter=api deploy --prod --legacy /app/api-deploy
+
 # ===== RUNNER =====
 FROM node:22-slim AS runner
 
@@ -45,10 +48,9 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 appgroup \
   && adduser --system --uid 1001 --ingroup appgroup appuser
 
-COPY --from=installer --chown=appuser:appgroup /app .
+COPY --from=installer --chown=appuser:appgroup /app/api-deploy ./
 
 USER appuser
-WORKDIR /app/apps/api
 
 EXPOSE 3000
 
