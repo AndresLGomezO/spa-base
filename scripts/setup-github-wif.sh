@@ -1,26 +1,18 @@
 #!/usr/bin/env bash
 # Provisions GitHub Actions Workload Identity Federation for development,
 # staging, and production GCP projects derived from a shared name prefix.
-# Idempotent: safe to re-run if a step was partially completed.
+# Idempotent: safe to re-run; updates provider attribute rules if the pool already exists.
 #
 # Usage:
 #   setup-github-wif.sh PROJECT_PREFIX [options]
 #
-# Arguments:
-#   PROJECT_PREFIX    First part of each GCP project id (e.g. entitysystem
-#                     → entitysystem-development, entitysystem-staging,
-#                       entitysystem-production)
-#
 # Options:
 #   --repo ORG/REPO   GitHub repository (default: AndresLGomezO/spa-base)
 #
-# Requires: gcloud CLI, credentials with IAM admin on each project.
-#
 # Example:
-#   bash scripts/setup-github-wif.sh entitysystem
 #   bash scripts/setup-github-wif.sh entitysystem --repo AndresLGomezO/spa-base
 #
-# See docs/infrastructure/github-wif-setup.md for manual steps and troubleshooting.
+# See docs/infrastructure/github-wif-setup.md
 set -euo pipefail
 
 DEPLOYER_SA="github-deployer"
@@ -29,11 +21,13 @@ PROVIDER_ID="github-provider"
 REPO="AndresLGomezO/spa-base"
 ENV_SUFFIXES=(development staging production)
 
+WIF_ATTRIBUTE_MAPPING="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository"
+
 PROJECT_PREFIX=""
 declare -a PROJECT_IDS=()
 
 usage() {
-  sed -n '2,22p' "$0" | sed 's/^# \{0,1\}//'
+  sed -n '2,14p' "$0" | sed 's/^# \{0,1\}//'
   exit "${1:-0}"
 }
 
@@ -52,7 +46,7 @@ while [[ $# -gt 0 ]]; do
       ;;
     *)
       if [[ -n "$PROJECT_PREFIX" ]]; then
-        echo "Unexpected argument: $1 (only one PROJECT_PREFIX is allowed)" >&2
+        echo "Unexpected argument: $1" >&2
         usage 1
       fi
       PROJECT_PREFIX="$1"
@@ -65,6 +59,14 @@ if [[ -z "$PROJECT_PREFIX" ]]; then
   echo "PROJECT_PREFIX is required." >&2
   usage 1
 fi
+
+if [[ "$REPO" != */* ]]; then
+  echo "REPO must be ORG/REPO (e.g. AndresLGomezO/spa-base), got: ${REPO}" >&2
+  exit 1
+fi
+
+# GitHub OIDC: assertion.repository is "owner/repo" (not repo name alone). See GitHub OIDC claims.
+WIF_ATTRIBUTE_CONDITION="assertion.repository=='${REPO}'"
 
 for suffix in "${ENV_SUFFIXES[@]}"; do
   PROJECT_IDS+=("${PROJECT_PREFIX}-${suffix}")
@@ -158,17 +160,23 @@ ensure_wif_provider() {
     --project="$project_id" \
     --location=global \
     --workload-identity-pool="$POOL_ID" &>/dev/null; then
-    log "WIF provider already exists: ${PROVIDER_ID}"
+    log "Updating WIF provider ${PROVIDER_ID} (repo=${REPO})"
+    gcloud iam workload-identity-pools providers update-oidc "$PROVIDER_ID" \
+      --project="$project_id" \
+      --location=global \
+      --workload-identity-pool="$POOL_ID" \
+      --attribute-mapping="$WIF_ATTRIBUTE_MAPPING" \
+      --attribute-condition="$WIF_ATTRIBUTE_CONDITION"
   else
-    log "Creating WIF provider: ${PROVIDER_ID} (repo=${REPO})"
+    log "Creating WIF provider ${PROVIDER_ID} (repo=${REPO})"
     gcloud iam workload-identity-pools providers create-oidc "$PROVIDER_ID" \
       --project="$project_id" \
       --location=global \
       --workload-identity-pool="$POOL_ID" \
       --display-name="GitHub provider" \
-      --attribute-mapping="google.subject=assertion.sub,attribute.actor=assertion.actor,attribute.repository=assertion.repository" \
+      --attribute-mapping="$WIF_ATTRIBUTE_MAPPING" \
       --issuer-uri="https://token.actions.githubusercontent.com" \
-      --attribute-condition="assertion.repository=='${REPO}'"
+      --attribute-condition="$WIF_ATTRIBUTE_CONDITION"
   fi
 }
 
@@ -176,9 +184,11 @@ bind_workload_identity_user() {
   local project_id="$1"
   local deployer_email="$2"
   local project_number="$3"
+  # Path segments: attribute.repository/OWNER/REPO (REPO variable is owner/repo).
   local member="principalSet://iam.googleapis.com/projects/${project_number}/locations/global/workloadIdentityPools/${POOL_ID}/attribute.repository/${REPO}"
 
   log "Ensuring workloadIdentityUser binding for ${deployer_email}"
+  log "Principal: ${member}"
   gcloud iam service-accounts add-iam-policy-binding "$deployer_email" \
     --project="$project_id" \
     --role="roles/iam.workloadIdentityUser" \
@@ -188,25 +198,11 @@ bind_workload_identity_user() {
 
 provider_resource_name() {
   local project_id="$1"
-  local attempt=1
-  local provider_name=""
-
-  while [[ $attempt -le 6 ]]; do
-    if provider_name="$(gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
-      --project="$project_id" \
-      --location=global \
-      --workload-identity-pool="$POOL_ID" \
-      --format='value(name)' 2>/dev/null)"; then
-      echo "$provider_name"
-      return 0
-    fi
-    log "Waiting for WIF provider to become readable (attempt ${attempt}/6)..."
-    sleep 5
-    attempt=$((attempt + 1))
-  done
-
-  echo "Failed to read WIF provider ${PROVIDER_ID} in ${project_id}" >&2
-  return 1
+  gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
+    --project="$project_id" \
+    --location=global \
+    --workload-identity-pool="$POOL_ID" \
+    --format='value(name)'
 }
 
 setup_project() {

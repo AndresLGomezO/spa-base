@@ -79,8 +79,8 @@ First apply only — initial secret placeholder (not stored in GitHub):
 | Error | Fix |
 | ----- | --- |
 | `must specify exactly one of workload_identity_provider or credentials_json` | Secret empty — add `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT` on the GitHub **Environment** for that job (`development` or `staging`). |
-| `invalid_target` / invalid `audience` | Almost always **wrong provider string**: use project **number** (from `print-gcp-wif-provider.sh`), provider must exist in **same GCP project** as Terraform (`entitysystem-development` for PR → `develop`). Re-run `bash scripts/setup-github-wif.sh entitysystem --repo OWNER/spa-base`. |
-| Provider from another GCP project | Each project has its own pool; copy provider from `print-gcp-wif-provider.sh` for **that** project only. |
+| `invalid_target` / invalid `audience` | Re-run `bash scripts/setup-github-wif.sh entitysystem --repo OWNER/spa-base` to fix pool/provider attribute rules, then refresh secrets from `print-gcp-wif-provider.sh`. |
+| Provider from another GCP project | Each environment needs the provider from **that** GCP project (`print-gcp-wif-provider.sh entitysystem-development`, etc.). |
 | Fork PR | Remote plan skipped; fmt/validate still run. |
 
 ## First run
