@@ -3,9 +3,7 @@
     {
       "collectionGroup": "user_invites",
       "queryScope": "COLLECTION_GROUP",
-      "fields": [
-        { "fieldPath": "email", "order": "ASCENDING" }
-      ]
+      "fields": [{ "fieldPath": "email", "order": "ASCENDING" }]
     }
   ],
   "fieldOverrides": []
