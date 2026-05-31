@@ -1,3 +1,4 @@
+export { applyTenantWideRead } from "./apply-tenant-wide-read.js";
 export {
   assertDynamicNameAvailable,
   defineEntityFromRecord,

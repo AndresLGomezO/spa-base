@@ -8,6 +8,7 @@ interface EntityPermissions {
   readonly canCreate: boolean;
   readonly canUpdate: boolean;
   readonly canDelete: boolean;
+  readonly canShare: boolean;
   readonly canManageShares: boolean;
 }
 
@@ -18,6 +19,7 @@ export function useEntityPermissions(
   const canCreate = usePermission(`${entityName}.create`);
   const canUpdate = usePermission(`${entityName}.update`);
   const canDelete = usePermission(`${entityName}.delete`);
+  const canShare = usePermission(`${entityName}.share`);
   const canManageShares = usePermission(`${entityName}.manage_shares`);
 
   return useMemo(
@@ -26,8 +28,9 @@ export function useEntityPermissions(
       canCreate,
       canUpdate,
       canDelete,
+      canShare,
       canManageShares,
     }),
-    [canCreate, canDelete, canRead, canUpdate, canManageShares],
+    [canCreate, canDelete, canRead, canUpdate, canShare, canManageShares],
   );
 }

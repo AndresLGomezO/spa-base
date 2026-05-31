@@ -1,5 +1,6 @@
 import {
   entityDefinitionRecordSchema,
+  applyTenantWideRead,
   ENTITY_DEFINITIONS_COLLECTION,
   type CreateEntityDefinitionInput,
   type EntityDefinitionRecord,
@@ -66,6 +67,7 @@ export function createFirestoreAdminEntityDefinitionRepository(
         label: input.label,
         fields: input.fields,
         ...(input.ui ? { ui: input.ui } : {}),
+        ...(input.tenantWideRead === true ? { tenantWideRead: true } : {}),
         version: 1,
         createdAt: now,
         updatedAt: now,
@@ -81,13 +83,16 @@ export function createFirestoreAdminEntityDefinitionRepository(
       }
 
       const now = new Date().toISOString();
-      const base = {
-        ...current,
-        ...(input.label ? { label: input.label } : {}),
-        ...(input.fields ? { fields: input.fields } : {}),
-        version: current.version + 1,
-        updatedAt: now,
-      };
+      const base = applyTenantWideRead(
+        {
+          ...current,
+          ...(input.label ? { label: input.label } : {}),
+          ...(input.fields ? { fields: input.fields } : {}),
+          version: current.version + 1,
+          updatedAt: now,
+        },
+        input.tenantWideRead,
+      );
       const withoutUi = { ...base };
       Reflect.deleteProperty(withoutUi, "ui");
       const next = entityDefinitionRecordSchema.parse({

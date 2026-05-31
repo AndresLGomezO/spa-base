@@ -41,6 +41,7 @@ describe("defineEntity", () => {
       "customer.create",
       "customer.update",
       "customer.delete",
+      "customer.share",
       "customer.manage_shares",
     ]);
   });
@@ -333,6 +334,7 @@ describe("buildPermissions", () => {
       "order.create",
       "order.update",
       "order.delete",
+      "order.share",
       "order.manage_shares",
     ]);
   });

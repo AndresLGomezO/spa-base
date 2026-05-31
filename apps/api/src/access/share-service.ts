@@ -3,8 +3,6 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
-import { hasPermission } from "@repo/rbac";
-
 import type { AuditLogger } from "../audit/audit-log.js";
 
 export type SharePermission = "read" | "write";
@@ -61,20 +59,14 @@ export class ShareAccessError extends Error {
 function assertShareAccess(
   data: Record<string, unknown>,
   callerUserId: string,
-  callerPermissions: readonly string[],
-  entityName: string,
+  _callerPermissions: readonly string[],
+  _entityName: string,
   action: string,
 ): void {
   const isOwner = data.ownerId === callerUserId;
   if (isOwner) return;
 
-  if (hasPermission(`${entityName}.manage_shares`, [...callerPermissions])) {
-    return;
-  }
-
-  throw new ShareAccessError(
-    `Only the record owner or users with manage_shares permission can ${action}.`,
-  );
+  throw new ShareAccessError(`Only the record owner can ${action}.`);
 }
 
 export function createShareService(deps: ShareServiceDeps): ShareService {

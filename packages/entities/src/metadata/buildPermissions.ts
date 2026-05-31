@@ -8,6 +8,7 @@ export function buildPermissions<TName extends string>(
     `${name}.create`,
     `${name}.update`,
     `${name}.delete`,
+    `${name}.share`,
     `${name}.manage_shares`,
   ] as EntityPermissions<TName>;
 }
