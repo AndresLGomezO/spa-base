@@ -2,12 +2,15 @@ import { useMemo } from "react";
 import type { QueryConfig, Filter, Sort } from "@repo/query-engine";
 import type { DataViewSortState } from "@repo/data-view";
 
+import { resolveServerFilterValue } from "./resolve-server-filter-value";
+
 interface ServerQueryConfigInput {
   readonly search: string;
   readonly filters: Readonly<Record<string, readonly string[]>>;
   readonly sort: DataViewSortState;
   readonly limit: number;
   readonly cursor?: string;
+  readonly fieldTypes?: Readonly<Record<string, string>>;
 }
 
 function buildServerQueryConfig(input: ServerQueryConfigInput): QueryConfig {
@@ -16,17 +19,22 @@ function buildServerQueryConfig(input: ServerQueryConfigInput): QueryConfig {
   for (const [columnId, values] of Object.entries(input.filters)) {
     if (values.length === 0) continue;
 
-    if (values.length === 1) {
+    const fieldType = input.fieldTypes?.[columnId];
+    const coercedValues = values.map((value) =>
+      resolveServerFilterValue(fieldType, value),
+    );
+
+    if (coercedValues.length === 1) {
       queryFilters.push({
         field: columnId,
         operator: "==",
-        value: values[0],
+        value: coercedValues[0],
       });
     } else {
       queryFilters.push({
         field: columnId,
         operator: "in",
-        value: [...values],
+        value: coercedValues,
       });
     }
   }
@@ -53,10 +61,18 @@ function buildServerQueryConfig(input: ServerQueryConfigInput): QueryConfig {
 export function useServerQueryConfig(
   input: ServerQueryConfigInput,
 ): QueryConfig {
-  const { search, filters, sort, limit, cursor } = input;
+  const { search, filters, sort, limit, cursor, fieldTypes } = input;
 
   return useMemo(
-    () => buildServerQueryConfig({ search, filters, sort, limit, cursor }),
-    [search, filters, sort, limit, cursor],
+    () =>
+      buildServerQueryConfig({
+        search,
+        filters,
+        sort,
+        limit,
+        cursor,
+        fieldTypes,
+      }),
+    [search, filters, sort, limit, cursor, fieldTypes],
   );
 }

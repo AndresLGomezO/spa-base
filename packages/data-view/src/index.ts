@@ -16,6 +16,7 @@ export {
 } from "./lib/data-view-search-params";
 export { deriveDataViewFilterOptions } from "./lib/derive-data-view-filter-options";
 export { matchesDataViewSearch } from "./lib/matches-data-view-search";
+export { serializeDataViewFilterValue } from "./lib/serialize-data-view-filter-value";
 export {
   useClientPagination,
   type UseClientPaginationResult,

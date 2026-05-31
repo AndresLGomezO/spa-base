@@ -94,12 +94,24 @@ export function EntityPage({ entityName }: EntityPageProps) {
     urlState.sort.direction,
   ]);
 
+  const fieldTypes = useMemo(
+    () =>
+      Object.fromEntries(
+        Object.entries(definition.fields).map(([name, meta]) => [
+          name,
+          meta.type,
+        ]),
+      ),
+    [definition.fields],
+  );
+
   const queryConfig = useServerQueryConfig({
     search: urlState.search,
     filters: urlState.filters,
     sort: urlState.sort,
     limit: SERVER_PAGE_SIZE,
     cursor: currentCursor,
+    fieldTypes,
   });
 
   const entityState = useEntity(entityName, { queryConfig });

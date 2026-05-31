@@ -1,6 +1,7 @@
 import { useCallback, useMemo, useState } from "react";
 
 import { deriveDataViewFilterOptions } from "../lib/derive-data-view-filter-options";
+import { serializeDataViewFilterValue } from "../lib/serialize-data-view-filter-value";
 import { matchesDataViewSearch } from "../lib/matches-data-view-search";
 import type {
   DataViewColumnDescriptor,
@@ -80,7 +81,9 @@ function matchesColumnFilters<T>(
     const rawValue = column.getValue(item);
     if (Array.isArray(rawValue)) {
       const normalizedValues = rawValue.map((entry) =>
-        formatColumnValue(column, entry),
+        column.getFilterValue
+          ? column.getFilterValue(entry)
+          : serializeDataViewFilterValue(entry),
       );
       if (!selectedValues.some((value) => normalizedValues.includes(value))) {
         return false;
@@ -88,13 +91,9 @@ function matchesColumnFilters<T>(
       continue;
     }
 
-    const normalizedValue = column.getDisplayValue
-      ? column.getDisplayValue(item)
-      : typeof rawValue === "boolean"
-        ? rawValue
-          ? "true"
-          : "false"
-        : formatColumnValue(column, rawValue);
+    const normalizedValue = column.getFilterValue
+      ? column.getFilterValue(rawValue)
+      : serializeDataViewFilterValue(rawValue);
 
     if (!selectedValues.includes(normalizedValue)) {
       return false;
