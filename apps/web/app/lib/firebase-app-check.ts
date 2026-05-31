@@ -10,17 +10,26 @@ import { appConfig } from "../config/app-config";
 
 const EMULATOR_APP_CHECK_HEADER = "emulator";
 
+let firebaseApp: FirebaseApp | undefined;
 let appCheck: AppCheck | undefined;
-let useEmulatorStub = false;
+const useEmulatorStub = Boolean(appConfig.firebase.authEmulatorHost);
 
-export function initFirebaseAppCheck(app: FirebaseApp): void {
-  if (appConfig.firebase.authEmulatorHost) {
-    useEmulatorStub = true;
+export function registerFirebaseAppForAppCheck(app: FirebaseApp): void {
+  firebaseApp = app;
+}
+
+function ensureAppCheckInitialized(): void {
+  if (useEmulatorStub || appCheck) {
+    return;
+  }
+
+  // ReCaptcha v3 requires DOM; skip during SSR / react-router prerender.
+  if (typeof document === "undefined") {
     return;
   }
 
   const siteKey = appConfig.appCheckRecaptchaSiteKey;
-  if (!siteKey) {
+  if (!siteKey || !firebaseApp) {
     return;
   }
 
@@ -32,7 +41,7 @@ export function initFirebaseAppCheck(app: FirebaseApp): void {
     ).FIREBASE_APPCHECK_DEBUG_TOKEN = appConfig.appCheckDebugToken;
   }
 
-  appCheck = initializeAppCheck(app, {
+  appCheck = initializeAppCheck(firebaseApp, {
     provider: new ReCaptchaV3Provider(siteKey),
     isTokenAutoRefreshEnabled: true,
   });
@@ -42,6 +51,8 @@ export async function getAppCheckHeaderValue(): Promise<string> {
   if (useEmulatorStub) {
     return EMULATOR_APP_CHECK_HEADER;
   }
+
+  ensureAppCheckInitialized();
 
   if (!appCheck) {
     throw new Error(

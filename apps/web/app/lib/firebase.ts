@@ -12,11 +12,11 @@ import {
 
 import { appConfig } from "../config/app-config";
 
-import { initFirebaseAppCheck } from "./firebase-app-check";
+import { registerFirebaseAppForAppCheck } from "./firebase-app-check";
 
 export { GoogleAuthProvider, onAuthStateChanged, signInWithPopup, type User };
 
-export const app = initializeApp({
+const app = initializeApp({
   apiKey: appConfig.firebase.apiKey,
   authDomain: appConfig.firebase.authDomain,
   projectId: appConfig.firebase.projectId,
@@ -37,7 +37,7 @@ if (appConfig.firebase.authEmulatorHost) {
   connectAuthEmulator(auth, emulatorUrl);
 }
 
-initFirebaseAppCheck(app);
+registerFirebaseAppForAppCheck(app);
 
 export async function signOut(): Promise<void> {
   await auth.signOut();
