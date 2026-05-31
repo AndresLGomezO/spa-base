@@ -62,7 +62,7 @@ Terraform also runs `google_firebase_project` to link Firebase programmatically;
 
 ## Step 3 — Deployer SA and WIF (per project)
 
-Follow [github-wif-setup.md](./github-wif-setup.md) for each of (enables GCP APIs, creates the Docker Artifact Registry repo `entitysystem-repo`, and configures WIF):
+Follow [github-wif-setup.md](./github-wif-setup.md) for each of (enables GCP APIs, Artifact Registry repo `entitysystem-repo`, and configures WIF):
 
 - `entitysystem-development` → GitHub Environment **development**
 - `entitysystem-staging` → GitHub Environment **staging**
@@ -139,10 +139,17 @@ bash ../../../scripts/terraform-import-brownfield.sh entitysystem-development us
 
 CI runs the same script automatically in **Deploy to GCP** and **Terraform Verification**.
 
-Re-run WIF setup after pulling latest `setup-github-wif.sh` so `github-deployer` has `roles/iam.serviceAccountAdmin`:
+Re-run WIF setup after pulling latest `setup-github-wif.sh` (`serviceAccountAdmin`, etc.):
 
 ```bash
 bash scripts/setup-github-wif.sh entitysystem --repo AndresLGomezO/spa-base
+```
+
+If a failed apply added App Engine to Terraform state:
+
+```bash
+cd packages/infrastructure/terraform && terraform workspace select dev
+terraform state rm google_app_engine_application.default
 ```
 
 ---

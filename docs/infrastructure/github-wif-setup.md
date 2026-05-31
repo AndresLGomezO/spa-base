@@ -87,7 +87,6 @@ Minimum roles for Terraform apply + image push + Firebase deploy:
 for ROLE in \
   roles/run.admin \
   roles/artifactregistry.admin \
-  roles/appengine.appAdmin \
   roles/iam.serviceAccountAdmin \
   roles/iam.serviceAccountUser \
   roles/storage.admin \
@@ -163,8 +162,7 @@ Repeat steps 1–4 for `entitysystem-staging` and `entitysystem-production`.
 On each `terraform apply`, when `ci_deployer_sa_email` is set, Terraform grants the deployer SA permission to act as:
 
 - `es-backend-sa-{prefix}` (Cloud Run runtime)
-- App Engine default SA (`{project}@appspot.gserviceaccount.com`) — required for Firebase CLI
-- Default Compute SA (`{number}-compute@developer.gserviceaccount.com`) — required for some Firebase deploy paths
+- Default Compute SA (`{number}-compute@developer.gserviceaccount.com`) — for Firebase CLI deploy paths
 
 See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastructure/terraform/ci_deployer.tf).
 
@@ -181,10 +179,10 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 | `iam.serviceAccounts.create` denied    | Same — `serviceAccountAdmin` on `github-deployer`                          |
 | Terraform 409 (AR / Firestore / rules)   | Run `scripts/terraform-import-brownfield.sh` before plan/apply             |
 | Secret `payload required`              | Add version with `gcloud secrets versions add` (Terraform creates secret only) |
-| `appengine.applications.create` denied | Re-run `setup-github-wif.sh` (`roles/appengine.appAdmin`) or `terraform import google_app_engine_application.default PROJECT_ID` |
-| appspot SA not found (404)               | Terraform creates App Engine app (`appengine.tf`); re-apply after `appengine.appAdmin` on deployer |
-| Cloud Run startup probe failed           | Add bootstrap secret version; redeploy after `SKIP_PLATFORM_STARTUP_SEEDS` + `PORT=3000` in Cloud Run template |
+| Cloud Run `reserved env PORT`            | Do not set `PORT` in Terraform; use `container_port = 3000` only (Cloud Run sets `PORT` automatically) |
+| Cloud Run startup probe failed           | Add bootstrap secret version; redeploy with `SKIP_PLATFORM_STARTUP_SEEDS=true` |
+| Stale `google_app_engine_application` in state | `terraform state rm google_app_engine_application.default` (App Engine product not used) |
 | `iam.serviceAccounts.actAs` denied       | Re-apply Terraform with `ci_deployer_sa_email` set; check `ci_deployer.tf` |
 | WIF auth fails in Actions                | Verify `attribute.repository` matches `owner/repo` exactly (`setup-github-wif.sh --repo`) |
-| Firebase deploy 403                      | Ensure `roles/firebase.admin` and appspot/compute `actAs` bindings exist   |
+| Firebase deploy 403                      | Ensure `roles/firebase.admin` and default compute `actAs` in `ci_deployer.tf` |
 

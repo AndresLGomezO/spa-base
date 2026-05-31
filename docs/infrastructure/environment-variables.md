@@ -12,7 +12,7 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | -------- | ---------------- | --------------------- | ----------- |
 | `API_HOST` | `0.0.0.0` | `0.0.0.0` | Bind address |
 | `API_PORT` | `3000` | `3000` | HTTP port (must match Cloud Run `container_port`) |
-| `PORT` | (unset) | (optional) | If set by platform, overrides listen port in `index.ts` |
+| `PORT` | (Cloud Run only) | auto | Set by Cloud Run from `container_port`; do not set in Terraform |
 | `NODE_ENV` | `development` | `production` | Node environment |
 | `GCP_PROJECT_ID` | `demo-project-base` | workspace project ID | Firebase / GCP project |
 | `GCP_STORAGE_BUCKET` | `demo-project-base.appspot.com` | `{project_id}.appspot.com` | GCS bucket for tenant logos |

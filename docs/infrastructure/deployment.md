@@ -113,8 +113,9 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Terraform 409 Artifact Registry / Firestore / rules release | Run `scripts/terraform-import-brownfield.sh` (CI runs it automatically) |
 | Terraform 403 `serviceAccounts.create` | Re-run `setup-github-wif.sh` (`roles/iam.serviceAccountAdmin` on deployer) |
 | Secret version `payload required` | Terraform no longer creates versions — use `gcloud secrets versions add` |
-| Firebase deploy permission | WIF + `ci_deployer.tf` appspot/compute actAs (App Engine app creates appspot SA) |
-| `appengine.applications.create` denied | Re-run `setup-github-wif.sh` (`roles/appengine.appAdmin` on deployer) or import existing App Engine app |
+| Firebase deploy permission | WIF + `roles/firebase.admin` + compute default `actAs` in `ci_deployer.tf` |
+| Cloud Run `reserved env PORT` | Remove `PORT` from Terraform env; `container_port` sets it automatically |
+| Stale App Engine in Terraform state | `terraform state rm google_app_engine_application.default` if a prior apply added it |
 | Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. Deploy sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so `/health` is available before Firestore seeds |
 | Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
 

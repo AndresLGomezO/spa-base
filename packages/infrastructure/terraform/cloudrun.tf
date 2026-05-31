@@ -71,10 +71,6 @@ resource "google_cloud_run_v2_service" "backend" {
         value = "3000"
       }
       env {
-        name  = "PORT"
-        value = "3000"
-      }
-      env {
         name  = "SKIP_PLATFORM_STARTUP_SEEDS"
         value = "true"
       }
