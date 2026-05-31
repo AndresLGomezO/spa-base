@@ -170,7 +170,8 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 
 | Error                                    | Fix                                                                        |
 | ---------------------------------------- | -------------------------------------------------------------------------- |
-| `invalid_target` / invalid `audience`    | Provider secret must be `projects/PROJECT_NUMBER/...` from `print-gcp-wif-provider.sh` for **that** GCP project — not a project id string in the path |
+| `invalid_target` / invalid `audience`    | Re-run `setup-github-wif.sh` (fixes provider attribute-condition) and refresh `GCP_WORKLOAD_IDENTITY_PROVIDER` from `print-gcp-wif-provider.sh` |
+| Auth works but 403 on later steps        | Wrong `attribute-condition` on provider — must be `assertion.repository=='owner/repo'`, not repo name alone |
 | `Permission denied` on `terraform apply` | Add missing project role to deployer SA (step 2)                           |
 | `iam.serviceAccounts.actAs` denied       | Re-apply Terraform with `ci_deployer_sa_email` set; check `ci_deployer.tf` |
 | WIF auth fails in Actions                | Verify `attribute.repository` matches `owner/repo` exactly (`setup-github-wif.sh --repo`) |

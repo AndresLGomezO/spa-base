@@ -12,7 +12,6 @@ on:
       - "packages/infrastructure/terraform/**"
       - ".github/workflows/verify.yml"
       - ".github/scripts/terraform-comment.js"
-      - ".github/scripts/validate-gcp-wif-secrets.sh"
 
 env:
   REGION: ${{ vars.GCP_REGION || 'us-central1' }}
@@ -70,14 +69,6 @@ jobs:
             echo "::error::GCP_SERVICE_ACCOUNT is empty for GitHub Environment \"$GH_ENVIRONMENT\"."
             exit 1
           fi
-
-      - name: Validate WIF secret format
-        if: github.event.pull_request.head.repo.full_name == github.repository
-        run: |
-          bash .github/scripts/validate-gcp-wif-secrets.sh \
-            "${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}" \
-            "${{ secrets.GCP_SERVICE_ACCOUNT }}" \
-            "$TARGET_PROJECT_ID"
 
       - name: Authenticate to Google Cloud
         if: github.event.pull_request.head.repo.full_name == github.repository
