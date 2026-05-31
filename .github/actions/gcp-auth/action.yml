@@ -1,0 +1,27 @@
+description: "Checkout repo and authenticate to Google Cloud"
+inputs:
+  checkout:
+    description: "Whether to run checkout (set false if job already checked out)"
+    required: false
+    default: "true"
+  workload_identity_provider:
+    description: "GCP Workload Identity Provider (pass secrets.GCP_WORKLOAD_IDENTITY_PROVIDER from workflow)"
+    required: true
+  service_account:
+    description: "GCP Service Account (pass secrets.GCP_SERVICE_ACCOUNT from workflow)"
+    required: true
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout
+      if: inputs.checkout == 'true'
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ inputs.workload_identity_provider }}
+        service_account: ${{ inputs.service_account }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2

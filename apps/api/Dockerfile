@@ -1,6 +1,4 @@
-# TODO: GCP service account / workload identity for prod Firestore (no emulators)
-# TODO: Secret Manager for env instead of .env file
-# TODO: When workspace packages emit dist/, switch CMD to node dist/index.js
+# Runtime uses the Cloud Run service account (Workload Identity); no .env file in the image.
 
 # ===== BUILDER =====
 FROM node:22-slim AS builder
@@ -47,7 +45,6 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 appgroup \
   && adduser --system --uid 1001 --ingroup appgroup appuser
 
-# Interim: workspace packages export TypeScript sources; tsx runs API until dist builds exist.
 COPY --from=installer --chown=appuser:appgroup /app .
 
 USER appuser
@@ -56,4 +53,4 @@ WORKDIR /app/apps/api
 EXPOSE 3000
 
 ENTRYPOINT ["dumb-init", "--"]
-CMD ["pnpm", "exec", "tsx", "src/index.ts"]
+CMD ["node", "dist/index.js"]

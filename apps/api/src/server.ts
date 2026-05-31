@@ -153,6 +153,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   registerRequestTiming(server, { enabled: apiEnv.ENABLE_PERF_LOGS });
 
+  server.get("/health", async () => ({ status: "ok" }));
+
   const firebaseAdminConfig = {
     projectId: apiEnv.GCP_PROJECT_ID,
     authEmulatorHost: apiEnv.FIREBASE_AUTH_EMULATOR_HOST,

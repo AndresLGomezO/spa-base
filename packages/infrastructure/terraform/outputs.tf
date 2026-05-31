@@ -1,0 +1,39 @@
+output "gcp_project_id" {
+  description = "GCP project ID for this workspace"
+  value       = local.gcp_project_id
+}
+
+output "backend_url" {
+  description = "Cloud Run API URL (use for VITE_API_URL)"
+  value       = local.backend_url_full
+}
+
+output "frontend_url" {
+  description = "Primary Firebase Hosting URL for this workspace"
+  value       = local.firebase_hosting_primary_url
+}
+
+output "firebase_hosting_url" {
+  description = "Alias for frontend_url"
+  value       = local.firebase_hosting_primary_url
+}
+
+output "firebase_hosting_site_id" {
+  description = "Firebase Hosting site ID for firebase target:apply hosting live"
+  value       = contains(["dev", "default"], local.workspace) ? google_firebase_hosting_site.dev[0].site_id : local.gcp_project_id
+}
+
+output "artifact_registry_url" {
+  description = "Artifact Registry base URL (without image name/tag)"
+  value       = local.artifact_registry_url
+}
+
+output "default_storage_bucket" {
+  description = "Default Firebase/GCS bucket for tenant logo uploads"
+  value       = local.default_storage_bucket
+}
+
+output "bootstrap_superadmin_emails_secret_id" {
+  description = "Secret Manager secret id for PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS (update value in Console or gcloud; Cloud Run uses latest)"
+  value       = google_secret_manager_secret.bootstrap_superadmin_emails.secret_id
+}
