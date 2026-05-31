@@ -72,6 +72,14 @@ for suffix in "${ENV_SUFFIXES[@]}"; do
   PROJECT_IDS+=("${PROJECT_PREFIX}-${suffix}")
 done
 
+# Required for google-github-actions/auth to impersonate the deployer SA (generateAccessToken).
+WIF_REQUIRED_APIS=(
+  iamcredentials.googleapis.com
+  iam.googleapis.com
+  sts.googleapis.com
+  cloudresourcemanager.googleapis.com
+)
+
 DEPLOYER_ROLES=(
   roles/run.admin
   roles/artifactregistry.admin
@@ -121,6 +129,12 @@ ensure_service_account() {
   fi
 
   echo "$deployer_email"
+}
+
+enable_wif_apis() {
+  local project_id="$1"
+  log "Enabling APIs for WIF + SA impersonation on ${project_id}"
+  gcloud services enable "${WIF_REQUIRED_APIS[@]}" --project="$project_id" --quiet
 }
 
 grant_deployer_roles() {
@@ -214,6 +228,7 @@ setup_project() {
   echo "=== ${project_id} ==="
   gcloud config set project "$project_id" >/dev/null
 
+  enable_wif_apis "$project_id"
   deployer_email="$(ensure_service_account "$project_id")"
   grant_deployer_roles "$project_id" "$deployer_email"
   ensure_wif_pool "$project_id"
