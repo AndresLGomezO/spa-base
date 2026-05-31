@@ -149,7 +149,7 @@ gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
   --format='value(name)'
 ```
 
-Copy into **repository** secrets for `verify.yml`. Copy the same values into each **Environment** for `deploy.yml`.
+Copy into the matching **GitHub Environment** (`development`, `staging`, or `production`) for both `verify.yml` and `deploy.yml`.
 
 Repeat steps 1–4 for `entitysystem-staging` and `entitysystem-production`.
 

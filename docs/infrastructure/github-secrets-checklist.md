@@ -2,9 +2,9 @@
 
 Use this checklist after completing [bootstrap-new-gcp-account.md](./bootstrap-new-gcp-account.md). Check each item before running **Deploy to GCP** → `dev`.
 
-**WIF for Terraform verify (PRs):** use **repository secrets** (`Settings → Secrets and variables → Actions`). The verify workflow does not set `environment:`, so Environment-only secrets are not visible to that job.
+**WIF and Firebase secrets** live on **GitHub Environments** (`development`, `staging`, `production`). Both `verify.yml` and `deploy.yml` set `environment:` so those secrets are available.
 
-**WIF for deploy:** use **GitHub Environment** secrets (`development` / `staging` / `production`) because `deploy.yml` sets `environment:`.
+**Repository variables only:** `GCP_REGION`, `GCP_REPOSITORY_NAME` (not secrets).
 
 **Provider value must use the project number** (digits), not project id:
 
@@ -21,20 +21,13 @@ projects/entitysystem-development/locations/global/...
 - [ ] `GCP_REGION` = `us-central1`
 - [ ] `GCP_REPOSITORY_NAME` = `entitysystem-repo`
 
-## Repository secrets (Terraform verify + optional deploy fallback)
+## GitHub Environment: `development`
 
-| Secret | Value source |
-| ------ | ------------- |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER` | `bash scripts/print-gcp-wif-provider.sh entitysystem-development` |
-| `GCP_SERVICE_ACCOUNT` | `github-deployer@entitysystem-development.iam.gserviceaccount.com` |
-| `GCP_WORKLOAD_IDENTITY_PROVIDER_STAGING` | (optional) output for `entitysystem-staging` — used on PRs to `main` |
-| `GCP_SERVICE_ACCOUNT_STAGING` | (optional) `github-deployer@entitysystem-staging.iam.gserviceaccount.com` |
-
-## GitHub Environment: `development` (deploy workflow)
+Used by: PRs → `develop` (Terraform verify), deploy to dev.
 
 Project: `entitysystem-development`
 
-- [ ] `GCP_WORKLOAD_IDENTITY_PROVIDER` — same **numeric** provider string as repository secret above
+- [ ] `GCP_WORKLOAD_IDENTITY_PROVIDER` — from `bash scripts/print-gcp-wif-provider.sh entitysystem-development`
 - [ ] `GCP_SERVICE_ACCOUNT` — `github-deployer@entitysystem-development.iam.gserviceaccount.com`
 - [ ] `FIREBASE_API_KEY`
 - [ ] `FIREBASE_AUTH_DOMAIN`
@@ -45,7 +38,13 @@ Project: `entitysystem-development`
 
 ## GitHub Environment: `staging`
 
-Project: `entitysystem-staging` — same secret names, staging values.
+Used by: PRs → `main` (Terraform verify), deploy to staging.
+
+Project: `entitysystem-staging` — same secret **names**, values from `print-gcp-wif-provider.sh entitysystem-staging`.
+
+- [ ] `GCP_WORKLOAD_IDENTITY_PROVIDER`
+- [ ] `GCP_SERVICE_ACCOUNT`
+- [ ] All `FIREBASE_*` secrets for staging Web app
 
 ## GitHub Environment: `production` (before prod deploy)
 
@@ -79,7 +78,7 @@ First apply only — initial secret placeholder (not stored in GitHub):
 
 | Error | Fix |
 | ----- | --- |
-| `must specify exactly one of workload_identity_provider or credentials_json` | Secret empty for that job. **Verify:** repository secrets. **Deploy:** Environment secrets. |
+| `must specify exactly one of workload_identity_provider or credentials_json` | Secret empty — add `GCP_WORKLOAD_IDENTITY_PROVIDER` and `GCP_SERVICE_ACCOUNT` on the GitHub **Environment** for that job (`development` or `staging`). |
 | `invalid_target` / invalid `audience` | Almost always **wrong provider string**: use project **number** (from `print-gcp-wif-provider.sh`), provider must exist in **same GCP project** as Terraform (`entitysystem-development` for PR → `develop`). Re-run `bash scripts/setup-github-wif.sh entitysystem --repo OWNER/spa-base`. |
 | Provider from another GCP project | Each project has its own pool; copy provider from `print-gcp-wif-provider.sh` for **that** project only. |
 | Fork PR | Remote plan skipped; fmt/validate still run. |
