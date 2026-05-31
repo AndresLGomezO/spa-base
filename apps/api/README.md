@@ -208,6 +208,8 @@ See [docs/performance-scaling-guide.md](../../docs/performance-scaling-guide.md)
 
 ```
 PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
+
+Cloud Run sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so the process listens on `/health` before Firestore role/tenant seeds run. Seed once locally against the target GCP project if needed.
 ```
 
 Promotes email to superadmin on **first** user document creation. Dev tenants `tenant_dev_1` and `tenant_dev_2` seeded on startup.

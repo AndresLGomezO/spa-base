@@ -87,6 +87,7 @@ Minimum roles for Terraform apply + image push + Firebase deploy:
 for ROLE in \
   roles/run.admin \
   roles/artifactregistry.admin \
+  roles/appengine.appAdmin \
   roles/iam.serviceAccountAdmin \
   roles/iam.serviceAccountUser \
   roles/storage.admin \
@@ -180,7 +181,9 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 | `iam.serviceAccounts.create` denied    | Same — `serviceAccountAdmin` on `github-deployer`                          |
 | Terraform 409 (AR / Firestore / rules)   | Run `scripts/terraform-import-brownfield.sh` before plan/apply             |
 | Secret `payload required`              | Add version with `gcloud secrets versions add` (Terraform creates secret only) |
-| appspot SA not found (404)               | Terraform creates App Engine app (`appengine.tf`); re-apply after API enabled |
+| `appengine.applications.create` denied | Re-run `setup-github-wif.sh` (`roles/appengine.appAdmin`) or `terraform import google_app_engine_application.default PROJECT_ID` |
+| appspot SA not found (404)               | Terraform creates App Engine app (`appengine.tf`); re-apply after `appengine.appAdmin` on deployer |
+| Cloud Run startup probe failed           | Add bootstrap secret version; redeploy after `SKIP_PLATFORM_STARTUP_SEEDS` + `PORT=3000` in Cloud Run template |
 | `iam.serviceAccounts.actAs` denied       | Re-apply Terraform with `ci_deployer_sa_email` set; check `ci_deployer.tf` |
 | WIF auth fails in Actions                | Verify `attribute.repository` matches `owner/repo` exactly (`setup-github-wif.sh --repo`) |
 | Firebase deploy 403                      | Ensure `roles/firebase.admin` and appspot/compute `actAs` bindings exist   |

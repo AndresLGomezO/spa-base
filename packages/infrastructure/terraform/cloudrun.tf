@@ -9,6 +9,11 @@ resource "google_cloud_run_v2_service" "backend" {
     google_firebase_project.default,
     google_project_service.run_api,
     google_secret_manager_secret.bootstrap_superadmin_emails,
+    google_project_iam_member.backend_firestore,
+    google_project_iam_member.backend_secrets,
+    google_project_iam_member.backend_firebase_auth,
+    google_project_iam_member.backend_storage,
+    google_service_account_iam_member.ci_deployer_act_as_backend_sa,
   ]
 
   template {
@@ -37,10 +42,10 @@ resource "google_cloud_run_v2_service" "backend" {
           path = "/health"
           port = 3000
         }
-        initial_delay_seconds = 10
+        initial_delay_seconds = 20
         period_seconds        = 5
         timeout_seconds       = 3
-        failure_threshold     = 6
+        failure_threshold     = 12
       }
 
       liveness_probe {
@@ -64,6 +69,14 @@ resource "google_cloud_run_v2_service" "backend" {
       env {
         name  = "API_PORT"
         value = "3000"
+      }
+      env {
+        name  = "PORT"
+        value = "3000"
+      }
+      env {
+        name  = "SKIP_PLATFORM_STARTUP_SEEDS"
+        value = "true"
       }
       env {
         name  = "GCP_PROJECT_ID"

@@ -97,6 +97,7 @@ BOOTSTRAP_APIS=(
 DEPLOYER_ROLES=(
   roles/run.admin
   roles/artifactregistry.admin
+  roles/appengine.appAdmin
   roles/iam.serviceAccountAdmin
   roles/iam.serviceAccountUser
   roles/storage.admin

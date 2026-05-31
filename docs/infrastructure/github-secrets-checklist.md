@@ -57,7 +57,7 @@ Project: `entitysystem-production`
 
 - [ ] Billing linked
 - [ ] Firebase project + Web app registered
-- [ ] Deployer SA created with roles from [github-wif-setup.md](./github-wif-setup.md) (includes `roles/iam.serviceAccountAdmin`)
+- [ ] Deployer SA created with roles from [github-wif-setup.md](./github-wif-setup.md) (includes `roles/iam.serviceAccountAdmin`, `roles/appengine.appAdmin`)
 - [ ] WIF pool + provider bound to `ORG/REPO`
 - [ ] Terraform state bucket exists (`entitysystem-*-terraform-state`)
 
