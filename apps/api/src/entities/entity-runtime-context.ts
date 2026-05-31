@@ -28,6 +28,7 @@ import {
 } from "@repo/gcp-firebase";
 import type { RbacQueryInjector } from "@repo/query-engine";
 
+import { buildConverterEncryptionConfig } from "../crud/sensitive-fields.js";
 import { createInMemoryEntityQueryExecutor } from "../repositories/in-memory-entity-query-executor.js";
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 import { createQueryRuntimeContext } from "../query/create-query-services.js";
@@ -157,6 +158,11 @@ export class EntityRuntimeContext {
       return undefined;
     }
 
+    const encryption = buildConverterEncryptionConfig(
+      entity.metadata.fields,
+      tenantId,
+    );
+
     const repository = this.options.repositories
       ? createInMemoryEntityRepository<GenericRecord>({
           store: this.getInMemoryRecordStore(key),
@@ -165,7 +171,8 @@ export class EntityRuntimeContext {
           config: this.options.firebaseAdminConfig,
           collection: entity.metadata.collection,
           converter:
-            getEntityConverter(entity.name) ?? createEntityConverter(entity),
+            getEntityConverter(entity.name) ??
+            createEntityConverter(entity, encryption),
         });
     this.repositoryCache.set(key, repository);
     return repository;
@@ -191,6 +198,11 @@ export class EntityRuntimeContext {
       return undefined;
     }
 
+    const encryption = buildConverterEncryptionConfig(
+      entity.metadata.fields,
+      tenantId,
+    );
+
     const executor = this.options.repositories
       ? createInMemoryEntityQueryExecutor(
           () =>
@@ -203,7 +215,8 @@ export class EntityRuntimeContext {
           config: this.options.firebaseAdminConfig,
           collection: entity.metadata.collection,
           converter:
-            getEntityConverter(entity.name) ?? createEntityConverter(entity),
+            getEntityConverter(entity.name) ??
+            createEntityConverter(entity, encryption),
           onIndexHint: this.options.onIndexHint,
         });
     this.queryExecutorCache.set(key, executor);

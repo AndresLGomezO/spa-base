@@ -32,7 +32,10 @@ export {
   type VersionedConverterConfig,
 } from "./core/versioned-converter.js";
 
-export { createEntityConverter } from "./entity/create-entity-converter.js";
+export {
+  createEntityConverter,
+  type EntityConverterEncryptionConfig,
+} from "./entity/create-entity-converter.js";
 export {
   registeredUserConverter,
   registeredUserCurrentVersion,

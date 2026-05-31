@@ -4,10 +4,20 @@ import { z } from "zod";
 import { createVersionedConverter } from "../core/versioned-converter.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
+type AnyRecord = Record<string, unknown>;
 
 const DEFAULT_SCHEMA_VERSION = 1;
 
-export function createEntityConverter(entity: AnyDefinedEntity) {
+export interface EntityConverterEncryptionConfig {
+  readonly sensitiveFieldNames: readonly string[];
+  readonly encrypt: (data: AnyRecord, fields: readonly string[]) => AnyRecord;
+  readonly decrypt: (data: AnyRecord, fields: readonly string[]) => AnyRecord;
+}
+
+export function createEntityConverter(
+  entity: AnyDefinedEntity,
+  encryption?: EntityConverterEncryptionConfig,
+) {
   const domainSchema = entity.schema;
 
   const persistedSchema = (
@@ -23,16 +33,38 @@ export function createEntityConverter(entity: AnyDefinedEntity) {
     readonly _schemaVersion: typeof DEFAULT_SCHEMA_VERSION;
   };
 
-  return createVersionedConverter<Domain, Persisted>({
+  const baseConverter = createVersionedConverter<Domain, Persisted>({
     currentVersion: DEFAULT_SCHEMA_VERSION,
     domainSchema,
     persistedSchema: persistedSchema as unknown as z.ZodType<Persisted>,
     migrations: {},
     fromPersisted: (persisted) => {
-      const domain = { ...persisted } as Record<string, unknown>;
+      const domain = { ...persisted } as AnyRecord;
       Reflect.deleteProperty(domain, "_schemaVersion");
       return domain as Domain;
     },
     toPersisted: (domain) => domain,
   });
+
+  if (!encryption || encryption.sensitiveFieldNames.length === 0) {
+    return baseConverter;
+  }
+
+  return {
+    read(raw: unknown): Domain {
+      const rawRecord = raw as AnyRecord;
+      const decrypted = encryption.decrypt(
+        rawRecord,
+        encryption.sensitiveFieldNames,
+      );
+      return baseConverter.read(decrypted);
+    },
+    write(rawDomain: unknown): Persisted {
+      const persisted = baseConverter.write(rawDomain);
+      return encryption.encrypt(
+        persisted as unknown as AnyRecord,
+        encryption.sensitiveFieldNames,
+      ) as unknown as Persisted;
+    },
+  };
 }
