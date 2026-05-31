@@ -3,9 +3,9 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
+import { hasPermission } from "@repo/rbac";
 
 import type { AuditLogger } from "../audit/audit-log.js";
-import { checkRecordAccess } from "./record-access.js";
 
 export type SharePermission = "read" | "write";
 
@@ -27,7 +27,6 @@ export interface ShareService {
     recordId: string;
     callerUserId: string;
     callerPermissions: readonly string[];
-    callerIsSuperAdmin?: boolean;
     targetUserId: string;
     permission: SharePermission;
   }): Promise<void>;
@@ -39,7 +38,6 @@ export interface ShareService {
     recordId: string;
     callerUserId: string;
     callerPermissions: readonly string[];
-    callerIsSuperAdmin?: boolean;
     targetUserId: string;
   }): Promise<void>;
 
@@ -50,7 +48,6 @@ export interface ShareService {
     recordId: string;
     callerUserId: string;
     callerPermissions: readonly string[];
-    callerIsSuperAdmin?: boolean;
   }): Promise<readonly ShareRecord[]>;
 }
 
@@ -59,6 +56,25 @@ export class ShareAccessError extends Error {
     super(message);
     this.name = "ShareAccessError";
   }
+}
+
+function assertShareAccess(
+  data: Record<string, unknown>,
+  callerUserId: string,
+  callerPermissions: readonly string[],
+  entityName: string,
+  action: string,
+): void {
+  const isOwner = data.ownerId === callerUserId;
+  if (isOwner) return;
+
+  if (hasPermission(`${entityName}.manage_shares`, [...callerPermissions])) {
+    return;
+  }
+
+  throw new ShareAccessError(
+    `Only the record owner or users with manage_shares permission can ${action}.`,
+  );
 }
 
 export function createShareService(deps: ShareServiceDeps): ShareService {
@@ -87,24 +103,13 @@ export function createShareService(deps: ShareServiceDeps): ShareService {
         }
 
         const data = doc.data() as Record<string, unknown>;
-        const access = checkRecordAccess(
+        assertShareAccess(
           data,
           params.callerUserId,
           params.callerPermissions,
           params.entityName,
-          params.callerIsSuperAdmin,
+          "share records",
         );
-
-        if (!access.isOwner && !params.callerIsSuperAdmin) {
-          const hasManageShares = params.callerPermissions.includes(
-            `${params.entityName}.manage_shares`,
-          );
-          if (!hasManageShares) {
-            throw new ShareAccessError(
-              "Only the record owner or users with manage_shares permission can share records.",
-            );
-          }
-        }
 
         transaction.update(docRef, {
           [`sharedWith.${params.targetUserId}`]: params.permission,
@@ -137,24 +142,13 @@ export function createShareService(deps: ShareServiceDeps): ShareService {
         }
 
         const data = doc.data() as Record<string, unknown>;
-        const access = checkRecordAccess(
+        assertShareAccess(
           data,
           params.callerUserId,
           params.callerPermissions,
           params.entityName,
-          params.callerIsSuperAdmin,
+          "revoke shares",
         );
-
-        if (!access.isOwner && !params.callerIsSuperAdmin) {
-          const hasManageShares = params.callerPermissions.includes(
-            `${params.entityName}.manage_shares`,
-          );
-          if (!hasManageShares) {
-            throw new ShareAccessError(
-              "Only the record owner or users with manage_shares permission can revoke shares.",
-            );
-          }
-        }
 
         transaction.update(docRef, {
           [`sharedWith.${params.targetUserId}`]: FieldValue.delete(),
@@ -184,24 +178,13 @@ export function createShareService(deps: ShareServiceDeps): ShareService {
       }
 
       const data = doc.data() as Record<string, unknown>;
-      const access = checkRecordAccess(
+      assertShareAccess(
         data,
         params.callerUserId,
         params.callerPermissions,
         params.entityName,
-        params.callerIsSuperAdmin,
+        "view shares",
       );
-
-      if (!access.isOwner && !params.callerIsSuperAdmin) {
-        const hasManageShares = params.callerPermissions.includes(
-          `${params.entityName}.manage_shares`,
-        );
-        if (!hasManageShares) {
-          throw new ShareAccessError(
-            "Only the record owner or users with manage_shares permission can view shares.",
-          );
-        }
-      }
 
       const sharedWith = data.sharedWith as Record<string, string> | undefined;
       if (!sharedWith || typeof sharedWith !== "object") {

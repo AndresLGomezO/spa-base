@@ -175,6 +175,19 @@ export function FieldEditorForm({
         onChange={(event) => update({ required: event.target.checked })}
       />
 
+      <div className="space-y-2">
+        <Checkbox
+          id={`${idPrefix}-field-sensitive`}
+          label={t("dataModels.sensitive")}
+          checked={field.sensitive ?? false}
+          disabled={field.type === "relation"}
+          onChange={(event) => update({ sensitive: event.target.checked })}
+        />
+        <Text className="text-muted-foreground text-sm">
+          {t("dataModels.sensitiveHint")}
+        </Text>
+      </div>
+
       <div>
         <FieldLabel htmlFor={`${idPrefix}-field-order`}>
           {t("dataModels.displayOrder")}

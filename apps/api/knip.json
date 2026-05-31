@@ -4,6 +4,7 @@
     "firebase-admin",
     "@app/platform",
     "@repo/dynamic-entities",
+    "@repo/encryption",
     "@repo/entities",
     "@repo/entity-relations",
     "@repo/eslint-config",

@@ -26,6 +26,7 @@ const ApiEnvSchema = z.object({
     .enum(["true", "false"])
     .default(process.env.NODE_ENV === "test" ? "true" : "false")
     .transform((value) => value === "true"),
+  TENANT_ENCRYPTION_MASTER_KEY: z.string().trim().min(1).optional(),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

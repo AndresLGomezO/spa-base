@@ -20,6 +20,7 @@ export const fieldDefinitionSchema = z
     name: z.string().trim().min(1),
     type: z.enum(["string", "number", "boolean", "date", "relation", "enum"]),
     required: z.boolean().optional(),
+    sensitive: z.boolean().optional(),
     relation: relationDefinitionSchema.optional(),
     enumValues: z.array(z.string().trim().min(1)).min(1).optional(),
     ui: z
@@ -62,6 +63,13 @@ export const fieldDefinitionSchema = z
         code: "custom",
         message: "Only enum fields may include enumValues.",
         path: ["enumValues"],
+      });
+    }
+    if (field.type === "relation" && field.sensitive) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Relation fields cannot be marked as sensitive.",
+        path: ["sensitive"],
       });
     }
   });

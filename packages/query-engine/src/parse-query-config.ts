@@ -211,6 +211,14 @@ function validateFilter(
     );
   }
 
+  const fieldMeta = getFieldMeta(entity, filter.field);
+  if (fieldMeta?.sensitive) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      `Cannot filter on encrypted field "${filter.field}".`,
+    );
+  }
+
   if (SYSTEM_ARRAY_FIELDS.has(filter.field)) {
     if (filter.operator !== "array-contains") {
       throw new QueryError(
@@ -256,6 +264,14 @@ function validateSort(entity: AnyDefinedEntity, sort: Sort): NormalizedSort {
     throw new QueryError(
       QueryErrorCode.QUERY_VALIDATION_ERROR,
       'Sorting on "tenantId" is not allowed.',
+    );
+  }
+
+  const sortFieldMeta = getFieldMeta(entity, sort.field);
+  if (sortFieldMeta?.sensitive) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      `Cannot sort on encrypted field "${sort.field}".`,
     );
   }
 

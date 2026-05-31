@@ -13,11 +13,14 @@ export function normalizeFieldMeta(config: FieldConfig): NormalizedFieldMeta {
       ? (config.relation.required ?? config.required === true) && !hasDefault
       : config.required === true && !hasDefault;
 
+  const sensitive = config.type !== "relation" && config.sensitive === true;
+
   const base: NormalizedFieldMeta = {
     type: config.type,
     required,
     optional: !required,
     ...(hasDefault ? { default: config.default } : {}),
+    ...(sensitive ? { sensitive: true } : {}),
   };
 
   if (config.type === "relation") {

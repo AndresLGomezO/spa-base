@@ -125,7 +125,7 @@ export function EntityField({
     );
   }
 
-  if (meta.type === "date" || componentId === "date") {
+  if (meta.type === "date") {
     return (
       <div className="flex flex-col gap-1">
         <FieldLabel htmlFor={inputId} required={meta.required}>

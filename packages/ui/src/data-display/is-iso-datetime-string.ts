@@ -1,9 +1,3 @@
-/**
- * ISO datetime string validator aligned with @repo/shared-types User model.
- * Entity `type: "date"` fields use strings, not native Date objects.
- */
-import { z } from "zod";
-
 const ISO_DATETIME_PATTERN =
   /^\d{4}-\d{2}-\d{2}(?:T\d{2}:\d{2}(?::\d{2}(?:\.\d{1,9})?)?(?:Z|[+-]\d{2}:\d{2})?)?$/;
 
@@ -15,11 +9,3 @@ export function isIsoDatetimeString(value: string): boolean {
   }
   return !Number.isNaN(Date.parse(trimmed));
 }
-
-/** ISO datetime string validated with strict ISO shape (not JavaScript loose date parsing). */
-export const isoDatetimeStringSchema = z
-  .string()
-  .trim()
-  .refine(isIsoDatetimeString, {
-    message: "Must be an ISO datetime string.",
-  });

@@ -33,24 +33,28 @@ export interface StringFieldConfig {
   readonly type: "string";
   readonly required?: boolean;
   readonly default?: string;
+  readonly sensitive?: boolean;
 }
 
 export interface NumberFieldConfig {
   readonly type: "number";
   readonly required?: boolean;
   readonly default?: number;
+  readonly sensitive?: boolean;
 }
 
 export interface BooleanFieldConfig {
   readonly type: "boolean";
   readonly required?: boolean;
   readonly default?: boolean;
+  readonly sensitive?: boolean;
 }
 
 export interface DateFieldConfig {
   readonly type: "date";
   readonly required?: boolean;
   readonly default?: string;
+  readonly sensitive?: boolean;
 }
 
 export interface RelationFieldConfig {
@@ -64,6 +68,7 @@ export interface EnumFieldConfig {
   readonly required?: boolean;
   readonly default?: string;
   readonly enumValues: readonly string[];
+  readonly sensitive?: boolean;
 }
 
 export type FieldConfig =
@@ -137,6 +142,7 @@ export interface NormalizedFieldMeta {
   readonly default?: string | number | boolean;
   readonly relation?: RelationConfig;
   readonly enumValues?: readonly string[];
+  readonly sensitive?: boolean;
 }
 
 export interface EntityMetadata<
@@ -162,9 +168,6 @@ export type EntityPermissionAction =
   | "create"
   | "update"
   | "delete"
-  | "read_all"
-  | "write_all"
-  | "delete_all"
   | "manage_shares";
 
 export type EntityPermission<TName extends string> =

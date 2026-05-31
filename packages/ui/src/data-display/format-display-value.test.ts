@@ -73,6 +73,34 @@ describe("formatDisplayValue", () => {
     expect(formatted).toContain("PM");
     expect(formatted).not.toMatch(/2024/);
   });
+
+  it("does not format plain text with numbers as dates", () => {
+    expect(
+      formatDisplayValue("test 1", {
+        fieldType: "string",
+        locale: "en-US",
+      }),
+    ).toBe("test 1");
+  });
+
+  it("does not format loose date-like text on date fields", () => {
+    expect(
+      formatDisplayValue("test 1", {
+        fieldType: "date",
+        locale: "en-US",
+      }),
+    ).toBe("test 1");
+  });
+
+  it("does not infer dates from ISO-shaped strings on non-date fields", () => {
+    expect(
+      formatDisplayValue("2024-06-01T15:45:00.000Z", {
+        fieldType: "string",
+        locale: "en-US",
+        timeZone: "UTC",
+      }),
+    ).toBe("2024-06-01T15:45:00.000Z");
+  });
 });
 
 describe("isCurrencyField", () => {

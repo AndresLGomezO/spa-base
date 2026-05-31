@@ -272,6 +272,7 @@ export interface FieldDefinitionInput {
   readonly name: string;
   readonly type: "string" | "number" | "boolean" | "date" | "relation" | "enum";
   readonly required?: boolean;
+  readonly sensitive?: boolean;
   readonly relation?: {
     readonly target: string;
     readonly type:

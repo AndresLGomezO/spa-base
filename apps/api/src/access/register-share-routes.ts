@@ -90,7 +90,6 @@ export function registerShareRoutes(
           recordId: params.data.id,
           callerUserId: request.ctx?.uid ?? "",
           callerPermissions: request.ctx?.permissions ?? [],
-          callerIsSuperAdmin: request.ctx?.isSuperAdmin,
           targetUserId: body.data.userId,
           permission: body.data.permission,
         });
@@ -148,7 +147,6 @@ export function registerShareRoutes(
           recordId: params.data.id,
           callerUserId: request.ctx?.uid ?? "",
           callerPermissions: request.ctx?.permissions ?? [],
-          callerIsSuperAdmin: request.ctx?.isSuperAdmin,
           targetUserId: params.data.userId,
         });
 
@@ -205,7 +203,6 @@ export function registerShareRoutes(
           recordId: params.data.id,
           callerUserId: request.ctx?.uid ?? "",
           callerPermissions: request.ctx?.permissions ?? [],
-          callerIsSuperAdmin: request.ctx?.isSuperAdmin,
         });
 
         return reply.status(200).send(successEnvelope(shares));

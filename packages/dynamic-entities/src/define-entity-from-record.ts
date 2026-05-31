@@ -19,37 +19,32 @@ export class DynamicEntityError extends Error {
 }
 
 function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
+  const req = field.required ? { required: true as const } : {};
+  const sens =
+    field.sensitive && field.type !== "relation"
+      ? { sensitive: true as const }
+      : {};
+
   switch (field.type) {
     case "string":
-      return {
-        type: "string",
-        ...(field.required ? { required: true } : {}),
-      };
+      return { type: "string", ...req, ...sens };
     case "number":
-      return {
-        type: "number",
-        ...(field.required ? { required: true } : {}),
-      };
+      return { type: "number", ...req, ...sens };
     case "boolean":
-      return {
-        type: "boolean",
-        ...(field.required ? { required: true } : {}),
-      };
+      return { type: "boolean", ...req, ...sens };
     case "date":
-      return {
-        type: "date",
-        ...(field.required ? { required: true } : {}),
-      };
+      return { type: "date", ...req, ...sens };
     case "enum":
       return {
         type: "enum",
         enumValues: field.enumValues ?? [],
-        ...(field.required ? { required: true } : {}),
+        ...req,
+        ...sens,
       };
     case "relation":
       return {
         type: "relation",
-        ...(field.required ? { required: true } : {}),
+        ...req,
         relation: {
           target: field.relation!.target,
           type: field.relation!.type,

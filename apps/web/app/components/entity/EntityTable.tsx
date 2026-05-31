@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { getTableColumns, isFieldVisible } from "@repo/ui-builder";
 import { Alert, DataTable, IconButton, SchemaCell } from "@repo/ui";
-import { Pencil, Share2, Trash2 } from "lucide-react";
+import { Lock, Pencil, Share2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -88,14 +88,12 @@ export function EntityTable({
     permissions.canUpdate || permissions.canDelete || !!onRequestShare;
 
   function canEditRow(item: Record<string, unknown>): boolean {
-    if (permissions.canWriteAll) return true;
     if (item.ownerId === currentUserId) return true;
     const sharedWith = item.sharedWith as Record<string, string> | undefined;
     return sharedWith?.[currentUserId] === "write";
   }
 
   function canDeleteRow(item: Record<string, unknown>): boolean {
-    if (permissions.canDeleteAll) return true;
     return item.ownerId === currentUserId;
   }
 
@@ -110,9 +108,18 @@ export function EntityTable({
         const { fieldType, displayFormat, dateDisplayFormat } =
           getEntityCellDisplayMeta(column, definition);
 
+        const isSensitive = definition.fields[column]?.sensitive === true;
+
         return {
           id: column,
-          header: formatFieldLabel(column, definition),
+          header: isSensitive ? (
+            <span className="inline-flex items-center gap-1">
+              {formatFieldLabel(column, definition)}
+              <Lock className="text-muted-foreground size-3.5" />
+            </span>
+          ) : (
+            formatFieldLabel(column, definition)
+          ),
           cell: (item) => (
             <SchemaCell
               value={getEntityCellRawValue(
@@ -172,15 +179,33 @@ export function EntityTable({
                         <Pencil className="size-4" />
                       </IconButton>
                     ) : null}
-                    {rowShareable && onRequestShare ? (
-                      <IconButton
-                        type="button"
-                        label={t("share.title")}
-                        onClick={() => onRequestShare(String(item.id))}
-                      >
-                        <Share2 className="size-4" />
-                      </IconButton>
-                    ) : null}
+                    {rowShareable && onRequestShare
+                      ? (() => {
+                          const sharedWith = row.sharedWith as
+                            | Record<string, string>
+                            | undefined;
+                          const shareCount = sharedWith
+                            ? Object.keys(sharedWith).length
+                            : 0;
+
+                          return (
+                            <IconButton
+                              type="button"
+                              label={t("share.title")}
+                              onClick={() => onRequestShare(String(item.id))}
+                            >
+                              <span className="relative inline-flex">
+                                <Share2 className="size-4" />
+                                {shareCount > 0 ? (
+                                  <span className="bg-primary text-primary-foreground absolute -top-2 -right-2 flex size-4 items-center justify-center rounded-full text-[10px] font-medium leading-none">
+                                    {shareCount}
+                                  </span>
+                                ) : null}
+                              </span>
+                            </IconButton>
+                          );
+                        })()
+                      : null}
                     {permissions.canDelete &&
                     rowDeletable &&
                     onRequestDelete ? (

@@ -5,7 +5,10 @@
 export { defineEntity } from "./defineEntity.js";
 export type { FieldTypeRegistry, FieldSchemaBuilder } from "./fieldTypes.js";
 export { defaultFieldTypeRegistry } from "./schema/buildFieldSchema.js";
-export { isoDatetimeStringSchema } from "./schema/isoDatetime.js";
+export {
+  isoDatetimeStringSchema,
+  isIsoDatetimeString,
+} from "./schema/isoDatetime.js";
 export {
   clearEntityRegistry,
   getAllEntities,

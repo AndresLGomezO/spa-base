@@ -19,10 +19,11 @@ export function createEmptyField(
     name: "",
     type,
     required: true,
+    sensitive: false,
     ui: { order, filterable: true, sortable: true },
     ...(type === "enum" ? { enumValues: [""] } : {}),
     ...(type === "relation"
-      ? { relation: { target: "", type: "many-to-one" } }
+      ? { relation: { target: "", type: "many-to-one" }, sensitive: undefined }
       : {}),
   };
 }

@@ -1,7 +1,9 @@
+import { isIsoDatetimeString } from "@repo/entities";
+
 export function isoToDatetimeLocalValue(
   value: string | null | undefined,
 ): string {
-  if (!value) return "";
+  if (!value || !isIsoDatetimeString(value)) return "";
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "";
   const pad = (part: number) => String(part).padStart(2, "0");
@@ -9,7 +11,7 @@ export function isoToDatetimeLocalValue(
 }
 
 export function datetimeLocalValueToIso(value: string): string | undefined {
-  if (!value.trim()) return undefined;
+  if (!value.trim() || !isIsoDatetimeString(value)) return undefined;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return undefined;
   return date.toISOString();

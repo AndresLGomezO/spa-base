@@ -235,6 +235,8 @@
       "relation": "Relación"
     },
     "required": "Obligatorio",
+    "sensitive": "Sensible (cifrado)",
+    "sensitiveHint": "Los campos sensibles se cifran en reposo. No se pueden filtrar ni ordenar en vistas de lista.",
     "displayOrder": "Orden de visualización",
     "displayOrderHint": "Los números más bajos aparecen primero en tablas y formularios.",
     "fieldFilterable": "Filtrable en vistas de lista",
