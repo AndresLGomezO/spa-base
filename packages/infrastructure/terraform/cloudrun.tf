@@ -9,6 +9,7 @@ resource "google_cloud_run_v2_service" "backend" {
     google_firebase_project.default,
     google_project_service.run_api,
     google_secret_manager_secret.bootstrap_superadmin_emails,
+    google_secret_manager_secret.tenant_encryption_master_key,
     google_project_iam_member.backend_firestore,
     google_project_iam_member.backend_secrets,
     google_project_iam_member.backend_firebase_auth,
@@ -91,6 +92,15 @@ resource "google_cloud_run_v2_service" "backend" {
         value_source {
           secret_key_ref {
             secret  = google_secret_manager_secret.bootstrap_superadmin_emails.secret_id
+            version = "latest"
+          }
+        }
+      }
+      env {
+        name = "TENANT_ENCRYPTION_MASTER_KEY"
+        value_source {
+          secret_key_ref {
+            secret  = google_secret_manager_secret.tenant_encryption_master_key.secret_id
             version = "latest"
           }
         }

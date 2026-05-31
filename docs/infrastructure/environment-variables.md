@@ -18,6 +18,7 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `GCP_STORAGE_BUCKET` | `demo-project-base.appspot.com` | `{project_id}.appspot.com` | GCS bucket for tenant logos |
 | `API_CORS_ORIGINS` | `http://localhost:5173,...` | Firebase Hosting URLs (comma-separated) | CORS allowlist |
 | `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` | your email in `.env` | **Secret Manager** `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (latest version) | Comma-separated emails promoted to superadmin on first login |
+| `TENANT_ENCRYPTION_MASTER_KEY` | base64 key in `.env.dev` | **Secret Manager** `TENANT_ENCRYPTION_MASTER_KEY` (latest version) | 256-bit master key for field-level encryption (HKDF derives per-tenant keys) |
 | `FIRESTORE_EMULATOR_HOST` | `127.0.0.1:8080` | **unset** | Firestore emulator |
 | `FIREBASE_AUTH_EMULATOR_HOST` | `127.0.0.1:9099` | **unset** | Auth emulator |
 | `FIREBASE_STORAGE_EMULATOR_HOST` | `127.0.0.1:9199` | **unset** | Storage emulator (Admin SDK) |
@@ -65,14 +66,16 @@ Example: [`apps/web/.env.development.example`](../../apps/web/.env.development.e
 | `api_image` | **Required** in CI | Artifact Registry image URI |
 | `ci_deployer_sa_email` | CI | GitHub deployer SA; grants `actAs` for Cloud Run + Firebase CLI |
 | `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (Secret Manager) | Before first Cloud Run deploy | Add versions with `gcloud secrets versions add` (Terraform creates the secret only) |
+| `TENANT_ENCRYPTION_MASTER_KEY` (Secret Manager) | Before first Cloud Run deploy | 256-bit base64 key for field-level encryption. Generate with `node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"` |
 
 ### Secret Manager (API runtime)
 
 | Secret ID | Cloud Run env | How to update after bootstrap |
 | --------- | ------------- | ----------------------------- |
 | `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` | `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` | [Google Cloud Console](https://console.cloud.google.com/security/secret-manager) → secret → **New version**, or `gcloud secrets versions add PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS --project=PROJECT_ID --data-file=-` |
+| `TENANT_ENCRYPTION_MASTER_KEY` | `TENANT_ENCRYPTION_MASTER_KEY` | `gcloud secrets versions add TENANT_ENCRYPTION_MASTER_KEY --project=PROJECT_ID --data-file=-`. **Changing this key invalidates all previously encrypted data.** |
 
-Value format: comma-separated emails, e.g. `admin@example.com,ops@example.com`. Cloud Run always mounts **latest**; no redeploy required for new versions (Run picks up `latest` on new instances).
+Value format for `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS`: comma-separated emails, e.g. `admin@example.com,ops@example.com`. Cloud Run always mounts **latest**; no redeploy required for new versions (Run picks up `latest` on new instances).
 
 ---
 

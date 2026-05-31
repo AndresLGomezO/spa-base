@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import {
   Alert,
   Button,
+  Checkbox,
   FieldLabel,
   Form,
   Heading,
@@ -48,6 +49,7 @@ export function EntityDefinitionWizard({
   const [name, setName] = useState("");
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
+  const [tenantWideRead, setTenantWideRead] = useState(false);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -148,6 +150,7 @@ export function EntityDefinitionWizard({
       const payload = {
         name: name.trim(),
         label: label.trim(),
+        ...(tenantWideRead ? { tenantWideRead: true } : {}),
         fields: fields
           .filter((field) => field.name.trim())
           .map((field) => ({
@@ -220,6 +223,17 @@ export function EntityDefinitionWizard({
               onChange={(event) => setLabel(event.target.value)}
               placeholder="Loans"
             />
+          </div>
+          <div className="space-y-2">
+            <Checkbox
+              id="model-tenant-wide-read"
+              label={t("dataModels.tenantWideRead")}
+              checked={tenantWideRead}
+              onChange={(event) => setTenantWideRead(event.target.checked)}
+            />
+            <Text className="text-muted-foreground text-sm">
+              {t("dataModels.tenantWideReadHint")}
+            </Text>
           </div>
           {!useModalFooter ? (
             <div className="flex gap-2">

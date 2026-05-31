@@ -237,6 +237,8 @@
     "required": "Obligatorio",
     "sensitive": "Sensible (cifrado)",
     "sensitiveHint": "Los campos sensibles se cifran en reposo. No se pueden filtrar ni ordenar en vistas de lista.",
+    "tenantWideRead": "Lectura para todo el tenant",
+    "tenantWideReadHint": "Cuando está activado, todos los miembros del tenant pueden leer los registros de esta entidad. Escritura y eliminación siguen requiriendo propiedad.",
     "displayOrder": "Orden de visualización",
     "displayOrderHint": "Los números más bajos aparecen primero en tablas y formularios.",
     "fieldFilterable": "Filtrable en vistas de lista",

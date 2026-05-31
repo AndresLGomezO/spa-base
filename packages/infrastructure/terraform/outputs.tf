@@ -37,3 +37,8 @@ output "bootstrap_superadmin_emails_secret_id" {
   description = "Secret Manager secret id for PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS (update value in Console or gcloud; Cloud Run uses latest)"
   value       = google_secret_manager_secret.bootstrap_superadmin_emails.secret_id
 }
+
+output "tenant_encryption_master_key_secret_id" {
+  description = "Secret Manager secret id for TENANT_ENCRYPTION_MASTER_KEY (update value in Console or gcloud; Cloud Run uses latest)"
+  value       = google_secret_manager_secret.tenant_encryption_master_key.secret_id
+}
