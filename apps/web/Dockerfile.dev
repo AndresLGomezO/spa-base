@@ -20,6 +20,8 @@ COPY packages/modules/package.json ./packages/modules/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/ui-builder/package.json ./packages/ui-builder/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/
+COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
+COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/hooks/package.json ./packages/hooks/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/rbac/package.json ./packages/rbac/
