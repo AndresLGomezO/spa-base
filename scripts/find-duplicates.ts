@@ -70,6 +70,7 @@ const IGNORE_BASE_NAMES = new Set<string>([
   "home",
   "home-page",
   "routes",
+  "roles",
 ]);
 
 const MIN_BODY_LENGTH = 40;
