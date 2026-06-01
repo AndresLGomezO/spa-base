@@ -72,7 +72,7 @@ Backend SA needs `roles/datastore.indexAdmin` (in addition to `datastore.user`) 
 
 ### MVP deploy (CI/CD)
 
-By default, **no Pub/Sub resources** are created in Terraform (`enable_index_provisioning_pubsub = false`). Indexes ship via committed [`firestore.indexes.json`](../firestore.indexes.json) and [`firestore.tf`](../packages/infrastructure/terraform/firestore.tf). Cloud Run sets `NODE_ENV=production` and does not set `ENSURE_FIRESTORE_INDEXES`, so runtime `createIndex` on sync/boot is **off** in deployed environments unless you add that env var in [`cloudrun.tf`](../packages/infrastructure/terraform/cloudrun.tf).
+By default, **no Pub/Sub resources** are created in Terraform (`enable_index_provisioning_pubsub = false`). Indexes also ship via committed [`firestore.indexes.json`](../firestore.indexes.json) and [`firestore.tf`](../packages/infrastructure/terraform/firestore.tf). Cloud Run sets `NODE_ENV=production` but **`ENSURE_FIRESTORE_INDEXES=true`** per workspace in [`workspaces.tf`](../packages/infrastructure/terraform/workspaces.tf) / [`cloudrun.tf`](../packages/infrastructure/terraform/cloudrun.tf), so the API calls Firestore Admin `createIndex` on entity sync, boot catalog ensure, and `COMPOSITE_INDEX_REQUIRED` hints. Backend SA needs `roles/datastore.indexAdmin` (see [`iam.tf`](../packages/infrastructure/terraform/iam.tf)).
 
 ### Enabling async index provisioning (Phase C)
 

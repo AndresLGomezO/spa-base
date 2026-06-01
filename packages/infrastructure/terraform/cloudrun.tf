@@ -64,6 +64,10 @@ resource "google_cloud_run_v2_service" "backend" {
         value = local.environment_config.node_env
       }
       env {
+        name  = "ENSURE_FIRESTORE_INDEXES"
+        value = local.environment_config.ensure_firestore_indexes
+      }
+      env {
         name  = "API_HOST"
         value = "0.0.0.0"
       }
