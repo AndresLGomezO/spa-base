@@ -32,6 +32,10 @@ const ApiEnvSchema = z.object({
     .trim()
     .min(16)
     .default("dev-cursor-secret-change-in-prod"),
+  ENSURE_FIRESTORE_INDEXES: z
+    .enum(["true", "false"])
+    .default(process.env.NODE_ENV === "production" ? "true" : "true") // TODO: Change to true in production
+    .transform((value) => value === "true"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

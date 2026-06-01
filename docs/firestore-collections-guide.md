@@ -622,6 +622,16 @@ Foreign-key relation fields used for reverse lookups require composite indexes. 
 
 Add entries to [`firestore.indexes.json`](../firestore.indexes.json) at the repo root. Use `indexes` for **multi-field** composite indexes; use `fieldOverrides` for **single-field** indexes (required for `collectionGroup()` queries such as `user_invites` by `email`). Join collections use equality filters on `sourceEntity`, `sourceId`, `targetEntity`, and `targetId` — add indexes when query patterns require them.
 
+**Ownership-scoped list queries** (default entity lists) require a composite index on `accessUserIds` (array-contains) + `id` per collection. Regenerate the catalog with:
+
+```bash
+pnpm generate:firestore-indexes
+pnpm generate:firestore-indexes -- --dynamic-from-firestore --tenant-id tenant_dev_1
+pnpm generate:firestore-indexes -- --collections accounts,loans
+```
+
+Then deploy via Terraform apply or `firebase deploy --only firestore:indexes`. With `ENSURE_FIRESTORE_INDEXES=true` (default outside production), the API also requests missing indexes at runtime when entities are created or synced.
+
 See [Relational Data System Guide](./relational-data-system-guide.md) for full relation storage and validation behavior.
 
 The User implementation remains the source of truth. When in doubt, read the User files side by side with this guide.

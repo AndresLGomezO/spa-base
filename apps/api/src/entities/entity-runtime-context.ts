@@ -23,6 +23,9 @@ import { createEntityConverter } from "@repo/firestore-converters";
 import {
   createFirestoreAdminEntityRepository,
   createFirestoreEntityQueryExecutor,
+  scheduleEnsureEntityFirestoreIndexes,
+  scheduleEnsureFirestoreIndexesFromHint,
+  type FirestoreCompositeIndex,
   type FirestoreIndexHint,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
@@ -42,7 +45,13 @@ interface EntityRuntimeContextOptions {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly entityDefinitionRepository: EntityDefinitionRepository;
   readonly definitionCacheTtlMs?: number;
+  readonly ensureFirestoreIndexes?: boolean;
   readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
+  readonly onIndexEnsured?: (index: FirestoreCompositeIndex) => void;
+  readonly onIndexEnsureError?: (
+    error: unknown,
+    index: FirestoreCompositeIndex,
+  ) => void;
   readonly cursorSecret?: string;
   readonly repositories?: Record<
     string,
@@ -259,10 +268,50 @@ export class EntityRuntimeContext {
     return this.getEntitiesForTenant(tenantId);
   }
 
+  private getIndexEnsureOptions():
+    | Parameters<typeof scheduleEnsureEntityFirestoreIndexes>[1]
+    | null {
+    if (!this.options.ensureFirestoreIndexes || this.options.repositories) {
+      return null;
+    }
+    return {
+      projectId: this.options.firebaseAdminConfig.projectId,
+      ...(this.options.onIndexEnsured
+        ? { onEnsured: this.options.onIndexEnsured }
+        : {}),
+      ...(this.options.onIndexEnsureError
+        ? { onError: this.options.onIndexEnsureError }
+        : {}),
+    };
+  }
+
+  ensureIndexesForEntity(entity: AnyDefinedEntity): void {
+    const ensureOptions = this.getIndexEnsureOptions();
+    if (!ensureOptions) {
+      return;
+    }
+    scheduleEnsureEntityFirestoreIndexes(entity, ensureOptions);
+  }
+
+  ensureIndexesFromHint(hint: FirestoreIndexHint): void {
+    const ensureOptions = this.getIndexEnsureOptions();
+    if (!ensureOptions) {
+      return;
+    }
+    scheduleEnsureFirestoreIndexesFromHint(hint, ensureOptions);
+  }
+
+  ensureCatalogIndexes(tenantId: string): void {
+    for (const entity of this.getEntitiesForTenant(tenantId)) {
+      this.ensureIndexesForEntity(entity);
+    }
+  }
+
   async syncDefinition(record: EntityDefinitionRecord): Promise<void> {
-    registerDynamicEntity(record.tenantId, record);
+    const entity = registerDynamicEntity(record.tenantId, record);
     this.invalidateEntityRuntime(record.tenantId, record.name);
     this.definitionsLoadedAt.set(record.tenantId, Date.now());
+    this.ensureIndexesForEntity(entity);
   }
 
   invalidateTenantDefinitions(tenantId: string): void {
@@ -295,7 +344,8 @@ export class EntityRuntimeContext {
     const records =
       await this.options.entityDefinitionRepository.list(parsedTenantId);
     for (const record of records) {
-      registerDynamicEntity(parsedTenantId, record);
+      const entity = registerDynamicEntity(parsedTenantId, record);
+      this.ensureIndexesForEntity(entity);
     }
     this.definitionsLoadedAt.set(parsedTenantId, now);
   }
