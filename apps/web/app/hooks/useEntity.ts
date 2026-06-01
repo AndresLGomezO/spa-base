@@ -60,6 +60,14 @@ interface UseEntityResult extends UseEntityListState, UseEntityMutationsState {
 }
 
 function getErrorMessage(error: unknown): string {
+  if (isApiClientError(error)) {
+    if (error.code === "INDEX_CREATING") {
+      return "Firestore indexes for this entity are still building. Please wait a few minutes and try again.";
+    }
+    if (error.code === "COMPOSITE_INDEX_REQUIRED") {
+      return "A Firestore index is required for this query. Indexes may still be building—retry in a few minutes, or use the link in the server response if provided.";
+    }
+  }
   if (error instanceof Error && error.message) {
     return error.message;
   }

@@ -9,6 +9,12 @@ resource "google_project_iam_member" "backend_firestore" {
   member  = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
+resource "google_project_iam_member" "backend_firestore_index_admin" {
+  project = local.gcp_project_id
+  role    = "roles/datastore.indexAdmin"
+  member  = "serviceAccount:${google_service_account.backend_sa.email}"
+}
+
 resource "google_project_iam_member" "backend_firebase_auth" {
   project = local.gcp_project_id
   role    = "roles/firebaseauth.admin"

@@ -27,6 +27,7 @@ import {
   scheduleEnsureFirestoreIndexesFromHint,
   type FirestoreCompositeIndex,
   type FirestoreIndexHint,
+  type FirestoreIndexStatusStore,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 import type { RbacQueryInjector } from "@repo/query-engine";
@@ -46,6 +47,7 @@ interface EntityRuntimeContextOptions {
   readonly entityDefinitionRepository: EntityDefinitionRepository;
   readonly definitionCacheTtlMs?: number;
   readonly ensureFirestoreIndexes?: boolean;
+  readonly indexStatusStore?: FirestoreIndexStatusStore;
   readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
   readonly onIndexEnsured?: (index: FirestoreCompositeIndex) => void;
   readonly onIndexEnsureError?: (
@@ -276,6 +278,9 @@ export class EntityRuntimeContext {
     }
     return {
       projectId: this.options.firebaseAdminConfig.projectId,
+      ...(this.options.indexStatusStore
+        ? { statusStore: this.options.indexStatusStore }
+        : {}),
       ...(this.options.onIndexEnsured
         ? { onEnsured: this.options.onIndexEnsured }
         : {}),
@@ -283,6 +288,10 @@ export class EntityRuntimeContext {
         ? { onError: this.options.onIndexEnsureError }
         : {}),
     };
+  }
+
+  getIndexStatusStore(): FirestoreIndexStatusStore | undefined {
+    return this.options.indexStatusStore;
   }
 
   ensureIndexesForEntity(entity: AnyDefinedEntity): void {

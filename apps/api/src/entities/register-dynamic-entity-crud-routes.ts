@@ -8,6 +8,8 @@ import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { createParametricEntityPermissionGuards } from "../rbac/create-entity-permission-guards.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { createRelationRuntimeContext } from "../relations/create-relation-services.js";
+import type { FirestoreIndexStatusStore } from "@repo/gcp-firebase";
+
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
 
 const registeredContexts = new WeakMap<EntityRuntimeContext, boolean>();
@@ -23,6 +25,7 @@ export async function registerDynamicEntityCrudRoutes(
   queryEngine: QueryEngine,
   relationContext: ReturnType<typeof createRelationRuntimeContext>,
   crudHooks?: CrudHookDeps,
+  indexStatusStore?: FirestoreIndexStatusStore,
 ): Promise<void> {
   if (registeredContexts.get(entityRuntime)) {
     return;
@@ -41,6 +44,7 @@ export async function registerDynamicEntityCrudRoutes(
       }
       return {
         name: entity.name,
+        collection: entity.metadata.collection,
         schema: entity.schema,
         createSchema: entity.createSchema,
         updateSchema: entity.updateSchema,
@@ -57,6 +61,7 @@ export async function registerDynamicEntityCrudRoutes(
     authorize: createParametricEntityPermissionGuards(permissionDeps),
     relations: (entityName) => relationContext.hooksFor(entityName),
     queryEngine,
+    indexStatusStore,
     referencePopulator: {
       getEntityDefinition: (name, tenantId) =>
         entityRuntime.getEntityDefinition(name, tenantId),

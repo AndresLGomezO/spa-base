@@ -34,8 +34,17 @@ const ApiEnvSchema = z.object({
     .default("dev-cursor-secret-change-in-prod"),
   ENSURE_FIRESTORE_INDEXES: z
     .enum(["true", "false"])
-    .default(process.env.NODE_ENV === "production" ? "true" : "true") // TODO: Change to true in production
+    .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
+  INDEX_PROVISIONING_PUBSUB: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  INDEX_PROVISIONING_TOPIC: z
+    .string()
+    .trim()
+    .min(1)
+    .default("index-provisioning"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);
