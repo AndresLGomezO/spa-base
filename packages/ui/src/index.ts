@@ -23,7 +23,23 @@ export {
   type PhotoUploadProps,
 } from "./photo-upload";
 export {
+  DocumentUpload,
+  type DocumentUploadLabels,
+  type DocumentUploadProps,
+} from "./document-upload";
+export {
+  DatePicker,
+  type DatePickerLabels,
+  type DatePickerMode,
+  type DatePickerProps,
+  buildIsoForMode,
+  formatPickerDisplayValue,
+  parseIsoToUtcParts,
+  resolvePickerParts,
+} from "./date-picker";
+export {
   Popover,
+  type PopoverLayer,
   type PopoverPlacement,
   type PopoverProps,
 } from "./popover/Popover";

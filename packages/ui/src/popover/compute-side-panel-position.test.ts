@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { computeSidePanelPosition } from "./compute-side-panel-position";
+import {
+  computeAnchoredPanelPosition,
+  computeSidePanelPosition,
+} from "./compute-side-panel-position";
 
 function triggerRect(left: number, top: number, width: number, height: number) {
   return {
@@ -103,5 +106,49 @@ describe("computeSidePanelPosition", () => {
     expect(result.resolvedPlacement).toBe("right-end");
     expect(result.style.bottom).toBe(60);
     expect(result.style.top).toBeUndefined();
+  });
+});
+
+describe("computeAnchoredPanelPosition", () => {
+  it("flips to above when there is not enough room below", () => {
+    const result = computeAnchoredPanelPosition({
+      preferred: "bottom-start",
+      triggerRect: triggerRect(12, 520, 240, 40),
+      panelSize: { width: 288, height: 320 },
+      viewport,
+    });
+
+    expect(result.resolvedPlacement).toBe("top-start");
+    expect(result.style).toMatchObject({
+      position: "fixed",
+      left: 12,
+    });
+    expect(result.style.bottom).toBeDefined();
+  });
+
+  it("does not clamp height when the panel fits below the trigger", () => {
+    const result = computeAnchoredPanelPosition({
+      preferred: "bottom-start",
+      triggerRect: triggerRect(12, 80, 240, 40),
+      panelSize: { width: 420, height: 280 },
+      viewport,
+    });
+
+    expect(result.resolvedPlacement).toBe("bottom-start");
+    expect(result.style.top).toBe(128);
+    expect(result.style.maxHeight).toBeUndefined();
+  });
+
+  it("clamps height only when the panel exceeds available space", () => {
+    const result = computeAnchoredPanelPosition({
+      preferred: "bottom-start",
+      triggerRect: triggerRect(12, 200, 240, 40),
+      panelSize: { width: 420, height: 400 },
+      viewport,
+    });
+
+    expect(result.resolvedPlacement).toBe("bottom-start");
+    expect(result.style.top).toBe(248);
+    expect(result.style.maxHeight).toBe(344);
   });
 });

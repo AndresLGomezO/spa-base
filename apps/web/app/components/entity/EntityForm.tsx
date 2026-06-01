@@ -237,6 +237,7 @@ export function EntityForm({
                 value={values[fieldName]}
                 error={fieldErrors[fieldName]}
                 readOnly={!isFieldEditable(fieldUI, canWrite, access)}
+                recordId={recordId}
                 onChange={(name, value) =>
                   setValues((current) => ({ ...current, [name]: value }))
                 }

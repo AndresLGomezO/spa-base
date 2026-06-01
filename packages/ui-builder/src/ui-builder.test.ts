@@ -9,6 +9,7 @@ import {
   getTableColumns,
   registerComponent,
   resolveComponentId,
+  resolveCreateForm,
   resolveEntityActionPermissions,
 } from "./index.js";
 
@@ -99,6 +100,29 @@ describe("@repo/ui-builder", () => {
       canUpdate: false,
       canDelete: false,
     });
+  });
+
+  it("includes entity fields missing from the saved create form layout", () => {
+    const layout = resolveCreateForm({
+      ...definition,
+      fields: {
+        ...definition.fields,
+        statement: { type: "document", required: false, optional: true },
+      },
+      ui: {
+        ...definition.ui,
+        forms: {
+          create: { sections: [{ fields: ["name", "isActive"] }] },
+          edit: { sections: [{ fields: ["name", "isActive"] }] },
+        },
+      },
+    });
+
+    expect(layout.sections[0]?.fields).toEqual([
+      "name",
+      "isActive",
+      "statement",
+    ]);
   });
 
   it("supports custom component registration", () => {

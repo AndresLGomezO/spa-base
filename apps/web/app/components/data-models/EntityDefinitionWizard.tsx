@@ -353,6 +353,7 @@ export function EntityDefinitionWizard({
         >
           <EntityFieldsManager
             fields={fields}
+            entityName={name.trim() || undefined}
             onChange={setFields}
             canEdit
             relationTargets={relationTargets}

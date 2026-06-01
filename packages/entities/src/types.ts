@@ -1,8 +1,14 @@
 import type { z } from "zod";
 
+import type { EntityFileReference } from "./schema/entityFileReference.js";
 import type { EntityUIConfig } from "./ui/types.js";
 
 import type { SystemFieldKey, SystemFieldRecord } from "./systemFields.js";
+
+export type {
+  EntityFileReference,
+  EntityFileReferenceWithDownload,
+} from "./schema/entityFileReference.js";
 
 export type Phase1FieldType =
   | "string"
@@ -10,7 +16,9 @@ export type Phase1FieldType =
   | "boolean"
   | "date"
   | "relation"
-  | "enum";
+  | "enum"
+  | "image"
+  | "document";
 
 export type RelationType =
   | "one-to-one"
@@ -74,13 +82,28 @@ export interface EnumFieldConfig {
   readonly sensitive?: boolean;
 }
 
+export interface ImageFieldConfig {
+  readonly type: "image";
+  readonly required?: boolean;
+  readonly maxSizeBytes?: number;
+  readonly defaultImage?: EntityFileReference;
+}
+
+export interface DocumentFieldConfig {
+  readonly type: "document";
+  readonly required?: boolean;
+  readonly maxSizeBytes?: number;
+}
+
 export type FieldConfig =
   | StringFieldConfig
   | NumberFieldConfig
   | BooleanFieldConfig
   | DateFieldConfig
   | RelationFieldConfig
-  | EnumFieldConfig;
+  | EnumFieldConfig
+  | ImageFieldConfig
+  | DocumentFieldConfig;
 
 export type FieldDefinitions = Readonly<Record<string, FieldConfig>>;
 
@@ -96,7 +119,9 @@ export type InferFieldValue<F extends FieldConfig> = F["type"] extends "string"
           ? string
           : F["type"] extends "enum"
             ? string
-            : never;
+            : F["type"] extends "image" | "document"
+              ? EntityFileReference
+              : never;
 
 type IsRequiredInEntity<F extends FieldConfig> = F extends { required: true }
   ? true
@@ -147,6 +172,8 @@ export interface NormalizedFieldMeta {
   readonly enumValues?: readonly string[];
   readonly sensitive?: boolean;
   readonly numberKind?: NumberKind;
+  readonly maxSizeBytes?: number;
+  readonly defaultImage?: EntityFileReference;
 }
 
 export interface EntityMetadata<

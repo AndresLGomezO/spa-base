@@ -101,7 +101,6 @@ export async function uploadTenantLogo(
   input: {
     readonly contentType: string;
     readonly data: string;
-    readonly objectId?: string;
   },
 ): Promise<{ readonly logoUrl: string; readonly tenant: AdminTenant }> {
   return adminFetch(`/admin/tenants/${encodeURIComponent(id)}/logo`, {

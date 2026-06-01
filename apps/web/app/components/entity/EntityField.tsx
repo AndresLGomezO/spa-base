@@ -1,8 +1,17 @@
-import { Checkbox, FieldError, FieldLabel, Input, Text } from "@repo/ui";
+import {
+  Checkbox,
+  DatePicker,
+  FieldError,
+  FieldLabel,
+  Input,
+  Text,
+  type DatePickerLabels,
+} from "@repo/ui";
 import { resolveComponentId } from "@repo/ui-builder";
 import {
   isDocumentStoredField,
   isJoinCollectionRelationField,
+  resolveFileFieldMaxSizeBytes,
 } from "@repo/entities";
 import { useTranslation } from "react-i18next";
 
@@ -11,10 +20,6 @@ import {
   type EntityName,
 } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
-import {
-  datetimeLocalValueToIso,
-  isoToDatetimeLocalValue,
-} from "./entity-field-utils";
 import { resolveFieldComponent } from "./field-component-registry";
 import { RelationPicker } from "./RelationPicker";
 import { ManyToManyRelationPicker } from "./ManyToManyRelationPicker";
@@ -25,6 +30,7 @@ interface EntityFieldProps {
   readonly value: unknown;
   readonly error?: string;
   readonly readOnly?: boolean;
+  readonly recordId?: string;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -34,6 +40,7 @@ export function EntityField({
   value,
   error,
   readOnly = false,
+  recordId,
   onChange,
 }: EntityFieldProps) {
   const { t } = useTranslation("common");
@@ -46,6 +53,16 @@ export function EntityField({
   const label = fieldUI?.label ?? formatFieldLabel(fieldName, definition);
   const componentId = resolveComponentId(fieldUI?.component, meta.type);
   const CustomField = resolveFieldComponent(componentId);
+  const fileFieldMaxSizeBytes =
+    meta.type === "image" || meta.type === "document"
+      ? resolveFileFieldMaxSizeBytes(meta.type, meta.maxSizeBytes)
+      : undefined;
+  const defaultImageUrl =
+    meta.type === "image" &&
+    meta.defaultImage &&
+    "downloadUrl" in meta.defaultImage
+      ? (meta.defaultImage.downloadUrl ?? null)
+      : null;
 
   if (CustomField) {
     return (
@@ -57,6 +74,9 @@ export function EntityField({
         required={meta.required}
         error={error}
         readOnly={readOnly}
+        recordId={recordId}
+        maxSizeBytes={fileFieldMaxSizeBytes}
+        defaultImageUrl={defaultImageUrl}
         onChange={onChange}
       />
     );
@@ -126,22 +146,31 @@ export function EntityField({
   }
 
   if (meta.type === "date") {
+    const dateMode = fieldUI?.dateDisplayFormat ?? "datetime";
+    const datePickerLabels: DatePickerLabels = {
+      placeholder: t("entity.datePicker.placeholder"),
+      clear: t("entity.datePicker.clear"),
+      previous: t("entity.datePicker.previous"),
+      next: t("entity.datePicker.next"),
+      am: t("entity.datePicker.am"),
+      pm: t("entity.datePicker.pm"),
+      hour: t("entity.datePicker.hour"),
+      minute: t("entity.datePicker.minute"),
+    };
+
     return (
       <div className="flex flex-col gap-1">
         <FieldLabel htmlFor={inputId} required={meta.required}>
           {label}
         </FieldLabel>
-        <Input
+        <DatePicker
           id={inputId}
-          type="datetime-local"
-          hasError={Boolean(error)}
+          mode={dateMode}
+          value={typeof value === "string" ? value : undefined}
+          onChange={(next) => onChange(fieldName, next)}
           disabled={readOnly}
-          value={isoToDatetimeLocalValue(
-            typeof value === "string" ? value : null,
-          )}
-          onChange={(event) =>
-            onChange(fieldName, datetimeLocalValueToIso(event.target.value))
-          }
+          hasError={Boolean(error)}
+          labels={datePickerLabels}
         />
         {error ? <FieldError>{error}</FieldError> : null}
       </div>

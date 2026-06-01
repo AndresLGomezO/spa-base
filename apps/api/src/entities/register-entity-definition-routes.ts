@@ -13,9 +13,11 @@ import {
   validateRelationTargets,
 } from "@repo/dynamic-entities";
 import type { EntityCategoryRepository } from "@repo/firestore-converters";
+import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
+import { enrichEntityDefinitionRecordFileFields } from "../entity-files/enrich-definition-file-fields.js";
 import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
@@ -26,6 +28,7 @@ interface RegisterEntityDefinitionRoutesOptions {
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly entityCategoryRepository: EntityCategoryRepository;
+  readonly firebaseAdminConfig: FirebaseAdminConfig;
 }
 
 const tenantIdQuerySchema = z.object({
@@ -71,7 +74,15 @@ export async function registerEntityDefinitionRoutes(
       await options.entityRuntime.loadTenantDefinitions(tenantId);
       const items =
         await options.entityRuntime.entityDefinitionRepository.list(tenantId);
-      return reply.send(successEnvelope({ items }));
+      const enrichedItems = await Promise.all(
+        items.map((item) =>
+          enrichEntityDefinitionRecordFileFields(
+            options.firebaseAdminConfig,
+            item,
+          ),
+        ),
+      );
+      return reply.send(successEnvelope({ items: enrichedItems }));
     },
   );
 
@@ -111,7 +122,12 @@ export async function registerEntityDefinitionRoutes(
         );
       }
 
-      return reply.send(successEnvelope(item));
+      const enrichedItem = await enrichEntityDefinitionRecordFileFields(
+        options.firebaseAdminConfig,
+        item,
+      );
+
+      return reply.send(successEnvelope(enrichedItem));
     },
   );
 

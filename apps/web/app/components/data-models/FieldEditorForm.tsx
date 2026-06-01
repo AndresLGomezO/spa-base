@@ -1,9 +1,27 @@
 import { useId, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button, Checkbox, FieldLabel, Input, Text } from "@repo/ui";
+import {
+  DEFAULT_DOCUMENT_MAX_SIZE_BYTES,
+  DEFAULT_IMAGE_MAX_SIZE_BYTES,
+  resolveFileFieldMaxSizeBytes,
+} from "@repo/entities";
+import {
+  Button,
+  Checkbox,
+  FieldLabel,
+  Input,
+  PhotoUpload,
+  Text,
+  toast,
+} from "@repo/ui";
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
+import {
+  isEntityFileReferenceWithDownload,
+  readFileAsBase64,
+  uploadEntityFile,
+} from "../../lib/entity-file-client";
 
 import { FIELD_TYPES } from "./field-types";
 import {
@@ -11,9 +29,11 @@ import {
   type RelationType,
 } from "./generate-relation-field-name";
 import { RelationTypeInfo } from "./RelationTypeInfo";
+import { resolveFieldDefinitionName } from "./field-types";
 
 interface FieldEditorFormProps {
   readonly field: FieldDefinitionInput;
+  readonly entityName?: string;
   readonly relationTargets: readonly {
     readonly name: string;
     readonly label: string;
@@ -21,6 +41,28 @@ interface FieldEditorFormProps {
   readonly onChange: (field: FieldDefinitionInput) => void;
   readonly typeReadOnly?: boolean;
   readonly orderDefault?: number;
+}
+
+function formatMaxSizeMb(bytes?: number): string {
+  if (bytes === undefined) {
+    return "";
+  }
+  const mb = bytes / (1024 * 1024);
+  return Number.isInteger(mb)
+    ? String(mb)
+    : mb.toFixed(2).replace(/\.?0+$/, "");
+}
+
+function parseMaxSizeMb(input: string): number | undefined {
+  const trimmed = input.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+  const mb = Number(trimmed);
+  if (!Number.isFinite(mb) || mb <= 0) {
+    return undefined;
+  }
+  return Math.round(mb * 1024 * 1024);
 }
 
 function isCustomRelationName(
@@ -41,6 +83,7 @@ function isCustomRelationName(
 
 export function FieldEditorForm({
   field,
+  entityName,
   relationTargets,
   onChange,
   typeReadOnly = false,
@@ -183,7 +226,11 @@ export function FieldEditorForm({
           id={`${idPrefix}-field-sensitive`}
           label={t("dataModels.sensitive")}
           checked={field.sensitive ?? false}
-          disabled={field.type === "relation"}
+          disabled={
+            field.type === "relation" ||
+            field.type === "image" ||
+            field.type === "document"
+          }
           onChange={(event) => update({ sensitive: event.target.checked })}
         />
         <Text className="text-muted-foreground text-sm">
@@ -459,6 +506,172 @@ export function FieldEditorForm({
               {t("dataModels.dateDisplayFormats.time")}
             </option>
           </select>
+        </div>
+      ) : null}
+
+      {field.type === "image" ? (
+        <FieldFileMetadataEditor
+          field={field}
+          entityName={entityName}
+          onChange={onChange}
+          showDefaultImage
+        />
+      ) : null}
+
+      {field.type === "document" ? (
+        <FieldFileMetadataEditor
+          field={field}
+          entityName={entityName}
+          onChange={onChange}
+        />
+      ) : null}
+    </div>
+  );
+}
+
+function FieldFileMetadataEditor({
+  field,
+  entityName,
+  onChange,
+  showDefaultImage = false,
+}: {
+  readonly field: FieldDefinitionInput;
+  readonly entityName?: string;
+  readonly onChange: (field: FieldDefinitionInput) => void;
+  readonly showDefaultImage?: boolean;
+}) {
+  const { t } = useTranslation("common");
+  const idPrefix = useId().replace(/:/g, "");
+  const [uploadingDefault, setUploadingDefault] = useState(false);
+
+  const defaultMaxBytes =
+    field.type === "image"
+      ? DEFAULT_IMAGE_MAX_SIZE_BYTES
+      : DEFAULT_DOCUMENT_MAX_SIZE_BYTES;
+  const effectiveMaxBytes = resolveFileFieldMaxSizeBytes(
+    field.type === "image" ? "image" : "document",
+    field.maxSizeBytes,
+  );
+  const resolvedFieldName = resolveFieldDefinitionName(field);
+  const defaultImageRef = isEntityFileReferenceWithDownload(field.defaultImage)
+    ? field.defaultImage
+    : null;
+
+  async function handleDefaultImageUpload(params: {
+    readonly file: File;
+    readonly uploadId: string;
+  }) {
+    if (!entityName?.trim() || !resolvedFieldName) {
+      toast.error(t("dataModels.defaultImageRequiresEntityName"));
+      return;
+    }
+
+    setUploadingDefault(true);
+    try {
+      const data = await readFileAsBase64(params.file);
+      const file = await uploadEntityFile({
+        entityName: entityName.trim(),
+        fieldName: resolvedFieldName,
+        contentType: params.file.type || "image/jpeg",
+        fileName: params.file.name,
+        data,
+        purpose: "fieldDefault",
+      });
+      onChange({ ...field, defaultImage: file });
+      toast.success(t("entity.fileUploadSuccess"));
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : t("entity.fileUploadFailed"),
+      );
+      throw error;
+    } finally {
+      setUploadingDefault(false);
+    }
+  }
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <FieldLabel htmlFor={`${idPrefix}-max-size-mb`}>
+          {t("dataModels.maxFileSizeMb")}
+        </FieldLabel>
+        <Input
+          id={`${idPrefix}-max-size-mb`}
+          type="number"
+          min={0.1}
+          step={0.1}
+          placeholder={formatMaxSizeMb(defaultMaxBytes)}
+          value={formatMaxSizeMb(field.maxSizeBytes)}
+          onChange={(event) => {
+            const maxSizeBytes = parseMaxSizeMb(event.target.value);
+            onChange({
+              ...field,
+              maxSizeBytes,
+            });
+          }}
+        />
+        <Text className="text-muted-foreground mt-1 text-sm">
+          {field.type === "image"
+            ? t("dataModels.imageFieldHint", {
+                maxSizeMb: formatMaxSizeMb(effectiveMaxBytes),
+              })
+            : t("dataModels.documentFieldHint", {
+                maxSizeMb: formatMaxSizeMb(effectiveMaxBytes),
+              })}
+        </Text>
+      </div>
+
+      {showDefaultImage ? (
+        <div>
+          <FieldLabel>{t("dataModels.defaultImage")}</FieldLabel>
+          <Text className="text-muted-foreground mb-2 text-sm">
+            {t("dataModels.defaultImageHint")}
+          </Text>
+          {!entityName?.trim() || !resolvedFieldName ? (
+            <Text className="text-muted-foreground text-sm">
+              {t("dataModels.defaultImageRequiresEntityName")}
+            </Text>
+          ) : (
+            <div className="flex flex-col gap-2">
+              <PhotoUpload
+                value={defaultImageRef?.downloadUrl ?? null}
+                alt={t("dataModels.defaultImage")}
+                uploading={uploadingDefault}
+                maxSizeBytes={effectiveMaxBytes}
+                dialogLayer="nested"
+                labels={{
+                  select: t("entity.fileSelectImage"),
+                  change: t("entity.fileChangeImage"),
+                  cropTitle: t("platform.appearance.photoCropTitle"),
+                  cropDescription: t(
+                    "platform.appearance.photoCropDescription",
+                  ),
+                  upload: t("platform.appearance.photoUpload"),
+                  cancel: t("platform.appearance.photoCancel"),
+                  reset: t("platform.appearance.photoReset"),
+                  expand: t("platform.appearance.photoExpand"),
+                }}
+                onUpload={handleDefaultImageUpload}
+                onError={(message) => toast.error(message)}
+              />
+              {field.defaultImage ? (
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="self-start"
+                  onClick={() =>
+                    onChange({
+                      ...field,
+                      defaultImage: undefined,
+                    })
+                  }
+                >
+                  {t("dataModels.clearDefaultImage")}
+                </Button>
+              ) : null}
+            </div>
+          )}
         </div>
       ) : null}
     </div>

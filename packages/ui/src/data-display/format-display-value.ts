@@ -6,7 +6,9 @@ export type DisplayFieldType =
   | "boolean"
   | "date"
   | "relation"
-  | "enum";
+  | "enum"
+  | "image"
+  | "document";
 
 export type DisplayFormat = "currency" | "plain" | "percentage";
 
@@ -168,6 +170,16 @@ export function formatDisplayValue(
 
   if (Array.isArray(value)) {
     return value.map((entry) => String(entry)).join(", ");
+  }
+
+  if (
+    (fieldType === "image" || fieldType === "document") &&
+    typeof value === "object" &&
+    value !== null &&
+    "fileName" in value &&
+    typeof (value as { fileName: unknown }).fileName === "string"
+  ) {
+    return (value as { fileName: string }).fileName;
   }
 
   return String(value);

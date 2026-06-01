@@ -23,6 +23,7 @@ export {
   validateDefinitionEvolution,
   validateRelationTargets,
 } from "./define-entity-from-record.js";
+export { syncEntityDefinitionUiWithFields } from "./sync-entity-definition-ui.js";
 export {
   clearDynamicEntityRegistry,
   clearDynamicEntitiesForTenant,

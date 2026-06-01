@@ -14,6 +14,7 @@ export interface SchemaCellProps {
   readonly displayFormat?: DisplayFormat;
   readonly dateDisplayFormat?: DateDisplayFormat;
   readonly fieldName?: string;
+  readonly fallbackImageUrl?: string | null;
   readonly locale?: string;
   readonly timeZone?: string;
   readonly trueLabel?: string;
@@ -27,6 +28,7 @@ export function SchemaCell({
   displayFormat,
   dateDisplayFormat,
   fieldName,
+  fallbackImageUrl,
   locale,
   timeZone,
   trueLabel,
@@ -46,6 +48,59 @@ export function SchemaCell({
         falseLabel={falseLabel}
       />
     );
+  }
+
+  if (fieldType === "image") {
+    const fileValue =
+      typeof value === "object" &&
+      value !== null &&
+      "downloadUrl" in value &&
+      typeof (value as { downloadUrl: unknown }).downloadUrl === "string"
+        ? (value as { downloadUrl: string; fileName?: string })
+        : null;
+    const imageUrl = fileValue?.downloadUrl ?? fallbackImageUrl ?? null;
+
+    if (imageUrl) {
+      return (
+        <a
+          href={imageUrl}
+          target="_blank"
+          rel="noreferrer"
+          className={fileValue ? undefined : "opacity-80"}
+        >
+          <img
+            src={imageUrl}
+            alt={fileValue?.fileName ?? "Image"}
+            className="h-10 w-auto max-w-[120px] rounded object-contain"
+          />
+        </a>
+      );
+    }
+  }
+
+  if (
+    fieldType === "document" &&
+    typeof value === "object" &&
+    value !== null &&
+    "fileName" in value
+  ) {
+    const fileValue = value as {
+      fileName: string;
+      downloadUrl?: string;
+    };
+    if (fileValue.downloadUrl) {
+      return (
+        <a
+          href={fileValue.downloadUrl}
+          target="_blank"
+          rel="noreferrer"
+          className="text-primary underline"
+        >
+          {fileValue.fileName}
+        </a>
+      );
+    }
+    return <span>{fileValue.fileName}</span>;
   }
 
   const text = formatDisplayValue(value, {

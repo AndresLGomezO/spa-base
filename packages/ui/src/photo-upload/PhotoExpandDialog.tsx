@@ -5,6 +5,7 @@ interface PhotoExpandDialogProps {
   readonly imageUrl: string | null;
   readonly alt: string;
   readonly title?: string;
+  readonly layer?: "default" | "nested";
   readonly onClose: () => void;
 }
 
@@ -13,10 +14,11 @@ export function PhotoExpandDialog({
   imageUrl,
   alt,
   title = "Photo preview",
+  layer = "nested",
   onClose,
 }: PhotoExpandDialogProps) {
   return (
-    <Modal open={open} onClose={onClose} title={title} size="lg">
+    <Modal open={open} onClose={onClose} title={title} size="lg" layer={layer}>
       {imageUrl ? (
         <div className="flex max-h-[70vh] items-center justify-center overflow-auto">
           <img

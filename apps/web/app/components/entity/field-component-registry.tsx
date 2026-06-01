@@ -10,6 +10,9 @@ export interface FieldComponentProps {
   readonly required?: boolean;
   readonly error?: string;
   readonly readOnly?: boolean;
+  readonly recordId?: string;
+  readonly maxSizeBytes?: number;
+  readonly defaultImageUrl?: string | null;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 

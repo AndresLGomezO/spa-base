@@ -3,6 +3,10 @@ import { z } from "zod";
 import type { FieldSchemaBuilder } from "../fieldTypes.js";
 import type { FieldConfig, RelationFieldConfig } from "../types.js";
 import { usesForeignKeyStorage } from "../relations/relationConfig.js";
+import {
+  documentFileReferenceSchema,
+  imageFileReferenceSchema,
+} from "./entityFileReference.js";
 import { isoDatetimeStringSchema } from "./isoDatetime.js";
 
 function applyDefault(schema: z.ZodTypeAny, config: FieldConfig): z.ZodTypeAny {
@@ -118,6 +122,23 @@ const enumFieldBuilder: FieldSchemaBuilder = {
   },
 };
 
+function fileFieldBuilder(schema: z.ZodTypeAny): FieldSchemaBuilder {
+  return {
+    buildCreateFieldSchema(config) {
+      return applyOptional(schema, config);
+    },
+    buildFullFieldSchema(config) {
+      if (config.required === true) {
+        return schema;
+      }
+      return schema.optional();
+    },
+  };
+}
+
+const imageFieldBuilder = fileFieldBuilder(imageFileReferenceSchema);
+const documentFieldBuilder = fileFieldBuilder(documentFileReferenceSchema);
+
 export const defaultFieldTypeRegistry = {
   string: stringFieldBuilder,
   number: numberFieldBuilder,
@@ -125,6 +146,8 @@ export const defaultFieldTypeRegistry = {
   date: dateFieldBuilder,
   relation: relationFieldBuilder,
   enum: enumFieldBuilder,
+  image: imageFieldBuilder,
+  document: documentFieldBuilder,
 } as const satisfies Record<FieldConfig["type"], FieldSchemaBuilder>;
 
 export function buildFieldSchema(

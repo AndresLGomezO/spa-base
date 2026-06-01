@@ -169,34 +169,77 @@ function stackedTriggerStyle(
 
   if (stack === "above") {
     const bottom = viewport.height - triggerRect.top + gap;
-    const maxHeight = Math.min(
-      panelSize.height,
-      triggerRect.top - gap - padding,
-    );
+    const availableHeight = triggerRect.top - gap - padding;
+    const style: CSSProperties = {
+      position: "fixed",
+      left,
+      bottom,
+    };
+
+    if (panelSize.height > availableHeight) {
+      style.maxHeight = Math.max(padding, availableHeight);
+    }
 
     return {
       resolvedPlacement,
-      style: {
-        position: "fixed",
-        left,
-        bottom,
-        maxHeight: Math.max(padding, maxHeight),
-      },
+      style,
     };
   }
 
   const top = triggerRect.bottom + gap;
-  const maxHeight = viewport.height - top - padding;
+  const availableHeight = viewport.height - top - padding;
+  const style: CSSProperties = {
+    position: "fixed",
+    left,
+    top,
+  };
+
+  if (panelSize.height > availableHeight) {
+    style.maxHeight = Math.max(padding, availableHeight);
+  }
 
   return {
     resolvedPlacement,
-    style: {
-      position: "fixed",
-      left,
-      top,
-      maxHeight: Math.max(padding, maxHeight),
-    },
+    style,
   };
+}
+
+export function computeAnchoredPanelPosition(input: {
+  readonly preferred: "bottom-start" | "top-start";
+  readonly triggerRect: RectLike;
+  readonly panelSize: PanelSize;
+  readonly viewport?: ViewportSize;
+  readonly padding?: number;
+  readonly gap?: number;
+}): ComputeSidePanelPositionResult {
+  const padding = input.padding ?? DEFAULT_PADDING;
+  const gap = input.gap ?? DEFAULT_GAP;
+  const viewport = input.viewport ?? {
+    width: typeof window !== "undefined" ? window.innerWidth : 0,
+    height: typeof window !== "undefined" ? window.innerHeight : 0,
+  };
+  const baseInput = {
+    triggerRect: input.triggerRect,
+    panelSize: input.panelSize,
+    padding,
+    gap,
+    viewport,
+  };
+
+  const roomAbove = input.triggerRect.top - gap - padding;
+  const roomBelow = viewport.height - input.triggerRect.bottom - gap - padding;
+
+  if (input.preferred === "bottom-start") {
+    if (roomBelow >= input.panelSize.height || roomBelow >= roomAbove) {
+      return stackedTriggerStyle("below", baseInput);
+    }
+    return stackedTriggerStyle("above", baseInput);
+  }
+
+  if (roomAbove >= input.panelSize.height || roomAbove >= roomBelow) {
+    return stackedTriggerStyle("above", baseInput);
+  }
+  return stackedTriggerStyle("below", baseInput);
 }
 
 export function computeSidePanelPosition(

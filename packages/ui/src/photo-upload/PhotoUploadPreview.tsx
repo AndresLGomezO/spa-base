@@ -4,6 +4,7 @@ import { Button } from "../button/Button";
 
 interface PhotoUploadPreviewProps {
   readonly value?: string | null;
+  readonly placeholderUrl?: string | null;
   readonly alt: string;
   readonly disabled?: boolean;
   readonly selectLabel: string;
@@ -16,6 +17,7 @@ interface PhotoUploadPreviewProps {
 
 export function PhotoUploadPreview({
   value,
+  placeholderUrl,
   alt,
   disabled = false,
   selectLabel,
@@ -25,21 +27,25 @@ export function PhotoUploadPreview({
   onSelectClick,
   onExpandClick,
 }: PhotoUploadPreviewProps) {
+  const previewUrl = value ?? placeholderUrl ?? null;
+  const isPlaceholder = !value && Boolean(placeholderUrl);
+
   return (
     <div className="flex flex-col gap-3">
-      {value ? (
+      {previewUrl ? (
         <button
           type="button"
           aria-label={expandLabel}
-          disabled={disabled}
+          disabled={disabled || isPlaceholder}
           className={cn(
             "border-border bg-muted/30 hover:bg-muted/50 focus-visible:ring-primary inline-flex max-w-fit items-center justify-center rounded-lg border p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+            isPlaceholder ? "opacity-80" : undefined,
             previewClassName,
           )}
-          onClick={onExpandClick}
+          onClick={isPlaceholder ? undefined : onExpandClick}
         >
           <img
-            src={value}
+            src={previewUrl}
             alt={alt}
             className="max-h-24 max-w-xs object-contain"
           />
@@ -61,7 +67,7 @@ export function PhotoUploadPreview({
         disabled={disabled}
         onClick={onSelectClick}
       >
-        {value ? changeLabel : selectLabel}
+        {previewUrl ? changeLabel : selectLabel}
       </Button>
     </div>
   );

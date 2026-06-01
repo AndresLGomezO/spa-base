@@ -1,5 +1,9 @@
 import type { RatesRecordSeedContext } from "../seed-helpers.js";
 import { ensureRatesRecordInContext } from "../seed-helpers.js";
+import {
+  shouldSeedProductSnapshotStatement,
+  uploadRatesProductSnapshotStatement,
+} from "../seed-rates-documents.js";
 
 export async function seedTestUserBusinessRecords(
   context: RatesRecordSeedContext,
@@ -100,6 +104,7 @@ export async function seedTestUserBusinessRecords(
         accountTypeId: "atype_bank",
         currencyId: "currency_cop",
         balance: 4_250_000,
+        bankId: "bank_bancolombia",
       },
     },
     {
@@ -109,6 +114,7 @@ export async function seedTestUserBusinessRecords(
         accountTypeId: "atype_bank",
         currencyId: "currency_cop",
         balance: 1_890_000,
+        bankId: "bank_davivienda",
       },
     },
     {
@@ -136,6 +142,7 @@ export async function seedTestUserBusinessRecords(
         accountTypeId: "atype_credit",
         currencyId: "currency_cop",
         balance: -1_850_000,
+        bankId: "bank_bancolombia",
       },
     },
     {
@@ -154,6 +161,7 @@ export async function seedTestUserBusinessRecords(
         accountTypeId: "atype_bank",
         currencyId: "currency_cop",
         balance: 980_000,
+        bankId: "bank_bbva",
       },
     },
     {
@@ -172,6 +180,7 @@ export async function seedTestUserBusinessRecords(
         accountTypeId: "atype_bank",
         currencyId: "currency_cop",
         balance: 2_100_000,
+        bankId: "bank_scotiabank",
       },
     },
     {
@@ -190,6 +199,7 @@ export async function seedTestUserBusinessRecords(
         accountTypeId: "atype_bank",
         currencyId: "currency_cop",
         balance: 540_000,
+        bankId: "bank_banco_bogota",
       },
     },
     {
@@ -224,6 +234,7 @@ export async function seedTestUserBusinessRecords(
         endDate: "2029-02-01T00:00:00.000Z",
         statusId: "status_active",
         description: "Vehicle financing",
+        bankId: "bank_bancolombia",
       },
     },
     {
@@ -239,6 +250,7 @@ export async function seedTestUserBusinessRecords(
         endDate: "2046-08-01T00:00:00.000Z",
         statusId: "status_active",
         description: "Fixed-rate mortgage Chapinero",
+        bankId: "bank_bancolombia",
       },
     },
     {
@@ -280,6 +292,7 @@ export async function seedTestUserBusinessRecords(
         currentBalance: 44_900,
         startDate: "2023-01-01T00:00:00.000Z",
         statusId: "status_active",
+        serviceProviderId: "sp_netflix",
       },
     },
     {
@@ -293,6 +306,7 @@ export async function seedTestUserBusinessRecords(
         currentBalance: 21_900,
         startDate: "2023-04-01T00:00:00.000Z",
         statusId: "status_active",
+        serviceProviderId: "sp_spotify",
       },
     },
     {
@@ -306,6 +320,7 @@ export async function seedTestUserBusinessRecords(
         currentBalance: 33_900,
         startDate: "2024-01-01T00:00:00.000Z",
         statusId: "status_active",
+        serviceProviderId: "sp_disney_plus",
       },
     },
     {
@@ -320,6 +335,7 @@ export async function seedTestUserBusinessRecords(
         startDate: "2024-10-01T00:00:00.000Z",
         endDate: "2025-10-01T00:00:00.000Z",
         statusId: "status_active",
+        bankId: "bank_bancolombia",
       },
     },
     {
@@ -346,6 +362,7 @@ export async function seedTestUserBusinessRecords(
         currentBalance: 2_100_000,
         startDate: "2023-06-01T00:00:00.000Z",
         statusId: "status_active",
+        bankId: "bank_bancolombia",
       },
     },
     {
@@ -360,6 +377,7 @@ export async function seedTestUserBusinessRecords(
         startDate: "2024-11-01T00:00:00.000Z",
         endDate: "2027-11-01T00:00:00.000Z",
         statusId: "status_active",
+        bankId: "bank_bancolombia",
       },
     },
     {
@@ -374,6 +392,7 @@ export async function seedTestUserBusinessRecords(
         startDate: "2025-01-01T00:00:00.000Z",
         endDate: "2027-01-01T00:00:00.000Z",
         statusId: "status_active",
+        bankId: "bank_bancolombia",
       },
     },
   ];
@@ -688,7 +707,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_01",
       data: {
         productId: "tu1_prod_05",
-        provider: "Netflix",
+        serviceProviderId: "sp_netflix",
         planName: "Standard",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-06-05T00:00:00.000Z",
@@ -699,7 +718,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_02",
       data: {
         productId: "tu1_prod_06",
-        provider: "Spotify",
+        serviceProviderId: "sp_spotify",
         planName: "Premium",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-06-12T00:00:00.000Z",
@@ -710,7 +729,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_03",
       data: {
         productId: "tu1_prod_07",
-        provider: "Disney+",
+        serviceProviderId: "sp_disney_plus",
         planName: "Standard",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-06-18T00:00:00.000Z",
@@ -721,7 +740,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_04",
       data: {
         productId: "tu1_prod_05",
-        provider: "Netflix",
+        serviceProviderId: "sp_netflix",
         planName: "Premium",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-07-05T00:00:00.000Z",
@@ -732,7 +751,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_05",
       data: {
         productId: "tu1_prod_06",
-        provider: "Spotify",
+        serviceProviderId: "sp_spotify",
         planName: "Duo",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-07-12T00:00:00.000Z",
@@ -743,7 +762,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_06",
       data: {
         productId: "tu1_prod_07",
-        provider: "Disney+",
+        serviceProviderId: "sp_disney_plus",
         planName: "Bundle",
         billingFrequencyId: "freq_annual",
         nextBillingDate: "2026-01-18T00:00:00.000Z",
@@ -754,7 +773,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_07",
       data: {
         productId: "tu1_prod_05",
-        provider: "Netflix",
+        serviceProviderId: "sp_netflix",
         planName: "Basic",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-08-05T00:00:00.000Z",
@@ -765,7 +784,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_08",
       data: {
         productId: "tu1_prod_06",
-        provider: "Spotify",
+        serviceProviderId: "sp_spotify",
         planName: "Family",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-08-12T00:00:00.000Z",
@@ -776,7 +795,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_09",
       data: {
         productId: "tu1_prod_07",
-        provider: "Disney+",
+        serviceProviderId: "sp_disney_plus",
         planName: "Premium",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-08-18T00:00:00.000Z",
@@ -787,7 +806,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_10",
       data: {
         productId: "tu1_prod_05",
-        provider: "Netflix",
+        serviceProviderId: "sp_netflix",
         planName: "Standard with ads",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-09-05T00:00:00.000Z",
@@ -798,7 +817,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_11",
       data: {
         productId: "tu1_prod_06",
-        provider: "Spotify",
+        serviceProviderId: "sp_spotify",
         planName: "Student",
         billingFrequencyId: "freq_monthly",
         nextBillingDate: "2025-09-12T00:00:00.000Z",
@@ -809,7 +828,7 @@ export async function seedTestUserBusinessRecords(
       id: "tu1_subdet_12",
       data: {
         productId: "tu1_prod_07",
-        provider: "Disney+",
+        serviceProviderId: "sp_disney_plus",
         planName: "Annual",
         billingFrequencyId: "freq_annual",
         nextBillingDate: "2026-06-18T00:00:00.000Z",
@@ -1054,7 +1073,16 @@ export async function seedTestUserBusinessRecords(
     },
   ];
   for (const row of snapshots) {
-    await ensure("productSnapshot", row.id, row.data);
+    const statement = shouldSeedProductSnapshotStatement(row.id)
+      ? await uploadRatesProductSnapshotStatement(context, {
+          recordId: row.id,
+        })
+      : undefined;
+
+    await ensure("productSnapshot", row.id, {
+      ...row.data,
+      ...(statement ? { statement } : {}),
+    });
   }
 
   // --- Transactions (12) ---

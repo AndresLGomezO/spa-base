@@ -3,7 +3,11 @@ import { useCallback, useRef, useState, type ChangeEvent } from "react";
 import { PhotoCropDialog, type PhotoCropShape } from "./PhotoCropDialog";
 import { PhotoExpandDialog } from "./PhotoExpandDialog";
 import { PhotoUploadPreview } from "./PhotoUploadPreview";
-import { createUploadId, validateFile } from "./photo-upload.utils";
+import {
+  createUploadId,
+  DEFAULT_IMAGE_MAX_SIZE_BYTES,
+  validateFile,
+} from "./photo-upload.utils";
 
 export interface PhotoUploadLabels {
   readonly select?: string;
@@ -18,12 +22,15 @@ export interface PhotoUploadLabels {
 
 export interface PhotoUploadProps {
   readonly value?: string | null;
+  readonly placeholderUrl?: string | null;
   readonly alt: string;
   readonly uploading?: boolean;
   readonly disabled?: boolean;
   readonly cropShape?: PhotoCropShape;
   readonly previewClassName?: string;
   readonly uploadId?: string;
+  readonly maxSizeBytes?: number;
+  readonly dialogLayer?: "default" | "nested";
   readonly onUpload: (params: {
     readonly file: File;
     readonly uploadId: string;
@@ -36,12 +43,15 @@ const ACCEPT = "image/jpeg,image/png,image/webp";
 
 export function PhotoUpload({
   value,
+  placeholderUrl,
   alt,
   uploading = false,
   disabled = false,
   cropShape = "rect",
   previewClassName,
   uploadId,
+  maxSizeBytes = DEFAULT_IMAGE_MAX_SIZE_BYTES,
+  dialogLayer = "nested",
   onUpload,
   onError,
   labels,
@@ -66,7 +76,7 @@ export function PhotoUpload({
       event.target.value = "";
       if (!file) return;
 
-      const validationError = validateFile(file);
+      const validationError = validateFile(file, maxSizeBytes);
       if (validationError) {
         onError?.(validationError);
         return;
@@ -75,7 +85,7 @@ export function PhotoUpload({
       setPendingFile(file);
       setCropOpen(true);
     },
-    [onError],
+    [maxSizeBytes, onError],
   );
 
   const handleCropComplete = useCallback(
@@ -118,6 +128,7 @@ export function PhotoUpload({
 
       <PhotoUploadPreview
         value={value}
+        placeholderUrl={placeholderUrl}
         alt={alt}
         disabled={disabled || uploading}
         selectLabel={selectLabel}
@@ -135,6 +146,7 @@ export function PhotoUpload({
         file={pendingFile}
         cropShape={cropShape}
         uploading={uploading}
+        layer={dialogLayer}
         labels={{
           title: labels?.cropTitle,
           description: labels?.cropDescription,
@@ -151,6 +163,7 @@ export function PhotoUpload({
         imageUrl={value ?? null}
         alt={alt}
         title={expandLabel}
+        layer={dialogLayer}
         onClose={() => setExpandOpen(false)}
       />
     </>

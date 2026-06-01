@@ -47,9 +47,18 @@ export function getEntityCellDisplayMeta(
   readonly fieldType?: DisplayFieldType;
   readonly displayFormat?: DisplayFormat;
   readonly dateDisplayFormat?: DateDisplayFormat;
+  readonly fallbackImageUrl?: string | null;
 } {
   const fieldMeta = definition.fields[column];
   const uiField = definition.ui.fields?.[column];
+  const defaultImage = fieldMeta?.defaultImage;
+  const fallbackImageUrl =
+    fieldMeta?.type === "image" &&
+    defaultImage &&
+    "downloadUrl" in defaultImage &&
+    typeof defaultImage.downloadUrl === "string"
+      ? defaultImage.downloadUrl
+      : null;
 
   return {
     fieldType: fieldMeta?.type as DisplayFieldType | undefined,
@@ -57,6 +66,7 @@ export function getEntityCellDisplayMeta(
     ...(uiField?.dateDisplayFormat
       ? { dateDisplayFormat: uiField.dateDisplayFormat }
       : {}),
+    ...(fallbackImageUrl ? { fallbackImageUrl } : {}),
   };
 }
 

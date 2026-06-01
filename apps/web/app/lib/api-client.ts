@@ -330,9 +330,19 @@ export async function getIndexProvisioningStatus(
   });
 }
 
+import type { EntityFileReference } from "@repo/entities";
+
 export interface FieldDefinitionInput {
   readonly name: string;
-  readonly type: "string" | "number" | "boolean" | "date" | "relation" | "enum";
+  readonly type:
+    | "string"
+    | "number"
+    | "boolean"
+    | "date"
+    | "relation"
+    | "enum"
+    | "image"
+    | "document";
   readonly required?: boolean;
   readonly sensitive?: boolean;
   readonly relation?: {
@@ -346,6 +356,10 @@ export interface FieldDefinitionInput {
   };
   readonly enumValues?: readonly string[];
   readonly numberKind?: "integer" | "decimal";
+  readonly maxSizeBytes?: number;
+  readonly defaultImage?: EntityFileReference & {
+    readonly downloadUrl?: string;
+  };
   readonly ui?: {
     readonly label?: string;
     readonly component?: string;

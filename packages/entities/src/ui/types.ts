@@ -1,10 +1,14 @@
+import type { EntityFileReference } from "../schema/entityFileReference.js";
+
 export type FieldComponentType =
   | "input"
   | "number"
   | "toggle"
   | "date"
   | "relation"
-  | "select";
+  | "select"
+  | "image"
+  | "document";
 
 export type FieldDisplayFormat = "currency" | "plain" | "percentage";
 
@@ -88,6 +92,10 @@ export interface SerializableFieldMeta {
   readonly enumValues?: readonly string[];
   readonly sensitive?: boolean;
   readonly numberKind?: "integer" | "decimal";
+  readonly maxSizeBytes?: number;
+  readonly defaultImage?: EntityFileReference & {
+    readonly downloadUrl?: string;
+  };
 }
 
 export type FieldAccessLevel = "read" | "write" | "none";

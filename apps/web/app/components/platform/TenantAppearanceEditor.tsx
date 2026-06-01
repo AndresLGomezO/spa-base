@@ -321,7 +321,6 @@ export function TenantAppearanceEditor({
       const result = await uploadTenantLogo(tenantId, {
         contentType: params.file.type || "image/jpeg",
         data,
-        objectId: params.uploadId,
       });
       setLogoPreview(result.logoUrl);
       setTenant(result.tenant);

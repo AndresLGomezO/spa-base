@@ -135,6 +135,7 @@ interface RegisterCrudRoutesOptions<
   readonly prefix?: string;
   readonly parametricEntityName?: boolean;
   readonly crudHooks?: CrudHookDeps;
+  readonly recordReadEnricher?: import("../entity-files/create-entity-file-read-enricher.js").RecordReadEnricher;
 }
 
 function requireTenant(
@@ -266,6 +267,22 @@ function filterPaginatedItemsForRead(
   items: readonly Record<string, unknown>[],
 ): Record<string, unknown>[] {
   return items.map((item) => filterRecordForRead(request, entity, item));
+}
+
+async function enrichRecordsForReadIfConfigured(
+  records: readonly Record<string, unknown>[],
+  options: Pick<RegisterCrudRoutesOptions<never, never>, "recordReadEnricher">,
+  context: {
+    readonly entityName: string;
+    readonly tenantId: string;
+    readonly request: FastifyRequest;
+  },
+): Promise<Record<string, unknown>[]> {
+  if (!options.recordReadEnricher) {
+    return [...records];
+  }
+
+  return options.recordReadEnricher(records, context);
 }
 
 function handleHookError(reply: FastifyReply, error: unknown): boolean {
@@ -524,9 +541,18 @@ export async function registerCrudRoutes<
           activeEntity,
           result.data as Record<string, unknown>[],
         );
+        const enrichedItems = await enrichRecordsForReadIfConfigured(
+          filteredItems,
+          options,
+          {
+            entityName: activeEntity.name,
+            tenantId,
+            request,
+          },
+        );
         const populatedItems = await maybePopulate(
           activeEntity,
-          filteredItems,
+          enrichedItems,
           request,
           tenantId,
           options.referencePopulator,
@@ -552,9 +578,18 @@ export async function registerCrudRoutes<
         activeEntity,
         result.items as Record<string, unknown>[],
       );
+      const enrichedFallback = await enrichRecordsForReadIfConfigured(
+        filteredFallback,
+        options,
+        {
+          entityName: activeEntity.name,
+          tenantId,
+          request,
+        },
+      );
       const populatedFallback = await maybePopulate(
         activeEntity,
-        filteredFallback,
+        enrichedFallback,
         request,
         tenantId,
         options.referencePopulator,
@@ -659,14 +694,23 @@ export async function registerCrudRoutes<
             activeEntity,
             recordData,
           );
+          const [enriched] = await enrichRecordsForReadIfConfigured(
+            [filtered],
+            options,
+            {
+              entityName: activeEntity.name,
+              tenantId,
+              request,
+            },
+          );
           const [populated] = await maybePopulate(
             activeEntity,
-            [filtered],
+            [enriched ?? filtered],
             request,
             tenantId,
             options.referencePopulator,
           );
-          return reply.send(successEnvelope(populated ?? filtered));
+          return reply.send(successEnvelope(populated ?? enriched ?? filtered));
         }
 
         const record = await activeRepository.findById(recordId, tenantId);
@@ -697,14 +741,25 @@ export async function registerCrudRoutes<
           activeEntity,
           recordData,
         );
+        const [enrichedById] = await enrichRecordsForReadIfConfigured(
+          [filteredById],
+          options,
+          {
+            entityName: activeEntity.name,
+            tenantId,
+            request,
+          },
+        );
         const [populatedById] = await maybePopulate(
           activeEntity,
-          [filteredById],
+          [enrichedById ?? filteredById],
           request,
           tenantId,
           options.referencePopulator,
         );
-        return reply.send(successEnvelope(populatedById ?? filteredById));
+        return reply.send(
+          successEnvelope(populatedById ?? enrichedById ?? filteredById),
+        );
       } catch (error) {
         if (handleQueryError(reply, error)) {
           return;
@@ -857,17 +912,24 @@ export async function registerCrudRoutes<
           ...(entityServices ? { entityServices } : {}),
         });
 
+        const filteredCreate = filterRecordForRead(
+          request,
+          activeEntity,
+          created as unknown as Record<string, unknown>,
+        );
+        const [enrichedCreate] = await enrichRecordsForReadIfConfigured(
+          [filteredCreate],
+          options,
+          {
+            entityName: activeEntity.name,
+            tenantId,
+            request,
+          },
+        );
+
         return reply
           .status(201)
-          .send(
-            successEnvelope(
-              filterRecordForRead(
-                request,
-                activeEntity,
-                created as unknown as Record<string, unknown>,
-              ),
-            ),
-          );
+          .send(successEnvelope(enrichedCreate ?? filteredCreate));
       } catch (error) {
         if (handleFieldAccessError(reply, error)) {
           return;
@@ -1096,15 +1158,22 @@ export async function registerCrudRoutes<
           ...(entityServices ? { entityServices } : {}),
         });
 
-        return reply.send(
-          successEnvelope(
-            filterRecordForRead(
-              request,
-              activeEntity,
-              validated.data as Record<string, unknown>,
-            ),
-          ),
+        const filteredUpdate = filterRecordForRead(
+          request,
+          activeEntity,
+          validated.data as Record<string, unknown>,
         );
+        const [enrichedUpdate] = await enrichRecordsForReadIfConfigured(
+          [filteredUpdate],
+          options,
+          {
+            entityName: activeEntity.name,
+            tenantId,
+            request,
+          },
+        );
+
+        return reply.send(successEnvelope(enrichedUpdate ?? filteredUpdate));
       } catch (error) {
         if (handleFieldAccessError(reply, error)) {
           return;

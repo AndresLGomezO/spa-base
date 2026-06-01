@@ -163,4 +163,20 @@ describe("FieldEditorForm", () => {
 
     expect(screen.getByLabelText("dataModels.required")).toBeChecked();
   });
+
+  it("renders max size and default image controls for image fields", () => {
+    render(
+      <FieldEditorForm
+        field={{ name: "logo", type: "image", maxSizeBytes: 2_097_152 }}
+        entityName="brand"
+        relationTargets={[]}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("dataModels.maxFileSizeMb"),
+    ).toBeInTheDocument();
+    expect(screen.getByText("dataModels.defaultImage")).toBeInTheDocument();
+  });
 });

@@ -1,5 +1,7 @@
 import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 
+import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
+
 import { canIncludeEntityInCatalog } from "@repo/dynamic-entities";
 import { serializeEntityDefinition } from "@repo/entities";
 import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
@@ -7,6 +9,7 @@ import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
+import { enrichSerializableDefinitionsFileFields } from "../entity-files/enrich-definition-file-fields.js";
 import { resolveRequestFieldAccessMap } from "../rbac/create-field-access-resolver.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
@@ -16,6 +19,7 @@ interface RegisterListEntitiesRouteOptions {
   readonly authenticate: ReturnType<typeof createAuthenticatePreHandler>;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
+  readonly firebaseAdminConfig: FirebaseAdminConfig;
 }
 
 export async function registerListEntitiesRoute(
@@ -93,7 +97,12 @@ export async function registerListEntitiesRoute(
           return permissions.has(`${definition.name}.read`);
         });
 
-      return reply.send(successEnvelope({ items }));
+      const enrichedItems = await enrichSerializableDefinitionsFileFields(
+        options.firebaseAdminConfig,
+        items,
+      );
+
+      return reply.send(successEnvelope({ items: enrichedItems }));
     },
   );
 }

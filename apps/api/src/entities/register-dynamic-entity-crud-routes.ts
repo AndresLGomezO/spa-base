@@ -11,6 +11,8 @@ import type { createRelationRuntimeContext } from "../relations/create-relation-
 import type { FirestoreIndexStatusStore } from "@repo/gcp-firebase";
 
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
+import { sanitizeFileFieldsForWrite } from "../entity-files/entity-file-field-utils.js";
+import type { RecordReadEnricher } from "../entity-files/create-entity-file-read-enricher.js";
 
 const registeredContexts = new WeakMap<EntityRuntimeContext, boolean>();
 const staticEntityNames = new Set(
@@ -26,6 +28,7 @@ export async function registerDynamicEntityCrudRoutes(
   relationContext: ReturnType<typeof createRelationRuntimeContext>,
   crudHooks?: CrudHookDeps,
   indexStatusStore?: FirestoreIndexStatusStore,
+  recordReadEnricher?: RecordReadEnricher,
 ): Promise<void> {
   if (registeredContexts.get(entityRuntime)) {
     return;
@@ -50,7 +53,10 @@ export async function registerDynamicEntityCrudRoutes(
         updateSchema: entity.updateSchema,
         businessFieldNames: Object.keys(entity.metadata.fields),
         prepareRecordForWrite: (record) =>
-          applySearchMirrorFields(entity, record),
+          sanitizeFileFieldsForWrite(
+            entity,
+            applySearchMirrorFields(entity, record),
+          ),
       };
     },
     repository: (tenantId, entityName) => {
@@ -71,6 +77,7 @@ export async function registerDynamicEntityCrudRoutes(
         entityRuntime.getRepository(tenantId, entityName),
     },
     ...(crudHooks ? { crudHooks } : {}),
+    ...(recordReadEnricher ? { recordReadEnricher } : {}),
   });
 
   registeredContexts.set(entityRuntime, true);

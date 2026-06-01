@@ -1,7 +1,11 @@
 import type { CreateEntityDefinitionInput } from "@repo/dynamic-entities";
 import type { FieldDefinitionRecord } from "@repo/dynamic-entities";
 
-import type { EntityUIConfig, FieldComponentType } from "@repo/entities";
+import type {
+  EntityUIConfig,
+  EntityFileReference,
+  FieldComponentType,
+} from "@repo/entities";
 
 import { resolveRatesListFieldUi } from "./field-ui-policy.js";
 
@@ -134,6 +138,78 @@ export function relationField(
   };
 }
 
+export function imageField(
+  name: string,
+  options?: {
+    readonly required?: boolean;
+    readonly label?: string;
+    readonly order?: number;
+    readonly maxSizeBytes?: number;
+    readonly defaultImage?: EntityFileReference;
+  },
+): FieldInput {
+  return {
+    name,
+    type: "image",
+    ...(options?.required ? { required: true } : {}),
+    ...(options?.maxSizeBytes !== undefined
+      ? { maxSizeBytes: options.maxSizeBytes }
+      : {}),
+    ...(options?.defaultImage ? { defaultImage: options.defaultImage } : {}),
+    ui: {
+      ...(options?.label ? { label: options.label } : {}),
+      ...(options?.order !== undefined ? { order: options.order } : {}),
+      component: "image",
+    },
+  };
+}
+
+export function documentField(
+  name: string,
+  options?: {
+    readonly required?: boolean;
+    readonly label?: string;
+    readonly order?: number;
+    readonly maxSizeBytes?: number;
+  },
+): FieldInput {
+  return {
+    name,
+    type: "document",
+    ...(options?.required ? { required: true } : {}),
+    ...(options?.maxSizeBytes !== undefined
+      ? { maxSizeBytes: options.maxSizeBytes }
+      : {}),
+    ui: {
+      ...(options?.label ? { label: options.label } : {}),
+      ...(options?.order !== undefined ? { order: options.order } : {}),
+      component: "document",
+    },
+  };
+}
+
+function defaultComponentForFieldType(field: FieldInput): FieldComponentType {
+  if (field.ui?.component) {
+    return field.ui.component as FieldComponentType;
+  }
+  switch (field.type) {
+    case "number":
+      return "number";
+    case "boolean":
+      return "toggle";
+    case "date":
+      return "date";
+    case "relation":
+      return "relation";
+    case "image":
+      return "image";
+    case "document":
+      return "document";
+    default:
+      return "input";
+  }
+}
+
 export function lookupDefinition(input: {
   readonly name: string;
   readonly label: string;
@@ -179,15 +255,7 @@ function buildDefinitionUi(
             label: field.ui?.label ?? field.name,
             component:
               (field.ui?.component as FieldComponentType | undefined) ??
-              (field.type === "number"
-                ? "number"
-                : field.type === "boolean"
-                  ? "toggle"
-                  : field.type === "date"
-                    ? "date"
-                    : field.type === "relation"
-                      ? "relation"
-                      : "input"),
+              defaultComponentForFieldType(field),
             ...(field.ui?.displayFormat
               ? { displayFormat: field.ui.displayFormat }
               : {}),

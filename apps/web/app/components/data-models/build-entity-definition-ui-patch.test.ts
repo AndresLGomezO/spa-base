@@ -44,6 +44,55 @@ describe("buildEntityDefinitionUiForSave", () => {
     expect(ui?.views).toHaveLength(1);
   });
 
+  it("syncs newly added fields into existing form layouts", () => {
+    const ui = buildEntityDefinitionUiForSave({
+      record: {
+        id: "def_1",
+        tenantId: "tenant_a",
+        name: "productSnapshot",
+        label: "Product Snapshots",
+        fields: [
+          { name: "productId", type: "relation" },
+          { name: "date", type: "date" },
+        ],
+        version: 1,
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        ui: {
+          nav: { label: "Product Snapshots", icon: "Camera" },
+          views: [
+            { type: "table", name: "default", fields: ["productId", "date"] },
+          ],
+          forms: {
+            create: { sections: [{ fields: ["productId", "date"] }] },
+            edit: { sections: [{ fields: ["productId", "date"] }] },
+          },
+          fields: {
+            productId: { component: "relation", order: 0 },
+            date: { component: "date", order: 1 },
+          },
+        },
+      },
+      label: "Product Snapshots",
+      fields: [
+        { name: "productId", type: "relation" },
+        { name: "date", type: "date" },
+        { name: "statement", type: "document", ui: { label: "Statement" } },
+      ],
+      navIcon: "Camera",
+    });
+
+    expect(ui?.forms?.create.sections[0]?.fields).toEqual([
+      "productId",
+      "date",
+      "statement",
+    ]);
+    expect(ui?.fields?.statement).toMatchObject({
+      component: "document",
+      label: "Statement",
+    });
+  });
+
   it("removes nav icon when cleared on an existing ui config", () => {
     const ui = buildEntityDefinitionUiForSave({
       record: {

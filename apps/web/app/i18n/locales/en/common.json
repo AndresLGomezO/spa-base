@@ -118,7 +118,24 @@
     "relationOneToManyReadOnly": "This one-to-many relation is managed on the related entity. Add a many-to-one field on the child entity instead.",
     "relationSyncFailed": "The record was saved, but related links could not be updated. Try saving again.",
     "noRelatedRecords": "No related records found.",
-    "view": "View"
+    "view": "View",
+    "fileUploadSuccess": "File uploaded successfully.",
+    "fileUploadFailed": "Unable to upload file.",
+    "fileSelectImage": "Select image",
+    "fileChangeImage": "Change image",
+    "fileSelectDocument": "Select document",
+    "fileChangeDocument": "Change document",
+    "fileRemove": "Remove",
+    "datePicker": {
+      "placeholder": "Select date",
+      "clear": "Clear",
+      "previous": "Previous",
+      "next": "Next",
+      "am": "AM",
+      "pm": "PM",
+      "hour": "Hour",
+      "minute": "Minute"
+    }
   },
   "tenant": {
     "selectTitle": "Select a tenant",
@@ -255,8 +272,17 @@
       "boolean": "Yes/No",
       "date": "Date",
       "enum": "Enum",
-      "relation": "Relation"
+      "relation": "Relation",
+      "image": "Image",
+      "document": "Document"
     },
+    "imageFieldHint": "Accepts JPEG, PNG, or WebP images up to {{maxSizeMb}} MB. Files are stored securely and respect record access permissions.",
+    "documentFieldHint": "Accepts PDF documents up to {{maxSizeMb}} MB. Files are stored securely and respect record access permissions.",
+    "maxFileSizeMb": "Max file size (MB)",
+    "defaultImage": "Default image",
+    "defaultImageHint": "Shown in forms and lists when a record has no uploaded image.",
+    "defaultImageRequiresEntityName": "Set the entity name and field name before uploading a default image.",
+    "clearDefaultImage": "Remove default image",
     "required": "Required",
     "sensitive": "Sensitive (encrypted)",
     "sensitiveHint": "Sensitive fields are encrypted at rest. They cannot be filtered or sorted in list views.",

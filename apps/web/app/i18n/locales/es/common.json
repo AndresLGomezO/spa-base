@@ -118,7 +118,24 @@
     "relationOneToManyReadOnly": "Esta relación uno a muchos se administra en la entidad relacionada. Agrega un campo muchos a uno en la entidad hija.",
     "relationSyncFailed": "El registro se guardó, pero no se pudieron actualizar los vínculos relacionados. Intenta guardar de nuevo.",
     "noRelatedRecords": "No se encontraron registros relacionados.",
-    "view": "Ver"
+    "view": "Ver",
+    "fileUploadSuccess": "Archivo subido correctamente.",
+    "fileUploadFailed": "No se pudo subir el archivo.",
+    "fileSelectImage": "Seleccionar imagen",
+    "fileChangeImage": "Cambiar imagen",
+    "fileSelectDocument": "Seleccionar documento",
+    "fileChangeDocument": "Cambiar documento",
+    "fileRemove": "Eliminar",
+    "datePicker": {
+      "placeholder": "Seleccionar fecha",
+      "clear": "Limpiar",
+      "previous": "Anterior",
+      "next": "Siguiente",
+      "am": "AM",
+      "pm": "PM",
+      "hour": "Hora",
+      "minute": "Minuto"
+    }
   },
   "tenant": {
     "selectTitle": "Seleccionar un tenant",
@@ -255,8 +272,17 @@
       "boolean": "Sí/No",
       "date": "Fecha",
       "enum": "Enum",
-      "relation": "Relación"
+      "relation": "Relación",
+      "image": "Imagen",
+      "document": "Documento"
     },
+    "imageFieldHint": "Acepta imágenes JPEG, PNG o WebP de hasta {{maxSizeMb}} MB. Los archivos se almacenan de forma segura y respetan los permisos de acceso del registro.",
+    "documentFieldHint": "Acepta documentos PDF de hasta {{maxSizeMb}} MB. Los archivos se almacenan de forma segura y respetan los permisos de acceso del registro.",
+    "maxFileSizeMb": "Tamaño máximo (MB)",
+    "defaultImage": "Imagen predeterminada",
+    "defaultImageHint": "Se muestra en formularios y listas cuando el registro no tiene imagen.",
+    "defaultImageRequiresEntityName": "Define el nombre de la entidad y del campo antes de subir una imagen predeterminada.",
+    "clearDefaultImage": "Quitar imagen predeterminada",
     "required": "Obligatorio",
     "sensitive": "Sensible (cifrado)",
     "sensitiveHint": "Los campos sensibles se cifran en reposo. No se pueden filtrar ni ordenar en vistas de lista.",

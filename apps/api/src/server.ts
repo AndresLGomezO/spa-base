@@ -67,6 +67,9 @@ import { createOwnershipQueryInjector } from "./access/ownership-query-injector.
 import { createShareService } from "./access/share-service.js";
 import { registerShareRoutes } from "./access/register-share-routes.js";
 import { createAuditLogger } from "./audit/audit-log.js";
+import { createEntityFileReadEnricher } from "./entity-files/create-entity-file-read-enricher.js";
+import { registerEntityFileRoutes } from "./entity-files/register-entity-file-routes.js";
+import { sanitizeFileFieldsForWrite } from "./entity-files/entity-file-field-utils.js";
 import { adminRoutes } from "./routes/admin.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
@@ -303,6 +306,10 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     permissionDeps,
   };
+  const recordReadEnricher = createEntityFileReadEnricher(
+    firebaseAdminConfig,
+    entityRuntime,
+  );
 
   await server.register(authValidateRoute, {
     firebaseAdminConfig,
@@ -335,6 +342,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     entityRuntime,
+    firebaseAdminConfig,
+  });
+
+  registerEntityFileRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    firebaseAdminConfig,
   });
 
   await registerEntityDefinitionRoutes(server, {
@@ -342,6 +357,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     entityCategoryRepository,
+    firebaseAdminConfig,
   });
 
   await registerEntityCategoryRoutes(server, {
@@ -395,6 +411,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
         createSchema: entity.createSchema,
         updateSchema: entity.updateSchema,
         businessFieldNames: Object.keys(entity.metadata.fields),
+        prepareRecordForWrite: (record) =>
+          sanitizeFileFieldsForWrite(entity, record),
       },
       repository,
       authenticate,
@@ -409,6 +427,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
           entityRuntime.getRepository(tenantId, entityName),
       },
       crudHooks,
+      recordReadEnricher,
     });
   }
 
@@ -421,6 +440,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     relationContext,
     crudHooks,
     indexStatusStore,
+    recordReadEnricher,
   );
 
   await registerEntityRelationRoutes(server, {

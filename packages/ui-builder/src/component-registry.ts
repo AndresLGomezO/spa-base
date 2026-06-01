@@ -11,6 +11,8 @@ const DEFAULT_COMPONENT_IDS: Record<FieldComponentType, string> = {
   date: "date",
   relation: "relation",
   select: "select",
+  image: "image",
+  document: "document",
 };
 
 export function registerComponent(
@@ -33,6 +35,8 @@ export function resolveComponentId(
   if (fieldType === "date") return DEFAULT_COMPONENT_IDS.date;
   if (fieldType === "relation") return DEFAULT_COMPONENT_IDS.relation;
   if (fieldType === "enum") return DEFAULT_COMPONENT_IDS.select;
+  if (fieldType === "image") return DEFAULT_COMPONENT_IDS.image;
+  if (fieldType === "document") return DEFAULT_COMPONENT_IDS.document;
   return DEFAULT_COMPONENT_IDS.input;
 }
 

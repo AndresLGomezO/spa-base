@@ -185,8 +185,12 @@ export function EntityTable({
                 (items as readonly Record<string, unknown>[]).map((item) => (
                   <TableRow key={String(item.id)}>
                     {columns.map((column) => {
-                      const { fieldType, displayFormat, dateDisplayFormat } =
-                        getEntityCellDisplayMeta(column, definition);
+                      const {
+                        fieldType,
+                        displayFormat,
+                        dateDisplayFormat,
+                        fallbackImageUrl,
+                      } = getEntityCellDisplayMeta(column, definition);
                       return (
                         <TableCell key={column}>
                           <SchemaCell
@@ -200,6 +204,7 @@ export function EntityTable({
                             displayFormat={displayFormat}
                             dateDisplayFormat={dateDisplayFormat}
                             fieldName={column}
+                            fallbackImageUrl={fallbackImageUrl}
                             locale={i18n.language}
                             trueLabel={t("table.booleanYes")}
                             falseLabel={t("table.booleanNo")}

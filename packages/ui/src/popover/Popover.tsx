@@ -17,10 +17,13 @@ import { createPortal } from "react-dom";
 import { cn } from "@repo/theme/utils";
 
 import {
+  computeAnchoredPanelPosition,
   computeSidePanelPosition,
   type SidePopoverPreferredPlacement,
   type SidePopoverResolvedPlacement,
 } from "./compute-side-panel-position";
+
+export type PopoverLayer = "default" | "elevated";
 
 export type PopoverPlacement =
   | "top-start"
@@ -76,6 +79,7 @@ export interface PopoverProps {
   readonly className?: string;
   readonly panelClassName?: string;
   readonly fullWidth?: boolean;
+  readonly layer?: PopoverLayer;
 }
 
 const TRANSITION_MS = 200;
@@ -90,6 +94,7 @@ export function Popover({
   className,
   panelClassName,
   fullWidth = false,
+  layer = "default",
 }: PopoverProps) {
   const titleId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
@@ -103,6 +108,7 @@ export function Popover({
     );
 
   const useSidePortal = isSidePlacement(placement);
+  const usePortal = useSidePortal || layer === "elevated";
 
   const close = useCallback(() => {
     onOpenChange(false);
@@ -125,7 +131,7 @@ export function Popover({
   }, [open]);
 
   useLayoutEffect(() => {
-    if (!open || !mounted || !useSidePortal || !rootRef.current) {
+    if (!open || !mounted || !usePortal || !rootRef.current) {
       return;
     }
 
@@ -143,12 +149,28 @@ export function Popover({
         return;
       }
 
-      const { style, resolvedPlacement } = computeSidePanelPosition({
-        preferred: placement,
-        triggerRect,
-        panelSize: { width: panelWidth, height: panelHeight },
-      });
+      const panelSize = { width: panelWidth, height: panelHeight };
 
+      if (isSidePlacement(placement)) {
+        const { style, resolvedPlacement } = computeSidePanelPosition({
+          preferred: placement,
+          triggerRect,
+          panelSize,
+        });
+        setSidePanelStyle(style);
+        setResolvedSidePlacement(resolvedPlacement);
+        return;
+      }
+
+      const preferred =
+        placement === "top-start" || placement === "top-end"
+          ? "top-start"
+          : "bottom-start";
+      const { style, resolvedPlacement } = computeAnchoredPanelPosition({
+        preferred,
+        triggerRect,
+        panelSize,
+      });
       setSidePanelStyle(style);
       setResolvedSidePlacement(resolvedPlacement);
     };
@@ -173,7 +195,7 @@ export function Popover({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [mounted, open, placement, useSidePortal]);
+  }, [layer, mounted, open, placement, usePortal]);
 
   useEffect(() => {
     if (!open) return;
@@ -223,19 +245,20 @@ export function Popover({
       })
     : trigger;
 
-  const sidePanelScrollable = useSidePortal && sidePanelStyle.maxHeight != null;
+  const sidePanelScrollable = usePortal && sidePanelStyle.maxHeight != null;
+  const portalZIndexClass = layer === "elevated" ? "z-[80]" : "z-[70]";
 
   const resolvedPanelClassName = cn(
     "border-border bg-popover/95 text-popover-foreground w-56 rounded-xl border p-4 shadow-lg ring-1 ring-focus/10 backdrop-blur-md transition-all duration-200 ease-out",
-    useSidePortal ? "fixed z-[70]" : "absolute z-50",
+    usePortal ? cn("fixed", portalZIndexClass) : "absolute z-50",
     sidePanelScrollable && "overflow-y-auto",
     panelClassName,
-    !useSidePortal && placementClasses[placement],
+    !usePortal && placementClasses[placement],
     visible
       ? "pointer-events-auto translate-x-0 translate-y-0 scale-100 opacity-100"
       : cn(
           "pointer-events-none scale-95 opacity-0",
-          useSidePortal
+          usePortal
             ? sideResolvedHiddenOffsetClasses[resolvedSidePlacement]
             : hiddenOffsetClasses[placement],
         ),
@@ -248,7 +271,7 @@ export function Popover({
       role="dialog"
       aria-modal="false"
       aria-label={title}
-      style={useSidePortal ? sidePanelStyle : undefined}
+      style={usePortal ? sidePanelStyle : undefined}
       className={resolvedPanelClassName}
     >
       {title ? (
@@ -272,7 +295,7 @@ export function Popover({
       )}
     >
       {triggerElement}
-      {useSidePortal && panel ? createPortal(panel, document.body) : panel}
+      {usePortal && panel ? createPortal(panel, document.body) : panel}
     </div>
   );
 }

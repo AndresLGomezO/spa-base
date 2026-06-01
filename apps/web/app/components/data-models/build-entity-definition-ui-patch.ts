@@ -1,4 +1,7 @@
-import { buildDefaultUiForNewDefinition } from "@repo/dynamic-entities";
+import {
+  buildDefaultUiForNewDefinition,
+  syncEntityDefinitionUiWithFields,
+} from "@repo/dynamic-entities";
 import type { EntityUIConfig } from "@repo/entities";
 
 import type {
@@ -20,14 +23,18 @@ export function buildEntityDefinitionUiForSave(input: {
     const { icon: _removed, ...navWithoutIcon } = existingNav ?? { label };
     void _removed;
 
-    return {
-      ...input.record.ui,
-      nav: {
-        ...navWithoutIcon,
-        label,
-        ...(trimmedIcon ? { icon: trimmedIcon } : {}),
+    return syncEntityDefinitionUiWithFields({
+      ui: {
+        ...input.record.ui,
+        nav: {
+          ...navWithoutIcon,
+          label,
+          ...(trimmedIcon ? { icon: trimmedIcon } : {}),
+        },
       },
-    };
+      label,
+      fields: input.fields,
+    });
   }
 
   if (!trimmedIcon) {

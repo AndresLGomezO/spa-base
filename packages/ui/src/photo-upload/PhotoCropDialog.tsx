@@ -36,6 +36,7 @@ interface PhotoCropDialogProps {
   readonly file: File | null;
   readonly cropShape?: PhotoCropShape;
   readonly uploading?: boolean;
+  readonly layer?: "default" | "nested";
   readonly labels?: PhotoCropDialogLabels;
   readonly onOpenChange: (open: boolean) => void;
   readonly onCropComplete: (file: File) => void;
@@ -73,6 +74,7 @@ export function PhotoCropDialog({
   file,
   cropShape = "rect",
   uploading = false,
+  layer = "nested",
   labels,
   onOpenChange,
   onCropComplete,
@@ -94,6 +96,7 @@ export function PhotoCropDialog({
       open={open}
       onClose={() => handleOpenChange(false)}
       title={labels?.title ?? "Crop photo"}
+      layer={layer}
     >
       <CropDialogContent
         key={cropKey}

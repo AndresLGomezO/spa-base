@@ -1,6 +1,11 @@
 import { z } from "zod";
 
-import type { EntityUIConfig } from "@repo/entities";
+import {
+  imageFileReferenceSchema,
+  MAX_FILE_SIZE_BYTES_CAP,
+  stripDownloadUrlFromFileReference,
+  type EntityUIConfig,
+} from "@repo/entities";
 
 export const ENTITY_DEFINITIONS_COLLECTION = "entity_definitions" as const;
 
@@ -19,12 +24,34 @@ export const relationDefinitionSchema = z.object({
 export const fieldDefinitionSchema = z
   .object({
     name: z.string().trim().min(1),
-    type: z.enum(["string", "number", "boolean", "date", "relation", "enum"]),
+    type: z.enum([
+      "string",
+      "number",
+      "boolean",
+      "date",
+      "relation",
+      "enum",
+      "image",
+      "document",
+    ]),
     required: z.boolean().optional(),
     sensitive: z.boolean().optional(),
     relation: relationDefinitionSchema.optional(),
     enumValues: z.array(z.string().trim().min(1)).min(1).optional(),
     numberKind: z.enum(["integer", "decimal"]).optional(),
+    maxSizeBytes: z
+      .number()
+      .int()
+      .positive()
+      .max(MAX_FILE_SIZE_BYTES_CAP)
+      .optional(),
+    defaultImage: z.preprocess(
+      (value) =>
+        value === undefined || value === null
+          ? undefined
+          : stripDownloadUrlFromFileReference(value),
+      imageFileReferenceSchema.optional(),
+    ),
     ui: z
       .object({
         label: z.string().optional(),
@@ -75,11 +102,39 @@ export const fieldDefinitionSchema = z
         path: ["sensitive"],
       });
     }
+    if (
+      (field.type === "image" || field.type === "document") &&
+      field.sensitive
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "File fields cannot be marked as sensitive.",
+        path: ["sensitive"],
+      });
+    }
     if (field.type !== "number" && field.numberKind !== undefined) {
       ctx.addIssue({
         code: "custom",
         message: "Only number fields may include numberKind.",
         path: ["numberKind"],
+      });
+    }
+    if (
+      field.type !== "image" &&
+      field.type !== "document" &&
+      field.maxSizeBytes !== undefined
+    ) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Only image and document fields may include maxSizeBytes.",
+        path: ["maxSizeBytes"],
+      });
+    }
+    if (field.type !== "image" && field.defaultImage !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Only image fields may include defaultImage.",
+        path: ["defaultImage"],
       });
     }
   });

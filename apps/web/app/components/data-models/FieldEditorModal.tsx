@@ -14,6 +14,7 @@ interface FieldEditorModalProps {
   readonly open: boolean;
   readonly mode: "add" | "edit";
   readonly field: FieldDefinitionInput;
+  readonly entityName?: string;
   readonly orderDefault: number;
   readonly relationTargets: readonly {
     readonly name: string;
@@ -29,6 +30,7 @@ export function FieldEditorModal({
   open,
   mode,
   field,
+  entityName,
   orderDefault,
   relationTargets,
   canRemove,
@@ -149,6 +151,7 @@ export function FieldEditorModal({
           ) : null}
           <FieldEditorForm
             field={draft}
+            entityName={entityName}
             relationTargets={relationTargets}
             onChange={setDraft}
             typeReadOnly={mode === "edit"}

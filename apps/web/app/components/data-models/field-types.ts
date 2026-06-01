@@ -9,6 +9,8 @@ export const FIELD_TYPES: readonly FieldDefinitionInput["type"][] = [
   "date",
   "enum",
   "relation",
+  "image",
+  "document",
 ];
 
 export function createEmptyField(
@@ -24,6 +26,9 @@ export function createEmptyField(
     ...(type === "enum" ? { enumValues: [""] } : {}),
     ...(type === "relation"
       ? { relation: { target: "", type: "many-to-one" }, sensitive: undefined }
+      : {}),
+    ...(type === "image" || type === "document"
+      ? { sensitive: undefined }
       : {}),
   };
 }

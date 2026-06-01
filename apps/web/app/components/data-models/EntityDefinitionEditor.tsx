@@ -8,6 +8,10 @@ import {
 import { useTranslation } from "react-i18next";
 
 import {
+  stripDownloadUrlFromFileReference,
+  type EntityFileReference,
+} from "@repo/entities";
+import {
   Alert,
   Button,
   Checkbox,
@@ -37,6 +41,21 @@ import { EntityFieldsManager } from "./EntityFieldsManager";
 import { useSyncCategoryNavIcon } from "./use-sync-category-nav-icon";
 
 const ENTITY_DEFINITION_EDITOR_FORM_ID = "entity-definition-editor-form";
+
+function sanitizeFieldDefinitionForSave(
+  field: FieldDefinitionInput,
+): FieldDefinitionInput {
+  if (!field.defaultImage) {
+    return field;
+  }
+
+  return {
+    ...field,
+    defaultImage: stripDownloadUrlFromFileReference(
+      field.defaultImage,
+    ) as EntityFileReference,
+  };
+}
 
 interface EntityDefinitionEditorProps {
   readonly definitionId: string;
@@ -259,7 +278,7 @@ export function EntityDefinitionEditor({
         displayField: displayField.trim() ? displayField.trim() : null,
         ...(ui ? { ui } : {}),
         fields: validFields.map((field) => ({
-          ...field,
+          ...sanitizeFieldDefinitionForSave(field),
           name: field.name.trim(),
           ...(field.type === "enum"
             ? {
@@ -463,6 +482,7 @@ export function EntityDefinitionEditor({
 
         <EntityFieldsManager
           fields={fields}
+          entityName={record?.name}
           onChange={setFields}
           canEdit={canUpdate}
           relationTargets={relationTargets}

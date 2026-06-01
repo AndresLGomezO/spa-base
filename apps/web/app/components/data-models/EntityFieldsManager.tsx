@@ -10,6 +10,7 @@ import { FieldEditorModal } from "./FieldEditorModal";
 
 interface EntityFieldsManagerProps {
   readonly fields: readonly FieldDefinitionInput[];
+  readonly entityName?: string;
   readonly onChange: (fields: FieldDefinitionInput[]) => void;
   readonly canEdit: boolean;
   readonly relationTargets: readonly {
@@ -25,6 +26,7 @@ type ModalState =
 
 export function EntityFieldsManager({
   fields,
+  entityName,
   onChange,
   canEdit,
   relationTargets,
@@ -110,6 +112,7 @@ export function EntityFieldsManager({
           open
           mode={modalState.kind}
           field={modalField}
+          entityName={entityName}
           orderDefault={orderDefault}
           relationTargets={relationTargets}
           canRemove={fields.length > 1}

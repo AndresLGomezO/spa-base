@@ -20,6 +20,13 @@ describe("photo-upload.utils", () => {
     expect(validateFile(file)).toMatch(/5 MB/i);
   });
 
+  it("validateFile honors a custom max size", () => {
+    const file = new File([new Uint8Array(1024 * 1024 + 1)], "big.png", {
+      type: "image/png",
+    });
+    expect(validateFile(file, 1024 * 1024)).toMatch(/1 MB/i);
+  });
+
   it("validateFile accepts supported image types", () => {
     const file = new File(["x"], "photo.png", { type: "image/png" });
     expect(validateFile(file)).toBeNull();

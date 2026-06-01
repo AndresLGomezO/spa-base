@@ -111,8 +111,12 @@ export function EntityCardView({
               className="border-border flex flex-col gap-3 rounded-lg border p-4"
             >
               {columns.map((column) => {
-                const { fieldType, displayFormat, dateDisplayFormat } =
-                  getEntityCellDisplayMeta(column, definition);
+                const {
+                  fieldType,
+                  displayFormat,
+                  dateDisplayFormat,
+                  fallbackImageUrl,
+                } = getEntityCellDisplayMeta(column, definition);
 
                 return (
                   <div key={column} className="flex flex-col gap-1">
@@ -130,6 +134,7 @@ export function EntityCardView({
                       displayFormat={displayFormat}
                       dateDisplayFormat={dateDisplayFormat}
                       fieldName={column}
+                      fallbackImageUrl={fallbackImageUrl}
                       locale={i18n.language}
                       trueLabel={t("table.booleanYes")}
                       falseLabel={t("table.booleanNo")}

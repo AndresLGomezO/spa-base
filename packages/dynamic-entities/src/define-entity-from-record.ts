@@ -22,7 +22,10 @@ export class DynamicEntityError extends Error {
 function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
   const req = field.required ? { required: true as const } : {};
   const sens =
-    field.sensitive && field.type !== "relation"
+    field.sensitive &&
+    field.type !== "relation" &&
+    field.type !== "image" &&
+    field.type !== "document"
       ? { sensitive: true as const }
       : {};
 
@@ -47,6 +50,23 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
         ...req,
         ...sens,
       };
+    case "image":
+      return {
+        type: "image",
+        ...req,
+        ...(field.maxSizeBytes !== undefined
+          ? { maxSizeBytes: field.maxSizeBytes }
+          : {}),
+        ...(field.defaultImage ? { defaultImage: field.defaultImage } : {}),
+      };
+    case "document":
+      return {
+        type: "document",
+        ...req,
+        ...(field.maxSizeBytes !== undefined
+          ? { maxSizeBytes: field.maxSizeBytes }
+          : {}),
+      };
     case "relation":
       return {
         type: "relation",
@@ -60,6 +80,18 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
     default:
       throw new DynamicEntityError(`Unsupported field type: ${field.type}`);
   }
+}
+
+function defaultFileFieldUiFlags(
+  type: FieldDefinitionRecord["type"],
+): Pick<
+  NonNullable<FieldDefinitionRecord["ui"]>,
+  "filterable" | "sortable" | "searchable"
+> {
+  if (type === "image" || type === "document") {
+    return { filterable: false, sortable: false, searchable: false };
+  }
+  return {};
 }
 
 function componentForFieldType(
@@ -76,6 +108,10 @@ function componentForFieldType(
       return "relation" as const;
     case "enum":
       return "select" as const;
+    case "image":
+      return "image" as const;
+    case "document":
+      return "document" as const;
     default:
       return "input" as const;
   }
@@ -117,34 +153,45 @@ export function buildDefaultUiForNewDefinition(input: {
       },
     },
     fields: Object.fromEntries(
-      input.fields.map((field, index) => [
-        field.name,
-        {
-          ...(field.ui?.label ? { label: field.ui.label } : {}),
-          component:
-            (field.ui?.component as FieldComponentType | undefined) ??
-            componentForFieldType(field.type),
-          ...(field.ui?.placeholder
-            ? { placeholder: field.ui.placeholder }
-            : {}),
-          ...(field.ui?.displayFormat
-            ? { displayFormat: field.ui.displayFormat }
-            : {}),
-          ...(field.ui?.dateDisplayFormat
-            ? { dateDisplayFormat: field.ui.dateDisplayFormat }
-            : {}),
-          ...(field.ui?.filterable !== undefined
-            ? { filterable: field.ui.filterable }
-            : {}),
-          ...(field.ui?.sortable !== undefined
-            ? { sortable: field.ui.sortable }
-            : {}),
-          ...(field.ui?.searchable !== undefined
-            ? { searchable: field.ui.searchable }
-            : {}),
-          order: field.ui?.order ?? index,
-        },
-      ]),
+      input.fields.map((field, index) => {
+        const fileUiDefaults = defaultFileFieldUiFlags(field.type);
+        const hasFileDefaults =
+          field.type === "image" || field.type === "document";
+        return [
+          field.name,
+          {
+            ...(field.ui?.label ? { label: field.ui.label } : {}),
+            component:
+              (field.ui?.component as FieldComponentType | undefined) ??
+              componentForFieldType(field.type),
+            ...(field.ui?.placeholder
+              ? { placeholder: field.ui.placeholder }
+              : {}),
+            ...(field.ui?.displayFormat
+              ? { displayFormat: field.ui.displayFormat }
+              : {}),
+            ...(field.ui?.dateDisplayFormat
+              ? { dateDisplayFormat: field.ui.dateDisplayFormat }
+              : {}),
+            ...(field.ui?.filterable !== undefined
+              ? { filterable: field.ui.filterable }
+              : hasFileDefaults
+                ? { filterable: fileUiDefaults.filterable }
+                : {}),
+            ...(field.ui?.sortable !== undefined
+              ? { sortable: field.ui.sortable }
+              : hasFileDefaults
+                ? { sortable: fileUiDefaults.sortable }
+                : {}),
+            ...(field.ui?.searchable !== undefined
+              ? { searchable: field.ui.searchable }
+              : hasFileDefaults
+                ? { searchable: fileUiDefaults.searchable }
+                : {}),
+            order: field.ui?.order ?? index,
+          },
+        ];
+      }),
     ) as EntityUIConfig["fields"],
   };
 }

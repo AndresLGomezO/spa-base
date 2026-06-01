@@ -4,14 +4,22 @@ const JPEG_QUALITY = 0.9;
 export const KEYBOARD_STEP = 10;
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
-const MAX_FILE_SIZE_BYTES = 5 * 1024 * 1024;
+export const DEFAULT_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
 
-export function validateFile(file: File): string | null {
+function formatMaxSizeMb(maxSizeBytes: number): string {
+  const mb = maxSizeBytes / (1024 * 1024);
+  return Number.isInteger(mb) ? String(mb) : mb.toFixed(1);
+}
+
+export function validateFile(
+  file: File,
+  maxSizeBytes: number = DEFAULT_IMAGE_MAX_SIZE_BYTES,
+): string | null {
   if (!ALLOWED_MIME_TYPES.has(file.type)) {
     return "Please choose a JPEG, PNG, or WebP image.";
   }
-  if (file.size > MAX_FILE_SIZE_BYTES) {
-    return "Image must be 5 MB or smaller.";
+  if (file.size > maxSizeBytes) {
+    return `Image must be ${formatMaxSizeMb(maxSizeBytes)} MB or smaller.`;
   }
   return null;
 }

@@ -1,15 +1,29 @@
 import type { FormLayout, SerializableEntityDefinition } from "@repo/entities";
 
+import { augmentFormLayoutWithFieldNames } from "./form-layout-sync.js";
+
+function resolveFormLayout(
+  definition: SerializableEntityDefinition,
+  mode: "create" | "edit",
+): FormLayout {
+  const layout =
+    mode === "create" ? definition.ui.forms.create : definition.ui.forms.edit;
+  return augmentFormLayoutWithFieldNames(
+    layout,
+    Object.keys(definition.fields),
+  );
+}
+
 export function resolveCreateForm(
   definition: SerializableEntityDefinition,
 ): FormLayout {
-  return definition.ui.forms.create;
+  return resolveFormLayout(definition, "create");
 }
 
 export function resolveEditForm(
   definition: SerializableEntityDefinition,
 ): FormLayout {
-  return definition.ui.forms.edit;
+  return resolveFormLayout(definition, "edit");
 }
 
 export function buildInitialValues(

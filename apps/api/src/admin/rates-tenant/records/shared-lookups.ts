@@ -1,5 +1,29 @@
 import type { RatesRecordSeedContext } from "../seed-helpers.js";
 import { ensureRatesRecordInContext } from "../seed-helpers.js";
+import { uploadRatesEntityLogo } from "../seed-rates-logos.js";
+
+async function seedLookupWithLogo(
+  context: RatesRecordSeedContext,
+  params: {
+    readonly entityName: "bank" | "serviceProvider";
+    readonly id: string;
+    readonly code: string;
+    readonly name: string;
+    readonly assetFileName: string;
+  },
+): Promise<void> {
+  const logo = await uploadRatesEntityLogo(context, {
+    entityName: params.entityName,
+    recordId: params.id,
+    assetFileName: params.assetFileName,
+  });
+
+  await ensureRatesRecordInContext(context, params.entityName, params.id, {
+    code: params.code,
+    name: params.name,
+    ...(logo ? { logo } : {}),
+  });
+}
 
 export async function seedSharedLookupRecords(
   context: RatesRecordSeedContext,
@@ -103,5 +127,63 @@ export async function seedSharedLookupRecords(
   await ensure("currency", "currency_usd", {
     code: "USD",
     name: "US Dollar",
+  });
+
+  await seedLookupWithLogo(context, {
+    entityName: "bank",
+    id: "bank_bancolombia",
+    code: "BANCOLOMBIA",
+    name: "Bancolombia",
+    assetFileName: "bancolombia.png",
+  });
+  await seedLookupWithLogo(context, {
+    entityName: "bank",
+    id: "bank_davivienda",
+    code: "DAVIVIENDA",
+    name: "Davivienda",
+    assetFileName: "davivienda.webp",
+  });
+  await seedLookupWithLogo(context, {
+    entityName: "bank",
+    id: "bank_bbva",
+    code: "BBVA",
+    name: "BBVA Colombia",
+    assetFileName: "bbva.png",
+  });
+  await seedLookupWithLogo(context, {
+    entityName: "bank",
+    id: "bank_scotiabank",
+    code: "SCOTIABANK",
+    name: "Scotiabank Colpatria",
+    assetFileName: "scotiabank.png",
+  });
+  await seedLookupWithLogo(context, {
+    entityName: "bank",
+    id: "bank_banco_bogota",
+    code: "BANCO_BOGOTA",
+    name: "Banco de Bogotá",
+    assetFileName: "banco-bogota.png",
+  });
+
+  await seedLookupWithLogo(context, {
+    entityName: "serviceProvider",
+    id: "sp_netflix",
+    code: "NETFLIX",
+    name: "Netflix",
+    assetFileName: "netflix.png",
+  });
+  await seedLookupWithLogo(context, {
+    entityName: "serviceProvider",
+    id: "sp_spotify",
+    code: "SPOTIFY",
+    name: "Spotify",
+    assetFileName: "spotify.png",
+  });
+  await seedLookupWithLogo(context, {
+    entityName: "serviceProvider",
+    id: "sp_disney_plus",
+    code: "DISNEY_PLUS",
+    name: "Disney+",
+    assetFileName: "disney-plus.png",
   });
 }

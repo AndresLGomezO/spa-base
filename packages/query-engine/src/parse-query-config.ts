@@ -88,7 +88,7 @@ const INEQUALITY_OPERATORS = new Set<FilterOperator>([
 
 const OPERATORS_BY_FIELD_TYPE: Record<
   Phase1FieldType,
-  readonly FilterOperator[]
+  readonly FilterOperator[] | null
 > = {
   string: ["==", "!=", "in", "contains", "startsWith", "endsWith"],
   number: ["==", "!=", "<", "<=", ">", ">=", "in"],
@@ -96,6 +96,8 @@ const OPERATORS_BY_FIELD_TYPE: Record<
   date: ["==", "!=", "<", "<=", ">", ">="],
   relation: ["==", "in"],
   enum: ["==", "!=", "in"],
+  image: null,
+  document: null,
 };
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
@@ -174,6 +176,10 @@ function resolveFieldType(
       return null;
     }
     return "relation";
+  }
+
+  if (meta.type === "image" || meta.type === "document") {
+    return null;
   }
 
   return meta.type;

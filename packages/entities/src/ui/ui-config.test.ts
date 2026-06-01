@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { defineEntity } from "../defineEntity.js";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import { getDefaultEntityUI } from "./default-ui-config.js";
+import { serializeEntityDefinition } from "./serialize-entity-definition.js";
 import { validateEntityUIConfig } from "./validate-ui-config.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
@@ -97,6 +98,58 @@ describe("validateEntityUIConfig", () => {
         },
       }),
     ).not.toThrow();
+  });
+
+  it("accepts image and document field components", () => {
+    const entity = defineEntity({
+      name: "brand",
+      fields: {
+        name: { type: "string", required: true },
+        logo: { type: "image" },
+        brochure: { type: "document" },
+      },
+    });
+
+    expect(() =>
+      validateEntityUIConfig(entity as unknown as AnyDefinedEntity, {
+        ...getDefaultEntityUI(entity as unknown as AnyDefinedEntity),
+        fields: {
+          logo: { component: "image" },
+          brochure: { component: "document" },
+        },
+      }),
+    ).not.toThrow();
+  });
+});
+
+describe("serializeEntityDefinition", () => {
+  it("includes file field metadata in catalog payload", () => {
+    const defaultImage = {
+      storagePath: "tenants/t1/entity-files/brand/field-default-logo.png",
+      contentType: "image/png",
+      fileName: "logo.png",
+    };
+    const entity = defineEntity({
+      name: "brand",
+      fields: {
+        name: { type: "string", required: true },
+        logo: {
+          type: "image",
+          maxSizeBytes: 2_097_152,
+          defaultImage,
+        },
+      },
+    });
+
+    const serialized = serializeEntityDefinition(
+      entity as unknown as AnyDefinedEntity,
+    );
+
+    expect(serialized.fields.logo).toMatchObject({
+      type: "image",
+      maxSizeBytes: 2_097_152,
+      defaultImage,
+    });
   });
 });
 

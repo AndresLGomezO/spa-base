@@ -10,6 +10,8 @@ const fieldComponentSchema = z.enum([
   "date",
   "relation",
   "select",
+  "image",
+  "document",
 ]);
 
 const fieldUISchema = z

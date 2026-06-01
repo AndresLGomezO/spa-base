@@ -111,15 +111,36 @@ describe("resolveRatesListFieldUi", () => {
     });
   });
 
-  it("allows subscription provider and planName to be searchable", () => {
+  it("allows subscription planName to be searchable", () => {
     expect(
       resolveRatesListFieldUi(
         "subscriptionDetail",
-        field({ name: "provider", type: "string" }),
+        field({ name: "planName", type: "string" }),
       ),
     ).toEqual({
       filterable: false,
       sortable: false,
+      searchable: true,
+    });
+  });
+
+  it("treats bank and serviceProvider as hidden lookups with searchable code", () => {
+    expect(
+      resolveRatesListFieldUi("bank", field({ name: "code", type: "string" })),
+    ).toEqual({
+      filterable: false,
+      sortable: true,
+      searchable: true,
+    });
+
+    expect(
+      resolveRatesListFieldUi(
+        "serviceProvider",
+        field({ name: "code", type: "string" }),
+      ),
+    ).toEqual({
+      filterable: false,
+      sortable: true,
       searchable: true,
     });
   });

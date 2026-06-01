@@ -4,6 +4,8 @@ import {
   booleanField,
   dateField,
   decimalField,
+  documentField,
+  imageField,
   integerField,
   lookupDefinition,
   relationField,
@@ -169,6 +171,30 @@ export function buildRatesEntityDefinitions(
         stringField("name", { required: true, label: "Name" }),
       ],
     }),
+    lookupDefinition({
+      name: "bank",
+      label: "Banks",
+      navCategoryId: ref,
+      navOrder: 16,
+      icon: "Landmark",
+      fields: [
+        stringField("code", { required: true, label: "Code" }),
+        stringField("name", { required: true, label: "Name" }),
+        imageField("logo", { label: "Logo" }),
+      ],
+    }),
+    lookupDefinition({
+      name: "serviceProvider",
+      label: "Service Providers",
+      navCategoryId: ref,
+      navOrder: 17,
+      icon: "Tv",
+      fields: [
+        stringField("code", { required: true, label: "Code" }),
+        stringField("name", { required: true, label: "Name" }),
+        imageField("logo", { label: "Logo" }),
+      ],
+    }),
     visibleDefinition({
       name: "account",
       label: "Accounts",
@@ -186,6 +212,7 @@ export function buildRatesEntityDefinitions(
           required: true,
           label: "Currency",
         }),
+        relationField("bankId", "bank", { label: "Bank" }),
         decimalField("balance", {
           required: true,
           sensitive: true,
@@ -236,6 +263,10 @@ export function buildRatesEntityDefinitions(
         relationField("statusId", "status", {
           required: true,
           label: "Status",
+        }),
+        relationField("bankId", "bank", { label: "Bank" }),
+        relationField("serviceProviderId", "serviceProvider", {
+          label: "Service provider",
         }),
         stringField("description", { label: "Description" }),
       ],
@@ -314,6 +345,7 @@ export function buildRatesEntityDefinitions(
           displayFormat: "currency",
           label: "Accrued interest",
         }),
+        documentField("statement", { label: "Statement" }),
       ],
     }),
     visibleDefinition({
@@ -440,7 +472,10 @@ export function buildRatesEntityDefinitions(
           required: true,
           label: "Product",
         }),
-        stringField("provider", { required: true, label: "Provider" }),
+        relationField("serviceProviderId", "serviceProvider", {
+          required: true,
+          label: "Service provider",
+        }),
         stringField("planName", { required: true, label: "Plan" }),
         relationField("billingFrequencyId", "frequency", {
           required: true,
@@ -497,6 +532,8 @@ export const RATES_ENTITY_NAMES = [
   "variabilityType",
   "riskLevel",
   "currency",
+  "bank",
+  "serviceProvider",
   "account",
   "financialProduct",
   "productTerm",

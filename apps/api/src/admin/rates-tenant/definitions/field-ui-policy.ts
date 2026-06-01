@@ -81,6 +81,8 @@ const HIDDEN_LOOKUP_ENTITIES = new Set([
   "variabilityType",
   "riskLevel",
   "currency",
+  "bank",
+  "serviceProvider",
 ]);
 
 function isLookupEntity(entityName: string): boolean {
@@ -117,10 +119,7 @@ export function resolveRatesListFieldUi(
     if (field.name === "name") {
       return TEXT_LABEL;
     }
-    if (
-      entityName === "subscriptionDetail" &&
-      (field.name === "provider" || field.name === "planName")
-    ) {
+    if (entityName === "subscriptionDetail" && field.name === "planName") {
       return SUBSCRIPTION_SEARCH_TEXT;
     }
     return TEXT_OTHER;

@@ -13,7 +13,11 @@ export function normalizeFieldMeta(config: FieldConfig): NormalizedFieldMeta {
       ? (config.relation.required ?? config.required === true) && !hasDefault
       : config.required === true && !hasDefault;
 
-  const sensitive = config.type !== "relation" && config.sensitive === true;
+  const sensitive =
+    config.type !== "relation" &&
+    config.type !== "image" &&
+    config.type !== "document" &&
+    config.sensitive === true;
 
   const base: NormalizedFieldMeta = {
     type: config.type,
@@ -44,6 +48,25 @@ export function normalizeFieldMeta(config: FieldConfig): NormalizedFieldMeta {
     return {
       ...base,
       numberKind: config.numberKind,
+    };
+  }
+
+  if (config.type === "image") {
+    return {
+      ...base,
+      ...(config.maxSizeBytes !== undefined
+        ? { maxSizeBytes: config.maxSizeBytes }
+        : {}),
+      ...(config.defaultImage ? { defaultImage: config.defaultImage } : {}),
+    };
+  }
+
+  if (config.type === "document") {
+    return {
+      ...base,
+      ...(config.maxSizeBytes !== undefined
+        ? { maxSizeBytes: config.maxSizeBytes }
+        : {}),
     };
   }
 

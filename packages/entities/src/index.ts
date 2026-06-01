@@ -6,9 +6,32 @@ export { defineEntity } from "./defineEntity.js";
 export type { FieldTypeRegistry, FieldSchemaBuilder } from "./fieldTypes.js";
 export { defaultFieldTypeRegistry } from "./schema/buildFieldSchema.js";
 export {
+  DEFAULT_DOCUMENT_MAX_SIZE_BYTES,
+  DEFAULT_IMAGE_MAX_SIZE_BYTES,
+  MAX_ENTITY_FILE_UPLOAD_REQUEST_BODY_BYTES,
+  MAX_FILE_SIZE_BYTES_CAP,
+  resolveFileFieldMaxSizeBytes,
+} from "./schema/file-field-defaults.js";
+export {
   isoDatetimeStringSchema,
   isIsoDatetimeString,
 } from "./schema/isoDatetime.js";
+export {
+  DOCUMENT_CONTENT_TYPES,
+  IMAGE_CONTENT_TYPES,
+  createEntityFileReferenceSchema,
+  documentFileReferenceSchema,
+  entityFileReferenceSchema,
+  imageFileReferenceSchema,
+  isEntityFileReference,
+  stripDownloadUrlFromFileReference,
+} from "./schema/entityFileReference.js";
+export type {
+  DocumentContentType,
+  EntityFileReference,
+  EntityFileReferenceWithDownload,
+  ImageContentType,
+} from "./schema/entityFileReference.js";
 export {
   clearEntityRegistry,
   getAllEntities,
@@ -87,6 +110,8 @@ export type {
   BooleanFieldConfig,
   DateFieldConfig,
   EnumFieldConfig,
+  ImageFieldConfig,
+  DocumentFieldConfig,
   DefinedEntity,
   EntityConfig,
   EntityMetadata,
