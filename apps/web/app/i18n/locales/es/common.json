@@ -78,6 +78,25 @@
     "paginationLast": "Última página",
     "paginationPage": "Página {{page}}"
   },
+  "indexes": {
+    "buildingSpinnerLabel": "Preparando índices de base de datos",
+    "buildingTitle": "Configurando {{entity}}",
+    "buildingSubtitle": "Se están creando índices de Firestore para este modelo. Suele tardar unos minutos.",
+    "tips": {
+      "tip1": "Puedes permanecer en esta página — la lista se cargará sola cuando los índices estén listos.",
+      "tip2": "Los campos de relación requieren índices compuestos adicionales; es normal en modelos nuevos.",
+      "tip3": "El tiempo habitual es de 5 a 15 minutos, según Google Cloud.",
+      "tip4": "Si acabas de cambiar el modelo, los índices se actualizan para coincidir con tus campos."
+    },
+    "errorTitle": "Error al configurar índices de {{entity}}",
+    "errorSubtitle": "No se pudieron crear uno o más índices de Firestore. La lista no estará disponible hasta resolverlo.",
+    "errorNextStepsTitle": "Qué puedes hacer",
+    "errorStepRetry": "Espera un momento — esta página comprueba el estado automáticamente y reintentará.",
+    "errorStepWait": "Abre Firebase Console → Firestore → Índices y confirma que nada quede en Error.",
+    "errorStepConsole": "Abre el enlace del índice del error del servidor (si aparece) y créalo o corrígelo manualmente.",
+    "errorStepConsoleGeneric": "Revisa Firebase Console → Firestore → Índices para este grupo de colección.",
+    "errorStepModel": "Edita el modelo para quitar filtros de relación no usados, o contacta a un administrador."
+  },
   "entity": {
     "create": "Crear",
     "edit": "Editar",

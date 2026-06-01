@@ -257,7 +257,7 @@ export async function registerEntityDefinitionRoutes(
             parsedParams.data.id,
             parsedBody.data,
           );
-        await options.entityRuntime.syncDefinition(updated);
+        await options.entityRuntime.syncDefinition(updated, current);
         return reply.send(successEnvelope(updated));
       } catch (error) {
         const message =

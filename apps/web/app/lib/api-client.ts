@@ -16,10 +16,40 @@ interface ApiEnvelope<T> {
   readonly error: ApiErrorBody | null;
 }
 
-interface ApiClientError extends Error {
+export interface ApiClientError extends Error {
   statusCode: number;
   code: string;
   fieldErrors: Record<string, string>;
+  details?: unknown;
+}
+
+export type IndexProvisioningPhase = "idle" | "building" | "ready" | "error";
+
+export interface IndexStatusRecord {
+  readonly signature: string;
+  readonly collection: string;
+  readonly status: "CREATING" | "READY" | "ERROR";
+  readonly errorMessage?: string;
+  readonly updatedAt: string;
+}
+
+export interface IndexProvisioningStatusSummary {
+  readonly collection: string;
+  readonly phase: IndexProvisioningPhase;
+  readonly records: readonly IndexStatusRecord[];
+  readonly creatingCount: number;
+  readonly readyCount: number;
+  readonly errorCount: number;
+}
+
+const INDEX_LIST_ERROR_CODES = new Set([
+  "INDEX_CREATING",
+  "COMPOSITE_INDEX_REQUIRED",
+  "INDEX_PROVISIONING_FAILED",
+]);
+
+export function isIndexListErrorCode(code: string): boolean {
+  return INDEX_LIST_ERROR_CODES.has(code);
 }
 
 interface PaginatedResult<T> {
@@ -62,6 +92,9 @@ function createApiClientError(
   clientError.statusCode = statusCode;
   clientError.code = error.code;
   clientError.fieldErrors = mapFieldErrors(error.details);
+  if (error.details !== undefined) {
+    clientError.details = error.details;
+  }
   return clientError;
 }
 
@@ -276,6 +309,14 @@ export async function listShares(
   return apiRequest<readonly ShareEntry[]>(
     `/api/${entityName}/${recordId}/share`,
   );
+}
+
+export async function getIndexProvisioningStatus(
+  collection: string,
+): Promise<IndexProvisioningStatusSummary> {
+  return apiRequest<IndexProvisioningStatusSummary>("/api/indexes/status", {
+    query: { collection },
+  });
 }
 
 export interface FieldDefinitionInput {

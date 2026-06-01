@@ -78,6 +78,25 @@
     "paginationLast": "Last page",
     "paginationPage": "Page {{page}}"
   },
+  "indexes": {
+    "buildingSpinnerLabel": "Preparing database indexes",
+    "buildingTitle": "Setting up {{entity}}",
+    "buildingSubtitle": "Firestore indexes are being created for this model. This usually takes a few minutes.",
+    "tips": {
+      "tip1": "You can stay on this page — the list will load automatically when indexes are ready.",
+      "tip2": "Relation fields need extra composite indexes; that is expected for new models.",
+      "tip3": "Typical build time is 5–15 minutes, depending on Google Cloud.",
+      "tip4": "If you just changed the model, indexes are being updated to match your fields."
+    },
+    "errorTitle": "Index setup failed for {{entity}}",
+    "errorSubtitle": "One or more Firestore indexes could not be created. The list stays unavailable until this is resolved.",
+    "errorNextStepsTitle": "What you can do",
+    "errorStepRetry": "Wait a moment — this page checks status automatically and will retry.",
+    "errorStepWait": "Open Firebase Console → Firestore → Indexes and confirm nothing is stuck in Error.",
+    "errorStepConsole": "Open the index link from the server error (if shown) and create or fix the index manually.",
+    "errorStepConsoleGeneric": "Check Firebase Console → Firestore → Indexes for this collection group.",
+    "errorStepModel": "Edit the model to remove unused relation filters, or contact an administrator."
+  },
   "entity": {
     "create": "Create",
     "edit": "Edit",

@@ -30,10 +30,27 @@ export {
   type IndexStatusRecord,
 } from "./firestore-index-status.js";
 export {
+  summarizeIndexProvisioningStatus,
+  type IndexProvisioningPhase,
+  type IndexProvisioningStatusSummary,
+} from "./index-provisioning-phase.js";
+export {
   INDEX_PROVISIONING_TOPIC,
   publishIndexProvisioningMessage,
   type IndexProvisioningMessage,
 } from "./firestore-index-pubsub.js";
+export {
+  adminIndexToComposite,
+  computeDesiredIndexesFromRepository,
+  deleteFirestoreIndex,
+  listAllTenantIds,
+  listCompositeIndexes,
+  pickIndexesToDelete,
+  reconcileIndexesForDefinitionChange,
+  scheduleReconcileIndexesForDefinitionChange,
+  type ListedFirestoreIndex,
+  type ReconcileDefinitionChangeOptions,
+} from "./firestore-index-reconciler.js";
 export { createFirestoreAdminJoinCollectionRepository } from "./firestore-admin-join-collection-repository.js";
 export { createFirestoreAdminPlatformRoleRepository } from "./firestore-admin-platform-role-repository.js";
 export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-repository.js";

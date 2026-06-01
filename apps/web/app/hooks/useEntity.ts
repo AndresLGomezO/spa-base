@@ -8,8 +8,10 @@ import {
   deleteEntity,
   getEntity,
   isApiClientError,
+  isIndexListErrorCode,
   listEntity,
   updateEntity,
+  type ApiClientError,
 } from "../lib/api-client";
 import type { EntityName } from "../entities/entity-catalog";
 import { useEntityDefinition } from "../entities/entity-catalog-context";
@@ -38,6 +40,7 @@ interface UseEntityListState {
   readonly page: number;
   readonly isLoading: boolean;
   readonly error: string | null;
+  readonly listError: ApiClientError | null;
   readonly refresh: () => Promise<void>;
 }
 
@@ -103,7 +106,19 @@ export function useEntity(
         query: queryConfig,
         populate: populateParam,
       }),
+    refetchInterval: (query) => {
+      const error = query.state.error;
+      if (isApiClientError(error) && isIndexListErrorCode(error.code)) {
+        return 10_000;
+      }
+      return false;
+    },
   });
+
+  const listError = useMemo((): ApiClientError | null => {
+    const error = listQuery.error;
+    return isApiClientError(error) ? error : null;
+  }, [listQuery.error]);
 
   const items = useMemo(
     () => listQuery.data?.items ?? [],
@@ -233,6 +248,7 @@ export function useEntity(
       nextCursor,
       page,
       isLoading: listQuery.isLoading,
+      listError,
       error:
         (listQuery.error ? getErrorMessage(listQuery.error) : null) ??
         mutationError,
@@ -249,6 +265,7 @@ export function useEntity(
       fieldErrors,
       getById,
       items,
+      listError,
       listQuery.error,
       listQuery.isLoading,
       mutationError,

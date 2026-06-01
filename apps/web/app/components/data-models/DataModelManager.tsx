@@ -13,6 +13,7 @@ import {
   listEntityDefinitions,
   type EntityDefinitionRecord,
 } from "../../lib/api-client";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { FormModal } from "../forms/FormModal";
 import { EntityDefinitionList } from "./EntityDefinitionList";
 import { EntityDefinitionWizard } from "./EntityDefinitionWizard";
@@ -39,6 +40,7 @@ export function DataModelManager({
   onTenantChange,
 }: DataModelManagerProps) {
   const { t } = useTranslation("common");
+  const { refresh: refreshEntityCatalog } = useEntityCatalog();
   const [items, setItems] = useState<readonly EntityDefinitionRecord[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
@@ -142,6 +144,7 @@ export function DataModelManager({
             onCreated={() => {
               closeModal();
               void loadDefinitions();
+              void refreshEntityCatalog();
             }}
           />
         ) : editingId ? (
@@ -155,6 +158,7 @@ export function DataModelManager({
             onSaved={() => {
               closeModal();
               void loadDefinitions();
+              void refreshEntityCatalog();
             }}
           />
         ) : null}

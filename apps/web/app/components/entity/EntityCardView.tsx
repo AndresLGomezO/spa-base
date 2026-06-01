@@ -26,7 +26,7 @@ import {
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
-  "items" | "totalCount" | "isLoading" | "error"
+  "items" | "totalCount" | "isLoading" | "error" | "listError"
 >;
 
 interface EntityCardViewProps {

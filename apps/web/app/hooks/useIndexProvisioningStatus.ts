@@ -1,0 +1,102 @@
+import { useEffect, useRef } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
+
+import {
+  getIndexProvisioningStatus,
+  isIndexListErrorCode,
+  type IndexProvisioningPhase,
+  type IndexProvisioningStatusSummary,
+} from "../lib/api-client";
+import type { EntityName } from "../entities/entity-catalog";
+
+const INDEX_STATUS_QUERY_KEY = "index-provisioning-status" as const;
+
+function indexStatusQueryKey(collection: string) {
+  return [INDEX_STATUS_QUERY_KEY, collection] as const;
+}
+
+function pollIntervalForPhase(
+  phase: IndexProvisioningPhase | undefined,
+): number | false {
+  if (phase === "building") {
+    return 5_000;
+  }
+  if (phase === "error") {
+    return 15_000;
+  }
+  return false;
+}
+
+interface UseIndexProvisioningStatusOptions {
+  readonly entityName?: EntityName;
+  readonly listErrorCode?: string | null;
+  readonly enabled?: boolean;
+}
+
+export function useIndexProvisioningStatus(
+  collection: string | undefined,
+  options: UseIndexProvisioningStatusOptions = {},
+) {
+  const queryClient = useQueryClient();
+  const previousPhaseRef = useRef<IndexProvisioningPhase | undefined>(
+    undefined,
+  );
+  const enabled =
+    options.enabled !== false &&
+    collection !== undefined &&
+    collection.length > 0;
+
+  const forcedByListError =
+    options.listErrorCode !== undefined &&
+    options.listErrorCode !== null &&
+    isIndexListErrorCode(options.listErrorCode);
+
+  const statusQuery = useQuery({
+    queryKey: collection
+      ? indexStatusQueryKey(collection)
+      : ["index-status-disabled"],
+    queryFn: () => getIndexProvisioningStatus(collection!),
+    enabled,
+    refetchInterval: (query) =>
+      pollIntervalForPhase(
+        (query.state.data as IndexProvisioningStatusSummary | undefined)?.phase,
+      ),
+  });
+
+  const phase = statusQuery.data?.phase ?? "idle";
+  const effectivePhase: IndexProvisioningPhase = forcedByListError
+    ? phase === "error"
+      ? "error"
+      : phase === "ready"
+        ? "ready"
+        : "building"
+    : phase;
+
+  useEffect(() => {
+    const previous = previousPhaseRef.current;
+    previousPhaseRef.current = effectivePhase;
+
+    if (
+      previous !== "ready" &&
+      effectivePhase === "ready" &&
+      options.entityName
+    ) {
+      void queryClient.invalidateQueries({
+        queryKey: ["entity", options.entityName],
+      });
+    }
+  }, [effectivePhase, options.entityName, queryClient]);
+
+  const isBlocking =
+    effectivePhase === "building" || effectivePhase === "error";
+
+  return {
+    summary: statusQuery.data,
+    phase: effectivePhase,
+    isBlocking,
+    isLoading: statusQuery.isLoading,
+    isFetching: statusQuery.isFetching,
+    error: statusQuery.error,
+    refresh: statusQuery.refetch,
+  };
+}

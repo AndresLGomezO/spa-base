@@ -27,6 +27,18 @@ vi.mock("../../auth/AuthContext", () => ({
   })),
 }));
 
+vi.mock("../../hooks/useIndexProvisioningStatus", () => ({
+  useIndexProvisioningStatus: vi.fn(() => ({
+    phase: "idle",
+    isBlocking: false,
+    isLoading: false,
+    isFetching: false,
+    summary: undefined,
+    error: null,
+    refresh: vi.fn(),
+  })),
+}));
+
 function renderTable() {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
@@ -55,6 +67,7 @@ function renderTable() {
               totalCount: 1,
               isLoading: false,
               error: null,
+              listError: null,
             }}
           />
         </I18nextProvider>

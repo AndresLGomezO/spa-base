@@ -19,6 +19,7 @@ import { useTranslation } from "react-i18next";
 
 import {
   formatFieldLabel,
+  getEntityLabel,
   type EntityName,
 } from "../../entities/entity-catalog";
 import {
@@ -33,7 +34,9 @@ import {
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
 import type { useEntity } from "../../hooks/useEntity";
+import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStatus";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
+import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import {
   getEntityCellDisplayMeta,
   getEntityCellRawValue,
@@ -41,7 +44,7 @@ import {
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
-  "items" | "totalCount" | "isLoading" | "error"
+  "items" | "totalCount" | "isLoading" | "error" | "listError"
 >;
 
 interface EntityTableProps {
@@ -86,16 +89,25 @@ export function EntityTable({
     [definition, fieldAccess, permissions.canRead],
   );
 
-  const { items, isLoading, error } = entityState;
+  const { items, isLoading, error, listError } = entityState;
+  const collection = definition.collection;
+  const indexStatus = useIndexProvisioningStatus(collection, {
+    entityName,
+    listErrorCode: listError?.code ?? null,
+  });
 
   const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
     useOneToManyColumnData(definition, items, getDefinition);
 
-  if (isLoading || isLoadingRelations) {
+  const showIndexPanel =
+    indexStatus.isBlocking &&
+    (indexStatus.phase === "building" || indexStatus.phase === "error");
+
+  if ((isLoading || isLoadingRelations) && !showIndexPanel) {
     return <EntityPageSkeleton />;
   }
 
-  if (error) {
+  if (error && !showIndexPanel) {
     return <Alert>{error}</Alert>;
   }
 
@@ -123,6 +135,14 @@ export function EntityTable({
 
   return (
     <div className="flex min-h-0 w-full flex-col gap-4">
+      {showIndexPanel ? (
+        <IndexProvisioningPanel
+          entityLabel={getEntityLabel(definition)}
+          phase={indexStatus.phase === "error" ? "error" : "building"}
+          summary={indexStatus.summary}
+          listErrorMessage={listError?.message ?? error}
+        />
+      ) : null}
       <TableCard className="min-h-0 flex-1">
         <div className="max-h-[min(32rem,calc(100dvh-16rem))] min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <Table>

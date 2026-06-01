@@ -25,6 +25,7 @@ import {
   createFirestoreEntityQueryExecutor,
   scheduleEnsureEntityFirestoreIndexes,
   scheduleEnsureFirestoreIndexesFromHint,
+  scheduleReconcileIndexesForDefinitionChange,
   type FirestoreCompositeIndex,
   type FirestoreIndexHint,
   type FirestoreIndexStatusStore,
@@ -316,11 +317,40 @@ export class EntityRuntimeContext {
     }
   }
 
-  async syncDefinition(record: EntityDefinitionRecord): Promise<void> {
+  async syncDefinition(
+    record: EntityDefinitionRecord,
+    previousRecord?: EntityDefinitionRecord,
+  ): Promise<void> {
     const entity = registerDynamicEntity(record.tenantId, record);
     this.invalidateEntityRuntime(record.tenantId, record.name);
     this.definitionsLoadedAt.set(record.tenantId, Date.now());
     this.ensureIndexesForEntity(entity);
+
+    if (previousRecord) {
+      const reconcileOptions = this.getReconcileOptions();
+      if (reconcileOptions) {
+        scheduleReconcileIndexesForDefinitionChange(
+          previousRecord,
+          record,
+          reconcileOptions,
+        );
+      }
+    }
+  }
+
+  private getReconcileOptions():
+    | Parameters<typeof scheduleReconcileIndexesForDefinitionChange>[2]
+    | null {
+    const ensureOptions = this.getIndexEnsureOptions();
+    if (!ensureOptions) {
+      return null;
+    }
+    return {
+      ...ensureOptions,
+      firebaseAdminConfig: this.options.firebaseAdminConfig,
+      repository: this.options.entityDefinitionRepository,
+      statusStore: this.options.indexStatusStore,
+    };
   }
 
   invalidateTenantDefinitions(tenantId: string): void {

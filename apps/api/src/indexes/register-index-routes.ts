@@ -9,6 +9,7 @@ import {
 } from "@repo/firestore-indexes";
 import {
   ensureFirestoreIndexes,
+  summarizeIndexProvisioningStatus,
   type FirestoreIndexStatusStore,
 } from "@repo/gcp-firebase";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
@@ -75,7 +76,9 @@ export async function registerIndexRoutes(
       }
 
       const records = await options.statusStore.listByCollection(collection);
-      return reply.send(successEnvelope(records));
+      return reply.send(
+        successEnvelope(summarizeIndexProvisioningStatus(collection, records)),
+      );
     },
   );
 

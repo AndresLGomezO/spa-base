@@ -90,9 +90,18 @@ export function createFirestoreIndexStatusStore(config: FirebaseAdminConfig) {
       if (records.length === 0) {
         return true;
       }
-      return records.every(
-        (record) => record.status === "READY" || record.status === "ERROR",
-      );
+      return records.every((record) => record.status === "READY");
+    },
+
+    async getFailedRecords(
+      collectionGroup: string,
+    ): Promise<readonly IndexStatusRecord[]> {
+      const records = await this.listByCollection(collectionGroup);
+      return records.filter((record) => record.status === "ERROR");
+    },
+
+    async deleteBySignature(signature: string): Promise<void> {
+      await collection().doc(signature).delete();
     },
 
     async hasCreating(collectionGroup: string): Promise<boolean> {

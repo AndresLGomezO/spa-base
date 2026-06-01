@@ -34,6 +34,7 @@ import { apiEnv } from "../config/env.js";
 import {
   assertCollectionIndexesReady,
   IndexCreatingError,
+  IndexProvisioningFailedError,
 } from "../indexes/index-query-guard.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { runEntityHooks } from "../modules/run-entity-hooks.js";
@@ -208,6 +209,22 @@ function mapIndexCreatingError(
   });
 }
 
+function mapIndexProvisioningFailedError(
+  reply: FastifyReply,
+  error: IndexProvisioningFailedError,
+): void {
+  replyWithError(
+    reply,
+    503,
+    ApiErrorCode.INDEX_PROVISIONING_FAILED,
+    error.message,
+    {
+      collection: error.collection,
+      errors: error.errors,
+    },
+  );
+}
+
 function handleFieldAccessError(reply: FastifyReply, error: unknown): boolean {
   if (!(error instanceof FieldAccessError)) {
     return false;
@@ -271,6 +288,10 @@ async function resolveHookServices(
 function handleQueryError(reply: FastifyReply, error: unknown): boolean {
   if (error instanceof IndexCreatingError) {
     mapIndexCreatingError(reply, error);
+    return true;
+  }
+  if (error instanceof IndexProvisioningFailedError) {
+    mapIndexProvisioningFailedError(reply, error);
     return true;
   }
   if (error instanceof QueryError) {

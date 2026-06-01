@@ -101,10 +101,23 @@ If lists still fail with `COMPOSITE_INDEX_REQUIRED`, use the Firebase link in th
 
 | Method | Path | Description |
 | ------ | ---- | ----------- |
-| `GET` | `/api/indexes/status` | Status for one index (`collection`, optional `signature`) or all for a collection |
+| `GET` | `/api/indexes/status` | Aggregate status for a collection (`phase`, counts, `records`) or single record when `signature` is set |
 | `POST` | `/api/indexes/provision` | Trigger provisioning for a collection (admin) |
 
-When indexes are `CREATING`, list queries may return `503` with `INDEX_CREATING` and `Retry-After`.
+When indexes are `CREATING`, list queries return `503` with `INDEX_CREATING` and `Retry-After`. When provisioning fails, lists return `503` with `INDEX_PROVISIONING_FAILED` and per-index error details.
+
+## Web UX (entity lists)
+
+[`IndexProvisioningPanel`](../apps/web/app/components/entity/IndexProvisioningPanel.tsx) shows a spinner and rotating tips while indexes build. [`useIndexProvisioningStatus`](../apps/web/app/hooks/useIndexProvisioningStatus.ts) polls `GET /api/indexes/status` every 5s (`building`) or 15s (`error`) and refetches the entity list when `phase` becomes `ready`—no manual page refresh.
+
+## Bidirectional index sync
+
+On entity definition **PATCH**, [`reconcileIndexesForDefinitionChange`](../packages/gcp-firebase/src/firestore-index-reconciler.ts):
+
+1. Ensures indexes required by the new definition (`createIndex`).
+2. Deletes composite indexes removed from that definition **only if** no other tenant’s entity definitions still need the same index signature (project-wide collection group).
+
+Status documents in `__index_status` are removed when an index is deleted. **POST** (create model) only creates indexes; it does not delete orphans.
 
 ## Implemented vs planned
 
@@ -117,8 +130,9 @@ When indexes are `CREATING`, list queries may return `503` with `INDEX_CREATING`
 - [x] Terraform `array_config` for composite indexes
 - [x] `pnpm generate:firestore-indexes`
 - [x] `__index_status` persistence + status API
-- [x] Query guard (`INDEX_CREATING`)
-- [x] Web message for index-building errors
+- [x] Query guard (`INDEX_CREATING`, `INDEX_PROVISIONING_FAILED`)
+- [x] Web index provisioning panel with live polling
+- [x] Bidirectional reconcile on definition PATCH (tenant-safe deletes)
 
 ### Target architecture (future)
 
@@ -139,4 +153,4 @@ Async provisioning (Pub/Sub + dedicated worker) is partially implemented via [`a
 
 **Full vision**
 
-- Above plus async worker at scale, metrics, and UI “optimizing query…” states with live status polling
+- Above plus async worker at scale and metrics for stuck `CREATING`
