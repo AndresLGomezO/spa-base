@@ -342,11 +342,12 @@ export interface FieldDefinitionInput {
     readonly onDelete?: "restrict" | "cascade" | "nullify";
   };
   readonly enumValues?: readonly string[];
+  readonly numberKind?: "integer" | "decimal";
   readonly ui?: {
     readonly label?: string;
     readonly component?: string;
     readonly placeholder?: string;
-    readonly displayFormat?: "currency" | "plain";
+    readonly displayFormat?: "currency" | "plain" | "percentage";
     readonly dateDisplayFormat?: "date" | "datetime" | "time";
     readonly order?: number;
     readonly filterable?: boolean;

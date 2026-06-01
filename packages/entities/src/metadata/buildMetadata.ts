@@ -40,6 +40,13 @@ export function normalizeFieldMeta(config: FieldConfig): NormalizedFieldMeta {
     };
   }
 
+  if (config.type === "number" && config.numberKind) {
+    return {
+      ...base,
+      numberKind: config.numberKind,
+    };
+  }
+
   return base;
 }
 

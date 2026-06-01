@@ -269,10 +269,16 @@
     "fieldFilterableHint": "Si está activado, este campo aparece como opción de filtro en las páginas de listado de la entidad.",
     "fieldSortable": "Ordenable en vistas de lista",
     "fieldSortableHint": "Si está activado, este campo puede seleccionarse para ordenar en las páginas de listado de la entidad.",
+    "numberKind": "Tipo de número",
+    "numberKinds": {
+      "integer": "Entero (números enteros)",
+      "decimal": "Decimal (números con fracción)"
+    },
     "numberDisplayFormat": "Formato numérico",
     "numberDisplayFormats": {
       "plain": "Número simple",
-      "currency": "Moneda"
+      "currency": "Moneda",
+      "percentage": "Porcentaje (almacenado como decimal, p. ej. 0.1 → 10%)"
     },
     "dateDisplayFormat": "Formato de fecha",
     "dateDisplayFormats": {

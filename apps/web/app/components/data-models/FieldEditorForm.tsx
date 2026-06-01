@@ -125,6 +125,8 @@ export function FieldEditorForm({
                   : undefined,
               enumValues:
                 type === "enum" ? (field.enumValues ?? [""]) : undefined,
+              numberKind:
+                type === "number" ? (field.numberKind ?? "decimal") : undefined,
             });
           }}
         >
@@ -375,28 +377,58 @@ export function FieldEditorForm({
       ) : null}
 
       {field.type === "number" ? (
-        <div>
-          <FieldLabel htmlFor={`${idPrefix}-display-format`}>
-            {t("dataModels.numberDisplayFormat")}
-          </FieldLabel>
-          <select
-            id={`${idPrefix}-display-format`}
-            className={selectClassName}
-            value={field.ui?.displayFormat ?? "plain"}
-            onChange={(event) =>
-              updateUi({
-                displayFormat: event.target.value as "currency" | "plain",
-              })
-            }
-          >
-            <option value="plain">
-              {t("dataModels.numberDisplayFormats.plain")}
-            </option>
-            <option value="currency">
-              {t("dataModels.numberDisplayFormats.currency")}
-            </option>
-          </select>
-        </div>
+        <>
+          <div>
+            <FieldLabel htmlFor={`${idPrefix}-number-kind`}>
+              {t("dataModels.numberKind")}
+            </FieldLabel>
+            <select
+              id={`${idPrefix}-number-kind`}
+              className={selectClassName}
+              value={field.numberKind ?? "decimal"}
+              onChange={(event) =>
+                update({
+                  numberKind: event.target.value as "integer" | "decimal",
+                })
+              }
+            >
+              <option value="decimal">
+                {t("dataModels.numberKinds.decimal")}
+              </option>
+              <option value="integer">
+                {t("dataModels.numberKinds.integer")}
+              </option>
+            </select>
+          </div>
+          <div>
+            <FieldLabel htmlFor={`${idPrefix}-display-format`}>
+              {t("dataModels.numberDisplayFormat")}
+            </FieldLabel>
+            <select
+              id={`${idPrefix}-display-format`}
+              className={selectClassName}
+              value={field.ui?.displayFormat ?? "plain"}
+              onChange={(event) =>
+                updateUi({
+                  displayFormat: event.target.value as
+                    | "currency"
+                    | "plain"
+                    | "percentage",
+                })
+              }
+            >
+              <option value="plain">
+                {t("dataModels.numberDisplayFormats.plain")}
+              </option>
+              <option value="currency">
+                {t("dataModels.numberDisplayFormats.currency")}
+              </option>
+              <option value="percentage">
+                {t("dataModels.numberDisplayFormats.percentage")}
+              </option>
+            </select>
+          </div>
+        </>
       ) : null}
 
       {field.type === "date" ? (

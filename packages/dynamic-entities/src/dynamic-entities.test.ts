@@ -88,6 +88,24 @@ describe("@repo/dynamic-entities", () => {
     );
   });
 
+  it("passes numberKind and percentage display metadata", () => {
+    const entity = defineEntityFromRecord({
+      ...baseRecord,
+      fields: [
+        {
+          name: "rate",
+          type: "number",
+          numberKind: "decimal",
+          ui: { displayFormat: "percentage" },
+        },
+        ...baseRecord.fields.slice(1),
+      ],
+    });
+
+    expect(entity.metadata.fields.rate.numberKind).toBe("decimal");
+    expect(entity.metadata.ui?.fields?.rate?.displayFormat).toBe("percentage");
+  });
+
   it("assigns field order from field ui config or array index", () => {
     const entity = defineEntityFromRecord({
       ...baseRecord,

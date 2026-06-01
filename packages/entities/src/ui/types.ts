@@ -6,7 +6,7 @@ export type FieldComponentType =
   | "relation"
   | "select";
 
-export type FieldDisplayFormat = "currency" | "plain";
+export type FieldDisplayFormat = "currency" | "plain" | "percentage";
 
 export type FieldDateDisplayFormat = "date" | "datetime" | "time";
 
@@ -86,6 +86,7 @@ export interface SerializableFieldMeta {
   };
   readonly enumValues?: readonly string[];
   readonly sensitive?: boolean;
+  readonly numberKind?: "integer" | "decimal";
 }
 
 export type FieldAccessLevel = "read" | "write" | "none";

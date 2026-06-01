@@ -36,13 +36,20 @@ const stringFieldBuilder: FieldSchemaBuilder = {
   },
 };
 
+function numberSchemaForConfig(config: FieldConfig): z.ZodNumber {
+  if (config.type === "number" && config.numberKind === "integer") {
+    return z.number().int();
+  }
+  return z.number();
+}
+
 const numberFieldBuilder: FieldSchemaBuilder = {
   buildCreateFieldSchema(config) {
-    const base = z.number();
+    const base = numberSchemaForConfig(config);
     return applyOptional(applyDefault(base, config), config);
   },
   buildFullFieldSchema(config) {
-    return applyDefault(z.number(), config);
+    return applyDefault(numberSchemaForConfig(config), config);
   },
 };
 

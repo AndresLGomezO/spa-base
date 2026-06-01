@@ -117,6 +117,41 @@ describe("FieldEditorForm", () => {
     });
   });
 
+  it("renders number kind and percentage display options for number fields", () => {
+    const onChange = vi.fn();
+
+    render(
+      <FieldEditorForm
+        field={{
+          name: "rate",
+          type: "number",
+          numberKind: "decimal",
+          ui: { displayFormat: "percentage" },
+        }}
+        relationTargets={[]}
+        onChange={onChange}
+      />,
+    );
+
+    expect(screen.getByLabelText("dataModels.numberKind")).toHaveValue(
+      "decimal",
+    );
+    expect(screen.getByLabelText("dataModels.numberDisplayFormat")).toHaveValue(
+      "percentage",
+    );
+
+    fireEvent.change(screen.getByLabelText("dataModels.numberKind"), {
+      target: { value: "integer" },
+    });
+
+    expect(onChange).toHaveBeenCalledWith({
+      name: "rate",
+      type: "number",
+      numberKind: "integer",
+      ui: { displayFormat: "percentage" },
+    });
+  });
+
   it("defaults required checkbox to checked for new fields", () => {
     render(
       <FieldEditorForm

@@ -36,11 +36,14 @@ export interface StringFieldConfig {
   readonly sensitive?: boolean;
 }
 
+export type NumberKind = "integer" | "decimal";
+
 export interface NumberFieldConfig {
   readonly type: "number";
   readonly required?: boolean;
   readonly default?: number;
   readonly sensitive?: boolean;
+  readonly numberKind?: NumberKind;
 }
 
 export interface BooleanFieldConfig {
@@ -143,6 +146,7 @@ export interface NormalizedFieldMeta {
   readonly relation?: RelationConfig;
   readonly enumValues?: readonly string[];
   readonly sensitive?: boolean;
+  readonly numberKind?: NumberKind;
 }
 
 export interface EntityMetadata<

@@ -42,8 +42,17 @@ export function summarizeFieldDetails(
 ): string {
   const parts: string[] = [];
 
-  if (field.type === "number" && field.ui?.displayFormat === "currency") {
-    parts.push(t("dataModels.numberDisplayFormats.currency"));
+  if (field.type === "number") {
+    if (field.numberKind === "integer") {
+      parts.push(t("dataModels.numberKinds.integer"));
+    } else if (field.numberKind === "decimal") {
+      parts.push(t("dataModels.numberKinds.decimal"));
+    }
+    if (field.ui?.displayFormat === "currency") {
+      parts.push(t("dataModels.numberDisplayFormats.currency"));
+    } else if (field.ui?.displayFormat === "percentage") {
+      parts.push(t("dataModels.numberDisplayFormats.percentage"));
+    }
   }
 
   if (field.type === "date" && field.ui?.dateDisplayFormat) {

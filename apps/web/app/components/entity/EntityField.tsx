@@ -175,6 +175,22 @@ export function EntityField({
   }
 
   if (meta.type === "number" || componentId === "number") {
+    const isInteger = meta.numberKind === "integer";
+
+    function parseNumberInput(raw: string): number | undefined {
+      if (raw === "") {
+        return undefined;
+      }
+      if (isInteger) {
+        if (!/^-?\d+$/.test(raw.trim())) {
+          return undefined;
+        }
+        return Number.parseInt(raw, 10);
+      }
+      const parsed = Number(raw);
+      return Number.isNaN(parsed) ? undefined : parsed;
+    }
+
     return (
       <div className="flex flex-col gap-1">
         <FieldLabel htmlFor={inputId} required={meta.required}>
@@ -183,18 +199,18 @@ export function EntityField({
         <Input
           id={inputId}
           type="number"
+          step={isInteger ? 1 : "any"}
           hasError={Boolean(error)}
           disabled={readOnly}
           placeholder={fieldUI?.placeholder}
           value={value === undefined || value === null ? "" : String(value)}
-          onChange={(event) =>
-            onChange(
-              fieldName,
-              event.target.value === ""
-                ? undefined
-                : Number(event.target.value),
-            )
-          }
+          onChange={(event) => {
+            const next = parseNumberInput(event.target.value);
+            if (event.target.value !== "" && next === undefined) {
+              return;
+            }
+            onChange(fieldName, next);
+          }}
         />
         {error ? <FieldError>{error}</FieldError> : null}
       </div>

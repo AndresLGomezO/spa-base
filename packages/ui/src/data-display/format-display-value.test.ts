@@ -38,6 +38,16 @@ describe("formatDisplayValue", () => {
     ).toBe("$ 1,200");
   });
 
+  it("formats percentage display values by multiplying stored decimal by 100", () => {
+    expect(
+      formatDisplayValue(0.1, {
+        fieldType: "number",
+        displayFormat: "percentage",
+        locale: "en-US",
+      }),
+    ).toBe("10%");
+  });
+
   it("does not treat totalPeriods as currency without metadata", () => {
     expect(
       formatDisplayValue(10, {

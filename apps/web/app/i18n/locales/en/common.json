@@ -269,10 +269,16 @@
     "fieldFilterableHint": "When enabled, this field appears as a filter option on entity list pages.",
     "fieldSortable": "Sortable in list views",
     "fieldSortableHint": "When enabled, this field can be selected for sorting on entity list pages.",
+    "numberKind": "Number kind",
+    "numberKinds": {
+      "integer": "Integer (whole numbers)",
+      "decimal": "Decimal (fractional numbers)"
+    },
     "numberDisplayFormat": "Number display",
     "numberDisplayFormats": {
       "plain": "Plain number",
-      "currency": "Currency"
+      "currency": "Currency",
+      "percentage": "Percentage (stored as decimal, e.g. 0.1 → 10%)"
     },
     "dateDisplayFormat": "Date display",
     "dateDisplayFormats": {

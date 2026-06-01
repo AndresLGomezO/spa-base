@@ -29,7 +29,12 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
     case "string":
       return { type: "string", ...req, ...sens };
     case "number":
-      return { type: "number", ...req, ...sens };
+      return {
+        type: "number",
+        ...req,
+        ...sens,
+        ...(field.numberKind ? { numberKind: field.numberKind } : {}),
+      };
     case "boolean":
       return { type: "boolean", ...req, ...sens };
     case "date":

@@ -24,12 +24,13 @@ export const fieldDefinitionSchema = z
     sensitive: z.boolean().optional(),
     relation: relationDefinitionSchema.optional(),
     enumValues: z.array(z.string().trim().min(1)).min(1).optional(),
+    numberKind: z.enum(["integer", "decimal"]).optional(),
     ui: z
       .object({
         label: z.string().optional(),
         component: z.string().optional(),
         placeholder: z.string().optional(),
-        displayFormat: z.enum(["currency", "plain"]).optional(),
+        displayFormat: z.enum(["currency", "plain", "percentage"]).optional(),
         dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
         order: z.number().int().nonnegative().optional(),
         filterable: z.boolean().optional(),
@@ -71,6 +72,13 @@ export const fieldDefinitionSchema = z
         code: "custom",
         message: "Relation fields cannot be marked as sensitive.",
         path: ["sensitive"],
+      });
+    }
+    if (field.type !== "number" && field.numberKind !== undefined) {
+      ctx.addIssue({
+        code: "custom",
+        message: "Only number fields may include numberKind.",
+        path: ["numberKind"],
       });
     }
   });

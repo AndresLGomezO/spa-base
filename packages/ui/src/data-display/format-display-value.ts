@@ -8,7 +8,7 @@ export type DisplayFieldType =
   | "relation"
   | "enum";
 
-export type DisplayFormat = "currency" | "plain";
+export type DisplayFormat = "currency" | "plain" | "percentage";
 
 export type DateDisplayFormat = "date" | "datetime" | "time";
 
@@ -152,6 +152,10 @@ export function formatDisplayValue(
   if (fieldType === "number" || typeof value === "number") {
     const numeric = typeof value === "number" ? value : Number(value);
     if (!Number.isNaN(numeric)) {
+      if (options.displayFormat === "percentage") {
+        const percentValue = numeric * 100;
+        return `${formatNumberDisplayValue(percentValue, { locale })}%`;
+      }
       const formatted = formatNumberDisplayValue(numeric, { locale });
       if (
         isCurrencyField(fieldType, options.fieldName, options.displayFormat)

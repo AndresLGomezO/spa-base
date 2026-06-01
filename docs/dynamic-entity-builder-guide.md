@@ -92,7 +92,7 @@ After save, `useEntityCatalog().refresh()` runs so the new entity appears in the
 | Type | Notes |
 | --- | --- |
 | `string` | Text input |
-| `number` | Numeric input |
+| `number` | Numeric input; optional `numberKind` (`integer` \| `decimal`); UI `displayFormat` can be `plain`, `currency`, or `percentage` (stored as decimal, e.g. `0.1` displays as `10%`) |
 | `boolean` | Checkbox |
 | `date` | Date input |
 | `enum` | Requires `enumValues: string[]`; renders as select |
