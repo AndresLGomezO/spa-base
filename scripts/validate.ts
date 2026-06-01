@@ -77,6 +77,10 @@ const VALIDATE_CI_STEPS: ValidateStep[] = [
     label: "Dependency catalog alignment",
     command: "pnpm run lint:deps",
   },
+  {
+    label: "Docker workspace COPY alignment",
+    command: "pnpm run check:docker-workspace",
+  },
 ];
 
 function runStep(step: ValidateStep): Promise<{ ok: boolean; output: string }> {

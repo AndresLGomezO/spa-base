@@ -1,3 +1,6 @@
+# When adding workspace:* deps to the app or root package.json, run:
+#   pnpm check:docker-workspace
+#
 # Mirror of docker.io/library/node (same image; use if Docker Hub times out)
 FROM public.ecr.aws/docker/library/node:22-slim
 

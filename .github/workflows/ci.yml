@@ -10,7 +10,10 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+      - "docker-bake.hcl"
+      - "docker-compose.dev.yml"
       - ".github/workflows/**"
+      - "apps/*/Dockerfile*"
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
     branches: [main, develop]
@@ -21,7 +24,10 @@ on:
       - "package.json"
       - "pnpm-lock.yaml"
       - "pnpm-workspace.yaml"
+      - "docker-bake.hcl"
+      - "docker-compose.dev.yml"
       - ".github/workflows/**"
+      - "apps/*/Dockerfile*"
 
 concurrency:
   group: ci-${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
@@ -58,16 +64,21 @@ jobs:
           filters: |
             web:
               - "apps/web/**"
+              - "apps/*/Dockerfile*"
               - "packages/**"
               - "package.json"
               - "pnpm-lock.yaml"
               - "pnpm-workspace.yaml"
+              - "docker-compose.dev.yml"
             api:
               - "apps/api/**"
+              - "apps/*/Dockerfile*"
               - "packages/**"
               - "package.json"
               - "pnpm-lock.yaml"
               - "pnpm-workspace.yaml"
+              - "docker-bake.hcl"
+              - "docker-compose.dev.yml"
             ui:
               - "packages/ui/**"
               - "packages/theme/**"
@@ -86,6 +97,8 @@ jobs:
               - "package.json"
               - "pnpm-lock.yaml"
               - "pnpm-workspace.yaml"
+              - "docker-bake.hcl"
+              - "docker-compose.dev.yml"
               - ".github/workflows/**"
 
   install:
@@ -277,6 +290,9 @@ jobs:
       - name: Duplicate detection
         run: pnpm run lint:duplicates
 
+      - name: Docker workspace COPY alignment
+        run: pnpm run check:docker-workspace
+
       - name: Save duplicate report JSON
         if: always()
         run: |
@@ -441,6 +457,30 @@ jobs:
         run: pnpm --filter ${{ matrix.workspace }} build
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # DOCKER-API — production API image (turbo prune, matches deploy)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  docker-api:
+    name: Docker build (api)
+    needs: [changes]
+    if: needs.changes.outputs.api == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build API production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/api/Dockerfile
+          push: false
+          tags: api:ci
+          cache-from: type=gha,scope=api
+          cache-to: type=gha,scope=api,mode=max
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # GATE — fail only if a required job failed (skipped is OK)
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ci-ok:
@@ -453,6 +493,7 @@ jobs:
       - validate-static
       - storybook
       - build
+      - docker-api
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate results
@@ -463,13 +504,15 @@ jobs:
           echo "validate-static:  ${{ needs.validate-static.result }}"
           echo "storybook:        ${{ needs.storybook.result }}"
           echo "build:            ${{ needs.build.result }}"
+          echo "docker-api:       ${{ needs.docker-api.result }}"
 
           for result in \
             "${{ needs.validate-core.result }}" \
             "${{ needs.validate-cypress.result }}" \
             "${{ needs.validate-static.result }}" \
             "${{ needs.storybook.result }}" \
-            "${{ needs.build.result }}"; do
+            "${{ needs.build.result }}" \
+            "${{ needs.docker-api.result }}"; do
             if [ "$result" = "failure" ]; then
               echo ""
               echo "❌ One or more required checks failed."
