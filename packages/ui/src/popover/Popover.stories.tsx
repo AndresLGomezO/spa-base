@@ -70,3 +70,57 @@ export const TopStart: StoryObj = {
 export const BottomStart: StoryObj = {
   render: () => <PopoverDemo placement="bottom-start" />,
 };
+
+function CollapsedSidebarFlyoutDemo() {
+  const [open, setOpen] = useState(true);
+  const items = Array.from(
+    { length: 12 },
+    (_, index) => `Nav item ${index + 1}`,
+  );
+
+  return (
+    <div className="bg-sidebar text-sidebar-foreground flex h-[480px] w-16 flex-col items-center gap-2 p-2">
+      <Popover
+        open={open}
+        onOpenChange={setOpen}
+        placement="right-start"
+        className="w-full"
+        trigger={
+          <Button
+            type="button"
+            variant="ghost"
+            className="w-full justify-center"
+          >
+            <SettingsIcon />
+          </Button>
+        }
+      >
+        {items.map((label) => (
+          <Button
+            key={label}
+            type="button"
+            variant="ghost"
+            className="justify-start"
+          >
+            {label}
+          </Button>
+        ))}
+      </Popover>
+    </div>
+  );
+}
+
+/** Mirrors collapsed sidebar nav groups: narrow rail, long child list, right-start flyout. */
+export const CollapsedSidebarFlyout: StoryObj = {
+  parameters: {
+    layout: "fullscreen",
+    viewport: { defaultViewport: "mobile1" },
+    docs: {
+      description: {
+        story:
+          "Simulates a collapsed sidebar icon rail with a long submenu. The flyout should open to the right, grow downward, and scroll inside the viewport instead of clipping at the top.",
+      },
+    },
+  },
+  render: () => <CollapsedSidebarFlyoutDemo />,
+};

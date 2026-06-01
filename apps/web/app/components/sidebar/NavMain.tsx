@@ -87,7 +87,7 @@ function SettingsGroup({
         <Popover
           open={popoverOpen}
           onOpenChange={setPopoverOpen}
-          placement="right-end"
+          placement="right-start"
           className="block w-full"
           trigger={
             <SidebarMenuButton

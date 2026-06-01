@@ -35,7 +35,7 @@ export function TenantSwitcher() {
     <Popover
       open={open}
       onOpenChange={setOpen}
-      placement="right-end"
+      placement="right-start"
       title={t("tenant.selectTitle")}
       className="block w-full"
       trigger={

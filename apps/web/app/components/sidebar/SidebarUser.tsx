@@ -87,7 +87,7 @@ export function SidebarUser() {
     <Popover
       open={open}
       onOpenChange={setOpen}
-      placement="right-end"
+      placement="right-start"
       title={t("nav.userMenu")}
       panelClassName="w-72"
       className="block w-full"

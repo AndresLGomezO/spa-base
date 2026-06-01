@@ -16,6 +16,12 @@ import { createPortal } from "react-dom";
 
 import { cn } from "@repo/theme/utils";
 
+import {
+  computeSidePanelPosition,
+  type SidePopoverPreferredPlacement,
+  type SidePopoverResolvedPlacement,
+} from "./compute-side-panel-position";
+
 export type PopoverPlacement =
   | "top-start"
   | "top-end"
@@ -29,7 +35,7 @@ const placementClasses: Record<PopoverPlacement, string> = {
   "top-end": "bottom-full right-0 mb-2 origin-bottom-right",
   "bottom-start": "top-full left-0 mt-2 origin-top-left",
   "bottom-end": "top-full right-0 mt-2 origin-top-right",
-  "right-start": "origin-left",
+  "right-start": "origin-top-left",
   "right-end": "origin-bottom-left",
 };
 
@@ -42,29 +48,22 @@ const hiddenOffsetClasses: Record<PopoverPlacement, string> = {
   "right-end": "-translate-x-1",
 };
 
-function isSidePlacement(placement: PopoverPlacement): boolean {
-  return placement.startsWith("right-");
-}
+const sideResolvedHiddenOffsetClasses: Record<
+  SidePopoverResolvedPlacement,
+  string
+> = {
+  "right-start": "-translate-x-1",
+  "right-end": "-translate-x-1",
+  "left-start": "translate-x-1",
+  "left-end": "translate-x-1",
+  "top-start": "translate-y-1",
+  "bottom-start": "-translate-y-1",
+};
 
-function getSidePanelStyle(
+function isSidePlacement(
   placement: PopoverPlacement,
-  rect: DOMRect,
-): CSSProperties {
-  const gap = 8;
-
-  if (placement === "right-end") {
-    return {
-      position: "fixed",
-      left: rect.right + gap,
-      bottom: window.innerHeight - rect.bottom,
-    };
-  }
-
-  return {
-    position: "fixed",
-    left: rect.right + gap,
-    top: rect.top,
-  };
+): placement is SidePopoverPreferredPlacement {
+  return placement === "right-start" || placement === "right-end";
 }
 
 export interface PopoverProps {
@@ -98,6 +97,10 @@ export function Popover({
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
   const [sidePanelStyle, setSidePanelStyle] = useState<CSSProperties>({});
+  const [resolvedSidePlacement, setResolvedSidePlacement] =
+    useState<SidePopoverResolvedPlacement>(
+      isSidePlacement(placement) ? placement : "right-start",
+    );
 
   const useSidePortal = isSidePlacement(placement);
 
@@ -122,25 +125,55 @@ export function Popover({
   }, [open]);
 
   useLayoutEffect(() => {
-    if (!open || !useSidePortal || !rootRef.current) {
+    if (!open || !mounted || !useSidePortal || !rootRef.current) {
       return;
     }
 
     const updatePosition = () => {
-      if (!rootRef.current) return;
-      const rect = rootRef.current.getBoundingClientRect();
-      setSidePanelStyle(getSidePanelStyle(placement, rect));
+      if (!rootRef.current || !panelRef.current) {
+        return;
+      }
+
+      const triggerRect = rootRef.current.getBoundingClientRect();
+      const panelRect = panelRef.current.getBoundingClientRect();
+      const panelWidth = panelRect.width || panelRef.current.offsetWidth;
+      const panelHeight = panelRect.height || panelRef.current.offsetHeight;
+
+      if (panelWidth === 0 && panelHeight === 0) {
+        return;
+      }
+
+      const { style, resolvedPlacement } = computeSidePanelPosition({
+        preferred: placement,
+        triggerRect,
+        panelSize: { width: panelWidth, height: panelHeight },
+      });
+
+      setSidePanelStyle(style);
+      setResolvedSidePlacement(resolvedPlacement);
     };
 
     updatePosition();
+
+    const panelElement = panelRef.current;
+    const resizeObserver =
+      typeof ResizeObserver !== "undefined" && panelElement
+        ? new ResizeObserver(updatePosition)
+        : null;
+
+    if (resizeObserver && panelElement) {
+      resizeObserver.observe(panelElement);
+    }
+
     window.addEventListener("resize", updatePosition);
     window.addEventListener("scroll", updatePosition, true);
 
     return () => {
+      resizeObserver?.disconnect();
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [open, placement, useSidePortal]);
+  }, [mounted, open, placement, useSidePortal]);
 
   useEffect(() => {
     if (!open) return;
@@ -190,16 +223,21 @@ export function Popover({
       })
     : trigger;
 
+  const sidePanelScrollable = useSidePortal && sidePanelStyle.maxHeight != null;
+
   const resolvedPanelClassName = cn(
     "border-border bg-popover/95 text-popover-foreground w-56 rounded-xl border p-4 shadow-lg ring-1 ring-focus/10 backdrop-blur-md transition-all duration-200 ease-out",
     useSidePortal ? "fixed z-[70]" : "absolute z-50",
+    sidePanelScrollable && "overflow-y-auto",
     panelClassName,
     !useSidePortal && placementClasses[placement],
     visible
       ? "pointer-events-auto translate-x-0 translate-y-0 scale-100 opacity-100"
       : cn(
           "pointer-events-none scale-95 opacity-0",
-          hiddenOffsetClasses[placement],
+          useSidePortal
+            ? sideResolvedHiddenOffsetClasses[resolvedSidePlacement]
+            : hiddenOffsetClasses[placement],
         ),
   );
 
