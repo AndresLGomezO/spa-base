@@ -1,3 +1,6 @@
+# When adding workspace:* deps to the app or root package.json, run:
+#   pnpm check:docker-workspace
+#
 # TODO: worker-service — add package.json COPY + volumes when introduced
 # TODO: Cloud Tasks / Pub/Sub emulators — extend depends_on and env in compose files
 
@@ -16,7 +19,9 @@ COPY apps/platform/package.json ./apps/platform/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/entity-relations/package.json ./packages/entity-relations/
+COPY packages/encryption/package.json ./packages/encryption/
 COPY packages/modules/package.json ./packages/modules/
+COPY packages/ui-builder/package.json ./packages/ui-builder/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/

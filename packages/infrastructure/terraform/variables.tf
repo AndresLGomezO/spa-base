@@ -39,3 +39,9 @@ variable "firestore_collection_prefix" {
   type        = string
   default     = null
 }
+
+variable "enable_index_provisioning_pubsub" {
+  description = "Create Pub/Sub topic and backend publisher/subscriber IAM for async index provisioning (Phase C)."
+  type        = bool
+  default     = false
+}
