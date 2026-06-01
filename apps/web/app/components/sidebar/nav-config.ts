@@ -122,6 +122,15 @@ export function isPathActive(pathname: string, matchPath: string): boolean {
   return pathname === matchPath || pathname.startsWith(`${matchPath}/`);
 }
 
+export function isNavGroupActive(
+  pathname: string,
+  group: NavGroupConfig,
+): boolean {
+  return group.children.some((child) =>
+    isPathActive(pathname, child.matchPath),
+  );
+}
+
 export function resolveNavLinkLabel(
   item: Pick<NavLinkConfig, "id" | "labelKey" | "label">,
   t: (key: `nav.${NavLabelKey}`) => string,

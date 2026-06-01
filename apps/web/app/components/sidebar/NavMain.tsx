@@ -19,6 +19,7 @@ import {
 
 import {
   isNavGroup,
+  isNavGroupActive,
   isPathActive,
   resolveNavGroupLabel,
   resolveNavLinkLabel,
@@ -66,7 +67,7 @@ function SettingsGroup({
   const { t } = useTranslation("common");
   const { pathname } = useLocation();
   const { collapsed } = useSidebar();
-  const groupActive = isPathActive(pathname, group.matchPath);
+  const groupActive = isNavGroupActive(pathname, group);
   const [open, setOpen] = useState(groupActive);
   const [popoverOpen, setPopoverOpen] = useState(false);
 
