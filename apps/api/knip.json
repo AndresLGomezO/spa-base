@@ -2,6 +2,7 @@
   "$schema": "https://unpkg.com/knip@5/schema.json",
   "ignoreDependencies": [
     "firebase-admin",
+    "@google-cloud/firestore",
     "@app/platform",
     "@repo/dynamic-entities",
     "@repo/encryption",

@@ -1,4 +1,4 @@
-import { v1 } from "@google-cloud/firestore";
+import firestore from "@google-cloud/firestore";
 
 import {
   indexesForEntity,
@@ -17,7 +17,16 @@ interface AdminIndexField {
   readonly arrayConfig?: "CONTAINS";
 }
 
-const adminClient = new v1.FirestoreAdminClient();
+type FirestoreAdminClient = InstanceType<
+  typeof firestore.v1.FirestoreAdminClient
+>;
+
+let adminClient: FirestoreAdminClient | undefined;
+
+function getAdminClient(): FirestoreAdminClient {
+  adminClient ??= new firestore.v1.FirestoreAdminClient();
+  return adminClient;
+}
 
 function isAlreadyExistsError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
@@ -118,14 +127,14 @@ export async function ensureFirestoreIndexes(
       }
       ensuredSignatures.add(signature);
 
-      const parent = adminClient.collectionGroupPath(
+      const parent = getAdminClient().collectionGroupPath(
         options.projectId,
         databaseId,
         index.collectionGroup,
       );
 
       try {
-        const [operation] = await adminClient.createIndex({
+        const [operation] = await getAdminClient().createIndex({
           parent,
           index: {
             queryScope: index.queryScope,

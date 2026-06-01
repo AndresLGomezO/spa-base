@@ -2,6 +2,7 @@ import * as esbuild from "esbuild";
 
 // Bundle workspace TypeScript packages into dist; keep npm packages with native/dynamic loads external.
 const external = [
+  "@google-cloud/firestore",
   "firebase-admin",
   "fastify",
   "@fastify/cors",
