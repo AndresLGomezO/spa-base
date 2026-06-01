@@ -2,6 +2,7 @@ import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 import { z } from "zod";
 
 import {
+  applyDisplayFieldToRecord,
   assertDynamicNameAvailable,
   createEntityDefinitionInputSchema,
   DynamicEntityError,
@@ -232,15 +233,20 @@ export async function registerEntityDefinitionRoutes(
       }
 
       try {
-        const next = {
-          ...current,
-          ...(parsedBody.data.label ? { label: parsedBody.data.label } : {}),
-          ...(parsedBody.data.fields ? { fields: parsedBody.data.fields } : {}),
-          ...(parsedBody.data.ui ? { ui: parsedBody.data.ui } : {}),
-          ...(parsedBody.data.tenantWideRead !== undefined
-            ? { tenantWideRead: parsedBody.data.tenantWideRead }
-            : {}),
-        };
+        const next = applyDisplayFieldToRecord(
+          {
+            ...current,
+            ...(parsedBody.data.label ? { label: parsedBody.data.label } : {}),
+            ...(parsedBody.data.fields
+              ? { fields: parsedBody.data.fields }
+              : {}),
+            ...(parsedBody.data.ui ? { ui: parsedBody.data.ui } : {}),
+            ...(parsedBody.data.tenantWideRead !== undefined
+              ? { tenantWideRead: parsedBody.data.tenantWideRead }
+              : {}),
+          },
+          parsedBody.data,
+        );
         validateDefinitionEvolution(current, next);
         await options.entityRuntime.loadTenantDefinitions(tenantId);
         const availableNames = getAvailableEntityNamesForTenant(

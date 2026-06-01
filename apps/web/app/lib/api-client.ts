@@ -401,6 +401,7 @@ interface PatchEntityDefinitionInput {
   readonly label?: string;
   readonly fields?: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly displayField?: string | null;
   readonly ui?: Record<string, unknown>;
 }
 

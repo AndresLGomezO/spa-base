@@ -169,7 +169,7 @@ export function EntityDefinitionEditor({
       const updated = await patchEntityDefinition(definitionId, {
         label: label.trim(),
         tenantWideRead,
-        ...(displayField ? { displayField } : {}),
+        displayField: displayField.trim() ? displayField.trim() : null,
         fields: validFields.map((field) => ({
           ...field,
           name: field.name.trim(),
@@ -269,11 +269,7 @@ export function EntityDefinitionEditor({
               disabled={!canUpdate}
               onChange={(event) => setDisplayField(event.target.value)}
             >
-              <option value="">
-                {t("dataModels.displayFieldAuto", {
-                  defaultValue: "Auto (name → title → label → id)",
-                })}
-              </option>
+              <option value="">{t("dataModels.displayFieldAuto")}</option>
               {fields
                 .filter((f) => f.type === "string" && f.name.trim())
                 .map((f) => (

@@ -1,5 +1,9 @@
 export { applyTenantWideRead } from "./apply-tenant-wide-read.js";
 export {
+  applyDisplayFieldToRecord,
+  displayFieldForCreate,
+} from "./apply-display-field-patch.js";
+export {
   assertDynamicNameAvailable,
   defineEntityFromRecord,
   DynamicEntityError,

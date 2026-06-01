@@ -261,7 +261,7 @@
     "tenantWideRead": "Tenant-wide read access",
     "tenantWideReadHint": "When enabled, all tenant members can read records of this entity. Write and delete still require ownership.",
     "displayField": "Display field",
-    "displayFieldAuto": "Auto (name → title → label → id)",
+    "displayFieldAuto": "Auto (name → title → label → code → id)",
     "displayFieldHint": "Which field is shown when this entity is referenced by others.",
     "displayOrder": "Display order",
     "displayOrderHint": "Lower numbers appear first in tables and forms.",

@@ -1,6 +1,8 @@
 import {
-  entityDefinitionRecordSchema,
+  applyDisplayFieldToRecord,
   applyTenantWideRead,
+  displayFieldForCreate,
+  entityDefinitionRecordSchema,
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
 import { nanoid } from "nanoid";
@@ -50,6 +52,7 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
         fields: input.fields,
         ...(input.ui ? { ui: input.ui } : {}),
         ...(input.tenantWideRead === true ? { tenantWideRead: true } : {}),
+        ...displayFieldForCreate(input),
         version: 1,
         createdAt: now,
         updatedAt: now,
@@ -65,13 +68,16 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
 
       const now = new Date().toISOString();
       const base = applyTenantWideRead(
-        {
-          ...current,
-          ...(input.label ? { label: input.label } : {}),
-          ...(input.fields ? { fields: input.fields } : {}),
-          version: current.version + 1,
-          updatedAt: now,
-        },
+        applyDisplayFieldToRecord(
+          {
+            ...current,
+            ...(input.label ? { label: input.label } : {}),
+            ...(input.fields ? { fields: input.fields } : {}),
+            version: current.version + 1,
+            updatedAt: now,
+          },
+          input,
+        ),
         input.tenantWideRead,
       );
       const { ui: _droppedUi, ...withoutUi } = base;

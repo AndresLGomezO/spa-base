@@ -83,12 +83,72 @@ describe("EntityDefinitionEditor", () => {
     await waitFor(() => {
       expect(mockPatchEntityDefinition).toHaveBeenCalledWith(
         "def_1",
-        expect.objectContaining({ label: "Loan Records" }),
+        expect.objectContaining({
+          label: "Loan Records",
+          displayField: null,
+        }),
       );
     });
 
     expect(mockRefresh).toHaveBeenCalled();
     expect(onSaved).toHaveBeenCalled();
+  });
+
+  it("saves selected displayField", async () => {
+    mockGetEntityDefinition.mockResolvedValue({
+      id: "def_1",
+      tenantId: "tenant_a",
+      name: "loan",
+      label: "Loans",
+      fields: [
+        { name: "title", type: "string", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      version: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    mockPatchEntityDefinition.mockResolvedValue({
+      id: "def_1",
+      tenantId: "tenant_a",
+      name: "loan",
+      label: "Loans",
+      fields: [
+        { name: "title", type: "string", required: true },
+        { name: "amount", type: "number", required: true },
+      ],
+      displayField: "title",
+      version: 2,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-02T00:00:00.000Z",
+    });
+
+    render(
+      <EntityDefinitionEditor
+        definitionId="def_1"
+        tenantId="tenant_a"
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(
+        screen.getByLabelText("dataModels.displayField"),
+      ).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("dataModels.displayField"), {
+      target: { value: "title" },
+    });
+    fireEvent.click(screen.getByText("dataModels.saveModel"));
+
+    await waitFor(() => {
+      expect(mockPatchEntityDefinition).toHaveBeenCalledWith(
+        "def_1",
+        expect.objectContaining({ displayField: "title" }),
+      );
+    });
   });
 
   it("keeps label edits when footer updates via onFooterChange", async () => {

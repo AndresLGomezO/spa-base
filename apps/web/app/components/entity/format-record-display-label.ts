@@ -8,7 +8,7 @@ export function formatRecordDisplayLabel(
       return value;
     }
   }
-  for (const key of ["name", "title", "label"]) {
+  for (const key of ["name", "title", "label", "code"]) {
     const value = record[key];
     if (typeof value === "string" && value.trim().length > 0) {
       return value;

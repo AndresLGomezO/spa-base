@@ -261,7 +261,7 @@
     "tenantWideRead": "Lectura para todo el tenant",
     "tenantWideReadHint": "Cuando está activado, todos los miembros del tenant pueden leer los registros de esta entidad. Escritura y eliminación siguen requiriendo propiedad.",
     "displayField": "Campo de visualización",
-    "displayFieldAuto": "Automático (name → title → label → id)",
+    "displayFieldAuto": "Automático (name → title → label → code → id)",
     "displayFieldHint": "Qué campo se muestra cuando otra entidad hace referencia a este modelo.",
     "displayOrder": "Orden de visualización",
     "displayOrderHint": "Los números más bajos aparecen primero en tablas y formularios.",

@@ -1,6 +1,8 @@
 import {
-  entityDefinitionRecordSchema,
+  applyDisplayFieldToRecord,
   applyTenantWideRead,
+  displayFieldForCreate,
+  entityDefinitionRecordSchema,
   ENTITY_DEFINITIONS_COLLECTION,
   type CreateEntityDefinitionInput,
   type EntityDefinitionRecord,
@@ -68,6 +70,7 @@ export function createFirestoreAdminEntityDefinitionRepository(
         fields: input.fields,
         ...(input.ui ? { ui: input.ui } : {}),
         ...(input.tenantWideRead === true ? { tenantWideRead: true } : {}),
+        ...displayFieldForCreate(input),
         version: 1,
         createdAt: now,
         updatedAt: now,
@@ -84,13 +87,16 @@ export function createFirestoreAdminEntityDefinitionRepository(
 
       const now = new Date().toISOString();
       const base = applyTenantWideRead(
-        {
-          ...current,
-          ...(input.label ? { label: input.label } : {}),
-          ...(input.fields ? { fields: input.fields } : {}),
-          version: current.version + 1,
-          updatedAt: now,
-        },
+        applyDisplayFieldToRecord(
+          {
+            ...current,
+            ...(input.label ? { label: input.label } : {}),
+            ...(input.fields ? { fields: input.fields } : {}),
+            version: current.version + 1,
+            updatedAt: now,
+          },
+          input,
+        ),
         input.tenantWideRead,
       );
       const withoutUi = { ...base };

@@ -118,7 +118,7 @@ export const patchEntityDefinitionInputSchema = z.object({
   label: z.string().trim().min(1).optional(),
   fields: z.array(fieldDefinitionSchema).min(1).optional(),
   tenantWideRead: z.boolean().optional(),
-  displayField: z.string().trim().min(1).optional(),
+  displayField: z.union([z.string().trim().min(1), z.null()]).optional(),
   ui: z.custom<EntityUIConfig>().optional(),
 });
 

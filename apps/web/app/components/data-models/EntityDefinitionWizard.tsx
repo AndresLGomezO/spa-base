@@ -152,7 +152,7 @@ export function EntityDefinitionWizard({
         name: name.trim(),
         label: label.trim(),
         ...(tenantWideRead ? { tenantWideRead: true } : {}),
-        ...(displayField ? { displayField } : {}),
+        ...(displayField.trim() ? { displayField: displayField.trim() } : {}),
         fields: fields
           .filter((field) => field.name.trim())
           .map((field) => ({
@@ -273,11 +273,7 @@ export function EntityDefinitionWizard({
                 value={displayField}
                 onChange={(event) => setDisplayField(event.target.value)}
               >
-                <option value="">
-                  {t("dataModels.displayFieldAuto", {
-                    defaultValue: "Auto (name → title → label → id)",
-                  })}
-                </option>
+                <option value="">{t("dataModels.displayFieldAuto")}</option>
                 {fields
                   .filter((f) => f.type === "string" && f.name.trim())
                   .map((f) => (
