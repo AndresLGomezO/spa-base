@@ -17,6 +17,7 @@
     "@fastify/compress": "catalog:",
     "@fastify/cors": "catalog:",
     "@fastify/rate-limit": "catalog:",
+    "@google-cloud/firestore": "catalog:",
     "@app/platform": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/encryption": "workspace:*",
