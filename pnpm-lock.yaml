@@ -18,6 +18,9 @@ catalogs:
     '@fastify/rate-limit':
       specifier: ^10.3.0
       version: 10.3.0
+    '@google-cloud/firestore':
+      specifier: ^7.11.6
+      version: 7.11.6
     '@playwright/test':
       specifier: ^1.52.0
       version: 1.60.0
@@ -191,6 +194,18 @@ importers:
 
   .:
     devDependencies:
+      '@repo/dynamic-entities':
+        specifier: workspace:*
+        version: link:packages/dynamic-entities
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:packages/entities
+      '@repo/firestore-indexes':
+        specifier: workspace:*
+        version: link:packages/firestore-indexes
+      '@repo/gcp-firebase':
+        specifier: workspace:*
+        version: link:packages/gcp-firebase
       firebase-tools:
         specifier: 'catalog:'
         version: 13.35.1(@types/node@22.19.19)
@@ -692,14 +707,51 @@ importers:
         specifier: 'catalog:'
         version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
 
+  packages/firestore-indexes:
+    dependencies:
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../entities
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
+
   packages/gcp-firebase:
     dependencies:
+      '@google-cloud/firestore':
+        specifier: 'catalog:'
+        version: 7.11.6
       '@repo/dynamic-entities':
         specifier: workspace:*
         version: link:../dynamic-entities
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../entities
       '@repo/firestore-converters':
         specifier: workspace:*
         version: link:../firestore-converters
+      '@repo/firestore-indexes':
+        specifier: workspace:*
+        version: link:../firestore-indexes
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
@@ -8373,7 +8425,6 @@ snapshots:
     transitivePeerDependencies:
       - encoding
       - supports-color
-    optional: true
 
   '@google-cloud/paginator@5.0.2':
     dependencies:
@@ -11468,8 +11519,7 @@ snapshots:
       hasown: 2.0.3
       is-callable: 1.2.7
 
-  functional-red-black-tree@1.0.1:
-    optional: true
+  functional-red-black-tree@1.0.1: {}
 
   functions-have-names@1.2.3: {}
 

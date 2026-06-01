@@ -71,8 +71,9 @@ resource "google_firestore_index" "from_json" {
   dynamic "fields" {
     for_each = each.value.fields
     content {
-      field_path = fields.value.fieldPath
-      order      = fields.value.order
+      field_path   = fields.value.fieldPath
+      order        = try(fields.value.order, null)
+      array_config = try(fields.value.arrayConfig, null)
     }
   }
 }

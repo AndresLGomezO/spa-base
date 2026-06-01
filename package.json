@@ -29,6 +29,7 @@
     "test:visual:install": "pnpm --filter @repo/ui test:visual:install",
     "test:visual": "pnpm --filter @repo/ui test:visual",
     "test:visual:update": "bash scripts/update-visual-snapshots-linux.sh",
+    "generate:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts",
     "validate": "tsx scripts/validate.ts",
     "validate:ci": "tsx scripts/validate.ts --ci",
     "precommit": "pnpm i18n:validate -- --strict && pnpm terraform:fmt:check && pnpm validate:ci",
@@ -39,6 +40,10 @@
     "dev:docker:reset": "docker compose -f docker-compose.dev.yml down -v --rmi all --remove-orphans && docker builder prune -af && docker compose -f docker-compose.dev.yml up -d --force-recreate --build"
   },
   "devDependencies": {
+    "@repo/dynamic-entities": "workspace:*",
+    "@repo/entities": "workspace:*",
+    "@repo/firestore-indexes": "workspace:*",
+    "@repo/gcp-firebase": "workspace:*",
     "firebase-tools": "catalog:",
     "knip": "catalog:",
     "madge": "catalog:",

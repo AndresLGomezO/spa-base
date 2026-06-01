@@ -28,7 +28,10 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@google-cloud/firestore": "catalog:",
     "@repo/dynamic-entities": "workspace:*",
+    "@repo/entities": "workspace:*",
+    "@repo/firestore-indexes": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/query-engine": "workspace:*",

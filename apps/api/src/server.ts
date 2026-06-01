@@ -220,6 +220,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityDefinitionRepository,
     definitionCacheTtlMs: apiEnv.CACHE_TTL_MS,
     cursorSecret: apiEnv.QUERY_CURSOR_SECRET,
+    ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
     onIndexHint: (hint) => {
       server.log.warn(
         {
@@ -230,6 +231,23 @@ export async function buildServer(options: BuildServerOptions = {}) {
           suggestedFields: hint.suggestedFields,
         },
         hint.message,
+      );
+      entityRuntime.ensureIndexesFromHint(hint);
+    },
+    onIndexEnsured: (index) => {
+      server.log.info(
+        { collection: index.collectionGroup, fields: index.fields },
+        "Ensured Firestore composite index (add to firestore.indexes.json for IaC)",
+      );
+    },
+    onIndexEnsureError: (error, index) => {
+      server.log.error(
+        {
+          err: error,
+          collection: index.collectionGroup,
+          fields: index.fields,
+        },
+        "Failed to ensure Firestore composite index",
       );
     },
     repositories: options.repositories,
@@ -383,12 +401,28 @@ export async function buildServer(options: BuildServerOptions = {}) {
     });
   }
 
-  const dynamicDefinitions =
-    options.repositories != null
-      ? await entityDefinitionRepository.list("tenant_dev_1")
-      : [];
-  for (const record of dynamicDefinitions) {
-    await entityRuntime.syncDefinition(record);
+  const bootstrapTenantId = "tenant_dev_1";
+  if (!options.repositories) {
+    try {
+      await entityRuntime.loadTenantDefinitions(bootstrapTenantId, {
+        force: true,
+      });
+    } catch (error) {
+      server.log.warn(
+        { err: error, tenantId: bootstrapTenantId },
+        "Could not preload tenant entity definitions at boot",
+      );
+    }
+  } else {
+    const dynamicDefinitions =
+      await entityDefinitionRepository.list(bootstrapTenantId);
+    for (const record of dynamicDefinitions) {
+      await entityRuntime.syncDefinition(record);
+    }
+  }
+
+  if (apiEnv.ENSURE_FIRESTORE_INDEXES) {
+    entityRuntime.ensureCatalogIndexes(bootstrapTenantId);
   }
 
   return server;
