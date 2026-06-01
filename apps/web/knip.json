@@ -3,6 +3,7 @@
   "ignoreDependencies": [
     "@app/platform",
     "@repo/data-view",
+    "@repo/dynamic-entities",
     "@repo/entities",
     "@repo/eslint-config",
     "@repo/modules",

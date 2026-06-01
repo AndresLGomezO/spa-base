@@ -61,35 +61,45 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
   }
 }
 
-function buildUiFromRecord(
-  record: EntityDefinitionRecord,
-): EntityUIConfig | undefined {
-  if (record.ui) {
-    return record.ui;
+function componentForFieldType(
+  type: FieldDefinitionRecord["type"],
+): FieldComponentType {
+  switch (type) {
+    case "number":
+      return "number" as const;
+    case "boolean":
+      return "toggle" as const;
+    case "date":
+      return "date" as const;
+    case "relation":
+      return "relation" as const;
+    case "enum":
+      return "select" as const;
+    default:
+      return "input" as const;
   }
+}
 
-  const fieldNames = record.fields.map((field) => field.name);
-  const componentForType = (
-    type: FieldDefinitionRecord["type"],
-  ): FieldComponentType => {
-    switch (type) {
-      case "number":
-        return "number" as const;
-      case "boolean":
-        return "toggle" as const;
-      case "date":
-        return "date" as const;
-      case "relation":
-        return "relation" as const;
-      case "enum":
-        return "select" as const;
-      default:
-        return "input" as const;
-    }
-  };
+export type FieldInputForDefaultUi = Pick<
+  FieldDefinitionRecord,
+  "name" | "type"
+> & {
+  readonly ui?: FieldDefinitionRecord["ui"];
+};
+
+export function buildDefaultUiForNewDefinition(input: {
+  readonly label: string;
+  readonly fields: ReadonlyArray<FieldInputForDefaultUi>;
+  readonly navIcon?: string;
+}): EntityUIConfig {
+  const fieldNames = input.fields.map((field) => field.name);
+  const trimmedIcon = input.navIcon?.trim();
 
   return {
-    nav: { label: record.label },
+    nav: {
+      label: input.label,
+      ...(trimmedIcon ? { icon: trimmedIcon } : {}),
+    },
     views: [
       {
         type: "table",
@@ -99,20 +109,20 @@ function buildUiFromRecord(
     ],
     forms: {
       create: {
-        sections: [{ title: record.label, fields: fieldNames }],
+        sections: [{ title: input.label, fields: fieldNames }],
       },
       edit: {
-        sections: [{ title: record.label, fields: fieldNames }],
+        sections: [{ title: input.label, fields: fieldNames }],
       },
     },
     fields: Object.fromEntries(
-      record.fields.map((field, index) => [
+      input.fields.map((field, index) => [
         field.name,
         {
           ...(field.ui?.label ? { label: field.ui.label } : {}),
           component:
             (field.ui?.component as FieldComponentType | undefined) ??
-            componentForType(field.type),
+            componentForFieldType(field.type),
           ...(field.ui?.placeholder
             ? { placeholder: field.ui.placeholder }
             : {}),
@@ -133,6 +143,19 @@ function buildUiFromRecord(
       ]),
     ) as EntityUIConfig["fields"],
   };
+}
+
+function buildUiFromRecord(
+  record: EntityDefinitionRecord,
+): EntityUIConfig | undefined {
+  if (record.ui) {
+    return record.ui;
+  }
+
+  return buildDefaultUiForNewDefinition({
+    label: record.label,
+    fields: record.fields,
+  });
 }
 
 export function defineEntityFromRecord(

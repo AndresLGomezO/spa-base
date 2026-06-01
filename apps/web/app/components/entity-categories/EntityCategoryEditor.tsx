@@ -9,7 +9,7 @@ import {
   patchEntityCategory,
   type EntityCategoryRecord,
 } from "../../lib/api-client";
-import { resolveLucideIcon } from "../../lib/resolve-lucide-icon";
+import { LucideIconField } from "../shared/LucideIconField";
 
 interface EntityCategoryEditorProps {
   readonly category: EntityCategoryRecord | null;
@@ -34,8 +34,6 @@ export function EntityCategoryEditor({
   const [order, setOrder] = useState(String(category?.order ?? 0));
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSaving, setIsSaving] = useState(false);
-
-  const PreviewIcon = resolveLucideIcon(icon);
 
   async function handleSave() {
     setValidationError(null);
@@ -114,23 +112,13 @@ export function EntityCategoryEditor({
         />
       </div>
 
-      <div>
-        <FieldLabel htmlFor="category-icon">
-          {t("entityCategories.icon")}
-        </FieldLabel>
-        <div className="flex items-center gap-3">
-          <Input
-            id="category-icon"
-            value={icon}
-            onChange={(event) => setIcon(event.target.value)}
-            placeholder="Folder"
-          />
-          <PreviewIcon className="size-5 shrink-0" aria-hidden />
-        </div>
-        <Text className="text-muted-foreground mt-1 text-sm">
-          {t("entityCategories.iconHint")}
-        </Text>
-      </div>
+      <LucideIconField
+        id="category-icon"
+        label={t("entityCategories.icon")}
+        hint={t("entityCategories.iconHint")}
+        value={icon}
+        onChange={setIcon}
+      />
 
       <div>
         <FieldLabel htmlFor="category-order">

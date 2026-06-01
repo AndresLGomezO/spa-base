@@ -19,6 +19,8 @@ import {
   toast,
 } from "@repo/ui";
 
+import { buildDefaultUiForNewDefinition } from "@repo/dynamic-entities";
+
 import {
   createEntityDefinition,
   isApiClientError,
@@ -28,8 +30,10 @@ import {
   type FieldDefinitionInput,
 } from "../../lib/api-client";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import { LucideIconField } from "../shared/LucideIconField";
 import { EntityFieldsManager } from "./EntityFieldsManager";
 import { ModelReview } from "./ModelReview";
+import { useSyncCategoryNavIcon } from "./use-sync-category-nav-icon";
 
 const ENTITY_DEFINITION_WIZARD_FORM_ID = "entity-definition-wizard-form";
 
@@ -57,6 +61,8 @@ export function EntityDefinitionWizard({
   const [hiddenFromNav, setHiddenFromNav] = useState(false);
   const [navCategoryId, setNavCategoryId] = useState("");
   const [navOrder, setNavOrder] = useState("");
+  const [navIcon, setNavIcon] = useState("");
+  const [useCategoryIcon, setUseCategoryIcon] = useState(false);
   const [navCategories, setNavCategories] = useState<
     readonly EntityCategoryRecord[]
   >([]);
@@ -113,6 +119,13 @@ export function EntityDefinitionWizard({
   }, []);
 
   const relationTargets = relationTargetDefinitions;
+
+  useSyncCategoryNavIcon(
+    navCategoryId,
+    useCategoryIcon,
+    navCategories,
+    setNavIcon,
+  );
 
   const useModalFooter = Boolean(onFooterChange);
   const onCancelRef = useRef(onCancel);
@@ -202,6 +215,29 @@ export function EntityDefinitionWizard({
       const parsedNavOrder =
         navOrder.trim().length > 0 ? Number(navOrder.trim()) : undefined;
 
+      const validFields = fields
+        .filter((field) => field.name.trim())
+        .map((field) => ({
+          ...field,
+          name: field.name.trim(),
+          ...(field.type === "enum"
+            ? {
+                enumValues: (field.enumValues ?? [])
+                  .map((value) => value.trim())
+                  .filter(Boolean),
+              }
+            : {}),
+        }));
+
+      const trimmedIcon = navIcon.trim();
+      const ui = trimmedIcon
+        ? buildDefaultUiForNewDefinition({
+            label: label.trim(),
+            fields: validFields,
+            navIcon: trimmedIcon,
+          })
+        : undefined;
+
       const payload = {
         name: name.trim(),
         label: label.trim(),
@@ -214,19 +250,8 @@ export function EntityDefinitionWizard({
           ? { navOrder: parsedNavOrder }
           : {}),
         ...(displayField.trim() ? { displayField: displayField.trim() } : {}),
-        fields: fields
-          .filter((field) => field.name.trim())
-          .map((field) => ({
-            ...field,
-            name: field.name.trim(),
-            ...(field.type === "enum"
-              ? {
-                  enumValues: (field.enumValues ?? [])
-                    .map((value) => value.trim())
-                    .filter(Boolean),
-                }
-              : {}),
-          })),
+        ...(ui ? { ui } : {}),
+        fields: validFields,
       };
 
       await createEntityDefinition(payload);
@@ -390,7 +415,13 @@ export function EntityDefinitionWizard({
               id="wizard-nav-category"
               className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
               value={navCategoryId}
-              onChange={(event) => setNavCategoryId(event.target.value)}
+              onChange={(event) => {
+                const nextCategoryId = event.target.value;
+                setNavCategoryId(nextCategoryId);
+                if (!nextCategoryId) {
+                  setUseCategoryIcon(false);
+                }
+              }}
             >
               <option value="">{t("dataModels.navCategoryNone")}</option>
               {navCategories.map((category) => (
@@ -417,6 +448,30 @@ export function EntityDefinitionWizard({
               {t("dataModels.navOrderHint")}
             </Text>
           </div>
+
+          {navCategoryId ? (
+            <div className="space-y-2">
+              <Checkbox
+                id="wizard-use-category-icon"
+                label={t("dataModels.useCategoryIcon")}
+                checked={useCategoryIcon}
+                onChange={(event) => setUseCategoryIcon(event.target.checked)}
+              />
+              <Text className="text-muted-foreground text-sm">
+                {t("dataModels.useCategoryIconHint")}
+              </Text>
+            </div>
+          ) : null}
+
+          <LucideIconField
+            id="wizard-nav-icon"
+            label={t("dataModels.navIcon")}
+            hint={t("dataModels.navIconHint")}
+            value={navIcon}
+            placeholder="Database"
+            disabled={useCategoryIcon}
+            onChange={setNavIcon}
+          />
 
           <ModelReview
             name={name.trim()}

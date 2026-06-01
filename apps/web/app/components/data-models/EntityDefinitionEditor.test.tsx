@@ -19,10 +19,12 @@ vi.mock("../../entities/entity-catalog-context", () => ({
   }),
 }));
 
+const mockListEntityCategories = vi.fn(async () => ({ items: [] }));
+
 vi.mock("../../lib/api-client", () => ({
   getEntityDefinition: (...args: unknown[]) => mockGetEntityDefinition(...args),
   listEntityDefinitions: vi.fn(async () => ({ items: [] })),
-  listEntityCategories: vi.fn(async () => ({ items: [] })),
+  listEntityCategories: () => mockListEntityCategories(),
   patchEntityDefinition: (...args: unknown[]) =>
     mockPatchEntityDefinition(...args),
   isApiClientError: (error: unknown) =>
@@ -192,5 +194,57 @@ describe("EntityDefinitionEditor", () => {
       "Updated Label",
     );
     expect(onFooterChange.mock.calls.length).toBe(initialFooterCalls);
+  });
+
+  it("patches ui.nav.icon when navigation icon is set", async () => {
+    mockGetEntityDefinition.mockResolvedValue({
+      id: "def_1",
+      tenantId: "tenant_a",
+      name: "loan",
+      label: "Loans",
+      fields: [{ name: "title", type: "string", required: true }],
+      version: 1,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    });
+    mockPatchEntityDefinition.mockResolvedValue({
+      id: "def_1",
+      tenantId: "tenant_a",
+      name: "loan",
+      label: "Loans",
+      fields: [{ name: "title", type: "string", required: true }],
+      version: 2,
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-02T00:00:00.000Z",
+    });
+
+    render(
+      <EntityDefinitionEditor
+        definitionId="def_1"
+        tenantId="tenant_a"
+        onSaved={vi.fn()}
+        onCancel={vi.fn()}
+      />,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByLabelText("dataModels.navIcon")).toBeInTheDocument();
+    });
+
+    fireEvent.change(screen.getByLabelText("dataModels.navIcon"), {
+      target: { value: "Box" },
+    });
+    fireEvent.click(screen.getByText("dataModels.saveModel"));
+
+    await waitFor(() => {
+      expect(mockPatchEntityDefinition).toHaveBeenCalledWith(
+        "def_1",
+        expect.objectContaining({
+          ui: expect.objectContaining({
+            nav: expect.objectContaining({ icon: "Box", label: "Loans" }),
+          }),
+        }),
+      );
+    });
   });
 });

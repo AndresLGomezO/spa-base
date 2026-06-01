@@ -358,6 +358,9 @@ importers:
       '@repo/data-view':
         specifier: workspace:*
         version: link:../../packages/data-view
+      '@repo/dynamic-entities':
+        specifier: workspace:*
+        version: link:../../packages/dynamic-entities
       '@repo/entities':
         specifier: workspace:*
         version: link:../../packages/entities

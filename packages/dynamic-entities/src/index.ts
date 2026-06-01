@@ -16,6 +16,7 @@ export {
 } from "./validate-nav-category.js";
 export {
   assertDynamicNameAvailable,
+  buildDefaultUiForNewDefinition,
   defineEntityFromRecord,
   DynamicEntityError,
   getAvailableEntityNamesForTenant,

@@ -30,8 +30,11 @@ import {
   type EntityDefinitionRecord,
   type FieldDefinitionInput,
 } from "../../lib/api-client";
+import { LucideIconField } from "../shared/LucideIconField";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
+import { buildEntityDefinitionUiForSave } from "./build-entity-definition-ui-patch";
 import { EntityFieldsManager } from "./EntityFieldsManager";
+import { useSyncCategoryNavIcon } from "./use-sync-category-nav-icon";
 
 const ENTITY_DEFINITION_EDITOR_FORM_ID = "entity-definition-editor-form";
 
@@ -61,6 +64,8 @@ export function EntityDefinitionEditor({
   const [hiddenFromNav, setHiddenFromNav] = useState(false);
   const [navCategoryId, setNavCategoryId] = useState("");
   const [navOrder, setNavOrder] = useState("");
+  const [navIcon, setNavIcon] = useState("");
+  const [useCategoryIcon, setUseCategoryIcon] = useState(false);
   const [navCategories, setNavCategories] = useState<
     readonly EntityCategoryRecord[]
   >([]);
@@ -124,6 +129,13 @@ export function EntityDefinitionEditor({
 
   const relationTargets = relationTargetDefinitions;
 
+  useSyncCategoryNavIcon(
+    navCategoryId,
+    useCategoryIcon,
+    navCategories,
+    setNavIcon,
+  );
+
   useEffect(() => {
     let cancelled = false;
 
@@ -145,6 +157,8 @@ export function EntityDefinitionEditor({
         setNavOrder(
           loaded.navOrder !== undefined ? String(loaded.navOrder) : "",
         );
+        setNavIcon(loaded.ui?.nav?.icon ?? "");
+        setUseCategoryIcon(false);
         setDisplayField(loaded.displayField ?? "");
       } catch (loadError) {
         if (cancelled) {
@@ -225,6 +239,13 @@ export function EntityDefinitionEditor({
     try {
       const parsedNavOrder =
         navOrder.trim().length > 0 ? Number(navOrder.trim()) : null;
+      const ui = buildEntityDefinitionUiForSave({
+        record,
+        label: label.trim(),
+        fields: validFields,
+        navIcon,
+      });
+
       const updated = await patchEntityDefinition(definitionId, {
         label: label.trim(),
         tenantWideRead,
@@ -236,6 +257,7 @@ export function EntityDefinitionEditor({
             ? { navOrder: null }
             : {}),
         displayField: displayField.trim() ? displayField.trim() : null,
+        ...(ui ? { ui } : {}),
         fields: validFields.map((field) => ({
           ...field,
           name: field.name.trim(),
@@ -345,7 +367,13 @@ export function EntityDefinitionEditor({
                 className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
                 value={navCategoryId}
                 disabled={!canUpdate}
-                onChange={(event) => setNavCategoryId(event.target.value)}
+                onChange={(event) => {
+                  const nextCategoryId = event.target.value;
+                  setNavCategoryId(nextCategoryId);
+                  if (!nextCategoryId) {
+                    setUseCategoryIcon(false);
+                  }
+                }}
               >
                 <option value="">{t("dataModels.navCategoryNone")}</option>
                 {navCategories.map((category) => (
@@ -373,6 +401,31 @@ export function EntityDefinitionEditor({
                 {t("dataModels.navOrderHint")}
               </Text>
             </div>
+
+            {navCategoryId ? (
+              <div className="space-y-2">
+                <Checkbox
+                  id="edit-use-category-icon"
+                  label={t("dataModels.useCategoryIcon")}
+                  checked={useCategoryIcon}
+                  disabled={!canUpdate}
+                  onChange={(event) => setUseCategoryIcon(event.target.checked)}
+                />
+                <Text className="text-muted-foreground text-sm">
+                  {t("dataModels.useCategoryIconHint")}
+                </Text>
+              </div>
+            ) : null}
+
+            <LucideIconField
+              id="edit-nav-icon"
+              label={t("dataModels.navIcon")}
+              hint={t("dataModels.navIconHint")}
+              value={navIcon}
+              placeholder="Database"
+              disabled={!canUpdate || useCategoryIcon}
+              onChange={setNavIcon}
+            />
           </>
         ) : null}
 

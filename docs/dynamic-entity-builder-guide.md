@@ -83,7 +83,7 @@ Model Builder loads **all** entity definitions for relation targets (`GET /api/e
 
 ### Sidebar navigation categories
 
-Tenants can define **entity categories** (name, Lucide icon name, sort order) under **Settings → Entity categories**. Assign models in Model Builder via **Navigation category** and **Navigation order** (`navCategoryId`, `navOrder` on the entity definition).
+Tenants can define **entity categories** (name, Lucide icon name, sort order) under **Settings → Entity categories**. Assign models in Model Builder via **Navigation category**, **Navigation order**, and **Navigation icon** (`navCategoryId`, `navOrder`, and `ui.nav.icon` on the entity definition). Use **Use category icon** to copy the selected category’s Lucide name into the model’s sidebar icon.
 
 | Sidebar group | Contents |
 | --- | --- |
@@ -110,7 +110,9 @@ The wizard flow:
 
 1. **Basic info** — entity name (camelCase), display label, optional **Tenant-wide read access** and **Hide from navigation**
 2. **Fields** — type picker, required toggle, enum values, relation target (entity **model names**, not records). Relation fields auto-name FK columns; one-to-many shows a warning that links are saved on the child via many-to-one.
-3. **Review** — optional **Navigation category** / **Navigation order**, confirm schema, then create
+3. **Review** — optional **Navigation category**, **Navigation order**, and **Navigation icon** (or **Use category icon**), confirm schema, then create
+
+The entity **edit** form exposes the same navigation fields for existing models.
 
 After save, `useEntityCatalog().refresh()` runs so the new entity appears in the sidebar without a page reload.
 

@@ -1,4 +1,7 @@
-import type { SerializableEntityDefinition } from "@repo/entities";
+import type {
+  EntityUIConfig,
+  SerializableEntityDefinition,
+} from "@repo/entities";
 import type { QueryConfig } from "@repo/query-engine";
 
 import { appConfig } from "../config/app-config";
@@ -366,6 +369,7 @@ export interface EntityDefinitionRecord {
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;
+  readonly ui?: EntityUIConfig;
   readonly version: number;
   readonly createdAt: string;
   readonly updatedAt: string;
@@ -381,6 +385,7 @@ interface CreateEntityDefinitionInput {
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;
+  readonly ui?: EntityUIConfig;
 }
 
 export async function listEntityDefinitions(options?: {
@@ -420,7 +425,7 @@ interface PatchEntityDefinitionInput {
   readonly navCategoryId?: string | null;
   readonly navOrder?: number | null;
   readonly displayField?: string | null;
-  readonly ui?: Record<string, unknown>;
+  readonly ui?: EntityUIConfig;
 }
 
 export async function patchEntityDefinition(
