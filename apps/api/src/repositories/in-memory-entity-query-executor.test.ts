@@ -85,4 +85,54 @@ describe("createInMemoryEntityQueryExecutor", () => {
     });
     expect(await executor.findById("c1", "tenant_b")).toBeNull();
   });
+
+  it("matches search via token post-filter on any word prefix", async () => {
+    const store = createInMemoryEntityQueryStore();
+    seedInMemoryEntityQueryStore(store, [
+      {
+        id: "a1",
+        tenantId: "tenant_a",
+        name: "Bancolombia Ahorros",
+        nameSearchTokens: ["bancolombia", "ahorros"],
+      },
+      {
+        id: "a2",
+        tenantId: "tenant_a",
+        name: "Other Bank",
+        nameSearchTokens: ["other", "bank"],
+      },
+    ]);
+
+    const executor = createInMemoryEntityQueryExecutor(() => store);
+
+    const bancol = await executor.executeQuery("tenant_a", {
+      filters: [],
+      postFilters: [
+        {
+          field: "nameSearchTokens",
+          operator: "tokenStartsWith",
+          value: "bancol",
+        },
+      ],
+      sort: { field: "id", direction: "asc" },
+      limit: 10,
+      search: "bancol",
+    });
+    expect(bancol.items.map((item) => item.id)).toEqual(["a1"]);
+
+    const ahorr = await executor.executeQuery("tenant_a", {
+      filters: [],
+      postFilters: [
+        {
+          field: "nameSearchTokens",
+          operator: "tokenStartsWith",
+          value: "ahorr",
+        },
+      ],
+      sort: { field: "id", direction: "asc" },
+      limit: 10,
+      search: "ahorr",
+    });
+    expect(ahorr.items.map((item) => item.id)).toEqual(["a1"]);
+  });
 });

@@ -139,21 +139,21 @@ describe("normalizeEntityQuery - post-filters", () => {
 });
 
 describe("normalizeEntityQuery - search", () => {
-  it("generates range filters for search term", () => {
+  it("generates token post-filter for search term on tokens field", () => {
     const normalized = normalizeEntityQuery(
       TestEntity as unknown as AnyDefinedEntity,
       { search: "hello" },
     );
     expect(normalized.search).toBe("hello");
-    expect(normalized.searchField).toBe("title");
-    expect(normalized.filters).toHaveLength(2);
-    expect(normalized.filters[0]?.operator).toBe(">=");
-    expect(normalized.filters[0]?.value).toBe("hello");
-    expect(normalized.filters[1]?.operator).toBe("<");
-    expect(normalized.sort?.field).toBe("title");
+    expect(normalized.searchField).toBe("titleSearchTokens");
+    expect(normalized.filters).toHaveLength(0);
+    expect(normalized.postFilters).toHaveLength(1);
+    expect(normalized.postFilters[0]?.field).toBe("titleSearchTokens");
+    expect(normalized.postFilters[0]?.operator).toBe("tokenStartsWith");
+    expect(normalized.postFilters[0]?.value).toBe("hello");
   });
 
-  it("forces sort to search field when search is active", () => {
+  it("preserves user sort when search is active", () => {
     const normalized = normalizeEntityQuery(
       TestEntity as unknown as AnyDefinedEntity,
       {
@@ -161,7 +161,8 @@ describe("normalizeEntityQuery - search", () => {
         sort: [{ field: "amount", direction: "desc" }],
       },
     );
-    expect(normalized.sort?.field).toBe("title");
+    expect(normalized.sort?.field).toBe("amount");
+    expect(normalized.sort?.direction).toBe("desc");
   });
 
   it("throws SEARCH_NOT_CONFIGURED for entity without string fields", () => {
@@ -189,6 +190,27 @@ describe("normalizeEntityQuery - encrypted fields", () => {
   });
 });
 
+function withSearchableUi(
+  entity: AnyDefinedEntity,
+  fields: Record<string, { searchable: boolean }>,
+  viewFields: string[],
+): AnyDefinedEntity {
+  return {
+    ...entity,
+    metadata: {
+      ...entity.metadata,
+      ui: {
+        views: [{ type: "table", name: "default", fields: viewFields }],
+        forms: {
+          create: { sections: [{ fields: viewFields }] },
+          edit: { sections: [{ fields: viewFields }] },
+        },
+        fields,
+      },
+    },
+  } as AnyDefinedEntity;
+}
+
 describe("resolveSearchField", () => {
   it("returns displayField when it is a non-sensitive string", () => {
     expect(resolveSearchField(TestEntity as unknown as AnyDefinedEntity)).toBe(
@@ -200,6 +222,99 @@ describe("resolveSearchField", () => {
     expect(
       resolveSearchField(NoStringEntity as unknown as AnyDefinedEntity),
     ).toBe(null);
+  });
+
+  it("skips displayField when searchable is false", () => {
+    const entity = withSearchableUi(
+      defineEntity({
+        name: "searchableFlags",
+        fields: {
+          title: { type: "string", required: true },
+          code: { type: "string", required: true },
+        },
+        displayField: "title",
+      }) as unknown as AnyDefinedEntity,
+      {
+        title: { searchable: false },
+        code: { searchable: true },
+      },
+      ["title", "code"],
+    );
+
+    expect(resolveSearchField(entity)).toBe("code");
+  });
+
+  it("returns null when all string fields are explicitly non-searchable", () => {
+    const entity = withSearchableUi(
+      defineEntity({
+        name: "noSearch",
+        fields: {
+          title: { type: "string", required: true },
+          description: { type: "string" },
+        },
+        displayField: "title",
+      }) as unknown as AnyDefinedEntity,
+      {
+        title: { searchable: false },
+        description: { searchable: false },
+      },
+      ["title", "description"],
+    );
+
+    expect(resolveSearchField(entity)).toBe(null);
+  });
+
+  it("does not search relation display fields", () => {
+    const entity = withSearchableUi(
+      defineEntity({
+        name: "relationDisplay",
+        fields: {
+          productId: {
+            type: "relation",
+            relation: {
+              target: "product",
+              type: "many-to-one",
+              onDelete: "restrict",
+            },
+          },
+          code: { type: "string" },
+        },
+        displayField: "productId",
+      }) as unknown as AnyDefinedEntity,
+      {
+        productId: { searchable: false },
+        code: { searchable: false },
+      },
+      ["productId", "code"],
+    );
+
+    expect(resolveSearchField(entity)).toBe(null);
+  });
+
+  it("token post-filter matches any word prefix on mirror tokens", () => {
+    const normalized = normalizeEntityQuery(
+      TestEntity as unknown as AnyDefinedEntity,
+      { search: "ahorr" },
+    );
+    const record = {
+      title: "Bancolombia Ahorros",
+      titleSearchTokens: ["bancolombia", "ahorros"],
+    };
+    const result = applyPostFilters([record], normalized.postFilters);
+    expect(result).toHaveLength(1);
+  });
+
+  it("token post-filter does not match mid-token substring", () => {
+    const normalized = normalizeEntityQuery(
+      TestEntity as unknown as AnyDefinedEntity,
+      { search: "colomb" },
+    );
+    const record = {
+      title: "Bancolombia Ahorros",
+      titleSearchTokens: ["bancolombia", "ahorros"],
+    };
+    const result = applyPostFilters([record], normalized.postFilters);
+    expect(result).toHaveLength(0);
   });
 });
 
@@ -255,6 +370,51 @@ describe("applyPostFilters", () => {
       { field: "title", operator: "contains", value: "nonexistent" },
     ]);
     expect(result).toHaveLength(0);
+  });
+
+  it("filters with tokenStartsWith on string array tokens", () => {
+    const tokenItems: Record<string, unknown>[] = [
+      {
+        id: "1",
+        name: "Bancolombia Ahorros",
+        nameSearchTokens: ["bancolombia", "ahorros"],
+      },
+      {
+        id: "2",
+        name: "Other Bank",
+        nameSearchTokens: ["other", "bank"],
+      },
+    ];
+
+    expect(
+      applyPostFilters(tokenItems, [
+        {
+          field: "nameSearchTokens",
+          operator: "tokenStartsWith",
+          value: "bancol",
+        },
+      ]),
+    ).toHaveLength(1);
+
+    expect(
+      applyPostFilters(tokenItems, [
+        {
+          field: "nameSearchTokens",
+          operator: "tokenStartsWith",
+          value: "ahorr",
+        },
+      ]),
+    ).toHaveLength(1);
+
+    expect(
+      applyPostFilters(tokenItems, [
+        {
+          field: "nameSearchTokens",
+          operator: "tokenStartsWith",
+          value: "colomb",
+        },
+      ]),
+    ).toHaveLength(0);
   });
 });
 

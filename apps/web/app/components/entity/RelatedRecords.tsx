@@ -89,7 +89,7 @@ export function RelatedRecords({
           getRowId={(item) => String(item.id)}
           page={1}
           totalCount={items.length}
-          pageSize={20}
+          pageSize={10}
           onPageChange={() => {}}
           emptyMessage={t("entity.empty")}
           loadingMessage={t("table.loading")}

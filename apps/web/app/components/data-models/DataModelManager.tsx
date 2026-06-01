@@ -94,7 +94,7 @@ export function DataModelManager({
   }, [editingRecord?.name, showWizard, t]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-full flex-col gap-6">
       {showTenantPicker ? (
         <div className="max-w-md">
           <FieldLabel htmlFor="data-model-tenant">
@@ -115,14 +115,16 @@ export function DataModelManager({
         </div>
       ) : null}
 
-      <EntityDefinitionList
-        items={items}
-        isLoading={isLoading}
-        canCreate={canCreate}
-        canUpdate={canUpdate}
-        onCreate={() => setShowWizard(true)}
-        onEdit={(id) => setEditingId(id)}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EntityDefinitionList
+          items={items}
+          isLoading={isLoading}
+          canCreate={canCreate}
+          canUpdate={canUpdate}
+          onCreate={() => setShowWizard(true)}
+          onEdit={(id) => setEditingId(id)}
+        />
+      </div>
 
       {!modalOpen && !isLoading && items.length > 0 ? (
         <Text className="text-muted-foreground text-sm">

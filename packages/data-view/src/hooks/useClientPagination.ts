@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 
-const DEFAULT_PAGE_SIZE = 20;
+export const DEFAULT_DATA_VIEW_PAGE_SIZE = 10;
 
 interface UseClientPaginationOptions {
   readonly pageSize?: number;
@@ -21,7 +21,7 @@ export function useClientPagination<T>(
   items: readonly T[],
   options: UseClientPaginationOptions = {},
 ): UseClientPaginationResult<T> {
-  const pageSize = options.pageSize ?? DEFAULT_PAGE_SIZE;
+  const pageSize = options.pageSize ?? DEFAULT_DATA_VIEW_PAGE_SIZE;
   const isControlled =
     options.controlledPage !== undefined && options.onPageChange !== undefined;
   const [internalPage, setInternalPage] = useState(options.initialPage ?? 1);

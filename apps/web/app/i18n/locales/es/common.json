@@ -43,6 +43,7 @@
     "signOut": "Cerrar sesión",
     "fallbackName": "Usuario",
     "dataModels": "Modelos de datos",
+    "dataStructure": "Estructura de datos",
     "dataModelBuilder": "Constructor de modelos",
     "automation": "Automatización",
     "entityCategories": "Categorías de entidades",

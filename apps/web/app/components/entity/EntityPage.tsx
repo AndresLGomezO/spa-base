@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveActiveView } from "@repo/ui-builder";
-import {
-  deriveDataViewFilterOptions,
-  useDataViewControls,
-  useDataViewUrlState,
-} from "@repo/data-view";
+import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
 import { Button, Heading, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
@@ -13,6 +9,7 @@ import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { useEntityFilterOptions } from "../../hooks/useEntityFilterOptions";
 import { useServerQueryConfig } from "../../hooks/useServerQueryConfig";
 import { FormModal } from "../forms/FormModal";
 import { WebDataViewToolbar } from "../data-view";
@@ -21,10 +18,11 @@ import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
 import { ShareDialog } from "./ShareDialog";
 import { resolveViewComponent } from "./view-component-registry";
-import { mergeEnumFilterOptions } from "./merge-enum-filter-options";
+import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
+import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
 
-const SERVER_PAGE_SIZE = 25;
+const SERVER_PAGE_SIZE = 10;
 
 type EntityFormModalState =
   | null
@@ -56,43 +54,35 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const [filtersOpen, setFiltersOpen] = useState(false);
 
   const columnDescriptors = useEntityColumnDescriptors(entityName);
+  const showSearch = useMemo(
+    () => entityHasSearchableColumns(columnDescriptors),
+    [columnDescriptors],
+  );
   const urlState = useDataViewUrlState(columnDescriptors);
+  const {
+    search,
+    filters,
+    sort,
+    page,
+    setSearch,
+    setFilter,
+    setSortColumn,
+    toggleSortDirection,
+    setPage,
+    clearAll,
+  } = urlState;
 
-  const [cursorStack, setCursorStack] = useState<string[]>([]);
-  const currentCursor =
-    cursorStack.length > 0 ? cursorStack[cursorStack.length - 1] : undefined;
-
-  const filtersKey = serializeFilters(urlState.filters);
-  const prevControlsRef = useRef({
-    search: urlState.search,
-    filtersKey,
-    sortColumnId: urlState.sort.columnId,
-    sortDirection: urlState.sort.direction,
+  const { filterOptions, relationFilterOptions } = useEntityFilterOptions({
+    definition,
+    columns: columnDescriptors,
+    filters,
+    booleanLabels: {
+      trueLabel: t("table.booleanYes"),
+      falseLabel: t("table.booleanNo"),
+    },
   });
 
-  useEffect(() => {
-    const prev = prevControlsRef.current;
-    const changed =
-      prev.search !== urlState.search ||
-      prev.filtersKey !== filtersKey ||
-      prev.sortColumnId !== urlState.sort.columnId ||
-      prev.sortDirection !== urlState.sort.direction;
-
-    if (changed) {
-      setCursorStack([]);
-      prevControlsRef.current = {
-        search: urlState.search,
-        filtersKey,
-        sortColumnId: urlState.sort.columnId,
-        sortDirection: urlState.sort.direction,
-      };
-    }
-  }, [
-    urlState.search,
-    filtersKey,
-    urlState.sort.columnId,
-    urlState.sort.direction,
-  ]);
+  const pageOffset = (page - 1) * SERVER_PAGE_SIZE;
 
   const fieldTypes = useMemo(
     () =>
@@ -105,52 +95,84 @@ export function EntityPage({ entityName }: EntityPageProps) {
     [definition.fields],
   );
 
+  const serverFilters = useMemo(
+    () =>
+      resolveRelationFilterValues(filters, definition, relationFilterOptions),
+    [filters, definition, relationFilterOptions],
+  );
+
+  const filtersKey = serializeFilters(serverFilters);
+  const prevControlsRef = useRef({
+    search,
+    filtersKey,
+    sortColumnId: sort.columnId,
+    sortDirection: sort.direction,
+  });
+
+  useEffect(() => {
+    const prev = prevControlsRef.current;
+    const changed =
+      prev.search !== search ||
+      prev.filtersKey !== filtersKey ||
+      prev.sortColumnId !== sort.columnId ||
+      prev.sortDirection !== sort.direction;
+
+    if (changed) {
+      if (page !== 1) {
+        setPage(1);
+      }
+      prevControlsRef.current = {
+        search,
+        filtersKey,
+        sortColumnId: sort.columnId,
+        sortDirection: sort.direction,
+      };
+    }
+  }, [search, filtersKey, sort.columnId, sort.direction, page, setPage]);
+
   const queryConfig = useServerQueryConfig({
-    search: urlState.search,
-    filters: urlState.filters,
-    sort: urlState.sort,
+    search: showSearch ? search : "",
+    filters: serverFilters,
+    sort,
     limit: SERVER_PAGE_SIZE,
-    cursor: currentCursor,
+    offset: pageOffset,
     fieldTypes,
   });
 
-  const entityState = useEntity(entityName, { queryConfig });
+  const entityState = useEntity(entityName, {
+    queryConfig,
+    page,
+  });
 
   const listItems = entityState.items as readonly Record<string, unknown>[];
 
   const dataViewControls = useDataViewControls(listItems, columnDescriptors, {
     controlled: {
-      search: urlState.search,
-      filters: urlState.filters,
-      sort: urlState.sort,
-      onSearchChange: urlState.setSearch,
-      onFilterChange: urlState.setFilter,
-      onSortColumnChange: urlState.setSortColumn,
-      onToggleSortDirection: urlState.toggleSortDirection,
-      onClearAll: urlState.clearAll,
+      search,
+      filters,
+      sort,
+      onSearchChange: setSearch,
+      onFilterChange: setFilter,
+      onSortColumnChange: setSortColumn,
+      onToggleSortDirection: toggleSortDirection,
+      onClearAll: clearAll,
     },
   });
 
-  const filterOptions = useMemo(() => {
-    const fromItems = deriveDataViewFilterOptions(listItems, columnDescriptors);
-    return mergeEnumFilterOptions(definition, fromItems);
-  }, [columnDescriptors, definition, listItems]);
-
-  const serverPage = cursorStack.length + 1;
-  const hasNextPage = !!entityState.nextCursor;
-
-  const goToNextPage = useCallback(() => {
-    if (entityState.nextCursor) {
-      setCursorStack((prev) => [...prev, entityState.nextCursor!]);
+  useEffect(() => {
+    if (entityState.isLoading) {
+      return;
     }
-  }, [entityState.nextCursor]);
 
-  const goToPreviousPage = useCallback(() => {
-    setCursorStack((prev) => {
-      if (prev.length === 0) return prev;
-      return prev.slice(0, -1);
-    });
-  }, []);
+    const totalPages =
+      entityState.totalCount === 0
+        ? 1
+        : Math.ceil(entityState.totalCount / SERVER_PAGE_SIZE);
+
+    if (page > totalPages) {
+      setPage(totalPages);
+    }
+  }, [entityState.isLoading, entityState.totalCount, page, setPage]);
 
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [shareRecordId, setShareRecordId] = useState<string | null>(null);
@@ -199,17 +221,9 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const listViewProps = {
     entityName,
     entityState,
-    page: serverPage,
+    page,
     pageSize: SERVER_PAGE_SIZE,
-    onPageChange: (page: number) => {
-      if (page > serverPage) {
-        goToNextPage();
-      } else if (page < serverPage) {
-        goToPreviousPage();
-      }
-    },
-    hasNextPage,
-    hasPreviousPage: cursorStack.length > 0,
+    onPageChange: setPage,
     onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
     onRequestEdit: permissions.canUpdate
       ? (id: string) => setFormModal({ mode: "edit", recordId: id })
@@ -218,8 +232,8 @@ export function EntityPage({ entityName }: EntityPageProps) {
   };
 
   return (
-    <div className="flex w-full min-h-0 flex-col gap-6">
-      <div className="flex items-center justify-between gap-4">
+    <div className="flex min-h-full w-full flex-col gap-6">
+      <div className="flex shrink-0 items-center justify-between gap-4">
         <Heading level={1}>{getEntityLabel(definition)}</Heading>
         {permissions.canCreate ? (
           <Button
@@ -231,23 +245,28 @@ export function EntityPage({ entityName }: EntityPageProps) {
         ) : null}
       </div>
 
-      <WebDataViewToolbar
-        search={urlState.search}
-        setSearch={urlState.setSearch}
-        filters={urlState.filters}
-        setFilter={urlState.setFilter}
-        sort={urlState.sort}
-        setSortColumn={urlState.setSortColumn}
-        toggleSortDirection={urlState.toggleSortDirection}
-        filterOptions={filterOptions}
-        activeBadges={dataViewControls.activeBadges}
-        clearAll={urlState.clearAll}
-        columns={columnDescriptors}
-        filtersOpen={filtersOpen}
-        onFiltersOpenChange={setFiltersOpen}
-      />
+      <div className="shrink-0">
+        <WebDataViewToolbar
+          search={search}
+          setSearch={setSearch}
+          filters={filters}
+          setFilter={setFilter}
+          sort={sort}
+          setSortColumn={setSortColumn}
+          toggleSortDirection={toggleSortDirection}
+          filterOptions={filterOptions}
+          activeBadges={dataViewControls.activeBadges}
+          clearAll={clearAll}
+          columns={columnDescriptors}
+          filtersOpen={filtersOpen}
+          onFiltersOpenChange={setFiltersOpen}
+          showSearch={showSearch}
+        />
+      </div>
 
-      <ViewComponent {...listViewProps} />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <ViewComponent {...listViewProps} />
+      </div>
 
       {formModal ? (
         <FormModal

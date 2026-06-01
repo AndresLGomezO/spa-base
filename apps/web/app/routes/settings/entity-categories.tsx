@@ -36,16 +36,18 @@ export default function SettingsEntityCategoriesRoute() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="flex min-h-full flex-col gap-4">
+      <div className="shrink-0 space-y-2">
         <Heading level={1}>{t("entityCategories.title")}</Heading>
         <Text>{t("entityCategories.description")}</Text>
       </div>
-      <EntityCategoryManager
-        tenantId={tenantId}
-        canCreate={canCreate}
-        canUpdate={canUpdate}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EntityCategoryManager
+          tenantId={tenantId}
+          canCreate={canCreate}
+          canUpdate={canUpdate}
+        />
+      </div>
     </div>
   );
 }

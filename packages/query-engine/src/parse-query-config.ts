@@ -1,6 +1,7 @@
 import {
   SYSTEM_FIELD_KEYS,
   usesForeignKeyStorage,
+  resolveSearchStorageField,
   type DefinedEntity,
   type FieldDefinitions,
   type NormalizedFieldMeta,
@@ -361,22 +362,7 @@ function enforceFirestoreConstraints(
   return primarySort;
 }
 
-export function resolveSearchField(entity: AnyDefinedEntity): string | null {
-  if (entity.metadata.displayField) {
-    const meta = getFieldMeta(entity, entity.metadata.displayField);
-    if (meta && meta.type === "string" && !meta.sensitive) {
-      return entity.metadata.displayField;
-    }
-  }
-
-  for (const [fieldName, meta] of Object.entries(entity.metadata.fields)) {
-    if (meta.type === "string" && !meta.sensitive) {
-      return fieldName;
-    }
-  }
-
-  return null;
-}
+export { resolveSearchField } from "@repo/entities";
 
 export function parseListQueryInput(
   input: ListQueryInput,
@@ -448,16 +434,16 @@ export function normalizeEntityQuery(
   const firestoreFilters = allFilters.filter(
     (f) => !isPostFilterOperator(f.operator),
   );
-  const postFilters = allFilters.filter((f) =>
+  const userPostFilters = allFilters.filter((f) =>
     isPostFilterOperator(f.operator),
   );
 
   let searchField: string | undefined;
   let search: string | undefined;
-  const searchFilters: NormalizedFilter[] = [];
+  const searchPostFilters: NormalizedFilter[] = [];
 
   if (config.search && config.search.length > 0) {
-    const field = resolveSearchField(entity);
+    const field = resolveSearchStorageField(entity);
     if (!field) {
       throw new QueryError(
         QueryErrorCode.SEARCH_NOT_CONFIGURED,
@@ -467,22 +453,18 @@ export function normalizeEntityQuery(
     searchField = field;
     search = config.search;
     const lowerTerm = config.search.toLowerCase();
-    searchFilters.push(
-      { field, operator: ">=", value: lowerTerm },
-      { field, operator: "<", value: lowerTerm + "\uf8ff" },
-    );
+    searchPostFilters.push({
+      field,
+      operator: "tokenStartsWith",
+      value: lowerTerm,
+    });
   }
 
-  const nativeFilters = [...firestoreFilters, ...searchFilters];
+  const nativeFilters = firestoreFilters;
+  const postFilters = [...userPostFilters, ...searchPostFilters];
 
   const sortEntry = config.sort?.[0] ?? null;
-  let sort = sortEntry ? validateSort(entity, sortEntry) : null;
-
-  if (searchField && sort && sort.field !== searchField) {
-    sort = { field: searchField, direction: "asc" };
-  } else if (searchField && !sort) {
-    sort = { field: searchField, direction: "asc" };
-  }
+  const sort = sortEntry ? validateSort(entity, sortEntry) : null;
 
   const primarySort = enforceFirestoreConstraints(nativeFilters, sort);
   const select = config.select

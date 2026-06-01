@@ -37,16 +37,6 @@ export function getEntityCellRawValue(
     }
   }
 
-  if (
-    fieldMeta?.relation?.type === "many-to-one" ||
-    fieldMeta?.relation?.type === "one-to-one"
-  ) {
-    const displayLabel = getPopulatedDisplayValue(item, column);
-    if (displayLabel !== null) {
-      return displayLabel;
-    }
-  }
-
   return item[column];
 }
 
@@ -79,6 +69,17 @@ export function resolveEntityCellValue(
     columnName: string,
   ) => string | null,
 ): string {
+  const fieldMeta = definition.fields[column];
+  if (
+    fieldMeta?.relation?.type === "many-to-one" ||
+    fieldMeta?.relation?.type === "one-to-one"
+  ) {
+    const displayLabel = getPopulatedDisplayValue(item, column);
+    if (displayLabel !== null) {
+      return displayLabel;
+    }
+  }
+
   const raw = getEntityCellRawValue(
     item,
     column,
@@ -94,4 +95,26 @@ export function resolveEntityCellValue(
     dateDisplayFormat,
     fieldName: column,
   });
+}
+
+export function getEntityCellSchemaValue(
+  item: Record<string, unknown>,
+  column: string,
+  definition: SerializableEntityDefinition,
+  getOneToManyCellValue: (
+    recordId: string,
+    columnName: string,
+  ) => string | null,
+): unknown {
+  const fieldMeta = definition.fields[column];
+  if (fieldMeta?.relation) {
+    return resolveEntityCellValue(
+      item,
+      column,
+      definition,
+      getOneToManyCellValue,
+    );
+  }
+
+  return getEntityCellRawValue(item, column, definition, getOneToManyCellValue);
 }

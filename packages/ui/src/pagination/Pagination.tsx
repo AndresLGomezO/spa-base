@@ -38,7 +38,7 @@ const defaultLabels: Required<PaginationLabels> = {
 export function Pagination({
   page,
   totalCount,
-  pageSize = 20,
+  pageSize = 10,
   onPageChange,
   className,
   labels: labelsProp,

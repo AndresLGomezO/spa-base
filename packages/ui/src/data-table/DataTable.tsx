@@ -48,7 +48,7 @@ export function DataTable<T>({
   page,
   totalCount,
   onPageChange,
-  pageSize = 20,
+  pageSize = 10,
   isLoading = false,
   emptyMessage = "No results.",
   loadingMessage = "Loading…",
@@ -61,11 +61,11 @@ export function DataTable<T>({
   const columnCount = columns.length + (actionsColumn ? 1 : 0);
 
   return (
-    <div className={cn("flex min-h-0 w-full flex-col gap-4", className)}>
-      <TableCard aria-label={ariaLabel} className="min-h-0 flex-1">
+    <div className={cn("flex w-full flex-col gap-4", className)}>
+      <TableCard aria-label={ariaLabel} className="w-full overflow-hidden">
         <div
           className={cn(
-            "min-h-0 flex-1 overflow-y-auto overflow-x-hidden",
+            "max-h-[calc(100dvh-14rem)] overflow-y-auto overflow-x-hidden",
             scrollClassName,
           )}
         >
@@ -138,6 +138,7 @@ export function DataTable<T>({
       </TableCard>
 
       <Pagination
+        className="shrink-0"
         page={page}
         totalCount={totalCount}
         pageSize={pageSize}

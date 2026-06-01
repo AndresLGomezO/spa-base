@@ -14,9 +14,10 @@ import {
   HOME_NAV_ITEM,
   PLATFORM_APPEARANCE_NAV_ITEM,
   PLATFORM_CURRENT_TENANT_NAV_ITEM,
+  DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM,
+  DATA_STRUCTURE_GROUP_ICON,
+  DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM,
   SETTINGS_AUTOMATION_NAV_ITEM,
-  SETTINGS_DATA_MODEL_BUILDER_NAV_ITEM,
-  SETTINGS_ENTITY_CATEGORIES_NAV_ITEM,
   SETTINGS_GROUP_ICON,
   SETTINGS_ROLES_NAV_ITEM,
   SETTINGS_USER_MANAGEMENT_NAV_ITEM,
@@ -101,6 +102,25 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       });
     }
 
+    const dataStructureChildren: NavLinkConfig[] = [];
+
+    if (hasPermission("entityDefinition.read", permissions, { isSuperAdmin })) {
+      dataStructureChildren.push(DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM);
+    }
+    if (hasPermission("entityCategory.read", permissions, { isSuperAdmin })) {
+      dataStructureChildren.push(DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM);
+    }
+
+    if (dataStructureChildren.length > 0) {
+      items.push({
+        id: "data-structure",
+        labelKey: "dataStructure",
+        matchPath: "/settings/data-models",
+        icon: DATA_STRUCTURE_GROUP_ICON,
+        children: dataStructureChildren,
+      });
+    }
+
     const settingsChildren: NavLinkConfig[] = [];
 
     if (hasPermission("tenantUser.read", permissions, { isSuperAdmin })) {
@@ -108,12 +128,6 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     }
     if (hasPermission("role.read", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_ROLES_NAV_ITEM);
-    }
-    if (hasPermission("entityDefinition.read", permissions, { isSuperAdmin })) {
-      settingsChildren.push(SETTINGS_DATA_MODEL_BUILDER_NAV_ITEM);
-    }
-    if (hasPermission("entityCategory.read", permissions, { isSuperAdmin })) {
-      settingsChildren.push(SETTINGS_ENTITY_CATEGORIES_NAV_ITEM);
     }
     if (hasPermission("hook.read", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_AUTOMATION_NAV_ITEM);

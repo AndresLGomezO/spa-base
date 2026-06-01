@@ -1,6 +1,6 @@
 import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 
-import { getAllEntities } from "@repo/entities";
+import { applySearchMirrorFields, getAllEntities } from "@repo/entities";
 import type { QueryEngine } from "@repo/query-engine";
 
 import { registerCrudRoutes } from "../crud/register-crud-routes.js";
@@ -49,6 +49,8 @@ export async function registerDynamicEntityCrudRoutes(
         createSchema: entity.createSchema,
         updateSchema: entity.updateSchema,
         businessFieldNames: Object.keys(entity.metadata.fields),
+        prepareRecordForWrite: (record) =>
+          applySearchMirrorFields(entity, record),
       };
     },
     repository: (tenantId, entityName) => {

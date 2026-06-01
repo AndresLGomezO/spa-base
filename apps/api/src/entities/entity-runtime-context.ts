@@ -48,6 +48,7 @@ interface EntityRuntimeContextOptions {
   readonly entityDefinitionRepository: EntityDefinitionRepository;
   readonly definitionCacheTtlMs?: number;
   readonly ensureFirestoreIndexes?: boolean;
+  readonly indexProvisioningExcludedTenants?: ReadonlySet<string>;
   readonly indexStatusStore?: FirestoreIndexStatusStore;
   readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
   readonly onIndexEnsured?: (index: FirestoreCompositeIndex) => void;
@@ -299,7 +300,11 @@ export class EntityRuntimeContext {
     return this.options.indexStatusStore;
   }
 
-  ensureIndexesForEntity(entity: AnyDefinedEntity): void {
+  ensureIndexesForEntity(entity: AnyDefinedEntity, tenantId?: string): void {
+    if (tenantId && this.isIndexProvisioningExcluded(tenantId)) {
+      return;
+    }
+
     const ensureOptions = this.getIndexEnsureOptions();
     if (!ensureOptions) {
       return;
@@ -308,6 +313,10 @@ export class EntityRuntimeContext {
   }
 
   ensureIndexesFromHint(hint: FirestoreIndexHint): void {
+    if (this.isIndexProvisioningExcluded(hint.tenantId)) {
+      return;
+    }
+
     const ensureOptions = this.getIndexEnsureOptions();
     if (!ensureOptions) {
       return;
@@ -316,8 +325,12 @@ export class EntityRuntimeContext {
   }
 
   ensureCatalogIndexes(tenantId: string): void {
+    if (this.isIndexProvisioningExcluded(tenantId)) {
+      return;
+    }
+
     for (const entity of this.getEntitiesForTenant(tenantId)) {
-      this.ensureIndexesForEntity(entity);
+      this.ensureIndexesForEntity(entity, tenantId);
     }
   }
 
@@ -328,9 +341,9 @@ export class EntityRuntimeContext {
     const entity = registerDynamicEntity(record.tenantId, record);
     this.invalidateEntityRuntime(record.tenantId, record.name);
     this.definitionsLoadedAt.set(record.tenantId, Date.now());
-    this.ensureIndexesForEntity(entity);
+    this.ensureIndexesForEntity(entity, record.tenantId);
 
-    if (previousRecord) {
+    if (previousRecord && !this.isIndexProvisioningExcluded(record.tenantId)) {
       const reconcileOptions = this.getReconcileOptions();
       if (reconcileOptions) {
         scheduleReconcileIndexesForDefinitionChange(
@@ -388,9 +401,15 @@ export class EntityRuntimeContext {
       await this.options.entityDefinitionRepository.list(parsedTenantId);
     for (const record of records) {
       const entity = registerDynamicEntity(parsedTenantId, record);
-      this.ensureIndexesForEntity(entity);
+      this.ensureIndexesForEntity(entity, parsedTenantId);
     }
     this.definitionsLoadedAt.set(parsedTenantId, now);
+  }
+
+  private isIndexProvisioningExcluded(tenantId: string): boolean {
+    return (
+      this.options.indexProvisioningExcludedTenants?.has(tenantId) ?? false
+    );
   }
 }
 

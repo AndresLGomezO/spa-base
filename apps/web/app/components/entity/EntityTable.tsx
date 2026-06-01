@@ -4,6 +4,7 @@ import {
   Alert,
   CursorPagination,
   IconButton,
+  Pagination,
   SchemaCell,
   Table,
   TableBody,
@@ -39,7 +40,7 @@ import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import {
   getEntityCellDisplayMeta,
-  getEntityCellRawValue,
+  getEntityCellSchemaValue,
 } from "./resolve-entity-cell-value";
 
 type EntityListState = Pick<
@@ -65,6 +66,7 @@ export function EntityTable({
   entityState,
   page,
   onPageChange,
+  pageSize = 10,
   hasNextPage,
   hasPreviousPage,
   onRequestDelete,
@@ -89,7 +91,7 @@ export function EntityTable({
     [definition, fieldAccess, permissions.canRead],
   );
 
-  const { items, isLoading, error, listError } = entityState;
+  const { items, isLoading, error, listError, totalCount } = entityState;
   const collection = definition.collection;
   const indexStatus = useIndexProvisioningStatus(collection, {
     entityName,
@@ -143,9 +145,9 @@ export function EntityTable({
   const columnCount = columns.length + (showActions ? 1 : 0);
 
   return (
-    <div className="flex min-h-0 w-full flex-col gap-4">
-      <TableCard className="min-h-0 flex-1">
-        <div className="max-h-[min(32rem,calc(100dvh-16rem))] min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
+    <div className="flex w-full flex-col gap-4">
+      <TableCard className="w-full overflow-hidden">
+        <div className="max-h-[calc(100dvh-14rem)] overflow-y-auto overflow-x-hidden">
           <Table>
             <TableHeader>
               <TableRow>
@@ -188,7 +190,7 @@ export function EntityTable({
                       return (
                         <TableCell key={column}>
                           <SchemaCell
-                            value={getEntityCellRawValue(
+                            value={getEntityCellSchemaValue(
                               item,
                               column,
                               definition,
@@ -273,6 +275,7 @@ export function EntityTable({
 
       {useCursorPagination ? (
         <CursorPagination
+          className="shrink-0"
           page={page}
           hasNextPage={hasNextPage ?? false}
           hasPreviousPage={hasPreviousPage ?? false}
@@ -282,6 +285,22 @@ export function EntityTable({
             previousPage: t("table.paginationPrevious"),
             nextPage: t("table.paginationNext"),
             pageIndicator: (p) => t("table.paginationPage", { page: p }),
+          }}
+        />
+      ) : totalCount > 0 ? (
+        <Pagination
+          className="shrink-0"
+          page={page}
+          totalCount={totalCount}
+          pageSize={pageSize}
+          onPageChange={onPageChange}
+          labels={{
+            firstPage: t("table.paginationFirst"),
+            previousPage: t("table.paginationPrevious"),
+            nextPage: t("table.paginationNext"),
+            lastPage: t("table.paginationLast"),
+            page: (pageNumber) =>
+              t("table.paginationPage", { page: pageNumber }),
           }}
         />
       ) : null}

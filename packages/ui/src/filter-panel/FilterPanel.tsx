@@ -73,7 +73,7 @@ export function FilterPanel({
     : null;
 
   const toolbarRow = (
-    <div className="flex flex-wrap items-center gap-2">
+    <div className="flex w-full min-w-0 items-center gap-2">
       {triggerButton}
       {toolbarPrefix}
       <div className="ml-auto shrink-0">{sibling}</div>

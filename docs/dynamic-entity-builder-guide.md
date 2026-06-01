@@ -64,7 +64,7 @@ Entity **data** uses the same tenant path pattern as static entities (`tenants/{
 | `entityDefinition.create` | Create new models |
 | `entityDefinition.update` | Patch models (add optional fields, UI metadata) |
 | `internalEntity.read` | Browse entities marked **Hide from navigation** in the sidebar and `GET /api/entities` catalog |
-| `entityCategory.read` | Open **Settings → Entity categories** (included in `*.read` for built-in viewer) |
+| `entityCategory.read` | Open **Data structure → Entity categories** (included in `*.read` for built-in viewer) |
 | `entityCategory.create` | Create navigation categories |
 | `entityCategory.update` | Edit or delete categories (delete blocked while models are assigned) |
 
@@ -83,7 +83,7 @@ Model Builder loads **all** entity definitions for relation targets (`GET /api/e
 
 ### Sidebar navigation categories
 
-Tenants can define **entity categories** (name, Lucide icon name, sort order) under **Settings → Entity categories**. Assign models in Model Builder via **Navigation category**, **Navigation order**, and **Navigation icon** (`navCategoryId`, `navOrder`, and `ui.nav.icon` on the entity definition). Use **Use category icon** to copy the selected category’s Lucide name into the model’s sidebar icon.
+Tenants can define **entity categories** (name, Lucide icon name, sort order) under **Data structure → Entity categories**. Assign models in Model Builder via **Navigation category**, **Navigation order**, and **Navigation icon** (`navCategoryId`, `navOrder`, and `ui.nav.icon` on the entity definition). Use **Use category icon** to copy the selected category’s Lucide name into the model’s sidebar icon.
 
 | Sidebar group | Contents |
 | --- | --- |

@@ -57,7 +57,7 @@ pnpm typecheck
 2. Open the tenant switcher → **Create tenant**, or use **Create new tenant** on `/select-tenant` (legacy `/platform/create-tenant` also opens the modal)
 3. Create tenant: name e.g. `Validation Tenant`, note the generated `id` (e.g. `tenant_abc`)
 
-**Alternative (Firestore seed):** Dev tenants `tenant_dev_1` and `tenant_dev_2` are seeded on API startup.
+**Alternative (Firestore seed):** Dev tenant `rates` is seeded on API startup. Sign in as `testuser1@rates.com` / `RatesTest1!` (Auth emulator) for a pre-provisioned `normalRatesUser` with 12+ records per business model. Other users can get the same role via `"tenants": { "rates": ["normalRatesUser"] }` on `users/{uid}`.
 
 ---
 

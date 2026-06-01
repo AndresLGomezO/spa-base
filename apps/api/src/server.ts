@@ -36,6 +36,7 @@ import { platformApp } from "@app/platform/app.config.js";
 import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
 import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
 import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
+import { RATES_TENANT_ID } from "./admin/rates-tenant/constants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
 import { registerRequestTiming } from "./observability/request-timing.js";
@@ -239,6 +240,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     definitionCacheTtlMs: apiEnv.CACHE_TTL_MS,
     cursorSecret: apiEnv.QUERY_CURSOR_SECRET,
     ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
+    indexProvisioningExcludedTenants: new Set([RATES_TENANT_ID]),
     indexStatusStore,
     onIndexHint: (hint) => {
       server.log.warn(
@@ -441,7 +443,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     });
   }
 
-  const bootstrapTenantId = "tenant_dev_1";
+  const bootstrapTenantId = "rates";
   if (!options.repositories) {
     try {
       await entityRuntime.loadTenantDefinitions(bootstrapTenantId, {

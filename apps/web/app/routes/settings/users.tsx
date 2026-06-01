@@ -37,17 +37,19 @@ export default function SettingsUsersRoute() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="flex min-h-full flex-col gap-4">
+      <div className="shrink-0 space-y-2">
         <Heading level={1}>{t("userManagement.title")}</Heading>
         <Text>{t("userManagement.description")}</Text>
       </div>
-      <UserManagement
-        tenantId={tenantId}
-        canCreate={canCreate}
-        canUpdate={canUpdate}
-        canRemove={canRemove}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <UserManagement
+          tenantId={tenantId}
+          canCreate={canCreate}
+          canUpdate={canUpdate}
+          canRemove={canRemove}
+        />
+      </div>
     </div>
   );
 }

@@ -9,6 +9,7 @@ interface ServerQueryConfigInput {
   readonly filters: Readonly<Record<string, readonly string[]>>;
   readonly sort: DataViewSortState;
   readonly limit: number;
+  readonly offset?: number;
   readonly cursor?: string;
   readonly fieldTypes?: Readonly<Record<string, string>>;
 }
@@ -53,7 +54,11 @@ function buildServerQueryConfig(input: ServerQueryConfigInput): QueryConfig {
     ...(input.search.trim().length > 0 ? { search: input.search.trim() } : {}),
     pagination: {
       limit: input.limit,
-      ...(input.cursor ? { cursor: input.cursor } : {}),
+      ...(input.offset !== undefined && input.offset > 0
+        ? { offset: input.offset }
+        : input.cursor
+          ? { cursor: input.cursor }
+          : {}),
     },
   };
 }
@@ -61,7 +66,7 @@ function buildServerQueryConfig(input: ServerQueryConfigInput): QueryConfig {
 export function useServerQueryConfig(
   input: ServerQueryConfigInput,
 ): QueryConfig {
-  const { search, filters, sort, limit, cursor, fieldTypes } = input;
+  const { search, filters, sort, limit, offset, cursor, fieldTypes } = input;
 
   return useMemo(
     () =>
@@ -70,9 +75,10 @@ export function useServerQueryConfig(
         filters,
         sort,
         limit,
+        offset,
         cursor,
         fieldTypes,
       }),
-    [search, filters, sort, limit, cursor, fieldTypes],
+    [search, filters, sort, limit, offset, cursor, fieldTypes],
   );
 }

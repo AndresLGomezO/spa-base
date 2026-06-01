@@ -65,7 +65,7 @@ export function EntityCategoryList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-full flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <Heading level={2}>{t("entityCategories.listTitle")}</Heading>
         {canCreate ? (
@@ -110,7 +110,6 @@ export function EntityCategoryList({
         onPageChange={dataView.setPage}
         emptyMessage={t("entityCategories.empty")}
         loadingMessage={t("table.loading")}
-        scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
         paginationLabels={paginationLabels}
         actionsColumn={
           canUpdate

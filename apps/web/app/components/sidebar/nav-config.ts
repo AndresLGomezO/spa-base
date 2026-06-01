@@ -4,6 +4,7 @@ import {
   Database,
   FolderTree,
   Home,
+  Layers,
   Palette,
   Settings,
   Shield,
@@ -19,6 +20,7 @@ export type NavLabelKey =
   | "currentTenant"
   | "appearance"
   | "dataModels"
+  | "dataStructure"
   | "dataModelBuilder"
   | "automation"
   | "roles"
@@ -68,7 +70,7 @@ export const SETTINGS_ROLES_NAV_ITEM: NavLinkConfig = {
   icon: Shield,
 };
 
-export const SETTINGS_DATA_MODEL_BUILDER_NAV_ITEM: NavLinkConfig = {
+export const DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM: NavLinkConfig = {
   id: "data-model-builder",
   labelKey: "dataModelBuilder",
   to: "/settings/data-models",
@@ -84,13 +86,15 @@ export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
   icon: Workflow,
 };
 
-export const SETTINGS_ENTITY_CATEGORIES_NAV_ITEM: NavLinkConfig = {
+export const DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM: NavLinkConfig = {
   id: "entity-categories",
   labelKey: "entityCategories",
   to: "/settings/entity-categories",
   matchPath: "/settings/entity-categories",
   icon: FolderTree,
 };
+
+export const DATA_STRUCTURE_GROUP_ICON = Layers;
 
 export const PLATFORM_CURRENT_TENANT_NAV_ITEM: NavLinkConfig = {
   id: "current-tenant",

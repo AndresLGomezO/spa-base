@@ -6,7 +6,7 @@ describe("buildIndexFromHint", () => {
   it("maps array-contains filters and sort fields to composite index fields", () => {
     const index = buildIndexFromHint({
       collection: "accounts",
-      tenantId: "tenant_dev_1",
+      tenantId: "rates",
       filters: [
         {
           field: "accessUserIds",

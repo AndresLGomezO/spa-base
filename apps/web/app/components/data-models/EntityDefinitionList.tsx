@@ -67,7 +67,7 @@ export function EntityDefinitionList({
   }
 
   return (
-    <div className="space-y-4">
+    <div className="flex min-h-full flex-col gap-4">
       <div className="flex items-center justify-between gap-3">
         <Heading level={2}>{t("dataModels.listTitle")}</Heading>
         {canCreate ? (
@@ -114,7 +114,6 @@ export function EntityDefinitionList({
         onPageChange={dataView.setPage}
         emptyMessage={t("dataModels.empty")}
         loadingMessage={t("table.loading")}
-        scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
         paginationLabels={paginationLabels}
         actionsColumn={
           canUpdate

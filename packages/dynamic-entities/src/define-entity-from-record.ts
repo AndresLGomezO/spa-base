@@ -1,5 +1,6 @@
 import {
   defineEntity,
+  extendEntitySchemaWithSearchMirrors,
   getAllEntities,
   getEntity,
   type DefinedEntity,
@@ -138,6 +139,9 @@ export function buildDefaultUiForNewDefinition(input: {
           ...(field.ui?.sortable !== undefined
             ? { sortable: field.ui.sortable }
             : {}),
+          ...(field.ui?.searchable !== undefined
+            ? { searchable: field.ui.searchable }
+            : {}),
           order: field.ui?.order ?? index,
         },
       ]),
@@ -167,7 +171,7 @@ export function defineEntityFromRecord(
 
   const ui = buildUiFromRecord(record);
 
-  return defineEntity({
+  const entity = defineEntity({
     name: record.name,
     fields,
     ...(ui ? { ui } : {}),
@@ -180,6 +184,8 @@ export function defineEntityFromRecord(
     string,
     FieldDefinitions
   >;
+
+  return extendEntitySchemaWithSearchMirrors(entity);
 }
 
 export function validateRelationTargets(

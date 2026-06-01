@@ -25,7 +25,8 @@ Layout hierarchy in [`routes.ts`](../routes.ts):
 
 - **Home** — `/`
 - **Data Models** — dynamic entity links from catalog (`/app/:entity`)
-- **Settings** — user management, roles, model builder, automation
+- **Data structure** — model builder, entity categories (`/settings/data-models`, `/settings/entity-categories`)
+- **Settings** — user management, roles, automation
 - **Platform** (superadmin) — current tenant, appearance
 
 ## Entity routes

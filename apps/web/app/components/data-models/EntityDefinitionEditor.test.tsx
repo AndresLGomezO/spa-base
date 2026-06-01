@@ -1,5 +1,11 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import {
+  act,
+  fireEvent,
+  render,
+  screen,
+  waitFor,
+} from "@testing-library/react";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { MOCK_ENTITY_CATALOG } from "../../test/entity-catalog-fixtures";
 import { EntityDefinitionEditor } from "./EntityDefinitionEditor";
@@ -43,6 +49,10 @@ vi.mock("react-i18next", () => ({
 }));
 
 describe("EntityDefinitionEditor", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("loads definition and saves patches", async () => {
     mockGetEntityDefinition.mockResolvedValue({
       id: "def_1",
@@ -179,15 +189,24 @@ describe("EntityDefinitionEditor", () => {
     );
 
     await waitFor(() => {
-      expect(
-        screen.getByLabelText("dataModels.modelLabel"),
-      ).toBeInTheDocument();
+      expect(screen.getByLabelText("dataModels.modelLabel")).toHaveValue(
+        "Loans",
+      );
+    });
+
+    await act(async () => {
+      await Promise.resolve();
     });
 
     const initialFooterCalls = onFooterChange.mock.calls.length;
+    expect(initialFooterCalls).toBeGreaterThan(0);
 
     fireEvent.change(screen.getByLabelText("dataModels.modelLabel"), {
       target: { value: "Updated Label" },
+    });
+
+    await act(async () => {
+      await Promise.resolve();
     });
 
     expect(screen.getByLabelText("dataModels.modelLabel")).toHaveValue(

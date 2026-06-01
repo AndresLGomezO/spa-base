@@ -25,6 +25,12 @@ export function buildEntityColumnDescriptors(
     const fieldMeta = definition.fields[column];
     const fieldUi = definition.ui.fields?.[column];
 
+    const searchable =
+      fieldUi?.searchable ??
+      (fieldMeta?.sensitive === true || fieldMeta?.type === "relation"
+        ? false
+        : undefined);
+
     return {
       id: column,
       label: formatFieldLabel(column, definition),
@@ -35,6 +41,7 @@ export function buildEntityColumnDescriptors(
       filterKind: fieldMeta?.type === "boolean" ? "boolean" : undefined,
       filterable: fieldUi?.filterable,
       sortable: fieldUi?.sortable,
+      searchable,
       getRowId: (item) => String(item.id),
     };
   });

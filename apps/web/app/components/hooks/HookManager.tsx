@@ -91,7 +91,7 @@ export function HookManager({
   }, [editingHook?.name, isCreating, t]);
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-full flex-col gap-6">
       {showTenantPicker ? (
         <div className="max-w-md">
           <FieldLabel htmlFor="hook-tenant">{t("hooks.tenant")}</FieldLabel>
@@ -110,14 +110,16 @@ export function HookManager({
         </div>
       ) : null}
 
-      <HookList
-        items={items}
-        isLoading={isLoading}
-        canCreate={canCreate}
-        canUpdate={canUpdate}
-        onCreate={() => setIsCreating(true)}
-        onEdit={(id) => setEditingId(id)}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <HookList
+          items={items}
+          isLoading={isLoading}
+          canCreate={canCreate}
+          canUpdate={canUpdate}
+          onCreate={() => setIsCreating(true)}
+          onEdit={(id) => setEditingId(id)}
+        />
+      </div>
 
       <FormModal
         open={modalOpen}

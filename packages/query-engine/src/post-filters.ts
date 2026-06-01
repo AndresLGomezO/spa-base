@@ -16,13 +16,28 @@ function matchesPostFilter(
   record: Record<string, unknown>,
   filter: NormalizedFilter,
 ): boolean {
+  if (typeof filter.value !== "string") {
+    return false;
+  }
+
   const rawValue = record[filter.field];
-  if (typeof rawValue !== "string" || typeof filter.value !== "string") {
+  const filterValue = filter.value.toLowerCase();
+
+  if (filter.operator === "tokenStartsWith") {
+    if (!Array.isArray(rawValue)) {
+      return false;
+    }
+
+    return rawValue.some(
+      (token) => typeof token === "string" && token.startsWith(filterValue),
+    );
+  }
+
+  if (typeof rawValue !== "string") {
     return false;
   }
 
   const fieldValue = rawValue.toLowerCase();
-  const filterValue = filter.value.toLowerCase();
 
   switch (filter.operator) {
     case "contains":

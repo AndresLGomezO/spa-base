@@ -23,8 +23,8 @@ Auth response includes RBAC fields when tenant is active:
   "email": "...",
   "permissions": ["loan.read", "loan.create"],
   "isSuperAdmin": false,
-  "tenantId": "tenant_dev_1",
-  "availableTenants": ["tenant_dev_1"]
+  "tenantId": "rates",
+  "availableTenants": ["rates"]
 }
 ```
 
@@ -140,7 +140,7 @@ Set claim in development:
 
 ```js
 import { getAuth } from "firebase-admin/auth";
-await getAuth().setCustomUserClaims(uid, { tenantId: "tenant_dev_1" });
+await getAuth().setCustomUserClaims(uid, { tenantId: "rates" });
 ```
 
 ---
@@ -178,7 +178,7 @@ Seed user roles on Firestore `users/{uid}`:
 ```json
 {
   "platformRole": null,
-  "tenants": { "tenant_dev_1": ["admin"] }
+  "tenants": { "rates": ["admin"] }
 }
 ```
 
@@ -212,7 +212,28 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 Cloud Run sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so the process listens on `/health` before Firestore role/tenant seeds run. Seed once locally against the target GCP project if needed.
 ```
 
-Promotes email to superadmin on **first** user document creation. Dev tenants `tenant_dev_1` and `tenant_dev_2` seeded on startup.
+Promotes email to superadmin on **first** user document creation. Dev tenant **`rates`** is seeded on startup with entity definitions, shared lookup rows, and **12+ linked records per business model** owned by the demo user below.
+
+### Rates demo user (emulator / Docker)
+
+| Field    | Value                                                                                                                                   |
+| -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
+| Email    | `testuser1@rates.com`                                                                                                                   |
+| Password | `RatesTest1!` (see `RATES_TEST_USER_PASSWORD` in [`apps/api/src/admin/rates-tenant/constants.ts`](src/admin/rates-tenant/constants.ts)) |
+| Tenant   | `rates` (set on JWT via startup seed)                                                                                                   |
+| Role     | `normalRatesUser` (pre-assigned on `users/{uid}`)                                                                                       |
+
+Sign in through the web app with the Auth emulator enabled. No manual Firestore edits are required for this account.
+
+To test a different user with the same role, assign manually:
+
+```json
+{ "tenants": { "rates": ["normalRatesUser"] } }
+```
+
+Hidden lookup entities (`productType`, `frequency`, etc.) use `hiddenFromNav` + `tenantWideRead`; browse them only with `internalEntity.read` (e.g. `admin`) or via relation fields.
+
+The **rates** tenant is emulator/Docker mock data only. Runtime Firestore composite index provisioning is skipped for that tenant (`indexProvisioningExcludedTenants`); the emulator runs list/search queries without deployed indexes.
 
 ---
 

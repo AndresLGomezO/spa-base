@@ -165,8 +165,8 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminTenantRepository: vi.fn(() =>
     createInMemoryTenantRepository([
       {
-        id: "tenant_dev_1",
-        name: "Dev Tenant 1",
+        id: "rates",
+        name: "Rates",
         status: "active",
         createdBy: null,
         createdAt: new Date().toISOString(),
@@ -214,8 +214,8 @@ describe("GET /auth/validate re-login", () => {
       ok: true,
       user: {
         isSuperAdmin: true,
-        availableTenants: ["tenant_dev_1"],
-        tenantOptions: [{ id: "tenant_dev_1", name: "Dev Tenant 1" }],
+        availableTenants: ["rates"],
+        tenantOptions: [{ id: "rates", name: "Rates" }],
       },
     });
     expect(reloginState.storedUser.tenants).toEqual({});
@@ -232,8 +232,8 @@ describe("GET /auth/validate re-login", () => {
       ok: true,
       user: {
         isSuperAdmin: true,
-        availableTenants: ["tenant_dev_1"],
-        tenantOptions: [{ id: "tenant_dev_1", name: "Dev Tenant 1" }],
+        availableTenants: ["rates"],
+        tenantOptions: [{ id: "rates", name: "Rates" }],
       },
     });
     expect(reloginState.storedUser.tenants).toEqual({});

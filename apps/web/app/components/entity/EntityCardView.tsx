@@ -24,7 +24,7 @@ import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import {
   getEntityCellDisplayMeta,
-  getEntityCellRawValue,
+  getEntityCellSchemaValue,
 } from "./resolve-entity-cell-value";
 
 type EntityListState = Pick<
@@ -47,6 +47,7 @@ export function EntityCardView({
   entityState,
   page,
   onPageChange,
+  pageSize = 10,
   onRequestDelete,
   onRequestEdit,
 }: EntityCardViewProps) {
@@ -119,7 +120,7 @@ export function EntityCardView({
                       {formatFieldLabel(column, definition)}
                     </Text>
                     <SchemaCell
-                      value={getEntityCellRawValue(
+                      value={getEntityCellSchemaValue(
                         item,
                         column,
                         definition,
@@ -170,6 +171,7 @@ export function EntityCardView({
       <Pagination
         page={page}
         totalCount={totalCount}
+        pageSize={pageSize}
         onPageChange={onPageChange}
         labels={{
           firstPage: t("table.paginationFirst"),

@@ -21,6 +21,7 @@ export interface FieldUIConfig {
   readonly editable?: boolean;
   readonly filterable?: boolean;
   readonly sortable?: boolean;
+  readonly searchable?: boolean;
 }
 
 export type FilterOperatorUI = "==" | "!=" | "<" | "<=" | ">" | ">=" | "in";

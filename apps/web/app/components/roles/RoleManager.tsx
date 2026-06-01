@@ -165,7 +165,7 @@ export function RoleManager({
   }
 
   return (
-    <div className="space-y-6">
+    <div className="flex min-h-full flex-col gap-6">
       {showTenantPicker ? (
         <div className="max-w-md">
           <FieldLabel htmlFor="role-tenant">{t("roles.tenant")}</FieldLabel>
@@ -201,7 +201,7 @@ export function RoleManager({
       {items.length === 0 ? (
         <Text>{t("roles.selectRole")}</Text>
       ) : (
-        <>
+        <div className="flex min-h-0 flex-1 flex-col gap-4">
           <WebDataViewToolbar
             {...dataView}
             columns={columns}
@@ -229,7 +229,6 @@ export function RoleManager({
             onPageChange={dataView.setPage}
             emptyMessage={t("roles.selectRole")}
             loadingMessage={t("table.loading")}
-            scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
             paginationLabels={paginationLabels}
             actionsColumn={
               canUpdate
@@ -253,7 +252,7 @@ export function RoleManager({
                 : undefined
             }
           />
-        </>
+        </div>
       )}
 
       <FormModal

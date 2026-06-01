@@ -35,6 +35,7 @@ export const fieldDefinitionSchema = z
         order: z.number().int().nonnegative().optional(),
         filterable: z.boolean().optional(),
         sortable: z.boolean().optional(),
+        searchable: z.boolean().optional(),
       })
       .optional(),
   })

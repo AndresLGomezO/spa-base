@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { resolveEntityCellValue } from "./resolve-entity-cell-value";
+import {
+  getEntityCellRawValue,
+  getEntityCellSchemaValue,
+  resolveEntityCellValue,
+} from "./resolve-entity-cell-value";
 
 describe("resolveEntityCellValue", () => {
   it("uses reverse lookup value for one-to-many columns", () => {
@@ -78,5 +82,43 @@ describe("resolveEntityCellValue", () => {
         () => null,
       ),
     ).toBe("test 1");
+  });
+
+  it("uses populated labels for display but foreign keys for raw values", () => {
+    const definition = {
+      name: "account",
+      collection: "accounts",
+      permissions: [],
+      fields: {
+        accountTypeId: {
+          type: "relation",
+          required: true,
+          optional: false,
+          relation: { target: "accountType", type: "many-to-one" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+      },
+    };
+
+    const item = {
+      id: "acc_1",
+      accountTypeId: "atype_wallet",
+      _populated: {
+        accountTypeId: { id: "atype_wallet", name: "Digital Wallet" },
+      },
+    };
+
+    expect(
+      getEntityCellRawValue(item, "accountTypeId", definition, () => null),
+    ).toBe("atype_wallet");
+    expect(
+      resolveEntityCellValue(item, "accountTypeId", definition, () => null),
+    ).toBe("Digital Wallet");
+    expect(
+      getEntityCellSchemaValue(item, "accountTypeId", definition, () => null),
+    ).toBe("Digital Wallet");
   });
 });

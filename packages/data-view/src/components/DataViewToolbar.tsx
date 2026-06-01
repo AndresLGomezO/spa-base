@@ -22,6 +22,7 @@ export interface DataViewToolbarProps<T> extends Pick<
   readonly filtersOpen: boolean;
   readonly onFiltersOpenChange: (open: boolean) => void;
   readonly warningMessage?: string;
+  readonly showSearch?: boolean;
 }
 
 export function DataViewToolbar<T>({
@@ -40,6 +41,7 @@ export function DataViewToolbar<T>({
   filtersOpen,
   onFiltersOpenChange,
   warningMessage,
+  showSearch = true,
 }: DataViewToolbarProps<T>) {
   const sortableColumns = columns
     .filter((column) => column.sortable !== false)
@@ -47,13 +49,6 @@ export function DataViewToolbar<T>({
 
   return (
     <div className="flex flex-col gap-4">
-      <SearchField
-        value={search}
-        onChange={setSearch}
-        placeholder={labels.searchPlaceholder}
-        ariaLabel={labels.searchPlaceholder}
-      />
-
       {warningMessage ? (
         <p className="text-muted-foreground text-sm">{warningMessage}</p>
       ) : null}
@@ -67,6 +62,17 @@ export function DataViewToolbar<T>({
         removeAriaLabel={labels.removeBadge}
         onClearAll={clearAll}
         badgesBelowToolbar
+        toolbarPrefix={
+          showSearch ? (
+            <SearchField
+              value={search}
+              onChange={setSearch}
+              placeholder={labels.searchPlaceholder}
+              ariaLabel={labels.searchPlaceholder}
+              className="max-w-none flex-1"
+            />
+          ) : undefined
+        }
         sibling={
           <SortControls
             options={sortableColumns}

@@ -19,8 +19,8 @@ const definition = {
       edit: { sections: [{ fields: ["name", "secret"] }] },
     },
     fields: {
-      name: { filterable: true, sortable: true },
-      secret: { filterable: false, sortable: false },
+      name: { filterable: true, sortable: true, searchable: true },
+      secret: { filterable: false, sortable: false, searchable: false },
     },
   },
 } as SerializableEntityDefinition;
@@ -37,11 +37,55 @@ describe("buildEntityColumnDescriptors", () => {
       id: "name",
       filterable: true,
       sortable: true,
+      searchable: true,
     });
     expect(columns[1]).toMatchObject({
       id: "secret",
       filterable: false,
       sortable: false,
+      searchable: false,
     });
+  });
+
+  it("defaults searchable to false for relations and sensitive fields", () => {
+    const relationDefinition = {
+      ...definition,
+      fields: {
+        ...definition.fields,
+        categoryId: {
+          type: "relation",
+          required: false,
+          optional: true,
+          relation: {
+            target: "category",
+            type: "many-to-one",
+            onDelete: "restrict",
+          },
+        },
+      },
+      ui: {
+        ...definition.ui,
+        views: [
+          {
+            type: "table",
+            name: "default",
+            fields: ["name", "categoryId"],
+          },
+        ],
+        fields: {
+          name: { searchable: true },
+          categoryId: {},
+        },
+      },
+    } as SerializableEntityDefinition;
+
+    const columns = buildEntityColumnDescriptors({
+      definition: relationDefinition,
+      columns: ["name", "categoryId"],
+      getOneToManyCellValue: () => null,
+    });
+
+    expect(columns[0]?.searchable).toBe(true);
+    expect(columns[1]?.searchable).toBe(false);
   });
 });

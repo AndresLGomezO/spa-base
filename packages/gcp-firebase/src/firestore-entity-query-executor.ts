@@ -53,6 +53,42 @@ const EQUALITY_OPERATORS = new Set<FirestoreNativeOperator>([
   "array-contains",
 ]);
 
+/** Max rows loaded when search scans a collection (token post-filter; no search index). */
+const SEARCH_SCAN_MAX_ITEMS = 500;
+const SEARCH_SCAN_PAGE_SIZE = 100;
+
+function compareValues(left: unknown, right: unknown): number {
+  if (typeof left === "number" && typeof right === "number") {
+    return left - right;
+  }
+  return String(left).localeCompare(String(right));
+}
+
+function sortItemsInMemory(
+  items: readonly Record<string, unknown>[],
+  sort: NormalizedEntityQuery["sort"],
+): Record<string, unknown>[] {
+  const primarySort = sort ?? { field: "id", direction: "asc" as const };
+  const sorted = [...items];
+
+  sorted.sort((left, right) => {
+    const primaryComparison =
+      primarySort.direction === "asc"
+        ? compareValues(left[primarySort.field], right[primarySort.field])
+        : compareValues(right[primarySort.field], left[primarySort.field]);
+
+    if (primaryComparison !== 0 || primarySort.field === "id") {
+      return primaryComparison;
+    }
+
+    return primarySort.direction === "asc"
+      ? compareValues(left.id, right.id)
+      : compareValues(right.id, left.id);
+  });
+
+  return sorted;
+}
+
 function applyFilter(query: Query, filter: NormalizedFilter): Query {
   if (filter.operator === "in") {
     return query.where(filter.field, "in", filter.value as unknown[]);
@@ -160,6 +196,11 @@ class FirestoreEntityQueryExecutor<
 
   async executeQuery(tenantId: string, query: NormalizedEntityQuery) {
     const collectionRef = this.getCollection(tenantId);
+
+    if (query.search) {
+      return this.executeSearchScan(collectionRef, query);
+    }
+
     const filteredQuery = buildFirestoreQuery(collectionRef, query);
     const hasPostFilters = query.postFilters.length > 0;
     const fetchLimit = computeOverfetchLimit(query.limit, hasPostFilters);
@@ -263,6 +304,75 @@ class FirestoreEntityQueryExecutor<
     }
 
     return record;
+  }
+
+  private async executeSearchScan(
+    collectionRef: CollectionReference<DocumentData>,
+    query: NormalizedEntityQuery,
+  ) {
+    const baseQuery = buildFirestoreQuery(collectionRef, query);
+    let items: Record<string, unknown>[] = [];
+    let lastDoc: FirebaseFirestore.QueryDocumentSnapshot | undefined;
+
+    while (items.length < SEARCH_SCAN_MAX_ITEMS) {
+      const remaining = SEARCH_SCAN_MAX_ITEMS - items.length;
+      const pageSize = Math.min(SEARCH_SCAN_PAGE_SIZE, remaining);
+      let pageQuery = baseQuery.limit(pageSize);
+
+      if (lastDoc) {
+        pageQuery = pageQuery.startAfter(lastDoc);
+      }
+
+      const snapshot = await pageQuery.get();
+      if (snapshot.empty) {
+        break;
+      }
+
+      items.push(
+        ...snapshot.docs.map(
+          (doc) =>
+            this.executorConfig.converter.read(doc.data()) as Record<
+              string,
+              unknown
+            >,
+        ),
+      );
+
+      lastDoc = snapshot.docs[snapshot.docs.length - 1];
+      if (snapshot.docs.length < pageSize) {
+        break;
+      }
+    }
+
+    items = applyPostFilters(items, query.postFilters);
+    const sorted = sortItemsInMemory(items, query.sort);
+    const totalCount = sorted.length;
+
+    let startIndex = query.offset ?? 0;
+    if (query.offset === undefined && query.cursor) {
+      const cursorIndex = sorted.findIndex(
+        (record) => String(record.id) === query.cursor,
+      );
+      startIndex = cursorIndex >= 0 ? cursorIndex + 1 : 0;
+    }
+
+    const page = sorted.slice(startIndex, startIndex + query.limit);
+    const hasMore = startIndex + query.limit < sorted.length;
+    const sortField = query.sort?.field ?? "id";
+    const secret = this.executorConfig.cursorSecret;
+    let nextCursor: string | null = null;
+    if (query.offset === undefined && hasMore && page.length > 0) {
+      const lastItem = page[page.length - 1]!;
+      nextCursor = secret
+        ? encodeCursor(lastItem, sortField, secret)
+        : String(lastItem.id);
+    }
+
+    return {
+      items: page,
+      nextCursor,
+      totalCount,
+    };
   }
 }
 

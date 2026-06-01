@@ -126,16 +126,18 @@ export function EntityCategoryManager({
   }, [editingCategory?.name, isCreating, t]);
 
   return (
-    <div className="space-y-6">
-      <EntityCategoryList
-        items={items}
-        isLoading={isLoading}
-        canCreate={canCreate}
-        canUpdate={canUpdate}
-        onCreate={() => setIsCreating(true)}
-        onEdit={(id) => setEditingId(id)}
-        onDelete={(id) => void handleDelete(id)}
-      />
+    <div className="flex min-h-full flex-col gap-6">
+      <div className="flex min-h-0 flex-1 flex-col">
+        <EntityCategoryList
+          items={items}
+          isLoading={isLoading}
+          canCreate={canCreate}
+          canUpdate={canUpdate}
+          onCreate={() => setIsCreating(true)}
+          onEdit={(id) => setEditingId(id)}
+          onDelete={(id) => void handleDelete(id)}
+        />
+      </div>
 
       <FormModal open={modalOpen} title={modalTitle} onClose={closeModal}>
         <EntityCategoryEditor

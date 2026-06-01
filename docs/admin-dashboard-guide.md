@@ -4,7 +4,7 @@ Settings and platform administration for data models, automation, roles, and use
 
 ## Audience
 
-- **Tenant admins** use the **Settings** sidebar group (`/settings/*`) scoped to their JWT tenant.
+- **Tenant admins** use **Data structure** and **Settings** sidebar groups (`/settings/*`) scoped to their JWT tenant.
 - **Platform superadmins** switch tenants via the sidebar `TenantSwitcher` (same UX as tenant admins) and use **Platform** routes to manage the active tenant only.
 
 ## Sections
@@ -19,13 +19,24 @@ Simple authenticated welcome page for all users.
 - **Create:** `tenantUser.create` (invite by email; roles apply on first sign-in)
 - **Update / remove:** `tenantUser.update`, `tenantUser.remove`
 
-### Data Models (`/settings/data-models`)
+### Data structure
+
+Sidebar group for shaping tenant data and navigation (not tenant admin configuration).
+
+#### Data Model Builder (`/settings/data-models`)
 
 - **Read:** `entityDefinition.read`
 - **Create:** `entityDefinition.create`
 - **Update:** `entityDefinition.update`
 
 Creates dynamic entities that appear under **Data Models** in the sidebar (`/app/:entity`).
+
+#### Entity categories (`/settings/entity-categories`)
+
+- **Read:** `entityCategory.read`
+- **Create / update:** `entityCategory.create`, `entityCategory.update`
+
+Groups entity links in the sidebar under named categories.
 
 ### Automation (`/settings/hooks`)
 
@@ -69,7 +80,8 @@ Superadmin only. Opens a centered modal from the tenant switcher or `/select-ten
 | --- | --- |
 | Home | `/` |
 | Data Models | Dynamic `/app/:entity` links from catalog |
-| Settings | User Management, Roles, Model Builder, Automation |
+| Data structure | Data Model Builder, Entity categories |
+| Settings | User Management, Roles, Automation |
 | Platform | Current Tenant, Appearance (superadmin) |
 
 ## Related

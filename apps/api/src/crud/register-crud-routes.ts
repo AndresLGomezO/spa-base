@@ -67,6 +67,9 @@ interface CrudEntityDefinition {
   readonly createSchema: z.ZodTypeAny;
   readonly updateSchema: z.ZodTypeAny;
   readonly businessFieldNames: readonly string[];
+  readonly prepareRecordForWrite?: (
+    record: Record<string, unknown>,
+  ) => Record<string, unknown>;
 }
 
 type EntityResolver = (
@@ -812,6 +815,10 @@ export async function registerCrudRoutes<
           ...(entityServices ? { entityServices } : {}),
         });
 
+        if (activeEntity.prepareRecordForWrite) {
+          currentData = activeEntity.prepareRecordForWrite(currentData);
+        }
+
         const parsedRecord = parseOrFormatError(
           activeEntity.schema,
           currentData,
@@ -1022,6 +1029,10 @@ export async function registerCrudRoutes<
           previous: existingRecord,
           ...(entityServices ? { entityServices } : {}),
         });
+
+        if (activeEntity.prepareRecordForWrite) {
+          merged = activeEntity.prepareRecordForWrite(merged);
+        }
 
         const parsedRecord = parseOrFormatError(activeEntity.schema, merged);
         if (!parsedRecord.success) {

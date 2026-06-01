@@ -49,6 +49,22 @@ export {
 } from "./ui/default-ui-config.js";
 export { serializeEntityDefinition } from "./ui/serialize-entity-definition.js";
 export { validateEntityUIConfig } from "./ui/validate-ui-config.js";
+export {
+  applySearchMirrorFields,
+  extendEntitySchemaWithSearchMirrors,
+  legacySearchMirrorFieldName,
+  listLegacySearchMirrorFieldNames,
+  listSearchMirrorStorageFields,
+  resolveSearchStorageField,
+  searchMirrorFieldName,
+  tokenizeSearchMirrorValue,
+} from "./search/search-mirror-fields.js";
+export {
+  entityUsesExplicitSearchableFlags,
+  isSearchableField,
+  listSearchableStringFields,
+  resolveSearchField,
+} from "./search/searchable-fields.js";
 export type {
   DetailConfig,
   EntityNavConfig,

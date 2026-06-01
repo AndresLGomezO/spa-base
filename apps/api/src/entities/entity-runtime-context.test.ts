@@ -158,4 +158,17 @@ describe("EntityRuntimeContext", () => {
     expect(repositoryAfterPatch).toBeDefined();
     expect(repositoryAfterPatch).not.toBe(repositoryBeforePatch);
   });
+
+  it("skips index provisioning for excluded mock tenants", () => {
+    const entityRuntime = createEntityRuntimeContext({
+      firebaseAdminConfig: {
+        projectId: "demo",
+      },
+      entityDefinitionRepository: createInMemoryEntityDefinitionRepository(),
+      ensureFirestoreIndexes: true,
+      indexProvisioningExcludedTenants: new Set(["rates"]),
+    });
+
+    expect(() => entityRuntime.ensureCatalogIndexes("rates")).not.toThrow();
+  });
 });

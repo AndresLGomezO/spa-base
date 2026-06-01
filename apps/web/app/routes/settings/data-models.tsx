@@ -36,16 +36,18 @@ export default function SettingsDataModelsRoute() {
   }
 
   return (
-    <div className="space-y-4">
-      <div className="space-y-2">
+    <div className="flex min-h-full flex-col gap-4">
+      <div className="shrink-0 space-y-2">
         <Heading level={1}>{t("dataModels.title")}</Heading>
         <Text>{t("dataModels.description")}</Text>
       </div>
-      <DataModelManager
-        tenantId={tenantId}
-        canCreate={canCreate}
-        canUpdate={canUpdate}
-      />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <DataModelManager
+          tenantId={tenantId}
+          canCreate={canCreate}
+          canUpdate={canUpdate}
+        />
+      </div>
     </div>
   );
 }

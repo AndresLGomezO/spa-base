@@ -8,7 +8,11 @@ export type FirestoreNativeOperator =
   | "in"
   | "array-contains";
 
-export type PostFilterOperator = "contains" | "startsWith" | "endsWith";
+export type PostFilterOperator =
+  | "contains"
+  | "startsWith"
+  | "endsWith"
+  | "tokenStartsWith";
 
 export type FilterOperator = FirestoreNativeOperator | PostFilterOperator;
 
@@ -16,6 +20,7 @@ export const POST_FILTER_OPERATORS = new Set<FilterOperator>([
   "contains",
   "startsWith",
   "endsWith",
+  "tokenStartsWith",
 ]);
 
 export function isPostFilterOperator(

@@ -80,7 +80,7 @@ describe("useAccessibleNavItems", () => {
     expect(getDataModelEntityIds(result.current)).toEqual(["widget"]);
   });
 
-  it("includes settings nav for tenant admins without profile or billing", () => {
+  it("puts model builder in data structure and automation in settings", () => {
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       isSuperAdmin: false,
@@ -88,19 +88,58 @@ describe("useAccessibleNavItems", () => {
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
+    const dataStructure = result.current.find(
+      (item) => item.id === "data-structure",
+    );
     const settings = result.current.find((item) => item.id === "settings");
+
+    expect(dataStructure && isNavGroup(dataStructure)).toBe(true);
+    if (dataStructure && isNavGroup(dataStructure)) {
+      expect(
+        dataStructure.children.some(
+          (child) => child.id === "data-model-builder",
+        ),
+      ).toBe(true);
+      expect(
+        dataStructure.children.some(
+          (child) => child.id === "entity-categories",
+        ),
+      ).toBe(false);
+    }
+
     expect(settings && isNavGroup(settings)).toBe(true);
     if (settings && isNavGroup(settings)) {
-      expect(settings.children.some((child) => child.id === "profile")).toBe(
-        false,
-      );
-      expect(settings.children.some((child) => child.id === "billing")).toBe(
-        false,
-      );
+      expect(
+        settings.children.some((child) => child.id === "data-model-builder"),
+      ).toBe(false);
       expect(settings.children.some((child) => child.id === "automation")).toBe(
         true,
       );
     }
+  });
+
+  it("shows entity categories in data structure without settings group", () => {
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      isSuperAdmin: false,
+      permissions: ["entityCategory.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const dataStructure = result.current.find(
+      (item) => item.id === "data-structure",
+    );
+    const settings = result.current.find((item) => item.id === "settings");
+
+    expect(dataStructure && isNavGroup(dataStructure)).toBe(true);
+    if (dataStructure && isNavGroup(dataStructure)) {
+      expect(
+        dataStructure.children.some(
+          (child) => child.id === "entity-categories",
+        ),
+      ).toBe(true);
+    }
+    expect(settings).toBeUndefined();
   });
 
   it("groups categorized entities separately from uncategorized data models", () => {

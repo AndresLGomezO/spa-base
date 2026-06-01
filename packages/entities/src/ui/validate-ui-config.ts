@@ -24,6 +24,7 @@ const fieldUISchema = z
     editable: z.boolean().optional(),
     filterable: z.boolean().optional(),
     sortable: z.boolean().optional(),
+    searchable: z.boolean().optional(),
   })
   .strict();
 

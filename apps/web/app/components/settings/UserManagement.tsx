@@ -208,7 +208,7 @@ export function UserManagement({
   }
 
   return (
-    <div className="flex w-full flex-col gap-6">
+    <div className="flex min-h-full w-full flex-col gap-6">
       <div className="flex flex-wrap items-center gap-3">
         {canCreate ? (
           <Button type="button" onClick={() => setInviteOpen(true)}>
@@ -250,7 +250,6 @@ export function UserManagement({
         isLoading={isLoading}
         emptyMessage={t("userManagement.empty")}
         loadingMessage={t("table.loading")}
-        scrollClassName="max-h-[min(32rem,calc(100dvh-16rem))]"
         paginationLabels={paginationLabels}
         actionsColumn={
           canUpdate
