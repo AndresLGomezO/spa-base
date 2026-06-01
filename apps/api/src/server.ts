@@ -25,6 +25,7 @@ import {
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRoleRepository,
   createFirestoreAdminTenantUserInviteRepository,
+  createFirestoreIndexStatusStore,
 } from "@repo/gcp-firebase";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
@@ -45,6 +46,7 @@ import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-ent
 import { registerEntityRelationRoutes } from "./entities/register-entity-relation-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
+import { registerIndexRoutes } from "./indexes/register-index-routes.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
@@ -215,12 +217,18 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   const hookRuntime = createHookRuntimeContext(hookRepository);
 
+  const indexStatusStore =
+    options.repositories == null
+      ? createFirestoreIndexStatusStore(firebaseAdminConfig)
+      : undefined;
+
   const entityRuntime = createEntityRuntimeContext({
     firebaseAdminConfig,
     entityDefinitionRepository,
     definitionCacheTtlMs: apiEnv.CACHE_TTL_MS,
     cursorSecret: apiEnv.QUERY_CURSOR_SECRET,
     ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
+    indexStatusStore,
     onIndexHint: (hint) => {
       server.log.warn(
         {
@@ -342,6 +350,16 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
   });
 
+  await registerIndexRoutes(server, {
+    authenticate,
+    firebaseAdminConfig,
+    entityRuntime,
+    statusStore: indexStatusStore,
+    ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
+    publishToPubSub: apiEnv.INDEX_PROVISIONING_PUBSUB,
+    indexProvisioningTopic: apiEnv.INDEX_PROVISIONING_TOPIC,
+  });
+
   for (const entity of getAllEntities()) {
     const repository = runtimeMaps.repositories[entity.name];
     if (!repository) {
@@ -351,6 +369,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     await registerCrudRoutes(server, {
       entity: {
         name: entity.name,
+        collection: entity.metadata.collection,
         schema: entity.schema,
         createSchema: entity.createSchema,
         updateSchema: entity.updateSchema,
@@ -361,6 +380,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
       authorize: createEntityPermissionGuards(permissionDeps, entity.name),
       relations: relationContext.hooksFor(entity.name),
       queryEngine: queryContext.queryEngine,
+      indexStatusStore,
       referencePopulator: {
         getEntityDefinition: (name, tenantId) =>
           entityRuntime.getEntityDefinition(name, tenantId),
@@ -379,6 +399,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     queryContext.queryEngine,
     relationContext,
     crudHooks,
+    indexStatusStore,
   );
 
   await registerEntityRelationRoutes(server, {

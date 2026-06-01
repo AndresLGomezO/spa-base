@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@google-cloud/firestore": "catalog:",
+    "@google-cloud/pubsub": "catalog:",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/firestore-indexes": "workspace:*",

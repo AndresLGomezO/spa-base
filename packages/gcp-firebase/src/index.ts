@@ -22,6 +22,18 @@ export {
   scheduleEnsureFirestoreIndexesFromHint,
 } from "./firestore-index-provisioner.js";
 export type { FirestoreCompositeIndex } from "@repo/firestore-indexes";
+export {
+  createFirestoreIndexStatusStore,
+  INDEX_STATUS_COLLECTION,
+  type FirestoreIndexStatusStore,
+  type IndexProvisioningStatus,
+  type IndexStatusRecord,
+} from "./firestore-index-status.js";
+export {
+  INDEX_PROVISIONING_TOPIC,
+  publishIndexProvisioningMessage,
+  type IndexProvisioningMessage,
+} from "./firestore-index-pubsub.js";
 export { createFirestoreAdminJoinCollectionRepository } from "./firestore-admin-join-collection-repository.js";
 export { createFirestoreAdminPlatformRoleRepository } from "./firestore-admin-platform-role-repository.js";
 export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-repository.js";

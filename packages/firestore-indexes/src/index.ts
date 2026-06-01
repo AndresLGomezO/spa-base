@@ -5,8 +5,11 @@ export type {
   FirestoreIndexesFile,
 } from "./types.js";
 export {
+  buildFindByFieldIndex,
+  buildOwnershipCreatedAtIndex,
   buildOwnershipFkIndex,
   buildOwnershipListIndex,
+  computeIndexSignature,
   dedupeIndexes,
   indexesForEntities,
   indexesForEntity,

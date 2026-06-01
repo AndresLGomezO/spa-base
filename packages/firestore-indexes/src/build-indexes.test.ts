@@ -2,6 +2,8 @@ import { defineEntity } from "@repo/entities";
 import { describe, expect, it } from "vitest";
 
 import {
+  buildFindByFieldIndex,
+  buildOwnershipCreatedAtIndex,
   buildOwnershipFkIndex,
   buildOwnershipListIndex,
   dedupeIndexes,
@@ -67,15 +69,41 @@ describe("indexesForEntity", () => {
     expect(indexesForEntity(PublicBoard)).toEqual([]);
   });
 
-  it("adds baseline and FK indexes for relation entities", () => {
+  it("adds baseline, ownership FK, and findByField indexes for relation entities", () => {
     const indexes = indexesForEntity(Order);
-    expect(indexes).toHaveLength(2);
+    expect(indexes).toHaveLength(3);
     expect(indexes[0]).toEqual(buildOwnershipListIndex("orders"));
     expect(indexes[1]).toEqual(buildOwnershipFkIndex("orders", "customerId"));
+    expect(indexes[2]).toEqual(buildFindByFieldIndex("orders", "customerId"));
   });
 
   it("uses default collection pluralization", () => {
     expect(indexesForEntity(Customer)[0]?.collectionGroup).toBe("customers");
+  });
+});
+
+describe("buildOwnershipCreatedAtIndex", () => {
+  it("includes createdAt and id", () => {
+    expect(buildOwnershipCreatedAtIndex("orders", "DESCENDING").fields).toEqual(
+      [
+        { fieldPath: "accessUserIds", arrayConfig: "CONTAINS" },
+        { fieldPath: "createdAt", order: "DESCENDING" },
+        { fieldPath: "id", order: "ASCENDING" },
+      ],
+    );
+  });
+});
+
+describe("buildFindByFieldIndex", () => {
+  it("uses fk and id without ownership", () => {
+    expect(buildFindByFieldIndex("orders", "customerId")).toEqual({
+      collectionGroup: "orders",
+      queryScope: "COLLECTION",
+      fields: [
+        { fieldPath: "customerId", order: "ASCENDING" },
+        { fieldPath: "id", order: "ASCENDING" },
+      ],
+    });
   });
 });
 

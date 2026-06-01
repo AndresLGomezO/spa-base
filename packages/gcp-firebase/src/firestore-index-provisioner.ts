@@ -1,6 +1,7 @@
 import firestore from "@google-cloud/firestore";
 
 import {
+  computeIndexSignature,
   indexesForEntity,
   type FirestoreCompositeIndex,
   type FirestoreIndexField,
@@ -8,6 +9,7 @@ import {
 import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
 
 import type { FirestoreIndexHint } from "./firestore-entity-query-executor.js";
+import type { FirestoreIndexStatusStore } from "./firestore-index-status.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
@@ -62,16 +64,6 @@ function toAdminIndexFields(
   });
 }
 
-function indexSignature(index: FirestoreCompositeIndex): string {
-  return `${index.collectionGroup}:${index.fields
-    .map((field) =>
-      "arrayConfig" in field
-        ? `${field.fieldPath}:a:${field.arrayConfig}`
-        : `${field.fieldPath}:o:${field.order}`,
-    )
-    .join(",")}`;
-}
-
 export function buildIndexFromHint(
   hint: FirestoreIndexHint,
 ): FirestoreCompositeIndex {
@@ -107,6 +99,7 @@ export function buildIndexFromHint(
 export interface EnsureFirestoreIndexesOptions {
   readonly projectId: string;
   readonly databaseId?: string;
+  readonly statusStore?: FirestoreIndexStatusStore;
   readonly onEnsured?: (index: FirestoreCompositeIndex) => void;
   readonly onError?: (error: unknown, index: FirestoreCompositeIndex) => void;
 }
@@ -121,7 +114,7 @@ export async function ensureFirestoreIndexes(
 
   await Promise.all(
     indexes.map(async (index) => {
-      const signature = indexSignature(index);
+      const signature = computeIndexSignature(index);
       if (ensuredSignatures.has(signature)) {
         return;
       }
@@ -141,18 +134,36 @@ export async function ensureFirestoreIndexes(
             fields: toAdminIndexFields(index.fields) as never,
           },
         });
+        const operationName =
+          operation.name ??
+          (operation as { latestResponse?: { name?: string } }).latestResponse
+            ?.name;
+        await options.statusStore?.upsertCreating(index, operationName);
         options.onEnsured?.(index);
-        void operation.promise().catch((error: unknown) => {
-          if (!isAlreadyExistsError(error)) {
+        void operation
+          .promise()
+          .then(async () => {
+            await options.statusStore?.markReady(index);
+          })
+          .catch(async (error: unknown) => {
+            if (isAlreadyExistsError(error)) {
+              await options.statusStore?.markReady(index);
+              return;
+            }
+            const message =
+              error instanceof Error ? error.message : String(error);
+            await options.statusStore?.markError(index, message);
             options.onError?.(error, index);
-          }
-        });
+          });
       } catch (error) {
         ensuredSignatures.delete(signature);
         if (isAlreadyExistsError(error)) {
           ensuredSignatures.add(signature);
+          await options.statusStore?.markReady(index);
           return;
         }
+        const message = error instanceof Error ? error.message : String(error);
+        await options.statusStore?.markError(index, message);
         options.onError?.(error, index);
       }
     }),

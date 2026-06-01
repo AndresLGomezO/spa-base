@@ -30,6 +30,7 @@
     "test:visual": "pnpm --filter @repo/ui test:visual",
     "test:visual:update": "bash scripts/update-visual-snapshots-linux.sh",
     "generate:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts",
+    "check:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts && git diff --exit-code firestore.indexes.json",
     "validate": "tsx scripts/validate.ts",
     "validate:ci": "tsx scripts/validate.ts --ci",
     "precommit": "pnpm i18n:validate -- --strict && pnpm terraform:fmt:check && pnpm validate:ci",

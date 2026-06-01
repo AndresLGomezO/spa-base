@@ -31,6 +31,10 @@ import {
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
 import { measureQueryTiming } from "../observability/request-timing.js";
 import { apiEnv } from "../config/env.js";
+import {
+  assertCollectionIndexesReady,
+  IndexCreatingError,
+} from "../indexes/index-query-guard.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
@@ -57,6 +61,7 @@ const idAndEntityParamsSchema = z.object({
 
 interface CrudEntityDefinition {
   readonly name: string;
+  readonly collection?: string;
   readonly schema: z.ZodTypeAny;
   readonly createSchema: z.ZodTypeAny;
   readonly updateSchema: z.ZodTypeAny;
@@ -121,6 +126,7 @@ interface RegisterCrudRoutesOptions<
           }
         | undefined);
   readonly queryEngine?: QueryEngine;
+  readonly indexStatusStore?: import("@repo/gcp-firebase").FirestoreIndexStatusStore;
   readonly referencePopulator?: ReferencePopulatorDeps;
   readonly prefix?: string;
   readonly parametricEntityName?: boolean;
@@ -171,6 +177,17 @@ function buildQueryContext(
 }
 
 function mapQueryErrorToResponse(reply: FastifyReply, error: QueryError): void {
+  if (error.code === ApiErrorCode.COMPOSITE_INDEX_REQUIRED) {
+    reply.header("Retry-After", "60");
+    replyWithError(
+      reply,
+      503,
+      ApiErrorCode.COMPOSITE_INDEX_REQUIRED,
+      error.message,
+    );
+    return;
+  }
+
   const statusCode =
     error.code === ApiErrorCode.NOT_FOUND
       ? 404
@@ -179,6 +196,16 @@ function mapQueryErrorToResponse(reply: FastifyReply, error: QueryError): void {
         : 400;
 
   replyWithError(reply, statusCode, error.code as ApiErrorCode, error.message);
+}
+
+function mapIndexCreatingError(
+  reply: FastifyReply,
+  error: IndexCreatingError,
+): void {
+  reply.header("Retry-After", String(error.retryAfterSeconds));
+  replyWithError(reply, 503, ApiErrorCode.INDEX_CREATING, error.message, {
+    collection: error.collection,
+  });
 }
 
 function handleFieldAccessError(reply: FastifyReply, error: unknown): boolean {
@@ -242,11 +269,27 @@ async function resolveHookServices(
 }
 
 function handleQueryError(reply: FastifyReply, error: unknown): boolean {
+  if (error instanceof IndexCreatingError) {
+    mapIndexCreatingError(reply, error);
+    return true;
+  }
   if (error instanceof QueryError) {
     mapQueryErrorToResponse(reply, error);
     return true;
   }
   return false;
+}
+
+function resolveEntityCollection(
+  entity: CrudEntityDefinition,
+  tenantId: string,
+  referencePopulator?: ReferencePopulatorDeps,
+): string | undefined {
+  if (entity.collection) {
+    return entity.collection;
+  }
+  return referencePopulator?.getEntityDefinition(entity.name, tenantId)
+    ?.metadata.collection;
 }
 
 function resolveRouteEntityName(
@@ -431,6 +474,17 @@ export async function registerCrudRoutes<
     try {
       if (queryEngine && request.ctx) {
         const ctx = request.ctx;
+        const collection = resolveEntityCollection(
+          activeEntity,
+          tenantId,
+          options.referencePopulator,
+        );
+        if (collection) {
+          await assertCollectionIndexesReady(
+            options.indexStatusStore,
+            collection,
+          );
+        }
         const result = await measureQueryTiming(request, async () =>
           queryEngine.find(
             activeEntity.name,
