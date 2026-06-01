@@ -52,6 +52,14 @@ export function isIndexListErrorCode(code: string): boolean {
   return INDEX_LIST_ERROR_CODES.has(code);
 }
 
+export function isTransientIndexListError(code: string): boolean {
+  return code === "INDEX_CREATING" || code === "COMPOSITE_INDEX_REQUIRED";
+}
+
+export function isHardIndexListError(code: string): boolean {
+  return code === "INDEX_PROVISIONING_FAILED";
+}
+
 interface PaginatedResult<T> {
   readonly items: readonly T[];
   readonly nextCursor: string | null;

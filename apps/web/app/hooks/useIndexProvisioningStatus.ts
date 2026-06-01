@@ -3,7 +3,8 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 
 import {
   getIndexProvisioningStatus,
-  isIndexListErrorCode,
+  isHardIndexListError,
+  isTransientIndexListError,
   type IndexProvisioningPhase,
   type IndexProvisioningStatusSummary,
 } from "../lib/api-client";
@@ -27,6 +28,28 @@ function pollIntervalForPhase(
   return false;
 }
 
+export function resolveEffectiveIndexPhase(
+  statusPhase: IndexProvisioningPhase,
+  listErrorCode: string | null | undefined,
+): IndexProvisioningPhase {
+  const hasHardListError =
+    listErrorCode !== undefined &&
+    listErrorCode !== null &&
+    isHardIndexListError(listErrorCode);
+  const hasTransientListError =
+    listErrorCode !== undefined &&
+    listErrorCode !== null &&
+    isTransientIndexListError(listErrorCode);
+
+  if (hasHardListError || statusPhase === "error") {
+    return "error";
+  }
+  if (hasTransientListError || statusPhase === "building") {
+    return "building";
+  }
+  return statusPhase;
+}
+
 interface UseIndexProvisioningStatusOptions {
   readonly entityName?: EntityName;
   readonly listErrorCode?: string | null;
@@ -46,10 +69,11 @@ export function useIndexProvisioningStatus(
     collection !== undefined &&
     collection.length > 0;
 
-  const forcedByListError =
-    options.listErrorCode !== undefined &&
-    options.listErrorCode !== null &&
-    isIndexListErrorCode(options.listErrorCode);
+  const listErrorCode = options.listErrorCode;
+  const pollWhileListBlocked =
+    listErrorCode !== undefined &&
+    listErrorCode !== null &&
+    isTransientIndexListError(listErrorCode);
 
   const statusQuery = useQuery({
     queryKey: collection
@@ -57,20 +81,18 @@ export function useIndexProvisioningStatus(
       : ["index-status-disabled"],
     queryFn: () => getIndexProvisioningStatus(collection!),
     enabled,
-    refetchInterval: (query) =>
-      pollIntervalForPhase(
+    refetchInterval: (query) => {
+      if (pollWhileListBlocked) {
+        return 5_000;
+      }
+      return pollIntervalForPhase(
         (query.state.data as IndexProvisioningStatusSummary | undefined)?.phase,
-      ),
+      );
+    },
   });
 
   const phase = statusQuery.data?.phase ?? "idle";
-  const effectivePhase: IndexProvisioningPhase = forcedByListError
-    ? phase === "error"
-      ? "error"
-      : phase === "ready"
-        ? "ready"
-        : "building"
-    : phase;
+  const effectivePhase = resolveEffectiveIndexPhase(phase, listErrorCode);
 
   useEffect(() => {
     const previous = previousPhaseRef.current;

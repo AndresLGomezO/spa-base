@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import {
   formatFieldLabel,
+  getEntityLabel,
   type EntityName,
 } from "../../entities/entity-catalog";
 import {
@@ -18,7 +19,9 @@ import {
   useFieldAccess,
 } from "../../hooks/useFieldAccess";
 import type { useEntity } from "../../hooks/useEntity";
+import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStatus";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
+import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import {
   getEntityCellDisplayMeta,
   getEntityCellRawValue,
@@ -64,16 +67,34 @@ export function EntityCardView({
     [definition, fieldAccess, permissions.canRead],
   );
 
-  const { items, isLoading, error, totalCount } = entityState;
+  const { items, isLoading, error, listError, totalCount } = entityState;
+  const collection = definition.collection;
+  const indexStatus = useIndexProvisioningStatus(collection, {
+    entityName,
+    listErrorCode: listError?.code ?? null,
+  });
 
   const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
     useOneToManyColumnData(definition, items, getDefinition);
 
-  if (isLoading || isLoadingRelations) {
+  const entityLabel = getEntityLabel(definition);
+
+  if (indexStatus.phase === "building" || indexStatus.phase === "error") {
+    return (
+      <IndexProvisioningPanel
+        entityLabel={entityLabel}
+        phase={indexStatus.phase === "error" ? "error" : "building"}
+        summary={indexStatus.summary}
+        listErrorMessage={listError?.message ?? null}
+      />
+    );
+  }
+
+  if ((isLoading || isLoadingRelations) && !indexStatus.isBlocking) {
     return <EntityPageSkeleton />;
   }
 
-  if (error) {
+  if (error && !indexStatus.isBlocking) {
     return <Alert>{error}</Alert>;
   }
 

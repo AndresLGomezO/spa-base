@@ -20,7 +20,7 @@ import {
   entityRecordQueryKey,
 } from "../query/query-client";
 
-interface EntityRecord {
+export interface EntityRecord {
   readonly id: string;
   readonly tenantId: string;
   readonly createdAt: string;

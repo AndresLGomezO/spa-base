@@ -99,15 +99,24 @@ export function EntityTable({
   const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
     useOneToManyColumnData(definition, items, getDefinition);
 
-  const showIndexPanel =
-    indexStatus.isBlocking &&
-    (indexStatus.phase === "building" || indexStatus.phase === "error");
+  const entityLabel = getEntityLabel(definition);
 
-  if ((isLoading || isLoadingRelations) && !showIndexPanel) {
+  if (indexStatus.phase === "building" || indexStatus.phase === "error") {
+    return (
+      <IndexProvisioningPanel
+        entityLabel={entityLabel}
+        phase={indexStatus.phase === "error" ? "error" : "building"}
+        summary={indexStatus.summary}
+        listErrorMessage={listError?.message ?? null}
+      />
+    );
+  }
+
+  if ((isLoading || isLoadingRelations) && !indexStatus.isBlocking) {
     return <EntityPageSkeleton />;
   }
 
-  if (error && !showIndexPanel) {
+  if (error && !indexStatus.isBlocking) {
     return <Alert>{error}</Alert>;
   }
 
@@ -135,14 +144,6 @@ export function EntityTable({
 
   return (
     <div className="flex min-h-0 w-full flex-col gap-4">
-      {showIndexPanel ? (
-        <IndexProvisioningPanel
-          entityLabel={getEntityLabel(definition)}
-          phase={indexStatus.phase === "error" ? "error" : "building"}
-          summary={indexStatus.summary}
-          listErrorMessage={listError?.message ?? error}
-        />
-      ) : null}
       <TableCard className="min-h-0 flex-1">
         <div className="max-h-[min(32rem,calc(100dvh-16rem))] min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <Table>

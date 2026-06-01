@@ -4,6 +4,9 @@ import { describe, expect, it, vi } from "vitest";
 import { I18nextProvider } from "react-i18next";
 
 import { i18n } from "../../i18n";
+import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStatus";
+import type { EntityRecord } from "../../hooks/useEntity";
+import type { ApiClientError } from "../../lib/api-client";
 import { TestEntityCatalogProvider } from "../../test/test-entity-catalog-provider";
 import { EntityTable } from "./EntityTable";
 
@@ -28,7 +31,24 @@ vi.mock("../../auth/AuthContext", () => ({
 }));
 
 vi.mock("../../hooks/useIndexProvisioningStatus", () => ({
-  useIndexProvisioningStatus: vi.fn(() => ({
+  useIndexProvisioningStatus: vi.fn(),
+}));
+
+const mockUseIndexProvisioningStatus = vi.mocked(useIndexProvisioningStatus);
+
+type EntityStateOverrides = Partial<{
+  items: readonly EntityRecord[];
+  totalCount: number;
+  isLoading: boolean;
+  error: string | null;
+  listError: ApiClientError | null;
+}>;
+
+type IndexStatusMock = ReturnType<typeof useIndexProvisioningStatus>;
+
+function renderTable(
+  entityStateOverrides: EntityStateOverrides = {},
+  indexStatus: IndexStatusMock = {
     phase: "idle",
     isBlocking: false,
     isLoading: false,
@@ -36,10 +56,9 @@ vi.mock("../../hooks/useIndexProvisioningStatus", () => ({
     summary: undefined,
     error: null,
     refresh: vi.fn(),
-  })),
-}));
-
-function renderTable() {
+  },
+) {
+  mockUseIndexProvisioningStatus.mockReturnValue(indexStatus);
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -68,6 +87,7 @@ function renderTable() {
               isLoading: false,
               error: null,
               listError: null,
+              ...entityStateOverrides,
             }}
           />
         </I18nextProvider>
@@ -83,5 +103,41 @@ describe("EntityTable", () => {
     expect(screen.getByText("Jane Doe")).toBeInTheDocument();
     expect(screen.queryByLabelText("Edit")).not.toBeInTheDocument();
     expect(screen.queryByLabelText("Delete")).not.toBeInTheDocument();
+  });
+
+  it("shows index building panel instead of list error alert while indexes build", () => {
+    const compositeIndexMessage =
+      "A Firestore index is required for this query. Indexes may still be building—retry in a few minutes, or use the link in the server response if provided.";
+
+    renderTable(
+      {
+        items: [],
+        totalCount: 0,
+        isLoading: false,
+        error: compositeIndexMessage,
+        listError: Object.assign(new Error(compositeIndexMessage), {
+          name: "ApiClientError",
+          statusCode: 503,
+          code: "COMPOSITE_INDEX_REQUIRED",
+          fieldErrors: {},
+        }) as ApiClientError,
+      },
+      {
+        phase: "building",
+        isBlocking: true,
+        isLoading: false,
+        isFetching: false,
+        summary: undefined,
+        error: null,
+        refresh: vi.fn(),
+      },
+    );
+
+    expect(
+      screen.getByLabelText("Preparing database indexes"),
+    ).toBeInTheDocument();
+    expect(screen.getByText(/Setting up/i)).toBeInTheDocument();
+    expect(screen.queryByText(compositeIndexMessage)).not.toBeInTheDocument();
+    expect(screen.queryByText("Jane Doe")).not.toBeInTheDocument();
   });
 });

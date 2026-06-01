@@ -108,7 +108,7 @@ When indexes are `CREATING`, list queries return `503` with `INDEX_CREATING` and
 
 ## Web UX (entity lists)
 
-[`IndexProvisioningPanel`](../apps/web/app/components/entity/IndexProvisioningPanel.tsx) shows a spinner and rotating tips while indexes build. [`useIndexProvisioningStatus`](../apps/web/app/hooks/useIndexProvisioningStatus.ts) polls `GET /api/indexes/status` every 5s (`building`) or 15s (`error`) and refetches the entity list when `phase` becomes `ready`—no manual page refresh.
+[`IndexProvisioningPanel`](../apps/web/app/components/entity/IndexProvisioningPanel.tsx) shows a spinner and rotating tips while indexes build. [`useIndexProvisioningStatus`](../apps/web/app/hooks/useIndexProvisioningStatus.ts) polls `GET /api/indexes/status` every 5s (`building`) or 15s (`error`) and refetches the entity list when `phase` becomes `ready`. The UI stays in building mode until the **entity list query** succeeds (not only when status reports `ready`), so transient `COMPOSITE_INDEX_REQUIRED` responses do not replace the spinner with a generic error alert.
 
 ## Bidirectional index sync
 
