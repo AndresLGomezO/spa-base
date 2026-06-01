@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   Building2,
   Database,
+  FolderTree,
   Home,
   Palette,
   Settings,
@@ -20,7 +21,8 @@ export type NavLabelKey =
   | "dataModels"
   | "dataModelBuilder"
   | "automation"
-  | "roles";
+  | "roles"
+  | "entityCategories";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -33,7 +35,8 @@ export interface NavLinkConfig {
 
 export interface NavGroupConfig {
   readonly id: string;
-  readonly labelKey: NavLabelKey;
+  readonly labelKey?: NavLabelKey;
+  readonly label?: string;
   readonly matchPath: string;
   readonly icon: LucideIcon;
   readonly children: readonly NavLinkConfig[];
@@ -81,6 +84,14 @@ export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
   icon: Workflow,
 };
 
+export const SETTINGS_ENTITY_CATEGORIES_NAV_ITEM: NavLinkConfig = {
+  id: "entity-categories",
+  labelKey: "entityCategories",
+  to: "/settings/entity-categories",
+  matchPath: "/settings/entity-categories",
+  icon: FolderTree,
+};
+
 export const PLATFORM_CURRENT_TENANT_NAV_ITEM: NavLinkConfig = {
   id: "current-tenant",
   labelKey: "currentTenant",
@@ -124,4 +135,19 @@ export function resolveNavLinkLabel(
   }
 
   return item.id;
+}
+
+export function resolveNavGroupLabel(
+  group: Pick<NavGroupConfig, "id" | "labelKey" | "label">,
+  t: (key: `nav.${NavLabelKey}`) => string,
+): string {
+  if (group.label) {
+    return group.label;
+  }
+
+  if (group.labelKey) {
+    return t(`nav.${group.labelKey}`);
+  }
+
+  return group.id;
 }

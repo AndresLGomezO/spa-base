@@ -5,6 +5,7 @@ import Fastify from "fastify";
 
 import { getAllEntities } from "@repo/entities";
 import type {
+  EntityCategoryRepository,
   EntityDefinitionRepository,
   EntityQueryExecutor,
   HookRepository,
@@ -12,12 +13,14 @@ import type {
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import {
+  createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
   createInMemoryHookRepository,
   createInMemoryTenantRoleRepository,
   createInMemoryTenantUserInviteRepository,
 } from "@repo/firestore-converters";
 import {
+  createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminHookRepository,
   createFirestoreAdminJoinCollectionRepository,
@@ -45,6 +48,7 @@ import {
 import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-entity-crud-routes.js";
 import { registerEntityRelationRoutes } from "./entities/register-entity-relation-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
+import { registerEntityCategoryRoutes } from "./entity-categories/register-entity-category-routes.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import { registerIndexRoutes } from "./indexes/register-index-routes.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
@@ -78,6 +82,7 @@ interface BuildServerOptions {
   readonly joinRepository?: JoinCollectionRepository;
   readonly queryExecutors?: Record<string, EntityQueryExecutor>;
   readonly entityDefinitionRepository?: EntityDefinitionRepository;
+  readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: HookRepository;
   readonly getUserAccessProfile?: (
     uid: string,
@@ -202,6 +207,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryEntityDefinitionRepository()
       : createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig));
+
+  const entityCategoryRepository =
+    options.entityCategoryRepository ??
+    (options.repositories
+      ? createInMemoryEntityCategoryRepository()
+      : createFirestoreAdminEntityCategoryRepository(firebaseAdminConfig));
 
   const hookRepository =
     options.hookRepository ??
@@ -328,6 +339,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     entityRuntime,
+    entityCategoryRepository,
+  });
+
+  await registerEntityCategoryRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityCategoryRepository,
+    entityDefinitionRepository,
   });
 
   await registerHookRoutes(server, {

@@ -165,6 +165,9 @@ export interface EntityMetadata<
   readonly permissions: EntityPermissions<TName>;
   readonly ui?: EntityUIConfig;
   readonly tenantWideRead?: boolean;
+  readonly hiddenFromNav?: boolean;
+  readonly navCategoryId?: string;
+  readonly navOrder?: number;
   readonly displayField?: string;
 }
 
@@ -198,6 +201,9 @@ export type EntityConfig<
   readonly collection?: string;
   readonly ui?: EntityUIConfig;
   readonly tenantWideRead?: boolean;
+  readonly hiddenFromNav?: boolean;
+  readonly navCategoryId?: string;
+  readonly navOrder?: number;
   readonly displayField?: string;
 };
 

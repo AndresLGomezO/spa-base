@@ -99,4 +99,7 @@ export interface SerializableEntityDefinition {
   readonly ui: EntityUIConfig;
   readonly fieldAccess?: Readonly<Record<string, FieldAccessLevel>>;
   readonly displayField?: string;
+  readonly hiddenFromNav?: boolean;
+  readonly navCategoryId?: string;
+  readonly navOrder?: number;
 }

@@ -10,7 +10,7 @@ export type SidePopoverResolvedPlacement =
   | "top-start"
   | "bottom-start";
 
-export interface RectLike {
+interface RectLike {
   readonly x: number;
   readonly y: number;
   readonly width: number;
@@ -21,17 +21,17 @@ export interface RectLike {
   readonly left: number;
 }
 
-export interface PanelSize {
+interface PanelSize {
   readonly width: number;
   readonly height: number;
 }
 
-export interface ViewportSize {
+interface ViewportSize {
   readonly width: number;
   readonly height: number;
 }
 
-export interface ComputeSidePanelPositionInput {
+interface ComputeSidePanelPositionInput {
   readonly preferred: SidePopoverPreferredPlacement;
   readonly triggerRect: RectLike;
   readonly panelSize: PanelSize;
@@ -40,7 +40,7 @@ export interface ComputeSidePanelPositionInput {
   readonly gap?: number;
 }
 
-export interface ComputeSidePanelPositionResult {
+interface ComputeSidePanelPositionResult {
   readonly style: CSSProperties;
   readonly resolvedPlacement: SidePopoverResolvedPlacement;
 }

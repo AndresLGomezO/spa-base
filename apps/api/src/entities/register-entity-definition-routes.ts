@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   applyDisplayFieldToRecord,
   assertDynamicNameAvailable,
+  assertNavCategoryExists,
   createEntityDefinitionInputSchema,
   DynamicEntityError,
   getAvailableEntityNamesForTenant,
@@ -11,6 +12,7 @@ import {
   validateDefinitionEvolution,
   validateRelationTargets,
 } from "@repo/dynamic-entities";
+import type { EntityCategoryRepository } from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
@@ -23,6 +25,7 @@ interface RegisterEntityDefinitionRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
+  readonly entityCategoryRepository: EntityCategoryRepository;
 }
 
 const tenantIdQuerySchema = z.object({
@@ -166,6 +169,11 @@ export async function registerEntityDefinitionRoutes(
           },
           availableNames,
         );
+        await assertNavCategoryExists(
+          options.entityCategoryRepository,
+          tenantId,
+          parsedBody.data.navCategoryId,
+        );
 
         const created =
           await options.entityRuntime.entityDefinitionRepository.create(
@@ -256,6 +264,11 @@ export async function registerEntityDefinitionRoutes(
             .map((entity) => entity.name),
         );
         validateRelationTargets(next, availableNames);
+        await assertNavCategoryExists(
+          options.entityCategoryRepository,
+          tenantId,
+          parsedBody.data.navCategoryId,
+        );
 
         const updated =
           await options.entityRuntime.entityDefinitionRepository.update(

@@ -362,6 +362,9 @@ export interface EntityDefinitionRecord {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly hiddenFromNav?: boolean;
+  readonly navCategoryId?: string;
+  readonly navOrder?: number;
   readonly displayField?: string;
   readonly version: number;
   readonly createdAt: string;
@@ -374,6 +377,9 @@ interface CreateEntityDefinitionInput {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly hiddenFromNav?: boolean;
+  readonly navCategoryId?: string;
+  readonly navOrder?: number;
   readonly displayField?: string;
 }
 
@@ -410,6 +416,9 @@ interface PatchEntityDefinitionInput {
   readonly label?: string;
   readonly fields?: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly hiddenFromNav?: boolean;
+  readonly navCategoryId?: string | null;
+  readonly navOrder?: number | null;
   readonly displayField?: string | null;
   readonly ui?: Record<string, unknown>;
 }
@@ -423,6 +432,64 @@ export async function patchEntityDefinition(
     method: "PATCH",
     body: input,
     query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+  });
+}
+
+export interface EntityCategoryRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly name: string;
+  readonly icon: string;
+  readonly order: number;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listEntityCategories(options?: {
+  readonly tenantId?: string;
+}): Promise<{ readonly items: readonly EntityCategoryRecord[] }> {
+  return apiRequest<{ readonly items: readonly EntityCategoryRecord[] }>(
+    "/api/entity-categories",
+    {
+      query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+    },
+  );
+}
+
+interface CreateEntityCategoryInput {
+  readonly name: string;
+  readonly icon: string;
+  readonly order: number;
+}
+
+export async function createEntityCategory(
+  input: CreateEntityCategoryInput,
+): Promise<EntityCategoryRecord> {
+  return apiRequest<EntityCategoryRecord>("/api/entity-categories", {
+    method: "POST",
+    body: input,
+  });
+}
+
+interface PatchEntityCategoryInput {
+  readonly name?: string;
+  readonly icon?: string;
+  readonly order?: number;
+}
+
+export async function patchEntityCategory(
+  id: string,
+  input: PatchEntityCategoryInput,
+): Promise<EntityCategoryRecord> {
+  return apiRequest<EntityCategoryRecord>(`/api/entity-categories/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export async function deleteEntityCategory(id: string): Promise<void> {
+  await apiRequest<void>(`/api/entity-categories/${id}`, {
+    method: "DELETE",
   });
 }
 

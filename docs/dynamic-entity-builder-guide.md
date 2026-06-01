@@ -63,8 +63,36 @@ Entity **data** uses the same tenant path pattern as static entities (`tenants/{
 | `entityDefinition.read` | List and view definitions |
 | `entityDefinition.create` | Create new models |
 | `entityDefinition.update` | Patch models (add optional fields, UI metadata) |
+| `internalEntity.read` | Browse entities marked **Hide from navigation** in the sidebar and `GET /api/entities` catalog |
+| `entityCategory.read` | Open **Settings → Entity categories** (included in `*.read` for built-in viewer) |
+| `entityCategory.create` | Create navigation categories |
+| `entityCategory.update` | Edit or delete categories (delete blocked while models are assigned) |
 
 Each dynamic entity also exposes standard CRUD permissions (`{name}.read`, `{name}.create`, …). Attach action-based hooks via `POST /api/hooks` targeting `{entity}.beforeCreate` etc.
+
+### Internal lookup entities (`hiddenFromNav`)
+
+Use **Hide from navigation** on lookup/reference models (often combined with **Tenant-wide read access**) that power relation fields but should not appear as standalone app sections for regular users.
+
+| Audience | Catalog / sidebar | Relation pickers | Direct `/app/{entity}` |
+| --- | --- | --- | --- |
+| Regular user with `{entity}.read` | Hidden | Works (`listEntity` on target) | Not found (excluded from catalog) |
+| `internalEntity.read` or superadmin | Visible (if they also have `{entity}.read`) | Works | Works |
+
+Model Builder loads **all** entity definitions for relation targets (`GET /api/entity-definitions`), so hidden models remain selectable when authoring schemas.
+
+### Sidebar navigation categories
+
+Tenants can define **entity categories** (name, Lucide icon name, sort order) under **Settings → Entity categories**. Assign models in Model Builder via **Navigation category** and **Navigation order** (`navCategoryId`, `navOrder` on the entity definition).
+
+| Sidebar group | Contents |
+| --- | --- |
+| **Data Models** | Models with no `navCategoryId` (uncategorized), sorted by `navOrder` then label |
+| One group per category | Models with matching `navCategoryId`, sorted by `navOrder` then label; empty groups are hidden |
+
+`GET /api/entity-categories` uses the same `*.read` guard as `GET /api/entities`, so viewers see grouped navigation without `entityCategory.create` / `entityCategory.update`. Category names are tenant-defined (not i18n keys).
+
+Deleting a category fails with `400` while any entity definition still references it.
 
 Platform superadmins can manage definitions for any tenant via `tenantId` query/body on the definition API and `/settings/admin/data-models`.
 
@@ -75,13 +103,14 @@ Platform superadmins can manage definitions for any tenant via `tenantId` query/
 | Route | Audience |
 | --- | --- |
 | `/settings/data-models` | Tenant admin — own tenant |
+| `/settings/entity-categories` | Tenant admin — sidebar navigation categories |
 | `/settings/admin/data-models` | Platform superadmin — tenant picker |
 
 The wizard flow:
 
-1. **Basic info** — entity name (camelCase) and display label
+1. **Basic info** — entity name (camelCase), display label, optional **Tenant-wide read access** and **Hide from navigation**
 2. **Fields** — type picker, required toggle, enum values, relation target (entity **model names**, not records). Relation fields auto-name FK columns; one-to-many shows a warning that links are saved on the child via many-to-one.
-3. **Review** — confirm schema, then create
+3. **Review** — optional **Navigation category** / **Navigation order**, confirm schema, then create
 
 After save, `useEntityCatalog().refresh()` runs so the new entity appears in the sidebar without a page reload.
 

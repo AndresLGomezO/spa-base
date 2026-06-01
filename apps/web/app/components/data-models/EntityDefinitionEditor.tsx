@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -21,11 +20,13 @@ import {
 } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
-import { getEntityLabel } from "../../entities/entity-catalog";
 import {
   getEntityDefinition,
   isApiClientError,
+  listEntityCategories,
+  listEntityDefinitions,
   patchEntityDefinition,
+  type EntityCategoryRecord,
   type EntityDefinitionRecord,
   type FieldDefinitionInput,
 } from "../../lib/api-client";
@@ -52,25 +53,76 @@ export function EntityDefinitionEditor({
   onFooterChange,
 }: EntityDefinitionEditorProps) {
   const { t } = useTranslation("common");
-  const { items, refresh } = useEntityCatalog();
+  const { refresh } = useEntityCatalog();
   const [record, setRecord] = useState<EntityDefinitionRecord | null>(null);
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
+  const [hiddenFromNav, setHiddenFromNav] = useState(false);
+  const [navCategoryId, setNavCategoryId] = useState("");
+  const [navOrder, setNavOrder] = useState("");
+  const [navCategories, setNavCategories] = useState<
+    readonly EntityCategoryRecord[]
+  >([]);
   const [displayField, setDisplayField] = useState<string>("");
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const relationTargets = useMemo(
-    () =>
-      items.map((item) => ({
-        name: item.name,
-        label: getEntityLabel(item),
-      })),
-    [items],
-  );
+  const [relationTargetDefinitions, setRelationTargetDefinitions] = useState<
+    readonly { readonly name: string; readonly label: string }[]
+  >([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void listEntityDefinitions()
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+        setRelationTargetDefinitions(
+          response.items.map((item) => ({
+            name: item.name,
+            label: item.label,
+          })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRelationTargetDefinitions([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void listEntityCategories()
+      .then((response) => {
+        if (!cancelled) {
+          setNavCategories(
+            [...response.items].sort((left, right) => left.order - right.order),
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNavCategories([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const relationTargets = relationTargetDefinitions;
 
   useEffect(() => {
     let cancelled = false;
@@ -88,6 +140,11 @@ export function EntityDefinitionEditor({
         setLabel(loaded.label);
         setFields([...loaded.fields]);
         setTenantWideRead(loaded.tenantWideRead ?? false);
+        setHiddenFromNav(loaded.hiddenFromNav ?? false);
+        setNavCategoryId(loaded.navCategoryId ?? "");
+        setNavOrder(
+          loaded.navOrder !== undefined ? String(loaded.navOrder) : "",
+        );
         setDisplayField(loaded.displayField ?? "");
       } catch (loadError) {
         if (cancelled) {
@@ -166,9 +223,18 @@ export function EntityDefinitionEditor({
     setIsSubmitting(true);
 
     try {
+      const parsedNavOrder =
+        navOrder.trim().length > 0 ? Number(navOrder.trim()) : null;
       const updated = await patchEntityDefinition(definitionId, {
         label: label.trim(),
         tenantWideRead,
+        hiddenFromNav,
+        navCategoryId: navCategoryId.trim() ? navCategoryId.trim() : null,
+        ...(parsedNavOrder !== null && Number.isInteger(parsedNavOrder)
+          ? { navOrder: parsedNavOrder }
+          : navOrder.trim().length === 0
+            ? { navOrder: null }
+            : {}),
         displayField: displayField.trim() ? displayField.trim() : null,
         fields: validFields.map((field) => ({
           ...field,
@@ -254,6 +320,61 @@ export function EntityDefinitionEditor({
             {t("dataModels.tenantWideReadHint")}
           </Text>
         </div>
+
+        <div className="space-y-2">
+          <Checkbox
+            id="edit-hidden-from-nav"
+            label={t("dataModels.hiddenFromNav")}
+            checked={hiddenFromNav}
+            disabled={!canUpdate}
+            onChange={(event) => setHiddenFromNav(event.target.checked)}
+          />
+          <Text className="text-muted-foreground text-sm">
+            {t("dataModels.hiddenFromNavHint")}
+          </Text>
+        </div>
+
+        {canUpdate ? (
+          <>
+            <div>
+              <FieldLabel htmlFor="edit-nav-category">
+                {t("dataModels.navCategory")}
+              </FieldLabel>
+              <select
+                id="edit-nav-category"
+                className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+                value={navCategoryId}
+                disabled={!canUpdate}
+                onChange={(event) => setNavCategoryId(event.target.value)}
+              >
+                <option value="">{t("dataModels.navCategoryNone")}</option>
+                {navCategories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.name}
+                  </option>
+                ))}
+              </select>
+              <Text className="text-muted-foreground mt-1 text-sm">
+                {t("dataModels.navCategoryHint")}
+              </Text>
+            </div>
+            <div>
+              <FieldLabel htmlFor="edit-nav-order">
+                {t("dataModels.navOrder")}
+              </FieldLabel>
+              <Input
+                id="edit-nav-order"
+                type="number"
+                value={navOrder}
+                disabled={!canUpdate}
+                onChange={(event) => setNavOrder(event.target.value)}
+              />
+              <Text className="text-muted-foreground mt-1 text-sm">
+                {t("dataModels.navOrderHint")}
+              </Text>
+            </div>
+          </>
+        ) : null}
 
         {fields.some((f) => f.type === "string") ? (
           <div>

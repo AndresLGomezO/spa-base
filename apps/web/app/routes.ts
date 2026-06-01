@@ -19,6 +19,10 @@ export default [
     route("settings/users", "./routes/settings/users.tsx"),
     route("settings/data-models", "./routes/settings/data-models.tsx"),
     route("settings/hooks", "./routes/settings/hooks.tsx"),
+    route(
+      "settings/entity-categories",
+      "./routes/settings/entity-categories.tsx",
+    ),
     route("settings/roles", "./routes/settings/roles.tsx"),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),

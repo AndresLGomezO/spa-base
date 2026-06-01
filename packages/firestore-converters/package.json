@@ -25,6 +25,7 @@
   "dependencies": {
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
+    "@repo/entity-categories": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",

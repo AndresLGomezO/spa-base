@@ -21,6 +21,8 @@ vi.mock("../../entities/entity-catalog-context", () => ({
 
 vi.mock("../../lib/api-client", () => ({
   getEntityDefinition: (...args: unknown[]) => mockGetEntityDefinition(...args),
+  listEntityDefinitions: vi.fn(async () => ({ items: [] })),
+  listEntityCategories: vi.fn(async () => ({ items: [] })),
   patchEntityDefinition: (...args: unknown[]) =>
     mockPatchEntityDefinition(...args),
   isApiClientError: (error: unknown) =>

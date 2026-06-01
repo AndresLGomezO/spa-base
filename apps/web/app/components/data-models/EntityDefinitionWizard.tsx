@@ -1,6 +1,5 @@
 import {
   useEffect,
-  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -23,10 +22,12 @@ import {
 import {
   createEntityDefinition,
   isApiClientError,
+  listEntityCategories,
+  listEntityDefinitions,
+  type EntityCategoryRecord,
   type FieldDefinitionInput,
 } from "../../lib/api-client";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
-import { getEntityLabel } from "../../entities/entity-catalog";
 import { EntityFieldsManager } from "./EntityFieldsManager";
 import { ModelReview } from "./ModelReview";
 
@@ -44,24 +45,74 @@ export function EntityDefinitionWizard({
   onFooterChange,
 }: EntityDefinitionWizardProps) {
   const { t } = useTranslation("common");
-  const { items, refresh } = useEntityCatalog();
+  const { refresh } = useEntityCatalog();
+  const [relationTargetDefinitions, setRelationTargetDefinitions] = useState<
+    readonly { readonly name: string; readonly label: string }[]
+  >([]);
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
+  const [hiddenFromNav, setHiddenFromNav] = useState(false);
+  const [navCategoryId, setNavCategoryId] = useState("");
+  const [navOrder, setNavOrder] = useState("");
+  const [navCategories, setNavCategories] = useState<
+    readonly EntityCategoryRecord[]
+  >([]);
   const [displayField, setDisplayField] = useState<string>("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const relationTargets = useMemo(
-    () =>
-      items.map((item) => ({
-        name: item.name,
-        label: getEntityLabel(item),
-      })),
-    [items],
-  );
+  useEffect(() => {
+    let cancelled = false;
+
+    void listEntityDefinitions()
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+        setRelationTargetDefinitions(
+          response.items.map((item) => ({
+            name: item.name,
+            label: item.label,
+          })),
+        );
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setRelationTargetDefinitions([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void listEntityCategories()
+      .then((response) => {
+        if (!cancelled) {
+          setNavCategories(
+            [...response.items].sort((left, right) => left.order - right.order),
+          );
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          setNavCategories([]);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const relationTargets = relationTargetDefinitions;
 
   const useModalFooter = Boolean(onFooterChange);
   const onCancelRef = useRef(onCancel);
@@ -148,10 +199,20 @@ export function EntityDefinitionWizard({
     setIsSubmitting(true);
 
     try {
+      const parsedNavOrder =
+        navOrder.trim().length > 0 ? Number(navOrder.trim()) : undefined;
+
       const payload = {
         name: name.trim(),
         label: label.trim(),
         ...(tenantWideRead ? { tenantWideRead: true } : {}),
+        ...(hiddenFromNav ? { hiddenFromNav: true } : {}),
+        ...(navCategoryId.trim()
+          ? { navCategoryId: navCategoryId.trim() }
+          : {}),
+        ...(parsedNavOrder !== undefined && Number.isInteger(parsedNavOrder)
+          ? { navOrder: parsedNavOrder }
+          : {}),
         ...(displayField.trim() ? { displayField: displayField.trim() } : {}),
         fields: fields
           .filter((field) => field.name.trim())
@@ -237,6 +298,17 @@ export function EntityDefinitionWizard({
               {t("dataModels.tenantWideReadHint")}
             </Text>
           </div>
+          <div className="space-y-2">
+            <Checkbox
+              id="model-hidden-from-nav"
+              label={t("dataModels.hiddenFromNav")}
+              checked={hiddenFromNav}
+              onChange={(event) => setHiddenFromNav(event.target.checked)}
+            />
+            <Text className="text-muted-foreground text-sm">
+              {t("dataModels.hiddenFromNavHint")}
+            </Text>
+          </div>
           {!useModalFooter ? (
             <div className="flex gap-2">
               <Button type="button" variant="ghost" onClick={onCancel}>
@@ -310,6 +382,42 @@ export function EntityDefinitionWizard({
           onSubmit={handleSubmit}
           className="space-y-4"
         >
+          <div>
+            <FieldLabel htmlFor="wizard-nav-category">
+              {t("dataModels.navCategory")}
+            </FieldLabel>
+            <select
+              id="wizard-nav-category"
+              className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
+              value={navCategoryId}
+              onChange={(event) => setNavCategoryId(event.target.value)}
+            >
+              <option value="">{t("dataModels.navCategoryNone")}</option>
+              {navCategories.map((category) => (
+                <option key={category.id} value={category.id}>
+                  {category.name}
+                </option>
+              ))}
+            </select>
+            <Text className="text-muted-foreground mt-1 text-sm">
+              {t("dataModels.navCategoryHint")}
+            </Text>
+          </div>
+          <div>
+            <FieldLabel htmlFor="wizard-nav-order">
+              {t("dataModels.navOrder")}
+            </FieldLabel>
+            <Input
+              id="wizard-nav-order"
+              type="number"
+              value={navOrder}
+              onChange={(event) => setNavOrder(event.target.value)}
+            />
+            <Text className="text-muted-foreground mt-1 text-sm">
+              {t("dataModels.navOrderHint")}
+            </Text>
+          </div>
+
           <ModelReview
             name={name.trim()}
             label={label.trim()}

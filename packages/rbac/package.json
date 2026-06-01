@@ -23,6 +23,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/entity-categories": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/hooks": "workspace:*",

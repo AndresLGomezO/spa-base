@@ -88,6 +88,28 @@ describe("EntityRuntimeContext", () => {
     expect(updated.tenantWideRead).toBeUndefined();
   });
 
+  it("persists hiddenFromNav on create and update", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+
+    const created = await entityDefinitionRepository.create("tenant_a", {
+      name: "statusType",
+      label: "Status Type",
+      hiddenFromNav: true,
+      fields: [{ name: "name", type: "string", required: true }],
+    });
+
+    expect(created.hiddenFromNav).toBe(true);
+
+    const updated = await entityDefinitionRepository.update(
+      "tenant_a",
+      created.id,
+      { hiddenFromNav: false },
+    );
+
+    expect(updated.hiddenFromNav).toBeUndefined();
+  });
+
   it("invalidates cached repository after syncDefinition updates fields", async () => {
     const entityDefinitionRepository =
       createInMemoryEntityDefinitionRepository();

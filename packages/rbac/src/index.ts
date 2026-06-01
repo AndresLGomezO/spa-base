@@ -1,4 +1,9 @@
 export {
+  canIncludeEntityInCatalog,
+  INTERNAL_ENTITY_PERMISSIONS,
+  INTERNAL_ENTITY_READ_PERMISSION,
+} from "@repo/dynamic-entities";
+export {
   ALL_KNOWN_PERMISSIONS,
   getAllKnownPermissions,
   type KnownPermission,

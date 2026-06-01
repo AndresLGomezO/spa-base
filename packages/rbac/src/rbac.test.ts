@@ -23,6 +23,8 @@ describe("expandGrant", () => {
   it("expands action wildcard", () => {
     expect(expandGrant("*.read", known)).toEqual([
       "entityDefinition.read",
+      "entityCategory.read",
+      "internalEntity.read",
       "hook.read",
       "role.read",
       "tenantUser.read",
@@ -62,6 +64,8 @@ describe("resolvePermissions", () => {
       }),
     ).toEqual([
       "entityDefinition.read",
+      "entityCategory.read",
+      "internalEntity.read",
       "hook.read",
       "role.read",
       "tenantUser.read",
@@ -74,12 +78,15 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(12);
+    expect(permissions).toHaveLength(16);
     expect(permissions).toEqual(
       expect.arrayContaining([
         "entityDefinition.read",
         "entityDefinition.create",
         "entityDefinition.update",
+        "entityCategory.read",
+        "entityCategory.create",
+        "entityCategory.update",
         "hook.read",
         "hook.create",
         "hook.update",
@@ -106,6 +113,8 @@ describe("resolvePermissions", () => {
       }),
     ).toEqual([
       "entityDefinition.read",
+      "entityCategory.read",
+      "internalEntity.read",
       "hook.read",
       "role.read",
       "tenantUser.read",
@@ -180,6 +189,8 @@ describe("expandGrants", () => {
       expandGrants(["*.read", "entityDefinition.read"], ALL_KNOWN_PERMISSIONS),
     ).toEqual([
       "entityDefinition.read",
+      "entityCategory.read",
+      "internalEntity.read",
       "hook.read",
       "role.read",
       "tenantUser.read",

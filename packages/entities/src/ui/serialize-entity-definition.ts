@@ -46,5 +46,12 @@ export function serializeEntityDefinition(
     ...(entity.metadata.displayField
       ? { displayField: entity.metadata.displayField }
       : {}),
+    ...(entity.metadata.hiddenFromNav ? { hiddenFromNav: true } : {}),
+    ...(entity.metadata.navCategoryId
+      ? { navCategoryId: entity.metadata.navCategoryId }
+      : {}),
+    ...(entity.metadata.navOrder !== undefined
+      ? { navOrder: entity.metadata.navOrder }
+      : {}),
   };
 }

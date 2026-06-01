@@ -31,6 +31,7 @@
     "@google-cloud/firestore": "catalog:",
     "@google-cloud/pubsub": "catalog:",
     "@repo/dynamic-entities": "workspace:*",
+    "@repo/entity-categories": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/firestore-indexes": "workspace:*",
     "@repo/firestore-converters": "workspace:*",

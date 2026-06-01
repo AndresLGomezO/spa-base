@@ -61,6 +61,9 @@ export function defineEntity<
     permissions: buildPermissions(config.name),
     ...(ui ? { ui } : {}),
     ...(config.tenantWideRead ? { tenantWideRead: true } : {}),
+    ...(config.hiddenFromNav ? { hiddenFromNav: true } : {}),
+    ...(config.navCategoryId ? { navCategoryId: config.navCategoryId } : {}),
+    ...(config.navOrder !== undefined ? { navOrder: config.navOrder } : {}),
     ...(config.displayField ? { displayField: config.displayField } : {}),
   };
 

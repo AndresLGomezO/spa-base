@@ -2,6 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { buildRoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
+import { createInMemoryEntityDefinitionRepository } from "@repo/firestore-converters";
+
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
@@ -246,5 +248,80 @@ describe("GET /api/entities", () => {
     });
 
     expect(response.statusCode).toBe(403);
+  });
+
+  it("excludes hidden-from-nav entities unless the viewer can browse internal entities", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+    await entityDefinitionRepository.create("tenant_a", {
+      name: "statusType",
+      label: "Status Type",
+      tenantWideRead: true,
+      hiddenFromNav: true,
+      fields: [{ name: "name", type: "string", required: true }],
+    });
+
+    const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
+    const server = await buildServer({
+      logger: false,
+      repositories: runtime.repositories,
+      queryExecutors: runtime.queryExecutors,
+      joinRepository: createInMemoryJoinCollectionRepository(),
+      entityDefinitionRepository,
+      getUserAccessProfile: async () => ({
+        platformRole: null,
+        tenants: { tenant_a: ["lookup_viewer"] },
+      }),
+      getRoleCatalog: async () => ({
+        lookup_viewer: { grants: ["statusType.read", "widget.read"] },
+      }),
+      skipPlatformRoleSeed: true,
+      skipPlatformTenantSeed: true,
+    });
+
+    const hiddenResponse = await server.inject({
+      method: "GET",
+      url: "/api/entities",
+      headers: authHeaders,
+    });
+
+    expect(hiddenResponse.statusCode).toBe(200);
+    expect(
+      hiddenResponse
+        .json()
+        .data.items.map((item: { name: string }) => item.name),
+    ).not.toContain("statusType");
+
+    const internalServer = await buildServer({
+      logger: false,
+      repositories: runtime.repositories,
+      queryExecutors: runtime.queryExecutors,
+      joinRepository: createInMemoryJoinCollectionRepository(),
+      entityDefinitionRepository,
+      getUserAccessProfile: async () => ({
+        platformRole: null,
+        tenants: { tenant_a: ["internal_viewer"] },
+      }),
+      getRoleCatalog: async () => ({
+        internal_viewer: {
+          grants: ["statusType.read", "internalEntity.read"],
+        },
+      }),
+      skipPlatformRoleSeed: true,
+      skipPlatformTenantSeed: true,
+    });
+
+    const internalResponse = await internalServer.inject({
+      method: "GET",
+      url: "/api/entities",
+      headers: authHeaders,
+    });
+
+    expect(internalResponse.statusCode).toBe(200);
+    expect(
+      internalResponse
+        .json()
+        .data.items.map((item: { name: string }) => item.name),
+    ).toContain("statusType");
   });
 });

@@ -1,5 +1,6 @@
 import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 
+import { canIncludeEntityInCatalog } from "@repo/dynamic-entities";
 import { serializeEntityDefinition } from "@repo/entities";
 import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
 
@@ -79,6 +80,15 @@ export async function registerListEntitiesRoute(
           };
         })
         .filter((definition) => {
+          if (
+            !canIncludeEntityInCatalog(
+              definition.hiddenFromNav,
+              permissions,
+              isSuperAdmin,
+            )
+          ) {
+            return false;
+          }
           if (isSuperAdmin) return true;
           return permissions.has(`${definition.name}.read`);
         });

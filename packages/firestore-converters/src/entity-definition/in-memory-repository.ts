@@ -1,5 +1,8 @@
 import {
   applyDisplayFieldToRecord,
+  applyHiddenFromNav,
+  applyNavCategoryId,
+  applyNavOrder,
   applyTenantWideRead,
   displayFieldForCreate,
   entityDefinitionRecordSchema,
@@ -52,6 +55,9 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
         fields: input.fields,
         ...(input.ui ? { ui: input.ui } : {}),
         ...(input.tenantWideRead === true ? { tenantWideRead: true } : {}),
+        ...(input.hiddenFromNav === true ? { hiddenFromNav: true } : {}),
+        ...(input.navCategoryId ? { navCategoryId: input.navCategoryId } : {}),
+        ...(input.navOrder !== undefined ? { navOrder: input.navOrder } : {}),
         ...displayFieldForCreate(input),
         version: 1,
         createdAt: now,
@@ -67,18 +73,27 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
       }
 
       const now = new Date().toISOString();
-      const base = applyTenantWideRead(
-        applyDisplayFieldToRecord(
-          {
-            ...current,
-            ...(input.label ? { label: input.label } : {}),
-            ...(input.fields ? { fields: input.fields } : {}),
-            version: current.version + 1,
-            updatedAt: now,
-          },
-          input,
+      const base = applyNavOrder(
+        applyNavCategoryId(
+          applyHiddenFromNav(
+            applyTenantWideRead(
+              applyDisplayFieldToRecord(
+                {
+                  ...current,
+                  ...(input.label ? { label: input.label } : {}),
+                  ...(input.fields ? { fields: input.fields } : {}),
+                  version: current.version + 1,
+                  updatedAt: now,
+                },
+                input,
+              ),
+              input.tenantWideRead,
+            ),
+            input.hiddenFromNav,
+          ),
+          input.navCategoryId,
         ),
-        input.tenantWideRead,
+        input.navOrder,
       );
       const { ui: _droppedUi, ...withoutUi } = base;
       void _droppedUi;

@@ -149,6 +149,9 @@ export function defineEntityFromRecord(
     fields,
     ...(ui ? { ui } : {}),
     ...(record.tenantWideRead ? { tenantWideRead: true } : {}),
+    ...(record.hiddenFromNav ? { hiddenFromNav: true } : {}),
+    ...(record.navCategoryId ? { navCategoryId: record.navCategoryId } : {}),
+    ...(record.navOrder !== undefined ? { navOrder: record.navOrder } : {}),
     ...(record.displayField ? { displayField: record.displayField } : {}),
   } as Parameters<typeof defineEntity>[0]) as DefinedEntity<
     string,

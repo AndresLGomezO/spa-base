@@ -20,6 +20,7 @@ import {
 import {
   isNavGroup,
   isPathActive,
+  resolveNavGroupLabel,
   resolveNavLinkLabel,
   type NavGroupConfig,
   type NavLinkConfig,
@@ -92,7 +93,7 @@ function SettingsGroup({
           trigger={
             <SidebarMenuButton
               isActive={groupActive}
-              tooltip={t(`nav.${group.labelKey}`)}
+              tooltip={resolveNavGroupLabel(group, t)}
             >
               <SidebarMenuIcon>
                 <Icon />
@@ -136,7 +137,7 @@ function SettingsGroup({
         <SidebarMenuIcon>
           <Icon />
         </SidebarMenuIcon>
-        <SidebarLabel>{t(`nav.${group.labelKey}`)}</SidebarLabel>
+        <SidebarLabel>{resolveNavGroupLabel(group, t)}</SidebarLabel>
         <ChevronDown
           className={`ml-auto size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
         />

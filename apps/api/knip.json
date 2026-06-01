@@ -7,6 +7,7 @@
     "@repo/dynamic-entities",
     "@repo/encryption",
     "@repo/entities",
+    "@repo/entity-categories",
     "@repo/entity-relations",
     "@repo/eslint-config",
     "@repo/firestore-converters",

@@ -1,5 +1,7 @@
+import { ENTITY_CATEGORY_PERMISSIONS } from "@repo/entity-categories";
 import {
   ENTITY_DEFINITION_PERMISSIONS,
+  INTERNAL_ENTITY_PERMISSIONS,
   getDynamicPermissionsForTenant,
 } from "@repo/dynamic-entities";
 import { HOOK_PERMISSIONS } from "@repo/hooks";
@@ -17,6 +19,8 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
   const permissions = [
     ...staticPermissions,
     ...ENTITY_DEFINITION_PERMISSIONS,
+    ...ENTITY_CATEGORY_PERMISSIONS,
+    ...INTERNAL_ENTITY_PERMISSIONS,
     ...HOOK_PERMISSIONS,
     ...ROLE_PERMISSIONS,
     ...TENANT_USER_PERMISSIONS,
