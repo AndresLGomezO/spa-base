@@ -37,11 +37,11 @@ React Router 7 automatically code-splits each route module file into separate br
 
 See [app/routing/README.md](app/routing/README.md).
 
-| Guard      | Behavior                                   |
-| ---------- | ------------------------------------------ |
-| Auth       | Unauthenticated → `/login`                 |
-| Tenant     | No `tenantId` claim → `/select-tenant`     |
-| Permission | Missing `{entity}.{action}` → forbidden UI |
+| Guard      | Behavior                                                   |
+| ---------- | ---------------------------------------------------------- |
+| Auth       | Unauthenticated → `/login`                                 |
+| Tenant     | No `tenantId` → auto-bind first tenant; none → empty state |
+| Permission | Missing `{entity}.{action}` → forbidden UI                 |
 
 ### Layouts
 
@@ -52,7 +52,7 @@ See [app/routing/README.md](app/routing/README.md).
 | Tenant     | `/`, `/app/*` (requires tenant claim)                                          |
 | Superadmin | `/settings/tenant`, `/settings/appearance`                                     |
 
-Settings routes (`/settings/users`, `/settings/data-models`, etc.) live in the private layout without a tenant guard. All users operate on the active JWT `tenantId`. Superadmins switch tenants via the sidebar `TenantSwitcher` or `/select-tenant`; tenant members are auto-bound to their first assigned tenant.
+Settings routes (`/settings/users`, `/settings/data-models`, etc.) live in the private layout without a tenant guard. All users operate on the active JWT `tenantId`. The first available tenant is auto-selected on sign-in; superadmins switch via the sidebar `TenantSwitcher`.
 
 ### Entity routes (dynamic)
 
@@ -75,7 +75,7 @@ Sidebar lists entities from catalog filtered by `{entity}.read` permission.
 | `/settings/hooks`       | Automation hooks                                |
 | `/settings/roles`       | Tenant roles + field permissions                |
 
-Platform superadmin: **Platform → Current Tenant** at `/settings/tenant`, **Appearance** at `/settings/appearance`, and **Create tenant** via modal from the tenant switcher or `/select-tenant`.
+Platform superadmin: **Platform → Current Tenant** at `/settings/tenant`, **Appearance** at `/settings/appearance`, and **Create tenant** via modal from the tenant switcher or the no-tenants empty state.
 
 ---
 

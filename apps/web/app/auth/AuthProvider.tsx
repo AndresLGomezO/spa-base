@@ -151,7 +151,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
         });
 
         if (
-          !isSuperAdmin &&
           !tenantId &&
           availableTenants.length > 0 &&
           autoBindAttemptedRef.current !== firebaseUser.uid

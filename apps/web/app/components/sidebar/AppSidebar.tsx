@@ -60,7 +60,7 @@ function SidebarBody({
   readonly showCollapse?: boolean;
 }) {
   const { t } = useTranslation("common");
-  const { isSuperAdmin } = useAuth();
+  const { isSuperAdmin, availableTenants } = useAuth();
 
   return (
     <>
@@ -83,7 +83,7 @@ function SidebarBody({
       <SidebarSeparator />
       <SidebarFooter>
         <SidebarMenu>
-          {isSuperAdmin ? (
+          {isSuperAdmin && availableTenants.length > 0 ? (
             <SidebarMenuItem>
               <TenantSwitcher />
             </SidebarMenuItem>

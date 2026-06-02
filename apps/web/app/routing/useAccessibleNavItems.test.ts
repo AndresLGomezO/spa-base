@@ -52,10 +52,15 @@ function getDataModelEntityIds(
   return [];
 }
 
+const defaultAuth = {
+  availableTenants: ["tenant_a"],
+};
+
 describe("useAccessibleNavItems", () => {
   it("shows all entities for superadmin", () => {
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
+      ...defaultAuth,
       isSuperAdmin: true,
       permissions: [],
     });
@@ -71,6 +76,7 @@ describe("useAccessibleNavItems", () => {
   it("filters entities by read permission for viewers", () => {
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
+      ...defaultAuth,
       isSuperAdmin: false,
       permissions: ["widget.read"],
     });
@@ -83,6 +89,7 @@ describe("useAccessibleNavItems", () => {
   it("puts model builder in data structure and automation in settings", () => {
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
+      ...defaultAuth,
       isSuperAdmin: false,
       permissions: ["entityDefinition.read", "hook.read"],
     });
@@ -121,6 +128,7 @@ describe("useAccessibleNavItems", () => {
   it("shows entity categories in data structure without settings group", () => {
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
+      ...defaultAuth,
       isSuperAdmin: false,
       permissions: ["entityCategory.read"],
     });
@@ -153,6 +161,7 @@ describe("useAccessibleNavItems", () => {
     ];
 
     mockUseAuth.mockReturnValue({
+      ...defaultAuth,
       isSuperAdmin: true,
       permissions: [],
     });
@@ -178,9 +187,24 @@ describe("useAccessibleNavItems", () => {
     }
   });
 
+  it("shows only home when there are no tenants", () => {
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      isSuperAdmin: true,
+      permissions: [],
+      availableTenants: [],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+
+    expect(result.current).toHaveLength(1);
+    expect(result.current[0]?.id).toBe("home");
+  });
+
   it("includes platform current tenant and appearance for superadmin", () => {
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
+      ...defaultAuth,
       isSuperAdmin: true,
       permissions: [],
     });

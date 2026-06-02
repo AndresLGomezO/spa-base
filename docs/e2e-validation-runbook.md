@@ -54,7 +54,7 @@ pnpm typecheck
 **As superadmin:**
 
 1. Sign in at `http://localhost:5173/login` (Google auth against emulator)
-2. Open the tenant switcher → **Create tenant**, or use **Create new tenant** on `/select-tenant` (legacy `/platform/create-tenant` also opens the modal)
+2. Open the tenant switcher → **Create tenant**, or use **Create tenant** on the home empty state when no tenants exist (legacy `/platform/create-tenant` also opens the modal)
 3. Create tenant: name e.g. `Validation Tenant`, note the generated `id` (e.g. `tenant_abc`)
 
 **Alternative (Firestore seed):** Dev tenant `rates` is seeded on API startup. Sign in as `testuser1@rates.com` / `RatesTest1!` (Auth emulator) for a pre-provisioned `normalRatesUser` with 12+ records per business model. Other users can get the same role via `"tenants": { "rates": ["normalRatesUser"] }` on `users/{uid}`.
@@ -83,9 +83,8 @@ After selecting a tenant, `GET /auth/validate` should return `permissions`, `ten
 | **JWT claim** | Primary tenant for RBAC, settings, and CRUD |
 | **Settings pages** | Same UI as tenant admin — no cross-tenant scope picker |
 | **Platform routes** | `/settings/tenant`, `/settings/appearance` — manage active tenant only |
-| **Create tenant modal** | From tenant switcher or `/select-tenant`; legacy `/platform/create-tenant` redirects and opens modal |
-| **`/select-tenant`** | Superadmin only — pick active tenant when JWT has no `tenantId` |
-| **`/app/:entity`** | Requires tenant JWT claim (superadmin selects first; members auto-bind) |
+| **Create tenant modal** | From tenant switcher or no-tenants empty state; legacy `/platform/create-tenant` redirects to `/` and opens modal |
+| **`/app/:entity`** | Requires tenant JWT claim (first available tenant auto-selected on sign-in) |
 
 Tenant members auto-bind their first available tenant on login and cannot switch tenants. Tenant name appears in the account profile popover.
 
@@ -108,8 +107,7 @@ There are no static demo entity links (customer, organization, project, inventor
 
 **As tenant admin with `entityDefinition.create`:**
 
-1. Select tenant at `/select-tenant` if needed
-2. Open **Settings → Data Model Builder** (`/settings/data-models`)
+1. Open **Settings → Data Model Builder** (`/settings/data-models`)
 3. Create entity e.g. `loan`:
    - Label: `Loan`
    - Fields: `amount` (number, required), `status` (string)

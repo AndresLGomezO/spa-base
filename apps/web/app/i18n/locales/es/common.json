@@ -205,11 +205,12 @@
   "tenant": {
     "selectTitle": "Seleccionar un tenant",
     "selectDescription": "Elige en qué tenant deseas trabajar.",
-    "select": "Seleccionar",
     "selectFailed": "No se pudo seleccionar el tenant. Inténtalo de nuevo.",
     "none": "Ninguno",
     "noTenants": "Sin acceso a tenants",
     "noTenantsDetail": "Tu cuenta no está asignada a ningún tenant. Contacta a un administrador.",
+    "emptyTitle": "Aún no hay tenants",
+    "emptyDescription": "Crea el primero y actívalo para empezar a construir.",
     "create": "Crear tenant",
     "createNew": "Crear nuevo tenant",
     "suspended": "Suspendido"

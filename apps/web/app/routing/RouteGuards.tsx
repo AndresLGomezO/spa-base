@@ -6,6 +6,7 @@ import { Alert, PageLoader, Text } from "@repo/ui";
 
 import { useAuth } from "../auth/AuthContext";
 import { usePermission } from "../auth/usePermission";
+import { NoTenantsEmptyState } from "./NoTenantsEmptyState";
 
 interface GuardProps {
   readonly children: ReactNode;
@@ -44,8 +45,7 @@ export function RedirectIfAuthenticated({ children }: GuardProps) {
 
 export function RequireTenant({ children }: GuardProps) {
   const { t } = useTranslation("common");
-  const { isReady, tenantId, availableTenants, isSuperAdmin } = useAuth();
-  const location = useLocation();
+  const { isReady, tenantId, availableTenants } = useAuth();
 
   if (!isReady) {
     return <PageLoader ariaLabel={t("loading")} />;
@@ -55,26 +55,11 @@ export function RequireTenant({ children }: GuardProps) {
     return <>{children}</>;
   }
 
-  if (isSuperAdmin) {
-    if (availableTenants.length > 0) {
-      return (
-        <Navigate to="/select-tenant" replace state={{ from: location }} />
-      );
-    }
-
-    return <>{children}</>;
-  }
-
   if (availableTenants.length > 0) {
     return <PageLoader ariaLabel={t("loading")} />;
   }
 
-  return (
-    <div className="flex w-full flex-col gap-3">
-      <Text>{t("tenant.noTenants")}</Text>
-      <Alert>{t("tenant.noTenantsDetail")}</Alert>
-    </div>
-  );
+  return <NoTenantsEmptyState />;
 }
 
 interface PermissionGuardProps {

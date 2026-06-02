@@ -45,12 +45,16 @@ function toNavLink(item: EntityNavItem): NavLinkConfig {
 }
 
 export function useAccessibleNavItems(): readonly NavItemConfig[] {
-  const { permissions, isSuperAdmin } = useAuth();
+  const { permissions, isSuperAdmin, availableTenants = [] } = useAuth();
   const { items: catalogItems } = useEntityCatalog();
   const entityNavItems = useEntityNavItems();
   const categoriesQuery = useEntityNavCategories();
 
   return useMemo(() => {
+    if (availableTenants.length === 0) {
+      return [HOME_NAV_ITEM];
+    }
+
     const items: NavItemConfig[] = [HOME_NAV_ITEM];
 
     const accessibleEntityLinks = entityNavItems
@@ -158,6 +162,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     return items;
   }, [
+    availableTenants.length,
     catalogItems,
     categoriesQuery.data,
     entityNavItems,

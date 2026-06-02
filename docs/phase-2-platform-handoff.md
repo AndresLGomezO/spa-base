@@ -295,7 +295,7 @@ HTTP examples: [apps/api/docs/crud-api.http](../apps/api/docs/crud-api.http).
 | Layout | Routes | Purpose |
 |--------|--------|---------|
 | Public | `/login` | Authentication |
-| Auth-only | `/select-tenant`, `/settings/admin/*` | Tenant selection, platform admin |
+| Auth-only | `/settings/admin/*` | Platform admin (legacy `/select-tenant` redirects to `/`) |
 | Private | `/`, `/app/*`, `/settings/*` | Authenticated app + Control Plane (fixed viewport; main body scrolls) |
 
 ### Key integrations

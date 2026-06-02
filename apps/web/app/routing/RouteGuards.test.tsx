@@ -27,6 +27,14 @@ vi.mock("react-i18next", () => ({
   }),
 }));
 
+vi.mock("../components/platform/create-tenant-modal-context", () => ({
+  useCreateTenantModal: () => ({
+    open: false,
+    openCreateTenantModal: vi.fn(),
+    closeCreateTenantModal: vi.fn(),
+  }),
+}));
+
 afterEach(() => {
   cleanup();
 });
@@ -139,33 +147,7 @@ describe("RequireTenant", () => {
     expect(screen.getByText("Tenant content")).toBeInTheDocument();
   });
 
-  it("allows superadmin without tenants to access platform routes", () => {
-    mockUseAuth.mockReturnValue({
-      isReady: true,
-      tenantId: null,
-      availableTenants: [],
-      isSuperAdmin: true,
-    });
-
-    render(
-      <MemoryRouter initialEntries={["/app/widget"]}>
-        <Routes>
-          <Route
-            path="/app/widget"
-            element={
-              <RequireTenant>
-                <div>Tenant content</div>
-              </RequireTenant>
-            }
-          />
-        </Routes>
-      </MemoryRouter>,
-    );
-
-    expect(screen.getByText("Tenant content")).toBeInTheDocument();
-  });
-
-  it("redirects superadmin with available tenants to select-tenant", () => {
+  it("shows loading while superadmin auto-bind is pending", () => {
     mockUseAuth.mockReturnValue({
       isReady: true,
       tenantId: null,
@@ -184,12 +166,65 @@ describe("RequireTenant", () => {
               </RequireTenant>
             }
           />
-          <Route path="/select-tenant" element={<div>Select tenant</div>} />
         </Routes>
       </MemoryRouter>,
     );
 
-    expect(screen.getByText("Select tenant")).toBeInTheDocument();
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
+  });
+
+  it("shows empty state when user has no tenants", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      tenantId: null,
+      availableTenants: [],
+      isSuperAdmin: true,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <RequireTenant>
+                <div>Tenant content</div>
+              </RequireTenant>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("tenant.emptyTitle")).toBeInTheDocument();
+    expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
+  });
+
+  it("shows member no-tenant message when not superadmin", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: true,
+      tenantId: null,
+      availableTenants: [],
+      isSuperAdmin: false,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Routes>
+          <Route
+            path="/"
+            element={
+              <RequireTenant>
+                <div>Tenant content</div>
+              </RequireTenant>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByText("tenant.noTenants")).toBeInTheDocument();
     expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
   });
 });

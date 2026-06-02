@@ -205,11 +205,12 @@
   "tenant": {
     "selectTitle": "Select a tenant",
     "selectDescription": "Choose which tenant you want to work in.",
-    "select": "Select",
     "selectFailed": "Unable to select tenant. Please try again.",
     "none": "None",
     "noTenants": "No tenant access",
     "noTenantsDetail": "Your account is not assigned to any tenant. Contact an administrator.",
+    "emptyTitle": "No tenants yet",
+    "emptyDescription": "Create the first one and activate it to start building.",
     "create": "Create tenant",
     "createNew": "Create new tenant",
     "suspended": "Suspended"

@@ -10,5 +10,5 @@ export default function CreateTenantRedirectRoute() {
     openCreateTenantModal();
   }, [openCreateTenantModal]);
 
-  return <Navigate to="/select-tenant" replace />;
+  return <Navigate to="/" replace />;
 }

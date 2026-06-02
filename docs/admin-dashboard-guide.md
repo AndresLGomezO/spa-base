@@ -72,7 +72,7 @@ Logo upload uses Firebase Admin Storage. See [gcs-storage-guide.md](./gcs-storag
 
 ### Create tenant (modal)
 
-Superadmin only. Opens a centered modal from the tenant switcher or `/select-tenant`. Creates a new tenant and switches into it. Legacy URL `/platform/create-tenant` redirects to `/select-tenant` and opens the same modal.
+Superadmin only. Opens a centered modal from the tenant switcher or the no-tenants empty state on home. Creates a new tenant and switches into it. Legacy URL `/platform/create-tenant` redirects to `/` and opens the same modal.
 
 ## Navigation structure
 

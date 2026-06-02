@@ -1,5 +1,5 @@
 describe("Routing tenant guard", () => {
-  it("redirects authenticated users without tenant to select-tenant", () => {
+  it("redirects unauthenticated users from home to login", () => {
     cy.intercept("GET", "**/auth/validate", {
       statusCode: 200,
       body: {

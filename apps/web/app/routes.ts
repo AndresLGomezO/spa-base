@@ -10,7 +10,7 @@ import { buildEntityRouteConfig } from "./routing/entity-routes";
 export default [
   route("login", "./routes/login.tsx"),
   layout("./routes/private-layout.tsx", [
-    route("select-tenant", "./routes/select-tenant.tsx"),
+    route("select-tenant", "./routes/select-tenant-redirect.tsx"),
     layout("./routes/superadmin-layout.tsx", [
       route("platform/create-tenant", "./routes/platform/create-tenant.tsx"),
       route("settings/tenant", "./routes/settings/tenant.tsx"),
