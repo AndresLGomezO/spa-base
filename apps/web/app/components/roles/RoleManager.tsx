@@ -94,6 +94,11 @@ export function RoleManager({
       "hook.read",
       "hook.create",
       "hook.update",
+      "metricDefinition.read",
+      "metricDefinition.create",
+      "metricDefinition.update",
+      "metricDefinition.delete",
+      "metricDefinition.backfill",
     ]);
 
     for (const entity of entities) {

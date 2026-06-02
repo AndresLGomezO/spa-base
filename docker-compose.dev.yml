@@ -1,10 +1,30 @@
 services:
+  pubsub-init:
+    build:
+      context: .
+      dockerfile: apps/worker-aggregation/Dockerfile.dev
+    container_name: project-base_pubsub_init
+    entrypoint: []
+    command: ["pnpm", "exec", "tsx", "/app/scripts/init-pubsub-emulator.ts"]
+    working_dir: /app
+    volumes:
+      - ./scripts:/app/scripts
+    environment:
+      PUBSUB_EMULATOR_HOST: firebase-emulator:8085
+      GCP_PROJECT_ID: demo-project-base
+      AGGREGATION_EVENTS_TOPIC: aggregation-events
+    depends_on:
+      firebase-emulator:
+        condition: service_started
+    restart: "no"
+
   firebase-emulator:
     image: andreysenov/firebase-tools
     container_name: project-base_firebase_emulator
     restart: unless-stopped
     ports:
       - "8080:8080"
+      - "8085:8085"
       - "9099:9099"
       - "4000:4000"
       - "9199:9199"
@@ -14,7 +34,7 @@ services:
         "firebase",
         "emulators:start",
         "--only",
-        "firestore,auth,storage,hosting",
+        "firestore,auth,storage,hosting,pubsub",
         "--project=demo-project-base",
       ]
     volumes:
@@ -54,38 +74,41 @@ services:
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
       - FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=127.0.0.1:9199
       - GCP_STORAGE_BUCKET=demo-project-base.appspot.com
+      - PUBSUB_EMULATOR_HOST=firebase-emulator:8085
+      - AGGREGATION_EVENTS_PUBSUB=true
+      - AGGREGATION_EVENTS_TOPIC=aggregation-events
     depends_on:
       firebase-emulator:
         condition: service_started
+      pubsub-init:
+        condition: service_completed_successfully
 
-  # worker-service:
-  #   build:
-  #     context: .
-  #     dockerfile: apps/worker-service/Dockerfile.dev
-  #   container_name: project-base_worker_service_dev
-  #   restart: unless-stopped
-  #   ports:
-  #     - '3001:3001'
-  #   volumes:
-  #     - ./package.json:/app/package.json
-  #     - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
-  #     - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
-  #     - ./apps/worker-service:/app/apps/worker-service
-  #     - ./packages:/app/packages
-  #     - /app/node_modules
-  #     - /app/apps/worker-service/node_modules
-  #     - ~/.config/gcloud:/root/.config/gcloud:ro
-  #   env_file:
-  #     - ./apps/worker-service/.env.dev
-  #   environment:
-  #     - NODE_ENV=development
-  #     - IS_LOCAL=true
-  #     - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
-  #     - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
-  #     - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
-  #   depends_on:
-  #     firebase-emulator:
-  #       condition: service_started
+  worker-aggregation:
+    build:
+      context: .
+      dockerfile: apps/worker-aggregation/Dockerfile.dev
+    container_name: project-base_worker_aggregation_dev
+    restart: unless-stopped
+    volumes:
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./apps/worker-aggregation:/app/apps/worker-aggregation
+      - ./packages:/app/packages
+      - /app/node_modules
+      - /app/apps/worker-aggregation/node_modules
+      - /app/packages/eslint-config/node_modules
+    environment:
+      - NODE_ENV=development
+      - GCP_PROJECT_ID=demo-project-base
+      - PUBSUB_EMULATOR_HOST=firebase-emulator:8085
+      - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+      - AGGREGATION_EVENTS_TOPIC=aggregation-events
+    depends_on:
+      firebase-emulator:
+        condition: service_started
+      pubsub-init:
+        condition: service_completed_successfully
 
   web:
     build:
@@ -122,6 +145,8 @@ services:
       firebase-emulator:
         condition: service_started
       api:
+        condition: service_started
+      worker-aggregation:
         condition: service_started
 
 volumes: {}

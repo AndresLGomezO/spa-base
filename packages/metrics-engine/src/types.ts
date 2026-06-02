@@ -1,0 +1,156 @@
+import { z } from "zod";
+
+import { validateFieldsDependency } from "./aggregation-helpers.js";
+
+export const METRICS_DEFINITIONS_COLLECTION = "__metrics_definitions" as const;
+export const METRICS_VALUES_ROOT = "metrics" as const;
+export const METRIC_CONTRIBUTIONS_ROOT = "__metric_contributions" as const;
+export const BACKFILL_JOBS_COLLECTION = "__backfill_jobs" as const;
+
+export const METRIC_DEFINITION_PERMISSIONS = [
+  "metricDefinition.read",
+  "metricDefinition.create",
+  "metricDefinition.update",
+  "metricDefinition.delete",
+  "metricDefinition.backfill",
+] as const;
+
+export const METRIC_AGGREGATION_OPERATIONS = ["SUM", "COUNT", "AVG"] as const;
+export const METRIC_DEFINITION_STATUSES = ["ACTIVE", "PAUSED"] as const;
+
+export type MetricAggregationOperation =
+  (typeof METRIC_AGGREGATION_OPERATIONS)[number];
+export type MetricDefinitionStatus =
+  (typeof METRIC_DEFINITION_STATUSES)[number];
+
+export const metricFilterSchema = z.object({
+  field: z.string().trim().min(1),
+  op: z.enum(["eq", "in"]),
+  value: z.union([
+    z.string(),
+    z.number(),
+    z.boolean(),
+    z.array(z.string().trim().min(1)),
+  ]),
+});
+
+export type MetricFilter = z.infer<typeof metricFilterSchema>;
+
+const sumAvgAggregationSpecSchema = z.object({
+  operation: z.enum(["SUM", "AVG"]),
+  field: z.string().trim().min(1),
+});
+
+const countAggregationSpecSchema = z.object({
+  operation: z.literal("COUNT"),
+  field: z.string().trim().min(1).optional(),
+});
+
+export const metricAggregationSpecSchema = z.union([
+  sumAvgAggregationSpecSchema,
+  countAggregationSpecSchema,
+]);
+
+export type MetricAggregationSpec = z.infer<typeof metricAggregationSpecSchema>;
+
+const fieldsDependencyRefine = {
+  aggregations: z.array(metricAggregationSpecSchema).min(1),
+  fieldsDependency: z.array(z.string().trim().min(1)).default([]),
+};
+
+export const metricTargetSchema = z.object({
+  collection: z.string().trim().min(1),
+  granularity: z.string().trim().min(1).default("dynamic"),
+});
+
+const metricDefinitionBodySchema = z.object({
+  name: z.string().trim().min(1),
+  description: z.string().trim().optional(),
+  sourceModel: z.string().trim().min(1),
+  filters: z.array(metricFilterSchema).default([]),
+  groupBy: z.array(z.string().trim().min(1)).default([]),
+  dimensions: z.array(z.string().trim().min(1)).default([]),
+  aggregations: fieldsDependencyRefine.aggregations,
+  target: metricTargetSchema,
+  version: z.number().int().positive(),
+  schemaVersionDependency: z.number().int().nonnegative(),
+  fieldsDependency: fieldsDependencyRefine.fieldsDependency,
+  status: z.enum(METRIC_DEFINITION_STATUSES),
+});
+
+function refineMetricDefinitionBody(
+  value: {
+    readonly aggregations: z.infer<typeof metricAggregationSpecSchema>[];
+    readonly fieldsDependency: readonly string[];
+  },
+  context: z.RefinementCtx,
+): void {
+  if (!validateFieldsDependency(value.aggregations, value.fieldsDependency)) {
+    context.addIssue({
+      code: "custom",
+      message:
+        "fieldsDependency must include at least one field unless the metric is document COUNT only.",
+      path: ["fieldsDependency"],
+    });
+  }
+}
+
+export const metricDefinitionRecordSchema = metricDefinitionBodySchema
+  .extend({
+    id: z.string().trim().min(1),
+    tenantId: z.string().trim().min(1),
+    metricId: z.string().trim().min(1),
+    createdAt: z.string().trim().min(1),
+    updatedAt: z.string().trim().min(1),
+  })
+  .superRefine((value, context) => refineMetricDefinitionBody(value, context));
+
+export type MetricDefinitionRecord = z.infer<
+  typeof metricDefinitionRecordSchema
+>;
+
+export const createMetricDefinitionInputSchema = metricDefinitionBodySchema
+  .omit({ target: true })
+  .extend({
+    target: metricTargetSchema.optional(),
+    version: z.number().int().positive().default(1),
+    status: z.enum(METRIC_DEFINITION_STATUSES).default("ACTIVE"),
+  })
+  .superRefine((value, context) => refineMetricDefinitionBody(value, context));
+
+export type CreateMetricDefinitionInput = z.infer<
+  typeof createMetricDefinitionInputSchema
+>;
+
+export const patchMetricDefinitionInputSchema = z
+  .object({
+    name: z.string().trim().min(1).optional(),
+    description: z.string().trim().optional(),
+    filters: z.array(metricFilterSchema).optional(),
+    groupBy: z.array(z.string().trim().min(1)).optional(),
+    dimensions: z.array(z.string().trim().min(1)).optional(),
+    aggregations: z.array(metricAggregationSpecSchema).min(1).optional(),
+    version: z.number().int().positive().optional(),
+    schemaVersionDependency: z.number().int().nonnegative().optional(),
+    fieldsDependency: z.array(z.string().trim().min(1)).optional(),
+    status: z.enum(METRIC_DEFINITION_STATUSES).optional(),
+  })
+  .refine((value) => Object.keys(value).length > 0, {
+    message: "At least one field is required.",
+  });
+
+export type PatchMetricDefinitionInput = z.infer<
+  typeof patchMetricDefinitionInputSchema
+>;
+
+export const metricValueRecordSchema = z.object({
+  id: z.string().trim().min(1),
+  tenantId: z.string().trim().min(1),
+  metricName: z.string().trim().min(1),
+  group: z.record(z.string(), z.unknown()).default({}),
+  dimensions: z.record(z.string(), z.unknown()).default({}),
+  values: z.record(z.string(), z.number()),
+  updatedAt: z.string().trim().min(1),
+});
+
+export type MetricValueRecord = z.infer<typeof metricValueRecordSchema>;

@@ -1,9 +1,17 @@
+import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { describe, expect, it } from "vitest";
 
 import { ALL_KNOWN_PERMISSIONS } from "./known-permissions.js";
 import { isPlatformSuperAdmin } from "./platform-role.js";
 import { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
 import { resolvePermissions } from "./resolve-permissions.js";
+import { isTenantBuiltInAdminRole } from "./roles.js";
+
+function canWriteEntityUiOverride(grants: readonly string[]): boolean {
+  return ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS.some((permission) =>
+    hasPermission(permission, grants),
+  );
+}
 
 describe("expandGrant", () => {
   const known = ALL_KNOWN_PERMISSIONS;
@@ -23,6 +31,7 @@ describe("expandGrant", () => {
   it("expands action wildcard", () => {
     expect(expandGrant("*.read", known)).toEqual([
       "entityDefinition.read",
+      "entityUiOverride.read",
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
@@ -64,6 +73,7 @@ describe("resolvePermissions", () => {
       }),
     ).toEqual([
       "entityDefinition.read",
+      "entityUiOverride.read",
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
@@ -78,7 +88,7 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(16);
+    expect(permissions).toHaveLength(18);
     expect(permissions).toEqual(
       expect.arrayContaining([
         "entityDefinition.read",
@@ -96,6 +106,8 @@ describe("resolvePermissions", () => {
         "tenantUser.read",
         "tenantUser.create",
         "tenantUser.update",
+        "entityUiOverride.read",
+        "entityUiOverride.update",
       ]),
     );
     expect(permissions).not.toContain("entityDefinition.delete");
@@ -113,6 +125,7 @@ describe("resolvePermissions", () => {
       }),
     ).toEqual([
       "entityDefinition.read",
+      "entityUiOverride.read",
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
@@ -189,11 +202,49 @@ describe("expandGrants", () => {
       expandGrants(["*.read", "entityDefinition.read"], ALL_KNOWN_PERMISSIONS),
     ).toEqual([
       "entityDefinition.read",
+      "entityUiOverride.read",
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
       "role.read",
       "tenantUser.read",
     ]);
+  });
+});
+
+describe("entity UI override write permissions", () => {
+  const entityUpdateOnlyGrants = [
+    "account.update",
+    "transaction.read",
+  ] as const;
+
+  it("still matches *.update for entity-level grants", () => {
+    expect(hasPermission("*.update", entityUpdateOnlyGrants)).toBe(true);
+  });
+
+  it("denies layout write when grants only include entity *.update", () => {
+    expect(canWriteEntityUiOverride(entityUpdateOnlyGrants)).toBe(false);
+  });
+
+  it("allows layout write with entityUiOverride.update", () => {
+    expect(
+      canWriteEntityUiOverride([
+        ...entityUpdateOnlyGrants,
+        "entityUiOverride.update",
+      ]),
+    ).toBe(true);
+  });
+
+  it("allows layout write for tenant built-in admin via role name", () => {
+    expect(isTenantBuiltInAdminRole(["admin"])).toBe(true);
+  });
+
+  it("resolves editor role with entityUiOverride.update", () => {
+    const permissions = resolvePermissions({
+      tenantId: "tenant_a",
+      tenants: { tenant_a: ["editor"] },
+    });
+
+    expect(canWriteEntityUiOverride(permissions)).toBe(true);
   });
 });

@@ -595,6 +595,94 @@ export async function patchHook(
   });
 }
 
+export interface MetricDefinitionRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly metricId: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly sourceModel: string;
+  readonly filters: readonly {
+    readonly field: string;
+    readonly op: "eq" | "in";
+    readonly value: string | number | boolean | readonly string[];
+  }[];
+  readonly groupBy: readonly string[];
+  readonly dimensions: readonly string[];
+  readonly aggregations: readonly {
+    readonly field?: string;
+    readonly operation: "SUM" | "COUNT" | "AVG";
+  }[];
+  readonly target: {
+    readonly collection: string;
+    readonly granularity: string;
+  };
+  readonly version: number;
+  readonly schemaVersionDependency: number;
+  readonly fieldsDependency: readonly string[];
+  readonly status: "ACTIVE" | "PAUSED";
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listMetricDefinitions(): Promise<{
+  readonly items: readonly MetricDefinitionRecord[];
+}> {
+  return apiRequest<{ readonly items: readonly MetricDefinitionRecord[] }>(
+    "/api/metric-definitions",
+  );
+}
+
+type CreateMetricDefinitionInput = Omit<
+  MetricDefinitionRecord,
+  "id" | "tenantId" | "metricId" | "createdAt" | "updatedAt" | "target"
+> & {
+  readonly version?: number;
+};
+
+export async function createMetricDefinition(
+  input: CreateMetricDefinitionInput,
+): Promise<MetricDefinitionRecord> {
+  return apiRequest<MetricDefinitionRecord>("/api/metric-definitions", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function patchMetricDefinition(
+  id: string,
+  input: Partial<
+    Omit<
+      MetricDefinitionRecord,
+      "id" | "tenantId" | "metricId" | "createdAt" | "updatedAt" | "target"
+    >
+  >,
+): Promise<MetricDefinitionRecord> {
+  return apiRequest<MetricDefinitionRecord>(`/api/metric-definitions/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export async function backfillMetricDefinition(
+  id: string,
+  input?: {
+    readonly previousVersion: number;
+    readonly changedDefinitionFields?: readonly string[];
+  },
+): Promise<{
+  readonly processedEvents: number;
+  readonly processedDocuments?: number;
+}> {
+  return apiRequest<{
+    readonly processedEvents: number;
+    readonly processedDocuments?: number;
+  }>(`/api/metric-definitions/${id}/backfill`, {
+    method: "POST",
+    body: input ?? {},
+  });
+}
+
 export interface TenantRoleRecord {
   readonly id: string;
   readonly tenantId: string;

@@ -45,6 +45,15 @@ const ApiEnvSchema = z.object({
     .trim()
     .min(1)
     .default("index-provisioning"),
+  AGGREGATION_EVENTS_PUBSUB: z
+    .enum(["true", "false"])
+    .default("false")
+    .transform((value) => value === "true"),
+  AGGREGATION_EVENTS_TOPIC: z
+    .string()
+    .trim()
+    .min(1)
+    .default("aggregation-events"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

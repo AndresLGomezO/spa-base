@@ -2,7 +2,6 @@
 #   pnpm check:docker-workspace
 #
 # TODO: worker-service — add package.json COPY + volumes when introduced
-# TODO: Cloud Tasks / Pub/Sub emulators — extend depends_on and env in compose files
 
 FROM node:22-slim
 
@@ -25,6 +24,9 @@ COPY packages/modules/package.json ./packages/modules/
 COPY packages/ui-builder/package.json ./packages/ui-builder/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
+COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/
+COPY packages/event-engine/package.json ./packages/event-engine/
+COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/hooks/package.json ./packages/hooks/

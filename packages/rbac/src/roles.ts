@@ -8,7 +8,13 @@ export const BUILT_IN_ROLES: Readonly<Record<BuiltInRoleName, RoleDefinition>> =
     },
     editor: {
       name: "editor",
-      grants: ["*.read", "*.create", "*.update"],
+      grants: [
+        "*.read",
+        "*.create",
+        "*.update",
+        "entityUiOverride.read",
+        "entityUiOverride.update",
+      ],
     },
     viewer: {
       name: "viewer",

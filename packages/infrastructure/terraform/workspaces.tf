@@ -5,28 +5,32 @@ locals {
   # Optional: set -var='project_id=...' to override for local testing only.
   env_base = {
     default = {
-      env_suffix               = "dev"
-      project_id               = "entitysystem-development"
-      node_env                 = "production"
-      ensure_firestore_indexes = "true"
+      env_suffix                = "dev"
+      project_id                = "entitysystem-development"
+      node_env                  = "production"
+      ensure_firestore_indexes  = "true"
+      enable_aggregation_pubsub = true
     }
     dev = {
-      env_suffix               = "dev"
-      project_id               = "entitysystem-development"
-      node_env                 = "production"
-      ensure_firestore_indexes = "true"
+      env_suffix                = "dev"
+      project_id                = "entitysystem-development"
+      node_env                  = "production"
+      ensure_firestore_indexes  = "true"
+      enable_aggregation_pubsub = true
     }
     staging = {
-      env_suffix               = "stg"
-      project_id               = "entitysystem-staging"
-      node_env                 = "production"
-      ensure_firestore_indexes = "true"
+      env_suffix                = "stg"
+      project_id                = "entitysystem-staging"
+      node_env                  = "production"
+      ensure_firestore_indexes  = "true"
+      enable_aggregation_pubsub = true
     }
     prod = {
-      env_suffix               = "prod"
-      project_id               = "entitysystem-production"
-      node_env                 = "production"
-      ensure_firestore_indexes = "true"
+      env_suffix                = "prod"
+      project_id                = "entitysystem-production"
+      node_env                  = "production"
+      ensure_firestore_indexes  = "true"
+      enable_aggregation_pubsub = true
     }
   }
 

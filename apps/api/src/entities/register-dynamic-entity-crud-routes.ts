@@ -16,6 +16,7 @@ import type {
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
 import { sanitizeFileFieldsForWrite } from "../entity-files/entity-file-field-utils.js";
 import type { RecordReadEnricher } from "../entity-files/create-entity-file-read-enricher.js";
+import type { AggregationEmitterDeps } from "../aggregation/emit-aggregation-event.js";
 
 const registeredContexts = new WeakMap<EntityRuntimeContext, boolean>();
 const staticEntityNames = new Set(
@@ -33,6 +34,7 @@ export async function registerDynamicEntityCrudRoutes(
   indexStatusStore?: FirestoreIndexStatusStore,
   recordReadEnricher?: RecordReadEnricher,
   firebaseAdminConfig?: FirebaseAdminConfig,
+  aggregation?: AggregationEmitterDeps,
 ): Promise<void> {
   if (registeredContexts.get(entityRuntime)) {
     return;
@@ -83,6 +85,7 @@ export async function registerDynamicEntityCrudRoutes(
     },
     ...(crudHooks ? { crudHooks } : {}),
     ...(recordReadEnricher ? { recordReadEnricher } : {}),
+    ...(aggregation ? { aggregation } : {}),
   });
 
   registeredContexts.set(entityRuntime, true);

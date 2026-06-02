@@ -8,11 +8,15 @@ flowchart LR
   Browser --> API[Cloud_Run_API]
   API --> Firestore[(Firestore)]
   API --> Storage[(GCS_default_bucket)]
+  API -->|AGGREGATION_EVENTS_PUBSUB| PubSub[PubSub_aggregation_events]
+  PubSub --> Worker[Cloud_Run_worker_aggregation]
+  Worker --> Firestore
   Hosting -->|VITE_API_URL| API
 ```
 
 - **Web:** static SPA on Firebase Hosting (`apps/web/build/client`).
 - **API:** container on Cloud Run v2 (`es-backend-service-{dev|stg|prod}`), scale-to-zero.
+- **Aggregation worker:** Cloud Run v2 (`es-worker-aggregation-{dev|stg|prod}`), min 1 instance, internal ingress — consumes Pub/Sub when `enable_aggregation_pubsub` is true (default for all workspaces).
 - **Data:** Firestore rules/indexes via Terraform; Storage rules via `firebase deploy --only storage`.
 
 ## GitHub Actions workflows
@@ -21,7 +25,7 @@ flowchart LR
 | -------- | ---- | ------------- |
 | [.github/workflows/ci.yml](../../.github/workflows/ci.yml) | PR / push to `develop` / `main` | App lint, tests, format (includes `pnpm terraform:fmt:check` on every run) |
 | [.github/workflows/verify.yml](../../.github/workflows/verify.yml) | PR touching `packages/infrastructure/terraform/**` | Environment WIF secrets (`development` / `staging`), fmt, validate, remote plan, PR comment |
-| [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml) | Merge, tag `v*`, or manual | Build API image, **apply**, deploy Hosting |
+| [.github/workflows/deploy.yml](../../.github/workflows/deploy.yml) | Merge, tag `v*`, or manual | Build API + worker images, **apply**, deploy Hosting |
 
 ### Deploy workflow — triggers
 
@@ -35,7 +39,7 @@ flowchart LR
 ### Jobs
 
 1. **resolve-target** — workspace, project, image tag.
-2. **build** — Docker Buildx bake `api` target → Artifact Registry.
+2. **build** — Docker Buildx bake `api` + `worker-aggregation` → Artifact Registry.
 3. **build-and-deploy** — Terraform init/apply → build web with `VITE_*` → `firebase deploy --only hosting:live,storage`.
 
 Auth: **Workload Identity Federation** only (`GCP_WORKLOAD_IDENTITY_PROVIDER`, `GCP_SERVICE_ACCOUNT`). No `FIREBASE_TOKEN`.
@@ -69,9 +73,9 @@ export REPO=entitysystem-repo
 export TAG=manual-$(git rev-parse --short HEAD)
 export REGISTRY="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPO}"
 
-# Build and push API image
+# Build and push API + worker images
 gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
-docker buildx bake -f docker-bake.hcl --set "*.args.REGISTRY=${REGISTRY}" --set "*.args.TAG=${TAG}" api --push
+REGISTRY="${REGISTRY}" TAG="${TAG}" docker buildx bake -f docker-bake.hcl --push
 
 cd packages/infrastructure/terraform
 terraform init -backend-config=backend-configs/dev.hcl
@@ -85,6 +89,7 @@ echo -n 'you@example.com' | gcloud secrets versions add PLATFORM_BOOTSTRAP_SUPER
 terraform apply \
   -var="region=${REGION}" \
   -var="api_image=${REGISTRY}/api:${TAG}" \
+  -var="worker_aggregation_image=${REGISTRY}/worker-aggregation:${TAG}" \
   -var="ci_deployer_sa_email=github-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
 
 export BACKEND_URL=$(terraform output -raw backend_url)

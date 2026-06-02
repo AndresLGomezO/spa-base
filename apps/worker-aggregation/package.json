@@ -1,0 +1,30 @@
+{
+  "name": "worker-aggregation",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "node esbuild.mjs",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "lint": "eslint ."
+  },
+  "dependencies": {
+    "@google-cloud/pubsub": "catalog:",
+    "@repo/aggregation-engine": "workspace:*",
+    "@repo/event-engine": "workspace:*",
+    "@repo/firestore-converters": "workspace:*",
+    "@repo/gcp-firebase": "workspace:*",
+    "@repo/metrics-engine": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "esbuild": "catalog:",
+    "eslint": "catalog:",
+    "tsx": "catalog:",
+    "typescript": "catalog:"
+  }
+}

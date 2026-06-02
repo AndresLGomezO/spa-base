@@ -28,6 +28,8 @@ COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/hooks/package.json ./packages/hooks/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
+COPY packages/event-engine/package.json ./packages/event-engine/
+COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/ui/package.json ./packages/ui/

@@ -1,5 +1,6 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  BarChart3,
   Building2,
   Database,
   FolderTree,
@@ -23,6 +24,8 @@ export type NavLabelKey =
   | "dataStructure"
   | "dataModelBuilder"
   | "automation"
+  | "analytics"
+  | "metricsNav"
   | "roles"
   | "entityCategories";
 
@@ -85,6 +88,16 @@ export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
   matchPath: "/settings/hooks",
   icon: Workflow,
 };
+
+export const SETTINGS_METRICS_NAV_ITEM: NavLinkConfig = {
+  id: "metrics",
+  labelKey: "metricsNav",
+  to: "/settings/metrics",
+  matchPath: "/settings/metrics",
+  icon: BarChart3,
+};
+
+export const ANALYTICS_GROUP_ICON = BarChart3;
 
 export const DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM: NavLinkConfig = {
   id: "entity-categories",
