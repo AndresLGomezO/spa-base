@@ -17,8 +17,10 @@ export {
 } from "./dark-mode-remaps.js";
 
 export {
+  BADGE_SEMANTIC_CSS_VARS,
   isSemanticCssVar,
   SEMANTIC_OVERRIDABLE_CSS_VARS,
+  type BadgeSemanticCssVar,
   type SemanticOverridableCssVar,
 } from "./semantic-vars.js";
 

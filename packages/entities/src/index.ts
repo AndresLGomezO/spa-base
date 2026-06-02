@@ -89,8 +89,44 @@ export {
   resolveSearchField,
 } from "./search/searchable-fields.js";
 export type {
+  CardBadgeVariant,
+  CardLayoutConfig,
+  CardSlotBinding,
+  CardSlotComponentType,
+  LayoutAlign,
+  LayoutContainerNode,
+  LayoutDirection,
+  LayoutJustify,
+  LayoutNode,
+  LayoutNodeBase,
+  LayoutSize,
+  LayoutSlotNode,
+} from "./ui/card-layout-types.js";
+export {
+  assertCardLayoutFieldPaths,
+  isValidCardLayoutFieldPath,
+  listCardLayoutFieldOptions,
+  relationAliasFieldPath,
+} from "./ui/card-layout-validation.js";
+export {
+  ENTITY_UI_OVERRIDES_COLLECTION,
+  entityUiOverrideRecordSchema,
+  putEntityUiOverrideInputSchema,
+  type PutEntityUiOverrideInput,
+} from "./ui/entity-ui-override-schema.js";
+export {
+  ENTITY_UI_OVERRIDE_PERMISSIONS,
+  ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  type EntityUiOverridePermission,
+} from "./ui/entity-ui-override-permissions.js";
+export { mergeEntityViewOverrides } from "./ui/merge-entity-view-overrides.js";
+export { normalizeEntityViews } from "./ui/normalize-entity-views.js";
+export type {
   DetailConfig,
   EntityNavConfig,
+  EntityUiOverride,
+  EntityUiOverrideRecord,
+  EntityListViewType,
   EntityUIConfig,
   FieldComponentType,
   FieldDateDisplayFormat,

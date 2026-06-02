@@ -71,6 +71,10 @@ export function resolveView(
     }
     return view;
   }
+  const tableView = ui.views.find((entry) => entry.type === "table");
+  if (tableView) {
+    return tableView;
+  }
   return ui.views[0] ?? getDefaultEntityUI(entity).views[0]!;
 }
 

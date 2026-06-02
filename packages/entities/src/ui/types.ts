@@ -1,4 +1,5 @@
 import type { EntityFileReference } from "../schema/entityFileReference.js";
+import type { CardLayoutConfig } from "./card-layout-types.js";
 
 export type FieldComponentType =
   | "input"
@@ -45,7 +46,17 @@ export interface ViewConfig {
     readonly field: string;
     readonly direction: "asc" | "desc";
   };
+  readonly layout?: CardLayoutConfig;
 }
+
+export interface EntityUiOverride {
+  readonly entityName: string;
+  readonly views: readonly ViewConfig[];
+  readonly listViewType?: EntityListViewType;
+  readonly updatedAt: string;
+}
+
+export type EntityUiOverrideRecord = EntityUiOverride;
 
 export interface FormSection {
   readonly title?: string;
@@ -70,8 +81,11 @@ export interface EntityNavConfig {
   readonly icon?: string;
 }
 
+export type EntityListViewType = "table" | "card";
+
 export interface EntityUIConfig {
   readonly views: readonly ViewConfig[];
+  readonly listViewType?: EntityListViewType;
   readonly forms: FormConfig;
   readonly detail?: DetailConfig;
   readonly nav?: EntityNavConfig;

@@ -80,8 +80,19 @@
   --color-button-background: var(--color-primary);
   --color-button-foreground: var(--color-primary-foreground);
 
-  --color-badge-background: var(--color-muted);
-  --color-badge-foreground: var(--color-foreground);
+  --color-badge-default: var(--color-muted);
+  --color-badge-default-foreground: var(--color-foreground);
+  --color-badge-background: var(--color-badge-default);
+  --color-badge-foreground: var(--color-badge-default-foreground);
+
+  --color-badge-success: var(--color-success-100);
+  --color-badge-success-foreground: var(--color-success-800);
+  --color-badge-warning: var(--color-warning-100);
+  --color-badge-warning-foreground: var(--color-warning-900);
+  --color-badge-danger: var(--color-danger-100);
+  --color-badge-danger-foreground: var(--color-danger-900);
+  --color-badge-info: var(--color-primary-100);
+  --color-badge-info-foreground: var(--color-primary-900);
 
   --color-avatar-border: var(--color-border);
 }

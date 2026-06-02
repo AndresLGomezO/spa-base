@@ -16,6 +16,7 @@ interface EntityViewProps {
   readonly pageSize?: number;
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
+  readonly onRequestShare?: (id: string) => void;
 }
 
 const viewComponents = new Map<string, ComponentType<EntityViewProps>>();

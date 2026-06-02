@@ -5,7 +5,7 @@ import { DocumentField } from "./custom-fields/DocumentField";
 import { ImageField } from "./custom-fields/ImageField";
 import { registerFieldComponent } from "./field-component-registry";
 import { registerViewComponent } from "./view-component-registry";
-import { EntityCardView } from "./EntityCardView";
+import { EntityLayoutCardView } from "./EntityLayoutCardView";
 import { EntityTable } from "./EntityTable";
 
 export function registerBuiltInEntityComponents(): void {
@@ -23,5 +23,5 @@ export function registerBuiltInEntityComponents(): void {
   registerFieldComponent("DocumentField", DocumentField);
 
   registerViewComponent("table", EntityTable);
-  registerViewComponent("card", EntityCardView);
+  registerViewComponent("card", EntityLayoutCardView);
 }

@@ -1,3 +1,19 @@
+/** Status badge colors for card layout and similar UI. */
+export const BADGE_SEMANTIC_CSS_VARS = [
+  "--color-badge-default",
+  "--color-badge-default-foreground",
+  "--color-badge-success",
+  "--color-badge-success-foreground",
+  "--color-badge-warning",
+  "--color-badge-warning-foreground",
+  "--color-badge-danger",
+  "--color-badge-danger-foreground",
+  "--color-badge-info",
+  "--color-badge-info-foreground",
+] as const;
+
+export type BadgeSemanticCssVar = (typeof BADGE_SEMANTIC_CSS_VARS)[number];
+
 /** Semantic tokens tenants may override (advanced appearance editor). */
 export const SEMANTIC_OVERRIDABLE_CSS_VARS = [
   "--color-background",
@@ -19,6 +35,7 @@ export const SEMANTIC_OVERRIDABLE_CSS_VARS = [
   "--color-active",
   "--color-accent",
   "--color-accent-foreground",
+  ...BADGE_SEMANTIC_CSS_VARS,
 ] as const;
 
 export type SemanticOverridableCssVar =

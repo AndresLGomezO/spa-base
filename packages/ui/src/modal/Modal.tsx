@@ -106,9 +106,10 @@ function ModalPanel({
       <div
         className={cn(
           "flex flex-col gap-4",
-          useStickyLayout
-            ? "min-h-0 flex-1 overflow-y-auto px-5 py-4"
-            : undefined,
+          useStickyLayout &&
+            (scrollable
+              ? "min-h-0 flex-1 overflow-y-auto px-5 py-4"
+              : "min-h-0 flex-1 overflow-hidden px-5 py-4"),
         )}
       >
         {children}

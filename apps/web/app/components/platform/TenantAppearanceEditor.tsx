@@ -592,6 +592,29 @@ export function TenantAppearanceEditor({
               ))}
             </section>
 
+            <section className="border-border grid gap-3 rounded-lg border p-4">
+              <Text className="font-medium">
+                {t("platform.appearance.badgeSemantics")}
+              </Text>
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.appearance.badgeSemanticsHint")}
+              </Text>
+              {TENANT_OVERRIDE_GROUPS.badge.map((cssVar) => (
+                <SemanticColorField
+                  key={cssVar}
+                  cssVar={cssVar}
+                  value={semantics[cssVar] ?? ""}
+                  placeholder={t("platform.appearance.placeholder")}
+                  onChange={(nextValue) =>
+                    setSemantics((current) => ({
+                      ...current,
+                      [cssVar]: nextValue,
+                    }))
+                  }
+                />
+              ))}
+            </section>
+
             {(["sidebar"] as const).map((groupKey) => {
               const vars = TENANT_OVERRIDE_GROUPS[groupKey];
               return (

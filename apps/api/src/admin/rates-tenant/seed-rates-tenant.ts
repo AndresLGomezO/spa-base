@@ -1,6 +1,7 @@
 import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
+  createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminTenantRoleRepository,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
@@ -17,6 +18,7 @@ import {
   seedRatesLookupRecords,
 } from "./records/index.js";
 import { seedRatesTestUser } from "./seed-rates-test-user.js";
+import { seedRatesAccountCardLayout } from "./seed-account-card-layout.js";
 import {
   ensureRatesRole,
   seedRatesCategories,
@@ -32,6 +34,8 @@ export async function seedRatesTenantMock(
     createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
   const roleRepository =
     createFirestoreAdminTenantRoleRepository(firebaseAdminConfig);
+  const uiOverrideRepository =
+    createFirestoreAdminEntityUiOverrideRepository(firebaseAdminConfig);
 
   const categoryIdsByName = await seedRatesCategories(
     categoryRepository,
@@ -67,4 +71,5 @@ export async function seedRatesTenantMock(
     definitionRecords,
     testUserUid,
   );
+  await seedRatesAccountCardLayout(uiOverrideRepository);
 }

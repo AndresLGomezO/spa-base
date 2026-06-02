@@ -40,11 +40,26 @@ class FirestoreAdminPlatformRoleRepositoryImpl {
 
     await firestore.runTransaction(async (transaction) => {
       const existing = await transaction.get(docRef);
+      const nowIso = new Date().toISOString();
+
       if (existing.exists) {
+        const current = platformRoleConverter.read(existing.data());
+        const mergedGrants = [...new Set([...current.grants, ...grants])];
+        if (mergedGrants.length === current.grants.length) {
+          return;
+        }
+
+        transaction.set(
+          docRef,
+          platformRoleConverter.write({
+            ...current,
+            grants: mergedGrants,
+            updatedAt: nowIso,
+          }),
+        );
         return;
       }
 
-      const nowIso = new Date().toISOString();
       const role: PlatformRole = {
         name: parsedName,
         grants: [...grants],

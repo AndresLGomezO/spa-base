@@ -1,10 +1,21 @@
 import type { PlatformRole } from "@repo/shared-types";
 
-import { BUILT_IN_ROLES } from "./roles.js";
+import { BUILT_IN_ROLES, isBuiltInRoleName } from "./roles.js";
 import type {
   EntityFieldRules,
   TenantRoleRecord,
 } from "./tenant-role-types.js";
+
+function mergeRoleGrants(
+  roleName: string,
+  grants: readonly string[],
+): readonly string[] {
+  if (!isBuiltInRoleName(roleName)) {
+    return [...grants];
+  }
+
+  return [...new Set([...BUILT_IN_ROLES[roleName].grants, ...grants])];
+}
 
 export interface RoleCatalogEntry {
   readonly grants: readonly string[];
@@ -22,7 +33,7 @@ export function buildRoleCatalog(
     if (role.tenantId !== null) {
       continue;
     }
-    catalog[role.name] = { grants: [...role.grants] };
+    catalog[role.name] = { grants: mergeRoleGrants(role.name, role.grants) };
   }
 
   for (const [name, definition] of Object.entries(BUILT_IN_ROLES)) {
@@ -44,7 +55,9 @@ export function buildTenantRoleCatalog(
     if (template.tenantId !== null) {
       continue;
     }
-    catalog[template.name] = { grants: [...template.grants] };
+    catalog[template.name] = {
+      grants: mergeRoleGrants(template.name, template.grants),
+    };
   }
 
   for (const [name, definition] of Object.entries(BUILT_IN_ROLES)) {
@@ -55,7 +68,7 @@ export function buildTenantRoleCatalog(
 
   for (const role of tenantRoles) {
     catalog[role.name] = {
-      grants: [...role.grants],
+      grants: mergeRoleGrants(role.name, role.grants),
       fieldRules: role.fieldRules ? [...role.fieldRules] : undefined,
     };
   }

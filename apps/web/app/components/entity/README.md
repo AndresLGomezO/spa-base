@@ -10,7 +10,7 @@ See [Advanced UI Builder Guide](../../../../docs/advanced-ui-builder-guide.md).
 | -------------------------- | --------------------------------------------------------------------------------------------------------- |
 | `EntityPage`               | List shell: create/edit modals, table/card view, delete modal                                             |
 | `EntityTable`              | Schema-driven `@repo/ui` DataTable; offset pagination from parent; one-to-many columns via reverse lookup |
-| `EntityCardView`           | Card grid for `views[].type: "card"`                                                                      |
+| `EntityLayoutCardView`     | Layout-driven card grid for `views[].type: "card"`                                                        |
 | `EntityForm`               | Create/edit form body (hosted in modal); syncs M2M after save                                             |
 | `EntityField`              | Field rendering; routes to pickers by relation type                                                       |
 | `RelationPicker`           | FK many-to-one / one-to-one                                                                               |

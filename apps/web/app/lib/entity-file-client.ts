@@ -2,6 +2,12 @@ import type { EntityFileReference } from "@repo/entities";
 
 import { apiRequest } from "./api-client";
 
+export interface EntityFileDownloadTarget {
+  readonly entityName: string;
+  readonly recordId: string;
+  readonly fieldName: string;
+}
+
 interface EntityFileReferenceWithDownload extends EntityFileReference {
   readonly downloadUrl?: string;
 }
@@ -35,6 +41,22 @@ export async function uploadEntityFile(input: {
     body: input,
   });
   return response.file;
+}
+
+export async function fetchEntityFileDownloadUrl(
+  target: EntityFileDownloadTarget,
+): Promise<string> {
+  const response = await apiRequest<{ readonly downloadUrl: string }>(
+    "/api/entity-files/download",
+    {
+      query: {
+        entityName: target.entityName,
+        recordId: target.recordId,
+        fieldName: target.fieldName,
+      },
+    },
+  );
+  return response.downloadUrl;
 }
 
 export function readFileAsBase64(file: File): Promise<string> {

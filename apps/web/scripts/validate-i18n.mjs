@@ -294,6 +294,22 @@ function extractAppearanceGroupKeys(corpus) {
   );
 }
 
+/** entity.viewSettings.badgeVariant.${variant} in source → all keys under entity.viewSettings.badgeVariant */
+function extractBadgeVariantKeys(corpus) {
+  if (!corpus.includes("entity.viewSettings.badgeVariant.${")) return [];
+
+  const refEntity = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).entity;
+
+  const badgeVariant = refEntity?.viewSettings?.badgeVariant;
+  if (!badgeVariant || typeof badgeVariant !== "object") return [];
+
+  return Object.keys(badgeVariant).map(
+    (key) => `${DEFAULT_NAMESPACE}:entity.viewSettings.badgeVariant.${key}`,
+  );
+}
+
 /** platform.appearance.presets.${presetId} in source → all keys under platform.appearance.presets */
 function extractAppearancePresetKeys(corpus) {
   if (!corpus.includes("platform.appearance.presets.${")) return [];
@@ -488,6 +504,11 @@ mergeUsedKeys(
   usedKeys,
   extractHookEventKeys(corpus),
   path.join(SRC_DIR, "components/hooks/HookEditor.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractBadgeVariantKeys(corpus),
+  path.join(SRC_DIR, "components/entity/EntityViewSettingsModal.tsx"),
 );
 const appearanceEditorFile = path.join(
   SRC_DIR,

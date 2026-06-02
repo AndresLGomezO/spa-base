@@ -49,6 +49,20 @@
 
     --color-skeleton: var(--color-muted);
 
+    --color-badge-default: var(--color-neutral-800);
+    --color-badge-default-foreground: var(--color-neutral-200);
+    --color-badge-background: var(--color-badge-default);
+    --color-badge-foreground: var(--color-badge-default-foreground);
+
+    --color-badge-success: var(--color-success-950);
+    --color-badge-success-foreground: var(--color-success-300);
+    --color-badge-warning: var(--color-warning-950);
+    --color-badge-warning-foreground: var(--color-warning-300);
+    --color-badge-danger: var(--color-danger-950);
+    --color-badge-danger-foreground: var(--color-danger-300);
+    --color-badge-info: var(--color-primary-950);
+    --color-badge-info-foreground: var(--color-primary-300);
+
     --color-sidebar: var(--color-neutral-900);
     --color-sidebar-foreground: var(--color-neutral-50);
     --color-sidebar-border: var(--color-neutral-800);

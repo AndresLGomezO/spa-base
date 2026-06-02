@@ -4,7 +4,9 @@ import {
   type FieldDefinitions,
 } from "@repo/entities";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
+import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
+import { enrichFileFieldsForRead } from "../entity-files/entity-file-field-utils.js";
 import { checkRecordAccess } from "./record-access.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
@@ -19,6 +21,7 @@ export interface ReferencePopulatorDeps {
     tenantId: string,
     entityName: string,
   ) => TenantScopedEntityRepository<GenericRecord, unknown> | undefined;
+  readonly firebaseAdminConfig?: FirebaseAdminConfig;
 }
 
 const MAX_DISTINCT_KEYS = 100;
@@ -102,7 +105,21 @@ export function createReferencePopulator(deps: ReferencePopulatorDeps) {
         }
 
         const access = checkRecordAccess(fullRecord, userId);
-        resolvedMap.set(id, access.canRead ? fullRecord : null);
+        if (!access.canRead) {
+          resolvedMap.set(id, null);
+          continue;
+        }
+
+        let readableRecord = fullRecord;
+        if (deps.firebaseAdminConfig && targetDef) {
+          readableRecord = await enrichFileFieldsForRead(
+            deps.firebaseAdminConfig,
+            targetDef,
+            fullRecord,
+          );
+        }
+
+        resolvedMap.set(id, readableRecord);
       }
 
       populatedByField.set(fieldName, resolvedMap);

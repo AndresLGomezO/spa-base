@@ -2,6 +2,42 @@ import type { SerializableEntityDefinition, ViewConfig } from "@repo/entities";
 
 import { sortFieldsByUiOrder } from "./sort-fields-by-order.js";
 
+function findViewByType(
+  definition: SerializableEntityDefinition,
+  type: ViewConfig["type"],
+): ViewConfig | undefined {
+  return definition.ui.views.find((entry) => entry.type === type);
+}
+
+export function resolveTableView(
+  definition: SerializableEntityDefinition,
+  viewName = "default",
+): ViewConfig {
+  const tableView = findViewByType(definition, "table");
+  if (tableView) {
+    return tableView;
+  }
+
+  const namedView = definition.ui.views.find(
+    (entry) => entry.name === viewName,
+  );
+  if (namedView) {
+    return namedView;
+  }
+
+  const fallback = definition.ui.views[0];
+  if (!fallback) {
+    throw new Error(`Entity "${definition.name}" has no configured views.`);
+  }
+  return fallback;
+}
+
+export function resolveCardView(
+  definition: SerializableEntityDefinition,
+): ViewConfig | null {
+  return findViewByType(definition, "card") ?? null;
+}
+
 export function resolveActiveView(
   definition: SerializableEntityDefinition,
   viewName?: string,
@@ -16,11 +52,7 @@ export function resolveActiveView(
     return view;
   }
 
-  const defaultView = definition.ui.views[0];
-  if (!defaultView) {
-    throw new Error(`Entity "${definition.name}" has no configured views.`);
-  }
-  return defaultView;
+  return resolveTableView(definition);
 }
 
 export function getTableColumns(

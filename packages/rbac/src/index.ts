@@ -10,7 +10,11 @@ export {
 } from "./known-permissions.js";
 export { isPlatformSuperAdmin } from "./platform-role.js";
 export { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
-export { BUILT_IN_ROLES, isBuiltInRoleName } from "./roles.js";
+export {
+  BUILT_IN_ROLES,
+  isBuiltInRoleName,
+  isTenantBuiltInAdminRole,
+} from "./roles.js";
 export {
   buildRoleCatalog,
   buildTenantRoleCatalog,

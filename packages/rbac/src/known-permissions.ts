@@ -4,6 +4,7 @@ import {
   INTERNAL_ENTITY_PERMISSIONS,
   getDynamicPermissionsForTenant,
 } from "@repo/dynamic-entities";
+import { ENTITY_UI_OVERRIDE_PERMISSIONS } from "@repo/entities";
 import { HOOK_PERMISSIONS } from "@repo/hooks";
 import { getAllEntities } from "@repo/entities";
 
@@ -19,6 +20,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
   const permissions = [
     ...staticPermissions,
     ...ENTITY_DEFINITION_PERMISSIONS,
+    ...ENTITY_UI_OVERRIDE_PERMISSIONS,
     ...ENTITY_CATEGORY_PERMISSIONS,
     ...INTERNAL_ENTITY_PERMISSIONS,
     ...HOOK_PERMISSIONS,

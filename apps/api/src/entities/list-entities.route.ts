@@ -3,8 +3,12 @@ import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import { canIncludeEntityInCatalog } from "@repo/dynamic-entities";
-import { serializeEntityDefinition } from "@repo/entities";
+import {
+  mergeEntityViewOverrides,
+  serializeEntityDefinition,
+} from "@repo/entities";
 import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
+import type { EntityUiOverrideRepository } from "@repo/firestore-converters";
 
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
 import { ApiErrorCode } from "../crud/errors.js";
@@ -20,6 +24,7 @@ interface RegisterListEntitiesRouteOptions {
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly firebaseAdminConfig: FirebaseAdminConfig;
+  readonly entityUiOverrideRepository: EntityUiOverrideRepository;
 }
 
 export async function registerListEntitiesRoute(
@@ -55,6 +60,12 @@ export async function registerListEntitiesRoute(
       const permissions = new Set(request.ctx?.permissions ?? []);
       const isSuperAdmin = request.ctx?.isSuperAdmin === true;
 
+      const uiOverrides =
+        await options.entityUiOverrideRepository.list(tenantId);
+      const overrideByEntity = new Map(
+        uiOverrides.map((override) => [override.entityName, override]),
+      );
+
       const items = options.entityRuntime
         .getEntitiesForTenant(tenantId)
         .map((entity) => {
@@ -68,13 +79,27 @@ export async function registerListEntitiesRoute(
                   ...definition,
                   ui: mergeUiExtensions(definition.ui, extensions),
                 };
+          const override = overrideByEntity.get(entity.name);
+          const mergedDefinition = mergeEntityViewOverrides(
+            base,
+            override
+              ? {
+                  entityName: override.entityName,
+                  views: override.views as typeof base.ui.views,
+                  ...(override.listViewType
+                    ? { listViewType: override.listViewType }
+                    : {}),
+                  updatedAt: override.updatedAt,
+                }
+              : null,
+          );
 
           if (isSuperAdmin || !request.ctx) {
-            return base;
+            return mergedDefinition;
           }
 
           return {
-            ...base,
+            ...mergedDefinition,
             fieldAccess: resolveRequestFieldAccessMap(
               request.ctx,
               entity.name,

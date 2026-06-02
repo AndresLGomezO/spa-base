@@ -42,11 +42,18 @@ export function isEntityName(
   return catalog.some((entry) => entry.name === value);
 }
 
+export function tryGetEntityDefinition(
+  name: string,
+  catalog: readonly EntityCatalogEntry[],
+): EntityCatalogEntry | undefined {
+  return catalog.find((entry) => entry.name === name);
+}
+
 export function getEntityDefinition(
   name: EntityName,
   catalog: readonly EntityCatalogEntry[],
 ): EntityCatalogEntry {
-  const definition = catalog.find((entry) => entry.name === name);
+  const definition = tryGetEntityDefinition(name, catalog);
   if (!definition) {
     throw new Error(`Unknown entity "${name}".`);
   }

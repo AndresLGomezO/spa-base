@@ -37,6 +37,18 @@ export const DARK_MODE_REMAPPED_SEMANTIC_VARS = [
   "--color-input-background",
   "--color-input-border",
   "--color-skeleton",
+  "--color-badge-default",
+  "--color-badge-default-foreground",
+  "--color-badge-background",
+  "--color-badge-foreground",
+  "--color-badge-success",
+  "--color-badge-success-foreground",
+  "--color-badge-warning",
+  "--color-badge-warning-foreground",
+  "--color-badge-danger",
+  "--color-badge-danger-foreground",
+  "--color-badge-info",
+  "--color-badge-info-foreground",
 ] as const;
 
 export type AppearanceColorScheme = "light" | "dark";

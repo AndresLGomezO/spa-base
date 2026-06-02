@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { resolveActiveView } from "@repo/ui-builder";
+import { resolveActiveView, resolveCardView } from "@repo/ui-builder";
 import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
-import { Button, Heading, Modal, Text, toast } from "@repo/ui";
+import { Button, Heading, IconButton, Modal, Text, toast } from "@repo/ui";
+import { Settings } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 
+import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
+
+import { useAnyPermission } from "../../auth/useAnyPermission";
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
@@ -21,6 +25,7 @@ import { resolveViewComponent } from "./view-component-registry";
 import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
 import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
+import { EntityViewSettingsModal } from "./EntityViewSettingsModal";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -48,7 +53,18 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
-  const activeView = useMemo(() => resolveActiveView(definition), [definition]);
+  const canConfigureView = useAnyPermission(
+    ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  );
+  const cardView = useMemo(() => resolveCardView(definition), [definition]);
+
+  const activeView = useMemo(() => {
+    if (definition.ui.listViewType === "card" && cardView) {
+      return cardView;
+    }
+    return resolveActiveView(definition);
+  }, [cardView, definition]);
+
   const ViewComponent = resolveViewComponent(activeView.type) ?? EntityTable;
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -177,6 +193,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [shareRecordId, setShareRecordId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
+  const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
 
   const closeFormModal = useCallback(() => {
@@ -235,14 +252,26 @@ export function EntityPage({ entityName }: EntityPageProps) {
     <div className="flex min-h-full w-full flex-col gap-6">
       <div className="flex shrink-0 items-center justify-between gap-4">
         <Heading level={1}>{getEntityLabel(definition)}</Heading>
-        {permissions.canCreate ? (
-          <Button
-            type="button"
-            onClick={() => setFormModal({ mode: "create" })}
-          >
-            {t("entity.create")}
-          </Button>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {canConfigureView ? (
+            <IconButton
+              label={t("entity.viewSettings.title")}
+              size="sm"
+              className="rounded-lg"
+              onClick={() => setViewSettingsOpen(true)}
+            >
+              <Settings className="size-4" />
+            </IconButton>
+          ) : null}
+          {permissions.canCreate ? (
+            <Button
+              type="button"
+              onClick={() => setFormModal({ mode: "create" })}
+            >
+              {t("entity.create")}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       <div className="shrink-0">
@@ -348,6 +377,19 @@ export function EntityPage({ entityName }: EntityPageProps) {
         open={shareRecordId !== null}
         onClose={() => setShareRecordId(null)}
       />
+
+      {canConfigureView ? (
+        <EntityViewSettingsModal
+          entityName={entityName}
+          open={viewSettingsOpen}
+          onClose={() => setViewSettingsOpen(false)}
+          previewItem={
+            listItems.length > 0
+              ? (listItems[0] as Record<string, unknown>)
+              : null
+          }
+        />
+      ) : null}
     </div>
   );
 }

@@ -1,7 +1,9 @@
 import { z } from "zod";
 
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
-import type { EntityUIConfig } from "./types.js";
+import { assertCardLayoutFieldPaths } from "./card-layout-validation.js";
+import type { CardLayoutConfig } from "./card-layout-types.js";
+import type { EntityUIConfig, SerializableEntityDefinition } from "./types.js";
 
 const fieldComponentSchema = z.enum([
   "input",
@@ -38,6 +40,89 @@ const filterUISchema = z
   })
   .strict();
 
+const layoutAlignSchema = z.enum(["start", "center", "end", "stretch"]);
+const layoutJustifySchema = z.enum(["start", "center", "end", "between"]);
+const layoutDirectionSchema = z.enum(["row", "column"]);
+const layoutSizeSchema = z.union([z.number(), z.string()]);
+const cardSlotComponentSchema = z.enum([
+  "text",
+  "labeled-text",
+  "image",
+  "badge",
+  "currency",
+]);
+const cardBadgeVariantSchema = z.enum([
+  "success",
+  "warning",
+  "danger",
+  "info",
+  "default",
+  "active",
+  "pending",
+  "closed",
+  "neutral",
+]);
+
+const layoutNodeBaseSchema = z
+  .object({
+    id: z.string().trim().min(1).optional(),
+    className: z.string().optional(),
+    minWidth: layoutSizeSchema.optional(),
+    maxWidth: layoutSizeSchema.optional(),
+    minHeight: layoutSizeSchema.optional(),
+    maxHeight: layoutSizeSchema.optional(),
+    flex: z.union([z.number(), z.string()]).optional(),
+    align: layoutAlignSchema.optional(),
+    justify: layoutJustifySchema.optional(),
+  })
+  .strict();
+
+const cardSlotBindingSchema = z
+  .object({
+    component: cardSlotComponentSchema,
+    fieldPath: z.string().trim().min(1),
+    showLabel: z.boolean().optional(),
+    label: z.string().optional(),
+    className: z.string().optional(),
+    imageSize: z.number().int().min(24).max(96).optional(),
+    textSize: z.number().int().min(10).max(32).optional(),
+    textThin: z.boolean().optional(),
+    textBold: z.boolean().optional(),
+    textItalic: z.boolean().optional(),
+    textUnderline: z.boolean().optional(),
+    badgeVariants: z.record(z.string(), cardBadgeVariantSchema).optional(),
+  })
+  .strict();
+
+const layoutNodeSchema: z.ZodType<unknown> = z.lazy(() =>
+  z.discriminatedUnion("type", [
+    layoutNodeBaseSchema
+      .extend({
+        type: z.literal("slot"),
+        slotId: z.string().trim().min(1),
+      })
+      .strict(),
+    layoutNodeBaseSchema
+      .extend({
+        type: z.enum(["grid", "stack"]),
+        direction: layoutDirectionSchema.optional(),
+        gap: z.number().nonnegative().optional(),
+        columns: z.union([z.number().int().positive(), z.string()]).optional(),
+        children: z.array(layoutNodeSchema).min(1),
+      })
+      .strict(),
+  ]),
+);
+
+const cardLayoutConfigSchema = z
+  .object({
+    root: layoutNodeSchema,
+    slots: z.record(z.string(), cardSlotBindingSchema),
+    showActions: z.boolean().optional(),
+    cardsPerRow: z.number().int().min(1).max(4).optional(),
+  })
+  .strict();
+
 const viewConfigSchema = z
   .object({
     type: z.enum(["table", "card"]),
@@ -51,6 +136,7 @@ const viewConfigSchema = z
       })
       .strict()
       .optional(),
+    layout: cardLayoutConfigSchema.optional(),
   })
   .strict();
 
@@ -70,6 +156,7 @@ const formLayoutSchema = z
 const entityUISchema = z
   .object({
     views: z.array(viewConfigSchema).min(1),
+    listViewType: z.enum(["table", "card"]).optional(),
     forms: z
       .object({
         create: formLayoutSchema,
@@ -142,6 +229,42 @@ export function validateEntityUIConfig(
         `defaultSort in view "${view.name}"`,
       );
     }
+    if (view.layout) {
+      assertCardLayoutFieldPaths(
+        {
+          name: entity.name,
+          collection: entity.metadata.collection,
+          permissions: entity.metadata.permissions,
+          fields: Object.fromEntries(
+            Object.entries(entity.metadata.fields).map(([key, field]) => [
+              key,
+              {
+                type: field.type,
+                required: field.required,
+                optional: field.optional,
+                ...(field.relation
+                  ? {
+                      relation: {
+                        target: field.relation.target,
+                        type: field.relation.type,
+                        ...(field.relation.onDelete
+                          ? { onDelete: field.relation.onDelete }
+                          : {}),
+                        ...(field.relation.joinCollection
+                          ? { joinCollection: field.relation.joinCollection }
+                          : {}),
+                      },
+                    }
+                  : {}),
+              },
+            ]),
+          ),
+          ui: parsed as EntityUIConfig,
+        } as SerializableEntityDefinition,
+        view.layout as CardLayoutConfig,
+        `view "${view.name}"`,
+      );
+    }
   }
 
   for (const mode of ["create", "edit"] as const) {
@@ -164,5 +287,5 @@ export function validateEntityUIConfig(
     }
   }
 
-  return parsed;
+  return parsed as EntityUIConfig;
 }

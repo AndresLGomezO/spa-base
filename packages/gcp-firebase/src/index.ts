@@ -55,6 +55,7 @@ export { createFirestoreAdminJoinCollectionRepository } from "./firestore-admin-
 export { createFirestoreAdminPlatformRoleRepository } from "./firestore-admin-platform-role-repository.js";
 export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-repository.js";
 export { createFirestoreAdminEntityDefinitionRepository } from "./firestore-admin-entity-definition-repository.js";
+export { createFirestoreAdminEntityUiOverrideRepository } from "./firestore-admin-entity-ui-override-repository.js";
 export { createFirestoreAdminHookRepository } from "./firestore-admin-hook-repository.js";
 export { createFirestoreAdminEntityCategoryRepository } from "./firestore-admin-entity-category-repository.js";
 export { createFirestoreAdminTenantRoleRepository } from "./firestore-admin-tenant-role-repository.js";

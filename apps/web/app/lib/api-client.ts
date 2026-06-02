@@ -1,6 +1,8 @@
 import type {
   EntityUIConfig,
+  EntityUiOverrideRecord,
   SerializableEntityDefinition,
+  ViewConfig,
 } from "@repo/entities";
 import type { QueryConfig } from "@repo/query-engine";
 
@@ -713,4 +715,20 @@ export async function removeTenantUser(
     method: "DELETE",
     query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
   });
+}
+
+export async function putEntityUiOverride(
+  entityName: string,
+  input: {
+    readonly views: readonly ViewConfig[];
+    readonly listViewType?: "table" | "card";
+  },
+): Promise<{ readonly override: EntityUiOverrideRecord }> {
+  return apiRequest<{ readonly override: EntityUiOverrideRecord }>(
+    `/api/entities/${encodeURIComponent(entityName)}/ui-override`,
+    {
+      method: "PUT",
+      body: input,
+    },
+  );
 }

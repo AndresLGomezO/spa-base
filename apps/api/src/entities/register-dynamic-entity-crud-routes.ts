@@ -8,7 +8,10 @@ import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { createParametricEntityPermissionGuards } from "../rbac/create-entity-permission-guards.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { createRelationRuntimeContext } from "../relations/create-relation-services.js";
-import type { FirestoreIndexStatusStore } from "@repo/gcp-firebase";
+import type {
+  FirebaseAdminConfig,
+  FirestoreIndexStatusStore,
+} from "@repo/gcp-firebase";
 
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
 import { sanitizeFileFieldsForWrite } from "../entity-files/entity-file-field-utils.js";
@@ -29,6 +32,7 @@ export async function registerDynamicEntityCrudRoutes(
   crudHooks?: CrudHookDeps,
   indexStatusStore?: FirestoreIndexStatusStore,
   recordReadEnricher?: RecordReadEnricher,
+  firebaseAdminConfig?: FirebaseAdminConfig,
 ): Promise<void> {
   if (registeredContexts.get(entityRuntime)) {
     return;
@@ -75,6 +79,7 @@ export async function registerDynamicEntityCrudRoutes(
         entityRuntime.getEntityDefinition(name, tenantId),
       getRepository: (tenantId, entityName) =>
         entityRuntime.getRepository(tenantId, entityName),
+      ...(firebaseAdminConfig ? { firebaseAdminConfig } : {}),
     },
     ...(crudHooks ? { crudHooks } : {}),
     ...(recordReadEnricher ? { recordReadEnricher } : {}),

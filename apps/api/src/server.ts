@@ -8,6 +8,7 @@ import type {
   EntityCategoryRepository,
   EntityDefinitionRepository,
   EntityQueryExecutor,
+  EntityUiOverrideRepository,
   HookRepository,
   JoinCollectionRepository,
   TenantScopedEntityRepository,
@@ -15,6 +16,7 @@ import type {
 import {
   createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
+  createInMemoryEntityUiOverrideRepository,
   createInMemoryHookRepository,
   createInMemoryTenantRoleRepository,
   createInMemoryTenantUserInviteRepository,
@@ -22,6 +24,7 @@ import {
 import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
+  createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminHookRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminPlatformRoleRepository,
@@ -49,6 +52,7 @@ import {
 import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-entity-crud-routes.js";
 import { registerEntityRelationRoutes } from "./entities/register-entity-relation-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
+import { registerEntityUiOverrideRoutes } from "./entities/register-entity-ui-override-routes.js";
 import { registerEntityCategoryRoutes } from "./entity-categories/register-entity-category-routes.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import { registerIndexRoutes } from "./indexes/register-index-routes.js";
@@ -86,6 +90,7 @@ interface BuildServerOptions {
   readonly joinRepository?: JoinCollectionRepository;
   readonly queryExecutors?: Record<string, EntityQueryExecutor>;
   readonly entityDefinitionRepository?: EntityDefinitionRepository;
+  readonly entityUiOverrideRepository?: EntityUiOverrideRepository;
   readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: HookRepository;
   readonly getUserAccessProfile?: (
@@ -211,6 +216,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryEntityDefinitionRepository()
       : createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig));
+
+  const entityUiOverrideRepository =
+    options.entityUiOverrideRepository ??
+    (options.repositories
+      ? createInMemoryEntityUiOverrideRepository()
+      : createFirestoreAdminEntityUiOverrideRepository(firebaseAdminConfig));
 
   const entityCategoryRepository =
     options.entityCategoryRepository ??
@@ -343,6 +354,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     firebaseAdminConfig,
+    entityUiOverrideRepository,
+  });
+
+  await registerEntityUiOverrideRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    entityUiOverrideRepository,
   });
 
   registerEntityFileRoutes(server, {
@@ -425,6 +444,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
           entityRuntime.getEntityDefinition(name, tenantId),
         getRepository: (tenantId, entityName) =>
           entityRuntime.getRepository(tenantId, entityName),
+        firebaseAdminConfig,
       },
       crudHooks,
       recordReadEnricher,
@@ -441,6 +461,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     crudHooks,
     indexStatusStore,
     recordReadEnricher,
+    firebaseAdminConfig,
   );
 
   await registerEntityRelationRoutes(server, {

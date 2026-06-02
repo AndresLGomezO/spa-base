@@ -30,7 +30,10 @@ import {
   hasPaletteScaleVariables,
   resolveSemanticsFromPalette,
 } from "./semantics/resolve-from-palette.js";
-import { SEMANTIC_OVERRIDABLE_CSS_VARS } from "./semantics/semantic-vars.js";
+import {
+  BADGE_SEMANTIC_CSS_VARS,
+  SEMANTIC_OVERRIDABLE_CSS_VARS,
+} from "./semantics/semantic-vars.js";
 
 export const PRIMARY_SCALE_STEPS = COLOR_SCALE_STEPS;
 export const NEUTRAL_SCALE_STEPS = COLOR_SCALE_STEPS;
@@ -74,7 +77,11 @@ export type TenantOverridableCssVar =
 export const TENANT_OVERRIDE_GROUPS = {
   primary: PRIMARY_CSS_VARS,
   neutral: NEUTRAL_CSS_VARS,
-  semantics: SEMANTIC_OVERRIDABLE_CSS_VARS,
+  semantics: SEMANTIC_OVERRIDABLE_CSS_VARS.filter(
+    (cssVar) =>
+      !(BADGE_SEMANTIC_CSS_VARS as readonly string[]).includes(cssVar),
+  ),
+  badge: BADGE_SEMANTIC_CSS_VARS,
   sidebar: [
     "--color-sidebar",
     "--color-sidebar-foreground",
@@ -168,12 +175,14 @@ export {
   type NamedAppearancePreset,
 } from "./presets/index.js";
 export {
+  BADGE_SEMANTIC_CSS_VARS,
   DARK_MODE_REMAPPED_SEMANTIC_VARS,
   expandAppearanceSemantics,
   filterSemanticsForColorScheme,
   isSemanticCssVar,
   SEMANTIC_OVERRIDABLE_CSS_VARS,
   type AppearanceColorScheme,
+  type BadgeSemanticCssVar,
   type SemanticOverridableCssVar,
 } from "./semantics/resolve-semantics.js";
 export {

@@ -85,6 +85,8 @@ export function RoleManager({
       "entityDefinition.read",
       "entityDefinition.create",
       "entityDefinition.update",
+      "entityUiOverride.read",
+      "entityUiOverride.update",
       "internalEntity.read",
       "entityCategory.read",
       "entityCategory.create",

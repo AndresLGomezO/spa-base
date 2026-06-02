@@ -31,5 +31,7 @@ export {
   getTableColumns,
   getViewFilters,
   resolveActiveView,
+  resolveCardView,
+  resolveTableView,
 } from "./view-engine.js";
 export { sortFieldsByUiOrder } from "./sort-fields-by-order.js";
