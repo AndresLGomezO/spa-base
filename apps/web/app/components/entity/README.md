@@ -38,7 +38,12 @@ Catalog refreshes on entity list (`useRefreshEntityCatalogOnMount`).
 
 Nav labels come from `ui.nav.label`. Do not hardcode entity links in the web app.
 
+## View layout (Card / Table)
+
+The list-page settings gear saves per-entity view overrides (`entity_ui_overrides`). Changing layout requires `entityUiOverride.update` (or tenant built-in **admin** / platform superadmin). Entity-level `*.update` grants are not sufficient.
+
 ## Related
 
 - [relational-data-system-guide.md](../../../../docs/relational-data-system-guide.md)
+- [Advanced RBAC Guide](../../../../docs/advanced-rbac-guide.md)
 - [Web app README](../../../README.md)

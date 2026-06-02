@@ -46,6 +46,8 @@
     "dataStructure": "Estructura de datos",
     "dataModelBuilder": "Constructor de modelos",
     "automation": "Automatización",
+    "analytics": "Analítica",
+    "metricsNav": "Métricas",
     "entityCategories": "Categorías de entidades",
     "roles": "Roles y permisos",
     "platform": "Plataforma",
@@ -523,6 +525,85 @@
       "nameRequired": "El nombre es obligatorio.",
       "iconRequired": "El icono es obligatorio.",
       "orderRequired": "El orden debe ser un número entero."
+    }
+  },
+  "metrics": {
+    "title": "Métricas",
+    "description": "Define métricas de agregación que se actualizan cuando cambian los registros.",
+    "createTitle": "Crear métrica",
+    "editTitle": "Editar métrica",
+    "name": "Nombre de la métrica",
+    "descriptionLabel": "Descripción (opcional)",
+    "descriptionPlaceholder": "Qué mide esta métrica y cuándo usarla",
+    "sourceModel": "Modelo origen",
+    "operation": "Agregación",
+    "operations": {
+      "SUM": "Suma",
+      "AVG": "Promedio",
+      "COUNT": "Contar documentos"
+    },
+    "aggregationField": "Campo numérico",
+    "countDocumentsHint": "Cuenta cada registro que cumple los filtros (sin seleccionar campo).",
+    "noNumericFields": "Este modelo no tiene campos numéricos para Suma o Promedio.",
+    "fieldsDependency": "Dependencias de campos",
+    "groupBy": "Agrupar por",
+    "dimensions": "Dimensiones",
+    "status": "Estado",
+    "selectModel": "Selecciona un modelo",
+    "selectField": "Selecciona un campo",
+    "selectModelFirst": "Selecciona un modelo origen para elegir campos.",
+    "versionLabel": "Versión {{version}}",
+    "runBackfill": "Ejecutar backfill",
+    "forbidden": "No tienes permiso para gestionar métricas.",
+    "loadFailed": "No se pudieron cargar las definiciones de métricas.",
+    "saveAction": "Guardar",
+    "cancel": "Cancelar",
+    "saving": "Guardando…",
+    "saved": "Métrica guardada.",
+    "saveFailed": "No se pudo guardar la métrica.",
+    "validationRequired": "Nombre, campo de agregación y dependencias son obligatorios.",
+    "backfillComplete": "Backfill procesó {{count}} registros origen.",
+    "backfillFailed": "Falló el backfill.",
+    "multiselect": {
+      "placeholder": "Seleccionar campos…",
+      "selectedCount": "{{count}} seleccionados",
+      "searchPlaceholder": "Buscar campos…",
+      "noResults": "Sin campos coincidentes",
+      "removeBadge": "Quitar {{label}}"
+    },
+    "fieldHelp": {
+      "infoLabel": "Ayuda del campo",
+      "exampleLabel": "Ejemplo",
+      "fieldsDependency": {
+        "title": "Dependencias de campos",
+        "description": "La métrica se recalcula solo cuando uno de estos campos cambia en un registro origen.",
+        "example": "amount — al cambiar amount; amount, status — si cambia cualquiera"
+      },
+      "groupBy": {
+        "title": "Agrupar por",
+        "description": "Divide los totales en filas separadas, una por cada combinación única de estos valores.",
+        "example": "region — totales separados para EU, US, etc."
+      },
+      "dimensions": {
+        "title": "Dimensiones",
+        "description": "Etiquetas extra guardadas en cada fila para filtrar o mostrar. No crean buckets salvo que también estén en agrupar por.",
+        "example": "currency, productType — contexto en la fila"
+      }
+    },
+    "summary": {
+      "title": "Resumen antes de guardar",
+      "whatCreatingNumeric": "{{operation}} de {{field}} en {{model}}",
+      "whatCreatingCount": "Conteo de registros de {{model}}",
+      "description": "Descripción: {{text}}",
+      "whenUpdates": "Se recalcula cuando cambian: {{fields}}",
+      "anyFieldChange": "cualquier campo rastreado",
+      "groupBy": "Agrupado por: {{fields}}",
+      "noGrouping": "total único (sin agrupación)",
+      "dimensions": "Dimensiones en filas: {{fields}}",
+      "noDimensions": "ninguna",
+      "storagePathCreate": "Valores en tenants/{tenantId}/metrics/{id-auto}/rows/…",
+      "storagePathEdit": "Valores en tenants/{tenantId}/metrics/{{collection}}/rows/…",
+      "exampleRow": "Ejemplo de fila: {{values}}"
     }
   },
   "hooks": {

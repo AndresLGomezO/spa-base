@@ -45,3 +45,15 @@ variable "enable_index_provisioning_pubsub" {
   type        = bool
   default     = false
 }
+
+variable "worker_aggregation_image" {
+  description = "Docker image URI for the aggregation worker Cloud Run service. Set by CI on every deploy."
+  type        = string
+  default     = "us-central1-docker.pkg.dev/entitysystem-development/entitysystem-repo/worker-aggregation:latest"
+}
+
+variable "enable_aggregation_pubsub" {
+  description = "Create Pub/Sub topic, subscription, worker Cloud Run, and backend publish IAM for aggregation events."
+  type        = bool
+  default     = true
+}

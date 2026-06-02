@@ -71,6 +71,25 @@ export { type EntityUiOverrideRepository } from "./entity-ui-override/repository
 export { createInMemoryEntityUiOverrideRepository } from "./entity-ui-override/in-memory-repository.js";
 export { type HookRepository } from "./hook/repository-contract.js";
 export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
+export { type MetricDefinitionRepository } from "./metric-definition/repository-contract.js";
+export { createInMemoryMetricDefinitionRepository } from "./metric-definition/in-memory-repository.js";
+export { type AggregationEventRepository } from "./aggregation-event/repository-contract.js";
+export { createInMemoryAggregationEventRepository } from "./aggregation-event/in-memory-repository.js";
+export { type MetricValueRepository } from "./metric-value/repository-contract.js";
+export { createInMemoryMetricValueRepository } from "./metric-value/in-memory-repository.js";
+export {
+  metricContributionRecordSchema,
+  type MetricContributionRecord,
+  type MetricContributionRepository,
+} from "./metric-contribution/repository-contract.js";
+export { createInMemoryMetricContributionRepository } from "./metric-contribution/in-memory-repository.js";
+export {
+  type BackfillJobRepository,
+  type BackfillJobRecord,
+  type BackfillJobStatus,
+  backfillJobRecordSchema,
+} from "./backfill-job/repository-contract.js";
+export { createInMemoryBackfillJobRepository } from "./backfill-job/in-memory-repository.js";
 export { type EntityCategoryRepository } from "./entity-category/repository-contract.js";
 export { createInMemoryEntityCategoryRepository } from "./entity-category/in-memory-repository.js";
 export { type TenantRoleRepository } from "./tenant-role/repository-contract.js";

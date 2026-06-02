@@ -14,10 +14,12 @@ import {
   HOME_NAV_ITEM,
   PLATFORM_APPEARANCE_NAV_ITEM,
   PLATFORM_CURRENT_TENANT_NAV_ITEM,
+  ANALYTICS_GROUP_ICON,
   DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM,
   DATA_STRUCTURE_GROUP_ICON,
   DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM,
   SETTINGS_AUTOMATION_NAV_ITEM,
+  SETTINGS_METRICS_NAV_ITEM,
   SETTINGS_GROUP_ICON,
   SETTINGS_ROLES_NAV_ITEM,
   SETTINGS_USER_MANAGEMENT_NAV_ITEM,
@@ -144,6 +146,22 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
         matchPath: "/settings",
         icon: SETTINGS_GROUP_ICON,
         children: settingsChildren,
+      });
+    }
+
+    const analyticsChildren: NavLinkConfig[] = [];
+
+    if (hasPermission("metricDefinition.read", permissions, { isSuperAdmin })) {
+      analyticsChildren.push(SETTINGS_METRICS_NAV_ITEM);
+    }
+
+    if (analyticsChildren.length > 0) {
+      items.push({
+        id: "analytics",
+        labelKey: "analytics",
+        matchPath: "/settings/metrics",
+        icon: ANALYTICS_GROUP_ICON,
+        children: analyticsChildren,
       });
     }
 

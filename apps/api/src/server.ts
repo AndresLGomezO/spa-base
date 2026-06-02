@@ -9,30 +9,49 @@ import type {
   EntityDefinitionRepository,
   EntityQueryExecutor,
   EntityUiOverrideRepository,
+  AggregationEventRepository,
+  BackfillJobRepository,
   HookRepository,
   JoinCollectionRepository,
+  MetricContributionRepository,
+  MetricDefinitionRepository,
+  MetricValueRepository,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import {
+  createInMemoryAggregationEventRepository,
+  createInMemoryBackfillJobRepository,
   createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
   createInMemoryEntityUiOverrideRepository,
   createInMemoryHookRepository,
+  createInMemoryMetricDefinitionRepository,
+  createInMemoryMetricContributionRepository,
+  createInMemoryMetricValueRepository,
   createInMemoryTenantRoleRepository,
   createInMemoryTenantUserInviteRepository,
 } from "@repo/firestore-converters";
 import {
+  createFirestoreAdminAggregationEventRepository,
+  createFirestoreAdminBackfillJobRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminHookRepository,
   createFirestoreAdminJoinCollectionRepository,
+  createFirestoreAdminMetricDefinitionRepository,
+  createFirestoreAdminMetricContributionRepository,
+  createFirestoreAdminMetricValueRepository,
   createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRoleRepository,
   createFirestoreAdminTenantUserInviteRepository,
   createFirestoreIndexStatusStore,
 } from "@repo/gcp-firebase";
+import { createMetricRuntimeContext } from "./aggregation/metric-runtime-context.js";
+import { listSourceDocumentsForMetric } from "./aggregation/list-source-documents.js";
+import { registerMetricDefinitionRoutes } from "./aggregation/register-metric-definition-routes.js";
+import type { AggregationEmitterDeps } from "./aggregation/emit-aggregation-event.js";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { platformApp } from "@app/platform/app.config.js";
@@ -93,6 +112,11 @@ interface BuildServerOptions {
   readonly entityUiOverrideRepository?: EntityUiOverrideRepository;
   readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: HookRepository;
+  readonly metricDefinitionRepository?: MetricDefinitionRepository;
+  readonly aggregationEventRepository?: AggregationEventRepository;
+  readonly metricValueRepository?: MetricValueRepository;
+  readonly metricContributionRepository?: MetricContributionRepository;
+  readonly backfillJobRepository?: BackfillJobRepository;
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
@@ -243,6 +267,36 @@ export async function buildServer(options: BuildServerOptions = {}) {
 
   const hookRuntime = createHookRuntimeContext(hookRepository);
 
+  const metricDefinitionRepository =
+    options.metricDefinitionRepository ??
+    (options.repositories
+      ? createInMemoryMetricDefinitionRepository()
+      : createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig));
+
+  const aggregationEventRepository =
+    options.aggregationEventRepository ??
+    (options.repositories
+      ? createInMemoryAggregationEventRepository()
+      : createFirestoreAdminAggregationEventRepository(firebaseAdminConfig));
+
+  const metricValueRepository =
+    options.metricValueRepository ??
+    (options.repositories
+      ? createInMemoryMetricValueRepository()
+      : createFirestoreAdminMetricValueRepository(firebaseAdminConfig));
+
+  const backfillJobRepository =
+    options.backfillJobRepository ??
+    (options.repositories
+      ? createInMemoryBackfillJobRepository()
+      : createFirestoreAdminBackfillJobRepository(firebaseAdminConfig));
+
+  const metricContributionRepository =
+    options.metricContributionRepository ??
+    (options.repositories
+      ? createInMemoryMetricContributionRepository()
+      : createFirestoreAdminMetricContributionRepository(firebaseAdminConfig));
+
   const indexStatusStore =
     options.repositories == null
       ? createFirestoreIndexStatusStore(firebaseAdminConfig)
@@ -288,6 +342,27 @@ export async function buildServer(options: BuildServerOptions = {}) {
     repositories: options.repositories,
     queryExecutors: options.queryExecutors,
   });
+
+  const metricRuntime = createMetricRuntimeContext({
+    metricDefinitionRepository,
+    aggregationEventRepository,
+    metricValueRepository,
+    backfillJobRepository,
+    metricContributionRepository,
+    listSourceDocuments: (tenantId, sourceModel) =>
+      listSourceDocumentsForMetric(entityRuntime, tenantId, sourceModel),
+  });
+
+  const aggregationEmitter: AggregationEmitterDeps = {
+    metricRuntime,
+    publishToPubSub: apiEnv.AGGREGATION_EVENTS_PUBSUB,
+    aggregationTopic: apiEnv.AGGREGATION_EVENTS_TOPIC,
+    projectId: apiEnv.GCP_PROJECT_ID,
+    getSchemaVersion: () => 1,
+    log: (message, meta) => {
+      server.log.info(meta, message);
+    },
+  };
 
   const permissionDeps = buildPermissionDeps(
     options,
@@ -393,6 +468,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     hookRuntime,
   });
 
+  await registerMetricDefinitionRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    metricRuntime,
+  });
+
   await registerRoleRoutes(server, {
     authenticate,
     permissionDeps,
@@ -448,6 +530,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
       },
       crudHooks,
       recordReadEnricher,
+      aggregation: aggregationEmitter,
     });
   }
 
@@ -462,6 +545,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     indexStatusStore,
     recordReadEnricher,
     firebaseAdminConfig,
+    aggregationEmitter,
   );
 
   await registerEntityRelationRoutes(server, {

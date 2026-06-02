@@ -46,6 +46,8 @@
     "dataStructure": "Data structure",
     "dataModelBuilder": "Data Model Builder",
     "automation": "Automation",
+    "analytics": "Analytics",
+    "metricsNav": "Metrics",
     "entityCategories": "Entity categories",
     "roles": "Roles & Permissions",
     "platform": "Platform",
@@ -523,6 +525,85 @@
       "nameRequired": "Name is required.",
       "iconRequired": "Icon is required.",
       "orderRequired": "Order must be a whole number."
+    }
+  },
+  "metrics": {
+    "title": "Metrics",
+    "description": "Define aggregation metrics that update when entity records change.",
+    "createTitle": "Create metric",
+    "editTitle": "Edit metric",
+    "name": "Metric name",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "What this metric measures and when to use it",
+    "sourceModel": "Source model",
+    "operation": "Aggregation",
+    "operations": {
+      "SUM": "Sum",
+      "AVG": "Average",
+      "COUNT": "Count documents"
+    },
+    "aggregationField": "Numeric field",
+    "countDocumentsHint": "Counts each record that matches filters (no field selection).",
+    "noNumericFields": "This model has no numeric fields for Sum or Average.",
+    "fieldsDependency": "Field dependencies",
+    "groupBy": "Group by",
+    "dimensions": "Dimensions",
+    "status": "Status",
+    "selectModel": "Select a model",
+    "selectField": "Select a field",
+    "selectModelFirst": "Select a source model to pick fields.",
+    "versionLabel": "Version {{version}}",
+    "runBackfill": "Run backfill",
+    "forbidden": "You do not have permission to manage metrics.",
+    "loadFailed": "Unable to load metric definitions.",
+    "saveAction": "Save",
+    "cancel": "Cancel",
+    "saving": "Saving…",
+    "saved": "Metric saved.",
+    "saveFailed": "Unable to save metric.",
+    "validationRequired": "Name, aggregation field, and field dependencies are required.",
+    "backfillComplete": "Backfill processed {{count}} source records.",
+    "backfillFailed": "Backfill failed.",
+    "multiselect": {
+      "placeholder": "Select fields…",
+      "selectedCount": "{{count}} selected",
+      "searchPlaceholder": "Search fields…",
+      "noResults": "No matching fields",
+      "removeBadge": "Remove {{label}}"
+    },
+    "fieldHelp": {
+      "infoLabel": "Field help",
+      "exampleLabel": "Example",
+      "fieldsDependency": {
+        "title": "Field dependencies",
+        "description": "The metric recalculates only when one of these fields changes on a source record. Use this to avoid unnecessary updates.",
+        "example": "amount — recalculates when amount changes; amount, status — when either field changes"
+      },
+      "groupBy": {
+        "title": "Group by",
+        "description": "Splits totals into separate metric rows, one per unique combination of these field values.",
+        "example": "region — separate totals for EU, US, etc."
+      },
+      "dimensions": {
+        "title": "Dimensions",
+        "description": "Extra labels stored on each metric row for filtering or display. They do not create separate buckets unless also used in group by.",
+        "example": "currency, productType — stored on the row for context"
+      }
+    },
+    "summary": {
+      "title": "Summary before saving",
+      "whatCreatingNumeric": "{{operation}} of {{field}} on {{model}}",
+      "whatCreatingCount": "Count of {{model}} records",
+      "description": "Description: {{text}}",
+      "whenUpdates": "Recalculates when these fields change: {{fields}}",
+      "anyFieldChange": "any tracked field change",
+      "groupBy": "Grouped by: {{fields}}",
+      "noGrouping": "single total (no grouping)",
+      "dimensions": "Dimensions stored on rows: {{fields}}",
+      "noDimensions": "none",
+      "storagePathCreate": "Values will be stored under tenants/{tenantId}/metrics/{auto-generated-id}/rows/…",
+      "storagePathEdit": "Values are stored under tenants/{tenantId}/metrics/{{collection}}/rows/…",
+      "exampleRow": "Example row values: {{values}}"
     }
   },
   "hooks": {

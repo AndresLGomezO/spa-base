@@ -37,6 +37,10 @@ import {
   IndexProvisioningFailedError,
 } from "../indexes/index-query-guard.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
+import {
+  emitAggregationEventIfNeeded,
+  type AggregationEmitterDeps,
+} from "../aggregation/emit-aggregation-event.js";
 import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
 import { noopPreHandler } from "./noop-pre-handler.js";
@@ -136,6 +140,23 @@ interface RegisterCrudRoutesOptions<
   readonly parametricEntityName?: boolean;
   readonly crudHooks?: CrudHookDeps;
   readonly recordReadEnricher?: import("../entity-files/create-entity-file-read-enricher.js").RecordReadEnricher;
+  readonly aggregation?: AggregationEmitterDeps;
+}
+
+async function tryEmitAggregationEvent(
+  aggregation: AggregationEmitterDeps | undefined,
+  input: Parameters<typeof emitAggregationEventIfNeeded>[1],
+  logError: (error: unknown) => void,
+): Promise<void> {
+  if (!aggregation) {
+    return;
+  }
+
+  try {
+    await emitAggregationEventIfNeeded(aggregation, input);
+  } catch (error) {
+    logError(error);
+  }
 }
 
 function requireTenant(
@@ -912,6 +933,25 @@ export async function registerCrudRoutes<
           ...(entityServices ? { entityServices } : {}),
         });
 
+        await tryEmitAggregationEvent(
+          options.aggregation,
+          {
+            tenantId,
+            entityName: activeEntity.name,
+            operation: "CREATE",
+            documentId: created.id,
+            before: null,
+            after: created as unknown as Record<string, unknown>,
+            businessFieldNames: activeEntity.businessFieldNames,
+          },
+          (error) => {
+            app.log.error(
+              { err: error, entityName: activeEntity.name, tenantId },
+              "Failed to emit aggregation event after create",
+            );
+          },
+        );
+
         const filteredCreate = filterRecordForRead(
           request,
           activeEntity,
@@ -1158,6 +1198,25 @@ export async function registerCrudRoutes<
           ...(entityServices ? { entityServices } : {}),
         });
 
+        await tryEmitAggregationEvent(
+          options.aggregation,
+          {
+            tenantId,
+            entityName: activeEntity.name,
+            operation: "UPDATE",
+            documentId: recordId,
+            before: existingRecord,
+            after: validated.data as Record<string, unknown>,
+            businessFieldNames: activeEntity.businessFieldNames,
+          },
+          (error) => {
+            app.log.error(
+              { err: error, entityName: activeEntity.name, tenantId },
+              "Failed to emit aggregation event after update",
+            );
+          },
+        );
+
         const filteredUpdate = filterRecordForRead(
           request,
           activeEntity,
@@ -1323,6 +1382,25 @@ export async function registerCrudRoutes<
           previous: existingRecord,
           ...(entityServices ? { entityServices } : {}),
         });
+
+        await tryEmitAggregationEvent(
+          options.aggregation,
+          {
+            tenantId,
+            entityName: activeEntity.name,
+            operation: "DELETE",
+            documentId: recordId,
+            before: existingRecord,
+            after: null,
+            businessFieldNames: activeEntity.businessFieldNames,
+          },
+          (error) => {
+            app.log.error(
+              { err: error, entityName: activeEntity.name, tenantId },
+              "Failed to emit aggregation event after delete",
+            );
+          },
+        );
 
         return reply.send(successEnvelope({ deleted: true }));
       } catch (error) {

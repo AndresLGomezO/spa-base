@@ -109,6 +109,22 @@ resource "google_cloud_run_v2_service" "backend" {
           }
         }
       }
+
+      dynamic "env" {
+        for_each = local.enable_aggregation_pubsub ? [1] : []
+        content {
+          name  = "AGGREGATION_EVENTS_PUBSUB"
+          value = "true"
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_aggregation_pubsub ? [1] : []
+        content {
+          name  = "AGGREGATION_EVENTS_TOPIC"
+          value = google_pubsub_topic.aggregation_events[0].name
+        }
+      }
     }
 
     scaling {

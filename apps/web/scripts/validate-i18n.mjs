@@ -326,6 +326,44 @@ function extractAppearancePresetKeys(corpus) {
   );
 }
 
+/** metrics.fieldHelp.${fieldKey}.* in source → nested keys under metrics.fieldHelp */
+function extractMetricsFieldHelpKeys(corpus) {
+  if (!corpus.includes("metrics.fieldHelp.${")) return [];
+
+  const refMetrics = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).metrics;
+
+  const fieldHelp = refMetrics?.fieldHelp;
+  if (!fieldHelp || typeof fieldHelp !== "object") return [];
+
+  const keys = [];
+  for (const [fieldKey, value] of Object.entries(fieldHelp)) {
+    if (fieldKey === "infoLabel" || fieldKey === "exampleLabel") continue;
+    if (!value || typeof value !== "object" || Array.isArray(value)) continue;
+    for (const subKey of Object.keys(value)) {
+      keys.push(`${DEFAULT_NAMESPACE}:metrics.fieldHelp.${fieldKey}.${subKey}`);
+    }
+  }
+  return keys;
+}
+
+/** metrics.operations.${operation} in source → all keys under metrics.operations */
+function extractMetricsOperationKeys(corpus) {
+  if (!corpus.includes("metrics.operations.${")) return [];
+
+  const refMetrics = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).metrics;
+
+  const operations = refMetrics?.operations;
+  if (!operations || typeof operations !== "object") return [];
+
+  return Object.keys(operations).map(
+    (key) => `${DEFAULT_NAMESPACE}:metrics.operations.${key}`,
+  );
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -524,6 +562,20 @@ mergeUsedKeys(
   extractAppearancePresetKeys(corpus),
   appearanceEditorFile,
 );
+const metricsFieldHelpFile = path.join(
+  SRC_DIR,
+  "components/metrics/MetricFieldHelp.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractMetricsFieldHelpKeys(corpus),
+  metricsFieldHelpFile,
+);
+const metricsEditorFile = path.join(
+  SRC_DIR,
+  "components/metrics/MetricDefinitionEditor.tsx",
+);
+mergeUsedKeys(usedKeys, extractMetricsOperationKeys(corpus), metricsEditorFile);
 
 console.log("── 1. Key Parity ──────────────────────────────");
 const parityErrs = checkKeyParity();

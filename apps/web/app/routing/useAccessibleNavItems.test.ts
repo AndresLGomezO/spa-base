@@ -125,6 +125,27 @@ describe("useAccessibleNavItems", () => {
     }
   });
 
+  it("puts metrics in analytics group, not settings", () => {
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: false,
+      permissions: ["metricDefinition.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const analytics = result.current.find((item) => item.id === "analytics");
+    const settings = result.current.find((item) => item.id === "settings");
+
+    expect(settings).toBeUndefined();
+    expect(analytics && isNavGroup(analytics)).toBe(true);
+    if (analytics && isNavGroup(analytics)) {
+      expect(analytics.children.some((child) => child.id === "metrics")).toBe(
+        true,
+      );
+    }
+  });
+
   it("shows entity categories in data structure without settings group", () => {
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({

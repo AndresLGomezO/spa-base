@@ -28,8 +28,24 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `API_RATE_LIMIT_TIME_WINDOW_MS` | `60000` | default | Rate limit window |
 | `ENABLE_PERF_LOGS` | `true` / `false` | `false` in prod | Request timing logs |
 | `STRICT_QUERY_PAGINATION` | `false` | default | Reject unbounded list queries |
+| `PUBSUB_EMULATOR_HOST` | `127.0.0.1:8085` / `firebase-emulator:8085` (Firebase Emulator Suite) | **unset** | Firebase Pub/Sub emulator (local only) |
+| `AGGREGATION_EVENTS_PUBSUB` | `false` (host); `true` in Docker compose and Cloud Run | `true` when aggregation enabled | Publish aggregation events to Pub/Sub instead of inline processing |
+| `AGGREGATION_EVENTS_TOPIC` | `aggregation-events` | `aggregation-events` | Pub/Sub topic for aggregation events |
 
 Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps/api/.env.example`](../../apps/api/.env.example).
+
+---
+
+## Worker aggregation (`apps/worker-aggregation`)
+
+| Variable | Local (emulator) | Cloud Run (Terraform) | Description |
+| -------- | ---------------- | --------------------- | ----------- |
+| `GCP_PROJECT_ID` | `demo-project-base` | workspace project ID | GCP project |
+| `PORT` | `8080` (Cloud Run) | `8080` | Health check HTTP port |
+| `PUBSUB_EMULATOR_HOST` | `127.0.0.1:8085` / `firebase-emulator:8085` | **unset** | Firebase Pub/Sub emulator (local only) |
+| `FIRESTORE_EMULATOR_HOST` | `127.0.0.1:8080` | **unset** | Firestore emulator |
+| `AGGREGATION_EVENTS_TOPIC` | `aggregation-events` | `aggregation-events` | Topic to subscribe to |
+| `AGGREGATION_EVENTS_SUBSCRIPTION` | `aggregation-events-worker` (default) | `aggregation-events-worker` | Pull subscription (Terraform-managed in GCP) |
 
 ---
 

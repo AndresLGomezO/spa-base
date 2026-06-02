@@ -46,6 +46,8 @@ role.create
 role.update
 ```
 
+Entity list Card/Table layout (view settings on entity pages) requires `entityUiOverride.update`, or tenant built-in **admin** / platform superadmin. Entity-level grants such as `account.update` or the global `*.update` wildcard do **not** unlock layout changes.
+
 ## Field permission semantics
 
 Each role may include `fieldRules`:

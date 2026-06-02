@@ -42,3 +42,13 @@ output "tenant_encryption_master_key_secret_id" {
   description = "Secret Manager secret id for TENANT_ENCRYPTION_MASTER_KEY (update value in Console or gcloud; Cloud Run uses latest)"
   value       = google_secret_manager_secret.tenant_encryption_master_key.secret_id
 }
+
+output "aggregation_pubsub_topic" {
+  description = "Pub/Sub topic for aggregation events (empty when disabled)"
+  value       = local.enable_aggregation_pubsub ? google_pubsub_topic.aggregation_events[0].name : ""
+}
+
+output "worker_aggregation_service_name" {
+  description = "Cloud Run service name for the aggregation worker (empty when disabled)"
+  value       = local.enable_aggregation_pubsub ? google_cloud_run_v2_service.worker_aggregation[0].name : ""
+}

@@ -57,6 +57,16 @@ export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-r
 export { createFirestoreAdminEntityDefinitionRepository } from "./firestore-admin-entity-definition-repository.js";
 export { createFirestoreAdminEntityUiOverrideRepository } from "./firestore-admin-entity-ui-override-repository.js";
 export { createFirestoreAdminHookRepository } from "./firestore-admin-hook-repository.js";
+export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admin-metric-definition-repository.js";
+export { createFirestoreAdminAggregationEventRepository } from "./firestore-admin-aggregation-event-repository.js";
+export { createFirestoreAdminMetricValueRepository } from "./firestore-admin-metric-value-repository.js";
+export { createFirestoreAdminMetricContributionRepository } from "./firestore-admin-metric-contribution-repository.js";
+export { createFirestoreAdminBackfillJobRepository } from "./firestore-admin-backfill-job-repository.js";
+export {
+  AGGREGATION_EVENTS_TOPIC,
+  ensureAggregationEventsTopic,
+  publishAggregationEventMessage,
+} from "./firestore-aggregation-pubsub.js";
 export { createFirestoreAdminEntityCategoryRepository } from "./firestore-admin-entity-category-repository.js";
 export { createFirestoreAdminTenantRoleRepository } from "./firestore-admin-tenant-role-repository.js";
 export {

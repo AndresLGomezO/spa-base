@@ -34,6 +34,11 @@ const TARGETS: DockerTarget[] = [
     dockerfile: "apps/api/Dockerfile.dev",
     entryManifests: ["apps/api/package.json", "apps/platform/package.json", "package.json"],
   },
+  {
+    id: "worker-aggregation",
+    dockerfile: "apps/worker-aggregation/Dockerfile.dev",
+    entryManifests: ["apps/worker-aggregation/package.json", "package.json"],
+  },
 ];
 
 function readJson<T>(path: string): T {
@@ -200,7 +205,7 @@ function main(): void {
     process.exit(1);
   }
 
-  console.log("Docker workspace check passed (web + api Dockerfile.dev).");
+  console.log("Docker workspace check passed (web + api + worker-aggregation Dockerfile.dev).");
 }
 
 main();

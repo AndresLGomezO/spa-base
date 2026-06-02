@@ -1,5 +1,11 @@
 locals {
-  backend_image = var.api_image
+  backend_image            = var.api_image
+  worker_aggregation_image = var.worker_aggregation_image
+
+  enable_aggregation_pubsub = try(
+    local.environment_config.enable_aggregation_pubsub,
+    var.enable_aggregation_pubsub,
+  )
 
   environment_tier = contains(["dev", "staging", "default"], local.workspace) ? "development" : (
     local.workspace == "prod" ? "production" : "development"
@@ -16,6 +22,12 @@ locals {
       startup_cpu_boost                = true
       timeout                          = "60s"
       max_instance_request_concurrency = 1
+      worker_min_instances             = 1
+      worker_max_instances             = 1
+      worker_cpu                       = "250m"
+      worker_memory                    = "256Mi"
+      worker_cpu_idle                  = false
+      worker_timeout                   = "3600s"
     }
     production = {
       backend_min_instances            = 0
@@ -26,6 +38,12 @@ locals {
       startup_cpu_boost                = true
       timeout                          = "60s"
       max_instance_request_concurrency = 40
+      worker_min_instances             = 1
+      worker_max_instances             = 1
+      worker_cpu                       = "250m"
+      worker_memory                    = "256Mi"
+      worker_cpu_idle                  = false
+      worker_timeout                   = "3600s"
     }
   }
 
