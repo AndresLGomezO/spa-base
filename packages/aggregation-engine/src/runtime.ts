@@ -22,6 +22,7 @@ export function createMetricValueWriter(
           delta.metricName,
           delta.docId,
           {
+            userId: delta.userId,
             group: delta.group,
             dimensions: delta.dimensions,
             increments: delta.increments,

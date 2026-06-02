@@ -112,6 +112,12 @@ When a metric becomes ACTIVE, CRUD on existing documents emits UPDATE (or DELETE
 
 Run snapshot backfill after activating a metric on entities with existing rows so historical totals match current source data.
 
+## Metric row keys (`userId`)
+
+Metric row document IDs include the source document `ownerId` as `userId` in `buildMetricDocId`. Reads use the authenticated user’s uid (see [metrics-consumption.md](./metrics-consumption.md)).
+
+After upgrading from keys that omitted `userId`, run **backfill per metric** so rows are rewritten under the new ids. Old rows are orphaned until deleted manually or by a future cleanup job.
+
 ## Known limitations (v1)
 
 - Hook-driven writes (`createHookEntityServices`) do not emit aggregation events.

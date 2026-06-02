@@ -4,6 +4,7 @@ import {
   extractKeySlice,
   isDocumentCountAggregation,
   recordMatchesFilters,
+  resolveMetricOwnerId,
   valueKeyForAggregation,
   type MetricAggregationSpec,
   type MetricDefinitionRecord,
@@ -12,6 +13,7 @@ import {
 export interface MetricValueDelta {
   readonly docId: string;
   readonly metricName: string;
+  readonly userId: string;
   readonly group: Record<string, unknown>;
   readonly dimensions: Record<string, unknown>;
   readonly increments: Record<string, number>;
@@ -80,6 +82,11 @@ function buildDeltaForRecord(
     return null;
   }
 
+  const userId = resolveMetricOwnerId(record);
+  if (!userId) {
+    return null;
+  }
+
   const group = extractKeySlice(record, metric.groupBy);
   const dimensions = extractKeySlice(record, metric.dimensions);
   const increments: Record<string, number> = {};
@@ -93,8 +100,9 @@ function buildDeltaForRecord(
   }
 
   return {
-    docId: buildMetricDocId(group, dimensions),
+    docId: buildMetricDocId(userId, group, dimensions),
     metricName: metric.target.collection,
+    userId,
     group,
     dimensions,
     increments,
@@ -184,6 +192,7 @@ export function computeMetricDeltas(
         deltas.push({
           docId: afterDelta.docId,
           metricName: afterDelta.metricName,
+          userId: afterDelta.userId,
           group: afterDelta.group,
           dimensions: afterDelta.dimensions,
           increments: filtered,

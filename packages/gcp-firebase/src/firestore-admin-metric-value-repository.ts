@@ -35,6 +35,7 @@ export function createFirestoreAdminMetricValueRepository(
         id: docId,
         tenantId,
         metricName,
+        userId: payload.userId,
         group: payload.group,
         dimensions: payload.dimensions,
         updatedAt: now,
@@ -52,6 +53,7 @@ export function createFirestoreAdminMetricValueRepository(
           id: docId,
           tenantId,
           metricName,
+          userId: payload.userId,
           group: payload.group,
           dimensions: payload.dimensions,
           values: payload.increments,
@@ -104,6 +106,10 @@ export function createFirestoreAdminMetricValueRepository(
         id: docId,
         tenantId,
         metricName,
+        userId:
+          typeof data.userId === "string" && data.userId.trim().length > 0
+            ? data.userId
+            : payload.userId,
         group:
           data.group && typeof data.group === "object"
             ? data.group
@@ -122,6 +128,28 @@ export function createFirestoreAdminMetricValueRepository(
       return metricValueRecordSchema.parse({
         id: docId,
         ...snapshot.data(),
+      });
+    },
+    async getManyByIds(tenantId, metricName, docIds) {
+      if (docIds.length === 0) {
+        return [];
+      }
+
+      const firestore = getFirestoreAdmin(config);
+      const refs = docIds.map((docId) =>
+        collection(tenantId, metricName).doc(docId),
+      );
+      const snapshots = await firestore.getAll(...refs);
+
+      return snapshots.map((snapshot, index) => {
+        if (!snapshot.exists) {
+          return null;
+        }
+        const docId = docIds[index]!;
+        return metricValueRecordSchema.parse({
+          id: docId,
+          ...snapshot.data(),
+        });
       });
     },
     async deleteAllRows(tenantId, metricName) {

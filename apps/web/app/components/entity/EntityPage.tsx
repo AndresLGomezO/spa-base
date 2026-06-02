@@ -26,6 +26,7 @@ import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
 import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
 import { EntityViewSettingsModal } from "./EntityViewSettingsModal";
+import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -235,6 +236,13 @@ export function EntityPage({ entityName }: EntityPageProps) {
       : t("entity.editTitle", { entity });
   }, [definition, formModal, t]);
 
+  const routeParams = useMemo(
+    () => Object.fromEntries(searchParams.entries()),
+    [searchParams],
+  );
+
+  const metricWidgets = activeView.metricWidgets ?? [];
+
   const listViewProps = {
     entityName,
     entityState,
@@ -246,6 +254,8 @@ export function EntityPage({ entityName }: EntityPageProps) {
       ? (id: string) => setFormModal({ mode: "edit", recordId: id })
       : undefined,
     onRequestShare: setShareRecordId,
+    listFilters: filters,
+    routeParams,
   };
 
   return (
@@ -292,6 +302,13 @@ export function EntityPage({ entityName }: EntityPageProps) {
           showSearch={showSearch}
         />
       </div>
+
+      {metricWidgets.length > 0 ? (
+        <EntityViewMetricsStrip
+          widgets={metricWidgets}
+          context={{ listFilters: filters, routeParams }}
+        />
+      ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col">
         <ViewComponent {...listViewProps} />

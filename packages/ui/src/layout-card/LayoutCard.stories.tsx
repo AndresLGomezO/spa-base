@@ -144,6 +144,8 @@ export const FinancialFourColumn: Story = {
                   className={binding.className}
                 />
               );
+            case "metric-kpi":
+              return null;
             default:
               return (
                 <CardFieldValue

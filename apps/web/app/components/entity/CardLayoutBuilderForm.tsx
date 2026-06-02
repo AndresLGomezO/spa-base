@@ -32,6 +32,7 @@ import {
   type SegmentedSwitchOption,
 } from "@repo/ui";
 import { ArrowDown, ArrowUp, Minus, Plus, Trash2 } from "lucide-react";
+import { useTranslation } from "react-i18next";
 
 import {
   allocateSlotId,
@@ -53,7 +54,12 @@ import {
   tryGetEntityDefinition,
 } from "../../entities/entity-catalog";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
-import { renderEntityLayoutSlotPreview } from "./render-entity-layout-slot-preview";
+import { useQuery } from "@tanstack/react-query";
+
+import { usePermission } from "../../auth/usePermission.js";
+import { listMetricDefinitions } from "../../lib/api-client.js";
+import { MetricBindingsEditor } from "../metrics/MetricBindingsEditor.js";
+import { renderEntityLayoutSlotPreview } from "./render-entity-layout-slot-preview.js";
 
 function withoutSlotField<K extends keyof BuilderSlotDraft>(
   slot: BuilderSlotDraft,
@@ -69,6 +75,7 @@ const COMPONENT_OPTIONS: readonly CardSlotComponentType[] = [
   "image",
   "badge",
   "currency",
+  "metric-kpi",
 ];
 
 const BADGE_COLOR_OPTIONS: readonly CardBadgeVariant[] = [
@@ -167,6 +174,7 @@ export function CardLayoutBuilderForm({
   onShowActionsChange,
   labels,
 }: CardLayoutBuilderFormProps) {
+  const { t } = useTranslation("common");
   const { items: catalogItems } = useEntityCatalog();
   const getDefinition = useCallback(
     (name: string) => tryGetEntityDefinition(name, catalogItems),
@@ -184,6 +192,17 @@ export function CardLayoutBuilderForm({
     () => listCardLayoutFieldOptions(definition),
     [definition],
   );
+  const canReadMetrics = usePermission("metricValue.read");
+  const metricDefinitionsQuery = useQuery({
+    queryKey: ["metric-definitions", "active"],
+    queryFn: async () => {
+      const result = await listMetricDefinitions();
+      return result.items.filter((item) => item.status === "ACTIVE");
+    },
+    enabled: canReadMetrics,
+  });
+  const metricDefinitions = metricDefinitionsQuery.data ?? [];
+  const defaultMetricDefinitionId = metricDefinitions[0]?.id ?? "";
 
   const layout = useMemo(
     () =>
@@ -454,6 +473,16 @@ export function CardLayoutBuilderForm({
                               slot.imageSize === undefined
                                 ? { imageSize: DEFAULT_CARD_IMAGE_SIZE_PX }
                                 : {}),
+                              ...(component === "metric-kpi"
+                                ? {
+                                    metricDefinitionId:
+                                      slot.metricDefinitionId ??
+                                      defaultMetricDefinitionId,
+                                    groupBindings: slot.groupBindings ?? {},
+                                    dimensionBindings:
+                                      slot.dimensionBindings ?? {},
+                                  }
+                                : {}),
                             });
                           }}
                         >
@@ -464,34 +493,83 @@ export function CardLayoutBuilderForm({
                           ))}
                         </select>
                       </label>
-                      <label className="flex flex-col gap-1">
-                        <span className="text-muted-foreground text-xs">
-                          {labels.field}
-                        </span>
-                        <select
-                          className={SELECT_CLASS}
-                          value={relationAliasFieldPath(
-                            definition,
-                            slot.fieldPath,
-                          )}
-                          onChange={(event) =>
-                            updateSlot(slot.slotId, {
-                              fieldPath: event.target.value,
-                            })
-                          }
-                        >
-                          {fieldOptions.map((fieldPath) => (
-                            <option key={fieldPath} value={fieldPath}>
-                              {formatFieldLabel(
-                                slotRootField(fieldPath),
-                                definition,
-                              )}
-                              {fieldPath.includes(".") ? ` (${fieldPath})` : ""}
-                            </option>
-                          ))}
-                        </select>
-                      </label>
+                      {slot.component !== "metric-kpi" ? (
+                        <label className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">
+                            {labels.field}
+                          </span>
+                          <select
+                            className={SELECT_CLASS}
+                            value={relationAliasFieldPath(
+                              definition,
+                              slot.fieldPath,
+                            )}
+                            onChange={(event) =>
+                              updateSlot(slot.slotId, {
+                                fieldPath: event.target.value,
+                              })
+                            }
+                          >
+                            {fieldOptions.map((fieldPath) => (
+                              <option key={fieldPath} value={fieldPath}>
+                                {formatFieldLabel(
+                                  slotRootField(fieldPath),
+                                  definition,
+                                )}
+                                {fieldPath.includes(".")
+                                  ? ` (${fieldPath})`
+                                  : ""}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      ) : null}
                     </div>
+
+                    {slot.component === "metric-kpi" &&
+                    slot.metricDefinitionId &&
+                    metricDefinitions.find(
+                      (item) => item.id === slot.metricDefinitionId,
+                    ) ? (
+                      <div className="flex flex-col gap-2">
+                        <label className="flex flex-col gap-1">
+                          <span className="text-muted-foreground text-xs">
+                            {t("entity.viewSettings.metrics.definition")}
+                          </span>
+                          <select
+                            className={SELECT_CLASS}
+                            value={slot.metricDefinitionId}
+                            onChange={(event) =>
+                              updateSlot(slot.slotId, {
+                                metricDefinitionId: event.target.value,
+                              })
+                            }
+                          >
+                            {metricDefinitions.map((item) => (
+                              <option key={item.id} value={item.id}>
+                                {item.name}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <MetricBindingsEditor
+                          metric={
+                            metricDefinitions.find(
+                              (item) => item.id === slot.metricDefinitionId,
+                            )!
+                          }
+                          bindings={{
+                            groupBindings: slot.groupBindings ?? {},
+                            dimensionBindings: slot.dimensionBindings ?? {},
+                          }}
+                          entityDefinition={definition}
+                          filterFieldOptions={fieldOptions}
+                          onChange={(bindings) =>
+                            updateSlot(slot.slotId, bindings)
+                          }
+                        />
+                      </div>
+                    ) : null}
 
                     {slot.component === "image" ? (
                       <div className="flex items-center justify-between gap-2">

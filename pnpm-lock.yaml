@@ -373,6 +373,9 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../../packages/entities
+      '@repo/metrics-engine':
+        specifier: workspace:*
+        version: link:../../packages/metrics-engine
       '@repo/modules':
         specifier: workspace:*
         version: link:../../packages/modules

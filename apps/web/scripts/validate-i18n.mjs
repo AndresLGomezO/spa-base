@@ -364,6 +364,22 @@ function extractMetricsOperationKeys(corpus) {
   );
 }
 
+/** entity.viewSettings.metrics.binding.${bindingType} in source → keys under entity.viewSettings.metrics.binding */
+function extractEntityViewMetricsBindingKeys(corpus) {
+  if (!corpus.includes("entity.viewSettings.metrics.binding.${")) return [];
+
+  const refEntity = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).entity;
+
+  const binding = refEntity?.viewSettings?.metrics?.binding;
+  if (!binding || typeof binding !== "object") return [];
+
+  return Object.keys(binding).map(
+    (key) => `${DEFAULT_NAMESPACE}:entity.viewSettings.metrics.binding.${key}`,
+  );
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -576,6 +592,15 @@ const metricsEditorFile = path.join(
   "components/metrics/MetricDefinitionEditor.tsx",
 );
 mergeUsedKeys(usedKeys, extractMetricsOperationKeys(corpus), metricsEditorFile);
+const metricBindingEditorFile = path.join(
+  SRC_DIR,
+  "components/metrics/MetricBindingSourceEditor.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractEntityViewMetricsBindingKeys(corpus),
+  metricBindingEditorFile,
+);
 
 console.log("── 1. Key Parity ──────────────────────────────");
 const parityErrs = checkKeyParity();

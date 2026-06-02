@@ -75,6 +75,7 @@ describe("runMetricBackfill", () => {
       created.target.collection,
       "default",
       {
+        userId: "user_owner",
         group: {},
         dimensions: {},
         increments: { sum_amount: -999 },
@@ -88,8 +89,14 @@ describe("runMetricBackfill", () => {
       backfillJobRepository,
       metricContributionRepository,
       listSourceDocuments: async () => [
-        { documentId: "loan_1", record: { amount: 1 } },
-        { documentId: "loan_2", record: { amount: 50 } },
+        {
+          documentId: "loan_1",
+          record: { amount: 1, ownerId: "user_owner" },
+        },
+        {
+          documentId: "loan_2",
+          record: { amount: 50, ownerId: "user_owner" },
+        },
       ],
     });
 

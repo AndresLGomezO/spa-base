@@ -7,6 +7,7 @@
     "@repo/entities",
     "@repo/eslint-config",
     "@repo/modules",
+    "@repo/metrics-engine",
     "@repo/query-engine",
     "@repo/rbac",
     "@repo/shared-types",

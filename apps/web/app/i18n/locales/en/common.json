@@ -184,6 +184,28 @@
         "pending": "Warning (legacy)",
         "closed": "Danger (legacy)",
         "neutral": "Default (legacy)"
+      },
+      "metrics": {
+        "title": "Metrics widgets",
+        "forbidden": "You do not have permission to read metric values.",
+        "addKpi": "Add KPI",
+        "addSeries": "Add series",
+        "noDefinitions": "Create an active metric in Settings → Metrics to add widgets.",
+        "kpiWidget": "KPI widget",
+        "seriesWidget": "Series widget",
+        "definition": "Metric definition",
+        "bucket": "Bucket {{index}}",
+        "addBucket": "Add bucket",
+        "bindingType": "Binding source",
+        "staticValue": "Static value",
+        "filterField": "List filter field",
+        "routeParam": "Route parameter",
+        "binding": {
+          "static": "Static value",
+          "entityField": "Entity field",
+          "listFilter": "List filter",
+          "routeParam": "Route parameter"
+        }
       }
     },
     "fileUploadSuccess": "File uploaded successfully.",
@@ -604,6 +626,12 @@
       "storagePathCreate": "Values will be stored under tenants/{tenantId}/metrics/{auto-generated-id}/rows/…",
       "storagePathEdit": "Values are stored under tenants/{tenantId}/metrics/{{collection}}/rows/…",
       "exampleRow": "Example row values: {{values}}"
+    },
+    "widget": {
+      "loading": "Loading metric…",
+      "empty": "No value",
+      "error": "Unable to load metric",
+      "forbidden": "Metric values are not available for your role."
     }
   },
   "hooks": {

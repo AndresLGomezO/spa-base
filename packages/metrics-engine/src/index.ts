@@ -4,6 +4,8 @@ export {
   METRIC_CONTRIBUTIONS_ROOT,
   BACKFILL_JOBS_COLLECTION,
   METRIC_DEFINITION_PERMISSIONS,
+  METRIC_VALUE_PERMISSIONS,
+  METRIC_PERMISSIONS,
   METRIC_AGGREGATION_OPERATIONS,
   METRIC_DEFINITION_STATUSES,
   metricFilterSchema,
@@ -35,16 +37,29 @@ export {
 } from "./filter.js";
 export {
   extractKeySlice,
+  resolveMetricOwnerId,
   buildMetricDocId,
+  buildMetricRowKey,
   valueKeyForAggregation,
   normalizeMetricFieldKey,
   sumKeyForField,
   countKeyForField,
   avgKeyForField,
 } from "./metric-doc-id.js";
+export type { MetricRowKey, MetricRowKeyInput } from "./metric-doc-id.js";
 export {
   computeAvgFieldsFromValues,
   mergeAvgFieldsIntoValues,
 } from "./avg-values.js";
 export { generateMetricTargetCollection } from "./target-collection.js";
 export { stableStringify } from "./stable-stringify.js";
+export {
+  metricRowQuerySchema,
+  metricBatchQuerySchema,
+  validateMetricQueryAgainstDefinition,
+  MetricQueryValidationError,
+} from "./validate-metric-query.js";
+export type {
+  MetricRowQuery,
+  MetricBatchQuery,
+} from "./validate-metric-query.js";

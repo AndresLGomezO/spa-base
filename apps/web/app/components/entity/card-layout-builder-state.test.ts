@@ -58,7 +58,11 @@ describe("normalizeSlotsForColumnCount", () => {
       { columns: 1 },
     );
 
-    expect(layout.slots.logo?.imageSize).toBe(56);
+    expect(
+      layout.slots.logo &&
+        "imageSize" in layout.slots.logo &&
+        layout.slots.logo.imageSize,
+    ).toBe(56);
     expect(createBuilderSlotsFromLayout(layout)[0]?.imageSize).toBe(56);
   });
 
@@ -79,7 +83,11 @@ describe("normalizeSlotsForColumnCount", () => {
       { columns: 1 },
     );
 
-    expect(layout.slots.status?.badgeVariants).toEqual({
+    expect(
+      layout.slots.status &&
+        "badgeVariants" in layout.slots.status &&
+        layout.slots.status.badgeVariants,
+    ).toEqual({
       ACTIVE: "success",
       CLOSED: "danger",
       PAUSED: "warning",
@@ -152,6 +160,51 @@ describe("normalizeSlotsForColumnCount", () => {
     });
 
     expect(layout.cardsPerRow).toBe(3);
+  });
+
+  it("round-trips metric-kpi slot bindings", () => {
+    const layout = buildLayoutFromBuilderSlots(
+      [
+        slot({
+          slotId: "revenue-kpi",
+          component: "metric-kpi",
+          metricDefinitionId: "metric-1",
+          groupBindings: {
+            month: { type: "static", value: "2026-06" },
+          },
+          dimensionBindings: {
+            categoryId: { type: "entityField", fieldPath: "categoryId" },
+          },
+          label: "Revenue",
+        }),
+      ],
+      { columns: 1 },
+    );
+
+    expect(layout.slots["revenue-kpi"]).toMatchObject({
+      component: "metric-kpi",
+      metricDefinitionId: "metric-1",
+      groupBindings: {
+        month: { type: "static", value: "2026-06" },
+      },
+      dimensionBindings: {
+        categoryId: { type: "entityField", fieldPath: "categoryId" },
+      },
+      label: "Revenue",
+    });
+
+    const restored = createBuilderSlotsFromLayout(layout);
+    expect(restored[0]).toMatchObject({
+      component: "metric-kpi",
+      metricDefinitionId: "metric-1",
+      groupBindings: {
+        month: { type: "static", value: "2026-06" },
+      },
+      dimensionBindings: {
+        categoryId: { type: "entityField", fieldPath: "categoryId" },
+      },
+      label: "Revenue",
+    });
   });
 });
 

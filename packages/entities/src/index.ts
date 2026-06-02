@@ -88,8 +88,23 @@ export {
   listSearchableStringFields,
   resolveSearchField,
 } from "./search/searchable-fields.js";
+export {
+  isCardMetricKpiBinding,
+  metricBindingSourceSchema,
+  viewMetricWidgetSchema,
+} from "./ui/metric-widget-types.js";
+export type {
+  CardMetricKpiSlotBinding,
+  MetricBindingSource,
+  MetricWidgetBindings,
+  ViewMetricKpiWidget,
+  ViewMetricSeriesWidget,
+  ViewMetricWidget,
+} from "./ui/metric-widget-types.js";
 export type {
   CardBadgeVariant,
+  CardFieldSlotBinding,
+  CardFieldSlotComponentType,
   CardLayoutConfig,
   CardSlotBinding,
   CardSlotComponentType,

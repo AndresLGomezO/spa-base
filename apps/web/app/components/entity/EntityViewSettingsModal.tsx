@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { ViewConfig } from "@repo/entities";
+import type { ViewConfig, ViewMetricWidget } from "@repo/entities";
 import {
   Button,
   SegmentedSwitch,
@@ -22,6 +22,8 @@ import {
   type BuilderSlotDraft,
 } from "./card-layout-builder-state";
 import { DEFAULT_CARDS_PER_ROW } from "./entity-card-list-grid";
+import { MetricWidgetsBuilderSection } from "../metrics/MetricWidgetsBuilderSection.js";
+import { viewMetricWidgetsFromView } from "../metrics/metric-widgets-builder-state.js";
 
 interface EntityViewSettingsModalProps {
   readonly entityName: EntityName;
@@ -59,14 +61,25 @@ export function EntityViewSettingsModal({
   const [cardsPerRow, setCardsPerRow] = useState(DEFAULT_CARDS_PER_ROW);
   const [showActions, setShowActions] = useState(true);
   const [slots, setSlots] = useState<readonly BuilderSlotDraft[]>([]);
+  const [tableMetricWidgets, setTableMetricWidgets] = useState<
+    readonly ViewMetricWidget[]
+  >([]);
+  const [cardMetricWidgets, setCardMetricWidgets] = useState<
+    readonly ViewMetricWidget[]
+  >([]);
   const [isSaving, setIsSaving] = useState(false);
+
+  const filterFieldOptions = useMemo(() => [...fieldPaths], [fieldPaths]);
 
   useEffect(() => {
     if (!open) {
       return;
     }
 
+    const tableView = uiViews.find((view) => view.type === "table");
     const cardView = uiViews.find((view) => view.type === "card");
+    setTableMetricWidgets(viewMetricWidgetsFromView(tableView?.metricWidgets));
+    setCardMetricWidgets(viewMetricWidgetsFromView(cardView?.metricWidgets));
     setViewType(listViewType ?? (cardView ? "card" : "table"));
 
     if (cardView?.layout) {
@@ -114,6 +127,9 @@ export function EntityViewSettingsModal({
       type: "table",
       name: "default",
       fields: fieldPaths,
+      ...(tableMetricWidgets.length > 0
+        ? { metricWidgets: tableMetricWidgets }
+        : {}),
     };
 
     if (viewType === "table") {
@@ -133,9 +149,21 @@ export function EntityViewSettingsModal({
         name: "card",
         fields: fieldPaths,
         layout,
+        ...(cardMetricWidgets.length > 0
+          ? { metricWidgets: cardMetricWidgets }
+          : {}),
       },
     ];
-  }, [cardsPerRow, columns, fieldPaths, showActions, slots, viewType]);
+  }, [
+    cardMetricWidgets,
+    cardsPerRow,
+    columns,
+    fieldPaths,
+    showActions,
+    slots,
+    tableMetricWidgets,
+    viewType,
+  ]);
 
   const handleSave = async () => {
     setIsSaving(true);
@@ -196,6 +224,17 @@ export function EntityViewSettingsModal({
             ariaLabel={t("entity.viewSettings.viewType")}
           />
         </div>
+
+        <MetricWidgetsBuilderSection
+          widgets={
+            viewType === "table" ? tableMetricWidgets : cardMetricWidgets
+          }
+          entityDefinition={definition}
+          filterFieldOptions={filterFieldOptions}
+          onChange={
+            viewType === "table" ? setTableMetricWidgets : setCardMetricWidgets
+          }
+        />
 
         {viewType === "card" ? (
           <CardLayoutBuilderForm

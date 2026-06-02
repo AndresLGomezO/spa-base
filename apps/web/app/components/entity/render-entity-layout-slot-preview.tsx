@@ -3,6 +3,7 @@ import type {
   CardSlotBinding,
   SerializableEntityDefinition,
 } from "@repo/entities";
+import { isCardMetricKpiBinding } from "@repo/entities";
 import {
   CardFieldBadge,
   CardFieldCurrency,
@@ -22,7 +23,8 @@ import {
   resolveEntityFieldPath,
   resolveEntityFieldRootName,
 } from "./resolve-entity-field-path";
-import { EntityLayoutImageField } from "./EntityLayoutImageField";
+import { MetricValueDisplay } from "../metrics/MetricValueDisplay.js";
+import { EntityLayoutImageField } from "./EntityLayoutImageField.js";
 
 export function renderEntityLayoutSlotPreview(options: {
   readonly item: Record<string, unknown>;
@@ -36,6 +38,8 @@ export function renderEntityLayoutSlotPreview(options: {
   readonly getDefinition?: (
     entityName: string,
   ) => EntityCatalogEntry | undefined;
+  readonly listFilters?: Readonly<Record<string, readonly string[]>>;
+  readonly routeParams?: Readonly<Record<string, string | undefined>>;
 }): ReactNode {
   const {
     item,
@@ -44,7 +48,22 @@ export function renderEntityLayoutSlotPreview(options: {
     locale,
     getOneToManyCellValue = () => null,
     getDefinition,
+    listFilters,
+    routeParams,
   } = options;
+
+  if (isCardMetricKpiBinding(binding)) {
+    return (
+      <MetricValueDisplay
+        metricDefinitionId={binding.metricDefinitionId}
+        groupBindings={binding.groupBindings}
+        dimensionBindings={binding.dimensionBindings}
+        label={binding.label}
+        context={{ record: item, listFilters, routeParams }}
+      />
+    );
+  }
+
   const rootField = resolveEntityFieldRootName(binding.fieldPath);
   const rawValue = resolveEntityFieldPath(
     item,
