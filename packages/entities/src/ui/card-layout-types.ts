@@ -1,3 +1,5 @@
+import type { CardMetricKpiSlotBinding } from "./metric-widget-types.js";
+
 export type LayoutAlign = "start" | "center" | "end" | "stretch";
 export type LayoutJustify = "start" | "center" | "end" | "between";
 export type LayoutDirection = "row" | "column";
@@ -30,12 +32,14 @@ export interface LayoutSlotNode extends LayoutNodeBase {
 
 export type LayoutNode = LayoutContainerNode | LayoutSlotNode;
 
-export type CardSlotComponentType =
+export type CardFieldSlotComponentType =
   | "text"
   | "labeled-text"
   | "image"
   | "badge"
   | "currency";
+
+export type CardSlotComponentType = CardFieldSlotComponentType | "metric-kpi";
 
 export type CardBadgeVariant =
   | "success"
@@ -48,15 +52,13 @@ export type CardBadgeVariant =
   | "closed"
   | "neutral";
 
-export interface CardSlotBinding {
-  readonly component: CardSlotComponentType;
+export interface CardFieldSlotBinding {
+  readonly component: CardFieldSlotComponentType;
   readonly fieldPath: string;
   readonly showLabel?: boolean;
   readonly label?: string;
   readonly className?: string;
-  /** Square image size in px (width and height); preserves aspect ratio via object-contain. */
   readonly imageSize?: number;
-  /** Value text size in px for text slots. */
   readonly textSize?: number;
   readonly textThin?: boolean;
   readonly textBold?: boolean;
@@ -65,10 +67,13 @@ export interface CardSlotBinding {
   readonly badgeVariants?: Readonly<Record<string, CardBadgeVariant>>;
 }
 
+export type CardSlotBinding = CardFieldSlotBinding | CardMetricKpiSlotBinding;
+
 export interface CardLayoutConfig {
   readonly root: LayoutNode;
   readonly slots: Readonly<Record<string, CardSlotBinding>>;
   readonly showActions?: boolean;
-  /** Maximum entity cards per row on wide viewports (responsive down to 1 on small screens). */
   readonly cardsPerRow?: number;
 }
+
+export type { CardMetricKpiSlotBinding };

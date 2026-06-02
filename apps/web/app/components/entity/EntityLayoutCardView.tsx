@@ -48,6 +48,8 @@ interface EntityLayoutCardViewProps {
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
   readonly onRequestShare?: (id: string) => void;
+  readonly listFilters?: Readonly<Record<string, readonly string[]>>;
+  readonly routeParams?: Readonly<Record<string, string | undefined>>;
 }
 
 export function EntityLayoutCardView({
@@ -59,6 +61,8 @@ export function EntityLayoutCardView({
   onRequestDelete,
   onRequestEdit,
   onRequestShare,
+  listFilters,
+  routeParams,
 }: EntityLayoutCardViewProps) {
   const { t, i18n } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
@@ -249,6 +253,8 @@ export function EntityLayoutCardView({
                       locale: i18n.language,
                       getOneToManyCellValue,
                       getDefinition,
+                      listFilters,
+                      routeParams,
                     });
                   }}
                 />

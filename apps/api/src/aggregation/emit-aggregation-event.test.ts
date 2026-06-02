@@ -73,7 +73,7 @@ describe("emitAggregationEventIfNeeded", () => {
         operation: "CREATE",
         documentId: "loan_1",
         before: null,
-        after: { amount: 100 },
+        after: { amount: 100, ownerId: "user_owner" },
         businessFieldNames: ["amount"],
       },
     );

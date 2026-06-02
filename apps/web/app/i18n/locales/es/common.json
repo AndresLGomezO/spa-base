@@ -184,6 +184,28 @@
         "pending": "Advertencia (legacy)",
         "closed": "Peligro (legacy)",
         "neutral": "Predeterminado (legacy)"
+      },
+      "metrics": {
+        "title": "Widgets de métricas",
+        "forbidden": "No tienes permiso para leer valores de métricas.",
+        "addKpi": "Agregar KPI",
+        "addSeries": "Agregar serie",
+        "noDefinitions": "Crea una métrica activa en Configuración → Métricas para agregar widgets.",
+        "kpiWidget": "Widget KPI",
+        "seriesWidget": "Widget de serie",
+        "definition": "Definición de métrica",
+        "bucket": "Bucket {{index}}",
+        "addBucket": "Agregar bucket",
+        "bindingType": "Fuente del enlace",
+        "staticValue": "Valor estático",
+        "filterField": "Campo de filtro de lista",
+        "routeParam": "Parámetro de ruta",
+        "binding": {
+          "static": "Valor estático",
+          "entityField": "Campo de entidad",
+          "listFilter": "Filtro de lista",
+          "routeParam": "Parámetro de ruta"
+        }
       }
     },
     "fileUploadSuccess": "Archivo subido correctamente.",
@@ -604,6 +626,12 @@
       "storagePathCreate": "Valores en tenants/{tenantId}/metrics/{id-auto}/rows/…",
       "storagePathEdit": "Valores en tenants/{tenantId}/metrics/{{collection}}/rows/…",
       "exampleRow": "Ejemplo de fila: {{values}}"
+    },
+    "widget": {
+      "loading": "Cargando métrica…",
+      "empty": "Sin valor",
+      "error": "No se pudo cargar la métrica",
+      "forbidden": "Los valores de métricas no están disponibles para tu rol."
     }
   },
   "hooks": {

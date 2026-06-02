@@ -18,6 +18,7 @@ export const ApiErrorCode = {
   SEARCH_NOT_CONFIGURED: "SEARCH_NOT_CONFIGURED",
   INVALID_CURSOR: "INVALID_CURSOR",
   QUERY_TOO_BROAD: "QUERY_TOO_BROAD",
+  METRIC_ROW_NOT_FOUND: "METRIC_ROW_NOT_FOUND",
 } as const;
 
 export type ApiErrorCode = (typeof ApiErrorCode)[keyof typeof ApiErrorCode];

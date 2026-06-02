@@ -15,6 +15,13 @@ export const METRIC_DEFINITION_PERMISSIONS = [
   "metricDefinition.backfill",
 ] as const;
 
+export const METRIC_VALUE_PERMISSIONS = ["metricValue.read"] as const;
+
+export const METRIC_PERMISSIONS = [
+  ...METRIC_DEFINITION_PERMISSIONS,
+  ...METRIC_VALUE_PERMISSIONS,
+] as const;
+
 export const METRIC_AGGREGATION_OPERATIONS = ["SUM", "COUNT", "AVG"] as const;
 export const METRIC_DEFINITION_STATUSES = ["ACTIVE", "PAUSED"] as const;
 
@@ -147,6 +154,7 @@ export const metricValueRecordSchema = z.object({
   id: z.string().trim().min(1),
   tenantId: z.string().trim().min(1),
   metricName: z.string().trim().min(1),
+  userId: z.string().trim().min(1),
   group: z.record(z.string(), z.unknown()).default({}),
   dimensions: z.record(z.string(), z.unknown()).default({}),
   values: z.record(z.string(), z.number()),

@@ -6,8 +6,10 @@ import type {
   LayoutAlign,
   LayoutJustify,
   LayoutNode,
+  MetricBindingSource,
   ViewConfig,
 } from "@repo/entities";
+import { isCardMetricKpiBinding } from "@repo/entities";
 import { createDefaultCardLayout } from "@repo/ui";
 
 export type BuilderSlotHorizontalAlign = LayoutAlign;
@@ -17,6 +19,9 @@ export interface BuilderSlotDraft {
   readonly slotId: string;
   readonly fieldPath: string;
   readonly component: CardSlotComponentType;
+  readonly metricDefinitionId?: string;
+  readonly groupBindings?: Readonly<Record<string, MetricBindingSource>>;
+  readonly dimensionBindings?: Readonly<Record<string, MetricBindingSource>>;
   readonly column: number;
   readonly order: number;
   readonly align?: BuilderSlotHorizontalAlign;
@@ -175,32 +180,73 @@ export function createBuilderSlotsFromLayout(
 
   return Object.entries(layout.slots).map(([slotId, binding], index) => {
     const isLegacyLabeledText = binding.component === "labeled-text";
+    const isMetricKpi = isCardMetricKpiBinding(binding);
 
     return {
       slotId,
-      fieldPath: binding.fieldPath,
+      fieldPath: isMetricKpi ? "" : binding.fieldPath,
       component: isLegacyLabeledText ? "text" : binding.component,
+      ...(isMetricKpi
+        ? {
+            metricDefinitionId: binding.metricDefinitionId,
+            groupBindings: binding.groupBindings,
+            dimensionBindings: binding.dimensionBindings,
+            ...(binding.label ? { label: binding.label } : {}),
+            ...(binding.textSize !== undefined
+              ? { textSize: binding.textSize }
+              : {}),
+            ...(binding.textBold !== undefined
+              ? { textBold: binding.textBold }
+              : {}),
+          }
+        : {}),
       column: columnBySlot.get(slotId) ?? 0,
       order: orderBySlot.get(slotId) ?? index,
-      ...(isLegacyLabeledText || binding.showLabel !== undefined
-        ? { showLabel: isLegacyLabeledText ? true : binding.showLabel }
-        : {}),
-      ...(binding.label ? { label: binding.label } : {}),
-      ...(binding.className ? { className: binding.className } : {}),
-      ...(binding.imageSize !== undefined
-        ? { imageSize: binding.imageSize }
-        : {}),
-      ...(binding.textSize !== undefined ? { textSize: binding.textSize } : {}),
-      ...(binding.textThin !== undefined ? { textThin: binding.textThin } : {}),
-      ...(binding.textBold !== undefined ? { textBold: binding.textBold } : {}),
-      ...(binding.textItalic !== undefined
-        ? { textItalic: binding.textItalic }
-        : {}),
-      ...(binding.textUnderline !== undefined
-        ? { textUnderline: binding.textUnderline }
-        : {}),
-      ...(binding.badgeVariants
-        ? { badgeVariantRules: badgeVariantRulesFromMap(binding.badgeVariants) }
+      ...(!isMetricKpi
+        ? {
+            ...(isLegacyLabeledText ||
+            ("showLabel" in binding && binding.showLabel !== undefined)
+              ? {
+                  showLabel: isLegacyLabeledText
+                    ? true
+                    : "showLabel" in binding
+                      ? binding.showLabel
+                      : undefined,
+                }
+              : {}),
+            ...("label" in binding && binding.label
+              ? { label: binding.label }
+              : {}),
+            ...("className" in binding && binding.className
+              ? { className: binding.className }
+              : {}),
+            ...("imageSize" in binding && binding.imageSize !== undefined
+              ? { imageSize: binding.imageSize }
+              : {}),
+            ...("textSize" in binding && binding.textSize !== undefined
+              ? { textSize: binding.textSize }
+              : {}),
+            ...("textThin" in binding && binding.textThin !== undefined
+              ? { textThin: binding.textThin }
+              : {}),
+            ...("textBold" in binding && binding.textBold !== undefined
+              ? { textBold: binding.textBold }
+              : {}),
+            ...("textItalic" in binding && binding.textItalic !== undefined
+              ? { textItalic: binding.textItalic }
+              : {}),
+            ...("textUnderline" in binding &&
+            binding.textUnderline !== undefined
+              ? { textUnderline: binding.textUnderline }
+              : {}),
+            ...("badgeVariants" in binding && binding.badgeVariants
+              ? {
+                  badgeVariantRules: badgeVariantRulesFromMap(
+                    binding.badgeVariants,
+                  ),
+                }
+              : {}),
+          }
         : {}),
       ...(alignBySlot.has(slotId) ? { align: alignBySlot.get(slotId) } : {}),
       ...(justifyBySlot.has(slotId)
@@ -211,6 +257,19 @@ export function createBuilderSlotsFromLayout(
 }
 
 function bindingFromSlot(slot: BuilderSlotDraft): CardSlotBinding {
+  if (slot.component === "metric-kpi") {
+    return {
+      component: "metric-kpi",
+      metricDefinitionId: slot.metricDefinitionId ?? "",
+      groupBindings: slot.groupBindings ?? {},
+      dimensionBindings: slot.dimensionBindings ?? {},
+      ...(slot.label ? { label: slot.label } : {}),
+      ...(slot.className ? { className: slot.className } : {}),
+      ...(slot.textSize !== undefined ? { textSize: slot.textSize } : {}),
+      ...(slot.textBold !== undefined ? { textBold: slot.textBold } : {}),
+    };
+  }
+
   const badgeVariants = badgeVariantMapFromRules(slot.badgeVariantRules ?? []);
 
   return {

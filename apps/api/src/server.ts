@@ -51,6 +51,7 @@ import {
 import { createMetricRuntimeContext } from "./aggregation/metric-runtime-context.js";
 import { listSourceDocumentsForMetric } from "./aggregation/list-source-documents.js";
 import { registerMetricDefinitionRoutes } from "./aggregation/register-metric-definition-routes.js";
+import { registerMetricReadRoutes } from "./aggregation/register-metric-read-routes.js";
 import type { AggregationEmitterDeps } from "./aggregation/emit-aggregation-event.js";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
@@ -472,6 +473,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     entityRuntime,
+    metricRuntime,
+  });
+
+  await registerMetricReadRoutes(server, {
+    authenticate,
+    permissionDeps,
     metricRuntime,
   });
 

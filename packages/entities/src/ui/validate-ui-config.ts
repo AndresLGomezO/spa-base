@@ -3,6 +3,10 @@ import { z } from "zod";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import { assertCardLayoutFieldPaths } from "./card-layout-validation.js";
 import type { CardLayoutConfig } from "./card-layout-types.js";
+import {
+  cardMetricKpiSlotBindingSchema,
+  viewMetricWidgetSchema,
+} from "./metric-widget-types.js";
 import type { EntityUIConfig, SerializableEntityDefinition } from "./types.js";
 
 const fieldComponentSchema = z.enum([
@@ -44,7 +48,7 @@ const layoutAlignSchema = z.enum(["start", "center", "end", "stretch"]);
 const layoutJustifySchema = z.enum(["start", "center", "end", "between"]);
 const layoutDirectionSchema = z.enum(["row", "column"]);
 const layoutSizeSchema = z.union([z.number(), z.string()]);
-const cardSlotComponentSchema = z.enum([
+const cardFieldSlotComponentSchema = z.enum([
   "text",
   "labeled-text",
   "image",
@@ -77,9 +81,9 @@ const layoutNodeBaseSchema = z
   })
   .strict();
 
-const cardSlotBindingSchema = z
+const cardFieldSlotBindingSchema = z
   .object({
-    component: cardSlotComponentSchema,
+    component: cardFieldSlotComponentSchema,
     fieldPath: z.string().trim().min(1),
     showLabel: z.boolean().optional(),
     label: z.string().optional(),
@@ -93,6 +97,11 @@ const cardSlotBindingSchema = z
     badgeVariants: z.record(z.string(), cardBadgeVariantSchema).optional(),
   })
   .strict();
+
+const cardSlotBindingSchema = z.union([
+  cardFieldSlotBindingSchema,
+  cardMetricKpiSlotBindingSchema,
+]);
 
 const layoutNodeSchema: z.ZodType<unknown> = z.lazy(() =>
   z.discriminatedUnion("type", [
@@ -137,6 +146,7 @@ const viewConfigSchema = z
       .strict()
       .optional(),
     layout: cardLayoutConfigSchema.optional(),
+    metricWidgets: z.array(viewMetricWidgetSchema).optional(),
   })
   .strict();
 

@@ -1,5 +1,7 @@
 # 📘 Master Plan — Metrics Consumption Layer (Firestore, Deterministic Access)
 
+> **Implemented API:** see [metrics-consumption.md](./metrics-consumption.md) for the live contract, key algorithm, and web integration checklist.
+
 ---
 
 # 1. 🎯 Objective

@@ -1,9 +1,6 @@
 import type { SerializableEntityDefinition } from "./types.js";
-import type {
-  CardLayoutConfig,
-  CardSlotBinding,
-  LayoutNode,
-} from "./card-layout-types.js";
+import { isCardMetricKpiBinding } from "./metric-widget-types.js";
+import type { CardLayoutConfig, LayoutNode } from "./card-layout-types.js";
 
 const CARD_LAYOUT_ALLOWED_SYSTEM_FIELDS = new Set([
   "id",
@@ -83,7 +80,7 @@ function collectLayoutFieldPaths(layout: CardLayoutConfig): readonly string[] {
   function walkNode(node: LayoutNode): void {
     if (node.type === "slot") {
       const binding = layout.slots[node.slotId];
-      if (binding?.fieldPath) {
+      if (binding && !isCardMetricKpiBinding(binding) && binding.fieldPath) {
         paths.add(binding.fieldPath);
       }
       return;
@@ -95,7 +92,7 @@ function collectLayoutFieldPaths(layout: CardLayoutConfig): readonly string[] {
 
   walkNode(layout.root);
   for (const binding of Object.values(layout.slots)) {
-    if (binding.fieldPath) {
+    if (!isCardMetricKpiBinding(binding) && binding.fieldPath) {
       paths.add(binding.fieldPath);
     }
   }
@@ -178,4 +175,5 @@ export function listCardLayoutFieldOptions(
   return [...options].sort((a, b) => a.localeCompare(b));
 }
 
-export type { CardSlotBinding, CardLayoutConfig, LayoutNode };
+export type { CardLayoutConfig, LayoutNode };
+export type { CardSlotBinding } from "./card-layout-types.js";

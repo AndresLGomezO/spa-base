@@ -16,6 +16,8 @@ import { processAggregationEvent } from "./process-event.js";
 import { createMetricValueWriter } from "./runtime.js";
 import { runSnapshotBackfillForMetric } from "./snapshot-backfill.js";
 
+const TEST_OWNER_ID = "user_owner";
+
 const baseMetric: MetricDefinitionRecord = {
   id: "metric_1",
   tenantId: "tenant_a",
@@ -43,7 +45,7 @@ describe("computeMetricDeltas", () => {
       operation: "CREATE",
       documentId: "doc_1",
       before: null,
-      after: { amount: 100 },
+      after: { amount: 100, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });
@@ -51,6 +53,49 @@ describe("computeMetricDeltas", () => {
     const deltas = computeMetricDeltas(event, baseMetric);
     expect(deltas).toHaveLength(1);
     expect(deltas[0]?.increments.sum_amount).toBe(100);
+    expect(deltas[0]?.userId).toBe(TEST_OWNER_ID);
+  });
+
+  it("skips records without ownerId", () => {
+    const event = buildAggregationEvent({
+      tenantId: "tenant_a",
+      model: "transaction",
+      operation: "CREATE",
+      documentId: "doc_1",
+      before: null,
+      after: { amount: 100 },
+      businessFieldNames: ["amount"],
+      schemaVersion: 1,
+    });
+
+    expect(computeMetricDeltas(event, baseMetric)).toHaveLength(0);
+  });
+
+  it("isolates metrics by ownerId in doc id", () => {
+    const eventA = buildAggregationEvent({
+      tenantId: "tenant_a",
+      model: "transaction",
+      operation: "CREATE",
+      documentId: "doc_1",
+      before: null,
+      after: { amount: 1, ownerId: "user_a" },
+      businessFieldNames: ["amount"],
+      schemaVersion: 1,
+    });
+    const eventB = buildAggregationEvent({
+      tenantId: "tenant_a",
+      model: "transaction",
+      operation: "CREATE",
+      documentId: "doc_2",
+      before: null,
+      after: { amount: 1, ownerId: "user_b" },
+      businessFieldNames: ["amount"],
+      schemaVersion: 1,
+    });
+
+    const deltaA = computeMetricDeltas(eventA, baseMetric)[0];
+    const deltaB = computeMetricDeltas(eventB, baseMetric)[0];
+    expect(deltaA?.docId).not.toBe(deltaB?.docId);
   });
 
   it("subtracts on delete", () => {
@@ -59,7 +104,7 @@ describe("computeMetricDeltas", () => {
       model: "transaction",
       operation: "DELETE",
       documentId: "doc_1",
-      before: { amount: 50 },
+      before: { amount: 50, ownerId: TEST_OWNER_ID },
       after: null,
       businessFieldNames: ["amount"],
       schemaVersion: 1,
@@ -75,8 +120,8 @@ describe("computeMetricDeltas", () => {
       model: "transaction",
       operation: "UPDATE",
       documentId: "doc_1",
-      before: { amount: 10 },
-      after: { amount: 25 },
+      before: { amount: 10, ownerId: TEST_OWNER_ID },
+      after: { amount: 25, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });
@@ -91,8 +136,8 @@ describe("computeMetricDeltas", () => {
       model: "transaction",
       operation: "UPDATE",
       documentId: "doc_1",
-      before: { amount: 1000 },
-      after: { amount: 1 },
+      before: { amount: 1000, ownerId: TEST_OWNER_ID },
+      after: { amount: 1, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });
@@ -110,7 +155,7 @@ describe("computeMetricDeltas", () => {
       model: "transaction",
       operation: "DELETE",
       documentId: "doc_1",
-      before: { amount: 50 },
+      before: { amount: 50, ownerId: TEST_OWNER_ID },
       after: null,
       businessFieldNames: ["amount"],
       schemaVersion: 1,
@@ -136,7 +181,7 @@ describe("computeMetricDeltas", () => {
       operation: "CREATE",
       documentId: "doc_1",
       before: null,
-      after: { amount: 100 },
+      after: { amount: 100, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });
@@ -150,7 +195,7 @@ describe("computeMetricDeltas", () => {
       model: "transaction",
       operation: "DELETE",
       documentId: "doc_1",
-      before: { amount: 100 },
+      before: { amount: 100, ownerId: TEST_OWNER_ID },
       after: null,
       businessFieldNames: ["amount"],
       schemaVersion: 1,
@@ -173,8 +218,8 @@ describe("processAggregationEvent contribution ledger", () => {
       model: "transaction",
       operation: "UPDATE",
       documentId: "doc_1",
-      before: { amount: 1000 },
-      after: { amount: 1 },
+      before: { amount: 1000, ownerId: TEST_OWNER_ID },
+      after: { amount: 1, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });
@@ -209,12 +254,13 @@ describe("processAggregationEvent contribution ledger", () => {
       "doc_1",
       "evt_seed",
     );
-    const docId = buildMetricDocId({}, {});
+    const docId = buildMetricDocId(TEST_OWNER_ID, {}, {});
     await metricValueRepository.applyIncrements(
       "tenant_a",
       "txn_totals",
       docId,
       {
+        userId: TEST_OWNER_ID,
         group: {},
         dimensions: {},
         increments: { sum_amount: 1 },
@@ -226,8 +272,8 @@ describe("processAggregationEvent contribution ledger", () => {
       model: "transaction",
       operation: "UPDATE",
       documentId: "doc_1",
-      before: { amount: 1 },
-      after: { amount: 5 },
+      before: { amount: 1, ownerId: TEST_OWNER_ID },
+      after: { amount: 5, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });
@@ -276,6 +322,7 @@ describe("runSnapshotBackfillForMetric", () => {
       metric.target.collection,
       "default",
       {
+        userId: TEST_OWNER_ID,
         group: {},
         dimensions: {},
         increments: { sum_amount: -999 },
@@ -286,8 +333,8 @@ describe("runSnapshotBackfillForMetric", () => {
       tenantId: "tenant_a",
       metric,
       documents: [
-        { documentId: "doc_1", record: { amount: 1 } },
-        { documentId: "doc_2", record: { amount: 4 } },
+        { documentId: "doc_1", record: { amount: 1, ownerId: TEST_OWNER_ID } },
+        { documentId: "doc_2", record: { amount: 4, ownerId: TEST_OWNER_ID } },
       ],
       metricValueRepository,
       metricContributionRepository,
@@ -321,7 +368,7 @@ describe("AVG metric storage", () => {
       operation: "CREATE",
       documentId: "doc_1",
       before: null,
-      after: { amount: 100 },
+      after: { amount: 100, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });
@@ -345,7 +392,7 @@ describe("AVG metric storage", () => {
       operation: "CREATE",
       documentId: "doc_1",
       before: null,
-      after: { amount: 100 },
+      after: { amount: 100, ownerId: TEST_OWNER_ID },
       businessFieldNames: ["amount"],
       schemaVersion: 1,
     });

@@ -99,6 +99,7 @@ export function RoleManager({
       "metricDefinition.update",
       "metricDefinition.delete",
       "metricDefinition.backfill",
+      "metricValue.read",
     ]);
 
     for (const entity of entities) {

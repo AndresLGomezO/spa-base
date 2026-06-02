@@ -33,18 +33,46 @@ export interface LayoutSlotNode extends LayoutNodeBase {
 
 export type LayoutNode = LayoutContainerNode | LayoutSlotNode;
 
-export type CardSlotComponentType =
+type CardFieldSlotComponentType =
   | "text"
   | "labeled-text"
   | "image"
   | "badge"
   | "currency";
 
+export type CardSlotComponentType = CardFieldSlotComponentType | "metric-kpi";
+
 export type { CardBadgeVariant } from "./badge-variants.js";
 import type { CardBadgeVariant } from "./badge-variants.js";
 
-export interface CardSlotBinding {
-  readonly component: CardSlotComponentType;
+interface MetricBindingSourceStatic {
+  readonly type: "static";
+  readonly value: string | number | boolean;
+}
+
+interface MetricBindingSourceEntityField {
+  readonly type: "entityField";
+  readonly fieldPath: string;
+}
+
+interface MetricBindingSourceListFilter {
+  readonly type: "listFilter";
+  readonly field: string;
+}
+
+interface MetricBindingSourceRouteParam {
+  readonly type: "routeParam";
+  readonly param: string;
+}
+
+type MetricBindingSource =
+  | MetricBindingSourceStatic
+  | MetricBindingSourceEntityField
+  | MetricBindingSourceListFilter
+  | MetricBindingSourceRouteParam;
+
+export interface CardFieldSlotBinding {
+  readonly component: CardFieldSlotComponentType;
   readonly fieldPath: string;
   readonly showLabel?: boolean;
   readonly label?: string;
@@ -57,6 +85,19 @@ export interface CardSlotBinding {
   readonly textUnderline?: boolean;
   readonly badgeVariants?: Readonly<Record<string, CardBadgeVariant>>;
 }
+
+export interface CardMetricKpiSlotBinding {
+  readonly component: "metric-kpi";
+  readonly metricDefinitionId: string;
+  readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly label?: string;
+  readonly className?: string;
+  readonly textSize?: number;
+  readonly textBold?: boolean;
+}
+
+export type CardSlotBinding = CardFieldSlotBinding | CardMetricKpiSlotBinding;
 
 export interface CardLayoutConfig {
   readonly root: LayoutNode;

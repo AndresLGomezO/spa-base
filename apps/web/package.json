@@ -29,6 +29,7 @@
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/modules": "workspace:*",
+    "@repo/metrics-engine": "workspace:*",
     "@repo/query-engine": "workspace:*",
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",

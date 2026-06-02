@@ -633,6 +633,72 @@ export async function listMetricDefinitions(): Promise<{
   );
 }
 
+export async function getMetricDefinition(
+  id: string,
+): Promise<MetricDefinitionRecord> {
+  return apiRequest<MetricDefinitionRecord>(`/api/metric-definitions/${id}`);
+}
+
+export interface MetricRowQuery {
+  readonly group: Record<string, string | number | boolean>;
+  readonly dimensions: Record<string, string | number | boolean>;
+}
+
+interface MetricRowResponse {
+  readonly values: Record<string, number>;
+  readonly updatedAt: string;
+}
+
+export function isMetricRowNotFoundError(
+  error: unknown,
+): error is ApiClientError {
+  return (
+    error instanceof Error &&
+    error.name === "ApiClientError" &&
+    (error as ApiClientError).code === "METRIC_ROW_NOT_FOUND"
+  );
+}
+
+export async function fetchMetricRow(
+  metricDefinitionId: string,
+  query: MetricRowQuery,
+): Promise<MetricRowResponse> {
+  return apiRequest<MetricRowResponse>(
+    `/api/metrics/${metricDefinitionId}/row`,
+    {
+      method: "POST",
+      body: query,
+    },
+  );
+}
+
+export async function fetchMetricRowOrNull(
+  metricDefinitionId: string,
+  query: MetricRowQuery,
+): Promise<MetricRowResponse | null> {
+  try {
+    return await fetchMetricRow(metricDefinitionId, query);
+  } catch (error) {
+    if (isMetricRowNotFoundError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
+export async function fetchMetricBatch(
+  metricDefinitionId: string,
+  queries: readonly MetricRowQuery[],
+): Promise<readonly (MetricRowResponse | null)[]> {
+  const result = await apiRequest<{
+    readonly items: readonly (MetricRowResponse | null)[];
+  }>(`/api/metrics/${metricDefinitionId}/batch`, {
+    method: "POST",
+    body: { queries },
+  });
+  return result.items;
+}
+
 type CreateMetricDefinitionInput = Omit<
   MetricDefinitionRecord,
   "id" | "tenantId" | "metricId" | "createdAt" | "updatedAt" | "target"

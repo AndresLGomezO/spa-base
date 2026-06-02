@@ -32,6 +32,7 @@ export function createInMemoryMetricValueRepository(): MetricValueRepository & {
         id: docId,
         tenantId,
         metricName,
+        userId: payload.userId,
         group: payload.group,
         dimensions: payload.dimensions,
         values: valuesWithAvg,
@@ -42,6 +43,11 @@ export function createInMemoryMetricValueRepository(): MetricValueRepository & {
     },
     async getById(tenantId, metricName, docId) {
       return store.get(key(tenantId, metricName, docId)) ?? null;
+    },
+    async getManyByIds(tenantId, metricName, docIds) {
+      return docIds.map(
+        (docId) => store.get(key(tenantId, metricName, docId)) ?? null,
+      );
     },
     async deleteAllRows(tenantId, metricName) {
       const prefix = `${tenantId}:${metricName}:`;

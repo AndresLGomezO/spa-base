@@ -15,12 +15,47 @@ export function extractKeySlice(
   return slice;
 }
 
+export function resolveMetricOwnerId(
+  record: Record<string, unknown>,
+): string | null {
+  const ownerId = record.ownerId;
+  if (typeof ownerId !== "string") {
+    return null;
+  }
+  const trimmed = ownerId.trim();
+  return trimmed.length > 0 ? trimmed : null;
+}
+
 export function buildMetricDocId(
+  userId: string,
   group: Record<string, unknown>,
   dimensions: Record<string, unknown>,
 ): string {
-  const payload = stableStringify({ group, dimensions });
+  const payload = stableStringify({ userId, group, dimensions });
   return createHash("sha256").update(payload).digest("hex").slice(0, 32);
+}
+
+export interface MetricRowKeyInput {
+  readonly userId: string;
+  readonly group: Record<string, unknown>;
+  readonly dimensions: Record<string, unknown>;
+}
+
+export interface MetricRowKey {
+  readonly userId: string;
+  readonly group: Record<string, unknown>;
+  readonly dimensions: Record<string, unknown>;
+  readonly docId: string;
+}
+
+export function buildMetricRowKey(input: MetricRowKeyInput): MetricRowKey {
+  const userId = input.userId.trim();
+  return {
+    userId,
+    group: input.group,
+    dimensions: input.dimensions,
+    docId: buildMetricDocId(userId, input.group, input.dimensions),
+  };
 }
 
 export function normalizeMetricFieldKey(field: string): string {
