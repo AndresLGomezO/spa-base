@@ -56,9 +56,7 @@ export function createEntityRecordRenderContext(options: {
         return null;
       }
       const target = populated[root];
-      const label = target
-        ? formatRecordDisplayLabel(target)
-        : rawId;
+      const label = target ? formatRecordDisplayLabel(target) : rawId;
       return {
         href: `/app/${meta.relation.target}/${rawId}`,
         label,

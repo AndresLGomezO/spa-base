@@ -116,8 +116,7 @@ export function renderUiComponent(
     }
     const { containerClassName } = splitStyleRuleClasses(config.styles);
     return (
-      context.formFieldRenderer?.(config.fieldPath, containerClassName) ??
-      null
+      context.formFieldRenderer?.(config.fieldPath, containerClassName) ?? null
     );
   }
 

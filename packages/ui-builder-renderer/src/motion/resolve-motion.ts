@@ -1,9 +1,6 @@
 import type { MotionPreset } from "@repo/ui-builder-core";
 
-const ENTRANCE_CLASS: Record<
-  NonNullable<MotionPreset["entrance"]>,
-  string
-> = {
+const ENTRANCE_CLASS: Record<NonNullable<MotionPreset["entrance"]>, string> = {
   none: "",
   fade: "ui-motion-entrance-fade",
   "slide-up": "ui-motion-entrance-slide-up",
@@ -56,5 +53,4 @@ export function resolveMotionPreset(
   return classes.filter(Boolean).join(" ");
 }
 
-export const REDUCED_MOTION_MEDIA =
-  "(prefers-reduced-motion: reduce)" as const;
+export const REDUCED_MOTION_MEDIA = "(prefers-reduced-motion: reduce)" as const;

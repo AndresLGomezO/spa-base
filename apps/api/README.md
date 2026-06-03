@@ -212,7 +212,7 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 Cloud Run sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so the process listens on `/health` before Firestore role/tenant seeds run. Seed once locally against the target GCP project if needed.
 ```
 
-Promotes email to superadmin on **first** user document creation. Dev tenant **`rates`** is seeded on startup with entity definitions, shared lookup rows, and **12+ linked records per business model** owned by the demo user below.
+Promotes email to superadmin on **first** user document creation. Dev tenant **`rates`** is seeded on startup with entity definitions, shared lookup rows, **12+ linked records per business model** owned by the demo user below, and UI Builder overrides for **`account`** (table list + card layout) and **`financialProduct`** (card list with the portfolio demo layout under [`rates-tenant/layouts/`](src/admin/rates-tenant/layouts/)).
 
 ### Rates demo user (emulator / Docker)
 

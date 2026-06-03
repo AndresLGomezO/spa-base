@@ -18,7 +18,9 @@
     animation: ui-motion-scale-in 0.35s ease-out both;
   }
   .ui-motion-hover-lift {
-    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    transition:
+      transform 0.2s ease,
+      box-shadow 0.2s ease;
   }
   .ui-motion-hover-lift:hover {
     transform: translateY(-2px);

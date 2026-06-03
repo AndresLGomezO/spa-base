@@ -31,7 +31,9 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const uiViews = definition.ui.views;
   const listViewType = definition.ui.listViewType;
 
-  const [viewType, setViewType] = useState<"table" | "card" | "compact">("table");
+  const [viewType, setViewType] = useState<"table" | "card" | "compact">(
+    "table",
+  );
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
     createDefaultUiLayout(fieldPaths),
   );
@@ -54,8 +56,7 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     setCardMetricWidgets(viewMetricWidgetsFromView(cardView?.metricWidgets));
     setViewType(listViewType ?? (cardView ? "card" : "table"));
 
-    const listItem =
-      definition.ui.listItem ?? cardView?.layout;
+    const listItem = definition.ui.listItem ?? cardView?.layout;
     if (listItem) {
       setLayout(listItem);
       setLayoutEditorKey((current) => current + 1);

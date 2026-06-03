@@ -167,46 +167,48 @@ export function EntityRecordDetail({
               </Link>
             </Alert>
           ) : null}
-        <dl className="grid gap-4 sm:grid-cols-2">
-          {businessFields.map((field) => {
-            const fieldMeta = definition.fields[field];
-            const isFK =
-              fieldMeta?.relation?.type === "many-to-one" ||
-              fieldMeta?.relation?.type === "one-to-one";
-            const rawValue = record[field];
-            const populatedRecord = isFK ? populated[field] : null;
+          <dl className="grid gap-4 sm:grid-cols-2">
+            {businessFields.map((field) => {
+              const fieldMeta = definition.fields[field];
+              const isFK =
+                fieldMeta?.relation?.type === "many-to-one" ||
+                fieldMeta?.relation?.type === "one-to-one";
+              const rawValue = record[field];
+              const populatedRecord = isFK ? populated[field] : null;
 
-            return (
-              <div key={field}>
-                <dt className="text-muted-foreground text-sm font-medium">
-                  {formatFieldLabel(field, definition)}
-                </dt>
-                <dd className="mt-1">
-                  {isFK && typeof rawValue === "string" && rawValue ? (
-                    populatedRecord ? (
-                      <Link
-                        to={`/app/${fieldMeta.relation!.target}/${rawValue}`}
-                        className="text-primary underline"
-                      >
-                        {formatRecordDisplayLabel(populatedRecord)}
-                      </Link>
-                    ) : (
-                      <span className="text-muted-foreground">{rawValue}</span>
-                    )
-                  ) : (
-                    <span>
-                      {rawValue != null ? (
-                        String(rawValue)
+              return (
+                <div key={field}>
+                  <dt className="text-muted-foreground text-sm font-medium">
+                    {formatFieldLabel(field, definition)}
+                  </dt>
+                  <dd className="mt-1">
+                    {isFK && typeof rawValue === "string" && rawValue ? (
+                      populatedRecord ? (
+                        <Link
+                          to={`/app/${fieldMeta.relation!.target}/${rawValue}`}
+                          className="text-primary underline"
+                        >
+                          {formatRecordDisplayLabel(populatedRecord)}
+                        </Link>
                       ) : (
-                        <span className="text-muted-foreground">—</span>
-                      )}
-                    </span>
-                  )}
-                </dd>
-              </div>
-            );
-          })}
-        </dl>
+                        <span className="text-muted-foreground">
+                          {rawValue}
+                        </span>
+                      )
+                    ) : (
+                      <span>
+                        {rawValue != null ? (
+                          String(rawValue)
+                        ) : (
+                          <span className="text-muted-foreground">—</span>
+                        )}
+                      </span>
+                    )}
+                  </dd>
+                </div>
+              );
+            })}
+          </dl>
         </div>
       )}
 

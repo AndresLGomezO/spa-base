@@ -48,10 +48,7 @@ function DesignLayoutFormsPage({
         description={t("designLayout.formsDescription")}
         readOnly={!canSave}
       />
-      <EntityFormLayoutDesignEditor
-        entityName={entityName}
-        canSave={canSave}
-      />
+      <EntityFormLayoutDesignEditor entityName={entityName} canSave={canSave} />
     </div>
   );
 }

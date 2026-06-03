@@ -1,7 +1,12 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import { Button, SegmentedSwitch, toast, type SegmentedSwitchOption } from "@repo/ui";
+import {
+  Button,
+  SegmentedSwitch,
+  toast,
+  type SegmentedSwitchOption,
+} from "@repo/ui";
 import { buildInitialValues } from "@repo/ui-builder";
 
 import type { EntityName } from "../../entities/entity-catalog";
