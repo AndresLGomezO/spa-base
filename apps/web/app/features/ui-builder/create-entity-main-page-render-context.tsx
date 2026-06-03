@@ -1,13 +1,17 @@
 import type { ComponentType } from "react";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
-import type { ViewMetricWidget } from "@repo/entities";
+import type {
+  SerializableEntityDefinition,
+  ViewMetricWidget,
+} from "@repo/entities";
+import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
 import type { EntityName } from "../../entities/entity-catalog";
 import { WebDataViewToolbar } from "../../components/data-view/WebDataViewToolbar";
 import { EntityViewMetricsStrip } from "../../components/metrics/EntityViewMetricsStrip";
 import { Heading, Button } from "@repo/ui";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
+import { Link, useNavigate } from "react-router";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
@@ -17,6 +21,8 @@ interface MainPageRenderContextInput {
   readonly locale: string;
   readonly canCreate: boolean;
   readonly metricWidgets: readonly ViewMetricWidget[];
+  readonly metricStripLayout?: UiLayoutDocument;
+  readonly entityDefinition: SerializableEntityDefinition;
   readonly listFilters: Readonly<Record<string, readonly string[]>>;
   readonly routeParams: Readonly<Record<string, string | undefined>>;
   readonly toolbar: React.ComponentProps<typeof WebDataViewToolbar>;
@@ -25,6 +31,7 @@ interface MainPageRenderContextInput {
   readonly listViewProps: Record<string, unknown>;
   readonly onCreate: () => void;
   readonly previewMode?: boolean;
+  readonly metricsDesignerPath?: string;
 }
 
 export function createEntityMainPageRenderContext(
@@ -34,6 +41,8 @@ export function createEntityMainPageRenderContext(
     entityName,
     entityLabel,
     metricWidgets,
+    metricStripLayout,
+    entityDefinition,
     listFilters,
     routeParams,
     toolbar,
@@ -42,6 +51,7 @@ export function createEntityMainPageRenderContext(
     onCreate,
     canCreate,
     previewMode = false,
+    metricsDesignerPath,
   } = input;
 
   return {
@@ -54,12 +64,14 @@ export function createEntityMainPageRenderContext(
       metricWidgets.length > 0 ? (
         <EntityViewMetricsStrip
           widgets={metricWidgets}
+          stripLayout={metricStripLayout}
+          entityDefinition={entityDefinition}
           context={{ listFilters, routeParams }}
+          locale={input.locale}
+          previewMode={previewMode}
         />
       ) : previewMode ? (
-        <div className="text-muted-foreground rounded-md border border-dashed p-4 text-sm">
-          Metrics (configure in Main View editor)
-        </div>
+        <MetricsPreviewPlaceholder metricsDesignerPath={metricsDesignerPath} />
       ) : null,
     pageListRenderer: () =>
       previewMode ? (
@@ -80,6 +92,32 @@ export function createEntityMainPageRenderContext(
       />
     ),
   };
+}
+
+function MetricsPreviewPlaceholder({
+  metricsDesignerPath,
+}: {
+  readonly metricsDesignerPath?: string;
+}) {
+  const { t } = useTranslation("common");
+
+  return (
+    <div className="text-muted-foreground rounded-md border border-dashed p-4 text-sm">
+      {metricsDesignerPath ? (
+        <>
+          {t("designLayout.metricsConfigureLink")}{" "}
+          <Link
+            to={metricsDesignerPath}
+            className="text-primary underline-offset-4 hover:underline"
+          >
+            {t("nav.designLayoutMetrics")}
+          </Link>
+        </>
+      ) : (
+        t("designLayout.metricsConfigureLink")
+      )}
+    </div>
+  );
 }
 
 function MainPageHeaderPreview({

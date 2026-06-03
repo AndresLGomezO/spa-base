@@ -7,7 +7,12 @@ export type DesignSurface =
   | "mainPage"
   | "recordDetail"
   | "formCreate"
-  | "formEdit";
+  | "formEdit"
+  | "formPlain"
+  | "formWizardShell"
+  | "formWizardStep"
+  | "metricWidget"
+  | "metricWidgetBucket";
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -30,10 +35,31 @@ const RECORD_DETAIL_KINDS: readonly UiComponentKind[] = [
   "related-records",
 ];
 
-const FORM_KINDS: readonly UiComponentKind[] = [
+const FORM_PLAIN_KINDS: readonly UiComponentKind[] = [
   "form-field",
   "form-section",
   "form-actions",
+];
+
+const FORM_WIZARD_SHELL_KINDS: readonly UiComponentKind[] = [
+  "wizard-progress",
+  "wizard-step-host",
+  "wizard-actions",
+  "text",
+  "image",
+  "date",
+  "numeric",
+  "badge",
+];
+
+const FORM_WIZARD_STEP_KINDS: readonly UiComponentKind[] = [
+  "form-field",
+  "form-section",
+  "text",
+  "image",
+  "date",
+  "numeric",
+  "badge",
 ];
 
 export function componentKindsForSurface(
@@ -43,6 +69,8 @@ export function componentKindsForSurface(
     case "listItem":
     case "tableColumnCell":
     case "tableRowExpand":
+    case "metricWidget":
+    case "metricWidgetBucket":
       return LIST_ITEM_KINDS;
     case "mainPage":
       return MAIN_PAGE_KINDS;
@@ -50,7 +78,12 @@ export function componentKindsForSurface(
       return RECORD_DETAIL_KINDS;
     case "formCreate":
     case "formEdit":
-      return FORM_KINDS;
+    case "formPlain":
+      return FORM_PLAIN_KINDS;
+    case "formWizardShell":
+      return FORM_WIZARD_SHELL_KINDS;
+    case "formWizardStep":
+      return FORM_WIZARD_STEP_KINDS;
   }
 }
 

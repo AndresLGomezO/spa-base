@@ -13,6 +13,15 @@ export {
   resolveFileFieldMaxSizeBytes,
 } from "./schema/file-field-defaults.js";
 export {
+  LAYOUT_STATIC_IMAGE_FIELD_NAME,
+  findFirstImageFieldName,
+  parseLayoutStaticImageRef,
+  readLayoutStaticImageUrl,
+  resolveLayoutStaticUploadFieldName,
+  resolveStaticImageSrc,
+  serializeLayoutStaticImageRef,
+} from "./layout-static-image.js";
+export {
   isoDatetimeStringSchema,
   isIsoDatetimeString,
 } from "./schema/isoDatetime.js";
@@ -90,15 +99,37 @@ export {
 } from "./search/searchable-fields.js";
 export {
   metricBindingSourceSchema,
+  metricWidgetPlacementSchema,
   viewMetricWidgetSchema,
 } from "./ui/metric-widget-types.js";
 export type {
   MetricBindingSource,
   MetricWidgetBindings,
+  MetricWidgetPlacement,
   ViewMetricKpiWidget,
   ViewMetricSeriesWidget,
   ViewMetricWidget,
 } from "./ui/metric-widget-types.js";
+export {
+  createDefaultMetricKpiWidgetLayout,
+  createDefaultMetricSeriesBucketLayout,
+  createDefaultMetricSeriesWidgetLayout,
+  migrateMetricWidgetLayout,
+  migrateMetricWidgetLayouts,
+  metricWidgetHasLayout,
+} from "./ui/metric-widget-layout.js";
+export {
+  assertMetricWidgetsPlacement,
+  clampMetricWidgetsToStrip,
+  createDefaultMetricStripLayout,
+  DEFAULT_METRIC_STRIP_COLUMN_COUNT,
+  defaultPlacementForNewWidget,
+  findPlacementConflicts,
+  metricStripColumnCount,
+  metricStripLayoutFromView,
+  migrateMetricWidgetsWithPlacement,
+  resolveWidgetPlacement,
+} from "./ui/metric-strip-placement.js";
 export type {
   UiLayoutDocument,
   UiComponentConfig,
@@ -149,6 +180,19 @@ export {
   resolveCreateFormFromLayout,
   resolveEditFormFromUi,
 } from "./ui/resolve-form-layout-from-ui.js";
+export {
+  resolveFormModalSize,
+  resolveFormPresentation,
+  resolvePlainFormLayout,
+  resolveWizardForm,
+} from "./ui/resolve-form-config.js";
+export type {
+  FormPresentation,
+  WizardFormConfig,
+  WizardStepConfig,
+  WizardStepStatus,
+  EntityUiOverrideForms,
+} from "./ui/form-config.js";
 export { normalizeEntityViews } from "./ui/normalize-entity-views.js";
 export {
   createDefaultExpandableTableView,
@@ -163,7 +207,6 @@ export type {
   DetailConfig,
   EntityNavConfig,
   EntityUiOverride,
-  EntityUiOverrideForms,
   EntityUiOverrideRecord,
   EntityListViewType,
   EntityUIConfig,
@@ -175,6 +218,7 @@ export type {
   FilterUIConfig,
   FormConfig,
   FormLayout,
+  FormModalSize,
   FormSection,
   FieldAccessLevel,
   SerializableEntityDefinition,

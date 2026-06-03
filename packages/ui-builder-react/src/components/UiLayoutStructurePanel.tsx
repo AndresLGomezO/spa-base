@@ -3,6 +3,7 @@ import {
   moveRootColumn,
   removeRootColumn,
   setRootColumnCount,
+  setRootColumnWidthPercent,
   updateLayoutMeta,
   updateRootColumnStackDirection,
   updateRootColumnStyles,
@@ -20,6 +21,7 @@ import {
   type EntityDefinitionLookup,
   type FieldDescriptor,
 } from "../adapters/entity-card-view-adapter.js";
+import { entityFormFieldAdapter } from "../adapters/entity-form-field-adapter.js";
 import {
   ColumnRowsEditor,
   type ColumnRowsEditorLabels,
@@ -65,6 +67,7 @@ export interface UiLayoutStructurePanelProps {
   readonly labels: UiLayoutStructurePanelLabels;
   readonly className?: string;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
+  readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
   readonly showStructureHeading?: boolean;
   readonly showShowActionsControl?: boolean;
   readonly getDefinition?: EntityDefinitionLookup;
@@ -79,22 +82,27 @@ export function UiLayoutStructurePanel({
   labels,
   className,
   metricKpiEditor,
+  staticImageEditor,
   showStructureHeading = true,
   showShowActionsControl = true,
   getDefinition,
   designSurface = "listItem",
 }: UiLayoutStructurePanelProps) {
   const allowedKinds = componentKindsForSurface(designSurface);
-  const { fieldDescriptors } = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition),
-    [definition, getDefinition],
-  );
+  const { fieldDescriptors } = useMemo(() => {
+    if (designSurface === "formPlain" || designSurface === "formWizardStep") {
+      return entityFormFieldAdapter(definition);
+    }
+    return entityCardViewAdapter(definition, getDefinition);
+  }, [definition, designSurface, getDefinition]);
 
   const [activeColumn, setActiveColumn] = useState(0);
 
   const columnLabels: ColumnRowsEditorLabels = {
     layoutColumns: labels.layoutColumns,
     columnTab: labels.columnTab,
+    columnWidthPercent: labels.columnWidthPercent,
+    columnWidthAutoHint: labels.columnWidthAutoHint,
     moveColumnLeft: labels.moveColumnLeft,
     moveColumnRight: labels.moveColumnRight,
     deleteColumn: labels.deleteColumn,
@@ -131,6 +139,9 @@ export function UiLayoutStructurePanel({
           );
         }}
         onActiveColumnChange={setActiveColumn}
+        onColumnWidthPercentChange={(index, percent) =>
+          onLayoutChange(setRootColumnWidthPercent(layout, index, percent))
+        }
         onMoveLeft={() => {
           onLayoutChange(moveRootColumn(layout, activeColumn, -1));
           setActiveColumn((current) => Math.max(0, current - 1));
@@ -204,6 +215,7 @@ export function UiLayoutStructurePanel({
           onLayoutChange={onLayoutChange}
           labels={columnLabels}
           metricKpiEditor={metricKpiEditor}
+          staticImageEditor={staticImageEditor}
           allowedKinds={allowedKinds}
         />
       ) : null}

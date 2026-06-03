@@ -63,6 +63,9 @@ export function EntityRecordDetailLayoutDesignEditor({
       },
       columnTab: (column: number) =>
         t("entity.viewSettings.columnTab", { column }),
+      columnWidthPercent: t("entity.viewSettings.columnWidthPercent"),
+      columnWidthAutoHint: (percent: number) =>
+        t("entity.viewSettings.columnWidthAutoHint", { percent }),
       moveColumnLeft: t("entity.viewSettings.moveColumnLeft"),
       moveColumnRight: t("entity.viewSettings.moveColumnRight"),
       deleteColumn: (column: number) =>

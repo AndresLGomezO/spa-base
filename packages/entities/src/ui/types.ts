@@ -1,5 +1,12 @@
 import type { EntityFileReference } from "../schema/entityFileReference.js";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
+import type {
+  EntityUiOverrideForms,
+  FormPresentation,
+  WizardFormConfig,
+  WizardStepConfig,
+  WizardStepStatus,
+} from "./form-config.js";
 import type { ViewMetricWidget } from "./metric-widget-types.js";
 
 export type FieldComponentType =
@@ -59,6 +66,8 @@ export interface TableViewConfig extends ViewConfigBase {
   readonly type: "table";
   /** Show row actions column (edit/share/delete). Default true when omitted. */
   readonly showActions?: boolean;
+  /** Grid shell for the metrics strip (column count, root/column styles). */
+  readonly metricStripLayout?: UiLayoutDocument;
 }
 
 export interface CardViewConfig extends ViewConfigBase {
@@ -92,10 +101,13 @@ export function isExpandableTableViewConfig(
   return view.type === "expandableTable";
 }
 
-export interface EntityUiOverrideForms {
-  readonly create?: UiLayoutDocument;
-  readonly edit?: UiLayoutDocument;
-}
+export type {
+  EntityUiOverrideForms,
+  FormPresentation,
+  WizardFormConfig,
+  WizardStepConfig,
+  WizardStepStatus,
+};
 
 export interface EntityUiOverride {
   readonly entityName: string;
@@ -124,9 +136,14 @@ export interface FormLayout {
   readonly layout?: UiLayoutDocument;
 }
 
+export type FormModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
+
 export interface FormConfig {
   readonly create: FormLayout;
   readonly edit: FormLayout;
+  readonly presentation?: FormPresentation;
+  readonly wizard?: WizardFormConfig;
+  readonly modalSize?: FormModalSize;
 }
 
 export interface DetailConfig {

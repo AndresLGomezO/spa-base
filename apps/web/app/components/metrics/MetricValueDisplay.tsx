@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { LayoutCard, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +14,8 @@ import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js"
 import { useMetricRow } from "../../hooks/metrics/useMetricRow.js";
 import { formatPrimaryMetricDisplayValue } from "./format-metric-display-value.js";
 
+type MetricValuePresentation = "card" | "inline";
+
 interface MetricValueDisplayProps {
   readonly metricDefinitionId: string;
   readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
@@ -21,6 +24,20 @@ interface MetricValueDisplayProps {
   readonly label?: string;
   readonly emptyLabel?: string;
   readonly query?: MetricRowQuery | null;
+  readonly presentation?: MetricValuePresentation;
+}
+
+function MetricValueShell({
+  presentation,
+  children,
+}: {
+  readonly presentation: MetricValuePresentation;
+  readonly children: ReactNode;
+}) {
+  if (presentation === "inline") {
+    return <>{children}</>;
+  }
+  return <LayoutCard>{children}</LayoutCard>;
 }
 
 export function MetricValueDisplay({
@@ -31,10 +48,13 @@ export function MetricValueDisplay({
   label,
   emptyLabel,
   query: queryOverride,
+  presentation = "card",
 }: MetricValueDisplayProps) {
   const { t, i18n } = useTranslation("common");
   const definitionQuery = useMetricDefinition(metricDefinitionId);
   const canRead = useCanReadMetricValues(definitionQuery.data?.sourceModel);
+  const inline = presentation === "inline";
+  const statusClassName = "text-sm";
 
   const resolvedQuery =
     queryOverride ??
@@ -55,31 +75,31 @@ export function MetricValueDisplay({
 
   if (!canRead) {
     return (
-      <LayoutCard>
-        <Text variant="muted" className="text-sm">
+      <MetricValueShell presentation={presentation}>
+        <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.forbidden")}
         </Text>
-      </LayoutCard>
+      </MetricValueShell>
     );
   }
 
   if (definitionQuery.isLoading || rowQuery.isLoading) {
     return (
-      <LayoutCard>
-        <Text variant="muted" className="text-sm">
+      <MetricValueShell presentation={presentation}>
+        <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.loading")}
         </Text>
-      </LayoutCard>
+      </MetricValueShell>
     );
   }
 
   if (definitionQuery.isError) {
     return (
-      <LayoutCard>
-        <Text variant="muted" className="text-sm">
+      <MetricValueShell presentation={presentation}>
+        <Text variant="muted" className={statusClassName}>
           {t("metrics.widget.error")}
         </Text>
-      </LayoutCard>
+      </MetricValueShell>
     );
   }
 
@@ -90,15 +110,19 @@ export function MetricValueDisplay({
 
   const title = label ?? definition.name;
   const row = rowQuery.data;
+  const emptyText = emptyLabel ?? t("metrics.widget.empty");
 
   if (!row) {
+    if (inline) {
+      return (
+        <Text className="text-2xl font-semibold tabular-nums">{emptyText}</Text>
+      );
+    }
     return (
-      <LayoutCard>
+      <MetricValueShell presentation={presentation}>
         <Text className="text-muted-foreground text-xs">{title}</Text>
-        <Text className="text-lg font-semibold tabular-nums">
-          {emptyLabel ?? t("metrics.widget.empty")}
-        </Text>
-      </LayoutCard>
+        <Text className="text-lg font-semibold tabular-nums">{emptyText}</Text>
+      </MetricValueShell>
     );
   }
 
@@ -107,13 +131,22 @@ export function MetricValueDisplay({
     row.values,
     i18n.language,
   );
+  const displayValue = value === null ? emptyText : value;
+
+  if (inline) {
+    return (
+      <Text className="text-2xl font-semibold tabular-nums">
+        {displayValue}
+      </Text>
+    );
+  }
 
   return (
-    <LayoutCard>
+    <MetricValueShell presentation={presentation}>
       <Text className="text-muted-foreground text-xs">{title}</Text>
       <Text className="text-2xl font-semibold tabular-nums">
-        {value === null ? (emptyLabel ?? t("metrics.widget.empty")) : value}
+        {displayValue}
       </Text>
-    </LayoutCard>
+    </MetricValueShell>
   );
 }

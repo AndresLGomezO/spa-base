@@ -45,6 +45,10 @@ export default [
       "settings/design-layout/forms/:entityName",
       "./routes/settings/design-layout/forms.tsx",
     ),
+    route(
+      "settings/design-layout/metrics/:entityName",
+      "./routes/settings/design-layout/metrics.tsx",
+    ),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
       ...buildEntityRouteConfig(),

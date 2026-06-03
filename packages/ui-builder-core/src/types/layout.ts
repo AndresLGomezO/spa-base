@@ -27,6 +27,8 @@ export interface ColumnNode {
   readonly rows: readonly RowNode[];
   /** Vertical (default) or horizontal stacking of rows in this column. */
   readonly stackDirection?: ColumnStackDirection;
+  /** User-set share of the row (1–100). Omitted = auto (split remainder equally). */
+  readonly widthPercent?: number;
   readonly styles?: readonly StyleRule[];
 }
 

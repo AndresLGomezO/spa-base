@@ -13,7 +13,10 @@ import { Button, Heading, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 
-import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
+import {
+  ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  resolveFormModalSize,
+} from "@repo/entities";
 
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
@@ -33,6 +36,7 @@ import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
 import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
 import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
+import { viewMetricWidgetsFromView } from "../metrics/metric-widgets-builder-state.js";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { createEntityMainPageRenderContext } from "../../features/ui-builder/create-entity-main-page-render-context";
 
@@ -265,10 +269,12 @@ export function EntityPage({ entityName }: EntityPageProps) {
     () => definition.ui.views.find((view) => view.type === "table"),
     [definition.ui.views],
   );
-  const metricWidgets = useMemo(
-    () => tableView?.metricWidgets ?? activeView.metricWidgets ?? [],
-    [activeView.metricWidgets, tableView?.metricWidgets],
-  );
+  const metricStripLayout =
+    tableView?.type === "table" ? tableView.metricStripLayout : undefined;
+  const metricWidgets = useMemo(() => {
+    const raw = tableView?.metricWidgets ?? activeView.metricWidgets ?? [];
+    return viewMetricWidgetsFromView(raw, metricStripLayout);
+  }, [activeView.metricWidgets, metricStripLayout, tableView?.metricWidgets]);
   const mainPageLayout = definition.ui.mainPageLayout;
 
   const listViewProps = useMemo(
@@ -305,7 +311,9 @@ export function EntityPage({ entityName }: EntityPageProps) {
         entityLabel: getEntityLabel(definition),
         locale: i18n.language,
         canCreate: permissions.canCreate,
+        entityDefinition: definition,
         metricWidgets,
+        metricStripLayout,
         listFilters: filters,
         routeParams,
         toolbar: {
@@ -343,6 +351,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
       filtersOpen,
       i18n.language,
       listViewProps,
+      metricStripLayout,
       metricWidgets,
       permissions.canCreate,
       routeParams,
@@ -407,6 +416,8 @@ export function EntityPage({ entityName }: EntityPageProps) {
       {metricWidgets.length > 0 ? (
         <EntityViewMetricsStrip
           widgets={metricWidgets}
+          stripLayout={metricStripLayout}
+          entityDefinition={definition}
           context={{ listFilters: filters, routeParams }}
         />
       ) : null}
@@ -435,7 +446,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
           open
           onClose={closeFormModal}
           title={formModalTitle}
-          size="lg"
+          size={resolveFormModalSize(definition)}
           footer={
             <div className="flex gap-2">
               <Button type="button" variant="outline" onClick={closeFormModal}>

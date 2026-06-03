@@ -1,11 +1,15 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Link } from "react-router";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { Text } from "@repo/ui";
 
 import type { EntityName } from "../../entities/entity-catalog";
-import { CollapsibleSection } from "../../components/CollapsibleSection";
-import { MetricWidgetsBuilderSection } from "../../components/metrics/MetricWidgetsBuilderSection";
+import {
+  metricStripLayoutFromTableView,
+  viewMetricWidgetsFromView,
+} from "../../components/metrics/metric-widgets-builder-state.js";
+import { designLayoutEntityPath } from "../../routing/design-layout-nav.js";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder";
 import { DesignLayoutEditorShell } from "./DesignLayoutEditorShell";
 import {
@@ -27,6 +31,25 @@ export function EntityMainPageLayoutDesignEditor({
   const internalEditor = useEntityMainPageLayoutEditor(entityName);
   const editor = editorProp ?? internalEditor;
 
+  const metricStripLayoutForPreview = useMemo(() => {
+    const tableView = editor.definition.ui.views.find(
+      (view) => view.type === "table",
+    );
+    return metricStripLayoutFromTableView(
+      tableView?.type === "table" ? tableView.metricStripLayout : undefined,
+    );
+  }, [editor.definition.ui.views]);
+
+  const metricWidgetsForPreview = useMemo(() => {
+    const tableView = editor.definition.ui.views.find(
+      (view) => view.type === "table",
+    );
+    return viewMetricWidgetsFromView(
+      tableView?.metricWidgets,
+      metricStripLayoutForPreview,
+    );
+  }, [editor.definition.ui.views, metricStripLayoutForPreview]);
+
   const structureLabels = useMemo(
     () => ({
       structure: t("designLayout.mainPageStructure"),
@@ -46,6 +69,9 @@ export function EntityMainPageLayoutDesignEditor({
       },
       columnTab: (column: number) =>
         t("entity.viewSettings.columnTab", { column }),
+      columnWidthPercent: t("entity.viewSettings.columnWidthPercent"),
+      columnWidthAutoHint: (percent: number) =>
+        t("entity.viewSettings.columnWidthAutoHint", { percent }),
       moveColumnLeft: t("entity.viewSettings.moveColumnLeft"),
       moveColumnRight: t("entity.viewSettings.moveColumnRight"),
       deleteColumn: (column: number) =>
@@ -103,7 +129,9 @@ export function EntityMainPageLayoutDesignEditor({
         entityLabel: editor.definition.ui.nav?.label ?? entityName,
         locale: i18n.language,
         canCreate: true,
-        metricWidgets: editor.metricWidgets,
+        metricWidgets: metricWidgetsForPreview,
+        metricStripLayout: metricStripLayoutForPreview,
+        entityDefinition: editor.definition,
         listFilters: {},
         routeParams: {},
         toolbar: {
@@ -126,12 +154,14 @@ export function EntityMainPageLayoutDesignEditor({
         listViewProps: {},
         onCreate: () => undefined,
         previewMode: true,
+        metricsDesignerPath: designLayoutEntityPath("metrics", entityName),
       }),
     [
-      editor.definition.ui.nav?.label,
-      editor.metricWidgets,
+      editor.definition,
       entityName,
       i18n.language,
+      metricStripLayoutForPreview,
+      metricWidgetsForPreview,
     ],
   );
 
@@ -149,17 +179,15 @@ export function EntityMainPageLayoutDesignEditor({
 
   return (
     <DesignLayoutEditorShell preview={preview}>
-      <CollapsibleSection
-        title={t("entity.viewSettings.metrics.title")}
-        defaultOpen={false}
-      >
-        <MetricWidgetsBuilderSection
-          widgets={editor.metricWidgets}
-          entityDefinition={editor.definition}
-          filterFieldOptions={editor.filterFieldOptions}
-          onChange={editor.setMetricWidgets}
-        />
-      </CollapsibleSection>
+      <Text variant="muted" className="text-sm">
+        {t("designLayout.metricsConfigureLink")}{" "}
+        <Link
+          to={designLayoutEntityPath("metrics", entityName)}
+          className="text-primary underline-offset-4 hover:underline"
+        >
+          {t("nav.designLayoutMetrics")}
+        </Link>
+      </Text>
       <EntityCardLayoutBuilder
         key={editor.layoutEditorKey}
         layout={editor.layout}

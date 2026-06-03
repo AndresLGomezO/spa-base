@@ -1,10 +1,12 @@
 import { renderHook } from "@testing-library/react";
+import { Database } from "lucide-react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
   flattenNavGroupLinks,
   isNavGroup,
   isNavSubGroup,
+  type NavSubGroupConfig,
 } from "../components/sidebar/nav-config";
 import type { EntityCatalogEntry } from "../entities/entity-catalog";
 import { MOCK_ENTITY_CATALOG } from "../test/entity-catalog-fixtures";
@@ -12,6 +14,50 @@ import { useAccessibleNavItems } from "./useAccessibleNavItems";
 
 const mockUseAuth = vi.fn();
 let mockCatalogItems: readonly EntityCatalogEntry[] = MOCK_ENTITY_CATALOG;
+let mockDesignLayoutSubGroups: readonly NavSubGroupConfig[] = [];
+
+const designLayoutEntityLink = (kind: string, entityName: string) => ({
+  id: `design-layout-${kind}-${entityName}`,
+  label: entityName,
+  to: `/settings/design-layout/${kind}/${entityName}`,
+  matchPath: `/settings/design-layout/${kind}/${entityName}`,
+  icon: Database,
+});
+
+const DESIGN_LAYOUT_SUBGROUPS_FIXTURE: readonly NavSubGroupConfig[] = [
+  {
+    id: "design-layout-main",
+    labelKey: "designLayoutMain",
+    children: [
+      designLayoutEntityLink("main", "testItem"),
+      designLayoutEntityLink("main", "widget"),
+    ],
+  },
+  {
+    id: "design-layout-list",
+    labelKey: "designLayoutList",
+    children: [
+      designLayoutEntityLink("list", "testItem"),
+      designLayoutEntityLink("list", "widget"),
+    ],
+  },
+  {
+    id: "design-layout-detail",
+    labelKey: "designLayoutDetail",
+    children: [
+      designLayoutEntityLink("detail", "testItem"),
+      designLayoutEntityLink("detail", "widget"),
+    ],
+  },
+  {
+    id: "design-layout-forms",
+    labelKey: "designLayoutForms",
+    children: [
+      designLayoutEntityLink("forms", "testItem"),
+      designLayoutEntityLink("forms", "widget"),
+    ],
+  },
+];
 
 vi.mock("../auth/AuthContext", () => ({
   useAuth: () => mockUseAuth(),
@@ -46,6 +92,11 @@ vi.mock("../hooks/useEntityNavCategories", () => ({
   }),
 }));
 
+vi.mock("./design-layout-nav", () => ({
+  DESIGN_LAYOUT_MATCH_PATH: "/settings/design-layout",
+  useDesignLayoutNavSubGroups: () => mockDesignLayoutSubGroups,
+}));
+
 function getDataModelEntityIds(
   items: ReturnType<typeof useAccessibleNavItems>,
 ): string[] {
@@ -62,6 +113,7 @@ const defaultAuth = {
 
 describe("useAccessibleNavItems", () => {
   it("shows all entities for superadmin", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -78,6 +130,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("filters entities by read permission for viewers", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -91,6 +144,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("puts model builder in data structure and automation in settings", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -130,6 +184,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("puts metrics in analytics group, not settings", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -151,6 +206,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("shows entity categories in data structure without settings group", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -176,6 +232,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("groups categorized entities separately from uncategorized data models", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = [
       {
         ...MOCK_ENTITY_CATALOG[0],
@@ -213,6 +270,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("shows only home when there are no tenants", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       isSuperAdmin: true,
@@ -227,6 +285,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("shows design layout group when entityUiOverride.read is granted", () => {
+    mockDesignLayoutSubGroups = DESIGN_LAYOUT_SUBGROUPS_FIXTURE;
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -258,6 +317,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("hides design layout group without entityUiOverride.read", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -273,6 +333,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("includes platform current tenant and appearance for superadmin", () => {
+    mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,

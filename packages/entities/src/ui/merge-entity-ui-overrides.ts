@@ -1,5 +1,6 @@
 import { migrateListPresentation } from "./migrate-list-presentation.js";
 import { normalizeEntityViews } from "./normalize-entity-views.js";
+import type { EntityUiOverrideForms } from "./form-config.js";
 import { isCardViewConfig } from "./types.js";
 import type {
   EntityUiOverrideRecord,
@@ -10,18 +11,32 @@ import type {
 
 function mergeFormConfig(
   base: FormConfig,
-  overrideForms: EntityUiOverrideRecord["forms"],
+  overrideForms: EntityUiOverrideForms | undefined,
 ): FormConfig {
   if (!overrideForms) {
     return base;
   }
+
+  const sharedLayout =
+    overrideForms.layout ?? overrideForms.create ?? overrideForms.edit;
+  const presentation =
+    overrideForms.presentation ??
+    (overrideForms.wizard ? ("wizard" as const) : undefined) ??
+    base.presentation;
+  const wizard = overrideForms.wizard ?? base.wizard;
+
+  const layoutForPlain = presentation === "wizard" ? undefined : sharedLayout;
+
   return {
-    create: overrideForms.create
-      ? { ...base.create, layout: overrideForms.create }
+    presentation: presentation ?? (wizard ? "wizard" : "plain"),
+    ...(wizard ? { wizard } : {}),
+    ...(overrideForms.modalSize !== undefined || base.modalSize !== undefined
+      ? { modalSize: overrideForms.modalSize ?? base.modalSize }
+      : {}),
+    create: layoutForPlain
+      ? { ...base.create, layout: layoutForPlain }
       : base.create,
-    edit: overrideForms.edit
-      ? { ...base.edit, layout: overrideForms.edit }
-      : base.edit,
+    edit: layoutForPlain ? { ...base.edit, layout: layoutForPlain } : base.edit,
   };
 }
 

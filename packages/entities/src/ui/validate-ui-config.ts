@@ -2,11 +2,18 @@ import { z } from "zod";
 
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import {
+  assertFormLayoutFieldPaths,
   assertLayoutFieldPaths,
+  assertWizardShellLayout,
+  collectLayoutFieldPaths,
   uiLayoutDocumentSchema,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
-import { viewMetricWidgetSchema } from "./metric-widget-types.js";
+import { assertMetricWidgetsPlacement } from "./metric-strip-placement.js";
+import {
+  viewMetricWidgetSchema,
+  type ViewMetricWidget,
+} from "./metric-widget-types.js";
 import { migrateListPresentation } from "./migrate-list-presentation.js";
 import type { EntityUIConfig } from "./types.js";
 
@@ -72,6 +79,7 @@ const tableViewConfigSchema = z
     type: z.literal("table"),
     ...viewConfigSharedSchema,
     showActions: z.boolean().optional(),
+    metricStripLayout: uiLayoutDocumentSchema.optional(),
   })
   .strict();
 
@@ -106,6 +114,36 @@ const formSectionSchema = z
   })
   .strict();
 
+const wizardStepConfigSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    label: z.string().trim().min(1),
+    subtitle: z.string().trim().min(1).optional(),
+    icon: z.string().trim().min(1).optional(),
+    layout: uiLayoutDocumentSchema,
+  })
+  .strict();
+
+const wizardFormConfigSchema = z
+  .object({
+    shellLayout: uiLayoutDocumentSchema,
+    steps: z.array(wizardStepConfigSchema).min(1),
+  })
+  .strict()
+  .superRefine((wizard, ctx) => {
+    const ids = new Set<string>();
+    for (const [index, step] of wizard.steps.entries()) {
+      if (ids.has(step.id)) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: `Duplicate wizard step id "${step.id}".`,
+          path: ["steps", index, "id"],
+        });
+      }
+      ids.add(step.id);
+    }
+  });
+
 const formLayoutSchema = z
   .object({
     sections: z.array(formSectionSchema).min(1),
@@ -127,6 +165,9 @@ const entityUISchema = z
       .object({
         create: formLayoutSchema,
         edit: formLayoutSchema,
+        presentation: z.enum(["plain", "wizard"]).optional(),
+        wizard: wizardFormConfigSchema.optional(),
+        modalSize: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
       })
       .strict(),
     detail: z
@@ -189,6 +230,7 @@ export function validateEntityUIConfig(
       Object.entries(entity.metadata.fields).map(([key, field]) => [
         key,
         {
+          type: field.type,
           ...(field.relation
             ? {
                 relation: {
@@ -246,6 +288,34 @@ export function validateEntityUIConfig(
         `view "${view.name}"`,
       );
     }
+    if (view.type === "table") {
+      if (view.metricWidgets?.length) {
+        assertMetricWidgetsPlacement(
+          view.metricWidgets as readonly ViewMetricWidget[],
+          view.metricStripLayout as UiLayoutDocument | undefined,
+        );
+        for (const widget of view.metricWidgets) {
+          if (widget.layout) {
+            assertLayoutFieldPaths(
+              layoutEntityShape,
+              widget.layout as UiLayoutDocument,
+              `metric widget "${widget.id}" layout`,
+            );
+          }
+          if (widget.display === "series") {
+            for (const [index, bucket] of widget.buckets.entries()) {
+              if (bucket.layout) {
+                assertLayoutFieldPaths(
+                  layoutEntityShape,
+                  bucket.layout as UiLayoutDocument,
+                  `metric widget "${widget.id}" bucket ${index + 1} layout`,
+                );
+              }
+            }
+          }
+        }
+      }
+    }
     if (view.type === "expandableTable") {
       for (const column of view.columns) {
         assertLayoutFieldPaths(
@@ -267,11 +337,34 @@ export function validateEntityUIConfig(
       assertFieldRefs(entity, section.fields, `${mode} form`);
     }
     if (parsed.forms[mode].layout) {
-      assertLayoutFieldPaths(
+      assertFormLayoutFieldPaths(
         layoutEntityShape,
         parsed.forms[mode].layout as UiLayoutDocument,
         `${mode} form layout`,
       );
+    }
+  }
+
+  if (parsed.forms.wizard) {
+    assertWizardShellLayout(
+      parsed.forms.wizard.shellLayout as UiLayoutDocument,
+      `forms wizard shell for entity "${entity.name}"`,
+    );
+    for (const [index, step] of parsed.forms.wizard.steps.entries()) {
+      assertFormLayoutFieldPaths(
+        layoutEntityShape,
+        step.layout as UiLayoutDocument,
+        `wizard step ${index + 1} (${step.id})`,
+      );
+      for (const fieldPath of collectLayoutFieldPaths(
+        step.layout as UiLayoutDocument,
+      )) {
+        assertFieldRefs(
+          entity,
+          [fieldPath],
+          `wizard step ${index + 1} (${step.id})`,
+        );
+      }
     }
   }
 

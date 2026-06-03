@@ -58,6 +58,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
       const syncResult = await syncAuthSession(firebaseUser);
 
       if (!syncResult.ok || !syncResult.user) {
+        if (syncResult.transient) {
+          return { success: true };
+        }
         return {
           success: false,
           error: syncResult.error ?? "Unable to refresh session.",
@@ -111,8 +114,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
         }
 
         syncInFlightRef.current = true;
+
+        const authUser = await buildAuthUser(firebaseUser);
         if (!cancelled) {
-          dispatch({ type: "LOGIN_STARTED" });
+          dispatch({
+            type: "AUTH_STATE_AUTHENTICATED",
+            user: authUser,
+          });
         }
 
         try {
@@ -121,6 +129,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (cancelled) return;
 
           if (!syncResult.ok) {
+            if (syncResult.transient) {
+              syncedUidRef.current = firebaseUser.uid;
+              return;
+            }
+
             syncedUidRef.current = null;
             await signOut();
             dispatch({

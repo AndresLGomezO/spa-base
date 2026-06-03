@@ -10,6 +10,10 @@ export type {
 } from "./types/layout.js";
 
 export { resolveColumnStackDirection } from "./types/layout.js";
+export {
+  resolveColumnWidthPercents,
+  buildGridTemplateColumnsFromPercents,
+} from "./layout/resolve-column-width-percents.js";
 
 export type {
   UiComponentConfig,
@@ -35,6 +39,24 @@ export {
 } from "./types/component.js";
 export { createDefaultMainPageLayout } from "./layout/default-main-page-layout.js";
 export { createDefaultFormLayout } from "./layout/default-form-layout.js";
+export {
+  createDefaultWizardShellLayout,
+  createDefaultWizardStepLayout,
+  createDefaultWizardFormConfig,
+} from "./layout/default-wizard-form-layout.js";
+export {
+  assertWizardShellLayout,
+  collectLayoutComponentKinds,
+  ensureWizardShellLayout,
+  createWizardShellLayoutWithSlots,
+} from "./layout/wizard-shell.js";
+export type {
+  WizardProgressComponentConfig,
+  WizardStepHostComponentConfig,
+  WizardActionsComponentConfig,
+  WizardStepStatusKind,
+} from "./types/component.js";
+export { isWizardUiComponent } from "./types/component.js";
 export type { DesignSurface } from "./types/design-surface.js";
 export {
   componentKindsForSurface,
@@ -104,15 +126,19 @@ export {
 
 export {
   isValidLayoutFieldPath,
+  isValidFormFieldPath,
   assertLayoutFieldPaths,
+  assertFormLayoutFieldPaths,
   collectLayoutFieldPaths,
   listLayoutFieldOptions,
+  listFormFieldOptions,
   type ListLayoutFieldOptionsParams,
   formatFieldPathLabel,
   relationAliasFieldPath,
   type FieldPathValidationDefinition,
 } from "./validation/field-paths.js";
 
+export { styleRuleSchema } from "./schema/ui-layout-schema.js";
 export {
   uiLayoutDocumentSchema,
   type UiLayoutDocumentInput,
@@ -125,9 +151,11 @@ export {
   createEmptyColumn,
   createEmptyLayout,
   setRootColumnCount,
+  setRootColumnWidthPercent,
   moveRootColumn,
   removeRootColumn,
   setNestedColumnCount,
+  setNestedColumnWidthPercent,
   moveNestedColumn,
   removeNestedColumn,
   updateRootColumnStyles,

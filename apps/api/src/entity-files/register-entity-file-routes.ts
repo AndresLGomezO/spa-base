@@ -7,7 +7,12 @@ import type {
 import { z } from "zod";
 
 import type { NormalizedFieldMeta } from "@repo/entities";
-import { MAX_ENTITY_FILE_UPLOAD_REQUEST_BODY_BYTES } from "@repo/entities";
+import {
+  DEFAULT_IMAGE_MAX_SIZE_BYTES,
+  ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  LAYOUT_STATIC_IMAGE_FIELD_NAME,
+  MAX_ENTITY_FILE_UPLOAD_REQUEST_BODY_BYTES,
+} from "@repo/entities";
 import { hasPermission } from "@repo/rbac";
 import {
   defineEntityFromRecord,
@@ -47,7 +52,12 @@ const uploadBodySchema = z.object({
   fileName: z.string().trim().min(1).max(255),
   data: z.string().trim().min(1),
   recordId: z.string().trim().min(1).optional(),
-  purpose: z.enum(["record", "fieldDefault"]).optional(),
+  purpose: z.enum(["record", "fieldDefault", "layoutStatic"]).optional(),
+});
+
+const downloadStorageQuerySchema = z.object({
+  entityName: z.string().trim().min(1),
+  storagePath: z.string().trim().min(1),
 });
 
 const downloadQuerySchema = z.object({
@@ -70,6 +80,15 @@ function decodeBase64Payload(data: string): Buffer {
   } catch {
     throw new Error("Invalid base64 file data.");
   }
+}
+
+function storagePathBelongsToEntity(
+  tenantId: string,
+  entityName: string,
+  storagePath: string,
+): boolean {
+  const prefix = `tenants/${tenantId}/entity-files/${entityName}/`;
+  return storagePath.startsWith(prefix);
 }
 
 function fieldTypeForMeta(type: string): EntityFileFieldType | null {
@@ -126,6 +145,7 @@ export function registerEntityFileRoutes(
       if (!tenantId || !request.ctx) {
         return;
       }
+      const ctx = request.ctx;
 
       await loadRequestPermissions(request, options.permissionDeps);
 
@@ -142,22 +162,35 @@ export function registerEntityFileRoutes(
       const body = parsedBody.data;
       const purpose = body.purpose ?? "record";
       const isFieldDefaultUpload = purpose === "fieldDefault";
+      const isLayoutStaticUpload = purpose === "layoutStatic";
 
-      if (isFieldDefaultUpload && body.recordId) {
+      if ((isFieldDefaultUpload || isLayoutStaticUpload) && body.recordId) {
         return replyWithError(
           reply,
           400,
           ApiErrorCode.VALIDATION_ERROR,
-          "Field default uploads cannot include recordId.",
+          "Layout and field default uploads cannot include recordId.",
         );
       }
 
-      const fieldMeta = await resolveUploadFileFieldMeta(
+      let fieldMeta = await resolveUploadFileFieldMeta(
         options.entityRuntime,
         tenantId,
         body.entityName,
         body.fieldName,
       );
+      if (
+        !fieldMeta &&
+        isLayoutStaticUpload &&
+        body.fieldName === LAYOUT_STATIC_IMAGE_FIELD_NAME
+      ) {
+        fieldMeta = {
+          type: "image",
+          required: false,
+          optional: true,
+          maxSizeBytes: DEFAULT_IMAGE_MAX_SIZE_BYTES,
+        };
+      }
       if (!fieldMeta) {
         return replyWithError(
           reply,
@@ -177,12 +210,15 @@ export function registerEntityFileRoutes(
         );
       }
 
-      if (isFieldDefaultUpload && fieldType !== "image") {
+      if (
+        (isFieldDefaultUpload || isLayoutStaticUpload) &&
+        fieldType !== "image"
+      ) {
         return replyWithError(
           reply,
           400,
           ApiErrorCode.VALIDATION_ERROR,
-          "Only image fields support default image uploads.",
+          "Only image fields support layout and default image uploads.",
         );
       }
 
@@ -195,7 +231,23 @@ export function registerEntityFileRoutes(
         );
       }
 
-      if (isFieldDefaultUpload) {
+      if (isLayoutStaticUpload) {
+        const canUploadLayoutStatic =
+          ctx.isSuperAdmin ||
+          ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS.some((permission) =>
+            hasPermission(permission, ctx.permissions ?? [], {
+              isSuperAdmin: ctx.isSuperAdmin,
+            }),
+          );
+        if (!canUploadLayoutStatic) {
+          return replyWithError(
+            reply,
+            403,
+            ApiErrorCode.FORBIDDEN,
+            "Insufficient permissions to upload layout image.",
+          );
+        }
+      } else if (isFieldDefaultUpload) {
         const canUpdateDefinitions =
           request.ctx.isSuperAdmin ||
           hasPermission(
@@ -513,6 +565,82 @@ export function registerEntityFileRoutes(
         const downloadUrl = await createEntityFileDownloadUrl({
           config: options.firebaseAdminConfig,
           storagePath,
+        });
+        return reply.send(successEnvelope({ downloadUrl }));
+      } catch (error) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          error instanceof Error ? error.message : "Download failed.",
+        );
+      }
+    },
+  );
+
+  app.get(
+    `${prefix}/entity-files/download-storage`,
+    { preHandler: options.authenticate },
+    async (request: FastifyRequest, reply: FastifyReply) => {
+      const tenantId = requireRequestTenant(request, reply);
+      if (!tenantId || !request.ctx) {
+        return;
+      }
+      const ctx = request.ctx;
+
+      const parsedQuery = downloadStorageQuerySchema.safeParse(request.query);
+      if (!parsedQuery.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid download query.",
+        );
+      }
+
+      const query = parsedQuery.data;
+      if (
+        !storagePathBelongsToEntity(
+          tenantId,
+          query.entityName,
+          query.storagePath,
+        )
+      ) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "File not found.",
+        );
+      }
+
+      await loadRequestPermissions(request, options.permissionDeps);
+      const permissions = ctx.permissions ?? [];
+      const readPermission = `${query.entityName}.read`;
+      const canReadLayoutFile =
+        ctx.isSuperAdmin ||
+        hasPermission(readPermission, permissions, {
+          isSuperAdmin: ctx.isSuperAdmin,
+        }) ||
+        ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS.some((permission) =>
+          hasPermission(permission, permissions, {
+            isSuperAdmin: ctx.isSuperAdmin,
+          }),
+        );
+
+      if (!canReadLayoutFile) {
+        return replyWithError(
+          reply,
+          403,
+          ApiErrorCode.FORBIDDEN,
+          "You do not have permission to perform this action.",
+        );
+      }
+
+      try {
+        const downloadUrl = await createEntityFileDownloadUrl({
+          config: options.firebaseAdminConfig,
+          storagePath: query.storagePath,
         });
         return reply.send(successEnvelope({ downloadUrl }));
       } catch (error) {

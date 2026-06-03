@@ -64,4 +64,27 @@ describe("isNavSubGroupActive", () => {
       isNavSubGroupActive("/settings/design-layout/page/account", subgroup),
     ).toBe(false);
   });
+
+  it("is active for metrics layout routes", () => {
+    const subgroup = {
+      id: "design-layout-metrics",
+      labelKey: "designLayoutMetrics" as const,
+      children: [
+        {
+          id: "account-metrics",
+          label: "Account",
+          to: "/settings/design-layout/metrics/account",
+          matchPath: "/settings/design-layout/metrics/account",
+          icon: Database,
+        },
+      ],
+    };
+
+    expect(
+      isNavSubGroupActive("/settings/design-layout/metrics/account", subgroup),
+    ).toBe(true);
+    expect(
+      isNavSubGroupActive("/settings/design-layout/main/account", subgroup),
+    ).toBe(false);
+  });
 });

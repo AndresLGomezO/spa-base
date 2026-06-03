@@ -1,6 +1,8 @@
 import cors from "@fastify/cors";
 import compress from "@fastify/compress";
 import rateLimit from "@fastify/rate-limit";
+
+import { isRateLimitExemptRequest } from "./rate-limit-allowlist.js";
 import Fastify from "fastify";
 
 import { getAllEntities } from "@repo/entities";
@@ -183,6 +185,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     await server.register(rateLimit, {
       max: apiEnv.API_RATE_LIMIT_MAX,
       timeWindow: apiEnv.API_RATE_LIMIT_TIME_WINDOW_MS,
+      allowList: (request) => isRateLimitExemptRequest(request),
       keyGenerator: (request) => {
         const ctx = request.ctx;
         if (ctx?.uid && ctx.tenantId) {

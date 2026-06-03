@@ -1,6 +1,12 @@
 import type { ReactNode } from "react";
 
-import type { MetricKpiComponentConfig } from "@repo/ui-builder-core";
+import type {
+  MetricKpiComponentConfig,
+  WizardActionsComponentConfig,
+  WizardProgressComponentConfig,
+  WizardStepHostComponentConfig,
+  WizardStepStatusKind,
+} from "@repo/ui-builder-core";
 
 import type {
   DateDisplayFormat,
@@ -22,6 +28,19 @@ export interface ImageResolveOptions {
 }
 
 export type LayoutRenderMode = "listItem" | "detail" | "form" | "mainPage";
+
+export interface WizardRenderStepMeta {
+  readonly id: string;
+  readonly label: string;
+  readonly subtitle?: string;
+  readonly icon?: string;
+}
+
+export interface WizardRenderState {
+  readonly steps: readonly WizardRenderStepMeta[];
+  readonly currentStepIndex: number;
+  readonly stepStatuses: Readonly<Record<string, WizardStepStatusKind>>;
+}
 
 export interface LayoutRenderContext {
   readonly mode?: LayoutRenderMode;
@@ -64,6 +83,16 @@ export interface LayoutRenderContext {
   readonly pageToolbarRenderer?: () => ReactNode;
   readonly pageMetricsRenderer?: () => ReactNode;
   readonly pageListRenderer?: () => ReactNode;
+  readonly wizard?: WizardRenderState;
+  readonly wizardProgressRenderer?: (
+    config: WizardProgressComponentConfig,
+  ) => ReactNode;
+  readonly wizardStepHostRenderer?: (
+    config: WizardStepHostComponentConfig,
+  ) => ReactNode;
+  readonly wizardActionsRenderer?: (
+    config: WizardActionsComponentConfig,
+  ) => ReactNode;
 }
 
 export type ListItemRenderContext = LayoutRenderContext & {

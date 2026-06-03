@@ -10,6 +10,7 @@ import type { EntityName } from "../../entities/entity-catalog";
 import { EntityField } from "../../components/entity/EntityField";
 import { ENTITY_FORM_ID } from "../../components/entity/entity-form-constants";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
+import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context";
 
 export function createEntityFormRenderContext(options: {
   readonly entityName: EntityName;
@@ -30,6 +31,13 @@ export function createEntityFormRenderContext(options: {
   readonly saveLabel: string;
 }): LayoutRenderContext {
   const canWrite = options.canWrite;
+
+  const layoutImageContext = createEntityLayoutRenderContext({
+    item: options.values,
+    definition: options.definition,
+    locale: options.locale,
+    usePreviewPlaceholder: true,
+  });
 
   return {
     mode: "form",
@@ -88,5 +96,7 @@ export function createEntityFormRenderContext(options: {
           </Button>
         </div>
       ),
+    resolveImage: layoutImageContext.resolveImage,
+    isImagePresent: layoutImageContext.isImagePresent,
   };
 }

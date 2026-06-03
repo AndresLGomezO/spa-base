@@ -5,6 +5,7 @@ export {
   type EntityDefinitionLookup,
   type FieldDescriptor,
 } from "./adapters/entity-card-view-adapter.js";
+export { entityFormFieldAdapter } from "./adapters/entity-form-field-adapter.js";
 
 export {
   UiLayoutBuilder,

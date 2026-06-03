@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { FieldPathValidationDefinition } from "./field-paths.js";
 import {
   isValidLayoutFieldPath,
+  listFormFieldOptions,
   listLayoutFieldOptions,
   relationAliasFieldPath,
 } from "./field-paths.js";
@@ -57,6 +58,17 @@ describe("listLayoutFieldOptions", () => {
 
     expect(options).toContain("bank.logo");
     expect(options).not.toContain("currency.logo");
+  });
+});
+
+describe("listFormFieldOptions", () => {
+  it("includes relation fk fields and scalar fields", () => {
+    const options = listFormFieldOptions(accountDefinition);
+    expect(options).toContain("name");
+    expect(options).toContain("balance");
+    expect(options).toContain("bankId");
+    expect(options).toContain("currencyId");
+    expect(options).not.toContain("bank.name");
   });
 });
 

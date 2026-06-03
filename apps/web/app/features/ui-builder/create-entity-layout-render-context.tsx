@@ -15,7 +15,10 @@ import {
 } from "../../components/entity/resolve-layout-slot-display";
 import { EntityLayoutImageField } from "../../components/entity/EntityLayoutImageField";
 import { MetricValueDisplay } from "../../components/metrics/MetricValueDisplay";
+import { readLayoutStaticImageUrl } from "@repo/entities";
+
 import { isEntityFileReferenceWithDownload } from "../../lib/entity-file-client";
+import { parseLayoutStaticImageRef } from "../../lib/layout-static-image";
 
 export function createEntityLayoutRenderContext(options: {
   readonly item: Record<string, unknown>;
@@ -79,6 +82,14 @@ export function createEntityLayoutRenderContext(options: {
       if (isEntityFileReferenceWithDownload(rawValue)) {
         return true;
       }
+      if (typeof rawValue === "string") {
+        if (readLayoutStaticImageUrl(rawValue)) {
+          return true;
+        }
+        if (parseLayoutStaticImageRef(rawValue)) {
+          return true;
+        }
+      }
       return (
         resolveEntityLayoutImageDownloadTarget({
           item,
@@ -101,10 +112,10 @@ export function createEntityLayoutRenderContext(options: {
     ),
     metricKpiRenderer: (config: MetricKpiComponentConfig) => (
       <MetricValueDisplay
+        presentation="inline"
         metricDefinitionId={config.metricDefinitionId}
         groupBindings={config.groupBindings}
         dimensionBindings={config.dimensionBindings}
-        label={config.label}
         context={{ record: item, listFilters, routeParams }}
       />
     ),

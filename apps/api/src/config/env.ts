@@ -12,7 +12,7 @@ const ApiEnvSchema = z.object({
   VITE_ENV: AppEnvSchema.optional(),
   PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS: z.string().trim().default(""),
   CACHE_TTL_MS: z.coerce.number().int().nonnegative().default(60_000),
-  API_RATE_LIMIT_MAX: z.coerce.number().int().nonnegative().default(100),
+  API_RATE_LIMIT_MAX: z.coerce.number().int().nonnegative().default(300),
   API_RATE_LIMIT_TIME_WINDOW_MS: z.coerce
     .number()
     .int()

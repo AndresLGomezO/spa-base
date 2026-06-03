@@ -14,7 +14,7 @@ export const MAX_NESTED_COLUMNS = 6;
 
 export function createDefaultComponent(
   kind: UiComponentKind,
-  fieldPath: string,
+  fieldPath = "name",
 ): UiComponentConfig {
   if (kind === "metric-kpi") {
     return {
@@ -54,6 +54,18 @@ export function createDefaultComponent(
     return { kind };
   }
 
+  if (kind === "wizard-progress") {
+    return { kind: "wizard-progress", conditionalStyles: [] };
+  }
+
+  if (kind === "wizard-step-host") {
+    return { kind: "wizard-step-host" };
+  }
+
+  if (kind === "wizard-actions") {
+    return { kind: "wizard-actions" };
+  }
+
   return {
     kind,
     primary: { type: "field", path: fieldPath },
@@ -62,6 +74,57 @@ export function createDefaultComponent(
 
 export function createEmptyColumn(): ColumnNode {
   return { id: createLayoutId("col"), rows: [] };
+}
+
+function stripColumnWidthPercent(column: ColumnNode): ColumnNode {
+  const { widthPercent: _, ...rest } = column;
+  void _;
+  return rest;
+}
+
+function clearColumnWidthPercents(
+  columns: readonly ColumnNode[],
+): ColumnNode[] {
+  return columns.map(stripColumnWidthPercent);
+}
+
+function clampColumnWidthPercent(
+  columns: readonly ColumnNode[],
+  columnIndex: number,
+  percent: number | undefined,
+): number | undefined {
+  if (percent === undefined) {
+    return undefined;
+  }
+
+  const clamped = Math.min(100, Math.max(1, Math.round(percent)));
+  const autoCount = columns.filter((column, index) =>
+    index === columnIndex ? false : column.widthPercent === undefined,
+  ).length;
+
+  if (autoCount === 0) {
+    return clamped;
+  }
+
+  const otherExplicitSum = columns.reduce((total, column, index) => {
+    if (index === columnIndex) {
+      return total;
+    }
+    return total + (column.widthPercent ?? 0);
+  }, 0);
+
+  const maxAllowed = 100 - otherExplicitSum;
+  return Math.min(clamped, Math.max(1, maxAllowed));
+}
+
+function withColumnWidthPercent(
+  column: ColumnNode,
+  widthPercent: number | undefined,
+): ColumnNode {
+  if (widthPercent === undefined) {
+    return stripColumnWidthPercent(column);
+  }
+  return { ...column, widthPercent };
 }
 
 export function createEmptyLayout(columnCount = 1): UiLayoutDocument {
@@ -89,13 +152,41 @@ export function setRootColumnCount(
     columns.push(createEmptyColumn());
   }
 
+  const nextColumns =
+    count < columns.length
+      ? clearColumnWidthPercents(columns.slice(0, count))
+      : columns.slice(0, count);
+
   return {
     ...layout,
     root: {
       ...layout.root,
       columnCount: count,
-      columns: columns.slice(0, count),
+      columns: nextColumns,
     },
+  };
+}
+
+export function setRootColumnWidthPercent(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  percent: number | undefined,
+): UiLayoutDocument {
+  const columns = layout.root.columns.map((column, index) => {
+    if (index !== columnIndex) {
+      return column;
+    }
+    const widthPercent = clampColumnWidthPercent(
+      layout.root.columns,
+      columnIndex,
+      percent,
+    );
+    return withColumnWidthPercent(column, widthPercent);
+  });
+
+  return {
+    ...layout,
+    root: { ...layout.root, columns },
   };
 }
 
@@ -258,12 +349,40 @@ export function setNestedColumnCount(
       columns.push(createEmptyColumn());
     }
 
+    const nextColumns =
+      count < columns.length
+        ? clearColumnWidthPercents(columns.slice(0, count))
+        : columns.slice(0, count);
+
     return {
       ...row,
       columnCount: count,
-      columns: columns.slice(0, count),
+      columns: nextColumns,
     };
   });
+}
+
+export function setNestedColumnWidthPercent(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  rowId: string,
+  nestedColumnIndex: number,
+  percent: number | undefined,
+): UiLayoutDocument {
+  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
+    ...row,
+    columns: row.columns.map((column, index) => {
+      if (index !== nestedColumnIndex) {
+        return column;
+      }
+      const widthPercent = clampColumnWidthPercent(
+        row.columns,
+        nestedColumnIndex,
+        percent,
+      );
+      return withColumnWidthPercent(column, widthPercent);
+    }),
+  }));
 }
 
 export function moveNestedColumn(

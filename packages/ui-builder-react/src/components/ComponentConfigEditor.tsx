@@ -121,6 +121,10 @@ export interface ComponentConfigEditorProps {
     config: Extract<UiComponentConfig, { kind: "metric-kpi" }>,
     onChange: (config: UiComponentConfig) => void,
   ) => ReactNode;
+  readonly staticImageEditor?: (options: {
+    readonly value: string;
+    readonly onChange: (value: string) => void;
+  }) => ReactNode;
   readonly allowedKinds?: readonly UiComponentKind[];
 }
 
@@ -144,6 +148,7 @@ export function ComponentConfigEditor({
   onChange,
   labels,
   metricKpiEditor,
+  staticImageEditor,
   allowedKinds = DEFAULT_COMPONENT_KINDS,
 }: ComponentConfigEditorProps) {
   const componentKinds = allowedKinds;
@@ -167,6 +172,9 @@ export function ComponentConfigEditor({
       nextKind === "form-field" ||
       nextKind === "form-section" ||
       nextKind === "form-actions" ||
+      nextKind === "wizard-progress" ||
+      nextKind === "wizard-step-host" ||
+      nextKind === "wizard-actions" ||
       nextKind === "related-records" ||
       nextKind === "page-header" ||
       nextKind === "page-toolbar" ||
@@ -287,7 +295,58 @@ export function ComponentConfigEditor({
             </label>
           </>
         ) : null}
-        {isPageUiComponent(config) ? (
+        {config.kind === "wizard-actions" ? (
+          <div className="grid gap-2 sm:grid-cols-2">
+            {(
+              [
+                ["nextLabel", "Next label"],
+                ["backLabel", "Back label"],
+                ["cancelLabel", "Cancel label"],
+                ["submitCreateLabel", "Create label"],
+                ["submitEditLabel", "Save label"],
+              ] as const
+            ).map(([key, label]) => (
+              <label key={key} className="flex flex-col gap-1 text-sm">
+                <span className="text-muted-foreground">{label}</span>
+                <Input
+                  value={config[key] ?? ""}
+                  onChange={(event) =>
+                    onChange({
+                      ...config,
+                      [key]: event.target.value.trim() || undefined,
+                    })
+                  }
+                />
+              </label>
+            ))}
+          </div>
+        ) : null}
+        {config.kind === "wizard-progress" ? (
+          <Text variant="muted" className="text-xs">
+            Style each status (pending, active, completed, invalid) using
+            conditional rules below.
+          </Text>
+        ) : null}
+        {config.kind === "wizard-progress" ? (
+          <StyleRulesEditor
+            styles={
+              config.conditionalStyles as unknown as StyleRule[] | undefined
+            }
+            onChange={(rules) =>
+              onChange({
+                ...config,
+                conditionalStyles: rules as unknown as ConditionalStyleRule[],
+              })
+            }
+            labels={{
+              ...labels.styleRules,
+              title: labels.badgeColorRules,
+            }}
+          />
+        ) : null}
+        {isPageUiComponent(config) ||
+        config.kind === "wizard-step-host" ||
+        config.kind === "wizard-actions" ? (
           <StyleRulesEditor
             styles={config.styles}
             onChange={(styles) => onChange({ ...config, styles })}
@@ -369,17 +428,28 @@ export function ComponentConfigEditor({
       </label>
 
       {useStatic ? (
-        <Input
-          value={
-            fieldConfig.primary.type === "static"
-              ? fieldConfig.primary.value
-              : ""
-          }
-          onChange={(event) =>
-            onChange(updateStaticPrimary(fieldConfig, event.target.value))
-          }
-          placeholder={labels.staticValue}
-        />
+        fieldConfig.kind === "image" && staticImageEditor ? (
+          staticImageEditor({
+            value:
+              fieldConfig.primary.type === "static"
+                ? fieldConfig.primary.value
+                : "",
+            onChange: (value) =>
+              onChange(updateStaticPrimary(fieldConfig, value)),
+          })
+        ) : (
+          <Input
+            value={
+              fieldConfig.primary.type === "static"
+                ? fieldConfig.primary.value
+                : ""
+            }
+            onChange={(event) =>
+              onChange(updateStaticPrimary(fieldConfig, event.target.value))
+            }
+            placeholder={labels.staticValue}
+          />
+        )
       ) : (
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.field}</span>
