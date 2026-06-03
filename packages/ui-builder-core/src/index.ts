@@ -66,7 +66,10 @@ export { STYLE_PROPERTY_OPTIONS } from "./styles/style-types.js";
 export {
   applyStyleRules,
   resolveStyleRules,
+  resolvePageSlotWrapper,
   spacingStyleFromStyleRules,
+  layoutInlineStyleFromStyleRules,
+  type LayoutInlineStyle,
   SPACING_STYLE_PROPERTIES,
   splitStyleRuleClasses,
   type ResolvedStyleRules,

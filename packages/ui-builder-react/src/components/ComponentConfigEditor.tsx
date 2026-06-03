@@ -7,6 +7,7 @@ import {
   type FieldUiComponentConfig,
   type StyleRule,
   isFieldUiComponent,
+  isPageUiComponent,
   type UiComponentConfig,
   type UiComponentKind,
 } from "@repo/ui-builder-core";
@@ -166,7 +167,11 @@ export function ComponentConfigEditor({
       nextKind === "form-field" ||
       nextKind === "form-section" ||
       nextKind === "form-actions" ||
-      nextKind === "related-records"
+      nextKind === "related-records" ||
+      nextKind === "page-header" ||
+      nextKind === "page-toolbar" ||
+      nextKind === "page-metrics" ||
+      nextKind === "page-list"
     ) {
       onChange(
         createDefaultComponent(nextKind, defaultPath) as UiComponentConfig,
@@ -281,6 +286,16 @@ export function ComponentConfigEditor({
               />
             </label>
           </>
+        ) : null}
+        {isPageUiComponent(config) ? (
+          <StyleRulesEditor
+            styles={config.styles}
+            onChange={(styles) => onChange({ ...config, styles })}
+            labels={{
+              ...labels.styleRules,
+              title: labels.componentStyles,
+            }}
+          />
         ) : null}
       </div>
     );

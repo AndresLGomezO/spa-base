@@ -44,6 +44,10 @@ export function createFirestoreAdminEntityUiOverrideRepository(
         entityName,
         views: input.views,
         ...(input.listViewType ? { listViewType: input.listViewType } : {}),
+        ...(input.listItem ? { listItem: input.listItem } : {}),
+        ...(input.mainPage ? { mainPage: input.mainPage } : {}),
+        ...(input.recordDetail ? { recordDetail: input.recordDetail } : {}),
+        ...(input.forms ? { forms: input.forms } : {}),
         updatedAt: new Date().toISOString(),
       }) as EntityUiOverrideRecord;
       await collection(tenantId).doc(entityName).set(record);

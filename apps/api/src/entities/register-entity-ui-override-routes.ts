@@ -7,6 +7,8 @@ import {
   putEntityUiOverrideInputSchema,
   serializeEntityDefinition,
   type EntityUIConfig,
+  type EntityUiOverrideRecord,
+  type PutEntityUiOverrideInput,
   type UiLayoutDocument,
 } from "@repo/entities";
 import type { EntityUiOverrideRepository } from "@repo/firestore-converters";
@@ -28,6 +30,40 @@ interface RegisterEntityUiOverrideRoutesOptions {
 const entityNameParamSchema = z.object({
   entityName: z.string().trim().min(1),
 });
+
+/** Preserve override slices omitted from a surface-specific PUT body. */
+function mergeUiOverridePutInput(
+  existing: EntityUiOverrideRecord | null,
+  incoming: PutEntityUiOverrideInput,
+): PutEntityUiOverrideInput {
+  const createLayout = incoming.forms?.create ?? existing?.forms?.create;
+  const editLayout = incoming.forms?.edit ?? existing?.forms?.edit;
+  const forms =
+    createLayout || editLayout
+      ? {
+          ...(createLayout ? { create: createLayout } : {}),
+          ...(editLayout ? { edit: editLayout } : {}),
+        }
+      : undefined;
+
+  const recordDetail =
+    incoming.recordDetail ?? existing?.recordDetail ?? existing?.detail;
+
+  return {
+    views: incoming.views,
+    ...(incoming.listViewType ?? existing?.listViewType
+      ? { listViewType: incoming.listViewType ?? existing?.listViewType }
+      : {}),
+    ...(incoming.listItem ?? existing?.listItem
+      ? { listItem: incoming.listItem ?? existing?.listItem }
+      : {}),
+    ...(incoming.mainPage ?? existing?.mainPage
+      ? { mainPage: incoming.mainPage ?? existing?.mainPage }
+      : {}),
+    ...(recordDetail ? { recordDetail } : {}),
+    ...(forms ? { forms } : {}),
+  } as PutEntityUiOverrideInput;
+}
 
 export async function registerEntityUiOverrideRoutes(
   app: FastifyInstance,
@@ -199,10 +235,16 @@ export async function registerEntityUiOverrideRoutes(
         );
       }
 
+      const existingOverride =
+        await options.entityUiOverrideRepository.get(
+          tenantId,
+          params.data.entityName,
+        );
+
       const override = await options.entityUiOverrideRepository.put(
         tenantId,
         params.data.entityName,
-        {
+        mergeUiOverridePutInput(existingOverride, {
           views: [...normalizedViews],
           ...(parsedBody.data.listViewType
             ? { listViewType: parsedBody.data.listViewType }
@@ -217,7 +259,7 @@ export async function registerEntityUiOverrideRoutes(
             ? { recordDetail: parsedBody.data.recordDetail }
             : {}),
           ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
-        },
+        }),
       );
 
       return reply.send(successEnvelope({ override }));
