@@ -1459,6 +1459,9 @@ importers:
 
   packages/ui-builder-renderer:
     dependencies:
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../entities
       '@repo/ui':
         specifier: workspace:*
         version: link:../ui

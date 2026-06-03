@@ -47,7 +47,7 @@ export default [
     ),
     route(
       "settings/design-layout/metrics/:entityName",
-      "./routes/settings/design-layout/metrics.tsx",
+      "./routes/settings/design-layout/metrics-layout.tsx",
     ),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
