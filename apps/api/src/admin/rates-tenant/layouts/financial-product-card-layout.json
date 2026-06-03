@@ -31,7 +31,7 @@
                           "path": "serviceProvider.logo"
                         }
                       ],
-                      "imageSize": 60
+                      "imageSize": 70
                     }
                   },
                   {
@@ -327,7 +327,7 @@
         "styles": [
           {
             "property": "gap",
-            "value": "10"
+            "value": "15"
           },
           {
             "property": "paddingRight",
