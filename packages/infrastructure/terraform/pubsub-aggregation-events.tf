@@ -47,12 +47,23 @@ resource "google_project_iam_member" "backend_aggregation_pubsub_publisher" {
   member  = "serviceAccount:${google_service_account.backend_sa.email}"
 }
 
-resource "google_project_iam_member" "worker_aggregation_pubsub_subscriber" {
+# Subscriber: pull/consume/ack. Viewer: subscriptions.get (worker calls subscription.exists() at startup).
+resource "google_pubsub_subscription_iam_member" "worker_aggregation_pubsub_subscriber" {
   count = local.enable_aggregation_pubsub ? 1 : 0
 
-  project = local.gcp_project_id
-  role    = "roles/pubsub.subscriber"
-  member  = "serviceAccount:${google_service_account.worker_aggregation_sa[0].email}"
+  project      = local.gcp_project_id
+  subscription = google_pubsub_subscription.aggregation_events_worker[0].name
+  role         = "roles/pubsub.subscriber"
+  member       = "serviceAccount:${google_service_account.worker_aggregation_sa[0].email}"
+}
+
+resource "google_pubsub_subscription_iam_member" "worker_aggregation_pubsub_viewer" {
+  count = local.enable_aggregation_pubsub ? 1 : 0
+
+  project      = local.gcp_project_id
+  subscription = google_pubsub_subscription.aggregation_events_worker[0].name
+  role         = "roles/pubsub.viewer"
+  member       = "serviceAccount:${google_service_account.worker_aggregation_sa[0].email}"
 }
 
 resource "google_project_iam_member" "worker_aggregation_firestore" {
