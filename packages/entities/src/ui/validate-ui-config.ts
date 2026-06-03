@@ -1,14 +1,13 @@
 import { z } from "zod";
 
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
-import { assertCardLayoutFieldPaths } from "./card-layout-validation.js";
-import type { CardLayoutConfig } from "./card-layout-types.js";
-import { layoutSpacingSchemaShape } from "./layout-spacing.js";
 import {
-  cardMetricKpiSlotBindingSchema,
-  viewMetricWidgetSchema,
-} from "./metric-widget-types.js";
-import type { EntityUIConfig, SerializableEntityDefinition } from "./types.js";
+  assertLayoutFieldPaths,
+  uiLayoutDocumentSchema,
+  type UiLayoutDocument,
+} from "@repo/ui-builder-core";
+import { viewMetricWidgetSchema } from "./metric-widget-types.js";
+import type { EntityUIConfig } from "./types.js";
 
 const fieldComponentSchema = z.enum([
   "input",
@@ -45,126 +44,6 @@ const filterUISchema = z
   })
   .strict();
 
-const layoutAlignSchema = z.enum(["start", "center", "end", "stretch"]);
-const layoutJustifySchema = z.enum(["start", "center", "end", "between"]);
-const layoutDirectionSchema = z.enum(["row", "column"]);
-const layoutSizeSchema = z.union([z.number(), z.string()]);
-const cardFieldSlotComponentSchema = z.enum([
-  "text",
-  "labeled-text",
-  "image",
-  "badge",
-  "currency",
-  "date",
-]);
-const cardBadgeVariantSchema = z.enum([
-  "success",
-  "warning",
-  "danger",
-  "info",
-  "default",
-  "active",
-  "pending",
-  "closed",
-  "neutral",
-]);
-
-const layoutNodeBaseSchema = z
-  .object({
-    id: z.string().trim().min(1).optional(),
-    className: z.string().optional(),
-    minWidth: layoutSizeSchema.optional(),
-    maxWidth: layoutSizeSchema.optional(),
-    minHeight: layoutSizeSchema.optional(),
-    maxHeight: layoutSizeSchema.optional(),
-    flex: z.union([z.number(), z.string()]).optional(),
-    align: layoutAlignSchema.optional(),
-    justify: layoutJustifySchema.optional(),
-    ...layoutSpacingSchemaShape,
-  })
-  .strict();
-
-const cardTextColorSchema = z.enum([
-  "default",
-  "muted",
-  "primary",
-  "success",
-  "warning",
-  "danger",
-  "info",
-]);
-
-const cardFieldSlotBindingSchema = z
-  .object({
-    component: cardFieldSlotComponentSchema,
-    fieldPath: z.string().trim().optional(),
-    fallbackFieldPaths: z.array(z.string().trim().min(1)).optional(),
-    align: layoutAlignSchema.optional(),
-    showLabel: z.boolean().optional(),
-    label: z.string().optional(),
-    labelPosition: z.enum(["above", "below"]).optional(),
-    dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
-    className: z.string().optional(),
-    imageSize: z.number().int().min(24).max(96).optional(),
-    textSize: z.number().int().min(10).max(32).optional(),
-    textColor: cardTextColorSchema.optional(),
-    textThin: z.boolean().optional(),
-    textBold: z.boolean().optional(),
-    textItalic: z.boolean().optional(),
-    textUnderline: z.boolean().optional(),
-    staticText: z.string().optional(),
-    badgeVariants: z.record(z.string(), cardBadgeVariantSchema).optional(),
-    ...layoutSpacingSchemaShape,
-  })
-  .strict()
-  .superRefine((value, ctx) => {
-    if (value.staticText !== undefined) {
-      return;
-    }
-
-    if (!value.fieldPath || value.fieldPath.trim().length === 0) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "fieldPath is required when staticText is not set",
-        path: ["fieldPath"],
-      });
-    }
-  });
-
-const cardSlotBindingSchema = z.union([
-  cardFieldSlotBindingSchema,
-  cardMetricKpiSlotBindingSchema,
-]);
-
-const layoutNodeSchema: z.ZodType<unknown> = z.lazy(() =>
-  z.discriminatedUnion("type", [
-    layoutNodeBaseSchema
-      .extend({
-        type: z.literal("slot"),
-        slotId: z.string().trim().min(1),
-      })
-      .strict(),
-    layoutNodeBaseSchema
-      .extend({
-        type: z.enum(["grid", "stack"]),
-        direction: layoutDirectionSchema.optional(),
-        gap: z.number().nonnegative().optional(),
-        columns: z.union([z.number().int().positive(), z.string()]).optional(),
-        children: z.array(layoutNodeSchema).min(1),
-      })
-      .strict(),
-  ]),
-);
-
-const cardLayoutConfigSchema = z
-  .object({
-    root: layoutNodeSchema,
-    slots: z.record(z.string(), cardSlotBindingSchema),
-    showActions: z.boolean().optional(),
-    cardsPerRow: z.number().int().min(1).max(4).optional(),
-  })
-  .strict();
-
 const viewConfigSchema = z
   .object({
     type: z.enum(["table", "card"]),
@@ -178,7 +57,7 @@ const viewConfigSchema = z
       })
       .strict()
       .optional(),
-    layout: cardLayoutConfigSchema.optional(),
+    layout: uiLayoutDocumentSchema.optional(),
     metricWidgets: z.array(viewMetricWidgetSchema).optional(),
   })
   .strict();
@@ -273,38 +152,26 @@ export function validateEntityUIConfig(
       );
     }
     if (view.layout) {
-      assertCardLayoutFieldPaths(
+      assertLayoutFieldPaths(
         {
           name: entity.name,
-          collection: entity.metadata.collection,
-          permissions: entity.metadata.permissions,
           fields: Object.fromEntries(
             Object.entries(entity.metadata.fields).map(([key, field]) => [
               key,
               {
-                type: field.type,
-                required: field.required,
-                optional: field.optional,
                 ...(field.relation
                   ? {
                       relation: {
                         target: field.relation.target,
                         type: field.relation.type,
-                        ...(field.relation.onDelete
-                          ? { onDelete: field.relation.onDelete }
-                          : {}),
-                        ...(field.relation.joinCollection
-                          ? { joinCollection: field.relation.joinCollection }
-                          : {}),
                       },
                     }
                   : {}),
               },
             ]),
           ),
-          ui: parsed as EntityUIConfig,
-        } as SerializableEntityDefinition,
-        view.layout as CardLayoutConfig,
+        },
+        view.layout as UiLayoutDocument,
         `view "${view.name}"`,
       );
     }

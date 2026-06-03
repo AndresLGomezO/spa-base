@@ -26,9 +26,11 @@ export function LayoutCard({
       {...props}
     >
       {actions ? (
-        <div className="absolute right-3 top-3 z-10">{actions}</div>
+        <div className="absolute end-3 top-3 z-10 shrink-0">{actions}</div>
       ) : null}
-      {children}
+      <div className={cn("min-h-0 w-full min-w-0", actions && "pe-11")}>
+        {children}
+      </div>
     </article>
   );
 }

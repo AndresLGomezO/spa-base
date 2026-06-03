@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import type { SerializableEntityDefinition } from "@repo/entities";
 
 import {
+  resolveEntityLayoutFieldDefaultImageSrc,
   resolveEntityLayoutImageDownloadTarget,
   resolveEntityLayoutImagePlaceholderSrc,
   resolveEntityLayoutImageSrc,
@@ -79,6 +80,36 @@ describe("resolveEntityLayoutImageSrc with record file reference", () => {
 
     expect(
       resolveEntityLayoutImagePlaceholderSrc({
+        fieldPath: "bankId.logo",
+        definition: accountDefinition,
+        getDefinition: (name) => (name === "bank" ? bankDefinition : undefined),
+      }),
+    ).toBe("https://example.com/default-logo.png");
+  });
+});
+
+describe("resolveEntityLayoutFieldDefaultImageSrc", () => {
+  it("returns primary field defaultImage without display fallback URLs", () => {
+    const bankDefinition = {
+      ...accountDefinition,
+      name: "bank",
+      fields: {
+        logo: {
+          type: "image",
+          required: false,
+          optional: true,
+          defaultImage: {
+            storagePath: "tenants/t1/entity-files/bank/default.png",
+            contentType: "image/png",
+            fileName: "default.png",
+            downloadUrl: "https://example.com/default-logo.png",
+          },
+        },
+      },
+    } as SerializableEntityDefinition;
+
+    expect(
+      resolveEntityLayoutFieldDefaultImageSrc({
         fieldPath: "bankId.logo",
         definition: accountDefinition,
         getDefinition: (name) => (name === "bank" ? bankDefinition : undefined),

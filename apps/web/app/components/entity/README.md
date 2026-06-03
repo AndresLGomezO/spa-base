@@ -40,7 +40,7 @@ Nav labels come from `ui.nav.label`. Do not hardcode entity links in the web app
 
 ## View layout (Card / Table)
 
-The list-page settings gear saves per-entity view overrides (`entity_ui_overrides`). Changing layout requires `entityUiOverride.update` (or tenant built-in **admin** / platform superadmin). Entity-level `*.update` grants are not sufficient.
+Per-entity list/card layout is configured on **Settings → Design layout → Item list** (`/settings/design-layout/list/:entityName`). Users with `entityUiOverride.update` (or tenant **admin** / platform superadmin) also see a **Design layout** button on the entity list page header that opens the same editor. Saves go to `entity_ui_overrides`. Entity-level `*.update` grants alone are not sufficient.
 
 ## Related
 

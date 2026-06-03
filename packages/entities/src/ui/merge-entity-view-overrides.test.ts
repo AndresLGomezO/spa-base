@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { createDefaultUiLayout } from "@repo/ui-builder-core";
 
 import { mergeEntityViewOverrides } from "./merge-entity-view-overrides.js";
 import type { SerializableEntityDefinition } from "./types.js";
@@ -29,12 +30,7 @@ describe("mergeEntityViewOverrides", () => {
           type: "card",
           name: "card",
           fields: ["name"],
-          layout: {
-            root: { type: "slot", slotId: "name" },
-            slots: {
-              name: { component: "text", fieldPath: "name" },
-            },
-          },
+          layout: createDefaultUiLayout(["name"]),
         },
       ],
     });
@@ -54,12 +50,7 @@ describe("mergeEntityViewOverrides", () => {
           type: "card",
           name: "card",
           fields: ["name"],
-          layout: {
-            root: { type: "slot", slotId: "name" },
-            slots: {
-              name: { component: "text", fieldPath: "name" },
-            },
-          },
+          layout: createDefaultUiLayout(["name"]),
         },
       ],
     });

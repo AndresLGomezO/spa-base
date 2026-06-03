@@ -1,12 +1,11 @@
+import type { CSSProperties } from "react";
+
 import { cn } from "@repo/theme/utils";
 
 import { Text } from "../typography/Text.js";
 
 import type { CardLabelPosition } from "./types.js";
-import {
-  cardTextColorClassName,
-  type CardTextColor,
-} from "./text-colors.js";
+import { cardTextColorClassName, type CardTextColor } from "./text-colors.js";
 
 export interface CardFieldValueProps {
   readonly value: React.ReactNode;
@@ -14,6 +13,7 @@ export interface CardFieldValueProps {
   readonly showLabel?: boolean;
   readonly labelPosition?: CardLabelPosition;
   readonly className?: string;
+  readonly style?: CSSProperties;
   readonly valueClassName?: string;
   readonly labelClassName?: string;
   readonly textSize?: number;
@@ -31,6 +31,7 @@ export function CardFieldValue({
   showLabel = false,
   labelPosition = "above",
   className,
+  style,
   valueClassName,
   labelClassName,
   textSize,
@@ -71,7 +72,9 @@ export function CardFieldValue({
         valueClassName,
       )}
       style={
-        resolvedTextSize !== undefined ? { fontSize: resolvedTextSize } : undefined
+        resolvedTextSize !== undefined
+          ? { fontSize: resolvedTextSize }
+          : undefined
       }
     >
       {displayValue}
@@ -79,7 +82,10 @@ export function CardFieldValue({
   );
 
   return (
-    <div className={cn("flex min-w-0 flex-col gap-0.5", className)}>
+    <div
+      className={cn("flex min-w-0 flex-col gap-0.5", className)}
+      style={style}
+    >
       {labelPosition === "below" ? (
         <>
           {valueElement}

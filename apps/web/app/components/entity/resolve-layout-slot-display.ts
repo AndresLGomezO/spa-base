@@ -10,14 +10,26 @@ import { formatFieldLabel } from "../../entities/entity-catalog";
 import { getEntityCellDisplayMeta } from "./resolve-entity-cell-value";
 import { parseRelationFieldPath } from "./resolve-relation-field-path";
 
+function resolveRelationTargetLabel(
+  targetEntityName: string,
+  targetDefinition?: EntityCatalogEntry,
+): string {
+  if (targetDefinition?.ui.nav?.label) {
+    return targetDefinition.ui.nav.label;
+  }
+
+  return formatFieldLabel(targetEntityName, targetDefinition);
+}
+
 export function resolveLayoutSlotLabel(
   fieldPath: string,
   definition: SerializableEntityDefinition,
   getDefinition?: (entityName: string) => EntityCatalogEntry | undefined,
 ): string {
-  const parsed = parseRelationFieldPath(definition, fieldPath);
+  const trimmedPath = fieldPath.trim();
+  const parsed = parseRelationFieldPath(definition, trimmedPath);
   if (!parsed) {
-    return formatFieldLabel(fieldPath.trim(), definition);
+    return formatFieldLabel(trimmedPath, definition);
   }
 
   const targetEntity =
@@ -25,11 +37,15 @@ export function resolveLayoutSlotLabel(
   const targetDefinition =
     targetEntity && getDefinition ? getDefinition(targetEntity) : undefined;
 
-  if (targetDefinition) {
-    return formatFieldLabel(parsed.subField, targetDefinition);
+  const subLabel = targetDefinition
+    ? formatFieldLabel(parsed.subField, targetDefinition)
+    : formatFieldLabel(parsed.subField, definition);
+
+  if (targetEntity) {
+    return `${resolveRelationTargetLabel(targetEntity, targetDefinition)} ${subLabel}`;
   }
 
-  return formatFieldLabel(parsed.subField, definition);
+  return subLabel;
 }
 
 export function resolveLayoutSlotDisplayMeta(

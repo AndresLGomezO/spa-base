@@ -1,13 +1,17 @@
-import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
+import type {
+  DefinedEntity,
+  FieldDefinitions,
+  NormalizedFieldMeta,
+} from "@repo/entities";
 import type { MetricDateGranularity } from "@repo/metrics-engine";
 
 interface EntityWithFields {
   readonly metadata: {
-    readonly fields: FieldDefinitions;
+    readonly fields: Readonly<Record<string, NormalizedFieldMeta>>;
   };
 }
 
-export interface MetricDefinitionKeyShape {
+interface MetricDefinitionKeyShape {
   readonly groupBy: readonly string[];
   readonly dimensions: readonly string[];
   readonly dateFieldGranularity: Readonly<

@@ -1,7 +1,11 @@
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import { isNavGroup } from "../components/sidebar/nav-config";
+import {
+  flattenNavGroupLinks,
+  isNavGroup,
+  isNavSubGroup,
+} from "../components/sidebar/nav-config";
 import type { EntityCatalogEntry } from "../entities/entity-catalog";
 import { MOCK_ENTITY_CATALOG } from "../test/entity-catalog-fixtures";
 import { useAccessibleNavItems } from "./useAccessibleNavItems";
@@ -220,6 +224,52 @@ describe("useAccessibleNavItems", () => {
 
     expect(result.current).toHaveLength(1);
     expect(result.current[0]?.id).toBe("home");
+  });
+
+  it("shows design layout group when entityUiOverride.read is granted", () => {
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: false,
+      permissions: ["entityUiOverride.read", "testItem.read", "widget.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const designLayout = result.current.find(
+      (item) => item.id === "design-layout",
+    );
+
+    expect(designLayout && isNavGroup(designLayout)).toBe(true);
+    if (designLayout && isNavGroup(designLayout)) {
+      expect(designLayout.children.length).toBe(3);
+      const listSubgroup = designLayout.children.find(
+        (child) => child.id === "design-layout-list",
+      );
+      expect(listSubgroup && isNavSubGroup(listSubgroup)).toBe(true);
+      if (listSubgroup && isNavSubGroup(listSubgroup)) {
+        expect(listSubgroup.children.length).toBeGreaterThan(0);
+        expect(
+          flattenNavGroupLinks(designLayout).some((link) =>
+            link.to.includes("/settings/design-layout/list/"),
+          ),
+        ).toBe(true);
+      }
+    }
+  });
+
+  it("hides design layout group without entityUiOverride.read", () => {
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: false,
+      permissions: ["testItem.read", "widget.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+
+    expect(result.current.some((item) => item.id === "design-layout")).toBe(
+      false,
+    );
   });
 
   it("includes platform current tenant and appearance for superadmin", () => {

@@ -4,7 +4,7 @@ import { formatDisplayValue } from "@repo/ui";
 import type { MetricDefinitionRecord } from "../../lib/api-client.js";
 import { formatMetricValueKey } from "../../lib/metric-query-utils.js";
 
-export function formatPrimaryMetricValue(
+function formatPrimaryMetricValue(
   definition: MetricDefinitionRecord,
   values: Record<string, number>,
 ): number | null {

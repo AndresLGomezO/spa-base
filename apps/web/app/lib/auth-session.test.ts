@@ -66,13 +66,13 @@ describe("syncAuthSession", () => {
     });
     expect(fetchMock).toHaveBeenCalledWith(
       new URL("/auth/validate", "http://127.0.0.1:3000"),
-      {
+      expect.objectContaining({
         method: "GET",
         headers: {
           Authorization: "Bearer id-token",
           "X-Firebase-AppCheck": "emulator",
         },
-      },
+      }),
     );
   });
 

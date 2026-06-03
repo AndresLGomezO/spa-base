@@ -1,4 +1,4 @@
-export const DEFAULT_CARDS_PER_ROW = 1;
+const DEFAULT_CARDS_PER_ROW = 1;
 export const MIN_CARDS_PER_ROW = 1;
 export const MAX_CARDS_PER_ROW = 4;
 

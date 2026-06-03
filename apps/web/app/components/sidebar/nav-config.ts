@@ -6,6 +6,7 @@ import {
   FolderTree,
   Home,
   Layers,
+  LayoutTemplate,
   Palette,
   Settings,
   Shield,
@@ -27,7 +28,11 @@ export type NavLabelKey =
   | "analytics"
   | "metricsNav"
   | "roles"
-  | "entityCategories";
+  | "entityCategories"
+  | "designLayout"
+  | "designLayoutList"
+  | "designLayoutPage"
+  | "designLayoutForms";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -38,16 +43,47 @@ export interface NavLinkConfig {
   readonly icon: LucideIcon;
 }
 
+export interface NavSubGroupConfig {
+  readonly id: string;
+  readonly labelKey?: NavLabelKey;
+  readonly label?: string;
+  readonly children: readonly NavLinkConfig[];
+}
+
+export type NavGroupChild = NavLinkConfig | NavSubGroupConfig;
+
 export interface NavGroupConfig {
   readonly id: string;
   readonly labelKey?: NavLabelKey;
   readonly label?: string;
   readonly matchPath: string;
   readonly icon: LucideIcon;
-  readonly children: readonly NavLinkConfig[];
+  readonly children: readonly NavGroupChild[];
 }
 
 export type NavItemConfig = NavLinkConfig | NavGroupConfig;
+
+export const DESIGN_LAYOUT_GROUP_ICON = LayoutTemplate;
+
+export function isNavSubGroup(
+  child: NavGroupChild,
+): child is NavSubGroupConfig {
+  return !("to" in child);
+}
+
+export function flattenNavGroupLinks(
+  group: NavGroupConfig,
+): readonly NavLinkConfig[] {
+  const links: NavLinkConfig[] = [];
+  for (const child of group.children) {
+    if (isNavSubGroup(child)) {
+      links.push(...child.children);
+    } else {
+      links.push(child);
+    }
+  }
+  return links;
+}
 
 export const HOME_NAV_ITEM: NavLinkConfig = {
   id: "home",
@@ -139,11 +175,35 @@ export function isPathActive(pathname: string, matchPath: string): boolean {
   return pathname === matchPath || pathname.startsWith(`${matchPath}/`);
 }
 
+export function resolveNavSubGroupLabel(
+  subgroup: Pick<NavSubGroupConfig, "id" | "labelKey" | "label">,
+  t: (key: `nav.${NavLabelKey}`) => string,
+): string {
+  if (subgroup.label) {
+    return subgroup.label;
+  }
+
+  if (subgroup.labelKey) {
+    return t(`nav.${subgroup.labelKey}`);
+  }
+
+  return subgroup.id;
+}
+
+export function isNavSubGroupActive(
+  pathname: string,
+  subgroup: NavSubGroupConfig,
+): boolean {
+  return subgroup.children.some((child) =>
+    isPathActive(pathname, child.matchPath),
+  );
+}
+
 export function isNavGroupActive(
   pathname: string,
   group: NavGroupConfig,
 ): boolean {
-  return group.children.some((child) =>
+  return flattenNavGroupLinks(group).some((child) =>
     isPathActive(pathname, child.matchPath),
   );
 }

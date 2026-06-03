@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { cn } from "@repo/theme/utils";
 
 import {
@@ -21,12 +23,14 @@ export interface CardFieldBadgeProps {
   readonly value: React.ReactNode;
   readonly variant?: CardBadgeVariant;
   readonly className?: string;
+  readonly style?: CSSProperties;
 }
 
 export function CardFieldBadge({
   value,
   variant = "default",
   className,
+  style,
 }: CardFieldBadgeProps) {
   const displayValue =
     value === null || value === undefined || value === "" ? "—" : value;
@@ -38,6 +42,7 @@ export function CardFieldBadge({
         badgeVariantClasses[variant],
         className,
       )}
+      style={style}
     >
       {displayValue}
     </span>

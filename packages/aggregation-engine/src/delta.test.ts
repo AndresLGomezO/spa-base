@@ -333,6 +333,8 @@ describe("runSnapshotBackfillForMetric", () => {
       filters: baseMetric.filters,
       groupBy: baseMetric.groupBy,
       dimensions: baseMetric.dimensions,
+      dateFieldGranularity: baseMetric.dateFieldGranularity,
+      valueDisplayFormat: baseMetric.valueDisplayFormat,
       aggregations: baseMetric.aggregations,
       schemaVersionDependency: baseMetric.schemaVersionDependency,
       fieldsDependency: baseMetric.fieldsDependency,

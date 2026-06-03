@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
+import type {
+  DefinedEntity,
+  FieldDefinitions,
+  NormalizedFieldMeta,
+} from "@repo/entities";
 
 import {
   findEntityForSourceModel,
@@ -11,11 +15,11 @@ const transactionEntity = {
   name: "transaction",
   metadata: {
     fields: {
-      date: { type: "date" },
-      categoryId: { type: "string" },
-    } as FieldDefinitions,
+      date: { type: "date", required: true, optional: false },
+      categoryId: { type: "string", required: true, optional: false },
+    } satisfies Record<string, NormalizedFieldMeta>,
   },
-} as DefinedEntity<string, FieldDefinitions>;
+} as unknown as DefinedEntity<string, FieldDefinitions>;
 
 describe("validateMetricDefinitionDateGranularity", () => {
   it("requires granularity for date fields in groupBy or dimensions", () => {

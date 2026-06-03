@@ -1,10 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { resolveActiveView, resolveCardView } from "@repo/ui-builder";
 import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
-import { Button, Heading, IconButton, Modal, Text, toast } from "@repo/ui";
-import { Settings } from "lucide-react";
+import { Button, Heading, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
-import { useSearchParams } from "react-router";
+import { useNavigate, useSearchParams } from "react-router";
 
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 
@@ -25,8 +24,8 @@ import { resolveViewComponent } from "./view-component-registry";
 import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
 import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
-import { EntityViewSettingsModal } from "./EntityViewSettingsModal";
 import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
+import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -52,6 +51,7 @@ function serializeFilters(
 
 export function EntityPage({ entityName }: EntityPageProps) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
   const canConfigureView = useAnyPermission(
@@ -194,7 +194,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [shareRecordId, setShareRecordId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
-  const [viewSettingsOpen, setViewSettingsOpen] = useState(false);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
 
   const closeFormModal = useCallback(() => {
@@ -264,14 +263,16 @@ export function EntityPage({ entityName }: EntityPageProps) {
         <Heading level={1}>{getEntityLabel(definition)}</Heading>
         <div className="flex items-center gap-2">
           {canConfigureView ? (
-            <IconButton
-              label={t("entity.viewSettings.title")}
+            <Button
+              type="button"
+              variant="outline"
               size="sm"
-              className="rounded-lg"
-              onClick={() => setViewSettingsOpen(true)}
+              onClick={() =>
+                navigate(designLayoutEntityPath("list", entityName))
+              }
             >
-              <Settings className="size-4" />
-            </IconButton>
+              {t("entity.openDesignLayout")}
+            </Button>
           ) : null}
           {permissions.canCreate ? (
             <Button
@@ -394,19 +395,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
         open={shareRecordId !== null}
         onClose={() => setShareRecordId(null)}
       />
-
-      {canConfigureView ? (
-        <EntityViewSettingsModal
-          entityName={entityName}
-          open={viewSettingsOpen}
-          onClose={() => setViewSettingsOpen(false)}
-          previewItem={
-            listItems.length > 0
-              ? (listItems[0] as Record<string, unknown>)
-              : null
-          }
-        />
-      ) : null}
     </div>
   );
 }

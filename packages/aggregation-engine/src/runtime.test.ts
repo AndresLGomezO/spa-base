@@ -42,6 +42,8 @@ describe("processAggregationEventTransaction", () => {
       filters: [],
       groupBy: [],
       dimensions: [],
+      dateFieldGranularity: {},
+      valueDisplayFormat: "number",
       aggregations: [{ field: "amount", operation: "SUM" }],
       target: { collection: "loan_total", granularity: "dynamic" },
       schemaVersionDependency: 1,

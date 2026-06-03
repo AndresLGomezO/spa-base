@@ -255,7 +255,7 @@ usePermission("metricValue.read")
 
 ### Builder entry points
 
-1. **Entity list → View settings** — `MetricWidgetsBuilderSection` below the table/card switch; persists `metricWidgets` on the active view type.
+1. **Settings → Design layout → Item list** (or entity list **Design layout** link) — `MetricWidgetsBuilderSection` below the table/card switch; persists `metricWidgets` on the active view type.
 2. **Card layout builder** — slot component `metric-kpi`: pick ACTIVE definition from `listMetricDefinitions()`, configure bindings (emphasize `entityField` for row-scoped dimensions).
 
 Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOverride.update` + `metricDefinition.read` (save layout via `ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS`).
@@ -263,7 +263,7 @@ Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOve
 ### Runtime wiring
 
 - `EntityPage` renders `EntityViewMetricsStrip` when `activeView.metricWidgets` is non-empty; passes `listFilters` and `routeParams` as binding context.
-- `EntityLayoutCardView` passes the same context into `metric-kpi` slots via `renderEntityLayoutSlotPreview`.
+- `EntityLayoutCardView` passes the same context into `metric-kpi` components via `RecursiveLayoutRenderer` / `createEntityLayoutRenderContext`.
 
 ### Permission gating
 
@@ -273,9 +273,9 @@ Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOve
 
 - `metric-binding-resolution.test.ts` — binding source resolution
 - `MetricValueDisplay.test.tsx` — loading, value, forbidden (mocked hooks)
-- `card-layout-builder-state.test.ts` — `metric-kpi` layout round-trip
+- `packages/ui-builder-core` layout mutations / schema — `metric-kpi` component round-trip in layout JSON
 
-Manual: Settings → Metrics (ACTIVE) → entity View settings → KPI with static bindings → list page shows value after source CRUD (+ backfill if needed).
+Manual: Settings → Metrics (ACTIVE) → Design layout → Item list → KPI with static bindings → list page shows value after source CRUD (+ backfill if needed).
 
 ## Implementation reference
 

@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import type { SerializableEntityDefinition } from "@repo/entities";
 import type { MetricDateGranularity } from "@repo/metrics-engine/browser";
-import { listCardLayoutFieldOptions } from "@repo/entities";
+import { listLayoutFieldOptions } from "@repo/entities";
 
 const SELECT_CLASS =
   "border-input bg-background ring-offset-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
@@ -36,7 +36,7 @@ export function MetricBindingSourceEditor({
   const { t } = useTranslation("common");
   const type = source?.type ?? "static";
   const entityFieldOptions = definition
-    ? listCardLayoutFieldOptions(definition)
+    ? listLayoutFieldOptions(definition)
     : [];
 
   return (

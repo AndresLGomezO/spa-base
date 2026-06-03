@@ -23,6 +23,9 @@ COPY packages/entity-categories/package.json ./packages/entity-categories/
 COPY packages/modules/package.json ./packages/modules/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/ui-builder/package.json ./packages/ui-builder/
+COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
+COPY packages/ui-builder-react/package.json ./packages/ui-builder-react/
+COPY packages/ui-builder-renderer/package.json ./packages/ui-builder-renderer/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/

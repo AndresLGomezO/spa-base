@@ -14,6 +14,9 @@
     "@repo/theme",
     "@repo/ui",
     "@repo/ui-builder",
+    "@repo/ui-builder-core",
+    "@repo/ui-builder-react",
+    "@repo/ui-builder-renderer",
     "tailwindcss"
   ],
   "project": ["app/**/*.{ts,tsx}"]
