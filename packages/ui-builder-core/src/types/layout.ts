@@ -1,5 +1,6 @@
 import type { StyleRule } from "../styles/style-types.js";
 import type { UiComponentConfig } from "./component.js";
+import type { MotionPreset } from "./motion.js";
 
 export type LayoutAlign = "start" | "center" | "end" | "stretch";
 
@@ -10,6 +11,7 @@ export interface UiLayoutDocument {
   readonly root: LayoutRootNode;
   readonly showActions?: boolean;
   readonly cardsPerRow?: number;
+  readonly motion?: MotionPreset;
 }
 
 export interface LayoutRootNode {
@@ -35,6 +37,7 @@ export interface ComponentRowNode {
   readonly id: string;
   readonly component: UiComponentConfig;
   readonly styles?: readonly StyleRule[];
+  readonly motion?: MotionPreset;
 }
 
 export interface NestedLayoutRowNode {

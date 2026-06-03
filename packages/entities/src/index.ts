@@ -137,12 +137,18 @@ export {
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   type EntityUiOverridePermission,
 } from "./ui/entity-ui-override-permissions.js";
-export { mergeEntityViewOverrides } from "./ui/merge-entity-view-overrides.js";
+export { mergeEntityUiOverrides, mergeEntityViewOverrides } from "./ui/merge-entity-ui-overrides.js";
+export { normalizeListItemLayout } from "./ui/normalize-list-item-layout.js";
+export {
+  resolveCreateFormFromLayout,
+  resolveEditFormFromUi,
+} from "./ui/resolve-form-layout-from-ui.js";
 export { normalizeEntityViews } from "./ui/normalize-entity-views.js";
 export type {
   DetailConfig,
   EntityNavConfig,
   EntityUiOverride,
+  EntityUiOverrideForms,
   EntityUiOverrideRecord,
   EntityListViewType,
   EntityUIConfig,

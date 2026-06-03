@@ -24,6 +24,9 @@ export function createInMemoryEntityUiOverrideRepository(): EntityUiOverrideRepo
         entityName,
         views: input.views,
         ...(input.listViewType ? { listViewType: input.listViewType } : {}),
+        ...(input.listItem ? { listItem: input.listItem } : {}),
+        ...(input.detail ? { detail: input.detail } : {}),
+        ...(input.forms ? { forms: input.forms } : {}),
         updatedAt: new Date().toISOString(),
       }) as EntityUiOverrideRecord;
       store.set(key(tenantId, entityName), record);

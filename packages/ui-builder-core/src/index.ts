@@ -28,7 +28,21 @@ export type {
   CardBadgeVariant,
 } from "./types/component.js";
 
-export { isMetricKpiComponent } from "./types/component.js";
+export { isMetricKpiComponent, isFieldUiComponent } from "./types/component.js";
+export type { DesignSurface } from "./types/design-surface.js";
+export {
+  componentKindsForSurface,
+  isComponentKindAllowedOnSurface,
+} from "./types/design-surface.js";
+
+export type {
+  MotionPreset,
+  MotionEntrance,
+  MotionHover,
+  MotionTransition,
+} from "./types/motion.js";
+export { MOTION_DURATION_MAX_MS } from "./types/motion.js";
+export { motionPresetSchema } from "./schema/motion-schema.js";
 
 export type {
   LabelConfig,

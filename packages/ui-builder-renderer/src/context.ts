@@ -21,7 +21,10 @@ export interface ImageResolveOptions {
   readonly imageSize?: number;
 }
 
+export type LayoutRenderMode = "listItem" | "detail" | "form";
+
 export interface LayoutRenderContext {
+  readonly mode?: LayoutRenderMode;
   readonly data: Record<string, unknown>;
   readonly locale: string;
   readonly resolveField: (path: string) => unknown;
@@ -39,4 +42,35 @@ export interface LayoutRenderContext {
   readonly resolveCurrencyCode?: () => string | undefined;
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;
   readonly metricKpiRenderer?: (config: MetricKpiComponentConfig) => ReactNode;
+  readonly formFieldRenderer?: (
+    fieldPath: string,
+    containerClassName?: string,
+  ) => ReactNode;
+  readonly formSectionRenderer?: (
+    title: string | undefined,
+    children: ReactNode,
+  ) => ReactNode;
+  readonly formActionsRenderer?: () => ReactNode;
+  readonly relatedRecordsRenderer?: (config: {
+    readonly childEntity: string;
+    readonly foreignKeyField: string;
+  }) => ReactNode;
+  readonly fieldAccessFilter?: (fieldPath: string) => boolean;
+  readonly resolveRecordFieldLink?: (fieldPath: string) => {
+    readonly href: string;
+    readonly label: string;
+  } | null;
 }
+
+export type ListItemRenderContext = LayoutRenderContext & {
+  readonly mode: "listItem";
+};
+
+export type RecordRenderContext = LayoutRenderContext & {
+  readonly mode: "detail";
+};
+
+export type FormRenderContext = LayoutRenderContext & {
+  readonly mode: "form";
+  readonly formErrors?: Readonly<Record<string, string | undefined>>;
+};

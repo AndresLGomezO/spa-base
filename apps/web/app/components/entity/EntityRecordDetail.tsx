@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Button, Heading, Text } from "@repo/ui";
+import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
+import { Alert, Button, Heading, Text } from "@repo/ui";
 import { Link, useNavigate } from "react-router";
 import { useTranslation } from "react-i18next";
 import { ArrowLeft, Pencil } from "lucide-react";
@@ -14,7 +15,10 @@ import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
+import { useAnyPermission } from "../../auth/useAnyPermission";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
+import { designLayoutEntityPath } from "../../routing/design-layout-nav";
+import { EntityLayoutDetailView } from "./EntityLayoutDetailView";
 import { getEntity } from "../../lib/api-client";
 import { entityRecordQueryKey } from "../../query/query-client";
 import { formatRecordDisplayLabel } from "./format-record-display-label";
@@ -36,6 +40,10 @@ export function EntityRecordDetail({
   const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
+  const canConfigureLayout = useAnyPermission(
+    ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  );
+  const detailLayout = definition.ui.detailLayout;
   const { items: catalogItems } = useEntityCatalog();
   const entityLabel = getEntityLabel(definition);
 
@@ -123,17 +131,42 @@ export function EntityRecordDetail({
         <Heading level={1}>
           {formatRecordDisplayLabel(record, definition.displayField)}
         </Heading>
-        {permissions.canUpdate ? (
-          <Link to={`/app/${entityName}?edit=${recordId}`}>
-            <Button type="button" variant="outline" size="sm">
-              <Pencil className="mr-1 size-4" />
-              {t("entity.edit")}
-            </Button>
-          </Link>
-        ) : null}
+        <div className="flex items-center gap-2">
+          {canConfigureLayout ? (
+            <Link to={designLayoutEntityPath("page", entityName)}>
+              <Button type="button" variant="outline" size="sm">
+                {t("nav.designLayoutPage")}
+              </Button>
+            </Link>
+          ) : null}
+          {permissions.canUpdate ? (
+            <Link to={`/app/${entityName}?edit=${recordId}`}>
+              <Button type="button" variant="outline" size="sm">
+                <Pencil className="mr-1 size-4" />
+                {t("entity.edit")}
+              </Button>
+            </Link>
+          ) : null}
+        </div>
       </div>
 
-      <div className="bg-card border-border rounded-lg border p-4">
+      {detailLayout ? (
+        <div className="bg-card border-border rounded-lg border p-4">
+          <EntityLayoutDetailView record={record} definition={definition} />
+        </div>
+      ) : (
+        <div className="bg-card border-border rounded-lg border p-4">
+          {canConfigureLayout ? (
+            <Alert className="mb-4">
+              <Text>{t("entity.detailLayoutMissing")}</Text>
+              <Link
+                to={designLayoutEntityPath("page", entityName)}
+                className="text-primary mt-2 inline-block text-sm underline"
+              >
+                {t("entity.detailLayoutMissingAction")}
+              </Link>
+            </Alert>
+          ) : null}
         <dl className="grid gap-4 sm:grid-cols-2">
           {businessFields.map((field) => {
             const fieldMeta = definition.fields[field];
@@ -174,7 +207,8 @@ export function EntityRecordDetail({
             );
           })}
         </dl>
-      </div>
+        </div>
+      )}
 
       {reverseRelations.length > 0 ? (
         <div className="space-y-4">

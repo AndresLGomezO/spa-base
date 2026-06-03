@@ -1,4 +1,6 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
+import { normalizeListItemLayout } from "@repo/entities";
+import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { getTableColumns, isFieldVisible } from "@repo/ui-builder";
 import {
   Alert,
@@ -42,6 +44,8 @@ import {
   getEntityCellDisplayMeta,
   getEntityCellSchemaValue,
 } from "./resolve-entity-cell-value";
+import { createEntityLayoutRenderContext } from "../../features/ui-builder";
+import { tryGetEntityDefinition } from "../../entities/entity-catalog";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
@@ -75,7 +79,16 @@ export function EntityTable({
 }: EntityTableProps) {
   const { t, i18n } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition: getDefinitionOrThrow, items: catalogItems } =
+    useEntityCatalog();
+  const getDefinition = useCallback(
+    (name: string) => tryGetEntityDefinition(name, catalogItems),
+    [catalogItems],
+  );
+  const listItemLayout = useMemo(
+    () => normalizeListItemLayout(definition.ui),
+    [definition.ui],
+  );
   const { user } = useAuth();
   const permissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
@@ -99,7 +112,7 @@ export function EntityTable({
   });
 
   const { getCellValue: getOneToManyCellValue, isLoading: isLoadingRelations } =
-    useOneToManyColumnData(definition, items, getDefinition);
+    useOneToManyColumnData(definition, items, getDefinitionOrThrow);
 
   const entityLabel = getEntityLabel(definition);
 
@@ -184,7 +197,25 @@ export function EntityTable({
               ) : (
                 (items as readonly Record<string, unknown>[]).map((item) => (
                   <TableRow key={String(item.id)}>
-                    {columns.map((column) => {
+                    {columns.map((column, columnIndex) => {
+                      if (columnIndex === 0 && listItemLayout) {
+                        return (
+                          <TableCell key={column}>
+                            <div className="max-w-md min-w-[12rem]">
+                              <RecursiveLayoutRenderer
+                                layout={listItemLayout}
+                                context={createEntityLayoutRenderContext({
+                                  item,
+                                  definition,
+                                  locale: i18n.language,
+                                  getOneToManyCellValue,
+                                  getDefinition,
+                                })}
+                              />
+                            </div>
+                          </TableCell>
+                        );
+                      }
                       const {
                         fieldType,
                         displayFormat,

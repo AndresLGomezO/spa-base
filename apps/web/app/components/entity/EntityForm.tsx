@@ -1,11 +1,15 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
+import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import {
+  resolveCreateFormFromLayout,
+  resolveEditFormFromUi,
+} from "@repo/entities";
 import {
   buildInitialValues,
   getFormSections,
   isFieldEditable,
   isFieldVisible,
-  resolveCreateForm,
-  resolveEditForm,
 } from "@repo/ui-builder";
 import { Button, Form, Heading, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
@@ -23,6 +27,7 @@ import {
   getEntityRelationTargets,
   syncEntityRelationTargets,
 } from "../../lib/api-client";
+import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
 import { EntityField } from "./EntityField";
 import {
   getJoinRelationFieldNames,
@@ -65,7 +70,7 @@ export function EntityForm({
   hideActions = false,
   onSubmittingChange,
 }: EntityFormProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
   const entityPermissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
@@ -78,9 +83,10 @@ export function EntityForm({
     entityState;
   const layout =
     mode === "create"
-      ? resolveCreateForm(definition)
-      : resolveEditForm(definition);
+      ? resolveCreateFormFromLayout(definition)
+      : resolveEditFormFromUi(definition);
   const sections = getFormSections(layout, definition.ui.fields);
+  const designedLayout = layout.layout;
   const joinRelationFieldNames = useMemo(
     () => getJoinRelationFieldNames(definition),
     [definition],
@@ -148,7 +154,10 @@ export function EntityForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const cleanedValues = cleanFormValues(sections, values);
+    const cleanSections = designedLayout
+      ? [{ fields: collectLayoutFieldPaths(designedLayout) }]
+      : sections;
+    const cleanedValues = cleanFormValues(cleanSections, values);
     const { documentPayload, joinRelations } = splitEntityFormPayload(
       definition,
       cleanedValues,
@@ -208,6 +217,39 @@ export function EntityForm({
 
   if (isLoadingRecord) {
     return <EntityFormSkeleton />;
+  }
+
+  if (designedLayout) {
+    return (
+      <Form
+        id={ENTITY_FORM_ID}
+        className="px-1"
+        onSubmit={(event) => void handleSubmit(event)}
+      >
+        <RecursiveLayoutRenderer
+          layout={designedLayout}
+          context={createEntityFormRenderContext({
+            entityName,
+            definition,
+            locale: i18n.language,
+            mode,
+            values,
+            errors: fieldErrors,
+            fieldAccess,
+            canRead: entityPermissions.canRead,
+            canWrite,
+            recordId,
+            onChange: (name, value) =>
+              setValues((current) => ({ ...current, [name]: value })),
+            onCancel,
+            hideActions,
+            isSubmitting,
+            cancelLabel: t("entity.cancel"),
+            saveLabel: t("entity.save"),
+          })}
+        />
+      </Form>
+    );
   }
 
   return (

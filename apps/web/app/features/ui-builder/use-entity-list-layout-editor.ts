@@ -31,7 +31,7 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const uiViews = definition.ui.views;
   const listViewType = definition.ui.listViewType;
 
-  const [viewType, setViewType] = useState<"table" | "card">("table");
+  const [viewType, setViewType] = useState<"table" | "card" | "compact">("table");
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
     createDefaultUiLayout(fieldPaths),
   );
@@ -54,15 +54,17 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     setCardMetricWidgets(viewMetricWidgetsFromView(cardView?.metricWidgets));
     setViewType(listViewType ?? (cardView ? "card" : "table"));
 
-    if (cardView?.layout) {
-      setLayout(cardView.layout);
+    const listItem =
+      definition.ui.listItem ?? cardView?.layout;
+    if (listItem) {
+      setLayout(listItem);
       setLayoutEditorKey((current) => current + 1);
       return;
     }
 
     setLayout(createDefaultUiLayout(fieldPaths));
     setLayoutEditorKey((current) => current + 1);
-  }, [fieldPaths, listViewType, uiViews]);
+  }, [definition.ui.listItem, fieldPaths, listViewType, uiViews]);
 
   const buildViews = useCallback((): readonly ViewConfig[] => {
     const tableView: ViewConfig = {
@@ -78,18 +80,17 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       return [tableView];
     }
 
-    return [
-      tableView,
-      {
-        type: "card",
-        name: "card",
-        fields: fieldPaths,
-        layout,
-        ...(cardMetricWidgets.length > 0
-          ? { metricWidgets: cardMetricWidgets }
-          : {}),
-      },
-    ];
+    const cardViewConfig = {
+      type: "card" as const,
+      name: "card",
+      fields: fieldPaths,
+      layout,
+      ...(cardMetricWidgets.length > 0
+        ? { metricWidgets: cardMetricWidgets }
+        : {}),
+    };
+
+    return [tableView, cardViewConfig];
   }, [cardMetricWidgets, fieldPaths, layout, tableMetricWidgets, viewType]);
 
   const save = useCallback(async (): Promise<boolean> => {
@@ -98,6 +99,7 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       await putEntityUiOverride(entityName, {
         views: buildViews(),
         listViewType: viewType,
+        listItem: layout,
       });
       await queryClient.invalidateQueries({
         queryKey: entityCatalogQueryKey,

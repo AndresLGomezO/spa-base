@@ -12,6 +12,10 @@ import { Text } from "@repo/ui";
 import type { SerializableEntityDefinition } from "@repo/entities";
 
 import {
+  componentKindsForSurface,
+  type DesignSurface,
+} from "@repo/ui-builder-core";
+import {
   entityCardViewAdapter,
   type EntityDefinitionLookup,
   type FieldDescriptor,
@@ -64,6 +68,7 @@ export interface UiLayoutStructurePanelProps {
   readonly showStructureHeading?: boolean;
   readonly showShowActionsControl?: boolean;
   readonly getDefinition?: EntityDefinitionLookup;
+  readonly designSurface?: DesignSurface;
 }
 
 export function UiLayoutStructurePanel({
@@ -77,7 +82,9 @@ export function UiLayoutStructurePanel({
   showStructureHeading = true,
   showShowActionsControl = true,
   getDefinition,
+  designSurface = "listItem",
 }: UiLayoutStructurePanelProps) {
+  const allowedKinds = componentKindsForSurface(designSurface);
   const { fieldDescriptors } = useMemo(
     () => entityCardViewAdapter(definition, getDefinition),
     [definition, getDefinition],
@@ -197,6 +204,7 @@ export function UiLayoutStructurePanel({
           onLayoutChange={onLayoutChange}
           labels={columnLabels}
           metricKpiEditor={metricKpiEditor}
+          allowedKinds={allowedKinds}
         />
       ) : null}
     </div>

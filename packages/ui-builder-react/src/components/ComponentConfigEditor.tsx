@@ -1,10 +1,12 @@
 import type { ReactNode } from "react";
 import {
+  createDefaultComponent,
   type BadgeComponentConfig,
   type ConditionalStyleRule,
   type DataSource,
   type FieldUiComponentConfig,
   type StyleRule,
+  isFieldUiComponent,
   type UiComponentConfig,
   type UiComponentKind,
 } from "@repo/ui-builder-core";
@@ -23,7 +25,7 @@ import {
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
 
-const COMPONENT_KINDS: readonly UiComponentKind[] = [
+const DEFAULT_COMPONENT_KINDS: readonly UiComponentKind[] = [
   "text",
   "image",
   "date",
@@ -118,6 +120,7 @@ export interface ComponentConfigEditorProps {
     config: Extract<UiComponentConfig, { kind: "metric-kpi" }>,
     onChange: (config: UiComponentConfig) => void,
   ) => ReactNode;
+  readonly allowedKinds?: readonly UiComponentKind[];
 }
 
 function updatePrimaryField(
@@ -140,7 +143,9 @@ export function ComponentConfigEditor({
   onChange,
   labels,
   metricKpiEditor,
+  allowedKinds = DEFAULT_COMPONENT_KINDS,
 }: ComponentConfigEditorProps) {
+  const componentKinds = allowedKinds;
   const kind = config.kind;
   const filtered = filterFieldsForComponentKind(fieldDescriptors, kind);
 
@@ -154,6 +159,18 @@ export function ComponentConfigEditor({
         groupBindings: {},
         dimensionBindings: {},
       });
+      return;
+    }
+
+    if (
+      nextKind === "form-field" ||
+      nextKind === "form-section" ||
+      nextKind === "form-actions" ||
+      nextKind === "related-records"
+    ) {
+      onChange(
+        createDefaultComponent(nextKind, defaultPath) as UiComponentConfig,
+      );
       return;
     }
 
@@ -175,7 +192,7 @@ export function ComponentConfigEditor({
               handleKindChange(event.target.value as UiComponentKind)
             }
           >
-            {COMPONENT_KINDS.map((option) => (
+            {componentKinds.map((option) => (
               <option key={option} value={option}>
                 {option}
               </option>
@@ -191,6 +208,80 @@ export function ComponentConfigEditor({
             title: labels.componentStyles,
           }}
         />
+      </div>
+    );
+  }
+
+  if (!isFieldUiComponent(config)) {
+    return (
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">{labels.component}</span>
+          <select
+            className={SELECT_CLASS}
+            value={config.kind}
+            onChange={(event) =>
+              handleKindChange(event.target.value as UiComponentKind)
+            }
+          >
+            {componentKinds.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        {config.kind === "form-field" ? (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">{labels.field}</span>
+            <select
+              className={SELECT_CLASS}
+              value={config.fieldPath}
+              onChange={(event) =>
+                onChange({ ...config, fieldPath: event.target.value })
+              }
+            >
+              {fieldDescriptors.map((field) => (
+                <option key={field.path} value={field.path}>
+                  {formatFieldOptionLabel(field)}
+                </option>
+              ))}
+            </select>
+          </label>
+        ) : null}
+        {config.kind === "form-section" ? (
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">{labels.label.label}</span>
+            <Input
+              value={config.title ?? ""}
+              onChange={(event) =>
+                onChange({ ...config, title: event.target.value || undefined })
+              }
+            />
+          </label>
+        ) : null}
+        {config.kind === "related-records" ? (
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">Child entity</span>
+              <Input
+                value={config.childEntity}
+                onChange={(event) =>
+                  onChange({ ...config, childEntity: event.target.value })
+                }
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">Foreign key field</span>
+              <Input
+                value={config.foreignKeyField}
+                onChange={(event) =>
+                  onChange({ ...config, foreignKeyField: event.target.value })
+                }
+              />
+            </label>
+          </>
+        ) : null}
       </div>
     );
   }
@@ -238,7 +329,7 @@ export function ComponentConfigEditor({
             handleKindChange(event.target.value as UiComponentKind)
           }
         >
-          {COMPONENT_KINDS.map((option) => (
+          {componentKinds.map((option) => (
             <option key={option} value={option}>
               {option}
             </option>

@@ -51,10 +51,18 @@ export interface ViewConfig {
   readonly metricWidgets?: readonly ViewMetricWidget[];
 }
 
+export interface EntityUiOverrideForms {
+  readonly create?: UiLayoutDocument;
+  readonly edit?: UiLayoutDocument;
+}
+
 export interface EntityUiOverride {
   readonly entityName: string;
   readonly views: readonly ViewConfig[];
   readonly listViewType?: EntityListViewType;
+  readonly listItem?: UiLayoutDocument;
+  readonly detail?: UiLayoutDocument;
+  readonly forms?: EntityUiOverrideForms;
   readonly updatedAt: string;
 }
 
@@ -65,8 +73,11 @@ export interface FormSection {
   readonly fields: readonly string[];
 }
 
+/** @deprecated Prefer `forms.*.layout` (`UiLayoutDocument`) on entity UI overrides. */
 export interface FormLayout {
   readonly sections: readonly FormSection[];
+  /** Designed form layout (override); sections remain fallback metadata. */
+  readonly layout?: UiLayoutDocument;
 }
 
 export interface FormConfig {
@@ -83,11 +94,15 @@ export interface EntityNavConfig {
   readonly icon?: string;
 }
 
-export type EntityListViewType = "table" | "card";
+export type EntityListViewType = "table" | "card" | "compact";
 
 export interface EntityUIConfig {
   readonly views: readonly ViewConfig[];
   readonly listViewType?: EntityListViewType;
+  /** Canonical per-record list item layout (override or migrated from card view). */
+  readonly listItem?: UiLayoutDocument;
+  /** Designed record detail page layout. */
+  readonly detailLayout?: UiLayoutDocument;
   readonly forms: FormConfig;
   readonly detail?: DetailConfig;
   readonly nav?: EntityNavConfig;

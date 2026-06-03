@@ -59,14 +59,20 @@ export function EntityPage({ entityName }: EntityPageProps) {
   );
   const cardView = useMemo(() => resolveCardView(definition), [definition]);
 
+  const listPresentation = definition.ui.listViewType ?? "table";
   const activeView = useMemo(() => {
-    if (definition.ui.listViewType === "card" && cardView) {
+    if (listPresentation === "card" && cardView) {
       return cardView;
     }
     return resolveActiveView(definition);
-  }, [cardView, definition]);
+  }, [cardView, listPresentation, definition]);
 
-  const ViewComponent = resolveViewComponent(activeView.type) ?? EntityTable;
+  const ViewComponent =
+    listPresentation === "compact"
+      ? (resolveViewComponent("compact") ?? EntityTable)
+      : (resolveViewComponent(
+          listPresentation === "card" ? "card" : activeView.type,
+        ) ?? EntityTable);
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
 

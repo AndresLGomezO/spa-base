@@ -6,3 +6,67 @@
 @import "@repo/theme/semantics.css";
 @import "@repo/theme/dark.css";
 @import "@repo/theme/base.css";
+
+@media (prefers-reduced-motion: no-preference) {
+  .ui-motion-entrance-fade {
+    animation: ui-motion-fade-in 0.4s ease-out both;
+  }
+  .ui-motion-entrance-slide-up {
+    animation: ui-motion-slide-up 0.45s ease-out both;
+  }
+  .ui-motion-entrance-scale {
+    animation: ui-motion-scale-in 0.35s ease-out both;
+  }
+  .ui-motion-hover-lift {
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .ui-motion-hover-lift:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgb(0 0 0 / 0.08);
+  }
+  .ui-motion-hover-glow:hover {
+    box-shadow: 0 0 0 2px var(--color-primary, currentColor);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-motion-entrance-fade,
+  .ui-motion-entrance-slide-up,
+  .ui-motion-entrance-scale,
+  .ui-motion-hover-lift,
+  .ui-motion-hover-glow {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@keyframes ui-motion-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes ui-motion-slide-up {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes ui-motion-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}

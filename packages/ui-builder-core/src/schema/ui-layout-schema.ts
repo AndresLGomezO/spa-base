@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+import { motionPresetSchema } from "./motion-schema.js";
+
 const dataSourceSchema = z.discriminatedUnion("type", [
   z
     .object({
@@ -179,6 +181,34 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
       styles: z.array(styleRuleSchema).optional(),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal("form-field"),
+      fieldPath: z.string().trim().min(1),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("form-section"),
+      title: z.string().trim().min(1).optional(),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("form-actions"),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("related-records"),
+      childEntity: z.string().trim().min(1),
+      foreignKeyField: z.string().trim().min(1),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
 ]);
 
 const componentRowSchema = z
@@ -187,6 +217,7 @@ const componentRowSchema = z
     id: z.string().trim().min(1),
     component: fieldComponentSchema,
     styles: z.array(styleRuleSchema).optional(),
+    motion: motionPresetSchema.optional(),
   })
   .strict();
 
@@ -243,6 +274,7 @@ export const uiLayoutDocumentSchema = z
     root: layoutRootNodeSchema,
     showActions: z.boolean().optional(),
     cardsPerRow: z.number().int().min(1).max(4).optional(),
+    motion: motionPresetSchema.optional(),
   })
   .strict()
   .superRefine((value, ctx) => {

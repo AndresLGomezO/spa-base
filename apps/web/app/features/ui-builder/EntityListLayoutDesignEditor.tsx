@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { updateLayoutMeta } from "@repo/ui-builder-core";
+import type { MotionEntrance } from "@repo/ui-builder-core";
 import { SegmentedSwitch, Text, type SegmentedSwitchOption } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
@@ -22,6 +23,13 @@ import {
 const CARDS_PER_ROW_SELECT_CLASS =
   "border-input bg-background ring-offset-background focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
+const ENTRANCE_OPTIONS: readonly MotionEntrance[] = [
+  "none",
+  "fade",
+  "slide-up",
+  "scale",
+];
+
 interface EntityListLayoutDesignEditorProps {
   readonly entityName: EntityName;
   readonly previewItem: Record<string, unknown> | null;
@@ -39,7 +47,7 @@ export function EntityListLayoutDesignEditor({
   const editor = editorProp ?? internalEditor;
 
   const viewTypeOptions = useMemo(
-    (): readonly SegmentedSwitchOption<"table" | "card">[] => [
+    (): readonly SegmentedSwitchOption<"table" | "card" | "compact">[] => [
       {
         value: "table",
         label: t("entity.viewSettings.table"),
@@ -49,6 +57,11 @@ export function EntityListLayoutDesignEditor({
         value: "card",
         label: t("entity.viewSettings.card"),
         ariaLabel: t("entity.viewSettings.card"),
+      },
+      {
+        value: "compact",
+        label: t("designLayout.presentationCompact"),
+        ariaLabel: t("designLayout.presentationCompact"),
       },
     ],
     [t],
@@ -63,7 +76,7 @@ export function EntityListLayoutDesignEditor({
     };
 
     return {
-      structure: t("entity.viewSettings.structure"),
+      structure: t("designLayout.listItemStructure"),
       layoutColumns: t("entity.viewSettings.layoutColumns"),
       showActions: t("entity.viewSettings.showActions"),
       columnStyles: t("entity.viewSettings.columnStyles"),
@@ -120,6 +133,7 @@ export function EntityListLayoutDesignEditor({
   }, [t]);
 
   const cardsPerRow = clampCardsPerRow(editor.layout.cardsPerRow);
+  const entrance = editor.layout.motion?.entrance ?? "none";
 
   const setCardsPerRow = (value: number) => {
     editor.setLayout(
@@ -129,96 +143,92 @@ export function EntityListLayoutDesignEditor({
     );
   };
 
-  const metricWidgetsSection = (
-    <CollapsibleSection
-      title={t("entity.viewSettings.metrics.title")}
-      defaultOpen={false}
-    >
-      <MetricWidgetsBuilderSection
-        widgets={
-          editor.viewType === "table"
-            ? editor.tableMetricWidgets
-            : editor.cardMetricWidgets
-        }
-        entityDefinition={editor.definition}
-        filterFieldOptions={editor.filterFieldOptions}
-        onChange={
-          editor.viewType === "table"
-            ? editor.setTableMetricWidgets
-            : editor.setCardMetricWidgets
-        }
-      />
-    </CollapsibleSection>
-  );
+  const setEntrance = (value: MotionEntrance) => {
+    editor.setLayout(
+      updateLayoutMeta(editor.layout, {
+        motion: {
+          ...editor.layout.motion,
+          entrance: value,
+          staggerIndex: value !== "none",
+        },
+      }),
+    );
+  };
 
-  const viewTypeSection = (
-    <div className="flex flex-col gap-2">
-      <div className="flex flex-wrap items-center gap-4">
-        <div className="flex flex-col gap-2">
-          <span className="text-muted-foreground text-sm">
-            {t("entity.viewSettings.viewType")}
-          </span>
-          <SegmentedSwitch
-            value={editor.viewType}
-            options={viewTypeOptions}
-            onChange={editor.setViewType}
-            ariaLabel={t("entity.viewSettings.viewType")}
-          />
-        </div>
-        {editor.viewType === "card" ? (
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-muted-foreground">
-              {t("entity.viewSettings.cardsPerRow")}
-            </span>
-            <select
-              className={CARDS_PER_ROW_SELECT_CLASS}
-              value={cardsPerRow}
-              onChange={(event) =>
-                setCardsPerRow(Number.parseInt(event.target.value, 10))
-              }
-              aria-label={t("entity.viewSettings.cardsPerRow")}
-            >
-              {Array.from(
-                { length: MAX_CARDS_PER_ROW - MIN_CARDS_PER_ROW + 1 },
-                (_, index) => {
-                  const value = MIN_CARDS_PER_ROW + index;
-                  return (
-                    <option key={value} value={value}>
-                      {value}
-                    </option>
-                  );
-                },
-              )}
-            </select>
-          </label>
-        ) : null}
-      </div>
-      {editor.viewType === "card" ? (
-        <Text variant="muted" className="text-sm">
-          {t("entity.viewSettings.cardsPerRowHint")}
-        </Text>
-      ) : null}
-    </div>
-  );
+  const metricWidgets =
+    editor.viewType === "table"
+      ? editor.tableMetricWidgets
+      : editor.cardMetricWidgets;
 
-  const cardLayoutSections =
-    editor.viewType === "card" ? (
-      <>
-        {viewTypeSection}
-        <DockedCardLayoutPreview
-          enabled={editor.viewType === "card"}
-          layout={editor.layout}
-          definition={editor.definition}
-          previewItem={previewItem}
-          title={t("entity.viewSettings.preview")}
-          locale={i18n.language}
-          getDefinition={getDefinition}
+  const setMetricWidgets =
+    editor.viewType === "table"
+      ? editor.setTableMetricWidgets
+      : editor.setCardMetricWidgets;
+
+  return (
+    <div className="flex flex-col gap-6">
+      <CollapsibleSection
+        title={t("entity.viewSettings.metrics.title")}
+        defaultOpen={false}
+      >
+        <MetricWidgetsBuilderSection
+          widgets={metricWidgets}
+          entityDefinition={editor.definition}
+          filterFieldOptions={editor.filterFieldOptions}
+          onChange={setMetricWidgets}
         />
-        <div className="flex flex-col gap-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <Text className="font-medium">
-              {t("entity.viewSettings.structure")}
-            </Text>
+      </CollapsibleSection>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-muted-foreground text-sm">
+          {t("designLayout.presentation")}
+        </span>
+        <SegmentedSwitch
+          value={editor.viewType}
+          options={viewTypeOptions}
+          onChange={editor.setViewType}
+          ariaLabel={t("designLayout.presentation")}
+        />
+      </div>
+
+      <DockedCardLayoutPreview
+        enabled
+        layout={editor.layout}
+        definition={editor.definition}
+        previewItem={previewItem}
+        title={t("entity.viewSettings.preview")}
+        locale={i18n.language}
+        getDefinition={getDefinition}
+      />
+
+      <div className="flex flex-col gap-3">
+        <Text className="font-medium">{structureLabels.structure}</Text>
+        {editor.viewType === "card" ? (
+          <div className="flex flex-wrap items-center gap-4">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {t("entity.viewSettings.cardsPerRow")}
+              </span>
+              <select
+                className={CARDS_PER_ROW_SELECT_CLASS}
+                value={cardsPerRow}
+                onChange={(event) =>
+                  setCardsPerRow(Number.parseInt(event.target.value, 10))
+                }
+              >
+                {Array.from(
+                  { length: MAX_CARDS_PER_ROW - MIN_CARDS_PER_ROW + 1 },
+                  (_, index) => {
+                    const value = MIN_CARDS_PER_ROW + index;
+                    return (
+                      <option key={value} value={value}>
+                        {value}
+                      </option>
+                    );
+                  },
+                )}
+              </select>
+            </label>
             <label className="flex items-center gap-2 text-sm">
               <input
                 type="checkbox"
@@ -234,31 +244,42 @@ export function EntityListLayoutDesignEditor({
               <span>{t("entity.viewSettings.showActions")}</span>
             </label>
           </div>
-          <EntityCardLayoutBuilder
-            key={editor.layoutEditorKey}
-            layout={editor.layout}
-            definition={editor.definition}
-            defaultFieldPath={editor.defaultFieldPath}
-            onLayoutChange={editor.setLayout}
-            labels={structureLabels}
-            showStructureHeading={false}
-            getDefinition={getDefinition}
-          />
-        </div>
-      </>
-    ) : (
-      <>
-        {viewTypeSection}
-        <p className="text-muted-foreground text-sm">
-          {t("designLayout.listTableHint")}
-        </p>
-      </>
-    );
+        ) : null}
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">
+            {t("designLayout.motionEntrance")}
+          </span>
+          <select
+            className={CARDS_PER_ROW_SELECT_CLASS}
+            value={entrance}
+            onChange={(event) =>
+              setEntrance(event.target.value as MotionEntrance)
+            }
+          >
+            {ENTRANCE_OPTIONS.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </select>
+        </label>
+        <EntityCardLayoutBuilder
+          key={editor.layoutEditorKey}
+          layout={editor.layout}
+          definition={editor.definition}
+          defaultFieldPath={editor.defaultFieldPath}
+          onLayoutChange={editor.setLayout}
+          labels={structureLabels}
+          showStructureHeading={false}
+          getDefinition={getDefinition}
+        />
+      </div>
 
-  return (
-    <div className="flex flex-col gap-6">
-      {metricWidgetsSection}
-      {cardLayoutSections}
+      {editor.viewType === "table" ? (
+        <p className="text-muted-foreground text-sm">
+          {t("designLayout.listTableHybridHint")}
+        </p>
+      ) : null}
     </div>
   );
 }

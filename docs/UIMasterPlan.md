@@ -6,6 +6,7 @@ Visual layout builder packages and documentation index.
 
 - [UIBuilder.md](./UIBuilder.md) — product spec (recursive layout, components, styles, fallbacks)
 - [UIBuilderStructure.md](./UIBuilderStructure.md) — monorepo package layout
+- [UIBuilderPhase2MasterPlan.md](./UIBuilderPhase2MasterPlan.md) — **next phases:** detail page, forms, unified list item, motion
 
 ## Packages
 
@@ -24,8 +25,9 @@ Visual layout builder packages and documentation index.
 - Entity list header **Design layout** link — `/settings/design-layout/list/:entityName` (same editor; requires `entityUiOverride.update`)
   - Requires `entityUiOverride.read` (+ per-entity `.read` for nav links)
   - Save requires `entityUiOverride.update` (or admin / superadmin)
-  - **Item list** — full builder + preview (`EntityListLayoutDesignEditor`)
-  - **Main page** / **Forms** — placeholder (coming soon)
+  - **Item list** — unified **list item** layout + table/card/compact presentation (`EntityListLayoutDesignEditor`)
+  - **Main page** — detail layout builder (`EntityDetailLayoutDesignEditor`)
+  - **Forms** — create/edit layout builders (`EntityFormLayoutDesignEditor`)
 
 ## Persisted shape
 
