@@ -68,6 +68,7 @@ export function EntityViewSettingsModal({
     readonly ViewMetricWidget[]
   >([]);
   const [isSaving, setIsSaving] = useState(false);
+  const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
   const filterFieldOptions = useMemo(() => [...fieldPaths], [fieldPaths]);
 
@@ -94,6 +95,7 @@ export function EntityViewSettingsModal({
             : 4
           : 4;
       setColumns(gridColumns);
+      setLayoutEditorKey((current) => current + 1);
       return;
     }
 
@@ -104,6 +106,7 @@ export function EntityViewSettingsModal({
     setShowActions(true);
     setCardsPerRow(DEFAULT_CARDS_PER_ROW);
     setColumns(4);
+    setLayoutEditorKey((current) => current + 1);
   }, [uiViews, listViewType, fieldPaths, open]);
 
   const viewTypeOptions = useMemo(
@@ -189,7 +192,7 @@ export function EntityViewSettingsModal({
       open={open}
       onClose={onClose}
       title={t("entity.viewSettings.title")}
-      size="lg"
+      size={viewType === "card" ? "2xl" : "lg"}
       scrollable={viewType !== "card"}
       footer={
         <div className="flex gap-2">
@@ -209,7 +212,7 @@ export function EntityViewSettingsModal({
       <div
         className={
           viewType === "card"
-            ? "flex min-h-0 flex-1 flex-col gap-4"
+            ? "flex min-h-0 flex-1 flex-col gap-4 overflow-hidden"
             : "flex flex-col gap-6"
         }
       >
@@ -238,7 +241,8 @@ export function EntityViewSettingsModal({
 
         {viewType === "card" ? (
           <CardLayoutBuilderForm
-            className="min-h-0 flex-1"
+            key={layoutEditorKey}
+            className="min-h-0 max-h-full flex-1 overflow-hidden"
             definition={definition}
             slots={slots}
             columns={columns}
@@ -254,12 +258,22 @@ export function EntityViewSettingsModal({
               slotSettings: t("entity.viewSettings.slotSettings"),
               preview: t("entity.viewSettings.preview"),
               field: t("entity.viewSettings.field"),
+              fallbackFields: t("entity.viewSettings.fallbackFields"),
+              fallbackField: (index) =>
+                t("entity.viewSettings.fallbackField", { index }),
+              addFallbackField: t("entity.viewSettings.addFallbackField"),
+              removeFallbackField: t("entity.viewSettings.removeFallbackField"),
               component: t("entity.viewSettings.component"),
               showLabel: t("entity.viewSettings.showLabel"),
+              labelPosition: t("entity.viewSettings.labelPosition"),
+              labelAbove: t("entity.viewSettings.labelAbove"),
+              labelBelow: t("entity.viewSettings.labelBelow"),
               label: t("entity.viewSettings.label"),
               addSlot: t("entity.viewSettings.addSlot"),
+              addInnerItem: t("entity.viewSettings.addInnerItem"),
               showActions: t("entity.viewSettings.showActions"),
               layoutColumns: t("entity.viewSettings.layoutColumns"),
+              slotColumns: t("entity.viewSettings.slotColumns"),
               cardsPerRow: t("entity.viewSettings.cardsPerRow"),
               cardsPerRowHint: t("entity.viewSettings.cardsPerRowHint"),
               columnTabs: t("entity.viewSettings.columnTabs"),
@@ -268,10 +282,18 @@ export function EntityViewSettingsModal({
               emptyColumn: t("entity.viewSettings.emptyColumn"),
               slotTitle: (index) =>
                 t("entity.viewSettings.slotTitle", { index }),
+              expandSlot: t("entity.viewSettings.expandSlot"),
+              collapseSlot: t("entity.viewSettings.collapseSlot"),
               moveSlotUp: t("entity.viewSettings.moveSlotUp"),
               moveSlotDown: t("entity.viewSettings.moveSlotDown"),
+              moveColumnLeft: t("entity.viewSettings.moveColumnLeft"),
+              moveColumnRight: t("entity.viewSettings.moveColumnRight"),
+              deleteColumn: (column) =>
+                t("entity.viewSettings.deleteColumn", { column }),
               deleteSlot: t("entity.viewSettings.deleteSlot"),
               horizontalAlign: t("entity.viewSettings.horizontalAlign"),
+              itemHorizontalAlign: t("entity.viewSettings.itemHorizontalAlign"),
+              alignSlotDefault: t("entity.viewSettings.alignSlotDefault"),
               verticalAlign: t("entity.viewSettings.verticalAlign"),
               alignLeft: t("entity.viewSettings.alignLeft"),
               alignCenter: t("entity.viewSettings.alignCenter"),
@@ -300,6 +322,22 @@ export function EntityViewSettingsModal({
               textBold: t("entity.viewSettings.textBold"),
               textItalic: t("entity.viewSettings.textItalic"),
               textUnderline: t("entity.viewSettings.textUnderline"),
+              textSource: t("entity.viewSettings.textSource"),
+              textSourceField: t("entity.viewSettings.textSourceField"),
+              textSourceFreeText: t("entity.viewSettings.textSourceFreeText"),
+              freeText: t("entity.viewSettings.freeText"),
+              textColor: t("entity.viewSettings.textColor"),
+              textColorLabel: (color) =>
+                t(`entity.viewSettings.textColorOption.${color}`),
+              spacing: t("entity.viewSettings.spacing"),
+              spacingHint: t("entity.viewSettings.spacingHint"),
+              marginX: t("entity.viewSettings.marginX"),
+              marginY: t("entity.viewSettings.marginY"),
+              marginTop: t("entity.viewSettings.marginTop"),
+              marginBottom: t("entity.viewSettings.marginBottom"),
+              marginLeft: t("entity.viewSettings.marginLeft"),
+              marginRight: t("entity.viewSettings.marginRight"),
+              padding: t("entity.viewSettings.padding"),
             }}
           />
         ) : null}

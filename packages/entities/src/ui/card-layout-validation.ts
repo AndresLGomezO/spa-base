@@ -80,8 +80,19 @@ function collectLayoutFieldPaths(layout: CardLayoutConfig): readonly string[] {
   function walkNode(node: LayoutNode): void {
     if (node.type === "slot") {
       const binding = layout.slots[node.slotId];
-      if (binding && !isCardMetricKpiBinding(binding) && binding.fieldPath) {
-        paths.add(binding.fieldPath);
+      if (binding && !isCardMetricKpiBinding(binding)) {
+        if ("staticText" in binding && binding.staticText !== undefined) {
+          return;
+        }
+        if (binding.fieldPath) {
+          paths.add(binding.fieldPath);
+        }
+        for (const fallbackPath of binding.fallbackFieldPaths ?? []) {
+          const trimmed = fallbackPath.trim();
+          if (trimmed.length > 0) {
+            paths.add(trimmed);
+          }
+        }
       }
       return;
     }
@@ -92,8 +103,19 @@ function collectLayoutFieldPaths(layout: CardLayoutConfig): readonly string[] {
 
   walkNode(layout.root);
   for (const binding of Object.values(layout.slots)) {
-    if (!isCardMetricKpiBinding(binding) && binding.fieldPath) {
-      paths.add(binding.fieldPath);
+    if (!isCardMetricKpiBinding(binding)) {
+      if ("staticText" in binding && binding.staticText !== undefined) {
+        continue;
+      }
+      if (binding.fieldPath) {
+        paths.add(binding.fieldPath);
+      }
+      for (const fallbackPath of binding.fallbackFieldPaths ?? []) {
+        const trimmed = fallbackPath.trim();
+        if (trimmed.length > 0) {
+          paths.add(trimmed);
+        }
+      }
     }
   }
 

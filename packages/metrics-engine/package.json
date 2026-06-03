@@ -11,7 +11,14 @@
     "validate": "pnpm run typecheck && pnpm run test && pnpm run lint && pnpm run format:check"
   },
   "exports": {
-    ".": "./src/index.ts"
+    ".": "./src/index.ts",
+    "./field-keys": "./src/metric-field-keys.ts",
+    "./permissions": "./src/permissions.ts",
+    "./types": "./src/types.ts",
+    "./validate-metric-query": "./src/validate-metric-query.ts",
+    "./date-granularity": "./src/date-granularity.ts",
+    "./browser": "./src/browser.ts",
+    "./metric-record-keys": "./src/metric-record-keys.ts"
   },
   "dependencies": {
     "zod": "catalog:"

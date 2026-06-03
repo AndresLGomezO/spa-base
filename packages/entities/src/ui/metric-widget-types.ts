@@ -1,5 +1,11 @@
 import { z } from "zod";
 
+import type { LayoutAlign } from "./card-layout-types.js";
+import type { LayoutSpacing } from "./layout-spacing.js";
+import { layoutSpacingSchemaShape } from "./layout-spacing.js";
+
+const cardLayoutAlignSchema = z.enum(["start", "center", "end", "stretch"]);
+
 export const metricBindingSourceSchema = z.discriminatedUnion("type", [
   z
     .object({
@@ -78,13 +84,14 @@ export function isCardMetricKpiBinding(binding: {
   return binding.component === "metric-kpi";
 }
 
-export interface CardMetricKpiSlotBinding {
+export interface CardMetricKpiSlotBinding extends LayoutSpacing {
   readonly component: "metric-kpi";
   readonly metricDefinitionId: string;
   readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly label?: string;
   readonly className?: string;
+  readonly align?: LayoutAlign;
   readonly textSize?: number;
   readonly textBold?: boolean;
 }
@@ -97,7 +104,9 @@ export const cardMetricKpiSlotBindingSchema = z
     dimensionBindings: z.record(z.string(), metricBindingSourceSchema),
     label: z.string().optional(),
     className: z.string().optional(),
+    align: cardLayoutAlignSchema.optional(),
     textSize: z.number().int().min(10).max(32).optional(),
     textBold: z.boolean().optional(),
+    ...layoutSpacingSchemaShape,
   })
   .strict();

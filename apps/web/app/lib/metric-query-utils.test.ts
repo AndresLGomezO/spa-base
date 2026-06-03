@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import type { MetricDefinitionRecord } from "@repo/metrics-engine";
+import type { MetricDefinitionRecord } from "@repo/metrics-engine/browser";
 
 import {
   buildMetricRowQuery,
@@ -18,6 +18,8 @@ const baseDefinition: MetricDefinitionRecord = {
   filters: [],
   groupBy: ["month"],
   dimensions: ["categoryId"],
+  dateFieldGranularity: {},
+  valueDisplayFormat: "number",
   aggregations: [{ field: "amount", operation: "SUM" }],
   target: { collection: "def_1", granularity: "dynamic" },
   version: 1,

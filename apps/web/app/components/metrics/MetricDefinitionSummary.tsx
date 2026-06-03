@@ -76,6 +76,27 @@ export function MetricDefinitionSummary({
         </li>
         <li>{t("metrics.summary.groupBy", { fields: groupByText })}</li>
         <li>{t("metrics.summary.dimensions", { fields: dimensionsText })}</li>
+        {context.selectedDateFields.length > 0 &&
+        Object.keys(context.dateFieldGranularity).length > 0 ? (
+          <li>
+            {t("metrics.summary.dateGranularity", {
+              fields: context.selectedDateFields
+                .filter((field) => context.dateFieldGranularity[field])
+                .map(
+                  (field) =>
+                    `${field}: ${t(`metrics.dateGranularity.options.${context.dateFieldGranularity[field]}`)}`,
+                )
+                .join(", "),
+            })}
+          </li>
+        ) : null}
+        <li>
+          {t("metrics.summary.valueDisplayFormat", {
+            format: t(
+              `metrics.valueDisplayFormat.${context.valueDisplayFormat}`,
+            ),
+          })}
+        </li>
         <li>{storagePath}</li>
         <li>{t("metrics.summary.exampleRow", { values: exampleValues })}</li>
       </ul>

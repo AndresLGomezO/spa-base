@@ -1,6 +1,5 @@
 import {
   METRICS_VALUES_ROOT,
-  metricValueRecordSchema,
   mergeAvgFieldsIntoValues,
   computeAvgFieldsFromValues,
 } from "@repo/metrics-engine";
@@ -12,6 +11,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { parseMetricValueFirestoreDoc } from "./parse-metric-value-firestore-doc.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 export function createFirestoreAdminMetricValueRepository(
@@ -47,9 +47,11 @@ export function createFirestoreAdminMetricValueRepository(
 
       await docRef.set(incrementPayload, { merge: true });
       const snapshot = await docRef.get();
-      const data = snapshot.data();
-      if (!data) {
-        return metricValueRecordSchema.parse({
+      const data = snapshot.data() as Record<string, unknown> | undefined;
+
+      const record =
+        parseMetricValueFirestoreDoc(docId, data, payload.increments) ??
+        parseMetricValueFirestoreDoc(docId, {
           id: docId,
           tenantId,
           metricName,
@@ -59,41 +61,12 @@ export function createFirestoreAdminMetricValueRepository(
           values: payload.increments,
           updatedAt: now,
         });
+
+      if (!record) {
+        throw new Error(`Failed to parse metric value row ${docId}.`);
       }
 
-      const parsed = metricValueRecordSchema.safeParse({
-        id: docId,
-        ...data,
-      });
-      if (parsed.success) {
-        const valuesWithAvg = mergeAvgFieldsIntoValues(parsed.data.values);
-        const avgFields = computeAvgFieldsFromValues(parsed.data.values);
-        if (Object.keys(avgFields).length > 0) {
-          const avgPayload: Record<string, unknown> = {};
-          for (const [avgKey, avgValue] of Object.entries(avgFields)) {
-            avgPayload[`values.${avgKey}`] = avgValue;
-          }
-          await docRef.set(avgPayload, { merge: true });
-        }
-
-        return metricValueRecordSchema.parse({
-          ...parsed.data,
-          values: valuesWithAvg,
-        });
-      }
-
-      const values =
-        data.values && typeof data.values === "object"
-          ? Object.fromEntries(
-              Object.entries(data.values as Record<string, unknown>).filter(
-                (entry): entry is [string, number] =>
-                  typeof entry[1] === "number" && Number.isFinite(entry[1]),
-              ),
-            )
-          : payload.increments;
-
-      const valuesWithAvg = mergeAvgFieldsIntoValues(values);
-      const avgFields = computeAvgFieldsFromValues(values);
+      const avgFields = computeAvgFieldsFromValues(record.values);
       if (Object.keys(avgFields).length > 0) {
         const avgPayload: Record<string, unknown> = {};
         for (const [avgKey, avgValue] of Object.entries(avgFields)) {
@@ -102,33 +75,18 @@ export function createFirestoreAdminMetricValueRepository(
         await docRef.set(avgPayload, { merge: true });
       }
 
-      return metricValueRecordSchema.parse({
-        id: docId,
-        tenantId,
-        metricName,
-        userId:
-          typeof data.userId === "string" && data.userId.trim().length > 0
-            ? data.userId
-            : payload.userId,
-        group:
-          data.group && typeof data.group === "object"
-            ? data.group
-            : payload.group,
-        dimensions:
-          data.dimensions && typeof data.dimensions === "object"
-            ? data.dimensions
-            : payload.dimensions,
-        values: valuesWithAvg,
-        updatedAt: typeof data.updatedAt === "string" ? data.updatedAt : now,
-      });
+      return {
+        ...record,
+        values: mergeAvgFieldsIntoValues(record.values),
+      };
     },
     async getById(tenantId, metricName, docId) {
       const snapshot = await collection(tenantId, metricName).doc(docId).get();
       if (!snapshot.exists) return null;
-      return metricValueRecordSchema.parse({
-        id: docId,
-        ...snapshot.data(),
-      });
+      return parseMetricValueFirestoreDoc(
+        docId,
+        snapshot.data() as Record<string, unknown> | undefined,
+      );
     },
     async getManyByIds(tenantId, metricName, docIds) {
       if (docIds.length === 0) {
@@ -146,10 +104,10 @@ export function createFirestoreAdminMetricValueRepository(
           return null;
         }
         const docId = docIds[index]!;
-        return metricValueRecordSchema.parse({
-          id: docId,
-          ...snapshot.data(),
-        });
+        return parseMetricValueFirestoreDoc(
+          docId,
+          snapshot.data() as Record<string, unknown> | undefined,
+        );
       });
     },
     async deleteAllRows(tenantId, metricName) {

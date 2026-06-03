@@ -88,6 +88,18 @@ async function getAuthRequestHeaders(firebaseUser: User) {
   };
 }
 
+const AUTH_REQUEST_TIMEOUT_MS = 15_000;
+
+async function fetchWithTimeout(
+  input: URL,
+  init: RequestInit,
+): Promise<Response> {
+  return fetch(input, {
+    ...init,
+    signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
+  });
+}
+
 function mapValidateUser(
   user: AuthValidateSuccessResponse["user"],
 ): SyncedAuthUser {
@@ -111,7 +123,7 @@ export async function syncAuthSession(
   try {
     const headers = await getAuthRequestHeaders(firebaseUser);
 
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       new URL("/auth/validate", appConfig.apiBaseUrl),
       {
         method: "GET",
@@ -151,7 +163,7 @@ export async function selectTenantSession(
   try {
     const headers = await getAuthRequestHeaders(firebaseUser);
 
-    const response = await fetch(
+    const response = await fetchWithTimeout(
       new URL("/auth/select-tenant", appConfig.apiBaseUrl),
       {
         method: "POST",

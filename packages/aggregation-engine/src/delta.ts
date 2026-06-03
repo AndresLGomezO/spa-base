@@ -1,7 +1,7 @@
 import type { AggregationEvent } from "@repo/event-engine";
 import {
+  applyDateGranularityToSlice,
   buildMetricDocId,
-  extractKeySlice,
   isDocumentCountAggregation,
   recordMatchesFilters,
   resolveMetricOwnerId,
@@ -87,8 +87,16 @@ function buildDeltaForRecord(
     return null;
   }
 
-  const group = extractKeySlice(record, metric.groupBy);
-  const dimensions = extractKeySlice(record, metric.dimensions);
+  const group = applyDateGranularityToSlice(
+    record,
+    metric.groupBy,
+    metric.dateFieldGranularity,
+  );
+  const dimensions = applyDateGranularityToSlice(
+    record,
+    metric.dimensions,
+    metric.dateFieldGranularity,
+  );
   const increments: Record<string, number> = {};
 
   for (const spec of metric.aggregations) {

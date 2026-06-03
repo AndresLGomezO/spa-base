@@ -1,4 +1,5 @@
-import { avgKeyForField } from "@repo/metrics-engine";
+import { avgKeyForField } from "@repo/metrics-engine/browser";
+import { formatDisplayValue } from "@repo/ui";
 
 import type { MetricDefinitionRecord } from "../../lib/api-client.js";
 import { formatMetricValueKey } from "../../lib/metric-query-utils.js";
@@ -28,4 +29,22 @@ export function formatPrimaryMetricValue(
 
   const value = values[primaryKey];
   return typeof value === "number" && Number.isFinite(value) ? value : null;
+}
+
+export function formatPrimaryMetricDisplayValue(
+  definition: MetricDefinitionRecord,
+  values: Record<string, number>,
+  locale?: string,
+): string | null {
+  const numeric = formatPrimaryMetricValue(definition, values);
+  if (numeric === null) {
+    return null;
+  }
+
+  return formatDisplayValue(numeric, {
+    fieldType: "number",
+    displayFormat:
+      definition.valueDisplayFormat === "currency" ? "currency" : "plain",
+    locale,
+  });
 }

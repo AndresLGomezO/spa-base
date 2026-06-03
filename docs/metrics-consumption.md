@@ -2,6 +2,8 @@
 
 Implemented read API for pre-aggregated metric rows. Design intent: [query-aggregations.md](./query-aggregations.md). Write pipeline: [aggregations.md](./aggregations.md).
 
+**Hands-on guide (Rates tenant):** [rates-metrics-guide.md](./rates-metrics-guide.md) — definitions for `transaction` and related models, group by vs dimensions, and KPI/Series view configuration.
+
 ## Overview
 
 Metrics are stored at:
@@ -56,9 +58,12 @@ Base URL: same as the rest of the API (`/api/...`). Requires Firebase Auth + App
 
 | Permission | Description |
 | --- | --- |
-| `metricValue.read` | Fetch metric rows for the authenticated user |
+| `metricValue.read` | Fetch metric rows (explicit grant) |
+| `{sourceModel}.read` | Also allows row/batch read and GET definition by id when the metric’s `sourceModel` matches (e.g. `transaction.read` for transaction metrics) |
+| `metricDefinition.read` | List/create/update definitions in Settings → Metrics; required to pick definitions in view-settings builder |
+| `entityUiOverride.update` | Save KPI/series widgets and card `metric-kpi` slots on entity views |
 
-Separate from `metricDefinition.*` (definition admin). Tenant built-in `admin` role includes `*.read`, which covers `metricValue.read`.
+**Runtime widgets** on entity lists use source-entity read access, not `metricValue.read` alone. **Layout configuration** stays behind `entityUiOverride.update` (and `metricDefinition.read` to list definitions in the builder).
 
 ### POST `/api/metrics/:metricDefinitionId/row`
 
@@ -97,7 +102,7 @@ Rules:
 | --- | --- | --- |
 | 400 | `VALIDATION_ERROR` | Invalid body or query keys vs definition |
 | 401 | `UNAUTHORIZED` | Missing auth |
-| 403 | `FORBIDDEN` | Missing `metricValue.read` |
+| 403 | `FORBIDDEN` | Missing `metricValue.read` and missing `{sourceModel}.read` |
 | 404 | `NOT_FOUND` | Unknown metric definition id |
 | 404 | `METRIC_ROW_NOT_FOUND` | No row for this user + group + dimensions |
 
@@ -146,7 +151,9 @@ Example: definition with `groupBy: ["month"]`, `dimensions: ["categoryId"]`, use
 { "group": { "month": "2026-06" }, "dimensions": { "categoryId": "food" } }
 ```
 
-Time bucketing (hour/day/month/year) is whatever the source entity stores in `groupBy` fields; there is no `timeGrouping` field on definitions yet.
+Time bucketing for **date fields** uses `dateFieldGranularity` on the metric definition. When a date field appears in `groupBy` or `dimensions`, choose **day** (`YYYY-MM-DD`), **month** (`YYYY-MM`), or **year** (`YYYY`). The aggregation engine normalizes ISO datetimes to that bucket in UTC before building row keys.
+
+**Value display:** set `valueDisplayFormat` to `number` or `currency` on the definition. KPI and series widgets format the primary aggregation using that setting.
 
 ## Operations
 
@@ -163,7 +170,6 @@ No composite Firestore indexes are required for the read API.
 
 - Partial dimension filters, date ranges, or dynamic `WHERE` clauses
 - Cross-user or tenant-wide metric reads (owner-only via `userId` in the key)
-- `timeGrouping` on metric definitions (deferred)
 - Firestore security rules for metric rows (optional future hardening)
 
 ## Web client (implemented)
@@ -219,7 +225,7 @@ Runtime, **user-scoped** widgets on entity list views (table and card). No hardc
 | `MetricValueSeries` | Grid of KPI cells from batched queries |
 | `MetricWidgetRenderer` | Dispatches `ViewMetricWidget` (`kpi` \| `series`) |
 | `EntityViewMetricsStrip` | Renders `activeView.metricWidgets` above the list |
-| `useMetricDefinition` / `useMetricRow` / `useMetricBatch` | React Query; `enabled` when `metricValue.read` and bindings resolve |
+| `useMetricDefinition` / `useMetricRow` / `useMetricBatch` | React Query; `enabled` when `metricValue.read` or `{sourceModel}.read` and bindings resolve |
 | `metric-binding-resolution.ts` | Resolves `MetricBindingSource` → `MetricRowQuery` |
 
 **Typical KPI flow:**
@@ -252,7 +258,7 @@ usePermission("metricValue.read")
 1. **Entity list → View settings** — `MetricWidgetsBuilderSection` below the table/card switch; persists `metricWidgets` on the active view type.
 2. **Card layout builder** — slot component `metric-kpi`: pick ACTIVE definition from `listMetricDefinitions()`, configure bindings (emphasize `entityField` for row-scoped dimensions).
 
-Gated by `metricValue.read` (read/fetch) and `ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS` (save layout).
+Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOverride.update` + `metricDefinition.read` (save layout via `ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS`).
 
 ### Runtime wiring
 
@@ -261,7 +267,7 @@ Gated by `metricValue.read` (read/fetch) and `ENTITY_UI_OVERRIDE_WRITE_PERMISSIO
 
 ### Permission gating
 
-`usePermission("metricValue.read")` on fetch and builder sections; forbidden copy in `metrics.widget.forbidden`.
+`useCanReadMetricValues(sourceModel)` on runtime widgets; builder uses `entityUiOverride.update`. Forbidden copy in `metrics.widget.forbidden`.
 
 ### Testing
 

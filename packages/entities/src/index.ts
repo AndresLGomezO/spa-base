@@ -104,6 +104,8 @@ export type {
 export type {
   CardBadgeVariant,
   CardFieldSlotBinding,
+  CardLabelPosition,
+  CardTextColor,
   CardFieldSlotComponentType,
   CardLayoutConfig,
   CardSlotBinding,
@@ -115,8 +117,15 @@ export type {
   LayoutNode,
   LayoutNodeBase,
   LayoutSize,
+  LayoutSpacing,
   LayoutSlotNode,
 } from "./ui/card-layout-types.js";
+export {
+  LAYOUT_SPACING_KEYS,
+  LAYOUT_SPACING_MAX_PX,
+  LAYOUT_SPACING_MIN_PX,
+  type LayoutSpacingKey,
+} from "./ui/layout-spacing.js";
 export {
   assertCardLayoutFieldPaths,
   isValidCardLayoutFieldPath,

@@ -31,7 +31,13 @@ export {
   type CardFieldCurrencyProps,
 } from "./CardFieldCurrency.js";
 export { CardFieldImage, type CardFieldImageProps } from "./CardFieldImage.js";
+export { CardFieldDate, type CardFieldDateProps } from "./CardFieldDate.js";
 export { CardFieldValue, type CardFieldValueProps } from "./CardFieldValue.js";
+export {
+  CARD_TEXT_COLOR_OPTIONS,
+  cardTextColorClassName,
+  type CardTextColor,
+} from "./text-colors.js";
 export {
   createDefaultCardLayout,
   createFourColumnFinancialLayout,
@@ -43,6 +49,11 @@ export {
   type LayoutGridProps,
   type LayoutStackProps,
 } from "./LayoutGrid.js";
+export {
+  getLayoutColumnHighlightClass,
+  resolveLayoutColumnIndex,
+  type LayoutColumnHighlight,
+} from "./layout-column-highlight.js";
 export { LayoutRenderer, type LayoutRendererProps } from "./LayoutRenderer.js";
 export { LayoutSlot, type LayoutSlotProps } from "./LayoutSlot.js";
 export type {

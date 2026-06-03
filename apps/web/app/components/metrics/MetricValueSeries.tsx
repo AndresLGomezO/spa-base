@@ -5,14 +5,14 @@ import { useTranslation } from "react-i18next";
 
 import type { ViewMetricSeriesWidget } from "@repo/entities";
 
-import { usePermission } from "../../auth/usePermission.js";
 import {
   buildMetricRowQueryFromBindings,
   type MetricBindingContext,
 } from "../../lib/metric-binding-resolution.js";
+import { useCanReadMetricValues } from "../../hooks/metrics/useCanReadMetricValues.js";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js";
 import { useMetricBatch } from "../../hooks/metrics/useMetricBatch.js";
-import { formatPrimaryMetricValue } from "./format-metric-display-value.js";
+import { formatPrimaryMetricDisplayValue } from "./format-metric-display-value.js";
 
 interface MetricValueSeriesProps {
   readonly widget: ViewMetricSeriesWidget;
@@ -23,9 +23,9 @@ export function MetricValueSeries({
   widget,
   context = {},
 }: MetricValueSeriesProps) {
-  const { t } = useTranslation("common");
-  const canRead = usePermission("metricValue.read");
+  const { t, i18n } = useTranslation("common");
   const definitionQuery = useMetricDefinition(widget.metricDefinitionId);
+  const canRead = useCanReadMetricValues(definitionQuery.data?.sourceModel);
 
   const queries = useMemo(() => {
     if (!definitionQuery.data) {
@@ -40,6 +40,7 @@ export function MetricValueSeries({
 
   const batchQuery = useMetricBatch({
     metricDefinitionId: widget.metricDefinitionId,
+    sourceModel: definitionQuery.data?.sourceModel,
     queries,
     enabled: canRead && definitionQuery.isSuccess,
   });
@@ -81,8 +82,11 @@ export function MetricValueSeries({
           <LayoutCard key={`${widget.id}-bucket-${index}`}>
             <Text className="text-2xl font-semibold tabular-nums">
               {row
-                ? (formatPrimaryMetricValue(definition, row.values) ??
-                  t("metrics.widget.empty"))
+                ? (formatPrimaryMetricDisplayValue(
+                    definition,
+                    row.values,
+                    i18n.language,
+                  ) ?? t("metrics.widget.empty"))
                 : t("metrics.widget.empty")}
             </Text>
           </LayoutCard>

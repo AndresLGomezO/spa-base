@@ -2,6 +2,8 @@ import { cn } from "@repo/theme/utils";
 
 import { Text } from "../typography/Text.js";
 
+import type { CardLabelPosition } from "./types.js";
+
 export type CardCurrencyTone = "positive" | "negative" | "neutral";
 
 export interface CardFieldCurrencyProps {
@@ -10,6 +12,7 @@ export interface CardFieldCurrencyProps {
   readonly tone?: CardCurrencyTone;
   readonly label?: string;
   readonly showLabel?: boolean;
+  readonly labelPosition?: CardLabelPosition;
   readonly className?: string;
 }
 
@@ -57,18 +60,21 @@ export function CardFieldCurrency({
   tone = "neutral",
   label,
   showLabel = false,
+  labelPosition = "above",
   className,
 }: CardFieldCurrencyProps) {
   const displayAmount =
     amount === null || amount === undefined || amount === "" ? "—" : amount;
 
-  return (
-    <div className={cn("flex min-w-0 flex-col items-end gap-0.5", className)}>
-      {showLabel && label ? (
-        <Text className="text-muted-foreground text-[11px] uppercase tracking-wide">
-          {label}
-        </Text>
-      ) : null}
+  const labelElement =
+    showLabel && label ? (
+      <Text className="text-muted-foreground text-[11px] uppercase tracking-wide">
+        {label}
+      </Text>
+    ) : null;
+
+  const valueElement = (
+    <>
       <span
         className={cn("text-lg font-bold tracking-tight", toneClasses[tone])}
       >
@@ -77,6 +83,22 @@ export function CardFieldCurrency({
       {currency ? (
         <Text className="text-muted-foreground text-xs">{currency}</Text>
       ) : null}
+    </>
+  );
+
+  return (
+    <div className={cn("flex min-w-0 flex-col items-end gap-0.5", className)}>
+      {labelPosition === "below" ? (
+        <>
+          {valueElement}
+          {labelElement}
+        </>
+      ) : (
+        <>
+          {labelElement}
+          {valueElement}
+        </>
+      )}
     </div>
   );
 }

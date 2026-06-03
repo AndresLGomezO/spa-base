@@ -1,18 +1,19 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { usePermission } from "../../auth/usePermission.js";
 import {
   fetchMetricRowOrNull,
   type MetricRowQuery,
 } from "../../lib/api-client.js";
 import { metricRowQueryKey } from "../../query/query-client.js";
+import { useCanReadMetricValues } from "./useCanReadMetricValues.js";
 
 export function useMetricRow(input: {
   readonly metricDefinitionId: string | undefined;
+  readonly sourceModel?: string;
   readonly query: MetricRowQuery | null;
   readonly enabled?: boolean;
 }) {
-  const canRead = usePermission("metricValue.read");
+  const canRead = useCanReadMetricValues(input.sourceModel);
   const enabled =
     (input.enabled ?? true) &&
     canRead &&

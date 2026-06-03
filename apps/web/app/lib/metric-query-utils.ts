@@ -1,10 +1,14 @@
 import {
+  applyDateGranularityToQuerySlice,
   validateMetricQueryAgainstDefinition,
   valueKeyForAggregation,
-  type MetricAggregationOperation,
-  type MetricDefinitionRecord,
   type MetricRowQuery,
-} from "@repo/metrics-engine";
+} from "@repo/metrics-engine/browser";
+import type {
+  MetricAggregationOperation,
+  MetricDateGranularity,
+  MetricDefinitionRecord,
+} from "@repo/metrics-engine/browser";
 
 import type { MetricRowQuery as ClientMetricRowQuery } from "./api-client.js";
 
@@ -20,6 +24,9 @@ export class MetricQueryBindingsError extends Error {
 type MetricDefinitionQueryShape = {
   readonly groupBy: readonly string[];
   readonly dimensions: readonly string[];
+  readonly dateFieldGranularity?: Readonly<
+    Record<string, MetricDateGranularity>
+  >;
 };
 
 export function listRequiredMetricQueryFields(
@@ -99,12 +106,22 @@ export function buildMetricRowQuery(
     "dimensions",
   );
 
+  const dateFieldGranularity = definition.dateFieldGranularity ?? {};
+
   const query: MetricRowQuery = {
-    group: pickBindings(definition.groupBy, input.groupBindings, "group"),
-    dimensions: pickBindings(
+    group: applyDateGranularityToQuerySlice(
+      pickBindings(definition.groupBy, input.groupBindings, "group"),
+      definition.groupBy,
+      dateFieldGranularity,
+    ),
+    dimensions: applyDateGranularityToQuerySlice(
+      pickBindings(
+        definition.dimensions,
+        input.dimensionBindings,
+        "dimensions",
+      ),
       definition.dimensions,
-      input.dimensionBindings,
-      "dimensions",
+      dateFieldGranularity,
     ),
   };
 

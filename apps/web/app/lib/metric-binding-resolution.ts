@@ -90,12 +90,6 @@ function resolveMetricBindingMap(
     resolved[field] = value;
   }
 
-  for (const key of Object.keys(bindings)) {
-    if (!requiredFields.includes(key)) {
-      return null;
-    }
-  }
-
   return resolved;
 }
 
@@ -107,6 +101,17 @@ export function buildMetricRowQueryFromBindings(
   },
   context: MetricBindingContext,
 ): MetricRowQuery | null {
+  if (definition.groupBy.length === 0 && definition.dimensions.length === 0) {
+    try {
+      return buildMetricRowQuery(definition, {
+        groupBindings: {},
+        dimensionBindings: {},
+      });
+    } catch {
+      return null;
+    }
+  }
+
   const groupResolved = resolveMetricBindingMap(
     input.groupBindings,
     definition.groupBy,

@@ -8,6 +8,8 @@ export {
   METRIC_PERMISSIONS,
   METRIC_AGGREGATION_OPERATIONS,
   METRIC_DEFINITION_STATUSES,
+  METRIC_DATE_GRANULARITIES,
+  METRIC_VALUE_DISPLAY_FORMATS,
   metricFilterSchema,
   metricAggregationSpecSchema,
   metricDefinitionRecordSchema,
@@ -18,6 +20,8 @@ export {
 export type {
   MetricAggregationOperation,
   MetricDefinitionStatus,
+  MetricDateGranularity,
+  MetricValueDisplayFormat,
   MetricFilter,
   MetricAggregationSpec,
   MetricDefinitionRecord,
@@ -40,13 +44,20 @@ export {
   resolveMetricOwnerId,
   buildMetricDocId,
   buildMetricRowKey,
-  valueKeyForAggregation,
+} from "./metric-doc-id.js";
+export type { MetricRowKey, MetricRowKeyInput } from "./metric-doc-id.js";
+export {
+  normalizeMetricDateValue,
+  applyDateGranularityToSlice,
+  applyDateGranularityToQuerySlice,
+} from "./date-granularity.js";
+export {
   normalizeMetricFieldKey,
   sumKeyForField,
   countKeyForField,
   avgKeyForField,
-} from "./metric-doc-id.js";
-export type { MetricRowKey, MetricRowKeyInput } from "./metric-doc-id.js";
+  valueKeyForAggregation,
+} from "./metric-field-keys.js";
 export {
   computeAvgFieldsFromValues,
   mergeAvgFieldsIntoValues,

@@ -22,7 +22,7 @@ export interface ModalProps {
   readonly title: string;
   readonly children: ReactNode;
   readonly footer?: ReactNode;
-  readonly size?: "sm" | "md" | "lg" | "xl";
+  readonly size?: "sm" | "md" | "lg" | "xl" | "2xl";
   readonly scrollable?: boolean;
   readonly showCloseButton?: boolean;
   readonly closeLabel?: string;
@@ -34,6 +34,7 @@ const panelSizeClasses = {
   md: "max-w-lg",
   lg: "max-w-3xl",
   xl: "max-w-6xl",
+  "2xl": "max-w-[96rem]",
 } as const;
 
 function ModalPanel({

@@ -3,6 +3,7 @@ import type { SerializableEntityDefinition } from "@repo/entities";
 
 import { listRequiredMetricQueryFields } from "../../lib/metric-query-utils.js";
 import type { MetricDefinitionRecord } from "../../lib/api-client.js";
+import { isDateEntityField } from "./metric-field-utils.js";
 import { MetricBindingSourceEditor } from "./MetricBindingSourceEditor.js";
 
 interface MetricBindingsEditorProps {
@@ -47,6 +48,11 @@ export function MetricBindingsEditor({
               source={bindings.groupBindings[field]}
               definition={entityDefinition}
               filterFieldOptions={filterFieldOptions}
+              dateGranularity={
+                isDateEntityField(entityDefinition, field)
+                  ? metric.dateFieldGranularity[field]
+                  : undefined
+              }
               onChange={(source) => updateGroupBinding(field, source)}
             />
           ))}
@@ -61,6 +67,11 @@ export function MetricBindingsEditor({
               source={bindings.dimensionBindings[field]}
               definition={entityDefinition}
               filterFieldOptions={filterFieldOptions}
+              dateGranularity={
+                isDateEntityField(entityDefinition, field)
+                  ? metric.dateFieldGranularity[field]
+                  : undefined
+              }
               onChange={(source) => updateDimensionBinding(field, source)}
             />
           ))}

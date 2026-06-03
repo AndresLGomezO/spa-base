@@ -4,6 +4,7 @@ import {
   buildMetricSummaryContext,
   canShowMetricSummary,
   formatSummaryExampleValues,
+  listDateFieldsInKeys,
 } from "./metric-field-utils";
 
 describe("formatSummaryExampleValues", () => {
@@ -58,9 +59,29 @@ describe("buildMetricSummaryContext", () => {
       fieldsDependency: ["amount"],
       groupBy: [],
       dimensions: [],
+      dateFieldGranularity: {},
+      valueDisplayFormat: "number",
       isCreate: true,
     });
 
     expect(context.sourceModelLabel).toBe("Loans");
+  });
+});
+
+describe("listDateFieldsInKeys", () => {
+  const entity = {
+    name: "transaction",
+    fields: {
+      date: { type: "date" },
+      categoryId: { type: "string" },
+    },
+    ui: {},
+  } as never;
+
+  it("returns only selected date fields", () => {
+    expect(listDateFieldsInKeys(entity, ["date", "categoryId"], [])).toEqual([
+      "date",
+    ]);
+    expect(listDateFieldsInKeys(entity, ["categoryId"], [])).toEqual([]);
   });
 });

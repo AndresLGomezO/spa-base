@@ -3,15 +3,15 @@ import { useTranslation } from "react-i18next";
 
 import type { MetricBindingSource } from "@repo/entities";
 
-import { usePermission } from "../../auth/usePermission.js";
 import {
   buildMetricRowQueryFromBindings,
   type MetricBindingContext,
 } from "../../lib/metric-binding-resolution.js";
 import type { MetricRowQuery } from "../../lib/api-client.js";
+import { useCanReadMetricValues } from "../../hooks/metrics/useCanReadMetricValues.js";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow.js";
-import { formatPrimaryMetricValue } from "./format-metric-display-value.js";
+import { formatPrimaryMetricDisplayValue } from "./format-metric-display-value.js";
 
 interface MetricValueDisplayProps {
   readonly metricDefinitionId: string;
@@ -32,9 +32,9 @@ export function MetricValueDisplay({
   emptyLabel,
   query: queryOverride,
 }: MetricValueDisplayProps) {
-  const { t } = useTranslation("common");
-  const canRead = usePermission("metricValue.read");
+  const { t, i18n } = useTranslation("common");
   const definitionQuery = useMetricDefinition(metricDefinitionId);
+  const canRead = useCanReadMetricValues(definitionQuery.data?.sourceModel);
 
   const resolvedQuery =
     queryOverride ??
@@ -48,6 +48,7 @@ export function MetricValueDisplay({
 
   const rowQuery = useMetricRow({
     metricDefinitionId,
+    sourceModel: definitionQuery.data?.sourceModel,
     query: resolvedQuery,
     enabled: canRead && definitionQuery.isSuccess,
   });
@@ -101,7 +102,11 @@ export function MetricValueDisplay({
     );
   }
 
-  const value = formatPrimaryMetricValue(definition, row.values);
+  const value = formatPrimaryMetricDisplayValue(
+    definition,
+    row.values,
+    i18n.language,
+  );
 
   return (
     <LayoutCard>

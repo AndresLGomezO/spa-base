@@ -12,8 +12,13 @@ import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import { assertCanReadMetricDefinition } from "./assert-metric-access.js";
 import { runMetricBackfill } from "./run-backfill.js";
 import type { MetricRuntimeContext } from "./metric-runtime-context.js";
+import {
+  findEntityForSourceModel,
+  validateMetricDefinitionDateGranularity,
+} from "./validate-metric-definition-entity.js";
 
 interface RegisterMetricDefinitionRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
@@ -90,7 +95,7 @@ export async function registerMetricDefinitionRoutes(
 
   app.get(
     "/api/metric-definitions/:id",
-    { preHandler: [options.authenticate, requireRead] },
+    { preHandler: [options.authenticate] },
     async (request, reply) => {
       const parsedParams = z
         .object({ id: z.string().trim().min(1) })
@@ -119,6 +124,17 @@ export async function registerMetricDefinitionRoutes(
           ApiErrorCode.NOT_FOUND,
           "Metric definition not found.",
         );
+      }
+
+      if (
+        !(await assertCanReadMetricDefinition(
+          request,
+          reply,
+          options.permissionDeps,
+          item.sourceModel,
+        ))
+      ) {
+        return;
       }
 
       return reply.send(successEnvelope(item));
@@ -156,6 +172,29 @@ export async function registerMetricDefinitionRoutes(
           ApiErrorCode.VALIDATION_ERROR,
           `Unknown source model "${parsedBody.data.sourceModel}".`,
         );
+      }
+
+      const sourceEntity = findEntityForSourceModel(
+        options.entityRuntime.getEntitiesForTenant(tenantId),
+        parsedBody.data.sourceModel,
+      );
+      if (sourceEntity) {
+        const dateGranularityError = validateMetricDefinitionDateGranularity(
+          sourceEntity,
+          {
+            groupBy: parsedBody.data.groupBy,
+            dimensions: parsedBody.data.dimensions,
+            dateFieldGranularity: parsedBody.data.dateFieldGranularity,
+          },
+        );
+        if (dateGranularityError) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            dateGranularityError,
+          );
+        }
       }
 
       try {
@@ -216,6 +255,31 @@ export async function registerMetricDefinitionRoutes(
           ApiErrorCode.NOT_FOUND,
           "Metric definition not found.",
         );
+      }
+
+      const sourceEntity = findEntityForSourceModel(
+        options.entityRuntime.getEntitiesForTenant(tenantId),
+        current.sourceModel,
+      );
+      if (sourceEntity) {
+        const dateGranularityError = validateMetricDefinitionDateGranularity(
+          sourceEntity,
+          {
+            groupBy: parsedBody.data.groupBy ?? current.groupBy,
+            dimensions: parsedBody.data.dimensions ?? current.dimensions,
+            dateFieldGranularity:
+              parsedBody.data.dateFieldGranularity ??
+              current.dateFieldGranularity,
+          },
+        );
+        if (dateGranularityError) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            dateGranularityError,
+          );
+        }
       }
 
       try {

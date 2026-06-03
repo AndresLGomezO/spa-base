@@ -7,6 +7,7 @@ import { isCardMetricKpiBinding } from "@repo/entities";
 import {
   CardFieldBadge,
   CardFieldCurrency,
+  CardFieldDate,
   CardFieldValue,
   formatDisplayValue,
   resolveBadgeVariant,
@@ -20,9 +21,9 @@ import {
   resolveLayoutSlotLabel,
 } from "./resolve-layout-slot-display";
 import {
-  resolveEntityFieldPath,
   resolveEntityFieldRootName,
 } from "./resolve-entity-field-path";
+import { resolveLayoutFieldBinding } from "./resolve-entity-layout-field-binding";
 import { MetricValueDisplay } from "../metrics/MetricValueDisplay.js";
 import { EntityLayoutImageField } from "./EntityLayoutImageField.js";
 
@@ -64,29 +65,51 @@ export function renderEntityLayoutSlotPreview(options: {
     );
   }
 
-  const rootField = resolveEntityFieldRootName(binding.fieldPath);
-  const rawValue = resolveEntityFieldPath(
+  if (binding.staticText !== undefined) {
+    return (
+      <CardFieldValue
+        label={binding.label}
+        showLabel={binding.showLabel}
+        labelPosition={binding.labelPosition}
+        value={binding.staticText}
+        allowEmpty
+        className={binding.className}
+        textSize={binding.textSize}
+        textColor={binding.textColor}
+        textThin={binding.textThin}
+        textBold={binding.textBold}
+        textItalic={binding.textItalic}
+        textUnderline={binding.textUnderline}
+      />
+    );
+  }
+
+  const resolvedField = resolveLayoutFieldBinding({
     item,
-    binding.fieldPath,
+    fieldPath: binding.fieldPath,
+    fallbackFieldPaths: binding.fallbackFieldPaths,
+    component: binding.component,
     definition,
     getOneToManyCellValue,
-  );
+  });
+  const rootField = resolveEntityFieldRootName(resolvedField.fieldPath);
+  const rawValue = resolvedField.rawValue;
   const displayMeta = resolveLayoutSlotDisplayMeta(
-    binding.fieldPath,
+    resolvedField.fieldPath,
     definition,
     getDefinition,
   );
   const label =
     binding.label ??
     (binding.component === "labeled-text" || binding.showLabel
-      ? resolveLayoutSlotLabel(binding.fieldPath, definition, getDefinition)
+      ? resolveLayoutSlotLabel(resolvedField.fieldPath, definition, getDefinition)
       : undefined);
 
   if (binding.component === "image") {
     return (
       <EntityLayoutImageField
         item={item}
-        fieldPath={binding.fieldPath}
+        fieldPath={resolvedField.fieldPath}
         rawValue={rawValue}
         definition={definition}
         className={binding.className}
@@ -140,7 +163,29 @@ export function renderEntityLayoutSlotPreview(options: {
         tone={resolveCurrencyTone(rawValue)}
         label={label}
         showLabel={binding.showLabel}
+        labelPosition={binding.labelPosition}
         className={binding.className}
+      />
+    );
+  }
+
+  if (binding.component === "date") {
+    return (
+      <CardFieldDate
+        value={rawValue}
+        dateDisplayFormat={
+          binding.dateDisplayFormat ?? displayMeta.dateDisplayFormat ?? "datetime"
+        }
+        locale={locale}
+        label={label}
+        showLabel={binding.showLabel}
+        labelPosition={binding.labelPosition}
+        className={binding.className}
+        textSize={binding.textSize}
+        textThin={binding.textThin}
+        textBold={binding.textBold}
+        textItalic={binding.textItalic}
+        textUnderline={binding.textUnderline}
       />
     );
   }
@@ -157,9 +202,11 @@ export function renderEntityLayoutSlotPreview(options: {
     <CardFieldValue
       label={label}
       showLabel={binding.component === "labeled-text" || binding.showLabel}
+      labelPosition={binding.labelPosition}
       value={formattedValue}
       className={binding.className}
       textSize={binding.textSize}
+      textColor={binding.textColor}
       textThin={binding.textThin}
       textBold={binding.textBold}
       textItalic={binding.textItalic}

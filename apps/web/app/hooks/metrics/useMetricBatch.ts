@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 
-import { usePermission } from "../../auth/usePermission.js";
 import { fetchMetricBatch, type MetricRowQuery } from "../../lib/api-client.js";
 import { chunkMetricQueries } from "../../lib/metric-query-utils.js";
 import { metricBatchQueryKey } from "../../query/query-client.js";
+import { useCanReadMetricValues } from "./useCanReadMetricValues.js";
 
 async function fetchMetricBatchChunked(
   metricDefinitionId: string,
@@ -22,10 +22,11 @@ async function fetchMetricBatchChunked(
 
 export function useMetricBatch(input: {
   readonly metricDefinitionId: string | undefined;
+  readonly sourceModel?: string;
   readonly queries: readonly MetricRowQuery[] | null;
   readonly enabled?: boolean;
 }) {
-  const canRead = usePermission("metricValue.read");
+  const canRead = useCanReadMetricValues(input.sourceModel);
   const enabled =
     (input.enabled ?? true) &&
     canRead &&
