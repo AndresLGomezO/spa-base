@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  migrateListPresentation,
   normalizeEntityViews,
   putEntityUiOverrideInputSchema,
   serializeEntityDefinition,
@@ -51,13 +52,13 @@ function mergeUiOverridePutInput(
 
   return {
     views: incoming.views,
-    ...(incoming.listViewType ?? existing?.listViewType
+    ...((incoming.listViewType ?? existing?.listViewType)
       ? { listViewType: incoming.listViewType ?? existing?.listViewType }
       : {}),
-    ...(incoming.listItem ?? existing?.listItem
+    ...((incoming.listItem ?? existing?.listItem)
       ? { listItem: incoming.listItem ?? existing?.listItem }
       : {}),
-    ...(incoming.mainPage ?? existing?.mainPage
+    ...((incoming.mainPage ?? existing?.mainPage)
       ? { mainPage: incoming.mainPage ?? existing?.mainPage }
       : {}),
     ...(recordDetail ? { recordDetail } : {}),
@@ -199,7 +200,7 @@ export async function registerEntityUiOverrideRoutes(
         },
       };
 
-      const mergedUi: EntityUIConfig = {
+      const mergedUi: EntityUIConfig = migrateListPresentation({
         ...serialized.ui,
         views: normalizedViews,
         forms: mergedForms,
@@ -219,7 +220,7 @@ export async function registerEntityUiOverrideRoutes(
               detailLayout: parsedBody.data.recordDetail as UiLayoutDocument,
             }
           : {}),
-      };
+      });
 
       try {
         const { validateEntityUIConfig } = await import("@repo/entities");
@@ -235,11 +236,10 @@ export async function registerEntityUiOverrideRoutes(
         );
       }
 
-      const existingOverride =
-        await options.entityUiOverrideRepository.get(
-          tenantId,
-          params.data.entityName,
-        );
+      const existingOverride = await options.entityUiOverrideRepository.get(
+        tenantId,
+        params.data.entityName,
+      );
 
       const override = await options.entityUiOverrideRepository.put(
         tenantId,

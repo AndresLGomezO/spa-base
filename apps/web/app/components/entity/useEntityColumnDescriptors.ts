@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from "react";
-import { getTableColumns, isFieldVisible } from "@repo/ui-builder";
+import { getListToolbarFields, isFieldVisible } from "@repo/ui-builder";
 import { useTranslation } from "react-i18next";
 
 import type { EntityName } from "../../entities/entity-catalog";
@@ -31,7 +31,7 @@ export function useEntityColumnDescriptors(
 
   const columns = useMemo(
     () =>
-      getTableColumns(definition).filter((column) =>
+      getListToolbarFields(definition).filter((column) =>
         isFieldVisible(
           definition.ui.fields?.[column],
           permissions.canRead,

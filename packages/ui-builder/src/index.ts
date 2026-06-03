@@ -28,8 +28,14 @@ export {
 } from "./query-config-builder.js";
 export {
   getDefaultSort,
+  getExpandableTableColumns,
+  getExpandableTableRowExpandLayout,
+  getExpandableTableShowActions,
+  getListToolbarFields,
   getTableColumns,
+  getTableViewShowActions,
   getViewFilters,
+  resolveExpandableTableView,
   resolveActiveView,
   resolveCardView,
   resolveTableView,

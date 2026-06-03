@@ -56,6 +56,34 @@ Example override document:
 
 **Rendering:** list surfaces use `listItem ?? cardView.layout`. The sibling `fields` array on views remains for table column metadata; card/list item rendering uses paths inside the layout tree only.
 
+### Expandable table view (`type: "expandableTable"`)
+
+Replaces the legacy `compact` list presentation. Persist with `listViewType: "expandableTable"`.
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `fields` | `string[]` | yes | Flat field list for toolbar sort/filter/search |
+| `columns` | `GroupedTableColumn[]` | yes | Collapsed row columns (each has `cellLayout: UiLayoutDocument`) |
+| `rowExpandLayout` | `UiLayoutDocument` | yes | Full-width panel when a row is expanded |
+| `showActions` | `boolean` | no | Row actions column (default true) |
+
+```json
+{
+  "type": "expandableTable",
+  "name": "expandable",
+  "fields": ["name", "balance", "status"],
+  "columns": [
+    {
+      "id": "summary",
+      "label": "Summary",
+      "cellLayout": { "root": { } }
+    }
+  ],
+  "rowExpandLayout": { "root": { } },
+  "showActions": true
+}
+```
+
 ---
 
 ## Top-level document: `UiLayoutDocument`

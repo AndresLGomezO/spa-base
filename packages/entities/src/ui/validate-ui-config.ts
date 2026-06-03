@@ -7,6 +7,7 @@ import {
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { viewMetricWidgetSchema } from "./metric-widget-types.js";
+import { migrateListPresentation } from "./migrate-list-presentation.js";
 import type { EntityUIConfig } from "./types.js";
 
 const fieldComponentSchema = z.enum([
@@ -44,23 +45,59 @@ const filterUISchema = z
   })
   .strict();
 
-const viewConfigSchema = z
+const viewConfigSharedSchema = {
+  name: z.string().trim().min(1),
+  fields: z.array(z.string().trim().min(1)).min(1),
+  filters: z.array(filterUISchema).optional(),
+  defaultSort: z
+    .object({
+      field: z.string().trim().min(1),
+      direction: z.enum(["asc", "desc"]),
+    })
+    .strict()
+    .optional(),
+  metricWidgets: z.array(viewMetricWidgetSchema).optional(),
+};
+
+const groupedTableColumnSchema = z
   .object({
-    type: z.enum(["table", "card"]),
-    name: z.string().trim().min(1),
-    fields: z.array(z.string().trim().min(1)).min(1),
-    filters: z.array(filterUISchema).optional(),
-    defaultSort: z
-      .object({
-        field: z.string().trim().min(1),
-        direction: z.enum(["asc", "desc"]),
-      })
-      .strict()
-      .optional(),
-    layout: uiLayoutDocumentSchema.optional(),
-    metricWidgets: z.array(viewMetricWidgetSchema).optional(),
+    id: z.string().trim().min(1),
+    label: z.string().trim().min(1).optional(),
+    cellLayout: uiLayoutDocumentSchema,
   })
   .strict();
+
+const tableViewConfigSchema = z
+  .object({
+    type: z.literal("table"),
+    ...viewConfigSharedSchema,
+    showActions: z.boolean().optional(),
+  })
+  .strict();
+
+const cardViewConfigSchema = z
+  .object({
+    type: z.literal("card"),
+    ...viewConfigSharedSchema,
+    layout: uiLayoutDocumentSchema.optional(),
+  })
+  .strict();
+
+const expandableTableViewConfigSchema = z
+  .object({
+    type: z.literal("expandableTable"),
+    ...viewConfigSharedSchema,
+    columns: z.array(groupedTableColumnSchema).min(1),
+    rowExpandLayout: uiLayoutDocumentSchema,
+    showActions: z.boolean().optional(),
+  })
+  .strict();
+
+const viewConfigSchema = z.discriminatedUnion("type", [
+  tableViewConfigSchema,
+  cardViewConfigSchema,
+  expandableTableViewConfigSchema,
+]);
 
 const formSectionSchema = z
   .object({
@@ -79,7 +116,9 @@ const formLayoutSchema = z
 const entityUISchema = z
   .object({
     views: z.array(viewConfigSchema).min(1),
-    listViewType: z.enum(["table", "card", "compact"]).optional(),
+    listViewType: z
+      .enum(["table", "card", "expandableTable", "compact"])
+      .optional(),
     listItem: uiLayoutDocumentSchema.optional(),
     mainPageLayout: uiLayoutDocumentSchema.optional(),
     recordDetailLayout: uiLayoutDocumentSchema.optional(),
@@ -200,11 +239,25 @@ export function validateEntityUIConfig(
         `defaultSort in view "${view.name}"`,
       );
     }
-    if (view.layout) {
+    if (view.type === "card" && view.layout) {
       assertLayoutFieldPaths(
         layoutEntityShape,
         view.layout as UiLayoutDocument,
         `view "${view.name}"`,
+      );
+    }
+    if (view.type === "expandableTable") {
+      for (const column of view.columns) {
+        assertLayoutFieldPaths(
+          layoutEntityShape,
+          column.cellLayout as UiLayoutDocument,
+          `expandableTable column "${column.id}" in view "${view.name}"`,
+        );
+      }
+      assertLayoutFieldPaths(
+        layoutEntityShape,
+        view.rowExpandLayout as UiLayoutDocument,
+        `expandableTable rowExpandLayout in view "${view.name}"`,
       );
     }
   }
@@ -236,5 +289,5 @@ export function validateEntityUIConfig(
     }
   }
 
-  return parsed as EntityUIConfig;
+  return migrateListPresentation(parsed as EntityUIConfig);
 }

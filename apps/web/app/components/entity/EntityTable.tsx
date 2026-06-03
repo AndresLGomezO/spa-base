@@ -1,7 +1,9 @@
-import { useCallback, useMemo } from "react";
-import { normalizeListItemLayout } from "@repo/entities";
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import { getTableColumns, isFieldVisible } from "@repo/ui-builder";
+import { useMemo } from "react";
+import {
+  getTableColumns,
+  getTableViewShowActions,
+  isFieldVisible,
+} from "@repo/ui-builder";
 import {
   Alert,
   CursorPagination,
@@ -44,8 +46,6 @@ import {
   getEntityCellDisplayMeta,
   getEntityCellSchemaValue,
 } from "./resolve-entity-cell-value";
-import { createEntityLayoutRenderContext } from "../../features/ui-builder";
-import { tryGetEntityDefinition } from "../../entities/entity-catalog";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
@@ -79,16 +79,7 @@ export function EntityTable({
 }: EntityTableProps) {
   const { t, i18n } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
-  const { getDefinition: getDefinitionOrThrow, items: catalogItems } =
-    useEntityCatalog();
-  const getDefinition = useCallback(
-    (name: string) => tryGetEntityDefinition(name, catalogItems),
-    [catalogItems],
-  );
-  const listItemLayout = useMemo(
-    () => normalizeListItemLayout(definition.ui),
-    [definition.ui],
-  );
+  const { getDefinition: getDefinitionOrThrow } = useEntityCatalog();
   const { user } = useAuth();
   const permissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
@@ -136,8 +127,9 @@ export function EntityTable({
   }
 
   const currentUserId = user?.uid ?? "";
-  const showActions =
-    permissions.canUpdate || permissions.canDelete || !!onRequestShare;
+  const showActionsColumn =
+    getTableViewShowActions(definition) &&
+    (permissions.canUpdate || permissions.canDelete || !!onRequestShare);
   const useCursorPagination =
     hasNextPage !== undefined || hasPreviousPage !== undefined;
 
@@ -155,7 +147,7 @@ export function EntityTable({
     return permissions.canShare && item.ownerId === currentUserId;
   }
 
-  const columnCount = columns.length + (showActions ? 1 : 0);
+  const columnCount = columns.length + (showActionsColumn ? 1 : 0);
 
   return (
     <div className="flex w-full flex-col gap-4">
@@ -178,7 +170,7 @@ export function EntityTable({
                     </TableHead>
                   );
                 })}
-                {showActions ? (
+                {showActionsColumn ? (
                   <TableHead className="text-center">
                     {t("entity.actions")}
                   </TableHead>
@@ -197,25 +189,7 @@ export function EntityTable({
               ) : (
                 (items as readonly Record<string, unknown>[]).map((item) => (
                   <TableRow key={String(item.id)}>
-                    {columns.map((column, columnIndex) => {
-                      if (columnIndex === 0 && listItemLayout) {
-                        return (
-                          <TableCell key={column}>
-                            <div className="max-w-md min-w-[12rem]">
-                              <RecursiveLayoutRenderer
-                                layout={listItemLayout}
-                                context={createEntityLayoutRenderContext({
-                                  item,
-                                  definition,
-                                  locale: i18n.language,
-                                  getOneToManyCellValue,
-                                  getDefinition,
-                                })}
-                              />
-                            </div>
-                          </TableCell>
-                        );
-                      }
+                    {columns.map((column) => {
                       const {
                         fieldType,
                         displayFormat,
@@ -243,7 +217,7 @@ export function EntityTable({
                         </TableCell>
                       );
                     })}
-                    {showActions ? (
+                    {showActionsColumn ? (
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
                           {permissions.canUpdate &&

@@ -174,12 +174,12 @@ Optional: single `views` entry `type: "list"` instead of split table/card—**de
 ### 4.3 Presentation enum (list)
 
 ```ts
-type ListPresentation = "table" | "card" | "compact" | "kanban"; // kanban = future
+type ListPresentation = "table" | "expandableTable" | "card" | "kanban"; // expandableTable replaces compact; kanban = future
 ```
 
 - **card** — current `EntityLayoutCardView` grid (`cardsPerRow`, actions menu).
 - **table** — rows built from `listItem` layout mapped into row/cell chrome (Phase C).
-- **compact** — single-column dense list (mobile-friendly).
+- **expandableTable** — grouped columns with designed cell layouts; row expands to `rowExpandLayout` (replaces compact).
 - **kanban** — column grouping field + card shell (later).
 
 Presentation affects **shell CSS and interaction**, not the underlying component tree.

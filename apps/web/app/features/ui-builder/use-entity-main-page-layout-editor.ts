@@ -57,7 +57,8 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
       if (view.type !== "table") {
         return view;
       }
-      const { metricWidgets: _existing, ...rest } = view;
+      const { metricWidgets: _omit, ...rest } = view;
+      void _omit;
       return metricWidgets.length > 0
         ? { ...rest, type: "table" as const, metricWidgets }
         : rest;

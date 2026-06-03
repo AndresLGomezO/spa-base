@@ -1,6 +1,7 @@
+import { migrateListPresentation } from "./migrate-list-presentation.js";
 import { normalizeEntityViews } from "./normalize-entity-views.js";
+import { isCardViewConfig } from "./types.js";
 import type {
-  EntityUIConfig,
   EntityUiOverrideRecord,
   FormConfig,
   SerializableEntityDefinition,
@@ -35,12 +36,21 @@ export function mergeEntityUiOverrides(
   const baseTableView = definition.ui.views.find(
     (view) => view.type === "table",
   );
+  const baseExpandableView = definition.ui.views.find(
+    (view) => view.type === "expandableTable",
+  );
   const overrideTableView = override.views.find(
     (view) => view.type === "table",
   );
+  const overrideExpandableView = override.views.find(
+    (view) => view.type === "expandableTable",
+  );
   const overrideCardView = override.views.find((view) => view.type === "card");
   const otherOverrideViews = override.views.filter(
-    (view) => view.type !== "table" && view.type !== "card",
+    (view) =>
+      view.type !== "table" &&
+      view.type !== "expandableTable" &&
+      view.type !== "card",
   );
 
   const mergedViews: ViewConfig[] = [];
@@ -50,6 +60,11 @@ export function mergeEntityUiOverrides(
     mergedViews.push(tableView as ViewConfig);
   }
 
+  const expandableView = overrideExpandableView ?? baseExpandableView;
+  if (expandableView) {
+    mergedViews.push(expandableView as ViewConfig);
+  }
+
   if (overrideCardView) {
     mergedViews.push(overrideCardView as ViewConfig);
   }
@@ -57,12 +72,15 @@ export function mergeEntityUiOverrides(
   mergedViews.push(...(otherOverrideViews as ViewConfig[]));
 
   const listItem =
-    override.listItem ?? (overrideCardView as ViewConfig | undefined)?.layout;
+    override.listItem ??
+    (overrideCardView && isCardViewConfig(overrideCardView)
+      ? overrideCardView.layout
+      : undefined);
 
   const recordDetailLayout =
     override.recordDetail ?? override.detail ?? undefined;
 
-  const mergedUi: EntityUIConfig = {
+  const mergedUi = migrateListPresentation({
     ...definition.ui,
     views: normalizeEntityViews(mergedViews),
     ...(override.listViewType !== undefined
@@ -77,7 +95,7 @@ export function mergeEntityUiOverrides(
         }
       : {}),
     forms: mergeFormConfig(definition.ui.forms, override.forms),
-  };
+  });
 
   return {
     ...definition,

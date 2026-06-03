@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from "react";
 import { cn } from "@repo/theme/utils";
 import { normalizeListItemLayout } from "@repo/entities";
-import { resolveCardView } from "@repo/ui-builder";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import {
@@ -80,7 +79,6 @@ export function EntityLayoutCardView({
   );
   const { user } = useAuth();
   const permissions = useEntityPermissions(entityName);
-  const cardView = useMemo(() => resolveCardView(definition), [definition]);
   const layout = useMemo(
     () => normalizeListItemLayout(definition.ui),
     [definition.ui],

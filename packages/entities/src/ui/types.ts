@@ -38,8 +38,7 @@ export interface FilterUIConfig {
   readonly label?: string;
 }
 
-export interface ViewConfig {
-  readonly type: "table" | "card";
+export interface ViewConfigBase {
   readonly name: string;
   readonly fields: readonly string[];
   readonly filters?: readonly FilterUIConfig[];
@@ -47,8 +46,50 @@ export interface ViewConfig {
     readonly field: string;
     readonly direction: "asc" | "desc";
   };
-  readonly layout?: UiLayoutDocument;
   readonly metricWidgets?: readonly ViewMetricWidget[];
+}
+
+export interface GroupedTableColumn {
+  readonly id: string;
+  readonly label?: string;
+  readonly cellLayout: UiLayoutDocument;
+}
+
+export interface TableViewConfig extends ViewConfigBase {
+  readonly type: "table";
+  /** Show row actions column (edit/share/delete). Default true when omitted. */
+  readonly showActions?: boolean;
+}
+
+export interface CardViewConfig extends ViewConfigBase {
+  readonly type: "card";
+  readonly layout?: UiLayoutDocument;
+}
+
+export interface ExpandableTableViewConfig extends ViewConfigBase {
+  readonly type: "expandableTable";
+  readonly columns: readonly GroupedTableColumn[];
+  readonly rowExpandLayout: UiLayoutDocument;
+  readonly showActions?: boolean;
+}
+
+export type ViewConfig =
+  | TableViewConfig
+  | CardViewConfig
+  | ExpandableTableViewConfig;
+
+export function isTableViewConfig(view: ViewConfig): view is TableViewConfig {
+  return view.type === "table";
+}
+
+export function isCardViewConfig(view: ViewConfig): view is CardViewConfig {
+  return view.type === "card";
+}
+
+export function isExpandableTableViewConfig(
+  view: ViewConfig,
+): view is ExpandableTableViewConfig {
+  return view.type === "expandableTable";
 }
 
 export interface EntityUiOverrideForms {
@@ -97,7 +138,10 @@ export interface EntityNavConfig {
   readonly icon?: string;
 }
 
-export type EntityListViewType = "table" | "card" | "compact";
+export type EntityListViewType = "table" | "card" | "expandableTable";
+
+/** @deprecated Use expandableTable */
+export type LegacyEntityListViewType = EntityListViewType | "compact";
 
 export interface EntityUIConfig {
   readonly views: readonly ViewConfig[];

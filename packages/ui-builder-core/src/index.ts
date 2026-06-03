@@ -155,3 +155,4 @@ export {
   createDefaultUiLayout,
   createAccountCardSeedLayout,
 } from "./builder/defaults.js";
+export { createDefaultTableCellLayout } from "./builder/table-cell-defaults.js";

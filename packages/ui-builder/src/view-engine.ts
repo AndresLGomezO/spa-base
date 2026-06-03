@@ -1,6 +1,15 @@
-import type { SerializableEntityDefinition, ViewConfig } from "@repo/entities";
+import type {
+  ExpandableTableViewConfig,
+  GroupedTableColumn,
+  SerializableEntityDefinition,
+  ViewConfig,
+} from "@repo/entities";
 
-import { sortFieldsByUiOrder } from "./sort-fields-by-order.js";
+function isExpandableTableView(
+  view: ViewConfig,
+): view is ExpandableTableViewConfig {
+  return view.type === "expandableTable";
+}
 
 function findViewByType(
   definition: SerializableEntityDefinition,
@@ -38,6 +47,63 @@ export function resolveCardView(
   return findViewByType(definition, "card") ?? null;
 }
 
+export function resolveExpandableTableView(
+  definition: SerializableEntityDefinition,
+  viewName = "expandable",
+): ExpandableTableViewConfig {
+  const expandableView = findViewByType(definition, "expandableTable");
+  if (expandableView && isExpandableTableView(expandableView)) {
+    return expandableView;
+  }
+
+  const namedView = definition.ui.views.find(
+    (entry) => entry.name === viewName,
+  );
+  if (namedView && isExpandableTableView(namedView)) {
+    return namedView;
+  }
+
+  throw new Error(
+    `Entity "${definition.name}" has no expandableTable view configured.`,
+  );
+}
+
+export function getExpandableTableColumns(
+  definition: SerializableEntityDefinition,
+  viewName?: string,
+): readonly GroupedTableColumn[] {
+  return [...resolveExpandableTableView(definition, viewName).columns];
+}
+
+export function getExpandableTableRowExpandLayout(
+  definition: SerializableEntityDefinition,
+  viewName?: string,
+) {
+  return resolveExpandableTableView(definition, viewName).rowExpandLayout;
+}
+
+export function getExpandableTableShowActions(
+  definition: SerializableEntityDefinition,
+  viewName?: string,
+): boolean {
+  return resolveExpandableTableView(definition, viewName).showActions !== false;
+}
+
+/** Toolbar sort/filter/search fields for the active list presentation. */
+export function getListToolbarFields(
+  definition: SerializableEntityDefinition,
+): readonly string[] {
+  const presentation = definition.ui.listViewType ?? "table";
+  if (presentation === "expandableTable") {
+    try {
+      return [...resolveExpandableTableView(definition).fields];
+    } catch {
+      return getTableColumns(definition);
+    }
+  }
+  return getTableColumns(definition);
+}
+
 export function resolveActiveView(
   definition: SerializableEntityDefinition,
   viewName?: string,
@@ -59,8 +125,18 @@ export function getTableColumns(
   definition: SerializableEntityDefinition,
   viewName?: string,
 ): readonly string[] {
-  const fields = resolveActiveView(definition, viewName).fields;
-  return sortFieldsByUiOrder(fields, definition.ui.fields);
+  return [...resolveTableView(definition, viewName).fields];
+}
+
+export function getTableViewShowActions(
+  definition: SerializableEntityDefinition,
+  viewName?: string,
+): boolean {
+  const view = resolveTableView(definition, viewName);
+  if (view.type !== "table") {
+    return true;
+  }
+  return view.showActions !== false;
 }
 
 export function getDefaultSort(

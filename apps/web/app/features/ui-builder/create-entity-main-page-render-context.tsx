@@ -11,7 +11,7 @@ import { useNavigate } from "react-router";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
-export interface MainPageRenderContextInput {
+interface MainPageRenderContextInput {
   readonly entityName: EntityName;
   readonly entityLabel: string;
   readonly locale: string;

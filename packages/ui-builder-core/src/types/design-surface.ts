@@ -2,6 +2,8 @@ import type { UiComponentKind } from "./component.js";
 
 export type DesignSurface =
   | "listItem"
+  | "tableColumnCell"
+  | "tableRowExpand"
   | "mainPage"
   | "recordDetail"
   | "formCreate"
@@ -39,6 +41,8 @@ export function componentKindsForSurface(
 ): readonly UiComponentKind[] {
   switch (surface) {
     case "listItem":
+    case "tableColumnCell":
+    case "tableRowExpand":
       return LIST_ITEM_KINDS;
     case "mainPage":
       return MAIN_PAGE_KINDS;

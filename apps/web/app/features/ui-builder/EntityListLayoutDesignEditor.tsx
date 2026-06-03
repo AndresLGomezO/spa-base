@@ -14,6 +14,10 @@ import {
 } from "../../components/entity/entity-card-list-grid.js";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder.js";
 import { DockedCardLayoutPreview } from "./DockedCardLayoutPreview.js";
+import { DockedExpandableTableLayoutPreview } from "./DockedExpandableTableLayoutPreview.js";
+import { EntityListTableLayoutPreview } from "./EntityListTableLayoutPreview.js";
+import { ExpandableTableColumnsEditor } from "./ExpandableTableColumnsEditor.js";
+import { TableViewFieldsEditor } from "./TableViewFieldsEditor.js";
 import {
   useEntityListLayoutEditor,
   type UseEntityListLayoutEditorResult,
@@ -46,21 +50,23 @@ export function EntityListLayoutDesignEditor({
   const editor = editorProp ?? internalEditor;
 
   const viewTypeOptions = useMemo(
-    (): readonly SegmentedSwitchOption<"table" | "card" | "compact">[] => [
+    (): readonly SegmentedSwitchOption<
+      "table" | "card" | "expandableTable"
+    >[] => [
       {
         value: "table",
         label: t("entity.viewSettings.table"),
         ariaLabel: t("entity.viewSettings.table"),
       },
       {
+        value: "expandableTable",
+        label: t("designLayout.presentationExpandableTable"),
+        ariaLabel: t("designLayout.presentationExpandableTable"),
+      },
+      {
         value: "card",
         label: t("entity.viewSettings.card"),
         ariaLabel: t("entity.viewSettings.card"),
-      },
-      {
-        value: "compact",
-        label: t("designLayout.presentationCompact"),
-        ariaLabel: t("designLayout.presentationCompact"),
       },
     ],
     [t],
@@ -154,6 +160,52 @@ export function EntityListLayoutDesignEditor({
     );
   };
 
+  const cardPreviewProps = {
+    layout: editor.layout,
+    definition: editor.definition,
+    previewItem,
+    title: t("entity.viewSettings.preview"),
+    locale: i18n.language,
+    getDefinition,
+  };
+
+  const listPreview = (() => {
+    switch (editor.viewType) {
+      case "table":
+        return (
+          <EntityListTableLayoutPreview
+            definition={editor.definition}
+            tableFields={editor.tableFields}
+            showActions={editor.tableShowActions}
+            previewItem={previewItem}
+            title={t("entity.viewSettings.preview")}
+            locale={i18n.language}
+          />
+        );
+      case "expandableTable":
+        return (
+          <DockedExpandableTableLayoutPreview
+            enabled
+            definition={editor.definition}
+            columns={editor.expandableColumns}
+            rowExpandLayout={editor.rowExpandLayout}
+            showActions={editor.expandableShowActions}
+            previewItem={previewItem}
+            title={t("entity.viewSettings.preview")}
+            locale={i18n.language}
+            getDefinition={getDefinition}
+          />
+        );
+      case "card":
+        return <DockedCardLayoutPreview enabled {...cardPreviewProps} />;
+    }
+  })();
+
+  const structureTitle =
+    editor.viewType === "table"
+      ? t("designLayout.tableColumns")
+      : structureLabels.structure;
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
@@ -168,18 +220,50 @@ export function EntityListLayoutDesignEditor({
         />
       </div>
 
-      <DockedCardLayoutPreview
-        enabled
-        layout={editor.layout}
-        definition={editor.definition}
-        previewItem={previewItem}
-        title={t("entity.viewSettings.preview")}
-        locale={i18n.language}
-        getDefinition={getDefinition}
-      />
+      <div
+        key={
+          editor.viewType === "table"
+            ? `table-${editor.tableFields.join(",")}`
+            : editor.viewType === "expandableTable"
+              ? `expandable-${editor.expandableColumns.map((column) => column.id).join(",")}`
+              : editor.viewType
+        }
+      >
+        {listPreview}
+      </div>
 
       <div className="flex flex-col gap-3">
-        <Text className="font-medium">{structureLabels.structure}</Text>
+        {editor.viewType !== "expandableTable" ? (
+          <Text className="font-medium">{structureTitle}</Text>
+        ) : null}
+        {editor.viewType === "table" ? (
+          <TableViewFieldsEditor
+            definition={editor.definition}
+            availableFields={editor.fieldPaths}
+            selectedFields={editor.tableFields}
+            onChange={editor.setTableFields}
+            showActions={editor.tableShowActions}
+            onShowActionsChange={editor.setTableShowActions}
+          />
+        ) : null}
+        {editor.viewType === "expandableTable" ? (
+          <CollapsibleSection
+            title={t("designLayout.expandableTableColumns")}
+            defaultOpen
+          >
+            <ExpandableTableColumnsEditor
+              definition={editor.definition}
+              availableFields={editor.fieldPaths}
+              columns={editor.expandableColumns}
+              onChange={editor.setExpandableColumns}
+              showActions={editor.expandableShowActions}
+              onShowActionsChange={editor.setExpandableShowActions}
+              defaultFieldPath={editor.defaultFieldPath}
+              structureLabels={structureLabels}
+              getDefinition={getDefinition}
+            />
+          </CollapsibleSection>
+        ) : null}
         {editor.viewType === "card" ? (
           <div className="flex flex-wrap items-center gap-4">
             <label className="flex flex-col gap-1 text-sm">
@@ -222,41 +306,57 @@ export function EntityListLayoutDesignEditor({
             </label>
           </div>
         ) : null}
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">
-            {t("designLayout.motionEntrance")}
-          </span>
-          <select
-            className={CARDS_PER_ROW_SELECT_CLASS}
-            value={entrance}
-            onChange={(event) =>
-              setEntrance(event.target.value as MotionEntrance)
-            }
+        {editor.viewType === "expandableTable" ? (
+          <CollapsibleSection
+            title={t("designLayout.expandableTableExpandRow")}
+            defaultOpen
           >
-            {ENTRANCE_OPTIONS.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
-        </label>
-        <EntityCardLayoutBuilder
-          key={editor.layoutEditorKey}
-          layout={editor.layout}
-          definition={editor.definition}
-          defaultFieldPath={editor.defaultFieldPath}
-          onLayoutChange={editor.setLayout}
-          labels={structureLabels}
-          showStructureHeading={false}
-          getDefinition={getDefinition}
-        />
+            <EntityCardLayoutBuilder
+              key={`expand-row-${editor.layoutEditorKey}`}
+              layout={editor.rowExpandLayout}
+              definition={editor.definition}
+              defaultFieldPath={editor.defaultFieldPath}
+              onLayoutChange={editor.setRowExpandLayout}
+              labels={structureLabels}
+              showStructureHeading={false}
+              designSurface="tableRowExpand"
+              getDefinition={getDefinition}
+            />
+          </CollapsibleSection>
+        ) : null}
+        {editor.viewType === "card" ? (
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {t("designLayout.motionEntrance")}
+              </span>
+              <select
+                className={CARDS_PER_ROW_SELECT_CLASS}
+                value={entrance}
+                onChange={(event) =>
+                  setEntrance(event.target.value as MotionEntrance)
+                }
+              >
+                {ENTRANCE_OPTIONS.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <EntityCardLayoutBuilder
+              key={`${editor.layoutEditorKey}-${editor.viewType}`}
+              layout={editor.layout}
+              definition={editor.definition}
+              defaultFieldPath={editor.defaultFieldPath}
+              onLayoutChange={editor.setLayout}
+              labels={structureLabels}
+              showStructureHeading={false}
+              getDefinition={getDefinition}
+            />
+          </>
+        ) : null}
       </div>
-
-      {editor.viewType === "table" ? (
-        <p className="text-muted-foreground text-sm">
-          {t("designLayout.listTableHybridHint")}
-        </p>
-      ) : null}
     </div>
   );
 }
