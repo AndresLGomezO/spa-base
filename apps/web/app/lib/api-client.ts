@@ -881,7 +881,8 @@ export async function putEntityUiOverride(
     readonly views: readonly ViewConfig[];
     readonly listViewType?: "table" | "card" | "compact";
     readonly listItem?: import("@repo/ui-builder-core").UiLayoutDocument;
-    readonly detail?: import("@repo/ui-builder-core").UiLayoutDocument;
+    readonly mainPage?: import("@repo/ui-builder-core").UiLayoutDocument;
+    readonly recordDetail?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly forms?: {
       readonly create?: import("@repo/ui-builder-core").UiLayoutDocument;
       readonly edit?: import("@repo/ui-builder-core").UiLayoutDocument;

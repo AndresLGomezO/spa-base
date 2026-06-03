@@ -15,19 +15,19 @@ import {
 } from "./use-entity-ui-override-editor";
 import { createEntityRecordRenderContext } from "./create-entity-record-render-context";
 
-interface EntityDetailLayoutDesignEditorProps {
+interface EntityRecordDetailLayoutDesignEditorProps {
   readonly entityName: EntityName;
   readonly editor?: UseEntityUiOverrideEditorResult;
 }
 
-export function EntityDetailLayoutDesignEditor({
+export function EntityRecordDetailLayoutDesignEditor({
   entityName,
   editor: editorProp,
-}: EntityDetailLayoutDesignEditorProps) {
+}: EntityRecordDetailLayoutDesignEditorProps) {
   const { t, i18n } = useTranslation("common");
-  const internalEditor = useEntityUiOverrideEditor(entityName, "detail");
+  const internalEditor = useEntityUiOverrideEditor(entityName, "recordDetail");
   const editor = editorProp ?? internalEditor;
-  const { getDefinition, items: catalogItems } = useEntityCatalog();
+  const { getDefinition } = useEntityCatalog();
   const { items } = useEntity(entityName, { page: 1 });
   const [previewRecordId, setPreviewRecordId] = useState("");
 
@@ -154,11 +154,9 @@ export function EntityDetailLayoutDesignEditor({
         defaultFieldPath={editor.defaultFieldPath}
         onLayoutChange={editor.setLayout}
         labels={structureLabels}
-        designSurface="detail"
+        designSurface="recordDetail"
         getDefinition={getDefinition}
       />
     </DesignLayoutEditorShell>
   );
 }
-
-export type { UseEntityUiOverrideEditorResult };

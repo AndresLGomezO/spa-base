@@ -3,5 +3,6 @@ export { createEntityRecordRenderContext } from "./create-entity-record-render-c
 export { createEntityFormRenderContext } from "./create-entity-form-render-context.js";
 export { DesignLayoutEditorShell } from "./DesignLayoutEditorShell.js";
 export { useEntityUiOverrideEditor } from "./use-entity-ui-override-editor.js";
-export { EntityDetailLayoutDesignEditor } from "./EntityDetailLayoutDesignEditor.js";
+export { EntityRecordDetailLayoutDesignEditor } from "./EntityRecordDetailLayoutDesignEditor.js";
+export { EntityMainPageLayoutDesignEditor } from "./EntityMainPageLayoutDesignEditor.js";
 export { EntityFormLayoutDesignEditor } from "./EntityFormLayoutDesignEditor.js";

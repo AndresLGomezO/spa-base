@@ -61,6 +61,9 @@ export interface EntityUiOverride {
   readonly views: readonly ViewConfig[];
   readonly listViewType?: EntityListViewType;
   readonly listItem?: UiLayoutDocument;
+  readonly mainPage?: UiLayoutDocument;
+  readonly recordDetail?: UiLayoutDocument;
+  /** @deprecated Use recordDetail; read-only alias for migration */
   readonly detail?: UiLayoutDocument;
   readonly forms?: EntityUiOverrideForms;
   readonly updatedAt: string;
@@ -101,7 +104,13 @@ export interface EntityUIConfig {
   readonly listViewType?: EntityListViewType;
   /** Canonical per-record list item layout (override or migrated from card view). */
   readonly listItem?: UiLayoutDocument;
-  /** Designed record detail page layout. */
+  /** Designed entity main list page layout (`/app/:entity`). */
+  readonly mainPageLayout?: UiLayoutDocument;
+  /** Designed single-record detail page layout (`/app/:entity/:id`). */
+  readonly recordDetailLayout?: UiLayoutDocument;
+  /**
+   * @deprecated Use recordDetailLayout
+   */
   readonly detailLayout?: UiLayoutDocument;
   readonly forms: FormConfig;
   readonly detail?: DetailConfig;

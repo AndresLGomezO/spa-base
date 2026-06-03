@@ -11,7 +11,11 @@ export type UiComponentKind =
   | "form-field"
   | "form-section"
   | "form-actions"
-  | "related-records";
+  | "related-records"
+  | "page-header"
+  | "page-toolbar"
+  | "page-metrics"
+  | "page-list";
 
 export type DataSource =
   | { readonly type: "field"; readonly path: string }
@@ -113,13 +117,51 @@ export interface RelatedRecordsComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export interface PageHeaderComponentConfig {
+  readonly kind: "page-header";
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface PageToolbarComponentConfig {
+  readonly kind: "page-toolbar";
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface PageMetricsComponentConfig {
+  readonly kind: "page-metrics";
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface PageListComponentConfig {
+  readonly kind: "page-list";
+  readonly styles?: readonly StyleRule[];
+}
+
+export type PageUiComponentConfig =
+  | PageHeaderComponentConfig
+  | PageToolbarComponentConfig
+  | PageMetricsComponentConfig
+  | PageListComponentConfig;
+
 export type UiComponentConfig =
   | FieldUiComponentConfig
   | MetricKpiComponentConfig
   | FormFieldComponentConfig
   | FormSectionComponentConfig
   | FormActionsComponentConfig
-  | RelatedRecordsComponentConfig;
+  | RelatedRecordsComponentConfig
+  | PageUiComponentConfig;
+
+export function isPageUiComponent(
+  config: UiComponentConfig,
+): config is PageUiComponentConfig {
+  return (
+    config.kind === "page-header" ||
+    config.kind === "page-toolbar" ||
+    config.kind === "page-metrics" ||
+    config.kind === "page-list"
+  );
+}
 
 export function isMetricKpiComponent(
   config: UiComponentConfig,

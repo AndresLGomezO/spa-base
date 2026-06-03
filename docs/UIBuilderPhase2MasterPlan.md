@@ -28,8 +28,10 @@ The guiding principle: **one schema-driven layout model, multiple render context
 | Route | Path | State |
 |-------|------|--------|
 | Item list | `/settings/design-layout/list/:entityName` | **Live** — `EntityListLayoutDesignEditor`, save via `putEntityUiOverride` |
-| Main page | `/settings/design-layout/page/:entityName` | Placeholder (`designLayout.comingSoon`) |
-| Forms | `/settings/design-layout/forms/:entityName` | Placeholder |
+| Main View | `/settings/design-layout/main/:entityName` | **Live** — `EntityMainPageLayoutDesignEditor`, saves `mainPage` |
+| Detailed View | `/settings/design-layout/detail/:entityName` | **Live** — `EntityRecordDetailLayoutDesignEditor`, saves `recordDetail` |
+| Forms | `/settings/design-layout/forms/:entityName` | **Live** — `EntityFormLayoutDesignEditor` |
+| Legacy redirect | `/settings/design-layout/page/:entityName` | Redirects to `main` |
 
 Permissions: `entityUiOverride.read` / `entityUiOverride.update` (+ per-entity `.read` for nav). Entity list header **Design layout** button deep-links to the list editor only.
 
@@ -292,10 +294,10 @@ Replace duplicated route placeholders in `page.tsx` / `forms.tsx` with real edit
 
 ### A.2 Builder
 
-1. `EntityDetailLayoutDesignEditor` on `design-layout/page.tsx`.
+1. `EntityRecordDetailLayoutDesignEditor` on `design-layout/detail.tsx`.
 2. Preview: load record by id selector (pick from recent list) or synthetic fixture from schema.
 3. Palette: read-only components + `related-records` + section titles.
-4. Save: `putEntityUiOverride({ detail: layout })`.
+4. Save: `putEntityUiOverride({ recordDetail: layout })` (`detail` read alias only).
 
 ### A.3 Header affordances
 

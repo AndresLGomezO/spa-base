@@ -59,6 +59,9 @@ export function mergeEntityUiOverrides(
   const listItem =
     override.listItem ?? (overrideCardView as ViewConfig | undefined)?.layout;
 
+  const recordDetailLayout =
+    override.recordDetail ?? override.detail ?? undefined;
+
   const mergedUi: EntityUIConfig = {
     ...definition.ui,
     views: normalizeEntityViews(mergedViews),
@@ -66,7 +69,13 @@ export function mergeEntityUiOverrides(
       ? { listViewType: override.listViewType }
       : {}),
     ...(listItem ? { listItem } : {}),
-    ...(override.detail ? { detailLayout: override.detail } : {}),
+    ...(override.mainPage ? { mainPageLayout: override.mainPage } : {}),
+    ...(recordDetailLayout
+      ? {
+          recordDetailLayout,
+          detailLayout: recordDetailLayout,
+        }
+      : {}),
     forms: mergeFormConfig(definition.ui.forms, override.forms),
   };
 

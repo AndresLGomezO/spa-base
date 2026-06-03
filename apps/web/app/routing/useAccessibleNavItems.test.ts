@@ -241,7 +241,7 @@ describe("useAccessibleNavItems", () => {
 
     expect(designLayout && isNavGroup(designLayout)).toBe(true);
     if (designLayout && isNavGroup(designLayout)) {
-      expect(designLayout.children.length).toBe(3);
+      expect(designLayout.children.length).toBe(4);
       const listSubgroup = designLayout.children.find(
         (child) => child.id === "design-layout-list",
       );

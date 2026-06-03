@@ -54,8 +54,9 @@
     "currentTenant": "Current Tenant",
     "appearance": "Appearance",
     "designLayout": "Design layout",
+    "designLayoutMain": "Main View",
     "designLayoutList": "Item list",
-    "designLayoutPage": "Main page",
+    "designLayoutDetail": "Detailed View",
     "designLayoutForms": "Forms"
   },
   "designLayout": {
@@ -73,10 +74,13 @@
     "backToHome": "Back to home",
     "entityContext": "Entity: {{entity}}",
     "listTitle": "Item list layout",
-    "listDescription": "Configure table vs card list view, metric widgets, and card layout structure.",
+    "listDescription": "Configure table vs card list view and per-item card layout structure.",
+    "mainTitle": "Main View layout",
+    "mainDescription": "Configure toolbar, metrics, and list container for the entity main page.",
+    "mainPageStructure": "Main page structure",
+    "detailTitle": "Detailed View layout",
+    "detailDescription": "Configure the record detail page layout for /app/:entity/:id.",
     "listTableHint": "Switch to Card view to edit the visual card layout with the builder and preview.",
-    "pageTitle": "Main page layout",
-    "pageDescription": "Configure the entity detail / main page layout.",
     "formsTitle": "Form layout",
     "formsDescription": "Configure create and edit form layouts."
   },
@@ -151,8 +155,8 @@
     "openDesignLayout": "Design layout",
     "cardLayoutMissing": "Card layout is not configured for this entity.",
     "cardLayoutMissingAction": "Configure layout",
-    "detailLayoutMissing": "No main page layout is configured for this entity.",
-    "detailLayoutMissingAction": "Design main page layout",
+    "detailLayoutMissing": "No record detail layout is configured for this entity.",
+    "detailLayoutMissingAction": "Design Detailed View layout",
     "viewSettings": {
       "viewType": "View type",
       "table": "Table",

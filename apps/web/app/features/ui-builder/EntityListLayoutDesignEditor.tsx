@@ -12,7 +12,6 @@ import {
   MAX_CARDS_PER_ROW,
   MIN_CARDS_PER_ROW,
 } from "../../components/entity/entity-card-list-grid.js";
-import { MetricWidgetsBuilderSection } from "../../components/metrics/MetricWidgetsBuilderSection.js";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder.js";
 import { DockedCardLayoutPreview } from "./DockedCardLayoutPreview.js";
 import {
@@ -155,30 +154,8 @@ export function EntityListLayoutDesignEditor({
     );
   };
 
-  const metricWidgets =
-    editor.viewType === "table"
-      ? editor.tableMetricWidgets
-      : editor.cardMetricWidgets;
-
-  const setMetricWidgets =
-    editor.viewType === "table"
-      ? editor.setTableMetricWidgets
-      : editor.setCardMetricWidgets;
-
   return (
     <div className="flex flex-col gap-6">
-      <CollapsibleSection
-        title={t("entity.viewSettings.metrics.title")}
-        defaultOpen={false}
-      >
-        <MetricWidgetsBuilderSection
-          widgets={metricWidgets}
-          entityDefinition={editor.definition}
-          filterFieldOptions={editor.filterFieldOptions}
-          onChange={setMetricWidgets}
-        />
-      </CollapsibleSection>
-
       <div className="flex flex-col gap-2">
         <span className="text-muted-foreground text-sm">
           {t("designLayout.presentation")}

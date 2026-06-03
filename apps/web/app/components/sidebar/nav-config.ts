@@ -30,8 +30,9 @@ export type NavLabelKey =
   | "roles"
   | "entityCategories"
   | "designLayout"
+  | "designLayoutMain"
   | "designLayoutList"
-  | "designLayoutPage"
+  | "designLayoutDetail"
   | "designLayoutForms";
 
 export interface NavLinkConfig {

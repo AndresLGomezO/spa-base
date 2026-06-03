@@ -1,6 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type { UiLayoutDocument, ViewConfig } from "@repo/entities";
-import { createDefaultUiLayout, normalizeEntityViews } from "@repo/entities";
+import {
+  createDefaultFormLayout,
+  createDefaultMainPageLayout,
+  createDefaultUiLayout,
+  normalizeEntityViews,
+} from "@repo/entities";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { EntityName } from "../../entities/entity-catalog";
@@ -10,7 +15,8 @@ import { entityCatalogQueryKey } from "../../query/query-client";
 
 export type UiOverrideSlice =
   | "listItem"
-  | "detail"
+  | "mainPage"
+  | "recordDetail"
   | "forms.create"
   | "forms.edit";
 
@@ -32,12 +38,31 @@ function readSliceLayout(
         definition.ui.listItem ??
         definition.ui.views.find((v) => v.type === "card")?.layout
       );
-    case "detail":
-      return definition.ui.detailLayout;
+    case "mainPage":
+      return definition.ui.mainPageLayout;
+    case "recordDetail":
+      return definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
     case "forms.create":
       return definition.ui.forms.create.layout;
     case "forms.edit":
       return definition.ui.forms.edit.layout;
+  }
+}
+
+function createDefaultLayoutForSlice(
+  slice: UiOverrideSlice,
+  fieldPaths: readonly string[],
+): UiLayoutDocument {
+  switch (slice) {
+    case "mainPage":
+      return createDefaultMainPageLayout();
+    case "forms.create":
+    case "forms.edit":
+      return createDefaultFormLayout(fieldPaths);
+    case "recordDetail":
+      return createDefaultUiLayout(fieldPaths);
+    case "listItem":
+      return createDefaultUiLayout(fieldPaths);
   }
 }
 
@@ -59,7 +84,7 @@ export function useEntityUiOverrideEditor(
   );
 
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
-    createDefaultUiLayout(fieldPaths),
+    createDefaultLayoutForSlice(slice, fieldPaths),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
@@ -73,7 +98,7 @@ export function useEntityUiOverrideEditor(
       setLayoutEditorKey((current) => current + 1);
       return;
     }
-    setLayout(createDefaultUiLayout(fieldPaths));
+    setLayout(createDefaultLayoutForSlice(slice, fieldPaths));
     setLayoutEditorKey((current) => current + 1);
   }, [definition, fieldPaths, slice]);
 
@@ -110,10 +135,15 @@ export function useEntityUiOverrideEditor(
           views: normalizeEntityViews(nextViews),
           listItem: layout,
         });
-      } else if (slice === "detail") {
+      } else if (slice === "mainPage") {
         await putEntityUiOverride(entityName, {
           ...basePayload,
-          detail: layout,
+          mainPage: layout,
+        });
+      } else if (slice === "recordDetail") {
+        await putEntityUiOverride(entityName, {
+          ...basePayload,
+          recordDetail: layout,
         });
       } else if (slice === "forms.create") {
         await putEntityUiOverride(entityName, {

@@ -26,7 +26,8 @@ Visual layout builder packages and documentation index.
   - Requires `entityUiOverride.read` (+ per-entity `.read` for nav links)
   - Save requires `entityUiOverride.update` (or admin / superadmin)
   - **Item list** — unified **list item** layout + table/card/compact presentation (`EntityListLayoutDesignEditor`)
-  - **Main page** — detail layout builder (`EntityDetailLayoutDesignEditor`)
+  - **Main View** — main page layout builder (`EntityMainPageLayoutDesignEditor`)
+  - **Detailed View** — record detail layout builder (`EntityRecordDetailLayoutDesignEditor`)
   - **Forms** — create/edit layout builders (`EntityFormLayoutDesignEditor`)
 
 ## Persisted shape

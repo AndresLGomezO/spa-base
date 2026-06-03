@@ -16,10 +16,13 @@ A hand-written JSON file that satisfies this spec should render the same as a la
 
 | Key | Surface | Description |
 |-----|---------|-------------|
-| `listItem` | List item | Canonical per-record list layout (preferred) |
-| `detail` | Main page | Record detail page layout |
+| `mainPage` | Main View (`/app/:entity`) | Toolbar, metrics, and list container slots |
+| `listItem` | Item list | Canonical per-record list layout (preferred) |
+| `recordDetail` | Detailed View (`/app/:entity/:id`) | Record detail page layout |
+| `detail` | (read alias) | Legacy key; merged as `recordDetail` on read |
 | `forms.create` / `forms.edit` | Forms | Create / edit form layouts |
 | `views[].layout` | Legacy | Card view layout; used when `listItem` is absent |
+| `views[].metricWidgets` | Main View | Metric strip config (edited in Main View designer) |
 
 Example override document:
 
@@ -27,8 +30,9 @@ Example override document:
 {
   "entityName": "account",
   "listViewType": "card",
+  "mainPage": { "root": { } },
   "listItem": { "root": { } },
-  "detail": { "root": { } },
+  "recordDetail": { "root": { } },
   "forms": {
     "create": { "root": { } },
     "edit": { "root": { } }

@@ -54,8 +54,9 @@
     "currentTenant": "Tenant actual",
     "appearance": "Apariencia",
     "designLayout": "Diseño de layout",
+    "designLayoutMain": "Vista principal",
     "designLayoutList": "Lista de ítems",
-    "designLayoutPage": "Página principal",
+    "designLayoutDetail": "Vista detallada",
     "designLayoutForms": "Formularios"
   },
   "designLayout": {
@@ -65,10 +66,13 @@
     "backToHome": "Volver al inicio",
     "entityContext": "Entidad: {{entity}}",
     "listTitle": "Layout de lista",
-    "listDescription": "Configura vista tabla vs tarjeta, widgets de métricas y estructura de tarjetas.",
+    "listDescription": "Configura vista tabla vs tarjeta y estructura de ítems de lista.",
     "listTableHint": "Cambia a vista Tarjeta para editar el layout visual con el constructor y la vista previa.",
-    "pageTitle": "Layout de página principal",
-    "pageDescription": "Configura el layout de la página de detalle de la entidad.",
+    "mainTitle": "Layout de Vista principal",
+    "mainDescription": "Configura barra de herramientas, métricas y contenedor de lista en la página principal.",
+    "mainPageStructure": "Estructura de página principal",
+    "detailTitle": "Layout de Vista detallada",
+    "detailDescription": "Configura el layout de la página de detalle de registro.",
     "formsTitle": "Layout de formularios",
     "formsDescription": "Configura los layouts de formularios de creación y edición."
   },

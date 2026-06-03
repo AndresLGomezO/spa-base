@@ -81,6 +81,8 @@ const entityUISchema = z
     views: z.array(viewConfigSchema).min(1),
     listViewType: z.enum(["table", "card", "compact"]).optional(),
     listItem: uiLayoutDocumentSchema.optional(),
+    mainPageLayout: uiLayoutDocumentSchema.optional(),
+    recordDetailLayout: uiLayoutDocumentSchema.optional(),
     detailLayout: uiLayoutDocumentSchema.optional(),
     forms: z
       .object({
@@ -169,11 +171,20 @@ export function validateEntityUIConfig(
     );
   }
 
-  if (parsed.detailLayout) {
+  if (parsed.mainPageLayout) {
     assertLayoutFieldPaths(
       layoutEntityShape,
-      parsed.detailLayout as UiLayoutDocument,
-      "detailLayout",
+      parsed.mainPageLayout as UiLayoutDocument,
+      "mainPageLayout",
+    );
+  }
+
+  const recordDetailLayout = parsed.recordDetailLayout ?? parsed.detailLayout;
+  if (recordDetailLayout) {
+    assertLayoutFieldPaths(
+      layoutEntityShape,
+      recordDetailLayout as UiLayoutDocument,
+      "recordDetailLayout",
     );
   }
 
