@@ -10,7 +10,9 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@google-cloud/firestore": "catalog:",
     "@google-cloud/pubsub": "catalog:",
+    "firebase-admin": "catalog:",
     "@repo/aggregation-engine": "workspace:*",
     "@repo/event-engine": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
