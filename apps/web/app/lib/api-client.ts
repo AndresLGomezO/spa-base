@@ -879,7 +879,7 @@ export async function putEntityUiOverride(
   entityName: string,
   input: {
     readonly views: readonly ViewConfig[];
-    readonly listViewType?: "table" | "card" | "compact";
+    readonly listViewType?: "table" | "card" | "expandableTable" | "compact";
     readonly listItem?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly mainPage?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly recordDetail?: import("@repo/ui-builder-core").UiLayoutDocument;

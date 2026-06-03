@@ -13,7 +13,7 @@ import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
 import { entityCatalogQueryKey } from "../../query/query-client";
 
-export type UiOverrideSlice =
+type UiOverrideSlice =
   | "listItem"
   | "mainPage"
   | "recordDetail"

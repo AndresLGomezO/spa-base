@@ -112,6 +112,7 @@ export type {
 export {
   uiLayoutDocumentSchema,
   createDefaultUiLayout,
+  createDefaultTableCellLayout,
   createDefaultMainPageLayout,
   createDefaultFormLayout,
   createAccountCardSeedLayout,
@@ -149,6 +150,15 @@ export {
   resolveEditFormFromUi,
 } from "./ui/resolve-form-layout-from-ui.js";
 export { normalizeEntityViews } from "./ui/normalize-entity-views.js";
+export {
+  createDefaultExpandableTableView,
+  expandableTableViewFromListItem,
+} from "./ui/expandable-table-defaults.js";
+export {
+  migrateListPresentation,
+  findExpandableTableView,
+  type EntityUiConfigWithLegacyPresentation,
+} from "./ui/migrate-list-presentation.js";
 export type {
   DetailConfig,
   EntityNavConfig,
@@ -170,6 +180,14 @@ export type {
   SerializableEntityDefinition,
   SerializableFieldMeta,
   ViewConfig,
+  ViewConfigBase,
+  TableViewConfig,
+  CardViewConfig,
+  ExpandableTableViewConfig,
+  GroupedTableColumn,
+  isTableViewConfig,
+  isCardViewConfig,
+  isExpandableTableViewConfig,
 } from "./ui/types.js";
 export type {
   BooleanFieldConfig,

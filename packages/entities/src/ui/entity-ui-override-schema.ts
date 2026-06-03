@@ -14,7 +14,9 @@ export const entityUiOverrideRecordSchema = z
   .object({
     entityName: z.string().trim().min(1),
     views: z.array(z.unknown()).min(1),
-    listViewType: z.enum(["table", "card", "compact"]).optional(),
+    listViewType: z
+      .enum(["table", "card", "expandableTable", "compact"])
+      .optional(),
     listItem: uiLayoutDocumentSchema.optional(),
     mainPage: uiLayoutDocumentSchema.optional(),
     recordDetail: uiLayoutDocumentSchema.optional(),
@@ -32,7 +34,9 @@ export type EntityUiOverrideRecord = z.infer<
 export const putEntityUiOverrideInputSchema = z
   .object({
     views: z.array(z.unknown()).min(1),
-    listViewType: z.enum(["table", "card", "compact"]).optional(),
+    listViewType: z
+      .enum(["table", "card", "expandableTable", "compact"])
+      .optional(),
     listItem: uiLayoutDocumentSchema.optional(),
     mainPage: uiLayoutDocumentSchema.optional(),
     recordDetail: uiLayoutDocumentSchema.optional(),

@@ -76,12 +76,18 @@ export function EntityPage({ entityName }: EntityPageProps) {
     return resolveActiveView(definition);
   }, [cardView, listPresentation, definition]);
 
-  const ViewComponent =
-    listPresentation === "compact"
-      ? (resolveViewComponent("compact") ?? EntityTable)
-      : (resolveViewComponent(
-          listPresentation === "card" ? "card" : activeView.type,
-        ) ?? EntityTable);
+  const ViewComponent = (() => {
+    if (listPresentation === "card") {
+      return resolveViewComponent("card") ?? EntityTable;
+    }
+    if (
+      listPresentation === "expandableTable" ||
+      listPresentation === ("compact" as typeof listPresentation)
+    ) {
+      return resolveViewComponent("expandableTable") ?? EntityTable;
+    }
+    return resolveViewComponent("table") ?? EntityTable;
+  })();
   const [searchParams, setSearchParams] = useSearchParams();
   const [filtersOpen, setFiltersOpen] = useState(false);
 
@@ -259,24 +265,38 @@ export function EntityPage({ entityName }: EntityPageProps) {
     () => definition.ui.views.find((view) => view.type === "table"),
     [definition.ui.views],
   );
-  const metricWidgets =
-    tableView?.metricWidgets ?? activeView.metricWidgets ?? [];
+  const metricWidgets = useMemo(
+    () => tableView?.metricWidgets ?? activeView.metricWidgets ?? [],
+    [activeView.metricWidgets, tableView?.metricWidgets],
+  );
   const mainPageLayout = definition.ui.mainPageLayout;
 
-  const listViewProps = {
-    entityName,
-    entityState,
-    page,
-    pageSize: SERVER_PAGE_SIZE,
-    onPageChange: setPage,
-    onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
-    onRequestEdit: permissions.canUpdate
-      ? (id: string) => setFormModal({ mode: "edit", recordId: id })
-      : undefined,
-    onRequestShare: setShareRecordId,
-    listFilters: filters,
-    routeParams,
-  };
+  const listViewProps = useMemo(
+    () => ({
+      entityName,
+      entityState,
+      page,
+      pageSize: SERVER_PAGE_SIZE,
+      onPageChange: setPage,
+      onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
+      onRequestEdit: permissions.canUpdate
+        ? (id: string) => setFormModal({ mode: "edit", recordId: id })
+        : undefined,
+      onRequestShare: setShareRecordId,
+      listFilters: filters,
+      routeParams,
+    }),
+    [
+      entityName,
+      entityState,
+      page,
+      setPage,
+      permissions.canDelete,
+      permissions.canUpdate,
+      filters,
+      routeParams,
+    ],
+  );
 
   const mainPageContext = useMemo(
     () =>

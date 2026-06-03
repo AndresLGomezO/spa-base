@@ -8,7 +8,7 @@ import { isFieldEditable, isFieldVisible } from "@repo/ui-builder";
 
 import type { EntityName } from "../../entities/entity-catalog";
 import { EntityField } from "../../components/entity/EntityField";
-import { ENTITY_FORM_ID } from "../../components/entity/EntityForm";
+import { ENTITY_FORM_ID } from "../../components/entity/entity-form-constants";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
 
 export function createEntityFormRenderContext(options: {

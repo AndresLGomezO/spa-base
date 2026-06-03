@@ -34,7 +34,7 @@ export const FINANCIAL_PRODUCT_TABLE_VIEW: ViewConfig = {
   ],
 };
 
-export const FINANCIAL_PRODUCT_CARD_FIELDS = [
+const FINANCIAL_PRODUCT_CARD_FIELDS = [
   "name",
   "productTypeId",
   "categoryId",

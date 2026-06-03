@@ -28,11 +28,14 @@ import {
   syncEntityRelationTargets,
 } from "../../lib/api-client";
 import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
+import { ENTITY_FORM_ID } from "./entity-form-constants";
 import { EntityField } from "./EntityField";
 import {
   getJoinRelationFieldNames,
   splitEntityFormPayload,
 } from "./entity-form-payload";
+
+export { ENTITY_FORM_ID } from "./entity-form-constants";
 
 interface EntityFormProps {
   readonly entityName: EntityName;
@@ -43,8 +46,6 @@ interface EntityFormProps {
   readonly hideActions?: boolean;
   readonly onSubmittingChange?: (isSubmitting: boolean) => void;
 }
-
-export const ENTITY_FORM_ID = "entity-form";
 
 function cleanFormValues(
   sections: ReturnType<typeof getFormSections>,

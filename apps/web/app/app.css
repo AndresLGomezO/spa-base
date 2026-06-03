@@ -36,8 +36,11 @@
   .ui-motion-entrance-slide-up,
   .ui-motion-entrance-scale,
   .ui-motion-hover-lift,
-  .ui-motion-hover-glow {
-    animation: none !important;
+  .ui-motion-hover-glow,
+  .ui-expandable-row-panel {
+    transition: none !important;
+  }
+  .ui-expandable-row-panel > * > * {
     transition: none !important;
   }
 }

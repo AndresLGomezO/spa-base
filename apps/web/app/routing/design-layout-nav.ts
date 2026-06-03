@@ -10,7 +10,7 @@ import type {
   NavSubGroupConfig,
 } from "../components/sidebar/nav-config";
 
-export type DesignLayoutKind = "main" | "list" | "detail" | "forms";
+type DesignLayoutKind = "main" | "list" | "detail" | "forms";
 
 export function designLayoutEntityPath(
   kind: DesignLayoutKind,

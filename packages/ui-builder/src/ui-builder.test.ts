@@ -1,4 +1,4 @@
-import { defineEntity } from "@repo/entities";
+import { createDefaultExpandableTableView, defineEntity } from "@repo/entities";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -6,7 +6,12 @@ import {
   buildListQueryConfig,
   filterNavEntities,
   getFormSections,
+  getExpandableTableColumns,
+  getExpandableTableRowExpandLayout,
+  getExpandableTableShowActions,
+  getListToolbarFields,
   getTableColumns,
+  getTableViewShowActions,
   registerComponent,
   resolveComponentId,
   resolveCreateForm,
@@ -54,8 +59,44 @@ const definition = {
 };
 
 describe("@repo/ui-builder", () => {
-  it("resolves table columns from view config", () => {
-    expect(getTableColumns(definition)).toEqual(["isActive", "name"]);
+  it("resolves table columns in view field order", () => {
+    expect(getTableColumns(definition)).toEqual(["name", "isActive"]);
+  });
+
+  it("resolves expandable table view config", () => {
+    const expandable = createDefaultExpandableTableView(["name", "isActive"]);
+    const withExpandable = {
+      ...definition,
+      ui: {
+        ...definition.ui,
+        listViewType: "expandableTable" as const,
+        views: [definition.ui.views[0]!, expandable],
+      },
+    };
+
+    expect(getExpandableTableColumns(withExpandable).length).toBeGreaterThan(0);
+    expect(getExpandableTableRowExpandLayout(withExpandable)).toBeDefined();
+    expect(getExpandableTableShowActions(withExpandable)).toBe(true);
+    expect(getListToolbarFields(withExpandable)).toEqual(["name", "isActive"]);
+  });
+
+  it("resolves table showActions from view config", () => {
+    expect(getTableViewShowActions(definition)).toBe(true);
+    const hidden = {
+      ...definition,
+      ui: {
+        ...definition.ui,
+        views: [
+          {
+            type: "table" as const,
+            name: "default",
+            fields: ["name"],
+            showActions: false,
+          },
+        ],
+      },
+    };
+    expect(getTableViewShowActions(hidden)).toBe(false);
   });
 
   it("sorts form sections by field order metadata", () => {
