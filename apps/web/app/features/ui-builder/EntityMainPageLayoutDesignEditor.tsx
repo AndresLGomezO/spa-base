@@ -13,7 +13,6 @@ import {
   type UseEntityMainPageLayoutEditorResult,
 } from "./use-entity-main-page-layout-editor";
 import { createEntityMainPageRenderContext } from "./create-entity-main-page-render-context";
-import { EntityTable } from "../../components/entity/EntityTable";
 
 interface EntityMainPageLayoutDesignEditorProps {
   readonly entityName: EntityName;
@@ -123,7 +122,7 @@ export function EntityMainPageLayoutDesignEditor({
           onFiltersOpenChange: () => undefined,
           showSearch: true,
         },
-        ViewComponent: EntityTable,
+        ViewComponent: () => null,
         listViewProps: {},
         onCreate: () => undefined,
         previewMode: true,

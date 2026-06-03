@@ -61,7 +61,15 @@ export function createEntityMainPageRenderContext(
           Metrics (configure in Main View editor)
         </div>
       ) : null,
-    pageListRenderer: () => <ViewComponent {...listViewProps} />,
+    pageListRenderer: () =>
+      previewMode ? (
+        <div className="text-muted-foreground rounded-md border border-dashed p-6 text-sm">
+          List view (configured in Item list designer; renders on the entity
+          page)
+        </div>
+      ) : (
+        <ViewComponent {...listViewProps} />
+      ),
     pageHeaderRenderer: () => (
       <MainPageHeaderPreview
         entityName={entityName}
