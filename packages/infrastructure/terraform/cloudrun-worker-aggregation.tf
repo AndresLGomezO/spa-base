@@ -62,10 +62,6 @@ resource "google_cloud_run_v2_service" "worker_aggregation" {
         value = local.environment_config.node_env
       }
       env {
-        name  = "PORT"
-        value = "8080"
-      }
-      env {
         name  = "GCP_PROJECT_ID"
         value = local.gcp_project_id
       }
