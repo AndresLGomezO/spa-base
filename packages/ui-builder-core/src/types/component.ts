@@ -7,7 +7,11 @@ export type UiComponentKind =
   | "date"
   | "numeric"
   | "badge"
-  | "metric-kpi";
+  | "metric-kpi"
+  | "form-field"
+  | "form-section"
+  | "form-actions"
+  | "related-records";
 
 export type DataSource =
   | { readonly type: "field"; readonly path: string }
@@ -85,12 +89,52 @@ export type FieldUiComponentConfig =
   | NumericComponentConfig
   | BadgeComponentConfig;
 
+export interface FormFieldComponentConfig {
+  readonly kind: "form-field";
+  readonly fieldPath: string;
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface FormSectionComponentConfig {
+  readonly kind: "form-section";
+  readonly title?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface FormActionsComponentConfig {
+  readonly kind: "form-actions";
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface RelatedRecordsComponentConfig {
+  readonly kind: "related-records";
+  readonly childEntity: string;
+  readonly foreignKeyField: string;
+  readonly styles?: readonly StyleRule[];
+}
+
 export type UiComponentConfig =
   | FieldUiComponentConfig
-  | MetricKpiComponentConfig;
+  | MetricKpiComponentConfig
+  | FormFieldComponentConfig
+  | FormSectionComponentConfig
+  | FormActionsComponentConfig
+  | RelatedRecordsComponentConfig;
 
 export function isMetricKpiComponent(
   config: UiComponentConfig,
 ): config is MetricKpiComponentConfig {
   return config.kind === "metric-kpi";
+}
+
+export function isFieldUiComponent(
+  config: UiComponentConfig,
+): config is FieldUiComponentConfig {
+  return (
+    config.kind === "text" ||
+    config.kind === "image" ||
+    config.kind === "date" ||
+    config.kind === "numeric" ||
+    config.kind === "badge"
+  );
 }

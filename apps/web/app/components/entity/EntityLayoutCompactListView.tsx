@@ -1,9 +1,6 @@
 import { useCallback, useMemo } from "react";
-import { cn } from "@repo/theme/utils";
 import { normalizeListItemLayout } from "@repo/entities";
-import { resolveCardView } from "@repo/ui-builder";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import {
   Alert,
   Button,
@@ -14,6 +11,7 @@ import {
 } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
+import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 
 import {
   getEntityLabel,
@@ -33,7 +31,6 @@ import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStat
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import { createEntityLayoutRenderContext } from "../../features/ui-builder";
-import { getEntityCardListGridClass } from "./entity-card-list-grid";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 
 type EntityListState = Pick<
@@ -41,7 +38,7 @@ type EntityListState = Pick<
   "items" | "totalCount" | "isLoading" | "error" | "listError"
 >;
 
-interface EntityLayoutCardViewProps {
+interface EntityLayoutCompactListViewProps {
   readonly entityName: EntityName;
   readonly entityState: EntityListState;
   readonly page: number;
@@ -50,11 +47,9 @@ interface EntityLayoutCardViewProps {
   readonly onRequestDelete?: (id: string) => void;
   readonly onRequestEdit?: (id: string) => void;
   readonly onRequestShare?: (id: string) => void;
-  readonly listFilters?: Readonly<Record<string, readonly string[]>>;
-  readonly routeParams?: Readonly<Record<string, string | undefined>>;
 }
 
-export function EntityLayoutCardView({
+export function EntityLayoutCompactListView({
   entityName,
   entityState,
   page,
@@ -63,9 +58,7 @@ export function EntityLayoutCardView({
   onRequestDelete,
   onRequestEdit,
   onRequestShare,
-  listFilters,
-  routeParams,
-}: EntityLayoutCardViewProps) {
+}: EntityLayoutCompactListViewProps) {
   const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
@@ -80,13 +73,10 @@ export function EntityLayoutCardView({
   );
   const { user } = useAuth();
   const permissions = useEntityPermissions(entityName);
-  const cardView = useMemo(() => resolveCardView(definition), [definition]);
   const layout = useMemo(
     () => normalizeListItemLayout(definition.ui),
     [definition.ui],
   );
-  const cardsPerRow = layout?.cardsPerRow;
-  const listGridClass = getEntityCardListGridClass(cardsPerRow);
 
   const { items, isLoading, error, listError, totalCount } = entityState;
   const collection = definition.collection;
@@ -136,118 +126,101 @@ export function EntityLayoutCardView({
 
   if (!layout) {
     return (
-      <div className="flex w-full flex-col gap-4">
-        <Alert className="flex flex-col gap-3">
-          <Text>{t("entity.cardLayoutMissing")}</Text>
-          {canConfigureLayout ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="self-start"
-              onClick={() =>
-                navigate(designLayoutEntityPath("list", entityName))
-              }
-            >
-              {t("entity.cardLayoutMissingAction")}
-            </Button>
-          ) : null}
-        </Alert>
-        {items.length === 0 ? <Text>{t("entity.empty")}</Text> : null}
-        <Pagination
-          page={page}
-          totalCount={totalCount}
-          pageSize={pageSize}
-          onPageChange={onPageChange}
-          labels={{
-            firstPage: t("table.paginationFirst"),
-            previousPage: t("table.paginationPrevious"),
-            nextPage: t("table.paginationNext"),
-            lastPage: t("table.paginationLast"),
-            page: (pageNumber) =>
-              t("table.paginationPage", { page: pageNumber }),
-          }}
-        />
-      </div>
+      <Alert className="flex flex-col gap-3">
+        <Text>{t("entity.cardLayoutMissing")}</Text>
+        {canConfigureLayout ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            className="self-start"
+            onClick={() =>
+              navigate(designLayoutEntityPath("list", entityName))
+            }
+          >
+            {t("entity.cardLayoutMissingAction")}
+          </Button>
+        ) : null}
+      </Alert>
     );
   }
 
   return (
-    <div className="flex w-full flex-col gap-4">
+    <div className="flex w-full flex-col gap-3">
       {items.length === 0 ? (
         <Text>{t("entity.empty")}</Text>
       ) : (
-        <div className={cn("grid gap-4", listGridClass)}>
-          {(items as readonly Record<string, unknown>[]).map((item) => {
-            const shareCount = Object.keys(
-              (item.sharedWith as Record<string, string> | undefined) ?? {},
-            ).length;
-            const cardActions =
-              layout.showActions === false ? null : (
-                <CardActionsMenu
-                  triggerLabel={t("entity.actions")}
-                  actions={[
-                    ...(permissions.canUpdate &&
-                    (!item.ownerId || canEditRow(item)) &&
-                    onRequestEdit
-                      ? [
-                          {
-                            id: "edit",
-                            label: t("entity.edit"),
-                            onSelect: () => onRequestEdit(String(item.id)),
-                          },
-                        ]
-                      : []),
-                    ...(canShareRow(item) && onRequestShare
-                      ? [
-                          {
-                            id: "share",
-                            label: t("entity.share"),
-                            onSelect: () => onRequestShare(String(item.id)),
-                            badgeCount: shareCount,
-                          },
-                        ]
-                      : []),
-                    ...(permissions.canDelete &&
-                    canDeleteRow(item) &&
-                    onRequestDelete
-                      ? [
-                          {
-                            id: "delete",
-                            label: t("entity.delete"),
-                            onSelect: () => onRequestDelete(String(item.id)),
-                            destructive: true,
-                          },
-                        ]
-                      : []),
-                  ]}
-                />
-              );
-
-            return (
-              <LayoutCard
-                key={String(item.id)}
-                interactive
-                actions={cardActions}
-              >
-                <RecursiveLayoutRenderer
-                  layout={layout}
-                  context={createEntityLayoutRenderContext({
-                    item,
-                    definition,
-                    locale: i18n.language,
-                    getOneToManyCellValue,
-                    getDefinition,
-                    listFilters,
-                    routeParams,
-                  })}
-                />
-              </LayoutCard>
+        (items as readonly Record<string, unknown>[]).map((item, index) => {
+          const shareCount = Object.keys(
+            (item.sharedWith as Record<string, string> | undefined) ?? {},
+          ).length;
+          const cardActions =
+            layout.showActions === false ? null : (
+              <CardActionsMenu
+                triggerLabel={t("entity.actions")}
+                actions={[
+                  ...(permissions.canUpdate &&
+                  (!item.ownerId || canEditRow(item)) &&
+                  onRequestEdit
+                    ? [
+                        {
+                          id: "edit",
+                          label: t("entity.edit"),
+                          onSelect: () => onRequestEdit(String(item.id)),
+                        },
+                      ]
+                    : []),
+                  ...(canShareRow(item) && onRequestShare
+                    ? [
+                        {
+                          id: "share",
+                          label: t("entity.share"),
+                          onSelect: () => onRequestShare(String(item.id)),
+                          badgeCount: shareCount,
+                        },
+                      ]
+                    : []),
+                  ...(permissions.canDelete &&
+                  canDeleteRow(item) &&
+                  onRequestDelete
+                    ? [
+                        {
+                          id: "delete",
+                          label: t("entity.delete"),
+                          onSelect: () => onRequestDelete(String(item.id)),
+                          destructive: true,
+                        },
+                      ]
+                    : []),
+                ]}
+              />
             );
-          })}
-        </div>
-      )}
 
+          return (
+            <LayoutCard
+              key={String(item.id)}
+              interactive
+              actions={cardActions}
+              className={
+                layout.motion?.staggerIndex
+                  ? `ui-motion-stagger-${index}`
+                  : undefined
+              }
+            >
+              <RecursiveLayoutRenderer
+                layout={layout}
+                context={createEntityLayoutRenderContext({
+                  item,
+                  definition,
+                  locale: i18n.language,
+                  getOneToManyCellValue,
+                  getDefinition,
+                })}
+              />
+            </LayoutCard>
+          );
+        })
+      )}
       <Pagination
         page={page}
         totalCount={totalCount}

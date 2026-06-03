@@ -15,6 +15,7 @@ import {
   type RowLocator,
   type RowNode,
   type UiComponentConfig,
+  type UiComponentKind,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { Button, Text } from "@repo/ui";
@@ -62,6 +63,7 @@ export interface ColumnRowsEditorProps {
   readonly onLayoutChange: (layout: UiLayoutDocument) => void;
   readonly labels: ColumnRowsEditorLabels;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
+  readonly allowedKinds?: readonly UiComponentKind[];
   readonly depth?: number;
 }
 
@@ -75,6 +77,7 @@ export function ColumnRowsEditor({
   onLayoutChange,
   labels,
   metricKpiEditor,
+  allowedKinds,
   depth = 0,
 }: ColumnRowsEditorProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(
@@ -156,6 +159,7 @@ export function ColumnRowsEditor({
               fieldDescriptors={fieldDescriptors}
               labels={labels.componentEditor}
               metricKpiEditor={metricKpiEditor}
+              allowedKinds={allowedKinds}
               onChange={(component: UiComponentConfig) =>
                 onLayoutChange(
                   updateComponentRowAt(layout, locator, row.id, component),

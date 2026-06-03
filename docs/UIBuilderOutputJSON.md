@@ -12,16 +12,36 @@ A hand-written JSON file that satisfies this spec should render the same as a la
 
 ## Where this JSON lives
 
-Card layouts are not stored as a standalone document. They are embedded in an **entity UI override** view entry:
+`UiLayoutDocument` JSON is stored on **entity UI overrides** (`entity_ui_overrides` collection). Top-level keys (all optional except `views` on write):
+
+| Key | Surface | Description |
+|-----|---------|-------------|
+| `listItem` | List item | Canonical per-record list layout (preferred) |
+| `detail` | Main page | Record detail page layout |
+| `forms.create` / `forms.edit` | Forms | Create / edit form layouts |
+| `views[].layout` | Legacy | Card view layout; used when `listItem` is absent |
+
+Example override document:
 
 ```json
 {
   "entityName": "account",
   "listViewType": "card",
+  "listItem": { "root": { } },
+  "detail": { "root": { } },
+  "forms": {
+    "create": { "root": { } },
+    "edit": { "root": { } }
+  },
   "views": [
     {
-      "type": "card",
+      "type": "table",
       "name": "default",
+      "fields": ["name", "balance"]
+    },
+    {
+      "type": "card",
+      "name": "card",
       "fields": ["name", "balance", "bankId.logo"],
       "layout": { }
     }
@@ -30,7 +50,7 @@ Card layouts are not stored as a standalone document. They are embedded in an **
 }
 ```
 
-Only the object in **`layout`** is defined here (`UiLayoutDocument`). The sibling `fields` array on the card view is **deprecated for rendering** (kept for table views and backward-compatible saves); the card list renderer uses paths inside `layout` components only.
+**Rendering:** list surfaces use `listItem ?? cardView.layout`. The sibling `fields` array on views remains for table column metadata; card/list item rendering uses paths inside the layout tree only.
 
 ---
 

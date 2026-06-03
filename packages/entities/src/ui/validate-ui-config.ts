@@ -72,13 +72,16 @@ const formSectionSchema = z
 const formLayoutSchema = z
   .object({
     sections: z.array(formSectionSchema).min(1),
+    layout: uiLayoutDocumentSchema.optional(),
   })
   .strict();
 
 const entityUISchema = z
   .object({
     views: z.array(viewConfigSchema).min(1),
-    listViewType: z.enum(["table", "card"]).optional(),
+    listViewType: z.enum(["table", "card", "compact"]).optional(),
+    listItem: uiLayoutDocumentSchema.optional(),
+    detailLayout: uiLayoutDocumentSchema.optional(),
     forms: z
       .object({
         create: formLayoutSchema,
@@ -139,6 +142,41 @@ export function validateEntityUIConfig(
 ): EntityUIConfig {
   const parsed = entityUISchema.parse(ui);
 
+  const layoutEntityShape = {
+    name: entity.name,
+    fields: Object.fromEntries(
+      Object.entries(entity.metadata.fields).map(([key, field]) => [
+        key,
+        {
+          ...(field.relation
+            ? {
+                relation: {
+                  target: field.relation.target,
+                  type: field.relation.type,
+                },
+              }
+            : {}),
+        },
+      ]),
+    ),
+  };
+
+  if (parsed.listItem) {
+    assertLayoutFieldPaths(
+      layoutEntityShape,
+      parsed.listItem as UiLayoutDocument,
+      "listItem",
+    );
+  }
+
+  if (parsed.detailLayout) {
+    assertLayoutFieldPaths(
+      layoutEntityShape,
+      parsed.detailLayout as UiLayoutDocument,
+      "detailLayout",
+    );
+  }
+
   for (const view of parsed.views) {
     assertFieldRefs(entity, view.fields, `view "${view.name}"`);
     for (const filter of view.filters ?? []) {
@@ -153,24 +191,7 @@ export function validateEntityUIConfig(
     }
     if (view.layout) {
       assertLayoutFieldPaths(
-        {
-          name: entity.name,
-          fields: Object.fromEntries(
-            Object.entries(entity.metadata.fields).map(([key, field]) => [
-              key,
-              {
-                ...(field.relation
-                  ? {
-                      relation: {
-                        target: field.relation.target,
-                        type: field.relation.type,
-                      },
-                    }
-                  : {}),
-              },
-            ]),
-          ),
-        },
+        layoutEntityShape,
         view.layout as UiLayoutDocument,
         `view "${view.name}"`,
       );
@@ -180,6 +201,13 @@ export function validateEntityUIConfig(
   for (const mode of ["create", "edit"] as const) {
     for (const section of parsed.forms[mode].sections) {
       assertFieldRefs(entity, section.fields, `${mode} form`);
+    }
+    if (parsed.forms[mode].layout) {
+      assertLayoutFieldPaths(
+        layoutEntityShape,
+        parsed.forms[mode].layout as UiLayoutDocument,
+        `${mode} form layout`,
+      );
     }
   }
 

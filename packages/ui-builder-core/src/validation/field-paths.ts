@@ -91,6 +91,18 @@ function collectComponentPaths(
     return [];
   }
 
+  if (component.kind === "form-field") {
+    return [component.fieldPath];
+  }
+
+  if (
+    component.kind === "form-section" ||
+    component.kind === "form-actions" ||
+    component.kind === "related-records"
+  ) {
+    return [];
+  }
+
   return listDataSourcePaths(component.primary, component.fallbacks);
 }
 

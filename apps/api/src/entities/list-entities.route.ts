@@ -4,7 +4,7 @@ import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import { canIncludeEntityInCatalog } from "@repo/dynamic-entities";
 import {
-  mergeEntityViewOverrides,
+  mergeEntityUiOverrides,
   serializeEntityDefinition,
 } from "@repo/entities";
 import { getUiExtensions, mergeUiExtensions } from "@repo/modules";
@@ -80,19 +80,7 @@ export async function registerListEntitiesRoute(
                   ui: mergeUiExtensions(definition.ui, extensions),
                 };
           const override = overrideByEntity.get(entity.name);
-          const mergedDefinition = mergeEntityViewOverrides(
-            base,
-            override
-              ? {
-                  entityName: override.entityName,
-                  views: override.views as typeof base.ui.views,
-                  ...(override.listViewType
-                    ? { listViewType: override.listViewType }
-                    : {}),
-                  updatedAt: override.updatedAt,
-                }
-              : null,
-          );
+          const mergedDefinition = mergeEntityUiOverrides(base, override);
 
           if (isSuperAdmin || !request.ctx) {
             return mergedDefinition;

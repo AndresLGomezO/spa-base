@@ -14,6 +14,7 @@ import { LayoutGrid, LayoutStack } from "@repo/ui";
 
 import type { LayoutRenderContext } from "../context.js";
 import { renderUiComponent } from "../engine/render-component.js";
+import { resolveMotionPreset } from "../motion/resolve-motion.js";
 
 /** Fills the grid/flex column cell so backgrounds and padding cover the full slot. */
 const COLUMN_SHELL_CLASS = "flex h-full min-h-0 w-full min-w-0 flex-col";
@@ -22,6 +23,7 @@ function renderRows(
   rows: readonly RowNode[],
   context: LayoutRenderContext,
   column: ColumnNode,
+  rowMotionIndexOffset = 0,
 ): ReactNode {
   const stackDirection = resolveColumnStackDirection(column);
   const columnFlex = parseFlexLayoutFromStyles(column.styles);
@@ -37,7 +39,9 @@ function renderRows(
       align={columnFlex.align}
       justify={columnFlex.justify}
     >
-      {rows.map((row) => renderRow(row, context, stackDirection))}
+      {rows.map((row, rowIndex) =>
+        renderRow(row, context, stackDirection, rowIndex + rowMotionIndexOffset),
+      )}
     </LayoutStack>
   );
 }
@@ -52,11 +56,13 @@ function renderRow(
   row: RowNode,
   context: LayoutRenderContext,
   stackDirection: ColumnStackDirection,
+  rowIndex = 0,
 ): ReactNode {
   const stackShellClass = rowStackShellClassName(stackDirection);
 
   if (row.type === "component") {
     const rowStyles = resolveStyleRules(row.styles);
+    const motionClass = resolveMotionPreset(row.motion, rowIndex);
     return (
       <div
         key={row.id}
@@ -64,6 +70,7 @@ function renderRow(
           stackShellClass,
           rowStyles.className,
           componentSlotWrapperClassName(row.component.styles),
+          motionClass,
         ]
           .filter(Boolean)
           .join(" ")}
@@ -130,8 +137,12 @@ export function RecursiveLayoutRenderer({
   className,
 }: RecursiveLayoutRendererProps): ReactNode {
   const rootStyles = resolveStyleRules(layout.root.styles, className);
+  const rootMotionClass = resolveMotionPreset(layout.motion);
   return (
-    <div className={rootStyles.className} style={rootStyles.style}>
+    <div
+      className={[rootStyles.className, rootMotionClass].filter(Boolean).join(" ")}
+      style={rootStyles.style}
+    >
       <LayoutGrid
         direction="row"
         gap={gapPxFromStyles(layout.root.styles)}

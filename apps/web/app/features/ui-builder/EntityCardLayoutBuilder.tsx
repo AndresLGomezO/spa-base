@@ -1,4 +1,5 @@
 import type {
+  DesignSurface,
   UiComponentConfig,
   UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -19,6 +20,7 @@ interface EntityCardLayoutBuilderProps {
   readonly className?: string;
   readonly showStructureHeading?: boolean;
   readonly getDefinition?: EntityDefinitionLookup;
+  readonly designSurface?: DesignSurface;
 }
 
 export function EntityCardLayoutBuilder({
@@ -30,9 +32,11 @@ export function EntityCardLayoutBuilder({
   className,
   showStructureHeading = false,
   getDefinition,
+  designSurface = "listItem",
 }: EntityCardLayoutBuilderProps) {
   return (
     <UiLayoutStructurePanel
+      designSurface={designSurface}
       className={className}
       layout={layout}
       definition={definition}

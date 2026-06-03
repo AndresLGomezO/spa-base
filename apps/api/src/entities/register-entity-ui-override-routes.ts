@@ -7,6 +7,7 @@ import {
   putEntityUiOverrideInputSchema,
   serializeEntityDefinition,
   type EntityUIConfig,
+  type UiLayoutDocument,
 } from "@repo/entities";
 import type { EntityUiOverrideRepository } from "@repo/firestore-converters";
 
@@ -143,13 +144,37 @@ export async function registerEntityUiOverrideRoutes(
       }
 
       const serialized = serializeEntityDefinition(entity);
+      const normalizedViews = normalizeEntityViews(
+        parsedBody.data.views as EntityUIConfig["views"],
+      );
+
+      const mergedForms: EntityUIConfig["forms"] = {
+        create: {
+          ...serialized.ui.forms.create,
+          ...(parsedBody.data.forms?.create
+            ? { layout: parsedBody.data.forms.create as UiLayoutDocument }
+            : {}),
+        },
+        edit: {
+          ...serialized.ui.forms.edit,
+          ...(parsedBody.data.forms?.edit
+            ? { layout: parsedBody.data.forms.edit as UiLayoutDocument }
+            : {}),
+        },
+      };
+
       const mergedUi: EntityUIConfig = {
         ...serialized.ui,
-        views: normalizeEntityViews(
-          parsedBody.data.views as EntityUIConfig["views"],
-        ),
+        views: normalizedViews,
+        forms: mergedForms,
         ...(parsedBody.data.listViewType
           ? { listViewType: parsedBody.data.listViewType }
+          : {}),
+        ...(parsedBody.data.listItem
+          ? { listItem: parsedBody.data.listItem as UiLayoutDocument }
+          : {}),
+        ...(parsedBody.data.detail
+          ? { detailLayout: parsedBody.data.detail as UiLayoutDocument }
           : {}),
       };
 
@@ -167,19 +192,22 @@ export async function registerEntityUiOverrideRoutes(
         );
       }
 
-      const normalizedViews = [
-        ...normalizeEntityViews(
-          parsedBody.data.views as EntityUIConfig["views"],
-        ),
-      ];
-
       const override = await options.entityUiOverrideRepository.put(
         tenantId,
         params.data.entityName,
         {
-          views: normalizedViews,
+          views: [...normalizedViews],
           ...(parsedBody.data.listViewType
             ? { listViewType: parsedBody.data.listViewType }
+            : {}),
+          ...(parsedBody.data.listItem
+            ? { listItem: parsedBody.data.listItem }
+            : {}),
+          ...(parsedBody.data.detail
+            ? { detail: parsedBody.data.detail }
+            : {}),
+          ...(parsedBody.data.forms
+            ? { forms: parsedBody.data.forms }
             : {}),
         },
       );

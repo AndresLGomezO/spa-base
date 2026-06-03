@@ -53,6 +53,7 @@ export function createEntityLayoutRenderContext(options: {
     : undefined;
 
   return {
+    mode: "listItem",
     data: item,
     locale,
     resolveField: (path) =>

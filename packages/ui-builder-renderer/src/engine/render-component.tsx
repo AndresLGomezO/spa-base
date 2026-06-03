@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import {
   conditionalRulesToBadgeVariants,
   fontSizePxFromStyles,
+  isFieldUiComponent,
   isMetricKpiComponent,
   matchConditionalStyles,
   resolveFieldChain,
@@ -106,6 +107,46 @@ export function renderUiComponent(
     return context.metricKpiRenderer?.(config) ?? null;
   }
 
+  if (config.kind === "form-field") {
+    if (
+      context.fieldAccessFilter &&
+      !context.fieldAccessFilter(config.fieldPath)
+    ) {
+      return null;
+    }
+    const { containerClassName } = splitStyleRuleClasses(config.styles);
+    return (
+      context.formFieldRenderer?.(config.fieldPath, containerClassName) ??
+      null
+    );
+  }
+
+  if (config.kind === "form-section") {
+    return (
+      context.formSectionRenderer?.(config.title, null) ??
+      (config.title ? (
+        <div className="text-sm font-medium">{config.title}</div>
+      ) : null)
+    );
+  }
+
+  if (config.kind === "form-actions") {
+    return context.formActionsRenderer?.() ?? null;
+  }
+
+  if (config.kind === "related-records") {
+    return (
+      context.relatedRecordsRenderer?.({
+        childEntity: config.childEntity,
+        foreignKeyField: config.foreignKeyField,
+      }) ?? null
+    );
+  }
+
+  if (!isFieldUiComponent(config)) {
+    return null;
+  }
+
   const { containerClassName, textClassName } = splitStyleRuleClasses(
     config.styles,
   );
@@ -136,6 +177,13 @@ export function renderUiComponent(
   }
 
   const fieldPath = chain.fieldPath;
+  if (
+    fieldPath &&
+    context.fieldAccessFilter &&
+    !context.fieldAccessFilter(fieldPath)
+  ) {
+    return null;
+  }
   const rawValue = chain.rawValue;
   const rootField = fieldPathRoot(fieldPath);
   const meta = context.resolveFieldMeta?.(fieldPath) ?? {};
@@ -291,6 +339,26 @@ export function renderUiComponent(
         }
         locale={context.locale}
         label={label}
+        className={containerClassName}
+        style={containerStyle}
+        valueClassName={textClassName}
+        textSize={textSize}
+        {...textPropsFromLabel(config)}
+      />
+    );
+  }
+
+  const recordLink = context.resolveRecordFieldLink?.(fieldPath);
+  if (recordLink) {
+    return (
+      <CardFieldValue
+        label={label}
+        value={
+          <a href={recordLink.href} className="text-primary underline">
+            {recordLink.label}
+          </a>
+        }
+        allowEmpty
         className={containerClassName}
         style={containerStyle}
         valueClassName={textClassName}

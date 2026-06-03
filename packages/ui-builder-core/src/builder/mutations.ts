@@ -25,6 +25,26 @@ export function createDefaultComponent(
     };
   }
 
+  if (kind === "form-field") {
+    return { kind: "form-field", fieldPath };
+  }
+
+  if (kind === "form-section") {
+    return { kind: "form-section", title: "Section" };
+  }
+
+  if (kind === "form-actions") {
+    return { kind: "form-actions" };
+  }
+
+  if (kind === "related-records") {
+    return {
+      kind: "related-records",
+      childEntity: "",
+      foreignKeyField: "",
+    };
+  }
+
   return {
     kind,
     primary: { type: "field", path: fieldPath },
@@ -413,7 +433,9 @@ export function moveRow(
 
 export function updateLayoutMeta(
   layout: UiLayoutDocument,
-  patch: Partial<Pick<UiLayoutDocument, "showActions" | "cardsPerRow">>,
+  patch: Partial<
+    Pick<UiLayoutDocument, "showActions" | "cardsPerRow" | "motion">
+  >,
 ): UiLayoutDocument {
   return { ...layout, ...patch };
 }

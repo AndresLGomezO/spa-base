@@ -6,6 +6,7 @@ import { ImageField } from "./custom-fields/ImageField";
 import { registerFieldComponent } from "./field-component-registry";
 import { registerViewComponent } from "./view-component-registry";
 import { EntityLayoutCardView } from "./EntityLayoutCardView";
+import { EntityLayoutCompactListView } from "./EntityLayoutCompactListView";
 import { EntityTable } from "./EntityTable";
 
 export function registerBuiltInEntityComponents(): void {
@@ -24,4 +25,5 @@ export function registerBuiltInEntityComponents(): void {
 
   registerViewComponent("table", EntityTable);
   registerViewComponent("card", EntityLayoutCardView);
+  registerViewComponent("compact", EntityLayoutCompactListView);
 }
