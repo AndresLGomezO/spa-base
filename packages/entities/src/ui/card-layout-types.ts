@@ -1,11 +1,15 @@
 import type { CardMetricKpiSlotBinding } from "./metric-widget-types.js";
+import type { FieldDateDisplayFormat } from "./types.js";
+import type { LayoutSpacing } from "./layout-spacing.js";
+
+export type { LayoutSpacing };
 
 export type LayoutAlign = "start" | "center" | "end" | "stretch";
 export type LayoutJustify = "start" | "center" | "end" | "between";
 export type LayoutDirection = "row" | "column";
 export type LayoutSize = number | string;
 
-export interface LayoutNodeBase {
+export interface LayoutNodeBase extends LayoutSpacing {
   readonly id?: string;
   readonly className?: string;
   readonly minWidth?: LayoutSize;
@@ -37,7 +41,8 @@ export type CardFieldSlotComponentType =
   | "labeled-text"
   | "image"
   | "badge"
-  | "currency";
+  | "currency"
+  | "date";
 
 export type CardSlotComponentType = CardFieldSlotComponentType | "metric-kpi";
 
@@ -52,14 +57,31 @@ export type CardBadgeVariant =
   | "closed"
   | "neutral";
 
-export interface CardFieldSlotBinding {
+export type CardLabelPosition = "above" | "below";
+
+export type CardTextColor =
+  | "default"
+  | "muted"
+  | "primary"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info";
+
+export interface CardFieldSlotBinding extends LayoutSpacing {
   readonly component: CardFieldSlotComponentType;
   readonly fieldPath: string;
+  readonly fallbackFieldPaths?: readonly string[];
+  readonly staticText?: string;
+  readonly align?: LayoutAlign;
   readonly showLabel?: boolean;
   readonly label?: string;
+  readonly labelPosition?: CardLabelPosition;
+  readonly dateDisplayFormat?: FieldDateDisplayFormat;
   readonly className?: string;
   readonly imageSize?: number;
   readonly textSize?: number;
+  readonly textColor?: CardTextColor;
   readonly textThin?: boolean;
   readonly textBold?: boolean;
   readonly textItalic?: boolean;

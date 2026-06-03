@@ -35,6 +35,8 @@ describe("expandGrant", () => {
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
+      "metricDefinition.read",
+      "metricValue.read",
       "role.read",
       "tenantUser.read",
     ]);
@@ -77,6 +79,8 @@ describe("resolvePermissions", () => {
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
+      "metricDefinition.read",
+      "metricValue.read",
       "role.read",
       "tenantUser.read",
     ]);
@@ -88,7 +92,7 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(18);
+    expect(permissions).toHaveLength(22);
     expect(permissions).toEqual(
       expect.arrayContaining([
         "entityDefinition.read",
@@ -129,6 +133,8 @@ describe("resolvePermissions", () => {
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
+      "metricDefinition.read",
+      "metricValue.read",
       "role.read",
       "tenantUser.read",
     ]);
@@ -206,6 +212,8 @@ describe("expandGrants", () => {
       "entityCategory.read",
       "internalEntity.read",
       "hook.read",
+      "metricDefinition.read",
+      "metricValue.read",
       "role.read",
       "tenantUser.read",
     ]);

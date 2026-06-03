@@ -115,65 +115,68 @@ export function AuthProvider({ children }: AuthProviderProps) {
           dispatch({ type: "LOGIN_STARTED" });
         }
 
-        const syncResult = await syncAuthSession(firebaseUser);
-        syncInFlightRef.current = false;
+        try {
+          const syncResult = await syncAuthSession(firebaseUser);
 
-        if (cancelled) return;
+          if (cancelled) return;
 
-        if (!syncResult.ok) {
-          syncedUidRef.current = null;
-          await signOut();
+          if (!syncResult.ok) {
+            syncedUidRef.current = null;
+            await signOut();
+            dispatch({
+              type: "LOGIN_FAILED",
+              error:
+                syncResult.error ??
+                "Unable to register your account. Please try again.",
+            });
+            return;
+          }
+
+          syncedUidRef.current = firebaseUser.uid;
+          const isSuperAdmin = syncResult.user?.isSuperAdmin ?? false;
+          const tenantId = syncResult.user?.tenantId ?? null;
+          const availableTenants = syncResult.user?.availableTenants ?? [];
+
           dispatch({
-            type: "LOGIN_FAILED",
-            error:
-              syncResult.error ??
-              "Unable to register your account. Please try again.",
+            type: "AUTH_STATE_AUTHENTICATED",
+            user: await buildAuthUser(firebaseUser),
+            permissions: syncResult.user?.permissions ?? [],
+            isSuperAdmin,
+            tenantId,
+            availableTenants,
+            tenantOptions: syncResult.user?.tenantOptions ?? [],
+            tenantRoleNames: syncResult.user?.tenantRoleNames ?? [],
+            activeTenantName: syncResult.user?.activeTenantName ?? null,
+            tenantAppearance: syncResult.user?.tenantAppearance ?? null,
           });
-          return;
-        }
 
-        syncedUidRef.current = firebaseUser.uid;
-        const isSuperAdmin = syncResult.user?.isSuperAdmin ?? false;
-        const tenantId = syncResult.user?.tenantId ?? null;
-        const availableTenants = syncResult.user?.availableTenants ?? [];
-
-        dispatch({
-          type: "AUTH_STATE_AUTHENTICATED",
-          user: await buildAuthUser(firebaseUser),
-          permissions: syncResult.user?.permissions ?? [],
-          isSuperAdmin,
-          tenantId,
-          availableTenants,
-          tenantOptions: syncResult.user?.tenantOptions ?? [],
-          tenantRoleNames: syncResult.user?.tenantRoleNames ?? [],
-          activeTenantName: syncResult.user?.activeTenantName ?? null,
-          tenantAppearance: syncResult.user?.tenantAppearance ?? null,
-        });
-
-        if (
-          !tenantId &&
-          availableTenants.length > 0 &&
-          autoBindAttemptedRef.current !== firebaseUser.uid
-        ) {
-          autoBindAttemptedRef.current = firebaseUser.uid;
-          const firstTenant = availableTenants[0];
-          if (firstTenant) {
-            const bindResult = await applyTenantSelection(
-              firebaseUser,
-              firstTenant,
-            );
-            if (!bindResult.success && !cancelled) {
-              syncedUidRef.current = null;
-              autoBindAttemptedRef.current = null;
-              await signOut();
-              dispatch({
-                type: "LOGIN_FAILED",
-                error:
-                  bindResult.error ??
-                  "Unable to assign your tenant. Please try again.",
-              });
+          if (
+            !tenantId &&
+            availableTenants.length > 0 &&
+            autoBindAttemptedRef.current !== firebaseUser.uid
+          ) {
+            autoBindAttemptedRef.current = firebaseUser.uid;
+            const firstTenant = availableTenants[0];
+            if (firstTenant) {
+              const bindResult = await applyTenantSelection(
+                firebaseUser,
+                firstTenant,
+              );
+              if (!bindResult.success && !cancelled) {
+                syncedUidRef.current = null;
+                autoBindAttemptedRef.current = null;
+                await signOut();
+                dispatch({
+                  type: "LOGIN_FAILED",
+                  error:
+                    bindResult.error ??
+                    "Unable to assign your tenant. Please try again.",
+                });
+              }
             }
           }
+        } finally {
+          syncInFlightRef.current = false;
         }
       })();
     });

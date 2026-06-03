@@ -11,6 +11,10 @@ export {
 export { isPlatformSuperAdmin } from "./platform-role.js";
 export { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
 export {
+  canReadMetricDefinition,
+  canReadMetricValues,
+} from "./metric-access.js";
+export {
   BUILT_IN_ROLES,
   isBuiltInRoleName,
   isTenantBuiltInAdminRole,

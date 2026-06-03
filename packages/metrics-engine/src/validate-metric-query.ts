@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { applyDateGranularityToQuerySlice } from "./date-granularity.js";
 import type { MetricDefinitionRecord } from "./types.js";
 
 const metricQueryValueSchema = z.union([z.string(), z.number(), z.boolean()]);
@@ -71,11 +72,15 @@ export function validateMetricQueryAgainstDefinition(
   readonly group: Record<string, unknown>;
   readonly dimensions: Record<string, unknown>;
 } {
-  const group = assertExactKeys("group", query.group, definition.groupBy);
-  const dimensions = assertExactKeys(
-    "dimensions",
-    query.dimensions,
+  const group = applyDateGranularityToQuerySlice(
+    assertExactKeys("group", query.group, definition.groupBy),
+    definition.groupBy,
+    definition.dateFieldGranularity,
+  );
+  const dimensions = applyDateGranularityToQuerySlice(
+    assertExactKeys("dimensions", query.dimensions, definition.dimensions),
     definition.dimensions,
+    definition.dateFieldGranularity,
   );
 
   return { group, dimensions };

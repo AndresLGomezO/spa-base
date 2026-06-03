@@ -24,16 +24,25 @@ import {
 } from "../../lib/api-client";
 import { MetricFieldLabel } from "./MetricFieldHelp";
 import { MetricDefinitionSummary } from "./MetricDefinitionSummary";
+import { DateFieldGranularityPicker } from "./DateFieldGranularityPicker";
 import {
   buildEntityFieldOptions,
   buildMetricSummaryContext,
   canShowMetricSummary,
   getInitialAggregationFromMetric,
   getNumericFieldNames,
+  inferDefaultValueDisplayFormat,
+  listDateFieldsInKeys,
   METRIC_OPERATIONS,
   operationRequiresNumericField,
+  pruneDateFieldGranularity,
+  validateClientDateFieldGranularity,
   type MetricOperation,
 } from "./metric-field-utils";
+import type {
+  MetricDateGranularity,
+  MetricValueDisplayFormat,
+} from "@repo/metrics-engine/browser";
 
 interface MetricDefinitionEditorProps {
   readonly metric: MetricDefinitionRecord | null;
@@ -83,7 +92,50 @@ export function MetricDefinitionEditor({
   const [dimensions, setDimensions] = useState<readonly string[]>(
     metric?.dimensions ?? [],
   );
+  const [dateFieldGranularity, setDateFieldGranularity] = useState<
+    Record<string, MetricDateGranularity>
+  >(metric?.dateFieldGranularity ?? {});
+  const [valueDisplayFormat, setValueDisplayFormat] =
+    useState<MetricValueDisplayFormat>(
+      metric?.valueDisplayFormat ??
+        inferDefaultValueDisplayFormat(
+          entities.find(
+            (entity) => entity.name === (metric?.sourceModel ?? ""),
+          ),
+          getInitialAggregationFromMetric(metric).field,
+        ),
+    );
   const [isSaving, setIsSaving] = useState(false);
+
+  const selectedEntity = entities.find((entity) => entity.name === sourceModel);
+  const selectedDateFields = useMemo(
+    () => listDateFieldsInKeys(selectedEntity, groupBy, dimensions),
+    [selectedEntity, groupBy, dimensions],
+  );
+
+  function handleGroupByChange(nextGroupBy: readonly string[]) {
+    setGroupBy(nextGroupBy);
+    setDateFieldGranularity((current) =>
+      pruneDateFieldGranularity(
+        current,
+        nextGroupBy,
+        dimensions,
+        selectedEntity,
+      ),
+    );
+  }
+
+  function handleDimensionsChange(nextDimensions: readonly string[]) {
+    setDimensions(nextDimensions);
+    setDateFieldGranularity((current) =>
+      pruneDateFieldGranularity(
+        current,
+        groupBy,
+        nextDimensions,
+        selectedEntity,
+      ),
+    );
+  }
 
   const entityOptions = useMemo(
     () =>
@@ -94,7 +146,6 @@ export function MetricDefinitionEditor({
     [entities],
   );
 
-  const selectedEntity = entities.find((entity) => entity.name === sourceModel);
   const numericFieldOptions = useMemo(
     () => getNumericFieldNames(selectedEntity),
     [selectedEntity],
@@ -128,6 +179,8 @@ export function MetricDefinitionEditor({
       fieldsDependency,
       groupBy,
       dimensions,
+      dateFieldGranularity,
+      valueDisplayFormat,
       targetCollection: metric?.target.collection,
       isCreate,
     });
@@ -141,6 +194,8 @@ export function MetricDefinitionEditor({
     fieldsDependency,
     groupBy,
     dimensions,
+    dateFieldGranularity,
+    valueDisplayFormat,
     metric?.target.collection,
     isCreate,
   ]);
@@ -206,7 +261,28 @@ export function MetricDefinitionEditor({
       return;
     }
 
+    const missingDateGranularity = validateClientDateFieldGranularity(
+      selectedEntity,
+      groupBy,
+      dimensions,
+      dateFieldGranularity,
+    );
+    if (missingDateGranularity) {
+      toast.error(
+        t("metrics.dateGranularity.validationRequired", {
+          field: missingDateGranularity,
+        }),
+      );
+      return;
+    }
+
     setIsSaving(true);
+    const resolvedDateFieldGranularity = pruneDateFieldGranularity(
+      dateFieldGranularity,
+      groupBy,
+      dimensions,
+      selectedEntity,
+    );
     try {
       const saved = isCreate
         ? await createMetricDefinition({
@@ -216,6 +292,8 @@ export function MetricDefinitionEditor({
             filters: [],
             groupBy: [...groupBy],
             dimensions: [...dimensions],
+            dateFieldGranularity: resolvedDateFieldGranularity,
+            valueDisplayFormat,
             aggregations,
             schemaVersionDependency: 1,
             fieldsDependency: [...resolvedFieldsDependency],
@@ -230,6 +308,8 @@ export function MetricDefinitionEditor({
             filters: [],
             groupBy: [...groupBy],
             dimensions: [...dimensions],
+            dateFieldGranularity: resolvedDateFieldGranularity,
+            valueDisplayFormat,
             aggregations,
             fieldsDependency: [...resolvedFieldsDependency],
             status,
@@ -323,6 +403,7 @@ export function MetricDefinitionEditor({
             setFieldsDependency([]);
             setGroupBy([]);
             setDimensions([]);
+            setDateFieldGranularity({});
           }}
         >
           <option value="">{t("metrics.selectModel")}</option>
@@ -367,6 +448,11 @@ export function MetricDefinitionEditor({
               onChange={(event) => {
                 const nextField = event.target.value;
                 setAggregationField(nextField);
+                if (isCreate) {
+                  setValueDisplayFormat(
+                    inferDefaultValueDisplayFormat(selectedEntity, nextField),
+                  );
+                }
                 if (
                   fieldsDependency.length === 0 &&
                   nextField &&
@@ -421,7 +507,7 @@ export function MetricDefinitionEditor({
         <SearchableMultiSelectDropdown
           options={fieldSelectOptions}
           selected={groupBy}
-          onChange={setGroupBy}
+          onChange={handleGroupByChange}
           disabled={!sourceModel}
           ariaLabel={t("metrics.groupBy")}
           {...multiselectLabels}
@@ -437,11 +523,44 @@ export function MetricDefinitionEditor({
         <SearchableMultiSelectDropdown
           options={fieldSelectOptions}
           selected={dimensions}
-          onChange={setDimensions}
+          onChange={handleDimensionsChange}
           disabled={!sourceModel}
           ariaLabel={t("metrics.dimensions")}
           {...multiselectLabels}
         />
+      </div>
+
+      {selectedDateFields.length > 0 ? (
+        <DateFieldGranularityPicker
+          entity={selectedEntity}
+          groupBy={groupBy}
+          dimensions={dimensions}
+          dateFieldGranularity={dateFieldGranularity}
+          onChange={setDateFieldGranularity}
+        />
+      ) : null}
+
+      <div>
+        <FieldLabel htmlFor="metric-value-display-format">
+          {t("metrics.valueDisplayFormat.label")}
+        </FieldLabel>
+        <select
+          id="metric-value-display-format"
+          className={selectClassName}
+          value={valueDisplayFormat}
+          onChange={(event) =>
+            setValueDisplayFormat(
+              event.target.value as MetricValueDisplayFormat,
+            )
+          }
+        >
+          <option value="number">
+            {t("metrics.valueDisplayFormat.number")}
+          </option>
+          <option value="currency">
+            {t("metrics.valueDisplayFormat.currency")}
+          </option>
+        </select>
       </div>
 
       <div>

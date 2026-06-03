@@ -609,6 +609,10 @@ export interface MetricDefinitionRecord {
   }[];
   readonly groupBy: readonly string[];
   readonly dimensions: readonly string[];
+  readonly dateFieldGranularity: Readonly<
+    Record<string, "day" | "month" | "year">
+  >;
+  readonly valueDisplayFormat: "number" | "currency";
   readonly aggregations: readonly {
     readonly field?: string;
     readonly operation: "SUM" | "COUNT" | "AVG";

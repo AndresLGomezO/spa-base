@@ -5,6 +5,10 @@ import {
 } from "../../entities/entity-catalog";
 import type { MetricDefinitionRecord } from "../../lib/api-client";
 import type { SearchableMultiSelectOption } from "@repo/ui";
+import type {
+  MetricDateGranularity,
+  MetricValueDisplayFormat,
+} from "@repo/metrics-engine/browser";
 
 export const METRIC_OPERATIONS = ["SUM", "COUNT", "AVG"] as const;
 
@@ -27,6 +31,78 @@ export function getNumericFieldNames(
     .filter(([, meta]) => meta.type === "number")
     .map(([name]) => name)
     .sort((left, right) => left.localeCompare(right));
+}
+
+export function isDateEntityField(
+  entity: EntityCatalogEntry | undefined,
+  fieldName: string,
+): boolean {
+  return entity?.fields[fieldName]?.type === "date";
+}
+
+export function listDateFieldsInKeys(
+  entity: EntityCatalogEntry | undefined,
+  groupBy: readonly string[],
+  dimensions: readonly string[],
+): readonly string[] {
+  const fields = new Set([...groupBy, ...dimensions]);
+  return [...fields]
+    .filter((field) => isDateEntityField(entity, field))
+    .sort((left, right) => left.localeCompare(right));
+}
+
+export function pruneDateFieldGranularity(
+  dateFieldGranularity: Readonly<Record<string, MetricDateGranularity>>,
+  groupBy: readonly string[],
+  dimensions: readonly string[],
+  entity?: EntityCatalogEntry,
+): Record<string, MetricDateGranularity> {
+  const allowed = new Set(listDateFieldsInKeys(entity, groupBy, dimensions));
+  const next: Record<string, MetricDateGranularity> = {};
+  for (const [field, granularity] of Object.entries(dateFieldGranularity)) {
+    if (allowed.has(field)) {
+      next[field] = granularity;
+    }
+  }
+  return next;
+}
+
+export function validateClientDateFieldGranularity(
+  entity: EntityCatalogEntry | undefined,
+  groupBy: readonly string[],
+  dimensions: readonly string[],
+  dateFieldGranularity: Readonly<Record<string, MetricDateGranularity>>,
+): string | null {
+  for (const field of listDateFieldsInKeys(entity, groupBy, dimensions)) {
+    if (!dateFieldGranularity[field]) {
+      return field;
+    }
+  }
+
+  for (const field of Object.keys(dateFieldGranularity)) {
+    if (!isDateEntityField(entity, field)) {
+      return field;
+    }
+  }
+
+  return null;
+}
+
+export function inferDefaultValueDisplayFormat(
+  entity: EntityCatalogEntry | undefined,
+  aggregationField: string,
+): MetricValueDisplayFormat {
+  if (entity?.ui.fields?.[aggregationField]?.displayFormat === "currency") {
+    return "currency";
+  }
+  return "number";
+}
+
+export function formatDateGranularityLabel(
+  field: string,
+  granularity: MetricDateGranularity,
+): string {
+  return `${field} (${granularity})`;
 }
 
 function getAllFieldNames(
@@ -94,6 +170,11 @@ export interface MetricSummaryContext {
   readonly fieldsDependency: readonly string[];
   readonly groupBy: readonly string[];
   readonly dimensions: readonly string[];
+  readonly selectedDateFields: readonly string[];
+  readonly dateFieldGranularity: Readonly<
+    Record<string, MetricDateGranularity>
+  >;
+  readonly valueDisplayFormat: MetricValueDisplayFormat;
   readonly targetCollection?: string;
   readonly isCreate: boolean;
 }
@@ -125,6 +206,10 @@ export function buildMetricSummaryContext(input: {
   readonly fieldsDependency: readonly string[];
   readonly groupBy: readonly string[];
   readonly dimensions: readonly string[];
+  readonly dateFieldGranularity: Readonly<
+    Record<string, MetricDateGranularity>
+  >;
+  readonly valueDisplayFormat: MetricValueDisplayFormat;
   readonly targetCollection?: string;
   readonly isCreate: boolean;
 }): MetricSummaryContext {
@@ -140,6 +225,13 @@ export function buildMetricSummaryContext(input: {
     fieldsDependency: input.fieldsDependency,
     groupBy: input.groupBy,
     dimensions: input.dimensions,
+    selectedDateFields: listDateFieldsInKeys(
+      input.entity,
+      input.groupBy,
+      input.dimensions,
+    ),
+    dateFieldGranularity: input.dateFieldGranularity,
+    valueDisplayFormat: input.valueDisplayFormat,
     targetCollection: input.targetCollection,
     isCreate: input.isCreate,
   };

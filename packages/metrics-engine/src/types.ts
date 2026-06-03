@@ -2,28 +2,25 @@ import { z } from "zod";
 
 import { validateFieldsDependency } from "./aggregation-helpers.js";
 
+export {
+  METRIC_DEFINITION_PERMISSIONS,
+  METRIC_PERMISSIONS,
+  METRIC_VALUE_PERMISSIONS,
+} from "./permissions.js";
+
 export const METRICS_DEFINITIONS_COLLECTION = "__metrics_definitions" as const;
 export const METRICS_VALUES_ROOT = "metrics" as const;
 export const METRIC_CONTRIBUTIONS_ROOT = "__metric_contributions" as const;
 export const BACKFILL_JOBS_COLLECTION = "__backfill_jobs" as const;
 
-export const METRIC_DEFINITION_PERMISSIONS = [
-  "metricDefinition.read",
-  "metricDefinition.create",
-  "metricDefinition.update",
-  "metricDefinition.delete",
-  "metricDefinition.backfill",
-] as const;
-
-export const METRIC_VALUE_PERMISSIONS = ["metricValue.read"] as const;
-
-export const METRIC_PERMISSIONS = [
-  ...METRIC_DEFINITION_PERMISSIONS,
-  ...METRIC_VALUE_PERMISSIONS,
-] as const;
-
 export const METRIC_AGGREGATION_OPERATIONS = ["SUM", "COUNT", "AVG"] as const;
 export const METRIC_DEFINITION_STATUSES = ["ACTIVE", "PAUSED"] as const;
+export const METRIC_DATE_GRANULARITIES = ["day", "month", "year"] as const;
+export const METRIC_VALUE_DISPLAY_FORMATS = ["number", "currency"] as const;
+
+export type MetricDateGranularity = (typeof METRIC_DATE_GRANULARITIES)[number];
+export type MetricValueDisplayFormat =
+  (typeof METRIC_VALUE_DISPLAY_FORMATS)[number];
 
 export type MetricAggregationOperation =
   (typeof METRIC_AGGREGATION_OPERATIONS)[number];
@@ -77,6 +74,10 @@ const metricDefinitionBodySchema = z.object({
   filters: z.array(metricFilterSchema).default([]),
   groupBy: z.array(z.string().trim().min(1)).default([]),
   dimensions: z.array(z.string().trim().min(1)).default([]),
+  dateFieldGranularity: z
+    .record(z.string().trim().min(1), z.enum(METRIC_DATE_GRANULARITIES))
+    .default({}),
+  valueDisplayFormat: z.enum(METRIC_VALUE_DISPLAY_FORMATS).default("number"),
   aggregations: fieldsDependencyRefine.aggregations,
   target: metricTargetSchema,
   version: z.number().int().positive(),
@@ -89,6 +90,11 @@ function refineMetricDefinitionBody(
   value: {
     readonly aggregations: z.infer<typeof metricAggregationSpecSchema>[];
     readonly fieldsDependency: readonly string[];
+    readonly groupBy: readonly string[];
+    readonly dimensions: readonly string[];
+    readonly dateFieldGranularity: Readonly<
+      Record<string, MetricDateGranularity>
+    >;
   },
   context: z.RefinementCtx,
 ): void {
@@ -99,6 +105,17 @@ function refineMetricDefinitionBody(
         "fieldsDependency must include at least one field unless the metric is document COUNT only.",
       path: ["fieldsDependency"],
     });
+  }
+
+  const allowedKeyFields = new Set([...value.groupBy, ...value.dimensions]);
+  for (const field of Object.keys(value.dateFieldGranularity)) {
+    if (!allowedKeyFields.has(field)) {
+      context.addIssue({
+        code: "custom",
+        message: `dateFieldGranularity includes unknown field "${field}".`,
+        path: ["dateFieldGranularity", field],
+      });
+    }
   }
 }
 
@@ -136,6 +153,10 @@ export const patchMetricDefinitionInputSchema = z
     filters: z.array(metricFilterSchema).optional(),
     groupBy: z.array(z.string().trim().min(1)).optional(),
     dimensions: z.array(z.string().trim().min(1)).optional(),
+    dateFieldGranularity: z
+      .record(z.string().trim().min(1), z.enum(METRIC_DATE_GRANULARITIES))
+      .optional(),
+    valueDisplayFormat: z.enum(METRIC_VALUE_DISPLAY_FORMATS).optional(),
     aggregations: z.array(metricAggregationSpecSchema).min(1).optional(),
     version: z.number().int().positive().optional(),
     schemaVersionDependency: z.number().int().nonnegative().optional(),

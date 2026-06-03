@@ -15,6 +15,8 @@ const baseDefinition: MetricDefinitionRecord = {
   filters: [],
   groupBy: ["month"],
   dimensions: ["categoryId"],
+  dateFieldGranularity: {},
+  valueDisplayFormat: "number",
   aggregations: [{ field: "amount", operation: "SUM" }],
   target: { collection: "metric_1", granularity: "dynamic" },
   version: 1,
@@ -51,5 +53,21 @@ describe("validateMetricQueryAgainstDefinition", () => {
         dimensions: { categoryId: "food" },
       }),
     ).toThrow(MetricQueryValidationError);
+  });
+
+  it("normalizes date group values using dateFieldGranularity", () => {
+    const definition: MetricDefinitionRecord = {
+      ...baseDefinition,
+      groupBy: ["date"],
+      dimensions: [],
+      dateFieldGranularity: { date: "month" },
+    };
+
+    const result = validateMetricQueryAgainstDefinition(definition, {
+      group: { date: "2026-06-02T14:30:00.000Z" },
+      dimensions: {},
+    });
+
+    expect(result.group).toEqual({ date: "2026-06" });
   });
 });

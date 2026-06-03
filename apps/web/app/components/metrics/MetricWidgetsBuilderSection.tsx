@@ -7,6 +7,9 @@ import { useTranslation } from "react-i18next";
 import type { ViewMetricWidget } from "@repo/entities";
 import type { SerializableEntityDefinition } from "@repo/entities";
 
+import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
+
+import { useAnyPermission } from "../../auth/useAnyPermission.js";
 import { usePermission } from "../../auth/usePermission.js";
 import { listMetricDefinitions } from "../../lib/api-client.js";
 import {
@@ -34,7 +37,10 @@ export function MetricWidgetsBuilderSection({
   onChange,
 }: MetricWidgetsBuilderSectionProps) {
   const { t } = useTranslation("common");
-  const canReadMetrics = usePermission("metricValue.read");
+  const canConfigureWidgets = useAnyPermission(
+    ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  );
+  const canListDefinitions = usePermission("metricDefinition.read");
 
   const definitionsQuery = useQuery({
     queryKey: ["metric-definitions", "active"],
@@ -42,7 +48,7 @@ export function MetricWidgetsBuilderSection({
       const result = await listMetricDefinitions();
       return result.items.filter((item) => item.status === "ACTIVE");
     },
-    enabled: canReadMetrics,
+    enabled: canConfigureWidgets && canListDefinitions,
   });
 
   const definitions = useMemo(
@@ -56,7 +62,7 @@ export function MetricWidgetsBuilderSection({
     [definitions],
   );
 
-  if (!canReadMetrics) {
+  if (!canConfigureWidgets) {
     return (
       <Text variant="muted" className="text-sm">
         {t("entity.viewSettings.metrics.forbidden")}

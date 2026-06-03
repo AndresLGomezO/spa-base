@@ -3,6 +3,7 @@ import { Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { SerializableEntityDefinition } from "@repo/entities";
+import type { MetricDateGranularity } from "@repo/metrics-engine/browser";
 import { listCardLayoutFieldOptions } from "@repo/entities";
 
 const SELECT_CLASS =
@@ -13,6 +14,7 @@ interface MetricBindingSourceEditorProps {
   readonly source: MetricBindingSource | undefined;
   readonly definition?: SerializableEntityDefinition;
   readonly filterFieldOptions?: readonly string[];
+  readonly dateGranularity?: MetricDateGranularity;
   readonly onChange: (source: MetricBindingSource) => void;
 }
 
@@ -28,6 +30,7 @@ export function MetricBindingSourceEditor({
   source,
   definition,
   filterFieldOptions = [],
+  dateGranularity,
   onChange,
 }: MetricBindingSourceEditorProps) {
   const { t } = useTranslation("common");
@@ -39,6 +42,13 @@ export function MetricBindingSourceEditor({
   return (
     <div className="border-border flex flex-col gap-2 rounded-md border p-2">
       <Text className="text-xs font-medium">{fieldName}</Text>
+      {dateGranularity ? (
+        <Text className="text-muted-foreground text-xs">
+          {t("entity.viewSettings.metrics.dateBucketHint", {
+            format: t(`metrics.dateGranularity.formats.${dateGranularity}`),
+          })}
+        </Text>
+      ) : null}
       <label className="flex flex-col gap-1">
         <span className="text-muted-foreground text-xs">
           {t("entity.viewSettings.metrics.bindingType")}

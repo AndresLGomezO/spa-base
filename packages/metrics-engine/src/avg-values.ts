@@ -1,4 +1,4 @@
-import { avgKeyForField, countKeyForField } from "./metric-doc-id.js";
+import { avgKeyForField, countKeyForField } from "./metric-field-keys.js";
 
 export function computeAvgFieldsFromValues(
   values: Record<string, number>,

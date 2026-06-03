@@ -1,6 +1,8 @@
 import type { CSSProperties } from "react";
 
 import type { LayoutNodeBase, LayoutSize } from "./types.js";
+import { getLayoutSpacingStyle } from "./layout-spacing.js";
+import type { LayoutSpacing } from "./layout-spacing.js";
 
 function toCssSize(value: LayoutSize | undefined): string | undefined {
   if (value === undefined) {
@@ -23,13 +25,16 @@ const justifyClasses = {
   between: "justify-between",
 } as const;
 
-export function getLayoutNodeStyle(node: LayoutNodeBase): CSSProperties {
+export function getLayoutNodeStyle(
+  node: LayoutNodeBase & LayoutSpacing,
+): CSSProperties {
   return {
     minWidth: toCssSize(node.minWidth),
     maxWidth: toCssSize(node.maxWidth),
     minHeight: toCssSize(node.minHeight),
     maxHeight: toCssSize(node.maxHeight),
     flex: node.flex,
+    ...getLayoutSpacingStyle(node),
   };
 }
 

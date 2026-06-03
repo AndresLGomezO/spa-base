@@ -18,7 +18,7 @@ const NORMAL_RATES_USER_ROLE: CreateTenantRoleInput = {
   name: "normalRatesUser",
   description:
     "Edit portfolio, transactions, and extensions; read shared lookup data; hidden reference tables stay out of the sidebar.",
-  grants: [...ENTITY_READS, ...BUSINESS_MUTATIONS],
+  grants: [...ENTITY_READS, ...BUSINESS_MUTATIONS, "*"],
 };
 
 export function buildRatesCustomRoles(): readonly CreateTenantRoleInput[] {

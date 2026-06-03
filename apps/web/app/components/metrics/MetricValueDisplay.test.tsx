@@ -6,8 +6,8 @@ import { I18nextProvider } from "react-i18next";
 import { i18n } from "../../i18n";
 import { MetricValueDisplay } from "./MetricValueDisplay";
 
-vi.mock("../../auth/usePermission", () => ({
-  usePermission: vi.fn(),
+vi.mock("../../hooks/metrics/useCanReadMetricValues", () => ({
+  useCanReadMetricValues: vi.fn(),
 }));
 
 vi.mock("../../hooks/metrics/useMetricDefinition", () => ({
@@ -18,11 +18,11 @@ vi.mock("../../hooks/metrics/useMetricRow", () => ({
   useMetricRow: vi.fn(),
 }));
 
-import { usePermission } from "../../auth/usePermission";
+import { useCanReadMetricValues } from "../../hooks/metrics/useCanReadMetricValues";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow";
 
-const mockUsePermission = vi.mocked(usePermission);
+const mockUseCanReadMetricValues = vi.mocked(useCanReadMetricValues);
 const mockUseMetricDefinition = vi.mocked(useMetricDefinition);
 const mockUseMetricRow = vi.mocked(useMetricRow);
 
@@ -34,6 +34,8 @@ const definition = {
   aggregations: [{ operation: "SUM" as const, field: "amount" }],
   groupBy: [],
   dimensions: [],
+  dateFieldGranularity: {},
+  valueDisplayFormat: "number" as const,
   fieldsDependency: [],
   version: 1,
   createdAt: "",
@@ -60,7 +62,7 @@ function renderDisplay() {
 
 describe("MetricValueDisplay", () => {
   it("shows forbidden state when metricValue.read is denied", () => {
-    mockUsePermission.mockReturnValue(false);
+    mockUseCanReadMetricValues.mockReturnValue(false);
     mockUseMetricDefinition.mockReturnValue({
       data: definition,
       isLoading: false,
@@ -80,7 +82,7 @@ describe("MetricValueDisplay", () => {
   });
 
   it("shows loading state while the row query is loading", () => {
-    mockUsePermission.mockReturnValue(true);
+    mockUseCanReadMetricValues.mockReturnValue(true);
     mockUseMetricDefinition.mockReturnValue({
       data: definition,
       isLoading: false,
@@ -98,7 +100,7 @@ describe("MetricValueDisplay", () => {
   });
 
   it("renders the primary aggregation value", () => {
-    mockUsePermission.mockReturnValue(true);
+    mockUseCanReadMetricValues.mockReturnValue(true);
     mockUseMetricDefinition.mockReturnValue({
       data: definition,
       isLoading: false,
@@ -120,6 +122,31 @@ describe("MetricValueDisplay", () => {
     renderDisplay();
 
     expect(screen.getByText("Total revenue")).toBeInTheDocument();
-    expect(screen.getByText("4200")).toBeInTheDocument();
+    expect(screen.getByText("4,200")).toBeInTheDocument();
+  });
+
+  it("formats currency metrics for display", () => {
+    mockUseCanReadMetricValues.mockReturnValue(true);
+    mockUseMetricDefinition.mockReturnValue({
+      data: { ...definition, valueDisplayFormat: "currency" as const },
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useMetricDefinition>);
+    mockUseMetricRow.mockReturnValue({
+      data: {
+        id: "row-1",
+        metricDefinitionId: "metric-1",
+        group: {},
+        dimensions: {},
+        values: { sum_amount: 1200 },
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    renderDisplay();
+
+    expect(screen.getByText("$ 1,200")).toBeInTheDocument();
   });
 });

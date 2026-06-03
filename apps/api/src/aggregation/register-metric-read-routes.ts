@@ -13,8 +13,8 @@ import {
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
 import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
-import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import { assertCanReadMetricValues } from "./assert-metric-access.js";
 import type { MetricRuntimeContext } from "./metric-runtime-context.js";
 
 interface RegisterMetricReadRoutesOptions {
@@ -41,14 +41,9 @@ export async function registerMetricReadRoutes(
   app: FastifyInstance,
   options: RegisterMetricReadRoutesOptions,
 ): Promise<void> {
-  const requireMetricValueRead = createRequirePermission(
-    options.permissionDeps,
-    "metricValue.read",
-  );
-
   app.post(
     "/api/metrics/:metricDefinitionId/row",
-    { preHandler: [options.authenticate, requireMetricValueRead] },
+    { preHandler: [options.authenticate] },
     async (request, reply) => {
       const parsedParams = metricDefinitionIdParamsSchema.safeParse(
         request.params,
@@ -100,6 +95,17 @@ export async function registerMetricReadRoutes(
         );
       }
 
+      if (
+        !(await assertCanReadMetricValues(
+          request,
+          reply,
+          options.permissionDeps,
+          definition.sourceModel,
+        ))
+      ) {
+        return;
+      }
+
       let normalizedQuery: {
         readonly group: Record<string, unknown>;
         readonly dimensions: Record<string, unknown>;
@@ -147,7 +153,7 @@ export async function registerMetricReadRoutes(
 
   app.post(
     "/api/metrics/:metricDefinitionId/batch",
-    { preHandler: [options.authenticate, requireMetricValueRead] },
+    { preHandler: [options.authenticate] },
     async (request, reply) => {
       const parsedParams = metricDefinitionIdParamsSchema.safeParse(
         request.params,
@@ -197,6 +203,17 @@ export async function registerMetricReadRoutes(
           ApiErrorCode.NOT_FOUND,
           "Metric definition not found.",
         );
+      }
+
+      if (
+        !(await assertCanReadMetricValues(
+          request,
+          reply,
+          options.permissionDeps,
+          definition.sourceModel,
+        ))
+      ) {
+        return;
       }
 
       const docIds: string[] = [];

@@ -3,6 +3,7 @@ import { z } from "zod";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import { assertCardLayoutFieldPaths } from "./card-layout-validation.js";
 import type { CardLayoutConfig } from "./card-layout-types.js";
+import { layoutSpacingSchemaShape } from "./layout-spacing.js";
 import {
   cardMetricKpiSlotBindingSchema,
   viewMetricWidgetSchema,
@@ -54,6 +55,7 @@ const cardFieldSlotComponentSchema = z.enum([
   "image",
   "badge",
   "currency",
+  "date",
 ]);
 const cardBadgeVariantSchema = z.enum([
   "success",
@@ -78,25 +80,56 @@ const layoutNodeBaseSchema = z
     flex: z.union([z.number(), z.string()]).optional(),
     align: layoutAlignSchema.optional(),
     justify: layoutJustifySchema.optional(),
+    ...layoutSpacingSchemaShape,
   })
   .strict();
+
+const cardTextColorSchema = z.enum([
+  "default",
+  "muted",
+  "primary",
+  "success",
+  "warning",
+  "danger",
+  "info",
+]);
 
 const cardFieldSlotBindingSchema = z
   .object({
     component: cardFieldSlotComponentSchema,
-    fieldPath: z.string().trim().min(1),
+    fieldPath: z.string().trim().optional(),
+    fallbackFieldPaths: z.array(z.string().trim().min(1)).optional(),
+    align: layoutAlignSchema.optional(),
     showLabel: z.boolean().optional(),
     label: z.string().optional(),
+    labelPosition: z.enum(["above", "below"]).optional(),
+    dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
     className: z.string().optional(),
     imageSize: z.number().int().min(24).max(96).optional(),
     textSize: z.number().int().min(10).max(32).optional(),
+    textColor: cardTextColorSchema.optional(),
     textThin: z.boolean().optional(),
     textBold: z.boolean().optional(),
     textItalic: z.boolean().optional(),
     textUnderline: z.boolean().optional(),
+    staticText: z.string().optional(),
     badgeVariants: z.record(z.string(), cardBadgeVariantSchema).optional(),
+    ...layoutSpacingSchemaShape,
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (value.staticText !== undefined) {
+      return;
+    }
+
+    if (!value.fieldPath || value.fieldPath.trim().length === 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "fieldPath is required when staticText is not set",
+        path: ["fieldPath"],
+      });
+    }
+  });
 
 const cardSlotBindingSchema = z.union([
   cardFieldSlotBindingSchema,

@@ -67,6 +67,8 @@ export function createFirestoreAdminMetricDefinitionRepository(
         filters: parsed.filters,
         groupBy: parsed.groupBy,
         dimensions: parsed.dimensions,
+        dateFieldGranularity: parsed.dateFieldGranularity,
+        valueDisplayFormat: parsed.valueDisplayFormat,
         aggregations: parsed.aggregations,
         target: {
           collection: generateMetricTargetCollection(id),
@@ -100,6 +102,12 @@ export function createFirestoreAdminMetricDefinitionRepository(
         ...(input.filters ? { filters: input.filters } : {}),
         ...(input.groupBy ? { groupBy: input.groupBy } : {}),
         ...(input.dimensions ? { dimensions: input.dimensions } : {}),
+        ...(input.dateFieldGranularity !== undefined
+          ? { dateFieldGranularity: input.dateFieldGranularity }
+          : {}),
+        ...(input.valueDisplayFormat !== undefined
+          ? { valueDisplayFormat: input.valueDisplayFormat }
+          : {}),
         ...(input.aggregations ? { aggregations: input.aggregations } : {}),
         ...(input.version !== undefined ? { version: input.version } : {}),
         ...(input.schemaVersionDependency !== undefined

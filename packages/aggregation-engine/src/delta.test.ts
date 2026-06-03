@@ -27,6 +27,8 @@ const baseMetric: MetricDefinitionRecord = {
   filters: [],
   groupBy: [],
   dimensions: [],
+  dateFieldGranularity: {},
+  valueDisplayFormat: "number",
   aggregations: [{ field: "amount", operation: "SUM" }],
   target: { collection: "txn_totals", granularity: "dynamic" },
   version: 1,
@@ -54,6 +56,32 @@ describe("computeMetricDeltas", () => {
     expect(deltas).toHaveLength(1);
     expect(deltas[0]?.increments.sum_amount).toBe(100);
     expect(deltas[0]?.userId).toBe(TEST_OWNER_ID);
+  });
+
+  it("normalizes date groupBy values to month buckets", () => {
+    const metric: MetricDefinitionRecord = {
+      ...baseMetric,
+      groupBy: ["date"],
+      dateFieldGranularity: { date: "month" },
+    };
+    const event = buildAggregationEvent({
+      tenantId: "tenant_a",
+      model: "transaction",
+      operation: "CREATE",
+      documentId: "doc_1",
+      before: null,
+      after: {
+        amount: 100,
+        ownerId: TEST_OWNER_ID,
+        date: "2026-06-02T14:30:00.000Z",
+      },
+      businessFieldNames: ["amount", "date"],
+      schemaVersion: 1,
+    });
+
+    const deltas = computeMetricDeltas(event, metric);
+    expect(deltas).toHaveLength(1);
+    expect(deltas[0]?.group).toEqual({ date: "2026-06" });
   });
 
   it("skips records without ownerId", () => {

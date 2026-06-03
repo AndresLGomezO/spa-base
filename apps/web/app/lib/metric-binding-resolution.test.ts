@@ -15,6 +15,8 @@ const definition: MetricDefinitionRecord = {
   filters: [],
   groupBy: ["month"],
   dimensions: ["categoryId"],
+  dateFieldGranularity: {},
+  valueDisplayFormat: "number",
   aggregations: [{ field: "amount", operation: "SUM" }],
   target: { collection: "def_1", granularity: "dynamic" },
   version: 1,
@@ -60,7 +62,29 @@ describe("resolveMetricBindingSource", () => {
   });
 });
 
+const totalDefinition: MetricDefinitionRecord = {
+  ...definition,
+  groupBy: [],
+  dimensions: [],
+};
+
 describe("buildMetricRowQueryFromBindings", () => {
+  it("builds an empty query for totals without bindings", () => {
+    const query = buildMetricRowQueryFromBindings(
+      totalDefinition,
+      {
+        groupBindings: { amount: { type: "static", value: "ignored" } },
+        dimensionBindings: {},
+      },
+      {},
+    );
+
+    expect(query).toEqual({
+      group: {},
+      dimensions: {},
+    });
+  });
+
   it("builds a query when bindings resolve", () => {
     const query = buildMetricRowQueryFromBindings(
       definition,

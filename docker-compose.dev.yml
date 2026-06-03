@@ -15,7 +15,7 @@ services:
       AGGREGATION_EVENTS_TOPIC: aggregation-events
     depends_on:
       firebase-emulator:
-        condition: service_started
+        condition: service_healthy
     restart: "no"
 
   firebase-emulator:
@@ -37,6 +37,18 @@ services:
         "firestore,auth,storage,hosting,pubsub",
         "--project=demo-project-base",
       ]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "const n=require('net');const p=(h,o)=>new Promise(r=>{const s=n.createConnection({host:h,port:o},()=>{s.end();r(true)});s.on('error',()=>r(false));});Promise.all([p('127.0.0.1',9099),p('127.0.0.1',8080),p('127.0.0.1',8085)]).then(x=>process.exit(x.every(Boolean)?0:1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 45s
     volumes:
       # Hosting emulator serves apps/web/build/client — run `pnpm --filter web build` before start
       - ./firebase.json:/home/node/firebase.json
@@ -62,6 +74,7 @@ services:
       - ./apps/api:/app/apps/api
       - ./apps/platform:/app/apps/platform
       - ./packages:/app/packages
+      - ./scripts:/app/scripts
       - /app/node_modules
       - /app/apps/api/node_modules
       - /app/packages/eslint-config/node_modules
@@ -77,9 +90,21 @@ services:
       - PUBSUB_EMULATOR_HOST=firebase-emulator:8085
       - AGGREGATION_EVENTS_PUBSUB=true
       - AGGREGATION_EVENTS_TOPIC=aggregation-events
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))",
+        ]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 90s
     depends_on:
       firebase-emulator:
-        condition: service_started
+        condition: service_healthy
       pubsub-init:
         condition: service_completed_successfully
 
@@ -95,6 +120,7 @@ services:
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
       - ./apps/worker-aggregation:/app/apps/worker-aggregation
       - ./packages:/app/packages
+      - ./scripts:/app/scripts
       - /app/node_modules
       - /app/apps/worker-aggregation/node_modules
       - /app/packages/eslint-config/node_modules
@@ -106,7 +132,7 @@ services:
       - AGGREGATION_EVENTS_TOPIC=aggregation-events
     depends_on:
       firebase-emulator:
-        condition: service_started
+        condition: service_healthy
       pubsub-init:
         condition: service_completed_successfully
 
@@ -125,6 +151,7 @@ services:
       - ./apps/web:/app/apps/web
       - ./apps/platform:/app/apps/platform
       - ./packages:/app/packages
+      - ./scripts:/app/scripts
       - /app/node_modules
       - /app/apps/web/node_modules
       # Preserve Linux node_modules from the image (host bind-mount of ./packages overwrites them)
@@ -143,9 +170,9 @@ services:
       # Deployed builds use VITE_APP_CHECK_RECAPTCHA_SITE_KEY (see apps/web/.env.development.example)
     depends_on:
       firebase-emulator:
-        condition: service_started
+        condition: service_healthy
       api:
-        condition: service_started
+        condition: service_healthy
       worker-aggregation:
         condition: service_started
 

@@ -257,4 +257,64 @@ describe("metric read routes", () => {
     expect(items[1]?.values.sum_amount).toBe(50);
     expect(items[2]).toBeNull();
   });
+
+  it("allows row read when the user has source entity read only", async () => {
+    const runtime = await createInMemoryCrudRuntime();
+    const server = await buildServer({
+      logger: false,
+      repositories: runtime.repositories,
+      queryExecutors: runtime.queryExecutors,
+      metricDefinitionRepository,
+      aggregationEventRepository,
+      metricValueRepository,
+      backfillJobRepository,
+      metricContributionRepository,
+      getRoleCatalog: async () =>
+        buildRoleCatalog([
+          {
+            name: "transactionReader",
+            grants: ["transaction.read"],
+            tenantId: null,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+          },
+        ]),
+      getUserAccessProfile: async () => ({
+        platformRole: null,
+        tenants: { tenant_a: ["transactionReader"] },
+      }),
+      skipPlatformRoleSeed: true,
+      skipPlatformTenantSeed: true,
+    });
+
+    const definition = (await metricDefinitionRepository.getById(
+      authState.tenantId,
+      metricDefinitionId,
+    ))!;
+    const group = { month: "2026-06" };
+    const dimensions = { categoryId: "food" };
+    const docId = buildMetricDocId(authState.uid, group, dimensions);
+
+    await metricValueRepository.applyIncrements(
+      authState.tenantId,
+      definition.target.collection,
+      docId,
+      {
+        userId: authState.uid,
+        group,
+        dimensions,
+        increments: { sum_amount: 99 },
+      },
+    );
+
+    const response = await server.inject({
+      method: "POST",
+      url: `/api/metrics/${metricDefinitionId}/row`,
+      headers: authHeaders,
+      payload: { group, dimensions },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data.values.sum_amount).toBe(99);
+  });
 });

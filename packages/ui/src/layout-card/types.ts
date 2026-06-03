@@ -16,6 +16,13 @@ export interface LayoutNodeBase {
   readonly flex?: number | string;
   readonly align?: LayoutAlign;
   readonly justify?: LayoutJustify;
+  readonly marginX?: number;
+  readonly marginY?: number;
+  readonly marginTop?: number;
+  readonly marginBottom?: number;
+  readonly marginLeft?: number;
+  readonly marginRight?: number;
+  readonly padding?: number;
 }
 
 export interface LayoutContainerNode extends LayoutNodeBase {
@@ -38,12 +45,24 @@ type CardFieldSlotComponentType =
   | "labeled-text"
   | "image"
   | "badge"
-  | "currency";
+  | "currency"
+  | "date";
 
 export type CardSlotComponentType = CardFieldSlotComponentType | "metric-kpi";
 
 export type { CardBadgeVariant } from "./badge-variants.js";
 import type { CardBadgeVariant } from "./badge-variants.js";
+
+export type CardLabelPosition = "above" | "below";
+export type CardDateDisplayFormat = "date" | "datetime" | "time";
+export type CardTextColor =
+  | "default"
+  | "muted"
+  | "primary"
+  | "success"
+  | "warning"
+  | "danger"
+  | "info";
 
 interface MetricBindingSourceStatic {
   readonly type: "static";
@@ -74,16 +93,29 @@ type MetricBindingSource =
 export interface CardFieldSlotBinding {
   readonly component: CardFieldSlotComponentType;
   readonly fieldPath: string;
+  readonly fallbackFieldPaths?: readonly string[];
+  readonly staticText?: string;
+  readonly align?: LayoutAlign;
   readonly showLabel?: boolean;
   readonly label?: string;
+  readonly labelPosition?: CardLabelPosition;
+  readonly dateDisplayFormat?: CardDateDisplayFormat;
   readonly className?: string;
   readonly imageSize?: number;
   readonly textSize?: number;
+  readonly textColor?: CardTextColor;
   readonly textThin?: boolean;
   readonly textBold?: boolean;
   readonly textItalic?: boolean;
   readonly textUnderline?: boolean;
   readonly badgeVariants?: Readonly<Record<string, CardBadgeVariant>>;
+  readonly marginX?: number;
+  readonly marginY?: number;
+  readonly marginTop?: number;
+  readonly marginBottom?: number;
+  readonly marginLeft?: number;
+  readonly marginRight?: number;
+  readonly padding?: number;
 }
 
 export interface CardMetricKpiSlotBinding {
@@ -93,8 +125,16 @@ export interface CardMetricKpiSlotBinding {
   readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly label?: string;
   readonly className?: string;
+  readonly align?: LayoutAlign;
   readonly textSize?: number;
   readonly textBold?: boolean;
+  readonly marginX?: number;
+  readonly marginY?: number;
+  readonly marginTop?: number;
+  readonly marginBottom?: number;
+  readonly marginLeft?: number;
+  readonly marginRight?: number;
+  readonly padding?: number;
 }
 
 export type CardSlotBinding = CardFieldSlotBinding | CardMetricKpiSlotBinding;
