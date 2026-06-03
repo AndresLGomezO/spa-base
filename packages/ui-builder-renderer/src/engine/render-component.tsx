@@ -7,8 +7,9 @@ import {
   isPageUiComponent,
   matchConditionalStyles,
   resolveFieldChain,
+  resolvePageSlotWrapper,
   resolveStyleRules,
-  spacingStyleFromStyleRules,
+  layoutInlineStyleFromStyleRules,
   splitStyleRuleClasses,
   type FieldUiComponentConfig,
   type UiComponentConfig,
@@ -144,13 +145,12 @@ export function renderUiComponent(
   }
 
   if (isPageUiComponent(config)) {
-    const { containerClassName } = splitStyleRuleClasses(config.styles);
-    const wrap = (node: ReactNode) =>
-      containerClassName ? (
-        <div className={containerClassName}>{node}</div>
-      ) : (
-        node
-      );
+    const slotWrapper = resolvePageSlotWrapper(config.styles);
+    const wrap = (node: ReactNode) => (
+      <div className={slotWrapper.className} style={slotWrapper.style}>
+        {node}
+      </div>
+    );
     switch (config.kind) {
       case "page-header":
         return wrap(context.pageHeaderRenderer?.() ?? null);
@@ -170,7 +170,7 @@ export function renderUiComponent(
   const { containerClassName, textClassName } = splitStyleRuleClasses(
     config.styles,
   );
-  const containerStyle = spacingStyleFromStyleRules(config.styles);
+  const containerStyle = layoutInlineStyleFromStyleRules(config.styles);
   const textSize = fontSizePxFromStyles(config.styles);
 
   const chain = resolveFieldChain({

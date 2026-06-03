@@ -1,4 +1,9 @@
 import type { StyleRule, StylePropertyKey, ThemeToken } from "./style-types.js";
+import {
+  themeTokenBackgroundClass,
+  themeTokenBorderClass,
+  themeTokenTextClass,
+} from "./theme-token-classes.js";
 
 export interface SpacingInlineStyle {
   marginTop?: string;
@@ -11,11 +16,15 @@ export interface SpacingInlineStyle {
   paddingRight?: string;
   padding?: string;
 }
-import {
-  themeTokenBackgroundClass,
-  themeTokenBorderClass,
-  themeTokenTextClass,
-} from "./theme-token-classes.js";
+
+/** Inline layout styles for pixel-based rules (avoids Tailwind arbitrary class scanning). */
+export interface LayoutInlineStyle extends SpacingInlineStyle {
+  borderRadius?: string;
+  minWidth?: string;
+  maxWidth?: string;
+  borderWidth?: string;
+  borderStyle?: string;
+}
 
 const TEXT_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   "color",
@@ -52,6 +61,15 @@ export const SPACING_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   "paddingLeft",
   "paddingRight",
   "padding",
+]);
+
+/** Applied as inline styles instead of `rounded-[Npx]` / `min-w-[Npx]` arbitrary utilities. */
+const PIXEL_INLINE_STYLE_PROPERTIES = new Set<StylePropertyKey>([
+  ...SPACING_STYLE_PROPERTIES,
+  "borderRadius",
+  "minWidth",
+  "maxWidth",
+  "borderWidth",
 ]);
 
 export type FlexAlign = "start" | "center" | "end" | "stretch";
@@ -140,28 +158,6 @@ function ruleToClass(rule: StyleRule): string | undefined {
 
   if (property === "flex") {
     return `flex-[${raw}]`;
-  }
-
-  if (property === "minWidth") {
-    return `min-w-[${raw}px]`;
-  }
-
-  if (property === "maxWidth") {
-    return `max-w-[${raw}px]`;
-  }
-
-  if (property === "borderRadius") {
-    const px = Number.parseInt(raw, 10);
-    if (Number.isFinite(px)) {
-      return `rounded-[${px}px]`;
-    }
-  }
-
-  if (property === "borderWidth") {
-    const px = Number.parseInt(raw, 10);
-    if (Number.isFinite(px) && px > 0) {
-      return `border border-solid border-[${px}px]`;
-    }
   }
 
   return undefined;
@@ -344,9 +340,52 @@ export function spacingStyleFromStyleRules(
   return style;
 }
 
+function parseNonNegativePx(value: string | ThemeToken): number | undefined {
+  const px = Number.parseInt(String(value), 10);
+  return Number.isFinite(px) && px >= 0 ? px : undefined;
+}
+
+/** Spacing plus pixel dimensions (border radius, min/max width, border width). */
+export function layoutInlineStyleFromStyleRules(
+  styles: readonly StyleRule[] | undefined,
+): LayoutInlineStyle {
+  const style: LayoutInlineStyle = {
+    ...spacingStyleFromStyleRules(styles),
+  };
+
+  for (const rule of styles ?? []) {
+    const px = parseNonNegativePx(rule.value);
+    if (px === undefined) {
+      continue;
+    }
+
+    switch (rule.property) {
+      case "borderRadius":
+        style.borderRadius = `${px}px`;
+        break;
+      case "minWidth":
+        style.minWidth = `${px}px`;
+        break;
+      case "maxWidth":
+        style.maxWidth = `${px}px`;
+        break;
+      case "borderWidth":
+        if (px > 0) {
+          style.borderWidth = `${px}px`;
+          style.borderStyle = style.borderStyle ?? "solid";
+        }
+        break;
+      default:
+        break;
+    }
+  }
+
+  return style;
+}
+
 export interface ResolvedStyleRules {
   readonly className: string;
-  readonly style: SpacingInlineStyle;
+  readonly style: LayoutInlineStyle;
 }
 
 export function resolveStyleRules(
@@ -358,7 +397,38 @@ export function resolveStyleRules(
     className: [split.containerClassName, split.textClassName]
       .filter(Boolean)
       .join(" "),
-    style: spacingStyleFromStyleRules(styles),
+    style: layoutInlineStyleFromStyleRules(styles),
+  };
+}
+
+/**
+ * Resolves wrapper class + inline spacing for main-page slot components
+ * (`page-toolbar`, `page-metrics`, `page-list`, `page-header`).
+ * Includes layout/position tokens (flex alignment, gap, min/max width) and
+ * theme backgrounds, not only margin/padding.
+ */
+export function resolvePageSlotWrapper(
+  styles: readonly StyleRule[] | undefined,
+  baseClassName?: string,
+): ResolvedStyleRules {
+  const containerClasses = classesFromRules(
+    styles,
+    (rule) =>
+      !TEXT_STYLE_PROPERTIES.has(rule.property) &&
+      !PIXEL_INLINE_STYLE_PROPERTIES.has(rule.property),
+  );
+  const flexWrapper = componentSlotWrapperClassName(styles);
+
+  return {
+    className: [
+      baseClassName,
+      "w-full min-w-0",
+      flexWrapper,
+      ...containerClasses,
+    ]
+      .filter(Boolean)
+      .join(" "),
+    style: layoutInlineStyleFromStyleRules(styles),
   };
 }
 
@@ -371,7 +441,7 @@ export function splitStyleRuleClasses(
     (rule) =>
       !TEXT_STYLE_PROPERTIES.has(rule.property) &&
       !LAYOUT_CONTAINER_PROPERTIES.has(rule.property) &&
-      !SPACING_STYLE_PROPERTIES.has(rule.property),
+      !PIXEL_INLINE_STYLE_PROPERTIES.has(rule.property),
   );
   const text = classesFromRules(styles, (rule) =>
     TEXT_STYLE_PROPERTIES.has(rule.property),

@@ -6,6 +6,7 @@ import {
   fontSizePxFromStyles,
   gapPxFromStyles,
   parseFlexLayoutFromStyles,
+  resolvePageSlotWrapper,
   resolveStyleRules,
   spacingStyleFromStyleRules,
   splitStyleRuleClasses,
@@ -17,15 +18,24 @@ import {
 
 describe("applyStyleRules", () => {
   it("applies border radius, width, and color", () => {
-    const className = applyStyleRules([
+    const resolved = resolveStyleRules([
       { property: "borderRadius", value: "8" },
       { property: "borderWidth", value: "2" },
       { property: "borderColor", value: "primary" },
     ]);
 
-    expect(className).toContain("rounded-[8px]");
-    expect(className).toContain("border border-solid border-[2px]");
-    expect(className).toContain("border-primary");
+    expect(resolved.style.borderRadius).toBe("8px");
+    expect(resolved.style.borderWidth).toBe("2px");
+    expect(resolved.style.borderStyle).toBe("solid");
+    expect(resolved.className).toContain("border-primary");
+    expect(resolved.className).not.toContain("rounded-[");
+  });
+
+  it("applies arbitrary border radius values as inline styles", () => {
+    const resolved = resolveStyleRules([
+      { property: "borderRadius", value: "16" },
+    ]);
+    expect(resolved.style.borderRadius).toBe("16px");
   });
 
   it("maps semantic tokens to theme utilities", () => {
@@ -111,5 +121,22 @@ describe("applyStyleRules", () => {
     ]);
     expect(split.textClassName).toBe("");
     expect(split.containerClassName).toBe("");
+  });
+
+  it("resolvePageSlotWrapper applies spacing, background, and flex position", () => {
+    const wrapper = resolvePageSlotWrapper([
+      { property: "paddingTop", value: "12" },
+      { property: "backgroundColor", value: "muted" },
+      { property: "justifyContent", value: "center" },
+      { property: "minWidth", value: "320" },
+      { property: "borderRadius", value: "12" },
+    ]);
+
+    expect(wrapper.style.paddingTop).toBe("12px");
+    expect(wrapper.style.minWidth).toBe("320px");
+    expect(wrapper.style.borderRadius).toBe("12px");
+    expect(wrapper.className).toContain("bg-muted");
+    expect(wrapper.className).toContain("justify-center");
+    expect(wrapper.className).toContain("w-full");
   });
 });
