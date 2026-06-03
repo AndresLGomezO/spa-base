@@ -1,5 +1,5 @@
 import type { EntityFileReference } from "../schema/entityFileReference.js";
-import type { CardLayoutConfig } from "./card-layout-types.js";
+import type { UiLayoutDocument } from "@repo/ui-builder-core";
 import type { ViewMetricWidget } from "./metric-widget-types.js";
 
 export type FieldComponentType =
@@ -47,7 +47,7 @@ export interface ViewConfig {
     readonly field: string;
     readonly direction: "asc" | "desc";
   };
-  readonly layout?: CardLayoutConfig;
+  readonly layout?: UiLayoutDocument;
   readonly metricWidgets?: readonly ViewMetricWidget[];
 }
 

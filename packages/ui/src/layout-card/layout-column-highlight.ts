@@ -2,7 +2,7 @@ import { cn } from "@repo/theme/utils";
 
 import type { LayoutNode } from "./types.js";
 
-export interface LayoutColumnHighlight {
+interface LayoutColumnHighlight {
   readonly depth: number;
   readonly columnIndex: number;
   readonly gridId?: string;

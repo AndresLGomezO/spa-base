@@ -63,6 +63,7 @@ export function DateFieldGranularityPicker({
               const value = event.target.value as MetricDateGranularity | "";
               if (!value) {
                 const { [field]: _removed, ...rest } = dateFieldGranularity;
+                void _removed;
                 onChange(rest);
                 return;
               }
@@ -90,10 +91,4 @@ export function DateFieldGranularityPicker({
       ))}
     </div>
   );
-}
-
-export function getDateGranularityHintKey(
-  granularity: MetricDateGranularity,
-): string {
-  return `metrics.dateGranularity.formats.${granularity}`;
 }

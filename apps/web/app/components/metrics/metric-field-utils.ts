@@ -98,13 +98,6 @@ export function inferDefaultValueDisplayFormat(
   return "number";
 }
 
-export function formatDateGranularityLabel(
-  field: string,
-  granularity: MetricDateGranularity,
-): string {
-  return `${field} (${granularity})`;
-}
-
 function getAllFieldNames(
   entity: EntityCatalogEntry | undefined,
 ): readonly string[] {

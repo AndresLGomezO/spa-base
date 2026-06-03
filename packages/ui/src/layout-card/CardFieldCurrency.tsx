@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { cn } from "@repo/theme/utils";
 
 import { Text } from "../typography/Text.js";
@@ -14,6 +16,9 @@ export interface CardFieldCurrencyProps {
   readonly showLabel?: boolean;
   readonly labelPosition?: CardLabelPosition;
   readonly className?: string;
+  readonly style?: CSSProperties;
+  readonly valueClassName?: string;
+  readonly textSize?: number;
 }
 
 const toneClasses: Record<CardCurrencyTone, string> = {
@@ -62,9 +67,13 @@ export function CardFieldCurrency({
   showLabel = false,
   labelPosition = "above",
   className,
+  style,
+  valueClassName,
+  textSize,
 }: CardFieldCurrencyProps) {
   const displayAmount =
     amount === null || amount === undefined || amount === "" ? "—" : amount;
+  const resolvedTextSize = textSize !== undefined ? textSize : undefined;
 
   const labelElement =
     showLabel && label ? (
@@ -76,7 +85,17 @@ export function CardFieldCurrency({
   const valueElement = (
     <>
       <span
-        className={cn("text-lg font-bold tracking-tight", toneClasses[tone])}
+        className={cn(
+          "font-bold tracking-tight",
+          resolvedTextSize === undefined && "text-lg",
+          toneClasses[tone],
+          valueClassName,
+        )}
+        style={
+          resolvedTextSize !== undefined
+            ? { fontSize: resolvedTextSize }
+            : undefined
+        }
       >
         {displayAmount}
       </span>
@@ -87,7 +106,10 @@ export function CardFieldCurrency({
   );
 
   return (
-    <div className={cn("flex min-w-0 flex-col items-end gap-0.5", className)}>
+    <div
+      className={cn("flex min-w-0 flex-col gap-0.5", className)}
+      style={style}
+    >
       {labelPosition === "below" ? (
         <>
           {valueElement}

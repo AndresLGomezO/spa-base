@@ -25,6 +25,18 @@ export default [
       "./routes/settings/entity-categories.tsx",
     ),
     route("settings/roles", "./routes/settings/roles.tsx"),
+    route(
+      "settings/design-layout/list/:entityName",
+      "./routes/settings/design-layout/list.tsx",
+    ),
+    route(
+      "settings/design-layout/page/:entityName",
+      "./routes/settings/design-layout/page.tsx",
+    ),
+    route(
+      "settings/design-layout/forms/:entityName",
+      "./routes/settings/design-layout/forms.tsx",
+    ),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
       ...buildEntityRouteConfig(),

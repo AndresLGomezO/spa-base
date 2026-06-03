@@ -1,19 +1,20 @@
 import { useCallback, useMemo } from "react";
 import { cn } from "@repo/theme/utils";
 import { resolveCardView } from "@repo/ui-builder";
+import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import {
   Alert,
+  Button,
   CardActionsMenu,
   LayoutCard,
-  LayoutRenderer,
   Pagination,
-  SchemaCell,
   Text,
 } from "@repo/ui";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 
 import {
-  formatFieldLabel,
   getEntityLabel,
   tryGetEntityDefinition,
   type EntityName,
@@ -23,16 +24,16 @@ import {
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
 import { useAuth } from "../../auth/AuthContext";
+import { useAnyPermission } from "../../auth/useAnyPermission";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useOneToManyColumnData } from "../../hooks/useOneToManyColumnData";
 import type { useEntity } from "../../hooks/useEntity";
 import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStatus";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
-import { getEntityCellDisplayMeta } from "./resolve-entity-cell-value";
-import { resolveEntityFieldPath } from "./resolve-entity-field-path";
-import { renderEntityLayoutSlotPreview } from "./render-entity-layout-slot-preview";
+import { createEntityLayoutRenderContext } from "../../features/ui-builder";
 import { getEntityCardListGridClass } from "./entity-card-list-grid";
+import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
@@ -65,7 +66,11 @@ export function EntityLayoutCardView({
   routeParams,
 }: EntityLayoutCardViewProps) {
   const { t, i18n } = useTranslation("common");
+  const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
+  const canConfigureLayout = useAnyPermission(
+    ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  );
   const { getDefinition: getDefinitionOrThrow, items: catalogItems } =
     useEntityCatalog();
   const getDefinition = useCallback(
@@ -128,41 +133,23 @@ export function EntityLayoutCardView({
   if (!layout) {
     return (
       <div className="flex w-full flex-col gap-4">
-        {items.length === 0 ? (
-          <Text>{t("entity.empty")}</Text>
-        ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {items.map((item) => (
-              <article
-                key={item.id}
-                className="border-border flex flex-col gap-3 rounded-lg border p-4"
-              >
-                {(cardView?.fields ?? definition.ui.views[0]?.fields ?? []).map(
-                  (column) => (
-                    <div key={column} className="flex flex-col gap-1">
-                      <Text className="text-muted-foreground text-xs">
-                        {formatFieldLabel(column, definition)}
-                      </Text>
-                      <SchemaCell
-                        value={resolveEntityFieldPath(
-                          item as Record<string, unknown>,
-                          column,
-                          definition,
-                          getOneToManyCellValue,
-                        )}
-                        {...getEntityCellDisplayMeta(column, definition)}
-                        fieldName={column}
-                        locale={i18n.language}
-                        trueLabel={t("table.booleanYes")}
-                        falseLabel={t("table.booleanNo")}
-                      />
-                    </div>
-                  ),
-                )}
-              </article>
-            ))}
-          </div>
-        )}
+        <Alert className="flex flex-col gap-3">
+          <Text>{t("entity.cardLayoutMissing")}</Text>
+          {canConfigureLayout ? (
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="self-start"
+              onClick={() =>
+                navigate(designLayoutEntityPath("list", entityName))
+              }
+            >
+              {t("entity.cardLayoutMissingAction")}
+            </Button>
+          ) : null}
+        </Alert>
+        {items.length === 0 ? <Text>{t("entity.empty")}</Text> : null}
         <Pagination
           page={page}
           totalCount={totalCount}
@@ -239,24 +226,17 @@ export function EntityLayoutCardView({
                 interactive
                 actions={cardActions}
               >
-                <LayoutRenderer
+                <RecursiveLayoutRenderer
                   layout={layout}
-                  renderSlot={(_slotId, binding) => {
-                    if (!binding) {
-                      return null;
-                    }
-
-                    return renderEntityLayoutSlotPreview({
-                      item,
-                      binding,
-                      definition,
-                      locale: i18n.language,
-                      getOneToManyCellValue,
-                      getDefinition,
-                      listFilters,
-                      routeParams,
-                    });
-                  }}
+                  context={createEntityLayoutRenderContext({
+                    item,
+                    definition,
+                    locale: i18n.language,
+                    getOneToManyCellValue,
+                    getDefinition,
+                    listFilters,
+                    routeParams,
+                  })}
                 />
               </LayoutCard>
             );

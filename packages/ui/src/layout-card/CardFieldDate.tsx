@@ -1,3 +1,5 @@
+import type { CSSProperties } from "react";
+
 import { cn } from "@repo/theme/utils";
 
 import {
@@ -17,6 +19,8 @@ export interface CardFieldDateProps {
   readonly showLabel?: boolean;
   readonly labelPosition?: CardLabelPosition;
   readonly className?: string;
+  readonly style?: CSSProperties;
+  readonly valueClassName?: string;
   readonly textSize?: number;
   readonly textThin?: boolean;
   readonly textBold?: boolean;
@@ -56,6 +60,8 @@ export function CardFieldDate({
   showLabel = false,
   labelPosition = "above",
   className,
+  style,
+  valueClassName,
   textSize,
   textThin,
   textBold,
@@ -84,9 +90,12 @@ export function CardFieldDate({
         textBold ? "font-bold" : textThin ? "font-light" : "font-medium",
         textItalic && "italic",
         textUnderline && "underline",
+        valueClassName,
       )}
       style={
-        resolvedTextSize !== undefined ? { fontSize: resolvedTextSize } : undefined
+        resolvedTextSize !== undefined
+          ? { fontSize: resolvedTextSize }
+          : undefined
       }
     >
       {formattedValue}
@@ -94,7 +103,10 @@ export function CardFieldDate({
   );
 
   return (
-    <div className={cn("flex min-w-0 flex-col gap-0.5", className)}>
+    <div
+      className={cn("flex min-w-0 flex-col gap-0.5", className)}
+      style={style}
+    >
       {labelPosition === "below" ? (
         <>
           {valueElement}

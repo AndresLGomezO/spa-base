@@ -90,7 +90,7 @@ The system must be designed as part of a **modular monorepo**, separating concer
 Framework-agnostic engine that defines:
 
 - Recursive layout model
-- JSON schema structure
+- JSON schema structure ([UIBuilderOutputJSON.md](./UIBuilderOutputJSON.md) — full output spec)
 - TypeScript types
 - Validation logic
 - Data binding resolution

@@ -1,6 +1,5 @@
 import { createHash } from "node:crypto";
 
-import { extractKeySlice, resolveMetricOwnerId } from "./metric-record-keys.js";
 import { stableStringify } from "./stable-stringify.js";
 
 export { extractKeySlice, resolveMetricOwnerId } from "./metric-record-keys.js";

@@ -1,0 +1,110 @@
+import { describe, expect, it } from "vitest";
+
+import { createLayoutId } from "./id.js";
+import {
+  addComponentRowAt,
+  createDefaultComponent,
+  createEmptyColumn,
+  createEmptyLayout,
+} from "./mutations.js";
+
+describe("addComponentRowAt", () => {
+  it("adds a component to the third nested column at the root level", () => {
+    const layout = createEmptyLayout(1);
+    const nestedRowId = createLayoutId("nested");
+    const nested: (typeof layout.root.columns)[0]["rows"][0] = {
+      type: "nested-layout",
+      id: nestedRowId,
+      columnCount: 3,
+      columns: [createEmptyColumn(), createEmptyColumn(), createEmptyColumn()],
+    };
+
+    const withNested = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [{ ...layout.root.columns[0]!, rows: [nested] }],
+      },
+    };
+
+    const next = addComponentRowAt(
+      withNested,
+      {
+        scope: "nested",
+        columnIndex: 0,
+        rowId: nestedRowId,
+        nestedColumnIndex: 2,
+      },
+      createDefaultComponent("text", "name"),
+    );
+
+    expect(next.root.columns[0]?.rows[0]).toMatchObject({
+      type: "nested-layout",
+      columns: [
+        { rows: [] },
+        { rows: [] },
+        { rows: [{ type: "component", component: { kind: "text" } }] },
+      ],
+    });
+  });
+
+  it("adds a component when the nested layout is inside another nested column", () => {
+    const layout = createEmptyLayout(1);
+    const outerNestedId = createLayoutId("nested_outer");
+    const innerNestedId = createLayoutId("nested_inner");
+
+    const innerNested = {
+      type: "nested-layout" as const,
+      id: innerNestedId,
+      columnCount: 3,
+      columns: [createEmptyColumn(), createEmptyColumn(), createEmptyColumn()],
+    };
+
+    const outerNested = {
+      type: "nested-layout" as const,
+      id: outerNestedId,
+      columnCount: 2,
+      columns: [
+        createEmptyColumn(),
+        { ...createEmptyColumn(), rows: [innerNested] },
+      ],
+    };
+
+    const withNested = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [{ ...layout.root.columns[0]!, rows: [outerNested] }],
+      },
+    };
+
+    const next = addComponentRowAt(
+      withNested,
+      {
+        scope: "nested",
+        columnIndex: 0,
+        rowId: innerNestedId,
+        nestedColumnIndex: 2,
+      },
+      createDefaultComponent("text", "balance"),
+    );
+
+    const outer = next.root.columns[0]?.rows[0];
+    expect(outer?.type).toBe("nested-layout");
+    if (outer?.type !== "nested-layout") {
+      return;
+    }
+
+    const inner = outer.columns[1]?.rows[0];
+    expect(inner?.type).toBe("nested-layout");
+    if (inner?.type !== "nested-layout") {
+      return;
+    }
+
+    expect(inner.columns[2]?.rows).toHaveLength(1);
+    expect(inner.columns[2]?.rows[0]).toMatchObject({
+      type: "component",
+      component: { kind: "text", primary: { path: "balance" } },
+    });
+  });
+});

@@ -380,6 +380,43 @@ function extractEntityViewMetricsBindingKeys(corpus) {
   );
 }
 
+/** metrics.dateGranularity.formats|options.${granularity} in source → keys under those objects */
+function extractMetricsDateGranularityKeys(corpus) {
+  const needsFormats = corpus.includes("metrics.dateGranularity.formats.${");
+  const needsOptions = corpus.includes("metrics.dateGranularity.options.${");
+  if (!needsFormats && !needsOptions) return [];
+
+  const refMetrics = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).metrics;
+
+  const dateGranularity = refMetrics?.dateGranularity;
+  if (!dateGranularity || typeof dateGranularity !== "object") return [];
+
+  const keys = [];
+  if (needsFormats) {
+    const formats = dateGranularity.formats;
+    if (formats && typeof formats === "object") {
+      for (const key of Object.keys(formats)) {
+        keys.push(
+          `${DEFAULT_NAMESPACE}:metrics.dateGranularity.formats.${key}`,
+        );
+      }
+    }
+  }
+  if (needsOptions) {
+    const options = dateGranularity.options;
+    if (options && typeof options === "object") {
+      for (const key of Object.keys(options)) {
+        keys.push(
+          `${DEFAULT_NAMESPACE}:metrics.dateGranularity.options.${key}`,
+        );
+      }
+    }
+  }
+  return keys;
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -562,7 +599,7 @@ mergeUsedKeys(
 mergeUsedKeys(
   usedKeys,
   extractBadgeVariantKeys(corpus),
-  path.join(SRC_DIR, "components/entity/EntityViewSettingsModal.tsx"),
+  path.join(SRC_DIR, "features/ui-builder/EntityListLayoutDesignEditor.tsx"),
 );
 const appearanceEditorFile = path.join(
   SRC_DIR,
@@ -600,6 +637,15 @@ mergeUsedKeys(
   usedKeys,
   extractEntityViewMetricsBindingKeys(corpus),
   metricBindingEditorFile,
+);
+const dateGranularityPickerFile = path.join(
+  SRC_DIR,
+  "components/metrics/DateFieldGranularityPicker.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractMetricsDateGranularityKeys(corpus),
+  dateGranularityPickerFile,
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

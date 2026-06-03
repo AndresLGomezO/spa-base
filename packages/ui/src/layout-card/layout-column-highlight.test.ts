@@ -10,9 +10,7 @@ describe("layout-column-highlight", () => {
     expect(
       resolveLayoutColumnIndex(
         {
-          type: "stack",
           id: "__col:2",
-          children: [],
         },
         0,
       ),

@@ -22,6 +22,7 @@ COPY packages/entity-relations/package.json ./packages/entity-relations/
 COPY packages/encryption/package.json ./packages/encryption/
 COPY packages/modules/package.json ./packages/modules/
 COPY packages/ui-builder/package.json ./packages/ui-builder/
+COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/

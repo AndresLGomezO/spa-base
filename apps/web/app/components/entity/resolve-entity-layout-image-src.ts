@@ -20,6 +20,60 @@ export function readEntityFileDownloadUrl(value: unknown): string | null {
   return null;
 }
 
+function readFieldDefaultImageUrl(
+  fieldMeta:
+    | {
+        readonly defaultImage?: {
+          readonly downloadUrl?: string;
+        };
+      }
+    | undefined,
+): string | null {
+  const defaultImage = fieldMeta?.defaultImage;
+  if (
+    defaultImage &&
+    "downloadUrl" in defaultImage &&
+    typeof defaultImage.downloadUrl === "string" &&
+    defaultImage.downloadUrl.length > 0
+  ) {
+    return defaultImage.downloadUrl;
+  }
+
+  return null;
+}
+
+/** Default image from the field definition (`defaultImage`), not layout preview assets. */
+export function resolveEntityLayoutFieldDefaultImageSrc(options: {
+  readonly fieldPath: string;
+  readonly definition: SerializableEntityDefinition;
+  readonly getDefinition?: (
+    entityName: string,
+  ) => EntityCatalogEntry | undefined;
+}): string | null {
+  const trimmedPath = options.fieldPath.trim();
+  if (!trimmedPath) {
+    return null;
+  }
+
+  const parsed = parseRelationFieldPath(options.definition, trimmedPath);
+  if (parsed) {
+    const relationMeta =
+      options.definition.fields[parsed.relationField]?.relation;
+
+    if (relationMeta && options.getDefinition) {
+      const targetDefinition = options.getDefinition(relationMeta.target);
+      const targetFieldMeta = targetDefinition?.fields[parsed.subField];
+      return readFieldDefaultImageUrl(targetFieldMeta);
+    }
+  }
+
+  const rootField = trimmedPath.includes(".")
+    ? (trimmedPath.split(".", 1)[0] ?? trimmedPath)
+    : trimmedPath;
+
+  return readFieldDefaultImageUrl(options.definition.fields[rootField]);
+}
+
 /** Default / field-level fallback when the record has no file to resolve. */
 export function resolveEntityLayoutImagePlaceholderSrc(options: {
   readonly fieldPath: string;
@@ -38,13 +92,9 @@ export function resolveEntityLayoutImagePlaceholderSrc(options: {
       const targetDefinition = options.getDefinition(relationMeta.target);
       const subField = parsed.subField;
       const targetFieldMeta = targetDefinition?.fields[subField];
-      const defaultImage = targetFieldMeta?.defaultImage;
-      if (
-        defaultImage &&
-        "downloadUrl" in defaultImage &&
-        typeof defaultImage.downloadUrl === "string"
-      ) {
-        return defaultImage.downloadUrl;
+      const defaultImageUrl = readFieldDefaultImageUrl(targetFieldMeta);
+      if (defaultImageUrl) {
+        return defaultImageUrl;
       }
 
       const subDisplayMeta = targetDefinition

@@ -23,6 +23,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/ui-builder-core": "workspace:*",
     "zod": "catalog:"
   }
 }

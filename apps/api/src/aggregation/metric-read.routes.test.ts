@@ -118,6 +118,8 @@ describe("metric read routes", () => {
         filters: [],
         groupBy: ["month"],
         dimensions: ["categoryId"],
+        dateFieldGranularity: {},
+        valueDisplayFormat: "number",
         aggregations: [{ field: "amount", operation: "SUM" }],
         schemaVersionDependency: 1,
         fieldsDependency: ["amount", "month", "categoryId"],

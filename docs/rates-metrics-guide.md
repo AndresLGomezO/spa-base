@@ -16,7 +16,7 @@ End-to-end guide for creating metrics on the **mocked Rates tenant**, wiring the
    - [Level 4 — M13–M15](#level-4--m13m15)
    - [Level 5 — M16–M23](#level-5--m16m23)
 4. [Create definitions (Settings → Metrics)](#4-create-definitions-settings--metrics)
-5. [Wire the UI (View settings → KPI & Series)](#5-wire-the-ui-view-settings--kpi--series)
+5. [Wire the UI (Design layout → KPI & Series)](#5-wire-the-ui-design-layout--kpi--series)
 6. [Binding sources cheat sheet](#6-binding-sources-cheat-sheet)
 7. [Permissions & troubleshooting](#7-permissions--troubleshooting)
 
@@ -653,9 +653,9 @@ Other Rates **source models** (configure KPI/Series on matching list pages).
 
 ---
 
-## 5. Wire the UI (View settings → KPI & Series)
+## 5. Wire the UI (Design layout → KPI & Series)
 
-**Configure layout:** `/app/transaction` → gear → **View settings**  
+**Configure layout:** **Settings → Design layout → Item list** → select entity (e.g. transaction), or **Design layout** on `/app/transaction`  
 Requires: `entityUiOverride.update` + `metricDefinition.read`  
 **View values:** `transaction.read` (e.g. `normalRatesUser`)
 
@@ -689,7 +689,7 @@ Requires: `entityUiOverride.update` + `metricDefinition.read`
 
 **Steps (KPI):**
 
-1. View settings → **Add KPI**
+1. Design layout → Item list → **Add KPI** (metrics section)
 2. Select metric definition
 3. For each field under Group by / Dimensions, set **Binding source** (see [§6](#6-binding-sources-cheat-sheet))
 4. **Save layout**

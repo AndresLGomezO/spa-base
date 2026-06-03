@@ -89,12 +89,10 @@ export {
   resolveSearchField,
 } from "./search/searchable-fields.js";
 export {
-  isCardMetricKpiBinding,
   metricBindingSourceSchema,
   viewMetricWidgetSchema,
 } from "./ui/metric-widget-types.js";
 export type {
-  CardMetricKpiSlotBinding,
   MetricBindingSource,
   MetricWidgetBindings,
   ViewMetricKpiWidget,
@@ -102,36 +100,32 @@ export type {
   ViewMetricWidget,
 } from "./ui/metric-widget-types.js";
 export type {
+  UiLayoutDocument,
+  UiComponentConfig,
+  UiComponentKind,
+  DataSource,
+  MetricKpiComponentConfig,
   CardBadgeVariant,
-  CardFieldSlotBinding,
-  CardLabelPosition,
-  CardTextColor,
-  CardFieldSlotComponentType,
-  CardLayoutConfig,
-  CardSlotBinding,
-  CardSlotComponentType,
-  LayoutAlign,
-  LayoutContainerNode,
-  LayoutDirection,
-  LayoutJustify,
-  LayoutNode,
-  LayoutNodeBase,
-  LayoutSize,
-  LayoutSpacing,
-  LayoutSlotNode,
-} from "./ui/card-layout-types.js";
+  LabelConfig,
+  StyleRule,
+} from "@repo/ui-builder-core";
+export {
+  uiLayoutDocumentSchema,
+  createDefaultUiLayout,
+  createAccountCardSeedLayout,
+  assertLayoutFieldPaths,
+  isValidLayoutFieldPath,
+  listLayoutFieldOptions,
+  formatFieldPathLabel,
+  relationAliasFieldPath,
+  isMetricKpiComponent,
+} from "@repo/ui-builder-core";
 export {
   LAYOUT_SPACING_KEYS,
   LAYOUT_SPACING_MAX_PX,
   LAYOUT_SPACING_MIN_PX,
   type LayoutSpacingKey,
 } from "./ui/layout-spacing.js";
-export {
-  assertCardLayoutFieldPaths,
-  isValidCardLayoutFieldPath,
-  listCardLayoutFieldOptions,
-  relationAliasFieldPath,
-} from "./ui/card-layout-validation.js";
 export {
   ENTITY_UI_OVERRIDES_COLLECTION,
   entityUiOverrideRecordSchema,

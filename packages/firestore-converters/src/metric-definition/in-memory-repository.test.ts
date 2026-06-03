@@ -11,6 +11,8 @@ describe("createInMemoryMetricDefinitionRepository", () => {
       filters: [],
       groupBy: [],
       dimensions: [],
+      dateFieldGranularity: {},
+      valueDisplayFormat: "number" as const,
       aggregations: [{ field: "amount", operation: "SUM" as const }],
       schemaVersionDependency: 1,
       fieldsDependency: ["amount"],

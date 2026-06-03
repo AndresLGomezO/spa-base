@@ -15,6 +15,7 @@ import {
   PLATFORM_APPEARANCE_NAV_ITEM,
   PLATFORM_CURRENT_TENANT_NAV_ITEM,
   ANALYTICS_GROUP_ICON,
+  DESIGN_LAYOUT_GROUP_ICON,
   DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM,
   DATA_STRUCTURE_GROUP_ICON,
   DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM,
@@ -26,6 +27,10 @@ import {
   type NavItemConfig,
   type NavLinkConfig,
 } from "../components/sidebar/nav-config";
+import {
+  DESIGN_LAYOUT_MATCH_PATH,
+  useDesignLayoutNavSubGroups,
+} from "./design-layout-nav";
 
 function compareNavItems(left: EntityNavItem, right: EntityNavItem): number {
   const leftOrder = left.navOrder ?? Number.MAX_SAFE_INTEGER;
@@ -51,6 +56,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
   const { items: catalogItems } = useEntityCatalog();
   const entityNavItems = useEntityNavItems();
   const categoriesQuery = useEntityNavCategories();
+  const designLayoutSubGroups = useDesignLayoutNavSubGroups();
 
   return useMemo(() => {
     if (availableTenants.length === 0) {
@@ -165,6 +171,16 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       });
     }
 
+    if (designLayoutSubGroups.length > 0) {
+      items.push({
+        id: "design-layout",
+        labelKey: "designLayout",
+        matchPath: DESIGN_LAYOUT_MATCH_PATH,
+        icon: DESIGN_LAYOUT_GROUP_ICON,
+        children: designLayoutSubGroups,
+      });
+    }
+
     if (isSuperAdmin) {
       items.push({
         id: "platform",
@@ -183,6 +199,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     availableTenants.length,
     catalogItems,
     categoriesQuery.data,
+    designLayoutSubGroups,
     entityNavItems,
     isSuperAdmin,
     permissions,

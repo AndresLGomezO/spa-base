@@ -20,11 +20,16 @@ import {
 import {
   isNavGroup,
   isNavGroupActive,
+  isNavSubGroup,
+  isNavSubGroupActive,
   isPathActive,
   resolveNavGroupLabel,
   resolveNavLinkLabel,
+  resolveNavSubGroupLabel,
   type NavGroupConfig,
+  type NavGroupChild,
   type NavLinkConfig,
+  type NavSubGroupConfig,
 } from "./nav-config";
 import { useAccessibleNavItems } from "../../routing/useAccessibleNavItems";
 
@@ -55,6 +60,129 @@ function NavLinkItem({
       </NavLink>
     </SidebarMenuItem>
   );
+}
+
+function NavSubGroupLink({
+  link,
+  onNavigate,
+}: {
+  readonly link: NavLinkConfig;
+  readonly onNavigate?: () => void;
+}) {
+  const { t } = useTranslation("common");
+  const ChildIcon = link.icon;
+
+  return (
+    <li className="list-none min-w-0 w-full">
+      <NavLink
+        to={link.to}
+        onClick={onNavigate}
+        className={({ isActive }) =>
+          cn(sidebarMenuButtonClassName({ isActive }), "min-w-0")
+        }
+      >
+        <SidebarMenuIcon>
+          <ChildIcon />
+        </SidebarMenuIcon>
+        <SidebarLabel>{resolveNavLinkLabel(link, t)}</SidebarLabel>
+      </NavLink>
+    </li>
+  );
+}
+
+function NavLinkPopoverItem({
+  link,
+  pathname,
+  onNavigate,
+  onClosePopover,
+}: {
+  readonly link: NavLinkConfig;
+  readonly pathname: string;
+  readonly onNavigate?: () => void;
+  readonly onClosePopover: () => void;
+}) {
+  const { t } = useTranslation("common");
+  const ChildIcon = link.icon;
+  const active = isPathActive(pathname, link.matchPath);
+
+  return (
+    <NavLink
+      to={link.to}
+      onClick={() => {
+        onNavigate?.();
+        onClosePopover();
+      }}
+      className={sidebarMenuButtonClassName({ isActive: active })}
+    >
+      <SidebarMenuIcon>
+        <ChildIcon />
+      </SidebarMenuIcon>
+      <SidebarLabel>{resolveNavLinkLabel(link, t)}</SidebarLabel>
+    </NavLink>
+  );
+}
+
+function NavSubGroupCollapsible({
+  subgroup,
+  onNavigate,
+}: {
+  readonly subgroup: NavSubGroupConfig;
+  readonly onNavigate?: () => void;
+}) {
+  const { t } = useTranslation("common");
+  const { pathname } = useLocation();
+  const subgroupActive = isNavSubGroupActive(pathname, subgroup);
+  const [open, setOpen] = useState(subgroupActive);
+
+  useEffect(() => {
+    if (subgroupActive) {
+      setOpen(true);
+    }
+  }, [subgroupActive]);
+
+  return (
+    <li className="list-none min-w-0 w-full">
+      <button
+        type="button"
+        aria-expanded={open}
+        onClick={() => setOpen((current) => !current)}
+        className={cn(
+          sidebarMenuButtonClassName({ isActive: subgroupActive }),
+          "text-muted-foreground w-full text-sm",
+        )}
+      >
+        <SidebarLabel>{resolveNavSubGroupLabel(subgroup, t)}</SidebarLabel>
+        <ChevronDown
+          className={`ml-auto size-4 shrink-0 transition-transform ${open ? "rotate-180" : ""}`}
+        />
+      </button>
+      {open ? (
+        <SidebarSubMenu className="border-l-0 pl-2">
+          {subgroup.children.map((link) => (
+            <NavSubGroupLink
+              key={link.id}
+              link={link}
+              onNavigate={onNavigate}
+            />
+          ))}
+        </SidebarSubMenu>
+      ) : null}
+    </li>
+  );
+}
+
+function NavGroupChildLinks({
+  child,
+  onNavigate,
+}: {
+  readonly child: NavGroupChild;
+  readonly onNavigate?: () => void;
+}) {
+  if (isNavSubGroup(child)) {
+    return <NavSubGroupCollapsible subgroup={child} onNavigate={onNavigate} />;
+  }
+
+  return <NavSubGroupLink link={child} onNavigate={onNavigate} />;
 }
 
 function SettingsGroup({
@@ -102,27 +230,32 @@ function SettingsGroup({
             </SidebarMenuButton>
           }
         >
-          {group.children.map((child) => {
-            const ChildIcon = child.icon;
-            const active = isPathActive(pathname, child.matchPath);
-
-            return (
-              <NavLink
+          {group.children.map((child) =>
+            isNavSubGroup(child) ? (
+              <div key={child.id} className="flex flex-col gap-0.5">
+                <span className="text-muted-foreground px-2 py-1 text-[11px] font-semibold uppercase tracking-wide">
+                  {resolveNavSubGroupLabel(child, t)}
+                </span>
+                {child.children.map((link) => (
+                  <NavLinkPopoverItem
+                    key={link.id}
+                    link={link}
+                    pathname={pathname}
+                    onNavigate={onNavigate}
+                    onClosePopover={() => setPopoverOpen(false)}
+                  />
+                ))}
+              </div>
+            ) : (
+              <NavLinkPopoverItem
                 key={child.id}
-                to={child.to}
-                onClick={() => {
-                  onNavigate?.();
-                  setPopoverOpen(false);
-                }}
-                className={sidebarMenuButtonClassName({ isActive: active })}
-              >
-                <SidebarMenuIcon>
-                  <ChildIcon />
-                </SidebarMenuIcon>
-                <SidebarLabel>{resolveNavLinkLabel(child, t)}</SidebarLabel>
-              </NavLink>
-            );
-          })}
+                link={child}
+                pathname={pathname}
+                onNavigate={onNavigate}
+                onClosePopover={() => setPopoverOpen(false)}
+              />
+            ),
+          )}
         </Popover>
       </SidebarMenuItem>
     );
@@ -145,26 +278,13 @@ function SettingsGroup({
       </SidebarMenuButton>
       {open ? (
         <SidebarSubMenu>
-          {group.children.map((child) => {
-            const ChildIcon = child.icon;
-
-            return (
-              <li key={child.id} className="list-none min-w-0 w-full">
-                <NavLink
-                  to={child.to}
-                  onClick={onNavigate}
-                  className={({ isActive }) =>
-                    cn(sidebarMenuButtonClassName({ isActive }), "min-w-0")
-                  }
-                >
-                  <SidebarMenuIcon>
-                    <ChildIcon />
-                  </SidebarMenuIcon>
-                  <SidebarLabel>{resolveNavLinkLabel(child, t)}</SidebarLabel>
-                </NavLink>
-              </li>
-            );
-          })}
+          {group.children.map((child) => (
+            <NavGroupChildLinks
+              key={child.id}
+              child={child}
+              onNavigate={onNavigate}
+            />
+          ))}
         </SidebarSubMenu>
       ) : null}
     </SidebarMenuItem>

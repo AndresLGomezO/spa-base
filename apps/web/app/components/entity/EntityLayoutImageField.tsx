@@ -9,8 +9,10 @@ import {
   isEntityFileReferenceWithDownload,
 } from "../../lib/entity-file-client";
 import { resolveEntityFieldRootName } from "./resolve-entity-field-path";
+import { ENTITY_LAYOUT_IMAGE_PLACEHOLDER_SRC } from "./entity-layout-image-placeholder.js";
 import {
   readEntityFileDownloadUrl,
+  resolveEntityLayoutFieldDefaultImageSrc,
   resolveEntityLayoutImageDownloadTarget,
   resolveEntityLayoutImagePlaceholderSrc,
 } from "./resolve-entity-layout-image-src";
@@ -25,6 +27,9 @@ interface EntityLayoutImageFieldProps {
   readonly getDefinition?: (
     entityName: string,
   ) => EntityCatalogEntry | undefined;
+  /** Layout primary field; default image fallback uses this path, not resolved fallbacks. */
+  readonly primaryFieldPath?: string;
+  readonly usePreviewPlaceholder?: boolean;
 }
 
 export function EntityLayoutImageField({
@@ -35,6 +40,8 @@ export function EntityLayoutImageField({
   className,
   imageSize,
   getDefinition,
+  primaryFieldPath,
+  usePreviewPlaceholder = false,
 }: EntityLayoutImageFieldProps) {
   const rootField = resolveEntityFieldRootName(fieldPath);
   const directUrl = readEntityFileDownloadUrl(rawValue);
@@ -44,8 +51,16 @@ export function EntityLayoutImageField({
     definition,
   });
   const shouldFetch = directUrl === null && downloadTarget !== null;
-  const placeholderSrc =
-    directUrl === null && !shouldFetch
+
+  const defaultFieldPath = (primaryFieldPath ?? fieldPath).trim();
+  const fieldDefaultSrc = resolveEntityLayoutFieldDefaultImageSrc({
+    fieldPath: defaultFieldPath,
+    definition,
+    getDefinition,
+  });
+
+  const previewFallbackSrc =
+    usePreviewPlaceholder && directUrl === null && !shouldFetch
       ? resolveEntityLayoutImagePlaceholderSrc({
           fieldPath,
           definition,
@@ -70,11 +85,15 @@ export function EntityLayoutImageField({
       ? rawValue.fileName
       : formatFieldLabel(rootField, definition);
 
-  const src =
-    directUrl ??
-    (shouldFetch ? downloadQuery.data : null) ??
-    placeholderSrc ??
-    null;
+  const src = usePreviewPlaceholder
+    ? (directUrl ??
+      (shouldFetch ? downloadQuery.data : null) ??
+      previewFallbackSrc ??
+      ENTITY_LAYOUT_IMAGE_PLACEHOLDER_SRC)
+    : (directUrl ??
+      (shouldFetch ? downloadQuery.data : null) ??
+      fieldDefaultSrc ??
+      null);
 
   return (
     <CardFieldImage

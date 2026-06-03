@@ -47,6 +47,8 @@ The builder operates in different contexts and receives different inputs:
 
 The builder must generate a **fully typed JSON configuration** representing the UI layout.
 
+**Authoritative field-by-field reference (hand-authored layouts, DB format):** [UIBuilderOutputJSON.md](./UIBuilderOutputJSON.md)
+
 Requirements:
 
 * Deterministic structure

@@ -15,6 +15,7 @@ COPY apps/worker-aggregation/package.json ./apps/worker-aggregation/
 COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/entities/package.json ./packages/entities/
+COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
 COPY packages/entity-categories/package.json ./packages/entity-categories/
 COPY packages/event-engine/package.json ./packages/event-engine/
 COPY packages/hooks/package.json ./packages/hooks/
@@ -35,6 +36,7 @@ COPY packages/firestore-converters ./packages/firestore-converters
 COPY packages/firestore-indexes ./packages/firestore-indexes
 COPY packages/dynamic-entities ./packages/dynamic-entities
 COPY packages/entities ./packages/entities
+COPY packages/ui-builder-core ./packages/ui-builder-core
 COPY packages/entity-categories ./packages/entity-categories
 COPY packages/hooks ./packages/hooks
 COPY packages/query-engine ./packages/query-engine
