@@ -32,7 +32,7 @@ export async function uploadEntityFile(input: {
   readonly fileName: string;
   readonly data: string;
   readonly recordId?: string;
-  readonly purpose?: "record" | "fieldDefault";
+  readonly purpose?: "record" | "fieldDefault" | "layoutStatic";
 }): Promise<EntityFileReferenceWithDownload> {
   const response = await apiRequest<{
     readonly file: EntityFileReferenceWithDownload;
@@ -53,6 +53,22 @@ export async function fetchEntityFileDownloadUrl(
         entityName: target.entityName,
         recordId: target.recordId,
         fieldName: target.fieldName,
+      },
+    },
+  );
+  return response.downloadUrl;
+}
+
+export async function fetchEntityFileDownloadUrlByStoragePath(
+  entityName: string,
+  storagePath: string,
+): Promise<string> {
+  const response = await apiRequest<{ readonly downloadUrl: string }>(
+    "/api/entity-files/download-storage",
+    {
+      query: {
+        entityName,
+        storagePath,
       },
     },
   );

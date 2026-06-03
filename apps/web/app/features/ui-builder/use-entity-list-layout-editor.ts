@@ -14,7 +14,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
-import { entityCatalogQueryKey } from "../../query/query-client";
+import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
 type ListPresentationType = "table" | "card" | "expandableTable";
 
@@ -198,23 +198,21 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
         views: buildViews(),
         listViewType: viewType,
       };
-      if (viewType === "card") {
-        await putEntityUiOverride(entityName, {
-          ...payload,
-          listItem: layout,
-        });
-      } else {
-        const existingListItem =
-          definition.ui.listItem ??
-          uiViews.find((view) => view.type === "card")?.layout;
-        await putEntityUiOverride(entityName, {
-          ...payload,
-          ...(existingListItem ? { listItem: existingListItem } : {}),
-        });
-      }
-      await queryClient.invalidateQueries({
-        queryKey: entityCatalogQueryKey,
-      });
+      const existingListItem =
+        definition.ui.listItem ??
+        uiViews.find((view) => view.type === "card")?.layout;
+      const { override } =
+        viewType === "card"
+          ? await putEntityUiOverride(entityName, {
+              ...payload,
+              listItem: layout,
+            })
+          : await putEntityUiOverride(entityName, {
+              ...payload,
+              ...(existingListItem ? { listItem: existingListItem } : {}),
+            });
+
+      patchEntityCatalogAfterUiOverrideSave(queryClient, entityName, override);
       return true;
     } catch {
       return false;

@@ -1,11 +1,14 @@
 import { useEffect } from "react";
 
-import { useEntityCatalog } from "./entity-catalog-context";
+import { entityCatalogQueryKey, queryClient } from "../query/query-client";
 
+/** Refetch catalog on mount only when cache is stale (avoids extra API calls). */
 export function useRefreshEntityCatalogOnMount(): void {
-  const { refresh } = useEntityCatalog();
-
   useEffect(() => {
-    void refresh();
-  }, [refresh]);
+    void queryClient.refetchQueries({
+      queryKey: entityCatalogQueryKey,
+      type: "active",
+      stale: true,
+    });
+  }, []);
 }

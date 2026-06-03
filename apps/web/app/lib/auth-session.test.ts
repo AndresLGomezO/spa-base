@@ -10,6 +10,11 @@ vi.mock("./app-check", () => ({
   getAppCheckHeaderValue: vi.fn(async () => "emulator"),
 }));
 
+vi.mock("./fetch-rate-limit-retry", () => ({
+  fetchWithRateLimitRetry: (input: URL, init: RequestInit): Promise<Response> =>
+    fetch(input, init),
+}));
+
 import { selectTenantSession, syncAuthSession } from "./auth-session";
 
 describe("syncAuthSession", () => {
@@ -74,6 +79,29 @@ describe("syncAuthSession", () => {
         },
       }),
     );
+  });
+
+  it("returns transient error on rate limit without signing out semantics", async () => {
+    fetchMock.mockResolvedValue({
+      status: 429,
+      ok: false,
+      json: async () => ({
+        ok: false,
+        message: "Rate limit exceeded, retry in 7 seconds",
+      }),
+    });
+
+    const firebaseUser = {
+      getIdToken: vi.fn(async () => "id-token"),
+    };
+
+    const result = await syncAuthSession(firebaseUser as never);
+
+    expect(result).toEqual({
+      ok: false,
+      transient: true,
+      error: "Rate limit exceeded, retry in 7 seconds",
+    });
   });
 
   it("returns error when API responds with failure", async () => {

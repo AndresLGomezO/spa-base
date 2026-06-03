@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type { UiLayoutDocument, ViewConfig } from "@repo/entities";
+import type {
+  EntityUiOverrideRecord,
+  UiLayoutDocument,
+  ViewConfig,
+} from "@repo/entities";
 import {
   createDefaultFormLayout,
   createDefaultMainPageLayout,
@@ -11,7 +15,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
-import { entityCatalogQueryKey } from "../../query/query-client";
+import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
 type UiOverrideSlice =
   | "listItem"
@@ -113,6 +117,7 @@ export function useEntityUiOverrideEditor(
           : {}),
       };
 
+      let override: EntityUiOverrideRecord;
       if (slice === "listItem") {
         const cardView = views.find((v) => v.type === "card");
         const nextViews = cardView
@@ -130,36 +135,34 @@ export function useEntityUiOverrideEditor(
                 layout,
               },
             ];
-        await putEntityUiOverride(entityName, {
+        ({ override } = await putEntityUiOverride(entityName, {
           ...basePayload,
           views: normalizeEntityViews(nextViews),
           listItem: layout,
-        });
+        }));
       } else if (slice === "mainPage") {
-        await putEntityUiOverride(entityName, {
+        ({ override } = await putEntityUiOverride(entityName, {
           ...basePayload,
           mainPage: layout,
-        });
+        }));
       } else if (slice === "recordDetail") {
-        await putEntityUiOverride(entityName, {
+        ({ override } = await putEntityUiOverride(entityName, {
           ...basePayload,
           recordDetail: layout,
-        });
+        }));
       } else if (slice === "forms.create") {
-        await putEntityUiOverride(entityName, {
+        ({ override } = await putEntityUiOverride(entityName, {
           ...basePayload,
           forms: { create: layout },
-        });
+        }));
       } else {
-        await putEntityUiOverride(entityName, {
+        ({ override } = await putEntityUiOverride(entityName, {
           ...basePayload,
           forms: { edit: layout },
-        });
+        }));
       }
 
-      await queryClient.invalidateQueries({
-        queryKey: entityCatalogQueryKey,
-      });
+      patchEntityCatalogAfterUiOverrideSave(queryClient, entityName, override);
       return true;
     } catch {
       return false;

@@ -11,11 +11,20 @@ export type UiComponentKind =
   | "form-field"
   | "form-section"
   | "form-actions"
+  | "wizard-progress"
+  | "wizard-step-host"
+  | "wizard-actions"
   | "related-records"
   | "page-header"
   | "page-toolbar"
   | "page-metrics"
   | "page-list";
+
+export type WizardStepStatusKind =
+  | "pending"
+  | "active"
+  | "completed"
+  | "invalid";
 
 export type DataSource =
   | { readonly type: "field"; readonly path: string }
@@ -110,6 +119,27 @@ export interface FormActionsComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export interface WizardProgressComponentConfig {
+  readonly kind: "wizard-progress";
+  readonly conditionalStyles?: readonly ConditionalStyleRule[];
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface WizardStepHostComponentConfig {
+  readonly kind: "wizard-step-host";
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface WizardActionsComponentConfig {
+  readonly kind: "wizard-actions";
+  readonly nextLabel?: string;
+  readonly backLabel?: string;
+  readonly cancelLabel?: string;
+  readonly submitCreateLabel?: string;
+  readonly submitEditLabel?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
 export interface RelatedRecordsComponentConfig {
   readonly kind: "related-records";
   readonly childEntity: string;
@@ -149,8 +179,24 @@ export type UiComponentConfig =
   | FormFieldComponentConfig
   | FormSectionComponentConfig
   | FormActionsComponentConfig
+  | WizardProgressComponentConfig
+  | WizardStepHostComponentConfig
+  | WizardActionsComponentConfig
   | RelatedRecordsComponentConfig
   | PageUiComponentConfig;
+
+export function isWizardUiComponent(
+  config: UiComponentConfig,
+): config is
+  | WizardProgressComponentConfig
+  | WizardStepHostComponentConfig
+  | WizardActionsComponentConfig {
+  return (
+    config.kind === "wizard-progress" ||
+    config.kind === "wizard-step-host" ||
+    config.kind === "wizard-actions"
+  );
+}
 
 export function isPageUiComponent(
   config: UiComponentConfig,

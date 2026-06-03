@@ -81,6 +81,53 @@ describe("mergeEntityUiOverrides", () => {
     expect(merged.ui.forms.create.layout).toEqual(createLayout);
   });
 
+  it("applies forms.modalSize", () => {
+    const merged = mergeEntityUiOverrides(baseDefinition, {
+      entityName: "widget",
+      views: baseDefinition.ui.views,
+      forms: { modalSize: "xl" },
+      updatedAt: new Date().toISOString(),
+    });
+
+    expect(merged.ui.forms.modalSize).toBe("xl");
+  });
+
+  it("applies unified forms.layout to both create and edit", () => {
+    const shared = createDefaultUiLayout(["name"]);
+    const merged = mergeEntityUiOverrides(baseDefinition, {
+      entityName: "account",
+      updatedAt: new Date().toISOString(),
+      views: [{ type: "table", name: "default", fields: ["name"] }],
+      forms: { layout: shared, presentation: "plain" },
+    });
+
+    expect(merged.ui.forms.create.layout).toEqual(shared);
+    expect(merged.ui.forms.edit.layout).toEqual(shared);
+    expect(merged.ui.forms.presentation).toBe("plain");
+  });
+
+  it("merges wizard presentation and config", () => {
+    const wizard = {
+      shellLayout: createDefaultUiLayout(["name"]),
+      steps: [
+        {
+          id: "step-1",
+          label: "Details",
+          layout: createDefaultUiLayout(["name"]),
+        },
+      ],
+    };
+    const merged = mergeEntityUiOverrides(baseDefinition, {
+      entityName: "account",
+      updatedAt: new Date().toISOString(),
+      views: [{ type: "table", name: "default", fields: ["name"] }],
+      forms: { presentation: "wizard", wizard },
+    });
+
+    expect(merged.ui.forms.presentation).toBe("wizard");
+    expect(merged.ui.forms.wizard).toEqual(wizard);
+  });
+
   it("migrates legacy detail override to recordDetailLayout", () => {
     const legacyDetail = createDefaultUiLayout(["name"]);
     const merged = mergeEntityUiOverrides(baseDefinition, {

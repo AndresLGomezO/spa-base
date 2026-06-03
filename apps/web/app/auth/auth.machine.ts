@@ -102,10 +102,9 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
   switch (action.type) {
     case "LOGIN_STARTED":
       return {
+        ...state,
         phase: "authenticating",
-        user: null,
         error: null,
-        ...clearSessionFields(),
       };
     case "AUTH_STATE_AUTHENTICATED":
       return {

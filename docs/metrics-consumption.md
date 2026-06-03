@@ -221,7 +221,7 @@ Runtime, **user-scoped** widgets on entity list views (table and card). No hardc
 
 | Location | Role |
 | --- | --- |
-| `MetricValueDisplay` | Single KPI card (loading / empty / forbidden) |
+| `MetricValueDisplay` | Fetches and formats a metric row; `presentation: "inline"` in layout slots (value only); `card` for legacy standalone chrome |
 | `MetricValueSeries` | Grid of KPI cells from batched queries |
 | `MetricWidgetRenderer` | Dispatches `ViewMetricWidget` (`kpi` \| `series`) |
 | `EntityViewMetricsStrip` | Renders `activeView.metricWidgets` above the list |
@@ -243,7 +243,9 @@ usePermission("metricValue.read")
 ### Schema (`@repo/entities`)
 
 - `ViewConfig.metricWidgets?: ViewMetricWidget[]` — per table/card view in entity UI overrides
-- `ViewMetricWidget`: `display: "kpi" | "series"` + `metricDefinitionId` + `groupBindings` / `dimensionBindings` (series adds `buckets[]`)
+- `ViewMetricWidget`: `display: "kpi" | "series"` + `metricDefinitionId` + `groupBindings` / `dimensionBindings` (series adds `buckets[]`); optional `layout` (`UiLayoutDocument` with text/image/badge/numeric/metric-kpi slots — **labels and chrome are layout slots**; `metric-kpi` renders only the fetched value); optional `placement` (`column`, `row`, `columnSpan`, `rowSpan`, `stackDirection` for series buckets); optional `styles` on grid cell wrapper
+- Series `buckets[]` entries may include `layout` per bucket cell (full UI builder per cell)
+- `TableViewConfig.metricStripLayout?: UiLayoutDocument` — strip shell (`root.columnCount`, root/column `styles`, column `stackDirection`); columns have no component rows
 - Card slot `component: "metric-kpi"` — same bindings on `CardMetricKpiSlotBinding` (no `fieldPath`)
 
 `MetricBindingSource` kinds:
@@ -255,8 +257,8 @@ usePermission("metricValue.read")
 
 ### Builder entry points
 
-1. **Settings → Design layout → Item list** (or entity list **Design layout** link) — `MetricWidgetsBuilderSection` below the table/card switch; persists `metricWidgets` on the active view type.
-2. **Card layout builder** — slot component `metric-kpi`: pick ACTIVE definition from `listMetricDefinitions()`, configure bindings (emphasize `entityField` for row-scoped dimensions).
+1. **Settings → Design layout → Metrics row** — per-entity KPI/series builder (`EntityMetricsWidgetsBuilder`); persists `metricWidgets` on the table view.
+2. **Card / list / main layout builders** — slot component `metric-kpi`: full definition picker, bindings, and styles via `MetricKpiComponentEditor` (emphasize `entityField` for row-scoped dimensions).
 
 Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOverride.update` + `metricDefinition.read` (save layout via `ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS`).
 
@@ -275,7 +277,7 @@ Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOve
 - `MetricValueDisplay.test.tsx` — loading, value, forbidden (mocked hooks)
 - `packages/ui-builder-core` layout mutations / schema — `metric-kpi` component round-trip in layout JSON
 
-Manual: Settings → Metrics (ACTIVE) → Design layout → Item list → KPI with static bindings → list page shows value after source CRUD (+ backfill if needed).
+Manual: Settings → Metrics (ACTIVE) → Design layout → Metrics row → KPI with static bindings → list page shows value after source CRUD (+ backfill if needed).
 
 ## Implementation reference
 

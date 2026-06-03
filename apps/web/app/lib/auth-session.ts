@@ -5,6 +5,7 @@ import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
 
 import type { TenantOption } from "../auth/auth.types";
+import { fetchWithRateLimitRetry } from "./fetch-rate-limit-retry";
 
 interface SyncedAuthUser {
   readonly uid: string;
@@ -23,6 +24,8 @@ interface SyncAuthSessionResult {
   readonly ok: boolean;
   readonly user?: SyncedAuthUser;
   readonly error?: string;
+  /** True when the server throttled the request (session should stay active). */
+  readonly transient?: boolean;
 }
 
 interface SelectTenantSessionResult {
@@ -33,6 +36,7 @@ interface SelectTenantSessionResult {
   readonly permissions?: readonly string[];
   readonly isSuperAdmin?: boolean;
   readonly error?: string;
+  readonly transient?: boolean;
   readonly tenantRoleNames?: readonly string[];
   readonly activeTenantName?: string | null;
   readonly tenantAppearance?: TenantAppearance | null;
@@ -94,10 +98,14 @@ async function fetchWithTimeout(
   input: URL,
   init: RequestInit,
 ): Promise<Response> {
-  return fetch(input, {
+  return fetchWithRateLimitRetry(input, {
     ...init,
     signal: AbortSignal.timeout(AUTH_REQUEST_TIMEOUT_MS),
   });
+}
+
+function isTransientRateLimitResponse(response: Response): boolean {
+  return response.status === 429;
 }
 
 function mapValidateUser(
@@ -134,6 +142,17 @@ export async function syncAuthSession(
     const payload = (await response.json()) as
       | AuthValidateSuccessResponse
       | AuthValidateErrorResponse;
+
+    if (isTransientRateLimitResponse(response)) {
+      return {
+        ok: false,
+        transient: true,
+        error:
+          "message" in payload && payload.message
+            ? payload.message
+            : "Rate limit exceeded. Please wait and try again.",
+      };
+    }
 
     if (!response.ok || !payload.ok) {
       const message =
@@ -178,6 +197,17 @@ export async function selectTenantSession(
     const payload = (await response.json()) as
       | AuthSelectTenantSuccessResponse
       | AuthSelectTenantErrorResponse;
+
+    if (isTransientRateLimitResponse(response)) {
+      return {
+        ok: false,
+        transient: true,
+        error:
+          "message" in payload && payload.message
+            ? payload.message
+            : "Rate limit exceeded. Please wait and try again.",
+      };
+    }
 
     if (!response.ok || !payload.ok) {
       const message =

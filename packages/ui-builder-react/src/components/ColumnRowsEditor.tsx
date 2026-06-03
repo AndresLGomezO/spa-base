@@ -8,6 +8,7 @@ import {
   removeNestedColumn,
   removeRowAt,
   setNestedColumnCount,
+  setNestedColumnWidthPercent,
   updateComponentRowAt,
   updateNestedColumnStackDirection,
   updateNestedColumnStyles,
@@ -63,6 +64,7 @@ export interface ColumnRowsEditorProps {
   readonly onLayoutChange: (layout: UiLayoutDocument) => void;
   readonly labels: ColumnRowsEditorLabels;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
+  readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
   readonly allowedKinds?: readonly UiComponentKind[];
   readonly depth?: number;
 }
@@ -77,6 +79,7 @@ export function ColumnRowsEditor({
   onLayoutChange,
   labels,
   metricKpiEditor,
+  staticImageEditor,
   allowedKinds,
   depth = 0,
 }: ColumnRowsEditorProps) {
@@ -86,7 +89,8 @@ export function ColumnRowsEditor({
   const [showAddMenu, setShowAddMenu] = useState(false);
 
   const addComponent = () => {
-    const component = createDefaultComponent("text", defaultFieldPath);
+    const defaultKind = allowedKinds?.[0] ?? "text";
+    const component = createDefaultComponent(defaultKind, defaultFieldPath);
     onLayoutChange(addComponentRowAt(layout, locator, component));
     setShowAddMenu(false);
   };
@@ -159,6 +163,7 @@ export function ColumnRowsEditor({
               fieldDescriptors={fieldDescriptors}
               labels={labels.componentEditor}
               metricKpiEditor={metricKpiEditor}
+              staticImageEditor={staticImageEditor}
               allowedKinds={allowedKinds}
               onChange={(component: UiComponentConfig) =>
                 onLayoutChange(
@@ -178,6 +183,8 @@ export function ColumnRowsEditor({
               onLayoutChange={onLayoutChange}
               labels={labels}
               metricKpiEditor={metricKpiEditor}
+              staticImageEditor={staticImageEditor}
+              allowedKinds={allowedKinds}
               depth={depth}
             />
           ) : null}
@@ -224,6 +231,8 @@ function NestedLayoutRowEditor({
   onLayoutChange,
   labels,
   metricKpiEditor,
+  staticImageEditor,
+  allowedKinds,
   depth,
 }: {
   readonly layout: UiLayoutDocument;
@@ -234,6 +243,8 @@ function NestedLayoutRowEditor({
   readonly onLayoutChange: (layout: UiLayoutDocument) => void;
   readonly labels: ColumnRowsEditorLabels;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
+  readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
+  readonly allowedKinds?: readonly UiComponentKind[];
   readonly depth: number;
 }) {
   const [activeColumn, setActiveColumn] = useState(0);
@@ -259,6 +270,17 @@ function NestedLayoutRowEditor({
           );
         }}
         onActiveColumnChange={setActiveColumn}
+        onColumnWidthPercentChange={(index, percent) =>
+          onLayoutChange(
+            setNestedColumnWidthPercent(
+              layout,
+              rootColumnIndex,
+              row.id,
+              index,
+              percent,
+            ),
+          )
+        }
         onMoveLeft={() => {
           onLayoutChange(
             moveNestedColumn(
@@ -355,6 +377,8 @@ function NestedLayoutRowEditor({
           onLayoutChange={onLayoutChange}
           labels={labels}
           metricKpiEditor={metricKpiEditor}
+          staticImageEditor={staticImageEditor}
+          allowedKinds={allowedKinds}
           depth={depth + 1}
         />
       ) : null}

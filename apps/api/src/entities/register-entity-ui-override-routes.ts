@@ -11,6 +11,7 @@ import {
   type EntityUiOverrideRecord,
   type PutEntityUiOverrideInput,
   type UiLayoutDocument,
+  type WizardFormConfig,
 } from "@repo/entities";
 import type { EntityUiOverrideRepository } from "@repo/firestore-converters";
 
@@ -37,13 +38,31 @@ function mergeUiOverridePutInput(
   existing: EntityUiOverrideRecord | null,
   incoming: PutEntityUiOverrideInput,
 ): PutEntityUiOverrideInput {
-  const createLayout = incoming.forms?.create ?? existing?.forms?.create;
-  const editLayout = incoming.forms?.edit ?? existing?.forms?.edit;
+  const incomingForms = incoming.forms;
+  const existingForms = existing?.forms;
+  const sharedLayout = incomingForms?.layout ?? existingForms?.layout;
+  const createLayout = incomingForms?.create ?? existingForms?.create;
+  const editLayout = incomingForms?.edit ?? existingForms?.edit;
+  const plainLayout = sharedLayout ?? createLayout ?? editLayout;
+  const presentation =
+    incomingForms?.presentation ?? existingForms?.presentation;
+  const wizard = incomingForms?.wizard ?? existingForms?.wizard;
+  const modalSize = incomingForms?.modalSize ?? existingForms?.modalSize;
+
   const forms =
-    createLayout || editLayout
+    plainLayout ||
+    presentation ||
+    wizard ||
+    createLayout ||
+    editLayout ||
+    modalSize
       ? {
-          ...(createLayout ? { create: createLayout } : {}),
-          ...(editLayout ? { edit: editLayout } : {}),
+          ...(presentation ? { presentation } : {}),
+          ...(plainLayout ? { layout: plainLayout } : {}),
+          ...(wizard ? { wizard } : {}),
+          ...(modalSize ? { modalSize } : {}),
+          ...(createLayout && !plainLayout ? { create: createLayout } : {}),
+          ...(editLayout && !plainLayout ? { edit: editLayout } : {}),
         }
       : undefined;
 
@@ -185,18 +204,38 @@ export async function registerEntityUiOverrideRoutes(
         parsedBody.data.views as EntityUIConfig["views"],
       );
 
+      const overrideForms = parsedBody.data.forms;
+      const sharedPlainLayout =
+        overrideForms?.layout ?? overrideForms?.create ?? overrideForms?.edit;
+      const presentation =
+        overrideForms?.presentation ??
+        (overrideForms?.wizard ? ("wizard" as const) : undefined) ??
+        serialized.ui.forms.presentation;
+      const wizard = (overrideForms?.wizard ?? serialized.ui.forms.wizard) as
+        | WizardFormConfig
+        | undefined;
+      const modalSize =
+        overrideForms?.modalSize ?? serialized.ui.forms.modalSize;
+
       const mergedForms: EntityUIConfig["forms"] = {
+        ...(presentation ? { presentation } : {}),
+        ...(wizard ? { wizard } : {}),
+        ...(modalSize ? { modalSize } : {}),
         create: {
           ...serialized.ui.forms.create,
-          ...(parsedBody.data.forms?.create
-            ? { layout: parsedBody.data.forms.create as UiLayoutDocument }
-            : {}),
+          ...(sharedPlainLayout && presentation !== "wizard"
+            ? { layout: sharedPlainLayout as UiLayoutDocument }
+            : parsedBody.data.forms?.create
+              ? { layout: parsedBody.data.forms.create as UiLayoutDocument }
+              : {}),
         },
         edit: {
           ...serialized.ui.forms.edit,
-          ...(parsedBody.data.forms?.edit
-            ? { layout: parsedBody.data.forms.edit as UiLayoutDocument }
-            : {}),
+          ...(sharedPlainLayout && presentation !== "wizard"
+            ? { layout: sharedPlainLayout as UiLayoutDocument }
+            : parsedBody.data.forms?.edit
+              ? { layout: parsedBody.data.forms.edit as UiLayoutDocument }
+              : {}),
         },
       };
 

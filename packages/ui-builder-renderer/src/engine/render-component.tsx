@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import { resolveStaticImageSrc } from "@repo/entities";
 import {
   conditionalRulesToBadgeVariants,
   fontSizePxFromStyles,
@@ -135,6 +136,18 @@ export function renderUiComponent(
     return context.formActionsRenderer?.() ?? null;
   }
 
+  if (config.kind === "wizard-progress") {
+    return context.wizardProgressRenderer?.(config) ?? null;
+  }
+
+  if (config.kind === "wizard-step-host") {
+    return context.wizardStepHostRenderer?.(config) ?? null;
+  }
+
+  if (config.kind === "wizard-actions") {
+    return context.wizardActionsRenderer?.(config) ?? null;
+  }
+
   if (config.kind === "related-records") {
     return (
       context.relatedRecordsRenderer?.({
@@ -181,7 +194,11 @@ export function renderUiComponent(
     isImagePresent: context.isImagePresent,
   });
 
-  if (chain.usedStatic && chain.staticValue !== undefined) {
+  if (
+    chain.usedStatic &&
+    chain.staticValue !== undefined &&
+    config.kind !== "image"
+  ) {
     return (
       <CardFieldValue
         value={chain.staticValue}
@@ -225,12 +242,7 @@ export function renderUiComponent(
       );
     }
 
-    const src =
-      typeof rawValue === "string"
-        ? rawValue
-        : rawValue && typeof rawValue === "object" && "downloadUrl" in rawValue
-          ? String((rawValue as { downloadUrl?: string }).downloadUrl ?? "")
-          : undefined;
+    const src = resolveStaticImageSrc(rawValue);
 
     return (
       <CardFieldImage

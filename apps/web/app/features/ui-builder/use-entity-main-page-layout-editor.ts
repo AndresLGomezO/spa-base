@@ -1,9 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
-import type {
-  UiLayoutDocument,
-  ViewConfig,
-  ViewMetricWidget,
-} from "@repo/entities";
+import { useCallback, useEffect, useState } from "react";
+import type { UiLayoutDocument } from "@repo/entities";
 import {
   createDefaultMainPageLayout,
   normalizeEntityViews,
@@ -13,8 +9,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
-import { entityCatalogQueryKey } from "../../query/query-client";
-import { viewMetricWidgetsFromView } from "../../components/metrics/metric-widgets-builder-state.js";
+import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
 export function useEntityMainPageLayoutEditor(entityName: EntityName) {
   const definition = useEntityDefinition(entityName);
@@ -24,24 +19,10 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
     createDefaultMainPageLayout(),
   );
-  const [metricWidgets, setMetricWidgets] = useState<
-    readonly ViewMetricWidget[]
-  >([]);
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
-  const filterFieldOptions = useMemo(
-    () =>
-      Object.keys(definition.fields).filter(
-        (field) => definition.fields[field]?.type !== "document",
-      ),
-    [definition.fields],
-  );
-
   useEffect(() => {
-    const tableView = uiViews.find((view) => view.type === "table");
-    setMetricWidgets(viewMetricWidgetsFromView(tableView?.metricWidgets));
-
     const existing = definition.ui.mainPageLayout;
     if (existing) {
       setLayout(existing);
@@ -50,51 +31,32 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
     }
     setLayout(createDefaultMainPageLayout());
     setLayoutEditorKey((current) => current + 1);
-  }, [definition.ui.mainPageLayout, uiViews]);
-
-  const buildViews = useCallback((): readonly ViewConfig[] => {
-    return uiViews.map((view) => {
-      if (view.type !== "table") {
-        return view;
-      }
-      const { metricWidgets: _omit, ...rest } = view;
-      void _omit;
-      return metricWidgets.length > 0
-        ? { ...rest, type: "table" as const, metricWidgets }
-        : rest;
-    });
-  }, [metricWidgets, uiViews]);
+  }, [definition.ui.mainPageLayout]);
 
   const save = useCallback(async (): Promise<boolean> => {
     setIsSaving(true);
     try {
-      const views = buildViews();
-      await putEntityUiOverride(entityName, {
-        views: normalizeEntityViews(views),
+      const { override } = await putEntityUiOverride(entityName, {
+        views: normalizeEntityViews(uiViews),
         ...(definition.ui.listViewType
           ? { listViewType: definition.ui.listViewType }
           : {}),
         mainPage: layout,
       });
-      await queryClient.invalidateQueries({
-        queryKey: entityCatalogQueryKey,
-      });
+      patchEntityCatalogAfterUiOverrideSave(queryClient, entityName, override);
       return true;
     } catch {
       return false;
     } finally {
       setIsSaving(false);
     }
-  }, [buildViews, definition.ui.listViewType, entityName, layout, queryClient]);
+  }, [definition.ui.listViewType, entityName, layout, queryClient, uiViews]);
 
   return {
     entityName,
     definition,
-    filterFieldOptions,
     layout,
     setLayout,
-    metricWidgets,
-    setMetricWidgets,
     isSaving,
     save,
     layoutEditorKey,

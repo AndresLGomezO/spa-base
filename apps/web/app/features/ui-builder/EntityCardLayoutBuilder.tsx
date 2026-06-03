@@ -1,15 +1,15 @@
-import type {
-  DesignSurface,
-  UiComponentConfig,
-  UiLayoutDocument,
-} from "@repo/ui-builder-core";
+import { useMemo } from "react";
+import type { DesignSurface, UiLayoutDocument } from "@repo/ui-builder-core";
 import {
   UiLayoutStructurePanel,
   type UiLayoutStructurePanelLabels,
 } from "@repo/ui-builder-react";
 import type { SerializableEntityDefinition } from "@repo/entities";
 import type { EntityDefinitionLookup } from "@repo/ui-builder-react";
-import { Input } from "@repo/ui";
+
+import type { EntityName } from "../../entities/entity-catalog";
+import { MetricKpiComponentEditor } from "../../components/metrics/MetricKpiComponentEditor.js";
+import { LayoutStaticImageValueEditor } from "./LayoutStaticImageValueEditor.js";
 
 interface EntityCardLayoutBuilderProps {
   readonly layout: UiLayoutDocument;
@@ -34,6 +34,14 @@ export function EntityCardLayoutBuilder({
   getDefinition,
   designSurface = "listItem",
 }: EntityCardLayoutBuilderProps) {
+  const filterFieldOptions = useMemo(
+    () =>
+      Object.keys(definition.fields).filter(
+        (field) => definition.fields[field]?.type !== "document",
+      ),
+    [definition.fields],
+  );
+
   return (
     <UiLayoutStructurePanel
       designSurface={designSurface}
@@ -47,32 +55,21 @@ export function EntityCardLayoutBuilder({
       showShowActionsControl={false}
       getDefinition={getDefinition}
       metricKpiEditor={(config, onChange) => (
-        <MetricKpiConfigEditor config={config} onChange={onChange} />
+        <MetricKpiComponentEditor
+          config={config}
+          entityDefinition={definition}
+          filterFieldOptions={filterFieldOptions}
+          onChange={onChange}
+        />
+      )}
+      staticImageEditor={({ value, onChange }) => (
+        <LayoutStaticImageValueEditor
+          entityName={definition.name as EntityName}
+          definition={definition}
+          value={value}
+          onChange={onChange}
+        />
       )}
     />
-  );
-}
-
-function MetricKpiConfigEditor({
-  config,
-  onChange,
-}: {
-  readonly config: Extract<UiComponentConfig, { kind: "metric-kpi" }>;
-  readonly onChange: (config: UiComponentConfig) => void;
-}) {
-  return (
-    <label className="flex flex-col gap-1 text-sm">
-      <span className="text-muted-foreground">Metric definition ID</span>
-      <Input
-        value={config.metricDefinitionId}
-        onChange={(event) =>
-          onChange({
-            ...config,
-            metricDefinitionId: event.target.value,
-          })
-        }
-        placeholder="metric-definition-id"
-      />
-    </label>
   );
 }

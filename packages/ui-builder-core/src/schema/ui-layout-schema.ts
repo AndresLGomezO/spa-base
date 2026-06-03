@@ -59,7 +59,7 @@ const themeTokenSchema = z.enum([
   "transparent",
 ]);
 
-const styleRuleSchema = z
+export const styleRuleSchema = z
   .object({
     property: stylePropertySchema,
     value: z.union([z.string(), themeTokenSchema]),
@@ -203,6 +203,30 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
     .strict(),
   z
     .object({
+      kind: z.literal("wizard-progress"),
+      conditionalStyles: z.array(conditionalStyleRuleSchema).optional(),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("wizard-step-host"),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("wizard-actions"),
+      nextLabel: z.string().trim().min(1).optional(),
+      backLabel: z.string().trim().min(1).optional(),
+      cancelLabel: z.string().trim().min(1).optional(),
+      submitCreateLabel: z.string().trim().min(1).optional(),
+      submitEditLabel: z.string().trim().min(1).optional(),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
       kind: z.literal("related-records"),
       childEntity: z.string().trim().min(1),
       foreignKeyField: z.string().trim().min(1),
@@ -249,6 +273,7 @@ const columnNodeSchema: z.ZodType<{
   id: string;
   rows: unknown[];
   stackDirection?: "column" | "row";
+  widthPercent?: number;
   styles?: unknown[];
 }> = z.lazy(() =>
   z
@@ -256,6 +281,7 @@ const columnNodeSchema: z.ZodType<{
       id: z.string().trim().min(1),
       rows: z.array(rowNodeSchema),
       stackDirection: z.enum(["column", "row"]).optional(),
+      widthPercent: z.number().int().min(1).max(100).optional(),
       styles: z.array(styleRuleSchema).optional(),
     })
     .strict(),

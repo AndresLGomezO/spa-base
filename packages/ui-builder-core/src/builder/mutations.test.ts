@@ -6,6 +6,9 @@ import {
   createDefaultComponent,
   createEmptyColumn,
   createEmptyLayout,
+  moveRootColumn,
+  setRootColumnCount,
+  setRootColumnWidthPercent,
 } from "./mutations.js";
 
 describe("addComponentRowAt", () => {
@@ -106,5 +109,48 @@ describe("addComponentRowAt", () => {
       type: "component",
       component: { kind: "text", primary: { path: "balance" } },
     });
+  });
+});
+
+describe("setRootColumnWidthPercent", () => {
+  it("sets explicit width on a column", () => {
+    const layout = createEmptyLayout(2);
+    const next = setRootColumnWidthPercent(layout, 0, 20);
+    expect(next.root.columns[0]?.widthPercent).toBe(20);
+    expect(next.root.columns[1]?.widthPercent).toBeUndefined();
+  });
+
+  it("clamps width when other columns are auto", () => {
+    const layout = setRootColumnWidthPercent(createEmptyLayout(3), 0, 80);
+    const next = setRootColumnWidthPercent(layout, 1, 50);
+    expect(next.root.columns[1]?.widthPercent).toBe(20);
+  });
+
+  it("clears explicit width when percent is undefined", () => {
+    const layout = setRootColumnWidthPercent(createEmptyLayout(2), 0, 30);
+    const next = setRootColumnWidthPercent(layout, 0, undefined);
+    expect(next.root.columns[0]?.widthPercent).toBeUndefined();
+  });
+});
+
+describe("moveRootColumn", () => {
+  it("swaps widthPercent between columns", () => {
+    let layout = createEmptyLayout(2);
+    layout = setRootColumnWidthPercent(layout, 0, 25);
+    layout = setRootColumnWidthPercent(layout, 1, 75);
+    const next = moveRootColumn(layout, 0, 1);
+    expect(next.root.columns[0]?.widthPercent).toBe(75);
+    expect(next.root.columns[1]?.widthPercent).toBe(25);
+  });
+});
+
+describe("setRootColumnCount", () => {
+  it("clears width percents when column count decreases", () => {
+    let layout = createEmptyLayout(3);
+    layout = setRootColumnWidthPercent(layout, 0, 20);
+    layout = setRootColumnWidthPercent(layout, 1, 30);
+    const next = setRootColumnCount(layout, 2);
+    expect(next.root.columns[0]?.widthPercent).toBeUndefined();
+    expect(next.root.columns[1]?.widthPercent).toBeUndefined();
   });
 });

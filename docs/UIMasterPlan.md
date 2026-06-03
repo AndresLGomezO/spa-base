@@ -28,7 +28,7 @@ Visual layout builder packages and documentation index.
   - **Item list** — unified **list item** layout + table/card/compact presentation (`EntityListLayoutDesignEditor`)
   - **Main View** — main page layout builder (`EntityMainPageLayoutDesignEditor`)
   - **Detailed View** — record detail layout builder (`EntityRecordDetailLayoutDesignEditor`)
-  - **Forms** — create/edit layout builders (`EntityFormLayoutDesignEditor`)
+  - **Forms** — unified plain or wizard form designer (`EntityFormLayoutDesignEditor`): shared layout for create/edit, wizard shell + steps, preview with step/status simulator
 
 ## Persisted shape
 

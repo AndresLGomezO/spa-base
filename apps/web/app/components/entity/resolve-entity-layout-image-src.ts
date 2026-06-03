@@ -5,6 +5,10 @@ import {
   isEntityFileReferenceWithDownload,
   type EntityFileDownloadTarget,
 } from "../../lib/entity-file-client";
+import {
+  parseLayoutStaticImageRef,
+  readLayoutStaticImageUrl,
+} from "../../lib/layout-static-image";
 import { getEntityCellDisplayMeta } from "./resolve-entity-cell-value";
 import { parseRelationFieldPath } from "./resolve-relation-field-path";
 
@@ -15,6 +19,26 @@ export function readEntityFileDownloadUrl(value: unknown): string | null {
 
   if (typeof value.downloadUrl === "string" && value.downloadUrl.length > 0) {
     return value.downloadUrl;
+  }
+
+  return null;
+}
+
+/** Entity file download URL or a layout-configured static image URL string. */
+export function readEntityLayoutImageSourceUrl(value: unknown): string | null {
+  const fileUrl = readEntityFileDownloadUrl(value);
+  if (fileUrl) {
+    return fileUrl;
+  }
+
+  if (typeof value === "string") {
+    const url = readLayoutStaticImageUrl(value);
+    if (url) {
+      return url;
+    }
+    if (parseLayoutStaticImageRef(value)) {
+      return null;
+    }
   }
 
   return null;

@@ -98,7 +98,7 @@ describe("EntityForm", () => {
   it("submits create payloads", async () => {
     renderForm();
 
-    fireEvent.click(screen.getAllByRole("button", { name: "Save" })[0]!);
+    fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalled();

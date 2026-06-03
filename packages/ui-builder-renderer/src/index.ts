@@ -6,6 +6,8 @@ export type {
   FormRenderContext,
   FieldDisplayMeta,
   ImageResolveOptions,
+  WizardRenderState,
+  WizardRenderStepMeta,
 } from "./context.js";
 export { renderUiComponent } from "./engine/render-component.js";
 export {

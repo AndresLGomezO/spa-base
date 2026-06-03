@@ -25,6 +25,7 @@ export interface UiLayoutBuilderProps {
   readonly labels: UiLayoutBuilderLabels;
   readonly className?: string;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
+  readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
   readonly previewActions?: ReactNode;
 }
 

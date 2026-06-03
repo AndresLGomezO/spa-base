@@ -100,6 +100,18 @@ describe("validateEntityUIConfig", () => {
     ).not.toThrow();
   });
 
+  it("accepts forms.modalSize", () => {
+    expect(() =>
+      validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
+        ...Widget.metadata.ui!,
+        forms: {
+          ...Widget.metadata.ui!.forms,
+          modalSize: "xl",
+        },
+      }),
+    ).not.toThrow();
+  });
+
   it("accepts image and document field components", () => {
     const entity = defineEntity({
       name: "brand",
@@ -117,6 +129,45 @@ describe("validateEntityUIConfig", () => {
           logo: { component: "image" },
           brochure: { component: "document" },
         },
+      }),
+    ).not.toThrow();
+  });
+
+  it("accepts metric widgets with optional styles", () => {
+    expect(() =>
+      validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
+        ...Widget.metadata.ui!,
+        views: [
+          {
+            type: "table",
+            name: "default",
+            fields: ["name"],
+            metricWidgets: [
+              {
+                id: "metric-widget-1",
+                display: "kpi",
+                metricDefinitionId: "total-widgets",
+                groupBindings: {},
+                dimensionBindings: {},
+                styles: [{ property: "padding", value: "12" }],
+                placement: { column: 1, row: 1, columnSpan: 2 },
+              },
+            ],
+            metricStripLayout: {
+              root: {
+                type: "root",
+                id: "root-1",
+                columnCount: 4,
+                columns: [
+                  { id: "col-1", rows: [] },
+                  { id: "col-2", rows: [] },
+                  { id: "col-3", rows: [] },
+                  { id: "col-4", rows: [] },
+                ],
+              },
+            },
+          },
+        ],
       }),
     ).not.toThrow();
   });

@@ -1,9 +1,11 @@
 import type { ReactNode } from "react";
 import {
+  buildGridTemplateColumnsFromPercents,
   componentSlotWrapperClassName,
   gapPxFromStyles,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
+  resolveColumnWidthPercents,
   resolveStyleRules,
   type ColumnNode,
   type ColumnStackDirection,
@@ -98,7 +100,9 @@ function renderRow(
       <LayoutGrid
         direction="row"
         gap={gapPxFromStyles(row.styles)}
-        columns={row.columnCount}
+        columns={buildGridTemplateColumnsFromPercents(
+          resolveColumnWidthPercents(row.columns),
+        )}
         align="stretch"
       >
         {row.columns.map((column) => renderColumn(column, context))}
@@ -153,7 +157,9 @@ export function RecursiveLayoutRenderer({
       <LayoutGrid
         direction="row"
         gap={gapPxFromStyles(layout.root.styles)}
-        columns={layout.root.columnCount}
+        columns={buildGridTemplateColumnsFromPercents(
+          resolveColumnWidthPercents(layout.root.columns),
+        )}
         align="stretch"
         className="min-h-0 w-full items-stretch"
       >

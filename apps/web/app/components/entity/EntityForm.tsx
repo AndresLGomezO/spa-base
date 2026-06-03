@@ -2,8 +2,9 @@ import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
-  resolveCreateFormFromLayout,
-  resolveEditFormFromUi,
+  resolveFormPresentation,
+  resolvePlainFormLayout,
+  resolveWizardForm,
 } from "@repo/entities";
 import {
   buildInitialValues,
@@ -30,6 +31,7 @@ import {
 import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
 import { ENTITY_FORM_ID } from "./entity-form-constants";
 import { EntityField } from "./EntityField";
+import { EntityWizardForm } from "./EntityWizardForm";
 import {
   getJoinRelationFieldNames,
   splitEntityFormPayload,
@@ -82,12 +84,11 @@ export function EntityForm({
   const entityState = useEntity(entityName);
   const { getById, fieldErrors, error, isSubmitting, create, update } =
     entityState;
-  const layout =
-    mode === "create"
-      ? resolveCreateFormFromLayout(definition)
-      : resolveEditFormFromUi(definition);
+  const presentation = resolveFormPresentation(definition);
+  const layout = resolvePlainFormLayout(definition);
+  const wizardConfig = resolveWizardForm(definition);
   const sections = getFormSections(layout, definition.ui.fields);
-  const designedLayout = layout.layout;
+  const designedLayout = presentation === "wizard" ? undefined : layout.layout;
   const joinRelationFieldNames = useMemo(
     () => getJoinRelationFieldNames(definition),
     [definition],
@@ -155,9 +156,18 @@ export function EntityForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const cleanSections = designedLayout
-      ? [{ fields: collectLayoutFieldPaths(designedLayout) }]
-      : sections;
+    const cleanSections =
+      presentation === "wizard" && wizardConfig
+        ? [
+            {
+              fields: wizardConfig.steps.flatMap((step) =>
+                collectLayoutFieldPaths(step.layout),
+              ),
+            },
+          ]
+        : designedLayout
+          ? [{ fields: collectLayoutFieldPaths(designedLayout) }]
+          : sections;
     const cleanedValues = cleanFormValues(cleanSections, values);
     const { documentPayload, joinRelations } = splitEntityFormPayload(
       definition,
@@ -220,6 +230,35 @@ export function EntityForm({
     return <EntityFormSkeleton />;
   }
 
+  const saveLabel = mode === "create" ? t("entity.create") : t("entity.save");
+
+  if (presentation === "wizard" && wizardConfig) {
+    return (
+      <EntityWizardForm
+        entityName={entityName}
+        definition={definition}
+        mode={mode}
+        wizard={wizardConfig}
+        locale={i18n.language}
+        values={values}
+        fieldErrors={fieldErrors}
+        fieldAccess={fieldAccess}
+        canRead={entityPermissions.canRead}
+        canWrite={canWrite}
+        recordId={recordId}
+        onChange={(name, value) =>
+          setValues((current) => ({ ...current, [name]: value }))
+        }
+        onCancel={onCancel}
+        hideActions={hideActions}
+        isSubmitting={isSubmitting}
+        cancelLabel={t("entity.cancel")}
+        saveLabel={saveLabel}
+        onSubmit={handleSubmit}
+      />
+    );
+  }
+
   if (designedLayout) {
     return (
       <Form
@@ -246,7 +285,7 @@ export function EntityForm({
             hideActions,
             isSubmitting,
             cancelLabel: t("entity.cancel"),
-            saveLabel: t("entity.save"),
+            saveLabel,
           })}
         />
       </Form>
@@ -292,7 +331,7 @@ export function EntityForm({
       {!hideActions ? (
         <div className="flex items-center gap-3">
           <Button type="submit" loading={isSubmitting}>
-            {t("entity.save")}
+            {saveLabel}
           </Button>
           <Button type="button" variant="outline" onClick={onCancel}>
             {t("entity.cancel")}

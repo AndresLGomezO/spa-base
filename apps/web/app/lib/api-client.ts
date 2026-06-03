@@ -8,6 +8,7 @@ import type { QueryConfig } from "@repo/query-engine";
 
 import { appConfig } from "../config/app-config";
 import { getAppCheckHeaderValue } from "./app-check";
+import { fetchWithRateLimitRetry } from "./fetch-rate-limit-retry";
 import { auth } from "./firebase";
 
 interface ApiErrorBody {
@@ -146,7 +147,7 @@ export async function apiRequest<T>(
   const headers = await getAuthHeaders();
   const url = buildUrl(path, options.query);
 
-  const response = await fetch(url, {
+  const response = await fetchWithRateLimitRetry(url, {
     method: options.method ?? "GET",
     headers: {
       ...headers,
@@ -648,10 +649,12 @@ export interface MetricRowQuery {
   readonly dimensions: Record<string, string | number | boolean>;
 }
 
-interface MetricRowResponse {
+export interface MetricRow {
   readonly values: Record<string, number>;
   readonly updatedAt: string;
 }
+
+type MetricRowResponse = MetricRow;
 
 export function isMetricRowNotFoundError(
   error: unknown,
@@ -884,6 +887,19 @@ export async function putEntityUiOverride(
     readonly mainPage?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly recordDetail?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly forms?: {
+      readonly presentation?: "plain" | "wizard";
+      readonly modalSize?: "sm" | "md" | "lg" | "xl" | "2xl";
+      readonly layout?: import("@repo/ui-builder-core").UiLayoutDocument;
+      readonly wizard?: {
+        readonly shellLayout: import("@repo/ui-builder-core").UiLayoutDocument;
+        readonly steps: readonly {
+          readonly id: string;
+          readonly label: string;
+          readonly subtitle?: string;
+          readonly icon?: string;
+          readonly layout: import("@repo/ui-builder-core").UiLayoutDocument;
+        }[];
+      };
       readonly create?: import("@repo/ui-builder-core").UiLayoutDocument;
       readonly edit?: import("@repo/ui-builder-core").UiLayoutDocument;
     };

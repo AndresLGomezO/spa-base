@@ -20,9 +20,13 @@ A hand-written JSON file that satisfies this spec should render the same as a la
 | `listItem` | Item list | Canonical per-record list layout (preferred) |
 | `recordDetail` | Detailed View (`/app/:entity/:id`) | Record detail page layout |
 | `detail` | (read alias) | Legacy key; merged as `recordDetail` on read |
-| `forms.create` / `forms.edit` | Forms | Create / edit form layouts |
+| `forms.presentation` | Forms | `"plain"` (default) or `"wizard"` |
+| `forms.layout` | Forms | Shared plain form layout (copied to create + edit on merge) |
+| `forms.wizard` | Forms | Wizard shell + steps (when `presentation` is `"wizard"`) |
+| `forms.create` / `forms.edit` | Forms | Legacy per-mode layouts; still read if `forms.layout` is absent |
 | `views[].layout` | Legacy | Card view layout; used when `listItem` is absent |
-| `views[].metricWidgets` | Main View | Metric strip config (edited in Main View designer) |
+| `views[].metricWidgets` | Metrics row | KPI/series strip above the entity list (edited in Design layout → Metrics row) |
+| `views[].metricStripLayout` | Metrics row | Strip grid shell: `root.columnCount`, root/column style rules (table view only) |
 
 Example override document:
 
@@ -34,8 +38,8 @@ Example override document:
   "listItem": { "root": { } },
   "recordDetail": { "root": { } },
   "forms": {
-    "create": { "root": { } },
-    "edit": { "root": { } }
+    "presentation": "plain",
+    "layout": { "root": { } }
   },
   "views": [
     {
@@ -83,6 +87,186 @@ Replaces the legacy `compact` list presentation. Persist with `listViewType: "ex
   "showActions": true
 }
 ```
+
+---
+
+## Metrics row (`views[].metricWidgets`, table view)
+
+Configured in **Design layout → Metrics row**. Each widget has optional `layout` (`UiLayoutDocument`) and optional `placement` on the strip grid. Series widgets also use `buckets[].layout` per bucket cell.
+
+| Property | KPI | Series | Description |
+|----------|-----|--------|-------------|
+| `id` | yes | yes | Stable widget id |
+| `display` | `"kpi"` | `"series"` | Widget type |
+| `metricDefinitionId` | yes | yes | Metric definition id |
+| `layout` | no | no | Widget chrome (columns/rows/slots); KPI holds the value slot |
+| `placement` | no | no | Strip grid: `column`, `row`, `columnSpan`, `rowSpan`; series may set `stackDirection` for bucket flow |
+| `buckets` | — | yes | Binding sets per bucket; each may include `layout` |
+| `groupBindings` / `dimensionBindings` | yes | yes (widget + buckets) | Kept for migration; prefer bindings on `metric-kpi` slots inside `layout` |
+
+**Design surfaces:** `metricWidget` (KPI + series chrome), `metricWidgetBucket` (series bucket cell). Allowed slot kinds: `text`, `image`, `date`, `numeric`, `badge`, `metric-kpi` (same as list item).
+
+**Strip shell:** `views[].metricStripLayout` — `UiLayoutDocument` with `root.columnCount` and style rules only (no component rows in columns).
+
+### KPI widget example
+
+Default seed is one column with a single `metric-kpi` row. Customize with extra columns, nested layouts, `text` / `badge` / `numeric` slots, etc. Runtime renders `metric-kpi` as the formatted value only (no built-in card or title).
+
+```json
+{
+  "id": "metric-widget-1",
+  "display": "kpi",
+  "metricDefinitionId": "total-balance-usd",
+  "groupBindings": {},
+  "dimensionBindings": {},
+  "placement": { "column": 1, "row": 1, "columnSpan": 2 },
+  "layout": {
+    "root": {
+      "type": "root",
+      "id": "metric-kpi-root",
+      "columnCount": 2,
+      "columns": [
+        {
+          "id": "col_label",
+          "rows": [
+            {
+              "type": "component",
+              "id": "row_label",
+              "component": {
+                "kind": "text",
+                "primary": { "type": "static", "value": "Total balance" },
+                "styles": [{ "property": "fontWeight", "value": "bold" }]
+              }
+            },
+            {
+              "type": "component",
+              "id": "row_badge",
+              "component": {
+                "kind": "badge",
+                "primary": { "type": "static", "value": "Live" }
+              }
+            }
+          ]
+        },
+        {
+          "id": "col_value",
+          "rows": [
+            {
+              "type": "component",
+              "id": "row_kpi",
+              "component": {
+                "kind": "metric-kpi",
+                "metricDefinitionId": "total-balance-usd",
+                "groupBindings": {
+                  "currency": { "type": "listFilter", "field": "currency" }
+                },
+                "dimensionBindings": {}
+              }
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
+```
+
+### Series widget example (chrome + per-bucket layouts)
+
+```json
+{
+  "id": "metric-widget-2",
+  "display": "series",
+  "metricDefinitionId": "balance-by-status",
+  "groupBindings": {},
+  "dimensionBindings": {},
+  "placement": { "column": 2, "row": 1, "columnSpan": 2, "stackDirection": "row" },
+  "layout": {
+    "root": {
+      "type": "root",
+      "id": "series-chrome-root",
+      "columnCount": 1,
+      "columns": [
+        {
+          "id": "col_title",
+          "rows": [
+            {
+              "type": "component",
+              "id": "row_title",
+              "component": {
+                "kind": "text",
+                "primary": { "type": "static", "value": "By status" },
+                "label": { "show": true, "text": "By status" },
+                "styles": [{ "property": "fontWeight", "value": "bold" }]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "buckets": [
+    {
+      "groupBindings": { "status": { "type": "static", "value": "active" } },
+      "dimensionBindings": {},
+      "layout": {
+        "root": {
+          "type": "root",
+          "id": "bucket-root-active",
+          "columnCount": 1,
+          "columns": [
+            {
+              "id": "col_kpi",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row_kpi",
+                  "component": {
+                    "kind": "metric-kpi",
+                    "metricDefinitionId": "balance-by-status",
+                    "groupBindings": { "status": { "type": "static", "value": "active" } },
+                    "dimensionBindings": {}
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    {
+      "groupBindings": { "status": { "type": "static", "value": "closed" } },
+      "dimensionBindings": {},
+      "layout": {
+        "root": {
+          "type": "root",
+          "id": "bucket-root-closed",
+          "columnCount": 1,
+          "columns": [
+            {
+              "id": "col_kpi",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row_kpi",
+                  "component": {
+                    "kind": "metric-kpi",
+                    "metricDefinitionId": "balance-by-status",
+                    "groupBindings": { "status": { "type": "static", "value": "closed" } },
+                    "dimensionBindings": {}
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    }
+  ]
+}
+```
+
+Widgets without `layout` are migrated at read time via `migrateMetricWidgetLayouts` (default layouts seeded from flat `label` / bindings).
 
 ---
 
@@ -235,6 +419,51 @@ Does **not** use `primary` / `fallbacks` / `label` / `conditionalStyles`.
 | `dimensionBindings` | `Record<string, MetricBindingSource>` | **yes** | may be `{}` |
 | `label` | `string` | no | display title override |
 | `styles` | `StyleRule[]` | no | |
+
+### Form layout components
+
+| `kind` | Surface | Notes |
+|--------|---------|-------|
+| `form-field` | `formPlain`, `formWizardStep` | `fieldPath` required |
+| `form-section` | plain / wizard step | optional `title` |
+| `form-actions` | `formPlain` only | submit/cancel row |
+| `wizard-progress` | `formWizardShell` | left sidebar; `conditionalStyles` match `pending` \| `active` \| `completed` \| `invalid` |
+| `wizard-step-host` | `formWizardShell` | mounts active step layout at runtime |
+| `wizard-actions` | `formWizardShell` | footer: optional `nextLabel`, `backLabel`, `cancelLabel`, `submitCreateLabel`, `submitEditLabel` |
+
+### Wizard override (`forms.wizard`)
+
+Required when `forms.presentation` is `"wizard"`. Shell layout must include all three wizard slot kinds (validated on save).
+
+```json
+{
+  "presentation": "wizard",
+  "wizard": {
+    "shellLayout": { "root": { } },
+    "steps": [
+      {
+        "id": "step_details",
+        "label": "Details",
+        "subtitle": "Basic info",
+        "icon": "User",
+        "layout": { "root": { } }
+      }
+    ]
+  }
+}
+```
+
+| Property | Type | Required |
+|----------|------|----------|
+| `shellLayout` | `UiLayoutDocument` | **yes** |
+| `steps` | array (min 1) | **yes** |
+| `steps[].id` | `string` | **yes**, unique |
+| `steps[].label` | `string` | **yes** |
+| `steps[].layout` | `UiLayoutDocument` | **yes** |
+| `steps[].subtitle` | `string` | no |
+| `steps[].icon` | `string` | no (Lucide icon name) |
+
+Runtime: one shared wizard for create and edit; submit label comes from `wizard-actions` config and mode (`submitCreateLabel` / `submitEditLabel`). Submit is shown only on the last step.
 
 ---
 

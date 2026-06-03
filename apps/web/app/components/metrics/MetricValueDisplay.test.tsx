@@ -1,3 +1,4 @@
+import type React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
@@ -42,7 +43,9 @@ const definition = {
   updatedAt: "",
 };
 
-function renderDisplay() {
+function renderDisplay(
+  props: Partial<React.ComponentProps<typeof MetricValueDisplay>> = {},
+) {
   const queryClient = new QueryClient({
     defaultOptions: { queries: { retry: false } },
   });
@@ -54,6 +57,7 @@ function renderDisplay() {
           metricDefinitionId="metric-1"
           groupBindings={{}}
           dimensionBindings={{}}
+          {...props}
         />
       </I18nextProvider>
     </QueryClientProvider>,
@@ -148,5 +152,32 @@ describe("MetricValueDisplay", () => {
     renderDisplay();
 
     expect(screen.getByText("$ 1,200")).toBeInTheDocument();
+  });
+
+  it("inline presentation renders value without card chrome or title", () => {
+    mockUseCanReadMetricValues.mockReturnValue(true);
+    mockUseMetricDefinition.mockReturnValue({
+      data: definition,
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useMetricDefinition>);
+    mockUseMetricRow.mockReturnValue({
+      data: {
+        id: "row-1",
+        metricDefinitionId: "metric-1",
+        group: {},
+        dimensions: {},
+        values: { sum_amount: 4200 },
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    const { container } = renderDisplay({ presentation: "inline" });
+
+    expect(screen.getByText("4,200")).toBeInTheDocument();
+    expect(screen.queryByText("Total revenue")).not.toBeInTheDocument();
+    expect(container.querySelector("article")).toBeNull();
   });
 });

@@ -12,6 +12,7 @@ export interface FieldPathValidationDefinition {
     Record<
       string,
       {
+        readonly type?: string;
         readonly relation?: {
           readonly type: string;
           readonly target?: string;
@@ -98,6 +99,9 @@ function collectComponentPaths(
   if (
     component.kind === "form-section" ||
     component.kind === "form-actions" ||
+    component.kind === "wizard-progress" ||
+    component.kind === "wizard-step-host" ||
+    component.kind === "wizard-actions" ||
     component.kind === "related-records" ||
     component.kind === "page-header" ||
     component.kind === "page-toolbar" ||
@@ -157,6 +161,57 @@ export interface ListLayoutFieldOptionsParams {
   readonly resolveTarget?: (
     target: string,
   ) => FieldPathValidationDefinition | undefined;
+}
+
+/** Field paths assignable to `form-field` slots (direct entity fields, including relations). */
+export function listFormFieldOptions(
+  definition: FieldPathValidationDefinition,
+): readonly string[] {
+  const options: string[] = [];
+
+  for (const [fieldName, meta] of Object.entries(definition.fields)) {
+    if (meta.type === "document") {
+      continue;
+    }
+    options.push(fieldName);
+  }
+
+  return options.sort((a, b) => a.localeCompare(b));
+}
+
+export function isValidFormFieldPath(
+  definition: FieldPathValidationDefinition,
+  fieldPath: string,
+): boolean {
+  const trimmed = fieldPath.trim();
+  if (trimmed.length === 0 || trimmed.includes(".")) {
+    return false;
+  }
+
+  if (ALLOWED_SYSTEM_FIELDS.has(trimmed)) {
+    return true;
+  }
+
+  const meta = definition.fields[trimmed];
+  if (!meta) {
+    return false;
+  }
+
+  return meta.type !== "document";
+}
+
+export function assertFormLayoutFieldPaths(
+  definition: FieldPathValidationDefinition,
+  layout: UiLayoutDocument,
+  context: string,
+): void {
+  for (const fieldPath of collectLayoutFieldPaths(layout)) {
+    if (!isValidFormFieldPath(definition, fieldPath)) {
+      throw new Error(
+        `Invalid ${context} form field path "${fieldPath}" for entity "${definition.name}".`,
+      );
+    }
+  }
 }
 
 export function listLayoutFieldOptions(

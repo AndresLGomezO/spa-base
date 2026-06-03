@@ -6,12 +6,14 @@ import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { formatFieldLabel } from "../../entities/entity-catalog";
 import {
   fetchEntityFileDownloadUrl,
+  fetchEntityFileDownloadUrlByStoragePath,
   isEntityFileReferenceWithDownload,
 } from "../../lib/entity-file-client";
+import { parseLayoutStaticImageRef } from "../../lib/layout-static-image";
 import { resolveEntityFieldRootName } from "./resolve-entity-field-path";
 import { ENTITY_LAYOUT_IMAGE_PLACEHOLDER_SRC } from "./entity-layout-image-placeholder.js";
 import {
-  readEntityFileDownloadUrl,
+  readEntityLayoutImageSourceUrl,
   resolveEntityLayoutFieldDefaultImageSrc,
   resolveEntityLayoutImageDownloadTarget,
   resolveEntityLayoutImagePlaceholderSrc,
@@ -44,13 +46,19 @@ export function EntityLayoutImageField({
   usePreviewPlaceholder = false,
 }: EntityLayoutImageFieldProps) {
   const rootField = resolveEntityFieldRootName(fieldPath);
-  const directUrl = readEntityFileDownloadUrl(rawValue);
-  const downloadTarget = resolveEntityLayoutImageDownloadTarget({
-    item,
-    fieldPath,
-    definition,
-  });
-  const shouldFetch = directUrl === null && downloadTarget !== null;
+  const staticFileRef =
+    typeof rawValue === "string" ? parseLayoutStaticImageRef(rawValue) : null;
+  const directUrl = readEntityLayoutImageSourceUrl(rawValue);
+  const downloadTarget =
+    staticFileRef === null
+      ? resolveEntityLayoutImageDownloadTarget({
+          item,
+          fieldPath,
+          definition,
+        })
+      : null;
+  const shouldFetchRecord = directUrl === null && downloadTarget !== null;
+  const shouldFetchStorage = directUrl === null && staticFileRef !== null;
 
   const defaultFieldPath = (primaryFieldPath ?? fieldPath).trim();
   const fieldDefaultSrc = resolveEntityLayoutFieldDefaultImageSrc({
@@ -60,7 +68,7 @@ export function EntityLayoutImageField({
   });
 
   const previewFallbackSrc =
-    usePreviewPlaceholder && directUrl === null && !shouldFetch
+    usePreviewPlaceholder && directUrl === null && !shouldFetchRecord
       ? resolveEntityLayoutImagePlaceholderSrc({
           fieldPath,
           definition,
@@ -76,7 +84,22 @@ export function EntityLayoutImageField({
       downloadTarget?.fieldName,
     ],
     queryFn: () => fetchEntityFileDownloadUrl(downloadTarget!),
-    enabled: shouldFetch,
+    enabled: shouldFetchRecord,
+    staleTime: 5 * 60 * 1000,
+  });
+
+  const storageDownloadQuery = useQuery({
+    queryKey: [
+      "layout-static-image-download",
+      definition.name,
+      staticFileRef?.storagePath,
+    ],
+    queryFn: () =>
+      fetchEntityFileDownloadUrlByStoragePath(
+        definition.name,
+        staticFileRef!.storagePath,
+      ),
+    enabled: shouldFetchStorage,
     staleTime: 5 * 60 * 1000,
   });
 
@@ -85,15 +108,17 @@ export function EntityLayoutImageField({
       ? rawValue.fileName
       : formatFieldLabel(rootField, definition);
 
+  const fetchedUrl =
+    (shouldFetchRecord ? downloadQuery.data : null) ??
+    (shouldFetchStorage ? storageDownloadQuery.data : null) ??
+    null;
+
   const src = usePreviewPlaceholder
     ? (directUrl ??
-      (shouldFetch ? downloadQuery.data : null) ??
+      fetchedUrl ??
       previewFallbackSrc ??
       ENTITY_LAYOUT_IMAGE_PLACEHOLDER_SRC)
-    : (directUrl ??
-      (shouldFetch ? downloadQuery.data : null) ??
-      fieldDefaultSrc ??
-      null);
+    : (directUrl ?? fetchedUrl ?? fieldDefaultSrc ?? null);
 
   return (
     <CardFieldImage
