@@ -59,8 +59,6 @@ import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
 import { platformApp } from "@app/platform/app.config.js";
 import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
-import { seedPlatformRoles } from "./admin/seed-platform-roles.js";
-import { seedPlatformTenants } from "./admin/seed-platform-tenants.js";
 import { RATES_TENANT_ID } from "./admin/rates-tenant/constants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
@@ -215,10 +213,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
   registerCrudErrorHandler(server);
 
   if (!options.skipPlatformRoleSeed) {
+    const { seedPlatformRoles } =
+      await import("./admin/seed-platform-roles.js");
     await seedPlatformRoles(firebaseAdminConfig);
   }
 
   if (!options.skipPlatformTenantSeed) {
+    const { seedPlatformTenants } =
+      await import("./admin/seed-platform-tenants.js");
     await seedPlatformTenants(firebaseAdminConfig);
   }
 

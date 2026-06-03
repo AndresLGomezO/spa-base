@@ -1,19 +1,12 @@
-import { readFileSync } from "node:fs";
-import { dirname, join } from "node:path";
-import { fileURLToPath } from "node:url";
-
 import {
   uiLayoutDocumentSchema,
   type UiLayoutDocument,
   type ViewConfig,
 } from "@repo/entities";
 
-import { remapLayoutDocumentIds } from "./layout-seed-utils.js";
+import financialProductCardLayoutJson from "./financial-product-card-layout.json" with { type: "json" };
 
-const LAYOUT_PATH = join(
-  dirname(fileURLToPath(import.meta.url)),
-  "financial-product-card-layout.json",
-);
+import { remapLayoutDocumentIds } from "./layout-seed-utils.js";
 
 export const FINANCIAL_PRODUCT_TABLE_VIEW: ViewConfig = {
   type: "table",
@@ -56,8 +49,9 @@ export function loadFinancialProductCardLayout(): UiLayoutDocument {
     return cachedLayout;
   }
 
-  const raw = JSON.parse(readFileSync(LAYOUT_PATH, "utf8")) as unknown;
-  const parsed = uiLayoutDocumentSchema.parse(raw) as UiLayoutDocument;
+  const parsed = uiLayoutDocumentSchema.parse(
+    financialProductCardLayoutJson,
+  ) as UiLayoutDocument;
   cachedLayout = remapLayoutDocumentIds(parsed, "fp-card");
   return cachedLayout;
 }

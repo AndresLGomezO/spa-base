@@ -13,10 +13,9 @@ import {
 import { buildRatesEntityDefinitions } from "./definitions/index.js";
 import type { RatesNavCategoryIds } from "./definitions/index.js";
 
-const FINANCIAL_PRODUCT_VIEWS: readonly ViewConfig[] = [
-  FINANCIAL_PRODUCT_TABLE_VIEW,
-  buildFinancialProductCardView(),
-];
+function getFinancialProductViews(): readonly ViewConfig[] {
+  return [FINANCIAL_PRODUCT_TABLE_VIEW, buildFinancialProductCardView()];
+}
 
 function ratesDefinitionForValidation(definition: CreateEntityDefinitionInput) {
   const timestamp = "1970-01-01T00:00:00.000Z";
@@ -51,7 +50,7 @@ export function assertFinancialProductUiOverrideValid(
 
   validateEntityUIConfig(financialProduct, {
     ...baseUi,
-    views: [...FINANCIAL_PRODUCT_VIEWS],
+    views: [...getFinancialProductViews()],
     listViewType: "card",
   });
 }
@@ -63,7 +62,7 @@ export async function seedRatesFinancialProductCardLayout(
   assertFinancialProductUiOverrideValid(navCategoryIds);
 
   await repository.put(RATES_TENANT_ID, "financialProduct", {
-    views: [...FINANCIAL_PRODUCT_VIEWS],
+    views: [...getFinancialProductViews()],
     listViewType: "card",
   });
 }
