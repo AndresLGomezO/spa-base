@@ -45,6 +45,15 @@ export function createDefaultComponent(
     };
   }
 
+  if (
+    kind === "page-header" ||
+    kind === "page-toolbar" ||
+    kind === "page-metrics" ||
+    kind === "page-list"
+  ) {
+    return { kind };
+  }
+
   return {
     kind,
     primary: { type: "field", path: fieldPath },

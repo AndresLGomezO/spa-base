@@ -173,8 +173,15 @@ export async function registerEntityUiOverrideRoutes(
         ...(parsedBody.data.listItem
           ? { listItem: parsedBody.data.listItem as UiLayoutDocument }
           : {}),
-        ...(parsedBody.data.detail
-          ? { detailLayout: parsedBody.data.detail as UiLayoutDocument }
+        ...(parsedBody.data.mainPage
+          ? { mainPageLayout: parsedBody.data.mainPage as UiLayoutDocument }
+          : {}),
+        ...(parsedBody.data.recordDetail
+          ? {
+              recordDetailLayout: parsedBody.data
+                .recordDetail as UiLayoutDocument,
+              detailLayout: parsedBody.data.recordDetail as UiLayoutDocument,
+            }
           : {}),
       };
 
@@ -203,7 +210,12 @@ export async function registerEntityUiOverrideRoutes(
           ...(parsedBody.data.listItem
             ? { listItem: parsedBody.data.listItem }
             : {}),
-          ...(parsedBody.data.detail ? { detail: parsedBody.data.detail } : {}),
+          ...(parsedBody.data.mainPage
+            ? { mainPage: parsedBody.data.mainPage }
+            : {}),
+          ...(parsedBody.data.recordDetail
+            ? { recordDetail: parsedBody.data.recordDetail }
+            : {}),
           ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
         },
       );

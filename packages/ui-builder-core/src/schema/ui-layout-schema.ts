@@ -209,6 +209,30 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
       styles: z.array(styleRuleSchema).optional(),
     })
     .strict(),
+  z
+    .object({
+      kind: z.literal("page-header"),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("page-toolbar"),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("page-metrics"),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("page-list"),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
 ]);
 
 const componentRowSchema = z

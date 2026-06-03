@@ -10,7 +10,7 @@ import type {
   NavSubGroupConfig,
 } from "../components/sidebar/nav-config";
 
-type DesignLayoutKind = "list" | "page" | "forms";
+export type DesignLayoutKind = "main" | "list" | "detail" | "forms";
 
 export function designLayoutEntityPath(
   kind: DesignLayoutKind,
@@ -59,12 +59,21 @@ function useDesignLayoutEntityLinks(
 }
 
 export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
+  const mainLinks = useDesignLayoutEntityLinks("main");
   const listLinks = useDesignLayoutEntityLinks("list");
-  const pageLinks = useDesignLayoutEntityLinks("page");
+  const detailLinks = useDesignLayoutEntityLinks("detail");
   const formsLinks = useDesignLayoutEntityLinks("forms");
 
   return useMemo(() => {
     const subgroups: NavSubGroupConfig[] = [];
+
+    if (mainLinks.length > 0) {
+      subgroups.push({
+        id: "design-layout-main",
+        labelKey: "designLayoutMain",
+        children: mainLinks,
+      });
+    }
 
     if (listLinks.length > 0) {
       subgroups.push({
@@ -74,11 +83,11 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
       });
     }
 
-    if (pageLinks.length > 0) {
+    if (detailLinks.length > 0) {
       subgroups.push({
-        id: "design-layout-page",
-        labelKey: "designLayoutPage",
-        children: pageLinks,
+        id: "design-layout-detail",
+        labelKey: "designLayoutDetail",
+        children: detailLinks,
       });
     }
 
@@ -91,5 +100,5 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
     }
 
     return subgroups;
-  }, [formsLinks, listLinks, pageLinks]);
+  }, [detailLinks, formsLinks, listLinks, mainLinks]);
 }

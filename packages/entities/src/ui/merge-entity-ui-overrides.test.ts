@@ -59,9 +59,10 @@ describe("mergeEntityUiOverrides", () => {
     expect(merged.ui.listViewType).toBe("card");
   });
 
-  it("merges listItem, detail, and form layouts", () => {
+  it("merges listItem, mainPage, recordDetail, and form layouts", () => {
     const listItem = createDefaultUiLayout(["name"]);
-    const detail = createDefaultUiLayout(["name"]);
+    const mainPage = createDefaultUiLayout(["name"]);
+    const recordDetail = createDefaultUiLayout(["name"]);
     const createLayout = createDefaultUiLayout(["name"]);
 
     const merged = mergeEntityUiOverrides(baseDefinition, {
@@ -69,13 +70,28 @@ describe("mergeEntityUiOverrides", () => {
       updatedAt: new Date().toISOString(),
       views: [{ type: "table", name: "default", fields: ["name"] }],
       listItem,
-      detail,
+      mainPage,
+      recordDetail,
       forms: { create: createLayout },
     });
 
     expect(merged.ui.listItem).toEqual(listItem);
-    expect(merged.ui.detailLayout).toEqual(detail);
+    expect(merged.ui.mainPageLayout).toEqual(mainPage);
+    expect(merged.ui.recordDetailLayout).toEqual(recordDetail);
     expect(merged.ui.forms.create.layout).toEqual(createLayout);
+  });
+
+  it("migrates legacy detail override to recordDetailLayout", () => {
+    const legacyDetail = createDefaultUiLayout(["name"]);
+    const merged = mergeEntityUiOverrides(baseDefinition, {
+      entityName: "account",
+      updatedAt: new Date().toISOString(),
+      views: [{ type: "table", name: "default", fields: ["name"] }],
+      detail: legacyDetail,
+    });
+
+    expect(merged.ui.recordDetailLayout).toEqual(legacyDetail);
+    expect(merged.ui.detailLayout).toEqual(legacyDetail);
   });
 });
 

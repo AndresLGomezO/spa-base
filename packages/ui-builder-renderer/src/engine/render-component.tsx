@@ -4,6 +4,7 @@ import {
   fontSizePxFromStyles,
   isFieldUiComponent,
   isMetricKpiComponent,
+  isPageUiComponent,
   matchConditionalStyles,
   resolveFieldChain,
   resolveStyleRules,
@@ -140,6 +141,26 @@ export function renderUiComponent(
         foreignKeyField: config.foreignKeyField,
       }) ?? null
     );
+  }
+
+  if (isPageUiComponent(config)) {
+    const { containerClassName } = splitStyleRuleClasses(config.styles);
+    const wrap = (node: ReactNode) =>
+      containerClassName ? (
+        <div className={containerClassName}>{node}</div>
+      ) : (
+        node
+      );
+    switch (config.kind) {
+      case "page-header":
+        return wrap(context.pageHeaderRenderer?.() ?? null);
+      case "page-toolbar":
+        return wrap(context.pageToolbarRenderer?.() ?? null);
+      case "page-metrics":
+        return wrap(context.pageMetricsRenderer?.() ?? null);
+      case "page-list":
+        return wrap(context.pageListRenderer?.() ?? null);
+    }
   }
 
   if (!isFieldUiComponent(config)) {

@@ -21,7 +21,7 @@ export interface ImageResolveOptions {
   readonly imageSize?: number;
 }
 
-export type LayoutRenderMode = "listItem" | "detail" | "form";
+export type LayoutRenderMode = "listItem" | "detail" | "form" | "mainPage";
 
 export interface LayoutRenderContext {
   readonly mode?: LayoutRenderMode;
@@ -60,6 +60,10 @@ export interface LayoutRenderContext {
     readonly href: string;
     readonly label: string;
   } | null;
+  readonly pageHeaderRenderer?: () => ReactNode;
+  readonly pageToolbarRenderer?: () => ReactNode;
+  readonly pageMetricsRenderer?: () => ReactNode;
+  readonly pageListRenderer?: () => ReactNode;
 }
 
 export type ListItemRenderContext = LayoutRenderContext & {

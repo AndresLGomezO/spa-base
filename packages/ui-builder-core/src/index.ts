@@ -28,7 +28,13 @@ export type {
   CardBadgeVariant,
 } from "./types/component.js";
 
-export { isMetricKpiComponent, isFieldUiComponent } from "./types/component.js";
+export {
+  isMetricKpiComponent,
+  isFieldUiComponent,
+  isPageUiComponent,
+} from "./types/component.js";
+export { createDefaultMainPageLayout } from "./layout/default-main-page-layout.js";
+export { createDefaultFormLayout } from "./layout/default-form-layout.js";
 export type { DesignSurface } from "./types/design-surface.js";
 export {
   componentKindsForSurface,

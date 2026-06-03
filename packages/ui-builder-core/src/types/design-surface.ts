@@ -1,6 +1,11 @@
 import type { UiComponentKind } from "./component.js";
 
-export type DesignSurface = "listItem" | "detail" | "formCreate" | "formEdit";
+export type DesignSurface =
+  | "listItem"
+  | "mainPage"
+  | "recordDetail"
+  | "formCreate"
+  | "formEdit";
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -11,7 +16,14 @@ const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "metric-kpi",
 ];
 
-const DETAIL_KINDS: readonly UiComponentKind[] = [
+const MAIN_PAGE_KINDS: readonly UiComponentKind[] = [
+  "page-header",
+  "page-toolbar",
+  "page-metrics",
+  "page-list",
+];
+
+const RECORD_DETAIL_KINDS: readonly UiComponentKind[] = [
   ...LIST_ITEM_KINDS,
   "related-records",
 ];
@@ -28,8 +40,10 @@ export function componentKindsForSurface(
   switch (surface) {
     case "listItem":
       return LIST_ITEM_KINDS;
-    case "detail":
-      return DETAIL_KINDS;
+    case "mainPage":
+      return MAIN_PAGE_KINDS;
+    case "recordDetail":
+      return RECORD_DETAIL_KINDS;
     case "formCreate":
     case "formEdit":
       return FORM_KINDS;

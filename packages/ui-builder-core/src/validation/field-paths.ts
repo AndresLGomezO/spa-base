@@ -98,7 +98,11 @@ function collectComponentPaths(
   if (
     component.kind === "form-section" ||
     component.kind === "form-actions" ||
-    component.kind === "related-records"
+    component.kind === "related-records" ||
+    component.kind === "page-header" ||
+    component.kind === "page-toolbar" ||
+    component.kind === "page-metrics" ||
+    component.kind === "page-list"
   ) {
     return [];
   }

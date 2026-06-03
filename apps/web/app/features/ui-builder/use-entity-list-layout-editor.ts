@@ -1,9 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import type {
-  UiLayoutDocument,
-  ViewConfig,
-  ViewMetricWidget,
-} from "@repo/entities";
+import type { UiLayoutDocument, ViewConfig } from "@repo/entities";
 import { createDefaultUiLayout } from "@repo/entities";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -11,7 +7,6 @@ import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
 import { entityCatalogQueryKey } from "../../query/query-client";
-import { viewMetricWidgetsFromView } from "../../components/metrics/metric-widgets-builder-state.js";
 
 function getDefaultFieldPaths(
   definition: ReturnType<typeof useEntityDefinition>,
@@ -37,12 +32,6 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
     createDefaultUiLayout(fieldPaths),
   );
-  const [tableMetricWidgets, setTableMetricWidgets] = useState<
-    readonly ViewMetricWidget[]
-  >([]);
-  const [cardMetricWidgets, setCardMetricWidgets] = useState<
-    readonly ViewMetricWidget[]
-  >([]);
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
@@ -50,10 +39,7 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const defaultFieldPath = fieldPaths[0] ?? "name";
 
   useEffect(() => {
-    const tableView = uiViews.find((view) => view.type === "table");
     const cardView = uiViews.find((view) => view.type === "card");
-    setTableMetricWidgets(viewMetricWidgetsFromView(tableView?.metricWidgets));
-    setCardMetricWidgets(viewMetricWidgetsFromView(cardView?.metricWidgets));
     setViewType(listViewType ?? (cardView ? "card" : "table"));
 
     const listItem = definition.ui.listItem ?? cardView?.layout;
@@ -68,31 +54,31 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   }, [definition.ui.listItem, fieldPaths, listViewType, uiViews]);
 
   const buildViews = useCallback((): readonly ViewConfig[] => {
-    const tableView: ViewConfig = {
+    const tableView = uiViews.find((view) => view.type === "table");
+    const tableViewConfig: ViewConfig = {
+      ...(tableView ?? { type: "table", name: "default", fields: fieldPaths }),
       type: "table",
-      name: "default",
+      name: tableView?.name ?? "default",
       fields: fieldPaths,
-      ...(tableMetricWidgets.length > 0
-        ? { metricWidgets: tableMetricWidgets }
-        : {}),
     };
 
     if (viewType === "table") {
-      return [tableView];
+      return [tableViewConfig];
     }
 
-    const cardViewConfig = {
-      type: "card" as const,
+    const existingCard = uiViews.find((view) => view.type === "card");
+    const cardViewConfig: ViewConfig = {
+      type: "card",
       name: "card",
       fields: fieldPaths,
       layout,
-      ...(cardMetricWidgets.length > 0
-        ? { metricWidgets: cardMetricWidgets }
+      ...(existingCard?.metricWidgets
+        ? { metricWidgets: existingCard.metricWidgets }
         : {}),
     };
 
-    return [tableView, cardViewConfig];
-  }, [cardMetricWidgets, fieldPaths, layout, tableMetricWidgets, viewType]);
+    return [tableViewConfig, cardViewConfig];
+  }, [fieldPaths, layout, uiViews, viewType]);
 
   const save = useCallback(async (): Promise<boolean> => {
     setIsSaving(true);
@@ -123,10 +109,6 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     setViewType,
     layout,
     setLayout,
-    tableMetricWidgets,
-    setTableMetricWidgets,
-    cardMetricWidgets,
-    setCardMetricWidgets,
     isSaving,
     save,
     layoutEditorKey,

@@ -43,7 +43,8 @@ export function EntityRecordDetail({
   const canConfigureLayout = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   );
-  const detailLayout = definition.ui.detailLayout;
+  const recordDetailLayout =
+    definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
   const { items: catalogItems } = useEntityCatalog();
   const entityLabel = getEntityLabel(definition);
 
@@ -133,9 +134,9 @@ export function EntityRecordDetail({
         </Heading>
         <div className="flex items-center gap-2">
           {canConfigureLayout ? (
-            <Link to={designLayoutEntityPath("page", entityName)}>
+            <Link to={designLayoutEntityPath("detail", entityName)}>
               <Button type="button" variant="outline" size="sm">
-                {t("nav.designLayoutPage")}
+                {t("nav.designLayoutDetail")}
               </Button>
             </Link>
           ) : null}
@@ -150,7 +151,7 @@ export function EntityRecordDetail({
         </div>
       </div>
 
-      {detailLayout ? (
+      {recordDetailLayout ? (
         <div className="bg-card border-border rounded-lg border p-4">
           <EntityLayoutDetailView record={record} definition={definition} />
         </div>
@@ -160,7 +161,7 @@ export function EntityRecordDetail({
             <Alert className="mb-4">
               <Text>{t("entity.detailLayoutMissing")}</Text>
               <Link
-                to={designLayoutEntityPath("page", entityName)}
+                to={designLayoutEntityPath("detail", entityName)}
                 className="text-primary mt-2 inline-block text-sm underline"
               >
                 {t("entity.detailLayoutMissingAction")}

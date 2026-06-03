@@ -1,5 +1,13 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type ComponentType,
+} from "react";
 import { resolveActiveView, resolveCardView } from "@repo/ui-builder";
+import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
 import { Button, Heading, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
@@ -26,6 +34,7 @@ import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
 import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
+import { createEntityMainPageRenderContext } from "../../features/ui-builder/create-entity-main-page-render-context";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -50,7 +59,7 @@ function serializeFilters(
 }
 
 export function EntityPage({ entityName }: EntityPageProps) {
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
@@ -246,7 +255,13 @@ export function EntityPage({ entityName }: EntityPageProps) {
     [searchParams],
   );
 
-  const metricWidgets = activeView.metricWidgets ?? [];
+  const tableView = useMemo(
+    () => definition.ui.views.find((view) => view.type === "table"),
+    [definition.ui.views],
+  );
+  const metricWidgets =
+    tableView?.metricWidgets ?? activeView.metricWidgets ?? [];
+  const mainPageLayout = definition.ui.mainPageLayout;
 
   const listViewProps = {
     entityName,
@@ -263,34 +278,93 @@ export function EntityPage({ entityName }: EntityPageProps) {
     routeParams,
   };
 
-  return (
-    <div className="flex min-h-full w-full flex-col gap-6">
-      <div className="flex shrink-0 items-center justify-between gap-4">
-        <Heading level={1}>{getEntityLabel(definition)}</Heading>
-        <div className="flex items-center gap-2">
-          {canConfigureView ? (
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              onClick={() =>
-                navigate(designLayoutEntityPath("list", entityName))
-              }
-            >
-              {t("entity.openDesignLayout")}
-            </Button>
-          ) : null}
-          {permissions.canCreate ? (
-            <Button
-              type="button"
-              onClick={() => setFormModal({ mode: "create" })}
-            >
-              {t("entity.create")}
-            </Button>
-          ) : null}
-        </div>
-      </div>
+  const mainPageContext = useMemo(
+    () =>
+      createEntityMainPageRenderContext({
+        entityName,
+        entityLabel: getEntityLabel(definition),
+        locale: i18n.language,
+        canCreate: permissions.canCreate,
+        metricWidgets,
+        listFilters: filters,
+        routeParams,
+        toolbar: {
+          search,
+          setSearch,
+          filters,
+          setFilter,
+          sort,
+          setSortColumn,
+          toggleSortDirection,
+          filterOptions,
+          activeBadges: dataViewControls.activeBadges,
+          clearAll,
+          columns: columnDescriptors as Parameters<
+            typeof WebDataViewToolbar
+          >[0]["columns"],
+          filtersOpen,
+          onFiltersOpenChange: setFiltersOpen,
+          showSearch,
+        },
+        ViewComponent: ViewComponent as unknown as ComponentType<
+          Record<string, unknown>
+        >,
+        listViewProps,
+        onCreate: () => setFormModal({ mode: "create" }),
+      }),
+    [
+      clearAll,
+      columnDescriptors,
+      dataViewControls.activeBadges,
+      definition,
+      entityName,
+      filterOptions,
+      filters,
+      filtersOpen,
+      i18n.language,
+      listViewProps,
+      metricWidgets,
+      permissions.canCreate,
+      routeParams,
+      search,
+      setFilter,
+      setSearch,
+      setSortColumn,
+      showSearch,
+      sort,
+      toggleSortDirection,
+      ViewComponent,
+    ],
+  );
 
+  const pageHeader = (
+    <div className="flex shrink-0 items-center justify-between gap-4">
+      <Heading level={1}>{getEntityLabel(definition)}</Heading>
+      <div className="flex items-center gap-2">
+        {canConfigureView ? (
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(designLayoutEntityPath("main", entityName))}
+          >
+            {t("entity.openDesignLayout")}
+          </Button>
+        ) : null}
+        {permissions.canCreate ? (
+          <Button
+            type="button"
+            onClick={() => setFormModal({ mode: "create" })}
+          >
+            {t("entity.create")}
+          </Button>
+        ) : null}
+      </div>
+    </div>
+  );
+
+  const legacyMainBody = (
+    <>
       <div className="shrink-0">
         <WebDataViewToolbar
           search={search}
@@ -320,6 +394,21 @@ export function EntityPage({ entityName }: EntityPageProps) {
       <div className="flex min-h-0 flex-1 flex-col">
         <ViewComponent {...listViewProps} />
       </div>
+    </>
+  );
+
+  return (
+    <div className="flex min-h-full w-full flex-col gap-6">
+      {pageHeader}
+
+      {mainPageLayout ? (
+        <RecursiveLayoutRenderer
+          layout={mainPageLayout}
+          context={mainPageContext}
+        />
+      ) : (
+        legacyMainBody
+      )}
 
       {formModal ? (
         <FormModal

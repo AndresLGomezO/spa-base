@@ -16,6 +16,9 @@ export const entityUiOverrideRecordSchema = z
     views: z.array(z.unknown()).min(1),
     listViewType: z.enum(["table", "card", "compact"]).optional(),
     listItem: uiLayoutDocumentSchema.optional(),
+    mainPage: uiLayoutDocumentSchema.optional(),
+    recordDetail: uiLayoutDocumentSchema.optional(),
+    /** @deprecated Use recordDetail; read-only alias for migration */
     detail: uiLayoutDocumentSchema.optional(),
     forms: uiOverrideFormsSchema.optional(),
     updatedAt: z.string().datetime(),
@@ -31,7 +34,8 @@ export const putEntityUiOverrideInputSchema = z
     views: z.array(z.unknown()).min(1),
     listViewType: z.enum(["table", "card", "compact"]).optional(),
     listItem: uiLayoutDocumentSchema.optional(),
-    detail: uiLayoutDocumentSchema.optional(),
+    mainPage: uiLayoutDocumentSchema.optional(),
+    recordDetail: uiLayoutDocumentSchema.optional(),
     forms: uiOverrideFormsSchema.optional(),
   })
   .strict();

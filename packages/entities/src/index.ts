@@ -112,6 +112,8 @@ export type {
 export {
   uiLayoutDocumentSchema,
   createDefaultUiLayout,
+  createDefaultMainPageLayout,
+  createDefaultFormLayout,
   createAccountCardSeedLayout,
   assertLayoutFieldPaths,
   isValidLayoutFieldPath,

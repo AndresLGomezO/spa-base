@@ -21,7 +21,7 @@ export function EntityLayoutDetailView({
     definition.name as import("../../entities/entity-catalog").EntityName,
   );
   const { items: catalogItems } = useEntityCatalog();
-  const layout = definition.ui.detailLayout;
+  const layout = definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
 
   if (!layout) {
     return null;
