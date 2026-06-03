@@ -12,7 +12,8 @@ resource "google_cloud_run_v2_service" "worker_aggregation" {
     google_project_service.run_api,
     google_pubsub_subscription.aggregation_events_worker,
     google_project_iam_member.worker_aggregation_firestore,
-    google_project_iam_member.worker_aggregation_pubsub_subscriber,
+    google_pubsub_subscription_iam_member.worker_aggregation_pubsub_subscriber,
+    google_pubsub_subscription_iam_member.worker_aggregation_pubsub_viewer,
     google_service_account_iam_member.ci_deployer_act_as_worker_aggregation_sa,
   ]
 
