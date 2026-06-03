@@ -24,9 +24,9 @@ locals {
       max_instance_request_concurrency = 1
       worker_min_instances             = 1
       worker_max_instances             = 1
-      # cpu_idle=false requires limits.cpu >= 1 on Cloud Run v2 (always-allocated / unthrottled).
+      # cpu_idle=false requires limits.cpu >= 1 and memory >= 512Mi on Cloud Run v2.
       worker_cpu      = "1000m"
-      worker_memory   = "256Mi"
+      worker_memory   = "512Mi"
       worker_cpu_idle = false
       worker_timeout  = "3600s"
     }
@@ -42,7 +42,7 @@ locals {
       worker_min_instances             = 1
       worker_max_instances             = 1
       worker_cpu                       = "1000m"
-      worker_memory                    = "256Mi"
+      worker_memory                    = "512Mi"
       worker_cpu_idle                  = false
       worker_timeout                   = "3600s"
     }
