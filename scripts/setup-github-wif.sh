@@ -91,6 +91,7 @@ BOOTSTRAP_APIS=(
   firebaserules.googleapis.com
   firebasehosting.googleapis.com
   firebase.googleapis.com
+  pubsub.googleapis.com
 )
 
 DEPLOYER_ROLES=(
@@ -104,6 +105,7 @@ DEPLOYER_ROLES=(
   roles/serviceusage.serviceUsageAdmin
   roles/resourcemanager.projectIamAdmin
   roles/secretmanager.admin
+  roles/pubsub.admin
 )
 
 github_secret_names() {
