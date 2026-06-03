@@ -40,7 +40,12 @@ function renderRows(
       justify={columnFlex.justify}
     >
       {rows.map((row, rowIndex) =>
-        renderRow(row, context, stackDirection, rowIndex + rowMotionIndexOffset),
+        renderRow(
+          row,
+          context,
+          stackDirection,
+          rowIndex + rowMotionIndexOffset,
+        ),
       )}
     </LayoutStack>
   );
@@ -140,7 +145,9 @@ export function RecursiveLayoutRenderer({
   const rootMotionClass = resolveMotionPreset(layout.motion);
   return (
     <div
-      className={[rootStyles.className, rootMotionClass].filter(Boolean).join(" ")}
+      className={[rootStyles.className, rootMotionClass]
+        .filter(Boolean)
+        .join(" ")}
       style={rootStyles.style}
     >
       <LayoutGrid

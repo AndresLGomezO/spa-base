@@ -203,12 +203,8 @@ export async function registerEntityUiOverrideRoutes(
           ...(parsedBody.data.listItem
             ? { listItem: parsedBody.data.listItem }
             : {}),
-          ...(parsedBody.data.detail
-            ? { detail: parsedBody.data.detail }
-            : {}),
-          ...(parsedBody.data.forms
-            ? { forms: parsedBody.data.forms }
-            : {}),
+          ...(parsedBody.data.detail ? { detail: parsedBody.data.detail } : {}),
+          ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
         },
       );
 

@@ -1,10 +1,6 @@
 import type { UiComponentKind } from "./component.js";
 
-export type DesignSurface =
-  | "listItem"
-  | "detail"
-  | "formCreate"
-  | "formEdit";
+export type DesignSurface = "listItem" | "detail" | "formCreate" | "formEdit";
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",

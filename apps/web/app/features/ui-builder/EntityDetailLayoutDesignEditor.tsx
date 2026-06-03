@@ -34,7 +34,8 @@ export function EntityDetailLayoutDesignEditor({
   const previewRecord = useMemo(() => {
     if (previewRecordId) {
       const match = items.find(
-        (item) => String((item as Record<string, unknown>).id) === previewRecordId,
+        (item) =>
+          String((item as Record<string, unknown>).id) === previewRecordId,
       );
       if (match) {
         return match as Record<string, unknown>;

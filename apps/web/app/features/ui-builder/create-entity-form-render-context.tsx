@@ -1,6 +1,9 @@
 import { Button, Heading } from "@repo/ui";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
-import type { FieldAccessLevel, SerializableEntityDefinition } from "@repo/entities";
+import type {
+  FieldAccessLevel,
+  SerializableEntityDefinition,
+} from "@repo/entities";
 import { isFieldEditable, isFieldVisible } from "@repo/ui-builder";
 
 import type { EntityName } from "../../entities/entity-catalog";
@@ -73,7 +76,11 @@ export function createEntityFormRenderContext(options: {
     formActionsRenderer: () =>
       options.hideActions ? null : (
         <div className="flex items-center gap-3">
-          <Button type="submit" form={ENTITY_FORM_ID} loading={options.isSubmitting}>
+          <Button
+            type="submit"
+            form={ENTITY_FORM_ID}
+            loading={options.isSubmitting}
+          >
             {options.saveLabel}
           </Button>
           <Button type="button" variant="outline" onClick={options.onCancel}>

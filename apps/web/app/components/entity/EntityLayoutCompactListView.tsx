@@ -134,9 +134,7 @@ export function EntityLayoutCompactListView({
             variant="outline"
             size="sm"
             className="self-start"
-            onClick={() =>
-              navigate(designLayoutEntityPath("list", entityName))
-            }
+            onClick={() => navigate(designLayoutEntityPath("list", entityName))}
           >
             {t("entity.cardLayoutMissingAction")}
           </Button>

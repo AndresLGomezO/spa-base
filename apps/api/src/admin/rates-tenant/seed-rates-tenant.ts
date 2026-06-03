@@ -19,6 +19,7 @@ import {
 } from "./records/index.js";
 import { seedRatesTestUser } from "./seed-rates-test-user.js";
 import { seedRatesAccountCardLayout } from "./seed-account-card-layout.js";
+import { seedRatesFinancialProductCardLayout } from "./seed-financial-product-card-layout.js";
 import {
   ensureRatesRole,
   seedRatesCategories,
@@ -72,4 +73,8 @@ export async function seedRatesTenantMock(
     testUserUid,
   );
   await seedRatesAccountCardLayout(uiOverrideRepository);
+  await seedRatesFinancialProductCardLayout(
+    uiOverrideRepository,
+    navCategoryIds,
+  );
 }
