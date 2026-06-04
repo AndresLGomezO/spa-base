@@ -7,6 +7,15 @@ import {
   resolveSearchField,
 } from "./searchable-fields.js";
 
+export function shouldPersistSearchMirrorFields(
+  entity: AnyDefinedEntity,
+): boolean {
+  return (
+    entity.metadata.inMemoryListQueries !== true &&
+    listSearchableStringFields(entity).length > 0
+  );
+}
+
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
 export function searchMirrorFieldName(sourceField: string): string {
@@ -67,6 +76,31 @@ function tokenizeSearchSourceValue(value: unknown): string[] | undefined {
   return tokens.length > 0 ? tokens : undefined;
 }
 
+export function stripSearchMirrorFields(
+  entity: AnyDefinedEntity,
+  record: Record<string, unknown>,
+): Record<string, unknown> {
+  const next = { ...record };
+
+  for (const sourceField of listSearchableStringFields(entity)) {
+    Reflect.deleteProperty(next, searchMirrorFieldName(sourceField));
+    Reflect.deleteProperty(next, legacySearchMirrorFieldName(sourceField));
+  }
+
+  return next;
+}
+
+export function prepareRecordSearchFields(
+  entity: AnyDefinedEntity,
+  record: Record<string, unknown>,
+): Record<string, unknown> {
+  if (!shouldPersistSearchMirrorFields(entity)) {
+    return stripSearchMirrorFields(entity, record);
+  }
+
+  return applySearchMirrorFields(entity, record);
+}
+
 export function applySearchMirrorFields(
   entity: AnyDefinedEntity,
   record: Record<string, unknown>,
@@ -95,6 +129,10 @@ export function applySearchMirrorFields(
 export function extendEntitySchemaWithSearchMirrors(
   entity: AnyDefinedEntity,
 ): AnyDefinedEntity {
+  if (!shouldPersistSearchMirrorFields(entity)) {
+    return entity;
+  }
+
   const searchableFields = listSearchableStringFields(entity);
   if (searchableFields.length === 0) {
     return entity;

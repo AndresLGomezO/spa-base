@@ -1,6 +1,7 @@
 import {
   applyDisplayFieldToRecord,
   applyHiddenFromNav,
+  applyInMemoryListQueries,
   applyNavCategoryId,
   applyNavOrder,
   applyTenantWideRead,
@@ -55,6 +56,9 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
         fields: input.fields,
         ...(input.ui ? { ui: input.ui } : {}),
         ...(input.tenantWideRead === true ? { tenantWideRead: true } : {}),
+        ...(input.inMemoryListQueries === true
+          ? { inMemoryListQueries: true }
+          : {}),
         ...(input.hiddenFromNav === true ? { hiddenFromNav: true } : {}),
         ...(input.navCategoryId ? { navCategoryId: input.navCategoryId } : {}),
         ...(input.navOrder !== undefined ? { navOrder: input.navOrder } : {}),
@@ -76,18 +80,21 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
       const base = applyNavOrder(
         applyNavCategoryId(
           applyHiddenFromNav(
-            applyTenantWideRead(
-              applyDisplayFieldToRecord(
-                {
-                  ...current,
-                  ...(input.label ? { label: input.label } : {}),
-                  ...(input.fields ? { fields: input.fields } : {}),
-                  version: current.version + 1,
-                  updatedAt: now,
-                },
-                input,
+            applyInMemoryListQueries(
+              applyTenantWideRead(
+                applyDisplayFieldToRecord(
+                  {
+                    ...current,
+                    ...(input.label ? { label: input.label } : {}),
+                    ...(input.fields ? { fields: input.fields } : {}),
+                    version: current.version + 1,
+                    updatedAt: now,
+                  },
+                  input,
+                ),
+                input.tenantWideRead,
               ),
-              input.tenantWideRead,
+              input.inMemoryListQueries,
             ),
             input.hiddenFromNav,
           ),

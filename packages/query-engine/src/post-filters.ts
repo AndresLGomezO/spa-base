@@ -1,6 +1,42 @@
 import type { NormalizedFilter } from "@repo/firestore-converters";
 
+/** Sentinel field for multi-field in-memory search post-filters. */
+export const SEARCH_SOURCE_FIELDS_FILTER_FIELD = "__searchSourceFields__";
+
+export interface SearchSourceFieldsContainValue {
+  readonly term: string;
+  readonly fields: readonly string[];
+}
+
 const POST_FILTER_OVERFETCH_MULTIPLIER = 3;
+
+function isSearchSourceFieldsContainValue(
+  value: unknown,
+): value is SearchSourceFieldsContainValue {
+  if (!value || typeof value !== "object") {
+    return false;
+  }
+
+  const candidate = value as SearchSourceFieldsContainValue;
+  return (
+    typeof candidate.term === "string" &&
+    Array.isArray(candidate.fields) &&
+    candidate.fields.every((field) => typeof field === "string")
+  );
+}
+
+function recordFieldContainsTerm(
+  record: Record<string, unknown>,
+  field: string,
+  term: string,
+): boolean {
+  const rawValue = record[field];
+  if (typeof rawValue !== "string") {
+    return false;
+  }
+
+  return rawValue.toLowerCase().includes(term);
+}
 
 export function computeOverfetchLimit(
   requestedLimit: number,
@@ -16,6 +52,21 @@ function matchesPostFilter(
   record: Record<string, unknown>,
   filter: NormalizedFilter,
 ): boolean {
+  if (filter.operator === "sourceFieldsContain") {
+    if (!isSearchSourceFieldsContainValue(filter.value)) {
+      return false;
+    }
+
+    const term = filter.value.term.toLowerCase();
+    if (term.length === 0) {
+      return true;
+    }
+
+    return filter.value.fields.some((field) =>
+      recordFieldContainsTerm(record, field, term),
+    );
+  }
+
   if (typeof filter.value !== "string") {
     return false;
   }

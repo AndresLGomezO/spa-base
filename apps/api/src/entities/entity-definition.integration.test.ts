@@ -231,4 +231,50 @@ describe("entity definitions integration", () => {
     expect(getWorkItem.statusCode).toBe(200);
     expect(getWorkItem.json().data.batchId).toBe(batchId);
   });
+
+  it("searches in-memory list entities using source fields without token mirrors", async () => {
+    const server = await buildTestServer();
+    const headers = {
+      authorization: "Bearer fake-token",
+      "x-firebase-appcheck": "fake-appcheck",
+    };
+
+    const createDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "tag",
+        label: "Tags",
+        inMemoryListQueries: true,
+        fields: [
+          { name: "code", type: "string", required: true },
+          { name: "label", type: "string", required: true },
+        ],
+      },
+    });
+    expect(createDefinition.statusCode).toBe(201);
+
+    const createRecord = await server.inject({
+      method: "POST",
+      url: "/api/tag",
+      headers,
+      payload: { code: "VIP", label: "Bancolombia VIP" },
+    });
+    expect(createRecord.statusCode).toBe(201);
+    const created = createRecord.json().data;
+
+    const searchResponse = await server.inject({
+      method: "GET",
+      url: "/api/tag?search=lombia&limit=10",
+      headers,
+    });
+
+    expect(searchResponse.statusCode).toBe(200);
+    expect(searchResponse.json().data.items).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: created.id, label: "Bancolombia VIP" }),
+      ]),
+    );
+  });
 });

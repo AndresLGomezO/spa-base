@@ -5,7 +5,7 @@ import rateLimit from "@fastify/rate-limit";
 import { isRateLimitExemptRequest } from "./rate-limit-allowlist.js";
 import Fastify from "fastify";
 
-import { getAllEntities } from "@repo/entities";
+import { getAllEntities, prepareRecordSearchFields } from "@repo/entities";
 import type {
   EntityCategoryRepository,
   EntityDefinitionRepository,
@@ -525,7 +525,10 @@ export async function buildServer(options: BuildServerOptions = {}) {
         updateSchema: entity.updateSchema,
         businessFieldNames: Object.keys(entity.metadata.fields),
         prepareRecordForWrite: (record) =>
-          sanitizeFileFieldsForWrite(entity, record),
+          sanitizeFileFieldsForWrite(
+            entity,
+            prepareRecordSearchFields(entity, record),
+          ),
       },
       repository,
       authenticate,

@@ -316,6 +316,47 @@ describe("resolveSearchField", () => {
     const result = applyPostFilters([record], normalized.postFilters);
     expect(result).toHaveLength(0);
   });
+
+  it("uses source field contains for in-memory list entities", () => {
+    const InMemoryEntity = defineEntity({
+      name: "inMemoryTag",
+      fields: {
+        code: { type: "string", required: true },
+        label: { type: "string", required: true },
+      },
+      inMemoryListQueries: true,
+      ui: {
+        views: [{ type: "table", name: "default", fields: ["code", "label"] }],
+        forms: {
+          create: { sections: [{ fields: ["code", "label"] }] },
+          edit: { sections: [{ fields: ["code", "label"] }] },
+        },
+        fields: {
+          code: { searchable: true },
+          label: { searchable: true },
+        },
+      },
+    }) as unknown as AnyDefinedEntity;
+
+    const normalized = normalizeEntityQuery(InMemoryEntity, {
+      search: "lomb",
+    });
+
+    expect(normalized.postFilters).toHaveLength(1);
+    expect(normalized.postFilters[0]?.operator).toBe("sourceFieldsContain");
+
+    const matching = applyPostFilters(
+      [{ code: "A1", label: "Bancolombia Savings" }],
+      normalized.postFilters,
+    );
+    const missing = applyPostFilters(
+      [{ code: "A2", label: "Other Bank" }],
+      normalized.postFilters,
+    );
+
+    expect(matching).toHaveLength(1);
+    expect(missing).toHaveLength(0);
+  });
 });
 
 describe("applyPostFilters", () => {

@@ -87,9 +87,9 @@ describe("createFirestoreEntityQueryExecutor in-memory list pipeline", () => {
       ],
       postFilters: [
         {
-          field: "titleSearchTokens",
-          operator: "tokenStartsWith",
-          value: "needle",
+          field: "__searchSourceFields__",
+          operator: "sourceFieldsContain",
+          value: { term: "needle", fields: ["name"] },
         },
       ],
       search: "needle",

@@ -5,6 +5,7 @@ import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import {
   applySearchMirrorFields,
   legacySearchMirrorFieldName,
+  prepareRecordSearchFields,
   resolveSearchStorageField,
   searchMirrorFieldName,
   tokenizeSearchMirrorValue,
@@ -110,5 +111,24 @@ describe("applySearchMirrorFields", () => {
 describe("resolveSearchStorageField", () => {
   it("maps logical search field to token mirror field", () => {
     expect(resolveSearchStorageField(AccountEntity)).toBe("nameSearchTokens");
+  });
+});
+
+describe("prepareRecordSearchFields", () => {
+  it("skips token mirrors for in-memory list entities", () => {
+    const TagEntity = defineEntity({
+      name: "tag",
+      fields: { label: { type: "string", required: true } },
+      inMemoryListQueries: true,
+    }) as unknown as AnyDefinedEntity;
+
+    expect(
+      prepareRecordSearchFields(TagEntity, {
+        label: "Bancolombia Savings",
+        labelSearchTokens: ["stale"],
+      }),
+    ).toEqual({
+      label: "Bancolombia Savings",
+    });
   });
 });

@@ -198,6 +198,35 @@ describe("CRUD API", () => {
       expect(response.json().data.tenantId).toBe("tenant_a");
     });
 
+    it("finds records by search after create persists token mirrors", async () => {
+      const server = await buildTestServer();
+
+      const createResponse = await server.inject({
+        method: "POST",
+        url: "/api/widget",
+        headers: authHeaders,
+        payload: { name: "UniqueSearchNeedle", email: "needle@example.com" },
+      });
+      expect(createResponse.statusCode).toBe(201);
+      const created = createResponse.json().data;
+
+      const searchResponse = await server.inject({
+        method: "GET",
+        url: "/api/widget?search=unique&limit=10",
+        headers: authHeaders,
+      });
+
+      expect(searchResponse.statusCode).toBe(200);
+      expect(searchResponse.json().data.items).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({
+            id: created.id,
+            name: "UniqueSearchNeedle",
+          }),
+        ]),
+      );
+    });
+
     it("lists, gets, updates, and deletes a record", async () => {
       const server = await buildTestServer();
 

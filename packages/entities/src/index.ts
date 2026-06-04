@@ -87,8 +87,11 @@ export {
   legacySearchMirrorFieldName,
   listLegacySearchMirrorFieldNames,
   listSearchMirrorStorageFields,
+  prepareRecordSearchFields,
   resolveSearchStorageField,
   searchMirrorFieldName,
+  shouldPersistSearchMirrorFields,
+  stripSearchMirrorFields,
   tokenizeSearchMirrorValue,
 } from "./search/search-mirror-fields.js";
 export {

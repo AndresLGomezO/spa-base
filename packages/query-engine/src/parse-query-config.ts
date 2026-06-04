@@ -1,6 +1,7 @@
 import {
   SYSTEM_FIELD_KEYS,
   usesForeignKeyStorage,
+  listSearchableStringFields,
   resolveSearchStorageField,
   type DefinedEntity,
   type FieldDefinitions,
@@ -17,6 +18,7 @@ import {
 import { z } from "zod";
 
 import { QueryError, QueryErrorCode } from "./errors.js";
+import { SEARCH_SOURCE_FIELDS_FILTER_FIELD } from "./post-filters.js";
 import type { Filter, ListQueryInput, QueryConfig, Sort } from "./types.js";
 
 const DEFAULT_LIMIT = 20;
@@ -449,21 +451,39 @@ export function normalizeEntityQuery(
   const searchPostFilters: NormalizedFilter[] = [];
 
   if (config.search && config.search.length > 0) {
-    const field = resolveSearchStorageField(entity);
-    if (!field) {
-      throw new QueryError(
-        QueryErrorCode.SEARCH_NOT_CONFIGURED,
-        `Search is not available for entity "${entity.name}". No searchable string field found.`,
-      );
-    }
-    searchField = field;
-    search = config.search;
     const lowerTerm = config.search.toLowerCase();
-    searchPostFilters.push({
-      field,
-      operator: "tokenStartsWith",
-      value: lowerTerm,
-    });
+    search = config.search;
+
+    if (entity.metadata.inMemoryListQueries === true) {
+      const sourceFields = listSearchableStringFields(entity);
+      if (sourceFields.length === 0) {
+        throw new QueryError(
+          QueryErrorCode.SEARCH_NOT_CONFIGURED,
+          `Search is not available for entity "${entity.name}". No searchable string field found.`,
+        );
+      }
+
+      searchField = sourceFields[0];
+      searchPostFilters.push({
+        field: SEARCH_SOURCE_FIELDS_FILTER_FIELD,
+        operator: "sourceFieldsContain",
+        value: { term: lowerTerm, fields: sourceFields },
+      });
+    } else {
+      const field = resolveSearchStorageField(entity);
+      if (!field) {
+        throw new QueryError(
+          QueryErrorCode.SEARCH_NOT_CONFIGURED,
+          `Search is not available for entity "${entity.name}". No searchable string field found.`,
+        );
+      }
+      searchField = field;
+      searchPostFilters.push({
+        field,
+        operator: "tokenStartsWith",
+        value: lowerTerm,
+      });
+    }
   }
 
   const nativeFilters = firestoreFilters;

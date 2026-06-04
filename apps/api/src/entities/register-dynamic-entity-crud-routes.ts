@@ -1,6 +1,6 @@
 import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 
-import { applySearchMirrorFields, getAllEntities } from "@repo/entities";
+import { getAllEntities, prepareRecordSearchFields } from "@repo/entities";
 import type { QueryEngine } from "@repo/query-engine";
 
 import { registerCrudRoutes } from "../crud/register-crud-routes.js";
@@ -61,7 +61,7 @@ export async function registerDynamicEntityCrudRoutes(
         prepareRecordForWrite: (record) =>
           sanitizeFileFieldsForWrite(
             entity,
-            applySearchMirrorFields(entity, record),
+            prepareRecordSearchFields(entity, record),
           ),
       };
     },

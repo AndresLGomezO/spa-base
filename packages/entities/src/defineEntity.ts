@@ -12,6 +12,7 @@ import {
   buildPermissions,
   defaultCollectionName,
 } from "./metadata/buildPermissions.js";
+import { extendEntitySchemaWithSearchMirrors } from "./search/search-mirror-fields.js";
 import { resolveEntityUI } from "./ui/default-ui-config.js";
 import { validateEntityUIConfig } from "./ui/validate-ui-config.js";
 import { SYSTEM_FIELDS } from "./systemFields.js";
@@ -22,6 +23,8 @@ import type {
   EntityMetadata,
   FieldDefinitions,
 } from "./types.js";
+
+type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
 export function defineEntity<
   const TName extends string,
@@ -68,11 +71,15 @@ export function defineEntity<
     ...(config.displayField ? { displayField: config.displayField } : {}),
   };
 
-  return {
+  const entity = {
     name: config.name,
     metadata,
     schema,
     createSchema,
     updateSchema,
-  };
+  } as DefinedEntity<TName, AssertNoSystemFields<TFields>>;
+
+  return extendEntitySchemaWithSearchMirrors(
+    entity as AnyDefinedEntity,
+  ) as DefinedEntity<TName, AssertNoSystemFields<TFields>>;
 }
