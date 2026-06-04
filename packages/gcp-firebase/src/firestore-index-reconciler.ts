@@ -181,6 +181,14 @@ export async function reconcileIndexesForDefinitionChange(
 
   await ensureFirestoreIndexes(newIndexes, options);
 
+  if (options.statusStore) {
+    await pruneOrphanIndexStatusRecords(
+      options.statusStore,
+      nextEntity.metadata.collection,
+      newSignatures,
+    );
+  }
+
   const removedCandidates = oldIndexes.filter(
     (index) => !newSignatures.has(computeIndexSignature(index)),
   );
@@ -215,6 +223,19 @@ export async function reconcileIndexesForDefinitionChange(
     }
     await options.statusStore?.deleteBySignature(signature);
   }
+}
+
+async function pruneOrphanIndexStatusRecords(
+  statusStore: FirestoreIndexStatusStore,
+  collectionGroup: string,
+  desiredSignatures: ReadonlySet<string>,
+): Promise<void> {
+  const records = await statusStore.listByCollection(collectionGroup);
+  await Promise.all(
+    records
+      .filter((record) => !desiredSignatures.has(record.signature))
+      .map((record) => statusStore.deleteBySignature(record.signature)),
+  );
 }
 
 export function scheduleReconcileIndexesForDefinitionChange(

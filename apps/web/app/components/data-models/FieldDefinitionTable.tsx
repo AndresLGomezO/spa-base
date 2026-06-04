@@ -15,6 +15,11 @@ import {
 import type { FieldDefinitionInput } from "../../lib/api-client";
 
 import {
+  computeFieldIndexContribution,
+  formatFieldIndexContribution,
+  type PlanEntityIndexesInput,
+} from "./plan-entity-indexes";
+import {
   sortIndexedFieldDefinitions,
   summarizeFieldDetails,
 } from "./field-definition-utils";
@@ -24,6 +29,15 @@ interface FieldDefinitionTableProps {
   readonly canEdit: boolean;
   readonly onEdit: (index: number) => void;
   readonly onDelete?: (index: number) => void;
+  readonly planInput?: PlanEntityIndexesInput;
+}
+
+function isFilterableColumn(field: FieldDefinitionInput): boolean {
+  return field.ui?.filterable !== false;
+}
+
+function isSortableColumn(field: FieldDefinitionInput): boolean {
+  return field.ui?.sortable !== false;
 }
 
 export function FieldDefinitionTable({
@@ -31,6 +45,7 @@ export function FieldDefinitionTable({
   canEdit,
   onEdit,
   onDelete,
+  planInput,
 }: FieldDefinitionTableProps) {
   const { t } = useTranslation("common");
   const sortedFields = sortIndexedFieldDefinitions(fields);
@@ -58,6 +73,19 @@ export function FieldDefinitionTable({
             {t("dataModels.fieldRequiredColumn")}
           </TableHead>
           <TableHead>{t("dataModels.fieldDetailsColumn")}</TableHead>
+          {planInput ? (
+            <>
+              <TableHead className="w-24 text-center">
+                {t("dataModels.indexPlan.filterableColumn")}
+              </TableHead>
+              <TableHead className="w-24 text-center">
+                {t("dataModels.indexPlan.sortableColumn")}
+              </TableHead>
+              <TableHead className="w-28 text-center">
+                {t("dataModels.indexPlan.contributionColumn")}
+              </TableHead>
+            </>
+          ) : null}
           {canEdit ? (
             <TableHead className="w-24 text-center">
               {t("entity.actions")}
@@ -87,6 +115,25 @@ export function FieldDefinitionTable({
               <TableCell className="text-muted-foreground">
                 {details || "—"}
               </TableCell>
+              {planInput ? (
+                <>
+                  <TableCell className="text-center text-sm">
+                    {isFilterableColumn(field)
+                      ? t("table.booleanYes")
+                      : t("table.booleanNo")}
+                  </TableCell>
+                  <TableCell className="text-center text-sm">
+                    {isSortableColumn(field)
+                      ? t("table.booleanYes")
+                      : t("table.booleanNo")}
+                  </TableCell>
+                  <TableCell className="text-center font-mono text-sm">
+                    {formatFieldIndexContribution(
+                      computeFieldIndexContribution(planInput, index),
+                    )}
+                  </TableCell>
+                </>
+              ) : null}
               {canEdit ? (
                 <TableCell>
                   <div className="flex items-center justify-center gap-1">

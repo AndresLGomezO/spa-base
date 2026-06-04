@@ -21,6 +21,7 @@ import type {
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import { createEntityConverter } from "@repo/firestore-converters";
+import { indexesForEntity } from "@repo/firestore-indexes";
 import {
   createFirestoreAdminEntityRepository,
   createFirestoreEntityQueryExecutor,
@@ -58,6 +59,7 @@ interface EntityRuntimeContextOptions {
     index: FirestoreCompositeIndex,
   ) => void;
   readonly cursorSecret?: string;
+  readonly clientFallbackMaxDocs?: number;
   readonly repositories?: Record<
     string,
     TenantScopedEntityRepository<GenericRecord, unknown>
@@ -241,6 +243,9 @@ export class EntityRuntimeContext {
             createEntityConverter(entity, encryption),
           onIndexHint: this.options.onIndexHint,
           cursorSecret: this.options.cursorSecret,
+          plannedIndexes: indexesForEntity(entity),
+          tenantWideRead: entity.metadata.tenantWideRead === true,
+          clientFallbackMaxDocs: this.options.clientFallbackMaxDocs ?? 0,
         });
     this.queryExecutorCache.set(key, executor);
     return executor;

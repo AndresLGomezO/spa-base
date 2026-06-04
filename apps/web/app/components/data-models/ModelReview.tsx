@@ -4,16 +4,34 @@ import { Heading, TableCard, Text } from "@repo/ui";
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
 
+import { EntityIndexPlanSummaryCard } from "./EntityIndexPlanSummaryCard";
 import { FieldDefinitionTable } from "./FieldDefinitionTable";
+import type { PlanEntityIndexesInput } from "./plan-entity-indexes";
 
 interface ModelReviewProps {
   readonly name: string;
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
+  readonly tenantWideRead?: boolean;
+  readonly navIcon?: string;
 }
 
-export function ModelReview({ name, label, fields }: ModelReviewProps) {
+export function ModelReview({
+  name,
+  label,
+  fields,
+  tenantWideRead,
+  navIcon,
+}: ModelReviewProps) {
   const { t } = useTranslation("common");
+
+  const planInput: PlanEntityIndexesInput = {
+    name,
+    label,
+    fields,
+    tenantWideRead,
+    navIcon,
+  };
 
   return (
     <div className="space-y-4">
@@ -35,12 +53,15 @@ export function ModelReview({ name, label, fields }: ModelReviewProps) {
         </div>
       </dl>
 
+      <EntityIndexPlanSummaryCard planInput={planInput} />
+
       <div className="space-y-2">
         <Text className="font-medium">{t("dataModels.fieldsTitle")}</Text>
         <TableCard>
           <FieldDefinitionTable
             fields={fields}
             canEdit={false}
+            planInput={planInput}
             onEdit={() => undefined}
           />
         </TableCard>

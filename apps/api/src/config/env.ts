@@ -36,6 +36,11 @@ const ApiEnvSchema = z.object({
     .enum(["true", "false"])
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
+  CLIENT_QUERY_FALLBACK_MAX_DOCS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(1_000),
   INDEX_PROVISIONING_PUBSUB: z
     .enum(["true", "false"])
     .default("false")

@@ -5,6 +5,7 @@ import {
   buildOwnershipListIndex,
   dedupeIndexes,
   indexesForEntity,
+  planIndexesForTenant,
   type FirestoreCompositeIndex,
 } from "@repo/firestore-indexes";
 import {
@@ -79,6 +80,20 @@ export async function registerIndexRoutes(
       return reply.send(
         successEnvelope(summarizeIndexProvisioningStatus(collection, records)),
       );
+    },
+  );
+
+  app.get(
+    `${basePath}/plan`,
+    { preHandler: [options.authenticate] },
+    async (request, reply) => {
+      const tenantId = requireRequestTenant(request, reply);
+      if (!tenantId) {
+        return;
+      }
+
+      const entities = options.entityRuntime.getEntitiesForTenant(tenantId);
+      return reply.send(successEnvelope(planIndexesForTenant(entities)));
     },
   );
 

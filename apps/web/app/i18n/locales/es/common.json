@@ -581,7 +581,27 @@
     "editTitle": "Editar {{name}}",
     "saveModel": "Guardar cambios",
     "updateFailed": "No se pudo actualizar el modelo de entidad.",
-    "nameReadOnly": "El nombre de la entidad no se puede cambiar después de crearla."
+    "nameReadOnly": "El nombre de la entidad no se puede cambiar después de crearla.",
+    "indexPlan": {
+      "tenantTitle": "Índices Firestore planificados (este tenant)",
+      "tenantDescription": "Suma de índices compuestos requeridos por {{count}} modelos de entidad en este tenant.",
+      "entityTitle": "Índices planificados para este modelo",
+      "entityDescription": "Índices compuestos que se aprovisionan al guardar este modelo. Pares filtro+orden sin índice dedicado pueden usar respaldo en memoria para colecciones pequeñas.",
+      "totalLabel": "índices compuestos planificados",
+      "collectionHint": "Grupo de colección: {{collection}}",
+      "listColumn": "Índices planificados",
+      "filterableColumn": "Filtrable",
+      "sortableColumn": "Ordenable",
+      "contributionColumn": "Impacto en índices",
+      "projectScopeFootnote": "Firestore almacena un conjunto de índices por grupo de colección para todo el proyecto GCP. Otros tenants que usen el mismo nombre de colección comparten esos índices.",
+      "categories": {
+        "ownershipBaseline": "Base",
+        "ownershipFk": "Lista FK",
+        "findByField": "Buscar por campo",
+        "sortOnly": "Solo orden",
+        "filterOnly": "Solo filtro"
+      }
+    }
   },
   "roles": {
     "title": "Roles",

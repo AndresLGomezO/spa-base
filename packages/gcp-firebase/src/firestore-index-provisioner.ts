@@ -102,72 +102,107 @@ export interface EnsureFirestoreIndexesOptions {
   readonly statusStore?: FirestoreIndexStatusStore;
   readonly onEnsured?: (index: FirestoreCompositeIndex) => void;
   readonly onError?: (error: unknown, index: FirestoreCompositeIndex) => void;
+  readonly concurrency?: number;
 }
 
 const ensuredSignatures = new Set<string>();
+const DEFAULT_ENSURE_CONCURRENCY = 5;
 
-export async function ensureFirestoreIndexes(
-  indexes: readonly FirestoreCompositeIndex[],
-  options: EnsureFirestoreIndexesOptions,
+async function runWithConcurrency<T>(
+  items: readonly T[],
+  concurrency: number,
+  worker: (item: T) => Promise<void>,
 ): Promise<void> {
-  const databaseId = options.databaseId ?? "(default)";
+  if (items.length === 0) {
+    return;
+  }
 
-  await Promise.all(
-    indexes.map(async (index) => {
-      const signature = computeIndexSignature(index);
-      if (ensuredSignatures.has(signature)) {
-        return;
+  let nextIndex = 0;
+  const workers = Array.from(
+    { length: Math.min(concurrency, items.length) },
+    async () => {
+      while (nextIndex < items.length) {
+        const current = items[nextIndex];
+        nextIndex += 1;
+        if (current === undefined) {
+          continue;
+        }
+        await worker(current);
       }
-      ensuredSignatures.add(signature);
+    },
+  );
 
-      const parent = getAdminClient().collectionGroupPath(
-        options.projectId,
-        databaseId,
-        index.collectionGroup,
-      );
+  await Promise.all(workers);
+}
 
-      try {
-        const [operation] = await getAdminClient().createIndex({
-          parent,
-          index: {
-            queryScope: index.queryScope,
-            fields: toAdminIndexFields(index.fields) as never,
-          },
-        });
-        const operationName =
-          operation.name ??
-          (operation as { latestResponse?: { name?: string } }).latestResponse
-            ?.name;
-        await options.statusStore?.upsertCreating(index, operationName);
-        options.onEnsured?.(index);
-        void operation
-          .promise()
-          .then(async () => {
-            await options.statusStore?.markReady(index);
-          })
-          .catch(async (error: unknown) => {
-            if (isAlreadyExistsError(error)) {
-              await options.statusStore?.markReady(index);
-              return;
-            }
-            const message =
-              error instanceof Error ? error.message : String(error);
-            await options.statusStore?.markError(index, message);
-            options.onError?.(error, index);
-          });
-      } catch (error) {
-        ensuredSignatures.delete(signature);
+async function ensureSingleFirestoreIndex(
+  index: FirestoreCompositeIndex,
+  options: EnsureFirestoreIndexesOptions,
+  databaseId: string,
+): Promise<void> {
+  const signature = computeIndexSignature(index);
+  if (ensuredSignatures.has(signature)) {
+    return;
+  }
+  ensuredSignatures.add(signature);
+
+  const parent = getAdminClient().collectionGroupPath(
+    options.projectId,
+    databaseId,
+    index.collectionGroup,
+  );
+
+  try {
+    const [operation] = await getAdminClient().createIndex({
+      parent,
+      index: {
+        queryScope: index.queryScope,
+        fields: toAdminIndexFields(index.fields) as never,
+      },
+    });
+    const operationName =
+      operation.name ??
+      (operation as { latestResponse?: { name?: string } }).latestResponse
+        ?.name;
+    await options.statusStore?.upsertCreating(index, operationName);
+    options.onEnsured?.(index);
+    void operation
+      .promise()
+      .then(async () => {
+        await options.statusStore?.markReady(index);
+      })
+      .catch(async (error: unknown) => {
         if (isAlreadyExistsError(error)) {
-          ensuredSignatures.add(signature);
           await options.statusStore?.markReady(index);
           return;
         }
         const message = error instanceof Error ? error.message : String(error);
         await options.statusStore?.markError(index, message);
         options.onError?.(error, index);
-      }
-    }),
-  );
+      });
+  } catch (error) {
+    ensuredSignatures.delete(signature);
+    if (isAlreadyExistsError(error)) {
+      ensuredSignatures.add(signature);
+      await options.statusStore?.markReady(index);
+      return;
+    }
+    const message = error instanceof Error ? error.message : String(error);
+    await options.statusStore?.markError(index, message);
+    options.onError?.(error, index);
+  }
+}
+
+export async function ensureFirestoreIndexes(
+  indexes: readonly FirestoreCompositeIndex[],
+  options: EnsureFirestoreIndexesOptions,
+): Promise<void> {
+  const databaseId = options.databaseId ?? "(default)";
+  const concurrency = options.concurrency ?? DEFAULT_ENSURE_CONCURRENCY;
+
+  await runWithConcurrency(indexes, concurrency, async (index) => {
+    await ensureSingleFirestoreIndex(index, options, databaseId);
+  });
 }
 
 export async function ensureEntityFirestoreIndexes(

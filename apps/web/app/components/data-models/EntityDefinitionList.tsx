@@ -5,6 +5,8 @@ import { Button, DataTable, Heading } from "@repo/ui";
 
 import type { EntityDefinitionRecord } from "../../lib/api-client";
 import { useDataViewWithPagination } from "@repo/data-view";
+
+import { planIndexesFromDefinitionRecords } from "./plan-entity-indexes";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
 import {
   WebDataViewToolbar,
@@ -32,6 +34,13 @@ export function EntityDefinitionList({
   const { t } = useTranslation("common");
   const paginationLabels = useTablePaginationLabels();
 
+  const indexCountByEntityName = useMemo(() => {
+    const tenantPlan = planIndexesFromDefinitionRecords(items);
+    return new Map(
+      tenantPlan.entities.map((plan) => [plan.entityName, plan.summary.total]),
+    );
+  }, [items]);
+
   const columns = useMemo<
     readonly DataViewColumnDescriptor<EntityDefinitionRecord>[]
   >(
@@ -56,8 +65,13 @@ export function EntityDefinitionList({
         label: t("dataModels.version"),
         getValue: (item) => item.version,
       },
+      {
+        id: "plannedIndexes",
+        label: t("dataModels.indexPlan.listColumn"),
+        getValue: (item) => indexCountByEntityName.get(item.name) ?? 0,
+      },
     ],
-    [t],
+    [indexCountByEntityName, t],
   );
 
   const dataView = useDataViewWithPagination(items, columns);
@@ -105,6 +119,15 @@ export function EntityDefinitionList({
             id: "version",
             header: t("dataModels.version"),
             cell: (item) => item.version,
+          },
+          {
+            id: "plannedIndexes",
+            header: t("dataModels.indexPlan.listColumn"),
+            cell: (item) => (
+              <span className="tabular-nums">
+                {indexCountByEntityName.get(item.name) ?? "—"}
+              </span>
+            ),
           },
         ]}
         rows={dataView.pageItems}

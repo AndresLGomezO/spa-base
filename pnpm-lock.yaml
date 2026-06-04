@@ -376,6 +376,9 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../../packages/entities
+      '@repo/firestore-indexes':
+        specifier: workspace:*
+        version: link:../../packages/firestore-indexes
       '@repo/metrics-engine':
         specifier: workspace:*
         version: link:../../packages/metrics-engine

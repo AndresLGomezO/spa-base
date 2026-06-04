@@ -55,27 +55,39 @@ It does **not** run on list filter/sort, record create, tenant definition cache 
 
 Missing-index errors on list still return `COMPOSITE_INDEX_REQUIRED` with a Firebase console link; the API logs the hint but does **not** call `createIndex` reactively. Use `POST /api/indexes/provision` for manual recovery.
 
-## Index catalog (current)
+## Index catalog (curated)
 
-[`indexesForEntity`](packages/firestore-indexes/src/build-indexes.ts) builds a predictive set from entity UI metadata:
+[`indexesForEntity`](packages/firestore-indexes/src/build-indexes.ts) and [`planIndexesForEntity`](packages/firestore-indexes/src/index-plan.ts) build a **curated** set from entity UI metadata (no filter×sort cartesian):
 
-For each non-`tenantWideRead` entity collection:
+| Category | Indexes | Purpose |
+| -------- | ------- | ------- |
+| **ownershipBaseline** | 1 | `accessUserIds` + `id` |
+| **ownershipFk** | 1 per FK relation | ownership + FK + `id` |
+| **findByField** | 1 per FK relation | `{fk}` + `id` (relation validation) |
+| **sortOnly** | 2 × sortable field | ownership + sort + `id` (asc/desc) |
+| **filterOnly** | 2 × filterable field | ownership + equality filter + `id` (asc/desc; sort is `id` only) |
 
-1. **Baseline list**: `accessUserIds` (CONTAINS) + `id` (ASC)
-2. **FK list** (per foreign-key relation field): `accessUserIds` + `{fk}` + `id`
-3. **findByField** (relation validation): `{fk}` + `id` (no ownership filter)
-4. **Sort-only** (per sortable field × asc/desc): ownership + sort field + `id` tiebreaker
-5. **Filter + sort** (full cartesian: each filterable × each sortable × asc/desc): ownership + equality filter + sort + `id` when needed
+For a contract-like model (8 filterable, 8 sortable, 2 FKs), expect **~37** planned indexes instead of **~146** with the old cartesian.
 
 Sortable/filterable fields come from `ui.fields` (`filterable` / `sortable` default true in Model Builder), view `defaultSort`, and view `filters`. Non-queryable types (encrypted, image, document, non-FK relations) are skipped.
 
-`tenantWideRead` entities get the same filter/sort combinations **without** `accessUserIds`.
+`tenantWideRead` entities use the same patterns **without** `accessUserIds`.
+
+### Tenant vs project scope
+
+- **Model Builder KPIs** sum `planIndexesForTenant` for the **current tenant’s** definitions.
+- **GCP composite indexes** are **project-wide per collection group**: the union of all tenants’ planned signatures for that collection ([`computeDesiredIndexesFromRepository`](packages/gcp-firebase/src/firestore-index-reconciler.ts)). Identical collection shapes across tenants do **not** multiply index count.
+
+### List queries without a dedicated composite index
+
+When a list query’s filter+sort shape does not match a planned index, the API may use **client fallback** for small collections: baseline Firestore query (ownership + `id`), load up to `CLIENT_QUERY_FALLBACK_MAX_DOCS` (default **1000**), then filter/sort in memory. Larger collections still return `COMPOSITE_INDEX_REQUIRED`.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 | -------- | ------- | -------- |
 | `ENSURE_FIRESTORE_INDEXES` | `true` in dev, `false` in production | Call Firestore Admin `createIndex` on model sync |
+| `CLIENT_QUERY_FALLBACK_MAX_DOCS` | `1000` | Max docs loaded for in-memory filter/sort fallback |
 | `INDEX_PROVISIONING_PUBSUB` | `false` | Publish index jobs to Pub/Sub for worker |
 | Terraform `enable_index_provisioning_pubsub` | `false` | Create Pub/Sub topic + backend pub/sub IAM ([`pubsub-index-provisioning.tf`](../packages/infrastructure/terraform/pubsub-index-provisioning.tf)) |
 
@@ -115,13 +127,20 @@ If lists fail with `COMPOSITE_INDEX_REQUIRED`, PATCH the entity definition again
 | Method | Path | Description |
 | ------ | ---- | ----------- |
 | `GET` | `/api/indexes/status` | Aggregate status for a collection (`phase`, counts, `records`) or single record when `signature` is set |
+| `GET` | `/api/indexes/plan` | Per-tenant planned index totals and per-entity breakdown (`planIndexesForTenant`) |
 | `POST` | `/api/indexes/provision` | Trigger provisioning for a collection (admin) |
 
 When indexes are `CREATING`, list queries return `503` with `INDEX_CREATING` and `Retry-After`. When provisioning fails, lists return `503` with `INDEX_PROVISIONING_FAILED` and per-index error details.
 
-## Web UX (entity lists)
+## Web UX
 
-[`IndexProvisioningPanel`](../apps/web/app/components/entity/IndexProvisioningPanel.tsx) shows a spinner while `GET /api/indexes/status` reports `building` or `error` for the collection—typically after saving a model. [`useIndexProvisioningStatus`](../apps/web/app/hooks/useIndexProvisioningStatus.ts) polls every 5s (`building`) or 15s (`error`) and refetches the entity list when `phase` becomes `ready`. `INDEX_CREATING` on the list API also keeps the panel visible. `COMPOSITE_INDEX_REQUIRED` shows a normal list error (not the provisioning panel).
+### Model Builder index KPIs
+
+[`TenantIndexPlanKpiCard`](../apps/web/app/components/data-models/TenantIndexPlanKpiCard.tsx) and [`EntityIndexPlanSummaryCard`](../apps/web/app/components/data-models/EntityIndexPlanSummaryCard.tsx) use [`plan-entity-indexes.ts`](../apps/web/app/components/data-models/plan-entity-indexes.ts) (`@repo/firestore-indexes` + `@repo/dynamic-entities`) to show live planned index counts with category breakdown on the Data Model Builder list, wizard review, and entity editor. The field table shows per-field filterable/sortable flags and marginal index impact.
+
+### Entity lists
+
+[`IndexProvisioningPanel`](../apps/web/app/components/entity/IndexProvisioningPanel.tsx) shows a spinner while `GET /api/indexes/status` reports `building` or `error` for the collection—typically after saving a model. [`useIndexProvisioningStatus`](../apps/web/app/hooks/useIndexProvisioningStatus.ts) polls every 5s (`building`) or 15s (`error`) and refetches the entity list when `phase` becomes `ready`. `INDEX_CREATING` on the list API also keeps the panel visible. `COMPOSITE_INDEX_REQUIRED` shows a normal list error (not the provisioning panel) unless client fallback applies.
 
 ## Bidirectional index sync
 
@@ -139,7 +158,10 @@ Status documents in `__index_status` are removed when an index is deleted. **POS
 - [x] `@repo/firestore-indexes` spec generator
 - [x] In-process Firestore Admin provisioner
 - [x] Hook on `syncDefinition` + reconcile on PATCH
-- [x] Predictive indexes for filterable × sortable combinations
+- [x] Curated index catalog (sort-only + filter-only; no filter×sort cartesian)
+- [x] Client query fallback for small collections
+- [x] Batched index provisioning (limited concurrency)
+- [x] Model Builder index plan KPIs
 - [x] `COMPOSITE_INDEX_REQUIRED` + console link (no reactive `createIndex`)
 - [x] Terraform `array_config` for composite indexes
 - [x] `pnpm generate:firestore-indexes`

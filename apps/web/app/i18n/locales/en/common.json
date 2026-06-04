@@ -581,7 +581,27 @@
     "editTitle": "Edit {{name}}",
     "saveModel": "Save changes",
     "updateFailed": "Unable to update entity model.",
-    "nameReadOnly": "Entity name cannot be changed after creation."
+    "nameReadOnly": "Entity name cannot be changed after creation.",
+    "indexPlan": {
+      "tenantTitle": "Planned Firestore indexes (this tenant)",
+      "tenantDescription": "Sum of composite indexes required by {{count}} entity models in this tenant.",
+      "entityTitle": "Planned indexes for this model",
+      "entityDescription": "Composite indexes provisioned when you save this model. Filter+sort pairs without a dedicated index can use in-memory fallback for small collections.",
+      "totalLabel": "planned composite indexes",
+      "collectionHint": "Collection group: {{collection}}",
+      "listColumn": "Planned indexes",
+      "filterableColumn": "Filterable",
+      "sortableColumn": "Sortable",
+      "contributionColumn": "Index impact",
+      "projectScopeFootnote": "Firestore stores one index set per collection group for the whole GCP project. Other tenants that use the same collection name share those indexes.",
+      "categories": {
+        "ownershipBaseline": "Baseline",
+        "ownershipFk": "FK list",
+        "findByField": "Find by field",
+        "sortOnly": "Sort only",
+        "filterOnly": "Filter only"
+      }
+    }
   },
   "roles": {
     "title": "Roles",

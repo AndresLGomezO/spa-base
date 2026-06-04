@@ -156,7 +156,7 @@ describe("indexesForEntity", () => {
     );
   });
 
-  it("generates full filterable x sortable cartesian for list queries", () => {
+  it("generates curated filter-only and sort-only indexes", () => {
     const indexes = indexesForEntity(Task);
     const signatures = new Set(
       indexes.map((index) => computeIndexSignature(index)),
@@ -177,7 +177,6 @@ describe("indexesForEntity", () => {
       signatures.has(
         computeIndexSignature(
           buildListQueryIndex("tasks", {
-            filterFields: ["status"],
             sortField: "createdAt",
             sortDirection: "DESCENDING",
           }),
@@ -188,13 +187,13 @@ describe("indexesForEntity", () => {
       signatures.has(
         computeIndexSignature(
           buildListQueryIndex("tasks", {
-            filterFields: ["priority"],
-            sortField: "id",
+            filterFields: ["status"],
+            sortField: "priority",
             sortDirection: "ASCENDING",
           }),
         ),
       ),
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("uses default collection pluralization", () => {

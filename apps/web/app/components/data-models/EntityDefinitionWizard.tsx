@@ -478,6 +478,8 @@ export function EntityDefinitionWizard({
             name={name.trim()}
             label={label.trim()}
             fields={fields}
+            tenantWideRead={tenantWideRead}
+            navIcon={navIcon}
           />
           {!useModalFooter ? (
             <div className="flex gap-2">

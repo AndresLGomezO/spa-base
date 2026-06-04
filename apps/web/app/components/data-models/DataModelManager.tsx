@@ -18,6 +18,7 @@ import { FormModal } from "../forms/FormModal";
 import { EntityDefinitionList } from "./EntityDefinitionList";
 import { EntityDefinitionWizard } from "./EntityDefinitionWizard";
 import { EntityDefinitionEditor } from "./EntityDefinitionEditor";
+import { TenantIndexPlanKpiCard } from "./TenantIndexPlanKpiCard";
 
 interface DataModelManagerProps {
   readonly tenantId: string;
@@ -113,6 +114,10 @@ export function DataModelManager({
             ))}
           </select>
         </div>
+      ) : null}
+
+      {!isLoading && items.length > 0 ? (
+        <TenantIndexPlanKpiCard items={items} />
       ) : null}
 
       <div className="flex min-h-0 flex-1 flex-col">

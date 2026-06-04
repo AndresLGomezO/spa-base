@@ -1,3 +1,4 @@
+import type { FirestoreCompositeIndex } from "@repo/firestore-indexes";
 import type {
   EntityQueryExecutor,
   FirestoreNativeOperator,
@@ -22,6 +23,10 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import {
+  matchesPlannedIndex,
+  queryNeedsClientFallback,
+} from "./query-index-match.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 interface EntityConverter<TRecord> {
@@ -45,6 +50,9 @@ interface FirestoreEntityQueryExecutorConfig<
   readonly converter: EntityConverter<TRecord>;
   readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
   readonly cursorSecret?: string;
+  readonly plannedIndexes?: readonly FirestoreCompositeIndex[];
+  readonly tenantWideRead?: boolean;
+  readonly clientFallbackMaxDocs?: number;
 }
 
 const EQUALITY_OPERATORS = new Set<FirestoreNativeOperator>([
@@ -155,6 +163,37 @@ function applyPagination(query: Query, limit: number, offset?: number): Query {
   return paginated.limit(limit);
 }
 
+function applyUserFiltersInMemory(
+  items: Record<string, unknown>[],
+  filters: readonly NormalizedFilter[],
+): Record<string, unknown>[] {
+  return items.filter((item) =>
+    filters.every((filter) => {
+      const value = item[filter.field];
+      switch (filter.operator) {
+        case "==":
+          return value === filter.value;
+        case "!=":
+          return value !== filter.value;
+        case "in":
+          return (
+            Array.isArray(filter.value) && filter.value.includes(value as never)
+          );
+        case ">":
+          return compareValues(value, filter.value) > 0;
+        case ">=":
+          return compareValues(value, filter.value) >= 0;
+        case "<":
+          return compareValues(value, filter.value) < 0;
+        case "<=":
+          return compareValues(value, filter.value) <= 0;
+        default:
+          return true;
+      }
+    }),
+  );
+}
+
 function buildSuggestedIndexFields(
   query: NormalizedEntityQuery,
 ): readonly string[] {
@@ -213,6 +252,29 @@ class FirestoreEntityQueryExecutor<
 
     if (query.search) {
       return this.executeSearchScan(collectionRef, query);
+    }
+
+    const plannedIndexes = this.executorConfig.plannedIndexes ?? [];
+    const tenantWideRead = this.executorConfig.tenantWideRead === true;
+    const clientFallbackMaxDocs =
+      this.executorConfig.clientFallbackMaxDocs ?? 0;
+
+    if (
+      clientFallbackMaxDocs > 0 &&
+      plannedIndexes.length > 0 &&
+      queryNeedsClientFallback(
+        query,
+        this.executorConfig.collection,
+        plannedIndexes,
+        tenantWideRead,
+      )
+    ) {
+      return this.executeClientFallback(
+        collectionRef,
+        query,
+        tenantWideRead,
+        clientFallbackMaxDocs,
+      );
     }
 
     const filteredQuery = buildFirestoreQuery(collectionRef, query);
@@ -283,6 +345,24 @@ class FirestoreEntityQueryExecutor<
       };
     } catch (error) {
       if (isMissingIndexError(error)) {
+        if (
+          clientFallbackMaxDocs > 0 &&
+          plannedIndexes.length > 0 &&
+          queryNeedsClientFallback(
+            query,
+            this.executorConfig.collection,
+            plannedIndexes,
+            tenantWideRead,
+          )
+        ) {
+          return this.executeClientFallback(
+            collectionRef,
+            query,
+            tenantWideRead,
+            clientFallbackMaxDocs,
+          );
+        }
+
         const indexLink = extractIndexLink(error);
         this.executorConfig.onIndexHint?.({
           collection: this.executorConfig.collection,
@@ -300,6 +380,83 @@ class FirestoreEntityQueryExecutor<
       }
       throw error;
     }
+  }
+
+  private async executeClientFallback(
+    collectionRef: CollectionReference<DocumentData>,
+    query: NormalizedEntityQuery,
+    tenantWideRead: boolean,
+    maxDocs: number,
+  ) {
+    const ownershipFilters = tenantWideRead
+      ? []
+      : query.filters.filter(
+          (filter) =>
+            filter.field === "accessUserIds" &&
+            filter.operator === "array-contains",
+        );
+
+    const baselineQuery: NormalizedEntityQuery = {
+      filters: ownershipFilters,
+      postFilters: [],
+      sort: { field: "id", direction: "asc" },
+      limit: maxDocs,
+    };
+
+    const planned = this.executorConfig.plannedIndexes ?? [];
+    const canUseBaseline =
+      planned.length === 0 ||
+      matchesPlannedIndex(this.executorConfig.collection, planned, {
+        tenantWideRead,
+        equalityFilterFields: [],
+        sortField: "id",
+        sortDirection: "ASCENDING",
+      });
+
+    const firestoreQuery = canUseBaseline
+      ? buildFirestoreQuery(collectionRef, baselineQuery)
+      : buildFirestoreQuery(collectionRef, {
+          ...baselineQuery,
+          filters: [],
+        });
+
+    const snapshot = await firestoreQuery.limit(maxDocs).get();
+    let items = snapshot.docs.map(
+      (doc) =>
+        this.executorConfig.converter.read(doc.data()) as Record<
+          string,
+          unknown
+        >,
+    );
+
+    const userFilters = query.filters.filter(
+      (filter) =>
+        filter.field !== "accessUserIds" &&
+        filter.operator !== "array-contains",
+    );
+    items = applyUserFiltersInMemory(items, userFilters);
+    items = sortItemsInMemory(items, query.sort);
+
+    const totalCount = items.length;
+    const offset = query.offset ?? 0;
+    const page = items.slice(offset, offset + query.limit);
+    const hasMore = offset + query.limit < totalCount;
+
+    const sortField = query.sort?.field ?? "id";
+    const secret = this.executorConfig.cursorSecret;
+    let nextCursor: string | null = null;
+    if (query.offset === undefined && hasMore && page.length > 0) {
+      const lastItem = page[page.length - 1]!;
+      nextCursor = secret
+        ? encodeCursor(lastItem, sortField, secret)
+        : String(lastItem.id);
+    }
+
+    return {
+      items: page,
+      nextCursor,
+      totalCount,
+    };
   }
 
   async findById(id: string, tenantId: string) {

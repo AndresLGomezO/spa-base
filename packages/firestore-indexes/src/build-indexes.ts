@@ -1,11 +1,13 @@
 import {
   getForeignKeyRelationFields,
-  usesForeignKeyStorage,
   type DefinedEntity,
   type FieldDefinitions,
-  type NormalizedFieldMeta,
 } from "@repo/entities";
 
+import {
+  collectFilterableFields,
+  collectSortableFields,
+} from "./index-field-sets.js";
 import type { FirestoreCompositeIndex, FirestoreIndexField } from "./types.js";
 
 const OWNERSHIP_FIELD = "accessUserIds";
@@ -157,106 +159,19 @@ export function indexesForEntity(
   }
 
   for (const filterField of filterableFields) {
-    for (const sortField of sortableFields) {
-      for (const sortDirection of sortDirections) {
-        indexes.push(
-          buildListQueryIndex(collection, {
-            tenantWideRead,
-            filterFields: [filterField],
-            sortField,
-            sortDirection,
-          }),
-        );
-      }
+    for (const sortDirection of sortDirections) {
+      indexes.push(
+        buildListQueryIndex(collection, {
+          tenantWideRead,
+          filterFields: [filterField],
+          sortField: DEFAULT_SORT_FIELD,
+          sortDirection,
+        }),
+      );
     }
   }
 
   return dedupeIndexes(indexes);
-}
-
-function isQueryableListField(
-  entity: AnyDefinedEntity,
-  fieldName: string,
-): boolean {
-  if (fieldName === "id" || fieldName === "ownerId") {
-    return true;
-  }
-  if (fieldName === "createdAt") {
-    return true;
-  }
-
-  const meta = entity.metadata.fields[fieldName];
-  if (!meta) {
-    return false;
-  }
-
-  return isQueryableFieldMeta(meta);
-}
-
-function isQueryableFieldMeta(meta: NormalizedFieldMeta): boolean {
-  if ("sensitive" in meta && meta.sensitive) {
-    return false;
-  }
-  if (meta.type === "image" || meta.type === "document") {
-    return false;
-  }
-  if (meta.type === "relation") {
-    return meta.relation !== undefined && usesForeignKeyStorage(meta.relation);
-  }
-  return true;
-}
-
-function collectFilterableFields(entity: AnyDefinedEntity): string[] {
-  const fields = new Set<string>();
-  const uiFields = entity.metadata.ui?.fields ?? {};
-
-  for (const [fieldName, fieldUi] of Object.entries(uiFields)) {
-    if (fieldUi?.filterable === false) {
-      continue;
-    }
-    if (isQueryableListField(entity, fieldName)) {
-      fields.add(fieldName);
-    }
-  }
-
-  for (const view of entity.metadata.ui?.views ?? []) {
-    for (const filter of view.filters ?? []) {
-      if (isQueryableListField(entity, filter.field)) {
-        fields.add(filter.field);
-      }
-    }
-  }
-
-  return [...fields].sort();
-}
-
-function collectSortableFields(entity: AnyDefinedEntity): string[] {
-  const fields = new Set<string>([DEFAULT_SORT_FIELD]);
-  const uiFields = entity.metadata.ui?.fields ?? {};
-
-  for (const [fieldName, fieldUi] of Object.entries(uiFields)) {
-    if (fieldUi?.sortable === false) {
-      continue;
-    }
-    if (isQueryableListField(entity, fieldName)) {
-      fields.add(fieldName);
-    }
-  }
-
-  for (const view of entity.metadata.ui?.views ?? []) {
-    if (
-      view.defaultSort &&
-      isQueryableListField(entity, view.defaultSort.field)
-    ) {
-      fields.add(view.defaultSort.field);
-    }
-  }
-
-  if (isQueryableListField(entity, "createdAt")) {
-    fields.add("createdAt");
-  }
-
-  return [...fields].sort();
 }
 
 export function indexesForEntities(

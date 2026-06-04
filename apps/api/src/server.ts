@@ -313,6 +313,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityDefinitionRepository,
     definitionCacheTtlMs: apiEnv.CACHE_TTL_MS,
     cursorSecret: apiEnv.QUERY_CURSOR_SECRET,
+    clientFallbackMaxDocs: apiEnv.CLIENT_QUERY_FALLBACK_MAX_DOCS,
     ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
     indexProvisioningExcludedTenants: new Set([RATES_TENANT_ID]),
     indexStatusStore,

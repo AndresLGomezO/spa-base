@@ -7,6 +7,7 @@ import type { FieldDefinitionInput } from "../../lib/api-client";
 
 import { FieldDefinitionTable } from "./FieldDefinitionTable";
 import { FieldEditorModal } from "./FieldEditorModal";
+import type { PlanEntityIndexesInput } from "./plan-entity-indexes";
 
 interface EntityFieldsManagerProps {
   readonly fields: readonly FieldDefinitionInput[];
@@ -17,6 +18,7 @@ interface EntityFieldsManagerProps {
     readonly name: string;
     readonly label: string;
   }[];
+  readonly indexPlanInput?: PlanEntityIndexesInput;
 }
 
 type ModalState =
@@ -30,6 +32,7 @@ export function EntityFieldsManager({
   onChange,
   canEdit,
   relationTargets,
+  indexPlanInput,
 }: EntityFieldsManagerProps) {
   const { t } = useTranslation("common");
   const [modalState, setModalState] = useState<ModalState>({ kind: "closed" });
@@ -102,6 +105,7 @@ export function EntityFieldsManager({
         <FieldDefinitionTable
           fields={fields}
           canEdit={canEdit}
+          planInput={indexPlanInput}
           onEdit={(index) => setModalState({ kind: "edit", index })}
           onDelete={canEdit ? handleDeleteField : undefined}
         />

@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -38,6 +39,8 @@ import { LucideIconField } from "../shared/LucideIconField";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { buildEntityDefinitionUiForSave } from "./build-entity-definition-ui-patch";
 import { EntityFieldsManager } from "./EntityFieldsManager";
+import { EntityIndexPlanSummaryCard } from "./EntityIndexPlanSummaryCard";
+import type { PlanEntityIndexesInput } from "./plan-entity-indexes";
 import { useSyncCategoryNavIcon } from "./use-sync-category-nav-icon";
 
 const ENTITY_DEFINITION_EDITOR_FORM_ID = "entity-definition-editor-form";
@@ -306,11 +309,27 @@ export function EntityDefinitionEditor({
     }
   }
 
+  const indexPlanInput = useMemo((): PlanEntityIndexesInput | null => {
+    if (!record) {
+      return null;
+    }
+
+    return {
+      tenantId,
+      name: record.name,
+      label,
+      fields,
+      tenantWideRead,
+      record,
+      navIcon,
+    };
+  }, [tenantId, record, label, fields, tenantWideRead, navIcon]);
+
   if (isLoading) {
     return <EntityFormSkeleton />;
   }
 
-  if (!record) {
+  if (!record || !indexPlanInput) {
     return loadError ? <Alert>{loadError}</Alert> : null;
   }
 
@@ -480,12 +499,15 @@ export function EntityDefinitionEditor({
           </div>
         ) : null}
 
+        <EntityIndexPlanSummaryCard planInput={indexPlanInput} />
+
         <EntityFieldsManager
           fields={fields}
           entityName={record?.name}
           onChange={setFields}
           canEdit={canUpdate}
           relationTargets={relationTargets}
+          indexPlanInput={indexPlanInput}
         />
 
         {!useModalFooter ? (
