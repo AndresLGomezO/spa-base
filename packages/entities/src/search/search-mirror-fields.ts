@@ -129,10 +129,6 @@ export function applySearchMirrorFields(
 export function extendEntitySchemaWithSearchMirrors(
   entity: AnyDefinedEntity,
 ): AnyDefinedEntity {
-  if (!shouldPersistSearchMirrorFields(entity)) {
-    return entity;
-  }
-
   const searchableFields = listSearchableStringFields(entity);
   if (searchableFields.length === 0) {
     return entity;
@@ -142,6 +138,9 @@ export function extendEntitySchemaWithSearchMirrors(
   for (const sourceField of searchableFields) {
     mirrorShape[searchMirrorFieldName(sourceField)] = z
       .array(z.string())
+      .optional();
+    mirrorShape[legacySearchMirrorFieldName(sourceField)] = z
+      .string()
       .optional();
   }
 

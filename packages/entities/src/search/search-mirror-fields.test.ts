@@ -132,3 +132,34 @@ describe("prepareRecordSearchFields", () => {
     });
   });
 });
+
+describe("extendEntitySchemaWithSearchMirrors", () => {
+  it("accepts legacy token mirrors on in-memory list entities", () => {
+    const TagEntity = defineEntity({
+      name: "tag",
+      fields: { label: { type: "string", required: true } },
+      displayField: "label",
+      inMemoryListQueries: true,
+      ui: {
+        views: [{ type: "table", name: "default", fields: ["label"] }],
+        forms: {
+          create: { sections: [{ fields: ["label"] }] },
+          edit: { sections: [{ fields: ["label"] }] },
+        },
+        fields: { label: { searchable: true } },
+      },
+    }) as unknown as AnyDefinedEntity;
+
+    const parsed = TagEntity.schema.safeParse({
+      id: "1",
+      tenantId: "t1",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      label: "Bancolombia Savings",
+      labelSearchTokens: ["bancolombia", "savings"],
+      labelSearch: "stale",
+    });
+
+    expect(parsed.success).toBe(true);
+  });
+});
