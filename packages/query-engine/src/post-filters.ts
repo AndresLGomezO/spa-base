@@ -1,14 +1,23 @@
 import type { NormalizedFilter } from "@repo/firestore-converters";
 
-/** Sentinel field for multi-field in-memory search post-filters. */
+/** Sentinel field for document-wide in-memory search post-filters. */
 export const SEARCH_SOURCE_FIELDS_FILTER_FIELD = "__searchSourceFields__";
 
 export interface SearchSourceFieldsContainValue {
   readonly term: string;
-  readonly fields: readonly string[];
+  /** When set, only these fields are searched (legacy per-field mode). */
+  readonly fields?: readonly string[];
+  /** Omitted from the concatenated haystack (e.g. sensitive columns). */
+  readonly excludeFields?: readonly string[];
 }
 
 const POST_FILTER_OVERFETCH_MULTIPLIER = 3;
+
+function isSearchMirrorStorageKey(key: string): boolean {
+  return (
+    key.endsWith("SearchTokens") || (key.endsWith("Search") && key !== "search")
+  );
+}
 
 function isSearchSourceFieldsContainValue(
   value: unknown,
@@ -18,24 +27,80 @@ function isSearchSourceFieldsContainValue(
   }
 
   const candidate = value as SearchSourceFieldsContainValue;
+  if (typeof candidate.term !== "string") {
+    return false;
+  }
+
+  if (candidate.fields === undefined) {
+    return true;
+  }
+
   return (
-    typeof candidate.term === "string" &&
     Array.isArray(candidate.fields) &&
     candidate.fields.every((field) => typeof field === "string")
   );
 }
 
-function recordFieldContainsTerm(
-  record: Record<string, unknown>,
-  field: string,
-  term: string,
-): boolean {
-  const rawValue = record[field];
-  if (typeof rawValue !== "string") {
-    return false;
+export function normalizeValueForDocumentSearch(value: unknown): string {
+  if (value === null || value === undefined) {
+    return "";
   }
 
-  return rawValue.toLowerCase().includes(term);
+  if (typeof value === "string") {
+    return value.trim().toLowerCase();
+  }
+
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value).toLowerCase();
+  }
+
+  if (value instanceof Date) {
+    return value.toISOString().toLowerCase();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeValueForDocumentSearch).join("");
+  }
+
+  if (typeof value === "object") {
+    return Object.values(value as Record<string, unknown>)
+      .map(normalizeValueForDocumentSearch)
+      .join("");
+  }
+
+  return "";
+}
+
+export function buildNormalizedDocumentSearchText(
+  record: Record<string, unknown>,
+  options: { readonly excludeFields?: readonly string[] } = {},
+): string {
+  const exclude = new Set(options.excludeFields ?? []);
+  let haystack = "";
+
+  for (const [key, value] of Object.entries(record)) {
+    if (exclude.has(key) || key === "_schemaVersion") {
+      continue;
+    }
+    if (isSearchMirrorStorageKey(key)) {
+      continue;
+    }
+
+    haystack += normalizeValueForDocumentSearch(value);
+  }
+
+  return haystack;
+}
+
+function buildFieldSearchHaystack(
+  record: Record<string, unknown>,
+  fields: readonly string[],
+): string {
+  let haystack = "";
+  for (const field of fields) {
+    haystack += normalizeValueForDocumentSearch(record[field]);
+  }
+  return haystack;
 }
 
 export function computeOverfetchLimit(
@@ -62,9 +127,14 @@ function matchesPostFilter(
       return true;
     }
 
-    return filter.value.fields.some((field) =>
-      recordFieldContainsTerm(record, field, term),
-    );
+    const haystack =
+      filter.value.fields && filter.value.fields.length > 0
+        ? buildFieldSearchHaystack(record, filter.value.fields)
+        : buildNormalizedDocumentSearchText(record, {
+            excludeFields: filter.value.excludeFields,
+          });
+
+    return haystack.includes(term);
   }
 
   if (typeof filter.value !== "string") {

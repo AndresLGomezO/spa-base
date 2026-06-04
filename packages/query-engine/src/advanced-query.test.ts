@@ -317,7 +317,7 @@ describe("resolveSearchField", () => {
     expect(result).toHaveLength(0);
   });
 
-  it("uses source field contains for in-memory list entities", () => {
+  it("uses document-wide concatenated search for in-memory list entities", () => {
     const InMemoryEntity = defineEntity({
       name: "inMemoryTag",
       fields: {
@@ -344,6 +344,10 @@ describe("resolveSearchField", () => {
 
     expect(normalized.postFilters).toHaveLength(1);
     expect(normalized.postFilters[0]?.operator).toBe("sourceFieldsContain");
+    expect(normalized.postFilters[0]?.value).toEqual({
+      term: "lomb",
+      excludeFields: [],
+    });
 
     const matching = applyPostFilters(
       [{ code: "A1", label: "Bancolombia Savings" }],
@@ -356,6 +360,28 @@ describe("resolveSearchField", () => {
 
     expect(matching).toHaveLength(1);
     expect(missing).toHaveLength(0);
+  });
+
+  it("matches in-memory search across concatenated field boundaries", () => {
+    const InMemoryEntity = defineEntity({
+      name: "inMemorySku",
+      fields: {
+        prefix: { type: "string", required: true },
+        suffix: { type: "string", required: true },
+      },
+      inMemoryListQueries: true,
+    }) as unknown as AnyDefinedEntity;
+
+    const normalized = normalizeEntityQuery(InMemoryEntity, {
+      search: "ab12",
+    });
+
+    const result = applyPostFilters(
+      [{ prefix: "ab", suffix: "12", id: "1", tenantId: "t" }],
+      normalized.postFilters,
+    );
+
+    expect(result).toHaveLength(1);
   });
 });
 

@@ -1,7 +1,6 @@
 import {
   SYSTEM_FIELD_KEYS,
   usesForeignKeyStorage,
-  listSearchableStringFields,
   resolveSearchStorageField,
   type DefinedEntity,
   type FieldDefinitions,
@@ -103,6 +102,12 @@ const OPERATORS_BY_FIELD_TYPE: Record<
 };
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
+
+function listSensitiveFieldNames(entity: AnyDefinedEntity): readonly string[] {
+  return Object.keys(entity.metadata.fields).filter(
+    (fieldName) => entity.metadata.fields[fieldName]?.sensitive === true,
+  );
+}
 
 const fieldOperatorCache = new WeakMap<
   AnyDefinedEntity,
@@ -455,19 +460,14 @@ export function normalizeEntityQuery(
     search = config.search;
 
     if (entity.metadata.inMemoryListQueries === true) {
-      const sourceFields = listSearchableStringFields(entity);
-      if (sourceFields.length === 0) {
-        throw new QueryError(
-          QueryErrorCode.SEARCH_NOT_CONFIGURED,
-          `Search is not available for entity "${entity.name}". No searchable string field found.`,
-        );
-      }
-
-      searchField = sourceFields[0];
+      searchField = SEARCH_SOURCE_FIELDS_FILTER_FIELD;
       searchPostFilters.push({
         field: SEARCH_SOURCE_FIELDS_FILTER_FIELD,
         operator: "sourceFieldsContain",
-        value: { term: lowerTerm, fields: sourceFields },
+        value: {
+          term: lowerTerm,
+          excludeFields: listSensitiveFieldNames(entity),
+        },
       });
     } else {
       const field = resolveSearchStorageField(entity);
