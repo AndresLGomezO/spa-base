@@ -45,7 +45,10 @@ export function createFirestoreIndexStatusStore(config: FirebaseAdminConfig) {
       const signature = computeIndexSignature(index);
       await collection().doc(signature).set(
         {
+          signature,
+          collection: index.collectionGroup,
           status: "READY",
+          fields: index.fields,
           updatedAt: new Date().toISOString(),
           errorMessage: FieldValue.delete(),
         },

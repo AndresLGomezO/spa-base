@@ -104,6 +104,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
             dispatch({
               type: "AUTH_STATE_AUTHENTICATED",
               user: await buildAuthUser(firebaseUser),
+              sessionResolved: true,
             });
           }
           return;
@@ -120,6 +121,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           dispatch({
             type: "AUTH_STATE_AUTHENTICATED",
             user: authUser,
+            sessionResolved: false,
           });
         }
 
@@ -131,6 +133,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
           if (!syncResult.ok) {
             if (syncResult.transient) {
               syncedUidRef.current = firebaseUser.uid;
+              if (!cancelled) {
+                dispatch({
+                  type: "AUTH_STATE_AUTHENTICATED",
+                  user: await buildAuthUser(firebaseUser),
+                  sessionResolved: true,
+                });
+              }
               return;
             }
 
@@ -153,6 +162,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
           dispatch({
             type: "AUTH_STATE_AUTHENTICATED",
             user: await buildAuthUser(firebaseUser),
+            sessionResolved: true,
             permissions: syncResult.user?.permissions ?? [],
             isSuperAdmin,
             tenantId,
@@ -237,8 +247,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
       user: state.user,
       error: state.error,
       isAuthenticated: state.phase === "authenticated",
+      isSessionResolved: state.sessionResolved,
       isReady:
-        state.phase === "authenticated" || state.phase === "unauthenticated",
+        state.phase === "unauthenticated" ||
+        (state.phase === "authenticated" && state.sessionResolved),
       permissions: state.permissions,
       isSuperAdmin: state.isSuperAdmin,
       tenantId: state.tenantId,
@@ -261,6 +273,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       state.isSuperAdmin,
       state.permissions,
       state.phase,
+      state.sessionResolved,
       state.tenantId,
       state.tenantRoleNames,
       state.activeTenantName,

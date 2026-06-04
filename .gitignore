@@ -31,3 +31,6 @@ firestore-debug.log
 ui-debug.log
 firebase-data/
 data/emulator/
+
+# Local GCP tenant ingestion / seeding (not deployed)
+.local/

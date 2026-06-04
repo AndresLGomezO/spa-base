@@ -84,6 +84,7 @@ export function SearchableMultiSelectDropdown({
       <Popover
         open={open}
         onOpenChange={setOpen}
+        placement="bottom-start"
         fullWidth
         className="w-full"
         panelClassName="w-full max-w-none"

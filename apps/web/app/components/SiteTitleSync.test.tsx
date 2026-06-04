@@ -27,6 +27,7 @@ function createAuthValue(
     user: null,
     isAuthenticated: true,
     isReady: true,
+    isSessionResolved: true,
     error: null,
     tenantId: "tenant_1",
     availableTenants: [],

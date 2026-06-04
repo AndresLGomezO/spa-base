@@ -5,6 +5,7 @@ import type { User } from "../lib/firebase";
 
 export const AUTH_INITIAL_STATE: AuthState = {
   phase: "initializing",
+  sessionResolved: false,
   user: null,
   error: null,
   permissions: [],
@@ -30,6 +31,7 @@ type AuthAction =
       readonly tenantRoleNames?: readonly string[];
       readonly activeTenantName?: string | null;
       readonly tenantAppearance?: TenantAppearance | null;
+      readonly sessionResolved?: boolean;
     }
   | {
       readonly type: "TENANT_SELECTED";
@@ -104,11 +106,13 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
       return {
         ...state,
         phase: "authenticating",
+        sessionResolved: false,
         error: null,
       };
     case "AUTH_STATE_AUTHENTICATED":
       return {
         phase: "authenticated",
+        sessionResolved: action.sessionResolved ?? state.sessionResolved,
         user: action.user,
         error: null,
         permissions: action.permissions ?? state.permissions,
@@ -124,6 +128,7 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
       return {
         ...state,
         phase: "authenticated",
+        sessionResolved: true,
         error: null,
         tenantId: action.tenantId,
         availableTenants: action.availableTenants,
@@ -137,6 +142,7 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
     case "AUTH_STATE_UNAUTHENTICATED":
       return {
         phase: "unauthenticated",
+        sessionResolved: true,
         user: null,
         error: null,
         ...clearSessionFields(),
@@ -144,6 +150,7 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
     case "LOGIN_FAILED":
       return {
         phase: "unauthenticated",
+        sessionResolved: true,
         user: null,
         error: action.error,
         ...clearSessionFields(),
@@ -151,6 +158,7 @@ export function authReducer(state: AuthState, action: AuthAction): AuthState {
     case "LOGOUT_COMPLETED":
       return {
         phase: "unauthenticated",
+        sessionResolved: true,
         user: null,
         error: null,
         ...clearSessionFields(),

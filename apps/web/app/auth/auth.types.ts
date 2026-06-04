@@ -23,6 +23,8 @@ export interface AuthState {
     | "authenticating"
     | "authenticated"
     | "unauthenticated";
+  /** True after the first auth session sync finishes for the current user. */
+  readonly sessionResolved: boolean;
   readonly user: AuthUser | null;
   readonly error: string | null;
   readonly permissions: readonly string[];
@@ -48,7 +50,9 @@ export interface SelectTenantResult {
 export interface AuthContextValue {
   readonly user: AuthUser | null;
   readonly isAuthenticated: boolean;
+  /** True when auth can be used for routing (session sync complete if signed in). */
   readonly isReady: boolean;
+  readonly isSessionResolved: boolean;
   readonly error: string | null;
   readonly permissions: readonly string[];
   readonly isSuperAdmin: boolean;

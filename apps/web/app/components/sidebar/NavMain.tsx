@@ -188,16 +188,20 @@ function NavGroupChildLinks({
 function SettingsGroup({
   onNavigate,
   group,
+  popoverOpen,
+  onPopoverOpenChange,
 }: {
   readonly onNavigate?: () => void;
   readonly group: NavGroupConfig;
+  readonly popoverOpen: boolean;
+  readonly onPopoverOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation("common");
   const { pathname } = useLocation();
-  const { collapsed } = useSidebar();
+  const { collapsed, isMobile } = useSidebar();
+  const usePopoverNav = collapsed && !isMobile;
   const groupActive = isNavGroupActive(pathname, group);
   const [open, setOpen] = useState(groupActive);
-  const [popoverOpen, setPopoverOpen] = useState(false);
 
   useEffect(() => {
     if (groupActive) {
@@ -211,12 +215,12 @@ function SettingsGroup({
 
   const Icon = group.icon;
 
-  if (collapsed) {
+  if (usePopoverNav) {
     return (
       <SidebarMenuItem>
         <Popover
           open={popoverOpen}
-          onOpenChange={setPopoverOpen}
+          onOpenChange={onPopoverOpenChange}
           placement="right-start"
           className="block w-full"
           trigger={
@@ -242,7 +246,7 @@ function SettingsGroup({
                     link={link}
                     pathname={pathname}
                     onNavigate={onNavigate}
-                    onClosePopover={() => setPopoverOpen(false)}
+                    onClosePopover={() => onPopoverOpenChange(false)}
                   />
                 ))}
               </div>
@@ -252,7 +256,7 @@ function SettingsGroup({
                 link={child}
                 pathname={pathname}
                 onNavigate={onNavigate}
-                onClosePopover={() => setPopoverOpen(false)}
+                onClosePopover={() => onPopoverOpenChange(false)}
               />
             ),
           )}
@@ -292,11 +296,20 @@ function SettingsGroup({
 }
 
 export function NavMain() {
+  const { pathname } = useLocation();
   const { setMobileOpen } = useSidebar();
   const navItems = useAccessibleNavItems();
+  const [openGroupPopoverId, setOpenGroupPopoverId] = useState<string | null>(
+    null,
+  );
+
+  useEffect(() => {
+    setOpenGroupPopoverId(null);
+  }, [pathname]);
 
   const closeMobile = () => {
     setMobileOpen(false);
+    setOpenGroupPopoverId(null);
   };
 
   return (
@@ -308,6 +321,10 @@ export function NavMain() {
               key={item.id}
               group={item}
               onNavigate={closeMobile}
+              popoverOpen={openGroupPopoverId === item.id}
+              onPopoverOpenChange={(open) =>
+                setOpenGroupPopoverId(open ? item.id : null)
+              }
             />
           ) : (
             <NavLinkItem key={item.id} item={item} onNavigate={closeMobile} />

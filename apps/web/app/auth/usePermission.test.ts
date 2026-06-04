@@ -17,6 +17,7 @@ function mockAuthContext(
     user: null,
     isAuthenticated: true,
     isReady: true,
+    isSessionResolved: true,
     error: null,
     permissions: [],
     isSuperAdmin: false,

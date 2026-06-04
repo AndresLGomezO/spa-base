@@ -1,3 +1,4 @@
+import { PubSub } from "@google-cloud/pubsub";
 import type { AggregationEventMessage } from "@repo/event-engine";
 
 export const AGGREGATION_EVENTS_TOPIC = "aggregation-events" as const;
@@ -6,7 +7,6 @@ export async function ensureAggregationEventsTopic(
   projectId: string,
   topicName: string = AGGREGATION_EVENTS_TOPIC,
 ): Promise<void> {
-  const { PubSub } = await import("@google-cloud/pubsub");
   const pubsub = new PubSub({ projectId });
   const topic = pubsub.topic(topicName);
   const [exists] = await topic.exists();
@@ -20,7 +20,6 @@ export async function publishAggregationEventMessage(
   topicName: string,
   message: AggregationEventMessage,
 ): Promise<void> {
-  const { PubSub } = await import("@google-cloud/pubsub");
   const pubsub = new PubSub({ projectId });
   const topic = pubsub.topic(topicName);
   await topic.publishMessage({ json: message });

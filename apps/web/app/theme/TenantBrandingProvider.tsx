@@ -1,9 +1,14 @@
 import type { TenantAppearance } from "@repo/shared-types";
 import { appearanceToCssVariables } from "@repo/theme/tenant-overrides";
 import { useColorScheme } from "@repo/theme/react";
-import { useEffect, type ReactNode } from "react";
+import { useLayoutEffect, type ReactNode } from "react";
 
 import { useAuth } from "../auth/AuthContext";
+import {
+  clearCachedTenantAppearance,
+  readBootstrapTenantAppearance,
+  writeCachedTenantAppearance,
+} from "./tenant-appearance-cache";
 
 const APPLIED_VARS = new Set<string>();
 
@@ -36,16 +41,37 @@ export function TenantBrandingProvider({
 }: {
   readonly children: ReactNode;
 }) {
-  const { tenantAppearance } = useAuth();
+  const { tenantAppearance, tenantId, isAuthenticated, isSessionResolved } =
+    useAuth();
   const { colorScheme } = useColorScheme();
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     const root = document.documentElement;
-    applyAppearance(root, tenantAppearance, colorScheme);
-    return () => {
+
+    if (!isAuthenticated) {
       clearAppliedVars(root);
-    };
-  }, [tenantAppearance, colorScheme]);
+      clearCachedTenantAppearance();
+      return;
+    }
+
+    if (!isSessionResolved) {
+      const bootstrapAppearance = readBootstrapTenantAppearance();
+      applyAppearance(root, bootstrapAppearance, colorScheme);
+      return;
+    }
+
+    if (tenantId) {
+      writeCachedTenantAppearance(tenantId, tenantAppearance);
+    }
+
+    applyAppearance(root, tenantAppearance, colorScheme);
+  }, [
+    colorScheme,
+    isAuthenticated,
+    isSessionResolved,
+    tenantAppearance,
+    tenantId,
+  ]);
 
   return <>{children}</>;
 }

@@ -92,6 +92,35 @@ describe("RequireAuth", () => {
 });
 
 describe("RequireTenant", () => {
+  it("shows loading while auth session is still syncing", () => {
+    mockUseAuth.mockReturnValue({
+      isReady: false,
+      isSessionResolved: false,
+      tenantId: null,
+      availableTenants: [],
+      isSuperAdmin: false,
+    });
+
+    render(
+      <MemoryRouter initialEntries={["/app/widget"]}>
+        <Routes>
+          <Route
+            path="/app/widget"
+            element={
+              <RequireTenant>
+                <div>Tenant content</div>
+              </RequireTenant>
+            }
+          />
+        </Routes>
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("status")).toBeInTheDocument();
+    expect(screen.queryByText("tenant.noTenants")).not.toBeInTheDocument();
+    expect(screen.queryByText("Tenant content")).not.toBeInTheDocument();
+  });
+
   it("shows loading while tenant member auto-bind is pending", () => {
     mockUseAuth.mockReturnValue({
       isReady: true,
