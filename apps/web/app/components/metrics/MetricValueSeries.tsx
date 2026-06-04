@@ -18,7 +18,7 @@ import {
   type MetricBindingContext,
 } from "../../lib/metric-binding-resolution.js";
 import { createMetricWidgetRenderContext } from "../../features/ui-builder/create-metric-widget-render-context.js";
-import { useCanReadMetricValues } from "../../hooks/metrics/useCanReadMetricValues.js";
+import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues.js";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js";
 import { useMetricBatch } from "../../hooks/metrics/useMetricBatch.js";
 import { formatPrimaryMetricDisplayValue } from "./format-metric-display-value.js";
@@ -98,7 +98,10 @@ export function MetricValueSeries({
 }: MetricValueSeriesProps) {
   const { t } = useTranslation("common");
   const definitionQuery = useMetricDefinition(widget.metricDefinitionId);
-  const canRead = useCanReadMetricValues(definitionQuery.data?.sourceModel);
+  const readAccess = useMetricReadAccess(definitionQuery.data?.sourceModel, {
+    sourceModelResolved: definitionQuery.isFetched,
+  });
+  const canRead = readAccess === "allowed";
 
   const queries = useMemo(() => {
     if (!definitionQuery.data) {
@@ -118,18 +121,22 @@ export function MetricValueSeries({
     enabled: canRead && definitionQuery.isSuccess && !previewMode,
   });
 
-  if (!canRead) {
+  if (
+    readAccess === "pending" ||
+    definitionQuery.isLoading ||
+    (!previewMode && canRead && batchQuery.isLoading)
+  ) {
     return (
       <Text variant="muted" className="text-sm">
-        {t("metrics.widget.forbidden")}
+        {t("metrics.widget.loading")}
       </Text>
     );
   }
 
-  if (!previewMode && (definitionQuery.isLoading || batchQuery.isLoading)) {
+  if (readAccess === "denied") {
     return (
       <Text variant="muted" className="text-sm">
-        {t("metrics.widget.loading")}
+        {t("metrics.widget.forbidden")}
       </Text>
     );
   }

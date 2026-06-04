@@ -9,7 +9,7 @@ import {
   type MetricBindingContext,
 } from "../../lib/metric-binding-resolution.js";
 import type { MetricRowQuery } from "../../lib/api-client.js";
-import { useCanReadMetricValues } from "../../hooks/metrics/useCanReadMetricValues.js";
+import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues.js";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow.js";
 import { formatPrimaryMetricDisplayValue } from "./format-metric-display-value.js";
@@ -52,7 +52,10 @@ export function MetricValueDisplay({
 }: MetricValueDisplayProps) {
   const { t, i18n } = useTranslation("common");
   const definitionQuery = useMetricDefinition(metricDefinitionId);
-  const canRead = useCanReadMetricValues(definitionQuery.data?.sourceModel);
+  const readAccess = useMetricReadAccess(definitionQuery.data?.sourceModel, {
+    sourceModelResolved: definitionQuery.isFetched,
+  });
+  const canRead = readAccess === "allowed";
   const inline = presentation === "inline";
   const statusClassName = "text-sm";
 
@@ -73,21 +76,25 @@ export function MetricValueDisplay({
     enabled: canRead && definitionQuery.isSuccess,
   });
 
-  if (!canRead) {
+  if (
+    readAccess === "pending" ||
+    definitionQuery.isLoading ||
+    (canRead && rowQuery.isLoading)
+  ) {
     return (
       <MetricValueShell presentation={presentation}>
         <Text variant="muted" className={statusClassName}>
-          {t("metrics.widget.forbidden")}
+          {t("metrics.widget.loading")}
         </Text>
       </MetricValueShell>
     );
   }
 
-  if (definitionQuery.isLoading || rowQuery.isLoading) {
+  if (readAccess === "denied") {
     return (
       <MetricValueShell presentation={presentation}>
         <Text variant="muted" className={statusClassName}>
-          {t("metrics.widget.loading")}
+          {t("metrics.widget.forbidden")}
         </Text>
       </MetricValueShell>
     );
