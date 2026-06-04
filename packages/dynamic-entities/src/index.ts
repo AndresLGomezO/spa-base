@@ -1,6 +1,7 @@
 export { applyHiddenFromNav } from "./apply-hidden-from-nav.js";
 export { applyNavCategoryId, applyNavOrder } from "./apply-nav-assignment.js";
 export { applyTenantWideRead } from "./apply-tenant-wide-read.js";
+export { applyInMemoryListQueries } from "./apply-in-memory-list-queries.js";
 export {
   canIncludeEntityInCatalog,
   INTERNAL_ENTITY_PERMISSIONS,

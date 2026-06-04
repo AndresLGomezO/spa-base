@@ -86,7 +86,9 @@ export function EntityIndexPlanSummaryCard({
           {t("dataModels.indexPlan.entityTitle")}
         </Text>
         <Text className="text-muted-foreground text-sm">
-          {t("dataModels.indexPlan.entityDescription")}
+          {planInput.inMemoryListQueries
+            ? t("dataModels.inMemoryListQueries.indexPlanDescription")
+            : t("dataModels.indexPlan.entityDescription")}
         </Text>
       </div>
       <div className="flex flex-wrap items-baseline gap-2">

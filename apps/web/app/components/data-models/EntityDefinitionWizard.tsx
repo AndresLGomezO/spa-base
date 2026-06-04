@@ -58,6 +58,7 @@ export function EntityDefinitionWizard({
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
+  const [inMemoryListQueries, setInMemoryListQueries] = useState(false);
   const [hiddenFromNav, setHiddenFromNav] = useState(false);
   const [navCategoryId, setNavCategoryId] = useState("");
   const [navOrder, setNavOrder] = useState("");
@@ -242,6 +243,7 @@ export function EntityDefinitionWizard({
         name: name.trim(),
         label: label.trim(),
         ...(tenantWideRead ? { tenantWideRead: true } : {}),
+        ...(inMemoryListQueries ? { inMemoryListQueries: true } : {}),
         ...(hiddenFromNav ? { hiddenFromNav: true } : {}),
         ...(navCategoryId.trim()
           ? { navCategoryId: navCategoryId.trim() }
@@ -321,6 +323,17 @@ export function EntityDefinitionWizard({
             />
             <Text className="text-muted-foreground text-sm">
               {t("dataModels.tenantWideReadHint")}
+            </Text>
+          </div>
+          <div className="space-y-2">
+            <Checkbox
+              id="model-in-memory-list-queries"
+              label={t("dataModels.inMemoryListQueries.label")}
+              checked={inMemoryListQueries}
+              onChange={(event) => setInMemoryListQueries(event.target.checked)}
+            />
+            <Text className="text-muted-foreground text-sm">
+              {t("dataModels.inMemoryListQueries.hint")}
             </Text>
           </div>
           <div className="space-y-2">
@@ -479,6 +492,7 @@ export function EntityDefinitionWizard({
             label={label.trim()}
             fields={fields}
             tenantWideRead={tenantWideRead}
+            inMemoryListQueries={inMemoryListQueries}
             navIcon={navIcon}
           />
           {!useModalFooter ? (

@@ -26,6 +26,7 @@ import {
 import {
   matchesPlannedIndex,
   queryNeedsClientFallback,
+  shouldExecuteInMemoryListQuery,
 } from "./query-index-match.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
@@ -52,6 +53,7 @@ interface FirestoreEntityQueryExecutorConfig<
   readonly cursorSecret?: string;
   readonly plannedIndexes?: readonly FirestoreCompositeIndex[];
   readonly tenantWideRead?: boolean;
+  readonly inMemoryListQueries?: boolean;
   readonly clientFallbackMaxDocs?: number;
 }
 
@@ -258,6 +260,22 @@ class FirestoreEntityQueryExecutor<
     const tenantWideRead = this.executorConfig.tenantWideRead === true;
     const clientFallbackMaxDocs =
       this.executorConfig.clientFallbackMaxDocs ?? 0;
+    const inMemoryListQueries =
+      this.executorConfig.inMemoryListQueries === true;
+
+    if (
+      shouldExecuteInMemoryListQuery(query, {
+        inMemoryListQueries,
+        clientFallbackMaxDocs,
+      })
+    ) {
+      return this.executeClientFallback(
+        collectionRef,
+        query,
+        tenantWideRead,
+        clientFallbackMaxDocs,
+      );
+    }
 
     if (
       clientFallbackMaxDocs > 0 &&

@@ -245,6 +245,7 @@ export class EntityRuntimeContext {
           cursorSecret: this.options.cursorSecret,
           plannedIndexes: indexesForEntity(entity),
           tenantWideRead: entity.metadata.tenantWideRead === true,
+          inMemoryListQueries: entity.metadata.inMemoryListQueries === true,
           clientFallbackMaxDocs: this.options.clientFallbackMaxDocs ?? 0,
         });
     this.queryExecutorCache.set(key, executor);

@@ -142,6 +142,10 @@ export function indexesForEntity(
     }
   }
 
+  if (entity.metadata.inMemoryListQueries === true) {
+    return dedupeIndexes(indexes);
+  }
+
   const filterableFields = collectFilterableFields(entity);
   const sortableFields = collectSortableFields(entity);
   const sortDirections = ["ASCENDING", "DESCENDING"] as const;

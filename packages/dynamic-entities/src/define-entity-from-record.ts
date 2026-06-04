@@ -223,6 +223,7 @@ export function defineEntityFromRecord(
     fields,
     ...(ui ? { ui } : {}),
     ...(record.tenantWideRead ? { tenantWideRead: true } : {}),
+    ...(record.inMemoryListQueries ? { inMemoryListQueries: true } : {}),
     ...(record.hiddenFromNav ? { hiddenFromNav: true } : {}),
     ...(record.navCategoryId ? { navCategoryId: record.navCategoryId } : {}),
     ...(record.navOrder !== undefined ? { navOrder: record.navOrder } : {}),

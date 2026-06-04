@@ -13,6 +13,7 @@ interface ModelReviewProps {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly inMemoryListQueries?: boolean;
   readonly navIcon?: string;
 }
 
@@ -21,6 +22,7 @@ export function ModelReview({
   label,
   fields,
   tenantWideRead,
+  inMemoryListQueries,
   navIcon,
 }: ModelReviewProps) {
   const { t } = useTranslation("common");
@@ -30,6 +32,7 @@ export function ModelReview({
     label,
     fields,
     tenantWideRead,
+    inMemoryListQueries,
     navIcon,
   };
 

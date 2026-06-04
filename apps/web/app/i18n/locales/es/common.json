@@ -468,6 +468,11 @@
     "sensitiveHint": "Los campos sensibles se cifran en reposo. No se pueden filtrar ni ordenar en vistas de lista.",
     "tenantWideRead": "Lectura para todo el tenant",
     "tenantWideReadHint": "Cuando está activado, todos los miembros del tenant pueden leer los registros de esta entidad. Escritura y eliminación siguen requiriendo propiedad.",
+    "inMemoryListQueries": {
+      "label": "Colección pequeña (consultas de lista en el servidor)",
+      "hint": "El filtro y orden de listas se ejecutan en la API sin índices Firestore adicionales para listas. Usa el límite global de documentos (CLIENT_QUERY_FALLBACK_MAX_DOCS). Las opciones de filtro/orden por campo siguen activas en la UI.",
+      "indexPlanDescription": "Índices Firestore mínimos (solo base y búsquedas por relación). El filtro/orden de listas lo resuelve el servidor dentro del límite global de documentos."
+    },
     "hiddenFromNav": "Ocultar de la navegación",
     "hiddenFromNavHint": "Oculta esta entidad del menú lateral y del catálogo para usuarios normales. Sigue disponible en campos de relación. Los usuarios con permiso de lectura de entidades internas pueden seguir consultándola.",
     "navCategory": "Categoría de navegación",

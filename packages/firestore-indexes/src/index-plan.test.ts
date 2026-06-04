@@ -102,10 +102,38 @@ describe("planIndexesForTenant", () => {
   });
 });
 
+const SmallListTask = defineEntity({
+  name: "tag",
+  inMemoryListQueries: true,
+  fields: {
+    status: { type: "string", required: true },
+    priority: { type: "number", required: true },
+  },
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["status", "priority"] }],
+    forms: {
+      create: { sections: [{ fields: ["status", "priority"] }] },
+      edit: { sections: [{ fields: ["status", "priority"] }] },
+    },
+    fields: {
+      status: { filterable: true, sortable: true },
+      priority: { filterable: true, sortable: false },
+    },
+  },
+});
+
 describe("indexesForEntity curated count", () => {
   it("matches expected formula for task entity", () => {
     const indexes = indexesForEntity(Task);
     // 1 baseline + 2*2 sort + 2*2 filter (status, priority) deduped
     expect(indexes.length).toBe(9);
+  });
+
+  it("plans only baseline and FK indexes when inMemoryListQueries is set", () => {
+    const plan = planIndexesForEntity(SmallListTask);
+    expect(plan.summary.total).toBe(1);
+    expect(plan.summary.sortOnly).toBe(0);
+    expect(plan.summary.filterOnly).toBe(0);
+    expect(plan.summary.ownershipBaseline).toBe(1);
   });
 });

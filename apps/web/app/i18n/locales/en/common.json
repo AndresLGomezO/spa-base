@@ -468,6 +468,11 @@
     "sensitiveHint": "Sensitive fields are encrypted at rest. They cannot be filtered or sorted in list views.",
     "tenantWideRead": "Tenant-wide read access",
     "tenantWideReadHint": "When enabled, all tenant members can read records of this entity. Write and delete still require ownership.",
+    "inMemoryListQueries": {
+      "label": "Small collection (server-side list queries)",
+      "hint": "List filter and sort run on the API without extra Firestore list indexes. Uses the global document cap (see CLIENT_QUERY_FALLBACK_MAX_DOCS). Field filter/sort options stay enabled in the UI.",
+      "indexPlanDescription": "Minimal Firestore indexes (baseline and relation lookups only). List filter/sort is handled on the server within the global document cap."
+    },
     "hiddenFromNav": "Hide from navigation",
     "hiddenFromNavHint": "Hides this entity from the sidebar and catalog for regular users. It remains available for relation fields. Users with the internal entity read permission can still browse it.",
     "navCategory": "Navigation category",

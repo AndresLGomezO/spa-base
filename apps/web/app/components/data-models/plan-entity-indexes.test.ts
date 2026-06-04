@@ -34,6 +34,26 @@ describe("planEntityIndexesFromDraft", () => {
     ).toBeNull();
   });
 
+  it("plans fewer indexes when inMemoryListQueries is enabled", () => {
+    const full = planEntityIndexesFromDraft({
+      name: "tag",
+      label: "Tag",
+      fields: baseFields,
+      navIcon: "Tag",
+    });
+    const minimal = planEntityIndexesFromDraft({
+      name: "tag",
+      label: "Tag",
+      fields: baseFields,
+      inMemoryListQueries: true,
+      navIcon: "Tag",
+    });
+
+    expect(full?.summary.total).toBeGreaterThan(minimal?.summary.total ?? 0);
+    expect(minimal?.summary.sortOnly).toBe(0);
+    expect(minimal?.summary.filterOnly).toBe(0);
+  });
+
   it("plans indexes for a draft entity", () => {
     const plan = planEntityIndexesFromDraft({
       name: "contract",

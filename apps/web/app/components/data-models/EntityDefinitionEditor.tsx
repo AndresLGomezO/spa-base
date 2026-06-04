@@ -83,6 +83,7 @@ export function EntityDefinitionEditor({
   const [label, setLabel] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
+  const [inMemoryListQueries, setInMemoryListQueries] = useState(false);
   const [hiddenFromNav, setHiddenFromNav] = useState(false);
   const [navCategoryId, setNavCategoryId] = useState("");
   const [navOrder, setNavOrder] = useState("");
@@ -174,6 +175,7 @@ export function EntityDefinitionEditor({
         setLabel(loaded.label);
         setFields([...loaded.fields]);
         setTenantWideRead(loaded.tenantWideRead ?? false);
+        setInMemoryListQueries(loaded.inMemoryListQueries ?? false);
         setHiddenFromNav(loaded.hiddenFromNav ?? false);
         setNavCategoryId(loaded.navCategoryId ?? "");
         setNavOrder(
@@ -271,6 +273,7 @@ export function EntityDefinitionEditor({
       const updated = await patchEntityDefinition(definitionId, {
         label: label.trim(),
         tenantWideRead,
+        inMemoryListQueries,
         hiddenFromNav,
         navCategoryId: navCategoryId.trim() ? navCategoryId.trim() : null,
         ...(parsedNavOrder !== null && Number.isInteger(parsedNavOrder)
@@ -320,10 +323,19 @@ export function EntityDefinitionEditor({
       label,
       fields,
       tenantWideRead,
+      inMemoryListQueries,
       record,
       navIcon,
     };
-  }, [tenantId, record, label, fields, tenantWideRead, navIcon]);
+  }, [
+    tenantId,
+    record,
+    label,
+    fields,
+    tenantWideRead,
+    inMemoryListQueries,
+    navIcon,
+  ]);
 
   if (isLoading) {
     return <EntityFormSkeleton />;
@@ -378,6 +390,19 @@ export function EntityDefinitionEditor({
           />
           <Text className="text-muted-foreground text-sm">
             {t("dataModels.tenantWideReadHint")}
+          </Text>
+        </div>
+
+        <div className="space-y-2">
+          <Checkbox
+            id="edit-in-memory-list-queries"
+            label={t("dataModels.inMemoryListQueries.label")}
+            checked={inMemoryListQueries}
+            disabled={!canUpdate}
+            onChange={(event) => setInMemoryListQueries(event.target.checked)}
+          />
+          <Text className="text-muted-foreground text-sm">
+            {t("dataModels.inMemoryListQueries.hint")}
           </Text>
         </div>
 

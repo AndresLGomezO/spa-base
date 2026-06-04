@@ -73,6 +73,15 @@ Sortable/filterable fields come from `ui.fields` (`filterable` / `sortable` defa
 
 `tenantWideRead` entities use the same patterns **without** `accessUserIds`.
 
+### Small collections (`inMemoryListQueries`)
+
+When **`inMemoryListQueries`** is enabled on an entity definition (Model Builder checkbox):
+
+- **Provisioning**: only baseline + FK / findByField indexes; **no** sort-only or filter-only composites.
+- **List queries**: the API always uses **server-side** in-memory filter/sort via [`executeClientFallback`](packages/gcp-firebase/src/firestore-entity-query-executor.ts), capped by `CLIENT_QUERY_FALLBACK_MAX_DOCS`. The web app still sends normal list API requests; no browser-side data logic.
+- **Field UI**: `filterable` / `sortable` on fields stay enabled for list views.
+- **PATCH** toggling the flag runs reconcile and drops sort/filter indexes that are no longer in the plan (tenant-safe).
+
 ### Tenant vs project scope
 
 - **Model Builder KPIs** sum `planIndexesForTenant` for the **current tenant’s** definitions.
@@ -80,7 +89,7 @@ Sortable/filterable fields come from `ui.fields` (`filterable` / `sortable` defa
 
 ### List queries without a dedicated composite index
 
-When a list query’s filter+sort shape does not match a planned index, the API may use **client fallback** for small collections: baseline Firestore query (ownership + `id`), load up to `CLIENT_QUERY_FALLBACK_MAX_DOCS` (default **1000**), then filter/sort in memory. Larger collections still return `COMPOSITE_INDEX_REQUIRED`.
+When a list query’s filter+sort shape does not match a planned index (or the entity has `inMemoryListQueries`), the API uses **server-side fallback**: baseline Firestore query (ownership + `id`), load up to `CLIENT_QUERY_FALLBACK_MAX_DOCS` (default **1000**), then filter/sort in memory. Larger collections still return `COMPOSITE_INDEX_REQUIRED`.
 
 ## Configuration
 

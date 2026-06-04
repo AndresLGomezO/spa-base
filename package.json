@@ -30,6 +30,7 @@
     "test:visual": "pnpm --filter @repo/ui test:visual",
     "test:visual:update": "bash scripts/update-visual-snapshots-linux.sh",
     "generate:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts",
+    "prune:firestore-indexes": "tsx scripts/prune-all-firestore-composite-indexes.ts",
     "check:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts && git diff --exit-code firestore.indexes.json",
     "check:docker-workspace": "tsx scripts/check-docker-workspace.ts",
     "validate": "tsx scripts/validate.ts",

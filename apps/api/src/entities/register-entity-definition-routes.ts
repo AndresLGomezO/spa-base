@@ -268,6 +268,9 @@ export async function registerEntityDefinitionRoutes(
             ...(parsedBody.data.tenantWideRead !== undefined
               ? { tenantWideRead: parsedBody.data.tenantWideRead }
               : {}),
+            ...(parsedBody.data.inMemoryListQueries !== undefined
+              ? { inMemoryListQueries: parsedBody.data.inMemoryListQueries }
+              : {}),
           },
           parsedBody.data,
         );

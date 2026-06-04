@@ -50,6 +50,26 @@ const Task = defineEntity({
   },
 });
 
+const SmallListTask = defineEntity({
+  name: "tag",
+  inMemoryListQueries: true,
+  fields: {
+    status: { type: "string", required: true },
+    priority: { type: "number", required: true },
+  },
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["status", "priority"] }],
+    forms: {
+      create: { sections: [{ fields: ["status", "priority"] }] },
+      edit: { sections: [{ fields: ["status", "priority"] }] },
+    },
+    fields: {
+      status: { filterable: true, sortable: true },
+      priority: { filterable: true, sortable: false },
+    },
+  },
+});
+
 const PublicBoard = defineEntity({
   name: "board",
   tenantWideRead: true,
@@ -154,6 +174,12 @@ describe("indexesForEntity", () => {
     expect(indexes).toContainEqual(
       buildFindByFieldIndex("orders", "customerId"),
     );
+  });
+
+  it("omits sort-only and filter-only when inMemoryListQueries is set", () => {
+    const indexes = indexesForEntity(SmallListTask);
+    expect(indexes).toEqual([buildOwnershipListIndex("tags")]);
+    expect(indexes.length).toBeLessThan(indexesForEntity(Task).length);
   });
 
   it("generates curated filter-only and sort-only indexes", () => {

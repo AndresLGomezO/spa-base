@@ -69,6 +69,22 @@ export function baselineListIndex(
   );
 }
 
+export function shouldExecuteInMemoryListQuery(
+  query: NormalizedEntityQuery,
+  options: {
+    readonly inMemoryListQueries: boolean;
+    readonly clientFallbackMaxDocs: number;
+  },
+): boolean {
+  if (!options.inMemoryListQueries || options.clientFallbackMaxDocs <= 0) {
+    return false;
+  }
+  if (query.search) {
+    return false;
+  }
+  return query.postFilters.length === 0;
+}
+
 export function queryNeedsClientFallback(
   query: NormalizedEntityQuery,
   collection: string,

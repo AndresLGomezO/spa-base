@@ -3,7 +3,10 @@ import { describe, expect, it } from "vitest";
 import { defineEntity } from "@repo/entities";
 import { indexesForEntity } from "@repo/firestore-indexes";
 
-import { queryNeedsClientFallback } from "./query-index-match.js";
+import {
+  queryNeedsClientFallback,
+  shouldExecuteInMemoryListQuery,
+} from "./query-index-match.js";
 
 const Task = defineEntity({
   name: "task",
@@ -22,6 +25,64 @@ const Task = defineEntity({
       priority: { filterable: true, sortable: false },
     },
   },
+});
+
+describe("shouldExecuteInMemoryListQuery", () => {
+  const listQuery = {
+    filters: [
+      {
+        field: "accessUserIds",
+        operator: "array-contains" as const,
+        value: "u1",
+      },
+      { field: "status", operator: "==" as const, value: "open" },
+    ],
+    postFilters: [],
+    sort: { field: "priority", direction: "asc" as const },
+    limit: 25,
+  };
+
+  it("forces server in-memory list path when entity flag is enabled", () => {
+    expect(
+      shouldExecuteInMemoryListQuery(listQuery, {
+        inMemoryListQueries: true,
+        clientFallbackMaxDocs: 1000,
+      }),
+    ).toBe(true);
+  });
+
+  it("does not apply when flag is off or cap is zero", () => {
+    expect(
+      shouldExecuteInMemoryListQuery(listQuery, {
+        inMemoryListQueries: false,
+        clientFallbackMaxDocs: 1000,
+      }),
+    ).toBe(false);
+    expect(
+      shouldExecuteInMemoryListQuery(listQuery, {
+        inMemoryListQueries: true,
+        clientFallbackMaxDocs: 0,
+      }),
+    ).toBe(false);
+  });
+
+  it("skips search and post-filter queries", () => {
+    expect(
+      shouldExecuteInMemoryListQuery(
+        { ...listQuery, search: "needle" },
+        { inMemoryListQueries: true, clientFallbackMaxDocs: 1000 },
+      ),
+    ).toBe(false);
+    expect(
+      shouldExecuteInMemoryListQuery(
+        {
+          ...listQuery,
+          postFilters: [{ field: "status", operator: "==", value: "open" }],
+        },
+        { inMemoryListQueries: true, clientFallbackMaxDocs: 1000 },
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("queryNeedsClientFallback", () => {

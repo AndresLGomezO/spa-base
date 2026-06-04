@@ -22,6 +22,7 @@ export interface PlanEntityIndexesInput {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly inMemoryListQueries?: boolean;
   readonly record?: EntityDefinitionRecord | null;
   readonly navIcon?: string;
 }
@@ -50,6 +51,7 @@ function buildDraftEntityDefinitionRecord(
     label: input.label.trim() || input.record?.label || name,
     fields: input.fields,
     ...(input.tenantWideRead ? { tenantWideRead: true } : {}),
+    ...(input.inMemoryListQueries ? { inMemoryListQueries: true } : {}),
     ...(input.record?.hiddenFromNav ? { hiddenFromNav: true } : {}),
     ...(input.record?.navCategoryId
       ? { navCategoryId: input.record.navCategoryId }

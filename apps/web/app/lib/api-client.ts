@@ -382,6 +382,7 @@ export interface EntityDefinitionRecord {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
@@ -398,6 +399,7 @@ interface CreateEntityDefinitionInput {
   readonly label: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
@@ -438,6 +440,7 @@ interface PatchEntityDefinitionInput {
   readonly label?: string;
   readonly fields?: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
+  readonly inMemoryListQueries?: boolean;
   readonly hiddenFromNav?: boolean;
   readonly navCategoryId?: string | null;
   readonly navOrder?: number | null;

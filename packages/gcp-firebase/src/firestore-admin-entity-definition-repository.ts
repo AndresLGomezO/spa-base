@@ -3,6 +3,7 @@ import {
   applyHiddenFromNav,
   applyNavCategoryId,
   applyNavOrder,
+  applyInMemoryListQueries,
   applyTenantWideRead,
   displayFieldForCreate,
   entityDefinitionRecordSchema,
@@ -73,6 +74,9 @@ export function createFirestoreAdminEntityDefinitionRepository(
         fields: input.fields,
         ...(input.ui ? { ui: input.ui } : {}),
         ...(input.tenantWideRead === true ? { tenantWideRead: true } : {}),
+        ...(input.inMemoryListQueries === true
+          ? { inMemoryListQueries: true }
+          : {}),
         ...(input.hiddenFromNav === true ? { hiddenFromNav: true } : {}),
         ...(input.navCategoryId ? { navCategoryId: input.navCategoryId } : {}),
         ...(input.navOrder !== undefined ? { navOrder: input.navOrder } : {}),
@@ -95,18 +99,21 @@ export function createFirestoreAdminEntityDefinitionRepository(
       const base = applyNavOrder(
         applyNavCategoryId(
           applyHiddenFromNav(
-            applyTenantWideRead(
-              applyDisplayFieldToRecord(
-                {
-                  ...current,
-                  ...(input.label ? { label: input.label } : {}),
-                  ...(input.fields ? { fields: input.fields } : {}),
-                  version: current.version + 1,
-                  updatedAt: now,
-                },
-                input,
+            applyInMemoryListQueries(
+              applyTenantWideRead(
+                applyDisplayFieldToRecord(
+                  {
+                    ...current,
+                    ...(input.label ? { label: input.label } : {}),
+                    ...(input.fields ? { fields: input.fields } : {}),
+                    version: current.version + 1,
+                    updatedAt: now,
+                  },
+                  input,
+                ),
+                input.tenantWideRead,
               ),
-              input.tenantWideRead,
+              input.inMemoryListQueries,
             ),
             input.hiddenFromNav,
           ),
