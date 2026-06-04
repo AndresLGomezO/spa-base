@@ -68,7 +68,10 @@ function getErrorMessage(error: unknown): string {
       return "Firestore indexes for this entity are still building. Please wait a few minutes and try again.";
     }
     if (error.code === "COMPOSITE_INDEX_REQUIRED") {
-      return "A Firestore index is required for this query. Indexes may still be building—retry in a few minutes, or use the link in the server response if provided.";
+      return (
+        error.message ||
+        "This list query needs a composite index that is not deployed for this filter/sort combination. Save the entity model again to provision indexes, or use the Firebase Console link in the API response."
+      );
     }
   }
   if (error instanceof Error && error.message) {

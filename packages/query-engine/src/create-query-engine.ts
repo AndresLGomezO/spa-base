@@ -85,7 +85,9 @@ export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
       );
       const mergedConfig: QueryConfig = {
         ...queryConfig,
-        filter: [...(queryConfig.filter ?? []), ...injectedFilters],
+        // Ownership (array-contains) must precede user equality filters so queries
+        // match composite indexes (accessUserIds first, then filter/sort fields).
+        filter: [...injectedFilters, ...(queryConfig.filter ?? [])],
       };
 
       const normalizedQuery = normalizeEntityQuery(entity, mergedConfig);

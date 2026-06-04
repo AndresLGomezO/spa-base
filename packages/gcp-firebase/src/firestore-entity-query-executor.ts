@@ -101,12 +101,26 @@ function applyFilter(query: Query, filter: NormalizedFilter): Query {
   );
 }
 
+function orderEqualityFiltersForCompositeIndex(
+  filters: readonly NormalizedFilter[],
+): NormalizedFilter[] {
+  const arrayContains = filters.filter(
+    (filter) => filter.operator === "array-contains",
+  );
+  const otherEquality = filters.filter(
+    (filter) => filter.operator !== "array-contains",
+  );
+  return [...arrayContains, ...otherEquality];
+}
+
 function buildFirestoreQuery(
   collectionRef: CollectionReference<DocumentData>,
   normalizedQuery: NormalizedEntityQuery,
 ): Query {
-  const equalityFilters = normalizedQuery.filters.filter((filter) =>
-    EQUALITY_OPERATORS.has(filter.operator as FirestoreNativeOperator),
+  const equalityFilters = orderEqualityFiltersForCompositeIndex(
+    normalizedQuery.filters.filter((filter) =>
+      EQUALITY_OPERATORS.has(filter.operator as FirestoreNativeOperator),
+    ),
   );
   const inequalityFilters = normalizedQuery.filters.filter(
     (filter) =>
