@@ -78,7 +78,8 @@ Sortable/filterable fields come from `ui.fields` (`filterable` / `sortable` defa
 When **`inMemoryListQueries`** is enabled on an entity definition (Model Builder checkbox):
 
 - **Provisioning**: only baseline + FK / findByField indexes; **no** sort-only or filter-only composites.
-- **List queries**: the API always uses **server-side** in-memory filter/sort via [`executeClientFallback`](packages/gcp-firebase/src/firestore-entity-query-executor.ts), capped by `CLIENT_QUERY_FALLBACK_MAX_DOCS`. The web app still sends normal list API requests; no browser-side data logic.
+- **List queries** (filter, text search `q`, and sort): one **server-side** pipeline via [`executeInMemoryListQuery`](packages/gcp-firebase/src/firestore-entity-query-executor.ts) — baseline Firestore load, then in-memory filter, search token match, and sort. Capped by `CLIENT_QUERY_FALLBACK_MAX_DOCS` (default **1000**). The web app still sends normal list API requests; no browser-side data logic.
+- **Snapshot cache**: loaded rows are cached in-process per tenant + collection + ownership scope for `CACHE_TTL_MS` (default **60s**, same as other API caches). Cleared when the entity model is saved (PATCH).
 - **Field UI**: `filterable` / `sortable` on fields stay enabled for list views.
 - **PATCH** toggling the flag runs reconcile and drops sort/filter indexes that are no longer in the plan (tenant-safe).
 
@@ -96,7 +97,8 @@ When a list query’s filter+sort shape does not match a planned index (or the e
 | Variable | Default | Purpose |
 | -------- | ------- | -------- |
 | `ENSURE_FIRESTORE_INDEXES` | `true` in dev, `false` in production | Call Firestore Admin `createIndex` on model sync |
-| `CLIENT_QUERY_FALLBACK_MAX_DOCS` | `1000` | Max docs loaded for in-memory filter/sort fallback |
+| `CLIENT_QUERY_FALLBACK_MAX_DOCS` | `1000` | Max docs loaded for in-memory list pipeline (`inMemoryListQueries` and non-flag fallback) |
+| `CACHE_TTL_MS` | `60000` | TTL for in-memory list snapshot cache (API process) |
 | `INDEX_PROVISIONING_PUBSUB` | `false` | Publish index jobs to Pub/Sub for worker |
 | Terraform `enable_index_provisioning_pubsub` | `false` | Create Pub/Sub topic + backend pub/sub IAM ([`pubsub-index-provisioning.tf`](../packages/infrastructure/terraform/pubsub-index-provisioning.tf)) |
 

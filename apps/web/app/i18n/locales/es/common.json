@@ -470,8 +470,8 @@
     "tenantWideReadHint": "Cuando está activado, todos los miembros del tenant pueden leer los registros de esta entidad. Escritura y eliminación siguen requiriendo propiedad.",
     "inMemoryListQueries": {
       "label": "Colección pequeña (consultas de lista en el servidor)",
-      "hint": "El filtro y orden de listas se ejecutan en la API sin índices Firestore adicionales para listas. Usa el límite global de documentos (CLIENT_QUERY_FALLBACK_MAX_DOCS). Las opciones de filtro/orden por campo siguen activas en la UI.",
-      "indexPlanDescription": "Índices Firestore mínimos (solo base y búsquedas por relación). El filtro/orden de listas lo resuelve el servidor dentro del límite global de documentos."
+      "hint": "El filtro, la búsqueda de texto y el orden de listas se ejecutan en la API sin índices Firestore adicionales para listas. Una caché breve en el servidor (CACHE_TTL_MS) evita volver a leer Firestore en cada solicitud. Usa el límite global de documentos (CLIENT_QUERY_FALLBACK_MAX_DOCS). Las opciones de filtro/orden por campo siguen activas en la UI.",
+      "indexPlanDescription": "Índices Firestore mínimos (solo base y búsquedas por relación). Filtro, búsqueda y orden usan un solo pipeline en memoria en el servidor dentro del límite global de documentos."
     },
     "hiddenFromNav": "Ocultar de la navegación",
     "hiddenFromNavHint": "Oculta esta entidad del menú lateral y del catálogo para usuarios normales. Sigue disponible en campos de relación. Los usuarios con permiso de lectura de entidades internas pueden seguir consultándola.",
@@ -493,6 +493,10 @@
     "fieldFilterableHint": "Si está activado, este campo aparece como opción de filtro en las páginas de listado de la entidad.",
     "fieldSortable": "Ordenable en vistas de lista",
     "fieldSortableHint": "Si está activado, este campo puede seleccionarse para ordenar en las páginas de listado de la entidad.",
+    "fieldSearchable": "Buscable en vistas de lista",
+    "fieldSearchableHint": "Si está activado, este campo se incluye en la búsqueda de la lista. Los campos de texto son buscables por defecto.",
+    "fieldDetailsSearchable": "Buscable",
+    "fieldDetailsNotSearchable": "No buscable",
     "numberKind": "Tipo de número",
     "numberKinds": {
       "integer": "Entero (números enteros)",

@@ -6,6 +6,7 @@ import { indexesForEntity } from "@repo/firestore-indexes";
 import {
   queryNeedsClientFallback,
   shouldExecuteInMemoryListQuery,
+  usesInMemoryListPipeline,
 } from "./query-index-match.js";
 
 const Task = defineEntity({
@@ -27,24 +28,10 @@ const Task = defineEntity({
   },
 });
 
-describe("shouldExecuteInMemoryListQuery", () => {
-  const listQuery = {
-    filters: [
-      {
-        field: "accessUserIds",
-        operator: "array-contains" as const,
-        value: "u1",
-      },
-      { field: "status", operator: "==" as const, value: "open" },
-    ],
-    postFilters: [],
-    sort: { field: "priority", direction: "asc" as const },
-    limit: 25,
-  };
-
-  it("forces server in-memory list path when entity flag is enabled", () => {
+describe("usesInMemoryListPipeline", () => {
+  it("enables unified pipeline when entity flag is on", () => {
     expect(
-      shouldExecuteInMemoryListQuery(listQuery, {
+      usesInMemoryListPipeline({
         inMemoryListQueries: true,
         clientFallbackMaxDocs: 1000,
       }),
@@ -53,35 +40,50 @@ describe("shouldExecuteInMemoryListQuery", () => {
 
   it("does not apply when flag is off or cap is zero", () => {
     expect(
-      shouldExecuteInMemoryListQuery(listQuery, {
+      usesInMemoryListPipeline({
         inMemoryListQueries: false,
         clientFallbackMaxDocs: 1000,
       }),
     ).toBe(false);
     expect(
-      shouldExecuteInMemoryListQuery(listQuery, {
+      usesInMemoryListPipeline({
         inMemoryListQueries: true,
         clientFallbackMaxDocs: 0,
       }),
     ).toBe(false);
   });
+});
 
-  it("skips search and post-filter queries", () => {
+describe("shouldExecuteInMemoryListQuery", () => {
+  const listQuery = {
+    filters: [
+      {
+        field: "accessUserIds",
+        operator: "array-contains" as const,
+        value: "u1",
+      },
+    ],
+    postFilters: [],
+    sort: { field: "id", direction: "asc" as const },
+    limit: 25,
+  };
+
+  it("defers to unified pipeline when inMemoryListQueries is enabled", () => {
     expect(
-      shouldExecuteInMemoryListQuery(
-        { ...listQuery, search: "needle" },
-        { inMemoryListQueries: true, clientFallbackMaxDocs: 1000 },
-      ),
+      shouldExecuteInMemoryListQuery(listQuery, {
+        inMemoryListQueries: true,
+        clientFallbackMaxDocs: 1000,
+      }),
     ).toBe(false);
+  });
+
+  it("allows fallback for non-flag entities without search", () => {
     expect(
-      shouldExecuteInMemoryListQuery(
-        {
-          ...listQuery,
-          postFilters: [{ field: "status", operator: "==", value: "open" }],
-        },
-        { inMemoryListQueries: true, clientFallbackMaxDocs: 1000 },
-      ),
-    ).toBe(false);
+      shouldExecuteInMemoryListQuery(listQuery, {
+        inMemoryListQueries: false,
+        clientFallbackMaxDocs: 1000,
+      }),
+    ).toBe(true);
   });
 });
 

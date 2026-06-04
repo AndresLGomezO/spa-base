@@ -470,8 +470,8 @@
     "tenantWideReadHint": "When enabled, all tenant members can read records of this entity. Write and delete still require ownership.",
     "inMemoryListQueries": {
       "label": "Small collection (server-side list queries)",
-      "hint": "List filter and sort run on the API without extra Firestore list indexes. Uses the global document cap (see CLIENT_QUERY_FALLBACK_MAX_DOCS). Field filter/sort options stay enabled in the UI.",
-      "indexPlanDescription": "Minimal Firestore indexes (baseline and relation lookups only). List filter/sort is handled on the server within the global document cap."
+      "hint": "List filter, text search, and sort run on the API without extra Firestore list indexes. A short-lived server cache (CACHE_TTL_MS) avoids re-reading Firestore on each request. Uses the global document cap (CLIENT_QUERY_FALLBACK_MAX_DOCS). Field filter/sort options stay enabled in the UI.",
+      "indexPlanDescription": "Minimal Firestore indexes (baseline and relation lookups only). Filter, search, and sort use one server-side in-memory pipeline within the global document cap."
     },
     "hiddenFromNav": "Hide from navigation",
     "hiddenFromNavHint": "Hides this entity from the sidebar and catalog for regular users. It remains available for relation fields. Users with the internal entity read permission can still browse it.",
@@ -493,6 +493,10 @@
     "fieldFilterableHint": "When enabled, this field appears as a filter option on entity list pages.",
     "fieldSortable": "Sortable in list views",
     "fieldSortableHint": "When enabled, this field can be selected for sorting on entity list pages.",
+    "fieldSearchable": "Searchable in list views",
+    "fieldSearchableHint": "When enabled, this field is included in the list search box. String fields are searchable by default.",
+    "fieldDetailsSearchable": "Searchable",
+    "fieldDetailsNotSearchable": "Not searchable",
     "numberKind": "Number kind",
     "numberKinds": {
       "integer": "Integer (whole numbers)",

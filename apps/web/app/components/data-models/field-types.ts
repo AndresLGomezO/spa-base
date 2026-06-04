@@ -22,7 +22,12 @@ export function createEmptyField(
     type,
     required: true,
     sensitive: false,
-    ui: { order, filterable: true, sortable: true },
+    ui: {
+      order,
+      filterable: true,
+      sortable: true,
+      ...(type === "string" ? { searchable: true } : {}),
+    },
     ...(type === "enum" ? { enumValues: [""] } : {}),
     ...(type === "relation"
       ? { relation: { target: "", type: "many-to-one" }, sensitive: undefined }

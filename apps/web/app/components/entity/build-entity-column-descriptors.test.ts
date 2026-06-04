@@ -47,6 +47,28 @@ describe("buildEntityColumnDescriptors", () => {
     });
   });
 
+  it("defaults searchable to true for string fields without explicit ui flag", () => {
+    const stringDefaultDefinition = {
+      ...definition,
+      ui: {
+        ...definition.ui,
+        fields: {
+          name: { filterable: true, sortable: true },
+          secret: { filterable: false, sortable: false },
+        },
+      },
+    } as SerializableEntityDefinition;
+
+    const columns = buildEntityColumnDescriptors({
+      definition: stringDefaultDefinition,
+      columns: ["name", "secret"],
+      getOneToManyCellValue: () => null,
+    });
+
+    expect(columns[0]?.searchable).toBe(true);
+    expect(columns[1]?.searchable).toBe(true);
+  });
+
   it("defaults searchable to false for relations and sensitive fields", () => {
     const relationDefinition = {
       ...definition,

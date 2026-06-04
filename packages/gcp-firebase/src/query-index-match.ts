@@ -69,6 +69,15 @@ export function baselineListIndex(
   );
 }
 
+export function usesInMemoryListPipeline(options: {
+  readonly inMemoryListQueries: boolean;
+  readonly clientFallbackMaxDocs: number;
+}): boolean {
+  return (
+    options.inMemoryListQueries === true && options.clientFallbackMaxDocs > 0
+  );
+}
+
 export function shouldExecuteInMemoryListQuery(
   query: NormalizedEntityQuery,
   options: {
@@ -76,13 +85,19 @@ export function shouldExecuteInMemoryListQuery(
     readonly clientFallbackMaxDocs: number;
   },
 ): boolean {
-  if (!options.inMemoryListQueries || options.clientFallbackMaxDocs <= 0) {
+  if (usesInMemoryListPipeline(options)) {
+    return false;
+  }
+  if (options.clientFallbackMaxDocs <= 0) {
     return false;
   }
   if (query.search) {
     return false;
   }
-  return query.postFilters.length === 0;
+  if (query.postFilters.length > 0) {
+    return false;
+  }
+  return true;
 }
 
 export function queryNeedsClientFallback(

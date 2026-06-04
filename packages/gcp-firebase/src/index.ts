@@ -79,6 +79,17 @@ export {
 } from "./firestore-admin-tenant-user-invite-repository.js";
 export { uploadTenantLogo, validateStorageObjectId } from "./tenant-storage.js";
 export {
+  buildInMemoryListSnapshotCacheKey,
+  buildInMemoryListSnapshotInvalidationPrefix,
+  buildOwnershipScope,
+  createInMemoryListSnapshotCache,
+  type InMemoryListSnapshotCache,
+} from "./in-memory-list-snapshot-cache.js";
+export {
+  usesInMemoryListPipeline,
+  shouldExecuteInMemoryListQuery,
+} from "./query-index-match.js";
+export {
   buildFieldDefaultEntityFileObjectId,
   createEntityFileDownloadUrl,
   createStableEntityFileObjectId,

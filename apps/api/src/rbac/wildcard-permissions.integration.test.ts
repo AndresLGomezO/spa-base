@@ -9,6 +9,10 @@ import { createInMemoryEntityDefinitionRepository } from "@repo/firestore-conver
 import { createInMemoryEntityRepository } from "../repositories/in-memory-entity-repository.js";
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
+import {
+  buildInMemoryListSnapshotInvalidationPrefix,
+  mockCreateInMemoryListSnapshotCache,
+} from "../test/mock-in-memory-list-snapshot-cache.js";
 import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.js";
 import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 
@@ -96,6 +100,8 @@ vi.mock("@repo/gcp-firebase", () => ({
   ),
   createFirestoreAdminTenantRepository: vi.fn(() => tenantRepository),
   createFirestoreEntityQueryExecutor: mockCreateFirestoreEntityQueryExecutor,
+  buildInMemoryListSnapshotInvalidationPrefix,
+  createInMemoryListSnapshotCache: mockCreateInMemoryListSnapshotCache,
 }));
 
 import { buildServer } from "../server.js";

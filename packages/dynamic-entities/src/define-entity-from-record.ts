@@ -119,7 +119,7 @@ function componentForFieldType(
 
 export type FieldInputForDefaultUi = Pick<
   FieldDefinitionRecord,
-  "name" | "type"
+  "name" | "type" | "sensitive"
 > & {
   readonly ui?: FieldDefinitionRecord["ui"];
 };
@@ -187,7 +187,9 @@ export function buildDefaultUiForNewDefinition(input: {
               ? { searchable: field.ui.searchable }
               : hasFileDefaults
                 ? { searchable: fileUiDefaults.searchable }
-                : {}),
+                : field.type === "string" && field.sensitive !== true
+                  ? { searchable: true }
+                  : {}),
             order: field.ui?.order ?? index,
           },
         ];

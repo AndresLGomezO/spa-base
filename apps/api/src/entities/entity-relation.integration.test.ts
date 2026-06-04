@@ -8,6 +8,10 @@ import { clearModuleRegistries } from "@repo/modules";
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
 import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
+import {
+  buildInMemoryListSnapshotInvalidationPrefix,
+  mockCreateInMemoryListSnapshotCache,
+} from "../test/mock-in-memory-list-snapshot-cache.js";
 import { buildServer } from "../server.js";
 
 const authState = {
@@ -53,6 +57,8 @@ vi.mock("@repo/gcp-firebase", () => ({
   createFirestoreAdminJoinCollectionRepository: vi.fn(),
   createFirestoreAdminEntityRepository: vi.fn(),
   createFirestoreEntityQueryExecutor: mockCreateFirestoreEntityQueryExecutor,
+  buildInMemoryListSnapshotInvalidationPrefix,
+  createInMemoryListSnapshotCache: mockCreateInMemoryListSnapshotCache,
   createFirestoreAdminEntityDefinitionRepository: vi.fn(),
 }));
 

@@ -23,8 +23,10 @@ import type {
 import { createEntityConverter } from "@repo/firestore-converters";
 import { indexesForEntity } from "@repo/firestore-indexes";
 import {
+  buildInMemoryListSnapshotInvalidationPrefix,
   createFirestoreAdminEntityRepository,
   createFirestoreEntityQueryExecutor,
+  createInMemoryListSnapshotCache,
   scheduleEnsureEntityFirestoreIndexes,
   scheduleEnsureFirestoreIndexesFromHint,
   scheduleReconcileIndexesForDefinitionChange,
@@ -32,6 +34,7 @@ import {
   type FirestoreIndexHint,
   type FirestoreIndexStatusStore,
   type FirebaseAdminConfig,
+  type InMemoryListSnapshotCache,
 } from "@repo/gcp-firebase";
 import type { RbacQueryInjector } from "@repo/query-engine";
 
@@ -79,9 +82,13 @@ export class EntityRuntimeContext {
   >();
   private readonly definitionsLoadedAt = new Map<string, number>();
   private readonly definitionCacheTtlMs: number;
+  private readonly inMemoryListSnapshotCache: InMemoryListSnapshotCache;
 
   constructor(private readonly options: EntityRuntimeContextOptions) {
     this.definitionCacheTtlMs = options.definitionCacheTtlMs ?? 60_000;
+    this.inMemoryListSnapshotCache = createInMemoryListSnapshotCache({
+      ttlMs: this.definitionCacheTtlMs,
+    });
     for (const [entityName, repository] of Object.entries(
       options.repositories ?? {},
     )) {
@@ -247,6 +254,9 @@ export class EntityRuntimeContext {
           tenantWideRead: entity.metadata.tenantWideRead === true,
           inMemoryListQueries: entity.metadata.inMemoryListQueries === true,
           clientFallbackMaxDocs: this.options.clientFallbackMaxDocs ?? 0,
+          inMemoryListSnapshotCache: entity.metadata.inMemoryListQueries
+            ? this.inMemoryListSnapshotCache
+            : undefined,
         });
     this.queryExecutorCache.set(key, executor);
     return executor;
@@ -350,6 +360,12 @@ export class EntityRuntimeContext {
   ): Promise<void> {
     const entity = registerDynamicEntity(record.tenantId, record);
     this.invalidateEntityRuntime(record.tenantId, record.name);
+    this.inMemoryListSnapshotCache.invalidateByPrefix(
+      buildInMemoryListSnapshotInvalidationPrefix(
+        record.tenantId,
+        entity.metadata.collection,
+      ),
+    );
     this.definitionsLoadedAt.set(record.tenantId, Date.now());
     this.ensureIndexesForEntity(entity, record.tenantId);
 

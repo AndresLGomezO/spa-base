@@ -3,6 +3,11 @@ import type { TFunction } from "i18next";
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
 
+import {
+  fieldSupportsListSearch,
+  isFieldSearchableChecked,
+} from "./field-list-search";
+
 interface IndexedFieldDefinition {
   readonly field: FieldDefinitionInput;
   readonly index: number;
@@ -76,6 +81,14 @@ export function summarizeFieldDetails(
         target: field.relation.target,
         type: field.relation.type,
       }),
+    );
+  }
+
+  if (fieldSupportsListSearch(field)) {
+    parts.push(
+      isFieldSearchableChecked(field)
+        ? t("dataModels.fieldDetailsSearchable")
+        : t("dataModels.fieldDetailsNotSearchable"),
     );
   }
 

@@ -93,6 +93,35 @@ describe("FieldEditorForm", () => {
     });
   });
 
+  it("renders searchable checkbox for string fields", () => {
+    render(
+      <FieldEditorForm
+        field={{ name: "title", type: "string" }}
+        relationTargets={[]}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.getByLabelText("dataModels.fieldSearchable"),
+    ).toBeInTheDocument();
+    expect(screen.getByLabelText("dataModels.fieldSearchable")).toBeChecked();
+  });
+
+  it("does not render searchable checkbox for number fields", () => {
+    render(
+      <FieldEditorForm
+        field={{ name: "amount", type: "number" }}
+        relationTargets={[]}
+        onChange={vi.fn()}
+      />,
+    );
+
+    expect(
+      screen.queryByLabelText("dataModels.fieldSearchable"),
+    ).not.toBeInTheDocument();
+  });
+
   it("updates filterable and sortable ui flags", () => {
     const onChange = vi.fn();
 
@@ -114,6 +143,30 @@ describe("FieldEditorForm", () => {
       name: "status",
       type: "string",
       ui: { filterable: false, sortable: true },
+    });
+  });
+
+  it("updates searchable ui flag", () => {
+    const onChange = vi.fn();
+
+    render(
+      <FieldEditorForm
+        field={{
+          name: "title",
+          type: "string",
+          ui: { searchable: true },
+        }}
+        relationTargets={[]}
+        onChange={onChange}
+      />,
+    );
+
+    fireEvent.click(screen.getByLabelText("dataModels.fieldSearchable"));
+
+    expect(onChange).toHaveBeenCalledWith({
+      name: "title",
+      type: "string",
+      ui: { searchable: false },
     });
   });
 

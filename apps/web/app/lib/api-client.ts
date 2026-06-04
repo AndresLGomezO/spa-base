@@ -372,6 +372,7 @@ export interface FieldDefinitionInput {
     readonly order?: number;
     readonly filterable?: boolean;
     readonly sortable?: boolean;
+    readonly searchable?: boolean;
   };
 }
 

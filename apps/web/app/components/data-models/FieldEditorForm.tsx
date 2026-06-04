@@ -29,6 +29,10 @@ import {
   type RelationType,
 } from "./generate-relation-field-name";
 import { RelationTypeInfo } from "./RelationTypeInfo";
+import {
+  fieldSupportsListSearch,
+  isFieldSearchableChecked,
+} from "./field-list-search";
 import { resolveFieldDefinitionName } from "./field-types";
 
 interface FieldEditorFormProps {
@@ -160,6 +164,18 @@ export function FieldEditorForm({
           onChange={(event) => {
             const type = event.target.value as FieldDefinitionInput["type"];
             setUseCustomRelationName(false);
+            let ui: FieldDefinitionInput["ui"];
+            if (type === "string" && field.sensitive !== true) {
+              ui = {
+                ...field.ui,
+                searchable: field.ui?.searchable ?? true,
+              };
+            } else if (field.ui?.searchable !== undefined) {
+              const { searchable: _removed, ...restUi } = field.ui;
+              void _removed;
+              ui = Object.keys(restUi).length > 0 ? restUi : undefined;
+            }
+
             update({
               type,
               relation:
@@ -170,6 +186,7 @@ export function FieldEditorForm({
                 type === "enum" ? (field.enumValues ?? [""]) : undefined,
               numberKind:
                 type === "number" ? (field.numberKind ?? "decimal") : undefined,
+              ...(ui !== undefined ? { ui } : {}),
             });
           }}
         >
@@ -231,7 +248,22 @@ export function FieldEditorForm({
             field.type === "image" ||
             field.type === "document"
           }
-          onChange={(event) => update({ sensitive: event.target.checked })}
+          onChange={(event) => {
+            const sensitive = event.target.checked;
+            update({
+              sensitive,
+              ...(field.type === "string"
+                ? {
+                    ui: {
+                      ...field.ui,
+                      searchable: sensitive
+                        ? false
+                        : (field.ui?.searchable ?? true),
+                    },
+                  }
+                : {}),
+            });
+          }}
         />
         <Text className="text-muted-foreground text-sm">
           {t("dataModels.sensitiveHint")}
@@ -283,6 +315,20 @@ export function FieldEditorForm({
           {t("dataModels.fieldSortableHint")}
         </Text>
       </div>
+
+      {fieldSupportsListSearch(field) ? (
+        <div className="space-y-2">
+          <Checkbox
+            id={`${idPrefix}-field-searchable`}
+            label={t("dataModels.fieldSearchable")}
+            checked={isFieldSearchableChecked(field)}
+            onChange={(event) => updateUi({ searchable: event.target.checked })}
+          />
+          <Text className="text-muted-foreground text-sm">
+            {t("dataModels.fieldSearchableHint")}
+          </Text>
+        </div>
+      ) : null}
 
       {field.type === "enum" ? (
         <div className="space-y-2">

@@ -29,7 +29,9 @@ export function buildEntityColumnDescriptors(
       fieldUi?.searchable ??
       (fieldMeta?.sensitive === true || fieldMeta?.type === "relation"
         ? false
-        : undefined);
+        : fieldMeta?.type === "string"
+          ? true
+          : undefined);
 
     return {
       id: column,

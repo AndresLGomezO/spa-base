@@ -23,10 +23,13 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import type { InMemoryListSnapshotCache } from "./in-memory-list-snapshot-cache.js";
+import { buildInMemoryListSnapshotCacheKey } from "./in-memory-list-snapshot-cache.js";
 import {
   matchesPlannedIndex,
   queryNeedsClientFallback,
   shouldExecuteInMemoryListQuery,
+  usesInMemoryListPipeline,
 } from "./query-index-match.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
@@ -55,6 +58,7 @@ interface FirestoreEntityQueryExecutorConfig<
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
   readonly clientFallbackMaxDocs?: number;
+  readonly inMemoryListSnapshotCache?: InMemoryListSnapshotCache;
 }
 
 const EQUALITY_OPERATORS = new Set<FirestoreNativeOperator>([
@@ -252,10 +256,6 @@ class FirestoreEntityQueryExecutor<
   async executeQuery(tenantId: string, query: NormalizedEntityQuery) {
     const collectionRef = this.getCollection(tenantId);
 
-    if (query.search) {
-      return this.executeSearchScan(collectionRef, query);
-    }
-
     const plannedIndexes = this.executorConfig.plannedIndexes ?? [];
     const tenantWideRead = this.executorConfig.tenantWideRead === true;
     const clientFallbackMaxDocs =
@@ -264,12 +264,32 @@ class FirestoreEntityQueryExecutor<
       this.executorConfig.inMemoryListQueries === true;
 
     if (
+      usesInMemoryListPipeline({
+        inMemoryListQueries,
+        clientFallbackMaxDocs,
+      })
+    ) {
+      return this.executeInMemoryListQuery(
+        tenantId,
+        collectionRef,
+        query,
+        tenantWideRead,
+        clientFallbackMaxDocs,
+      );
+    }
+
+    if (query.search) {
+      return this.executeSearchScan(collectionRef, query);
+    }
+
+    if (
       shouldExecuteInMemoryListQuery(query, {
         inMemoryListQueries,
         clientFallbackMaxDocs,
       })
     ) {
       return this.executeClientFallback(
+        tenantId,
         collectionRef,
         query,
         tenantWideRead,
@@ -288,6 +308,7 @@ class FirestoreEntityQueryExecutor<
       )
     ) {
       return this.executeClientFallback(
+        tenantId,
         collectionRef,
         query,
         tenantWideRead,
@@ -374,6 +395,7 @@ class FirestoreEntityQueryExecutor<
           )
         ) {
           return this.executeClientFallback(
+            tenantId,
             collectionRef,
             query,
             tenantWideRead,
@@ -400,12 +422,13 @@ class FirestoreEntityQueryExecutor<
     }
   }
 
-  private async executeClientFallback(
+  private async loadInMemorySnapshot(
+    tenantId: string,
     collectionRef: CollectionReference<DocumentData>,
     query: NormalizedEntityQuery,
     tenantWideRead: boolean,
     maxDocs: number,
-  ) {
+  ): Promise<Record<string, unknown>[]> {
     const ownershipFilters = tenantWideRead
       ? []
       : query.filters.filter(
@@ -421,40 +444,53 @@ class FirestoreEntityQueryExecutor<
       limit: maxDocs,
     };
 
-    const planned = this.executorConfig.plannedIndexes ?? [];
-    const canUseBaseline =
-      planned.length === 0 ||
-      matchesPlannedIndex(this.executorConfig.collection, planned, {
-        tenantWideRead,
-        equalityFilterFields: [],
-        sortField: "id",
-        sortDirection: "ASCENDING",
-      });
-
-    const firestoreQuery = canUseBaseline
-      ? buildFirestoreQuery(collectionRef, baselineQuery)
-      : buildFirestoreQuery(collectionRef, {
-          ...baselineQuery,
-          filters: [],
+    const loadFromFirestore = async (): Promise<Record<string, unknown>[]> => {
+      const planned = this.executorConfig.plannedIndexes ?? [];
+      const canUseBaseline =
+        planned.length === 0 ||
+        matchesPlannedIndex(this.executorConfig.collection, planned, {
+          tenantWideRead,
+          equalityFilterFields: [],
+          sortField: "id",
+          sortDirection: "ASCENDING",
         });
 
-    const snapshot = await firestoreQuery.limit(maxDocs).get();
-    let items = snapshot.docs.map(
-      (doc) =>
-        this.executorConfig.converter.read(doc.data()) as Record<
-          string,
-          unknown
-        >,
-    );
+      const firestoreQuery = canUseBaseline
+        ? buildFirestoreQuery(collectionRef, baselineQuery)
+        : buildFirestoreQuery(collectionRef, {
+            ...baselineQuery,
+            filters: [],
+          });
 
-    const userFilters = query.filters.filter(
-      (filter) =>
-        filter.field !== "accessUserIds" &&
-        filter.operator !== "array-contains",
-    );
-    items = applyUserFiltersInMemory(items, userFilters);
-    items = sortItemsInMemory(items, query.sort);
+      const snapshot = await firestoreQuery.limit(maxDocs).get();
+      return snapshot.docs.map(
+        (doc) =>
+          this.executorConfig.converter.read(doc.data()) as Record<
+            string,
+            unknown
+          >,
+      );
+    };
 
+    const cache = this.executorConfig.inMemoryListSnapshotCache;
+    if (!cache) {
+      return loadFromFirestore();
+    }
+
+    const cacheKey = buildInMemoryListSnapshotCacheKey({
+      tenantId,
+      collection: this.executorConfig.collection,
+      tenantWideRead,
+      query,
+    });
+
+    return [...(await cache.getOrLoad(cacheKey, loadFromFirestore))];
+  }
+
+  private paginateInMemoryResults(
+    items: Record<string, unknown>[],
+    query: NormalizedEntityQuery,
+  ) {
     const totalCount = items.length;
     const offset = query.offset ?? 0;
     const page = items.slice(offset, offset + query.limit);
@@ -475,6 +511,63 @@ class FirestoreEntityQueryExecutor<
       nextCursor,
       totalCount,
     };
+  }
+
+  private async executeInMemoryListQuery(
+    tenantId: string,
+    collectionRef: CollectionReference<DocumentData>,
+    query: NormalizedEntityQuery,
+    tenantWideRead: boolean,
+    maxDocs: number,
+  ) {
+    let items = await this.loadInMemorySnapshot(
+      tenantId,
+      collectionRef,
+      query,
+      tenantWideRead,
+      maxDocs,
+    );
+
+    const userFilters = query.filters.filter(
+      (filter) =>
+        filter.field !== "accessUserIds" &&
+        filter.operator !== "array-contains",
+    );
+    items = applyUserFiltersInMemory(items, userFilters);
+
+    if (query.postFilters.length > 0) {
+      items = applyPostFilters(items, query.postFilters);
+    }
+
+    items = sortItemsInMemory(items, query.sort);
+
+    return this.paginateInMemoryResults(items, query);
+  }
+
+  private async executeClientFallback(
+    tenantId: string,
+    collectionRef: CollectionReference<DocumentData>,
+    query: NormalizedEntityQuery,
+    tenantWideRead: boolean,
+    maxDocs: number,
+  ) {
+    let items = await this.loadInMemorySnapshot(
+      tenantId,
+      collectionRef,
+      query,
+      tenantWideRead,
+      maxDocs,
+    );
+
+    const userFilters = query.filters.filter(
+      (filter) =>
+        filter.field !== "accessUserIds" &&
+        filter.operator !== "array-contains",
+    );
+    items = applyUserFiltersInMemory(items, userFilters);
+    items = sortItemsInMemory(items, query.sort);
+
+    return this.paginateInMemoryResults(items, query);
   }
 
   async findById(id: string, tenantId: string) {
