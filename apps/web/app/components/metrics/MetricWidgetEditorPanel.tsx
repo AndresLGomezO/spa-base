@@ -3,6 +3,7 @@ import { Button, Text } from "@repo/ui";
 import { migrateMetricWidgetLayout } from "@repo/entities";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { motionPresetEditorLabels } from "../../features/ui-builder/ui-builder-motion-labels.js";
 
 import type {
   SerializableEntityDefinition,
@@ -86,6 +87,10 @@ export function MetricWidgetEditorPanel({
         styleProperty: t("entity.viewSettings.styleProperty"),
         styleValue: t("entity.viewSettings.styleValue"),
       },
+      motion: motionPresetEditorLabels(t),
+      layoutEffects: t("entity.viewSettings.layoutEffects"),
+      rowStyles: t("entity.viewSettings.rowStyles"),
+      rowEffects: t("entity.viewSettings.rowEffects"),
       columnTab: (column: number) =>
         t("entity.viewSettings.columnTab", { column }),
       columnWidthPercent: t("entity.viewSettings.columnWidthPercent"),

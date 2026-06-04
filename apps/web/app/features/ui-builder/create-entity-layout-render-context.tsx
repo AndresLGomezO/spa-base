@@ -110,13 +110,17 @@ export function createEntityLayoutRenderContext(options: {
         usePreviewPlaceholder={usePreviewPlaceholder}
       />
     ),
-    metricKpiRenderer: (config: MetricKpiComponentConfig) => (
+    metricKpiRenderer: (config, presentation) => (
       <MetricValueDisplay
         presentation="inline"
         metricDefinitionId={config.metricDefinitionId}
         groupBindings={config.groupBindings}
         dimensionBindings={config.dimensionBindings}
         context={{ record: item, listFilters, routeParams }}
+        className={presentation?.className}
+        style={presentation?.style}
+        valueClassName={presentation?.valueClassName}
+        textSize={presentation?.textSize}
       />
     ),
   };

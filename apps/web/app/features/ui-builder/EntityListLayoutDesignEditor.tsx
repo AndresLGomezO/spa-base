@@ -22,6 +22,7 @@ import {
   useEntityListLayoutEditor,
   type UseEntityListLayoutEditorResult,
 } from "./use-entity-list-layout-editor.js";
+import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
 
 const CARDS_PER_ROW_SELECT_CLASS =
   "border-input bg-background ring-offset-background focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
@@ -91,6 +92,10 @@ export function EntityListLayoutDesignEditor({
         horizontal: t("entity.viewSettings.stackHorizontal"),
       },
       styleRules,
+      motion: motionPresetEditorLabels(t),
+      layoutEffects: t("entity.viewSettings.layoutEffects"),
+      rowStyles: t("entity.viewSettings.rowStyles"),
+      rowEffects: t("entity.viewSettings.rowEffects"),
       columnTab: (column: number) =>
         t("entity.viewSettings.columnTab", { column }),
       columnWidthPercent: t("entity.viewSettings.columnWidthPercent"),
@@ -211,18 +216,6 @@ export function EntityListLayoutDesignEditor({
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <span className="text-muted-foreground text-sm">
-          {t("designLayout.presentation")}
-        </span>
-        <SegmentedSwitch
-          value={editor.viewType}
-          options={viewTypeOptions}
-          onChange={editor.setViewType}
-          ariaLabel={t("designLayout.presentation")}
-        />
-      </div>
-
       <div
         key={
           editor.viewType === "table"
@@ -233,6 +226,18 @@ export function EntityListLayoutDesignEditor({
         }
       >
         {listPreview}
+      </div>
+
+      <div className="flex flex-col gap-2">
+        <span className="text-muted-foreground text-sm">
+          {t("designLayout.presentation")}
+        </span>
+        <SegmentedSwitch
+          value={editor.viewType}
+          options={viewTypeOptions}
+          onChange={editor.setViewType}
+          ariaLabel={t("designLayout.presentation")}
+        />
       </div>
 
       <div className="flex flex-col gap-3">

@@ -108,6 +108,10 @@ export {
   type FlexAlign,
   type FlexJustify,
 } from "./styles/apply-style-rules.js";
+export {
+  resolveMetricKpiPresentation,
+  type MetricKpiPresentation,
+} from "./styles/resolve-metric-kpi-presentation.js";
 
 export {
   matchConditionalStyles,
@@ -174,6 +178,7 @@ export {
   removeRowAt,
   moveRowAt,
   updateComponentRowAt,
+  updateComponentRowMetaAt,
   MAX_ROOT_COLUMNS,
   MAX_NESTED_COLUMNS,
   type RowLocator,

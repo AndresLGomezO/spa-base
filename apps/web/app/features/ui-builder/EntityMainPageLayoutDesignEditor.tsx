@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
@@ -67,6 +68,10 @@ export function EntityMainPageLayoutDesignEditor({
         styleProperty: t("entity.viewSettings.styleProperty"),
         styleValue: t("entity.viewSettings.styleValue"),
       },
+      motion: motionPresetEditorLabels(t),
+      layoutEffects: t("entity.viewSettings.layoutEffects"),
+      rowStyles: t("entity.viewSettings.rowStyles"),
+      rowEffects: t("entity.viewSettings.rowEffects"),
       columnTab: (column: number) =>
         t("entity.viewSettings.columnTab", { column }),
       columnWidthPercent: t("entity.viewSettings.columnWidthPercent"),

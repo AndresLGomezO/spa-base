@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import type {
   MetricKpiComponentConfig,
+  MetricKpiPresentation,
   WizardActionsComponentConfig,
   WizardProgressComponentConfig,
   WizardStepHostComponentConfig,
@@ -60,7 +61,10 @@ export interface LayoutRenderContext {
   ) => ReactNode;
   readonly resolveCurrencyCode?: () => string | undefined;
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;
-  readonly metricKpiRenderer?: (config: MetricKpiComponentConfig) => ReactNode;
+  readonly metricKpiRenderer?: (
+    config: MetricKpiComponentConfig,
+    presentation?: MetricKpiPresentation,
+  ) => ReactNode;
   readonly formFieldRenderer?: (
     fieldPath: string,
     containerClassName?: string,

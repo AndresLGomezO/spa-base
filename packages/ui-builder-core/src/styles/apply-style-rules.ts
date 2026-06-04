@@ -160,6 +160,20 @@ function ruleToClass(rule: StyleRule): string | undefined {
     return `flex-[${raw}]`;
   }
 
+  if (property === "overflowX") {
+    if (raw === "visible") return "overflow-x-visible";
+    if (raw === "hidden") return "overflow-x-hidden";
+    if (raw === "scroll") return "overflow-x-scroll";
+    if (raw === "auto") return "overflow-x-auto";
+  }
+
+  if (property === "overflowY") {
+    if (raw === "visible") return "overflow-y-visible";
+    if (raw === "hidden") return "overflow-y-hidden";
+    if (raw === "scroll") return "overflow-y-scroll";
+    if (raw === "auto") return "overflow-y-auto";
+  }
+
   return undefined;
 }
 

@@ -9,6 +9,7 @@ import {
   matchConditionalStyles,
   resolveFieldChain,
   resolvePageSlotWrapper,
+  resolveMetricKpiPresentation,
   resolveStyleRules,
   layoutInlineStyleFromStyleRules,
   splitStyleRuleClasses,
@@ -107,7 +108,12 @@ export function renderUiComponent(
   context: LayoutRenderContext,
 ): ReactNode {
   if (isMetricKpiComponent(config)) {
-    return context.metricKpiRenderer?.(config) ?? null;
+    return (
+      context.metricKpiRenderer?.(
+        config,
+        resolveMetricKpiPresentation(config.styles),
+      ) ?? null
+    );
   }
 
   if (config.kind === "form-field") {

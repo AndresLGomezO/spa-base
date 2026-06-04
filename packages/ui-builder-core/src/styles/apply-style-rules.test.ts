@@ -71,6 +71,16 @@ describe("applyStyleRules", () => {
     expect(resolved.className).not.toContain("pt-[");
   });
 
+  it("maps overflow axis rules to tailwind utilities", () => {
+    const resolved = resolveStyleRules([
+      { property: "overflowX", value: "hidden" },
+      { property: "overflowY", value: "auto" },
+    ]);
+
+    expect(resolved.className).toContain("overflow-x-hidden");
+    expect(resolved.className).toContain("overflow-y-auto");
+  });
+
   it("routes column flex alignment to layout stack props", () => {
     const flex = parseFlexLayoutFromStyles([
       { property: "alignItems", value: "center" },

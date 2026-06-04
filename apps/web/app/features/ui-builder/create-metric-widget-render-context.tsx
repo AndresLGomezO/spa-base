@@ -66,7 +66,7 @@ export function createMetricWidgetRenderContext(options: {
           resolveLayoutSlotLabel(fieldPath, definition, getDefinition) ??
           "Sample"
       : undefined,
-    metricKpiRenderer: (config: MetricKpiComponentConfig) => (
+    metricKpiRenderer: (config, presentation) => (
       <MetricValueDisplay
         presentation="inline"
         metricDefinitionId={config.metricDefinitionId || metricDefinitionId}
@@ -82,6 +82,10 @@ export function createMetricWidgetRenderContext(options: {
         }
         context={context}
         query={bucketQuery ?? null}
+        className={presentation?.className}
+        style={presentation?.style}
+        valueClassName={presentation?.valueClassName}
+        textSize={presentation?.textSize}
       />
     ),
     resolveImage: layoutImageContext.resolveImage,

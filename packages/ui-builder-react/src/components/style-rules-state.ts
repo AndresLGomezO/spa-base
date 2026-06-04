@@ -104,6 +104,9 @@ export function defaultValueForProperty(
   if (property === "justifyContent") {
     return "start";
   }
+  if (property === "overflowX" || property === "overflowY") {
+    return "visible";
+  }
   if (
     property === "fontSize" ||
     property === "borderWidth" ||
@@ -178,7 +181,9 @@ export function isEnumStyleProperty(property: StylePropertyKey): boolean {
     property === "alignItems" ||
     property === "justifyContent" ||
     property === "alignSelf" ||
-    property === "flex"
+    property === "flex" ||
+    property === "overflowX" ||
+    property === "overflowY"
   );
 }
 
@@ -221,6 +226,14 @@ export function enumOptionsForProperty(
       return [
         { value: "1", label: "1" },
         { value: "0", label: "0" },
+        { value: "auto", label: "Auto" },
+      ];
+    case "overflowX":
+    case "overflowY":
+      return [
+        { value: "visible", label: "Visible" },
+        { value: "hidden", label: "Hidden" },
+        { value: "scroll", label: "Scroll" },
         { value: "auto", label: "Auto" },
       ];
     default:

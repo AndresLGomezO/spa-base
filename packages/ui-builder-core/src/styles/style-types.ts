@@ -36,7 +36,9 @@ export type StylePropertyKey =
   | "maxWidth"
   | "borderRadius"
   | "borderWidth"
-  | "borderColor";
+  | "borderColor"
+  | "overflowX"
+  | "overflowY";
 
 export interface StyleRule {
   readonly property: StylePropertyKey;
@@ -67,4 +69,6 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "borderRadius",
   "borderWidth",
   "borderColor",
+  "overflowX",
+  "overflowY",
 ] as const;

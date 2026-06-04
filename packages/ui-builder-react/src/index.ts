@@ -35,6 +35,11 @@ export {
   type StyleRulesEditorProps,
 } from "./components/StyleRulesEditor.js";
 export {
+  MotionPresetEditor,
+  type MotionPresetEditorLabels,
+  type MotionPresetEditorProps,
+} from "./components/MotionPresetEditor.js";
+export {
   LabelConfigEditor,
   type LabelConfigEditorLabels,
   type LabelConfigEditorProps,

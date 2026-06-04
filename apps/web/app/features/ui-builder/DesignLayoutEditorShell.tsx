@@ -15,7 +15,7 @@ export function DesignLayoutEditorShell({
   }
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col gap-6 lg:flex-row lg:gap-8">
+    <div className="flex min-h-0 flex-1 flex-col-reverse gap-6 lg:flex-row lg:gap-8">
       <div className="flex min-w-0 flex-1 flex-col gap-6">{children}</div>
       <div className="lg:sticky lg:top-4 lg:w-[min(420px,40%)] lg:shrink-0">
         {preview}

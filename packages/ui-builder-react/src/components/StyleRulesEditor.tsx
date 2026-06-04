@@ -23,6 +23,7 @@ const SELECT_CLASS =
 
 export interface StyleRulesEditorLabels {
   readonly title?: string;
+  readonly rowStyles?: string;
   readonly addStyleRule: string;
   readonly removeStyleRule: string;
   readonly styleProperty: string;

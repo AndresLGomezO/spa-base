@@ -10,6 +10,7 @@ import {
   setNestedColumnCount,
   setNestedColumnWidthPercent,
   updateComponentRowAt,
+  updateComponentRowMetaAt,
   updateNestedColumnStackDirection,
   updateNestedColumnStyles,
   type NestedLayoutRowNode,
@@ -36,6 +37,10 @@ import {
   type ColumnStackDirectionEditorLabels,
 } from "./ColumnStackDirectionEditor.js";
 import {
+  MotionPresetEditor,
+  type MotionPresetEditorLabels,
+} from "./MotionPresetEditor.js";
+import {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
@@ -51,6 +56,9 @@ export interface ColumnRowsEditorLabels extends LayoutColumnControlsLabels {
   readonly columnStyles: string;
   readonly stackDirection: ColumnStackDirectionEditorLabels;
   readonly styleRules: StyleRulesEditorLabels;
+  readonly motion?: MotionPresetEditorLabels;
+  readonly rowStyles?: string;
+  readonly rowEffects?: string;
   readonly componentEditor: ComponentConfigEditorLabels;
 }
 
@@ -158,19 +166,51 @@ export function ColumnRowsEditor({
           </div>
 
           {expandedRowId === row.id && row.type === "component" ? (
-            <ComponentConfigEditor
-              config={row.component}
-              fieldDescriptors={fieldDescriptors}
-              labels={labels.componentEditor}
-              metricKpiEditor={metricKpiEditor}
-              staticImageEditor={staticImageEditor}
-              allowedKinds={allowedKinds}
-              onChange={(component: UiComponentConfig) =>
-                onLayoutChange(
-                  updateComponentRowAt(layout, locator, row.id, component),
-                )
-              }
-            />
+            <div className="flex flex-col gap-3">
+              <ComponentConfigEditor
+                config={row.component}
+                fieldDescriptors={fieldDescriptors}
+                labels={labels.componentEditor}
+                metricKpiEditor={metricKpiEditor}
+                staticImageEditor={staticImageEditor}
+                allowedKinds={allowedKinds}
+                onChange={(component: UiComponentConfig) =>
+                  onLayoutChange(
+                    updateComponentRowAt(layout, locator, row.id, component),
+                  )
+                }
+              />
+              {labels.motion ? (
+                <MotionPresetEditor
+                  motion={row.motion}
+                  onChange={(motion) =>
+                    onLayoutChange(
+                      updateComponentRowMetaAt(layout, locator, row.id, {
+                        motion,
+                      }),
+                    )
+                  }
+                  labels={{
+                    ...labels.motion,
+                    title: labels.rowEffects,
+                  }}
+                />
+              ) : null}
+              <StyleRulesEditor
+                styles={row.styles}
+                onChange={(styles) =>
+                  onLayoutChange(
+                    updateComponentRowMetaAt(layout, locator, row.id, {
+                      styles,
+                    }),
+                  )
+                }
+                labels={{
+                  ...labels.styleRules,
+                  title: labels.rowStyles,
+                }}
+              />
+            </div>
           ) : null}
 
           {expandedRowId === row.id && row.type === "nested-layout" ? (

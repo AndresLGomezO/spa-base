@@ -702,4 +702,17 @@ export function updateComponentRowAt(
   );
 }
 
+export function updateComponentRowMetaAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  rowId: string,
+  patch: Partial<Pick<ComponentRowNode, "styles" | "motion">>,
+): UiLayoutDocument {
+  return updateRowsAtLocator(layout, locator, (rows) =>
+    rows.map((row) =>
+      row.type === "component" && row.id === rowId ? { ...row, ...patch } : row,
+    ),
+  );
+}
+
 export type { RowLocator };

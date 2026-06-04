@@ -6,6 +6,7 @@ import {
   setRootColumnWidthPercent,
   updateLayoutMeta,
   updateRootColumnStackDirection,
+  type MotionPreset,
   updateRootColumnStyles,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -39,6 +40,10 @@ import {
   type ColumnStackDirectionEditorLabels,
 } from "./ColumnStackDirectionEditor.js";
 import {
+  MotionPresetEditor,
+  type MotionPresetEditorLabels,
+} from "./MotionPresetEditor.js";
+import {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
@@ -49,6 +54,10 @@ export interface UiLayoutStructurePanelLabels extends LayoutColumnControlsLabels
   readonly columnStyles: string;
   readonly stackDirection: ColumnStackDirectionEditorLabels;
   readonly styleRules: StyleRulesEditorLabels;
+  readonly motion?: MotionPresetEditorLabels;
+  readonly layoutEffects?: string;
+  readonly rowStyles?: string;
+  readonly rowEffects?: string;
   readonly componentEditor: ComponentConfigEditorLabels;
   readonly addRow: string;
   readonly componentRow: string;
@@ -116,6 +125,9 @@ export function UiLayoutStructurePanel({
     columnStyles: labels.columnStyles,
     stackDirection: labels.stackDirection,
     styleRules: labels.styleRules,
+    motion: labels.motion,
+    rowStyles: labels.rowStyles,
+    rowEffects: labels.rowEffects,
     componentEditor: labels.componentEditor,
   };
 
@@ -173,6 +185,19 @@ export function UiLayoutStructurePanel({
           />
           <span>{labels.showActions}</span>
         </label>
+      ) : null}
+
+      {labels.motion ? (
+        <MotionPresetEditor
+          motion={layout.motion}
+          onChange={(motion: MotionPreset | undefined) =>
+            onLayoutChange(updateLayoutMeta(layout, { motion }))
+          }
+          labels={{
+            ...labels.motion,
+            title: labels.layoutEffects,
+          }}
+        />
       ) : null}
 
       {activeColumnNode ? (
