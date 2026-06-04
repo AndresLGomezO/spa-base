@@ -2,7 +2,7 @@ import { canReadMetricValues } from "@repo/rbac";
 
 import { useAuth } from "../../auth/AuthContext.js";
 
-export type MetricReadAccess = "pending" | "allowed" | "denied";
+type MetricReadAccess = "pending" | "allowed" | "denied";
 
 export function useMetricReadAccess(
   sourceModel: string | undefined,

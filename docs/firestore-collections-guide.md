@@ -630,7 +630,7 @@ pnpm generate:firestore-indexes -- --dynamic-from-firestore --tenant-id tenant_d
 pnpm generate:firestore-indexes -- --collections accounts,loans
 ```
 
-Then deploy via Terraform apply or `firebase deploy --only firestore:indexes`. With `ENSURE_FIRESTORE_INDEXES=true` (default outside production), the API also requests missing indexes at runtime when entities are created or synced.
+Then deploy via Terraform apply or `firebase deploy --only firestore:indexes`. With `ENSURE_FIRESTORE_INDEXES=true` (default outside production), the API also requests indexes when entity **models** are created or updated in Model Builder (not on list filter/sort). See [dynamic-firestore-indexes.md](./dynamic-firestore-indexes.md).
 
 See [Relational Data System Guide](./relational-data-system-guide.md) for full relation storage and validation behavior.
 

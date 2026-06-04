@@ -325,9 +325,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
           sort: hint.sort,
           suggestedFields: hint.suggestedFields,
         },
-        hint.message,
+        "List query requires a composite index; update the entity model or use POST /api/indexes/provision.",
       );
-      entityRuntime.ensureIndexesFromHint(hint);
     },
     onIndexEnsured: (index) => {
       server.log.info(
@@ -598,10 +597,6 @@ export async function buildServer(options: BuildServerOptions = {}) {
     for (const record of dynamicDefinitions) {
       await entityRuntime.syncDefinition(record);
     }
-  }
-
-  if (apiEnv.ENSURE_FIRESTORE_INDEXES) {
-    entityRuntime.ensureCatalogIndexes(bootstrapTenantId);
   }
 
   return server;

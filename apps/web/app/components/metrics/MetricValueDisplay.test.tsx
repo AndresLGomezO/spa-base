@@ -8,7 +8,7 @@ import { i18n } from "../../i18n";
 import { MetricValueDisplay } from "./MetricValueDisplay";
 
 vi.mock("../../hooks/metrics/useCanReadMetricValues", () => ({
-  useCanReadMetricValues: vi.fn(),
+  useMetricReadAccess: vi.fn(),
 }));
 
 vi.mock("../../hooks/metrics/useMetricDefinition", () => ({
@@ -19,11 +19,11 @@ vi.mock("../../hooks/metrics/useMetricRow", () => ({
   useMetricRow: vi.fn(),
 }));
 
-import { useCanReadMetricValues } from "../../hooks/metrics/useCanReadMetricValues";
+import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow";
 
-const mockUseCanReadMetricValues = vi.mocked(useCanReadMetricValues);
+const mockUseMetricReadAccess = vi.mocked(useMetricReadAccess);
 const mockUseMetricDefinition = vi.mocked(useMetricDefinition);
 const mockUseMetricRow = vi.mocked(useMetricRow);
 
@@ -66,7 +66,7 @@ function renderDisplay(
 
 describe("MetricValueDisplay", () => {
   it("shows forbidden state when metricValue.read is denied", () => {
-    mockUseCanReadMetricValues.mockReturnValue(false);
+    mockUseMetricReadAccess.mockReturnValue("denied");
     mockUseMetricDefinition.mockReturnValue({
       data: definition,
       isLoading: false,
@@ -86,7 +86,7 @@ describe("MetricValueDisplay", () => {
   });
 
   it("shows loading state while the row query is loading", () => {
-    mockUseCanReadMetricValues.mockReturnValue(true);
+    mockUseMetricReadAccess.mockReturnValue("allowed");
     mockUseMetricDefinition.mockReturnValue({
       data: definition,
       isLoading: false,
@@ -104,7 +104,7 @@ describe("MetricValueDisplay", () => {
   });
 
   it("renders the primary aggregation value", () => {
-    mockUseCanReadMetricValues.mockReturnValue(true);
+    mockUseMetricReadAccess.mockReturnValue("allowed");
     mockUseMetricDefinition.mockReturnValue({
       data: definition,
       isLoading: false,
@@ -130,7 +130,7 @@ describe("MetricValueDisplay", () => {
   });
 
   it("formats currency metrics for display", () => {
-    mockUseCanReadMetricValues.mockReturnValue(true);
+    mockUseMetricReadAccess.mockReturnValue("allowed");
     mockUseMetricDefinition.mockReturnValue({
       data: { ...definition, valueDisplayFormat: "currency" as const },
       isLoading: false,
@@ -155,7 +155,7 @@ describe("MetricValueDisplay", () => {
   });
 
   it("inline presentation renders value without card chrome or title", () => {
-    mockUseCanReadMetricValues.mockReturnValue(true);
+    mockUseMetricReadAccess.mockReturnValue("allowed");
     mockUseMetricDefinition.mockReturnValue({
       data: definition,
       isLoading: false,

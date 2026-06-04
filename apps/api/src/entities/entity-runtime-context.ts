@@ -404,8 +404,7 @@ export class EntityRuntimeContext {
     const records =
       await this.options.entityDefinitionRepository.list(parsedTenantId);
     for (const record of records) {
-      const entity = registerDynamicEntity(parsedTenantId, record);
-      this.ensureIndexesForEntity(entity, parsedTenantId);
+      registerDynamicEntity(parsedTenantId, record);
     }
     this.definitionsLoadedAt.set(parsedTenantId, now);
   }

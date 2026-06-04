@@ -3,10 +3,13 @@ import { describe, expect, it } from "vitest";
 import { resolveEffectiveIndexPhase } from "./useIndexProvisioningStatus";
 
 describe("resolveEffectiveIndexPhase", () => {
-  it("stays building when status is ready but list has COMPOSITE_INDEX_REQUIRED", () => {
+  it("does not treat COMPOSITE_INDEX_REQUIRED as building", () => {
     expect(
       resolveEffectiveIndexPhase("ready", "COMPOSITE_INDEX_REQUIRED"),
-    ).toBe("building");
+    ).toBe("ready");
+    expect(resolveEffectiveIndexPhase("idle", "COMPOSITE_INDEX_REQUIRED")).toBe(
+      "idle",
+    );
   });
 
   it("stays building when status is ready but list has INDEX_CREATING", () => {
@@ -26,8 +29,8 @@ describe("resolveEffectiveIndexPhase", () => {
     expect(resolveEffectiveIndexPhase("ready", undefined)).toBe("ready");
   });
 
-  it("reports building for idle status with transient list error", () => {
-    expect(resolveEffectiveIndexPhase("idle", "COMPOSITE_INDEX_REQUIRED")).toBe(
+  it("reports building for idle status with INDEX_CREATING list error", () => {
+    expect(resolveEffectiveIndexPhase("idle", "INDEX_CREATING")).toBe(
       "building",
     );
   });

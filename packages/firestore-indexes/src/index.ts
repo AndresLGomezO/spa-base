@@ -6,6 +6,7 @@ export type {
 } from "./types.js";
 export {
   buildFindByFieldIndex,
+  buildListQueryIndex,
   buildOwnershipCreatedAtIndex,
   buildOwnershipFkIndex,
   buildOwnershipListIndex,

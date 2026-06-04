@@ -10,28 +10,22 @@ Firestore requires composite indexes to exist **before** queries run. This platf
 
 Every ownership-scoped list query includes `accessUserIds array-contains` (see [`ownership-query-injector.ts`](../apps/api/src/access/ownership-query-injector.ts)) and defaults to `orderBy id` (see [`parse-query-config.ts`](../packages/query-engine/src/parse-query-config.ts)). That combination requires a composite index per collection—not only entities with relations.
 
-## MVP architecture (implemented)
+## Architecture
 
 ```mermaid
 flowchart TB
   UI[apps/web]
-  API[apps/api Fastify]
-  DynEnt["@repo/dynamic-entities"]
-  Spec["@repo/firestore-indexes"]
+  ModelAPI["POST/PATCH entity definition"]
+  SyncDef["syncDefinition"]
+  Spec["@repo/firestore-indexes indexesForEntity"]
   Prov["gcp-firebase provisioner"]
   Status["__index_status store"]
   FSAdmin[Firestore Admin API]
-  Exec[firestore-entity-query-executor]
+  ListAPI["GET entity list"]
 
-  UI --> API
-  API --> DynEnt
-  DynEnt --> Spec
-  Spec --> Prov
-  Prov --> Status
-  Prov --> FSAdmin
-  API --> Exec
-  Exec -->|COMPOSITE_INDEX_REQUIRED| API
-  API -->|onIndexHint| Prov
+  UI --> ModelAPI --> SyncDef --> Spec --> Prov --> Status --> FSAdmin
+  UI --> ListAPI
+  ListAPI --> Status
 ```
 
 ### Monorepo map
@@ -47,24 +41,41 @@ flowchart TB
 | Async worker (optional) | [`apps/worker-indexer`](../apps/worker-indexer) |
 | IaC indexes | [`firestore.indexes.json`](../firestore.indexes.json), [`packages/infrastructure/terraform/firestore.tf`](../packages/infrastructure/terraform/firestore.tf) |
 | Generator | [`scripts/generate-firestore-indexes.ts`](../scripts/generate-firestore-indexes.ts) |
-| Query errors (reactive) | [`packages/gcp-firebase/src/firestore-entity-query-executor.ts`](../packages/gcp-firebase/src/firestore-entity-query-executor.ts) |
 
 The query engine is intentionally **not** modified for index provisioning; see [Advanced Query Engine workstream](../Ecosystem%20Plan/Phase%202/workstream/3.%20ADVANCED%20QUERY%20ENGINE.md).
 
+## When indexes are provisioned
+
+Runtime `createIndex` runs **only** when an entity model is created or updated:
+
+- [`syncDefinition`](apps/api/src/entities/entity-runtime-context.ts) on POST/PATCH entity definitions
+- [`reconcileIndexesForDefinitionChange`](packages/gcp-firebase/src/firestore-index-reconciler.ts) on PATCH (add new indexes, delete orphans tenant-safely)
+
+It does **not** run on list filter/sort, record create, tenant definition cache reload, or API boot.
+
+Missing-index errors on list still return `COMPOSITE_INDEX_REQUIRED` with a Firebase console link; the API logs the hint but does **not** call `createIndex` reactively. Use `POST /api/indexes/provision` for manual recovery.
+
 ## Index catalog (current)
+
+[`indexesForEntity`](packages/firestore-indexes/src/build-indexes.ts) builds a predictive set from entity UI metadata:
 
 For each non-`tenantWideRead` entity collection:
 
 1. **Baseline list**: `accessUserIds` (CONTAINS) + `id` (ASC)
 2. **FK list** (per foreign-key relation field): `accessUserIds` + `{fk}` + `id`
-3. **Default sort** (when UI `defaultSort` uses `createdAt`): `accessUserIds` + `createdAt` + `id`
-4. **findByField** (relation validation): `{fk}` + `id` (no ownership filter)
+3. **findByField** (relation validation): `{fk}` + `id` (no ownership filter)
+4. **Sort-only** (per sortable field × asc/desc): ownership + sort field + `id` tiebreaker
+5. **Filter + sort** (full cartesian: each filterable × each sortable × asc/desc): ownership + equality filter + sort + `id` when needed
+
+Sortable/filterable fields come from `ui.fields` (`filterable` / `sortable` default true in Model Builder), view `defaultSort`, and view `filters`. Non-queryable types (encrypted, image, document, non-FK relations) are skipped.
+
+`tenantWideRead` entities get the same filter/sort combinations **without** `accessUserIds`.
 
 ## Configuration
 
 | Variable | Default | Purpose |
 | -------- | ------- | -------- |
-| `ENSURE_FIRESTORE_INDEXES` | `true` in dev, `false` in production | Call Firestore Admin `createIndex` on sync/boot |
+| `ENSURE_FIRESTORE_INDEXES` | `true` in dev, `false` in production | Call Firestore Admin `createIndex` on model sync |
 | `INDEX_PROVISIONING_PUBSUB` | `false` | Publish index jobs to Pub/Sub for worker |
 | Terraform `enable_index_provisioning_pubsub` | `false` | Create Pub/Sub topic + backend pub/sub IAM ([`pubsub-index-provisioning.tf`](../packages/infrastructure/terraform/pubsub-index-provisioning.tf)) |
 
@@ -72,7 +83,7 @@ Backend SA needs `roles/datastore.indexAdmin` (in addition to `datastore.user`) 
 
 ### MVP deploy (CI/CD)
 
-By default, **no Pub/Sub resources** are created in Terraform (`enable_index_provisioning_pubsub = false`). Indexes also ship via committed [`firestore.indexes.json`](../firestore.indexes.json) and [`firestore.tf`](../packages/infrastructure/terraform/firestore.tf). Cloud Run sets `NODE_ENV=production` but **`ENSURE_FIRESTORE_INDEXES=true`** per workspace in [`workspaces.tf`](../packages/infrastructure/terraform/workspaces.tf) / [`cloudrun.tf`](../packages/infrastructure/terraform/cloudrun.tf), so the API calls Firestore Admin `createIndex` on entity sync, boot catalog ensure, and `COMPOSITE_INDEX_REQUIRED` hints. Backend SA needs `roles/datastore.indexAdmin` (see [`iam.tf`](../packages/infrastructure/terraform/iam.tf)).
+By default, **no Pub/Sub resources** are created in Terraform (`enable_index_provisioning_pubsub = false`). Indexes also ship via committed [`firestore.indexes.json`](../firestore.indexes.json) and [`firestore.tf`](../packages/infrastructure/terraform/firestore.tf). Cloud Run sets **`ENSURE_FIRESTORE_INDEXES=true`** per workspace in [`workspaces.tf`](../packages/infrastructure/terraform/workspaces.tf) / [`cloudrun.tf`](../packages/infrastructure/terraform/cloudrun.tf), so the API calls Firestore Admin `createIndex` on entity model sync. Backend SA needs `roles/datastore.indexAdmin` (see [`iam.tf`](../packages/infrastructure/terraform/iam.tf)).
 
 ### Enabling async index provisioning (Phase C)
 
@@ -95,7 +106,9 @@ By default, **no Pub/Sub resources** are created in Terraform (`enable_index_pro
 4. Check API logs for `Ensured Firestore composite index` or `Failed to ensure`.
 5. **Query status**: `GET /api/indexes/status?collection=accounts`
 
-If lists still fail with `COMPOSITE_INDEX_REQUIRED`, use the Firebase link in the error or call `POST /api/indexes/provision` with `{ "collection": "accounts" }`.
+After changing a model in Model Builder, wait for indexes to reach **Enabled** before relying on new filter/sort columns.
+
+If lists fail with `COMPOSITE_INDEX_REQUIRED`, PATCH the entity definition again (re-provisions the catalog) or call `POST /api/indexes/provision` with `{ "collection": "accounts" }`.
 
 ## API endpoints
 
@@ -108,7 +121,7 @@ When indexes are `CREATING`, list queries return `503` with `INDEX_CREATING` and
 
 ## Web UX (entity lists)
 
-[`IndexProvisioningPanel`](../apps/web/app/components/entity/IndexProvisioningPanel.tsx) shows a spinner and rotating tips while indexes build. [`useIndexProvisioningStatus`](../apps/web/app/hooks/useIndexProvisioningStatus.ts) polls `GET /api/indexes/status` every 5s (`building`) or 15s (`error`) and refetches the entity list when `phase` becomes `ready`. The UI stays in building mode until the **entity list query** succeeds (not only when status reports `ready`), so transient `COMPOSITE_INDEX_REQUIRED` responses do not replace the spinner with a generic error alert.
+[`IndexProvisioningPanel`](../apps/web/app/components/entity/IndexProvisioningPanel.tsx) shows a spinner while `GET /api/indexes/status` reports `building` or `error` for the collection—typically after saving a model. [`useIndexProvisioningStatus`](../apps/web/app/hooks/useIndexProvisioningStatus.ts) polls every 5s (`building`) or 15s (`error`) and refetches the entity list when `phase` becomes `ready`. `INDEX_CREATING` on the list API also keeps the panel visible. `COMPOSITE_INDEX_REQUIRED` shows a normal list error (not the provisioning panel).
 
 ## Bidirectional index sync
 
@@ -125,8 +138,9 @@ Status documents in `__index_status` are removed when an index is deleted. **POS
 
 - [x] `@repo/firestore-indexes` spec generator
 - [x] In-process Firestore Admin provisioner
-- [x] Hook on `syncDefinition`, boot catalog ensure, `onIndexHint` recovery
-- [x] `COMPOSITE_INDEX_REQUIRED` + console link
+- [x] Hook on `syncDefinition` + reconcile on PATCH
+- [x] Predictive indexes for filterable × sortable combinations
+- [x] `COMPOSITE_INDEX_REQUIRED` + console link (no reactive `createIndex`)
 - [x] Terraform `array_config` for composite indexes
 - [x] `pnpm generate:firestore-indexes`
 - [x] `__index_status` persistence + status API
@@ -137,7 +151,7 @@ Status documents in `__index_status` are removed when an index is deleted. **POS
 ### Target architecture (future)
 
 - [ ] Full observability (metrics, alerts on stuck `CREATING`)
-- [ ] Predictive indexes for all filter/sort combinations
+- [ ] Inequality-filter index catalog
 - [ ] Index cleanup / cost optimization
 - [ ] Hybrid query engine
 
@@ -148,7 +162,7 @@ Async provisioning (Pub/Sub + dedicated worker) is partially implemented via [`a
 **Development usable**
 
 - Composite indexes **Enabled** for all collections used in `tenant_dev_1`
-- List APIs succeed for default sort/filter without `COMPOSITE_INDEX_REQUIRED`
+- List APIs succeed for filter/sort combinations allowed by the model without `COMPOSITE_INDEX_REQUIRED`
 - `firestore.indexes.json` committed and deployed
 
 **Full vision**

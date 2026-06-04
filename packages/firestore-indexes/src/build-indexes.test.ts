@@ -3,9 +3,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildFindByFieldIndex,
+  buildListQueryIndex,
   buildOwnershipCreatedAtIndex,
   buildOwnershipFkIndex,
   buildOwnershipListIndex,
+  computeIndexSignature,
   dedupeIndexes,
   indexesForEntity,
   indexesForEntities,
@@ -29,11 +31,40 @@ const Order = defineEntity({
   },
 });
 
+const Task = defineEntity({
+  name: "task",
+  fields: {
+    status: { type: "string", required: true },
+    priority: { type: "number", required: true },
+  },
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["status", "priority"] }],
+    forms: {
+      create: { sections: [{ fields: ["status", "priority"] }] },
+      edit: { sections: [{ fields: ["status", "priority"] }] },
+    },
+    fields: {
+      status: { filterable: true, sortable: true },
+      priority: { filterable: true, sortable: false },
+    },
+  },
+});
+
 const PublicBoard = defineEntity({
   name: "board",
   tenantWideRead: true,
   fields: {
     title: { type: "string", required: true },
+  },
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["title"] }],
+    forms: {
+      create: { sections: [{ fields: ["title"] }] },
+      edit: { sections: [{ fields: ["title"] }] },
+    },
+    fields: {
+      title: { filterable: true, sortable: true },
+    },
   },
 });
 
@@ -64,17 +95,106 @@ describe("buildOwnershipFkIndex", () => {
   });
 });
 
-describe("indexesForEntity", () => {
-  it("skips indexes for tenantWideRead entities", () => {
-    expect(indexesForEntity(PublicBoard)).toEqual([]);
+describe("buildListQueryIndex", () => {
+  it("matches hint-style ownership filter + sort", () => {
+    expect(
+      buildListQueryIndex("tasks", {
+        filterFields: ["status"],
+        sortField: "priority",
+        sortDirection: "DESCENDING",
+      }),
+    ).toEqual({
+      collectionGroup: "tasks",
+      queryScope: "COLLECTION",
+      fields: [
+        { fieldPath: "accessUserIds", arrayConfig: "CONTAINS" },
+        { fieldPath: "status", order: "ASCENDING" },
+        { fieldPath: "priority", order: "DESCENDING" },
+        { fieldPath: "id", order: "DESCENDING" },
+      ],
+    });
   });
 
-  it("adds baseline, ownership FK, and findByField indexes for relation entities", () => {
+  it("omits ownership for tenantWideRead", () => {
+    expect(
+      buildListQueryIndex("boards", {
+        tenantWideRead: true,
+        sortField: "title",
+        sortDirection: "ASCENDING",
+      }),
+    ).toEqual({
+      collectionGroup: "boards",
+      queryScope: "COLLECTION",
+      fields: [
+        { fieldPath: "title", order: "ASCENDING" },
+        { fieldPath: "id", order: "ASCENDING" },
+      ],
+    });
+  });
+});
+
+describe("indexesForEntity", () => {
+  it("skips indexes for tenantWideRead entities", () => {
+    const indexes = indexesForEntity(PublicBoard);
+    expect(indexes.length).toBeGreaterThan(0);
+    expect(
+      indexes.every(
+        (index) =>
+          !index.fields.some((field) => field.fieldPath === "accessUserIds"),
+      ),
+    ).toBe(true);
+  });
+
+  it("adds baseline and FK indexes for relation entities", () => {
     const indexes = indexesForEntity(Order);
-    expect(indexes).toHaveLength(3);
-    expect(indexes[0]).toEqual(buildOwnershipListIndex("orders"));
-    expect(indexes[1]).toEqual(buildOwnershipFkIndex("orders", "customerId"));
-    expect(indexes[2]).toEqual(buildFindByFieldIndex("orders", "customerId"));
+    expect(indexes).toContainEqual(buildOwnershipListIndex("orders"));
+    expect(indexes).toContainEqual(
+      buildOwnershipFkIndex("orders", "customerId"),
+    );
+    expect(indexes).toContainEqual(
+      buildFindByFieldIndex("orders", "customerId"),
+    );
+  });
+
+  it("generates full filterable x sortable cartesian for list queries", () => {
+    const indexes = indexesForEntity(Task);
+    const signatures = new Set(
+      indexes.map((index) => computeIndexSignature(index)),
+    );
+
+    expect(
+      signatures.has(
+        computeIndexSignature(
+          buildListQueryIndex("tasks", {
+            filterFields: ["status"],
+            sortField: "id",
+            sortDirection: "ASCENDING",
+          }),
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      signatures.has(
+        computeIndexSignature(
+          buildListQueryIndex("tasks", {
+            filterFields: ["status"],
+            sortField: "createdAt",
+            sortDirection: "DESCENDING",
+          }),
+        ),
+      ),
+    ).toBe(true);
+    expect(
+      signatures.has(
+        computeIndexSignature(
+          buildListQueryIndex("tasks", {
+            filterFields: ["priority"],
+            sortField: "id",
+            sortDirection: "ASCENDING",
+          }),
+        ),
+      ),
+    ).toBe(true);
   });
 
   it("uses default collection pluralization", () => {

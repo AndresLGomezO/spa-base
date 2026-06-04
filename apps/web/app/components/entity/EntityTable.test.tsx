@@ -105,22 +105,22 @@ describe("EntityTable", () => {
     expect(screen.queryByLabelText("Delete")).not.toBeInTheDocument();
   });
 
-  it("shows index building panel instead of list error alert while indexes build", () => {
-    const compositeIndexMessage =
-      "A Firestore index is required for this query. Indexes may still be building—retry in a few minutes, or use the link in the server response if provided.";
-
+  it("shows index building panel while model-driven indexes are building", () => {
     renderTable(
       {
         items: [],
         totalCount: 0,
         isLoading: false,
-        error: compositeIndexMessage,
-        listError: Object.assign(new Error(compositeIndexMessage), {
-          name: "ApiClientError",
-          statusCode: 503,
-          code: "COMPOSITE_INDEX_REQUIRED",
-          fieldErrors: {},
-        }) as ApiClientError,
+        error: "Firestore indexes for this entity are still building.",
+        listError: Object.assign(
+          new Error("Firestore indexes for this entity are still building."),
+          {
+            name: "ApiClientError",
+            statusCode: 503,
+            code: "INDEX_CREATING",
+            fieldErrors: {},
+          },
+        ) as ApiClientError,
       },
       {
         phase: "building",
@@ -137,7 +137,29 @@ describe("EntityTable", () => {
       screen.getByLabelText("Preparing database indexes"),
     ).toBeInTheDocument();
     expect(screen.getByText(/Setting up/i)).toBeInTheDocument();
-    expect(screen.queryByText(compositeIndexMessage)).not.toBeInTheDocument();
     expect(screen.queryByText("Jane Doe")).not.toBeInTheDocument();
+  });
+
+  it("shows list error for COMPOSITE_INDEX_REQUIRED when indexes are not building", () => {
+    const compositeIndexMessage =
+      "A Firestore index is required for this query. Create it from the model or Firebase console.";
+
+    renderTable({
+      items: [],
+      totalCount: 0,
+      isLoading: false,
+      error: compositeIndexMessage,
+      listError: Object.assign(new Error(compositeIndexMessage), {
+        name: "ApiClientError",
+        statusCode: 503,
+        code: "COMPOSITE_INDEX_REQUIRED",
+        fieldErrors: {},
+      }) as ApiClientError,
+    });
+
+    expect(screen.getByText(compositeIndexMessage)).toBeInTheDocument();
+    expect(
+      screen.queryByLabelText("Preparing database indexes"),
+    ).not.toBeInTheDocument();
   });
 });

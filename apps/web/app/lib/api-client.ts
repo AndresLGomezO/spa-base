@@ -59,7 +59,7 @@ export function isIndexListErrorCode(code: string): boolean {
 }
 
 export function isTransientIndexListError(code: string): boolean {
-  return code === "INDEX_CREATING" || code === "COMPOSITE_INDEX_REQUIRED";
+  return code === "INDEX_CREATING";
 }
 
 export function isHardIndexListError(code: string): boolean {
