@@ -80,7 +80,6 @@ export function EntityListLayoutDesignEditor({
       styleProperty: t("entity.viewSettings.styleProperty"),
       styleValue: t("entity.viewSettings.styleValue"),
     };
-
     return {
       structure: t("designLayout.listItemStructure"),
       layoutColumns: t("entity.viewSettings.layoutColumns"),

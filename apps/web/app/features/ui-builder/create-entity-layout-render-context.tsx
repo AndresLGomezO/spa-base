@@ -1,4 +1,3 @@
-import type { MetricKpiComponentConfig } from "@repo/ui-builder-core";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { SerializableEntityDefinition } from "@repo/entities";
 

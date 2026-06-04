@@ -169,6 +169,7 @@ export function MotionPresetEditor({
             const raw = event.target.value.trim();
             if (raw.length === 0) {
               const { durationMs: _removed, ...rest } = motion ?? {};
+              void _removed;
               onChange(hasMotionValues(rest) ? rest : undefined);
               return;
             }
@@ -201,6 +202,7 @@ export function MotionPresetEditor({
             const raw = event.target.value.trim();
             if (raw.length === 0) {
               const { delayMs: _removed, ...rest } = motion ?? {};
+              void _removed;
               onChange(hasMotionValues(rest) ? rest : undefined);
               return;
             }
@@ -231,7 +233,11 @@ export function MotionPresetEditor({
       </label>
 
       {hasMotionValues(motion) ? (
-        <Button type="button" variant="outline" onClick={() => onChange(undefined)}>
+        <Button
+          type="button"
+          variant="outline"
+          onClick={() => onChange(undefined)}
+        >
           {labels.clearEffects}
         </Button>
       ) : null}

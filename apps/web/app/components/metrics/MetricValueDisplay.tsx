@@ -64,7 +64,9 @@ function metricValueTextClassName(valueClassName: string | undefined): string {
   return cn("tabular-nums", valueClassName || "text-2xl font-semibold");
 }
 
-function metricValueTextStyle(textSize: number | undefined): CSSProperties | undefined {
+function metricValueTextStyle(
+  textSize: number | undefined,
+): CSSProperties | undefined {
   return textSize !== undefined ? { fontSize: textSize } : undefined;
 }
 

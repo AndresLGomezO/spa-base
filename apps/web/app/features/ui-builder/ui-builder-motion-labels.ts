@@ -1,7 +1,8 @@
+import type { TFunction } from "i18next";
 import type { MotionPresetEditorLabels } from "@repo/ui-builder-react";
 
 export function motionPresetEditorLabels(
-  t: (key: string) => string,
+  t: TFunction,
 ): MotionPresetEditorLabels {
   return {
     entrance: t("entity.viewSettings.motionEntrance"),
