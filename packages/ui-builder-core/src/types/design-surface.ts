@@ -11,8 +11,7 @@ export type DesignSurface =
   | "formPlain"
   | "formWizardShell"
   | "formWizardStep"
-  | "metricWidget"
-  | "metricWidgetBucket";
+  | "metricStrip";
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -69,8 +68,7 @@ export function componentKindsForSurface(
     case "listItem":
     case "tableColumnCell":
     case "tableRowExpand":
-    case "metricWidget":
-    case "metricWidgetBucket":
+    case "metricStrip":
       return LIST_ITEM_KINDS;
     case "mainPage":
       return MAIN_PAGE_KINDS;

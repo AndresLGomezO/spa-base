@@ -653,7 +653,7 @@ export interface MetricRowQuery {
   readonly dimensions: Record<string, string | number | boolean>;
 }
 
-export interface MetricRow {
+interface MetricRow {
   readonly values: Record<string, number>;
   readonly updatedAt: string;
 }

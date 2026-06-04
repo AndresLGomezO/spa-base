@@ -1,29 +1,45 @@
+import { useMemo } from "react";
+import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { Text } from "@repo/ui";
-import type { UiLayoutDocument } from "@repo/ui-builder-core";
+import { metricStripHasContent } from "@repo/entities";
 import { useTranslation } from "react-i18next";
 
-import type {
-  SerializableEntityDefinition,
-  ViewMetricWidget,
-} from "@repo/entities";
+import type { SerializableEntityDefinition } from "@repo/entities";
+import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
-import { EntityViewMetricsStrip } from "../../components/metrics/EntityViewMetricsStrip.js";
 import { DockedLayoutPreview } from "./DockedLayoutPreview.js";
+import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
 
 interface DockedMetricsStripPreviewProps {
   readonly enabled: boolean;
-  readonly widgets: readonly ViewMetricWidget[];
   readonly stripLayout: UiLayoutDocument;
   readonly entityDefinition: SerializableEntityDefinition;
+  readonly locale: string;
 }
 
 export function DockedMetricsStripPreview({
   enabled,
-  widgets,
   stripLayout,
   entityDefinition,
+  locale,
 }: DockedMetricsStripPreviewProps) {
   const { t } = useTranslation("common");
+
+  const previewContext = useMemo(
+    () =>
+      createEntityLayoutRenderContext({
+        item: {},
+        definition: entityDefinition,
+        locale,
+        usePreviewPlaceholder: true,
+        usePreviewSamples: true,
+        listFilters: {},
+        routeParams: {},
+      }),
+    [entityDefinition, locale],
+  );
+
+  const hasContent = metricStripHasContent(stripLayout);
 
   return (
     <DockedLayoutPreview enabled={enabled}>
@@ -31,17 +47,14 @@ export function DockedMetricsStripPreview({
         <Text className="text-muted-foreground mb-3 text-sm">
           {t("designLayout.metricsPreview")}
         </Text>
-        {widgets.length > 0 ? (
-          <EntityViewMetricsStrip
-            widgets={widgets}
-            stripLayout={stripLayout}
-            entityDefinition={entityDefinition}
-            context={{ listFilters: {}, routeParams: {} }}
-            previewMode
+        {hasContent ? (
+          <RecursiveLayoutRenderer
+            layout={stripLayout}
+            context={previewContext}
           />
         ) : (
           <Text variant="muted" className="text-sm">
-            {t("entity.viewSettings.metrics.addKpi")}
+            {t("entity.viewSettings.addSlot")}
           </Text>
         )}
       </div>

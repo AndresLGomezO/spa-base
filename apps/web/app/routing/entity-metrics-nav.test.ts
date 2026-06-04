@@ -24,7 +24,7 @@ describe("entityHasActiveMetrics", () => {
     expect(entityHasActiveMetrics("deal", definitions)).toBe(false);
   });
 
-  it("is true when table view already has metric widgets", () => {
-    expect(entityHasActiveMetrics("deal", definitions, 1)).toBe(true);
+  it("is true when table view already has a configured metrics strip", () => {
+    expect(entityHasActiveMetrics("deal", definitions, true)).toBe(true);
   });
 });

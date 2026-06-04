@@ -9,11 +9,7 @@ import {
   uiLayoutDocumentSchema,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
-import { assertMetricWidgetsPlacement } from "./metric-strip-placement.js";
-import {
-  viewMetricWidgetSchema,
-  type ViewMetricWidget,
-} from "./metric-widget-types.js";
+import { metricStripHasContent } from "./metric-strip-placement.js";
 import { migrateListPresentation } from "./migrate-list-presentation.js";
 import type { EntityUIConfig } from "./types.js";
 
@@ -63,7 +59,6 @@ const viewConfigSharedSchema = {
     })
     .strict()
     .optional(),
-  metricWidgets: z.array(viewMetricWidgetSchema).optional(),
 };
 
 const groupedTableColumnSchema = z
@@ -288,33 +283,16 @@ export function validateEntityUIConfig(
         `view "${view.name}"`,
       );
     }
-    if (view.type === "table") {
-      if (view.metricWidgets?.length) {
-        assertMetricWidgetsPlacement(
-          view.metricWidgets as readonly ViewMetricWidget[],
-          view.metricStripLayout as UiLayoutDocument | undefined,
-        );
-        for (const widget of view.metricWidgets) {
-          if (widget.layout) {
-            assertLayoutFieldPaths(
-              layoutEntityShape,
-              widget.layout as UiLayoutDocument,
-              `metric widget "${widget.id}" layout`,
-            );
-          }
-          if (widget.display === "series") {
-            for (const [index, bucket] of widget.buckets.entries()) {
-              if (bucket.layout) {
-                assertLayoutFieldPaths(
-                  layoutEntityShape,
-                  bucket.layout as UiLayoutDocument,
-                  `metric widget "${widget.id}" bucket ${index + 1} layout`,
-                );
-              }
-            }
-          }
-        }
-      }
+    if (
+      view.type === "table" &&
+      view.metricStripLayout &&
+      metricStripHasContent(view.metricStripLayout as UiLayoutDocument)
+    ) {
+      assertLayoutFieldPaths(
+        layoutEntityShape,
+        view.metricStripLayout as UiLayoutDocument,
+        `view "${view.name}" metricStripLayout`,
+      );
     }
     if (view.type === "expandableTable") {
       for (const column of view.columns) {

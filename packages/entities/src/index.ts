@@ -102,36 +102,18 @@ export {
 } from "./search/searchable-fields.js";
 export {
   metricBindingSourceSchema,
-  metricWidgetPlacementSchema,
-  viewMetricWidgetSchema,
+  metricWidgetBindingsSchema,
 } from "./ui/metric-widget-types.js";
 export type {
   MetricBindingSource,
   MetricWidgetBindings,
-  MetricWidgetPlacement,
-  ViewMetricKpiWidget,
-  ViewMetricSeriesWidget,
-  ViewMetricWidget,
 } from "./ui/metric-widget-types.js";
 export {
-  createDefaultMetricKpiWidgetLayout,
-  createDefaultMetricSeriesBucketLayout,
-  createDefaultMetricSeriesWidgetLayout,
-  migrateMetricWidgetLayout,
-  migrateMetricWidgetLayouts,
-  metricWidgetHasLayout,
-} from "./ui/metric-widget-layout.js";
-export {
-  assertMetricWidgetsPlacement,
-  clampMetricWidgetsToStrip,
   createDefaultMetricStripLayout,
   DEFAULT_METRIC_STRIP_COLUMN_COUNT,
-  defaultPlacementForNewWidget,
-  findPlacementConflicts,
   metricStripColumnCount,
+  metricStripHasContent,
   metricStripLayoutFromView,
-  migrateMetricWidgetsWithPlacement,
-  resolveWidgetPlacement,
 } from "./ui/metric-strip-placement.js";
 export type {
   UiLayoutDocument,

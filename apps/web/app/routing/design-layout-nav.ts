@@ -11,6 +11,7 @@ import type {
   NavLinkConfig,
   NavSubGroupConfig,
 } from "../components/sidebar/nav-config";
+import { metricStripHasContent } from "@repo/entities";
 import { entityHasActiveMetrics } from "./entity-metrics-nav.js";
 
 type DesignLayoutKind = "main" | "list" | "detail" | "forms" | "metrics";
@@ -107,7 +108,8 @@ function useDesignLayoutMetricsEntityLinks(): readonly NavLinkConfig[] {
         return entityHasActiveMetrics(
           definition.name,
           definitions,
-          tableView?.metricWidgets?.length ?? 0,
+          tableView?.type === "table" &&
+            metricStripHasContent(tableView.metricStripLayout),
         );
       })
       .map((definition) => ({

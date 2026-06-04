@@ -25,8 +25,7 @@ A hand-written JSON file that satisfies this spec should render the same as a la
 | `forms.wizard` | Forms | Wizard shell + steps (when `presentation` is `"wizard"`) |
 | `forms.create` / `forms.edit` | Forms | Legacy per-mode layouts; still read if `forms.layout` is absent |
 | `views[].layout` | Legacy | Card view layout; used when `listItem` is absent |
-| `views[].metricWidgets` | Metrics row | KPI/series strip above the entity list (edited in Design layout → Metrics row) |
-| `views[].metricStripLayout` | Metrics row | Strip grid shell: `root.columnCount`, root/column style rules (table view only) |
+| `views[].metricStripLayout` | Metrics row | Full strip layout above the entity list (columns, rows, slots, styles; table view only) |
 
 Example override document:
 
@@ -90,40 +89,22 @@ Replaces the legacy `compact` list presentation. Persist with `listViewType: "ex
 
 ---
 
-## Metrics row (`views[].metricWidgets`, table view)
+## Metrics row (`views[].metricStripLayout`, table view)
 
-Configured in **Design layout → Metrics row**. Each widget has optional `layout` (`UiLayoutDocument`) and optional `placement` on the strip grid. Series widgets also use `buckets[].layout` per bucket cell.
+Configured in **Design layout → Metrics row**. The strip is a full `UiLayoutDocument` (same tree model as list item / card layouts): root columns, component rows, nested layouts, style rules, and motion presets.
 
-| Property | KPI | Series | Description |
-|----------|-----|--------|-------------|
-| `id` | yes | yes | Stable widget id |
-| `display` | `"kpi"` | `"series"` | Widget type |
-| `metricDefinitionId` | yes | yes | Metric definition id |
-| `layout` | no | no | Widget chrome (columns/rows/slots); KPI holds the value slot |
-| `placement` | no | no | Strip grid: `column`, `row`, `columnSpan`, `rowSpan`; series may set `stackDirection` for bucket flow |
-| `buckets` | — | yes | Binding sets per bucket; each may include `layout` |
-| `groupBindings` / `dimensionBindings` | yes | yes (widget + buckets) | Kept for migration; prefer bindings on `metric-kpi` slots inside `layout` |
+**Design surface:** `metricStrip`. Allowed slot kinds: `text`, `image`, `date`, `numeric`, `badge`, `metric-kpi`.
 
-**Design surfaces:** `metricWidget` (KPI + series chrome), `metricWidgetBucket` (series bucket cell). Allowed slot kinds: `text`, `image`, `date`, `numeric`, `badge`, `metric-kpi` (same as list item).
+**Runtime:** `EntityViewMetricsStrip` renders the layout with `RecursiveLayoutRenderer`. `metric-kpi` slots hold `metricDefinitionId`, `groupBindings`, and `dimensionBindings`; the slot renders only the fetched value (labels/chrome are sibling slots).
 
-**Strip shell:** `views[].metricStripLayout` — `UiLayoutDocument` with `root.columnCount` and style rules only (no component rows in columns).
-
-### KPI widget example
-
-Default seed is one column with a single `metric-kpi` row. Customize with extra columns, nested layouts, `text` / `badge` / `numeric` slots, etc. Runtime renders `metric-kpi` as the formatted value only (no built-in card or title).
+### Example strip layout
 
 ```json
 {
-  "id": "metric-widget-1",
-  "display": "kpi",
-  "metricDefinitionId": "total-balance-usd",
-  "groupBindings": {},
-  "dimensionBindings": {},
-  "placement": { "column": 1, "row": 1, "columnSpan": 2 },
-  "layout": {
+  "metricStripLayout": {
     "root": {
       "type": "root",
-      "id": "metric-kpi-root",
+      "id": "metric-strip-root",
       "columnCount": 2,
       "columns": [
         {
@@ -136,14 +117,6 @@ Default seed is one column with a single `metric-kpi` row. Customize with extra 
                 "kind": "text",
                 "primary": { "type": "static", "value": "Total balance" },
                 "styles": [{ "property": "fontWeight", "value": "bold" }]
-              }
-            },
-            {
-              "type": "component",
-              "id": "row_badge",
-              "component": {
-                "kind": "badge",
-                "primary": { "type": "static", "value": "Live" }
               }
             }
           ]
@@ -170,103 +143,6 @@ Default seed is one column with a single `metric-kpi` row. Customize with extra 
   }
 }
 ```
-
-### Series widget example (chrome + per-bucket layouts)
-
-```json
-{
-  "id": "metric-widget-2",
-  "display": "series",
-  "metricDefinitionId": "balance-by-status",
-  "groupBindings": {},
-  "dimensionBindings": {},
-  "placement": { "column": 2, "row": 1, "columnSpan": 2, "stackDirection": "row" },
-  "layout": {
-    "root": {
-      "type": "root",
-      "id": "series-chrome-root",
-      "columnCount": 1,
-      "columns": [
-        {
-          "id": "col_title",
-          "rows": [
-            {
-              "type": "component",
-              "id": "row_title",
-              "component": {
-                "kind": "text",
-                "primary": { "type": "static", "value": "By status" },
-                "label": { "show": true, "text": "By status" },
-                "styles": [{ "property": "fontWeight", "value": "bold" }]
-              }
-            }
-          ]
-        }
-      ]
-    }
-  },
-  "buckets": [
-    {
-      "groupBindings": { "status": { "type": "static", "value": "active" } },
-      "dimensionBindings": {},
-      "layout": {
-        "root": {
-          "type": "root",
-          "id": "bucket-root-active",
-          "columnCount": 1,
-          "columns": [
-            {
-              "id": "col_kpi",
-              "rows": [
-                {
-                  "type": "component",
-                  "id": "row_kpi",
-                  "component": {
-                    "kind": "metric-kpi",
-                    "metricDefinitionId": "balance-by-status",
-                    "groupBindings": { "status": { "type": "static", "value": "active" } },
-                    "dimensionBindings": {}
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      }
-    },
-    {
-      "groupBindings": { "status": { "type": "static", "value": "closed" } },
-      "dimensionBindings": {},
-      "layout": {
-        "root": {
-          "type": "root",
-          "id": "bucket-root-closed",
-          "columnCount": 1,
-          "columns": [
-            {
-              "id": "col_kpi",
-              "rows": [
-                {
-                  "type": "component",
-                  "id": "row_kpi",
-                  "component": {
-                    "kind": "metric-kpi",
-                    "metricDefinitionId": "balance-by-status",
-                    "groupBindings": { "status": { "type": "static", "value": "closed" } },
-                    "dimensionBindings": {}
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      }
-    }
-  ]
-}
-```
-
-Widgets without `layout` are migrated at read time via `migrateMetricWidgetLayouts` (default layouts seeded from flat `label` / bindings).
 
 ---
 

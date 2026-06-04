@@ -61,7 +61,7 @@ Base URL: same as the rest of the API (`/api/...`). Requires Firebase Auth + App
 | `metricValue.read` | Fetch metric rows (explicit grant) |
 | `{sourceModel}.read` | Also allows row/batch read and GET definition by id when the metric’s `sourceModel` matches (e.g. `transaction.read` for transaction metrics) |
 | `metricDefinition.read` | List/create/update definitions in Settings → Metrics; required to pick definitions in view-settings builder |
-| `entityUiOverride.update` | Save KPI/series widgets and card `metric-kpi` slots on entity views |
+| `entityUiOverride.update` | Save metrics strip layout and card `metric-kpi` slots on entity views |
 
 **Runtime widgets** on entity lists use source-entity read access, not `metricValue.read` alone. **Layout configuration** stays behind `entityUiOverride.update` (and `metricDefinition.read` to list definitions in the builder).
 
@@ -206,26 +206,24 @@ Auth and App Check use the existing `apiRequest` helper. Callers pass only `metr
 
 ## Global UI components
 
-Runtime, **user-scoped** widgets on entity list views (table and card). No hardcoded metrics: every widget references a `metricDefinitionId` and bindings from definitions created in **Settings → Metrics**.
+Runtime, **user-scoped** metric slots on entity list views. No hardcoded metrics: every `metric-kpi` slot references a `metricDefinitionId` and bindings from definitions created in **Settings → Metrics**.
 
 ### Principles
 
 | Principle | Detail |
 | --- | --- |
-| No hardcoded metrics | Widget config stores `metricDefinitionId` + `MetricBindingSource` bindings only |
+| No hardcoded metrics | Slot config stores `metricDefinitionId` + `MetricBindingSource` bindings only |
 | User scope | API injects JWT `uid`; UI never sends `userId` |
-| Runtime data | `useMetricDefinition` → `buildMetricRowQueryFromBindings` → `useMetricRow` / `useMetricBatch` |
-| Definition-driven labels | Title from `definition.name`; values via `formatPrimaryMetricValue` |
+| Runtime data | `useMetricDefinition` → `buildMetricRowQueryFromBindings` → `useMetricRow` |
+| Definition-driven labels | Titles/labels are layout `text` / `badge` slots; values via `formatPrimaryMetricValue` |
 
 ### Components and hooks
 
 | Location | Role |
 | --- | --- |
-| `MetricValueDisplay` | Fetches and formats a metric row; `presentation: "inline"` in layout slots (value only); `card` for legacy standalone chrome |
-| `MetricValueSeries` | Grid of KPI cells from batched queries |
-| `MetricWidgetRenderer` | Dispatches `ViewMetricWidget` (`kpi` \| `series`) |
-| `EntityViewMetricsStrip` | Renders `activeView.metricWidgets` above the list |
-| `useMetricDefinition` / `useMetricRow` / `useMetricBatch` | React Query; `enabled` when `metricValue.read` or `{sourceModel}.read` and bindings resolve |
+| `MetricValueDisplay` | Fetches and formats a metric row; `presentation: "inline"` in layout slots (value only) |
+| `EntityViewMetricsStrip` | Renders `metricStripLayout` above the list via `RecursiveLayoutRenderer` |
+| `useMetricDefinition` / `useMetricRow` | React Query; `enabled` when `metricValue.read` or `{sourceModel}.read` and bindings resolve |
 | `metric-binding-resolution.ts` | Resolves `MetricBindingSource` → `MetricRowQuery` |
 
 **Typical KPI flow:**
@@ -238,15 +236,11 @@ usePermission("metricValue.read")
   → formatPrimaryMetricValue(definition, row.values)
 ```
 
-**Batch flow:** each series bucket has full bindings → `chunkMetricQueries` → `useMetricBatch` merges chunk results in order.
-
 ### Schema (`@repo/entities`)
 
-- `ViewConfig.metricWidgets?: ViewMetricWidget[]` — per table/card view in entity UI overrides
-- `ViewMetricWidget`: `display: "kpi" | "series"` + `metricDefinitionId` + `groupBindings` / `dimensionBindings` (series adds `buckets[]`); optional `layout` (`UiLayoutDocument` with text/image/badge/numeric/metric-kpi slots — **labels and chrome are layout slots**; `metric-kpi` renders only the fetched value); optional `placement` (`column`, `row`, `columnSpan`, `rowSpan`, `stackDirection` for series buckets); optional `styles` on grid cell wrapper
-- Series `buckets[]` entries may include `layout` per bucket cell (full UI builder per cell)
-- `TableViewConfig.metricStripLayout?: UiLayoutDocument` — strip shell (`root.columnCount`, root/column `styles`, column `stackDirection`); columns have no component rows
-- Card slot `component: "metric-kpi"` — same bindings on `CardMetricKpiSlotBinding` (no `fieldPath`)
+- `TableViewConfig.metricStripLayout?: UiLayoutDocument` — full strip layout (columns, rows, nested layouts, styles, `metric-kpi` slots)
+- `metricStripHasContent(layout)` — true when any column has at least one row (gates strip visibility)
+- Card / list slot `kind: "metric-kpi"` — bindings on layout JSON (no `fieldPath`)
 
 `MetricBindingSource` kinds:
 
@@ -257,19 +251,19 @@ usePermission("metricValue.read")
 
 ### Builder entry points
 
-1. **Settings → Design layout → Metrics row** — per-entity KPI/series builder (`EntityMetricsWidgetsBuilder`); persists `metricWidgets` on the table view.
+1. **Settings → Design layout → Metrics row** — `EntityCardLayoutBuilder` with `designSurface: "metricStrip"`; persists `metricStripLayout` on the table view.
 2. **Card / list / main layout builders** — slot component `metric-kpi`: full definition picker, bindings, and styles via `MetricKpiComponentEditor` (emphasize `entityField` for row-scoped dimensions).
 
 Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOverride.update` + `metricDefinition.read` (save layout via `ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS`).
 
 ### Runtime wiring
 
-- `EntityPage` renders `EntityViewMetricsStrip` when `activeView.metricWidgets` is non-empty; passes `listFilters` and `routeParams` as binding context.
+- `EntityPage` renders `EntityViewMetricsStrip` when `metricStripHasContent(metricStripLayout)`; passes `listFilters` and `routeParams` as binding context.
 - `EntityLayoutCardView` passes the same context into `metric-kpi` components via `RecursiveLayoutRenderer` / `createEntityLayoutRenderContext`.
 
 ### Permission gating
 
-`useCanReadMetricValues(sourceModel)` on runtime widgets; builder uses `entityUiOverride.update`. Forbidden copy in `metrics.widget.forbidden`.
+`useCanReadMetricValues(sourceModel)` on runtime slots; builder uses `entityUiOverride.update`. Forbidden copy in `metrics.widget.forbidden`.
 
 ### Testing
 
@@ -277,7 +271,7 @@ Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOve
 - `MetricValueDisplay.test.tsx` — loading, value, forbidden (mocked hooks)
 - `packages/ui-builder-core` layout mutations / schema — `metric-kpi` component round-trip in layout JSON
 
-Manual: Settings → Metrics (ACTIVE) → Design layout → Metrics row → KPI with static bindings → list page shows value after source CRUD (+ backfill if needed).
+Manual: Settings → Metrics (ACTIVE) → Design layout → Metrics row → add `metric-kpi` slot with static bindings → list page shows value after source CRUD (+ backfill if needed).
 
 ## Implementation reference
 

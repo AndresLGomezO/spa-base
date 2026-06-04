@@ -39,10 +39,3 @@ export function metricRowQueryKey(
 ): readonly ["metric-row", string, unknown] {
   return ["metric-row", metricDefinitionId, query];
 }
-
-export function metricBatchQueryKey(
-  metricDefinitionId: string,
-  queries: unknown,
-): readonly ["metric-batch", string, unknown] {
-  return ["metric-batch", metricDefinitionId, queries];
-}

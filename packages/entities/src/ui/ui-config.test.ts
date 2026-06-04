@@ -133,7 +133,7 @@ describe("validateEntityUIConfig", () => {
     ).not.toThrow();
   });
 
-  it("accepts metric widgets with optional styles", () => {
+  it("accepts metric strip layout with metric-kpi slot", () => {
     expect(() =>
       validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
         ...Widget.metadata.ui!,
@@ -142,27 +142,28 @@ describe("validateEntityUIConfig", () => {
             type: "table",
             name: "default",
             fields: ["name"],
-            metricWidgets: [
-              {
-                id: "metric-widget-1",
-                display: "kpi",
-                metricDefinitionId: "total-widgets",
-                groupBindings: {},
-                dimensionBindings: {},
-                styles: [{ property: "padding", value: "12" }],
-                placement: { column: 1, row: 1, columnSpan: 2 },
-              },
-            ],
             metricStripLayout: {
               root: {
                 type: "root",
                 id: "root-1",
-                columnCount: 4,
+                columnCount: 1,
                 columns: [
-                  { id: "col-1", rows: [] },
-                  { id: "col-2", rows: [] },
-                  { id: "col-3", rows: [] },
-                  { id: "col-4", rows: [] },
+                  {
+                    id: "col-1",
+                    rows: [
+                      {
+                        type: "component",
+                        id: "row-kpi",
+                        component: {
+                          kind: "metric-kpi",
+                          metricDefinitionId: "total-widgets",
+                          groupBindings: {},
+                          dimensionBindings: {},
+                          styles: [{ property: "padding", value: "12" }],
+                        },
+                      },
+                    ],
+                  },
                 ],
               },
             },

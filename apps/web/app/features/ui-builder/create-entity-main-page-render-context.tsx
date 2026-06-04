@@ -1,8 +1,9 @@
 import type { ComponentType } from "react";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
-import type {
-  SerializableEntityDefinition,
-  ViewMetricWidget,
+import type { SerializableEntityDefinition } from "@repo/entities";
+import {
+  metricStripHasContent,
+  metricStripLayoutFromView,
 } from "@repo/entities";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
@@ -20,7 +21,6 @@ interface MainPageRenderContextInput {
   readonly entityLabel: string;
   readonly locale: string;
   readonly canCreate: boolean;
-  readonly metricWidgets: readonly ViewMetricWidget[];
   readonly metricStripLayout?: UiLayoutDocument;
   readonly entityDefinition: SerializableEntityDefinition;
   readonly listFilters: Readonly<Record<string, readonly string[]>>;
@@ -40,7 +40,6 @@ export function createEntityMainPageRenderContext(
   const {
     entityName,
     entityLabel,
-    metricWidgets,
     metricStripLayout,
     entityDefinition,
     listFilters,
@@ -54,6 +53,9 @@ export function createEntityMainPageRenderContext(
     metricsDesignerPath,
   } = input;
 
+  const stripLayout = metricStripLayoutFromView(metricStripLayout);
+  const showMetricsStrip = metricStripHasContent(stripLayout);
+
   return {
     mode: "mainPage",
     data: {},
@@ -61,10 +63,9 @@ export function createEntityMainPageRenderContext(
     resolveField: () => undefined,
     pageToolbarRenderer: () => <WebDataViewToolbar {...toolbar} />,
     pageMetricsRenderer: () =>
-      metricWidgets.length > 0 ? (
+      showMetricsStrip ? (
         <EntityViewMetricsStrip
-          widgets={metricWidgets}
-          stripLayout={metricStripLayout}
+          stripLayout={stripLayout}
           entityDefinition={entityDefinition}
           context={{ listFilters, routeParams }}
           locale={input.locale}

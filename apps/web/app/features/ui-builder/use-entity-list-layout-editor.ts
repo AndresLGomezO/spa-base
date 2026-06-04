@@ -125,9 +125,6 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
           : createDefaultExpandableTableView(fieldPaths).columns,
       rowExpandLayout,
       showActions: expandableShowActions,
-      ...(existing?.metricWidgets
-        ? { metricWidgets: existing.metricWidgets }
-        : {}),
       ...(existing?.filters ? { filters: existing.filters } : {}),
       ...(existing?.defaultSort ? { defaultSort: existing.defaultSort } : {}),
     }),
@@ -148,8 +145,8 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       name: tableView?.name ?? "default",
       fields: resolvedTableFields,
       showActions: tableShowActions,
-      ...(tableView?.type === "table" && tableView.metricWidgets
-        ? { metricWidgets: tableView.metricWidgets }
+      ...(tableView?.type === "table" && tableView.metricStripLayout
+        ? { metricStripLayout: tableView.metricStripLayout }
         : {}),
       ...(tableView?.type === "table" && tableView.filters
         ? { filters: tableView.filters }
@@ -169,15 +166,11 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       return [tableViewConfig, expandableViewConfig];
     }
 
-    const existingCard = uiViews.find((view) => view.type === "card");
     const cardViewConfig: ViewConfig = {
       type: "card",
       name: "card",
       fields: fieldPaths,
       layout,
-      ...(existingCard?.type === "card" && existingCard.metricWidgets
-        ? { metricWidgets: existingCard.metricWidgets }
-        : {}),
     };
 
     return [tableViewConfig, expandableViewConfig, cardViewConfig];

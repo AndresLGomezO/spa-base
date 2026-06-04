@@ -7,8 +7,6 @@ import type {
   WizardStepConfig,
   WizardStepStatus,
 } from "./form-config.js";
-import type { ViewMetricWidget } from "./metric-widget-types.js";
-
 export type FieldComponentType =
   | "input"
   | "number"
@@ -53,7 +51,6 @@ export interface ViewConfigBase {
     readonly field: string;
     readonly direction: "asc" | "desc";
   };
-  readonly metricWidgets?: readonly ViewMetricWidget[];
 }
 
 export interface GroupedTableColumn {
@@ -66,7 +63,7 @@ export interface TableViewConfig extends ViewConfigBase {
   readonly type: "table";
   /** Show row actions column (edit/share/delete). Default true when omitted. */
   readonly showActions?: boolean;
-  /** Grid shell for the metrics strip (column count, root/column styles). */
+  /** Full metrics strip layout (columns, rows, slots, styles). */
   readonly metricStripLayout?: UiLayoutDocument;
 }
 

@@ -61,13 +61,34 @@ function MetricValueShell({
 }
 
 function metricValueTextClassName(valueClassName: string | undefined): string {
-  return cn("tabular-nums", valueClassName || "text-2xl font-semibold");
+  return cn(
+    "tabular-nums truncate",
+    valueClassName === undefined || valueClassName.length === 0
+      ? "text-2xl font-semibold"
+      : valueClassName,
+  );
 }
 
 function metricValueTextStyle(
   textSize: number | undefined,
 ): CSSProperties | undefined {
   return textSize !== undefined ? { fontSize: textSize } : undefined;
+}
+
+function MetricKpiValueText({
+  children,
+  valueClassName,
+  textSize,
+}: {
+  readonly children: ReactNode;
+  readonly valueClassName: string;
+  readonly textSize: number | undefined;
+}) {
+  return (
+    <span className={valueClassName} style={metricValueTextStyle(textSize)}>
+      {children}
+    </span>
+  );
 }
 
 export function MetricValueDisplay({
@@ -93,7 +114,6 @@ export function MetricValueDisplay({
   const inline = presentation === "inline";
   const statusClassName = "text-sm";
   const valueTextClassName = metricValueTextClassName(valueClassName);
-  const valueTextStyle = metricValueTextStyle(textSize);
 
   const resolvedQuery =
     queryOverride ??
@@ -175,9 +195,12 @@ export function MetricValueDisplay({
           className={className}
           style={style}
         >
-          <Text className={valueTextClassName} style={valueTextStyle}>
+          <MetricKpiValueText
+            valueClassName={valueTextClassName}
+            textSize={textSize}
+          >
             {emptyText}
-          </Text>
+          </MetricKpiValueText>
         </MetricValueShell>
       );
     }
@@ -188,9 +211,12 @@ export function MetricValueDisplay({
         style={style}
       >
         <Text className="text-muted-foreground text-xs">{title}</Text>
-        <Text className={valueTextClassName} style={valueTextStyle}>
+        <MetricKpiValueText
+          valueClassName={valueTextClassName}
+          textSize={textSize}
+        >
           {emptyText}
-        </Text>
+        </MetricKpiValueText>
       </MetricValueShell>
     );
   }
@@ -209,9 +235,12 @@ export function MetricValueDisplay({
         className={className}
         style={style}
       >
-        <Text className={valueTextClassName} style={valueTextStyle}>
+        <MetricKpiValueText
+          valueClassName={valueTextClassName}
+          textSize={textSize}
+        >
           {displayValue}
-        </Text>
+        </MetricKpiValueText>
       </MetricValueShell>
     );
   }
@@ -223,9 +252,12 @@ export function MetricValueDisplay({
       style={style}
     >
       <Text className="text-muted-foreground text-xs">{title}</Text>
-      <Text className={valueTextClassName} style={valueTextStyle}>
+      <MetricKpiValueText
+        valueClassName={valueTextClassName}
+        textSize={textSize}
+      >
         {displayValue}
-      </Text>
+      </MetricKpiValueText>
     </MetricValueShell>
   );
 }

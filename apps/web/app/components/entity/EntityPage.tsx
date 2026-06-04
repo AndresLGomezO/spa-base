@@ -6,7 +6,6 @@ import {
   useState,
   type ComponentType,
 } from "react";
-import { resolveActiveView, resolveCardView } from "@repo/ui-builder";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
 import { Button, Heading, Modal, Text, toast } from "@repo/ui";
@@ -35,8 +34,11 @@ import { resolveViewComponent } from "./view-component-registry";
 import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
 import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
+import {
+  metricStripHasContent,
+  metricStripLayoutFromView,
+} from "@repo/entities";
 import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
-import { viewMetricWidgetsFromView } from "../metrics/metric-widgets-builder-state.js";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { createEntityMainPageRenderContext } from "../../features/ui-builder/create-entity-main-page-render-context";
 
@@ -70,15 +72,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const canConfigureView = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   );
-  const cardView = useMemo(() => resolveCardView(definition), [definition]);
-
   const listPresentation = definition.ui.listViewType ?? "table";
-  const activeView = useMemo(() => {
-    if (listPresentation === "card" && cardView) {
-      return cardView;
-    }
-    return resolveActiveView(definition);
-  }, [cardView, listPresentation, definition]);
 
   const ViewComponent = (() => {
     if (listPresentation === "card") {
@@ -269,12 +263,14 @@ export function EntityPage({ entityName }: EntityPageProps) {
     () => definition.ui.views.find((view) => view.type === "table"),
     [definition.ui.views],
   );
-  const metricStripLayout =
-    tableView?.type === "table" ? tableView.metricStripLayout : undefined;
-  const metricWidgets = useMemo(() => {
-    const raw = tableView?.metricWidgets ?? activeView.metricWidgets ?? [];
-    return viewMetricWidgetsFromView(raw, metricStripLayout);
-  }, [activeView.metricWidgets, metricStripLayout, tableView?.metricWidgets]);
+  const metricStripLayout = useMemo(
+    () =>
+      metricStripLayoutFromView(
+        tableView?.type === "table" ? tableView.metricStripLayout : undefined,
+      ),
+    [tableView],
+  );
+  const showMetricsStrip = metricStripHasContent(metricStripLayout);
   const mainPageLayout = definition.ui.mainPageLayout;
 
   const listViewProps = useMemo(
@@ -312,7 +308,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
         locale: i18n.language,
         canCreate: permissions.canCreate,
         entityDefinition: definition,
-        metricWidgets,
         metricStripLayout,
         listFilters: filters,
         routeParams,
@@ -352,7 +347,6 @@ export function EntityPage({ entityName }: EntityPageProps) {
       i18n.language,
       listViewProps,
       metricStripLayout,
-      metricWidgets,
       permissions.canCreate,
       routeParams,
       search,
@@ -413,12 +407,12 @@ export function EntityPage({ entityName }: EntityPageProps) {
         />
       </div>
 
-      {metricWidgets.length > 0 ? (
+      {showMetricsStrip ? (
         <EntityViewMetricsStrip
-          widgets={metricWidgets}
           stripLayout={metricStripLayout}
           entityDefinition={definition}
           context={{ listFilters: filters, routeParams }}
+          locale={i18n.language}
         />
       ) : null}
 

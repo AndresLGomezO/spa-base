@@ -3,7 +3,7 @@ import type { MetricDefinitionRecord } from "../lib/api-client.js";
 export function entityHasActiveMetrics(
   entityName: string,
   definitions: readonly MetricDefinitionRecord[],
-  existingMetricWidgetCount = 0,
+  metricsStripConfigured = false,
 ): boolean {
   const hasActiveDefinition = definitions.some(
     (item) => item.status === "ACTIVE" && item.sourceModel === entityName,
@@ -12,5 +12,5 @@ export function entityHasActiveMetrics(
     return true;
   }
 
-  return existingMetricWidgetCount > 0;
+  return metricsStripConfigured;
 }

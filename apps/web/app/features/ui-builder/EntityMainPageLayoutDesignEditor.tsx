@@ -6,10 +6,7 @@ import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { Text } from "@repo/ui";
 
 import type { EntityName } from "../../entities/entity-catalog";
-import {
-  metricStripLayoutFromTableView,
-  viewMetricWidgetsFromView,
-} from "../../components/metrics/metric-widgets-builder-state.js";
+import { metricStripLayoutFromView } from "@repo/entities";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav.js";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder";
 import { DesignLayoutEditorShell } from "./DesignLayoutEditorShell";
@@ -36,20 +33,10 @@ export function EntityMainPageLayoutDesignEditor({
     const tableView = editor.definition.ui.views.find(
       (view) => view.type === "table",
     );
-    return metricStripLayoutFromTableView(
+    return metricStripLayoutFromView(
       tableView?.type === "table" ? tableView.metricStripLayout : undefined,
     );
   }, [editor.definition.ui.views]);
-
-  const metricWidgetsForPreview = useMemo(() => {
-    const tableView = editor.definition.ui.views.find(
-      (view) => view.type === "table",
-    );
-    return viewMetricWidgetsFromView(
-      tableView?.metricWidgets,
-      metricStripLayoutForPreview,
-    );
-  }, [editor.definition.ui.views, metricStripLayoutForPreview]);
 
   const structureLabels = useMemo(
     () => ({
@@ -134,7 +121,6 @@ export function EntityMainPageLayoutDesignEditor({
         entityLabel: editor.definition.ui.nav?.label ?? entityName,
         locale: i18n.language,
         canCreate: true,
-        metricWidgets: metricWidgetsForPreview,
         metricStripLayout: metricStripLayoutForPreview,
         entityDefinition: editor.definition,
         listFilters: {},
@@ -161,13 +147,7 @@ export function EntityMainPageLayoutDesignEditor({
         previewMode: true,
         metricsDesignerPath: designLayoutEntityPath("metrics", entityName),
       }),
-    [
-      editor.definition,
-      entityName,
-      i18n.language,
-      metricStripLayoutForPreview,
-      metricWidgetsForPreview,
-    ],
+    [editor.definition, entityName, i18n.language, metricStripLayoutForPreview],
   );
 
   const preview = (
