@@ -148,7 +148,9 @@ export {
 export {
   ENTITY_UI_OVERRIDES_COLLECTION,
   entityUiOverrideRecordSchema,
+  parseEntityUiOverrideRecord,
   putEntityUiOverrideInputSchema,
+  safeParseEntityUiOverrideRecord,
   type PutEntityUiOverrideInput,
 } from "./ui/entity-ui-override-schema.js";
 export {

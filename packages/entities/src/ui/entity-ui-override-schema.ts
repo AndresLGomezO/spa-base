@@ -68,3 +68,33 @@ export const putEntityUiOverrideInputSchema = z
 export type PutEntityUiOverrideInput = z.infer<
   typeof putEntityUiOverrideInputSchema
 >;
+
+function toRecordInput(
+  entityName: string,
+  data: unknown,
+): Record<string, unknown> {
+  return {
+    entityName,
+    ...(typeof data === "object" && data !== null ? data : {}),
+  };
+}
+
+export function parseEntityUiOverrideRecord(
+  entityName: string,
+  data: unknown,
+): EntityUiOverrideRecord {
+  return entityUiOverrideRecordSchema.parse(
+    toRecordInput(entityName, data),
+  ) as EntityUiOverrideRecord;
+}
+
+/** Returns null when Firestore data no longer matches the current schema. */
+export function safeParseEntityUiOverrideRecord(
+  entityName: string,
+  data: unknown,
+): EntityUiOverrideRecord | null {
+  const parsed = entityUiOverrideRecordSchema.safeParse(
+    toRecordInput(entityName, data),
+  );
+  return parsed.success ? (parsed.data as EntityUiOverrideRecord) : null;
+}

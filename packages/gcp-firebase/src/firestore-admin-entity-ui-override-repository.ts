@@ -1,6 +1,7 @@
 import {
   ENTITY_UI_OVERRIDES_COLLECTION,
-  entityUiOverrideRecordSchema,
+  parseEntityUiOverrideRecord,
+  safeParseEntityUiOverrideRecord,
   type EntityUiOverrideRecord,
   type PutEntityUiOverrideInput,
 } from "@repo/entities";
@@ -12,13 +13,6 @@ import {
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
-
-function toRecord(entityName: string, data: unknown): EntityUiOverrideRecord {
-  return entityUiOverrideRecordSchema.parse({
-    entityName,
-    ...(typeof data === "object" && data !== null ? data : {}),
-  }) as EntityUiOverrideRecord;
-}
 
 export function createFirestoreAdminEntityUiOverrideRepository(
   config: FirebaseAdminConfig,
@@ -37,11 +31,10 @@ export function createFirestoreAdminEntityUiOverrideRepository(
       if (!snapshot.exists) {
         return null;
       }
-      return toRecord(entityName, snapshot.data()) as EntityUiOverrideRecord;
+      return safeParseEntityUiOverrideRecord(entityName, snapshot.data());
     },
     async put(tenantId, entityName, input: PutEntityUiOverrideInput) {
-      const record = entityUiOverrideRecordSchema.parse({
-        entityName,
+      const record = parseEntityUiOverrideRecord(entityName, {
         views: input.views,
         ...(input.listViewType ? { listViewType: input.listViewType } : {}),
         ...(input.listItem ? { listItem: input.listItem } : {}),
@@ -49,13 +42,16 @@ export function createFirestoreAdminEntityUiOverrideRepository(
         ...(input.recordDetail ? { recordDetail: input.recordDetail } : {}),
         ...(input.forms ? { forms: input.forms } : {}),
         updatedAt: new Date().toISOString(),
-      }) as EntityUiOverrideRecord;
+      });
       await collection(tenantId).doc(entityName).set(record);
       return record;
     },
     async list(tenantId) {
       const snapshot = await collection(tenantId).get();
-      return snapshot.docs.map((doc) => toRecord(doc.id, doc.data()));
+      return snapshot.docs.flatMap((doc) => {
+        const record = safeParseEntityUiOverrideRecord(doc.id, doc.data());
+        return record ? [record] : [];
+      });
     },
   };
 }

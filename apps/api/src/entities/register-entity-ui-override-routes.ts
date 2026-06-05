@@ -33,6 +33,15 @@ const entityNameParamSchema = z.object({
   entityName: z.string().trim().min(1),
 });
 
+function formatZodValidationMessage(error: z.ZodError): string {
+  const issue = error.issues[0];
+  if (!issue) {
+    return "Invalid UI override payload.";
+  }
+  const path = issue.path.length > 0 ? `${issue.path.join(".")}: ` : "";
+  return `${path}${issue.message}`;
+}
+
 /** Preserve override slices omitted from a surface-specific PUT body. */
 function mergeUiOverridePutInput(
   existing: EntityUiOverrideRecord | null,
@@ -280,28 +289,40 @@ export async function registerEntityUiOverrideRoutes(
         params.data.entityName,
       );
 
-      const override = await options.entityUiOverrideRepository.put(
-        tenantId,
-        params.data.entityName,
-        mergeUiOverridePutInput(existingOverride, {
-          views: [...normalizedViews],
-          ...(parsedBody.data.listViewType
-            ? { listViewType: parsedBody.data.listViewType }
-            : {}),
-          ...(parsedBody.data.listItem
-            ? { listItem: parsedBody.data.listItem }
-            : {}),
-          ...(parsedBody.data.mainPage
-            ? { mainPage: parsedBody.data.mainPage }
-            : {}),
-          ...(parsedBody.data.recordDetail
-            ? { recordDetail: parsedBody.data.recordDetail }
-            : {}),
-          ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
-        }),
-      );
+      try {
+        const override = await options.entityUiOverrideRepository.put(
+          tenantId,
+          params.data.entityName,
+          mergeUiOverridePutInput(existingOverride, {
+            views: [...normalizedViews],
+            ...(parsedBody.data.listViewType
+              ? { listViewType: parsedBody.data.listViewType }
+              : {}),
+            ...(parsedBody.data.listItem
+              ? { listItem: parsedBody.data.listItem }
+              : {}),
+            ...(parsedBody.data.mainPage
+              ? { mainPage: parsedBody.data.mainPage }
+              : {}),
+            ...(parsedBody.data.recordDetail
+              ? { recordDetail: parsedBody.data.recordDetail }
+              : {}),
+            ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
+          }),
+        );
 
-      return reply.send(successEnvelope({ override }));
+        return reply.send(successEnvelope({ override }));
+      } catch (error) {
+        if (error instanceof z.ZodError) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            formatZodValidationMessage(error),
+          );
+        }
+        throw error;
+      }
     },
   );
 }
