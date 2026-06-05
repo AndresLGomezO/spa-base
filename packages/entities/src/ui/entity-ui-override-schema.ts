@@ -1,6 +1,8 @@
 import { uiLayoutDocumentSchema } from "@repo/ui-builder-core";
 import { z } from "zod";
 
+import type { EntityUiOverrideRecord } from "./types.js";
+
 export const ENTITY_UI_OVERRIDES_COLLECTION = "entity_ui_overrides";
 
 const wizardStepConfigSchema = z
@@ -47,10 +49,6 @@ export const entityUiOverrideRecordSchema = z
     updatedAt: z.string().datetime(),
   })
   .strict();
-
-export type EntityUiOverrideRecord = z.infer<
-  typeof entityUiOverrideRecordSchema
->;
 
 export const putEntityUiOverrideInputSchema = z
   .object({

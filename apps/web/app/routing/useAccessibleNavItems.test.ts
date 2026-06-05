@@ -1,5 +1,5 @@
 import { renderHook } from "@testing-library/react";
-import { Database } from "lucide-react";
+import { Database, LayoutGrid } from "lucide-react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -94,6 +94,13 @@ vi.mock("../hooks/useEntityNavCategories", () => ({
 
 vi.mock("./design-layout-nav", () => ({
   DESIGN_LAYOUT_MATCH_PATH: "/settings/design-layout",
+  DESIGN_LAYOUT_PRESETS_NAV_ITEM: {
+    id: "design-layout-presets",
+    labelKey: "designLayoutPresets",
+    to: "/settings/design-layout/presets",
+    matchPath: "/settings/design-layout/presets",
+    icon: LayoutGrid,
+  },
   useDesignLayoutNavSubGroups: () => mockDesignLayoutSubGroups,
 }));
 
@@ -300,7 +307,7 @@ describe("useAccessibleNavItems", () => {
 
     expect(designLayout && isNavGroup(designLayout)).toBe(true);
     if (designLayout && isNavGroup(designLayout)) {
-      expect(designLayout.children.length).toBe(4);
+      expect(designLayout.children.length).toBe(5);
       const listSubgroup = designLayout.children.find(
         (child) => child.id === "design-layout-list",
       );

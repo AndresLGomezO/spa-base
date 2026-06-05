@@ -261,7 +261,7 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
     .strict(),
 ]);
 
-const componentRowSchema = z
+export const componentRowSchema = z
   .object({
     type: z.literal("component"),
     id: z.string().trim().min(1),
@@ -271,7 +271,7 @@ const componentRowSchema = z
   })
   .strict();
 
-const columnNodeSchema: z.ZodType<{
+export const columnNodeSchema: z.ZodType<{
   id: string;
   rows: unknown[];
   stackDirection?: "column" | "row";
@@ -289,7 +289,7 @@ const columnNodeSchema: z.ZodType<{
     .strict(),
 );
 
-const nestedLayoutRowSchema: z.ZodType<{
+export const nestedLayoutRowSchema: z.ZodType<{
   type: "nested-layout";
   id: string;
   columnCount: number;
@@ -304,7 +304,16 @@ const nestedLayoutRowSchema: z.ZodType<{
       columns: z.array(columnNodeSchema).min(1),
       styles: z.array(styleRuleSchema).optional(),
     })
-    .strict(),
+    .strict()
+    .superRefine((value, ctx) => {
+      if (value.columnCount !== value.columns.length) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: "columnCount must match columns.length",
+          path: ["columnCount"],
+        });
+      }
+    }),
 );
 
 const rowNodeSchema: z.ZodType<unknown> = z.lazy(() =>

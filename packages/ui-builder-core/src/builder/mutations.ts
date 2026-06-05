@@ -8,6 +8,11 @@ import type {
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
 import type { StyleRule } from "../styles/style-types.js";
 import { createLayoutId } from "./id.js";
+import { regenerateLayoutDocumentIds } from "../validation/regenerate-layout-ids.js";
+import {
+  regenerateComponentRowSubtree,
+  regenerateNestedLayoutRowSubtree,
+} from "../validation/regenerate-layout-ids.js";
 
 export const MAX_ROOT_COLUMNS = 6;
 export const MAX_NESTED_COLUMNS = 6;
@@ -713,6 +718,75 @@ export function updateComponentRowMetaAt(
       row.type === "component" && row.id === rowId ? { ...row, ...patch } : row,
     ),
   );
+}
+
+export function replaceLayoutDocument(
+  imported: UiLayoutDocument,
+): UiLayoutDocument {
+  return regenerateLayoutDocumentIds(normalizeLayout(imported));
+}
+
+export function replaceComponentRowAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  rowId: string,
+  importedRow: ComponentRowNode,
+): UiLayoutDocument {
+  const nextRow: ComponentRowNode = { ...importedRow, id: rowId };
+  return updateRowsAtLocator(layout, locator, (rows) =>
+    rows.map((row) =>
+      row.id === rowId && row.type === "component" ? nextRow : row,
+    ),
+  );
+}
+
+export function replaceNestedLayoutRowAt(
+  layout: UiLayoutDocument,
+  rowId: string,
+  importedRow: NestedLayoutRowNode,
+): UiLayoutDocument {
+  const nextRow: NestedLayoutRowNode = { ...importedRow, id: rowId };
+  const columns = layout.root.columns.map((column) => ({
+    ...column,
+    rows: mapNestedRowById(column.rows, rowId, () => nextRow),
+  }));
+  return { ...layout, root: { ...layout.root, columns } };
+}
+
+export function insertColumnAt(
+  layout: UiLayoutDocument,
+  index: number,
+  column: ColumnNode,
+): UiLayoutDocument {
+  const columns = [...layout.root.columns];
+  const clampedIndex = Math.min(Math.max(0, index), columns.length);
+  columns.splice(clampedIndex, 0, column);
+  return {
+    ...layout,
+    root: {
+      ...layout.root,
+      columnCount: columns.length,
+      columns,
+    },
+  };
+}
+
+export function appendComponentRowAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  row: ComponentRowNode,
+): UiLayoutDocument {
+  const nextRow = regenerateComponentRowSubtree(row);
+  return updateRowsAtLocator(layout, locator, (rows) => [...rows, nextRow]);
+}
+
+export function appendNestedLayoutRowAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  row: NestedLayoutRowNode,
+): UiLayoutDocument {
+  const nextRow = regenerateNestedLayoutRowSubtree(row);
+  return updateRowsAtLocator(layout, locator, (rows) => [...rows, nextRow]);
 }
 
 export type { RowLocator };

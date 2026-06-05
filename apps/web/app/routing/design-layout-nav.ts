@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
+import { LayoutGrid } from "lucide-react";
 import { hasPermission } from "@repo/rbac";
 
 import { useAuth } from "../auth/AuthContext";
@@ -24,6 +25,14 @@ export function designLayoutEntityPath(
 }
 
 export const DESIGN_LAYOUT_MATCH_PATH = "/settings/design-layout";
+
+export const DESIGN_LAYOUT_PRESETS_NAV_ITEM: NavLinkConfig = {
+  id: "design-layout-presets",
+  labelKey: "designLayoutPresets",
+  to: "/settings/design-layout/presets",
+  matchPath: "/settings/design-layout/presets",
+  icon: LayoutGrid,
+};
 
 function compareEntityLabels(left: string, right: string): number {
   return left.localeCompare(right);

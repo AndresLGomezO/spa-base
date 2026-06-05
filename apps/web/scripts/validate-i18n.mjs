@@ -380,6 +380,22 @@ function extractEntityViewMetricsBindingKeys(corpus) {
   );
 }
 
+/** designLayout.presets.kind.${kind} in source → all keys under designLayout.presets.kind */
+function extractUiBuilderPresetKindKeys(corpus) {
+  if (!corpus.includes("designLayout.presets.kind.${")) return [];
+
+  const refDesignLayout = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).designLayout;
+
+  const kinds = refDesignLayout?.presets?.kind;
+  if (!kinds || typeof kinds !== "object") return [];
+
+  return Object.keys(kinds).map(
+    (key) => `${DEFAULT_NAMESPACE}:designLayout.presets.kind.${key}`,
+  );
+}
+
 /** metrics.dateGranularity.formats|options.${granularity} in source → keys under those objects */
 function extractMetricsDateGranularityKeys(corpus) {
   const needsFormats = corpus.includes("metrics.dateGranularity.formats.${");
@@ -646,6 +662,15 @@ mergeUsedKeys(
   usedKeys,
   extractMetricsDateGranularityKeys(corpus),
   dateGranularityPickerFile,
+);
+const uiBuilderPresetManagerFile = path.join(
+  SRC_DIR,
+  "features/ui-builder/UiBuilderPresetManager.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractUiBuilderPresetKindKeys(corpus),
+  uiBuilderPresetManagerFile,
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

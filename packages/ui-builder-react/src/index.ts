@@ -44,7 +44,19 @@ export {
   type LabelConfigEditorLabels,
   type LabelConfigEditorProps,
 } from "./components/LabelConfigEditor.js";
-export { ColumnRowsEditor } from "./components/ColumnRowsEditor.js";
+export {
+  LayoutJsonImportDialog,
+  type LayoutJsonImportLabels,
+  type LayoutJsonImportDialogProps,
+} from "./components/LayoutJsonImportDialog.js";
+export {
+  SavePresetDialog,
+  type LayoutPresetLabels,
+} from "./components/SavePresetDialog.js";
+export {
+  InsertPresetDialog,
+  type LayoutPresetInsertLabels,
+} from "./components/InsertPresetDialog.js";
 export {
   ColumnStackDirectionEditor,
   type ColumnStackDirectionEditorLabels,

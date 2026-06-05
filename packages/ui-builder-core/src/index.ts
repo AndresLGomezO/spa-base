@@ -142,9 +142,47 @@ export {
   type FieldPathValidationDefinition,
 } from "./validation/field-paths.js";
 
+export {
+  validateLayoutJsonImport,
+  createLayoutJsonSkeleton,
+  type LayoutJsonImportScope,
+  type LayoutJsonImportError,
+  type LayoutJsonImportValidationResult,
+  type ValidateLayoutJsonImportOptions,
+} from "./validation/layout-json-import.js";
+
+export {
+  regenerateLayoutDocumentIds,
+  regenerateComponentRowSubtree,
+  regenerateNestedLayoutRowSubtree,
+  regenerateColumnSubtree,
+} from "./validation/regenerate-layout-ids.js";
+
+export {
+  genericizeLayoutNode,
+  GenericizeLayoutNodeError,
+  type GenericizeLayoutNodeResult,
+} from "./presets/genericize-layout-node.js";
+export {
+  applyPresetSlots,
+  type ApplyPresetSlotsResult,
+} from "./presets/apply-preset-slots.js";
+export {
+  type UiBuilderPresetKind,
+  type UiBuilderFieldSlot,
+  type UiBuilderFieldSlotKind,
+  UI_BUILDER_SLOT_TOKEN_PREFIX,
+  uiBuilderSlotToken,
+  isUiBuilderSlotToken,
+  parseUiBuilderSlotToken,
+} from "./presets/types.js";
+
 export { styleRuleSchema } from "./schema/ui-layout-schema.js";
 export {
   uiLayoutDocumentSchema,
+  componentRowSchema,
+  nestedLayoutRowSchema,
+  columnNodeSchema,
   type UiLayoutDocumentInput,
 } from "./schema/ui-layout-schema.js";
 
@@ -179,6 +217,12 @@ export {
   moveRowAt,
   updateComponentRowAt,
   updateComponentRowMetaAt,
+  replaceLayoutDocument,
+  replaceComponentRowAt,
+  replaceNestedLayoutRowAt,
+  insertColumnAt,
+  appendComponentRowAt,
+  appendNestedLayoutRowAt,
   MAX_ROOT_COLUMNS,
   MAX_NESTED_COLUMNS,
   type RowLocator,

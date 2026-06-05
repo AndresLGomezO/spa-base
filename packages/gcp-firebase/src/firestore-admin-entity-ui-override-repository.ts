@@ -1,10 +1,8 @@
 import {
   ENTITY_UI_OVERRIDES_COLLECTION,
-  deserializeDeepValuesFromFirestore,
   parseEntityUiOverrideRecord,
-  safeParseEntityUiOverrideRecord,
-  serializeDeepValuesForFirestore,
-  type EntityUiOverrideRecord,
+  safeFromPersistedUiOverride,
+  toPersistedUiOverride,
   type PutEntityUiOverrideInput,
 } from "@repo/entities";
 
@@ -33,10 +31,7 @@ export function createFirestoreAdminEntityUiOverrideRepository(
       if (!snapshot.exists) {
         return null;
       }
-      return safeParseEntityUiOverrideRecord(
-        entityName,
-        deserializeDeepValuesFromFirestore(snapshot.data()),
-      );
+      return safeFromPersistedUiOverride(snapshot.data());
     },
     async put(tenantId, entityName, input: PutEntityUiOverrideInput) {
       const record = parseEntityUiOverrideRecord(entityName, {
@@ -50,16 +45,13 @@ export function createFirestoreAdminEntityUiOverrideRepository(
       });
       await collection(tenantId)
         .doc(entityName)
-        .set(serializeDeepValuesForFirestore(record));
+        .set(toPersistedUiOverride(record));
       return record;
     },
     async list(tenantId) {
       const snapshot = await collection(tenantId).get();
       return snapshot.docs.flatMap((doc) => {
-        const record = safeParseEntityUiOverrideRecord(
-          doc.id,
-          deserializeDeepValuesFromFirestore(doc.data()),
-        );
+        const record = safeFromPersistedUiOverride(doc.data());
         return record ? [record] : [];
       });
     },

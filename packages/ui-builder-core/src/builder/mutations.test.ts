@@ -7,6 +7,9 @@ import {
   createEmptyColumn,
   createEmptyLayout,
   moveRootColumn,
+  replaceComponentRowAt,
+  replaceLayoutDocument,
+  replaceNestedLayoutRowAt,
   setRootColumnCount,
   setRootColumnWidthPercent,
 } from "./mutations.js";
@@ -152,5 +155,126 @@ describe("setRootColumnCount", () => {
     const next = setRootColumnCount(layout, 2);
     expect(next.root.columns[0]?.widthPercent).toBeUndefined();
     expect(next.root.columns[1]?.widthPercent).toBeUndefined();
+  });
+});
+
+describe("replaceLayoutDocument", () => {
+  it("replaces the layout with regenerated ids", () => {
+    const base = createEmptyLayout(2);
+    const imported = {
+      ...base,
+      root: {
+        ...base.root,
+        columns: [
+          {
+            ...base.root.columns[0]!,
+            rows: [
+              {
+                type: "component" as const,
+                id: "imported-row",
+                component: createDefaultComponent("text", "name"),
+              },
+            ],
+          },
+          ...base.root.columns.slice(1),
+        ],
+      },
+    };
+
+    const next = replaceLayoutDocument(imported);
+    expect(next.root.columnCount).toBe(2);
+    expect(next.root.columns[0]?.rows[0]?.id).not.toBe("imported-row");
+  });
+});
+
+describe("replaceComponentRowAt", () => {
+  it("replaces a component row while preserving row id", () => {
+    const layout = createEmptyLayout(1);
+    const rowId = createLayoutId("row");
+    const column = layout.root.columns[0];
+    if (!column) {
+      throw new Error("missing column");
+    }
+
+    const withRow = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...column,
+            rows: [
+              {
+                type: "component" as const,
+                id: rowId,
+                component: createDefaultComponent("text", "name"),
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const imported = {
+      type: "component" as const,
+      id: "new-id",
+      component: createDefaultComponent("badge", "balance"),
+    };
+
+    const next = replaceComponentRowAt(
+      withRow,
+      { scope: "root", columnIndex: 0 },
+      rowId,
+      imported,
+    );
+
+    expect(next.root.columns[0]?.rows[0]).toMatchObject({
+      id: rowId,
+      component: { kind: "badge" },
+    });
+  });
+});
+
+describe("replaceNestedLayoutRowAt", () => {
+  it("replaces a nested layout row while preserving row id", () => {
+    const layout = createEmptyLayout(1);
+    const nestedRowId = createLayoutId("nested");
+    const column = layout.root.columns[0];
+    if (!column) {
+      throw new Error("missing column");
+    }
+
+    const withNested = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...column,
+            rows: [
+              {
+                type: "nested-layout" as const,
+                id: nestedRowId,
+                columnCount: 1,
+                columns: [createEmptyColumn()],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const imported = {
+      type: "nested-layout" as const,
+      id: "imported-nested",
+      columnCount: 2,
+      columns: [createEmptyColumn(), createEmptyColumn()],
+    };
+
+    const next = replaceNestedLayoutRowAt(withNested, nestedRowId, imported);
+    expect(next.root.columns[0]?.rows[0]).toMatchObject({
+      id: nestedRowId,
+      columnCount: 2,
+    });
   });
 });

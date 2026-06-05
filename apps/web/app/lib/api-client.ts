@@ -1,7 +1,10 @@
 import type {
+  CreateUiBuilderPresetInput,
   EntityUIConfig,
   EntityUiOverrideRecord,
   SerializableEntityDefinition,
+  UiBuilderPresetRecord,
+  UpdateUiBuilderPresetInput,
   ViewConfig,
 } from "@repo/entities";
 import type { QueryConfig } from "@repo/query-engine";
@@ -916,4 +919,43 @@ export async function putEntityUiOverride(
       body: input,
     },
   );
+}
+
+export async function listUiBuilderPresets(): Promise<{
+  readonly items: readonly UiBuilderPresetRecord[];
+}> {
+  return apiRequest<{ readonly items: readonly UiBuilderPresetRecord[] }>(
+    "/api/ui-builder-presets",
+  );
+}
+
+export async function createUiBuilderPreset(
+  input: CreateUiBuilderPresetInput,
+): Promise<{ readonly preset: UiBuilderPresetRecord }> {
+  return apiRequest<{ readonly preset: UiBuilderPresetRecord }>(
+    "/api/ui-builder-presets",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export async function updateUiBuilderPreset(
+  presetId: string,
+  input: UpdateUiBuilderPresetInput,
+): Promise<{ readonly preset: UiBuilderPresetRecord }> {
+  return apiRequest<{ readonly preset: UiBuilderPresetRecord }>(
+    `/api/ui-builder-presets/${encodeURIComponent(presetId)}`,
+    {
+      method: "PUT",
+      body: input,
+    },
+  );
+}
+
+export async function deleteUiBuilderPreset(presetId: string): Promise<void> {
+  await apiRequest(`/api/ui-builder-presets/${encodeURIComponent(presetId)}`, {
+    method: "DELETE",
+  });
 }

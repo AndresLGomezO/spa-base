@@ -34,7 +34,8 @@ export type NavLabelKey =
   | "designLayoutList"
   | "designLayoutDetail"
   | "designLayoutForms"
-  | "designLayoutMetrics";
+  | "designLayoutMetrics"
+  | "designLayoutPresets";
 
 export interface NavLinkConfig {
   readonly id: string;

@@ -12,8 +12,10 @@ import { ChevronDown, ChevronUp } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder.js";
-import type { UiLayoutStructurePanelLabels } from "@repo/ui-builder-react";
-import type { EntityDefinitionLookup } from "@repo/ui-builder-react";
+import type {
+  EntityDefinitionLookup,
+  UiLayoutStructurePanelLabels,
+} from "@repo/ui-builder-react";
 
 interface ExpandableTableColumnsEditorProps {
   readonly definition: SerializableEntityDefinition;
@@ -23,7 +25,10 @@ interface ExpandableTableColumnsEditorProps {
   readonly showActions: boolean;
   readonly onShowActionsChange: (showActions: boolean) => void;
   readonly defaultFieldPath: string;
-  readonly structureLabels: UiLayoutStructurePanelLabels;
+  readonly structureLabels: Omit<
+    UiLayoutStructurePanelLabels,
+    "layoutJsonImport"
+  >;
   readonly getDefinition?: EntityDefinitionLookup;
 }
 

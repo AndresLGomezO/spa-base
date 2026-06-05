@@ -7,6 +7,8 @@ import {
   moveRowAt,
   removeNestedColumn,
   removeRowAt,
+  replaceComponentRowAt,
+  replaceNestedLayoutRowAt,
   setNestedColumnCount,
   setNestedColumnWidthPercent,
   updateComponentRowAt,
@@ -14,13 +16,16 @@ import {
   updateNestedColumnStackDirection,
   updateNestedColumnStyles,
   type NestedLayoutRowNode,
+  type ComponentRowNode,
   type RowLocator,
   type RowNode,
   type UiComponentConfig,
   type UiComponentKind,
   type UiLayoutDocument,
+  type DesignSurface,
 } from "@repo/ui-builder-core";
 import { Button, Text } from "@repo/ui";
+import type { SerializableEntityDefinition } from "@repo/entities";
 
 import type { FieldDescriptor } from "../adapters/entity-card-view-adapter.js";
 import {
@@ -44,6 +49,22 @@ import {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
+import {
+  LayoutJsonImportDialog,
+  type LayoutJsonImportLabels,
+} from "./LayoutJsonImportDialog.js";
+import {
+  SavePresetDialog,
+  type LayoutPresetLabels,
+} from "./SavePresetDialog.js";
+import {
+  InsertPresetDialog,
+  type LayoutPresetInsertLabels,
+} from "./InsertPresetDialog.js";
+import type {
+  CreateUiBuilderPresetInput,
+  UiBuilderPresetRecord,
+} from "@repo/entities";
 
 export interface ColumnRowsEditorLabels extends LayoutColumnControlsLabels {
   readonly addRow: string;
@@ -60,6 +81,7 @@ export interface ColumnRowsEditorLabels extends LayoutColumnControlsLabels {
   readonly rowStyles?: string;
   readonly rowEffects?: string;
   readonly componentEditor: ComponentConfigEditorLabels;
+  readonly layoutJsonImport: LayoutJsonImportLabels;
 }
 
 export interface ColumnRowsEditorProps {
@@ -75,6 +97,19 @@ export interface ColumnRowsEditorProps {
   readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
   readonly allowedKinds?: readonly UiComponentKind[];
   readonly depth?: number;
+  readonly canApplyImport?: boolean;
+  readonly designSurface?: DesignSurface;
+  readonly definition?: SerializableEntityDefinition;
+  readonly presetStore?: {
+    readonly presets: readonly UiBuilderPresetRecord[];
+    readonly canApplyPresets: boolean;
+    readonly presetLabels: LayoutPresetLabels;
+    readonly presetInsertLabels: LayoutPresetInsertLabels;
+    readonly onCreatePreset: (
+      input: CreateUiBuilderPresetInput,
+    ) => Promise<void>;
+    readonly sourceEntityName?: string;
+  };
 }
 
 export function ColumnRowsEditor({
@@ -90,6 +125,10 @@ export function ColumnRowsEditor({
   staticImageEditor,
   allowedKinds,
   depth = 0,
+  canApplyImport = false,
+  designSurface = "listItem",
+  definition,
+  presetStore,
 }: ColumnRowsEditorProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(
     rows[0]?.id ?? null,
@@ -132,7 +171,92 @@ export function ColumnRowsEditor({
                 ? `Component: ${row.component.kind}`
                 : `Nested layout (${row.columnCount} cols)`}
             </button>
-            <div className="flex gap-1">
+            <div className="flex flex-wrap gap-1">
+              {definition && presetStore ? (
+                <>
+                  <InsertPresetDialog
+                    kind={
+                      row.type === "component"
+                        ? "component-row"
+                        : "nested-layout-row"
+                    }
+                    designSurface={designSurface}
+                    definition={definition}
+                    fieldDescriptors={fieldDescriptors}
+                    presets={presetStore.presets}
+                    canApply={presetStore.canApplyPresets}
+                    labels={presetStore.presetInsertLabels}
+                    onApply={(data) => {
+                      if (row.type === "component") {
+                        onLayoutChange(
+                          replaceComponentRowAt(
+                            layout,
+                            locator,
+                            row.id,
+                            data as ComponentRowNode,
+                          ),
+                        );
+                        return;
+                      }
+                      onLayoutChange(
+                        replaceNestedLayoutRowAt(
+                          layout,
+                          row.id,
+                          data as NestedLayoutRowNode,
+                        ),
+                      );
+                    }}
+                  />
+                  <SavePresetDialog
+                    kind={
+                      row.type === "component"
+                        ? "component-row"
+                        : "nested-layout-row"
+                    }
+                    node={row}
+                    designSurface={designSurface}
+                    sourceEntityName={presetStore.sourceEntityName}
+                    canSave={presetStore.canApplyPresets}
+                    labels={presetStore.presetLabels}
+                    onSave={presetStore.onCreatePreset}
+                  />
+                </>
+              ) : null}
+              {definition ? (
+                <LayoutJsonImportDialog
+                  scope={{
+                    type:
+                      row.type === "component"
+                        ? "component-row"
+                        : "nested-layout-row",
+                  }}
+                  designSurface={designSurface}
+                  definition={definition}
+                  defaultFieldPath={defaultFieldPath}
+                  canApply={canApplyImport}
+                  labels={labels.layoutJsonImport}
+                  onApply={(data) => {
+                    if (row.type === "component") {
+                      onLayoutChange(
+                        replaceComponentRowAt(
+                          layout,
+                          locator,
+                          row.id,
+                          data as ComponentRowNode,
+                        ),
+                      );
+                      return;
+                    }
+                    onLayoutChange(
+                      replaceNestedLayoutRowAt(
+                        layout,
+                        row.id,
+                        data as NestedLayoutRowNode,
+                      ),
+                    );
+                  }}
+                />
+              ) : null}
               <Button
                 type="button"
                 variant="outline"
@@ -226,6 +350,10 @@ export function ColumnRowsEditor({
               staticImageEditor={staticImageEditor}
               allowedKinds={allowedKinds}
               depth={depth}
+              canApplyImport={canApplyImport}
+              designSurface={designSurface}
+              definition={definition}
+              presetStore={presetStore}
             />
           ) : null}
         </div>
@@ -274,6 +402,10 @@ function NestedLayoutRowEditor({
   staticImageEditor,
   allowedKinds,
   depth,
+  canApplyImport = false,
+  designSurface = "listItem",
+  definition,
+  presetStore,
 }: {
   readonly layout: UiLayoutDocument;
   readonly row: NestedLayoutRowNode;
@@ -286,6 +418,10 @@ function NestedLayoutRowEditor({
   readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
   readonly allowedKinds?: readonly UiComponentKind[];
   readonly depth: number;
+  readonly canApplyImport?: boolean;
+  readonly designSurface?: DesignSurface;
+  readonly definition?: SerializableEntityDefinition;
+  readonly presetStore?: ColumnRowsEditorProps["presetStore"];
 }) {
   const [activeColumn, setActiveColumn] = useState(0);
   const clampedActiveColumn = Math.min(
@@ -420,6 +556,10 @@ function NestedLayoutRowEditor({
           staticImageEditor={staticImageEditor}
           allowedKinds={allowedKinds}
           depth={depth + 1}
+          canApplyImport={canApplyImport}
+          designSurface={designSurface}
+          definition={definition}
+          presetStore={presetStore}
         />
       ) : null}
     </div>

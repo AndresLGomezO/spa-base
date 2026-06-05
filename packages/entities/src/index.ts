@@ -154,16 +154,37 @@ export {
   type PutEntityUiOverrideInput,
 } from "./ui/entity-ui-override-schema.js";
 export {
-  FIRESTORE_MAX_DOCUMENT_DEPTH,
-  SERIALIZED_LAYOUT_MARKER,
-  deserializeDeepValuesFromFirestore,
-  serializeDeepValuesForFirestore,
-} from "./ui/firestore-layout-serialization.js";
+  fromPersistedUiOverride,
+  persistedEntityUiOverrideSchema,
+  safeFromPersistedUiOverride,
+  toPersistedUiOverride,
+  type PersistedEntityUiOverride,
+} from "./ui/entity-ui-override-persistence.js";
 export {
   ENTITY_UI_OVERRIDE_PERMISSIONS,
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   type EntityUiOverridePermission,
 } from "./ui/entity-ui-override-permissions.js";
+export {
+  UI_BUILDER_PRESETS_COLLECTION,
+  uiBuilderPresetRecordSchema,
+  createUiBuilderPresetInputSchema,
+  updateUiBuilderPresetInputSchema,
+  uiBuilderFieldSlotSchema,
+  uiBuilderPresetKindSchema,
+  type UiBuilderPresetRecord,
+  type CreateUiBuilderPresetInput,
+  type UpdateUiBuilderPresetInput,
+  type UiBuilderFieldSlot,
+  type UiBuilderPresetKind,
+} from "./ui/ui-builder-preset-schema.js";
+export {
+  fromPersistedUiBuilderPreset,
+  persistedUiBuilderPresetSchema,
+  safeFromPersistedUiBuilderPreset,
+  toPersistedUiBuilderPreset,
+  type PersistedUiBuilderPreset,
+} from "./ui/ui-builder-preset-persistence.js";
 export {
   mergeEntityUiOverrides,
   mergeEntityViewOverrides,

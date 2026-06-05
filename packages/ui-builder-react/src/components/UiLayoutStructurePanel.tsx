@@ -2,6 +2,8 @@ import { useMemo, useState } from "react";
 import {
   moveRootColumn,
   removeRootColumn,
+  replaceLayoutDocument,
+  insertColumnAt,
   setRootColumnCount,
   setRootColumnWidthPercent,
   updateLayoutMeta,
@@ -31,6 +33,23 @@ import type {
   ComponentConfigEditorLabels,
   ComponentConfigEditorProps,
 } from "./ComponentConfigEditor.js";
+import {
+  LayoutJsonImportDialog,
+  type LayoutJsonImportLabels,
+} from "./LayoutJsonImportDialog.js";
+import {
+  SavePresetDialog,
+  type LayoutPresetLabels,
+} from "./SavePresetDialog.js";
+import {
+  InsertPresetDialog,
+  type LayoutPresetInsertLabels,
+} from "./InsertPresetDialog.js";
+import type {
+  CreateUiBuilderPresetInput,
+  UiBuilderPresetRecord,
+} from "@repo/entities";
+import type { ColumnNode } from "@repo/ui-builder-core";
 import {
   LayoutColumnControls,
   type LayoutColumnControlsLabels,
@@ -66,6 +85,7 @@ export interface UiLayoutStructurePanelLabels extends LayoutColumnControlsLabels
   readonly moveUp: string;
   readonly moveDown: string;
   readonly deleteRow: string;
+  readonly layoutJsonImport: LayoutJsonImportLabels;
 }
 
 export interface UiLayoutStructurePanelProps {
@@ -81,6 +101,17 @@ export interface UiLayoutStructurePanelProps {
   readonly showShowActionsControl?: boolean;
   readonly getDefinition?: EntityDefinitionLookup;
   readonly designSurface?: DesignSurface;
+  readonly canApplyImport?: boolean;
+  readonly presetStore?: {
+    readonly presets: readonly UiBuilderPresetRecord[];
+    readonly canApplyPresets: boolean;
+    readonly presetLabels: LayoutPresetLabels;
+    readonly presetInsertLabels: LayoutPresetInsertLabels;
+    readonly onCreatePreset: (
+      input: CreateUiBuilderPresetInput,
+    ) => Promise<void>;
+    readonly sourceEntityName?: string;
+  };
 }
 
 export function UiLayoutStructurePanel({
@@ -96,6 +127,8 @@ export function UiLayoutStructurePanel({
   showShowActionsControl = true,
   getDefinition,
   designSurface = "listItem",
+  canApplyImport = false,
+  presetStore,
 }: UiLayoutStructurePanelProps) {
   const allowedKinds = componentKindsForSurface(designSurface);
   const { fieldDescriptors } = useMemo(() => {
@@ -129,14 +162,87 @@ export function UiLayoutStructurePanel({
     rowStyles: labels.rowStyles,
     rowEffects: labels.rowEffects,
     componentEditor: labels.componentEditor,
+    layoutJsonImport: labels.layoutJsonImport,
   };
 
   const activeColumnNode = layout.root.columns[activeColumn];
 
   return (
     <div className={className ?? "flex flex-col gap-3"}>
-      {showStructureHeading ? (
-        <Text className="font-medium">{labels.structure}</Text>
+      <div className="flex items-center justify-between gap-2">
+        {showStructureHeading ? (
+          <Text className="font-medium">{labels.structure}</Text>
+        ) : (
+          <span />
+        )}
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          {presetStore ? (
+            <>
+              <InsertPresetDialog
+                kind="layout-document"
+                designSurface={designSurface}
+                definition={definition}
+                fieldDescriptors={fieldDescriptors}
+                presets={presetStore.presets}
+                canApply={presetStore.canApplyPresets}
+                labels={presetStore.presetInsertLabels}
+                onApply={(data) =>
+                  onLayoutChange(
+                    replaceLayoutDocument(data as UiLayoutDocument),
+                  )
+                }
+              />
+              <SavePresetDialog
+                kind="layout-document"
+                node={layout}
+                designSurface={designSurface}
+                sourceEntityName={presetStore.sourceEntityName}
+                canSave={presetStore.canApplyPresets}
+                labels={presetStore.presetLabels}
+                onSave={presetStore.onCreatePreset}
+              />
+            </>
+          ) : null}
+          <LayoutJsonImportDialog
+            scope={{ type: "layout-document" }}
+            designSurface={designSurface}
+            definition={definition}
+            defaultFieldPath={defaultFieldPath}
+            canApply={canApplyImport}
+            labels={labels.layoutJsonImport}
+            onApply={(data) =>
+              onLayoutChange(replaceLayoutDocument(data as UiLayoutDocument))
+            }
+          />
+        </div>
+      </div>
+
+      {presetStore && activeColumnNode ? (
+        <div className="flex flex-wrap items-center justify-end gap-2">
+          <InsertPresetDialog
+            kind="column"
+            designSurface={designSurface}
+            definition={definition}
+            fieldDescriptors={fieldDescriptors}
+            presets={presetStore.presets}
+            canApply={presetStore.canApplyPresets}
+            labels={presetStore.presetInsertLabels}
+            onApply={(data) =>
+              onLayoutChange(
+                insertColumnAt(layout, activeColumn + 1, data as ColumnNode),
+              )
+            }
+          />
+          <SavePresetDialog
+            kind="column"
+            node={activeColumnNode}
+            designSurface={designSurface}
+            sourceEntityName={presetStore.sourceEntityName}
+            canSave={presetStore.canApplyPresets}
+            labels={presetStore.presetLabels}
+            onSave={presetStore.onCreatePreset}
+          />
+        </div>
       ) : null}
 
       <LayoutColumnControls
@@ -242,6 +348,10 @@ export function UiLayoutStructurePanel({
           metricKpiEditor={metricKpiEditor}
           staticImageEditor={staticImageEditor}
           allowedKinds={allowedKinds}
+          canApplyImport={canApplyImport}
+          designSurface={designSurface}
+          definition={definition}
+          presetStore={presetStore}
         />
       ) : null}
     </div>

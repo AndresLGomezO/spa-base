@@ -29,6 +29,7 @@ import {
 } from "../components/sidebar/nav-config";
 import {
   DESIGN_LAYOUT_MATCH_PATH,
+  DESIGN_LAYOUT_PRESETS_NAV_ITEM,
   useDesignLayoutNavSubGroups,
 } from "./design-layout-nav";
 
@@ -171,13 +172,23 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       });
     }
 
-    if (designLayoutSubGroups.length > 0) {
+    const canAccessDesignLayout = hasPermission(
+      "entityUiOverride.read",
+      permissions,
+      { isSuperAdmin },
+    );
+
+    if (canAccessDesignLayout || designLayoutSubGroups.length > 0) {
+      const designLayoutChildren = canAccessDesignLayout
+        ? [DESIGN_LAYOUT_PRESETS_NAV_ITEM, ...designLayoutSubGroups]
+        : designLayoutSubGroups;
+
       items.push({
         id: "design-layout",
         labelKey: "designLayout",
         matchPath: DESIGN_LAYOUT_MATCH_PATH,
         icon: DESIGN_LAYOUT_GROUP_ICON,
-        children: designLayoutSubGroups,
+        children: designLayoutChildren,
       });
     }
 

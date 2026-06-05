@@ -69,6 +69,8 @@ export { type EntityDefinitionRepository } from "./entity-definition/repository-
 export { createInMemoryEntityDefinitionRepository } from "./entity-definition/in-memory-repository.js";
 export { type EntityUiOverrideRepository } from "./entity-ui-override/repository-contract.js";
 export { createInMemoryEntityUiOverrideRepository } from "./entity-ui-override/in-memory-repository.js";
+export { type UiBuilderPresetRepository } from "./ui-builder-preset/repository-contract.js";
+export { createInMemoryUiBuilderPresetRepository } from "./ui-builder-preset/in-memory-repository.js";
 export { type HookRepository } from "./hook/repository-contract.js";
 export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
 export { type MetricDefinitionRepository } from "./metric-definition/repository-contract.js";

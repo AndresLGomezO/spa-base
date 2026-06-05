@@ -1,0 +1,182 @@
+import { describe, expect, it } from "vitest";
+
+import { createEmptyLayout } from "../builder/mutations.js";
+import {
+  createLayoutJsonSkeleton,
+  validateLayoutJsonImport,
+} from "./layout-json-import.js";
+import { regenerateLayoutDocumentIds } from "./regenerate-layout-ids.js";
+
+const definition = {
+  name: "account",
+  fields: {
+    name: { type: "string" },
+    balance: { type: "number" },
+  },
+};
+
+describe("validateLayoutJsonImport", () => {
+  it("accepts a valid layout document", () => {
+    const skeleton = createLayoutJsonSkeleton(
+      { type: "layout-document" },
+      "listItem",
+      "name",
+    );
+    const result = validateLayoutJsonImport(
+      skeleton,
+      { type: "layout-document" },
+      {
+        designSurface: "listItem",
+        definition,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+    expect(result.data).toMatchObject({
+      root: { columns: [{ rows: [{ type: "component" }] }] },
+    });
+  });
+
+  it("rejects invalid JSON syntax", () => {
+    const result = validateLayoutJsonImport(
+      "{",
+      { type: "layout-document" },
+      {
+        designSurface: "listItem",
+        definition,
+      },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.errors[0]?.path).toBe("(parse)");
+  });
+
+  it("rejects disallowed component kinds for the surface", () => {
+    const base = createEmptyLayout(1);
+    const column = base.root.columns[0];
+    const layout =
+      column == null
+        ? base
+        : {
+            ...base,
+            root: {
+              ...base.root,
+              columns: [
+                {
+                  ...column,
+                  rows: [
+                    {
+                      type: "component" as const,
+                      id: "row-1",
+                      component: {
+                        kind: "page-header" as const,
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(layout),
+      { type: "layout-document" },
+      { designSurface: "listItem", definition },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((error) => error.path === "component.kind")).toBe(
+      true,
+    );
+  });
+
+  it("rejects invalid field paths", () => {
+    const base = createEmptyLayout(1);
+    const column = base.root.columns[0];
+    const layout =
+      column == null
+        ? base
+        : {
+            ...base,
+            root: {
+              ...base.root,
+              columns: [
+                {
+                  ...column,
+                  rows: [
+                    {
+                      type: "component" as const,
+                      id: "row-1",
+                      component: {
+                        kind: "text" as const,
+                        primary: {
+                          type: "field" as const,
+                          path: "missingField",
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(layout),
+      { type: "layout-document" },
+      { designSurface: "listItem", definition },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((error) => error.path === "fieldPath")).toBe(
+      true,
+    );
+  });
+
+  it("validates component-row scope", () => {
+    const skeleton = createLayoutJsonSkeleton(
+      { type: "component-row" },
+      "listItem",
+      "name",
+    );
+    const result = validateLayoutJsonImport(
+      skeleton,
+      { type: "component-row" },
+      {
+        designSurface: "listItem",
+        definition,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({ type: "component" });
+  });
+
+  it("validates nested-layout-row scope", () => {
+    const skeleton = createLayoutJsonSkeleton(
+      { type: "nested-layout-row" },
+      "listItem",
+      "name",
+    );
+    const result = validateLayoutJsonImport(
+      skeleton,
+      { type: "nested-layout-row" },
+      { designSurface: "listItem", definition },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({ type: "nested-layout" });
+  });
+});
+
+describe("regenerateLayoutDocumentIds", () => {
+  it("assigns fresh ids throughout the tree", () => {
+    const layout = createEmptyLayout(1);
+    const originalRootId = layout.root.id;
+    const next = regenerateLayoutDocumentIds(layout);
+
+    expect(next.root.id).not.toBe(originalRootId);
+    expect(next.root.columns[0]?.id).not.toBe(layout.root.columns[0]?.id);
+  });
+});

@@ -11,6 +11,7 @@ import type {
   EntityDefinitionRepository,
   EntityQueryExecutor,
   EntityUiOverrideRepository,
+  UiBuilderPresetRepository,
   AggregationEventRepository,
   BackfillJobRepository,
   HookRepository,
@@ -26,6 +27,7 @@ import {
   createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
   createInMemoryEntityUiOverrideRepository,
+  createInMemoryUiBuilderPresetRepository,
   createInMemoryHookRepository,
   createInMemoryMetricDefinitionRepository,
   createInMemoryMetricContributionRepository,
@@ -39,6 +41,7 @@ import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityUiOverrideRepository,
+  createFirestoreAdminUiBuilderPresetRepository,
   createFirestoreAdminHookRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminMetricDefinitionRepository,
@@ -73,6 +76,7 @@ import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-ent
 import { registerEntityRelationRoutes } from "./entities/register-entity-relation-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
 import { registerEntityUiOverrideRoutes } from "./entities/register-entity-ui-override-routes.js";
+import { registerUiBuilderPresetRoutes } from "./ui-builder-presets/register-ui-builder-preset-routes.js";
 import { registerEntityCategoryRoutes } from "./entity-categories/register-entity-category-routes.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import { registerIndexRoutes } from "./indexes/register-index-routes.js";
@@ -111,6 +115,7 @@ interface BuildServerOptions {
   readonly queryExecutors?: Record<string, EntityQueryExecutor>;
   readonly entityDefinitionRepository?: EntityDefinitionRepository;
   readonly entityUiOverrideRepository?: EntityUiOverrideRepository;
+  readonly uiBuilderPresetRepository?: UiBuilderPresetRepository;
   readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: HookRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
@@ -252,6 +257,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryEntityUiOverrideRepository()
       : createFirestoreAdminEntityUiOverrideRepository(firebaseAdminConfig));
+
+  const uiBuilderPresetRepository =
+    options.uiBuilderPresetRepository ??
+    (options.repositories
+      ? createInMemoryUiBuilderPresetRepository()
+      : createFirestoreAdminUiBuilderPresetRepository(firebaseAdminConfig));
 
   const entityCategoryRepository =
     options.entityCategoryRepository ??
@@ -443,6 +454,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     entityUiOverrideRepository,
+  });
+
+  await registerUiBuilderPresetRoutes(server, {
+    authenticate,
+    permissionDeps,
+    uiBuilderPresetRepository,
   });
 
   registerEntityFileRoutes(server, {

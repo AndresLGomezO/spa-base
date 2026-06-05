@@ -49,6 +49,10 @@ export default [
       "settings/design-layout/metrics/:entityName",
       "./routes/settings/design-layout/metrics-layout.tsx",
     ),
+    route(
+      "settings/design-layout/presets",
+      "./routes/settings/design-layout/presets.tsx",
+    ),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
       ...buildEntityRouteConfig(),
