@@ -9,6 +9,7 @@ import { z } from "zod";
 import type { NormalizedFieldMeta } from "@repo/entities";
 import {
   DEFAULT_IMAGE_MAX_SIZE_BYTES,
+  ENTITY_UI_OVERRIDE_PERMISSIONS,
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   LAYOUT_STATIC_IMAGE_FIELD_NAME,
   MAX_ENTITY_FILE_UPLOAD_REQUEST_BODY_BYTES,
@@ -622,7 +623,7 @@ export function registerEntityFileRoutes(
         hasPermission(readPermission, permissions, {
           isSuperAdmin: ctx.isSuperAdmin,
         }) ||
-        ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS.some((permission) =>
+        ENTITY_UI_OVERRIDE_PERMISSIONS.some((permission) =>
           hasPermission(permission, permissions, {
             isSuperAdmin: ctx.isSuperAdmin,
           }),

@@ -124,6 +124,7 @@ export function EntityCardLayoutBuilder({
           definition={definition}
           value={value}
           onChange={onChange}
+          canEdit={canApplyImport}
         />
       )}
     />

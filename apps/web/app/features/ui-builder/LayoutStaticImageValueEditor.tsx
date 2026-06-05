@@ -26,6 +26,7 @@ interface LayoutStaticImageValueEditorProps {
   readonly definition: SerializableEntityDefinition;
   readonly value: string;
   readonly onChange: (value: string) => void;
+  readonly canEdit?: boolean;
 }
 
 export function LayoutStaticImageValueEditor({
@@ -33,6 +34,7 @@ export function LayoutStaticImageValueEditor({
   definition,
   value,
   onChange,
+  canEdit = true,
 }: LayoutStaticImageValueEditorProps) {
   const { t } = useTranslation("common");
   const [uploading, setUploading] = useState(false);
@@ -73,6 +75,9 @@ export function LayoutStaticImageValueEditor({
     readonly file: File;
     readonly uploadId: string;
   }) {
+    if (!canEdit) {
+      return;
+    }
     setUploading(true);
     try {
       const data = await readFileAsBase64(params.file);
@@ -106,6 +111,7 @@ export function LayoutStaticImageValueEditor({
           value={urlInputValue}
           placeholder="https://"
           onChange={(event) => onChange(event.target.value)}
+          disabled={!canEdit}
         />
       </label>
 
@@ -118,7 +124,7 @@ export function LayoutStaticImageValueEditor({
           alt={t("designLayout.staticImage")}
           cropShape="rect"
           uploading={uploading}
-          disabled={uploading}
+          disabled={!canEdit || uploading}
           maxSizeBytes={maxSizeBytes}
           labels={{
             select: t("entity.fileSelectImage"),
@@ -133,10 +139,15 @@ export function LayoutStaticImageValueEditor({
           onUpload={handleUpload}
           onError={(message) => toast.error(message)}
         />
-        {fileRef ? (
+        {fileRef && canEdit ? (
           <Button type="button" variant="outline" onClick={() => onChange("")}>
             {t("designLayout.staticImageClear")}
           </Button>
+        ) : null}
+        {!canEdit ? (
+          <Text className="text-muted-foreground text-sm">
+            {t("designLayout.readOnly")}
+          </Text>
         ) : null}
       </div>
     </div>
