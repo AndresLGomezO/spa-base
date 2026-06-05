@@ -14,7 +14,7 @@ import {
   LAYOUT_STATIC_IMAGE_FIELD_NAME,
   MAX_ENTITY_FILE_UPLOAD_REQUEST_BODY_BYTES,
 } from "@repo/entities";
-import { hasPermission } from "@repo/rbac";
+import { hasPermission, isTenantBuiltInAdminRole } from "@repo/rbac";
 import {
   defineEntityFromRecord,
   type FieldDefinitionRecord,
@@ -31,6 +31,7 @@ import {
 
 import { checkRecordAccess } from "../access/record-access.js";
 import { requireRequestTenant } from "../auth/resolve-target-tenant-id.js";
+import type { RequestContext } from "../auth/request-context.js";
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
@@ -99,6 +100,35 @@ function fieldTypeForMeta(type: string): EntityFileFieldType | null {
   return null;
 }
 
+function canWriteEntityUiOverride(ctx: RequestContext): boolean {
+  return (
+    ctx.isSuperAdmin === true ||
+    isTenantBuiltInAdminRole(ctx.tenantRoleNames) ||
+    ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS.some((permission) =>
+      hasPermission(permission, ctx.permissions ?? [], {
+        isSuperAdmin: ctx.isSuperAdmin,
+      }),
+    )
+  );
+}
+
+function canReadEntityUiLayoutFile(
+  ctx: RequestContext,
+  entityName: string,
+): boolean {
+  const permissions = ctx.permissions ?? [];
+  const permissionOptions = { isSuperAdmin: ctx.isSuperAdmin };
+
+  return (
+    ctx.isSuperAdmin === true ||
+    isTenantBuiltInAdminRole(ctx.tenantRoleNames) ||
+    hasPermission(`${entityName}.read`, permissions, permissionOptions) ||
+    ENTITY_UI_OVERRIDE_PERMISSIONS.some((permission) =>
+      hasPermission(permission, permissions, permissionOptions),
+    )
+  );
+}
+
 async function resolveUploadFileFieldMeta(
   entityRuntime: EntityRuntimeContext,
   tenantId: string,
@@ -146,9 +176,11 @@ export function registerEntityFileRoutes(
       if (!tenantId || !request.ctx) {
         return;
       }
-      const ctx = request.ctx;
 
       await loadRequestPermissions(request, options.permissionDeps);
+      if (!request.ctx) {
+        return;
+      }
 
       const parsedBody = uploadBodySchema.safeParse(request.body);
       if (!parsedBody.success) {
@@ -233,14 +265,7 @@ export function registerEntityFileRoutes(
       }
 
       if (isLayoutStaticUpload) {
-        const canUploadLayoutStatic =
-          ctx.isSuperAdmin ||
-          ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS.some((permission) =>
-            hasPermission(permission, ctx.permissions ?? [], {
-              isSuperAdmin: ctx.isSuperAdmin,
-            }),
-          );
-        if (!canUploadLayoutStatic) {
+        if (!canWriteEntityUiOverride(request.ctx)) {
           return replyWithError(
             reply,
             403,
@@ -587,7 +612,6 @@ export function registerEntityFileRoutes(
       if (!tenantId || !request.ctx) {
         return;
       }
-      const ctx = request.ctx;
 
       const parsedQuery = downloadStorageQuerySchema.safeParse(request.query);
       if (!parsedQuery.success) {
@@ -616,20 +640,11 @@ export function registerEntityFileRoutes(
       }
 
       await loadRequestPermissions(request, options.permissionDeps);
-      const permissions = ctx.permissions ?? [];
-      const readPermission = `${query.entityName}.read`;
-      const canReadLayoutFile =
-        ctx.isSuperAdmin ||
-        hasPermission(readPermission, permissions, {
-          isSuperAdmin: ctx.isSuperAdmin,
-        }) ||
-        ENTITY_UI_OVERRIDE_PERMISSIONS.some((permission) =>
-          hasPermission(permission, permissions, {
-            isSuperAdmin: ctx.isSuperAdmin,
-          }),
-        );
+      if (!request.ctx) {
+        return;
+      }
 
-      if (!canReadLayoutFile) {
+      if (!canReadEntityUiLayoutFile(request.ctx, query.entityName)) {
         return replyWithError(
           reply,
           403,
