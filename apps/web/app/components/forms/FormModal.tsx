@@ -1,6 +1,11 @@
 import type { ReactNode } from "react";
 
-import { Modal, type ModalContentPadding, type ModalProps } from "@repo/ui";
+import {
+  Modal,
+  type ModalContentPadding,
+  type ModalProps,
+  type ModalVariant,
+} from "@repo/ui";
 
 interface FormModalProps {
   readonly open: boolean;
@@ -15,6 +20,7 @@ interface FormModalProps {
   readonly contentPadding?: ModalContentPadding;
   readonly closeLabel?: string;
   readonly layer?: ModalProps["layer"];
+  readonly variant?: ModalVariant;
 }
 
 export function FormModal({
@@ -30,6 +36,7 @@ export function FormModal({
   contentPadding = "default",
   closeLabel,
   layer = "default",
+  variant = "overlay",
 }: FormModalProps) {
   return (
     <Modal
@@ -44,6 +51,7 @@ export function FormModal({
       contentPadding={contentPadding}
       closeLabel={closeLabel}
       layer={layer}
+      variant={variant}
     >
       {children}
     </Modal>

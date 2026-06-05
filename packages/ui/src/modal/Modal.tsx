@@ -18,6 +18,8 @@ import {
 
 export type ModalContentPadding = "default" | "none";
 
+export type ModalVariant = "overlay" | "inline";
+
 export interface ModalProps {
   readonly open: boolean;
   readonly onClose: () => void;
@@ -31,6 +33,8 @@ export interface ModalProps {
   readonly contentPadding?: ModalContentPadding;
   readonly closeLabel?: string;
   readonly layer?: "default" | "nested";
+  /** Inline renders the dialog panel in place without a portal or backdrop. */
+  readonly variant?: ModalVariant;
 }
 
 const panelSizeClasses = {
@@ -54,6 +58,7 @@ function ModalPanel({
   closeLabel,
   onClose,
   panelRef,
+  embedded = false,
 }: {
   readonly titleId: string;
   readonly title: string;
@@ -67,18 +72,19 @@ function ModalPanel({
   readonly closeLabel: string;
   readonly onClose: () => void;
   readonly panelRef: RefObject<HTMLDivElement | null>;
+  readonly embedded?: boolean;
 }) {
   const visible = useOverlayTransitionVisible();
   const durationMs = useOverlayTransitionDurationMs();
-  const animate = durationMs > 0;
+  const animate = !embedded && durationMs > 0;
   const useStickyLayout = scrollable || Boolean(footer);
   const flushContent = contentPadding === "none";
 
   return (
     <div
       ref={panelRef}
-      role="dialog"
-      aria-modal="true"
+      role={embedded ? "region" : "dialog"}
+      aria-modal={embedded ? undefined : true}
       aria-labelledby={titleId}
       className={cn(
         "border-border bg-popover text-popover-foreground pointer-events-auto relative flex w-full origin-center flex-col rounded-xl border shadow-xl",
@@ -154,9 +160,11 @@ export function Modal({
   contentPadding = "default",
   closeLabel = "Close dialog",
   layer = "default",
+  variant = "overlay",
 }: ModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
+  const embedded = variant === "inline";
 
   const focusPanel = useCallback(() => {
     const focusable = panelRef.current?.querySelector<HTMLElement>(
@@ -164,6 +172,33 @@ export function Modal({
     );
     focusable?.focus();
   }, []);
+
+  const panel = (
+    <ModalPanel
+      titleId={titleId}
+      title={title}
+      footer={footer}
+      size={size}
+      scrollable={scrollable}
+      showHeader={showHeader}
+      showCloseButton={showCloseButton}
+      contentPadding={contentPadding}
+      closeLabel={closeLabel}
+      onClose={onClose}
+      panelRef={panelRef}
+      embedded={embedded}
+    >
+      {children}
+    </ModalPanel>
+  );
+
+  if (embedded) {
+    if (!open) {
+      return null;
+    }
+
+    return <div className="w-full">{panel}</div>;
+  }
 
   return (
     <OverlayRoot
@@ -174,21 +209,7 @@ export function Modal({
       contentClassName="flex items-center justify-center p-4"
       focusPanel={focusPanel}
     >
-      <ModalPanel
-        titleId={titleId}
-        title={title}
-        footer={footer}
-        size={size}
-        scrollable={scrollable}
-        showHeader={showHeader}
-        showCloseButton={showCloseButton}
-        contentPadding={contentPadding}
-        closeLabel={closeLabel}
-        onClose={onClose}
-        panelRef={panelRef}
-      >
-        {children}
-      </ModalPanel>
+      {panel}
     </OverlayRoot>
   );
 }

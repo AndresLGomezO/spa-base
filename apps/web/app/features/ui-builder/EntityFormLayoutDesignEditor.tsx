@@ -395,12 +395,13 @@ export function EntityFormLayoutDesignEditor({
             {t("entity.viewSettings.preview")}
           </Text>
           <FormModal
+            variant="inline"
             open
             onClose={() => undefined}
             title={t("entity.viewSettings.preview")}
             size={editor.modalSize}
             showHeader={editor.modalChrome.showHeader}
-            showCloseButton={editor.modalChrome.showHeader}
+            showCloseButton={false}
             contentPadding={editor.modalChrome.contentPadding}
             footer={usesDesignedModalFooter ? previewFooter : undefined}
           >

@@ -20,6 +20,7 @@ export {
   Modal,
   type ModalContentPadding,
   type ModalProps,
+  type ModalVariant,
 } from "./modal/Modal";
 export {
   PhotoUpload,
