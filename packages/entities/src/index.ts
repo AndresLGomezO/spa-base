@@ -154,6 +154,12 @@ export {
   type PutEntityUiOverrideInput,
 } from "./ui/entity-ui-override-schema.js";
 export {
+  FIRESTORE_MAX_DOCUMENT_DEPTH,
+  SERIALIZED_LAYOUT_MARKER,
+  deserializeDeepValuesFromFirestore,
+  serializeDeepValuesForFirestore,
+} from "./ui/firestore-layout-serialization.js";
+export {
   ENTITY_UI_OVERRIDE_PERMISSIONS,
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   type EntityUiOverridePermission,
