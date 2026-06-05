@@ -896,6 +896,11 @@ export async function putEntityUiOverride(
     readonly forms?: {
       readonly presentation?: "plain" | "wizard";
       readonly modalSize?: "sm" | "md" | "lg" | "xl" | "2xl";
+      readonly modalChrome?: {
+        readonly showHeader?: boolean;
+        readonly contentPadding?: "default" | "none";
+      };
+      readonly modalFooterLayout?: import("@repo/ui-builder-core").UiLayoutDocument;
       readonly layout?: import("@repo/ui-builder-core").UiLayoutDocument;
       readonly wizard?: {
         readonly shellLayout: import("@repo/ui-builder-core").UiLayoutDocument;

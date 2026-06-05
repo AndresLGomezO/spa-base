@@ -57,6 +57,9 @@ function mergeUiOverridePutInput(
     incomingForms?.presentation ?? existingForms?.presentation;
   const wizard = incomingForms?.wizard ?? existingForms?.wizard;
   const modalSize = incomingForms?.modalSize ?? existingForms?.modalSize;
+  const modalChrome = incomingForms?.modalChrome ?? existingForms?.modalChrome;
+  const modalFooterLayout =
+    incomingForms?.modalFooterLayout ?? existingForms?.modalFooterLayout;
 
   const forms =
     plainLayout ||
@@ -64,12 +67,16 @@ function mergeUiOverridePutInput(
     wizard ||
     createLayout ||
     editLayout ||
-    modalSize
+    modalSize ||
+    modalChrome ||
+    modalFooterLayout
       ? {
           ...(presentation ? { presentation } : {}),
           ...(plainLayout ? { layout: plainLayout } : {}),
           ...(wizard ? { wizard } : {}),
           ...(modalSize ? { modalSize } : {}),
+          ...(modalChrome ? { modalChrome } : {}),
+          ...(modalFooterLayout ? { modalFooterLayout } : {}),
           ...(createLayout && !plainLayout ? { create: createLayout } : {}),
           ...(editLayout && !plainLayout ? { edit: editLayout } : {}),
         }
@@ -225,11 +232,20 @@ export async function registerEntityUiOverrideRoutes(
         | undefined;
       const modalSize =
         overrideForms?.modalSize ?? serialized.ui.forms.modalSize;
+      const modalChrome =
+        overrideForms?.modalChrome ?? serialized.ui.forms.modalChrome;
+      const modalFooterLayout =
+        overrideForms?.modalFooterLayout ??
+        serialized.ui.forms.modalFooterLayout;
 
       const mergedForms: EntityUIConfig["forms"] = {
         ...(presentation ? { presentation } : {}),
         ...(wizard ? { wizard } : {}),
         ...(modalSize ? { modalSize } : {}),
+        ...(modalChrome ? { modalChrome } : {}),
+        ...(modalFooterLayout
+          ? { modalFooterLayout: modalFooterLayout as UiLayoutDocument }
+          : {}),
         create: {
           ...serialized.ui.forms.create,
           ...(sharedPlainLayout && presentation !== "wizard"

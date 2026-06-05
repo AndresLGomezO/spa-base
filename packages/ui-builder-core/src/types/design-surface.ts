@@ -11,6 +11,7 @@ export type DesignSurface =
   | "formPlain"
   | "formWizardShell"
   | "formWizardStep"
+  | "formModalFooter"
   | "metricStrip";
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
@@ -61,6 +62,11 @@ const FORM_WIZARD_STEP_KINDS: readonly UiComponentKind[] = [
   "badge",
 ];
 
+const FORM_MODAL_FOOTER_KINDS: readonly UiComponentKind[] = [
+  "form-actions",
+  "wizard-actions",
+];
+
 export function componentKindsForSurface(
   surface: DesignSurface,
 ): readonly UiComponentKind[] {
@@ -82,6 +88,8 @@ export function componentKindsForSurface(
       return FORM_WIZARD_SHELL_KINDS;
     case "formWizardStep":
       return FORM_WIZARD_STEP_KINDS;
+    case "formModalFooter":
+      return FORM_MODAL_FOOTER_KINDS;
   }
 }
 

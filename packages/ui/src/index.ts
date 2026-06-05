@@ -16,7 +16,11 @@ export { Card, type CardProps } from "./card/Card";
 export { cardVariants, type CardVariant } from "./card/card.variants";
 export { IconButton, type IconButtonProps } from "./icon-button/IconButton";
 export { Logo, type LogoProps } from "./logo/Logo";
-export { Modal, type ModalProps } from "./modal/Modal";
+export {
+  Modal,
+  type ModalContentPadding,
+  type ModalProps,
+} from "./modal/Modal";
 export {
   PhotoUpload,
   type PhotoUploadLabels,

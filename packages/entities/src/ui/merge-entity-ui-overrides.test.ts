@@ -92,6 +92,25 @@ describe("mergeEntityUiOverrides", () => {
     expect(merged.ui.forms.modalSize).toBe("xl");
   });
 
+  it("applies forms.modalChrome and modalFooterLayout", () => {
+    const footerLayout = createDefaultUiLayout(["name"]);
+    const merged = mergeEntityUiOverrides(baseDefinition, {
+      entityName: "widget",
+      views: baseDefinition.ui.views,
+      forms: {
+        modalChrome: { showHeader: false, contentPadding: "none" },
+        modalFooterLayout: footerLayout,
+      },
+      updatedAt: new Date().toISOString(),
+    });
+
+    expect(merged.ui.forms.modalChrome).toEqual({
+      showHeader: false,
+      contentPadding: "none",
+    });
+    expect(merged.ui.forms.modalFooterLayout).toEqual(footerLayout);
+  });
+
   it("applies unified forms.layout to both create and edit", () => {
     const shared = createDefaultUiLayout(["name"]);
     const merged = mergeEntityUiOverrides(baseDefinition, {

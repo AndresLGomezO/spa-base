@@ -1,12 +1,15 @@
 import type { ReactNode } from "react";
 import {
   buildGridTemplateColumnsFromPercents,
+  columnFlexBasisStyle,
   componentSlotWrapperClassName,
+  flexWrapClassFromStyles,
   gapPxFromStyles,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
   resolveColumnWidthPercents,
   resolveStyleRules,
+  usesFlexWrapLayout,
   type ColumnNode,
   type ColumnStackDirection,
   type RowNode,
@@ -37,7 +40,10 @@ function renderRows(
       className={[
         "flex min-h-0 w-full min-w-0 flex-1",
         stackDirection === "column" ? "flex-col" : "flex-row",
-      ].join(" ")}
+        flexWrapClassFromStyles(column.styles),
+      ]
+        .filter(Boolean)
+        .join(" ")}
       align={columnFlex.align}
       justify={columnFlex.justify}
     >
@@ -57,6 +63,50 @@ function rowStackShellClassName(
   stackDirection: ColumnStackDirection,
 ): string | undefined {
   return stackDirection === "row" ? "min-w-0 shrink-0" : undefined;
+}
+
+function renderWrappedColumns(
+  columns: readonly ColumnNode[],
+  context: LayoutRenderContext,
+  styles: readonly import("@repo/ui-builder-core").StyleRule[] | undefined,
+): ReactNode {
+  const percents = resolveColumnWidthPercents(columns);
+  const gap = gapPxFromStyles(styles);
+
+  return (
+    <LayoutStack
+      direction="row"
+      gap={gap}
+      className={["flex w-full min-w-0", flexWrapClassFromStyles(styles)]
+        .filter(Boolean)
+        .join(" ")}
+      align="stretch"
+    >
+      {columns.map((column, index) => {
+        if (column.rows.length === 0) {
+          return null;
+        }
+
+        const columnStyles = resolveStyleRules(column.styles);
+        const flexBasis = columnFlexBasisStyle(percents[index] ?? 0);
+
+        return (
+          <div
+            key={column.id}
+            className={[COLUMN_SHELL_CLASS, columnStyles.className]
+              .filter(Boolean)
+              .join(" ")}
+            style={{
+              ...columnStyles.style,
+              ...flexBasis,
+            }}
+          >
+            {renderRows(column.rows, context, column)}
+          </div>
+        );
+      })}
+    </LayoutStack>
+  );
 }
 
 function renderRow(
@@ -89,6 +139,20 @@ function renderRow(
   }
 
   const rowStyles = resolveStyleRules(row.styles);
+  if (usesFlexWrapLayout(row.styles)) {
+    return (
+      <div
+        key={row.id}
+        className={[stackShellClass, rowStyles.className]
+          .filter(Boolean)
+          .join(" ")}
+        style={rowStyles.style}
+      >
+        {renderWrappedColumns(row.columns, context, row.styles)}
+      </div>
+    );
+  }
+
   return (
     <div
       key={row.id}
@@ -147,6 +211,20 @@ export function RecursiveLayoutRenderer({
 }: RecursiveLayoutRendererProps): ReactNode {
   const rootStyles = resolveStyleRules(layout.root.styles, className);
   const rootMotionClass = resolveMotionPreset(layout.motion);
+
+  if (usesFlexWrapLayout(layout.root.styles)) {
+    return (
+      <div
+        className={[rootStyles.className, rootMotionClass]
+          .filter(Boolean)
+          .join(" ")}
+        style={rootStyles.style}
+      >
+        {renderWrappedColumns(layout.root.columns, context, layout.root.styles)}
+      </div>
+    );
+  }
+
   return (
     <div
       className={[rootStyles.className, rootMotionClass]

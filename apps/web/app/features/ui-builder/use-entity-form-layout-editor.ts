@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  createDefaultModalFooterLayout,
   createDefaultWizardFormConfig,
   createDefaultWizardStepLayout,
   createLayoutId,
@@ -9,10 +10,13 @@ import {
 import {
   createDefaultFormLayout,
   normalizeEntityViews,
+  resolveFormModalChrome,
+  resolveFormModalFooterLayout,
   resolveFormModalSize,
   resolveFormPresentation,
   resolvePlainFormLayout,
   resolveWizardForm,
+  type FormModalChrome,
   type FormModalSize,
   type FormPresentation,
   type WizardFormConfig,
@@ -37,6 +41,12 @@ function preserveViews(definition: ReturnType<typeof useEntityDefinition>) {
   return [...definition.ui.views];
 }
 
+function defaultModalFooterActionKind(
+  presentation: FormPresentation,
+): "form-actions" | "wizard-actions" {
+  return presentation === "wizard" ? "wizard-actions" : "form-actions";
+}
+
 export function useEntityFormLayoutEditor(entityName: EntityName) {
   const definition = useEntityDefinition(entityName);
   const queryClient = useQueryClient();
@@ -52,6 +62,12 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   const [modalSize, setModalSize] = useState<FormModalSize>(() =>
     resolveFormModalSize(definition),
   );
+  const [modalChrome, setModalChrome] = useState<FormModalChrome>(() =>
+    resolveFormModalChrome(definition),
+  );
+  const [modalFooterLayout, setModalFooterLayout] = useState<
+    UiLayoutDocument | undefined
+  >(() => resolveFormModalFooterLayout(definition));
   const [plainLayout, setPlainLayout] = useState<UiLayoutDocument>(
     () =>
       resolvePlainFormLayout(definition).layout ??
@@ -61,9 +77,12 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     const initial =
       resolveWizardForm(definition) ??
       createDefaultWizardFormConfig(fieldPaths);
+    const footerLayout = resolveFormModalFooterLayout(definition);
     return {
       ...initial,
-      shellLayout: ensureWizardShellLayout(initial.shellLayout),
+      shellLayout: ensureWizardShellLayout(initial.shellLayout, {
+        actionsInModalFooter: footerLayout != null,
+      }),
     };
   });
   const [selectedStepIndex, setSelectedStepIndex] = useState(0);
@@ -73,6 +92,8 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   useEffect(() => {
     setPresentation(resolveFormPresentation(definition));
     setModalSize(resolveFormModalSize(definition));
+    setModalChrome(resolveFormModalChrome(definition));
+    setModalFooterLayout(resolveFormModalFooterLayout(definition));
     const resolvedPlain = resolvePlainFormLayout(definition).layout;
     if (resolvedPlain) {
       setPlainLayout(resolvedPlain);
@@ -82,9 +103,12 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     const resolvedWizard =
       resolveWizardForm(definition) ??
       createDefaultWizardFormConfig(fieldPaths);
+    const footerLayout = resolveFormModalFooterLayout(definition);
     setWizard({
       ...resolvedWizard,
-      shellLayout: ensureWizardShellLayout(resolvedWizard.shellLayout),
+      shellLayout: ensureWizardShellLayout(resolvedWizard.shellLayout, {
+        actionsInModalFooter: footerLayout != null,
+      }),
     });
     setLayoutEditorKey((current) => current + 1);
   }, [definition, fieldPaths]);
@@ -158,6 +182,43 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     });
   }, []);
 
+  const setShowModalHeader = useCallback((showHeader: boolean) => {
+    setModalChrome((current) => ({ ...current, showHeader }));
+  }, []);
+
+  const setFlushModalContent = useCallback((flushContent: boolean) => {
+    setModalChrome((current) => ({
+      ...current,
+      contentPadding: flushContent ? "none" : "default",
+    }));
+  }, []);
+
+  const enableModalFooterLayout = useCallback(() => {
+    setModalFooterLayout(
+      (current) =>
+        current ??
+        createDefaultModalFooterLayout(
+          defaultModalFooterActionKind(presentation),
+        ),
+    );
+    setWizard((current) => ({
+      ...current,
+      shellLayout: ensureWizardShellLayout(current.shellLayout, {
+        actionsInModalFooter: true,
+      }),
+    }));
+  }, [presentation]);
+
+  const disableModalFooterLayout = useCallback(() => {
+    setModalFooterLayout(undefined);
+    setWizard((current) => ({
+      ...current,
+      shellLayout: ensureWizardShellLayout(current.shellLayout, {
+        actionsInModalFooter: false,
+      }),
+    }));
+  }, []);
+
   const save = useCallback(async (): Promise<string | null> => {
     setIsSaving(true);
     try {
@@ -173,13 +234,22 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
         presentation === "wizard"
           ? {
               ...wizard,
-              shellLayout: ensureWizardShellLayout(wizard.shellLayout),
+              shellLayout: ensureWizardShellLayout(wizard.shellLayout, {
+                actionsInModalFooter: modalFooterLayout != null,
+              }),
             }
           : wizard;
+
+      const shouldPersistModalChrome =
+        modalChrome.showHeader !== true ||
+        modalChrome.contentPadding !== "default" ||
+        definition.ui.forms.modalChrome != null;
 
       const formsPayload = {
         presentation,
         modalSize,
+        ...(shouldPersistModalChrome ? { modalChrome } : {}),
+        ...(modalFooterLayout ? { modalFooterLayout } : {}),
         ...(presentation === "wizard"
           ? { wizard: wizardToSave }
           : { layout: plainLayout }),
@@ -202,8 +272,10 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   }, [
     definition,
     entityName,
-    plainLayout,
+    modalChrome,
+    modalFooterLayout,
     modalSize,
+    plainLayout,
     presentation,
     queryClient,
     wizard,
@@ -216,6 +288,13 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     defaultFieldPath,
     modalSize,
     setModalSize,
+    modalChrome,
+    setShowModalHeader,
+    setFlushModalContent,
+    modalFooterLayout,
+    setModalFooterLayout,
+    enableModalFooterLayout,
+    disableModalFooterLayout,
     presentation,
     setPresentation,
     plainLayout,
@@ -225,7 +304,9 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     setShellLayout: (shellLayout: UiLayoutDocument) =>
       setWizard((current) => ({
         ...current,
-        shellLayout: ensureWizardShellLayout(shellLayout),
+        shellLayout: ensureWizardShellLayout(shellLayout, {
+          actionsInModalFooter: modalFooterLayout != null,
+        }),
       })),
     selectedStepIndex,
     setSelectedStepIndex,

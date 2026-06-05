@@ -17,6 +17,7 @@ export interface CardFieldValueProps {
   readonly valueClassName?: string;
   readonly labelClassName?: string;
   readonly textSize?: number;
+  readonly valueStyle?: CSSProperties;
   readonly textColor?: CardTextColor;
   readonly textThin?: boolean;
   readonly textBold?: boolean;
@@ -35,6 +36,7 @@ export function CardFieldValue({
   valueClassName,
   labelClassName,
   textSize,
+  valueStyle,
   textColor,
   textThin,
   textBold,
@@ -71,11 +73,12 @@ export function CardFieldValue({
         textUnderline && "underline",
         valueClassName,
       )}
-      style={
-        resolvedTextSize !== undefined
+      style={{
+        ...(resolvedTextSize !== undefined
           ? { fontSize: resolvedTextSize }
-          : undefined
-      }
+          : {}),
+        ...valueStyle,
+      }}
     >
       {displayValue}
     </span>

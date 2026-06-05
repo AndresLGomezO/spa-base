@@ -44,6 +44,8 @@ const stylePropertySchema = z.enum([
   "borderRadius",
   "borderWidth",
   "borderColor",
+  "borderStyle",
+  "flexWrap",
   "overflowX",
   "overflowY",
 ]);

@@ -22,12 +22,21 @@ const wizardFormConfigSchema = z
   })
   .strict();
 
+const formModalChromeSchema = z
+  .object({
+    showHeader: z.boolean().optional(),
+    contentPadding: z.enum(["default", "none"]).optional(),
+  })
+  .strict();
+
 const uiOverrideFormsSchema = z
   .object({
     presentation: z.enum(["plain", "wizard"]).optional(),
     layout: uiLayoutDocumentSchema.optional(),
     wizard: wizardFormConfigSchema.optional(),
     modalSize: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+    modalChrome: formModalChromeSchema.optional(),
+    modalFooterLayout: uiLayoutDocumentSchema.optional(),
     create: uiLayoutDocumentSchema.optional(),
     edit: uiLayoutDocumentSchema.optional(),
   })

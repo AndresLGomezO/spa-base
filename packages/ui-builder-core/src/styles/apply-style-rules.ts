@@ -1,4 +1,5 @@
 import type { StyleRule, StylePropertyKey, ThemeToken } from "./style-types.js";
+import { isCssColorValue, isThemeTokenValue } from "./color-values.js";
 import {
   themeTokenBackgroundClass,
   themeTokenBorderClass,
@@ -24,6 +25,14 @@ export interface LayoutInlineStyle extends SpacingInlineStyle {
   maxWidth?: string;
   borderWidth?: string;
   borderStyle?: string;
+  borderColor?: string;
+  backgroundColor?: string;
+  color?: string;
+}
+
+export interface TextInlineStyle {
+  fontSize?: string;
+  color?: string;
 }
 
 const TEXT_STYLE_PROPERTIES = new Set<StylePropertyKey>([
@@ -34,6 +43,12 @@ const TEXT_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   "textAlign",
 ]);
 
+const COLOR_STYLE_PROPERTIES = new Set<StylePropertyKey>([
+  "backgroundColor",
+  "color",
+  "borderColor",
+]);
+
 /** Pixel font size from style rules; applied via inline `fontSize`, not Tailwind. */
 export const FONT_SIZE_STYLE_PROPERTY: StylePropertyKey = "fontSize";
 
@@ -42,6 +57,7 @@ export const FLEX_LAYOUT_PROPERTIES = new Set<StylePropertyKey>([
   "alignItems",
   "justifyContent",
   "alignSelf",
+  "flexWrap",
 ]);
 
 /** Applied by layout primitives (`LayoutGrid` / `LayoutStack`), not wrapper classNames. */
@@ -74,25 +90,19 @@ const PIXEL_INLINE_STYLE_PROPERTIES = new Set<StylePropertyKey>([
 
 export type FlexAlign = "start" | "center" | "end" | "stretch";
 export type FlexJustify = "start" | "center" | "end" | "between";
+export type FlexWrap = "nowrap" | "wrap" | "wrap-reverse";
 
 function isThemeToken(value: string): value is ThemeToken {
-  return (
-    value === "default" ||
-    value === "muted" ||
-    value === "primary" ||
-    value === "success" ||
-    value === "warning" ||
-    value === "danger" ||
-    value === "info" ||
-    value === "background" ||
-    value === "foreground" ||
-    value === "transparent"
-  );
+  return isThemeTokenValue(value);
 }
 
 function ruleToClass(rule: StyleRule): string | undefined {
   const { property, value } = rule;
   const raw = String(value);
+
+  if (COLOR_STYLE_PROPERTIES.has(property) && isCustomColorRule(rule)) {
+    return undefined;
+  }
 
   if (property === "backgroundColor" && isThemeToken(raw)) {
     return themeTokenBackgroundClass(raw);
@@ -149,6 +159,12 @@ function ruleToClass(rule: StyleRule): string | undefined {
     if (raw === "stretch") return "self-stretch";
   }
 
+  if (property === "flexWrap") {
+    if (raw === "wrap") return "flex-wrap";
+    if (raw === "wrap-reverse") return "flex-wrap-reverse";
+    if (raw === "nowrap") return "flex-nowrap";
+  }
+
   if (property === "gap") {
     const px = Number.parseInt(raw, 10);
     if (Number.isFinite(px)) {
@@ -175,6 +191,10 @@ function ruleToClass(rule: StyleRule): string | undefined {
   }
 
   return undefined;
+}
+
+function isCustomColorRule(rule: StyleRule): boolean {
+  return isCssColorValue(String(rule.value));
 }
 
 function classesFromRules(
@@ -216,9 +236,17 @@ function parseFlexJustify(value: string): FlexJustify | undefined {
   return undefined;
 }
 
+function parseFlexWrap(value: string): FlexWrap | undefined {
+  if (value === "nowrap" || value === "wrap" || value === "wrap-reverse") {
+    return value;
+  }
+  return undefined;
+}
+
 export interface FlexLayoutFromStyles {
   readonly align?: FlexAlign;
   readonly justify?: FlexJustify;
+  readonly wrap?: FlexWrap;
   readonly selfClassName: string;
   readonly slotFlexClassName: string;
 }
@@ -228,6 +256,7 @@ export function parseFlexLayoutFromStyles(
 ): FlexLayoutFromStyles {
   let align: FlexAlign | undefined;
   let justify: FlexJustify | undefined;
+  let wrap: FlexWrap | undefined;
   const selfClasses: string[] = [];
   const slotFlexClasses: string[] = [];
 
@@ -241,6 +270,12 @@ export function parseFlexLayoutFromStyles(
       }
     } else if (rule.property === "justifyContent") {
       justify = parseFlexJustify(raw) ?? justify;
+      const cls = ruleToClass(rule);
+      if (cls) {
+        slotFlexClasses.push(cls);
+      }
+    } else if (rule.property === "flexWrap") {
+      wrap = parseFlexWrap(raw) ?? wrap;
       const cls = ruleToClass(rule);
       if (cls) {
         slotFlexClasses.push(cls);
@@ -261,9 +296,30 @@ export function parseFlexLayoutFromStyles(
   return {
     align,
     justify,
+    wrap,
     selfClassName: selfClasses.join(" "),
     slotFlexClassName,
   };
+}
+
+export function usesFlexWrapLayout(
+  styles: readonly StyleRule[] | undefined,
+): boolean {
+  const wrap = parseFlexLayoutFromStyles(styles).wrap;
+  return wrap === "wrap" || wrap === "wrap-reverse";
+}
+
+export function flexWrapClassFromStyles(
+  styles: readonly StyleRule[] | undefined,
+): string {
+  const wrap = parseFlexLayoutFromStyles(styles).wrap;
+  if (wrap === "wrap") {
+    return "flex-wrap";
+  }
+  if (wrap === "wrap-reverse") {
+    return "flex-wrap-reverse";
+  }
+  return "";
 }
 
 export function componentSlotWrapperClassName(
@@ -288,6 +344,24 @@ export function fontSizePxFromStyles(
   return Number.isFinite(px) && px > 0 ? px : undefined;
 }
 
+/** Inline text styles for card field values (custom colors + font size). */
+export function textInlineStyleFromStyleRules(
+  styles: readonly StyleRule[] | undefined,
+): TextInlineStyle {
+  const style: TextInlineStyle = {};
+  const fontSizePx = fontSizePxFromStyles(styles);
+  if (fontSizePx !== undefined) {
+    style.fontSize = `${fontSizePx}px`;
+  }
+
+  const colorRule = styles?.find((rule) => rule.property === "color");
+  if (colorRule && isCustomColorRule(colorRule)) {
+    style.color = String(colorRule.value).trim();
+  }
+
+  return style;
+}
+
 /** Pixel gap for `LayoutGrid` / `LayoutStack`; defaults to 0 when no `gap` style rule. */
 export function gapPxFromStyles(
   styles: readonly StyleRule[] | undefined,
@@ -299,6 +373,32 @@ export function gapPxFromStyles(
 
   const px = Number.parseInt(String(gapRule.value), 10);
   return Number.isFinite(px) && px >= 0 ? px : 0;
+}
+
+function applyCustomColorRules(
+  styles: readonly StyleRule[] | undefined,
+  style: LayoutInlineStyle,
+): void {
+  for (const rule of styles ?? []) {
+    if (!isCustomColorRule(rule)) {
+      continue;
+    }
+
+    const value = String(rule.value).trim();
+    switch (rule.property) {
+      case "backgroundColor":
+        style.backgroundColor = value;
+        break;
+      case "color":
+        style.color = value;
+        break;
+      case "borderColor":
+        style.borderColor = value;
+        break;
+      default:
+        break;
+    }
+  }
 }
 
 /** Inline margin/padding from style rules. */
@@ -369,30 +469,42 @@ export function layoutInlineStyleFromStyleRules(
 
   for (const rule of styles ?? []) {
     const px = parseNonNegativePx(rule.value);
-    if (px === undefined) {
-      continue;
+    if (px !== undefined) {
+      switch (rule.property) {
+        case "borderRadius":
+          style.borderRadius = `${px}px`;
+          break;
+        case "minWidth":
+          style.minWidth = `${px}px`;
+          break;
+        case "maxWidth":
+          style.maxWidth = `${px}px`;
+          break;
+        case "borderWidth":
+          if (px > 0) {
+            style.borderWidth = `${px}px`;
+            style.borderStyle = style.borderStyle ?? "solid";
+          }
+          break;
+        default:
+          break;
+      }
     }
 
-    switch (rule.property) {
-      case "borderRadius":
-        style.borderRadius = `${px}px`;
-        break;
-      case "minWidth":
-        style.minWidth = `${px}px`;
-        break;
-      case "maxWidth":
-        style.maxWidth = `${px}px`;
-        break;
-      case "borderWidth":
-        if (px > 0) {
-          style.borderWidth = `${px}px`;
-          style.borderStyle = style.borderStyle ?? "solid";
-        }
-        break;
-      default:
-        break;
+    if (rule.property === "borderStyle") {
+      const raw = String(rule.value);
+      if (
+        raw === "solid" ||
+        raw === "dashed" ||
+        raw === "dotted" ||
+        raw === "none"
+      ) {
+        style.borderStyle = raw;
+      }
     }
   }
+
+  applyCustomColorRules(styles, style);
 
   return style;
 }
@@ -457,8 +569,10 @@ export function splitStyleRuleClasses(
       !LAYOUT_CONTAINER_PROPERTIES.has(rule.property) &&
       !PIXEL_INLINE_STYLE_PROPERTIES.has(rule.property),
   );
-  const text = classesFromRules(styles, (rule) =>
-    TEXT_STYLE_PROPERTIES.has(rule.property),
+  const text = classesFromRules(
+    styles,
+    (rule) =>
+      TEXT_STYLE_PROPERTIES.has(rule.property) && !isCustomColorRule(rule),
   );
 
   return {
@@ -472,4 +586,14 @@ export function applyStyleRules(
   className?: string,
 ): string {
   return resolveStyleRules(styles, className).className;
+}
+
+export function columnFlexBasisStyle(percent: number): {
+  readonly flex: string;
+  readonly minWidth: string;
+} {
+  return {
+    flex: `1 1 ${percent}%`,
+    minWidth: `min(${percent}%, 100%)`,
+  };
 }

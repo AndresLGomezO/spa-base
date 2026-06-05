@@ -39,6 +39,11 @@ export {
 } from "./types/component.js";
 export { createDefaultMainPageLayout } from "./layout/default-main-page-layout.js";
 export { createDefaultFormLayout } from "./layout/default-form-layout.js";
+export { createDefaultModalFooterLayout } from "./layout/default-modal-footer-layout.js";
+export {
+  findLayoutComponent,
+  layoutHasComponentKind,
+} from "./layout/find-layout-component.js";
 export {
   createDefaultWizardShellLayout,
   createDefaultWizardStepLayout,
@@ -86,17 +91,27 @@ export type {
 } from "./styles/style-types.js";
 export { STYLE_PROPERTY_OPTIONS } from "./styles/style-types.js";
 export {
+  isCssColorValue,
+  isCustomColorValue,
+  isThemeTokenValue,
+} from "./styles/color-values.js";
+export {
   applyStyleRules,
   resolveStyleRules,
   resolvePageSlotWrapper,
   spacingStyleFromStyleRules,
   layoutInlineStyleFromStyleRules,
+  textInlineStyleFromStyleRules,
   type LayoutInlineStyle,
+  type TextInlineStyle,
   SPACING_STYLE_PROPERTIES,
   splitStyleRuleClasses,
   type ResolvedStyleRules,
   type SpacingInlineStyle,
   parseFlexLayoutFromStyles,
+  usesFlexWrapLayout,
+  flexWrapClassFromStyles,
+  columnFlexBasisStyle,
   componentSlotWrapperClassName,
   gapPxFromStyles,
   fontSizePxFromStyles,
@@ -107,6 +122,7 @@ export {
   type FlexLayoutFromStyles,
   type FlexAlign,
   type FlexJustify,
+  type FlexWrap,
 } from "./styles/apply-style-rules.js";
 export {
   resolveMetricKpiPresentation,

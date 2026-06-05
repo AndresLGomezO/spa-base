@@ -1,4 +1,12 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+import {
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
+import type { UiLayoutDocument } from "@repo/ui-builder-core";
 import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
@@ -36,6 +44,7 @@ import {
   getJoinRelationFieldNames,
   splitEntityFormPayload,
 } from "./entity-form-payload";
+import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
 
 export { ENTITY_FORM_ID } from "./entity-form-constants";
 
@@ -46,6 +55,10 @@ interface EntityFormProps {
   readonly onCancel: () => void;
   readonly onSuccess?: () => void;
   readonly hideActions?: boolean;
+  readonly modalActionPlacement?: "inline" | "footer";
+  readonly modalFooterLayout?: UiLayoutDocument;
+  readonly flushContent?: boolean;
+  readonly onFooterChange?: (footer: ReactNode | null) => void;
   readonly onSubmittingChange?: (isSubmitting: boolean) => void;
 }
 
@@ -71,6 +84,10 @@ export function EntityForm({
   onCancel,
   onSuccess,
   hideActions = false,
+  modalActionPlacement = "inline",
+  modalFooterLayout,
+  flushContent = false,
+  onFooterChange,
   onSubmittingChange,
 }: EntityFormProps) {
   const { t, i18n } = useTranslation("common");
@@ -226,11 +243,104 @@ export function EntityForm({
     }
   };
 
+  const saveLabel = mode === "create" ? t("entity.create") : t("entity.save");
+  const suppressInlineActions =
+    hideActions || modalActionPlacement === "footer";
+  const formClassName = flushContent ? undefined : "px-1";
+
+  const designedFormContext = useMemo(
+    () =>
+      createEntityFormRenderContext({
+        entityName,
+        definition,
+        locale: i18n.language,
+        mode,
+        values,
+        errors: fieldErrors,
+        fieldAccess,
+        canRead: entityPermissions.canRead,
+        canWrite,
+        recordId,
+        onChange: (name, value) =>
+          setValues((current) => ({ ...current, [name]: value })),
+        onCancel,
+        hideActions: suppressInlineActions,
+        isSubmitting,
+        cancelLabel: t("entity.cancel"),
+        saveLabel,
+      }),
+    [
+      definition,
+      entityName,
+      entityPermissions.canRead,
+      fieldAccess,
+      fieldErrors,
+      canWrite,
+      i18n.language,
+      isSubmitting,
+      mode,
+      onCancel,
+      recordId,
+      saveLabel,
+      suppressInlineActions,
+      t,
+      values,
+    ],
+  );
+
+  const footerFormContext = useMemo(
+    () =>
+      createEntityFormRenderContext({
+        entityName,
+        definition,
+        locale: i18n.language,
+        mode,
+        values,
+        errors: fieldErrors,
+        fieldAccess,
+        canRead: entityPermissions.canRead,
+        canWrite,
+        recordId,
+        onChange: (name, value) =>
+          setValues((current) => ({ ...current, [name]: value })),
+        onCancel,
+        hideActions: false,
+        isSubmitting,
+        cancelLabel: t("entity.cancel"),
+        saveLabel,
+      }),
+    [
+      definition,
+      entityName,
+      entityPermissions.canRead,
+      fieldAccess,
+      fieldErrors,
+      canWrite,
+      i18n.language,
+      isSubmitting,
+      mode,
+      onCancel,
+      recordId,
+      saveLabel,
+      t,
+      values,
+    ],
+  );
+
+  useEntityFormModalFooter({
+    enabled:
+      modalActionPlacement === "footer" &&
+      presentation !== "wizard" &&
+      designedLayout != null,
+    onFooterChange,
+    modalFooterLayout,
+    fallbackLayout: designedLayout,
+    footerContext: footerFormContext,
+  });
+
   if (isLoadingRecord) {
     return <EntityFormSkeleton />;
   }
-
-  const saveLabel = mode === "create" ? t("entity.create") : t("entity.save");
 
   if (presentation === "wizard" && wizardConfig) {
     return (
@@ -250,7 +360,11 @@ export function EntityForm({
           setValues((current) => ({ ...current, [name]: value }))
         }
         onCancel={onCancel}
-        hideActions={hideActions}
+        hideActions={suppressInlineActions}
+        modalActionPlacement={modalActionPlacement}
+        modalFooterLayout={modalFooterLayout}
+        flushContent={flushContent}
+        onFooterChange={onFooterChange}
         isSubmitting={isSubmitting}
         cancelLabel={t("entity.cancel")}
         saveLabel={saveLabel}
@@ -263,30 +377,12 @@ export function EntityForm({
     return (
       <Form
         id={ENTITY_FORM_ID}
-        className="px-1"
+        className={formClassName}
         onSubmit={(event) => void handleSubmit(event)}
       >
         <RecursiveLayoutRenderer
           layout={designedLayout}
-          context={createEntityFormRenderContext({
-            entityName,
-            definition,
-            locale: i18n.language,
-            mode,
-            values,
-            errors: fieldErrors,
-            fieldAccess,
-            canRead: entityPermissions.canRead,
-            canWrite,
-            recordId,
-            onChange: (name, value) =>
-              setValues((current) => ({ ...current, [name]: value })),
-            onCancel,
-            hideActions,
-            isSubmitting,
-            cancelLabel: t("entity.cancel"),
-            saveLabel,
-          })}
+          context={designedFormContext}
         />
       </Form>
     );
@@ -295,7 +391,7 @@ export function EntityForm({
   return (
     <Form
       id={ENTITY_FORM_ID}
-      className="px-1"
+      className={formClassName}
       onSubmit={(event) => void handleSubmit(event)}
     >
       {sections.map((section, index) => (

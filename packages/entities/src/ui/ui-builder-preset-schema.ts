@@ -35,6 +35,7 @@ export const designSurfaceSchema = z.enum([
   "formPlain",
   "formWizardShell",
   "formWizardStep",
+  "formModalFooter",
   "metricStrip",
 ]);
 

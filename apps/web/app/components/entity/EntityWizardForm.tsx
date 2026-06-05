@@ -1,6 +1,13 @@
-import { useCallback, useMemo, useState, type FormEvent } from "react";
+import {
+  useCallback,
+  useMemo,
+  useState,
+  type FormEvent,
+  type ReactNode,
+} from "react";
 import {
   collectLayoutFieldPaths,
+  type UiLayoutDocument,
   type WizardActionsComponentConfig,
   type WizardProgressComponentConfig,
   type WizardStepHostComponentConfig,
@@ -20,6 +27,7 @@ import { WizardActions } from "../forms/WizardActions";
 import { WizardProgress } from "../forms/WizardProgress";
 import { WizardStepHost } from "../forms/WizardStepHost";
 import { ENTITY_FORM_ID } from "./entity-form-constants";
+import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
 
 function fieldPathRoot(fieldPath: string): string {
   return fieldPath.includes(".")
@@ -66,6 +74,10 @@ interface EntityWizardFormProps {
   readonly onChange: (fieldName: string, value: unknown) => void;
   readonly onCancel: () => void;
   readonly hideActions?: boolean;
+  readonly modalActionPlacement?: "inline" | "footer";
+  readonly modalFooterLayout?: UiLayoutDocument;
+  readonly flushContent?: boolean;
+  readonly onFooterChange?: (footer: ReactNode | null) => void;
   readonly isSubmitting?: boolean;
   readonly cancelLabel: string;
   readonly saveLabel: string;
@@ -87,6 +99,10 @@ export function EntityWizardForm({
   onChange,
   onCancel,
   hideActions,
+  modalActionPlacement = "inline",
+  modalFooterLayout,
+  flushContent = false,
+  onFooterChange,
   isSubmitting,
   cancelLabel,
   saveLabel,
@@ -116,6 +132,9 @@ export function EntityWizardForm({
     }
     return statuses;
   }, [currentStepIndex, invalidStepIds, wizard.steps]);
+
+  const suppressInlineActions =
+    hideActions || modalActionPlacement === "footer";
 
   const baseContext = useMemo(
     () =>
@@ -228,7 +247,7 @@ export function EntityWizardForm({
           currentStepIndex={currentStepIndex}
           totalSteps={wizard.steps.length}
           isSubmitting={isSubmitting}
-          hideActions={hideActions}
+          hideActions={suppressInlineActions}
           onNext={handleNext}
           onBack={handleBack}
           onCancel={onCancel}
@@ -241,13 +260,43 @@ export function EntityWizardForm({
     currentStepIndex,
     handleBack,
     handleNext,
-    hideActions,
     isSubmitting,
     mode,
     onCancel,
     stepStatuses,
+    suppressInlineActions,
     wizard.steps,
   ]);
+
+  useEntityFormModalFooter({
+    enabled: modalActionPlacement === "footer",
+    onFooterChange,
+    modalFooterLayout,
+    fallbackLayout: wizard.shellLayout,
+    footerContext: {
+      ...renderContext,
+      wizardActionsRenderer: (config: WizardActionsComponentConfig) => (
+        <WizardActions
+          config={config}
+          mode={mode}
+          currentStepIndex={currentStepIndex}
+          totalSteps={wizard.steps.length}
+          isSubmitting={isSubmitting}
+          hideActions={false}
+          onNext={handleNext}
+          onBack={handleBack}
+          onCancel={onCancel}
+        />
+      ),
+    },
+    wizardMode: mode,
+    wizardCurrentStepIndex: currentStepIndex,
+    wizardTotalSteps: wizard.steps.length,
+    wizardIsSubmitting: isSubmitting,
+    wizardOnNext: handleNext,
+    wizardOnBack: handleBack,
+    wizardOnCancel: onCancel,
+  });
 
   if (!activeStep) {
     return null;
@@ -256,7 +305,7 @@ export function EntityWizardForm({
   return (
     <Form
       id={ENTITY_FORM_ID}
-      className="px-1"
+      className={flushContent ? undefined : "px-1"}
       onSubmit={(event) => void onSubmit(event)}
     >
       <RecursiveLayoutRenderer

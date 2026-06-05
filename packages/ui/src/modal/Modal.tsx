@@ -16,6 +16,8 @@ import {
   useOverlayTransitionVisible,
 } from "../overlay/useOverlayTransition";
 
+export type ModalContentPadding = "default" | "none";
+
 export interface ModalProps {
   readonly open: boolean;
   readonly onClose: () => void;
@@ -24,7 +26,9 @@ export interface ModalProps {
   readonly footer?: ReactNode;
   readonly size?: "sm" | "md" | "lg" | "xl" | "2xl";
   readonly scrollable?: boolean;
+  readonly showHeader?: boolean;
   readonly showCloseButton?: boolean;
+  readonly contentPadding?: ModalContentPadding;
   readonly closeLabel?: string;
   readonly layer?: "default" | "nested";
 }
@@ -44,7 +48,9 @@ function ModalPanel({
   footer,
   size,
   scrollable,
+  showHeader,
   showCloseButton,
+  contentPadding,
   closeLabel,
   onClose,
   panelRef,
@@ -55,7 +61,9 @@ function ModalPanel({
   readonly footer?: ReactNode;
   readonly size: NonNullable<ModalProps["size"]>;
   readonly scrollable: boolean;
+  readonly showHeader: boolean;
   readonly showCloseButton: boolean;
+  readonly contentPadding: ModalContentPadding;
   readonly closeLabel: string;
   readonly onClose: () => void;
   readonly panelRef: RefObject<HTMLDivElement | null>;
@@ -64,6 +72,7 @@ function ModalPanel({
   const durationMs = useOverlayTransitionDurationMs();
   const animate = durationMs > 0;
   const useStickyLayout = scrollable || Boolean(footer);
+  const flushContent = contentPadding === "none";
 
   return (
     <div
@@ -75,42 +84,50 @@ function ModalPanel({
         "border-border bg-popover text-popover-foreground pointer-events-auto relative flex w-full origin-center flex-col rounded-xl border shadow-xl",
         panelSizeClasses[size],
         useStickyLayout && "max-h-[min(90vh,calc(100vh-2rem))]",
-        !useStickyLayout && "p-5",
+        !useStickyLayout && !flushContent && "p-5",
         animate &&
           (visible ? "scale-100 opacity-100" : "scale-[0.92] opacity-0"),
       )}
       style={overlayTransitionStyle(durationMs, "opacity-transform")}
       onClick={(event) => event.stopPropagation()}
     >
-      <div
-        className={cn(
-          "flex shrink-0 items-start justify-between gap-3",
-          useStickyLayout ? "border-border border-b px-5 py-4" : "mb-4",
-        )}
-      >
-        <h2 id={titleId} className="text-foreground text-lg font-semibold">
+      {showHeader ? (
+        <div
+          className={cn(
+            "flex shrink-0 items-start justify-between gap-3",
+            useStickyLayout ? "border-border border-b px-5 py-4" : "mb-4",
+          )}
+        >
+          <h2 id={titleId} className="text-foreground text-lg font-semibold">
+            {title}
+          </h2>
+          {showCloseButton ? (
+            <IconButton
+              label={closeLabel}
+              size="sm"
+              className="shrink-0"
+              onClick={onClose}
+            >
+              <span aria-hidden className="text-lg leading-none">
+                ×
+              </span>
+            </IconButton>
+          ) : null}
+        </div>
+      ) : (
+        <p id={titleId} className="sr-only">
           {title}
-        </h2>
-        {showCloseButton ? (
-          <IconButton
-            label={closeLabel}
-            size="sm"
-            className="shrink-0"
-            onClick={onClose}
-          >
-            <span aria-hidden className="text-lg leading-none">
-              ×
-            </span>
-          </IconButton>
-        ) : null}
-      </div>
+        </p>
+      )}
       <div
         className={cn(
-          "flex flex-col gap-4",
+          "flex flex-col",
+          !flushContent && "gap-4",
           useStickyLayout &&
             (scrollable
-              ? "min-h-0 flex-1 overflow-y-auto px-5 py-4"
-              : "min-h-0 flex-1 overflow-hidden px-5 py-4"),
+              ? "min-h-0 flex-1 overflow-y-auto"
+              : "min-h-0 flex-1 overflow-hidden"),
+          useStickyLayout && !flushContent && "px-5 py-4",
         )}
       >
         {children}
@@ -132,7 +149,9 @@ export function Modal({
   footer,
   size = "sm",
   scrollable = false,
+  showHeader = true,
   showCloseButton = true,
+  contentPadding = "default",
   closeLabel = "Close dialog",
   layer = "default",
 }: ModalProps) {
@@ -161,7 +180,9 @@ export function Modal({
         footer={footer}
         size={size}
         scrollable={scrollable}
+        showHeader={showHeader}
         showCloseButton={showCloseButton}
+        contentPadding={contentPadding}
         closeLabel={closeLabel}
         onClose={onClose}
         panelRef={panelRef}

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   componentSlotWrapperClassName,
+  flexWrapClassFromStyles,
   fontSizePxFromStyles,
   gapPxFromStyles,
   parseFlexLayoutFromStyles,
@@ -9,6 +10,7 @@ import {
   resolveStyleRules,
   spacingStyleFromStyleRules,
   splitStyleRuleClasses,
+  usesFlexWrapLayout,
 } from "./apply-style-rules.js";
 import {
   themeTokenBackgroundClass,
@@ -147,5 +149,45 @@ describe("applyStyleRules", () => {
     expect(wrapper.className).toContain("bg-muted");
     expect(wrapper.className).toContain("justify-center");
     expect(wrapper.className).toContain("w-full");
+  });
+
+  it("applies custom css colors as inline styles", () => {
+    const resolved = resolveStyleRules([
+      { property: "backgroundColor", value: "#112233" },
+      { property: "color", value: "rgb(10, 20, 30)" },
+      { property: "borderColor", value: "#445566" },
+      { property: "borderWidth", value: "1" },
+    ]);
+
+    expect(resolved.style.backgroundColor).toBe("#112233");
+    expect(resolved.style.color).toBe("rgb(10, 20, 30)");
+    expect(resolved.style.borderColor).toBe("#445566");
+    expect(resolved.className).not.toContain("bg-");
+  });
+
+  it("maps flexWrap to tailwind utilities", () => {
+    expect(
+      flexWrapClassFromStyles([{ property: "flexWrap", value: "wrap" }]),
+    ).toBe("flex-wrap");
+
+    const flex = parseFlexLayoutFromStyles([
+      { property: "flexWrap", value: "wrap-reverse" },
+    ]);
+    expect(flex.wrap).toBe("wrap-reverse");
+    expect(usesFlexWrapLayout([{ property: "flexWrap", value: "wrap" }])).toBe(
+      true,
+    );
+    expect(
+      componentSlotWrapperClassName([{ property: "flexWrap", value: "wrap" }]),
+    ).toContain("flex-wrap");
+  });
+
+  it("applies borderStyle inline", () => {
+    const resolved = resolveStyleRules([
+      { property: "borderStyle", value: "dashed" },
+      { property: "borderWidth", value: "2" },
+    ]);
+    expect(resolved.style.borderStyle).toBe("dashed");
+    expect(resolved.style.borderWidth).toBe("2px");
   });
 });

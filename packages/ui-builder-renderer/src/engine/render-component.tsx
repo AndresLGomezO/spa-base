@@ -12,6 +12,7 @@ import {
   resolveMetricKpiPresentation,
   resolveStyleRules,
   layoutInlineStyleFromStyleRules,
+  textInlineStyleFromStyleRules,
   splitStyleRuleClasses,
   type FieldUiComponentConfig,
   type UiComponentConfig,
@@ -190,6 +191,7 @@ export function renderUiComponent(
     config.styles,
   );
   const containerStyle = layoutInlineStyleFromStyleRules(config.styles);
+  const valueStyle = textInlineStyleFromStyleRules(config.styles);
   const textSize = fontSizePxFromStyles(config.styles);
 
   const chain = resolveFieldChain({
@@ -213,6 +215,7 @@ export function renderUiComponent(
         style={containerStyle}
         valueClassName={textClassName}
         textSize={textSize}
+        valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
         label={labelFromConfig(config, "", context)}
       />
@@ -320,6 +323,7 @@ export function renderUiComponent(
           style={containerStyle}
           valueClassName={sampleValueClassName(textClassName, true)}
           textSize={textSize}
+          valueStyle={valueStyle}
           {...textPropsFromLabel(config)}
         />
       );
@@ -364,6 +368,7 @@ export function renderUiComponent(
           style={containerStyle}
           valueClassName={sampleValueClassName(textClassName, true)}
           textSize={textSize}
+          valueStyle={valueStyle}
           {...textPropsFromLabel(config)}
         />
       );
@@ -401,6 +406,7 @@ export function renderUiComponent(
         style={containerStyle}
         valueClassName={textClassName}
         textSize={textSize}
+        valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
       />
     );
@@ -428,6 +434,7 @@ export function renderUiComponent(
       style={containerStyle}
       valueClassName={sampleValueClassName(textClassName, isSample)}
       textSize={textSize}
+      valueStyle={valueStyle}
       {...textPropsFromLabel(config)}
     />
   );

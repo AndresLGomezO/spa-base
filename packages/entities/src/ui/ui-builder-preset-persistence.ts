@@ -35,6 +35,7 @@ export const persistedUiBuilderPresetSchema = z
         "formPlain",
         "formWizardShell",
         "formWizardStep",
+        "formModalFooter",
         "metricStrip",
       ])
       .optional(),

@@ -9,9 +9,10 @@ import {
   addStyleRule,
   coerceNumericStyleValue,
   enumOptionsForProperty,
+  isColorStyleProperty,
   isEnumStyleProperty,
   isNumericStyleProperty,
-  isTokenStyleProperty,
+  isThemeTokenStyleValue,
   numericStyleInputMin,
   removeStyleRule,
   THEME_TOKEN_OPTIONS,
@@ -41,6 +42,61 @@ function formatPropertyLabel(property: StylePropertyKey): string {
   return property
     .replace(/([a-z])([A-Z])/g, "$1 $2")
     .replace(/^./, (char) => char.toUpperCase());
+}
+
+function ColorStyleValueInput({
+  rule,
+  onChange,
+}: {
+  readonly rule: StyleRule;
+  readonly onChange: (value: string) => void;
+}) {
+  const rawValue = String(rule.value);
+  const usesThemeToken = isThemeTokenStyleValue(rawValue);
+
+  return (
+    <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">Theme</span>
+        <select
+          className={SELECT_CLASS}
+          value={usesThemeToken ? rawValue : ""}
+          onChange={(event) => {
+            if (event.target.value) {
+              onChange(event.target.value);
+            } else {
+              onChange("#000000");
+            }
+          }}
+        >
+          <option value="">Custom color</option>
+          {THEME_TOKEN_OPTIONS.map((token) => (
+            <option key={token} value={token}>
+              {token}
+            </option>
+          ))}
+        </select>
+      </label>
+      {!usesThemeToken ? (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">Custom</span>
+          <div className="flex items-center gap-2">
+            <input
+              type="color"
+              className="border-border h-9 w-12 shrink-0 cursor-pointer rounded border bg-transparent p-1"
+              value={/^#[0-9a-fA-F]{6}$/.test(rawValue) ? rawValue : "#000000"}
+              onChange={(event) => onChange(event.target.value)}
+            />
+            <Input
+              value={rawValue}
+              placeholder="#rrggbb, rgb(), hsl()"
+              onChange={(event) => onChange(event.target.value)}
+            />
+          </div>
+        </label>
+      ) : null}
+    </div>
+  );
 }
 
 export function StyleRulesEditor({
@@ -82,60 +138,56 @@ export function StyleRulesEditor({
             </select>
           </label>
 
-          <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-sm">
-            <span className="text-muted-foreground">{labels.styleValue}</span>
-            {isTokenStyleProperty(rule.property) ? (
-              <select
-                className={SELECT_CLASS}
-                value={String(rule.value)}
-                onChange={(event) =>
-                  updateRule(index, { value: event.target.value })
-                }
-              >
-                {THEME_TOKEN_OPTIONS.map((token) => (
-                  <option key={token} value={token}>
-                    {token}
-                  </option>
-                ))}
-              </select>
-            ) : isEnumStyleProperty(rule.property) ? (
-              <select
-                className={SELECT_CLASS}
-                value={String(rule.value)}
-                onChange={(event) =>
-                  updateRule(index, { value: event.target.value })
-                }
-              >
-                {enumOptionsForProperty(rule.property).map((option) => (
-                  <option key={option.value} value={option.value}>
-                    {option.label}
-                  </option>
-                ))}
-              </select>
-            ) : isNumericStyleProperty(rule.property) ? (
-              <Input
-                type="number"
-                min={numericStyleInputMin(rule.property)}
-                step={1}
-                value={String(rule.value)}
-                onChange={(event) =>
-                  updateRule(index, {
-                    value: coerceNumericStyleValue(
-                      rule.property,
-                      event.target.value,
-                    ),
-                  })
-                }
+          {isColorStyleProperty(rule.property) ? (
+            <div className="flex min-w-[8rem] flex-1 flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{labels.styleValue}</span>
+              <ColorStyleValueInput
+                rule={rule}
+                onChange={(value) => updateRule(index, { value })}
               />
-            ) : (
-              <Input
-                value={String(rule.value)}
-                onChange={(event) =>
-                  updateRule(index, { value: event.target.value })
-                }
-              />
-            )}
-          </label>
+            </div>
+          ) : (
+            <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{labels.styleValue}</span>
+              {isEnumStyleProperty(rule.property) ? (
+                <select
+                  className={SELECT_CLASS}
+                  value={String(rule.value)}
+                  onChange={(event) =>
+                    updateRule(index, { value: event.target.value })
+                  }
+                >
+                  {enumOptionsForProperty(rule.property).map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </select>
+              ) : isNumericStyleProperty(rule.property) ? (
+                <Input
+                  type="number"
+                  min={numericStyleInputMin(rule.property)}
+                  step={1}
+                  value={String(rule.value)}
+                  onChange={(event) =>
+                    updateRule(index, {
+                      value: coerceNumericStyleValue(
+                        rule.property,
+                        event.target.value,
+                      ),
+                    })
+                  }
+                />
+              ) : (
+                <Input
+                  value={String(rule.value)}
+                  onChange={(event) =>
+                    updateRule(index, { value: event.target.value })
+                  }
+                />
+              )}
+            </label>
+          )}
 
           <Button
             type="button"

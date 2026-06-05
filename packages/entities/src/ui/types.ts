@@ -2,6 +2,7 @@ import type { EntityFileReference } from "../schema/entityFileReference.js";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 import type {
   EntityUiOverrideForms,
+  FormModalChrome,
   FormPresentation,
   WizardFormConfig,
   WizardStepConfig,
@@ -141,6 +142,8 @@ export interface FormConfig {
   readonly presentation?: FormPresentation;
   readonly wizard?: WizardFormConfig;
   readonly modalSize?: FormModalSize;
+  readonly modalChrome?: FormModalChrome;
+  readonly modalFooterLayout?: UiLayoutDocument;
 }
 
 export interface DetailConfig {

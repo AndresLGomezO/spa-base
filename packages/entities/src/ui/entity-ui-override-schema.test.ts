@@ -101,4 +101,39 @@ describe("entity ui override record parsing", () => {
     expect(record.forms?.presentation).toBe("wizard");
     expect(record.forms?.wizard?.steps).toHaveLength(1);
   });
+
+  it("parses modal chrome and footer layout overrides", () => {
+    const record = parseEntityUiOverrideRecord("contract", {
+      views: [{ type: "table", name: "default", fields: ["name"] }],
+      forms: {
+        modalChrome: { showHeader: false, contentPadding: "none" },
+        modalFooterLayout: {
+          root: {
+            type: "root",
+            id: "root-footer",
+            columnCount: 1,
+            columns: [
+              {
+                id: "col-footer",
+                rows: [
+                  {
+                    type: "component",
+                    id: "row-actions",
+                    component: { kind: "wizard-actions" },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      },
+      updatedAt: new Date().toISOString(),
+    });
+
+    expect(record.forms?.modalChrome).toEqual({
+      showHeader: false,
+      contentPadding: "none",
+    });
+    expect(record.forms?.modalFooterLayout?.root.id).toBe("root-footer");
+  });
 });

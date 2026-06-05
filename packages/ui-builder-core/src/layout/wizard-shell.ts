@@ -40,13 +40,27 @@ export function collectLayoutComponentKinds(
   return kinds;
 }
 
+export interface WizardShellLayoutOptions {
+  readonly actionsInModalFooter?: boolean;
+}
+
+function requiredWizardShellKinds(
+  options?: WizardShellLayoutOptions,
+): readonly UiComponentKind[] {
+  if (options?.actionsInModalFooter) {
+    return ["wizard-progress", "wizard-step-host"];
+  }
+  return REQUIRED_WIZARD_SHELL_KINDS;
+}
+
 export function assertWizardShellLayout(
   layout: UiLayoutDocument,
   context: string,
+  options?: WizardShellLayoutOptions,
 ): void {
   const kinds = collectLayoutComponentKinds(layout);
 
-  for (const kind of REQUIRED_WIZARD_SHELL_KINDS) {
+  for (const kind of requiredWizardShellKinds(options)) {
     if (!kinds.has(kind)) {
       throw new Error(
         `Wizard shell ${context} must include a "${kind}" component.`,
@@ -58,9 +72,11 @@ export function assertWizardShellLayout(
 /** Adds any missing wizard shell slot components without removing existing rows. */
 export function ensureWizardShellLayout(
   layout: UiLayoutDocument,
+  options?: WizardShellLayoutOptions,
 ): UiLayoutDocument {
+  const requiredKinds = requiredWizardShellKinds(options);
   const kinds = collectLayoutComponentKinds(layout);
-  if (REQUIRED_WIZARD_SHELL_KINDS.every((kind) => kinds.has(kind))) {
+  if (requiredKinds.every((kind) => kinds.has(kind))) {
     return layout;
   }
 
@@ -88,7 +104,10 @@ export function ensureWizardShellLayout(
     );
   }
 
-  if (!collectLayoutComponentKinds(next).has("wizard-actions")) {
+  if (
+    !options?.actionsInModalFooter &&
+    !collectLayoutComponentKinds(next).has("wizard-actions")
+  ) {
     next = addComponentRowAt(
       next,
       rightLocator,

@@ -1,5 +1,7 @@
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
+import type { FormModalSize } from "./types.js";
+
 export type FormPresentation = "plain" | "wizard";
 
 export type WizardStepStatus = "pending" | "active" | "completed" | "invalid";
@@ -17,13 +19,20 @@ export interface WizardFormConfig {
   readonly steps: readonly WizardStepConfig[];
 }
 
-import type { FormModalSize } from "./types.js";
+export type FormModalContentPadding = "default" | "none";
+
+export interface FormModalChrome {
+  readonly showHeader?: boolean;
+  readonly contentPadding?: FormModalContentPadding;
+}
 
 export interface EntityUiOverrideForms {
   readonly presentation?: FormPresentation;
   readonly layout?: UiLayoutDocument;
   readonly wizard?: WizardFormConfig;
   readonly modalSize?: FormModalSize;
+  readonly modalChrome?: FormModalChrome;
+  readonly modalFooterLayout?: UiLayoutDocument;
   /** @deprecated Prefer unified `layout`. */
   readonly create?: UiLayoutDocument;
   /** @deprecated Prefer unified `layout`. */

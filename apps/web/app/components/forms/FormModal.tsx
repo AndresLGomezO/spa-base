@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
 
-import { Modal, type ModalProps } from "@repo/ui";
+import { Modal, type ModalContentPadding, type ModalProps } from "@repo/ui";
 
 interface FormModalProps {
   readonly open: boolean;
@@ -10,6 +10,9 @@ interface FormModalProps {
   readonly footer?: ReactNode;
   readonly size?: ModalProps["size"];
   readonly scrollable?: boolean;
+  readonly showHeader?: boolean;
+  readonly showCloseButton?: boolean;
+  readonly contentPadding?: ModalContentPadding;
   readonly closeLabel?: string;
   readonly layer?: ModalProps["layer"];
 }
@@ -22,6 +25,9 @@ export function FormModal({
   footer,
   size = "lg",
   scrollable = true,
+  showHeader = true,
+  showCloseButton = true,
+  contentPadding = "default",
   closeLabel,
   layer = "default",
 }: FormModalProps) {
@@ -33,6 +39,9 @@ export function FormModal({
       footer={footer}
       size={size}
       scrollable={scrollable}
+      showHeader={showHeader}
+      showCloseButton={showCloseButton}
+      contentPadding={contentPadding}
       closeLabel={closeLabel}
       layer={layer}
     >

@@ -1,6 +1,15 @@
-import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
+import {
+  collectLayoutFieldPaths,
+  findLayoutComponent,
+  type UiComponentKind,
+} from "@repo/ui-builder-core";
 
-import type { FormPresentation, WizardFormConfig } from "./form-config.js";
+import type {
+  FormModalChrome,
+  FormModalContentPadding,
+  FormPresentation,
+  WizardFormConfig,
+} from "./form-config.js";
 import type {
   FormLayout,
   FormModalSize,
@@ -15,6 +24,11 @@ const FORM_MODAL_SIZES = new Set<FormModalSize>([
   "2xl",
 ]);
 
+export interface ResolvedFormModalChrome {
+  readonly showHeader: boolean;
+  readonly contentPadding: FormModalContentPadding;
+}
+
 export function resolveFormModalSize(
   definition: SerializableEntityDefinition,
 ): FormModalSize {
@@ -25,11 +39,72 @@ export function resolveFormModalSize(
   return "lg";
 }
 
+export function resolveFormModalChrome(
+  definition: SerializableEntityDefinition,
+): ResolvedFormModalChrome {
+  const chrome = definition.ui.forms.modalChrome;
+  return {
+    showHeader: chrome?.showHeader ?? true,
+    contentPadding: chrome?.contentPadding ?? "default",
+  };
+}
+
+export function resolveFormModalFooterLayout(
+  definition: SerializableEntityDefinition,
+): import("@repo/ui-builder-core").UiLayoutDocument | undefined {
+  return definition.ui.forms.modalFooterLayout;
+}
+
+export function resolveFormUsesModalBuilderFooter(
+  definition: SerializableEntityDefinition,
+): boolean {
+  return (
+    definition.ui.forms.modalFooterLayout != null ||
+    definition.ui.forms.modalChrome != null
+  );
+}
+
+export function resolveFormModalActionComponentKind(
+  definition: SerializableEntityDefinition,
+): Extract<UiComponentKind, "form-actions" | "wizard-actions"> {
+  return resolveFormPresentation(definition) === "wizard"
+    ? "wizard-actions"
+    : "form-actions";
+}
+
 function sharedPlainLayout(
   definition: SerializableEntityDefinition,
 ): import("@repo/ui-builder-core").UiLayoutDocument | undefined {
   const forms = definition.ui.forms;
   return forms.create.layout ?? forms.edit.layout ?? undefined;
+}
+
+export function resolveFormModalActionLayout(
+  definition: SerializableEntityDefinition,
+): import("@repo/ui-builder-core").UiLayoutDocument | undefined {
+  const footerLayout = resolveFormModalFooterLayout(definition);
+  if (footerLayout) {
+    return footerLayout;
+  }
+
+  const presentation = resolveFormPresentation(definition);
+  if (presentation === "wizard") {
+    return definition.ui.forms.wizard?.shellLayout;
+  }
+
+  return sharedPlainLayout(definition);
+}
+
+export function resolveFormModalHasLayoutActions(
+  definition: SerializableEntityDefinition,
+): boolean {
+  const actionLayout = resolveFormModalActionLayout(definition);
+  if (!actionLayout) {
+    return false;
+  }
+
+  const kind = resolveFormModalActionComponentKind(definition);
+  return findLayoutComponent(actionLayout, kind) != null;
 }
 
 export function resolveFormPresentation(
@@ -77,3 +152,5 @@ export function resolveEditFormFromUi(
 ): FormLayout {
   return resolvePlainFormLayout(definition);
 }
+
+export type { FormModalChrome, FormModalContentPadding };

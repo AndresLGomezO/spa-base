@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
 import { useTranslation } from "react-i18next";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
@@ -10,6 +10,7 @@ import type {
 } from "@repo/ui-builder-core";
 import {
   Button,
+  Checkbox,
   Input,
   SegmentedSwitch,
   Text,
@@ -20,6 +21,8 @@ import { buildInitialValues } from "@repo/ui-builder";
 import type { FormModalSize } from "@repo/entities";
 
 import type { EntityName } from "../../entities/entity-catalog";
+import { FormModal } from "../../components/forms/FormModal";
+import { useEntityFormModalFooter } from "../../components/entity/use-entity-form-modal-footer";
 import { WizardActions } from "../../components/forms/WizardActions";
 import { WizardProgress } from "../../components/forms/WizardProgress";
 import { WizardStepHost } from "../../components/forms/WizardStepHost";
@@ -47,6 +50,12 @@ export function EntityFormLayoutDesignEditor({
   const [values, setValues] = useState(() =>
     buildInitialValues(editor.definition, "create"),
   );
+  const [previewFooter, setPreviewFooter] = useState<ReactNode>(null);
+
+  const usesDesignedModalFooter =
+    editor.modalFooterLayout != null ||
+    editor.modalChrome.showHeader === false ||
+    editor.modalChrome.contentPadding === "none";
 
   const modalSizeOptions = useMemo(
     (): readonly SegmentedSwitchOption<FormModalSize>[] => [
@@ -188,7 +197,36 @@ export function EntityFormLayoutDesignEditor({
         onChange: (name, value) =>
           setValues((current) => ({ ...current, [name]: value })),
         onCancel: () => undefined,
-        hideActions: true,
+        hideActions: usesDesignedModalFooter,
+        cancelLabel: t("entity.cancel"),
+        saveLabel: t("entity.create"),
+      }),
+    [
+      editor.definition,
+      entityName,
+      i18n.language,
+      t,
+      usesDesignedModalFooter,
+      values,
+    ],
+  );
+
+  const plainFooterContext = useMemo(
+    () =>
+      createEntityFormRenderContext({
+        entityName,
+        definition: editor.definition,
+        locale: i18n.language,
+        mode: "create",
+        values,
+        errors: {},
+        fieldAccess: {},
+        canRead: true,
+        canWrite: true,
+        onChange: (name, value) =>
+          setValues((current) => ({ ...current, [name]: value })),
+        onCancel: () => undefined,
+        hideActions: false,
         cancelLabel: t("entity.cancel"),
         saveLabel: t("entity.create"),
       }),
@@ -242,7 +280,7 @@ export function EntityFormLayoutDesignEditor({
           mode="create"
           currentStepIndex={previewStepIndex}
           totalSteps={editor.wizard.steps.length}
-          hideActions={false}
+          hideActions={!usesDesignedModalFooter}
           onNext={() =>
             setPreviewStepIndex((index) =>
               Math.min(index + 1, editor.wizard.steps.length - 1),
@@ -258,8 +296,52 @@ export function EntityFormLayoutDesignEditor({
     plainPreviewContext,
     previewStep?.layout,
     previewStepIndex,
+    usesDesignedModalFooter,
     wizardPreviewState,
   ]);
+
+  useEntityFormModalFooter({
+    enabled: usesDesignedModalFooter && editor.presentation === "plain",
+    onFooterChange: setPreviewFooter,
+    modalFooterLayout: editor.modalFooterLayout,
+    fallbackLayout: editor.plainLayout,
+    footerContext: plainFooterContext,
+  });
+
+  useEntityFormModalFooter({
+    enabled: usesDesignedModalFooter && editor.presentation === "wizard",
+    onFooterChange: setPreviewFooter,
+    modalFooterLayout: editor.modalFooterLayout,
+    fallbackLayout: editor.wizard.shellLayout,
+    footerContext: {
+      ...wizardPreviewContext,
+      wizardActionsRenderer: (config: WizardActionsComponentConfig) => (
+        <WizardActions
+          config={config}
+          mode="create"
+          currentStepIndex={previewStepIndex}
+          totalSteps={editor.wizard.steps.length}
+          hideActions={false}
+          onNext={() =>
+            setPreviewStepIndex((index) =>
+              Math.min(index + 1, editor.wizard.steps.length - 1),
+            )
+          }
+          onBack={() => setPreviewStepIndex((index) => Math.max(0, index - 1))}
+          onCancel={() => undefined}
+        />
+      ),
+    },
+    wizardMode: "create",
+    wizardCurrentStepIndex: previewStepIndex,
+    wizardTotalSteps: editor.wizard.steps.length,
+    wizardOnNext: () =>
+      setPreviewStepIndex((index) =>
+        Math.min(index + 1, editor.wizard.steps.length - 1),
+      ),
+    wizardOnBack: () => setPreviewStepIndex((index) => Math.max(0, index - 1)),
+    wizardOnCancel: () => undefined,
+  });
 
   const preview = (
     <DockedLayoutPreview enabled>
@@ -312,17 +394,28 @@ export function EntityFormLayoutDesignEditor({
           <Text className="text-muted-foreground mb-3 text-sm">
             {t("entity.viewSettings.preview")}
           </Text>
-          {editor.presentation === "wizard" ? (
-            <RecursiveLayoutRenderer
-              layout={editor.wizard.shellLayout}
-              context={wizardPreviewContext}
-            />
-          ) : (
-            <RecursiveLayoutRenderer
-              layout={editor.plainLayout}
-              context={plainPreviewContext}
-            />
-          )}
+          <FormModal
+            open
+            onClose={() => undefined}
+            title={t("entity.viewSettings.preview")}
+            size={editor.modalSize}
+            showHeader={editor.modalChrome.showHeader}
+            showCloseButton={editor.modalChrome.showHeader}
+            contentPadding={editor.modalChrome.contentPadding}
+            footer={usesDesignedModalFooter ? previewFooter : undefined}
+          >
+            {editor.presentation === "wizard" ? (
+              <RecursiveLayoutRenderer
+                layout={editor.wizard.shellLayout}
+                context={wizardPreviewContext}
+              />
+            ) : (
+              <RecursiveLayoutRenderer
+                layout={editor.plainLayout}
+                context={plainPreviewContext}
+              />
+            )}
+          </FormModal>
         </div>
       </div>
     </DockedLayoutPreview>
@@ -371,7 +464,55 @@ export function EntityFormLayoutDesignEditor({
           onChange={(value) => editor.setPresentation(value)}
           ariaLabel={t("designLayout.presentation")}
         />
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={editor.modalChrome.showHeader}
+            onChange={(event) =>
+              editor.setShowModalHeader(event.target.checked)
+            }
+          />
+          <span>{t("designLayout.formModalShowHeader")}</span>
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={editor.modalChrome.contentPadding === "none"}
+            onChange={(event) =>
+              editor.setFlushModalContent(event.target.checked)
+            }
+          />
+          <span>{t("designLayout.formModalFlushContent")}</span>
+        </label>
       </div>
+      <section className="flex flex-col gap-2">
+        <Text className="font-medium">{t("designLayout.formModalFooter")}</Text>
+        <Text className="text-muted-foreground text-sm">
+          {t("designLayout.formModalFooterHint")}
+        </Text>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={editor.modalFooterLayout != null}
+            onChange={(event) => {
+              if (event.target.checked) {
+                editor.enableModalFooterLayout();
+              } else {
+                editor.disableModalFooterLayout();
+              }
+            }}
+          />
+          <span>{t("designLayout.formModalFooterDedicated")}</span>
+        </label>
+        {editor.modalFooterLayout ? (
+          <EntityCardLayoutBuilder
+            key={`footer-${editor.layoutEditorKey}`}
+            layout={editor.modalFooterLayout}
+            definition={editor.definition}
+            defaultFieldPath={editor.defaultFieldPath}
+            onLayoutChange={editor.setModalFooterLayout}
+            labels={structureLabels}
+            designSurface="formModalFooter"
+          />
+        ) : null}
+      </section>
       {editor.presentation === "plain" ? (
         <EntityCardLayoutBuilder
           key={`plain-${editor.layoutEditorKey}`}

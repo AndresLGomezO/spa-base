@@ -69,4 +69,42 @@ describe("wizard shell layout", () => {
       ),
     ).toThrow(/wizard-progress/);
   });
+
+  it("does not require wizard-actions when actions live in the modal footer", () => {
+    const shellWithoutActions = {
+      root: {
+        type: "root" as const,
+        id: "root",
+        columnCount: 2,
+        columns: [
+          {
+            id: "c1",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r1",
+                component: { kind: "wizard-progress" as const },
+              },
+            ],
+          },
+          {
+            id: "c2",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r2",
+                component: { kind: "wizard-step-host" as const },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    expect(() =>
+      assertWizardShellLayout(shellWithoutActions as never, "test", {
+        actionsInModalFooter: true,
+      }),
+    ).not.toThrow();
+  });
 });

@@ -5,6 +5,7 @@ import {
   useRef,
   useState,
   type ComponentType,
+  type ReactNode,
 } from "react";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
@@ -14,7 +15,11 @@ import { useNavigate, useSearchParams } from "react-router";
 
 import {
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  resolveFormModalChrome,
+  resolveFormModalFooterLayout,
+  resolveFormModalHasLayoutActions,
   resolveFormModalSize,
+  resolveFormUsesModalBuilderFooter,
 } from "@repo/entities";
 
 import { useAnyPermission } from "../../auth/useAnyPermission";
@@ -214,10 +219,28 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const [shareRecordId, setShareRecordId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
+  const [formModalFooter, setFormModalFooter] = useState<ReactNode>(null);
+
+  const formModalChrome = useMemo(
+    () => resolveFormModalChrome(definition),
+    [definition],
+  );
+  const formModalFooterLayout = useMemo(
+    () => resolveFormModalFooterLayout(definition),
+    [definition],
+  );
+  const useDesignedFormModalFooter = useMemo(
+    () =>
+      resolveFormUsesModalBuilderFooter(definition) &&
+      (formModalFooterLayout != null ||
+        resolveFormModalHasLayoutActions(definition)),
+    [definition, formModalFooterLayout],
+  );
 
   const closeFormModal = useCallback(() => {
     setFormModal(null);
     setIsFormSubmitting(false);
+    setFormModalFooter(null);
     if (searchParams.has("create") || searchParams.has("edit")) {
       const next = new URLSearchParams(searchParams);
       next.delete("create");
@@ -253,6 +276,30 @@ export function EntityPage({ entityName }: EntityPageProps) {
       ? t("entity.createTitle", { entity })
       : t("entity.editTitle", { entity });
   }, [definition, formModal, t]);
+
+  const legacyFormModalFooter = (
+    <div className="flex gap-2">
+      <Button type="button" variant="outline" onClick={closeFormModal}>
+        {t("entity.cancel")}
+      </Button>
+      <Button type="submit" form={ENTITY_FORM_ID} loading={isFormSubmitting}>
+        {t("entity.save")}
+      </Button>
+    </div>
+  );
+
+  const formModalSharedProps = {
+    modalActionPlacement: useDesignedFormModalFooter
+      ? ("footer" as const)
+      : ("inline" as const),
+    modalFooterLayout: formModalFooterLayout,
+    flushContent: formModalChrome.contentPadding === "none",
+    onFooterChange: useDesignedFormModalFooter ? setFormModalFooter : undefined,
+    hideActions: !useDesignedFormModalFooter,
+    onSubmittingChange: setIsFormSubmitting,
+    onCancel: closeFormModal,
+    onSuccess: closeFormModal,
+  };
 
   const routeParams = useMemo(
     () => Object.fromEntries(searchParams.entries()),
@@ -441,19 +488,11 @@ export function EntityPage({ entityName }: EntityPageProps) {
           onClose={closeFormModal}
           title={formModalTitle}
           size={resolveFormModalSize(definition)}
+          showHeader={formModalChrome.showHeader}
+          showCloseButton={formModalChrome.showHeader}
+          contentPadding={formModalChrome.contentPadding}
           footer={
-            <div className="flex gap-2">
-              <Button type="button" variant="outline" onClick={closeFormModal}>
-                {t("entity.cancel")}
-              </Button>
-              <Button
-                type="submit"
-                form={ENTITY_FORM_ID}
-                loading={isFormSubmitting}
-              >
-                {t("entity.save")}
-              </Button>
-            </div>
+            useDesignedFormModalFooter ? formModalFooter : legacyFormModalFooter
           }
         >
           {formModal.mode === "create" ? (
@@ -461,10 +500,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
               <EntityForm
                 entityName={entityName}
                 mode="create"
-                hideActions
-                onSubmittingChange={setIsFormSubmitting}
-                onCancel={closeFormModal}
-                onSuccess={closeFormModal}
+                {...formModalSharedProps}
               />
             </RequireEntityPermission>
           ) : (
@@ -474,10 +510,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
                 entityName={entityName}
                 mode="edit"
                 recordId={formModal.recordId}
-                hideActions
-                onSubmittingChange={setIsFormSubmitting}
-                onCancel={closeFormModal}
-                onSuccess={closeFormModal}
+                {...formModalSharedProps}
               />
             </RequireEntityPermission>
           )}

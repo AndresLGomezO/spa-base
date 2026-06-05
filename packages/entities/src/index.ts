@@ -196,12 +196,21 @@ export {
 } from "./ui/resolve-form-layout-from-ui.js";
 export {
   resolveFormModalSize,
+  resolveFormModalChrome,
+  resolveFormModalFooterLayout,
+  resolveFormUsesModalBuilderFooter,
+  resolveFormModalActionComponentKind,
+  resolveFormModalActionLayout,
+  resolveFormModalHasLayoutActions,
   resolveFormPresentation,
   resolvePlainFormLayout,
   resolveWizardForm,
+  type ResolvedFormModalChrome,
 } from "./ui/resolve-form-config.js";
 export type {
   FormPresentation,
+  FormModalChrome,
+  FormModalContentPadding,
   WizardFormConfig,
   WizardStepConfig,
   WizardStepStatus,

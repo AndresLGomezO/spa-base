@@ -1,5 +1,6 @@
 import {
   STYLE_PROPERTY_OPTIONS,
+  isThemeTokenValue,
   type StylePropertyKey,
   type StyleRule,
   type ThemeToken,
@@ -107,6 +108,12 @@ export function defaultValueForProperty(
   if (property === "overflowX" || property === "overflowY") {
     return "visible";
   }
+  if (property === "flexWrap") {
+    return "wrap";
+  }
+  if (property === "borderStyle") {
+    return "solid";
+  }
   if (
     property === "fontSize" ||
     property === "borderWidth" ||
@@ -131,6 +138,14 @@ export function isTokenStyleProperty(property: StylePropertyKey): boolean {
     property === "color" ||
     property === "borderColor"
   );
+}
+
+export function isColorStyleProperty(property: StylePropertyKey): boolean {
+  return isTokenStyleProperty(property);
+}
+
+export function isThemeTokenStyleValue(value: string): boolean {
+  return isThemeTokenValue(value);
 }
 
 export function isNumericStyleProperty(property: StylePropertyKey): boolean {
@@ -182,6 +197,8 @@ export function isEnumStyleProperty(property: StylePropertyKey): boolean {
     property === "justifyContent" ||
     property === "alignSelf" ||
     property === "flex" ||
+    property === "flexWrap" ||
+    property === "borderStyle" ||
     property === "overflowX" ||
     property === "overflowY"
   );
@@ -227,6 +244,19 @@ export function enumOptionsForProperty(
         { value: "1", label: "1" },
         { value: "0", label: "0" },
         { value: "auto", label: "Auto" },
+      ];
+    case "flexWrap":
+      return [
+        { value: "nowrap", label: "No wrap" },
+        { value: "wrap", label: "Wrap" },
+        { value: "wrap-reverse", label: "Wrap reverse" },
+      ];
+    case "borderStyle":
+      return [
+        { value: "solid", label: "Solid" },
+        { value: "dashed", label: "Dashed" },
+        { value: "dotted", label: "Dotted" },
+        { value: "none", label: "None" },
       ];
     case "overflowX":
     case "overflowY":

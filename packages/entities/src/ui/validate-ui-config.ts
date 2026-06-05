@@ -163,6 +163,14 @@ const entityUISchema = z
         presentation: z.enum(["plain", "wizard"]).optional(),
         wizard: wizardFormConfigSchema.optional(),
         modalSize: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        modalChrome: z
+          .object({
+            showHeader: z.boolean().optional(),
+            contentPadding: z.enum(["default", "none"]).optional(),
+          })
+          .strict()
+          .optional(),
+        modalFooterLayout: uiLayoutDocumentSchema.optional(),
       })
       .strict(),
     detail: z
