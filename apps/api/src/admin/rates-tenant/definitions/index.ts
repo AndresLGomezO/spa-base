@@ -2,559 +2,603 @@ import type { CreateEntityDefinitionInput } from "@repo/dynamic-entities";
 
 import {
   booleanField,
-  dateField,
+  CURRENCY_ENUM_VALUES,
+  dateOnlyField,
   decimalField,
   documentField,
+  enumField,
+  groupedDefinition,
   imageField,
   integerField,
-  lookupDefinition,
+  manyToManyRelationField,
   relationField,
   stringField,
-  visibleDefinition,
+  uncategorizedDefinition,
 } from "./helpers.js";
 
 export interface RatesNavCategoryIds {
-  readonly referenceData: string;
-  readonly portfolio: string;
-  readonly transactions: string;
-  readonly extensions: string;
+  readonly contracts: string;
 }
+
+export const RATES_ENTITY_NAMES = [
+  "category",
+  "provider",
+  "account",
+  "contract",
+  "incomeDetails",
+  "subscriptionDetails",
+  "investmentDetails",
+  "contractTerms",
+  "contractSnapshot",
+  "transaction",
+  "statement",
+  "file",
+] as const;
+
+export const RATES_BUSINESS_ENTITY_NAMES = [
+  "category",
+  "provider",
+  "account",
+  "contract",
+  "incomeDetails",
+  "subscriptionDetails",
+  "investmentDetails",
+  "contractTerms",
+  "contractSnapshot",
+  "transaction",
+  "statement",
+  "file",
+] as const;
 
 export function buildRatesEntityDefinitions(
   categories: RatesNavCategoryIds,
 ): readonly CreateEntityDefinitionInput[] {
-  const ref = categories.referenceData;
-  const port = categories.portfolio;
-  const txn = categories.transactions;
-  const ext = categories.extensions;
+  const contracts = categories.contracts;
 
   return [
-    lookupDefinition({
-      name: "productType",
-      label: "Product Types",
-      navCategoryId: ref,
-      navOrder: 1,
-      icon: "Tag",
-      fields: [
-        stringField("code", { required: true, label: "Code" }),
-        stringField("name", { required: true, label: "Name" }),
-        stringField("description", { label: "Description" }),
-      ],
-    }),
-    lookupDefinition({
-      name: "accountType",
-      label: "Account Types",
-      navCategoryId: ref,
-      navOrder: 2,
-      icon: "Landmark",
-      fields: [
-        stringField("code", { required: true, label: "Code" }),
-        stringField("name", { required: true, label: "Name" }),
-      ],
-    }),
-    lookupDefinition({
-      name: "categoryType",
-      label: "Category Types",
-      navCategoryId: ref,
-      navOrder: 3,
-      icon: "FolderOpen",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    visibleDefinition({
+    uncategorizedDefinition({
       name: "category",
       label: "Categories",
-      navCategoryId: ref,
-      navOrder: 4,
+      navOrder: 1,
       icon: "FolderTree",
-      tenantWideRead: true,
-      displayField: "name",
       fields: [
-        stringField("name", { required: true, label: "Name" }),
-        relationField("categoryTypeId", "categoryType", {
+        stringField("name", {
           required: true,
-          label: "Type",
+          label: "Name",
+          sortable: true,
+          filterable: false,
         }),
-        relationField("parentId", "category", { label: "Parent" }),
+        enumField(
+          "type",
+          ["INCOME", "EXPENSE", "INVESTMENT", "SAVINGS", "DEBT"],
+          { required: true, label: "Type", filterable: true },
+        ),
+        relationField("parentId", "category", {
+          label: "Parent",
+          filterable: true,
+        }),
       ],
     }),
-    lookupDefinition({
-      name: "frequency",
-      label: "Frequencies",
-      navCategoryId: ref,
-      navOrder: 5,
-      icon: "Clock",
+    uncategorizedDefinition({
+      name: "provider",
+      label: "Providers",
+      navOrder: 2,
+      icon: "Building2",
       fields: [
-        stringField("code", { required: true, label: "Code" }),
-        integerField("daysInterval", { label: "Days interval" }),
-      ],
-    }),
-    lookupDefinition({
-      name: "status",
-      label: "Statuses",
-      navCategoryId: ref,
-      navOrder: 6,
-      icon: "CheckCircle",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "rateType",
-      label: "Rate Types",
-      navCategoryId: ref,
-      navOrder: 7,
-      icon: "Percent",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "compoundingFrequency",
-      label: "Compounding Frequencies",
-      navCategoryId: ref,
-      navOrder: 8,
-      icon: "RefreshCw",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "amortizationType",
-      label: "Amortization Types",
-      navCategoryId: ref,
-      navOrder: 9,
-      icon: "Calculator",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "transactionType",
-      label: "Transaction Types",
-      navCategoryId: ref,
-      navOrder: 10,
-      icon: "ArrowLeftRight",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "cashflowDirection",
-      label: "Cashflow Directions",
-      navCategoryId: ref,
-      navOrder: 11,
-      icon: "TrendingUp",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "incomeType",
-      label: "Income Types",
-      navCategoryId: ref,
-      navOrder: 12,
-      icon: "DollarSign",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "variabilityType",
-      label: "Variability Types",
-      navCategoryId: ref,
-      navOrder: 13,
-      icon: "Sliders",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "riskLevel",
-      label: "Risk Levels",
-      navCategoryId: ref,
-      navOrder: 14,
-      icon: "Shield",
-      fields: [stringField("code", { required: true, label: "Code" })],
-    }),
-    lookupDefinition({
-      name: "currency",
-      label: "Currencies",
-      navCategoryId: ref,
-      navOrder: 15,
-      icon: "CurrencyDollar",
-      fields: [
-        stringField("code", { required: true, label: "Code" }),
-        stringField("name", { required: true, label: "Name" }),
-      ],
-    }),
-    lookupDefinition({
-      name: "bank",
-      label: "Banks",
-      navCategoryId: ref,
-      navOrder: 16,
-      icon: "Landmark",
-      fields: [
-        stringField("code", { required: true, label: "Code" }),
-        stringField("name", { required: true, label: "Name" }),
+        stringField("name", {
+          required: true,
+          label: "Name",
+          sortable: true,
+          filterable: false,
+        }),
+        enumField(
+          "type",
+          [
+            "BANK",
+            "SERVICE",
+            "EMPLOYER",
+            "BROKER",
+            "UTILITY",
+            "INSURANCE",
+            "TAX_AUTHORITY",
+            "OTHER",
+          ],
+          { required: true, label: "Type", filterable: true },
+        ),
         imageField("logo", { label: "Logo" }),
+        stringField("website", { label: "Website" }),
       ],
     }),
-    lookupDefinition({
-      name: "serviceProvider",
-      label: "Service Providers",
-      navCategoryId: ref,
-      navOrder: 17,
-      icon: "Tv",
-      fields: [
-        stringField("code", { required: true, label: "Code" }),
-        stringField("name", { required: true, label: "Name" }),
-        imageField("logo", { label: "Logo" }),
-      ],
-    }),
-    visibleDefinition({
+    uncategorizedDefinition({
       name: "account",
       label: "Accounts",
-      navCategoryId: port,
-      navOrder: 1,
-      icon: "Building2",
-      displayField: "name",
+      navOrder: 3,
+      icon: "Landmark",
       fields: [
-        stringField("name", { required: true, label: "Name" }),
-        relationField("accountTypeId", "accountType", {
+        stringField("name", {
           required: true,
-          label: "Account type",
+          label: "Name",
+          sortable: true,
+          filterable: false,
         }),
-        relationField("currencyId", "currency", {
+        enumField(
+          "accountType",
+          ["BANK", "CASH", "BROKER", "CRYPTO_WALLET", "DIGITAL_WALLET"],
+          { required: true, label: "Account type", filterable: true },
+        ),
+        relationField("providerId", "provider", {
+          required: true,
+          label: "Provider",
+          filterable: true,
+        }),
+        enumField("currency", [...CURRENCY_ENUM_VALUES], {
           required: true,
           label: "Currency",
+          filterable: true,
         }),
-        relationField("bankId", "bank", { label: "Bank" }),
         decimalField("balance", {
           required: true,
-          sensitive: true,
-          displayFormat: "currency",
           label: "Balance",
+          sortable: true,
         }),
       ],
     }),
-    visibleDefinition({
-      name: "financialProduct",
-      label: "Financial Products",
-      navCategoryId: port,
-      navOrder: 2,
-      icon: "Briefcase",
-      displayField: "name",
+    groupedDefinition({
+      name: "contract",
+      label: "Contracts",
+      navCategoryId: contracts,
+      navOrder: 1,
+      icon: "FileText",
       fields: [
-        stringField("name", { required: true, label: "Name" }),
-        relationField("productTypeId", "productType", {
+        stringField("name", {
           required: true,
-          label: "Product type",
+          label: "Name",
+          sortable: true,
+          filterable: false,
         }),
+        enumField(
+          "contractType",
+          [
+            "LOAN",
+            "CREDIT_CARD",
+            "MORTGAGE",
+            "CAR_LOAN",
+            "PERSONAL_LOAN",
+            "INVESTMENT",
+            "STOCK",
+            "ETF",
+            "BOND",
+            "CRYPTO",
+            "SAVINGS",
+            "FIXED_TERM",
+            "REAL_ESTATE",
+            "BUSINESS",
+            "BILL",
+            "UTILITY",
+            "TAX",
+            "INSURANCE",
+            "SUBSCRIPTION",
+            "INCOME_SOURCE",
+          ],
+          { required: true, label: "Contract type", filterable: true },
+        ),
         relationField("categoryId", "category", {
           required: true,
           label: "Category",
+          filterable: true,
         }),
-        relationField("currencyId", "currency", {
+        relationField("providerId", "provider", {
+          required: true,
+          label: "Provider",
+          filterable: true,
+        }),
+        enumField("currency", [...CURRENCY_ENUM_VALUES], {
           required: true,
           label: "Currency",
+          filterable: true,
         }),
         decimalField("initialAmount", {
           required: true,
-          sensitive: true,
-          displayFormat: "currency",
           label: "Initial amount",
+          sortable: true,
         }),
         decimalField("currentBalance", {
           required: true,
-          sensitive: true,
-          displayFormat: "currency",
           label: "Current balance",
+          sortable: true,
         }),
-        dateField("startDate", {
+        dateOnlyField("startDate", {
           required: true,
           label: "Start date",
-          dateDisplayFormat: "date",
+          sortable: true,
         }),
-        dateField("endDate", { label: "End date", dateDisplayFormat: "date" }),
-        relationField("statusId", "status", {
-          required: true,
-          label: "Status",
-        }),
-        relationField("bankId", "bank", { label: "Bank" }),
-        relationField("serviceProviderId", "serviceProvider", {
-          label: "Service provider",
-        }),
+        dateOnlyField("endDate", { label: "End date", sortable: true }),
+        enumField(
+          "status",
+          ["ACTIVE", "INACTIVE", "CLOSED", "DEFAULTED", "PAUSED", "COMPLETED"],
+          { required: true, label: "Status", filterable: true },
+        ),
         stringField("description", { label: "Description" }),
+        booleanField("isRecurring", {
+          required: true,
+          label: "Recurring",
+          filterable: true,
+        }),
+        enumField(
+          "frequency",
+          [
+            "DAILY",
+            "WEEKLY",
+            "BIWEEKLY",
+            "MONTHLY",
+            "BIMONTHLY",
+            "QUARTERLY",
+            "SEMIANNUAL",
+            "ANNUAL",
+            "IRREGULAR",
+          ],
+          { label: "Frequency", filterable: true },
+        ),
+        integerField("frequencyInDays", {
+          label: "Frequency (days)",
+          sortable: true,
+        }),
+        enumField("variability", ["FIXED", "VARIABLE"], {
+          label: "Variability",
+          filterable: true,
+        }),
       ],
     }),
-    visibleDefinition({
-      name: "productTerm",
-      label: "Product Terms",
-      navCategoryId: port,
-      navOrder: 3,
-      icon: "FileText",
-      displayField: "productId",
+    groupedDefinition({
+      name: "incomeDetails",
+      label: "Income Details",
+      navCategoryId: contracts,
+      navOrder: 2,
+      icon: "HandCoins",
+      displayField: "name",
       fields: [
-        relationField("productId", "financialProduct", {
+        stringField("name", {
           required: true,
-          label: "Product",
+          label: "Name",
+          sortable: true,
+          searchable: true,
+        }),
+        relationField("contractId", "contract", {
+          required: true,
+          label: "Contract",
+          filterable: true,
+        }),
+        enumField(
+          "incomeType",
+          [
+            "SALARY",
+            "FREELANCE",
+            "RENT",
+            "DIVIDEND",
+            "INTEREST",
+            "BUSINESS",
+            "CAPITAL_GAIN",
+            "GIFT",
+            "OTHER",
+          ],
+          { required: true, label: "Income type", filterable: true },
+        ),
+        decimalField("expectedAmount", {
+          required: true,
+          label: "Expected amount",
+          sortable: true,
+        }),
+      ],
+    }),
+    groupedDefinition({
+      name: "subscriptionDetails",
+      label: "Subscription Details",
+      navCategoryId: contracts,
+      navOrder: 3,
+      icon: "MonitorPlay",
+      fields: [
+        relationField("contractId", "contract", {
+          required: true,
+          label: "Contract",
+          filterable: true,
+        }),
+        stringField("planName", {
+          required: true,
+          label: "Plan name",
+          sortable: true,
+          filterable: false,
+        }),
+        dateOnlyField("startDate", { label: "Start date", sortable: true }),
+        dateOnlyField("nextBillingDate", {
+          required: true,
+          label: "Next billing date",
+          sortable: true,
+        }),
+        booleanField("autoRenew", {
+          required: true,
+          label: "Auto renew",
+          filterable: true,
+        }),
+      ],
+    }),
+    groupedDefinition({
+      name: "investmentDetails",
+      label: "Investment Details",
+      navCategoryId: contracts,
+      navOrder: 4,
+      icon: "LineChart",
+      fields: [
+        relationField("contractId", "contract", {
+          required: true,
+          label: "Contract",
+          filterable: true,
+        }),
+        decimalField("expectedReturnRate", {
+          required: true,
+          label: "Expected return rate",
+          displayFormat: "percentage",
+          sortable: true,
+        }),
+        enumField("riskLevel", ["LOW", "MEDIUM", "HIGH"], {
+          required: true,
+          label: "Risk level",
+          filterable: true,
+        }),
+        enumField("liquidity", ["HIGH", "MEDIUM", "LOW"], {
+          required: true,
+          label: "Liquidity",
+          filterable: true,
+        }),
+      ],
+    }),
+    groupedDefinition({
+      name: "contractTerms",
+      label: "Contract Terms",
+      navCategoryId: contracts,
+      navOrder: 5,
+      icon: "ClipboardList",
+      fields: [
+        relationField("contractId", "contract", {
+          required: true,
+          label: "Contract",
+          filterable: true,
         }),
         decimalField("interestRate", {
           required: true,
-          sensitive: true,
-          displayFormat: "percentage",
           label: "Interest rate",
+          displayFormat: "percentage",
+          sortable: true,
         }),
-        relationField("rateTypeId", "rateType", {
+        enumField("rateType", ["FIXED", "VARIABLE", "MIXED"], {
           required: true,
           label: "Rate type",
+          filterable: true,
         }),
-        relationField("compoundingFrequencyId", "compoundingFrequency", {
-          required: true,
-          label: "Compounding",
-        }),
+        enumField(
+          "compoundingFrequency",
+          ["DAILY", "MONTHLY", "QUARTERLY", "ANNUAL", "CONTINUOUS"],
+          { required: true, label: "Compounding frequency", filterable: true },
+        ),
         decimalField("paymentAmount", {
           required: true,
-          sensitive: true,
-          displayFormat: "currency",
           label: "Payment amount",
+          sortable: true,
         }),
-        relationField("paymentFrequencyId", "frequency", {
-          required: true,
-          label: "Payment frequency",
-        }),
+        enumField(
+          "paymentFrequency",
+          [
+            "DAILY",
+            "WEEKLY",
+            "BIWEEKLY",
+            "MONTHLY",
+            "BIMONTHLY",
+            "QUARTERLY",
+            "SEMIANNUAL",
+            "ANNUAL",
+            "IRREGULAR",
+          ],
+          { required: true, label: "Payment frequency", filterable: true },
+        ),
         integerField("totalPeriods", {
           required: true,
           label: "Total periods",
+          sortable: true,
         }),
-        relationField("amortizationTypeId", "amortizationType", {
+        enumField(
+          "amortizationType",
+          ["FRENCH", "GERMAN", "AMERICAN", "BULLET", "NONE"],
+          { required: true, label: "Amortization type", filterable: true },
+        ),
+        integerField("gracePeriods", {
+          label: "Grace periods",
+          sortable: true,
+        }),
+        dateOnlyField("effectiveDate", {
           required: true,
-          label: "Amortization",
+          label: "Effective date",
+          sortable: true,
         }),
-        integerField("gracePeriods", { label: "Grace periods" }),
       ],
     }),
-    visibleDefinition({
-      name: "productSnapshot",
-      label: "Product Snapshots",
-      navCategoryId: port,
-      navOrder: 4,
+    groupedDefinition({
+      name: "contractSnapshot",
+      label: "Contract Snapshots",
+      navCategoryId: contracts,
+      navOrder: 6,
       icon: "Camera",
       fields: [
-        relationField("productId", "financialProduct", {
+        relationField("contractId", "contract", {
           required: true,
-          label: "Product",
+          label: "Contract",
+          filterable: true,
         }),
-        dateField("date", {
+        dateOnlyField("date", {
           required: true,
           label: "Date",
-          dateDisplayFormat: "date",
+          sortable: true,
         }),
         decimalField("balance", {
           required: true,
-          sensitive: true,
-          displayFormat: "currency",
           label: "Balance",
+          sortable: true,
         }),
         decimalField("accruedInterest", {
-          sensitive: true,
-          displayFormat: "currency",
           label: "Accrued interest",
+          sortable: true,
         }),
-        documentField("statement", { label: "Statement" }),
       ],
     }),
-    visibleDefinition({
+    uncategorizedDefinition({
       name: "transaction",
       label: "Transactions",
-      navCategoryId: txn,
-      navOrder: 1,
-      icon: "Receipt",
+      navOrder: 5,
+      icon: "ArrowLeftRight",
       fields: [
-        relationField("productId", "financialProduct", { label: "Product" }),
+        enumField(
+          "type",
+          [
+            "INCOME",
+            "EXPENSE",
+            "TRANSFER",
+            "PAYMENT",
+            "INVESTMENT_BUY",
+            "INVESTMENT_SELL",
+            "INTEREST",
+            "FEE",
+            "TAX",
+          ],
+          { required: true, label: "Type", filterable: true },
+        ),
+        decimalField("amount", {
+          required: true,
+          label: "Amount",
+          sortable: true,
+        }),
+        dateOnlyField("date", {
+          required: true,
+          label: "Date",
+          sortable: true,
+        }),
         relationField("accountId", "account", {
           required: true,
           label: "Account",
+          filterable: true,
         }),
-        relationField("transactionTypeId", "transactionType", {
-          required: true,
-          label: "Type",
-        }),
-        decimalField("amount", {
-          required: true,
-          sensitive: true,
-          displayFormat: "currency",
-          label: "Amount",
-        }),
-        dateField("date", {
-          required: true,
-          label: "Date",
-          dateDisplayFormat: "datetime",
+        relationField("contractId", "contract", {
+          label: "Contract",
+          filterable: true,
         }),
         relationField("categoryId", "category", {
           required: true,
           label: "Category",
+          filterable: true,
         }),
         stringField("description", { label: "Description" }),
+        manyToManyRelationField("sources", "incomeDetails", {
+          label: "Income sources",
+        }),
       ],
     }),
-    visibleDefinition({
-      name: "transactionSource",
-      label: "Transaction Sources",
-      navCategoryId: txn,
-      navOrder: 2,
-      icon: "Link",
+    groupedDefinition({
+      name: "statement",
+      label: "Statements",
+      navCategoryId: contracts,
+      navOrder: 7,
+      icon: "Receipt",
       fields: [
+        relationField("contractId", "contract", {
+          required: true,
+          label: "Contract",
+          filterable: true,
+        }),
+        dateOnlyField("periodStart", {
+          required: true,
+          label: "Period start",
+          sortable: true,
+        }),
+        dateOnlyField("periodEnd", {
+          required: true,
+          label: "Period end",
+          sortable: true,
+        }),
+        decimalField("openingBalance", {
+          required: true,
+          label: "Opening balance",
+          sortable: true,
+        }),
+        decimalField("closingBalance", {
+          required: true,
+          label: "Closing balance",
+          sortable: true,
+        }),
+        decimalField("minimumPayment", {
+          label: "Minimum payment",
+          sortable: true,
+        }),
+        dateOnlyField("dueDate", {
+          required: true,
+          label: "Due date",
+          sortable: true,
+        }),
+        decimalField("paidAmount", {
+          label: "Paid amount",
+          sortable: true,
+        }),
+        enumField("status", ["PENDING", "PAID", "OVERDUE", "PARTIALLY_PAID"], {
+          required: true,
+          label: "Status",
+          filterable: true,
+        }),
+        manyToManyRelationField("transactions", "transaction", {
+          label: "Transactions",
+        }),
+      ],
+    }),
+    uncategorizedDefinition({
+      name: "file",
+      label: "Files",
+      navOrder: 6,
+      icon: "Paperclip",
+      fields: [
+        enumField("parentType", ["CONTRACT", "TRANSACTION", "STATEMENT"], {
+          required: true,
+          label: "Parent type",
+          filterable: true,
+        }),
+        relationField("contractId", "contract", {
+          label: "Contract",
+          filterable: true,
+        }),
         relationField("transactionId", "transaction", {
-          required: true,
           label: "Transaction",
+          filterable: true,
         }),
-        relationField("sourceProductId", "financialProduct", {
+        relationField("statementId", "statement", {
+          label: "Statement",
+          filterable: true,
+        }),
+        enumField(
+          "documentType",
+          ["RECEIPT", "STATEMENT_PDF", "CONTRACT_PDF", "OTHER"],
+          { required: true, label: "Document type", filterable: true },
+        ),
+        stringField("name", {
           required: true,
-          label: "Source product",
+          label: "Name",
+          sortable: true,
+          filterable: false,
         }),
-        decimalField("percentage", {
+        documentField("document", {
           required: true,
-          displayFormat: "percentage",
-          label: "Percentage",
+          label: "Document",
         }),
-      ],
-    }),
-    visibleDefinition({
-      name: "cashflow",
-      label: "Cashflows",
-      navCategoryId: txn,
-      navOrder: 3,
-      icon: "Activity",
-      fields: [
-        relationField("transactionId", "transaction", {
+        dateOnlyField("uploadedAt", {
           required: true,
-          label: "Transaction",
+          label: "Uploaded at",
+          sortable: true,
         }),
-        relationField("directionId", "cashflowDirection", {
-          required: true,
-          label: "Direction",
-        }),
-        booleanField("recurring", { required: true, label: "Recurring" }),
-        relationField("frequencyId", "frequency", {
-          required: true,
-          label: "Frequency",
-        }),
-        relationField("variabilityTypeId", "variabilityType", {
-          required: true,
-          label: "Variability",
-        }),
-      ],
-    }),
-    visibleDefinition({
-      name: "incomeDetail",
-      label: "Income Details",
-      navCategoryId: ext,
-      navOrder: 1,
-      icon: "HandCoins",
-      fields: [
-        relationField("productId", "financialProduct", {
-          required: true,
-          label: "Product",
-        }),
-        relationField("incomeTypeId", "incomeType", {
-          required: true,
-          label: "Income type",
-        }),
-        decimalField("expectedAmount", {
-          required: true,
-          sensitive: true,
-          displayFormat: "currency",
-          label: "Expected amount",
-        }),
-        relationField("variabilityTypeId", "variabilityType", {
-          required: true,
-          label: "Variability",
-        }),
-        relationField("frequencyId", "frequency", {
-          required: true,
-          label: "Frequency",
-        }),
-      ],
-    }),
-    visibleDefinition({
-      name: "subscriptionDetail",
-      label: "Subscription Details",
-      navCategoryId: ext,
-      navOrder: 2,
-      icon: "MonitorPlay",
-      fields: [
-        relationField("productId", "financialProduct", {
-          required: true,
-          label: "Product",
-        }),
-        relationField("serviceProviderId", "serviceProvider", {
-          required: true,
-          label: "Service provider",
-        }),
-        stringField("planName", { required: true, label: "Plan" }),
-        relationField("billingFrequencyId", "frequency", {
-          required: true,
-          label: "Billing frequency",
-        }),
-        dateField("nextBillingDate", {
-          required: true,
-          label: "Next billing date",
-          dateDisplayFormat: "date",
-        }),
-        booleanField("autoRenew", { required: true, label: "Auto renew" }),
-      ],
-    }),
-    visibleDefinition({
-      name: "investmentDetail",
-      label: "Investment Details",
-      navCategoryId: ext,
-      navOrder: 3,
-      icon: "LineChart",
-      fields: [
-        relationField("productId", "financialProduct", {
-          required: true,
-          label: "Product",
-        }),
-        decimalField("expectedReturnRate", {
-          required: true,
-          sensitive: true,
-          displayFormat: "percentage",
-          label: "Expected return",
-        }),
-        relationField("riskLevelId", "riskLevel", {
-          required: true,
-          label: "Risk level",
-        }),
-        stringField("liquidity", { required: true, label: "Liquidity" }),
+        stringField("tags", { label: "Tags (comma-separated)" }),
       ],
     }),
   ];
 }
-
-export const RATES_ENTITY_NAMES = [
-  "productType",
-  "accountType",
-  "categoryType",
-  "category",
-  "frequency",
-  "status",
-  "rateType",
-  "compoundingFrequency",
-  "amortizationType",
-  "transactionType",
-  "cashflowDirection",
-  "incomeType",
-  "variabilityType",
-  "riskLevel",
-  "currency",
-  "bank",
-  "serviceProvider",
-  "account",
-  "financialProduct",
-  "productTerm",
-  "productSnapshot",
-  "transaction",
-  "transactionSource",
-  "cashflow",
-  "incomeDetail",
-  "subscriptionDetail",
-  "investmentDetail",
-] as const;
-
-export const RATES_BUSINESS_ENTITY_NAMES = [
-  "account",
-  "financialProduct",
-  "productTerm",
-  "productSnapshot",
-  "transaction",
-  "transactionSource",
-  "cashflow",
-  "incomeDetail",
-  "subscriptionDetail",
-  "investmentDetail",
-] as const;

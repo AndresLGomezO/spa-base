@@ -62,9 +62,9 @@ function MetricValueShell({
 
 function metricValueTextClassName(valueClassName: string | undefined): string {
   return cn(
-    "tabular-nums truncate",
+    "tabular-nums",
     valueClassName === undefined || valueClassName.length === 0
-      ? "text-2xl font-semibold"
+      ? "text-2xl font-semibold truncate"
       : valueClassName,
   );
 }

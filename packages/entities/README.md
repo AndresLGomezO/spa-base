@@ -85,6 +85,8 @@ Developers must **not** define these in `fields`. TypeScript rejects configs tha
 | `date`     | ISO datetime **string** | `isoDatetimeStringSchema`                     |
 | `relation` | `string` (FK id)        | `z.string().trim().min(1)` for FK relations   |
 
+Scalar fields (`string`, `number`, `boolean`, `date`, `enum`) may set `isArray: true` to store `T[]` (for example tags). Relation, image, and document fields cannot be arrays. Array fields use Firestore `array-contains` for filters; `string[]` and `enum[]` support normalized token search mirrors.
+
 See [Relational Data System Guide](../../docs/relational-data-system-guide.md) for relation config (`target`, `type`, `onDelete`, join collections).
 
 **Date convention:** `type: "date"` stores ISO strings, not `Date` objects. This matches the User model and Firestore serialization. See [workaround](#dates-are-iso-strings-not-date-objects) below.
@@ -94,6 +96,7 @@ See [Relational Data System Guide](../../docs/relational-data-system-guide.md) f
 - `required: true` — must be present on create (unless `default` is set).
 - `default` — applied by Zod when the field is omitted on create; field becomes optional in create input.
 - No `required` and no `default` — optional everywhere.
+- `isArray: true` — stores multiple values as a JSON array; required arrays need at least one element.
 
 ### Permissions
 

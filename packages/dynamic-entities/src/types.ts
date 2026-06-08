@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import {
   imageFileReferenceSchema,
+  isArrayEligibleFieldType,
   MAX_FILE_SIZE_BYTES_CAP,
   stripDownloadUrlFromFileReference,
   type EntityUIConfig,
@@ -35,6 +36,7 @@ export const fieldDefinitionSchema = z
       "document",
     ]),
     required: z.boolean().optional(),
+    isArray: z.boolean().optional(),
     sensitive: z.boolean().optional(),
     relation: relationDefinitionSchema.optional(),
     enumValues: z.array(z.string().trim().min(1)).min(1).optional(),
@@ -137,9 +139,17 @@ export const fieldDefinitionSchema = z
         path: ["defaultImage"],
       });
     }
+    if (field.isArray === true && !isArrayEligibleFieldType(field.type)) {
+      ctx.addIssue({
+        code: "custom",
+        message:
+          "Only string, number, boolean, date, and enum fields may be stored as arrays.",
+        path: ["isArray"],
+      });
+    }
   });
 
-export const entityDefinitionRecordSchema = z.object({
+const entityDefinitionRecordBaseSchema = z.object({
   id: z.string().trim().min(1),
   tenantId: z.string().trim().min(1),
   name: z
@@ -161,38 +171,88 @@ export const entityDefinitionRecordSchema = z.object({
   updatedAt: z.string().trim().min(1),
 });
 
+type DisplayFieldValidationInput = {
+  readonly displayField?: string;
+  readonly fields: readonly z.infer<typeof fieldDefinitionSchema>[];
+};
+
+function refineEntityDefinitionDisplayField(
+  record: DisplayFieldValidationInput,
+  ctx: z.RefinementCtx,
+): void {
+  if (!record.displayField) {
+    return;
+  }
+
+  const displayField = record.fields.find(
+    (field) => field.name === record.displayField,
+  );
+  if (displayField?.isArray === true) {
+    ctx.addIssue({
+      code: "custom",
+      message: "displayField cannot reference an array field.",
+      path: ["displayField"],
+    });
+  }
+}
+
+export const entityDefinitionRecordSchema =
+  entityDefinitionRecordBaseSchema.superRefine(
+    refineEntityDefinitionDisplayField,
+  );
+
 export type FieldDefinitionRecord = z.infer<typeof fieldDefinitionSchema>;
 export type EntityDefinitionRecord = z.infer<
   typeof entityDefinitionRecordSchema
 >;
 
-export const createEntityDefinitionInputSchema = entityDefinitionRecordSchema
-  .omit({
-    id: true,
-    tenantId: true,
-    version: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    tenantId: z.string().trim().min(1).optional(),
-  });
+export const createEntityDefinitionInputSchema =
+  entityDefinitionRecordBaseSchema
+    .omit({
+      id: true,
+      tenantId: true,
+      version: true,
+      createdAt: true,
+      updatedAt: true,
+    })
+    .extend({
+      tenantId: z.string().trim().min(1).optional(),
+    })
+    .superRefine(refineEntityDefinitionDisplayField);
 
 export type CreateEntityDefinitionInput = z.infer<
   typeof createEntityDefinitionInputSchema
 >;
 
-export const patchEntityDefinitionInputSchema = z.object({
-  label: z.string().trim().min(1).optional(),
-  fields: z.array(fieldDefinitionSchema).min(1).optional(),
-  tenantWideRead: z.boolean().optional(),
-  inMemoryListQueries: z.boolean().optional(),
-  hiddenFromNav: z.boolean().optional(),
-  navCategoryId: z.union([z.string().trim().min(1), z.null()]).optional(),
-  navOrder: z.union([z.number().int(), z.null()]).optional(),
-  displayField: z.union([z.string().trim().min(1), z.null()]).optional(),
-  ui: z.custom<EntityUIConfig>().optional(),
-});
+export const patchEntityDefinitionInputSchema = z
+  .object({
+    label: z.string().trim().min(1).optional(),
+    fields: z.array(fieldDefinitionSchema).min(1).optional(),
+    tenantWideRead: z.boolean().optional(),
+    inMemoryListQueries: z.boolean().optional(),
+    hiddenFromNav: z.boolean().optional(),
+    navCategoryId: z.union([z.string().trim().min(1), z.null()]).optional(),
+    navOrder: z.union([z.number().int(), z.null()]).optional(),
+    displayField: z.union([z.string().trim().min(1), z.null()]).optional(),
+    ui: z.custom<EntityUIConfig>().optional(),
+  })
+  .superRefine((input, ctx) => {
+    if (
+      typeof input.displayField !== "string" ||
+      input.displayField.length === 0 ||
+      !input.fields
+    ) {
+      return;
+    }
+
+    refineEntityDefinitionDisplayField(
+      {
+        displayField: input.displayField,
+        fields: input.fields,
+      },
+      ctx,
+    );
+  });
 
 export type PatchEntityDefinitionInput = z.infer<
   typeof patchEntityDefinitionInputSchema

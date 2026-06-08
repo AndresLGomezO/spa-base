@@ -8,7 +8,10 @@ export interface FormProps extends FormHTMLAttributes<HTMLFormElement> {
 
 export function Form({ className, children, ...props }: FormProps) {
   return (
-    <form className={cn("flex w-full flex-col gap-4", className)} {...props}>
+    <form
+      className={cn("m-0 flex w-full flex-col gap-4", className)}
+      {...props}
+    >
       {children}
     </form>
   );

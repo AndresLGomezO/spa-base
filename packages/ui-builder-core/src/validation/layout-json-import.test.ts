@@ -168,6 +168,71 @@ describe("validateLayoutJsonImport", () => {
     expect(result.ok).toBe(true);
     expect(result.data).toMatchObject({ type: "nested-layout" });
   });
+
+  it("accepts a single image component row on formWizardShell without wizard shell slots", () => {
+    const row = {
+      type: "component" as const,
+      id: "row-image",
+      component: {
+        kind: "image" as const,
+        primary: { type: "field" as const, path: "name" },
+        imageSize: 48,
+        styles: [{ property: "marginTop" as const, value: "8" }],
+      },
+      styles: [{ property: "paddingTop" as const, value: "4" }],
+    };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(row),
+      { type: "component-row" },
+      { designSurface: "formWizardShell", definition },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({
+      type: "component",
+      component: {
+        kind: "image",
+        imageSize: 48,
+        styles: [{ property: "marginTop", value: "8" }],
+      },
+      styles: [{ property: "paddingTop", value: "4" }],
+    });
+  });
+
+  it("still requires wizard shell slots for full layout-document imports", () => {
+    const row = {
+      type: "component" as const,
+      id: "row-image",
+      component: {
+        kind: "image" as const,
+        primary: { type: "field" as const, path: "name" },
+      },
+    };
+    const layout = createEmptyLayout(1);
+    const column = layout.root.columns[0];
+    const document =
+      column == null
+        ? layout
+        : {
+            ...layout,
+            root: {
+              ...layout.root,
+              columns: [{ ...column, rows: [row] }],
+            },
+          };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(document),
+      { type: "layout-document" },
+      { designSurface: "formWizardShell", definition },
+    );
+
+    expect(result.ok).toBe(false);
+    expect(result.errors.some((error) => error.path === "wizardShell")).toBe(
+      true,
+    );
+  });
 });
 
 describe("regenerateLayoutDocumentIds", () => {

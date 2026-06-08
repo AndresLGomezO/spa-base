@@ -70,6 +70,23 @@ const SmallListTask = defineEntity({
   },
 });
 
+const TaggedEntity = defineEntity({
+  name: "tagged",
+  fields: {
+    tags: { type: "string", isArray: true, required: true },
+  },
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["tags"] }],
+    forms: {
+      create: { sections: [{ fields: ["tags"] }] },
+      edit: { sections: [{ fields: ["tags"] }] },
+    },
+    fields: {
+      tags: { filterable: true, sortable: false },
+    },
+  },
+});
+
 const PublicBoard = defineEntity({
   name: "board",
   tenantWideRead: true,
@@ -224,6 +241,26 @@ describe("indexesForEntity", () => {
 
   it("uses default collection pluralization", () => {
     expect(indexesForEntity(Customer)[0]?.collectionGroup).toBe("customers");
+  });
+
+  it("plans array-contains indexes for filterable array fields", () => {
+    const indexes = indexesForEntity(TaggedEntity);
+    const signatures = new Set(
+      indexes.map((index) => computeIndexSignature(index)),
+    );
+
+    expect(
+      signatures.has(
+        computeIndexSignature(
+          buildListQueryIndex("taggeds", {
+            filterFields: ["tags"],
+            sortField: "id",
+            sortDirection: "ASCENDING",
+            arrayFilterFields: new Set(["tags"]),
+          }),
+        ),
+      ),
+    ).toBe(true);
   });
 });
 

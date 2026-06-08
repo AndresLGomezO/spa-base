@@ -3,6 +3,8 @@ import { describe, expect, it } from "vitest";
 import type { FieldPathValidationDefinition } from "./field-paths.js";
 import {
   isValidLayoutFieldPath,
+  isValidEntityFieldSelectorFieldPath,
+  listEntityFieldSelectorFieldOptions,
   listFormFieldOptions,
   listLayoutFieldOptions,
   relationAliasFieldPath,
@@ -88,5 +90,55 @@ describe("isValidLayoutFieldPath", () => {
   it("accepts relation subfields", () => {
     expect(isValidLayoutFieldPath(accountDefinition, "bankId.logo")).toBe(true);
     expect(isValidLayoutFieldPath(accountDefinition, "bank.logo")).toBe(true);
+  });
+});
+
+const selectorDefinition: FieldPathValidationDefinition = {
+  name: "contract",
+  fields: {
+    bankId: {
+      type: "relation",
+      relation: { type: "many-to-one", target: "bank" },
+    },
+    providerIds: {
+      type: "relation",
+      relation: { type: "many-to-many", target: "provider" },
+    },
+    childRecords: {
+      type: "relation",
+      relation: { type: "one-to-many", target: "child" },
+    },
+    status: { type: "enum" },
+    notes: { type: "string" },
+  },
+};
+
+describe("isValidEntityFieldSelectorFieldPath", () => {
+  it("accepts relation FK, many-to-many, and enum fields", () => {
+    expect(
+      isValidEntityFieldSelectorFieldPath(selectorDefinition, "bankId"),
+    ).toBe(true);
+    expect(
+      isValidEntityFieldSelectorFieldPath(selectorDefinition, "providerIds"),
+    ).toBe(true);
+    expect(
+      isValidEntityFieldSelectorFieldPath(selectorDefinition, "status"),
+    ).toBe(true);
+  });
+
+  it("rejects one-to-many relations and non-selector field types", () => {
+    expect(
+      isValidEntityFieldSelectorFieldPath(selectorDefinition, "childRecords"),
+    ).toBe(false);
+    expect(
+      isValidEntityFieldSelectorFieldPath(selectorDefinition, "notes"),
+    ).toBe(false);
+  });
+});
+
+describe("listEntityFieldSelectorFieldOptions", () => {
+  it("lists only eligible selector fields", () => {
+    const options = listEntityFieldSelectorFieldOptions(selectorDefinition);
+    expect(options).toEqual(["bankId", "providerIds", "status"]);
   });
 });

@@ -9,6 +9,7 @@ export type UiComponentKind =
   | "badge"
   | "metric-kpi"
   | "form-field"
+  | "entity-field-selector"
   | "form-section"
   | "form-actions"
   | "wizard-progress"
@@ -108,6 +109,21 @@ export interface FormFieldComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export type EntityFieldSelectorLayout =
+  | "list"
+  | "list-with-logo"
+  | "mini-cards";
+
+export interface EntityFieldSelectorComponentConfig {
+  readonly kind: "entity-field-selector";
+  readonly fieldPath: string;
+  readonly layout: EntityFieldSelectorLayout;
+  readonly enableSearch?: boolean;
+  readonly cardsPerRow?: number;
+  readonly imageFieldPath?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
 export interface FormSectionComponentConfig {
   readonly kind: "form-section";
   readonly title?: string;
@@ -177,6 +193,7 @@ export type UiComponentConfig =
   | FieldUiComponentConfig
   | MetricKpiComponentConfig
   | FormFieldComponentConfig
+  | EntityFieldSelectorComponentConfig
   | FormSectionComponentConfig
   | FormActionsComponentConfig
   | WizardProgressComponentConfig
@@ -225,4 +242,10 @@ export function isFieldUiComponent(
     config.kind === "numeric" ||
     config.kind === "badge"
   );
+}
+
+export function isEntityFieldSelectorComponent(
+  config: UiComponentConfig,
+): config is EntityFieldSelectorComponentConfig {
+  return config.kind === "entity-field-selector";
 }

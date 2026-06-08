@@ -278,3 +278,14 @@ describe("replaceNestedLayoutRowAt", () => {
     });
   });
 });
+
+describe("createDefaultComponent", () => {
+  it("creates entity-field-selector defaults", () => {
+    expect(createDefaultComponent("entity-field-selector", "bankId")).toEqual({
+      kind: "entity-field-selector",
+      fieldPath: "bankId",
+      layout: "list",
+      enableSearch: true,
+    });
+  });
+});

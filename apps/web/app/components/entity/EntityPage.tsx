@@ -16,9 +16,11 @@ import { useNavigate, useSearchParams } from "react-router";
 import {
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   resolveFormModalChrome,
+  resolveEffectiveFormModalContentPadding,
   resolveFormModalFooterLayout,
   resolveFormModalHasLayoutActions,
   resolveFormModalSize,
+  resolveFormPresentation,
   resolveFormUsesModalBuilderFooter,
 } from "@repo/entities";
 
@@ -218,12 +220,23 @@ export function EntityPage({ entityName }: EntityPageProps) {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const [shareRecordId, setShareRecordId] = useState<string | null>(null);
   const [formModal, setFormModal] = useState<EntityFormModalState>(null);
+  const [formModalSession, setFormModalSession] = useState(0);
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
   const [formModalFooter, setFormModalFooter] = useState<ReactNode>(null);
 
   const formModalChrome = useMemo(
     () => resolveFormModalChrome(definition),
     [definition],
+  );
+  const formModalContentPadding = useMemo(
+    () => resolveEffectiveFormModalContentPadding(formModalChrome),
+    [formModalChrome],
+  );
+  const formModalScrollable = useMemo(
+    () =>
+      resolveFormPresentation(definition) !== "wizard" &&
+      formModalContentPadding !== "none",
+    [definition, formModalContentPadding],
   );
   const formModalFooterLayout = useMemo(
     () => resolveFormModalFooterLayout(definition),
@@ -236,11 +249,24 @@ export function EntityPage({ entityName }: EntityPageProps) {
         resolveFormModalHasLayoutActions(definition)),
     [definition, formModalFooterLayout],
   );
+  const isWizardFormModal = useMemo(
+    () => resolveFormPresentation(definition) === "wizard",
+    [definition],
+  );
+
+  const openCreateFormModal = useCallback(() => {
+    setFormModalSession((session) => session + 1);
+    setFormModal({ mode: "create" });
+  }, []);
+
+  const openEditFormModal = useCallback((recordId: string) => {
+    setFormModalSession((session) => session + 1);
+    setFormModal({ mode: "edit", recordId });
+  }, []);
 
   const closeFormModal = useCallback(() => {
     setFormModal(null);
     setIsFormSubmitting(false);
-    setFormModalFooter(null);
     if (searchParams.has("create") || searchParams.has("edit")) {
       const next = new URLSearchParams(searchParams);
       next.delete("create");
@@ -251,14 +277,27 @@ export function EntityPage({ entityName }: EntityPageProps) {
 
   useEffect(() => {
     if (searchParams.has("create") && permissions.canCreate) {
-      setFormModal({ mode: "create" });
+      if (formModal?.mode !== "create") {
+        openCreateFormModal();
+      }
       return;
     }
     const editId = searchParams.get("edit");
-    if (editId && permissions.canUpdate) {
-      setFormModal({ mode: "edit", recordId: editId });
+    if (
+      editId &&
+      permissions.canUpdate &&
+      (formModal?.mode !== "edit" || formModal.recordId !== editId)
+    ) {
+      openEditFormModal(editId);
     }
-  }, [permissions.canCreate, permissions.canUpdate, searchParams]);
+  }, [
+    formModal,
+    openCreateFormModal,
+    openEditFormModal,
+    permissions.canCreate,
+    permissions.canUpdate,
+    searchParams,
+  ]);
 
   const handleDelete = async () => {
     if (!deleteId) return;
@@ -288,12 +327,19 @@ export function EntityPage({ entityName }: EntityPageProps) {
     </div>
   );
 
+  const formModalFooterSlot = useDesignedFormModalFooter
+    ? formModal != null
+      ? (formModalFooter ?? (
+          <div className="min-h-10 w-full shrink-0" aria-hidden />
+        ))
+      : null
+    : legacyFormModalFooter;
+
   const formModalSharedProps = {
     modalActionPlacement: useDesignedFormModalFooter
       ? ("footer" as const)
       : ("inline" as const),
     modalFooterLayout: formModalFooterLayout,
-    flushContent: formModalChrome.contentPadding === "none",
     onFooterChange: useDesignedFormModalFooter ? setFormModalFooter : undefined,
     hideActions: !useDesignedFormModalFooter,
     onSubmittingChange: setIsFormSubmitting,
@@ -328,9 +374,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
       pageSize: SERVER_PAGE_SIZE,
       onPageChange: setPage,
       onRequestDelete: permissions.canDelete ? setDeleteId : undefined,
-      onRequestEdit: permissions.canUpdate
-        ? (id: string) => setFormModal({ mode: "edit", recordId: id })
-        : undefined,
+      onRequestEdit: permissions.canUpdate ? openEditFormModal : undefined,
       onRequestShare: setShareRecordId,
       listFilters: filters,
       routeParams,
@@ -340,6 +384,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
       entityState,
       page,
       setPage,
+      openEditFormModal,
       permissions.canDelete,
       permissions.canUpdate,
       filters,
@@ -380,7 +425,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
           Record<string, unknown>
         >,
         listViewProps,
-        onCreate: () => setFormModal({ mode: "create" }),
+        onCreate: openCreateFormModal,
       }),
     [
       clearAll,
@@ -394,6 +439,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
       i18n.language,
       listViewProps,
       metricStripLayout,
+      openCreateFormModal,
       permissions.canCreate,
       routeParams,
       search,
@@ -422,10 +468,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
           </Button>
         ) : null}
         {permissions.canCreate ? (
-          <Button
-            type="button"
-            onClick={() => setFormModal({ mode: "create" })}
-          >
+          <Button type="button" onClick={openCreateFormModal}>
             {t("entity.create")}
           </Button>
         ) : null}
@@ -463,59 +506,63 @@ export function EntityPage({ entityName }: EntityPageProps) {
         />
       ) : null}
 
-      <div className="flex min-h-0 flex-1 flex-col">
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         <ViewComponent {...listViewProps} />
       </div>
     </>
   );
 
   return (
-    <div className="flex min-h-full w-full flex-col gap-6">
-      {pageHeader}
+    <div className="flex h-full min-h-0 w-full flex-col gap-6 overflow-hidden">
+      <div className="shrink-0">{pageHeader}</div>
 
       {mainPageLayout ? (
-        <RecursiveLayoutRenderer
-          layout={mainPageLayout}
-          context={mainPageContext}
-        />
+        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+          <RecursiveLayoutRenderer
+            layout={mainPageLayout}
+            context={mainPageContext}
+          />
+        </div>
       ) : (
-        legacyMainBody
+        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
+          {legacyMainBody}
+        </div>
       )}
 
-      {formModal ? (
-        <FormModal
-          open
-          onClose={closeFormModal}
-          title={formModalTitle}
-          size={resolveFormModalSize(definition)}
-          showHeader={formModalChrome.showHeader}
-          showCloseButton={formModalChrome.showHeader}
-          contentPadding={formModalChrome.contentPadding}
-          footer={
-            useDesignedFormModalFooter ? formModalFooter : legacyFormModalFooter
-          }
-        >
-          {formModal.mode === "create" ? (
+      <FormModal
+        open={formModal != null}
+        onClose={closeFormModal}
+        title={formModalTitle}
+        size={resolveFormModalSize(definition)}
+        scrollable={formModalScrollable}
+        showHeader={formModalChrome.showHeader}
+        showCloseButton={formModalChrome.showHeader}
+        contentPadding={formModalContentPadding}
+        footer={formModalFooterSlot}
+      >
+        <div className={isWizardFormModal ? "w-full min-w-0" : "w-full"}>
+          {formModal?.mode === "create" ? (
             <RequireEntityPermission entityName={entityName} action="create">
               <EntityForm
+                key={`create-${formModalSession}`}
                 entityName={entityName}
                 mode="create"
                 {...formModalSharedProps}
               />
             </RequireEntityPermission>
-          ) : (
+          ) : formModal?.mode === "edit" ? (
             <RequireEntityPermission entityName={entityName} action="update">
               <EntityForm
-                key={formModal.recordId}
+                key={`edit-${formModal.recordId}-${formModalSession}`}
                 entityName={entityName}
                 mode="edit"
                 recordId={formModal.recordId}
                 {...formModalSharedProps}
               />
             </RequireEntityPermission>
-          )}
-        </FormModal>
-      ) : null}
+          ) : null}
+        </div>
+      </FormModal>
 
       <Modal
         open={deleteId !== null}

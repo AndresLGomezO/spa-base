@@ -42,7 +42,7 @@ vi.mock("@repo/ui", async (importOriginal) => {
 });
 
 describe("PrivateLayoutRoute", () => {
-  it("uses a fixed viewport shell with a scrollable main body", () => {
+  it("uses a fixed viewport shell with scroll contained in the page outlet", () => {
     render(
       <MemoryRouter>
         <PrivateLayoutRoute />
@@ -58,6 +58,13 @@ describe("PrivateLayoutRoute", () => {
       "min-w-0",
       "w-full",
       "max-w-none",
+      "flex-1",
+      "overflow-hidden",
+    );
+
+    const pageScroll = main.firstElementChild;
+    expect(pageScroll).toHaveClass(
+      "min-h-0",
       "flex-1",
       "overflow-y-auto",
       "overflow-x-hidden",

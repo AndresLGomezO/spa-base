@@ -66,6 +66,10 @@ export function summarizeFieldDetails(
     );
   }
 
+  if (field.isArray) {
+    parts.push(t("dataModels.fieldDetailsArray"));
+  }
+
   if (field.type === "enum") {
     const count = (field.enumValues ?? []).filter((value) =>
       value.trim(),

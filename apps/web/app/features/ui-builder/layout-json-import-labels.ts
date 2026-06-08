@@ -17,5 +17,14 @@ export function layoutJsonImportLabels(t: TFunction): LayoutJsonImportLabels {
     apply: t("designLayout.layoutJsonImport.apply"),
     cancel: t("designLayout.layoutJsonImport.cancel"),
     readOnlyHint: t("designLayout.layoutJsonImport.readOnlyHint"),
+    viewTrigger: t("designLayout.layoutJsonImport.viewTrigger"),
+    viewTitleRoot: t("designLayout.layoutJsonImport.viewTitleRoot"),
+    viewTitleComponentRow: t(
+      "designLayout.layoutJsonImport.viewTitleComponentRow",
+    ),
+    viewTitleNestedRow: t("designLayout.layoutJsonImport.viewTitleNestedRow"),
+    viewDescription: t("designLayout.layoutJsonImport.viewDescription"),
+    viewCopy: t("designLayout.layoutJsonImport.viewCopy"),
+    viewCopied: t("designLayout.layoutJsonImport.viewCopied"),
   };
 }

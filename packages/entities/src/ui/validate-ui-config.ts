@@ -335,6 +335,9 @@ export function validateEntityUIConfig(
     assertWizardShellLayout(
       parsed.forms.wizard.shellLayout as UiLayoutDocument,
       `forms wizard shell for entity "${entity.name}"`,
+      {
+        actionsInModalFooter: parsed.forms.modalFooterLayout != null,
+      },
     );
     for (const [index, step] of parsed.forms.wizard.steps.entries()) {
       assertFormLayoutFieldPaths(

@@ -34,6 +34,15 @@ export function createDefaultComponent(
     return { kind: "form-field", fieldPath };
   }
 
+  if (kind === "entity-field-selector") {
+    return {
+      kind: "entity-field-selector",
+      fieldPath,
+      layout: "list",
+      enableSearch: true,
+    };
+  }
+
   if (kind === "form-section") {
     return { kind: "form-section", title: "Section" };
   }

@@ -41,6 +41,13 @@ function isQueryableFieldMeta(meta: NormalizedFieldMeta): boolean {
   return true;
 }
 
+function isSortableFieldMeta(meta: NormalizedFieldMeta): boolean {
+  if (meta.isArray === true) {
+    return false;
+  }
+  return isQueryableFieldMeta(meta);
+}
+
 export function collectFilterableFields(entity: AnyDefinedEntity): string[] {
   const fields = new Set<string>();
   const uiFields = entity.metadata.ui?.fields ?? {};
@@ -73,16 +80,18 @@ export function collectSortableFields(entity: AnyDefinedEntity): string[] {
     if (fieldUi?.sortable === false) {
       continue;
     }
-    if (isQueryableListField(entity, fieldName)) {
+    const meta = entity.metadata.fields[fieldName];
+    if (meta && isSortableFieldMeta(meta)) {
       fields.add(fieldName);
     }
   }
 
   for (const view of entity.metadata.ui?.views ?? []) {
-    if (
-      view.defaultSort &&
-      isQueryableListField(entity, view.defaultSort.field)
-    ) {
+    if (!view.defaultSort) {
+      continue;
+    }
+    const meta = entity.metadata.fields[view.defaultSort.field];
+    if (meta && isSortableFieldMeta(meta)) {
       fields.add(view.defaultSort.field);
     }
   }

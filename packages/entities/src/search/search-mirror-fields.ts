@@ -2,6 +2,7 @@ import { z } from "zod";
 
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 
+import { normalizeArrayFieldValues } from "./normalize-array-fields.js";
 import {
   listSearchableStringFields,
   resolveSearchField,
@@ -68,12 +69,22 @@ export function tokenizeSearchMirrorValue(value: string): string[] {
 }
 
 function tokenizeSearchSourceValue(value: unknown): string[] | undefined {
-  if (typeof value !== "string") {
-    return undefined;
+  if (typeof value === "string") {
+    const tokens = tokenizeSearchMirrorValue(value);
+    return tokens.length > 0 ? tokens : undefined;
   }
 
-  const tokens = tokenizeSearchMirrorValue(value);
-  return tokens.length > 0 ? tokens : undefined;
+  if (
+    Array.isArray(value) &&
+    value.every((entry) => typeof entry === "string")
+  ) {
+    const tokens = [
+      ...new Set(value.flatMap((entry) => tokenizeSearchMirrorValue(entry))),
+    ];
+    return tokens.length > 0 ? tokens : undefined;
+  }
+
+  return undefined;
 }
 
 export function stripSearchMirrorFields(
@@ -94,11 +105,13 @@ export function prepareRecordSearchFields(
   entity: AnyDefinedEntity,
   record: Record<string, unknown>,
 ): Record<string, unknown> {
+  const normalized = normalizeArrayFieldValues(entity, record);
+
   if (!shouldPersistSearchMirrorFields(entity)) {
-    return stripSearchMirrorFields(entity, record);
+    return stripSearchMirrorFields(entity, normalized);
   }
 
-  return applySearchMirrorFields(entity, record);
+  return applySearchMirrorFields(entity, normalized);
 }
 
 export function applySearchMirrorFields(

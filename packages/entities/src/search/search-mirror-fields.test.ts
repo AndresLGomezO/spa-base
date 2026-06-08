@@ -59,6 +59,33 @@ describe("tokenizeSearchMirrorValue", () => {
 });
 
 describe("applySearchMirrorFields", () => {
+  it("writes token mirror for searchable string array fields", () => {
+    const TagEntity = defineEntity({
+      name: "tagged",
+      fields: {
+        tags: { type: "string", isArray: true, required: true },
+      },
+      displayField: "tags",
+      ui: {
+        views: [{ type: "table", name: "default", fields: ["tags"] }],
+        forms: {
+          create: { sections: [{ fields: ["tags"] }] },
+          edit: { sections: [{ fields: ["tags"] }] },
+        },
+        fields: { tags: { searchable: true } },
+      },
+    }) as unknown as AnyDefinedEntity;
+
+    expect(
+      applySearchMirrorFields(TagEntity, {
+        tags: ["Tag-One", "Beta"],
+      }),
+    ).toEqual({
+      tags: ["Tag-One", "Beta"],
+      tagsSearchTokens: ["tag-one", "beta"],
+    });
+  });
+
   it("writes token mirror for searchable string fields", () => {
     expect(
       applySearchMirrorFields(AccountEntity, {

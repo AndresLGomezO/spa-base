@@ -2,6 +2,12 @@
  * Public API for @repo/entities.
  * See packages/entities/README.md for integration and extension guidance.
  */
+export {
+  ARRAY_ELIGIBLE_FIELD_TYPES,
+  fieldConfigIsArray,
+  isArrayEligibleFieldType,
+} from "./array-field-eligibility.js";
+export type { ArrayEligibleFieldType } from "./array-field-eligibility.js";
 export { defineEntity } from "./defineEntity.js";
 export type { FieldTypeRegistry, FieldSchemaBuilder } from "./fieldTypes.js";
 export { defaultFieldTypeRegistry } from "./schema/buildFieldSchema.js";
@@ -81,6 +87,7 @@ export {
 } from "./ui/default-ui-config.js";
 export { serializeEntityDefinition } from "./ui/serialize-entity-definition.js";
 export { validateEntityUIConfig } from "./ui/validate-ui-config.js";
+export { normalizeArrayFieldValues } from "./search/normalize-array-fields.js";
 export {
   applySearchMirrorFields,
   extendEntitySchemaWithSearchMirrors,
@@ -197,6 +204,7 @@ export {
 export {
   resolveFormModalSize,
   resolveFormModalChrome,
+  resolveEffectiveFormModalContentPadding,
   resolveFormModalFooterLayout,
   resolveFormUsesModalBuilderFooter,
   resolveFormModalActionComponentKind,

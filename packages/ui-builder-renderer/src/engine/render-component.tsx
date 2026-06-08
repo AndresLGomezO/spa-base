@@ -14,6 +14,7 @@ import {
   layoutInlineStyleFromStyleRules,
   textInlineStyleFromStyleRules,
   splitStyleRuleClasses,
+  textWrapClassFromStyles,
   type FieldUiComponentConfig,
   type UiComponentConfig,
 } from "@repo/ui-builder-core";
@@ -104,6 +105,16 @@ function textPropsFromLabel(config: FieldUiComponentConfig) {
   };
 }
 
+function valueClassNameFromStyles(
+  styles: FieldUiComponentConfig["styles"],
+  textClassName: string,
+  extra?: string,
+): string {
+  return [textWrapClassFromStyles(styles), textClassName, extra]
+    .filter(Boolean)
+    .join(" ");
+}
+
 export function renderUiComponent(
   config: UiComponentConfig,
   context: LayoutRenderContext,
@@ -127,6 +138,19 @@ export function renderUiComponent(
     const { containerClassName } = splitStyleRuleClasses(config.styles);
     return (
       context.formFieldRenderer?.(config.fieldPath, containerClassName) ?? null
+    );
+  }
+
+  if (config.kind === "entity-field-selector") {
+    if (
+      context.fieldAccessFilter &&
+      !context.fieldAccessFilter(config.fieldPath)
+    ) {
+      return null;
+    }
+    const { containerClassName } = splitStyleRuleClasses(config.styles);
+    return (
+      context.entityFieldSelectorRenderer?.(config, containerClassName) ?? null
     );
   }
 
@@ -165,12 +189,14 @@ export function renderUiComponent(
   }
 
   if (isPageUiComponent(config)) {
-    const slotWrapper = resolvePageSlotWrapper(config.styles);
-    const wrap = (node: ReactNode) => (
-      <div className={slotWrapper.className} style={slotWrapper.style}>
-        {node}
-      </div>
-    );
+    const wrap = (node: ReactNode, extraClassName?: string) => {
+      const slotWrapper = resolvePageSlotWrapper(config.styles, extraClassName);
+      return (
+        <div className={slotWrapper.className} style={slotWrapper.style}>
+          {node}
+        </div>
+      );
+    };
     switch (config.kind) {
       case "page-header":
         return wrap(context.pageHeaderRenderer?.() ?? null);
@@ -178,8 +204,21 @@ export function renderUiComponent(
         return wrap(context.pageToolbarRenderer?.() ?? null);
       case "page-metrics":
         return wrap(context.pageMetricsRenderer?.() ?? null);
-      case "page-list":
-        return wrap(context.pageListRenderer?.() ?? null);
+      case "page-list": {
+        const list = context.pageListRenderer?.() ?? null;
+        return wrap(
+          context.mode === "mainPage" ? (
+            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+              {list}
+            </div>
+          ) : (
+            list
+          ),
+          context.mode === "mainPage"
+            ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+            : undefined,
+        );
+      }
     }
   }
 
@@ -213,7 +252,7 @@ export function renderUiComponent(
         allowEmpty
         className={containerClassName}
         style={containerStyle}
-        valueClassName={textClassName}
+        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
         textSize={textSize}
         valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
@@ -321,7 +360,10 @@ export function renderUiComponent(
           allowEmpty
           className={containerClassName}
           style={containerStyle}
-          valueClassName={sampleValueClassName(textClassName, true)}
+          valueClassName={valueClassNameFromStyles(
+            config.styles,
+            sampleValueClassName(textClassName, true),
+          )}
           textSize={textSize}
           valueStyle={valueStyle}
           {...textPropsFromLabel(config)}
@@ -337,7 +379,7 @@ export function renderUiComponent(
         label={label}
         className={containerClassName}
         style={containerStyle}
-        valueClassName={textClassName}
+        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
         textSize={textSize}
         {...textPropsFromLabel(config)}
       />
@@ -366,7 +408,10 @@ export function renderUiComponent(
           allowEmpty
           className={containerClassName}
           style={containerStyle}
-          valueClassName={sampleValueClassName(textClassName, true)}
+          valueClassName={valueClassNameFromStyles(
+            config.styles,
+            sampleValueClassName(textClassName, true),
+          )}
           textSize={textSize}
           valueStyle={valueStyle}
           {...textPropsFromLabel(config)}
@@ -384,7 +429,7 @@ export function renderUiComponent(
         label={label}
         className={containerClassName}
         style={containerStyle}
-        valueClassName={textClassName}
+        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
         textSize={textSize}
         {...textPropsFromLabel(config)}
       />
@@ -404,7 +449,7 @@ export function renderUiComponent(
         allowEmpty
         className={containerClassName}
         style={containerStyle}
-        valueClassName={textClassName}
+        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
         textSize={textSize}
         valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
@@ -432,7 +477,10 @@ export function renderUiComponent(
       allowEmpty={isSample}
       className={containerClassName}
       style={containerStyle}
-      valueClassName={sampleValueClassName(textClassName, isSample)}
+      valueClassName={valueClassNameFromStyles(
+        config.styles,
+        sampleValueClassName(textClassName, isSample),
+      )}
       textSize={textSize}
       valueStyle={valueStyle}
       {...textPropsFromLabel(config)}

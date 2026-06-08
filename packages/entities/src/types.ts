@@ -42,6 +42,7 @@ export interface StringFieldConfig {
   readonly required?: boolean;
   readonly default?: string;
   readonly sensitive?: boolean;
+  readonly isArray?: boolean;
 }
 
 export type NumberKind = "integer" | "decimal";
@@ -52,6 +53,7 @@ export interface NumberFieldConfig {
   readonly default?: number;
   readonly sensitive?: boolean;
   readonly numberKind?: NumberKind;
+  readonly isArray?: boolean;
 }
 
 export interface BooleanFieldConfig {
@@ -59,6 +61,7 @@ export interface BooleanFieldConfig {
   readonly required?: boolean;
   readonly default?: boolean;
   readonly sensitive?: boolean;
+  readonly isArray?: boolean;
 }
 
 export interface DateFieldConfig {
@@ -66,6 +69,7 @@ export interface DateFieldConfig {
   readonly required?: boolean;
   readonly default?: string;
   readonly sensitive?: boolean;
+  readonly isArray?: boolean;
 }
 
 export interface RelationFieldConfig {
@@ -80,6 +84,7 @@ export interface EnumFieldConfig {
   readonly default?: string;
   readonly enumValues: readonly string[];
   readonly sensitive?: boolean;
+  readonly isArray?: boolean;
 }
 
 export interface ImageFieldConfig {
@@ -107,7 +112,7 @@ export type FieldConfig =
 
 export type FieldDefinitions = Readonly<Record<string, FieldConfig>>;
 
-export type InferFieldValue<F extends FieldConfig> = F["type"] extends "string"
+type InferScalarFieldValue<F extends FieldConfig> = F["type"] extends "string"
   ? string
   : F["type"] extends "number"
     ? number
@@ -122,6 +127,12 @@ export type InferFieldValue<F extends FieldConfig> = F["type"] extends "string"
             : F["type"] extends "image" | "document"
               ? EntityFileReference
               : never;
+
+export type InferFieldValue<F extends FieldConfig> = F extends {
+  readonly isArray: true;
+}
+  ? InferScalarFieldValue<F>[]
+  : InferScalarFieldValue<F>;
 
 type IsRequiredInEntity<F extends FieldConfig> = F extends { required: true }
   ? true
@@ -174,6 +185,7 @@ export interface NormalizedFieldMeta {
   readonly numberKind?: NumberKind;
   readonly maxSizeBytes?: number;
   readonly defaultImage?: EntityFileReference;
+  readonly isArray?: boolean;
 }
 
 export interface EntityMetadata<

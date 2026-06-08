@@ -28,7 +28,7 @@ export function Sidebar({ children, className, ...props }: SidebarProps) {
     <aside
       data-collapsible={collapsed ? "icon" : "expanded"}
       className={cn(
-        "group/sidebar bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-dvh shrink-0 flex-col overflow-x-hidden border-r transition-[width] duration-200 ease-linear",
+        "group/sidebar bg-sidebar text-sidebar-foreground border-sidebar-border relative flex h-dvh shrink-0 flex-col overflow-hidden overscroll-y-contain border-r transition-[width] duration-200 ease-linear",
         collapsed ? "w-(--sidebar-width-icon)" : "w-(--sidebar-width)",
         className,
       )}
@@ -83,7 +83,7 @@ export function SidebarContent({
   return (
     <div
       className={cn(
-        "flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto p-2",
+        "flex min-h-0 flex-1 flex-col gap-1 overflow-x-hidden overflow-y-auto overscroll-y-contain p-2",
         className,
       )}
       {...props}

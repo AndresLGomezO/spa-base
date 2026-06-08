@@ -1,15 +1,20 @@
 import type { ReactNode } from "react";
+import type { SerializableEntityDefinition } from "@repo/entities";
+import { findFirstImageFieldName } from "@repo/entities";
 import {
   createDefaultComponent,
   type BadgeComponentConfig,
   type ConditionalStyleRule,
   type DataSource,
+  type EntityFieldSelectorComponentConfig,
   type FieldUiComponentConfig,
   type StyleRule,
   isFieldUiComponent,
   isPageUiComponent,
   type UiComponentConfig,
   type UiComponentKind,
+  type WizardProgressComponentConfig,
+  type WizardStepStatusKind,
 } from "@repo/ui-builder-core";
 import { Button, Input, Text, clampCardImageSizePx } from "@repo/ui";
 
@@ -25,6 +30,7 @@ import {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
+import { TEXT_COLOR_TOKEN_OPTIONS } from "./style-rules-state.js";
 
 const DEFAULT_COMPONENT_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -91,6 +97,24 @@ const BADGE_VARIANTS = [
   "neutral",
 ] as const;
 
+const WIZARD_STEP_STATUS_OPTIONS: readonly WizardStepStatusKind[] = [
+  "pending",
+  "active",
+  "completed",
+  "invalid",
+] as const;
+
+function updateWizardProgressConditionalRules(
+  config: WizardProgressComponentConfig,
+  rules: readonly ConditionalStyleRule[],
+  onChange: (config: UiComponentConfig) => void,
+): void {
+  onChange({
+    ...config,
+    conditionalStyles: rules,
+  });
+}
+
 export interface ComponentConfigEditorLabels {
   readonly component: string;
   readonly staticValue: string;
@@ -108,6 +132,15 @@ export interface ComponentConfigEditorLabels {
   readonly displayFormat: string;
   readonly showCurrency: string;
   readonly showToneColors: string;
+  readonly entityFieldSelectorLayout?: string;
+  readonly entityFieldSelectorLayoutList?: string;
+  readonly entityFieldSelectorLayoutListWithLogo?: string;
+  readonly entityFieldSelectorLayoutMiniCards?: string;
+  readonly entityFieldSelectorEnableSearch?: string;
+  readonly entityFieldSelectorCardsPerRow?: string;
+  readonly entityFieldSelectorImageField?: string;
+  readonly entityFieldSelectorImageFieldAuto?: string;
+  readonly entityFieldSelectorEnumLayoutHint?: string;
   readonly styleRules: StyleRulesEditorLabels;
   readonly label: LabelConfigEditorLabels;
 }
@@ -126,6 +159,11 @@ export interface ComponentConfigEditorProps {
     readonly onChange: (value: string) => void;
   }) => ReactNode;
   readonly allowedKinds?: readonly UiComponentKind[];
+  readonly entityFieldSelectorFieldDescriptors?: readonly FieldDescriptor[];
+  readonly definition?: SerializableEntityDefinition;
+  readonly getDefinition?: (
+    entityName: string,
+  ) => SerializableEntityDefinition | undefined;
 }
 
 function updatePrimaryField(
@@ -142,6 +180,194 @@ function updateStaticPrimary(
   return { ...config, primary: { type: "static", value } };
 }
 
+function resolveEntityFieldSelectorImageFields(
+  config: EntityFieldSelectorComponentConfig,
+  definition: SerializableEntityDefinition | undefined,
+  getDefinition?: (
+    entityName: string,
+  ) => SerializableEntityDefinition | undefined,
+): readonly string[] {
+  if (!definition) {
+    return [];
+  }
+
+  const fieldMeta = definition.fields[config.fieldPath];
+  if (fieldMeta?.type !== "relation" || !fieldMeta.relation?.target) {
+    return [];
+  }
+
+  const targetDefinition = getDefinition?.(fieldMeta.relation.target);
+  if (!targetDefinition) {
+    return [];
+  }
+
+  return Object.entries(targetDefinition.fields)
+    .filter(([, meta]) => meta.type === "image")
+    .map(([name]) => name)
+    .sort((a, b) => a.localeCompare(b));
+}
+
+function EntityFieldSelectorConfigFields({
+  config,
+  fieldDescriptors,
+  labels,
+  definition,
+  getDefinition,
+  onChange,
+}: {
+  readonly config: EntityFieldSelectorComponentConfig;
+  readonly fieldDescriptors: readonly FieldDescriptor[];
+  readonly labels: ComponentConfigEditorLabels;
+  readonly definition?: SerializableEntityDefinition;
+  readonly getDefinition?: (
+    entityName: string,
+  ) => SerializableEntityDefinition | undefined;
+  readonly onChange: (config: UiComponentConfig) => void;
+}) {
+  const fieldMeta = definition?.fields[config.fieldPath];
+  const isEnumField = fieldMeta?.type === "enum";
+  const isRelationField = fieldMeta?.type === "relation";
+  const showImageField =
+    isRelationField &&
+    (config.layout === "list-with-logo" || config.layout === "mini-cards");
+  const imageFieldOptions = resolveEntityFieldSelectorImageFields(
+    config,
+    definition,
+    getDefinition,
+  );
+  const defaultImageField = definition
+    ? (resolveEntityFieldSelectorImageFields(
+        config,
+        definition,
+        getDefinition,
+      )[0] ??
+      (fieldMeta?.type === "relation" && fieldMeta.relation?.target
+        ? findFirstImageFieldName(
+            getDefinition?.(fieldMeta.relation.target)?.fields ?? {},
+          )
+        : undefined))
+    : undefined;
+
+  return (
+    <>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">{labels.field}</span>
+        <select
+          className={SELECT_CLASS}
+          value={config.fieldPath}
+          onChange={(event) =>
+            onChange({ ...config, fieldPath: event.target.value })
+          }
+        >
+          {fieldDescriptors.map((field) => (
+            <option key={field.path} value={field.path}>
+              {formatFieldOptionLabel(field)}
+            </option>
+          ))}
+        </select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">
+          {labels.entityFieldSelectorLayout ?? "Layout"}
+        </span>
+        <select
+          className={SELECT_CLASS}
+          value={config.layout}
+          onChange={(event) =>
+            onChange({
+              ...config,
+              layout: event.target
+                .value as EntityFieldSelectorComponentConfig["layout"],
+            })
+          }
+        >
+          <option value="list">
+            {labels.entityFieldSelectorLayoutList ?? "Simple list"}
+          </option>
+          <option value="list-with-logo" disabled={isEnumField}>
+            {labels.entityFieldSelectorLayoutListWithLogo ?? "List with logos"}
+          </option>
+          <option value="mini-cards">
+            {labels.entityFieldSelectorLayoutMiniCards ?? "Mini cards"}
+          </option>
+        </select>
+      </label>
+
+      {isEnumField &&
+      (config.layout === "list-with-logo" || config.layout === "mini-cards") ? (
+        <Text variant="muted" className="text-xs">
+          {labels.entityFieldSelectorEnumLayoutHint ??
+            "Logo layouts show text only for enum fields."}
+        </Text>
+      ) : null}
+
+      <label className="flex items-center gap-2 text-sm">
+        <input
+          type="checkbox"
+          checked={config.enableSearch !== false}
+          onChange={(event) =>
+            onChange({ ...config, enableSearch: event.target.checked })
+          }
+        />
+        <span>{labels.entityFieldSelectorEnableSearch ?? "Enable search"}</span>
+      </label>
+
+      {config.layout === "mini-cards" ? (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">
+            {labels.entityFieldSelectorCardsPerRow ?? "Cards per row"}
+          </span>
+          <select
+            className={SELECT_CLASS}
+            value={config.cardsPerRow ?? 1}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                cardsPerRow: Number.parseInt(event.target.value, 10),
+              })
+            }
+          >
+            {[1, 2, 3, 4].map((count) => (
+              <option key={count} value={count}>
+                {count}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+
+      {showImageField ? (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">
+            {labels.entityFieldSelectorImageField ?? "Image field"}
+          </span>
+          <select
+            className={SELECT_CLASS}
+            value={config.imageFieldPath ?? defaultImageField ?? ""}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                imageFieldPath: event.target.value.trim() || undefined,
+              })
+            }
+          >
+            <option value="">
+              {labels.entityFieldSelectorImageFieldAuto ??
+                "Auto (first image field)"}
+            </option>
+            {imageFieldOptions.map((fieldName) => (
+              <option key={fieldName} value={fieldName}>
+                {fieldName}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : null}
+    </>
+  );
+}
+
 export function ComponentConfigEditor({
   config,
   fieldDescriptors,
@@ -150,6 +376,9 @@ export function ComponentConfigEditor({
   metricKpiEditor,
   staticImageEditor,
   allowedKinds = DEFAULT_COMPONENT_KINDS,
+  entityFieldSelectorFieldDescriptors,
+  definition,
+  getDefinition,
 }: ComponentConfigEditorProps) {
   const componentKinds = allowedKinds;
   const kind = config.kind;
@@ -170,6 +399,7 @@ export function ComponentConfigEditor({
 
     if (
       nextKind === "form-field" ||
+      nextKind === "entity-field-selector" ||
       nextKind === "form-section" ||
       nextKind === "form-actions" ||
       nextKind === "wizard-progress" ||
@@ -262,6 +492,18 @@ export function ComponentConfigEditor({
             </select>
           </label>
         ) : null}
+        {config.kind === "entity-field-selector" ? (
+          <EntityFieldSelectorConfigFields
+            config={config}
+            fieldDescriptors={
+              entityFieldSelectorFieldDescriptors ?? fieldDescriptors
+            }
+            labels={labels}
+            definition={definition}
+            getDefinition={getDefinition}
+            onChange={onChange}
+          />
+        ) : null}
         {config.kind === "form-section" ? (
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{labels.label.label}</span>
@@ -328,25 +570,130 @@ export function ComponentConfigEditor({
           </Text>
         ) : null}
         {config.kind === "wizard-progress" ? (
-          <StyleRulesEditor
-            styles={
-              config.conditionalStyles as unknown as StyleRule[] | undefined
-            }
-            onChange={(rules) =>
-              onChange({
-                ...config,
-                conditionalStyles: rules as unknown as ConditionalStyleRule[],
-              })
-            }
-            labels={{
-              ...labels.styleRules,
-              title: labels.badgeColorRules,
-            }}
-          />
+          <div className="flex flex-col gap-2">
+            <Text className="text-muted-foreground text-sm">
+              {labels.badgeColorRules}
+            </Text>
+            {(config.conditionalStyles ?? []).map((rule, index) => (
+              <div key={index} className="flex flex-wrap gap-2">
+                <select
+                  className={SELECT_CLASS}
+                  value={rule.matchValue ?? ""}
+                  onChange={(event) => {
+                    const rules = [...(config.conditionalStyles ?? [])];
+                    rules[index] = {
+                      ...rule,
+                      matchValue: event.target.value,
+                    };
+                    updateWizardProgressConditionalRules(
+                      config,
+                      rules,
+                      onChange,
+                    );
+                  }}
+                >
+                  <option value="">{labels.matchValue}</option>
+                  {WIZARD_STEP_STATUS_OPTIONS.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className={SELECT_CLASS}
+                  value={rule.background ?? ""}
+                  onChange={(event) => {
+                    const rules = [...(config.conditionalStyles ?? [])];
+                    rules[index] = {
+                      ...rule,
+                      background:
+                        event.target.value.length > 0
+                          ? (event.target
+                              .value as ConditionalStyleRule["background"])
+                          : undefined,
+                    };
+                    updateWizardProgressConditionalRules(
+                      config,
+                      rules,
+                      onChange,
+                    );
+                  }}
+                >
+                  <option value="">Background</option>
+                  {TEXT_COLOR_TOKEN_OPTIONS.map((token) => (
+                    <option key={token} value={token}>
+                      {token}
+                    </option>
+                  ))}
+                </select>
+                <select
+                  className={SELECT_CLASS}
+                  value={rule.textColor ?? ""}
+                  onChange={(event) => {
+                    const rules = [...(config.conditionalStyles ?? [])];
+                    rules[index] = {
+                      ...rule,
+                      textColor:
+                        event.target.value.length > 0
+                          ? (event.target
+                              .value as ConditionalStyleRule["textColor"])
+                          : undefined,
+                    };
+                    updateWizardProgressConditionalRules(
+                      config,
+                      rules,
+                      onChange,
+                    );
+                  }}
+                >
+                  <option value="">Text color</option>
+                  {TEXT_COLOR_TOKEN_OPTIONS.map((token) => (
+                    <option key={token} value={token}>
+                      {token}
+                    </option>
+                  ))}
+                </select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    updateWizardProgressConditionalRules(
+                      config,
+                      (config.conditionalStyles ?? []).filter(
+                        (_, ruleIndex) => ruleIndex !== index,
+                      ),
+                      onChange,
+                    );
+                  }}
+                >
+                  {labels.remove}
+                </Button>
+              </div>
+            ))}
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => {
+                updateWizardProgressConditionalRules(
+                  config,
+                  [
+                    ...(config.conditionalStyles ?? []),
+                    { matchValue: "active" },
+                  ],
+                  onChange,
+                );
+              }}
+            >
+              {labels.addRule}
+            </Button>
+          </div>
         ) : null}
         {isPageUiComponent(config) ||
         config.kind === "wizard-step-host" ||
-        config.kind === "wizard-actions" ? (
+        config.kind === "wizard-actions" ||
+        config.kind === "wizard-progress" ||
+        config.kind === "entity-field-selector" ||
+        config.kind === "form-field" ? (
           <StyleRulesEditor
             styles={config.styles}
             onChange={(styles) => onChange({ ...config, styles })}

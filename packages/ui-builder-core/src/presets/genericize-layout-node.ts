@@ -56,6 +56,17 @@ function genericizeComponent(
     return { ...component, fieldPath: uiBuilderSlotToken(slotId) };
   }
 
+  if (component.kind === "entity-field-selector") {
+    const slotId = nextSlotId(slotCounter.value++);
+    slots.push({
+      id: slotId,
+      kind: "formFieldPath",
+      jsonPath: `${jsonPathPrefix}.fieldPath`,
+      sourceHint: component.fieldPath,
+    });
+    return { ...component, fieldPath: uiBuilderSlotToken(slotId) };
+  }
+
   if (!isFieldUiComponent(component)) {
     return component;
   }

@@ -4,10 +4,9 @@ import {
   uploadEntityFile,
 } from "@repo/gcp-firebase";
 
-import { RATES_TENANT_ID } from "./constants.js";
-import type { RatesRecordSeedContext } from "./seed-helpers.js";
+import type { RatesRecordSeedContext } from "./seed-record-helpers.js";
 
-/** Minimal valid single-page PDF used as an empty statement placeholder. */
+/** Minimal valid single-page PDF used as an empty document placeholder. */
 const EMPTY_MOCK_PDF = Buffer.from(
   [
     "%PDF-1.4",
@@ -28,38 +27,33 @@ const EMPTY_MOCK_PDF = Buffer.from(
   "utf-8",
 );
 
-export function shouldSeedProductSnapshotStatement(recordId: string): boolean {
-  let hash = 0;
-  for (const char of recordId) {
-    hash = (hash * 31 + char.charCodeAt(0)) >>> 0;
-  }
-  return hash % 5 < 2;
-}
-
-export async function uploadRatesProductSnapshotStatement(
+export async function uploadRatesEmptyPdf(
   context: RatesRecordSeedContext,
   params: {
+    readonly entityName: string;
+    readonly fieldName: string;
     readonly recordId: string;
+    readonly fileName?: string;
   },
 ): Promise<EntityFileReference | undefined> {
   try {
     return await uploadEntityFile({
       config: context.config,
-      tenantId: RATES_TENANT_ID,
-      entityName: "productSnapshot",
-      fieldName: "statement",
+      tenantId: context.tenantId,
+      entityName: params.entityName,
+      fieldName: params.fieldName,
       fieldType: "document",
       objectId: createStableEntityFileObjectId(
-        `rates/productSnapshot/${params.recordId}/statement`,
+        `rates/${params.entityName}/${params.recordId}/${params.fieldName}`,
       ),
       buffer: EMPTY_MOCK_PDF,
       contentType: "application/pdf",
-      fileName: "statement.pdf",
+      fileName: params.fileName ?? "document.pdf",
       uploadedBy: context.ownerId,
     });
   } catch (error) {
     console.warn(
-      `[rates-seed] Failed to upload statement for productSnapshot/${params.recordId}:`,
+      `[rates-seed] Failed to upload ${params.entityName}/${params.recordId}/${params.fieldName}:`,
       error instanceof Error ? error.message : error,
     );
     return undefined;

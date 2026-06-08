@@ -54,6 +54,11 @@ export function WizardActions({
         .join(" ")}
       style={style}
     >
+      {!isFirstStep ? (
+        <Button type="button" variant="outline" onClick={onBack}>
+          {backLabel}
+        </Button>
+      ) : null}
       {!isLastStep ? (
         <Button type="button" onClick={onNext}>
           {nextLabel}
@@ -63,11 +68,6 @@ export function WizardActions({
           {submitLabel}
         </Button>
       )}
-      {!isFirstStep ? (
-        <Button type="button" variant="outline" onClick={onBack}>
-          {backLabel}
-        </Button>
-      ) : null}
       <Button type="button" variant="outline" onClick={onCancel}>
         {cancelLabel}
       </Button>

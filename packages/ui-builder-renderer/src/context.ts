@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 
 import type {
+  EntityFieldSelectorComponentConfig,
   MetricKpiComponentConfig,
   MetricKpiPresentation,
   WizardActionsComponentConfig,
@@ -69,6 +70,10 @@ export interface LayoutRenderContext {
     fieldPath: string,
     containerClassName?: string,
   ) => ReactNode;
+  readonly entityFieldSelectorRenderer?: (
+    config: EntityFieldSelectorComponentConfig,
+    containerClassName?: string,
+  ) => ReactNode;
   readonly formSectionRenderer?: (
     title: string | undefined,
     children: ReactNode,
@@ -97,6 +102,8 @@ export interface LayoutRenderContext {
   readonly wizardActionsRenderer?: (
     config: WizardActionsComponentConfig,
   ) => ReactNode;
+  /** Step body rendered inside wizard-step-host (bounded height, no step-level scroll). */
+  readonly wizardStepContent?: boolean;
 }
 
 export type ListItemRenderContext = LayoutRenderContext & {

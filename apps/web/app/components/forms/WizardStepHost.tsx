@@ -3,6 +3,7 @@ import {
   splitStyleRuleClasses,
   type WizardStepHostComponentConfig,
 } from "@repo/ui-builder-core";
+import { cn } from "@repo/theme/utils";
 import type { ReactNode } from "react";
 
 interface WizardStepHostProps {
@@ -15,7 +16,10 @@ export function WizardStepHost({ config, children }: WizardStepHostProps) {
   const style = layoutInlineStyleFromStyleRules(config.styles);
 
   return (
-    <div className={containerClassName} style={style}>
+    <div
+      className={cn("flex w-full min-w-0 flex-col", containerClassName)}
+      style={style}
+    >
       {children}
     </div>
   );

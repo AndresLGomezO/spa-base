@@ -7,10 +7,13 @@ import type {
 import { isFieldEditable, isFieldVisible } from "@repo/ui-builder";
 
 import type { EntityName } from "../../entities/entity-catalog";
+import { formatFieldLabel } from "../../entities/entity-catalog";
 import { EntityField } from "../../components/entity/EntityField";
+import { EntityFieldSelector } from "../../components/entity/EntityFieldSelector";
 import { ENTITY_FORM_ID } from "../../components/entity/entity-form-constants";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context";
+import { formComponentContainerClassName } from "./form-component-container-class-name";
 
 export function createEntityFormRenderContext(options: {
   readonly entityName: EntityName;
@@ -29,6 +32,7 @@ export function createEntityFormRenderContext(options: {
   readonly isSubmitting?: boolean;
   readonly cancelLabel: string;
   readonly saveLabel: string;
+  readonly wizardStepContent?: boolean;
 }): LayoutRenderContext {
   const canWrite = options.canWrite;
 
@@ -41,6 +45,7 @@ export function createEntityFormRenderContext(options: {
 
   return {
     mode: "form",
+    wizardStepContent: options.wizardStepContent,
     data: options.values,
     locale: options.locale,
     resolveField: (path) => options.values[path],
@@ -62,7 +67,7 @@ export function createEntityFormRenderContext(options: {
         return null;
       }
       return (
-        <div className={containerClassName}>
+        <div className={formComponentContainerClassName(containerClassName)}>
           <EntityField
             entityName={options.entityName}
             fieldName={root}
@@ -73,6 +78,31 @@ export function createEntityFormRenderContext(options: {
             onChange={options.onChange}
           />
         </div>
+      );
+    },
+    entityFieldSelectorRenderer: (config, containerClassName) => {
+      const root = config.fieldPath;
+      const fieldUI = options.definition.ui.fields?.[root];
+      const access = getFieldAccessLevel(options.fieldAccess, root);
+      if (!isFieldVisible(fieldUI, options.canRead, access)) {
+        return null;
+      }
+      const fieldMeta = options.definition.fields[root];
+      return (
+        <EntityFieldSelector
+          entityName={options.entityName}
+          config={config}
+          value={options.values[root]}
+          label={fieldUI?.label ?? formatFieldLabel(root, options.definition)}
+          required={fieldMeta?.required}
+          error={options.errors[root]}
+          readOnly={!isFieldEditable(fieldUI, canWrite, access)}
+          containerClassName={formComponentContainerClassName(
+            containerClassName,
+          )}
+          listScrollContained={options.wizardStepContent === true}
+          onChange={options.onChange}
+        />
       );
     },
     formSectionRenderer: (title, children) => (

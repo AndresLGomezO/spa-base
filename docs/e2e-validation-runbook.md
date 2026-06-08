@@ -57,7 +57,7 @@ pnpm typecheck
 2. Open the tenant switcher → **Create tenant**, or use **Create tenant** on the home empty state when no tenants exist (legacy `/platform/create-tenant` also opens the modal)
 3. Create tenant: name e.g. `Validation Tenant`, note the generated `id` (e.g. `tenant_abc`)
 
-**Alternative (Firestore seed):** Dev tenant `rates` is seeded on API startup. Sign in as `testuser1@rates.com` / `RatesTest1!` (Auth emulator) for a pre-provisioned `normalRatesUser` with 12+ records per business model. Other users can get the same role via `"tenants": { "rates": ["normalRatesUser"] }` on `users/{uid}`.
+**Alternative (Firestore seed):** Dev tenant `rates` is seeded on API startup with the Rates Dev contract model (12 entities, demo data, metrics, contract wizard UI). Sign in as `testuser1@rates.com` / `RatesTest1!` (Auth emulator) for a pre-provisioned `normalRatesUser`. Other users can get the same role via `"tenants": { "rates": ["normalRatesUser"] }` on `users/{uid}`. If you previously used the old portfolio model, run `pnpm dev:docker:reset` before validating.
 
 ---
 
@@ -218,7 +218,20 @@ Requires Storage emulator in local dev (`FIREBASE_STORAGE_EMULATOR_HOST`). See [
 
 ---
 
-## 11. Automated Cypress (optional)
+## 11. Entity field selector (form wizard)
+
+Use the **`entity-field-selector`** layout component in form/wizard step layouts for relation and enum fields.
+
+1. Open **Design form layout** for an entity with a relation field (e.g. `bankId`) or enum field.
+2. Add component kind **`entity-field-selector`**, bind the field, and choose layout (**Simple list**, **List with logos**, or **Mini cards**).
+3. Toggle **Enable search** and confirm the search placeholder uses the target entity label (relations) or field label (enums).
+4. For wizard steps, place the selector as the primary row in the step column so it fills the step body (`flex: 1` style is applied by default).
+5. Do **not** also add a `form-field` slot for the same field on the same step.
+6. Multi-select follows the entity definition: **many-to-many** relations and **enum + is array** allow multiple selections; FK relations are single-select.
+
+---
+
+## 12. Automated Cypress (optional)
 
 ```bash
 pnpm --filter web cypress:run

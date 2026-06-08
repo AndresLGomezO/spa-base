@@ -36,11 +36,15 @@ function isStringSearchCandidate(
   fieldName: string,
 ): boolean {
   const meta = getFieldMeta(entity, fieldName);
-  if (!meta || meta.type !== "string" || meta.sensitive) {
+  if (!meta || meta.sensitive) {
     return false;
   }
 
-  return true;
+  if (meta.isArray === true) {
+    return meta.type === "string" || meta.type === "enum";
+  }
+
+  return meta.type === "string";
 }
 
 export function isSearchableField(

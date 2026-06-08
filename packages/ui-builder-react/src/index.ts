@@ -50,6 +50,10 @@ export {
   type LayoutJsonImportDialogProps,
 } from "./components/LayoutJsonImportDialog.js";
 export {
+  LayoutJsonViewDialog,
+  type LayoutJsonViewDialogProps,
+} from "./components/LayoutJsonViewDialog.js";
+export {
   SavePresetDialog,
   type LayoutPresetLabels,
 } from "./components/SavePresetDialog.js";

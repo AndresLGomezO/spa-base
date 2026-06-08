@@ -28,6 +28,7 @@ export type StylePropertyKey =
   | "fontStyle"
   | "textDecoration"
   | "textAlign"
+  | "textWrap"
   | "alignItems"
   | "justifyContent"
   | "alignSelf"
@@ -35,6 +36,10 @@ export type StylePropertyKey =
   | "minWidth"
   | "maxWidth"
   | "borderRadius"
+  | "borderTopLeftRadius"
+  | "borderTopRightRadius"
+  | "borderBottomLeftRadius"
+  | "borderBottomRightRadius"
   | "borderWidth"
   | "borderColor"
   | "borderStyle"
@@ -65,6 +70,7 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "fontStyle",
   "textDecoration",
   "textAlign",
+  "textWrap",
   "alignItems",
   "justifyContent",
   "alignSelf",
@@ -72,12 +78,14 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "minWidth",
   "maxWidth",
   "borderRadius",
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius",
   "borderWidth",
   "borderColor",
   "borderStyle",
   "flexWrap",
-  "fontStyle",
-  "textDecoration",
   "overflowX",
   "overflowY",
 ] as const;

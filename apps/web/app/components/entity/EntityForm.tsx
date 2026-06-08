@@ -57,7 +57,6 @@ interface EntityFormProps {
   readonly hideActions?: boolean;
   readonly modalActionPlacement?: "inline" | "footer";
   readonly modalFooterLayout?: UiLayoutDocument;
-  readonly flushContent?: boolean;
   readonly onFooterChange?: (footer: ReactNode | null) => void;
   readonly onSubmittingChange?: (isSubmitting: boolean) => void;
 }
@@ -86,7 +85,6 @@ export function EntityForm({
   hideActions = false,
   modalActionPlacement = "inline",
   modalFooterLayout,
-  flushContent = false,
   onFooterChange,
   onSubmittingChange,
 }: EntityFormProps) {
@@ -246,7 +244,6 @@ export function EntityForm({
   const saveLabel = mode === "create" ? t("entity.create") : t("entity.save");
   const suppressInlineActions =
     hideActions || modalActionPlacement === "footer";
-  const formClassName = flushContent ? undefined : "px-1";
 
   const designedFormContext = useMemo(
     () =>
@@ -363,7 +360,6 @@ export function EntityForm({
         hideActions={suppressInlineActions}
         modalActionPlacement={modalActionPlacement}
         modalFooterLayout={modalFooterLayout}
-        flushContent={flushContent}
         onFooterChange={onFooterChange}
         isSubmitting={isSubmitting}
         cancelLabel={t("entity.cancel")}
@@ -375,11 +371,7 @@ export function EntityForm({
 
   if (designedLayout) {
     return (
-      <Form
-        id={ENTITY_FORM_ID}
-        className={formClassName}
-        onSubmit={(event) => void handleSubmit(event)}
-      >
+      <Form id={ENTITY_FORM_ID} onSubmit={(event) => void handleSubmit(event)}>
         <RecursiveLayoutRenderer
           layout={designedLayout}
           context={designedFormContext}
@@ -389,11 +381,7 @@ export function EntityForm({
   }
 
   return (
-    <Form
-      id={ENTITY_FORM_ID}
-      className={formClassName}
-      onSubmit={(event) => void handleSubmit(event)}
-    >
+    <Form id={ENTITY_FORM_ID} onSubmit={(event) => void handleSubmit(event)}>
       {sections.map((section, index) => (
         <div
           key={`${section.title ?? "section"}-${index}`}

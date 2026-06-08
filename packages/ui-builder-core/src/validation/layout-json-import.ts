@@ -31,7 +31,6 @@ import {
 import {
   regenerateComponentRowSubtree,
   regenerateLayoutDocumentIds,
-  regenerateNestedLayoutRowSubtree,
 } from "./regenerate-layout-ids.js";
 
 export type LayoutJsonImportScope =
@@ -90,7 +89,7 @@ function assertSurfaceComponentKinds(
   return errors;
 }
 
-function assertEntityLayoutSemantics(
+function assertLayoutFieldPathSemantics(
   layout: UiLayoutDocument,
   options: ValidateLayoutJsonImportOptions,
 ): LayoutJsonImportError[] {
@@ -110,18 +109,49 @@ function assertEntityLayoutSemantics(
     });
   }
 
-  if (options.designSurface === "formWizardShell") {
-    try {
-      assertWizardShellLayout(layout, context);
-    } catch (error) {
-      errors.push({
-        path: "wizardShell",
-        message: error instanceof Error ? error.message : String(error),
-      });
-    }
+  return errors;
+}
+
+function assertWizardShellSemantics(
+  layout: UiLayoutDocument,
+  options: ValidateLayoutJsonImportOptions,
+): LayoutJsonImportError[] {
+  if (options.designSurface !== "formWizardShell") {
+    return [];
   }
 
-  return errors;
+  try {
+    assertWizardShellLayout(layout, options.designSurface);
+    return [];
+  } catch (error) {
+    return [
+      {
+        path: "wizardShell",
+        message: error instanceof Error ? error.message : String(error),
+      },
+    ];
+  }
+}
+
+function assertEntityLayoutSemantics(
+  layout: UiLayoutDocument,
+  options: ValidateLayoutJsonImportOptions,
+): LayoutJsonImportError[] {
+  return [
+    ...assertLayoutFieldPathSemantics(layout, options),
+    ...assertWizardShellSemantics(layout, options),
+  ];
+}
+
+function assertImportRowSemantics(
+  row: ComponentRowNode | NestedLayoutRowNode,
+  options: ValidateLayoutJsonImportOptions,
+): LayoutJsonImportError[] {
+  const wrapped = wrapRowInLayoutDocument(row);
+  return [
+    ...assertSurfaceComponentKinds(wrapped, options.designSurface),
+    ...assertLayoutFieldPathSemantics(wrapped, options),
+  ];
 }
 
 function wrapRowInLayoutDocument(
@@ -167,11 +197,7 @@ function postProcessComponentRow(
   row: ComponentRowNode,
   options: ValidateLayoutJsonImportOptions,
 ): LayoutJsonImportValidationResult {
-  const wrapped = wrapRowInLayoutDocument(row);
-  const semanticErrors = [
-    ...assertSurfaceComponentKinds(wrapped, options.designSurface),
-    ...assertEntityLayoutSemantics(wrapped, options),
-  ];
+  const semanticErrors = assertImportRowSemantics(row, options);
 
   if (semanticErrors.length > 0) {
     return { ok: false, errors: semanticErrors };
@@ -188,11 +214,7 @@ function postProcessNestedLayoutRow(
   row: NestedLayoutRowNode,
   options: ValidateLayoutJsonImportOptions,
 ): LayoutJsonImportValidationResult {
-  const wrapped = wrapRowInLayoutDocument(row);
-  const semanticErrors = [
-    ...assertSurfaceComponentKinds(wrapped, options.designSurface),
-    ...assertEntityLayoutSemantics(wrapped, options),
-  ];
+  const semanticErrors = assertImportRowSemantics(row, options);
 
   if (semanticErrors.length > 0) {
     return { ok: false, errors: semanticErrors };
@@ -200,7 +222,7 @@ function postProcessNestedLayoutRow(
 
   return {
     ok: true,
-    data: regenerateNestedLayoutRowSubtree(row),
+    data: row,
     errors: [],
   };
 }
@@ -259,8 +281,36 @@ export function createLayoutJsonSkeleton(
   scope: LayoutJsonImportScope,
   designSurface: DesignSurface,
   defaultFieldPath: string,
+  referenceData?: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode,
 ): string {
-  const kind = defaultKindForSurface(designSurface);
+  if (referenceData !== undefined) {
+    if (
+      scope.type === "layout-document" &&
+      "root" in referenceData &&
+      referenceData.root.type === "root"
+    ) {
+      return JSON.stringify(referenceData, null, 2);
+    }
+    if (
+      scope.type === "component-row" &&
+      "type" in referenceData &&
+      referenceData.type === "component"
+    ) {
+      return JSON.stringify(referenceData, null, 2);
+    }
+    if (
+      scope.type === "nested-layout-row" &&
+      "type" in referenceData &&
+      referenceData.type === "nested-layout"
+    ) {
+      return JSON.stringify(referenceData, null, 2);
+    }
+  }
+
+  const kind =
+    scope.type === "layout-document"
+      ? defaultKindForSurface(designSurface)
+      : "text";
 
   if (scope.type === "layout-document") {
     const layout = createEmptyLayout(1);

@@ -4,7 +4,7 @@ import {
   type WizardProgressComponentConfig,
   type WizardStepStatusKind,
 } from "@repo/ui-builder-core";
-import { Check } from "lucide-react";
+import { Check, X } from "lucide-react";
 
 import { resolveLucideIcon } from "../../lib/resolve-lucide-icon";
 import type { WizardRenderState } from "@repo/ui-builder-renderer";
@@ -51,6 +51,8 @@ export function WizardProgress({ config, wizard }: WizardProgressProps) {
               >
                 {status === "completed" ? (
                   <Check className="size-4 text-emerald-600" />
+                ) : status === "invalid" ? (
+                  <X className="size-4 text-destructive" />
                 ) : Icon ? (
                   <Icon className="size-4" />
                 ) : (

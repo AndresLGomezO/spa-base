@@ -11,7 +11,7 @@ describe("resolveMetricKpiPresentation", () => {
     ]);
 
     expect(presentation.className).not.toContain("text-primary");
-    expect(presentation.valueClassName).toBe("text-primary");
+    expect(presentation.valueClassName).toBe("truncate text-primary");
     expect(presentation.textSize).toBe(28);
     expect(presentation.style.padding).toBe("8px");
   });

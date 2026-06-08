@@ -25,13 +25,16 @@ export function buildEntityColumnDescriptors(
     const fieldMeta = definition.fields[column];
     const fieldUi = definition.ui.fields?.[column];
 
-    const searchable =
-      fieldUi?.searchable ??
-      (fieldMeta?.sensitive === true || fieldMeta?.type === "relation"
+    const defaultSearchable =
+      fieldMeta?.sensitive === true || fieldMeta?.type === "relation"
         ? false
-        : fieldMeta?.type === "string"
-          ? true
-          : undefined);
+        : fieldMeta?.isArray === true
+          ? fieldMeta.type === "string" || fieldMeta.type === "enum"
+          : fieldMeta?.type === "string"
+            ? true
+            : undefined;
+
+    const searchable = fieldUi?.searchable ?? defaultSearchable;
 
     return {
       id: column,

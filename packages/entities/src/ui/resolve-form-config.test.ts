@@ -6,6 +6,7 @@ import {
 
 import {
   resolveFormModalChrome,
+  resolveEffectiveFormModalContentPadding,
   resolveFormModalFooterLayout,
   resolveFormModalHasLayoutActions,
   resolveFormUsesModalBuilderFooter,
@@ -55,6 +56,29 @@ describe("resolveFormModalChrome", () => {
       showHeader: false,
       contentPadding: "none",
     });
+  });
+});
+
+describe("resolveEffectiveFormModalContentPadding", () => {
+  it("flushes content when padding is none or header is hidden", () => {
+    expect(
+      resolveEffectiveFormModalContentPadding({
+        showHeader: true,
+        contentPadding: "default",
+      }),
+    ).toBe("default");
+    expect(
+      resolveEffectiveFormModalContentPadding({
+        showHeader: false,
+        contentPadding: "default",
+      }),
+    ).toBe("none");
+    expect(
+      resolveEffectiveFormModalContentPadding({
+        showHeader: true,
+        contentPadding: "none",
+      }),
+    ).toBe("none");
   });
 });
 

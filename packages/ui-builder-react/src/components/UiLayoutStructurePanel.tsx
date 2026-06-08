@@ -24,7 +24,11 @@ import {
   type EntityDefinitionLookup,
   type FieldDescriptor,
 } from "../adapters/entity-card-view-adapter.js";
-import { entityFormFieldAdapter } from "../adapters/entity-form-field-adapter.js";
+import {
+  entityFormFieldAdapter,
+  entityFieldSelectorFieldAdapter,
+} from "../adapters/entity-form-field-adapter.js";
+import { CollapsibleSection } from "./CollapsibleSection.js";
 import {
   ColumnRowsEditor,
   type ColumnRowsEditorLabels,
@@ -37,6 +41,7 @@ import {
   LayoutJsonImportDialog,
   type LayoutJsonImportLabels,
 } from "./LayoutJsonImportDialog.js";
+import { LayoutJsonViewDialog } from "./LayoutJsonViewDialog.js";
 import {
   SavePresetDialog,
   type LayoutPresetLabels,
@@ -138,6 +143,13 @@ export function UiLayoutStructurePanel({
     return entityCardViewAdapter(definition, getDefinition);
   }, [definition, designSurface, getDefinition]);
 
+  const entityFieldSelectorFieldDescriptors = useMemo(() => {
+    if (designSurface !== "formPlain" && designSurface !== "formWizardStep") {
+      return undefined;
+    }
+    return entityFieldSelectorFieldAdapter(definition).fieldDescriptors;
+  }, [definition, designSurface]);
+
   const [activeColumn, setActiveColumn] = useState(0);
 
   const columnLabels: ColumnRowsEditorLabels = {
@@ -203,6 +215,11 @@ export function UiLayoutStructurePanel({
               />
             </>
           ) : null}
+          <LayoutJsonViewDialog
+            scope={{ type: "layout-document" }}
+            data={layout}
+            labels={labels.layoutJsonImport}
+          />
           <LayoutJsonImportDialog
             scope={{ type: "layout-document" }}
             designSurface={designSurface}
@@ -210,6 +227,7 @@ export function UiLayoutStructurePanel({
             defaultFieldPath={defaultFieldPath}
             canApply={canApplyImport}
             labels={labels.layoutJsonImport}
+            referenceData={layout}
             onApply={(data) =>
               onLayoutChange(replaceLayoutDocument(data as UiLayoutDocument))
             }
@@ -294,16 +312,15 @@ export function UiLayoutStructurePanel({
       ) : null}
 
       {labels.motion ? (
-        <MotionPresetEditor
-          motion={layout.motion}
-          onChange={(motion: MotionPreset | undefined) =>
-            onLayoutChange(updateLayoutMeta(layout, { motion }))
-          }
-          labels={{
-            ...labels.motion,
-            title: labels.layoutEffects,
-          }}
-        />
+        <CollapsibleSection title={labels.layoutEffects} defaultOpen={false}>
+          <MotionPresetEditor
+            motion={layout.motion}
+            onChange={(motion: MotionPreset | undefined) =>
+              onLayoutChange(updateLayoutMeta(layout, { motion }))
+            }
+            labels={labels.motion}
+          />
+        </CollapsibleSection>
       ) : null}
 
       {activeColumnNode ? (
@@ -351,6 +368,10 @@ export function UiLayoutStructurePanel({
           canApplyImport={canApplyImport}
           designSurface={designSurface}
           definition={definition}
+          getDefinition={getDefinition}
+          entityFieldSelectorFieldDescriptors={
+            entityFieldSelectorFieldDescriptors
+          }
           presetStore={presetStore}
         />
       ) : null}

@@ -3,6 +3,7 @@ import { describe, expect, it, vi } from "vitest";
 import { I18nextProvider } from "react-i18next";
 import { MemoryRouter } from "react-router";
 import { createDefaultFormLayout } from "@repo/entities";
+import { createDefaultWizardFormConfig } from "@repo/ui-builder-core";
 
 import { i18n } from "../../i18n";
 import { TestEntityCatalogProvider } from "../../test/test-entity-catalog-provider";
@@ -102,6 +103,53 @@ describe("EntityForm", () => {
 
     await waitFor(() => {
       expect(createMock).toHaveBeenCalled();
+    });
+  });
+
+  it("publishes wizard modal footer when actions are placed in the footer", async () => {
+    const onFooterChange = vi.fn();
+    const wizardEntity: EntityCatalogEntry = {
+      ...MOCK_ENTITY_CATALOG[0]!,
+      ui: {
+        ...MOCK_ENTITY_CATALOG[0]!.ui,
+        forms: {
+          presentation: "wizard",
+          modalChrome: { showHeader: false, contentPadding: "none" },
+          wizard: createDefaultWizardFormConfig(["name"]),
+          create: {
+            sections: [
+              { title: "Details", fields: ["name", "email", "isActive"] },
+            ],
+          },
+          edit: {
+            sections: [
+              { title: "Details", fields: ["name", "email", "isActive"] },
+            ],
+          },
+        },
+      },
+    };
+
+    render(
+      <TestEntityCatalogProvider items={[wizardEntity]}>
+        <MemoryRouter>
+          <I18nextProvider i18n={i18n}>
+            <EntityForm
+              entityName="widget"
+              mode="create"
+              onCancel={vi.fn()}
+              modalActionPlacement="footer"
+              hideActions
+              onFooterChange={onFooterChange}
+            />
+          </I18nextProvider>
+        </MemoryRouter>
+      </TestEntityCatalogProvider>,
+    );
+
+    await waitFor(() => {
+      expect(onFooterChange).toHaveBeenCalled();
+      expect(onFooterChange.mock.calls.at(-1)?.[0]).not.toBeNull();
     });
   });
 });

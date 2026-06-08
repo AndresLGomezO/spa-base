@@ -10,7 +10,9 @@ import {
   resolveStyleRules,
   spacingStyleFromStyleRules,
   splitStyleRuleClasses,
+  textWrapClassFromStyles,
   usesFlexWrapLayout,
+  usesTextWrap,
 } from "./apply-style-rules.js";
 import {
   themeTokenBackgroundClass,
@@ -37,6 +39,20 @@ describe("applyStyleRules", () => {
       { property: "borderRadius", value: "16" },
     ]);
     expect(resolved.style.borderRadius).toBe("16px");
+  });
+
+  it("applies per-corner border radius as inline styles", () => {
+    const resolved = resolveStyleRules([
+      { property: "borderTopLeftRadius", value: "0" },
+      { property: "borderTopRightRadius", value: "8" },
+      { property: "borderBottomLeftRadius", value: "16" },
+      { property: "borderBottomRightRadius", value: "24" },
+    ]);
+
+    expect(resolved.style.borderTopLeftRadius).toBe("0px");
+    expect(resolved.style.borderTopRightRadius).toBe("8px");
+    expect(resolved.style.borderBottomLeftRadius).toBe("16px");
+    expect(resolved.style.borderBottomRightRadius).toBe("24px");
   });
 
   it("maps semantic tokens to theme utilities", () => {
@@ -165,6 +181,17 @@ describe("applyStyleRules", () => {
     expect(resolved.className).not.toContain("bg-");
   });
 
+  it("applies semantic css variable colors as inline styles", () => {
+    const resolved = resolveStyleRules([
+      { property: "backgroundColor", value: "var(--color-primary)" },
+      { property: "color", value: "var(--color-muted-foreground)" },
+    ]);
+
+    expect(resolved.style.backgroundColor).toBe("var(--color-primary)");
+    expect(resolved.style.color).toBe("var(--color-muted-foreground)");
+    expect(resolved.className).not.toContain("bg-");
+  });
+
   it("maps flexWrap to tailwind utilities", () => {
     expect(
       flexWrapClassFromStyles([{ property: "flexWrap", value: "wrap" }]),
@@ -189,5 +216,24 @@ describe("applyStyleRules", () => {
     ]);
     expect(resolved.style.borderStyle).toBe("dashed");
     expect(resolved.style.borderWidth).toBe("2px");
+  });
+
+  it("defaults textWrap to truncate and supports wrap mode", () => {
+    expect(textWrapClassFromStyles(undefined)).toBe("truncate");
+    expect(
+      textWrapClassFromStyles([{ property: "textWrap", value: "wrap" }]),
+    ).toContain("break-words");
+    expect(usesTextWrap([{ property: "textWrap", value: "wrap" }])).toBe(true);
+    expect(usesTextWrap([{ property: "textWrap", value: "truncate" }])).toBe(
+      false,
+    );
+
+    const wrapped = resolveStyleRules([
+      { property: "textWrap", value: "wrap" },
+    ]);
+    expect(wrapped.className).toContain("break-words");
+    expect(
+      componentSlotWrapperClassName([{ property: "textWrap", value: "wrap" }]),
+    ).toContain("shrink");
   });
 });

@@ -144,7 +144,7 @@ Platform tenants are first-class Firestore documents (not env vars):
 
 - Collection constant: `TENANTS_COLLECTION` in `@repo/shared-types`.
 - Repository: `createFirestoreAdminTenantRepository` in `@repo/gcp-firebase`.
-- Dev seed on API startup: `rates` tenant with Rates domain definitions, sample data, and `normalRatesUser` role (idempotent).
+- Dev seed on API startup: `rates` tenant with Rates Dev contract-model definitions (12 entities), demo data, metrics, contract wizard UI, and `normalRatesUser` role (idempotent).
 - Business entity data remains under `tenants/{tenantId}/{collection}/{documentId}`.
 
 ---

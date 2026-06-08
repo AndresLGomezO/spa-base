@@ -1,6 +1,7 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
 import {
   formatFieldPathLabel,
+  listEntityFieldSelectorFieldOptions,
   listFormFieldOptions,
 } from "@repo/ui-builder-core";
 
@@ -47,6 +48,28 @@ export function entityFormFieldAdapter(
   definition: SerializableEntityDefinition,
 ): EntityCardViewAdapterResult {
   const fieldOptions = listFormFieldOptions(definition);
+
+  const fieldDescriptors: FieldDescriptor[] = fieldOptions.map((path) => {
+    const meta = definition.fields[path];
+    const fieldUi = definition.ui.fields?.[path];
+
+    return {
+      path,
+      label: resolveFieldLabel(definition, path),
+      valueType: meta ? resolveFormValueType(meta) : "unknown",
+      displayFormat: fieldUi?.displayFormat,
+      dateDisplayFormat: fieldUi?.dateDisplayFormat,
+    };
+  });
+
+  return { fieldDescriptors, fieldOptions };
+}
+
+/** Form designer field list for entity-field-selector slots (relation + enum). */
+export function entityFieldSelectorFieldAdapter(
+  definition: SerializableEntityDefinition,
+): EntityCardViewAdapterResult {
+  const fieldOptions = listEntityFieldSelectorFieldOptions(definition);
 
   const fieldDescriptors: FieldDescriptor[] = fieldOptions.map((path) => {
     const meta = definition.fields[path];

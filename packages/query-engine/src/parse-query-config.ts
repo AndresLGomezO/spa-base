@@ -114,6 +114,17 @@ const fieldOperatorCache = new WeakMap<
   Map<string, readonly FilterOperator[] | null>
 >();
 
+function isEntityArrayField(
+  entity: AnyDefinedEntity,
+  fieldName: string,
+): boolean {
+  if (SYSTEM_ARRAY_FIELDS.has(fieldName)) {
+    return true;
+  }
+
+  return entity.metadata.fields[fieldName]?.isArray === true;
+}
+
 function getAllowedOperators(
   entity: AnyDefinedEntity,
   fieldName: string,
@@ -126,6 +137,11 @@ function getAllowedOperators(
 
   if (entityCache.has(fieldName)) {
     return entityCache.get(fieldName) ?? null;
+  }
+
+  if (isEntityArrayField(entity, fieldName)) {
+    entityCache.set(fieldName, ["array-contains"]);
+    return ["array-contains"];
   }
 
   const fieldType = resolveFieldType(entity, fieldName);
@@ -247,7 +263,7 @@ function validateFilter(
     );
   }
 
-  if (SYSTEM_ARRAY_FIELDS.has(filter.field)) {
+  if (isEntityArrayField(entity, filter.field)) {
     if (filter.operator !== "array-contains") {
       throw new QueryError(
         QueryErrorCode.QUERY_VALIDATION_ERROR,
@@ -307,6 +323,13 @@ function validateSort(entity: AnyDefinedEntity, sort: Sort): NormalizedSort {
     throw new QueryError(
       QueryErrorCode.QUERY_VALIDATION_ERROR,
       `Unknown or non-queryable sort field "${sort.field}".`,
+    );
+  }
+
+  if (isEntityArrayField(entity, sort.field)) {
+    throw new QueryError(
+      QueryErrorCode.QUERY_VALIDATION_ERROR,
+      `Sorting on array field "${sort.field}" is not supported.`,
     );
   }
 

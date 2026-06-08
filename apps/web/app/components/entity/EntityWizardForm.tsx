@@ -6,58 +6,40 @@ import {
   type ReactNode,
 } from "react";
 import {
-  collectLayoutFieldPaths,
   type UiLayoutDocument,
   type WizardActionsComponentConfig,
   type WizardProgressComponentConfig,
   type WizardStepHostComponentConfig,
   type WizardStepStatusKind,
 } from "@repo/ui-builder-core";
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import {
+  RecursiveLayoutRenderer,
+  type LayoutRenderContext,
+} from "@repo/ui-builder-renderer";
 import type {
   FieldAccessLevel,
   SerializableEntityDefinition,
   WizardFormConfig,
 } from "@repo/entities";
 import { Form } from "@repo/ui";
+import { useTranslation } from "react-i18next";
 
-import type { EntityName } from "../../entities/entity-catalog";
+import {
+  formatFieldLabel,
+  type EntityName,
+} from "../../entities/entity-catalog";
 import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
 import { WizardActions } from "../forms/WizardActions";
 import { WizardProgress } from "../forms/WizardProgress";
 import { WizardStepHost } from "../forms/WizardStepHost";
 import { ENTITY_FORM_ID } from "./entity-form-constants";
 import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
-
-function fieldPathRoot(fieldPath: string): string {
-  return fieldPath.includes(".")
-    ? (fieldPath.split(".")[0] ?? fieldPath)
-    : fieldPath;
-}
-
-function validateStepFields(options: {
-  readonly stepLayout: import("@repo/ui-builder-core").UiLayoutDocument;
-  readonly values: Record<string, unknown>;
-  readonly definition: SerializableEntityDefinition;
-  readonly fieldErrors: Readonly<Record<string, string | undefined>>;
-}): boolean {
-  const paths = collectLayoutFieldPaths(options.stepLayout);
-  for (const path of paths) {
-    const root = fieldPathRoot(path);
-    if (options.fieldErrors[root]) {
-      return false;
-    }
-    const field = options.definition.fields[root];
-    if (!field?.required) {
-      continue;
-    }
-    const value = options.values[root];
-    if (value === "" || value === null || value === undefined) {
-      return false;
-    }
-  }
-  return true;
-}
+import {
+  collectStepFieldErrors,
+  mergeFieldErrors,
+  omitFieldErrorsForStep,
+  stepHasValidationErrors,
+} from "./validate-wizard-step-fields";
 
 interface EntityWizardFormProps {
   readonly entityName: EntityName;
@@ -76,7 +58,6 @@ interface EntityWizardFormProps {
   readonly hideActions?: boolean;
   readonly modalActionPlacement?: "inline" | "footer";
   readonly modalFooterLayout?: UiLayoutDocument;
-  readonly flushContent?: boolean;
   readonly onFooterChange?: (footer: ReactNode | null) => void;
   readonly isSubmitting?: boolean;
   readonly cancelLabel: string;
@@ -101,19 +82,67 @@ export function EntityWizardForm({
   hideActions,
   modalActionPlacement = "inline",
   modalFooterLayout,
-  flushContent = false,
   onFooterChange,
   isSubmitting,
   cancelLabel,
   saveLabel,
   onSubmit,
 }: EntityWizardFormProps) {
+  const { t } = useTranslation("common");
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [invalidStepIds, setInvalidStepIds] = useState<ReadonlySet<string>>(
     () => new Set(),
   );
+  const [stepFieldErrors, setStepFieldErrors] = useState<
+    Record<string, string>
+  >({});
 
   const activeStep = wizard.steps[currentStepIndex];
+
+  const resolvedFieldErrors = useMemo(
+    () => mergeFieldErrors(stepFieldErrors, fieldErrors),
+    [fieldErrors, stepFieldErrors],
+  );
+
+  const formatRequiredMessage = useCallback(
+    (fieldName: string) =>
+      t("entity.validation.fieldRequired", {
+        field: formatFieldLabel(fieldName, definition),
+      }),
+    [definition, t],
+  );
+
+  const buildStepValidationState = useCallback(
+    (stepLayout: UiLayoutDocument) => {
+      const clientErrors = collectStepFieldErrors({
+        stepLayout,
+        values,
+        definition,
+        formatRequiredMessage,
+      });
+      const mergedErrors = mergeFieldErrors(clientErrors, fieldErrors);
+      return {
+        clientErrors,
+        hasErrors: stepHasValidationErrors(stepLayout, mergedErrors),
+      };
+    },
+    [definition, fieldErrors, formatRequiredMessage, values],
+  );
+
+  const handleFieldChange = useCallback(
+    (fieldName: string, value: unknown) => {
+      onChange(fieldName, value);
+      setStepFieldErrors((current) => {
+        if (!current[fieldName]) {
+          return current;
+        }
+        const next = { ...current };
+        delete next[fieldName];
+        return next;
+      });
+    },
+    [onChange],
+  );
 
   const stepStatuses = useMemo((): Readonly<
     Record<string, WizardStepStatusKind>
@@ -136,38 +165,37 @@ export function EntityWizardForm({
   const suppressInlineActions =
     hideActions || modalActionPlacement === "footer";
 
-  const baseContext = useMemo(
-    () =>
-      createEntityFormRenderContext({
-        entityName,
-        definition,
-        locale,
-        mode,
-        values,
-        errors: fieldErrors,
-        fieldAccess,
-        canRead,
-        canWrite,
-        recordId,
-        onChange,
-        onCancel,
-        hideActions: true,
-        isSubmitting,
-        cancelLabel,
-        saveLabel,
-      }),
+  const sharedFormContextOptions = useMemo(
+    () => ({
+      entityName,
+      definition,
+      locale,
+      mode,
+      values,
+      errors: resolvedFieldErrors,
+      fieldAccess,
+      canRead,
+      canWrite,
+      recordId,
+      onChange: handleFieldChange,
+      onCancel,
+      hideActions: true as const,
+      isSubmitting,
+      cancelLabel,
+      saveLabel,
+    }),
     [
       entityName,
       definition,
       locale,
       mode,
       values,
-      fieldErrors,
+      resolvedFieldErrors,
       fieldAccess,
+      handleFieldChange,
       canRead,
       canWrite,
       recordId,
-      onChange,
       onCancel,
       isSubmitting,
       cancelLabel,
@@ -175,30 +203,67 @@ export function EntityWizardForm({
     ],
   );
 
+  const baseContext = useMemo(
+    () => createEntityFormRenderContext(sharedFormContextOptions),
+    [sharedFormContextOptions],
+  );
+
+  const stepFormContext = useMemo(
+    () =>
+      createEntityFormRenderContext({
+        ...sharedFormContextOptions,
+        wizardStepContent: true,
+      }),
+    [sharedFormContextOptions],
+  );
+
+  const applyStepValidation = useCallback(
+    (stepLayout: UiLayoutDocument, stepId: string) => {
+      const { clientErrors, hasErrors } = buildStepValidationState(stepLayout);
+      setStepFieldErrors((current) =>
+        mergeFieldErrors(
+          omitFieldErrorsForStep(current, stepLayout),
+          clientErrors,
+        ),
+      );
+      setInvalidStepIds((current) => {
+        const next = new Set(current);
+        if (hasErrors) {
+          next.add(stepId);
+        } else {
+          next.delete(stepId);
+        }
+        return next;
+      });
+      return hasErrors;
+    },
+    [buildStepValidationState],
+  );
+
   const handleNext = useCallback(() => {
     const step = wizard.steps[currentStepIndex];
     if (!step) {
       return;
     }
-    const valid = validateStepFields({
-      stepLayout: step.layout,
-      values,
-      definition,
-      fieldErrors,
-    });
-    if (!valid) {
-      setInvalidStepIds((current) => new Set(current).add(step.id));
+    if (applyStepValidation(step.layout, step.id)) {
       return;
     }
-    setInvalidStepIds((current) => {
-      const next = new Set(current);
-      next.delete(step.id);
-      return next;
-    });
     setCurrentStepIndex((index) =>
       Math.min(index + 1, wizard.steps.length - 1),
     );
-  }, [currentStepIndex, definition, fieldErrors, values, wizard.steps]);
+  }, [applyStepValidation, currentStepIndex, wizard.steps]);
+
+  const handleFormSubmit = useCallback(
+    (event: FormEvent<HTMLFormElement>) => {
+      const step = wizard.steps[currentStepIndex];
+      if (step && applyStepValidation(step.layout, step.id)) {
+        event.preventDefault();
+        return;
+      }
+      onSubmit(event);
+    },
+    [applyStepValidation, currentStepIndex, onSubmit, wizard.steps],
+  );
 
   const handleBack = useCallback(() => {
     const targetIndex = Math.max(0, currentStepIndex - 1);
@@ -213,8 +278,8 @@ export function EntityWizardForm({
     }
   }, [currentStepIndex, wizard.steps]);
 
-  const renderContext = useMemo(() => {
-    const wizardState = {
+  const wizardState = useMemo(
+    () => ({
       steps: wizard.steps.map((step) => ({
         id: step.id,
         label: step.label,
@@ -223,8 +288,11 @@ export function EntityWizardForm({
       })),
       currentStepIndex,
       stepStatuses,
-    };
+    }),
+    [currentStepIndex, stepStatuses, wizard.steps],
+  );
 
+  const renderContext = useMemo(() => {
     return {
       ...baseContext,
       wizard: wizardState,
@@ -236,7 +304,7 @@ export function EntityWizardForm({
           <WizardStepHost config={config}>
             <RecursiveLayoutRenderer
               layout={activeStep.layout}
-              context={baseContext}
+              context={stepFormContext}
             />
           </WizardStepHost>
         ) : null,
@@ -263,18 +331,18 @@ export function EntityWizardForm({
     isSubmitting,
     mode,
     onCancel,
-    stepStatuses,
+    stepFormContext,
     suppressInlineActions,
-    wizard.steps,
+    wizard.steps.length,
+    wizardState,
   ]);
 
-  useEntityFormModalFooter({
-    enabled: modalActionPlacement === "footer",
-    onFooterChange,
-    modalFooterLayout,
-    fallbackLayout: wizard.shellLayout,
-    footerContext: {
-      ...renderContext,
+  const wizardFooterContext = useMemo(
+    (): LayoutRenderContext => ({
+      mode: "form",
+      data: values,
+      locale,
+      resolveField: (path) => values[path],
       wizardActionsRenderer: (config: WizardActionsComponentConfig) => (
         <WizardActions
           config={config}
@@ -288,7 +356,26 @@ export function EntityWizardForm({
           onCancel={onCancel}
         />
       ),
-    },
+    }),
+    [
+      currentStepIndex,
+      handleBack,
+      handleNext,
+      isSubmitting,
+      locale,
+      mode,
+      onCancel,
+      values,
+      wizard.steps.length,
+    ],
+  );
+
+  useEntityFormModalFooter({
+    enabled: modalActionPlacement === "footer",
+    onFooterChange,
+    modalFooterLayout,
+    fallbackLayout: wizard.shellLayout,
+    footerContext: wizardFooterContext,
     wizardMode: mode,
     wizardCurrentStepIndex: currentStepIndex,
     wizardTotalSteps: wizard.steps.length,
@@ -305,8 +392,8 @@ export function EntityWizardForm({
   return (
     <Form
       id={ENTITY_FORM_ID}
-      className={flushContent ? undefined : "px-1"}
-      onSubmit={(event) => void onSubmit(event)}
+      className="flex w-full min-w-0 flex-col gap-0"
+      onSubmit={(event) => void handleFormSubmit(event)}
     >
       <RecursiveLayoutRenderer
         layout={wizard.shellLayout}

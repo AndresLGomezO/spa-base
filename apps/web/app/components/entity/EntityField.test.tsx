@@ -59,6 +59,51 @@ describe("EntityField", () => {
     expect(onChange).toHaveBeenCalledWith("isActive", true);
   });
 
+  it("renders array field entry and badges for string arrays", () => {
+    const onChange = vi.fn();
+    const widgetWithTags: EntityCatalogEntry = {
+      ...MOCK_ENTITY_CATALOG[0]!,
+      fields: {
+        ...MOCK_ENTITY_CATALOG[0]!.fields,
+        tags: {
+          type: "string",
+          isArray: true,
+          required: false,
+          optional: true,
+        },
+      },
+      ui: {
+        ...MOCK_ENTITY_CATALOG[0]!.ui,
+        fields: {
+          ...MOCK_ENTITY_CATALOG[0]!.ui.fields,
+          tags: { label: "Tags", component: "input" },
+        },
+      },
+    };
+
+    render(
+      <TestEntityCatalogProvider items={[widgetWithTags]}>
+        <EntityField
+          entityName="widget"
+          fieldName="tags"
+          value={["alpha"]}
+          onChange={onChange}
+        />
+      </TestEntityCatalogProvider>,
+    );
+
+    expect(screen.getByLabelText(/Tags/i)).toBeInTheDocument();
+    expect(screen.getByText("alpha")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: /Add value/i })).toBeDisabled();
+
+    fireEvent.change(screen.getByLabelText(/Tags/i), {
+      target: { value: "beta" },
+    });
+    fireEvent.click(screen.getByRole("button", { name: /Add value/i }));
+
+    expect(onChange).toHaveBeenCalledWith("tags", ["alpha", "beta"]);
+  });
+
   it("renders a date picker for date fields", () => {
     render(
       <TestEntityCatalogProvider items={[WIDGET_WITH_DATE]}>

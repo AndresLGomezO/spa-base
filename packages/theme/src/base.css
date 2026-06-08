@@ -1,31 +1,29 @@
-*,
-*::before,
-*::after {
-  box-sizing: border-box;
-}
+@layer base {
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
 
-body {
-  margin: 0;
-  @apply bg-background font-sans text-foreground leading-normal;
-}
+  body {
+    margin: 0;
+    @apply bg-background font-sans text-foreground leading-normal;
+  }
 
-form {
-  @apply my-4 grid gap-3;
-}
+  input,
+  button {
+    @apply rounded-md border border-border p-2 font-[inherit];
+  }
 
-input,
-button {
-  @apply rounded-md border border-border p-2 font-[inherit];
-}
+  button:not([data-overlay-backdrop]) {
+    @apply cursor-pointer;
+  }
 
-button:not([data-overlay-backdrop]) {
-  @apply cursor-pointer;
-}
+  form button {
+    @apply w-fit;
+  }
 
-form button {
-  @apply w-fit;
-}
-
-button:disabled {
-  @apply cursor-not-allowed opacity-60;
+  button:disabled {
+    @apply cursor-not-allowed opacity-60;
+  }
 }

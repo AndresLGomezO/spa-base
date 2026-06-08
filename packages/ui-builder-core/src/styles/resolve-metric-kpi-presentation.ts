@@ -2,6 +2,7 @@ import {
   fontSizePxFromStyles,
   layoutInlineStyleFromStyleRules,
   splitStyleRuleClasses,
+  textWrapClassFromStyles,
   type LayoutInlineStyle,
 } from "./apply-style-rules.js";
 import type { StyleRule } from "./style-types.js";
@@ -21,7 +22,9 @@ export function resolveMetricKpiPresentation(
   return {
     className: split.containerClassName,
     style: layoutInlineStyleFromStyleRules(styles),
-    valueClassName: split.textClassName,
+    valueClassName: [textWrapClassFromStyles(styles), split.textClassName]
+      .filter(Boolean)
+      .join(" "),
     textSize: fontSizePxFromStyles(styles),
   };
 }

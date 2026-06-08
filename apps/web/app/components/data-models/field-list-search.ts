@@ -1,9 +1,17 @@
 import type { FieldDefinitionInput } from "../../lib/api-client";
 
 export function fieldSupportsListSearch(
-  field: Pick<FieldDefinitionInput, "type" | "sensitive">,
+  field: Pick<FieldDefinitionInput, "type" | "sensitive" | "isArray">,
 ): boolean {
-  return field.type === "string" && field.sensitive !== true;
+  if (field.sensitive === true) {
+    return false;
+  }
+
+  if (field.isArray === true) {
+    return field.type === "string" || field.type === "enum";
+  }
+
+  return field.type === "string";
 }
 
 export function isFieldSearchableChecked(field: FieldDefinitionInput): boolean {

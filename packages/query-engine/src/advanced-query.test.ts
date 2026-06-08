@@ -38,8 +38,29 @@ const NoStringEntity = defineEntity({
   },
 });
 
+const TaggedEntity = defineEntity({
+  name: "tagged",
+  fields: {
+    tags: { type: "string", isArray: true, required: true },
+    title: { type: "string", required: true },
+  },
+  displayField: "title",
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["title", "tags"] }],
+    forms: {
+      create: { sections: [{ fields: ["title", "tags"] }] },
+      edit: { sections: [{ fields: ["title", "tags"] }] },
+    },
+    fields: {
+      title: { searchable: true },
+      tags: { searchable: true, filterable: true, sortable: false },
+    },
+  },
+});
+
 registerEntity(TestEntity as unknown as AnyDefinedEntity);
 registerEntity(NoStringEntity as unknown as AnyDefinedEntity);
+registerEntity(TaggedEntity as unknown as AnyDefinedEntity);
 
 describe("parseListQueryInput - search parameter", () => {
   it("parses search from JSON query", () => {
@@ -187,6 +208,39 @@ describe("normalizeEntityQuery - encrypted fields", () => {
         code: QueryErrorCode.QUERY_ON_ENCRYPTED_FIELD,
       }),
     );
+  });
+});
+
+describe("normalizeEntityQuery - array fields", () => {
+  it("allows array-contains filter on array fields", () => {
+    const normalized = normalizeEntityQuery(
+      TaggedEntity as unknown as AnyDefinedEntity,
+      {
+        filter: [{ field: "tags", operator: "array-contains", value: "alpha" }],
+      },
+    );
+
+    expect(normalized.filters[0]).toEqual({
+      field: "tags",
+      operator: "array-contains",
+      value: "alpha",
+    });
+  });
+
+  it("rejects non-array-contains operators on array fields", () => {
+    expect(() =>
+      normalizeEntityQuery(TaggedEntity as unknown as AnyDefinedEntity, {
+        filter: [{ field: "tags", operator: "contains", value: "alpha" }],
+      }),
+    ).toThrow(/array-contains/);
+  });
+
+  it("rejects sorting on array fields", () => {
+    expect(() =>
+      normalizeEntityQuery(TaggedEntity as unknown as AnyDefinedEntity, {
+        sort: [{ field: "tags", direction: "asc" }],
+      }),
+    ).toThrow(/Sorting on array field/);
   });
 });
 

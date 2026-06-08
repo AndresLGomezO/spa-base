@@ -85,7 +85,7 @@ export function CardFieldDate({
   const valueElement = (
     <span
       className={cn(
-        "text-foreground truncate tabular-nums",
+        "text-foreground tabular-nums",
         resolvedTextSize === undefined && "text-sm",
         textBold ? "font-bold" : textThin ? "font-light" : "font-medium",
         textItalic && "italic",

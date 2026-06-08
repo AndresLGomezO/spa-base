@@ -223,12 +223,6 @@ export async function buildServer(options: BuildServerOptions = {}) {
     await seedPlatformRoles(firebaseAdminConfig);
   }
 
-  if (!options.skipPlatformTenantSeed) {
-    const { seedPlatformTenants } =
-      await import("./admin/seed-platform-tenants.js");
-    await seedPlatformTenants(firebaseAdminConfig);
-  }
-
   const registeredUserRepository =
     createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
   const platformRoleRepository =
@@ -359,6 +353,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     repositories: options.repositories,
     queryExecutors: options.queryExecutors,
   });
+
+  if (!options.skipPlatformTenantSeed) {
+    const { seedPlatformTenants } =
+      await import("./admin/seed-platform-tenants.js");
+    await seedPlatformTenants(firebaseAdminConfig, entityRuntime);
+  }
 
   const metricRuntime = createMetricRuntimeContext({
     metricDefinitionRepository,

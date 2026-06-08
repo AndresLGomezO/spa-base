@@ -37,6 +37,7 @@ const RECORD_DETAIL_KINDS: readonly UiComponentKind[] = [
 
 const FORM_PLAIN_KINDS: readonly UiComponentKind[] = [
   "form-field",
+  "entity-field-selector",
   "form-section",
   "form-actions",
 ];
@@ -54,6 +55,7 @@ const FORM_WIZARD_SHELL_KINDS: readonly UiComponentKind[] = [
 
 const FORM_WIZARD_STEP_KINDS: readonly UiComponentKind[] = [
   "form-field",
+  "entity-field-selector",
   "form-section",
   "text",
   "image",

@@ -23,15 +23,15 @@ describe("layout-static-image", () => {
   it("reads downloadUrl from serialized layout static ref", () => {
     const serialized = JSON.stringify({
       storagePath:
-        "tenants/rates/entity-files/financialProduct/d2795de8-06af-4ce5-b41e-c4745e011c43.png",
+        "tenants/rates/entity-files/contract/d2795de8-06af-4ce5-b41e-c4745e011c43.png",
       fileName: "bank.png",
       contentType: "image/png",
       downloadUrl:
-        "http://127.0.0.1:9199/v0/b/demo-project-base.appspot.com/o/tenants%2Frates%2Fentity-files%2FfinancialProduct%2Fd2795de8-06af-4ce5-b41e-c4745e011c43.png?alt=media",
+        "http://127.0.0.1:9199/v0/b/demo-project-base.appspot.com/o/tenants%2Frates%2Fentity-files%2Fcontract%2Fd2795de8-06af-4ce5-b41e-c4745e011c43.png?alt=media",
     });
 
     expect(readLayoutStaticImageUrl(serialized)).toBe(
-      "http://127.0.0.1:9199/v0/b/demo-project-base.appspot.com/o/tenants%2Frates%2Fentity-files%2FfinancialProduct%2Fd2795de8-06af-4ce5-b41e-c4745e011c43.png?alt=media",
+      "http://127.0.0.1:9199/v0/b/demo-project-base.appspot.com/o/tenants%2Frates%2Fentity-files%2Fcontract%2Fd2795de8-06af-4ce5-b41e-c4745e011c43.png?alt=media",
     );
     expect(resolveStaticImageSrc(serialized)).toBe(
       readLayoutStaticImageUrl(serialized),

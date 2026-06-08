@@ -33,6 +33,7 @@ export function serializeEntityDefinition(
         : {}),
       ...(meta.enumValues ? { enumValues: meta.enumValues } : {}),
       ...(meta.sensitive ? { sensitive: true } : {}),
+      ...(meta.isArray ? { isArray: true } : {}),
       ...(meta.numberKind ? { numberKind: meta.numberKind } : {}),
       ...(meta.maxSizeBytes !== undefined
         ? { maxSizeBytes: meta.maxSizeBytes }

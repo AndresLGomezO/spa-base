@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vitest";
 
+import {
+  createDefaultModalFooterLayout,
+  ensureWizardShellLayout,
+} from "@repo/ui-builder-core";
 import { defineEntity } from "../defineEntity.js";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import { getDefaultEntityUI } from "./default-ui-config.js";
@@ -107,6 +111,69 @@ describe("validateEntityUIConfig", () => {
         forms: {
           ...Widget.metadata.ui!.forms,
           modalSize: "xl",
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it("accepts wizard shell without wizard-actions when modal footer layout is configured", () => {
+    const shellWithoutActions = ensureWizardShellLayout(
+      {
+        root: {
+          type: "root",
+          id: "root-1",
+          columnCount: 2,
+          columns: [
+            {
+              id: "col-left",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-progress",
+                  component: { kind: "wizard-progress" },
+                },
+              ],
+            },
+            {
+              id: "col-right",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-host",
+                  component: { kind: "wizard-step-host" },
+                },
+              ],
+            },
+          ],
+        },
+      },
+      { actionsInModalFooter: true },
+    );
+
+    expect(() =>
+      validateEntityUIConfig(Widget as unknown as AnyDefinedEntity, {
+        ...Widget.metadata.ui!,
+        forms: {
+          ...Widget.metadata.ui!.forms,
+          presentation: "wizard",
+          modalFooterLayout: createDefaultModalFooterLayout("wizard-actions"),
+          wizard: {
+            shellLayout: shellWithoutActions,
+            steps: [
+              {
+                id: "step-1",
+                label: "Basic",
+                layout: {
+                  root: {
+                    type: "root",
+                    id: "root-step",
+                    columnCount: 1,
+                    columns: [{ id: "col-step", rows: [] }],
+                  },
+                },
+              },
+            ],
+          },
         },
       }),
     ).not.toThrow();

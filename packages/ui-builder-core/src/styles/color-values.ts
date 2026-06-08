@@ -28,7 +28,11 @@ export function isCssColorValue(value: string): boolean {
     return true;
   }
 
-  return /^(rgb|rgba|hsl|hsla)\(/i.test(trimmed);
+  if (/^(rgb|rgba|hsl|hsla)\(/i.test(trimmed)) {
+    return true;
+  }
+
+  return /^var\(--[a-zA-Z0-9-]+\)$/.test(trimmed);
 }
 
 export function isCustomColorValue(value: string): boolean {

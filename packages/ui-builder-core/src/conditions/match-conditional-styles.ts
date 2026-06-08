@@ -22,7 +22,12 @@ export function matchConditionalStyles(
     rawValue === null || rawValue === undefined ? "" : String(rawValue).trim();
 
   for (const rule of rules) {
-    if (rule.matchValue.trim() === normalized) {
+    const matchValue =
+      typeof rule.matchValue === "string" ? rule.matchValue.trim() : "";
+    if (matchValue.length === 0) {
+      continue;
+    }
+    if (matchValue === normalized) {
       const classes: string[] = [];
       if (rule.background) {
         classes.push(themeTokenBackgroundClass(rule.background));

@@ -37,6 +37,24 @@ export interface ModalProps {
   readonly variant?: ModalVariant;
 }
 
+export const MODAL_PANEL_MAX_HEIGHT = "min(90vh, calc(100vh - 2rem))";
+
+export function modalContentIsScrollable(options: {
+  readonly scrollable: boolean;
+}): boolean {
+  return options.scrollable;
+}
+
+export function modalPanelViewportStyle(options: {
+  readonly useStickyLayout: boolean;
+}): { readonly maxHeight?: string } {
+  if (!options.useStickyLayout) {
+    return {};
+  }
+
+  return { maxHeight: MODAL_PANEL_MAX_HEIGHT };
+}
+
 const panelSizeClasses = {
   sm: "max-w-sm",
   md: "max-w-lg",
@@ -77,8 +95,11 @@ function ModalPanel({
   const visible = useOverlayTransitionVisible();
   const durationMs = useOverlayTransitionDurationMs();
   const animate = !embedded && durationMs > 0;
-  const useStickyLayout = scrollable || Boolean(footer);
+  const hasFooter = Boolean(footer);
+  const useStickyLayout = scrollable || hasFooter;
+  const contentScrollable = modalContentIsScrollable({ scrollable });
   const flushContent = contentPadding === "none";
+  const panelViewportStyle = modalPanelViewportStyle({ useStickyLayout });
 
   return (
     <div
@@ -87,14 +108,19 @@ function ModalPanel({
       aria-modal={embedded ? undefined : true}
       aria-labelledby={titleId}
       className={cn(
-        "border-border bg-popover text-popover-foreground pointer-events-auto relative flex w-full origin-center flex-col rounded-xl border shadow-xl",
+        "bg-popover text-popover-foreground pointer-events-auto relative flex w-full origin-center flex-col shadow-xl",
+        useStickyLayout && "min-h-0",
+        flushContent ? "rounded-xl" : "border-border rounded-xl border",
         panelSizeClasses[size],
-        useStickyLayout && "max-h-[min(90vh,calc(100vh-2rem))]",
+        useStickyLayout && !contentScrollable && "overflow-hidden",
         !useStickyLayout && !flushContent && "p-5",
         animate &&
           (visible ? "scale-100 opacity-100" : "scale-[0.92] opacity-0"),
       )}
-      style={overlayTransitionStyle(durationMs, "opacity-transform")}
+      style={{
+        ...overlayTransitionStyle(durationMs, "opacity-transform"),
+        ...panelViewportStyle,
+      }}
       onClick={(event) => event.stopPropagation()}
     >
       {showHeader ? (
@@ -127,19 +153,23 @@ function ModalPanel({
       )}
       <div
         className={cn(
-          "flex flex-col",
+          "flex min-h-0 flex-col",
           !flushContent && "gap-4",
+          useStickyLayout && "min-h-0 grow",
           useStickyLayout &&
-            (scrollable
-              ? "min-h-0 flex-1 overflow-y-auto"
-              : "min-h-0 flex-1 overflow-hidden"),
+            (contentScrollable ? "overflow-y-auto" : "overflow-hidden"),
           useStickyLayout && !flushContent && "px-5 py-4",
         )}
       >
         {children}
       </div>
-      {footer ? (
-        <div className="border-border flex shrink-0 justify-end gap-2 border-t px-5 py-4">
+      {hasFooter ? (
+        <div
+          className={cn(
+            "border-border relative z-10 flex shrink-0 justify-end gap-2 border-t bg-popover",
+            !flushContent && "px-5 py-4",
+          )}
+        >
           {footer}
         </div>
       ) : null}

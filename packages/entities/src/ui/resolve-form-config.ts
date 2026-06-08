@@ -49,6 +49,16 @@ export function resolveFormModalChrome(
   };
 }
 
+/** Applies modal chrome rules for runtime padding (hidden header implies flush body). */
+export function resolveEffectiveFormModalContentPadding(
+  chrome: FormModalChrome | ResolvedFormModalChrome,
+): FormModalContentPadding {
+  if (chrome.contentPadding === "none" || chrome.showHeader === false) {
+    return "none";
+  }
+  return "default";
+}
+
 export function resolveFormModalFooterLayout(
   definition: SerializableEntityDefinition,
 ): import("@repo/ui-builder-core").UiLayoutDocument | undefined {

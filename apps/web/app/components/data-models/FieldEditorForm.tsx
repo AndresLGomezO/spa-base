@@ -23,6 +23,7 @@ import {
   uploadEntityFile,
 } from "../../lib/entity-file-client";
 
+import { fieldSupportsArray } from "./array-field-eligibility";
 import { FIELD_TYPES } from "./field-types";
 import {
   generateRelationFieldName,
@@ -176,8 +177,14 @@ export function FieldEditorForm({
               ui = Object.keys(restUi).length > 0 ? restUi : undefined;
             }
 
+            const nextIsArray =
+              field.isArray === true && fieldSupportsArray(type)
+                ? true
+                : undefined;
+
             update({
               type,
+              isArray: nextIsArray,
               relation:
                 type === "relation"
                   ? (field.relation ?? { target: "", type: "many-to-one" })
@@ -187,6 +194,17 @@ export function FieldEditorForm({
               numberKind:
                 type === "number" ? (field.numberKind ?? "decimal") : undefined,
               ...(ui !== undefined ? { ui } : {}),
+              ...(nextIsArray
+                ? {
+                    ui: {
+                      ...ui,
+                      sortable: false,
+                      searchable:
+                        (type === "string" || type === "enum") &&
+                        field.sensitive !== true,
+                    },
+                  }
+                : {}),
             });
           }}
         >
@@ -237,6 +255,37 @@ export function FieldEditorForm({
         checked={field.required ?? false}
         onChange={(event) => update({ required: event.target.checked })}
       />
+
+      {fieldSupportsArray(field.type) ? (
+        <div className="space-y-2">
+          <Checkbox
+            id={`${idPrefix}-field-is-array`}
+            label={t("dataModels.fieldIsArray")}
+            checked={field.isArray === true}
+            onChange={(event) => {
+              const isArray = event.target.checked;
+              if (!isArray) {
+                update({ isArray: undefined });
+                return;
+              }
+
+              update({
+                isArray: true,
+                ui: {
+                  ...field.ui,
+                  sortable: false,
+                  searchable:
+                    (field.type === "string" || field.type === "enum") &&
+                    field.sensitive !== true,
+                },
+              });
+            }}
+          />
+          <Text className="text-muted-foreground text-sm">
+            {t("dataModels.fieldIsArrayHint")}
+          </Text>
+        </div>
+      ) : null}
 
       <div className="space-y-2">
         <Checkbox
@@ -300,7 +349,9 @@ export function FieldEditorForm({
           onChange={(event) => updateUi({ filterable: event.target.checked })}
         />
         <Text className="text-muted-foreground text-sm">
-          {t("dataModels.fieldFilterableHint")}
+          {field.isArray
+            ? t("dataModels.fieldFilterableArrayHint")
+            : t("dataModels.fieldFilterableHint")}
         </Text>
       </div>
 
@@ -309,10 +360,13 @@ export function FieldEditorForm({
           id={`${idPrefix}-field-sortable`}
           label={t("dataModels.fieldSortable")}
           checked={field.ui?.sortable !== false}
+          disabled={field.isArray === true}
           onChange={(event) => updateUi({ sortable: event.target.checked })}
         />
         <Text className="text-muted-foreground text-sm">
-          {t("dataModels.fieldSortableHint")}
+          {field.isArray
+            ? t("dataModels.fieldSortableArrayHint")
+            : t("dataModels.fieldSortableHint")}
         </Text>
       </div>
 

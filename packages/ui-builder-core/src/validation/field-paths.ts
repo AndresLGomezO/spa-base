@@ -96,6 +96,10 @@ function collectComponentPaths(
     return [component.fieldPath];
   }
 
+  if (component.kind === "entity-field-selector") {
+    return [component.fieldPath];
+  }
+
   if (
     component.kind === "form-section" ||
     component.kind === "form-actions" ||
@@ -200,17 +204,99 @@ export function isValidFormFieldPath(
   return meta.type !== "document";
 }
 
+export function isValidEntityFieldSelectorFieldPath(
+  definition: FieldPathValidationDefinition,
+  fieldPath: string,
+): boolean {
+  const trimmed = fieldPath.trim();
+  if (trimmed.length === 0 || trimmed.includes(".")) {
+    return false;
+  }
+
+  const meta = definition.fields[trimmed];
+  if (!meta) {
+    return false;
+  }
+
+  if (meta.type === "enum") {
+    return true;
+  }
+
+  if (meta.type === "relation" && meta.relation) {
+    const relationType = meta.relation.type;
+    return (
+      relationType === "many-to-one" ||
+      relationType === "one-to-one" ||
+      relationType === "many-to-many"
+    );
+  }
+
+  return false;
+}
+
+/** Field paths assignable to `entity-field-selector` slots (relation + enum). */
+export function listEntityFieldSelectorFieldOptions(
+  definition: FieldPathValidationDefinition,
+): readonly string[] {
+  const options: string[] = [];
+
+  for (const [fieldName, meta] of Object.entries(definition.fields)) {
+    void meta;
+    if (isValidEntityFieldSelectorFieldPath(definition, fieldName)) {
+      options.push(fieldName);
+    }
+  }
+
+  return options.sort((a, b) => a.localeCompare(b));
+}
+
+function validateFormComponent(
+  component: UiComponentConfig,
+  definition: FieldPathValidationDefinition,
+  context: string,
+): void {
+  if (component.kind === "form-field") {
+    if (!isValidFormFieldPath(definition, component.fieldPath)) {
+      throw new Error(
+        `Invalid ${context} form field path "${component.fieldPath}" for entity "${definition.name}".`,
+      );
+    }
+    return;
+  }
+
+  if (component.kind === "entity-field-selector") {
+    if (!isValidEntityFieldSelectorFieldPath(definition, component.fieldPath)) {
+      throw new Error(
+        `Invalid ${context} entity field selector path "${component.fieldPath}" for entity "${definition.name}".`,
+      );
+    }
+  }
+}
+
+function walkFormComponentValidation(
+  rows: readonly RowNode[],
+  definition: FieldPathValidationDefinition,
+  context: string,
+): void {
+  for (const row of rows) {
+    if (row.type === "component") {
+      validateFormComponent(row.component, definition, context);
+      continue;
+    }
+
+    for (const column of row.columns) {
+      walkFormComponentValidation(column.rows, definition, context);
+    }
+  }
+}
+
 export function assertFormLayoutFieldPaths(
   definition: FieldPathValidationDefinition,
   layout: UiLayoutDocument,
   context: string,
 ): void {
-  for (const fieldPath of collectLayoutFieldPaths(layout)) {
-    if (!isValidFormFieldPath(definition, fieldPath)) {
-      throw new Error(
-        `Invalid ${context} form field path "${fieldPath}" for entity "${definition.name}".`,
-      );
-    }
+  for (const column of layout.root.columns) {
+    walkFormComponentValidation(column.rows, definition, context);
   }
 }
 

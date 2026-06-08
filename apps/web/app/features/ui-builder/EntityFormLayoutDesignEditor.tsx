@@ -1,4 +1,4 @@
-import { useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
 import { useTranslation } from "react-i18next";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
@@ -11,38 +11,45 @@ import type {
 import {
   Button,
   Checkbox,
+  Form,
   Input,
   SegmentedSwitch,
   Text,
-  toast,
   type SegmentedSwitchOption,
 } from "@repo/ui";
 import { buildInitialValues } from "@repo/ui-builder";
-import type { FormModalSize } from "@repo/entities";
+import {
+  resolveEffectiveFormModalContentPadding,
+  type FormModalSize,
+} from "@repo/entities";
 
 import type { EntityName } from "../../entities/entity-catalog";
+import { CollapsibleSection } from "../../components/CollapsibleSection.js";
 import { FormModal } from "../../components/forms/FormModal";
-import { useEntityFormModalFooter } from "../../components/entity/use-entity-form-modal-footer";
+import { resolveEntityFormModalFooter } from "../../components/entity/use-entity-form-modal-footer";
 import { WizardActions } from "../../components/forms/WizardActions";
 import { WizardProgress } from "../../components/forms/WizardProgress";
 import { WizardStepHost } from "../../components/forms/WizardStepHost";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder";
 import { DesignLayoutEditorShell } from "./DesignLayoutEditorShell";
-import { DockedLayoutPreview } from "./DockedLayoutPreview";
 import { createEntityFormRenderContext } from "./create-entity-form-render-context";
-import { useEntityFormLayoutEditor } from "./use-entity-form-layout-editor";
+import {
+  useEntityFormLayoutEditor,
+  type UseEntityFormLayoutEditorResult,
+} from "./use-entity-form-layout-editor";
 
 interface EntityFormLayoutDesignEditorProps {
   readonly entityName: EntityName;
-  readonly canSave?: boolean;
+  readonly editor?: UseEntityFormLayoutEditorResult;
 }
 
 export function EntityFormLayoutDesignEditor({
   entityName,
-  canSave = false,
+  editor: editorProp,
 }: EntityFormLayoutDesignEditorProps) {
   const { t, i18n } = useTranslation("common");
-  const editor = useEntityFormLayoutEditor(entityName);
+  const internalEditor = useEntityFormLayoutEditor(entityName);
+  const editor = editorProp ?? internalEditor;
   const [previewStepIndex, setPreviewStepIndex] = useState(0);
   const [previewStepStatus, setPreviewStepStatus] =
     useState<WizardStepStatusKind>("active");
@@ -50,12 +57,17 @@ export function EntityFormLayoutDesignEditor({
   const [values, setValues] = useState(() =>
     buildInitialValues(editor.definition, "create"),
   );
-  const [previewFooter, setPreviewFooter] = useState<ReactNode>(null);
+  const [previewModalOpen, setPreviewModalOpen] = useState(false);
 
   const usesDesignedModalFooter =
     editor.modalFooterLayout != null ||
     editor.modalChrome.showHeader === false ||
     editor.modalChrome.contentPadding === "none";
+
+  const previewContentPadding = useMemo(
+    () => resolveEffectiveFormModalContentPadding(editor.modalChrome),
+    [editor.modalChrome],
+  );
 
   const modalSizeOptions = useMemo(
     (): readonly SegmentedSwitchOption<FormModalSize>[] => [
@@ -120,6 +132,14 @@ export function EntityFormLayoutDesignEditor({
         removeStyleRule: t("entity.viewSettings.removeStyleRule"),
         styleProperty: t("entity.viewSettings.styleProperty"),
         styleValue: t("entity.viewSettings.styleValue"),
+        styleColorTheme: t("entity.viewSettings.styleColorTheme"),
+        styleColorCustom: t("entity.viewSettings.styleColorCustom"),
+        styleColorThemeTokens: t("entity.viewSettings.styleColorThemeTokens"),
+        styleColorSemanticTokens: t(
+          "entity.viewSettings.styleColorSemanticTokens",
+        ),
+        styleColorCustomInput: t("entity.viewSettings.styleColorCustomInput"),
+        styleColorInvalid: t("entity.viewSettings.styleColorInvalid"),
       },
       motion: motionPresetEditorLabels(t),
       layoutEffects: t("entity.viewSettings.layoutEffects"),
@@ -158,11 +178,46 @@ export function EntityFormLayoutDesignEditor({
         displayFormat: t("entity.viewSettings.displayFormat"),
         showCurrency: t("entity.viewSettings.showCurrency"),
         showToneColors: t("entity.viewSettings.showToneColors"),
+        entityFieldSelectorLayout: t(
+          "entity.viewSettings.entityFieldSelectorLayout",
+        ),
+        entityFieldSelectorLayoutList: t(
+          "entity.viewSettings.entityFieldSelectorLayoutList",
+        ),
+        entityFieldSelectorLayoutListWithLogo: t(
+          "entity.viewSettings.entityFieldSelectorLayoutListWithLogo",
+        ),
+        entityFieldSelectorLayoutMiniCards: t(
+          "entity.viewSettings.entityFieldSelectorLayoutMiniCards",
+        ),
+        entityFieldSelectorEnableSearch: t(
+          "entity.viewSettings.entityFieldSelectorEnableSearch",
+        ),
+        entityFieldSelectorCardsPerRow: t(
+          "entity.viewSettings.entityFieldSelectorCardsPerRow",
+        ),
+        entityFieldSelectorImageField: t(
+          "entity.viewSettings.entityFieldSelectorImageField",
+        ),
+        entityFieldSelectorImageFieldAuto: t(
+          "entity.viewSettings.entityFieldSelectorImageFieldAuto",
+        ),
+        entityFieldSelectorEnumLayoutHint: t(
+          "entity.viewSettings.entityFieldSelectorEnumLayoutHint",
+        ),
         styleRules: {
           addStyleRule: t("entity.viewSettings.addStyleRule"),
           removeStyleRule: t("entity.viewSettings.removeStyleRule"),
           styleProperty: t("entity.viewSettings.styleProperty"),
           styleValue: t("entity.viewSettings.styleValue"),
+          styleColorTheme: t("entity.viewSettings.styleColorTheme"),
+          styleColorCustom: t("entity.viewSettings.styleColorCustom"),
+          styleColorThemeTokens: t("entity.viewSettings.styleColorThemeTokens"),
+          styleColorSemanticTokens: t(
+            "entity.viewSettings.styleColorSemanticTokens",
+          ),
+          styleColorCustomInput: t("entity.viewSettings.styleColorCustomInput"),
+          styleColorInvalid: t("entity.viewSettings.styleColorInvalid"),
         },
         label: {
           showLabel: t("entity.viewSettings.showLabel"),
@@ -181,6 +236,21 @@ export function EntityFormLayoutDesignEditor({
   );
 
   const previewStep = editor.wizard.steps[previewStepIndex];
+
+  const previewWizardStepNext = useCallback(
+    () =>
+      setPreviewStepIndex((index) =>
+        Math.min(index + 1, editor.wizard.steps.length - 1),
+      ),
+    [editor.wizard.steps.length],
+  );
+
+  const previewWizardStepBack = useCallback(
+    () => setPreviewStepIndex((index) => Math.max(0, index - 1)),
+    [],
+  );
+
+  const previewWizardStepCancel = useCallback(() => undefined, []);
 
   const plainPreviewContext = useMemo(
     () =>
@@ -281,13 +351,9 @@ export function EntityFormLayoutDesignEditor({
           currentStepIndex={previewStepIndex}
           totalSteps={editor.wizard.steps.length}
           hideActions={!usesDesignedModalFooter}
-          onNext={() =>
-            setPreviewStepIndex((index) =>
-              Math.min(index + 1, editor.wizard.steps.length - 1),
-            )
-          }
-          onBack={() => setPreviewStepIndex((index) => Math.max(0, index - 1))}
-          onCancel={() => undefined}
+          onNext={previewWizardStepNext}
+          onBack={previewWizardStepBack}
+          onCancel={previewWizardStepCancel}
         />
       ),
     };
@@ -296,24 +362,15 @@ export function EntityFormLayoutDesignEditor({
     plainPreviewContext,
     previewStep?.layout,
     previewStepIndex,
+    previewWizardStepBack,
+    previewWizardStepCancel,
+    previewWizardStepNext,
     usesDesignedModalFooter,
     wizardPreviewState,
   ]);
 
-  useEntityFormModalFooter({
-    enabled: usesDesignedModalFooter && editor.presentation === "plain",
-    onFooterChange: setPreviewFooter,
-    modalFooterLayout: editor.modalFooterLayout,
-    fallbackLayout: editor.plainLayout,
-    footerContext: plainFooterContext,
-  });
-
-  useEntityFormModalFooter({
-    enabled: usesDesignedModalFooter && editor.presentation === "wizard",
-    onFooterChange: setPreviewFooter,
-    modalFooterLayout: editor.modalFooterLayout,
-    fallbackLayout: editor.wizard.shellLayout,
-    footerContext: {
+  const wizardFooterContext = useMemo(
+    () => ({
       ...wizardPreviewContext,
       wizardActionsRenderer: (config: WizardActionsComponentConfig) => (
         <WizardActions
@@ -322,351 +379,416 @@ export function EntityFormLayoutDesignEditor({
           currentStepIndex={previewStepIndex}
           totalSteps={editor.wizard.steps.length}
           hideActions={false}
-          onNext={() =>
-            setPreviewStepIndex((index) =>
-              Math.min(index + 1, editor.wizard.steps.length - 1),
-            )
-          }
-          onBack={() => setPreviewStepIndex((index) => Math.max(0, index - 1))}
-          onCancel={() => undefined}
+          onNext={previewWizardStepNext}
+          onBack={previewWizardStepBack}
+          onCancel={previewWizardStepCancel}
         />
       ),
-    },
-    wizardMode: "create",
-    wizardCurrentStepIndex: previewStepIndex,
-    wizardTotalSteps: editor.wizard.steps.length,
-    wizardOnNext: () =>
-      setPreviewStepIndex((index) =>
-        Math.min(index + 1, editor.wizard.steps.length - 1),
-      ),
-    wizardOnBack: () => setPreviewStepIndex((index) => Math.max(0, index - 1)),
-    wizardOnCancel: () => undefined,
-  });
-
-  const preview = (
-    <DockedLayoutPreview enabled>
-      <div className="flex flex-col gap-3">
-        {editor.presentation === "wizard" ? (
-          <div className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">
-                {t("designLayout.wizardPreviewStep")}
-              </span>
-              <select
-                className="border-border bg-background rounded-md border px-2 py-1 text-sm"
-                value={previewStepIndex}
-                onChange={(event) =>
-                  setPreviewStepIndex(Number(event.target.value))
-                }
-              >
-                {editor.wizard.steps.map((step, index) => (
-                  <option key={step.id} value={index}>
-                    {step.label}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <label className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">
-                {t("designLayout.wizardPreviewStatus")}
-              </span>
-              <select
-                className="border-border bg-background rounded-md border px-2 py-1 text-sm"
-                value={previewStepStatus}
-                onChange={(event) =>
-                  setPreviewStepStatus(
-                    event.target.value as WizardStepStatusKind,
-                  )
-                }
-              >
-                {(["pending", "active", "completed", "invalid"] as const).map(
-                  (status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ),
-                )}
-              </select>
-            </label>
-          </div>
-        ) : null}
-        <div className="bg-card border-border rounded-lg border p-4">
-          <Text className="text-muted-foreground mb-3 text-sm">
-            {t("entity.viewSettings.preview")}
-          </Text>
-          <FormModal
-            variant="inline"
-            open
-            onClose={() => undefined}
-            title={t("entity.viewSettings.preview")}
-            size={editor.modalSize}
-            showHeader={editor.modalChrome.showHeader}
-            showCloseButton={false}
-            contentPadding={editor.modalChrome.contentPadding}
-            footer={usesDesignedModalFooter ? previewFooter : undefined}
-          >
-            {editor.presentation === "wizard" ? (
-              <RecursiveLayoutRenderer
-                layout={editor.wizard.shellLayout}
-                context={wizardPreviewContext}
-              />
-            ) : (
-              <RecursiveLayoutRenderer
-                layout={editor.plainLayout}
-                context={plainPreviewContext}
-              />
-            )}
-          </FormModal>
-        </div>
-      </div>
-    </DockedLayoutPreview>
+    }),
+    [
+      editor.wizard.steps.length,
+      previewStepIndex,
+      previewWizardStepBack,
+      previewWizardStepCancel,
+      previewWizardStepNext,
+      wizardPreviewContext,
+    ],
   );
 
-  const handleSave = async () => {
-    if (!canSave) {
-      return;
-    }
-    const saveError = await editor.save();
-    if (!saveError) {
-      toast.success(t("entity.viewSettings.saved"));
-    } else {
-      toast.error(saveError);
-    }
-  };
+  const previewFooter = useMemo(
+    () =>
+      resolveEntityFormModalFooter({
+        enabled: usesDesignedModalFooter,
+        modalFooterLayout: editor.modalFooterLayout,
+        fallbackLayout:
+          editor.presentation === "wizard"
+            ? editor.wizard.shellLayout
+            : editor.plainLayout,
+        footerContext:
+          editor.presentation === "wizard"
+            ? wizardFooterContext
+            : plainFooterContext,
+        wizardMode: editor.presentation === "wizard" ? "create" : undefined,
+        wizardCurrentStepIndex:
+          editor.presentation === "wizard" ? previewStepIndex : undefined,
+        wizardTotalSteps:
+          editor.presentation === "wizard"
+            ? editor.wizard.steps.length
+            : undefined,
+        wizardOnNext:
+          editor.presentation === "wizard" ? previewWizardStepNext : undefined,
+        wizardOnBack:
+          editor.presentation === "wizard" ? previewWizardStepBack : undefined,
+        wizardOnCancel:
+          editor.presentation === "wizard"
+            ? previewWizardStepCancel
+            : undefined,
+      }),
+    [
+      editor.modalFooterLayout,
+      editor.plainLayout,
+      editor.presentation,
+      editor.wizard.shellLayout,
+      editor.wizard.steps.length,
+      plainFooterContext,
+      previewStepIndex,
+      previewWizardStepBack,
+      previewWizardStepCancel,
+      previewWizardStepNext,
+      usesDesignedModalFooter,
+      wizardFooterContext,
+    ],
+  );
 
-  return (
-    <DesignLayoutEditorShell preview={preview}>
-      {canSave ? (
-        <div className="flex justify-end">
-          <Button
-            type="button"
-            loading={editor.isSaving}
-            onClick={() => void handleSave()}
-          >
-            {t("entity.viewSettings.save")}
-          </Button>
-        </div>
-      ) : null}
-      <div className="flex flex-col gap-4">
+  const wizardPreviewControls =
+    editor.presentation === "wizard" ? (
+      <div className="flex flex-wrap items-end gap-3">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">
-            {t("designLayout.formModalSize")}
+            {t("designLayout.wizardPreviewStep")}
           </span>
-          <SegmentedSwitch
-            value={editor.modalSize}
-            options={modalSizeOptions}
-            onChange={(value) => editor.setModalSize(value)}
-            ariaLabel={t("designLayout.formModalSize")}
-          />
-        </label>
-        <SegmentedSwitch
-          value={editor.presentation}
-          options={presentationOptions}
-          onChange={(value) => editor.setPresentation(value)}
-          ariaLabel={t("designLayout.presentation")}
-        />
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox
-            checked={editor.modalChrome.showHeader}
+          <select
+            className="border-border bg-background rounded-md border px-2 py-1 text-sm"
+            value={previewStepIndex}
             onChange={(event) =>
-              editor.setShowModalHeader(event.target.checked)
+              setPreviewStepIndex(Number(event.target.value))
             }
-          />
-          <span>{t("designLayout.formModalShowHeader")}</span>
+          >
+            {editor.wizard.steps.map((step, index) => (
+              <option key={step.id} value={index}>
+                {step.label}
+              </option>
+            ))}
+          </select>
         </label>
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox
-            checked={editor.modalChrome.contentPadding === "none"}
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">
+            {t("designLayout.wizardPreviewStatus")}
+          </span>
+          <select
+            className="border-border bg-background rounded-md border px-2 py-1 text-sm"
+            value={previewStepStatus}
             onChange={(event) =>
-              editor.setFlushModalContent(event.target.checked)
+              setPreviewStepStatus(event.target.value as WizardStepStatusKind)
             }
-          />
-          <span>{t("designLayout.formModalFlushContent")}</span>
+          >
+            {(["pending", "active", "completed", "invalid"] as const).map(
+              (status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ),
+            )}
+          </select>
         </label>
       </div>
-      <section className="flex flex-col gap-2">
-        <Text className="font-medium">{t("designLayout.formModalFooter")}</Text>
-        <Text className="text-muted-foreground text-sm">
-          {t("designLayout.formModalFooterHint")}
-        </Text>
-        <label className="flex items-center gap-2 text-sm">
-          <Checkbox
-            checked={editor.modalFooterLayout != null}
-            onChange={(event) => {
-              if (event.target.checked) {
-                editor.enableModalFooterLayout();
-              } else {
-                editor.disableModalFooterLayout();
+    ) : null;
+
+  const formPreviewBody =
+    editor.presentation === "wizard" ? (
+      <RecursiveLayoutRenderer
+        layout={editor.wizard.shellLayout}
+        context={wizardPreviewContext}
+      />
+    ) : (
+      <RecursiveLayoutRenderer
+        layout={editor.plainLayout}
+        context={plainPreviewContext}
+      />
+    );
+
+  const previewFormScrollable =
+    editor.presentation !== "wizard" && previewContentPadding !== "none";
+
+  const formPreviewContent = (
+    <div className="w-full">
+      <Form className="flex w-full flex-col gap-0">{formPreviewBody}</Form>
+    </div>
+  );
+
+  const preview = (
+    <div className="flex flex-col gap-3">
+      {wizardPreviewControls}
+      <div className="bg-card border-border rounded-lg border p-4">
+        <div className="mb-3 flex items-center justify-between gap-2">
+          <Text className="text-muted-foreground text-sm">
+            {t("entity.viewSettings.preview")}
+          </Text>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            onClick={() => setPreviewModalOpen(true)}
+          >
+            {t("designLayout.openFormPreview")}
+          </Button>
+        </div>
+        <FormModal
+          variant="inline"
+          open
+          scrollable={false}
+          onClose={() => undefined}
+          title={t("entity.viewSettings.preview")}
+          size={editor.modalSize}
+          showHeader={editor.modalChrome.showHeader}
+          showCloseButton={false}
+          contentPadding={previewContentPadding}
+          footer={usesDesignedModalFooter ? previewFooter : undefined}
+        >
+          {formPreviewContent}
+        </FormModal>
+      </div>
+    </div>
+  );
+
+  return (
+    <>
+      <DesignLayoutEditorShell
+        preview={preview}
+        columnRatio={{ editor: 2, preview: 1 }}
+        independentScroll
+      >
+        <div className="flex flex-col gap-4">
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">
+              {t("designLayout.formModalSize")}
+            </span>
+            <SegmentedSwitch
+              value={editor.modalSize}
+              options={modalSizeOptions}
+              onChange={(value) => editor.setModalSize(value)}
+              ariaLabel={t("designLayout.formModalSize")}
+            />
+          </label>
+          <SegmentedSwitch
+            value={editor.presentation}
+            options={presentationOptions}
+            onChange={(value) => editor.setPresentation(value)}
+            ariaLabel={t("designLayout.presentation")}
+          />
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={editor.modalChrome.showHeader}
+              onChange={(event) =>
+                editor.setShowModalHeader(event.target.checked)
               }
-            }}
-          />
-          <span>{t("designLayout.formModalFooterDedicated")}</span>
-        </label>
-        {editor.modalFooterLayout ? (
-          <EntityCardLayoutBuilder
-            key={`footer-${editor.layoutEditorKey}`}
-            layout={editor.modalFooterLayout}
-            definition={editor.definition}
-            defaultFieldPath={editor.defaultFieldPath}
-            onLayoutChange={editor.setModalFooterLayout}
-            labels={structureLabels}
-            designSurface="formModalFooter"
-          />
-        ) : null}
-      </section>
-      {editor.presentation === "plain" ? (
-        <EntityCardLayoutBuilder
-          key={`plain-${editor.layoutEditorKey}`}
-          layout={editor.plainLayout}
-          definition={editor.definition}
-          defaultFieldPath={editor.defaultFieldPath}
-          onLayoutChange={editor.setPlainLayout}
-          labels={structureLabels}
-          designSurface="formPlain"
-        />
-      ) : (
-        <div className="flex flex-col gap-6">
-          <section className="flex flex-col gap-2">
-            <Text className="font-medium">{t("designLayout.wizardShell")}</Text>
-            <Text className="text-muted-foreground text-sm">
-              {t("designLayout.wizardShellRequiredHint")}
-            </Text>
+            />
+            <span>{t("designLayout.formModalShowHeader")}</span>
+          </label>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={editor.modalChrome.contentPadding === "none"}
+              onChange={(event) =>
+                editor.setFlushModalContent(event.target.checked)
+              }
+            />
+            <span>{t("designLayout.formModalFlushContent")}</span>
+          </label>
+        </div>
+        <section className="flex flex-col gap-2">
+          <Text className="font-medium">
+            {t("designLayout.formModalFooter")}
+          </Text>
+          <Text className="text-muted-foreground text-sm">
+            {t("designLayout.formModalFooterHint")}
+          </Text>
+          <label className="flex items-center gap-2 text-sm">
+            <Checkbox
+              checked={editor.modalFooterLayout != null}
+              onChange={(event) => {
+                if (event.target.checked) {
+                  editor.enableModalFooterLayout();
+                } else {
+                  editor.disableModalFooterLayout();
+                }
+              }}
+            />
+            <span>{t("designLayout.formModalFooterDedicated")}</span>
+          </label>
+          {editor.modalFooterLayout ? (
             <EntityCardLayoutBuilder
-              key={`shell-${editor.layoutEditorKey}`}
-              layout={editor.wizard.shellLayout}
+              key={`footer-${editor.layoutEditorKey}`}
+              layout={editor.modalFooterLayout}
               definition={editor.definition}
               defaultFieldPath={editor.defaultFieldPath}
-              onLayoutChange={editor.setShellLayout}
+              onLayoutChange={editor.setModalFooterLayout}
               labels={structureLabels}
-              designSurface="formWizardShell"
+              designSurface="formModalFooter"
             />
-          </section>
+          ) : null}
+        </section>
+        {editor.presentation === "plain" ? (
+          <EntityCardLayoutBuilder
+            key={`plain-${editor.layoutEditorKey}`}
+            layout={editor.plainLayout}
+            definition={editor.definition}
+            defaultFieldPath={editor.defaultFieldPath}
+            onLayoutChange={editor.setPlainLayout}
+            labels={structureLabels}
+            designSurface="formPlain"
+          />
+        ) : (
           <div className="flex flex-col gap-6">
-            <section className="flex flex-col gap-3">
+            <section className="flex flex-col gap-2">
               <Text className="font-medium">
-                {t("designLayout.wizardSteps")}
+                {t("designLayout.wizardShell")}
               </Text>
-              <ul className="flex flex-col gap-2">
-                {editor.wizard.steps.map((step, index) => (
-                  <li
-                    key={step.id}
-                    className="border-border flex flex-col gap-2 rounded-md border p-3"
-                  >
-                    <div className="flex flex-wrap items-center gap-2">
+              <Text className="text-muted-foreground text-sm">
+                {t("designLayout.wizardShellRequiredHint")}
+              </Text>
+              <EntityCardLayoutBuilder
+                key={`shell-${editor.layoutEditorKey}`}
+                layout={editor.wizard.shellLayout}
+                definition={editor.definition}
+                defaultFieldPath={editor.defaultFieldPath}
+                onLayoutChange={editor.setShellLayout}
+                labels={structureLabels}
+                designSurface="formWizardShell"
+              />
+            </section>
+            <CollapsibleSection
+              title={t("designLayout.wizardSteps")}
+              defaultOpen={false}
+            >
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-wrap gap-1">
+                  {editor.wizard.steps.map((step, index) => (
+                    <Button
+                      key={step.id}
+                      type="button"
+                      variant={
+                        editor.selectedStepIndex === index
+                          ? "primary"
+                          : "outline"
+                      }
+                      onClick={() => editor.setSelectedStepIndex(index)}
+                    >
+                      {t("designLayout.wizardStepTab", { step: index + 1 })}
+                    </Button>
+                  ))}
+                </div>
+
+                {editor.selectedStep ? (
+                  <>
+                    <div className="flex flex-wrap gap-2">
                       <Button
                         type="button"
-                        size="sm"
-                        variant={
-                          editor.selectedStepIndex === index
-                            ? "primary"
-                            : "outline"
+                        variant="outline"
+                        disabled={editor.selectedStepIndex === 0}
+                        onClick={() =>
+                          editor.moveStep(editor.selectedStepIndex, -1)
                         }
-                        onClick={() => editor.setSelectedStepIndex(index)}
                       >
-                        {step.label}
+                        {t("designLayout.moveColumnUp")}
                       </Button>
                       <Button
                         type="button"
-                        size="sm"
                         variant="outline"
-                        disabled={index === 0}
-                        onClick={() => editor.moveStep(index, -1)}
+                        disabled={
+                          editor.selectedStepIndex >=
+                          editor.wizard.steps.length - 1
+                        }
+                        onClick={() =>
+                          editor.moveStep(editor.selectedStepIndex, 1)
+                        }
                       >
-                        ↑
+                        {t("designLayout.moveColumnDown")}
                       </Button>
                       <Button
                         type="button"
-                        size="sm"
-                        variant="outline"
-                        disabled={index >= editor.wizard.steps.length - 1}
-                        onClick={() => editor.moveStep(index, 1)}
-                      >
-                        ↓
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
                         variant="outline"
                         disabled={editor.wizard.steps.length <= 1}
-                        onClick={() => editor.removeStep(index)}
+                        onClick={() =>
+                          editor.removeStep(editor.selectedStepIndex)
+                        }
                       >
                         {t("designLayout.removeWizardStep")}
                       </Button>
                     </div>
-                    {editor.selectedStepIndex === index ? (
-                      <div className="grid gap-2 sm:grid-cols-3">
-                        <label className="flex flex-col gap-1 text-sm">
-                          <span className="text-muted-foreground">
-                            {t("designLayout.wizardStepLabel")}
-                          </span>
-                          <Input
-                            value={step.label}
-                            onChange={(event) =>
-                              editor.updateStep(index, {
-                                label: event.target.value,
-                              })
-                            }
-                          />
-                        </label>
-                        <label className="flex flex-col gap-1 text-sm">
-                          <span className="text-muted-foreground">
-                            {t("designLayout.wizardStepSubtitle")}
-                          </span>
-                          <Input
-                            value={step.subtitle ?? ""}
-                            onChange={(event) =>
-                              editor.updateStep(index, {
-                                subtitle: event.target.value || undefined,
-                              })
-                            }
-                          />
-                        </label>
-                        <label className="flex flex-col gap-1 text-sm">
-                          <span className="text-muted-foreground">
-                            {t("designLayout.wizardStepIcon")}
-                          </span>
-                          <Input
-                            value={step.icon ?? ""}
-                            onChange={(event) =>
-                              editor.updateStep(index, {
-                                icon: event.target.value || undefined,
-                              })
-                            }
-                            placeholder="Database"
-                          />
-                        </label>
-                      </div>
-                    ) : null}
-                  </li>
-                ))}
-              </ul>
-              <Button type="button" variant="outline" onClick={editor.addStep}>
-                {t("designLayout.addWizardStep")}
-              </Button>
-            </section>
-            {editor.selectedStep ? (
-              <section className="flex flex-col gap-2">
-                <Text className="font-medium">
-                  {t("designLayout.wizardStep", {
-                    step: editor.selectedStep.label,
-                  })}
-                </Text>
-                <EntityCardLayoutBuilder
-                  key={`step-${editor.selectedStepIndex}-${editor.layoutEditorKey}`}
-                  layout={editor.selectedStep.layout}
-                  definition={editor.definition}
-                  defaultFieldPath={editor.defaultFieldPath}
-                  onLayoutChange={(layout) =>
-                    editor.updateStep(editor.selectedStepIndex, { layout })
-                  }
-                  labels={structureLabels}
-                  designSurface="formWizardStep"
-                />
-              </section>
-            ) : null}
+
+                    <div className="grid gap-2 sm:grid-cols-3">
+                      <label className="flex flex-col gap-1 text-sm">
+                        <span className="text-muted-foreground">
+                          {t("designLayout.wizardStepLabel")}
+                        </span>
+                        <Input
+                          value={editor.selectedStep.label}
+                          onChange={(event) =>
+                            editor.updateStep(editor.selectedStepIndex, {
+                              label: event.target.value,
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-sm">
+                        <span className="text-muted-foreground">
+                          {t("designLayout.wizardStepSubtitle")}
+                        </span>
+                        <Input
+                          value={editor.selectedStep.subtitle ?? ""}
+                          onChange={(event) =>
+                            editor.updateStep(editor.selectedStepIndex, {
+                              subtitle: event.target.value || undefined,
+                            })
+                          }
+                        />
+                      </label>
+                      <label className="flex flex-col gap-1 text-sm">
+                        <span className="text-muted-foreground">
+                          {t("designLayout.wizardStepIcon")}
+                        </span>
+                        <Input
+                          value={editor.selectedStep.icon ?? ""}
+                          onChange={(event) =>
+                            editor.updateStep(editor.selectedStepIndex, {
+                              icon: event.target.value || undefined,
+                            })
+                          }
+                          placeholder="Database"
+                        />
+                      </label>
+                    </div>
+
+                    <EntityCardLayoutBuilder
+                      key={`step-${editor.selectedStepIndex}-${editor.layoutEditorKey}`}
+                      layout={editor.selectedStep.layout}
+                      definition={editor.definition}
+                      defaultFieldPath={editor.defaultFieldPath}
+                      onLayoutChange={(layout) =>
+                        editor.updateStep(editor.selectedStepIndex, { layout })
+                      }
+                      labels={structureLabels}
+                      designSurface="formWizardStep"
+                    />
+                  </>
+                ) : null}
+
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={editor.addStep}
+                >
+                  {t("designLayout.addWizardStep")}
+                </Button>
+              </div>
+            </CollapsibleSection>
           </div>
-        </div>
-      )}
-    </DesignLayoutEditorShell>
+        )}
+      </DesignLayoutEditorShell>
+      <FormModal
+        variant="overlay"
+        open={previewModalOpen}
+        onClose={() => setPreviewModalOpen(false)}
+        title={t("entity.viewSettings.preview")}
+        size={editor.modalSize}
+        scrollable={previewFormScrollable}
+        showHeader={editor.modalChrome.showHeader}
+        showCloseButton={editor.modalChrome.showHeader}
+        contentPadding={previewContentPadding}
+        footer={usesDesignedModalFooter ? previewFooter : undefined}
+      >
+        {formPreviewContent}
+      </FormModal>
+    </>
   );
 }

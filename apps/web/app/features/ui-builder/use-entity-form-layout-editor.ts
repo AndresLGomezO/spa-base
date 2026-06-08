@@ -320,3 +320,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     layoutEditorKey,
   };
 }
+
+export type UseEntityFormLayoutEditorResult = ReturnType<
+  typeof useEntityFormLayoutEditor
+>;

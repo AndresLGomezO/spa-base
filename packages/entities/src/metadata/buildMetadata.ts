@@ -25,6 +25,9 @@ export function normalizeFieldMeta(config: FieldConfig): NormalizedFieldMeta {
     optional: !required,
     ...(hasDefault ? { default: config.default } : {}),
     ...(sensitive ? { sensitive: true } : {}),
+    ...("isArray" in config && config.isArray === true
+      ? { isArray: true as const }
+      : {}),
   };
 
   if (config.type === "relation") {

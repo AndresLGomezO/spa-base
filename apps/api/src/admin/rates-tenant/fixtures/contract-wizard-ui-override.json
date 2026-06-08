@@ -1,0 +1,1292 @@
+{
+  "views": [
+    {
+      "type": "table",
+      "name": "default",
+      "fields": ["variability", "name"],
+      "showActions": true,
+      "metricStripLayout": {
+        "root": {
+          "type": "root",
+          "id": "root-58b7fdcf-08a1-4455-a377-fdca9ff8663c",
+          "columnCount": 1,
+          "columns": [
+            {
+              "id": "col-4524b4f4-225a-4d35-ac2e-4c8458ea7e0f",
+              "rows": [
+                {
+                  "type": "nested-layout",
+                  "id": "nested-0917f6c7-c447-4785-a8f0-e701bcad7a54",
+                  "columnCount": 1,
+                  "columns": [
+                    {
+                      "id": "col-7a306fb3-9d32-49d8-9d4f-d31a6bf82835",
+                      "rows": [
+                        {
+                          "type": "nested-layout",
+                          "id": "nested-ce8f955e-64af-4426-8f6d-5992e4aa970f",
+                          "columnCount": 1,
+                          "columns": [
+                            {
+                              "id": "col-7fba5a94-f7b7-4213-adda-62fd5b5c925d",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-1a1a776b-701b-4779-a1db-81bc6131a57c",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Saldo Total"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "thin"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "16"
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "muted"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-6b4926ab-ea82-4b4e-9457-316f9900eef7",
+                                  "component": {
+                                    "kind": "metric-kpi",
+                                    "metricDefinitionId": "metric_X1OpNRgVRet7",
+                                    "groupBindings": {},
+                                    "dimensionBindings": {},
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "styles": [
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "info"
+                                },
+                                {
+                                  "property": "padding",
+                                  "value": "16"
+                                },
+                                {
+                                  "property": "borderRadius",
+                                  "value": "12"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "nested-layout",
+                          "id": "nested-cc59a6bd-bc7b-48ad-9074-5b48b5a74621",
+                          "columnCount": 1,
+                          "columns": [
+                            {
+                              "id": "col-7e90ec26-b1bf-4d61-8cad-b6f3e9a47638",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-07a4a9bc-4fca-40aa-8c47-17a6d9f13aa4",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Saldo Promedio"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "16"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "thin"
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "muted"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-cc5331ea-bbb4-439c-aaa2-0fc7980f7c9e",
+                                  "component": {
+                                    "kind": "metric-kpi",
+                                    "metricDefinitionId": "metric_CnjkRmTY4Czu",
+                                    "groupBindings": {},
+                                    "dimensionBindings": {},
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "styles": [
+                                {
+                                  "property": "padding",
+                                  "value": "16"
+                                },
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "info"
+                                },
+                                {
+                                  "property": "borderRadius",
+                                  "value": "12"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "component",
+                          "id": "row-bb53ea7c-ba9d-44dc-b731-7a4b9a86eb38",
+                          "component": {
+                            "kind": "text",
+                            "primary": {
+                              "type": "static",
+                              "value": "|"
+                            },
+                            "styles": [
+                              {
+                                "property": "fontSize",
+                                "value": "20"
+                              },
+                              {
+                                "property": "fontWeight",
+                                "value": "thin"
+                              },
+                              {
+                                "property": "color",
+                                "value": "muted"
+                              },
+                              {
+                                "property": "alignItems",
+                                "value": "center"
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "stackDirection": "row",
+                      "styles": [
+                        {
+                          "property": "gap",
+                          "value": "15"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "stackDirection": "column",
+              "styles": [
+                {
+                  "property": "overflowX",
+                  "value": "scroll"
+                },
+                {
+                  "property": "paddingBottom",
+                  "value": "10"
+                }
+              ]
+            }
+          ],
+          "styles": []
+        },
+        "motion": {
+          "entrance": "scale",
+          "hover": "none",
+          "transition": "none",
+          "staggerIndex": false,
+          "durationMs": 900
+        }
+      }
+    },
+    {
+      "type": "expandableTable",
+      "name": "expandable",
+      "fields": [
+        "name",
+        "contractType",
+        "categoryId",
+        "providerId",
+        "currency",
+        "initialAmount",
+        "currentBalance",
+        "startDate",
+        "endDate",
+        "status",
+        "description",
+        "isRecurring",
+        "frequency",
+        "variability"
+      ],
+      "columns": [
+        {
+          "id": "column-0",
+          "cellLayout": {
+            "root": {
+              "type": "root",
+              "id": "root-d0d23118-360d-4183-8a51-69a515d2d60d",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-dbe85d1c-2e17-4c1b-8a5e-cb7253db44bf",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-036922e0-d2f7-4862-a598-eec2707c3d04",
+                      "component": {
+                        "kind": "image",
+                        "primary": {
+                          "type": "field",
+                          "path": "provider.logo"
+                        },
+                        "imageSize": 60
+                      }
+                    },
+                    {
+                      "type": "nested-layout",
+                      "id": "nested-dfd009c6-48d4-4b5d-bbcb-4229699c9866",
+                      "columnCount": 1,
+                      "columns": [
+                        {
+                          "id": "col-7c73eeeb-c545-4459-8963-8a33abeb3bd5",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-02fdf059-2f8c-4343-88a3-247257cd79a1",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "name"
+                                },
+                                "fallbacks": [],
+                                "styles": [
+                                  {
+                                    "property": "fontSize",
+                                    "value": "15"
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-d0a10d70-ccdb-4624-bb7f-23fd4e0f6e52",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "description"
+                                },
+                                "styles": [
+                                  {
+                                    "property": "fontWeight",
+                                    "value": "thin"
+                                  },
+                                  {
+                                    "property": "fontSize",
+                                    "value": "11"
+                                  },
+                                  {
+                                    "property": "color",
+                                    "value": "muted"
+                                  }
+                                ]
+                              }
+                            }
+                          ],
+                          "styles": [
+                            {
+                              "property": "padding",
+                              "value": "5"
+                            },
+                            {
+                              "property": "gap",
+                              "value": "5"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "stackDirection": "row",
+                  "styles": [
+                    {
+                      "property": "gap",
+                      "value": "5"
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          },
+          "label": "Información Básica"
+        },
+        {
+          "id": "column-1",
+          "cellLayout": {
+            "root": {
+              "type": "root",
+              "id": "root-02bc09bc-3073-47cf-85d2-d411d9ff3347",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-6ffe85df-c38d-481a-a142-80ff6c64e546",
+                  "rows": [
+                    {
+                      "type": "nested-layout",
+                      "id": "nested-35f7d716-960c-4313-93fc-5de13ddad145",
+                      "columnCount": 1,
+                      "columns": [
+                        {
+                          "id": "col-f277cf11-fada-4a19-8a5b-00dac32f3eca",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-6420de38-eb24-484f-9346-29808d181c6b",
+                              "component": {
+                                "kind": "numeric",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "currentBalance"
+                                },
+                                "showCurrency": true,
+                                "showToneColors": true,
+                                "label": {
+                                  "show": true,
+                                  "position": "below"
+                                },
+                                "displayFormat": "currency"
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          },
+          "label": "Saldo Actual"
+        },
+        {
+          "id": "column-1387f580-30b5-4e32-a2ea-d0256360d922",
+          "cellLayout": {
+            "root": {
+              "type": "root",
+              "id": "root-51a6940c-f811-4f2d-9f79-ce827d43166d",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-6331f16a-41ec-4df6-bf5a-1e0686cbfe87",
+                  "rows": [
+                    {
+                      "type": "nested-layout",
+                      "id": "nested-d80ebf7b-261c-4532-82e8-b6c4ea1ef8d3",
+                      "columnCount": 1,
+                      "columns": [
+                        {
+                          "id": "col-11ee1bef-b525-4d99-ab47-0dffbe485245",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-7078a16f-7910-4d88-a745-50ffaaf9f33f",
+                              "component": {
+                                "kind": "badge",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "frequency"
+                                }
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-4953af16-7182-4e7e-b796-be2eaaadf55a",
+                              "component": {
+                                "kind": "badge",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "category.name"
+                                }
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-24594c22-f22a-4d68-a239-ce430397e30f",
+                              "component": {
+                                "kind": "badge",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "currency"
+                                }
+                              }
+                            }
+                          ],
+                          "stackDirection": "row",
+                          "styles": [
+                            {
+                              "property": "gap",
+                              "value": "5"
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          },
+          "label": "Tags"
+        },
+        {
+          "id": "column-2",
+          "cellLayout": {
+            "root": {
+              "type": "root",
+              "id": "root-a52c9b3d-940b-486e-89b9-525ed749d011",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-81a5de7d-65ed-46c2-8bc3-86c2280ca85b",
+                  "rows": [
+                    {
+                      "type": "nested-layout",
+                      "id": "nested-870316d2-3cf3-4daa-9067-a357233224f0",
+                      "columnCount": 1,
+                      "columns": [
+                        {
+                          "id": "col-fb873862-4ac3-4616-8564-64b503d58937",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-c1845821-1943-4466-bade-1a3751f1519a",
+                              "component": {
+                                "kind": "badge",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "status"
+                                },
+                                "conditionalStyles": [
+                                  {
+                                    "matchValue": "ACTIVE",
+                                    "badgeVariant": "success"
+                                  },
+                                  {
+                                    "matchValue": "CLOSED",
+                                    "badgeVariant": "danger"
+                                  }
+                                ],
+                                "styles": []
+                              }
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ],
+                  "styles": [
+                    {
+                      "property": "gap",
+                      "value": "10"
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          },
+          "label": "Estado"
+        }
+      ],
+      "rowExpandLayout": {
+        "root": {
+          "type": "root",
+          "id": "root-1ad1ebc0-3038-4ce4-b2b6-ef2049021253",
+          "columnCount": 1,
+          "columns": [
+            {
+              "id": "col-2ee001ab-d05e-49a5-a02f-2753cd5e07f9",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row-b7a23bd7-2b63-4d4d-a34b-b6f6811837d5",
+                  "component": {
+                    "kind": "text",
+                    "primary": {
+                      "type": "field",
+                      "path": "currency"
+                    },
+                    "label": {
+                      "show": true
+                    }
+                  }
+                },
+                {
+                  "type": "component",
+                  "id": "row-2043386d-6c95-4416-a800-c6679db98788",
+                  "component": {
+                    "kind": "text",
+                    "primary": {
+                      "type": "field",
+                      "path": "initialAmount"
+                    },
+                    "label": {
+                      "show": true
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "showActions": true,
+        "cardsPerRow": 1
+      },
+      "showActions": true
+    }
+  ],
+  "listViewType": "expandableTable",
+  "forms": {
+    "presentation": "wizard",
+    "modalSize": "xl",
+    "wizard": {
+      "shellLayout": {
+        "root": {
+          "type": "root",
+          "id": "root-3de8e236-f649-4cec-8473-c1eccf51dbcc",
+          "columnCount": 2,
+          "columns": [
+            {
+              "id": "col-29975a26-b809-48f2-86ac-886d323fdf2a",
+              "rows": [
+                {
+                  "type": "nested-layout",
+                  "id": "nested-0e02beda-019e-4133-a622-b5b2efb7d301",
+                  "columnCount": 1,
+                  "columns": [
+                    {
+                      "id": "col-ce8f99d5-0459-41f5-9ad1-543f6a65cb81",
+                      "rows": [
+                        {
+                          "type": "component",
+                          "id": "row-77337d71-75aa-4522-9724-642fdbbcb507",
+                          "component": {
+                            "primary": {
+                              "type": "field",
+                              "path": "contractType"
+                            },
+                            "styles": [
+                              {
+                                "property": "justifyContent",
+                                "value": "center"
+                              }
+                            ],
+                            "kind": "image",
+                            "imageSize": 60
+                          }
+                        },
+                        {
+                          "type": "component",
+                          "id": "row-87269590-a969-4968-8399-e3315800d67b",
+                          "component": {
+                            "primary": {
+                              "type": "static",
+                              "value": "New Financial Product"
+                            },
+                            "styles": [
+                              {
+                                "property": "justifyContent",
+                                "value": "center"
+                              },
+                              {
+                                "property": "fontWeight",
+                                "value": "bold"
+                              },
+                              {
+                                "property": "fontSize",
+                                "value": "20"
+                              }
+                            ],
+                            "kind": "text"
+                          }
+                        },
+                        {
+                          "type": "component",
+                          "id": "row-4ccb0572-02c1-448c-bfc4-c62321d49d47",
+                          "component": {
+                            "primary": {
+                              "type": "static",
+                              "value": "Complete the form to register your product"
+                            },
+                            "styles": [
+                              {
+                                "property": "justifyContent",
+                                "value": "center"
+                              },
+                              {
+                                "property": "fontWeight",
+                                "value": "thin"
+                              },
+                              {
+                                "property": "fontSize",
+                                "value": "12"
+                              },
+                              {
+                                "property": "color",
+                                "value": "muted"
+                              }
+                            ],
+                            "kind": "text"
+                          }
+                        },
+                        {
+                          "type": "component",
+                          "id": "row-fd73a614-ff8d-492d-bf6a-0a220ec47aa0",
+                          "component": {
+                            "kind": "wizard-progress",
+                            "conditionalStyles": []
+                          },
+                          "styles": [
+                            {
+                              "property": "padding",
+                              "value": "20"
+                            }
+                          ]
+                        },
+                        {
+                          "type": "nested-layout",
+                          "id": "nested-c46759d5-cce3-4ba0-953a-1dc4b2dcd1a3",
+                          "columnCount": 1,
+                          "columns": [
+                            {
+                              "id": "col-1313c0b7-9fa1-424a-8fd1-3921998d661d",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-2050b288-42eb-4545-86da-d5c533f27659",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "ⓘ"
+                                    },
+                                    "fallbacks": [],
+                                    "styles": [
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "nested-layout",
+                                  "id": "nested-2bb487d7-4574-48de-9acc-e5567e689d9b",
+                                  "columnCount": 1,
+                                  "columns": [
+                                    {
+                                      "id": "col-0785a5b1-bbfc-421e-960d-798bede5f922",
+                                      "rows": [
+                                        {
+                                          "type": "component",
+                                          "id": "row-4305924a-dd13-42a2-91bb-7dfec91ee31a",
+                                          "component": {
+                                            "kind": "text",
+                                            "primary": {
+                                              "type": "static",
+                                              "value": "Need help?"
+                                            },
+                                            "styles": [
+                                              {
+                                                "property": "fontWeight",
+                                                "value": "bold"
+                                              },
+                                              {
+                                                "property": "fontSize",
+                                                "value": "15"
+                                              },
+                                              {
+                                                "property": "color",
+                                                "value": "background"
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        {
+                                          "type": "component",
+                                          "id": "row-1f07b0cf-2cee-49ba-806d-878ecb67a86c",
+                                          "component": {
+                                            "kind": "text",
+                                            "primary": {
+                                              "type": "static",
+                                              "value": "Learn more about creating financial products."
+                                            },
+                                            "styles": [
+                                              {
+                                                "property": "fontWeight",
+                                                "value": "thin"
+                                              },
+                                              {
+                                                "property": "color",
+                                                "value": "muted"
+                                              },
+                                              {
+                                                "property": "fontSize",
+                                                "value": "12"
+                                              }
+                                            ]
+                                          }
+                                        }
+                                      ],
+                                      "styles": []
+                                    }
+                                  ]
+                                }
+                              ],
+                              "stackDirection": "row",
+                              "styles": [
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "info"
+                                },
+                                {
+                                  "property": "borderRadius",
+                                  "value": "12"
+                                },
+                                {
+                                  "property": "padding",
+                                  "value": "20"
+                                },
+                                {
+                                  "property": "gap",
+                                  "value": "10"
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "widthPercent": 30
+            },
+            {
+              "id": "col-02159502-445f-4555-91e6-b660793950c0",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row-23232480-14ad-4487-8f13-b4f89b21e88e",
+                  "component": {
+                    "kind": "wizard-step-host"
+                  }
+                },
+                {
+                  "type": "component",
+                  "id": "row-040e7f81-d10f-48d3-8276-dd88792900de",
+                  "component": {
+                    "kind": "wizard-actions"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "showActions": true,
+        "cardsPerRow": 1
+      },
+      "steps": [
+        {
+          "id": "step-33f8d8af-f3da-46fa-842c-872efaf9571c",
+          "label": "Basic Information",
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-3c27f442-06ba-454b-8972-a7d356244880",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-5cc595e3-dd68-4dff-9a3c-1ec90c37b10f",
+                  "rows": []
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        {
+          "id": "step-c7fdfa23-9d2f-469e-9842-229a547396c5",
+          "label": "Financial Details",
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-dfeca5d7-a7c5-4809-891e-b0020d6f969e",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-c2965f5f-649f-4c5f-901d-3d0feaedeee8",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-5f90668b-974e-414f-b28f-0869a5ed7a1d",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "name"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-fd418b8f-7f31-450e-85a6-0c29f22ed9a4",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "contractType"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-a923efbc-08f8-4984-a386-f730586e3dcc",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "categoryId"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-31787fc7-1683-4b51-9d37-3adea68a0507",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "providerId"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-a61af40b-16b2-447b-a489-cfa84566bfc7",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "currency"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-5408dc34-2fbe-4746-8a10-9dfc0e814dc0",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "initialAmount"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-2c2a15b5-90de-4638-b676-cf65406b7e62",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "currentBalance"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-1c0867db-4d7e-45b6-aa17-b4e4d328682e",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "startDate"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-2d97b56e-34b2-4b0d-a63c-dbb623a861c6",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "endDate"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-07b98b2b-3416-4ca6-b1e8-b7764d190504",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "status"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-684c96eb-b954-4619-b6ee-741b62b41787",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "description"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-bcb5bf39-4150-4c82-b842-13ec8b45c1f5",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "isRecurring"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-7dcba5f4-33a5-40c2-90f4-8d82a2996c09",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "frequency"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-47367598-de8d-4baa-b12f-7adcf20b769f",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "frequencyInDays"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-b013b9a0-363a-4250-82db-1661ff77ba8d",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "variability"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        {
+          "id": "step-1b8ad4a8-ba8e-443e-b653-bf3358730745",
+          "label": "Dates & Status",
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-cc9df556-a0d0-4582-8067-f7644a3eb97c",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-0226d31c-533f-45cf-8a29-76d0b5ae49f3",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-f526a51b-f398-4632-96cb-000807e32874",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "name"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-2d86f119-865a-4e55-b124-097df8a66c51",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "contractType"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-16d6b025-750a-4061-9baf-11458779450c",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "categoryId"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-2ff9cc27-c66c-4b50-b0e6-ec9ffa2cfbd7",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "providerId"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-96bbbfe0-a60b-44b9-b65c-fe9768b7ff24",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "currency"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-f7f63370-16a1-4eb0-9fd2-b7eb256fe179",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "initialAmount"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-2f4a0f0b-efd8-4185-9c86-a9072e950670",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "currentBalance"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-b8b811e4-22b7-4b6c-ab9b-7106468b3918",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "startDate"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-7ed9a707-dce3-4ba6-9c0e-b53ed9ba283f",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "endDate"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-07efc66c-c751-4f3e-9e93-88886ed14ae4",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "status"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-24214e30-10eb-480e-964e-95ce0428a1ec",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "description"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-553dd068-5821-4d0d-a4d2-8d25ea2c0768",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "isRecurring"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-34e826d8-722b-4e65-9dc5-7cea5b5b8827",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "frequency"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-21ad5e1d-eb97-470c-a3af-2b5d96dea6a0",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "frequencyInDays"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-db0c6590-93d0-4b62-8e49-5a893b1a6351",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "variability"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        },
+        {
+          "id": "step-ffe3cca6-0f1b-432b-8d35-bdb91cbd32df",
+          "label": "Additional Information",
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-6be6cabd-223e-4fce-b3a9-07d8903c2655",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-8754b982-b74c-4ab2-9965-4b40924ee176",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-f4e43bea-ec81-45a4-9b87-4738e9fff0fd",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "name"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-59e237e0-5692-4402-b922-b8b39a1c00d7",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "contractType"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-c174f5a6-ab5c-4f9a-ae1e-1895ee75720f",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "categoryId"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-c4cb9608-da48-4ded-98a6-fbfe284f6de1",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "providerId"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-1a9ea4f3-a52f-47cf-a1c8-f5a3f302c6a2",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "currency"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-af0d3b5f-8bd2-4047-acf8-b9e63629b248",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "initialAmount"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-cbf94f3b-22c9-4431-9f74-4483bd587f2d",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "currentBalance"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-291693ac-e6a7-45c5-b303-dd1aead79023",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "startDate"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-a82736c7-7c6a-42b7-bc34-28d481599081",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "endDate"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-01f8cbf3-e695-4522-a29b-db4d3a112a84",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "status"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-c9cd0c42-2873-41c1-9735-8db3bf0c0bcf",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "description"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-4b1b2229-a3ba-47e7-90b9-26e15c6625c5",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "isRecurring"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-c9f26fa6-4eff-46be-9a67-2cace4343e3a",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "frequency"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-8a82a36a-ef83-419a-b0a8-036b3c6a6471",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "frequencyInDays"
+                      }
+                    },
+                    {
+                      "type": "component",
+                      "id": "row-fab86338-594c-4966-afc0-ac1a3260912f",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "variability"
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
+          }
+        }
+      ]
+    }
+  }
+}

@@ -19,6 +19,39 @@ export const THEME_TOKEN_OPTIONS: readonly ThemeToken[] = [
   "transparent",
 ] as const;
 
+export interface SemanticColorOption {
+  readonly label: string;
+  readonly value: string;
+}
+
+/** Tenant-overridable semantic CSS variables (see packages/theme semantics). */
+export const SEMANTIC_COLOR_OPTIONS: readonly SemanticColorOption[] = [
+  { label: "Background", value: "var(--color-background)" },
+  { label: "Foreground", value: "var(--color-foreground)" },
+  { label: "Primary", value: "var(--color-primary)" },
+  { label: "Primary foreground", value: "var(--color-primary-foreground)" },
+  { label: "Muted", value: "var(--color-muted)" },
+  { label: "Muted foreground", value: "var(--color-muted-foreground)" },
+  { label: "Border", value: "var(--color-border)" },
+  { label: "Card", value: "var(--color-card)" },
+  { label: "Card foreground", value: "var(--color-card-foreground)" },
+  { label: "Popover", value: "var(--color-popover)" },
+  { label: "Accent", value: "var(--color-accent)" },
+  { label: "Hover", value: "var(--color-hover)" },
+] as const;
+
+const SEMANTIC_COLOR_VALUES = new Set(
+  SEMANTIC_COLOR_OPTIONS.map((option) => option.value),
+);
+
+export function isSemanticCssVarStyleValue(value: string): boolean {
+  return SEMANTIC_COLOR_VALUES.has(value.trim());
+}
+
+export function isThemeModeColorValue(value: string): boolean {
+  return isThemeTokenValue(value) || isSemanticCssVarStyleValue(value);
+}
+
 export const TEXT_COLOR_TOKEN_OPTIONS = [
   "default",
   "muted",
@@ -99,6 +132,9 @@ export function defaultValueForProperty(
   if (property === "textAlign") {
     return "left";
   }
+  if (property === "textWrap") {
+    return "truncate";
+  }
   if (property === "alignItems" || property === "alignSelf") {
     return "start";
   }
@@ -122,7 +158,11 @@ export function defaultValueForProperty(
     property === "gap" ||
     property === "minWidth" ||
     property === "maxWidth" ||
-    property === "borderRadius"
+    property === "borderRadius" ||
+    property === "borderTopLeftRadius" ||
+    property === "borderTopRightRadius" ||
+    property === "borderBottomLeftRadius" ||
+    property === "borderBottomRightRadius"
   ) {
     return numericStyleInputMin(property) === 1 ? "1" : "0";
   }
@@ -145,7 +185,7 @@ export function isColorStyleProperty(property: StylePropertyKey): boolean {
 }
 
 export function isThemeTokenStyleValue(value: string): boolean {
-  return isThemeTokenValue(value);
+  return isThemeModeColorValue(value);
 }
 
 export function isNumericStyleProperty(property: StylePropertyKey): boolean {
@@ -157,6 +197,10 @@ export function isNumericStyleProperty(property: StylePropertyKey): boolean {
     property === "minWidth" ||
     property === "maxWidth" ||
     property === "borderRadius" ||
+    property === "borderTopLeftRadius" ||
+    property === "borderTopRightRadius" ||
+    property === "borderBottomLeftRadius" ||
+    property === "borderBottomRightRadius" ||
     property === "borderWidth"
   );
 }
@@ -193,6 +237,7 @@ export function isEnumStyleProperty(property: StylePropertyKey): boolean {
     property === "fontStyle" ||
     property === "textDecoration" ||
     property === "textAlign" ||
+    property === "textWrap" ||
     property === "alignItems" ||
     property === "justifyContent" ||
     property === "alignSelf" ||
@@ -223,6 +268,11 @@ export function enumOptionsForProperty(
         { value: "left", label: "Left" },
         { value: "center", label: "Center" },
         { value: "right", label: "Right" },
+      ];
+    case "textWrap":
+      return [
+        { value: "truncate", label: "Single line (ellipsis)" },
+        { value: "wrap", label: "Wrap to next line" },
       ];
     case "alignItems":
     case "alignSelf":

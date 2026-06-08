@@ -28,6 +28,7 @@ import { Button, Text } from "@repo/ui";
 import type { SerializableEntityDefinition } from "@repo/entities";
 
 import type { FieldDescriptor } from "../adapters/entity-card-view-adapter.js";
+import { CollapsibleSection } from "./CollapsibleSection.js";
 import {
   ComponentConfigEditor,
   type ComponentConfigEditorLabels,
@@ -53,6 +54,7 @@ import {
   LayoutJsonImportDialog,
   type LayoutJsonImportLabels,
 } from "./LayoutJsonImportDialog.js";
+import { LayoutJsonViewDialog } from "./LayoutJsonViewDialog.js";
 import {
   SavePresetDialog,
   type LayoutPresetLabels,
@@ -100,6 +102,10 @@ export interface ColumnRowsEditorProps {
   readonly canApplyImport?: boolean;
   readonly designSurface?: DesignSurface;
   readonly definition?: SerializableEntityDefinition;
+  readonly getDefinition?: (
+    entityName: string,
+  ) => SerializableEntityDefinition | undefined;
+  readonly entityFieldSelectorFieldDescriptors?: readonly FieldDescriptor[];
   readonly presetStore?: {
     readonly presets: readonly UiBuilderPresetRecord[];
     readonly canApplyPresets: boolean;
@@ -128,6 +134,8 @@ export function ColumnRowsEditor({
   canApplyImport = false,
   designSurface = "listItem",
   definition,
+  getDefinition,
+  entityFieldSelectorFieldDescriptors,
   presetStore,
 }: ColumnRowsEditorProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(
@@ -223,39 +231,52 @@ export function ColumnRowsEditor({
                 </>
               ) : null}
               {definition ? (
-                <LayoutJsonImportDialog
-                  scope={{
-                    type:
-                      row.type === "component"
-                        ? "component-row"
-                        : "nested-layout-row",
-                  }}
-                  designSurface={designSurface}
-                  definition={definition}
-                  defaultFieldPath={defaultFieldPath}
-                  canApply={canApplyImport}
-                  labels={labels.layoutJsonImport}
-                  onApply={(data) => {
-                    if (row.type === "component") {
+                <>
+                  <LayoutJsonViewDialog
+                    scope={{
+                      type:
+                        row.type === "component"
+                          ? "component-row"
+                          : "nested-layout-row",
+                    }}
+                    data={row}
+                    labels={labels.layoutJsonImport}
+                  />
+                  <LayoutJsonImportDialog
+                    scope={{
+                      type:
+                        row.type === "component"
+                          ? "component-row"
+                          : "nested-layout-row",
+                    }}
+                    designSurface={designSurface}
+                    definition={definition}
+                    defaultFieldPath={defaultFieldPath}
+                    canApply={canApplyImport}
+                    labels={labels.layoutJsonImport}
+                    referenceData={row}
+                    onApply={(data) => {
+                      if (row.type === "component") {
+                        onLayoutChange(
+                          replaceComponentRowAt(
+                            layout,
+                            locator,
+                            row.id,
+                            data as ComponentRowNode,
+                          ),
+                        );
+                        return;
+                      }
                       onLayoutChange(
-                        replaceComponentRowAt(
+                        replaceNestedLayoutRowAt(
                           layout,
-                          locator,
                           row.id,
-                          data as ComponentRowNode,
+                          data as NestedLayoutRowNode,
                         ),
                       );
-                      return;
-                    }
-                    onLayoutChange(
-                      replaceNestedLayoutRowAt(
-                        layout,
-                        row.id,
-                        data as NestedLayoutRowNode,
-                      ),
-                    );
-                  }}
-                />
+                    }}
+                  />
+                </>
               ) : null}
               <Button
                 type="button"
@@ -298,6 +319,11 @@ export function ColumnRowsEditor({
                 metricKpiEditor={metricKpiEditor}
                 staticImageEditor={staticImageEditor}
                 allowedKinds={allowedKinds}
+                definition={definition}
+                getDefinition={getDefinition}
+                entityFieldSelectorFieldDescriptors={
+                  entityFieldSelectorFieldDescriptors
+                }
                 onChange={(component: UiComponentConfig) =>
                   onLayoutChange(
                     updateComponentRowAt(layout, locator, row.id, component),
@@ -305,20 +331,22 @@ export function ColumnRowsEditor({
                 }
               />
               {labels.motion ? (
-                <MotionPresetEditor
-                  motion={row.motion}
-                  onChange={(motion) =>
-                    onLayoutChange(
-                      updateComponentRowMetaAt(layout, locator, row.id, {
-                        motion,
-                      }),
-                    )
-                  }
-                  labels={{
-                    ...labels.motion,
-                    title: labels.rowEffects,
-                  }}
-                />
+                <CollapsibleSection
+                  title={labels.rowEffects}
+                  defaultOpen={false}
+                >
+                  <MotionPresetEditor
+                    motion={row.motion}
+                    onChange={(motion) =>
+                      onLayoutChange(
+                        updateComponentRowMetaAt(layout, locator, row.id, {
+                          motion,
+                        }),
+                      )
+                    }
+                    labels={labels.motion}
+                  />
+                </CollapsibleSection>
               ) : null}
               <StyleRulesEditor
                 styles={row.styles}
@@ -353,6 +381,10 @@ export function ColumnRowsEditor({
               canApplyImport={canApplyImport}
               designSurface={designSurface}
               definition={definition}
+              getDefinition={getDefinition}
+              entityFieldSelectorFieldDescriptors={
+                entityFieldSelectorFieldDescriptors
+              }
               presetStore={presetStore}
             />
           ) : null}
@@ -405,6 +437,8 @@ function NestedLayoutRowEditor({
   canApplyImport = false,
   designSurface = "listItem",
   definition,
+  getDefinition,
+  entityFieldSelectorFieldDescriptors,
   presetStore,
 }: {
   readonly layout: UiLayoutDocument;
@@ -421,6 +455,10 @@ function NestedLayoutRowEditor({
   readonly canApplyImport?: boolean;
   readonly designSurface?: DesignSurface;
   readonly definition?: SerializableEntityDefinition;
+  readonly getDefinition?: (
+    entityName: string,
+  ) => SerializableEntityDefinition | undefined;
+  readonly entityFieldSelectorFieldDescriptors?: readonly FieldDescriptor[];
   readonly presetStore?: ColumnRowsEditorProps["presetStore"];
 }) {
   const [activeColumn, setActiveColumn] = useState(0);
@@ -559,6 +597,10 @@ function NestedLayoutRowEditor({
           canApplyImport={canApplyImport}
           designSurface={designSurface}
           definition={definition}
+          getDefinition={getDefinition}
+          entityFieldSelectorFieldDescriptors={
+            entityFieldSelectorFieldDescriptors
+          }
           presetStore={presetStore}
         />
       ) : null}

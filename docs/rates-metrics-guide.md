@@ -95,7 +95,7 @@ Lists fields that, when changed on a source record, **trigger** a metric update.
 
 ### User scope (Rates seed data)
 
-Metric rows are keyed by **`ownerId`** on source records (JWT `uid` on read). Mock transactions live under seed user business data (`tu1_txn_*` in `apps/api/src/admin/rates-tenant/records/test-user-business.ts`). To see non-empty widgets:
+Metric rows are keyed by **`ownerId`** on source records (JWT `uid` on read). Mock transactions live under seed demo data (`rd_txn_*` in `apps/api/src/admin/rates-tenant/records/seed-demo-data.ts`). To see non-empty widgets:
 
 1. Sign in as that seeded user (or create transactions as your user).
 2. Run **Backfill** after creating each metric.

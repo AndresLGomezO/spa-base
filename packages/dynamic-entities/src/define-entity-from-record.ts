@@ -28,27 +28,30 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
     field.type !== "document"
       ? { sensitive: true as const }
       : {};
+  const arr = field.isArray ? { isArray: true as const } : {};
 
   switch (field.type) {
     case "string":
-      return { type: "string", ...req, ...sens };
+      return { type: "string", ...req, ...sens, ...arr };
     case "number":
       return {
         type: "number",
         ...req,
         ...sens,
+        ...arr,
         ...(field.numberKind ? { numberKind: field.numberKind } : {}),
       };
     case "boolean":
-      return { type: "boolean", ...req, ...sens };
+      return { type: "boolean", ...req, ...sens, ...arr };
     case "date":
-      return { type: "date", ...req, ...sens };
+      return { type: "date", ...req, ...sens, ...arr };
     case "enum":
       return {
         type: "enum",
         enumValues: field.enumValues ?? [],
         ...req,
         ...sens,
+        ...arr,
       };
     case "image":
       return {
@@ -83,13 +86,22 @@ function fieldRecordToConfig(field: FieldDefinitionRecord): FieldConfig {
 }
 
 function defaultFileFieldUiFlags(
-  type: FieldDefinitionRecord["type"],
+  field: Pick<FieldDefinitionRecord, "type" | "isArray" | "sensitive">,
 ): Pick<
   NonNullable<FieldDefinitionRecord["ui"]>,
   "filterable" | "sortable" | "searchable"
 > {
-  if (type === "image" || type === "document") {
+  if (field.type === "image" || field.type === "document") {
     return { filterable: false, sortable: false, searchable: false };
+  }
+  if (field.isArray === true) {
+    return {
+      filterable: true,
+      sortable: false,
+      searchable:
+        (field.type === "string" || field.type === "enum") &&
+        field.sensitive !== true,
+    };
   }
   return {};
 }
@@ -119,7 +131,7 @@ function componentForFieldType(
 
 export type FieldInputForDefaultUi = Pick<
   FieldDefinitionRecord,
-  "name" | "type" | "sensitive"
+  "name" | "type" | "sensitive" | "isArray"
 > & {
   readonly ui?: FieldDefinitionRecord["ui"];
 };
@@ -154,9 +166,11 @@ export function buildDefaultUiForNewDefinition(input: {
     },
     fields: Object.fromEntries(
       input.fields.map((field, index) => {
-        const fileUiDefaults = defaultFileFieldUiFlags(field.type);
+        const fileUiDefaults = defaultFileFieldUiFlags(field);
         const hasFileDefaults =
-          field.type === "image" || field.type === "document";
+          field.type === "image" ||
+          field.type === "document" ||
+          field.isArray === true;
         return [
           field.name,
           {
@@ -282,6 +296,11 @@ export function validateDefinitionEvolution(
     if (existing.type !== field.type) {
       throw new DynamicEntityError(
         `Field "${field.name}" type cannot be changed.`,
+      );
+    }
+    if (Boolean(existing.isArray) !== Boolean(field.isArray)) {
+      throw new DynamicEntityError(
+        `Field "${field.name}" array setting cannot be changed.`,
       );
     }
     if (existing.required && !field.required) {

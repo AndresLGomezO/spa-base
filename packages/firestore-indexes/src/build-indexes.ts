@@ -76,6 +76,13 @@ export function buildOwnershipFkIndex(
   };
 }
 
+function isArrayFilterField(
+  entity: AnyDefinedEntity,
+  fieldName: string,
+): boolean {
+  return entity.metadata.fields[fieldName]?.isArray === true;
+}
+
 export function buildListQueryIndex(
   collection: string,
   options: {
@@ -83,6 +90,7 @@ export function buildListQueryIndex(
     readonly filterFields?: readonly string[];
     readonly sortField: string;
     readonly sortDirection: "ASCENDING" | "DESCENDING";
+    readonly arrayFilterFields?: ReadonlySet<string>;
   },
 ): FirestoreCompositeIndex {
   const fields: FirestoreIndexField[] = [];
@@ -98,7 +106,11 @@ export function buildListQueryIndex(
     if (field === sortField) {
       continue;
     }
-    fields.push({ fieldPath: field, order: "ASCENDING" });
+    if (options.arrayFilterFields?.has(field)) {
+      fields.push({ fieldPath: field, arrayConfig: "CONTAINS" });
+    } else {
+      fields.push({ fieldPath: field, order: "ASCENDING" });
+    }
   }
 
   if (
@@ -149,6 +161,11 @@ export function indexesForEntity(
   const filterableFields = collectFilterableFields(entity);
   const sortableFields = collectSortableFields(entity);
   const sortDirections = ["ASCENDING", "DESCENDING"] as const;
+  const arrayFilterFields = new Set(
+    filterableFields.filter((fieldName) =>
+      isArrayFilterField(entity, fieldName),
+    ),
+  );
 
   for (const sortField of sortableFields) {
     for (const sortDirection of sortDirections) {
@@ -170,6 +187,7 @@ export function indexesForEntity(
           filterFields: [filterField],
           sortField: DEFAULT_SORT_FIELD,
           sortDirection,
+          arrayFilterFields,
         }),
       );
     }

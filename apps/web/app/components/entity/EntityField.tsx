@@ -20,6 +20,7 @@ import {
   type EntityName,
 } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import { ArrayEntityField } from "./ArrayEntityField";
 import { resolveFieldComponent } from "./field-component-registry";
 import { RelationPicker } from "./RelationPicker";
 import { ManyToManyRelationPicker } from "./ManyToManyRelationPicker";
@@ -63,6 +64,23 @@ export function EntityField({
     "downloadUrl" in meta.defaultImage
       ? (meta.defaultImage.downloadUrl ?? null)
       : null;
+
+  if (meta.isArray) {
+    return (
+      <ArrayEntityField
+        fieldName={fieldName}
+        value={value}
+        meta={meta}
+        fieldUI={fieldUI}
+        label={label}
+        required={meta.required}
+        error={error}
+        readOnly={readOnly}
+        inputId={inputId}
+        onChange={onChange}
+      />
+    );
+  }
 
   if (CustomField) {
     return (

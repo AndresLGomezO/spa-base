@@ -17,7 +17,7 @@ const ENTITY_READS = RATES_ENTITY_NAMES.map((name) => `${name}.read`);
 const NORMAL_RATES_USER_ROLE: CreateTenantRoleInput = {
   name: "normalRatesUser",
   description:
-    "Edit portfolio, transactions, and extensions; read shared lookup data; hidden reference tables stay out of the sidebar.",
+    "Edit contracts, accounts, transactions, and related records across the Rates contract model.",
   grants: [...ENTITY_READS, ...BUSINESS_MUTATIONS, "*"],
 };
 

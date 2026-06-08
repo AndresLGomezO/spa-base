@@ -212,7 +212,7 @@ PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 Cloud Run sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so the process listens on `/health` before Firestore role/tenant seeds run. Seed once locally against the target GCP project if needed.
 ```
 
-Promotes email to superadmin on **first** user document creation. Dev tenant **`rates`** is seeded on startup with entity definitions, shared lookup rows, **12+ linked records per business model** owned by the demo user below, and UI Builder overrides for **`account`** (table list + card layout) and **`financialProduct`** (card list with the portfolio demo layout under [`rates-tenant/layouts/`](src/admin/rates-tenant/layouts/)).
+Promotes email to superadmin on **first** user document creation. Dev tenant **`rates`** is seeded on startup with the **Rates Dev contract model** (12 entities: `category`, `provider`, `account`, `contract`, …), demo records, metric definitions with backfill, and a **contract wizard** UI override (see [`rates-tenant/fixtures/`](src/admin/rates-tenant/fixtures/)).
 
 ### Rates demo user (emulator / Docker)
 
@@ -231,9 +231,7 @@ To test a different user with the same role, assign manually:
 { "tenants": { "rates": ["normalRatesUser"] } }
 ```
 
-Hidden lookup entities (`productType`, `frequency`, etc.) use `hiddenFromNav` + `tenantWideRead`; browse them only with `internalEntity.read` (e.g. `admin`) or via relation fields.
-
-The **rates** tenant is emulator/Docker mock data only. Runtime Firestore composite index provisioning is skipped for that tenant (`indexProvisioningExcludedTenants`); the emulator runs list/search queries without deployed indexes.
+The **rates** tenant is emulator/Docker mock data only. Runtime Firestore composite index provisioning is skipped for that tenant (`indexProvisioningExcludedTenants`); the emulator runs list/search queries without deployed indexes. After changing the entity model, reset emulator data with `pnpm dev:docker:reset` so stale collections from the old portfolio model do not linger.
 
 ---
 

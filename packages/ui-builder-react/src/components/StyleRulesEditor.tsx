@@ -1,9 +1,11 @@
 import {
+  isCssColorValue,
+  isThemeTokenValue,
   STYLE_PROPERTY_OPTIONS,
   type StylePropertyKey,
   type StyleRule,
 } from "@repo/ui-builder-core";
-import { Button, Input, Text } from "@repo/ui";
+import { Button, Input, SegmentedSwitch, Text } from "@repo/ui";
 
 import {
   addStyleRule,
@@ -12,9 +14,11 @@ import {
   isColorStyleProperty,
   isEnumStyleProperty,
   isNumericStyleProperty,
-  isThemeTokenStyleValue,
+  isSemanticCssVarStyleValue,
+  isThemeModeColorValue,
   numericStyleInputMin,
   removeStyleRule,
+  SEMANTIC_COLOR_OPTIONS,
   THEME_TOKEN_OPTIONS,
   upsertStyleRule,
 } from "./style-rules-state.js";
@@ -29,6 +33,12 @@ export interface StyleRulesEditorLabels {
   readonly removeStyleRule: string;
   readonly styleProperty: string;
   readonly styleValue: string;
+  readonly styleColorTheme?: string;
+  readonly styleColorCustom?: string;
+  readonly styleColorThemeTokens?: string;
+  readonly styleColorSemanticTokens?: string;
+  readonly styleColorCustomInput?: string;
+  readonly styleColorInvalid?: string;
 }
 
 export interface StyleRulesEditorProps {
@@ -46,40 +56,117 @@ function formatPropertyLabel(property: StylePropertyKey): string {
 
 function ColorStyleValueInput({
   rule,
+  labels,
   onChange,
 }: {
   readonly rule: StyleRule;
+  readonly labels: StyleRulesEditorLabels;
   readonly onChange: (value: string) => void;
 }) {
   const rawValue = String(rule.value);
-  const usesThemeToken = isThemeTokenStyleValue(rawValue);
+  const themeMode = isThemeModeColorValue(rawValue);
+  const colorMode = themeMode ? ("theme" as const) : ("custom" as const);
+  const themeLabel = labels.styleColorTheme ?? "Theme";
+  const customLabel = labels.styleColorCustom ?? "Custom";
+  const themeTokensLabel = labels.styleColorThemeTokens ?? "Theme tokens";
+  const semanticTokensLabel =
+    labels.styleColorSemanticTokens ?? "Semantic colors";
+  const customInputLabel = labels.styleColorCustomInput ?? "Custom color";
+  const invalidLabel = labels.styleColorInvalid ?? "Enter a valid color value.";
+  const showInvalid =
+    colorMode === "custom" &&
+    rawValue.trim().length > 0 &&
+    !isCssColorValue(rawValue);
+
+  const swatchStyle = themeMode
+    ? isThemeTokenValue(rawValue)
+      ? undefined
+      : { backgroundColor: rawValue }
+    : isCssColorValue(rawValue)
+      ? { backgroundColor: rawValue }
+      : undefined;
+
+  const swatchClassName = isThemeTokenValue(rawValue)
+    ? rawValue === "transparent"
+      ? "bg-transparent"
+      : rawValue === "background"
+        ? "bg-background"
+        : rawValue === "foreground"
+          ? "bg-foreground"
+          : rawValue === "default"
+            ? "bg-card"
+            : `bg-${rawValue}`
+    : undefined;
 
   return (
     <div className="flex min-w-[8rem] flex-1 flex-col gap-2">
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-muted-foreground">Theme</span>
-        <select
-          className={SELECT_CLASS}
-          value={usesThemeToken ? rawValue : ""}
-          onChange={(event) => {
-            if (event.target.value) {
-              onChange(event.target.value);
+      <div className="flex items-center gap-2">
+        <span
+          className={`border-border h-8 w-8 shrink-0 rounded border ${swatchClassName ?? ""}`}
+          style={swatchStyle}
+          aria-hidden
+        />
+        <SegmentedSwitch
+          value={colorMode}
+          options={[
+            { value: "theme", label: themeLabel, ariaLabel: themeLabel },
+            { value: "custom", label: customLabel, ariaLabel: customLabel },
+          ]}
+          onChange={(mode) => {
+            if (mode === "theme") {
+              onChange("default");
             } else {
               onChange("#000000");
             }
           }}
-        >
-          <option value="">Custom color</option>
-          {THEME_TOKEN_OPTIONS.map((token) => (
-            <option key={token} value={token}>
-              {token}
-            </option>
-          ))}
-        </select>
-      </label>
-      {!usesThemeToken ? (
+          ariaLabel={themeLabel}
+        />
+      </div>
+
+      {colorMode === "theme" ? (
         <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">Custom</span>
+          <span className="text-muted-foreground">{themeTokensLabel}</span>
+          <select
+            className={SELECT_CLASS}
+            value={isThemeTokenValue(rawValue) ? rawValue : ""}
+            onChange={(event) => {
+              if (event.target.value) {
+                onChange(event.target.value);
+              }
+            }}
+          >
+            <option value="" disabled>
+              Select token
+            </option>
+            {THEME_TOKEN_OPTIONS.map((token) => (
+              <option key={token} value={token}>
+                {token}
+              </option>
+            ))}
+          </select>
+          <span className="text-muted-foreground">{semanticTokensLabel}</span>
+          <select
+            className={SELECT_CLASS}
+            value={isSemanticCssVarStyleValue(rawValue) ? rawValue : ""}
+            onChange={(event) => {
+              if (event.target.value) {
+                onChange(event.target.value);
+              }
+            }}
+          >
+            <option value="" disabled>
+              Select semantic color
+            </option>
+            {SEMANTIC_COLOR_OPTIONS.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        </label>
+      ) : (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">{customInputLabel}</span>
           <div className="flex items-center gap-2">
             <input
               type="color"
@@ -89,12 +176,15 @@ function ColorStyleValueInput({
             />
             <Input
               value={rawValue}
-              placeholder="#rrggbb, rgb(), hsl()"
+              placeholder="#rrggbb, rgb(), hsl(), var(--color-primary)"
               onChange={(event) => onChange(event.target.value)}
             />
           </div>
+          {showInvalid ? (
+            <Text className="text-destructive text-xs">{invalidLabel}</Text>
+          ) : null}
         </label>
-      ) : null}
+      )}
     </div>
   );
 }
@@ -143,6 +233,7 @@ export function StyleRulesEditor({
               <span className="text-muted-foreground">{labels.styleValue}</span>
               <ColorStyleValueInput
                 rule={rule}
+                labels={labels}
                 onChange={(value) => updateRule(index, { value })}
               />
             </div>

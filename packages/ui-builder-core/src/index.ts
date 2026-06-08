@@ -27,6 +27,9 @@ export type {
   DateComponentConfig,
   NumericComponentConfig,
   BadgeComponentConfig,
+  FormFieldComponentConfig,
+  EntityFieldSelectorComponentConfig,
+  EntityFieldSelectorLayout,
   FieldDateDisplayFormat,
   NumericDisplayFormat,
   CardBadgeVariant,
@@ -35,6 +38,7 @@ export type {
 export {
   isMetricKpiComponent,
   isFieldUiComponent,
+  isEntityFieldSelectorComponent,
   isPageUiComponent,
 } from "./types/component.js";
 export { createDefaultMainPageLayout } from "./layout/default-main-page-layout.js";
@@ -110,7 +114,9 @@ export {
   type SpacingInlineStyle,
   parseFlexLayoutFromStyles,
   usesFlexWrapLayout,
+  usesTextWrap,
   flexWrapClassFromStyles,
+  textWrapClassFromStyles,
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
   gapPxFromStyles,
@@ -152,6 +158,8 @@ export {
   collectLayoutFieldPaths,
   listLayoutFieldOptions,
   listFormFieldOptions,
+  listEntityFieldSelectorFieldOptions,
+  isValidEntityFieldSelectorFieldPath,
   type ListLayoutFieldOptionsParams,
   formatFieldPathLabel,
   relationAliasFieldPath,

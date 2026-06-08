@@ -27,6 +27,13 @@ export interface LayoutJsonImportLabels {
   readonly apply: string;
   readonly cancel: string;
   readonly readOnlyHint: string;
+  readonly viewTrigger: string;
+  readonly viewTitleRoot: string;
+  readonly viewTitleComponentRow: string;
+  readonly viewTitleNestedRow: string;
+  readonly viewDescription: string;
+  readonly viewCopy: string;
+  readonly viewCopied: string;
 }
 
 export interface LayoutJsonImportDialogProps {
@@ -39,6 +46,10 @@ export interface LayoutJsonImportDialogProps {
   readonly onApply: (
     data: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode,
   ) => void;
+  readonly referenceData?:
+    | UiLayoutDocument
+    | ComponentRowNode
+    | NestedLayoutRowNode;
   readonly triggerSize?: "sm" | "md" | "lg";
 }
 
@@ -64,6 +75,7 @@ export function LayoutJsonImportDialog({
   canApply,
   labels,
   onApply,
+  referenceData,
   triggerSize = "sm",
 }: LayoutJsonImportDialogProps) {
   const [open, setOpen] = useState(false);
@@ -72,8 +84,14 @@ export function LayoutJsonImportDialog({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const skeleton = useMemo(
-    () => createLayoutJsonSkeleton(scope, designSurface, defaultFieldPath),
-    [scope, designSurface, defaultFieldPath],
+    () =>
+      createLayoutJsonSkeleton(
+        scope,
+        designSurface,
+        defaultFieldPath,
+        referenceData,
+      ),
+    [scope, designSurface, defaultFieldPath, referenceData],
   );
 
   const validation = useMemo((): LayoutJsonImportValidationResult => {

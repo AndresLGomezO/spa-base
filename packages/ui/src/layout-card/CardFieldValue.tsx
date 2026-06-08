@@ -65,7 +65,6 @@ export function CardFieldValue({
   const valueElement = (
     <span
       className={cn(
-        "truncate",
         cardTextColorClassName(textColor),
         resolvedTextSize === undefined && "text-sm",
         textBold ? "font-bold" : textThin ? "font-light" : "font-medium",

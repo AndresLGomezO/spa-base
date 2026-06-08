@@ -35,6 +35,7 @@ const stylePropertySchema = z.enum([
   "fontStyle",
   "textDecoration",
   "textAlign",
+  "textWrap",
   "alignItems",
   "justifyContent",
   "alignSelf",
@@ -42,6 +43,10 @@ const stylePropertySchema = z.enum([
   "minWidth",
   "maxWidth",
   "borderRadius",
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius",
   "borderWidth",
   "borderColor",
   "borderStyle",
@@ -189,6 +194,17 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
     .object({
       kind: z.literal("form-field"),
       fieldPath: z.string().trim().min(1),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("entity-field-selector"),
+      fieldPath: z.string().trim().min(1),
+      layout: z.enum(["list", "list-with-logo", "mini-cards"]),
+      enableSearch: z.boolean().optional(),
+      cardsPerRow: z.number().int().min(1).max(4).optional(),
+      imageFieldPath: z.string().trim().min(1).optional(),
       styles: z.array(styleRuleSchema).optional(),
     })
     .strict(),

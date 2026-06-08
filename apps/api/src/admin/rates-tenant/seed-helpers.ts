@@ -1,38 +1,22 @@
-import {
-  defineEntityFromRecord,
-  registerDynamicEntity,
-  type CreateEntityDefinitionInput,
-  type EntityDefinitionRecord,
+import type {
+  CreateEntityDefinitionInput,
+  EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
 import type { CreateEntityCategoryInput } from "@repo/entity-categories";
 import type { CreateTenantRoleInput } from "@repo/rbac";
-import { createEntityConverter } from "@repo/firestore-converters";
 import type {
   EntityCategoryRepository,
   EntityDefinitionRepository,
   TenantRoleRepository,
-  TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
-import {
-  createFirestoreAdminEntityRepository,
-  type FirebaseAdminConfig,
-} from "@repo/gcp-firebase";
-import {
-  applySearchMirrorFields,
-  listLegacySearchMirrorFieldNames,
-  listSearchMirrorStorageFields,
-  type DefinedEntity,
-} from "@repo/entities";
 
-import { RATES_TENANT_ID } from "./constants.js";
-
-type GenericRecord = { readonly id: string; readonly tenantId: string };
+import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
 
 function stableJson(value: unknown): string {
   return JSON.stringify(value);
 }
 
-function ratesDefinitionNeedsSync(
+function definitionNeedsSync(
   existing: EntityDefinitionRecord,
   desired: CreateEntityDefinitionInput,
 ): boolean {
@@ -42,6 +26,7 @@ function ratesDefinitionNeedsSync(
     existing.navCategoryId !== desired.navCategoryId ||
     existing.navOrder !== desired.navOrder ||
     (existing.displayField ?? "name") !== (desired.displayField ?? "name") ||
+    existing.label !== desired.label ||
     stableJson(existing.fields) !== stableJson(desired.fields) ||
     stableJson(existing.ui) !== stableJson(desired.ui)
   );
@@ -49,16 +34,17 @@ function ratesDefinitionNeedsSync(
 
 export async function seedRatesCategories(
   repository: EntityCategoryRepository,
+  tenantId: string,
   categories: readonly CreateEntityCategoryInput[],
 ): Promise<Readonly<Record<string, string>>> {
-  const existing = await repository.list(RATES_TENANT_ID);
+  const existing = await repository.list(tenantId);
   const byName = new Map(existing.map((item) => [item.name, item.id]));
 
   for (const category of categories) {
     if (byName.has(category.name)) {
       continue;
     }
-    const created = await repository.create(RATES_TENANT_ID, category);
+    const created = await repository.create(tenantId, category);
     byName.set(created.name, created.id);
   }
 
@@ -73,20 +59,31 @@ export async function seedRatesCategories(
   return resolved;
 }
 
+interface SeedRatesDefinitionsResult {
+  readonly created: number;
+  readonly updated: number;
+  readonly skipped: number;
+  readonly records: readonly EntityDefinitionRecord[];
+}
+
 export async function seedRatesDefinitions(
+  tenantId: string,
   repository: EntityDefinitionRepository,
+  entityRuntime: EntityRuntimeContext,
   definitions: readonly CreateEntityDefinitionInput[],
-): Promise<readonly EntityDefinitionRecord[]> {
-  const created: EntityDefinitionRecord[] = [];
+): Promise<SeedRatesDefinitionsResult> {
+  let created = 0;
+  let updated = 0;
+  let skipped = 0;
+  const records: EntityDefinitionRecord[] = [];
+
+  await entityRuntime.loadTenantDefinitions(tenantId, { force: true });
 
   for (const definition of definitions) {
-    const existing = await repository.getByName(
-      RATES_TENANT_ID,
-      definition.name,
-    );
+    const existing = await repository.getByName(tenantId, definition.name);
     if (existing) {
-      if (ratesDefinitionNeedsSync(existing, definition)) {
-        const record = await repository.update(RATES_TENANT_ID, existing.id, {
+      if (definitionNeedsSync(existing, definition)) {
+        const record = await repository.update(tenantId, existing.id, {
           label: definition.label,
           fields: definition.fields,
           ui: definition.ui,
@@ -96,28 +93,32 @@ export async function seedRatesDefinitions(
           navOrder: definition.navOrder,
           displayField: definition.displayField,
         });
-        registerDynamicEntity(RATES_TENANT_ID, record);
-        created.push(record);
+        await entityRuntime.syncDefinition(record, existing);
+        records.push(record);
+        updated += 1;
       } else {
-        registerDynamicEntity(RATES_TENANT_ID, existing);
-        created.push(existing);
+        await entityRuntime.syncDefinition(existing);
+        records.push(existing);
+        skipped += 1;
       }
       continue;
     }
 
-    const record = await repository.create(RATES_TENANT_ID, definition);
-    registerDynamicEntity(RATES_TENANT_ID, record);
-    created.push(record);
+    const record = await repository.create(tenantId, definition);
+    await entityRuntime.syncDefinition(record);
+    records.push(record);
+    created += 1;
   }
 
-  return created;
+  return { created, updated, skipped, records };
 }
 
 export async function ensureRatesRole(
   repository: TenantRoleRepository,
+  tenantId: string,
   input: CreateTenantRoleInput,
 ): Promise<void> {
-  const existing = await repository.getByName(RATES_TENANT_ID, input.name);
+  const existing = await repository.getByName(tenantId, input.name);
   if (existing) {
     const grantsMatch =
       stableJson([...existing.grants].sort()) ===
@@ -128,7 +129,7 @@ export async function ensureRatesRole(
       return;
     }
 
-    await repository.update(RATES_TENANT_ID, existing.id, {
+    await repository.update(tenantId, existing.id, {
       grants: [...input.grants],
       ...(input.description !== undefined
         ? { description: input.description }
@@ -137,119 +138,5 @@ export async function ensureRatesRole(
     return;
   }
 
-  await repository.create(RATES_TENANT_ID, input);
-}
-
-function buildSeedRecord(
-  business: Record<string, unknown>,
-  id: string,
-  ownerId: string,
-  now: string,
-): Record<string, unknown> {
-  return {
-    ...business,
-    id,
-    tenantId: RATES_TENANT_ID,
-    createdAt: now,
-    updatedAt: now,
-    ownerId,
-    accessUserIds: [ownerId],
-    sharedWith: {},
-  };
-}
-
-function createRatesEntityRepository(
-  firebaseAdminConfig: FirebaseAdminConfig,
-  entity: DefinedEntity<string, import("@repo/entities").FieldDefinitions>,
-): TenantScopedEntityRepository<GenericRecord, unknown> {
-  return createFirestoreAdminEntityRepository({
-    config: firebaseAdminConfig,
-    collection: entity.metadata.collection,
-    converter: createEntityConverter(entity),
-  });
-}
-
-async function ensureRatesRecord(
-  repository: TenantScopedEntityRepository<GenericRecord, unknown>,
-  entity: DefinedEntity<string, import("@repo/entities").FieldDefinitions>,
-  id: string,
-  ownerId: string,
-  business: Record<string, unknown>,
-): Promise<void> {
-  const existing = await repository.findById(id, RATES_TENANT_ID);
-  const now = new Date().toISOString();
-  const draft = applySearchMirrorFields(
-    entity,
-    buildSeedRecord(business, id, ownerId, now),
-  );
-
-  if (existing) {
-    const existingRecord = existing as Record<string, unknown>;
-    const withMirrors = applySearchMirrorFields(entity, {
-      ...existingRecord,
-      ...business,
-    });
-    const needsTokenSync = listSearchMirrorStorageFields(entity).some(
-      (field) => withMirrors[field] !== existingRecord[field],
-    );
-    const hasLegacyData = listLegacySearchMirrorFieldNames(entity).some(
-      (field) => field in existingRecord,
-    );
-
-    if (needsTokenSync || hasLegacyData) {
-      const parsed = entity.schema.parse(withMirrors);
-      await repository.update(id, RATES_TENANT_ID, parsed as GenericRecord);
-    }
-    return;
-  }
-
-  const parsed = entity.schema.parse(draft);
-  await repository.create(RATES_TENANT_ID, parsed as GenericRecord);
-}
-
-function entityFromDefinition(
-  record: EntityDefinitionRecord,
-): DefinedEntity<string, import("@repo/entities").FieldDefinitions> {
-  return defineEntityFromRecord(record);
-}
-
-export type RatesRecordSeedContext = {
-  readonly config: FirebaseAdminConfig;
-  readonly entities: Map<
-    string,
-    DefinedEntity<string, import("@repo/entities").FieldDefinitions>
-  >;
-  readonly ownerId: string;
-};
-
-export function createRatesRecordSeedContext(
-  firebaseAdminConfig: FirebaseAdminConfig,
-  definitionRecords: readonly EntityDefinitionRecord[],
-  ownerId: string,
-): RatesRecordSeedContext {
-  return {
-    config: firebaseAdminConfig,
-    entities: new Map(
-      definitionRecords.map((record) => [
-        record.name,
-        entityFromDefinition(record),
-      ]),
-    ),
-    ownerId,
-  };
-}
-
-export async function ensureRatesRecordInContext(
-  context: RatesRecordSeedContext,
-  entityName: string,
-  id: string,
-  business: Record<string, unknown>,
-): Promise<void> {
-  const entity = context.entities.get(entityName);
-  if (!entity) {
-    throw new Error(`Entity "${entityName}" is not registered for rates seed.`);
-  }
-
-  const repository = createRatesEntityRepository(context.config, entity);
-  await ensureRatesRecord(repository, entity, id, context.ownerId, business);
+  await repository.create(tenantId, input);
 }

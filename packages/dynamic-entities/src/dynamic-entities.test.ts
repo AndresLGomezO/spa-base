@@ -163,6 +163,26 @@ describe("@repo/dynamic-entities", () => {
     );
   });
 
+  it("rejects isArray changes on existing fields", () => {
+    const current: EntityDefinitionRecord = {
+      ...baseRecord,
+      fields: [
+        ...baseRecord.fields,
+        { name: "tags", type: "string", isArray: true, required: true },
+      ],
+    };
+    const next: EntityDefinitionRecord = {
+      ...current,
+      fields: current.fields.map((field) =>
+        field.name === "tags" ? { ...field, isArray: undefined } : field,
+      ),
+    };
+
+    expect(() => validateDefinitionEvolution(current, next)).toThrow(
+      /array setting cannot be changed/,
+    );
+  });
+
   it("derives dynamic permissions for a tenant", () => {
     registerDynamicEntity("tenant_a", baseRecord);
     expect(getDynamicPermissionsForTenant("tenant_a")).toEqual([

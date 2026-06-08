@@ -350,6 +350,7 @@ export interface FieldDefinitionInput {
     | "image"
     | "document";
   readonly required?: boolean;
+  readonly isArray?: boolean;
   readonly sensitive?: boolean;
   readonly relation?: {
     readonly target: string;

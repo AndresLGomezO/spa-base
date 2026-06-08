@@ -183,6 +183,7 @@ export interface SerializableFieldMeta {
   readonly type: string;
   readonly required: boolean;
   readonly optional: boolean;
+  readonly isArray?: boolean;
   readonly default?: string | number | boolean;
   readonly relation?: {
     readonly target: string;

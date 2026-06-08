@@ -14,6 +14,7 @@ import {
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
 
+import { formatFieldTypeLabel } from "./array-field-eligibility";
 import {
   computeFieldIndexContribution,
   formatFieldIndexContribution,
@@ -108,7 +109,11 @@ export function FieldDefinitionTable({
                   ) : null}
                 </span>
               </TableCell>
-              <TableCell>{t(`dataModels.fieldTypes.${field.type}`)}</TableCell>
+              <TableCell>
+                {formatFieldTypeLabel(field, (type) =>
+                  t(`dataModels.fieldTypes.${type}`),
+                )}
+              </TableCell>
               <TableCell>
                 {field.required ? t("table.booleanYes") : t("table.booleanNo")}
               </TableCell>

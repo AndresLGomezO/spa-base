@@ -1,6 +1,7 @@
 import { createFirestoreAdminTenantRepository } from "@repo/gcp-firebase";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
+import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import {
   RATES_TENANT_ID,
   RATES_TENANT_NAME,
@@ -10,10 +11,11 @@ import { seedTenantRolesFromTemplates } from "./seed-tenant-roles-from-templates
 
 export async function seedPlatformTenants(
   firebaseAdminConfig: FirebaseAdminConfig,
+  entityRuntime: EntityRuntimeContext,
 ): Promise<void> {
   const repository = createFirestoreAdminTenantRepository(firebaseAdminConfig);
 
   await repository.ensureTenant(RATES_TENANT_ID, RATES_TENANT_NAME, null);
   await seedTenantRolesFromTemplates(firebaseAdminConfig, RATES_TENANT_ID);
-  await seedRatesTenantMock(firebaseAdminConfig);
+  await seedRatesTenantMock(firebaseAdminConfig, entityRuntime);
 }

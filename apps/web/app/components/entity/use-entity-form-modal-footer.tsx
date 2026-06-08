@@ -1,4 +1,10 @@
-import { useEffect, type ReactNode } from "react";
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  type ReactNode,
+} from "react";
 import {
   findLayoutComponent,
   type UiLayoutDocument,
@@ -8,9 +14,8 @@ import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 
 import { WizardActions } from "../forms/WizardActions";
 
-interface UseEntityFormModalFooterOptions {
+interface ResolveEntityFormModalFooterOptions {
   readonly enabled: boolean;
-  readonly onFooterChange?: (footer: ReactNode | null) => void;
   readonly modalFooterLayout?: UiLayoutDocument;
   readonly fallbackLayout?: UiLayoutDocument;
   readonly footerContext: LayoutRenderContext;
@@ -23,9 +28,73 @@ interface UseEntityFormModalFooterOptions {
   readonly wizardOnCancel?: () => void;
 }
 
-export function useEntityFormModalFooter({
+export function resolveEntityFormModalFooter({
   enabled,
+  modalFooterLayout,
+  fallbackLayout,
+  footerContext,
+  wizardMode,
+  wizardCurrentStepIndex,
+  wizardTotalSteps,
+  wizardIsSubmitting,
+  wizardOnNext,
+  wizardOnBack,
+  wizardOnCancel,
+}: ResolveEntityFormModalFooterOptions): ReactNode | null {
+  if (!enabled) {
+    return null;
+  }
+
+  if (modalFooterLayout) {
+    return (
+      <RecursiveLayoutRenderer
+        layout={modalFooterLayout}
+        context={footerContext}
+      />
+    );
+  }
+
+  if (fallbackLayout && wizardMode != null && wizardCurrentStepIndex != null) {
+    const config = findLayoutComponent(fallbackLayout, "wizard-actions");
+    if (
+      config?.kind === "wizard-actions" &&
+      wizardTotalSteps != null &&
+      wizardOnNext &&
+      wizardOnBack &&
+      wizardOnCancel
+    ) {
+      return (
+        <WizardActions
+          config={config}
+          mode={wizardMode}
+          currentStepIndex={wizardCurrentStepIndex}
+          totalSteps={wizardTotalSteps}
+          isSubmitting={wizardIsSubmitting}
+          onNext={wizardOnNext}
+          onBack={wizardOnBack}
+          onCancel={wizardOnCancel}
+        />
+      );
+    }
+  }
+
+  if (fallbackLayout) {
+    const config = findLayoutComponent(fallbackLayout, "form-actions");
+    if (config?.kind === "form-actions") {
+      return footerContext.formActionsRenderer?.() ?? null;
+    }
+  }
+
+  return null;
+}
+
+interface UseEntityFormModalFooterOptions extends ResolveEntityFormModalFooterOptions {
+  readonly onFooterChange?: (footer: ReactNode | null) => void;
+}
+
+export function useEntityFormModalFooter({
   onFooterChange,
+  enabled,
   modalFooterLayout,
   fallbackLayout,
   footerContext,
@@ -37,77 +106,58 @@ export function useEntityFormModalFooter({
   wizardOnBack,
   wizardOnCancel,
 }: UseEntityFormModalFooterOptions): void {
+  const footerContextRef = useRef(footerContext);
+  footerContextRef.current = footerContext;
+
+  const footer = useMemo(
+    () =>
+      resolveEntityFormModalFooter({
+        enabled,
+        modalFooterLayout,
+        fallbackLayout,
+        footerContext: footerContextRef.current,
+        wizardMode,
+        wizardCurrentStepIndex,
+        wizardTotalSteps,
+        wizardIsSubmitting,
+        wizardOnNext,
+        wizardOnBack,
+        wizardOnCancel,
+      }),
+    [
+      enabled,
+      fallbackLayout,
+      modalFooterLayout,
+      wizardCurrentStepIndex,
+      wizardIsSubmitting,
+      wizardMode,
+      wizardOnBack,
+      wizardOnCancel,
+      wizardOnNext,
+      wizardTotalSteps,
+    ],
+  );
+
+  const wasEnabledRef = useRef(enabled);
+  wasEnabledRef.current = enabled;
+
+  useLayoutEffect(() => {
+    if (!enabled || !onFooterChange) {
+      return;
+    }
+
+    onFooterChange(footer);
+  }, [enabled, footer, onFooterChange]);
+
   useEffect(() => {
     if (!onFooterChange) {
       return;
     }
 
-    if (!enabled) {
-      onFooterChange(null);
-      return;
-    }
-
-    if (modalFooterLayout) {
-      onFooterChange(
-        <RecursiveLayoutRenderer
-          layout={modalFooterLayout}
-          context={footerContext}
-        />,
-      );
-      return () => onFooterChange(null);
-    }
-
-    if (
-      fallbackLayout &&
-      wizardMode != null &&
-      wizardCurrentStepIndex != null
-    ) {
-      const config = findLayoutComponent(fallbackLayout, "wizard-actions");
-      if (
-        config?.kind === "wizard-actions" &&
-        wizardTotalSteps != null &&
-        wizardOnNext &&
-        wizardOnBack &&
-        wizardOnCancel
-      ) {
-        onFooterChange(
-          <WizardActions
-            config={config}
-            mode={wizardMode}
-            currentStepIndex={wizardCurrentStepIndex}
-            totalSteps={wizardTotalSteps}
-            isSubmitting={wizardIsSubmitting}
-            onNext={wizardOnNext}
-            onBack={wizardOnBack}
-            onCancel={wizardOnCancel}
-          />,
-        );
-        return () => onFooterChange(null);
+    return () => {
+      if (wasEnabledRef.current) {
+        onFooterChange(null);
       }
-    }
-
-    if (fallbackLayout) {
-      const config = findLayoutComponent(fallbackLayout, "form-actions");
-      if (config?.kind === "form-actions") {
-        onFooterChange(footerContext.formActionsRenderer?.() ?? null);
-        return () => onFooterChange(null);
-      }
-    }
-
-    onFooterChange(null);
-    return () => onFooterChange(null);
-  }, [
-    enabled,
-    fallbackLayout,
-    footerContext,
-    modalFooterLayout,
-    onFooterChange,
-    wizardCurrentStepIndex,
-    wizardIsSubmitting,
-    wizardMode,
-    wizardOnBack,
-    wizardOnCancel,
-    wizardOnNext,
-    wizardTotalSteps,
-  ]);
+    };
+  }, [onFooterChange]);
 }

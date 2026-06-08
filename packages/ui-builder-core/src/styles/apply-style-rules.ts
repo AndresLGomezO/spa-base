@@ -21,6 +21,10 @@ export interface SpacingInlineStyle {
 /** Inline layout styles for pixel-based rules (avoids Tailwind arbitrary class scanning). */
 export interface LayoutInlineStyle extends SpacingInlineStyle {
   borderRadius?: string;
+  borderTopLeftRadius?: string;
+  borderTopRightRadius?: string;
+  borderBottomLeftRadius?: string;
+  borderBottomRightRadius?: string;
   minWidth?: string;
   maxWidth?: string;
   borderWidth?: string;
@@ -80,9 +84,17 @@ export const SPACING_STYLE_PROPERTIES = new Set<StylePropertyKey>([
 ]);
 
 /** Applied as inline styles instead of `rounded-[Npx]` / `min-w-[Npx]` arbitrary utilities. */
+const BORDER_RADIUS_STYLE_PROPERTIES = new Set<StylePropertyKey>([
+  "borderRadius",
+  "borderTopLeftRadius",
+  "borderTopRightRadius",
+  "borderBottomLeftRadius",
+  "borderBottomRightRadius",
+]);
+
 const PIXEL_INLINE_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   ...SPACING_STYLE_PROPERTIES,
-  "borderRadius",
+  ...BORDER_RADIUS_STYLE_PROPERTIES,
   "minWidth",
   "maxWidth",
   "borderWidth",
@@ -136,6 +148,15 @@ function ruleToClass(rule: StyleRule): string | undefined {
     if (raw === "left") return "text-left";
     if (raw === "center") return "text-center";
     if (raw === "right") return "text-right";
+  }
+
+  if (property === "textWrap") {
+    if (raw === "wrap") {
+      return "min-w-0 max-w-full break-words whitespace-normal";
+    }
+    if (raw === "truncate") {
+      return "truncate";
+    }
   }
 
   if (property === "alignItems") {
@@ -322,11 +343,43 @@ export function flexWrapClassFromStyles(
   return "";
 }
 
+export function usesTextWrap(
+  styles: readonly StyleRule[] | undefined,
+): boolean {
+  return (
+    styles?.some(
+      (rule) => rule.property === "textWrap" && String(rule.value) === "wrap",
+    ) ?? false
+  );
+}
+
+/** Default single-line ellipsis; use `textWrap: wrap` for multi-line content. */
+export function textWrapClassFromStyles(
+  styles: readonly StyleRule[] | undefined,
+): string {
+  const rule = styles?.find((entry) => entry.property === "textWrap");
+  if (!rule) {
+    return "truncate";
+  }
+
+  const raw = String(rule.value);
+  if (raw === "wrap") {
+    return "min-w-0 max-w-full break-words whitespace-normal";
+  }
+
+  return "truncate";
+}
+
 export function componentSlotWrapperClassName(
   styles: readonly StyleRule[] | undefined,
 ): string {
   const flex = parseFlexLayoutFromStyles(styles);
-  return [flex.selfClassName, flex.slotFlexClassName].filter(Boolean).join(" ");
+  const wrapLayout = usesTextWrap(styles)
+    ? "min-w-0 w-full shrink max-w-full"
+    : "";
+  return [flex.selfClassName, flex.slotFlexClassName, wrapLayout]
+    .filter(Boolean)
+    .join(" ");
 }
 
 /** Pixel font size for card field values; undefined when no valid `fontSize` rule. */
@@ -474,6 +527,18 @@ export function layoutInlineStyleFromStyleRules(
         case "borderRadius":
           style.borderRadius = `${px}px`;
           break;
+        case "borderTopLeftRadius":
+          style.borderTopLeftRadius = `${px}px`;
+          break;
+        case "borderTopRightRadius":
+          style.borderTopRightRadius = `${px}px`;
+          break;
+        case "borderBottomLeftRadius":
+          style.borderBottomLeftRadius = `${px}px`;
+          break;
+        case "borderBottomRightRadius":
+          style.borderBottomRightRadius = `${px}px`;
+          break;
         case "minWidth":
           style.minWidth = `${px}px`;
           break;
@@ -520,7 +585,11 @@ export function resolveStyleRules(
 ): ResolvedStyleRules {
   const split = splitStyleRuleClasses(styles, baseClassName);
   return {
-    className: [split.containerClassName, split.textClassName]
+    className: [
+      split.containerClassName,
+      textWrapClassFromStyles(styles),
+      split.textClassName,
+    ]
       .filter(Boolean)
       .join(" "),
     style: layoutInlineStyleFromStyleRules(styles),
@@ -550,6 +619,7 @@ export function resolvePageSlotWrapper(
       baseClassName,
       "w-full min-w-0",
       flexWrapper,
+      textWrapClassFromStyles(styles),
       ...containerClasses,
     ]
       .filter(Boolean)

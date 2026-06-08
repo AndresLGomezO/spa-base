@@ -1,5 +1,6 @@
 import { z } from "zod";
 
+import { fieldConfigIsArray } from "../array-field-eligibility.js";
 import type { FieldSchemaBuilder } from "../fieldTypes.js";
 import type { FieldConfig, RelationFieldConfig } from "../types.js";
 import { usesForeignKeyStorage } from "../relations/relationConfig.js";
@@ -27,15 +28,37 @@ function applyOptional(
   return schema.optional();
 }
 
+function wrapAsArray(
+  elementSchema: z.ZodTypeAny,
+  config: FieldConfig,
+): z.ZodTypeAny {
+  if (!fieldConfigIsArray(config)) {
+    return elementSchema;
+  }
+
+  const arraySchema = z.array(elementSchema);
+  if (config.required === true) {
+    return arraySchema.min(1);
+  }
+  return arraySchema;
+}
+
+function stringElementSchema(config: FieldConfig): z.ZodString {
+  if (fieldConfigIsArray(config)) {
+    return z.string().trim().min(1);
+  }
+  return config.required === true
+    ? z.string().trim().min(1)
+    : z.string().trim();
+}
+
 const stringFieldBuilder: FieldSchemaBuilder = {
   buildCreateFieldSchema(config) {
-    const base =
-      config.required === true ? z.string().trim().min(1) : z.string().trim();
+    const base = wrapAsArray(stringElementSchema(config), config);
     return applyOptional(applyDefault(base, config), config);
   },
   buildFullFieldSchema(config) {
-    const base =
-      config.required === true ? z.string().trim().min(1) : z.string().trim();
+    const base = wrapAsArray(stringElementSchema(config), config);
     return applyDefault(base, config);
   },
 };
@@ -49,31 +72,34 @@ function numberSchemaForConfig(config: FieldConfig): z.ZodNumber {
 
 const numberFieldBuilder: FieldSchemaBuilder = {
   buildCreateFieldSchema(config) {
-    const base = numberSchemaForConfig(config);
+    const base = wrapAsArray(numberSchemaForConfig(config), config);
     return applyOptional(applyDefault(base, config), config);
   },
   buildFullFieldSchema(config) {
-    return applyDefault(numberSchemaForConfig(config), config);
+    return applyDefault(
+      wrapAsArray(numberSchemaForConfig(config), config),
+      config,
+    );
   },
 };
 
 const booleanFieldBuilder: FieldSchemaBuilder = {
   buildCreateFieldSchema(config) {
-    const base = z.boolean();
+    const base = wrapAsArray(z.boolean(), config);
     return applyOptional(applyDefault(base, config), config);
   },
   buildFullFieldSchema(config) {
-    return applyDefault(z.boolean(), config);
+    return applyDefault(wrapAsArray(z.boolean(), config), config);
   },
 };
 
 const dateFieldBuilder: FieldSchemaBuilder = {
   buildCreateFieldSchema(config) {
-    const base = isoDatetimeStringSchema;
+    const base = wrapAsArray(isoDatetimeStringSchema, config);
     return applyOptional(applyDefault(base, config), config);
   },
   buildFullFieldSchema(config) {
-    return applyDefault(isoDatetimeStringSchema, config);
+    return applyDefault(wrapAsArray(isoDatetimeStringSchema, config), config);
   },
 };
 
@@ -110,14 +136,20 @@ const enumFieldBuilder: FieldSchemaBuilder = {
     if (config.type !== "enum") {
       return z.never().optional();
     }
-    const base = z.enum(config.enumValues as [string, ...string[]]);
+    const base = wrapAsArray(
+      z.enum(config.enumValues as [string, ...string[]]),
+      config,
+    );
     return applyOptional(applyDefault(base, config), config);
   },
   buildFullFieldSchema(config) {
     if (config.type !== "enum") {
       return z.never().optional();
     }
-    const base = z.enum(config.enumValues as [string, ...string[]]);
+    const base = wrapAsArray(
+      z.enum(config.enumValues as [string, ...string[]]),
+      config,
+    );
     return applyDefault(base, config);
   },
 };

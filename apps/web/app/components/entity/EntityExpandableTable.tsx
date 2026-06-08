@@ -167,9 +167,9 @@ export function EntityExpandableTable({
   }
 
   return (
-    <div className="flex w-full flex-col gap-4">
-      <TableCard className="w-full overflow-hidden">
-        <div className="max-h-[calc(100dvh-14rem)] overflow-y-auto overflow-x-hidden">
+    <div className="flex h-full min-h-0 w-full flex-col gap-4">
+      <TableCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
           <Table>
             <TableHeader>
               <TableRow>
