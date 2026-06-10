@@ -9,7 +9,7 @@ import type { EntityName } from "../../entities/entity-catalog";
 import { DesignLayoutFullOverrideJsonActions } from "./DesignLayoutFullOverrideJsonActions.js";
 import { DesignLayoutSliceJsonActions } from "./DesignLayoutSliceJsonActions.js";
 
-export interface DesignLayoutPageActionsProps {
+interface DesignLayoutPageActionsProps {
   readonly entityName: EntityName;
   readonly definition: SerializableEntityDefinition;
   readonly surface: DesignLayoutSurface;

@@ -24,6 +24,43 @@ function withUi(
   return { ...field, ui: { ...field.ui, ...ui } };
 }
 
+export function stringArrayField(
+  name: string,
+  options?: {
+    readonly required?: boolean;
+    readonly label?: string;
+    readonly order?: number;
+    readonly filterable?: boolean;
+    readonly searchable?: boolean;
+  },
+): FieldInput {
+  const field: FieldInput = {
+    name,
+    type: "string",
+    isArray: true,
+    ...(options?.required ? { required: true } : {}),
+  };
+  if (
+    options?.label ||
+    options?.order !== undefined ||
+    options?.filterable !== undefined ||
+    options?.searchable !== undefined
+  ) {
+    return withUi(field, {
+      ...(options.label ? { label: options.label } : {}),
+      ...(options.order !== undefined ? { order: options.order } : {}),
+      filterable: options?.filterable ?? true,
+      sortable: false,
+      searchable: options?.searchable ?? true,
+    });
+  }
+  return withUi(field, {
+    filterable: true,
+    sortable: false,
+    searchable: true,
+  });
+}
+
 export function stringField(
   name: string,
   options?: {

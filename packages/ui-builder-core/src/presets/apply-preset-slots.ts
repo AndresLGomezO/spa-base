@@ -4,17 +4,16 @@ import {
   uiLayoutDocumentSchema,
   columnNodeSchema,
 } from "../schema/ui-layout-schema.js";
-import type { DesignSurface } from "../types/design-surface.js";
 import type {
   ColumnNode,
   ComponentRowNode,
   NestedLayoutRowNode,
   UiLayoutDocument,
 } from "../types/layout.js";
-import type { FieldPathValidationDefinition } from "../validation/field-paths.js";
 import {
   validateLayoutJsonImport,
   type LayoutJsonImportScope,
+  type ValidateLayoutJsonImportOptions,
 } from "../validation/layout-json-import.js";
 import {
   regenerateColumnSubtree,
@@ -157,10 +156,7 @@ export function applyPresetSlots(
   templateJson: string,
   fieldSlots: readonly UiBuilderFieldSlot[],
   slotValues: Readonly<Record<string, string>>,
-  options: {
-    readonly designSurface: DesignSurface;
-    readonly definition: FieldPathValidationDefinition;
-  },
+  options: ValidateLayoutJsonImportOptions,
 ): ApplyPresetSlotsResult {
   const mappingErrors = validateSlotMappings(fieldSlots, slotValues);
   if (mappingErrors.length > 0) {

@@ -10,7 +10,7 @@ import { designLayoutSliceJsonLabels } from "./design-layout-slice-json-labels.j
 import { DesignLayoutSliceJsonImportDialog } from "./DesignLayoutSliceJsonImportDialog.js";
 import { DesignLayoutSliceJsonViewDialog } from "./DesignLayoutSliceJsonViewDialog.js";
 
-export interface DesignLayoutSliceJsonActionsProps {
+interface DesignLayoutSliceJsonActionsProps {
   readonly surface: DesignLayoutSurface;
   readonly definition: SerializableEntityDefinition;
   readonly exportData: DesignLayoutSliceData;

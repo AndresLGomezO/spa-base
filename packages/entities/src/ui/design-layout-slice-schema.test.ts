@@ -56,10 +56,7 @@ describe("parseDesignLayoutSliceJson", () => {
       },
     });
 
-    const result = parseDesignLayoutSliceJson(
-      JSON.stringify(envelope),
-      "list",
-    );
+    const result = parseDesignLayoutSliceJson(JSON.stringify(envelope), "list");
     expect(result.ok).toBe(true);
     if (result.ok) {
       expect(result.data).toMatchObject({
@@ -74,10 +71,7 @@ describe("parseDesignLayoutSliceJson", () => {
       mainPage: createDefaultUiLayout(["name"]),
     });
 
-    const result = parseDesignLayoutSliceJson(
-      JSON.stringify(envelope),
-      "list",
-    );
+    const result = parseDesignLayoutSliceJson(JSON.stringify(envelope), "list");
     expect(result.ok).toBe(false);
   });
 

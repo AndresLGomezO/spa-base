@@ -1,4 +1,8 @@
-import type { DefinedEntity, FieldDefinitions, SerializableEntityDefinition } from "@repo/entities";
+import type {
+  DefinedEntity,
+  FieldDefinitions,
+  SerializableEntityDefinition,
+} from "@repo/entities";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 

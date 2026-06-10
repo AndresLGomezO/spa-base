@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import type { DesignLayoutSliceData, MetricStripSliceData, ViewConfig } from "@repo/entities";
+import type {
+  DesignLayoutSliceData,
+  MetricStripSliceData,
+  ViewConfig,
+} from "@repo/entities";
 import {
   createDefaultMetricStripLayout,
   metricStripHasContent,

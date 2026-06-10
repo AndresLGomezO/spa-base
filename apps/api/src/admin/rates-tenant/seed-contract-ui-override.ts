@@ -107,7 +107,7 @@ function buildWizardOnlyPutInput(
   return putEntityUiOverrideInputSchema.parse({
     views: [...defaultViews],
     forms: wizardForms,
-  });
+  }) as PutEntityUiOverrideInput;
 }
 
 function mergeUiLikeApiRoute(

@@ -11,7 +11,7 @@ import { Button, Modal, Text } from "@repo/ui";
 import type { DesignLayoutFullOverrideJsonLabels } from "./design-layout-slice-json-labels.js";
 import { toValidationEntity } from "./to-validation-entity.js";
 
-export interface DesignLayoutFullOverrideJsonViewDialogProps {
+interface DesignLayoutFullOverrideJsonViewDialogProps {
   readonly definition: SerializableEntityDefinition;
   readonly labels: DesignLayoutFullOverrideJsonLabels;
   readonly triggerSize?: "sm" | "md" | "lg";
@@ -86,7 +86,7 @@ export function DesignLayoutFullOverrideJsonViewDialog({
   );
 }
 
-export interface DesignLayoutFullOverrideJsonImportDialogProps {
+interface DesignLayoutFullOverrideJsonImportDialogProps {
   readonly definition: SerializableEntityDefinition;
   readonly canApply: boolean;
   readonly labels: DesignLayoutFullOverrideJsonLabels;

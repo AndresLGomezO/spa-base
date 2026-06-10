@@ -18,7 +18,7 @@ import {
 } from "./DesignLayoutFullOverrideJsonDialogs.js";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save.js";
 
-export interface DesignLayoutFullOverrideJsonActionsProps {
+interface DesignLayoutFullOverrideJsonActionsProps {
   readonly entityName: EntityName;
   readonly definition: SerializableEntityDefinition;
   readonly canApply: boolean;
@@ -71,5 +71,3 @@ export function DesignLayoutFullOverrideJsonActions({
     </>
   );
 }
-
-export type { DesignLayoutSliceData, DesignLayoutSurface } from "@repo/entities";
