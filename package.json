@@ -37,6 +37,7 @@
     "check:docker-workspace": "tsx scripts/check-docker-workspace.ts",
     "validate": "tsx scripts/validate.ts",
     "validate:ci": "tsx scripts/validate.ts --ci",
+    "validate:local": "pnpm format && pnpm validate:ci",
     "precommit": "pnpm i18n:validate -- --strict && pnpm terraform:fmt:check && pnpm validate:ci",
     "emulators:prepare": "pnpm --filter web build",
     "emulators": "pnpm run emulators:prepare && firebase emulators:start --only auth,firestore,storage,hosting,pubsub --project demo-project-base",
