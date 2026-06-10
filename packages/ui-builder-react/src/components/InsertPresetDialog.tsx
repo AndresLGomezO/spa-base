@@ -42,6 +42,7 @@ export interface InsertPresetDialogProps {
       | ComponentRowNode
       | NestedLayoutRowNode,
   ) => void;
+  readonly actionsInModalFooter?: boolean;
   readonly triggerSize?: "sm" | "md" | "lg";
 }
 
@@ -54,6 +55,7 @@ export function InsertPresetDialog({
   canApply,
   labels,
   onApply,
+  actionsInModalFooter = false,
   triggerSize = "sm",
 }: InsertPresetDialogProps) {
   const [open, setOpen] = useState(false);
@@ -95,9 +97,9 @@ export function InsertPresetDialog({
       selectedPreset.templateJson,
       selectedPreset.fieldSlots,
       slotValues,
-      { designSurface, definition },
+      { designSurface, definition, actionsInModalFooter },
     );
-  }, [definition, designSurface, selectedPreset, slotValues]);
+  }, [actionsInModalFooter, definition, designSurface, selectedPreset, slotValues]);
 
   const handleApply = () => {
     if (!canApply || !validation?.ok || !validation.data) {

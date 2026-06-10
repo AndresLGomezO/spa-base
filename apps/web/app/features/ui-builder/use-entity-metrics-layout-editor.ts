@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { ViewConfig } from "@repo/entities";
+import type { DesignLayoutSliceData, MetricStripSliceData, ViewConfig } from "@repo/entities";
 import {
   createDefaultMetricStripLayout,
   metricStripHasContent,
@@ -83,6 +83,14 @@ export function useEntityMetricsLayoutEditor(entityName: EntityName) {
     queryClient,
   ]);
 
+  const exportSlice = useCallback((): MetricStripSliceData => {
+    return { metricStripLayout };
+  }, [metricStripLayout]);
+
+  const applySlice = useCallback((data: DesignLayoutSliceData) => {
+    setMetricStripLayout((data as MetricStripSliceData).metricStripLayout);
+  }, []);
+
   return {
     entityName,
     definition,
@@ -91,6 +99,8 @@ export function useEntityMetricsLayoutEditor(entityName: EntityName) {
     setMetricStripLayout,
     isSaving,
     save,
+    exportSlice,
+    applySlice,
   };
 }
 

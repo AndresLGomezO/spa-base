@@ -52,6 +52,8 @@ export interface LayoutJsonImportValidationResult {
 export interface ValidateLayoutJsonImportOptions {
   readonly designSurface: DesignSurface;
   readonly definition: FieldPathValidationDefinition;
+  /** When true, wizard shell layout may omit wizard-actions (actions live in modal footer). */
+  readonly actionsInModalFooter?: boolean;
 }
 
 function zodErrorsToImportErrors(error: ZodError): LayoutJsonImportError[] {
@@ -121,7 +123,9 @@ function assertWizardShellSemantics(
   }
 
   try {
-    assertWizardShellLayout(layout, options.designSurface);
+    assertWizardShellLayout(layout, options.designSurface, {
+      actionsInModalFooter: options.actionsInModalFooter,
+    });
     return [];
   } catch (error) {
     return [

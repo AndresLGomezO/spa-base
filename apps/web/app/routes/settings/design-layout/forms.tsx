@@ -5,6 +5,7 @@ import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { useAnyPermission } from "../../../auth/useAnyPermission";
 import { DesignLayoutPageHeader } from "../../../components/design-layout/DesignLayoutPageHeader";
 import { DesignLayoutRouteGuard } from "../../../components/design-layout/DesignLayoutRouteGuard";
+import { DesignLayoutPageActions } from "../../../features/ui-builder/DesignLayoutPageActions";
 import { EntityFormLayoutDesignEditor } from "../../../features/ui-builder/EntityFormLayoutDesignEditor";
 import { useEntityFormLayoutEditor } from "../../../features/ui-builder/use-entity-form-layout-editor";
 import type { EntityName } from "../../../entities/entity-catalog";
@@ -64,15 +65,25 @@ function DesignLayoutFormsPage({
         description={t("designLayout.formsDescription")}
         readOnly={!canSave}
         actions={
-          canSave ? (
-            <Button
-              type="button"
-              loading={editor.isSaving}
-              onClick={() => void handleSave()}
-            >
-              {t("entity.viewSettings.save")}
-            </Button>
-          ) : null
+          <DesignLayoutPageActions
+            entityName={entityName}
+            definition={editor.definition}
+            surface="forms"
+            exportSlice={editor.exportSlice}
+            applySlice={editor.applySlice}
+            canWrite={canSave}
+            saveButton={
+              canSave ? (
+                <Button
+                  type="button"
+                  loading={editor.isSaving}
+                  onClick={() => void handleSave()}
+                >
+                  {t("entity.viewSettings.save")}
+                </Button>
+              ) : null
+            }
+          />
         }
       />
       <div className="flex min-h-0 flex-1 flex-col">

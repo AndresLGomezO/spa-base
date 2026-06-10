@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import type { UiLayoutDocument } from "@repo/entities";
+import type { DesignLayoutSliceData, MainPageSliceData, UiLayoutDocument } from "@repo/entities";
 import {
   createDefaultMainPageLayout,
   normalizeEntityViews,
@@ -52,6 +52,15 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
     }
   }, [definition.ui.listViewType, entityName, layout, queryClient, uiViews]);
 
+  const exportSlice = useCallback((): MainPageSliceData => {
+    return { mainPage: layout };
+  }, [layout]);
+
+  const applySlice = useCallback((data: DesignLayoutSliceData) => {
+    setLayout((data as MainPageSliceData).mainPage);
+    setLayoutEditorKey((current) => current + 1);
+  }, []);
+
   return {
     entityName,
     definition,
@@ -60,6 +69,8 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
     isSaving,
     save,
     layoutEditorKey,
+    exportSlice,
+    applySlice,
   };
 }
 

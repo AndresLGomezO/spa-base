@@ -1,111 +1,62 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  createLayoutJsonSkeleton,
-  validateLayoutJsonImport,
-  type ComponentRowNode,
-  type DesignSurface,
-  type FieldPathValidationDefinition,
-  type LayoutJsonImportScope,
-  type LayoutJsonImportValidationResult,
-  type NestedLayoutRowNode,
-  type UiLayoutDocument,
-} from "@repo/ui-builder-core";
+  createDesignLayoutSliceSkeleton,
+  parseDesignLayoutSliceJson,
+  validateDesignLayoutSlice,
+  type DesignLayoutSliceData,
+  type DesignLayoutSurface,
+  type SerializableEntityDefinition,
+} from "@repo/entities";
 import { Button, Modal, Text } from "@repo/ui";
 
-export interface LayoutJsonImportLabels {
-  readonly trigger: string;
-  readonly titleRoot: string;
-  readonly titleComponentRow: string;
-  readonly titleNestedRow: string;
-  readonly pasteLabel: string;
-  readonly uploadLabel: string;
-  readonly skeletonTitle: string;
-  readonly skeletonShow: string;
-  readonly skeletonHide: string;
-  readonly valid: string;
-  readonly invalid: string;
-  readonly apply: string;
-  readonly cancel: string;
-  readonly readOnlyHint: string;
-  readonly viewTrigger: string;
-  readonly viewTitleRoot: string;
-  readonly viewTitleComponentRow: string;
-  readonly viewTitleNestedRow: string;
-  readonly viewDescription: string;
-  readonly viewCopy: string;
-  readonly viewCopied: string;
-}
+import type { DesignLayoutSliceJsonLabels } from "./design-layout-slice-json-labels.js";
+import { toValidationEntity } from "./to-validation-entity.js";
 
-export interface LayoutJsonImportDialogProps {
-  readonly scope: LayoutJsonImportScope;
-  readonly designSurface: DesignSurface;
-  readonly definition: FieldPathValidationDefinition;
-  readonly defaultFieldPath: string;
+export interface DesignLayoutSliceJsonImportDialogProps {
+  readonly surface: DesignLayoutSurface;
+  readonly definition: SerializableEntityDefinition;
   readonly canApply: boolean;
-  readonly labels: LayoutJsonImportLabels;
-  readonly onApply: (
-    data: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode,
-  ) => void;
-  readonly referenceData?:
-    | UiLayoutDocument
-    | ComponentRowNode
-    | NestedLayoutRowNode;
-  readonly actionsInModalFooter?: boolean;
+  readonly labels: DesignLayoutSliceJsonLabels;
+  readonly onApply: (data: DesignLayoutSliceData) => void;
   readonly triggerSize?: "sm" | "md" | "lg";
 }
 
-function titleForScope(
-  scope: LayoutJsonImportScope,
-  labels: LayoutJsonImportLabels,
-): string {
-  switch (scope.type) {
-    case "layout-document":
-      return labels.titleRoot;
-    case "component-row":
-      return labels.titleComponentRow;
-    case "nested-layout-row":
-      return labels.titleNestedRow;
-  }
-}
-
-export function LayoutJsonImportDialog({
-  scope,
-  designSurface,
+export function DesignLayoutSliceJsonImportDialog({
+  surface,
   definition,
-  defaultFieldPath,
   canApply,
   labels,
   onApply,
-  referenceData,
-  actionsInModalFooter = false,
   triggerSize = "sm",
-}: LayoutJsonImportDialogProps) {
+}: DesignLayoutSliceJsonImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [jsonText, setJsonText] = useState("");
   const [showSkeleton, setShowSkeleton] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const skeleton = useMemo(
-    () =>
-      createLayoutJsonSkeleton(
-        scope,
-        designSurface,
-        defaultFieldPath,
-        referenceData,
-      ),
-    [scope, designSurface, defaultFieldPath, referenceData],
+    () => createDesignLayoutSliceSkeleton(surface),
+    [surface],
   );
 
-  const validation = useMemo((): LayoutJsonImportValidationResult => {
+  const validation = useMemo((): DesignLayoutSliceValidationResult => {
     if (jsonText.trim().length === 0) {
       return { ok: false, errors: [] };
     }
-    return validateLayoutJsonImport(jsonText, scope, {
-      designSurface,
-      definition,
-      actionsInModalFooter,
-    });
-  }, [jsonText, scope, designSurface, definition, actionsInModalFooter]);
+
+    const parsed = parseDesignLayoutSliceJson(jsonText, surface);
+    if (!parsed.ok) {
+      return parsed;
+    }
+
+    const entity = toValidationEntity(definition);
+    return validateDesignLayoutSlice(
+      entity,
+      surface,
+      parsed.data,
+      definition.ui,
+    );
+  }, [definition, jsonText, surface]);
 
   useEffect(() => {
     if (!open) {
@@ -142,13 +93,13 @@ export function LayoutJsonImportDialog({
         size={triggerSize}
         onClick={() => setOpen(true)}
       >
-        {labels.trigger}
+        {labels.importTrigger}
       </Button>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={titleForScope(scope, labels)}
+        title={labels.importTitle}
         size="xl"
         scrollable
         footer={
@@ -176,6 +127,10 @@ export function LayoutJsonImportDialog({
               {labels.readOnlyHint}
             </Text>
           ) : null}
+
+          <Text className="text-muted-foreground text-sm">
+            {labels.importDescription}
+          </Text>
 
           <div className="flex flex-col gap-2">
             <Text className="text-sm font-medium">{labels.pasteLabel}</Text>
@@ -237,7 +192,7 @@ export function LayoutJsonImportDialog({
                   <Text className="text-destructive text-sm">
                     {labels.invalid}
                   </Text>
-                  {validation.errors.length > 0 ? (
+                  {"errors" in validation && validation.errors.length > 0 ? (
                     <ul className="text-destructive max-h-40 list-disc overflow-auto pl-5 text-sm">
                       {validation.errors.map((error) => (
                         <li key={`${error.path}:${error.message}`}>

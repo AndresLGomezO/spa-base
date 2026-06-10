@@ -29,7 +29,7 @@ const formModalChromeSchema = z
   })
   .strict();
 
-const uiOverrideFormsSchema = z
+export const uiOverrideFormsSchema = z
   .object({
     presentation: z.enum(["plain", "wizard"]).optional(),
     layout: uiLayoutDocumentSchema.optional(),

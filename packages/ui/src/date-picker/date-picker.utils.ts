@@ -125,7 +125,10 @@ export function getYearPageYears(startYear: number): readonly number[] {
 }
 
 export function getWeekdayLabels(locale: string): readonly string[] {
-  const formatter = new Intl.DateTimeFormat(locale, { weekday: "short" });
+  const formatter = new Intl.DateTimeFormat(locale, {
+    weekday: "short",
+    timeZone: "UTC",
+  });
   const base = Date.UTC(2024, 0, 7);
   return Array.from({ length: 7 }, (_, index) =>
     formatter.format(new Date(base + index * 86_400_000)),
@@ -133,7 +136,10 @@ export function getWeekdayLabels(locale: string): readonly string[] {
 }
 
 export function getMonthLabels(locale: string): readonly string[] {
-  const formatter = new Intl.DateTimeFormat(locale, { month: "short" });
+  const formatter = new Intl.DateTimeFormat(locale, {
+    month: "short",
+    timeZone: "UTC",
+  });
   return Array.from({ length: 12 }, (_, month) =>
     formatter.format(new Date(Date.UTC(2024, month, 1))),
   );
