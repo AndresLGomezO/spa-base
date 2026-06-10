@@ -252,7 +252,9 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const applySlice = useCallback((data: DesignLayoutSliceData) => {
     const listData = data as ListSliceData;
     const nextViewType =
-      listData.listViewType === "compact" ? "expandableTable" : listData.listViewType;
+      listData.listViewType === "compact"
+        ? "expandableTable"
+        : listData.listViewType;
     setViewType(nextViewType);
     setTableFields([...listData.table.fields]);
     setTableShowActions(listData.table.showActions !== false);

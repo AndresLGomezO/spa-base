@@ -99,7 +99,13 @@ export function InsertPresetDialog({
       slotValues,
       { designSurface, definition, actionsInModalFooter },
     );
-  }, [actionsInModalFooter, definition, designSurface, selectedPreset, slotValues]);
+  }, [
+    actionsInModalFooter,
+    definition,
+    designSurface,
+    selectedPreset,
+    slotValues,
+  ]);
 
   const handleApply = () => {
     if (!canApply || !validation?.ok || !validation.data) {

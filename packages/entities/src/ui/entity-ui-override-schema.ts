@@ -1,7 +1,14 @@
-import { uiLayoutDocumentSchema } from "@repo/ui-builder-core";
+import {
+  uiLayoutDocumentSchema,
+  type UiLayoutDocument,
+} from "@repo/ui-builder-core";
 import { z } from "zod";
 
-import type { EntityUiOverrideRecord } from "./types.js";
+import type { EntityUiOverrideForms } from "./form-config.js";
+import type {
+  EntityUiOverrideRecord,
+  LegacyEntityListViewType,
+} from "./types.js";
 
 export const ENTITY_UI_OVERRIDES_COLLECTION = "entity_ui_overrides";
 
@@ -72,9 +79,14 @@ export const putEntityUiOverrideInputSchema = z
   })
   .strict();
 
-export type PutEntityUiOverrideInput = z.infer<
-  typeof putEntityUiOverrideInputSchema
->;
+export interface PutEntityUiOverrideInput {
+  readonly views: readonly unknown[];
+  readonly listViewType?: LegacyEntityListViewType;
+  readonly listItem?: UiLayoutDocument;
+  readonly mainPage?: UiLayoutDocument;
+  readonly recordDetail?: UiLayoutDocument;
+  readonly forms?: EntityUiOverrideForms;
+}
 
 function toRecordInput(
   entityName: string,

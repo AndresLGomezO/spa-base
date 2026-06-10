@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useState } from "react";
-import type { DesignLayoutSliceData, MainPageSliceData, UiLayoutDocument } from "@repo/entities";
+import type {
+  DesignLayoutSliceData,
+  MainPageSliceData,
+  UiLayoutDocument,
+} from "@repo/entities";
 import {
   createDefaultMainPageLayout,
   normalizeEntityViews,

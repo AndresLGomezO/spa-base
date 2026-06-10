@@ -324,7 +324,7 @@ export async function registerEntityUiOverrideRoutes(
               ? { recordDetail: parsedBody.data.recordDetail }
               : {}),
             ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
-          }),
+          } as PutEntityUiOverrideInput),
         );
 
         return reply.send(successEnvelope({ override }));

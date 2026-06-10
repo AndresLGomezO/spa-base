@@ -101,6 +101,48 @@ const SUBSCRIPTION_PLANS = [
 
 const LOAN_CONTRACT_IDS = ["rd_con_14", "rd_con_15"] as const;
 
+type ContractStatus =
+  | "ACTIVE"
+  | "INACTIVE"
+  | "CLOSED"
+  | "DEFAULTED"
+  | "PAUSED"
+  | "COMPLETED";
+
+type ContractFrequency =
+  | "DAILY"
+  | "WEEKLY"
+  | "BIWEEKLY"
+  | "MONTHLY"
+  | "BIMONTHLY"
+  | "QUARTERLY"
+  | "SEMIANNUAL"
+  | "ANNUAL"
+  | "IRREGULAR";
+
+interface ContractDemoSeed {
+  readonly name: string;
+  readonly contractType:
+    | "SUBSCRIPTION"
+    | "INCOME_SOURCE"
+    | "MORTGAGE"
+    | "CREDIT_CARD";
+  readonly categoryIndex: number;
+  readonly providerIndex: number;
+  readonly currency: "COP" | "USD";
+  readonly initialAmount: number;
+  readonly currentBalance: number;
+  readonly startDate: string;
+  readonly endDate?: string;
+  readonly status: ContractStatus;
+  readonly description: string;
+  readonly isRecurring: boolean;
+  readonly frequency?: ContractFrequency;
+  readonly frequencyInDays?: number;
+  readonly variability?: "FIXED" | "VARIABLE";
+  readonly tags?: readonly string[];
+}
+
 function padId(prefix: string, index: number): string {
   return `${prefix}_${String(index).padStart(2, "0")}`;
 }
@@ -112,6 +154,276 @@ function dateOnly(year: number, month: number, day: number): string {
 function monthStart(year: number, month: number): string {
   return dateOnly(year, month, 1);
 }
+
+const CONTRACT_DEMO_SEEDS: readonly ContractDemoSeed[] = [
+  {
+    name: "Netflix Standard",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 5,
+    providerIndex: 3,
+    currency: "COP",
+    initialAmount: 32_900,
+    currentBalance: 32_900,
+    startDate: dateOnly(2023, 3, 15),
+    status: "ACTIVE",
+    description: "Standard streaming plan, 2 screens, HD.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["streaming", "entertainment", "household"],
+  },
+  {
+    name: "Spotify Premium",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 5,
+    providerIndex: 4,
+    currency: "COP",
+    initialAmount: 21_900,
+    currentBalance: 21_900,
+    startDate: dateOnly(2022, 11, 1),
+    status: "ACTIVE",
+    description: "Individual premium plan, ad-free music.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["streaming", "music", "mobile"],
+  },
+  {
+    name: "Bancolombia Cuenta de Ahorros",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 10,
+    providerIndex: 1,
+    currency: "COP",
+    initialAmount: 18_500,
+    currentBalance: 18_500,
+    startDate: dateOnly(2021, 6, 1),
+    status: "ACTIVE",
+    description: "Monthly account maintenance fee.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["banking", "fees", "savings"],
+  },
+  {
+    name: "Davivienda Plan Empresarial",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 6,
+    providerIndex: 2,
+    currency: "COP",
+    initialAmount: 45_000,
+    currentBalance: 45_000,
+    startDate: dateOnly(2024, 1, 10),
+    status: "ACTIVE",
+    description: "Business banking package with payroll module.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["banking", "business", "payroll"],
+  },
+  {
+    name: "Acme Corp Enterprise SaaS",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 6,
+    providerIndex: 5,
+    currency: "USD",
+    initialAmount: 1_200,
+    currentBalance: 1_200,
+    startDate: dateOnly(2024, 4, 1),
+    endDate: dateOnly(2027, 3, 31),
+    status: "ACTIVE",
+    description: "Annual enterprise license for project management suite.",
+    isRecurring: true,
+    frequency: "ANNUAL",
+    frequencyInDays: 365,
+    variability: "FIXED",
+    tags: ["saas", "productivity", "business", "annual-billing"],
+  },
+  {
+    name: "Fidelity Active Trader Pro",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 10,
+    providerIndex: 6,
+    currency: "USD",
+    initialAmount: 49.95,
+    currentBalance: 49.95,
+    startDate: dateOnly(2023, 8, 20),
+    status: "ACTIVE",
+    description: "Brokerage platform subscription with real-time quotes.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["investing", "brokerage", "trading"],
+  },
+  {
+    name: "EPM Utilities — Residencial",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 6,
+    providerIndex: 7,
+    currency: "COP",
+    initialAmount: 185_000,
+    currentBalance: 212_400,
+    startDate: dateOnly(2020, 1, 1),
+    status: "ACTIVE",
+    description:
+      "Electricity and water utility service, variable monthly bill.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "VARIABLE",
+    tags: ["utilities", "essential", "household", "variable-cost"],
+  },
+  {
+    name: "Sura Seguro de Salud",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 4,
+    providerIndex: 8,
+    currency: "COP",
+    initialAmount: 890_000,
+    currentBalance: 890_000,
+    startDate: dateOnly(2023, 1, 1),
+    endDate: dateOnly(2026, 12, 31),
+    status: "ACTIVE",
+    description: "Family health insurance policy, copay plan.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["insurance", "health", "family", "protection"],
+  },
+  {
+    name: "DIAN Declaración Renta",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 6,
+    providerIndex: 9,
+    currency: "COP",
+    initialAmount: 0,
+    currentBalance: 0,
+    startDate: dateOnly(2025, 1, 1),
+    endDate: dateOnly(2025, 4, 30),
+    status: "PAUSED",
+    description: "Annual income tax filing obligation — filing window closed.",
+    isRecurring: true,
+    frequency: "ANNUAL",
+    frequencyInDays: 365,
+    variability: "VARIABLE",
+    tags: ["tax", "government", "compliance", "annual"],
+  },
+  {
+    name: "Misc Cloud Backup",
+    contractType: "SUBSCRIPTION",
+    categoryIndex: 7,
+    providerIndex: 10,
+    currency: "USD",
+    initialAmount: 9.99,
+    currentBalance: 9.99,
+    startDate: dateOnly(2025, 6, 1),
+    status: "ACTIVE",
+    description: "1 TB cloud backup for personal files and photos.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["cloud", "backup", "personal"],
+  },
+  {
+    name: "Acme Corp — Salario",
+    contractType: "INCOME_SOURCE",
+    categoryIndex: 8,
+    providerIndex: 5,
+    currency: "COP",
+    initialAmount: 12_500_000,
+    currentBalance: 12_500_000,
+    startDate: dateOnly(2022, 2, 1),
+    status: "ACTIVE",
+    description: "Full-time software engineer salary, paid biweekly.",
+    isRecurring: true,
+    frequency: "BIWEEKLY",
+    frequencyInDays: 14,
+    variability: "FIXED",
+    tags: ["salary", "employment", "primary-income", "w2"],
+  },
+  {
+    name: "Freelance — Design Projects",
+    contractType: "INCOME_SOURCE",
+    categoryIndex: 9,
+    providerIndex: 10,
+    currency: "COP",
+    initialAmount: 4_800_000,
+    currentBalance: 3_200_000,
+    startDate: dateOnly(2024, 6, 1),
+    status: "ACTIVE",
+    description:
+      "Irregular freelance design income from 2–3 clients per month.",
+    isRecurring: true,
+    frequency: "IRREGULAR",
+    variability: "VARIABLE",
+    tags: ["freelance", "side-income", "1099", "creative"],
+  },
+  {
+    name: "Rental — Apt. Chapinero",
+    contractType: "INCOME_SOURCE",
+    categoryIndex: 8,
+    providerIndex: 10,
+    currency: "COP",
+    initialAmount: 2_800_000,
+    currentBalance: 2_800_000,
+    startDate: dateOnly(2023, 5, 1),
+    endDate: dateOnly(2026, 4, 30),
+    status: "INACTIVE",
+    description: "Short-term rental ended — tenant moved out April 2026.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: ["rental", "passive-income", "real-estate", "ended"],
+  },
+  {
+    name: "Home Mortgage — Bancolombia",
+    contractType: "MORTGAGE",
+    categoryIndex: 1,
+    providerIndex: 1,
+    currency: "COP",
+    initialAmount: 380_000_000,
+    currentBalance: 342_500_000,
+    startDate: dateOnly(2020, 8, 15),
+    endDate: dateOnly(2045, 8, 15),
+    status: "ACTIVE",
+    description: "30-year fixed mortgage on primary residence in Bogotá.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "FIXED",
+    tags: [
+      "housing",
+      "mortgage",
+      "long-term",
+      "primary-residence",
+      "fixed-rate",
+    ],
+  },
+  {
+    name: "Visa Platinum — Davivienda",
+    contractType: "CREDIT_CARD",
+    categoryIndex: 7,
+    providerIndex: 2,
+    currency: "COP",
+    initialAmount: 8_000_000,
+    currentBalance: 1_247_500,
+    startDate: dateOnly(2021, 3, 1),
+    status: "ACTIVE",
+    description: "Rewards credit card with travel benefits, ~16% utilization.",
+    isRecurring: true,
+    frequency: "MONTHLY",
+    frequencyInDays: 30,
+    variability: "VARIABLE",
+    tags: ["credit-card", "revolving", "rewards", "travel", "debt"],
+  },
+];
 
 export async function seedRatesDemoRecords(
   context: RatesRecordSeedContext,
@@ -155,41 +467,27 @@ export async function seedRatesDemoRecords(
     });
   }
 
-  for (let index = 1; index <= 15; index += 1) {
-    const isSubscription = index <= 10;
-    const contractType = isSubscription
-      ? "SUBSCRIPTION"
-      : index <= 13
-        ? "INCOME_SOURCE"
-        : index === 14
-          ? "MORTGAGE"
-          : "CREDIT_CARD";
-
-    await ensure("contract", padId("rd_con", index), {
-      name: isSubscription
-        ? `${PROVIDER_NAMES[index - 1]!} ${SUBSCRIPTION_PLANS[index - 1]!}`
-        : index <= 13
-          ? `Income — ${CATEGORY_NAMES[Math.min(index - 1, 9)]!}`
-          : index === 14
-            ? "Home Mortgage"
-            : "Visa Platinum",
-      contractType,
-      categoryId: padId(
-        "rd_cat",
-        index > 10 && index <= 13 ? 8 : Math.min(index, 7),
-      ),
-      providerId: padId("rd_prov", Math.min(index, 10)),
-      currency: index % 4 === 0 ? "USD" : "COP",
-      initialAmount: 1_000_000 + index * 250_000,
-      currentBalance: 900_000 + index * 200_000,
-      startDate: dateOnly(2024, 1 + (index % 12), 1),
-      endDate: index % 5 === 0 ? dateOnly(2027, 12, 31) : undefined,
-      status: "ACTIVE",
-      description: `Demo contract ${index}`,
-      isRecurring: true,
-      frequency: "MONTHLY",
-      frequencyInDays: 30,
-      variability: index % 2 === 0 ? "FIXED" : "VARIABLE",
+  for (let index = 0; index < CONTRACT_DEMO_SEEDS.length; index += 1) {
+    const seed = CONTRACT_DEMO_SEEDS[index]!;
+    await ensure("contract", padId("rd_con", index + 1), {
+      name: seed.name,
+      contractType: seed.contractType,
+      categoryId: padId("rd_cat", seed.categoryIndex),
+      providerId: padId("rd_prov", seed.providerIndex),
+      currency: seed.currency,
+      initialAmount: seed.initialAmount,
+      currentBalance: seed.currentBalance,
+      startDate: seed.startDate,
+      ...(seed.endDate ? { endDate: seed.endDate } : {}),
+      status: seed.status,
+      description: seed.description,
+      isRecurring: seed.isRecurring,
+      ...(seed.frequency ? { frequency: seed.frequency } : {}),
+      ...(seed.frequencyInDays !== undefined
+        ? { frequencyInDays: seed.frequencyInDays }
+        : {}),
+      ...(seed.variability ? { variability: seed.variability } : {}),
+      ...(seed.tags ? { tags: [...seed.tags] } : {}),
     });
   }
 
@@ -261,20 +559,38 @@ export async function seedRatesDemoRecords(
     });
   }
 
-  for (let contractIndex = 1; contractIndex <= 15; contractIndex += 1) {
+  for (
+    let contractIndex = 1;
+    contractIndex <= CONTRACT_DEMO_SEEDS.length;
+    contractIndex += 1
+  ) {
+    const seed = CONTRACT_DEMO_SEEDS[contractIndex - 1]!;
     const contractId = padId("rd_con", contractIndex);
-    const baseBalance = 900_000 + contractIndex * 200_000;
 
     for (let snap = 1; snap <= RATES_SNAPSHOTS_PER_CONTRACT; snap += 1) {
       const month = ((snap - 1) % 12) + 1;
+      const balance =
+        seed.contractType === "MORTGAGE"
+          ? seed.currentBalance - snap * 1_800_000
+          : seed.contractType === "CREDIT_CARD"
+            ? seed.currentBalance + (snap % 2 === 0 ? 85_000 : -120_000)
+            : seed.variability === "VARIABLE"
+              ? seed.currentBalance +
+                (snap % 3 === 0 ? 28_000 : snap % 2 === 0 ? -12_000 : 5_000)
+              : seed.currentBalance;
+
       await ensure(
         "contractSnapshot",
         `${contractId}_snap_${String(snap).padStart(2, "0")}`,
         {
           contractId,
           date: monthStart(2025, month),
-          balance: baseBalance - snap * 15_000,
-          accruedInterest: contractIndex >= 14 ? snap * 2_500 : undefined,
+          balance,
+          accruedInterest:
+            seed.contractType === "MORTGAGE" ||
+            seed.contractType === "CREDIT_CARD"
+              ? snap * 2_500
+              : undefined,
         },
       );
     }

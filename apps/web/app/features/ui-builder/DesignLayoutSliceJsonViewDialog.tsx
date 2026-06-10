@@ -8,7 +8,7 @@ import { Button, Modal, Text } from "@repo/ui";
 
 import type { DesignLayoutSliceJsonLabels } from "./design-layout-slice-json-labels.js";
 
-export interface DesignLayoutSliceJsonViewDialogProps {
+interface DesignLayoutSliceJsonViewDialogProps {
   readonly surface: DesignLayoutSurface;
   readonly data: DesignLayoutSliceData;
   readonly labels: DesignLayoutSliceJsonLabels;

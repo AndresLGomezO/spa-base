@@ -12,6 +12,7 @@ import {
   integerField,
   manyToManyRelationField,
   relationField,
+  stringArrayField,
   stringField,
   uncategorizedDefinition,
 } from "./helpers.js";
@@ -247,6 +248,7 @@ export function buildRatesEntityDefinitions(
           label: "Variability",
           filterable: true,
         }),
+        stringArrayField("tags", { label: "Tags" }),
       ],
     }),
     groupedDefinition({

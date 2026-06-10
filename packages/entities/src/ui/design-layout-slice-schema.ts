@@ -1,4 +1,8 @@
-import { createDefaultUiLayout, uiLayoutDocumentSchema } from "@repo/ui-builder-core";
+import {
+  createDefaultUiLayout,
+  uiLayoutDocumentSchema,
+  type UiLayoutDocument,
+} from "@repo/ui-builder-core";
 import { z } from "zod";
 
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
@@ -8,6 +12,7 @@ import {
   putEntityUiOverrideInputSchema,
   uiOverrideFormsSchema,
 } from "./entity-ui-override-schema.js";
+import type { EntityUiOverrideForms } from "./form-config.js";
 import { normalizeEntityViews } from "./normalize-entity-views.js";
 import type {
   EntityUIConfig,
@@ -76,11 +81,33 @@ const metricStripSliceDataSchema = z
   })
   .strict();
 
-export type ListSliceData = z.infer<typeof listSliceDataSchema>;
-export type FormsSliceData = z.infer<typeof uiOverrideFormsSchema>;
-export type MainPageSliceData = z.infer<typeof mainPageSliceDataSchema>;
-export type RecordDetailSliceData = z.infer<typeof recordDetailSliceDataSchema>;
-export type MetricStripSliceData = z.infer<typeof metricStripSliceDataSchema>;
+export interface ListSliceData {
+  readonly listViewType: "table" | "card" | "expandableTable" | "compact";
+  readonly table: {
+    readonly fields: readonly string[];
+    readonly showActions?: boolean;
+  };
+  readonly expandableTable: {
+    readonly columns: readonly GroupedTableColumn[];
+    readonly rowExpandLayout: UiLayoutDocument;
+    readonly showActions?: boolean;
+  };
+  readonly listItem?: UiLayoutDocument;
+}
+
+export type FormsSliceData = EntityUiOverrideForms;
+
+export interface MainPageSliceData {
+  readonly mainPage: UiLayoutDocument;
+}
+
+export interface RecordDetailSliceData {
+  readonly recordDetail: UiLayoutDocument;
+}
+
+export interface MetricStripSliceData {
+  readonly metricStripLayout: UiLayoutDocument;
+}
 
 export type DesignLayoutSliceData =
   | ListSliceData
@@ -200,7 +227,10 @@ export function parseDesignLayoutSliceJson(
   try {
     parsedJson = JSON.parse(text);
   } catch {
-    return { ok: false, errors: [{ path: "(root)", message: "Invalid JSON." }] };
+    return {
+      ok: false,
+      errors: [{ path: "(root)", message: "Invalid JSON." }],
+    };
   }
 
   const envelopeResult = designLayoutSliceEnvelopeSchema.safeParse(parsedJson);
@@ -281,8 +311,7 @@ function listSliceToUiConfig(
       expandableView?.fields && expandableView.fields.length > 0
         ? expandableView.fields
         : data.table.fields,
-    columns: data.expandableTable
-      .columns as unknown as readonly GroupedTableColumn[],
+    columns: data.expandableTable.columns,
     rowExpandLayout: data.expandableTable.rowExpandLayout,
     showActions: data.expandableTable.showActions,
     ...(expandableView?.filters ? { filters: expandableView.filters } : {}),
@@ -316,7 +345,8 @@ function formsSliceToUiConfig(
   data: FormsSliceData,
   baseUi: EntityUIConfig,
 ): EntityUIConfig {
-  const presentation = data.presentation ?? baseUi.forms.presentation ?? "plain";
+  const presentation =
+    data.presentation ?? baseUi.forms.presentation ?? "plain";
   const plainLayout =
     presentation === "plain" ? data.layout : baseUi.forms.create.layout;
 
@@ -369,7 +399,8 @@ function sliceDataToUiConfig(
       };
     case "metricStrip": {
       const tableView = baseUi.views.find((view) => view.type === "table");
-      const metricStripLayout = (data as MetricStripSliceData).metricStripLayout;
+      const metricStripLayout = (data as MetricStripSliceData)
+        .metricStripLayout;
       const views = baseUi.views.map((view) => {
         if (view.type !== "table") {
           return view;
@@ -460,13 +491,17 @@ export function entityUiConfigToPutOverrideInput(
     ...(presentation === "wizard" && ui.forms.wizard
       ? { wizard: ui.forms.wizard }
       : {}),
-    ...(presentation !== "wizard" && plainLayout ? { layout: plainLayout } : {}),
+    ...(presentation !== "wizard" && plainLayout
+      ? { layout: plainLayout }
+      : {}),
   } as NonNullable<PutEntityUiOverrideInput["forms"]>;
 
   const hasFormsPayload = Object.keys(formsPayload).length > 0;
 
   return {
-    views: normalizeEntityViews([...ui.views]) as PutEntityUiOverrideInput["views"],
+    views: normalizeEntityViews([
+      ...ui.views,
+    ]) as PutEntityUiOverrideInput["views"],
     ...(ui.listViewType ? { listViewType: ui.listViewType } : {}),
     ...(ui.listItem ? { listItem: ui.listItem } : {}),
     ...(ui.mainPageLayout ? { mainPage: ui.mainPageLayout } : {}),
@@ -486,7 +521,10 @@ export function parsePutEntityUiOverrideJson(
   try {
     parsedJson = JSON.parse(text);
   } catch {
-    return { ok: false, errors: [{ path: "(root)", message: "Invalid JSON." }] };
+    return {
+      ok: false,
+      errors: [{ path: "(root)", message: "Invalid JSON." }],
+    };
   }
 
   const result = putEntityUiOverrideInputSchema.safeParse(parsedJson);
@@ -497,7 +535,7 @@ export function parsePutEntityUiOverrideJson(
     };
   }
 
-  return { ok: true, data: result.data };
+  return { ok: true, data: result.data as PutEntityUiOverrideInput };
 }
 
 export function validatePutEntityUiOverrideInput(
@@ -515,9 +553,7 @@ export function validatePutEntityUiOverrideInput(
       : {}),
     ...(input.listItem ? { listItem: input.listItem } : {}),
     ...(input.mainPage ? { mainPageLayout: input.mainPage } : {}),
-    ...(input.recordDetail
-      ? { recordDetailLayout: input.recordDetail }
-      : {}),
+    ...(input.recordDetail ? { recordDetailLayout: input.recordDetail } : {}),
     ...(input.forms
       ? {
           forms: {

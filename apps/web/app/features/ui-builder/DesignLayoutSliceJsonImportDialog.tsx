@@ -4,6 +4,7 @@ import {
   parseDesignLayoutSliceJson,
   validateDesignLayoutSlice,
   type DesignLayoutSliceData,
+  type DesignLayoutSliceValidationResult,
   type DesignLayoutSurface,
   type SerializableEntityDefinition,
 } from "@repo/entities";
@@ -12,7 +13,7 @@ import { Button, Modal, Text } from "@repo/ui";
 import type { DesignLayoutSliceJsonLabels } from "./design-layout-slice-json-labels.js";
 import { toValidationEntity } from "./to-validation-entity.js";
 
-export interface DesignLayoutSliceJsonImportDialogProps {
+interface DesignLayoutSliceJsonImportDialogProps {
   readonly surface: DesignLayoutSurface;
   readonly definition: SerializableEntityDefinition;
   readonly canApply: boolean;
