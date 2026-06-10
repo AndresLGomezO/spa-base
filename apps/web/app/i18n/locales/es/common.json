@@ -313,6 +313,8 @@
     "createTitle": "Crear {{entity}}",
     "editTitle": "Editar {{entity}}",
     "deleteSuccess": "Registro eliminado correctamente.",
+    "createSuccess": "{{entity}} creado correctamente.",
+    "updateSuccess": "{{entity}} actualizado correctamente.",
     "relationOneToManyReadOnly": "Esta relación uno a muchos se administra en la entidad relacionada. Agrega un campo muchos a uno en la entidad hija.",
     "fieldSelector": {
       "searchEntityPlaceholder": "Buscar {{entityLabel}}...",

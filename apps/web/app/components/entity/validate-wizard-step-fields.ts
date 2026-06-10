@@ -5,7 +5,7 @@ import {
 import type { SerializableEntityDefinition } from "@repo/entities";
 import type { SerializableFieldMeta } from "@repo/entities";
 
-function fieldPathRoot(fieldPath: string): string {
+export function fieldPathRoot(fieldPath: string): string {
   return fieldPath.includes(".")
     ? (fieldPath.split(".")[0] ?? fieldPath)
     : fieldPath;

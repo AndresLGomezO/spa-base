@@ -44,6 +44,8 @@ export function buildInitialValues(
       if (!meta) continue;
       if (meta.default !== undefined) {
         values[fieldName] = meta.default;
+      } else if (meta.isArray) {
+        values[fieldName] = [];
       } else if (meta.type === "boolean") {
         values[fieldName] = false;
       } else if (meta.type === "number") {

@@ -5,18 +5,18 @@ import {
 } from "@repo/ui-builder-core";
 import { Button } from "@repo/ui";
 
-import { ENTITY_FORM_ID } from "../entity/entity-form-constants";
-
 interface WizardActionsProps {
   readonly config: WizardActionsComponentConfig;
   readonly mode: "create" | "edit";
   readonly currentStepIndex: number;
   readonly totalSteps: number;
   readonly isSubmitting?: boolean;
+  readonly isCurrentStepValid?: boolean;
   readonly hideActions?: boolean;
   readonly onNext: () => void;
   readonly onBack: () => void;
   readonly onCancel: () => void;
+  readonly onSubmit?: () => void;
 }
 
 export function WizardActions({
@@ -25,15 +25,18 @@ export function WizardActions({
   currentStepIndex,
   totalSteps,
   isSubmitting,
+  isCurrentStepValid = true,
   hideActions,
   onNext,
   onBack,
   onCancel,
+  onSubmit,
 }: WizardActionsProps) {
   const { containerClassName } = splitStyleRuleClasses(config.styles);
   const style = layoutInlineStyleFromStyleRules(config.styles);
   const isLastStep = currentStepIndex >= totalSteps - 1;
   const isFirstStep = currentStepIndex === 0;
+  const stepActionsDisabled = isSubmitting || !isCurrentStepValid;
 
   const nextLabel = config.nextLabel ?? "Next";
   const backLabel = config.backLabel ?? "Back";
@@ -60,11 +63,16 @@ export function WizardActions({
         </Button>
       ) : null}
       {!isLastStep ? (
-        <Button type="button" onClick={onNext}>
+        <Button type="button" onClick={onNext} disabled={stepActionsDisabled}>
           {nextLabel}
         </Button>
       ) : (
-        <Button type="submit" form={ENTITY_FORM_ID} loading={isSubmitting}>
+        <Button
+          type="button"
+          onClick={onSubmit}
+          disabled={stepActionsDisabled}
+          loading={isSubmitting}
+        >
           {submitLabel}
         </Button>
       )}

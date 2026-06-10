@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import type { SerializableEntityDefinition } from "@repo/entities";
 
 import {
+  buildFormSubmitValues,
   getJoinRelationFieldNames,
   splitEntityFormPayload,
 } from "./entity-form-payload";
@@ -38,7 +39,75 @@ const definition = {
   },
 } satisfies SerializableEntityDefinition;
 
+const contractLikeDefinition = {
+  name: "contract",
+  collection: "contracts",
+  permissions: [],
+  fields: {
+    name: { type: "string", required: true, optional: false },
+    description: { type: "string", required: false, optional: true },
+    tags: { type: "string", required: false, optional: true, isArray: true },
+  },
+  ui: {
+    views: [],
+    forms: { create: { sections: [] }, edit: { sections: [] } },
+  },
+} satisfies SerializableEntityDefinition;
+
 describe("entity-form-payload", () => {
+  it("builds wizard submit values from layout field roots", () => {
+    expect(
+      buildFormSubmitValues(
+        [
+          {
+            fields: [
+              "name",
+              "description",
+              "tags",
+              "description",
+              "providerId",
+            ],
+          },
+        ],
+        {
+          name: "Loan",
+          description: "Longer text",
+          tags: ["essential", "utilities"],
+          providerId: "prov_1",
+          status: "",
+        },
+      ),
+    ).toEqual({
+      name: "Loan",
+      description: "Longer text",
+      tags: ["essential", "utilities"],
+      providerId: "prov_1",
+    });
+  });
+
+  it("includes optional wizard fields in the create payload", () => {
+    const submitValues = buildFormSubmitValues(
+      [{ fields: ["name", "description", "tags"] }],
+      {
+        name: "Loan",
+        description: "Product notes",
+        tags: ["streaming"],
+        currency: "USD",
+      },
+    );
+
+    expect(
+      splitEntityFormPayload(contractLikeDefinition, submitValues),
+    ).toEqual({
+      documentPayload: {
+        name: "Loan",
+        description: "Product notes",
+        tags: ["streaming"],
+      },
+      joinRelations: {},
+    });
+  });
+
   it("identifies join relation field names", () => {
     expect(getJoinRelationFieldNames(definition)).toEqual(["otherModels"]);
   });

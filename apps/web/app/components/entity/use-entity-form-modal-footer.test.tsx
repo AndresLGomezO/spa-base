@@ -97,6 +97,39 @@ describe("useEntityFormModalFooter", () => {
     expect(onFooterChange.mock.calls.at(-1)?.[0]).not.toBeNull();
   });
 
+  it("does not republish the footer when wizard callbacks change identity", () => {
+    const onFooterChange = vi.fn();
+
+    const hookProps = {
+      enabled: true,
+      fallbackLayout: wizardShellLayout,
+      footerContext,
+      wizardMode: "create" as const,
+      wizardCurrentStepIndex: 0,
+      wizardTotalSteps: 3,
+      wizardOnNext: vi.fn(),
+      wizardOnBack: vi.fn(),
+      wizardOnCancel: vi.fn(),
+      wizardOnSubmit: vi.fn(),
+      onFooterChange,
+    };
+
+    const { rerender } = renderHook(
+      (props: typeof hookProps) => useEntityFormModalFooter(props),
+      { initialProps: hookProps },
+    );
+
+    expect(onFooterChange).toHaveBeenCalledTimes(1);
+
+    rerender({
+      ...hookProps,
+      wizardOnSubmit: vi.fn(),
+      wizardOnNext: vi.fn(),
+    });
+
+    expect(onFooterChange).toHaveBeenCalledTimes(1);
+  });
+
   it("publishes the footer before unmount cleanup clears it on reopen", () => {
     const onFooterChange = vi.fn();
 

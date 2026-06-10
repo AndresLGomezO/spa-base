@@ -23,7 +23,7 @@ import {
 import { Button, Form, Heading, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
-import { type EntityName } from "../../entities/entity-catalog";
+import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
@@ -41,6 +41,7 @@ import { ENTITY_FORM_ID } from "./entity-form-constants";
 import { EntityField } from "./EntityField";
 import { EntityWizardForm } from "./EntityWizardForm";
 import {
+  buildFormSubmitValues,
   getJoinRelationFieldNames,
   splitEntityFormPayload,
 } from "./entity-form-payload";
@@ -59,21 +60,6 @@ interface EntityFormProps {
   readonly modalFooterLayout?: UiLayoutDocument;
   readonly onFooterChange?: (footer: ReactNode | null) => void;
   readonly onSubmittingChange?: (isSubmitting: boolean) => void;
-}
-
-function cleanFormValues(
-  sections: ReturnType<typeof getFormSections>,
-  values: Record<string, unknown>,
-): Record<string, unknown> {
-  const payload = { ...values };
-  for (const section of sections) {
-    for (const fieldName of section.fields) {
-      if (payload[fieldName] === "") {
-        delete payload[fieldName];
-      }
-    }
-  }
-  return payload;
 }
 
 export function EntityForm({
@@ -115,6 +101,8 @@ export function EntityForm({
     }
     return initial;
   });
+  const valuesRef = useRef(values);
+  valuesRef.current = values;
   const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
   const lastToastedError = useRef<string | null>(null);
 
@@ -183,7 +171,10 @@ export function EntityForm({
         : designedLayout
           ? [{ fields: collectLayoutFieldPaths(designedLayout) }]
           : sections;
-    const cleanedValues = cleanFormValues(cleanSections, values);
+    const cleanedValues = buildFormSubmitValues(
+      cleanSections,
+      valuesRef.current,
+    );
     const { documentPayload, joinRelations } = splitEntityFormPayload(
       definition,
       cleanedValues,
@@ -204,6 +195,11 @@ export function EntityForm({
             targetIds,
           );
         }
+        toast.success(
+          t("entity.createSuccess", {
+            entity: getEntityLabel(definition),
+          }),
+        );
         onSuccess?.();
       } catch (syncError) {
         toast.error(
@@ -231,6 +227,11 @@ export function EntityForm({
           targetIds,
         );
       }
+      toast.success(
+        t("entity.updateSuccess", {
+          entity: getEntityLabel(definition),
+        }),
+      );
       onSuccess?.();
     } catch (syncError) {
       toast.error(
