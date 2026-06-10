@@ -1,111 +1,143 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  createLayoutJsonSkeleton,
-  validateLayoutJsonImport,
-  type ComponentRowNode,
-  type DesignSurface,
-  type FieldPathValidationDefinition,
-  type LayoutJsonImportScope,
-  type LayoutJsonImportValidationResult,
-  type NestedLayoutRowNode,
-  type UiLayoutDocument,
-} from "@repo/ui-builder-core";
+  entityUiConfigToPutOverrideInput,
+  parsePutEntityUiOverrideJson,
+  validatePutEntityUiOverrideInput,
+  type PutEntityUiOverrideInput,
+  type SerializableEntityDefinition,
+} from "@repo/entities";
 import { Button, Modal, Text } from "@repo/ui";
 
-export interface LayoutJsonImportLabels {
-  readonly trigger: string;
-  readonly titleRoot: string;
-  readonly titleComponentRow: string;
-  readonly titleNestedRow: string;
-  readonly pasteLabel: string;
-  readonly uploadLabel: string;
-  readonly skeletonTitle: string;
-  readonly skeletonShow: string;
-  readonly skeletonHide: string;
-  readonly valid: string;
-  readonly invalid: string;
-  readonly apply: string;
-  readonly cancel: string;
-  readonly readOnlyHint: string;
-  readonly viewTrigger: string;
-  readonly viewTitleRoot: string;
-  readonly viewTitleComponentRow: string;
-  readonly viewTitleNestedRow: string;
-  readonly viewDescription: string;
-  readonly viewCopy: string;
-  readonly viewCopied: string;
-}
+import type { DesignLayoutFullOverrideJsonLabels } from "./design-layout-slice-json-labels.js";
+import { toValidationEntity } from "./to-validation-entity.js";
 
-export interface LayoutJsonImportDialogProps {
-  readonly scope: LayoutJsonImportScope;
-  readonly designSurface: DesignSurface;
-  readonly definition: FieldPathValidationDefinition;
-  readonly defaultFieldPath: string;
-  readonly canApply: boolean;
-  readonly labels: LayoutJsonImportLabels;
-  readonly onApply: (
-    data: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode,
-  ) => void;
-  readonly referenceData?:
-    | UiLayoutDocument
-    | ComponentRowNode
-    | NestedLayoutRowNode;
-  readonly actionsInModalFooter?: boolean;
+export interface DesignLayoutFullOverrideJsonViewDialogProps {
+  readonly definition: SerializableEntityDefinition;
+  readonly labels: DesignLayoutFullOverrideJsonLabels;
   readonly triggerSize?: "sm" | "md" | "lg";
 }
 
-function titleForScope(
-  scope: LayoutJsonImportScope,
-  labels: LayoutJsonImportLabels,
-): string {
-  switch (scope.type) {
-    case "layout-document":
-      return labels.titleRoot;
-    case "component-row":
-      return labels.titleComponentRow;
-    case "nested-layout-row":
-      return labels.titleNestedRow;
-  }
+export function DesignLayoutFullOverrideJsonViewDialog({
+  definition,
+  labels,
+  triggerSize = "sm",
+}: DesignLayoutFullOverrideJsonViewDialogProps) {
+  const [open, setOpen] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const jsonText = useMemo(
+    () =>
+      JSON.stringify(entityUiConfigToPutOverrideInput(definition.ui), null, 2),
+    [definition.ui],
+  );
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(jsonText);
+      setCopied(true);
+      window.setTimeout(() => setCopied(false), 2000);
+    } catch {
+      setCopied(false);
+    }
+  };
+
+  return (
+    <>
+      <Button
+        type="button"
+        variant="outline"
+        size={triggerSize}
+        onClick={() => setOpen(true)}
+      >
+        {labels.viewTrigger}
+      </Button>
+
+      <Modal
+        open={open}
+        onClose={() => setOpen(false)}
+        title={labels.viewTitle}
+        size="xl"
+        scrollable
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => void handleCopy()}
+            >
+              {copied ? labels.viewCopied : labels.viewCopy}
+            </Button>
+            <Button type="button" onClick={() => setOpen(false)}>
+              {labels.cancel}
+            </Button>
+          </>
+        }
+      >
+        <div className="flex flex-col gap-2">
+          <Text className="text-muted-foreground text-sm">
+            {labels.viewDescription}
+          </Text>
+          <pre className="bg-muted max-h-[min(60vh,28rem)] overflow-auto rounded-md p-3 font-mono text-xs whitespace-pre-wrap">
+            {jsonText}
+          </pre>
+        </div>
+      </Modal>
+    </>
+  );
 }
 
-export function LayoutJsonImportDialog({
-  scope,
-  designSurface,
+export interface DesignLayoutFullOverrideJsonImportDialogProps {
+  readonly definition: SerializableEntityDefinition;
+  readonly canApply: boolean;
+  readonly labels: DesignLayoutFullOverrideJsonLabels;
+  readonly onApply: (data: PutEntityUiOverrideInput) => Promise<void>;
+  readonly triggerSize?: "sm" | "md" | "lg";
+}
+
+const FULL_OVERRIDE_SKELETON = JSON.stringify(
+  {
+    views: [
+      {
+        type: "table",
+        name: "default",
+        fields: ["name"],
+      },
+    ],
+    listViewType: "table",
+  },
+  null,
+  2,
+);
+
+export function DesignLayoutFullOverrideJsonImportDialog({
   definition,
-  defaultFieldPath,
   canApply,
   labels,
   onApply,
-  referenceData,
-  actionsInModalFooter = false,
   triggerSize = "sm",
-}: LayoutJsonImportDialogProps) {
+}: DesignLayoutFullOverrideJsonImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [jsonText, setJsonText] = useState("");
   const [showSkeleton, setShowSkeleton] = useState(true);
+  const [isApplying, setIsApplying] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const skeleton = useMemo(
-    () =>
-      createLayoutJsonSkeleton(
-        scope,
-        designSurface,
-        defaultFieldPath,
-        referenceData,
-      ),
-    [scope, designSurface, defaultFieldPath, referenceData],
-  );
-
-  const validation = useMemo((): LayoutJsonImportValidationResult => {
+  const validation = useMemo(() => {
     if (jsonText.trim().length === 0) {
-      return { ok: false, errors: [] };
+      return { ok: false as const, errors: [] as const };
     }
-    return validateLayoutJsonImport(jsonText, scope, {
-      designSurface,
-      definition,
-      actionsInModalFooter,
-    });
-  }, [jsonText, scope, designSurface, definition, actionsInModalFooter]);
+
+    const parsed = parsePutEntityUiOverrideJson(jsonText);
+    if (!parsed.ok) {
+      return parsed;
+    }
+
+    return validatePutEntityUiOverrideInput(
+      toValidationEntity(definition),
+      parsed.data,
+      definition.ui,
+    );
+  }, [definition, jsonText]);
 
   useEffect(() => {
     if (!open) {
@@ -126,12 +158,17 @@ export function LayoutJsonImportDialog({
     event.target.value = "";
   };
 
-  const handleApply = () => {
-    if (!validation.ok || !validation.data || !canApply) {
+  const handleApply = async () => {
+    if (!validation.ok || !canApply) {
       return;
     }
-    onApply(validation.data);
-    setOpen(false);
+    setIsApplying(true);
+    try {
+      await onApply(validation.data);
+      setOpen(false);
+    } finally {
+      setIsApplying(false);
+    }
   };
 
   return (
@@ -142,13 +179,13 @@ export function LayoutJsonImportDialog({
         size={triggerSize}
         onClick={() => setOpen(true)}
       >
-        {labels.trigger}
+        {labels.importTrigger}
       </Button>
 
       <Modal
         open={open}
         onClose={() => setOpen(false)}
-        title={titleForScope(scope, labels)}
+        title={labels.importTitle}
         size="xl"
         scrollable
         footer={
@@ -157,13 +194,15 @@ export function LayoutJsonImportDialog({
               type="button"
               variant="outline"
               onClick={() => setOpen(false)}
+              disabled={isApplying}
             >
               {labels.cancel}
             </Button>
             <Button
               type="button"
-              disabled={!validation.ok || !canApply}
-              onClick={handleApply}
+              disabled={!validation.ok || !canApply || isApplying}
+              loading={isApplying}
+              onClick={() => void handleApply()}
             >
               {labels.apply}
             </Button>
@@ -176,6 +215,10 @@ export function LayoutJsonImportDialog({
               {labels.readOnlyHint}
             </Text>
           ) : null}
+
+          <Text className="text-muted-foreground text-sm">
+            {labels.importDescription}
+          </Text>
 
           <div className="flex flex-col gap-2">
             <Text className="text-sm font-medium">{labels.pasteLabel}</Text>
@@ -221,7 +264,7 @@ export function LayoutJsonImportDialog({
             </div>
             {showSkeleton ? (
               <pre className="bg-muted max-h-48 overflow-auto rounded-md p-3 font-mono text-xs">
-                {skeleton}
+                {FULL_OVERRIDE_SKELETON}
               </pre>
             ) : null}
           </div>

@@ -19,6 +19,8 @@ import {
   type FormModalChrome,
   type FormModalSize,
   type FormPresentation,
+  type DesignLayoutSliceData,
+  type FormsSliceData,
   type WizardFormConfig,
   type WizardStepConfig,
 } from "@repo/entities";
@@ -281,6 +283,72 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     wizard,
   ]);
 
+  const exportSlice = useCallback((): FormsSliceData => {
+    const wizardToExport =
+      presentation === "wizard"
+        ? {
+            ...wizard,
+            shellLayout: ensureWizardShellLayout(wizard.shellLayout, {
+              actionsInModalFooter: modalFooterLayout != null,
+            }),
+          }
+        : wizard;
+
+    const shouldPersistModalChrome =
+      modalChrome.showHeader !== true ||
+      modalChrome.contentPadding !== "default" ||
+      definition.ui.forms.modalChrome != null;
+
+    return {
+      presentation,
+      modalSize,
+      ...(shouldPersistModalChrome ? { modalChrome } : {}),
+      ...(modalFooterLayout ? { modalFooterLayout } : {}),
+      ...(presentation === "wizard"
+        ? { wizard: wizardToExport }
+        : { layout: plainLayout }),
+    };
+  }, [
+    definition.ui.forms.modalChrome,
+    modalChrome,
+    modalFooterLayout,
+    modalSize,
+    plainLayout,
+    presentation,
+    wizard,
+  ]);
+
+  const applySlice = useCallback(
+    (data: DesignLayoutSliceData) => {
+      const formsData = data as FormsSliceData;
+      const nextPresentation = formsData.presentation ?? "plain";
+      setPresentation(nextPresentation);
+      if (formsData.modalSize) {
+        setModalSize(formsData.modalSize);
+      }
+      if (formsData.modalChrome) {
+        setModalChrome(formsData.modalChrome);
+      } else {
+        setModalChrome(resolveFormModalChrome(definition));
+      }
+      setModalFooterLayout(formsData.modalFooterLayout);
+      if (formsData.layout) {
+        setPlainLayout(formsData.layout);
+      }
+      if (formsData.wizard) {
+        setWizard({
+          ...formsData.wizard,
+          shellLayout: ensureWizardShellLayout(formsData.wizard.shellLayout, {
+            actionsInModalFooter: formsData.modalFooterLayout != null,
+          }),
+        });
+        setSelectedStepIndex(0);
+      }
+      setLayoutEditorKey((current) => current + 1);
+    },
+    [definition],
+  );
+
   return {
     entityName,
     definition,
@@ -318,6 +386,8 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     isSaving,
     save,
     layoutEditorKey,
+    exportSlice,
+    applySlice,
   };
 }
 

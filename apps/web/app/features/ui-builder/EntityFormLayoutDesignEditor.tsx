@@ -644,6 +644,7 @@ export function EntityFormLayoutDesignEditor({
                 onLayoutChange={editor.setShellLayout}
                 labels={structureLabels}
                 designSurface="formWizardShell"
+                actionsInModalFooter={editor.modalFooterLayout != null}
               />
             </section>
             <CollapsibleSection

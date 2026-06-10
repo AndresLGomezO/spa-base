@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
+  DesignLayoutSliceData,
   ExpandableTableViewConfig,
   GroupedTableColumn,
+  ListSliceData,
   UiLayoutDocument,
   ViewConfig,
 } from "@repo/entities";
@@ -222,6 +224,47 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     viewType,
   ]);
 
+  const exportSlice = useCallback((): ListSliceData => {
+    return {
+      listViewType: viewType,
+      table: {
+        fields: tableFields.length > 0 ? [...tableFields] : [...fieldPaths],
+        showActions: tableShowActions,
+      },
+      expandableTable: {
+        columns: [...expandableColumns],
+        rowExpandLayout,
+        showActions: expandableShowActions,
+      },
+      ...(viewType === "card" ? { listItem: layout } : {}),
+    };
+  }, [
+    expandableColumns,
+    expandableShowActions,
+    fieldPaths,
+    layout,
+    rowExpandLayout,
+    tableFields,
+    tableShowActions,
+    viewType,
+  ]);
+
+  const applySlice = useCallback((data: DesignLayoutSliceData) => {
+    const listData = data as ListSliceData;
+    const nextViewType =
+      listData.listViewType === "compact" ? "expandableTable" : listData.listViewType;
+    setViewType(nextViewType);
+    setTableFields([...listData.table.fields]);
+    setTableShowActions(listData.table.showActions !== false);
+    setExpandableColumns([...listData.expandableTable.columns]);
+    setRowExpandLayout(listData.expandableTable.rowExpandLayout);
+    setExpandableShowActions(listData.expandableTable.showActions !== false);
+    if (listData.listItem) {
+      setLayout(listData.listItem);
+    }
+    setLayoutEditorKey((current) => current + 1);
+  }, []);
+
   return {
     entityName,
     definition,
@@ -245,6 +288,8 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     isSaving,
     save,
     layoutEditorKey,
+    exportSlice,
+    applySlice,
   };
 }
 

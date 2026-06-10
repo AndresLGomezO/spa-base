@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
+  DesignLayoutSliceData,
   EntityUiOverrideRecord,
+  RecordDetailSliceData,
   UiLayoutDocument,
   ViewConfig,
 } from "@repo/entities";
@@ -171,6 +173,15 @@ export function useEntityUiOverrideEditor(
     }
   }, [definition, entityName, fieldPaths, layout, queryClient, slice]);
 
+  const exportSlice = useCallback((): RecordDetailSliceData => {
+    return { recordDetail: layout };
+  }, [layout]);
+
+  const applySlice = useCallback((data: DesignLayoutSliceData) => {
+    setLayout((data as RecordDetailSliceData).recordDetail);
+    setLayoutEditorKey((current) => current + 1);
+  }, []);
+
   return {
     entityName,
     definition,
@@ -181,6 +192,8 @@ export function useEntityUiOverrideEditor(
     isSaving,
     save,
     layoutEditorKey,
+    exportSlice,
+    applySlice,
   };
 }
 

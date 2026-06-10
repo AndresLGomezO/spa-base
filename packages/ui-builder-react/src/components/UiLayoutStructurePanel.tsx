@@ -107,6 +107,8 @@ export interface UiLayoutStructurePanelProps {
   readonly getDefinition?: EntityDefinitionLookup;
   readonly designSurface?: DesignSurface;
   readonly canApplyImport?: boolean;
+  /** When true, formWizardShell imports may omit wizard-actions (actions in modal footer). */
+  readonly actionsInModalFooter?: boolean;
   readonly presetStore?: {
     readonly presets: readonly UiBuilderPresetRecord[];
     readonly canApplyPresets: boolean;
@@ -133,6 +135,7 @@ export function UiLayoutStructurePanel({
   getDefinition,
   designSurface = "listItem",
   canApplyImport = false,
+  actionsInModalFooter = false,
   presetStore,
 }: UiLayoutStructurePanelProps) {
   const allowedKinds = componentKindsForSurface(designSurface);
@@ -203,6 +206,7 @@ export function UiLayoutStructurePanel({
                     replaceLayoutDocument(data as UiLayoutDocument),
                   )
                 }
+                actionsInModalFooter={actionsInModalFooter}
               />
               <SavePresetDialog
                 kind="layout-document"
@@ -228,6 +232,7 @@ export function UiLayoutStructurePanel({
             canApply={canApplyImport}
             labels={labels.layoutJsonImport}
             referenceData={layout}
+            actionsInModalFooter={actionsInModalFooter}
             onApply={(data) =>
               onLayoutChange(replaceLayoutDocument(data as UiLayoutDocument))
             }

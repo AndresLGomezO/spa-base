@@ -35,6 +35,8 @@ interface EntityCardLayoutBuilderProps {
   readonly showStructureHeading?: boolean;
   readonly getDefinition?: EntityDefinitionLookup;
   readonly designSurface?: DesignSurface;
+  /** When true, formWizardShell imports may omit wizard-actions (actions in modal footer). */
+  readonly actionsInModalFooter?: boolean;
 }
 
 export function EntityCardLayoutBuilder({
@@ -47,6 +49,7 @@ export function EntityCardLayoutBuilder({
   showStructureHeading = false,
   getDefinition,
   designSurface = "listItem",
+  actionsInModalFooter = false,
 }: EntityCardLayoutBuilderProps) {
   const { t } = useTranslation("common");
   const queryClient = useQueryClient();
@@ -109,6 +112,7 @@ export function EntityCardLayoutBuilder({
       showShowActionsControl={false}
       getDefinition={getDefinition}
       canApplyImport={canApplyImport}
+      actionsInModalFooter={actionsInModalFooter}
       presetStore={presetStore}
       metricKpiEditor={(config, onChange) => (
         <MetricKpiComponentEditor

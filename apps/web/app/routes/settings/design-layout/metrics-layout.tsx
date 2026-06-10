@@ -6,6 +6,7 @@ import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { useAnyPermission } from "../../../auth/useAnyPermission";
 import { DesignLayoutPageHeader } from "../../../components/design-layout/DesignLayoutPageHeader";
 import { DesignLayoutRouteGuard } from "../../../components/design-layout/DesignLayoutRouteGuard";
+import { DesignLayoutPageActions } from "../../../features/ui-builder/DesignLayoutPageActions";
 import { EntityMetricsLayoutDesignEditor } from "../../../features/ui-builder/EntityMetricsLayoutDesignEditor";
 import { useEntityMetricsLayoutEditor } from "../../../features/ui-builder/use-entity-metrics-layout-editor";
 import type { EntityName } from "../../../entities/entity-catalog";
@@ -65,15 +66,25 @@ function DesignLayoutMetricsPage({
         description={t("designLayout.metricsDescription")}
         readOnly={!canSave}
         actions={
-          canSave ? (
-            <Button
-              type="button"
-              loading={editor.isSaving}
-              onClick={() => void handleSave()}
-            >
-              {t("entity.viewSettings.save")}
-            </Button>
-          ) : null
+          <DesignLayoutPageActions
+            entityName={entityName}
+            definition={editor.definition}
+            surface="metricStrip"
+            exportSlice={editor.exportSlice}
+            applySlice={editor.applySlice}
+            canWrite={canSave}
+            saveButton={
+              canSave ? (
+                <Button
+                  type="button"
+                  loading={editor.isSaving}
+                  onClick={() => void handleSave()}
+                >
+                  {t("entity.viewSettings.save")}
+                </Button>
+              ) : null
+            }
+          />
         }
       />
       <EntityMetricsLayoutDesignEditor editor={editor} />

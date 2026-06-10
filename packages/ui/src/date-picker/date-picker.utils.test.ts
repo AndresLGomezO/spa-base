@@ -6,6 +6,8 @@ import {
   formatTimePreview,
   from12Hour,
   getCalendarDayCells,
+  getMonthLabels,
+  getWeekdayLabels,
   getYearPageStart,
   getYearPageYears,
   parseIsoToUtcParts,
@@ -88,6 +90,35 @@ describe("date-picker.utils", () => {
 
   it("builds a six-week calendar grid", () => {
     expect(getCalendarDayCells(2025, 2)).toHaveLength(42);
+  });
+
+  it("aligns month labels with 0-indexed UTC month indices", () => {
+    const labels = getMonthLabels("en");
+    const utcFormatter = new Intl.DateTimeFormat("en", {
+      month: "short",
+      timeZone: "UTC",
+    });
+
+    for (let month = 0; month < 12; month += 1) {
+      expect(labels[month]).toBe(
+        utcFormatter.format(new Date(Date.UTC(2024, month, 1))),
+      );
+    }
+  });
+
+  it("aligns weekday labels with the UTC calendar grid", () => {
+    const labels = getWeekdayLabels("en");
+    const utcFormatter = new Intl.DateTimeFormat("en", {
+      weekday: "short",
+      timeZone: "UTC",
+    });
+    const base = Date.UTC(2024, 0, 7);
+
+    for (let index = 0; index < 7; index += 1) {
+      expect(labels[index]).toBe(
+        utcFormatter.format(new Date(base + index * 86_400_000)),
+      );
+    }
   });
 
   it("converts between 12-hour and 24-hour time", () => {
