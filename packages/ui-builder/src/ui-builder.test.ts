@@ -112,6 +112,27 @@ describe("@repo/ui-builder", () => {
     });
   });
 
+  it("initializes array fields as empty arrays", () => {
+    const withTags = {
+      ...definition,
+      fields: {
+        ...definition.fields,
+        tags: {
+          type: "string" as const,
+          required: false,
+          optional: true,
+          isArray: true,
+        },
+      },
+    };
+
+    expect(buildInitialValues(withTags, "create")).toEqual({
+      name: "",
+      isActive: true,
+      tags: [],
+    });
+  });
+
   it("builds query config for filters and sort", () => {
     const config = buildListQueryConfig({
       filters: [{ field: "name", operator: "==", value: "Acme" }],

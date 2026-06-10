@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useMemo,
@@ -23,9 +24,11 @@ interface ResolveEntityFormModalFooterOptions {
   readonly wizardCurrentStepIndex?: number;
   readonly wizardTotalSteps?: number;
   readonly wizardIsSubmitting?: boolean;
+  readonly wizardIsCurrentStepValid?: boolean;
   readonly wizardOnNext?: () => void;
   readonly wizardOnBack?: () => void;
   readonly wizardOnCancel?: () => void;
+  readonly wizardOnSubmit?: () => void;
 }
 
 export function resolveEntityFormModalFooter({
@@ -37,9 +40,11 @@ export function resolveEntityFormModalFooter({
   wizardCurrentStepIndex,
   wizardTotalSteps,
   wizardIsSubmitting,
+  wizardIsCurrentStepValid,
   wizardOnNext,
   wizardOnBack,
   wizardOnCancel,
+  wizardOnSubmit,
 }: ResolveEntityFormModalFooterOptions): ReactNode | null {
   if (!enabled) {
     return null;
@@ -70,9 +75,11 @@ export function resolveEntityFormModalFooter({
           currentStepIndex={wizardCurrentStepIndex}
           totalSteps={wizardTotalSteps}
           isSubmitting={wizardIsSubmitting}
+          isCurrentStepValid={wizardIsCurrentStepValid}
           onNext={wizardOnNext}
           onBack={wizardOnBack}
           onCancel={wizardOnCancel}
+          onSubmit={wizardOnSubmit}
         />
       );
     }
@@ -102,12 +109,36 @@ export function useEntityFormModalFooter({
   wizardCurrentStepIndex,
   wizardTotalSteps,
   wizardIsSubmitting,
+  wizardIsCurrentStepValid,
   wizardOnNext,
   wizardOnBack,
   wizardOnCancel,
+  wizardOnSubmit,
 }: UseEntityFormModalFooterOptions): void {
   const footerContextRef = useRef(footerContext);
   footerContextRef.current = footerContext;
+
+  const wizardOnNextRef = useRef(wizardOnNext);
+  wizardOnNextRef.current = wizardOnNext;
+  const wizardOnBackRef = useRef(wizardOnBack);
+  wizardOnBackRef.current = wizardOnBack;
+  const wizardOnCancelRef = useRef(wizardOnCancel);
+  wizardOnCancelRef.current = wizardOnCancel;
+  const wizardOnSubmitRef = useRef(wizardOnSubmit);
+  wizardOnSubmitRef.current = wizardOnSubmit;
+
+  const stableWizardOnNext = useCallback(() => {
+    wizardOnNextRef.current?.();
+  }, []);
+  const stableWizardOnBack = useCallback(() => {
+    wizardOnBackRef.current?.();
+  }, []);
+  const stableWizardOnCancel = useCallback(() => {
+    wizardOnCancelRef.current?.();
+  }, []);
+  const stableWizardOnSubmit = useCallback(() => {
+    wizardOnSubmitRef.current?.();
+  }, []);
 
   const footer = useMemo(
     () =>
@@ -120,20 +151,24 @@ export function useEntityFormModalFooter({
         wizardCurrentStepIndex,
         wizardTotalSteps,
         wizardIsSubmitting,
-        wizardOnNext,
-        wizardOnBack,
-        wizardOnCancel,
+        wizardIsCurrentStepValid,
+        wizardOnNext: stableWizardOnNext,
+        wizardOnBack: stableWizardOnBack,
+        wizardOnCancel: stableWizardOnCancel,
+        wizardOnSubmit: stableWizardOnSubmit,
       }),
     [
       enabled,
       fallbackLayout,
       modalFooterLayout,
+      stableWizardOnBack,
+      stableWizardOnCancel,
+      stableWizardOnNext,
+      stableWizardOnSubmit,
       wizardCurrentStepIndex,
+      wizardIsCurrentStepValid,
       wizardIsSubmitting,
       wizardMode,
-      wizardOnBack,
-      wizardOnCancel,
-      wizardOnNext,
       wizardTotalSteps,
     ],
   );

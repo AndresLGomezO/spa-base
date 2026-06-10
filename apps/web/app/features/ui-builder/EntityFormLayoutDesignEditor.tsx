@@ -350,10 +350,12 @@ export function EntityFormLayoutDesignEditor({
           mode="create"
           currentStepIndex={previewStepIndex}
           totalSteps={editor.wizard.steps.length}
+          isCurrentStepValid
           hideActions={!usesDesignedModalFooter}
           onNext={previewWizardStepNext}
           onBack={previewWizardStepBack}
           onCancel={previewWizardStepCancel}
+          onSubmit={() => {}}
         />
       ),
     };
@@ -378,10 +380,12 @@ export function EntityFormLayoutDesignEditor({
           mode="create"
           currentStepIndex={previewStepIndex}
           totalSteps={editor.wizard.steps.length}
+          isCurrentStepValid
           hideActions={false}
           onNext={previewWizardStepNext}
           onBack={previewWizardStepBack}
           onCancel={previewWizardStepCancel}
+          onSubmit={() => {}}
         />
       ),
     }),
@@ -423,6 +427,9 @@ export function EntityFormLayoutDesignEditor({
           editor.presentation === "wizard"
             ? previewWizardStepCancel
             : undefined,
+        wizardIsCurrentStepValid:
+          editor.presentation === "wizard" ? true : undefined,
+        wizardOnSubmit: editor.presentation === "wizard" ? () => {} : undefined,
       }),
     [
       editor.modalFooterLayout,

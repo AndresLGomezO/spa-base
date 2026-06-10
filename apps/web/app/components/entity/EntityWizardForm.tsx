@@ -129,6 +129,13 @@ export function EntityWizardForm({
     [definition, fieldErrors, formatRequiredMessage, values],
   );
 
+  const isCurrentStepValid = useMemo(() => {
+    if (!activeStep) {
+      return false;
+    }
+    return !buildStepValidationState(activeStep.layout).hasErrors;
+  }, [activeStep, buildStepValidationState]);
+
   const handleFieldChange = useCallback(
     (fieldName: string, value: unknown) => {
       onChange(fieldName, value);
@@ -253,16 +260,20 @@ export function EntityWizardForm({
     );
   }, [applyStepValidation, currentStepIndex, wizard.steps]);
 
+  const submitCurrentStep = useCallback(() => {
+    const step = wizard.steps[currentStepIndex];
+    if (step && applyStepValidation(step.layout, step.id)) {
+      return;
+    }
+    onSubmit({ preventDefault: () => {} } as FormEvent<HTMLFormElement>);
+  }, [applyStepValidation, currentStepIndex, onSubmit, wizard.steps]);
+
   const handleFormSubmit = useCallback(
     (event: FormEvent<HTMLFormElement>) => {
-      const step = wizard.steps[currentStepIndex];
-      if (step && applyStepValidation(step.layout, step.id)) {
-        event.preventDefault();
-        return;
-      }
-      onSubmit(event);
+      event.preventDefault();
+      submitCurrentStep();
     },
-    [applyStepValidation, currentStepIndex, onSubmit, wizard.steps],
+    [submitCurrentStep],
   );
 
   const handleBack = useCallback(() => {
@@ -315,10 +326,12 @@ export function EntityWizardForm({
           currentStepIndex={currentStepIndex}
           totalSteps={wizard.steps.length}
           isSubmitting={isSubmitting}
+          isCurrentStepValid={isCurrentStepValid}
           hideActions={suppressInlineActions}
           onNext={handleNext}
           onBack={handleBack}
           onCancel={onCancel}
+          onSubmit={submitCurrentStep}
         />
       ),
     };
@@ -328,10 +341,12 @@ export function EntityWizardForm({
     currentStepIndex,
     handleBack,
     handleNext,
+    isCurrentStepValid,
     isSubmitting,
     mode,
     onCancel,
     stepFormContext,
+    submitCurrentStep,
     suppressInlineActions,
     wizard.steps.length,
     wizardState,
@@ -350,10 +365,12 @@ export function EntityWizardForm({
           currentStepIndex={currentStepIndex}
           totalSteps={wizard.steps.length}
           isSubmitting={isSubmitting}
+          isCurrentStepValid={isCurrentStepValid}
           hideActions={false}
           onNext={handleNext}
           onBack={handleBack}
           onCancel={onCancel}
+          onSubmit={submitCurrentStep}
         />
       ),
     }),
@@ -361,10 +378,12 @@ export function EntityWizardForm({
       currentStepIndex,
       handleBack,
       handleNext,
+      isCurrentStepValid,
       isSubmitting,
       locale,
       mode,
       onCancel,
+      submitCurrentStep,
       values,
       wizard.steps.length,
     ],
@@ -380,9 +399,11 @@ export function EntityWizardForm({
     wizardCurrentStepIndex: currentStepIndex,
     wizardTotalSteps: wizard.steps.length,
     wizardIsSubmitting: isSubmitting,
+    wizardIsCurrentStepValid: isCurrentStepValid,
     wizardOnNext: handleNext,
     wizardOnBack: handleBack,
     wizardOnCancel: onCancel,
+    wizardOnSubmit: submitCurrentStep,
   });
 
   if (!activeStep) {

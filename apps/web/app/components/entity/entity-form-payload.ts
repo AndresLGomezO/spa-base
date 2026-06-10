@@ -1,8 +1,57 @@
+import type { FormLayout } from "@repo/entities";
 import {
   isDocumentStoredField,
   isJoinCollectionRelationField,
   type SerializableEntityDefinition,
 } from "@repo/entities";
+
+import { fieldPathRoot } from "./validate-wizard-step-fields";
+
+function uniqueFieldRootsFromSections(
+  sections: FormLayout["sections"],
+): readonly string[] {
+  const roots: string[] = [];
+  const seen = new Set<string>();
+  for (const section of sections) {
+    for (const fieldPath of section.fields) {
+      const root = fieldPathRoot(fieldPath);
+      if (seen.has(root)) {
+        continue;
+      }
+      seen.add(root);
+      roots.push(root);
+    }
+  }
+  return roots;
+}
+
+function isEmptySubmitValue(value: unknown): boolean {
+  if (value === undefined || value === null || value === "") {
+    return true;
+  }
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
+  return false;
+}
+
+export function buildFormSubmitValues(
+  sections: FormLayout["sections"],
+  values: Record<string, unknown>,
+): Record<string, unknown> {
+  const payload: Record<string, unknown> = {};
+  for (const root of uniqueFieldRootsFromSections(sections)) {
+    if (!(root in values)) {
+      continue;
+    }
+    const value = values[root];
+    if (isEmptySubmitValue(value)) {
+      continue;
+    }
+    payload[root] = value;
+  }
+  return payload;
+}
 
 export function getJoinRelationFieldNames(
   definition: SerializableEntityDefinition,
