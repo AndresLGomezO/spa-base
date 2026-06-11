@@ -59,6 +59,35 @@ describe("EntityField", () => {
     expect(onChange).toHaveBeenCalledWith("isActive", true);
   });
 
+  it("renders a squared Yes/No selector when booleanFieldOptions requests squared switch", () => {
+    const onChange = vi.fn();
+
+    render(
+      <TestEntityCatalogProvider>
+        <EntityField
+          entityName="widget"
+          fieldName="isActive"
+          value={false}
+          booleanFieldOptions={{ display: "switch", switchVariant: "squared" }}
+          onChange={onChange}
+        />
+      </TestEntityCatalogProvider>,
+    );
+
+    expect(screen.getByText("Active")).toBeInTheDocument();
+    expect(screen.getByRole("radio", { name: "Yes" })).toHaveAttribute(
+      "aria-checked",
+      "false",
+    );
+    expect(screen.getByRole("radio", { name: "No" })).toHaveAttribute(
+      "aria-checked",
+      "true",
+    );
+
+    fireEvent.click(screen.getByRole("radio", { name: "Yes" }));
+    expect(onChange).toHaveBeenCalledWith("isActive", true);
+  });
+
   it("renders array field entry and badges for string arrays", () => {
     const onChange = vi.fn();
     const widgetWithTags: EntityCatalogEntry = {

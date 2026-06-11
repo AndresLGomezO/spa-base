@@ -57,7 +57,8 @@ export function createEntityFormRenderContext(options: {
       const access = getFieldAccessLevel(options.fieldAccess, root);
       return isFieldVisible(fieldUI, options.canRead, access);
     },
-    formFieldRenderer: (fieldPath, containerClassName) => {
+    formFieldRenderer: (config, containerClassName) => {
+      const fieldPath = config.fieldPath;
       const root = fieldPath.includes(".")
         ? (fieldPath.split(".")[0] ?? fieldPath)
         : fieldPath;
@@ -66,6 +67,18 @@ export function createEntityFormRenderContext(options: {
       if (!isFieldVisible(fieldUI, options.canRead, access)) {
         return null;
       }
+      const booleanFieldOptions =
+        config.booleanDisplay ||
+        config.switchVariant ||
+        config.switchWidth !== undefined ||
+        config.switchHeight !== undefined
+          ? {
+              display: config.booleanDisplay,
+              switchVariant: config.switchVariant,
+              switchWidth: config.switchWidth,
+              switchHeight: config.switchHeight,
+            }
+          : undefined;
       return (
         <div className={formComponentContainerClassName(containerClassName)}>
           <EntityField
@@ -75,6 +88,7 @@ export function createEntityFormRenderContext(options: {
             error={options.errors[root]}
             readOnly={!isFieldEditable(fieldUI, canWrite, access)}
             recordId={options.recordId}
+            booleanFieldOptions={booleanFieldOptions}
             onChange={options.onChange}
           />
         </div>

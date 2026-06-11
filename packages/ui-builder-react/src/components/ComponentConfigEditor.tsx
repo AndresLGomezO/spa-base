@@ -7,6 +7,7 @@ import {
   type ConditionalStyleRule,
   type DataSource,
   type EntityFieldSelectorComponentConfig,
+  type FormFieldComponentConfig,
   type FieldUiComponentConfig,
   type StyleRule,
   isFieldUiComponent,
@@ -141,6 +142,14 @@ export interface ComponentConfigEditorLabels {
   readonly entityFieldSelectorImageField?: string;
   readonly entityFieldSelectorImageFieldAuto?: string;
   readonly entityFieldSelectorEnumLayoutHint?: string;
+  readonly booleanFieldDisplay?: string;
+  readonly booleanFieldDisplayCheckbox?: string;
+  readonly booleanFieldDisplaySwitch?: string;
+  readonly booleanFieldSwitchVariant?: string;
+  readonly booleanFieldSwitchVariantIos?: string;
+  readonly booleanFieldSwitchVariantSquared?: string;
+  readonly booleanFieldSwitchWidth?: string;
+  readonly booleanFieldSwitchHeight?: string;
   readonly styleRules: StyleRulesEditorLabels;
   readonly label: LabelConfigEditorLabels;
 }
@@ -205,6 +214,137 @@ function resolveEntityFieldSelectorImageFields(
     .filter(([, meta]) => meta.type === "image")
     .map(([name]) => name)
     .sort((a, b) => a.localeCompare(b));
+}
+
+function FormBooleanFieldConfigFields({
+  config,
+  labels,
+  definition,
+  onChange,
+}: {
+  readonly config: FormFieldComponentConfig;
+  readonly labels: ComponentConfigEditorLabels;
+  readonly definition?: SerializableEntityDefinition;
+  readonly onChange: (config: UiComponentConfig) => void;
+}) {
+  const fieldMeta = definition?.fields[config.fieldPath];
+  if (fieldMeta?.type !== "boolean") {
+    return null;
+  }
+
+  const booleanDisplay = config.booleanDisplay ?? "checkbox";
+  const showSwitchOptions = booleanDisplay === "switch";
+
+  function parseDimension(
+    raw: string,
+    min: number,
+    max: number,
+  ): number | undefined {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+    const parsed = Number.parseInt(trimmed, 10);
+    if (!Number.isFinite(parsed) || parsed < min || parsed > max) {
+      return undefined;
+    }
+    return parsed;
+  }
+
+  return (
+    <>
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">
+          {labels.booleanFieldDisplay ?? "Boolean display"}
+        </span>
+        <select
+          className={SELECT_CLASS}
+          value={booleanDisplay}
+          onChange={(event) =>
+            onChange({
+              ...config,
+              booleanDisplay: event.target
+                .value as FormFieldComponentConfig["booleanDisplay"],
+            })
+          }
+        >
+          <option value="checkbox">
+            {labels.booleanFieldDisplayCheckbox ?? "Checkbox"}
+          </option>
+          <option value="switch">
+            {labels.booleanFieldDisplaySwitch ?? "Switch"}
+          </option>
+        </select>
+      </label>
+
+      {showSwitchOptions ? (
+        <>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">
+              {labels.booleanFieldSwitchVariant ?? "Switch style"}
+            </span>
+            <select
+              className={SELECT_CLASS}
+              value={config.switchVariant ?? "ios"}
+              onChange={(event) =>
+                onChange({
+                  ...config,
+                  switchVariant: event.target
+                    .value as FormFieldComponentConfig["switchVariant"],
+                })
+              }
+            >
+              <option value="ios">
+                {labels.booleanFieldSwitchVariantIos ?? "iOS"}
+              </option>
+              <option value="squared">
+                {labels.booleanFieldSwitchVariantSquared ?? "Squared"}
+              </option>
+            </select>
+          </label>
+
+          <div className="grid gap-2 sm:grid-cols-2">
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {labels.booleanFieldSwitchWidth ?? "Switch width (px)"}
+              </span>
+              <Input
+                type="number"
+                min={28}
+                max={120}
+                placeholder="44"
+                value={config.switchWidth ?? ""}
+                onChange={(event) =>
+                  onChange({
+                    ...config,
+                    switchWidth: parseDimension(event.target.value, 28, 120),
+                  })
+                }
+              />
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {labels.booleanFieldSwitchHeight ?? "Switch height (px)"}
+              </span>
+              <Input
+                type="number"
+                min={16}
+                max={64}
+                placeholder="24"
+                value={config.switchHeight ?? ""}
+                onChange={(event) =>
+                  onChange({
+                    ...config,
+                    switchHeight: parseDimension(event.target.value, 16, 64),
+                  })
+                }
+              />
+            </label>
+          </div>
+        </>
+      ) : null}
+    </>
+  );
 }
 
 function EntityFieldSelectorConfigFields({
@@ -475,22 +615,30 @@ export function ComponentConfigEditor({
           </select>
         </label>
         {config.kind === "form-field" ? (
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-muted-foreground">{labels.field}</span>
-            <select
-              className={SELECT_CLASS}
-              value={config.fieldPath}
-              onChange={(event) =>
-                onChange({ ...config, fieldPath: event.target.value })
-              }
-            >
-              {fieldDescriptors.map((field) => (
-                <option key={field.path} value={field.path}>
-                  {formatFieldOptionLabel(field)}
-                </option>
-              ))}
-            </select>
-          </label>
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{labels.field}</span>
+              <select
+                className={SELECT_CLASS}
+                value={config.fieldPath}
+                onChange={(event) =>
+                  onChange({ ...config, fieldPath: event.target.value })
+                }
+              >
+                {fieldDescriptors.map((field) => (
+                  <option key={field.path} value={field.path}>
+                    {formatFieldOptionLabel(field)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <FormBooleanFieldConfigFields
+              config={config}
+              labels={labels}
+              definition={definition}
+              onChange={onChange}
+            />
+          </>
         ) : null}
         {config.kind === "entity-field-selector" ? (
           <EntityFieldSelectorConfigFields

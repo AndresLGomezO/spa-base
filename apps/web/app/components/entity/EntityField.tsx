@@ -4,9 +4,12 @@ import {
   FieldError,
   FieldLabel,
   Input,
+  Switch,
   Text,
   type DatePickerLabels,
+  type SwitchVariant,
 } from "@repo/ui";
+import type { BooleanFieldDisplay } from "@repo/ui-builder-core";
 import { resolveComponentId } from "@repo/ui-builder";
 import {
   isDocumentStoredField,
@@ -25,6 +28,13 @@ import { resolveFieldComponent } from "./field-component-registry";
 import { RelationPicker } from "./RelationPicker";
 import { ManyToManyRelationPicker } from "./ManyToManyRelationPicker";
 
+interface BooleanFieldOptions {
+  readonly display?: BooleanFieldDisplay;
+  readonly switchVariant?: SwitchVariant;
+  readonly switchWidth?: number;
+  readonly switchHeight?: number;
+}
+
 interface EntityFieldProps {
   readonly entityName: EntityName;
   readonly fieldName: string;
@@ -32,6 +42,7 @@ interface EntityFieldProps {
   readonly error?: string;
   readonly readOnly?: boolean;
   readonly recordId?: string;
+  readonly booleanFieldOptions?: BooleanFieldOptions;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -42,6 +53,7 @@ export function EntityField({
   error,
   readOnly = false,
   recordId,
+  booleanFieldOptions,
   onChange,
 }: EntityFieldProps) {
   const { t } = useTranslation("common");
@@ -149,6 +161,52 @@ export function EntityField({
   }
 
   if (meta.type === "boolean" || componentId === "toggle") {
+    const booleanDisplay = booleanFieldOptions?.display ?? "checkbox";
+
+    if (booleanDisplay === "switch") {
+      const switchVariant = booleanFieldOptions?.switchVariant ?? "ios";
+
+      if (switchVariant === "squared") {
+        const squaredLabelId = `${inputId}-label`;
+
+        return (
+          <div className="flex flex-col gap-1">
+            <FieldLabel id={squaredLabelId} required={meta.required}>
+              {label}
+            </FieldLabel>
+            <Switch
+              checked={Boolean(value)}
+              disabled={readOnly}
+              variant="squared"
+              ariaLabelledBy={squaredLabelId}
+              trueLabel={t("table.booleanYes")}
+              falseLabel={t("table.booleanNo")}
+              width={booleanFieldOptions?.switchWidth}
+              height={booleanFieldOptions?.switchHeight}
+              onChange={(checked) => onChange(fieldName, checked)}
+            />
+            {error ? <FieldError>{error}</FieldError> : null}
+          </div>
+        );
+      }
+
+      return (
+        <div className="flex flex-col gap-1">
+          <Switch
+            id={inputId}
+            label={label}
+            checked={Boolean(value)}
+            disabled={readOnly}
+            variant="ios"
+            width={booleanFieldOptions?.switchWidth}
+            height={booleanFieldOptions?.switchHeight}
+            onChange={(checked) => onChange(fieldName, checked)}
+          />
+          {error ? <FieldError>{error}</FieldError> : null}
+        </div>
+      );
+    }
+
     return (
       <div className="flex flex-col gap-1">
         <Checkbox

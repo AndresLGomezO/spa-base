@@ -1,5 +1,6 @@
 export { Alert, type AlertProps } from "./alert/Alert";
 export { Checkbox, type CheckboxProps } from "./checkbox/Checkbox";
+export { Switch, type SwitchProps, type SwitchVariant } from "./switch/Switch";
 export { FieldError, type FieldErrorProps } from "./field/FieldError";
 export { FieldLabel, type FieldLabelProps } from "./field/FieldLabel";
 export { Form, type FormProps } from "./form/Form";

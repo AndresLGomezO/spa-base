@@ -28,6 +28,8 @@ export type {
   NumericComponentConfig,
   BadgeComponentConfig,
   FormFieldComponentConfig,
+  BooleanFieldDisplay,
+  SwitchVariant,
   EntityFieldSelectorComponentConfig,
   EntityFieldSelectorLayout,
   FieldDateDisplayFormat,

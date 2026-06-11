@@ -205,6 +205,28 @@ export function EntityFormLayoutDesignEditor({
         entityFieldSelectorEnumLayoutHint: t(
           "entity.viewSettings.entityFieldSelectorEnumLayoutHint",
         ),
+        booleanFieldDisplay: t("entity.viewSettings.booleanFieldDisplay"),
+        booleanFieldDisplayCheckbox: t(
+          "entity.viewSettings.booleanFieldDisplayCheckbox",
+        ),
+        booleanFieldDisplaySwitch: t(
+          "entity.viewSettings.booleanFieldDisplaySwitch",
+        ),
+        booleanFieldSwitchVariant: t(
+          "entity.viewSettings.booleanFieldSwitchVariant",
+        ),
+        booleanFieldSwitchVariantIos: t(
+          "entity.viewSettings.booleanFieldSwitchVariantIos",
+        ),
+        booleanFieldSwitchVariantSquared: t(
+          "entity.viewSettings.booleanFieldSwitchVariantSquared",
+        ),
+        booleanFieldSwitchWidth: t(
+          "entity.viewSettings.booleanFieldSwitchWidth",
+        ),
+        booleanFieldSwitchHeight: t(
+          "entity.viewSettings.booleanFieldSwitchHeight",
+        ),
         styleRules: {
           addStyleRule: t("entity.viewSettings.addStyleRule"),
           removeStyleRule: t("entity.viewSettings.removeStyleRule"),
@@ -281,6 +303,36 @@ export function EntityFormLayoutDesignEditor({
     ],
   );
 
+  const wizardStepPreviewContext = useMemo(
+    () =>
+      createEntityFormRenderContext({
+        entityName,
+        definition: editor.definition,
+        locale: i18n.language,
+        mode: "create",
+        values,
+        errors: {},
+        fieldAccess: {},
+        canRead: true,
+        canWrite: true,
+        onChange: (name, value) =>
+          setValues((current) => ({ ...current, [name]: value })),
+        onCancel: () => undefined,
+        hideActions: usesDesignedModalFooter,
+        cancelLabel: t("entity.cancel"),
+        saveLabel: t("entity.create"),
+        wizardStepContent: true,
+      }),
+    [
+      editor.definition,
+      entityName,
+      i18n.language,
+      t,
+      usesDesignedModalFooter,
+      values,
+    ],
+  );
+
   const plainFooterContext = useMemo(
     () =>
       createEntityFormRenderContext({
@@ -340,7 +392,7 @@ export function EntityFormLayoutDesignEditor({
           <WizardStepHost config={config}>
             <RecursiveLayoutRenderer
               layout={activeStepLayout}
-              context={baseContext}
+              context={wizardStepPreviewContext}
             />
           </WizardStepHost>
         ) : null,
@@ -364,6 +416,7 @@ export function EntityFormLayoutDesignEditor({
     plainPreviewContext,
     previewStep?.layout,
     previewStepIndex,
+    wizardStepPreviewContext,
     previewWizardStepBack,
     previewWizardStepCancel,
     previewWizardStepNext,

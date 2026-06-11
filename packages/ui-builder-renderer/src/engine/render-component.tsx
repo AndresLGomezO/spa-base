@@ -136,9 +136,7 @@ export function renderUiComponent(
       return null;
     }
     const { containerClassName } = splitStyleRuleClasses(config.styles);
-    return (
-      context.formFieldRenderer?.(config.fieldPath, containerClassName) ?? null
-    );
+    return context.formFieldRenderer?.(config, containerClassName) ?? null;
   }
 
   if (config.kind === "entity-field-selector") {

@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 
 import type {
   EntityFieldSelectorComponentConfig,
+  FormFieldComponentConfig,
   MetricKpiComponentConfig,
   MetricKpiPresentation,
   WizardActionsComponentConfig,
@@ -67,7 +68,7 @@ export interface LayoutRenderContext {
     presentation?: MetricKpiPresentation,
   ) => ReactNode;
   readonly formFieldRenderer?: (
-    fieldPath: string,
+    config: FormFieldComponentConfig,
     containerClassName?: string,
   ) => ReactNode;
   readonly entityFieldSelectorRenderer?: (

@@ -62,12 +62,11 @@ function columnShellClassName(
   if (context.mode === "mainPage") {
     return COLUMN_SHELL_CLASS;
   }
-  if (isWizardFormContext(context) || isWizardStepContentContext(context)) {
-    if (
-      isWizardFormContext(context) &&
-      column &&
-      !columnContainsComponentKind(column, "wizard-step-host")
-    ) {
+  if (isWizardStepContentContext(context)) {
+    return FORM_COLUMN_SHELL_CLASS;
+  }
+  if (isWizardFormContext(context)) {
+    if (column && !columnContainsComponentKind(column, "wizard-step-host")) {
       return `${WIZARD_FORM_COLUMN_SHELL_CLASS} overflow-y-auto`;
     }
     return WIZARD_FORM_COLUMN_SHELL_CLASS;
@@ -271,10 +270,9 @@ function renderRow(
   const rowStyles = resolveStyleRules(row.styles);
   const isFormFill = context.mode === "form";
   const isWizardForm = isWizardFormContext(context);
-  const isWizardStepContent = isWizardStepContentContext(context);
   const formNestedRowClass =
     isFormFill && stackDirection === "column"
-      ? isWizardForm || isWizardStepContent
+      ? isWizardForm
         ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
         : "flex w-full min-w-0 shrink-0 flex-col"
       : undefined;
