@@ -15,13 +15,28 @@ import type {
 import { metricStripHasContent } from "@repo/entities";
 import { entityHasActiveMetrics } from "./entity-metrics-nav.js";
 
-type DesignLayoutKind = "main" | "list" | "detail" | "forms" | "metrics";
+type DesignLayoutKind =
+  | "main"
+  | "list"
+  | "detail"
+  | "forms"
+  | "newForms"
+  | "metrics";
+
+const DESIGN_LAYOUT_KIND_PATH_SEGMENT: Record<DesignLayoutKind, string> = {
+  main: "main",
+  list: "list",
+  detail: "detail",
+  forms: "forms",
+  newForms: "new-forms",
+  metrics: "metrics",
+};
 
 export function designLayoutEntityPath(
   kind: DesignLayoutKind,
   entityName: string,
 ): string {
-  return `/settings/design-layout/${kind}/${entityName}`;
+  return `/settings/design-layout/${DESIGN_LAYOUT_KIND_PATH_SEGMENT[kind]}/${entityName}`;
 }
 
 export const DESIGN_LAYOUT_MATCH_PATH = "/settings/design-layout";
@@ -139,6 +154,7 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
   const listLinks = useDesignLayoutEntityLinks("list");
   const detailLinks = useDesignLayoutEntityLinks("detail");
   const formsLinks = useDesignLayoutEntityLinks("forms");
+  const newFormsLinks = useDesignLayoutEntityLinks("newForms");
   const metricsLinks = useDesignLayoutMetricsEntityLinks();
 
   return useMemo(() => {
@@ -176,6 +192,14 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
       });
     }
 
+    if (newFormsLinks.length > 0) {
+      subgroups.push({
+        id: "design-layout-new-forms",
+        labelKey: "designLayoutNewForms",
+        children: newFormsLinks,
+      });
+    }
+
     if (metricsLinks.length > 0) {
       subgroups.push({
         id: "design-layout-metrics",
@@ -185,5 +209,12 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
     }
 
     return subgroups;
-  }, [detailLinks, formsLinks, listLinks, mainLinks, metricsLinks]);
+  }, [
+    detailLinks,
+    formsLinks,
+    listLinks,
+    mainLinks,
+    metricsLinks,
+    newFormsLinks,
+  ]);
 }

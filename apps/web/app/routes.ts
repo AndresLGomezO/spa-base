@@ -46,6 +46,10 @@ export default [
       "./routes/settings/design-layout/forms.tsx",
     ),
     route(
+      "settings/design-layout/new-forms/:entityName",
+      "./routes/settings/design-layout/new-forms.tsx",
+    ),
+    route(
       "settings/design-layout/metrics/:entityName",
       "./routes/settings/design-layout/metrics-layout.tsx",
     ),

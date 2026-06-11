@@ -112,6 +112,7 @@ function ModalPanel({
         useStickyLayout && "min-h-0",
         flushContent ? "rounded-xl" : "border-border rounded-xl border",
         panelSizeClasses[size],
+        embedded && "mx-auto",
         useStickyLayout && !contentScrollable && "overflow-hidden",
         !useStickyLayout && !flushContent && "p-5",
         animate &&
@@ -227,7 +228,11 @@ export function Modal({
       return null;
     }
 
-    return <div className="w-full">{panel}</div>;
+    return (
+      <div className="flex min-h-0 w-full flex-1 items-center justify-center p-4">
+        {panel}
+      </div>
+    );
   }
 
   return (

@@ -58,8 +58,42 @@
     "designLayoutList": "Lista de ítems",
     "designLayoutDetail": "Vista detallada",
     "designLayoutForms": "Formularios",
+    "designLayoutNewForms": "(New) Forms",
     "designLayoutMetrics": "Fila de métricas",
     "designLayoutPresets": "Presets de componentes"
+  },
+  "formDesigner": {
+    "title": "Diseñador de formularios",
+    "entitySubtitle": "Entidad: {{entity}}",
+    "openPreview": "Abrir vista previa",
+    "previewScreenSize": "Tamaño de pantalla",
+    "previewBreakpoints": {
+      "base": "mobile",
+      "sm": "sm",
+      "md": "md",
+      "lg": "lg",
+      "xl": "xl",
+      "full": "full",
+      "fullDescription": "Ancho completo"
+    },
+    "settings": "Configuración",
+    "tabs": {
+      "ariaLabel": "Secciones del diseñador de formularios",
+      "settings": "Configuración",
+      "layout": "Layout",
+      "components": "Componentes",
+      "layoutTabPlaceholder": "El editor de layout estará disponible pronto.",
+      "componentsTabPlaceholder": "El editor de componentes estará disponible pronto.",
+      "layoutPreviewPlaceholder": "La vista previa del layout aparecerá aquí cuando el editor de layout esté disponible.",
+      "componentsPreviewPlaceholder": "La vista previa de componentes aparecerá aquí cuando el editor de componentes esté disponible."
+    },
+    "unsavedChanges": {
+      "title": "Cambios sin guardar",
+      "message": "Tienes cambios de configuración sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
+      "save": "Guardar cambios",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando"
+    }
   },
   "designLayout": {
     "forbidden": "No tienes permiso para configurar layouts de entidades.",

@@ -58,8 +58,42 @@
     "designLayoutList": "Item list",
     "designLayoutDetail": "Detailed View",
     "designLayoutForms": "Forms",
+    "designLayoutNewForms": "(New) Forms",
     "designLayoutMetrics": "Metrics row",
     "designLayoutPresets": "Component presets"
+  },
+  "formDesigner": {
+    "title": "Form Designer",
+    "entitySubtitle": "Entity: {{entity}}",
+    "openPreview": "Open preview",
+    "previewScreenSize": "Screen Size",
+    "previewBreakpoints": {
+      "base": "mobile",
+      "sm": "sm",
+      "md": "md",
+      "lg": "lg",
+      "xl": "xl",
+      "full": "full",
+      "fullDescription": "Full width"
+    },
+    "settings": "Settings",
+    "tabs": {
+      "ariaLabel": "Form designer sections",
+      "settings": "Settings",
+      "layout": "Layout",
+      "components": "Components",
+      "layoutTabPlaceholder": "Layout editor coming soon.",
+      "componentsTabPlaceholder": "Components editor coming soon.",
+      "layoutPreviewPlaceholder": "Layout preview will appear here once the layout editor is available.",
+      "componentsPreviewPlaceholder": "Components preview will appear here once the components editor is available."
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "message": "You have unsaved settings changes. Save them before leaving this tab, or discard your changes.",
+      "save": "Save changes",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing"
+    }
   },
   "designLayout": {
     "forbidden": "You do not have permission to configure entity layouts.",

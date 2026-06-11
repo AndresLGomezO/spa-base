@@ -52,6 +52,16 @@ export {
 } from "./popover/Popover";
 export { Sheet, type SheetProps } from "./sheet/Sheet";
 export {
+  BuilderPageShell,
+  type BuilderPageShellProps,
+} from "./builder-page-shell";
+export {
+  TabbedPanel,
+  type TabbedPanelProps,
+  type TabbedPanelTab,
+  type TabbedPanelTabId,
+} from "./tabbed-panel";
+export {
   ThirdRail,
   ThirdRailHeader,
   ThirdRailHost,
