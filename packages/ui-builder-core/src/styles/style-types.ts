@@ -45,7 +45,14 @@ export type StylePropertyKey =
   | "borderStyle"
   | "flexWrap"
   | "overflowX"
-  | "overflowY";
+  | "overflowY"
+  | "gridColumns"
+  | "gridColumnsSm"
+  | "gridColumnsMd"
+  | "gridColumnsLg"
+  | "gridColumnsXl"
+  | "gridAutoFitMinWidth"
+  | "gridResponsiveMode";
 
 export interface StyleRule {
   readonly property: StylePropertyKey;
@@ -88,4 +95,11 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "flexWrap",
   "overflowX",
   "overflowY",
+  "gridColumns",
+  "gridColumnsSm",
+  "gridColumnsMd",
+  "gridColumnsLg",
+  "gridColumnsXl",
+  "gridAutoFitMinWidth",
+  "gridResponsiveMode",
 ] as const;

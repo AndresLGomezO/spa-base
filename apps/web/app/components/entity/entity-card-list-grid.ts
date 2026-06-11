@@ -16,6 +16,24 @@ const RESPONSIVE_BREAKPOINTS = [
   { prefix: "xl:", cap: 4 },
 ] as const;
 
+/** Tailwind min-width thresholds for card-list responsive caps (md uses sm cap). */
+const CARD_LIST_BREAKPOINT_CAPS = [
+  { minWidth: 0, cap: 1 },
+  { minWidth: 640, cap: 2 },
+  { minWidth: 1024, cap: 3 },
+  { minWidth: 1280, cap: 4 },
+] as const;
+
+const BREAKPOINT_MIN_WIDTH = {
+  base: 0,
+  sm: 640,
+  md: 768,
+  lg: 1024,
+  xl: 1280,
+} as const;
+
+type EntityCardListGridBreakpoint = keyof typeof BREAKPOINT_MIN_WIDTH;
+
 export function clampCardsPerRow(value: number | undefined): number {
   const resolved = value ?? DEFAULT_CARDS_PER_ROW;
   return Math.min(
@@ -46,4 +64,22 @@ export function getEntityCardListGridClass(
   }
 
   return classes.join(" ");
+}
+
+export function getEntityCardListGridClassAtBreakpoint(
+  cardsPerRow: number | undefined,
+  atBreakpoint: EntityCardListGridBreakpoint,
+): string {
+  const maxPerRow = clampCardsPerRow(cardsPerRow);
+  const targetWidth = BREAKPOINT_MIN_WIDTH[atBreakpoint];
+  let cap = 1;
+
+  for (const entry of CARD_LIST_BREAKPOINT_CAPS) {
+    if (targetWidth >= entry.minWidth) {
+      cap = entry.cap;
+    }
+  }
+
+  const cols = Math.min(maxPerRow, cap);
+  return GRID_COLS_CLASS[cols] ?? "grid-cols-1";
 }

@@ -12,6 +12,7 @@ import {
   replaceNestedLayoutRowAt,
   setRootColumnCount,
   setRootColumnWidthPercent,
+  updateComponentRowMetaAt,
 } from "./mutations.js";
 
 describe("addComponentRowAt", () => {
@@ -276,6 +277,45 @@ describe("replaceNestedLayoutRowAt", () => {
       id: nestedRowId,
       columnCount: 2,
     });
+  });
+});
+
+describe("updateComponentRowMetaAt display range", () => {
+  it("clears displayFrom and displayTo when reset to all screens", () => {
+    const layout = createEmptyLayout(1);
+    const rowId = createLayoutId("row");
+    const withRow = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...layout.root.columns[0]!,
+            rows: [
+              {
+                type: "component" as const,
+                id: rowId,
+                displayFrom: "md" as const,
+                displayTo: "xl" as const,
+                component: createDefaultComponent("text", "name"),
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const next = updateComponentRowMetaAt(
+      withRow,
+      { scope: "root", columnIndex: 0 },
+      rowId,
+      { displayFrom: undefined, displayTo: undefined },
+    );
+
+    const row = next.root.columns[0]?.rows[0];
+    expect(row).toMatchObject({ type: "component", id: rowId });
+    expect(row).not.toHaveProperty("displayFrom");
+    expect(row).not.toHaveProperty("displayTo");
   });
 });
 

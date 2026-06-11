@@ -1,18 +1,23 @@
 import type { ReactNode } from "react";
 import {
   buildGridTemplateColumnsFromPercents,
+  buildDisplayRangeClassName,
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
   flexWrapClassFromStyles,
   gapPxFromStyles,
+  isVisibleAtBreakpoint,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
   resolveColumnWidthPercents,
+  resolveResponsiveGridLayout,
   resolveStyleRules,
   usesFlexWrapLayout,
+  usesResponsiveGridLayout,
   usesTextWrap,
   type ColumnNode,
   type ColumnStackDirection,
+  type ResponsiveGridBreakpoint,
   type RowNode,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -21,6 +26,7 @@ import { LayoutGrid, LayoutStack } from "@repo/ui";
 import type { LayoutRenderContext } from "../context.js";
 import { renderUiComponent } from "../engine/render-component.js";
 import { resolveMotionPreset } from "../motion/resolve-motion.js";
+import { usePreviewBreakpoint } from "../preview-breakpoint-context.js";
 
 /** Fills the grid/flex column cell so backgrounds and padding cover the full slot. */
 const COLUMN_SHELL_CLASS = "flex h-full min-h-0 w-full min-w-0 flex-col";
@@ -78,6 +84,7 @@ function renderRows(
   rows: readonly RowNode[],
   context: LayoutRenderContext,
   column: ColumnNode,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
   rowMotionIndexOffset = 0,
 ): ReactNode {
   const stackDirection = resolveColumnStackDirection(column);
@@ -111,6 +118,7 @@ function renderRows(
           row,
           context,
           stackDirection,
+          atBreakpoint,
           rowIndex + rowMotionIndexOffset,
         ),
       )}
@@ -133,10 +141,90 @@ function rowStackShellClassName(
   return "min-w-0 shrink-0";
 }
 
+function countLayoutSlots(columns: readonly ColumnNode[]): number {
+  return columns.filter((column) => column.rows.length > 0).length;
+}
+
+function layoutGridStretchClassName(context: LayoutRenderContext): string {
+  const isMainPage = context.mode === "mainPage";
+  const isFormFill = context.mode === "form";
+  const isWizardForm = isWizardFormContext(context);
+  const isWizardStepContent = isWizardStepContentContext(context);
+
+  if (isMainPage) {
+    return "h-full min-h-0 w-full flex-1 items-stretch";
+  }
+  if (isWizardForm || isWizardStepContent || isFormFill) {
+    return "w-full items-stretch";
+  }
+  return "min-h-0 w-full items-stretch";
+}
+
+function renderLayoutColumnGrid(
+  columns: readonly ColumnNode[],
+  context: LayoutRenderContext,
+  styles: readonly import("@repo/ui-builder-core").StyleRule[] | undefined,
+  columnCount: number,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
+): ReactNode {
+  const slotCount = countLayoutSlots(columns);
+  const responsiveLayout = resolveResponsiveGridLayout({
+    styles,
+    columnCount,
+    slotCount: slotCount > 0 ? slotCount : columnCount,
+    atBreakpoint,
+  });
+  const stretchClass = layoutGridStretchClassName(context);
+
+  if (responsiveLayout.mode === "responsive") {
+    return (
+      <LayoutGrid
+        direction="row"
+        gap={gapPxFromStyles(styles)}
+        align="stretch"
+        className={[stretchClass, responsiveLayout.className]
+          .filter(Boolean)
+          .join(" ")}
+      >
+        {columns.map((column) => renderColumn(column, context, atBreakpoint))}
+      </LayoutGrid>
+    );
+  }
+
+  if (responsiveLayout.mode === "autoFit") {
+    return (
+      <LayoutGrid
+        direction="row"
+        gap={gapPxFromStyles(styles)}
+        columns={responsiveLayout.columnsTemplate}
+        align="stretch"
+        className={stretchClass}
+      >
+        {columns.map((column) => renderColumn(column, context, atBreakpoint))}
+      </LayoutGrid>
+    );
+  }
+
+  return (
+    <LayoutGrid
+      direction="row"
+      gap={gapPxFromStyles(styles)}
+      columns={buildGridTemplateColumnsFromPercents(
+        resolveColumnWidthPercents(columns),
+      )}
+      align="stretch"
+      className={stretchClass}
+    >
+      {columns.map((column) => renderColumn(column, context, atBreakpoint))}
+    </LayoutGrid>
+  );
+}
+
 function renderWrappedColumns(
   columns: readonly ColumnNode[],
   context: LayoutRenderContext,
   styles: readonly import("@repo/ui-builder-core").StyleRule[] | undefined,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
 ): ReactNode {
   const percents = resolveColumnWidthPercents(columns);
   const gap = gapPxFromStyles(styles);
@@ -172,7 +260,7 @@ function renderWrappedColumns(
               ...flexBasis,
             }}
           >
-            {renderRows(column.rows, context, column)}
+            {renderRows(column.rows, context, column, atBreakpoint)}
           </div>
         );
       })}
@@ -180,12 +268,37 @@ function renderWrappedColumns(
   );
 }
 
+function resolveRowDisplayRange(
+  row: RowNode,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
+): { readonly hidden: boolean; readonly className?: string } {
+  if (
+    atBreakpoint !== undefined &&
+    !isVisibleAtBreakpoint(row.displayFrom, row.displayTo, atBreakpoint)
+  ) {
+    return { hidden: true };
+  }
+
+  return {
+    hidden: false,
+    className: buildDisplayRangeClassName(row.displayFrom, row.displayTo, {
+      display: "flex",
+    }),
+  };
+}
+
 function renderRow(
   row: RowNode,
   context: LayoutRenderContext,
   stackDirection: ColumnStackDirection,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
   rowIndex = 0,
 ): ReactNode {
+  const displayRange = resolveRowDisplayRange(row, atBreakpoint);
+  if (displayRange.hidden) {
+    return null;
+  }
+
   const stackShellClass = rowStackShellClassName(stackDirection);
 
   if (row.type === "component") {
@@ -257,6 +370,7 @@ function renderRow(
           formSlotClassName,
           rowStyles.className,
           motionClass,
+          displayRange.className,
         ]
           .filter(Boolean)
           .join(" ")}
@@ -276,16 +390,24 @@ function renderRow(
         ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
         : "flex w-full min-w-0 shrink-0 flex-col"
       : undefined;
-  if (usesFlexWrapLayout(row.styles)) {
+  if (
+    !usesResponsiveGridLayout(row.styles, row.columnCount) &&
+    usesFlexWrapLayout(row.styles)
+  ) {
     return (
       <div
         key={row.id}
-        className={[stackShellClass, formNestedRowClass, rowStyles.className]
+        className={[
+          stackShellClass,
+          formNestedRowClass,
+          rowStyles.className,
+          displayRange.className,
+        ]
           .filter(Boolean)
           .join(" ")}
         style={rowStyles.style}
       >
-        {renderWrappedColumns(row.columns, context, row.styles)}
+        {renderWrappedColumns(row.columns, context, row.styles, atBreakpoint)}
       </div>
     );
   }
@@ -293,22 +415,23 @@ function renderRow(
   return (
     <div
       key={row.id}
-      className={[stackShellClass, formNestedRowClass, rowStyles.className]
+      className={[
+        stackShellClass,
+        formNestedRowClass,
+        rowStyles.className,
+        displayRange.className,
+      ]
         .filter(Boolean)
         .join(" ")}
       style={rowStyles.style}
     >
-      <LayoutGrid
-        direction="row"
-        gap={gapPxFromStyles(row.styles)}
-        columns={buildGridTemplateColumnsFromPercents(
-          resolveColumnWidthPercents(row.columns),
-        )}
-        align="stretch"
-        className={isFormFill ? "w-full items-stretch" : undefined}
-      >
-        {row.columns.map((column) => renderColumn(column, context))}
-      </LayoutGrid>
+      {renderLayoutColumnGrid(
+        row.columns,
+        context,
+        row.styles,
+        row.columnCount,
+        atBreakpoint,
+      )}
     </div>
   );
 }
@@ -316,6 +439,7 @@ function renderRow(
 function renderColumn(
   column: ColumnNode,
   context: LayoutRenderContext,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
 ): ReactNode {
   if (column.rows.length === 0) {
     return null;
@@ -331,7 +455,7 @@ function renderColumn(
         .join(" ")}
       style={columnStyles.style}
     >
-      {renderRows(column.rows, context, column)}
+      {renderRows(column.rows, context, column, atBreakpoint)}
     </div>
   );
 }
@@ -347,6 +471,7 @@ export function RecursiveLayoutRenderer({
   context,
   className,
 }: RecursiveLayoutRendererProps): ReactNode {
+  const atBreakpoint = usePreviewBreakpoint();
   const rootMotionClass = resolveMotionPreset(layout.motion);
   const isMainPage = context.mode === "mainPage";
   const isFormFill = context.mode === "form";
@@ -361,7 +486,10 @@ export function RecursiveLayoutRenderer({
         : undefined;
   const rootStylesResolved = resolveStyleRules(layout.root.styles, className);
 
-  if (usesFlexWrapLayout(layout.root.styles)) {
+  if (
+    !usesResponsiveGridLayout(layout.root.styles, layout.root.columnCount) &&
+    usesFlexWrapLayout(layout.root.styles)
+  ) {
     return (
       <div
         className={[
@@ -373,7 +501,12 @@ export function RecursiveLayoutRenderer({
           .join(" ")}
         style={rootStylesResolved.style}
       >
-        {renderWrappedColumns(layout.root.columns, context, layout.root.styles)}
+        {renderWrappedColumns(
+          layout.root.columns,
+          context,
+          layout.root.styles,
+          atBreakpoint,
+        )}
       </div>
     );
   }
@@ -385,25 +518,13 @@ export function RecursiveLayoutRenderer({
         .join(" ")}
       style={rootStylesResolved.style}
     >
-      <LayoutGrid
-        direction="row"
-        gap={gapPxFromStyles(layout.root.styles)}
-        columns={buildGridTemplateColumnsFromPercents(
-          resolveColumnWidthPercents(layout.root.columns),
-        )}
-        align="stretch"
-        className={
-          isMainPage
-            ? "h-full min-h-0 w-full flex-1 items-stretch"
-            : isWizardForm || isWizardStepContent
-              ? "w-full items-stretch"
-              : isFormFill
-                ? "w-full items-stretch"
-                : "min-h-0 w-full items-stretch"
-        }
-      >
-        {layout.root.columns.map((column) => renderColumn(column, context))}
-      </LayoutGrid>
+      {renderLayoutColumnGrid(
+        layout.root.columns,
+        context,
+        layout.root.styles,
+        layout.root.columnCount,
+        atBreakpoint,
+      )}
     </div>
   );
 }

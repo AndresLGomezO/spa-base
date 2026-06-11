@@ -1,8 +1,9 @@
 import { useMemo, useState } from "react";
+import type { ResponsiveGridBreakpoint } from "@repo/ui-builder-core";
 import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
 import { useTranslation } from "react-i18next";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import { Input, Text } from "@repo/ui";
+import { Input } from "@repo/ui";
 
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -11,10 +12,16 @@ import { useEntity } from "../../hooks/useEntity";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder";
 import { DesignLayoutEditorShell } from "./DesignLayoutEditorShell";
 import {
+  DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
+  LayoutPreviewPanel,
+} from "./LayoutPreviewPanel";
+import {
   useEntityUiOverrideEditor,
   type UseEntityUiOverrideEditorResult,
 } from "./use-entity-ui-override-editor";
 import { createEntityRecordRenderContext } from "./create-entity-record-render-context";
+import { responsiveGridEditorLabels } from "./responsive-grid-editor-labels";
+import { componentDisplayRangeEditorLabels } from "./component-display-range-editor-labels";
 
 interface EntityRecordDetailLayoutDesignEditorProps {
   readonly entityName: EntityName;
@@ -31,6 +38,8 @@ export function EntityRecordDetailLayoutDesignEditor({
   const { getDefinition } = useEntityCatalog();
   const { items } = useEntity(entityName, { page: 1 });
   const [previewRecordId, setPreviewRecordId] = useState("");
+  const [previewBreakpoint, setPreviewBreakpoint] =
+    useState<ResponsiveGridBreakpoint>(DEFAULT_LAYOUT_PREVIEW_BREAKPOINT);
 
   const previewRecord = useMemo(() => {
     if (previewRecordId) {
@@ -56,6 +65,9 @@ export function EntityRecordDetailLayoutDesignEditor({
         vertical: t("entity.viewSettings.stackVertical"),
         horizontal: t("entity.viewSettings.stackHorizontal"),
       },
+      responsiveGrid: responsiveGridEditorLabels(t),
+      displayRange: componentDisplayRangeEditorLabels(t),
+      rowLayoutStyles: t("entity.viewSettings.responsiveGrid.rowLayoutStyles"),
       styleRules: {
         addStyleRule: t("entity.viewSettings.addStyleRule"),
         removeStyleRule: t("entity.viewSettings.removeStyleRule"),
@@ -122,10 +134,11 @@ export function EntityRecordDetailLayoutDesignEditor({
   );
 
   const preview = previewRecord ? (
-    <div className="bg-card border-border rounded-lg border p-4">
-      <Text className="text-muted-foreground mb-3 text-sm">
-        {t("entity.viewSettings.preview")}
-      </Text>
+    <LayoutPreviewPanel
+      title={t("entity.viewSettings.preview")}
+      breakpoint={previewBreakpoint}
+      onBreakpointChange={setPreviewBreakpoint}
+    >
       <RecursiveLayoutRenderer
         layout={editor.layout}
         context={createEntityRecordRenderContext({
@@ -136,7 +149,7 @@ export function EntityRecordDetailLayoutDesignEditor({
           getDefinition,
         })}
       />
-    </div>
+    </LayoutPreviewPanel>
   ) : null;
 
   return (

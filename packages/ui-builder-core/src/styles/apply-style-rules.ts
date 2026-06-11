@@ -68,6 +68,13 @@ export const FLEX_LAYOUT_PROPERTIES = new Set<StylePropertyKey>([
 export const LAYOUT_CONTAINER_PROPERTIES = new Set<StylePropertyKey>([
   ...FLEX_LAYOUT_PROPERTIES,
   "gap",
+  "gridColumns",
+  "gridColumnsSm",
+  "gridColumnsMd",
+  "gridColumnsLg",
+  "gridColumnsXl",
+  "gridAutoFitMinWidth",
+  "gridResponsiveMode",
 ]);
 
 /** Margin/padding — applied as inline styles, not Tailwind arbitrary classes. */

@@ -7,6 +7,8 @@ import type {
 } from "../types/layout.js";
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
 import type { StyleRule } from "../styles/style-types.js";
+import { isFullDisplayRange } from "../layout/component-display-range.js";
+import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
 import { createLayoutId } from "./id.js";
 import { regenerateLayoutDocumentIds } from "../validation/regenerate-layout-ids.js";
 import {
@@ -468,6 +470,42 @@ export function updateRootColumnStyles(
   };
 }
 
+export function updateRootNodeStyles(
+  layout: UiLayoutDocument,
+  styles: readonly StyleRule[],
+): UiLayoutDocument {
+  return {
+    ...layout,
+    root: {
+      ...layout.root,
+      styles: [...styles],
+    },
+  };
+}
+
+export function updateNestedLayoutRowStyles(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  rowId: string,
+  styles: readonly StyleRule[],
+): UiLayoutDocument {
+  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
+    ...row,
+    styles: [...styles],
+  }));
+}
+
+export function updateNestedLayoutRowDisplayRange(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  rowId: string,
+  patch: Partial<Pick<NestedLayoutRowNode, "displayFrom" | "displayTo">>,
+): UiLayoutDocument {
+  return updateNestedRowAt(layout, columnIndex, rowId, (row) =>
+    stripDisplayRangeIfFull({ ...row, ...patch }),
+  );
+}
+
 export function updateNestedColumnStyles(
   layout: UiLayoutDocument,
   columnIndex: number,
@@ -720,15 +758,35 @@ export function updateComponentRowAt(
   );
 }
 
+function stripDisplayRangeIfFull<
+  T extends {
+    readonly displayFrom?: ResponsiveGridBreakpoint;
+    readonly displayTo?: ResponsiveGridBreakpoint;
+  },
+>(row: T): T {
+  if (!isFullDisplayRange(row.displayFrom, row.displayTo)) {
+    return row;
+  }
+  return Object.fromEntries(
+    Object.entries(row).filter(
+      ([key]) => key !== "displayFrom" && key !== "displayTo",
+    ),
+  ) as T;
+}
+
 export function updateComponentRowMetaAt(
   layout: UiLayoutDocument,
   locator: RowLocator,
   rowId: string,
-  patch: Partial<Pick<ComponentRowNode, "styles" | "motion">>,
+  patch: Partial<
+    Pick<ComponentRowNode, "styles" | "motion" | "displayFrom" | "displayTo">
+  >,
 ): UiLayoutDocument {
   return updateRowsAtLocator(layout, locator, (rows) =>
     rows.map((row) =>
-      row.type === "component" && row.id === rowId ? { ...row, ...patch } : row,
+      row.type === "component" && row.id === rowId
+        ? stripDisplayRangeIfFull({ ...row, ...patch })
+        : row,
     ),
   );
 }

@@ -53,6 +53,13 @@ const stylePropertySchema = z.enum([
   "flexWrap",
   "overflowX",
   "overflowY",
+  "gridColumns",
+  "gridColumnsSm",
+  "gridColumnsMd",
+  "gridColumnsLg",
+  "gridColumnsXl",
+  "gridAutoFitMinWidth",
+  "gridResponsiveMode",
 ]);
 
 const themeTokenSchema = z.enum([
@@ -67,6 +74,8 @@ const themeTokenSchema = z.enum([
   "foreground",
   "transparent",
 ]);
+
+const responsiveGridBreakpointSchema = z.enum(["base", "sm", "md", "lg", "xl"]);
 
 export const styleRuleSchema = z
   .object({
@@ -302,6 +311,8 @@ export const componentRowSchema = z
     component: fieldComponentSchema,
     styles: z.array(styleRuleSchema).optional(),
     motion: motionPresetSchema.optional(),
+    displayFrom: responsiveGridBreakpointSchema.optional(),
+    displayTo: responsiveGridBreakpointSchema.optional(),
   })
   .strict();
 
@@ -329,6 +340,8 @@ export const nestedLayoutRowSchema: z.ZodType<{
   columnCount: number;
   columns: unknown[];
   styles?: unknown[];
+  displayFrom?: "base" | "sm" | "md" | "lg" | "xl";
+  displayTo?: "base" | "sm" | "md" | "lg" | "xl";
 }> = z.lazy(() =>
   z
     .object({
@@ -337,6 +350,8 @@ export const nestedLayoutRowSchema: z.ZodType<{
       columnCount: z.number().int().min(1).max(6),
       columns: z.array(columnNodeSchema).min(1),
       styles: z.array(styleRuleSchema).optional(),
+      displayFrom: responsiveGridBreakpointSchema.optional(),
+      displayTo: responsiveGridBreakpointSchema.optional(),
     })
     .strict()
     .superRefine((value, ctx) => {

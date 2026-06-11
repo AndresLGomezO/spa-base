@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   clampCardsPerRow,
   getEntityCardListGridClass,
+  getEntityCardListGridClassAtBreakpoint,
 } from "./entity-card-list-grid";
 
 describe("getEntityCardListGridClass", () => {
@@ -22,6 +23,17 @@ describe("getEntityCardListGridClass", () => {
     expect(getEntityCardListGridClass(4)).toBe(
       "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4",
     );
+  });
+});
+
+describe("getEntityCardListGridClassAtBreakpoint", () => {
+  it("returns a single grid-cols class for the selected breakpoint", () => {
+    expect(getEntityCardListGridClassAtBreakpoint(3, "base")).toBe(
+      "grid-cols-1",
+    );
+    expect(getEntityCardListGridClassAtBreakpoint(3, "md")).toBe("grid-cols-2");
+    expect(getEntityCardListGridClassAtBreakpoint(3, "lg")).toBe("grid-cols-3");
+    expect(getEntityCardListGridClassAtBreakpoint(4, "xl")).toBe("grid-cols-4");
   });
 });
 

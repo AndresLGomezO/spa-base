@@ -1,10 +1,17 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { ResponsiveGridBreakpoint } from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder.js";
 import { DesignLayoutEditorShell } from "./DesignLayoutEditorShell.js";
+import {
+  DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
+  LayoutPreviewPanel,
+} from "./LayoutPreviewPanel.js";
 import { DockedMetricsStripPreview } from "./DockedMetricsStripPreview.js";
 import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
+import { responsiveGridEditorLabels } from "./responsive-grid-editor-labels.js";
+import { componentDisplayRangeEditorLabels } from "./component-display-range-editor-labels.js";
 import type { UseEntityMetricsLayoutEditorResult } from "./use-entity-metrics-layout-editor.js";
 
 interface EntityMetricsLayoutDesignEditorProps {
@@ -15,6 +22,8 @@ export function EntityMetricsLayoutDesignEditor({
   editor,
 }: EntityMetricsLayoutDesignEditorProps) {
   const { t, i18n } = useTranslation("common");
+  const [previewBreakpoint, setPreviewBreakpoint] =
+    useState<ResponsiveGridBreakpoint>(DEFAULT_LAYOUT_PREVIEW_BREAKPOINT);
 
   const structureLabels = useMemo(() => {
     const styleRules = {
@@ -34,6 +43,9 @@ export function EntityMetricsLayoutDesignEditor({
         vertical: t("entity.viewSettings.stackVertical"),
         horizontal: t("entity.viewSettings.stackHorizontal"),
       },
+      responsiveGrid: responsiveGridEditorLabels(t),
+      displayRange: componentDisplayRangeEditorLabels(t),
+      rowLayoutStyles: t("entity.viewSettings.responsiveGrid.rowLayoutStyles"),
       styleRules,
       motion: motionPresetEditorLabels(t),
       layoutEffects: t("entity.viewSettings.layoutEffects"),
@@ -96,12 +108,19 @@ export function EntityMetricsLayoutDesignEditor({
   return (
     <DesignLayoutEditorShell
       preview={
-        <DockedMetricsStripPreview
-          enabled
-          stripLayout={editor.metricStripLayout}
-          entityDefinition={editor.definition}
-          locale={i18n.language}
-        />
+        <LayoutPreviewPanel
+          title={t("designLayout.metricsPreview")}
+          breakpoint={previewBreakpoint}
+          onBreakpointChange={setPreviewBreakpoint}
+        >
+          <DockedMetricsStripPreview
+            enabled
+            embedded
+            stripLayout={editor.metricStripLayout}
+            entityDefinition={editor.definition}
+            locale={i18n.language}
+          />
+        </LayoutPreviewPanel>
       }
     >
       <EntityCardLayoutBuilder

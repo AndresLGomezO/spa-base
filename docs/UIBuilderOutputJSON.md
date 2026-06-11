@@ -193,7 +193,7 @@ flowchart TB
 | `columns` | `ColumnNode[]` | **yes** | min length `1` |
 | `styles` | `StyleRule[]` | no | see [Style rules](#style-rules) |
 
-**Rendering:** `styles.gap` sets horizontal gap between root columns. Other `styles` apply to the root wrapper; `alignItems` / `justifyContent` map to the root column stack/grid alignment API.
+**Rendering:** `styles.gap` sets horizontal gap between root columns. [Responsive grid](#responsive-grid-layout) style rules control how many columns appear at each viewport breakpoint. Other `styles` apply to the root wrapper; `alignItems` / `justifyContent` map to the root column stack/grid alignment API.
 
 ---
 
@@ -220,8 +220,10 @@ flowchart TB
 | `id` | `string` | **yes** |
 | `component` | `UiComponentConfig` | **yes** |
 | `styles` | `StyleRule[]` | no |
+| `displayFrom` | `"base"` \| `"sm"` \| `"md"` \| `"lg"` \| `"xl"` | no | First breakpoint where row is visible (default: `base`) |
+| `displayTo` | `"base"` \| `"sm"` \| `"md"` \| `"lg"` \| `"xl"` | no | Last breakpoint where row is visible (default: `xl`) |
 
-**Rendering:** `row.styles` → wrapper around the slot. `component.styles` → slot text vs container (see [Style application](#style-application-at-render-time)).
+**Rendering:** `row.styles` → wrapper around the slot. `component.styles` → slot text vs container (see [Style application](#style-application-at-render-time)). [Screen visibility](#screen-visibility) controls which viewport breakpoints render this row.
 
 #### `NestedLayoutRowNode` — `type: "nested-layout"`
 
@@ -232,8 +234,10 @@ flowchart TB
 | `columnCount` | `integer` | **yes** | `1`–`6`, must match `columns.length` |
 | `columns` | `ColumnNode[]` | **yes** | min length `1` |
 | `styles` | `StyleRule[]` | no | |
+| `displayFrom` | `"base"` \| `"sm"` \| `"md"` \| `"lg"` \| `"xl"` | no | First breakpoint where row is visible (default: `base`) |
+| `displayTo` | `"base"` \| `"sm"` \| `"md"` \| `"lg"` \| `"xl"` | no | Last breakpoint where row is visible (default: `xl`) |
 
-**Rendering:** `styles.gap` = horizontal gap between nested columns. Nested columns reuse the same `ColumnNode` shape (recursive).
+**Rendering:** `styles.gap` = horizontal gap between nested columns. [Responsive grid](#responsive-grid-layout) style rules control breakpoint column counts. [Screen visibility](#screen-visibility) controls which viewports render the entire nested row. Nested columns reuse the same `ColumnNode` shape (recursive).
 
 ---
 
@@ -450,6 +454,13 @@ Duplicate `property` entries in one `styles` array: last writer wins in the buil
 | `paddingRight` | numeric string | integer ≥ 0 (px) | Inline `paddingRight` |
 | `padding` | numeric string | integer ≥ 0 (px) | Inline `padding` (all sides) |
 | `gap` | numeric string | integer ≥ 0 (px) | **layout only:** see below |
+| `gridColumns` | numeric string | `"1"`–`"6"` | **layout only:** base (mobile-first) column count |
+| `gridColumnsSm` | numeric string | `"1"`–`"6"` | **layout only:** `sm` (640px+) column count |
+| `gridColumnsMd` | numeric string | `"1"`–`"6"` | **layout only:** `md` (768px+) column count |
+| `gridColumnsLg` | numeric string | `"1"`–`"6"` | **layout only:** `lg` (1024px+) column count |
+| `gridColumnsXl` | numeric string | `"1"`–`"6"` | **layout only:** `xl` (1280px+) column count |
+| `gridAutoFitMinWidth` | numeric string | integer > 0 (px) | **layout only:** auto-fit min track width |
+| `gridResponsiveMode` | enum string | `"fixed"` \| `"auto"` | **layout only:** opt out of auto defaults (`fixed` = legacy fixed grid) |
 | `backgroundColor` | `ThemeToken` | see tokens | |
 | `color` | `ThemeToken` | see tokens | text/value color on components |
 | `fontSize` | numeric string | integer > 0 (px) | Applied as inline `fontSize` on the field value (not a Tailwind class) |
@@ -483,6 +494,93 @@ Duplicate `property` entries in one `styles` array: last writer wins in the buil
 
 Default gap is **0** if omitted (no implicit spacing).
 
+### Responsive grid layout
+
+Responsive grid rules apply only to **`root.styles`** and **`nested-layout` row `styles`** (the horizontal column grid for that layout node). They do not apply to `column.styles` or component rows.
+
+**Resolution priority** (per layout node):
+
+1. **`gridAutoFitMinWidth`** — container-driven wrap: `repeat(auto-fit, minmax(min(100%, Xpx), 1fr))`.
+2. **Explicit `gridColumns*`** — Tailwind responsive classes (`grid-cols-1 md:grid-cols-2`, etc.).
+3. **Auto default** — when `columnCount >= 2`, no auto-fit rule, no explicit `gridColumns*`, and `gridResponsiveMode !== "fixed"`: stack on mobile, scale up on larger breakpoints.
+4. **Legacy fixed grid** — when `columnCount === 1`, `gridResponsiveMode: "fixed"`, or no responsive rules apply: fixed `minmax(0, Nfr)` tracks from `widthPercent`.
+
+**Auto default** (for `columnCount >= 2` with no explicit rules):
+
+| Breakpoint | Columns |
+|------------|---------|
+| base | `1` |
+| `sm` (640px+) | `min(2, columnCount)` |
+| `lg` (1024px+) | `min(3, columnCount)` |
+| `xl` (1280px+) | `columnCount` |
+
+Each resolved count is clamped to `1..min(columnCount, slotCount, 6)`.
+
+**Width percent:** In fixed (legacy) mode, `widthPercent` on columns drives `minmax(0, Nfr)` tracks. In responsive or auto-fit modes, tracks are equal width at each breakpoint and **`widthPercent` is ignored**.
+
+**Example — two form fields side-by-side on tablet/desktop, stacked on mobile** (auto default; no extra rules required):
+
+```json
+{
+  "type": "nested-layout",
+  "id": "row_contract_fields",
+  "columnCount": 2,
+  "styles": [{ "property": "gap", "value": "20" }],
+  "columns": []
+}
+```
+
+Explicit override (stack until `md`, then two columns):
+
+```json
+"styles": [
+  { "property": "gap", "value": "20" },
+  { "property": "gridColumns", "value": "1" },
+  { "property": "gridColumnsMd", "value": "2" }
+]
+```
+
+Prefer responsive grid over legacy `flexWrap` for side-by-side fields; `flexWrap` with `gap` often wraps immediately when column widths plus gap exceed 100%.
+
+### Screen visibility
+
+`displayFrom` and `displayTo` on **`component`** and **`nested-layout`** rows control which viewport breakpoints render that row. Omitted fields mean **all screens** (`base` through `xl`).
+
+Breakpoints match Tailwind defaults:
+
+| Value | Viewport |
+|-------|----------|
+| `base` | Mobile (default, &lt; 640px) |
+| `sm` | 640px+ |
+| `md` | 768px+ (tablet) |
+| `lg` | 1024px+ (desktop) |
+| `xl` | 1280px+ |
+
+The range is **inclusive**. Rows outside the range use `display: none` and do not occupy layout space.
+
+**Example — field visible on tablet and desktop only:**
+
+```json
+{
+  "type": "component",
+  "id": "row_category",
+  "displayFrom": "md",
+  "displayTo": "xl",
+  "component": { "kind": "form-field", "fieldPath": "categoryId" }
+}
+```
+
+**Example — mobile-only row:**
+
+```json
+{
+  "type": "component",
+  "displayFrom": "base",
+  "displayTo": "base",
+  "component": { "kind": "text", "primary": { "type": "static", "value": "Compact hint" } }
+}
+```
+
 ### Style application at render time
 
 | Attachment point | Container styles | Text/value styles | Flex layout (`alignItems`, `justifyContent`, `alignSelf`) |
@@ -490,7 +588,7 @@ Default gap is **0** if omitted (no implicit spacing).
 | `component.styles` | padding, background, border, size, etc. | `color`, `fontSize`, `fontWeight`, `textAlign`, … | `alignSelf`, `alignItems`, `justifyContent` on slot wrapper |
 | `row.styles` (component row) | merged on row wrapper | — | |
 | `column.styles` | column shell | — | stack align/justify |
-| `root.styles` | root wrapper | — | root grid align/justify via `gap` |
+| `root.styles` | root wrapper | — | root grid align/justify via `gap`; responsive grid column counts |
 
 ---
 

@@ -1,6 +1,7 @@
 import { useMemo } from "react";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 import { LayoutPreview } from "@repo/ui-builder-react";
+import { usePreviewBreakpoint } from "@repo/ui-builder-renderer";
 import { Text } from "@repo/ui";
 import type { SerializableEntityDefinition } from "@repo/entities";
 import { useTranslation } from "react-i18next";
@@ -8,6 +9,7 @@ import { useTranslation } from "react-i18next";
 import {
   clampCardsPerRow,
   getEntityCardListGridClass,
+  getEntityCardListGridClassAtBreakpoint,
 } from "../../components/entity/entity-card-list-grid.js";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
@@ -61,15 +63,23 @@ export function EntityCardListLayoutPreview({
 
   const cardsPerRow = clampCardsPerRow(layout.cardsPerRow);
   const previewCount = compact ? 1 : cardsPerRow;
+  const previewBreakpoint = usePreviewBreakpoint();
   const gridClass = compact
     ? "grid-cols-1"
-    : getEntityCardListGridClass(layout.cardsPerRow);
+    : previewBreakpoint !== undefined
+      ? getEntityCardListGridClassAtBreakpoint(
+          layout.cardsPerRow,
+          previewBreakpoint,
+        )
+      : getEntityCardListGridClass(layout.cardsPerRow);
 
   return (
     <div className={compact ? "flex flex-col gap-1.5" : "flex flex-col gap-2"}>
-      <Text className={compact ? "text-sm font-medium" : "font-medium"}>
-        {title}
-      </Text>
+      {title ? (
+        <Text className={compact ? "text-sm font-medium" : "font-medium"}>
+          {title}
+        </Text>
+      ) : null}
       <div
         className={
           compact

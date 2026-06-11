@@ -1,4 +1,5 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
+import type { ResponsiveGridBreakpoint } from "@repo/ui-builder-core";
 import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -11,10 +12,16 @@ import { designLayoutEntityPath } from "../../routing/design-layout-nav.js";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder";
 import { DesignLayoutEditorShell } from "./DesignLayoutEditorShell";
 import {
+  DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
+  LayoutPreviewPanel,
+} from "./LayoutPreviewPanel";
+import {
   useEntityMainPageLayoutEditor,
   type UseEntityMainPageLayoutEditorResult,
 } from "./use-entity-main-page-layout-editor";
 import { createEntityMainPageRenderContext } from "./create-entity-main-page-render-context";
+import { responsiveGridEditorLabels } from "./responsive-grid-editor-labels";
+import { componentDisplayRangeEditorLabels } from "./component-display-range-editor-labels";
 
 interface EntityMainPageLayoutDesignEditorProps {
   readonly entityName: EntityName;
@@ -28,6 +35,8 @@ export function EntityMainPageLayoutDesignEditor({
   const { t, i18n } = useTranslation("common");
   const internalEditor = useEntityMainPageLayoutEditor(entityName);
   const editor = editorProp ?? internalEditor;
+  const [previewBreakpoint, setPreviewBreakpoint] =
+    useState<ResponsiveGridBreakpoint>(DEFAULT_LAYOUT_PREVIEW_BREAKPOINT);
 
   const metricStripLayoutForPreview = useMemo(() => {
     const tableView = editor.definition.ui.views.find(
@@ -49,6 +58,9 @@ export function EntityMainPageLayoutDesignEditor({
         vertical: t("entity.viewSettings.stackVertical"),
         horizontal: t("entity.viewSettings.stackHorizontal"),
       },
+      responsiveGrid: responsiveGridEditorLabels(t),
+      displayRange: componentDisplayRangeEditorLabels(t),
+      rowLayoutStyles: t("entity.viewSettings.responsiveGrid.rowLayoutStyles"),
       styleRules: {
         addStyleRule: t("entity.viewSettings.addStyleRule"),
         removeStyleRule: t("entity.viewSettings.removeStyleRule"),
@@ -151,15 +163,16 @@ export function EntityMainPageLayoutDesignEditor({
   );
 
   const preview = (
-    <div className="bg-card border-border rounded-lg border p-4">
-      <Text className="text-muted-foreground mb-3 text-sm">
-        {t("entity.viewSettings.preview")}
-      </Text>
+    <LayoutPreviewPanel
+      title={t("entity.viewSettings.preview")}
+      breakpoint={previewBreakpoint}
+      onBreakpointChange={setPreviewBreakpoint}
+    >
       <RecursiveLayoutRenderer
         layout={editor.layout}
         context={previewContext}
       />
-    </div>
+    </LayoutPreviewPanel>
   );
 
   return (

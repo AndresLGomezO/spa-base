@@ -15,6 +15,8 @@ import {
   updateComponentRowMetaAt,
   updateNestedColumnStackDirection,
   updateNestedColumnStyles,
+  updateNestedLayoutRowStyles,
+  updateNestedLayoutRowDisplayRange,
   type NestedLayoutRowNode,
   type ComponentRowNode,
   type RowLocator,
@@ -51,6 +53,10 @@ import {
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
 import {
+  filterStyleRulesForGenericEditor,
+  isResponsiveGridStyleProperty,
+} from "./responsive-grid-state.js";
+import {
   LayoutJsonImportDialog,
   type LayoutJsonImportLabels,
 } from "./LayoutJsonImportDialog.js";
@@ -63,6 +69,14 @@ import {
   InsertPresetDialog,
   type LayoutPresetInsertLabels,
 } from "./InsertPresetDialog.js";
+import {
+  ResponsiveGridEditor,
+  type ResponsiveGridEditorLabels,
+} from "./ResponsiveGridEditor.js";
+import {
+  ComponentDisplayRangeEditor,
+  type ComponentDisplayRangeEditorLabels,
+} from "./ComponentDisplayRangeEditor.js";
 import type {
   CreateUiBuilderPresetInput,
   UiBuilderPresetRecord,
@@ -82,6 +96,9 @@ export interface ColumnRowsEditorLabels extends LayoutColumnControlsLabels {
   readonly motion?: MotionPresetEditorLabels;
   readonly rowStyles?: string;
   readonly rowEffects?: string;
+  readonly rowLayoutStyles?: string;
+  readonly responsiveGrid: ResponsiveGridEditorLabels;
+  readonly displayRange: ComponentDisplayRangeEditorLabels;
   readonly componentEditor: ComponentConfigEditorLabels;
   readonly layoutJsonImport: LayoutJsonImportLabels;
 }
@@ -336,6 +353,16 @@ export function ColumnRowsEditor({
                   )
                 }
               />
+              <ComponentDisplayRangeEditor
+                displayFrom={row.displayFrom}
+                displayTo={row.displayTo}
+                labels={labels.displayRange}
+                onChange={(patch) =>
+                  onLayoutChange(
+                    updateComponentRowMetaAt(layout, locator, row.id, patch),
+                  )
+                }
+              />
               {labels.motion ? (
                 <CollapsibleSection
                   title={labels.rowEffects}
@@ -545,6 +572,59 @@ function NestedLayoutRowEditor({
           setActiveColumn((current) =>
             Math.min(row.columns.length - 2, current),
           );
+        }}
+      />
+
+      <ComponentDisplayRangeEditor
+        displayFrom={row.displayFrom}
+        displayTo={row.displayTo}
+        labels={labels.displayRange}
+        onChange={(patch) =>
+          onLayoutChange(
+            updateNestedLayoutRowDisplayRange(
+              layout,
+              rootColumnIndex,
+              row.id,
+              patch,
+            ),
+          )
+        }
+      />
+
+      {row.columnCount >= 1 ? (
+        <ResponsiveGridEditor
+          styles={row.styles}
+          columnCount={row.columnCount}
+          labels={labels.responsiveGrid}
+          onChange={(styles) =>
+            onLayoutChange(
+              updateNestedLayoutRowStyles(
+                layout,
+                rootColumnIndex,
+                row.id,
+                styles,
+              ),
+            )
+          }
+        />
+      ) : null}
+
+      <StyleRulesEditor
+        styles={filterStyleRulesForGenericEditor(row.styles)}
+        onChange={(genericStyles) => {
+          const gridStyles = (row.styles ?? []).filter((rule) =>
+            isResponsiveGridStyleProperty(rule.property),
+          );
+          onLayoutChange(
+            updateNestedLayoutRowStyles(layout, rootColumnIndex, row.id, [
+              ...genericStyles,
+              ...gridStyles,
+            ]),
+          );
+        }}
+        labels={{
+          ...labels.styleRules,
+          title: labels.rowLayoutStyles ?? labels.rowStyles,
         }}
       />
 

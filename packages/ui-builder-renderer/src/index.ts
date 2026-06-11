@@ -18,3 +18,8 @@ export {
   RecursiveLayoutRenderer,
   type RecursiveLayoutRendererProps,
 } from "./layout/RecursiveLayoutRenderer.js";
+export {
+  PreviewBreakpointProvider,
+  usePreviewBreakpoint,
+  type PreviewBreakpointProviderProps,
+} from "./preview-breakpoint-context.js";

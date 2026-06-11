@@ -62,7 +62,7 @@ export function EntityExpandableTableLayoutPreview({
 
   return (
     <div className="flex flex-col gap-2">
-      <Text className="font-medium">{title}</Text>
+      {title ? <Text className="font-medium">{title}</Text> : null}
       <TableCard className="w-full overflow-hidden">
         <div className="overflow-x-auto">
           <Table>

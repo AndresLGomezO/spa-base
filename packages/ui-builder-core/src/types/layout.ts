@@ -1,6 +1,7 @@
 import type { StyleRule } from "../styles/style-types.js";
 import type { UiComponentConfig } from "./component.js";
 import type { MotionPreset } from "./motion.js";
+import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
 
 export type LayoutAlign = "start" | "center" | "end" | "stretch";
 
@@ -40,6 +41,8 @@ export interface ComponentRowNode {
   readonly component: UiComponentConfig;
   readonly styles?: readonly StyleRule[];
   readonly motion?: MotionPreset;
+  readonly displayFrom?: ResponsiveGridBreakpoint;
+  readonly displayTo?: ResponsiveGridBreakpoint;
 }
 
 export interface NestedLayoutRowNode {
@@ -48,6 +51,8 @@ export interface NestedLayoutRowNode {
   readonly columnCount: number;
   readonly columns: readonly ColumnNode[];
   readonly styles?: readonly StyleRule[];
+  readonly displayFrom?: ResponsiveGridBreakpoint;
+  readonly displayTo?: ResponsiveGridBreakpoint;
 }
 
 export function resolveColumnStackDirection(

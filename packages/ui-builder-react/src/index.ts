@@ -30,6 +30,16 @@ export {
   type ComponentConfigEditorProps,
 } from "./components/ComponentConfigEditor.js";
 export {
+  ComponentDisplayRangeEditor,
+  type ComponentDisplayRangeEditorLabels,
+  type ComponentDisplayRangeEditorProps,
+} from "./components/ComponentDisplayRangeEditor.js";
+export {
+  ResponsiveGridEditor,
+  type ResponsiveGridEditorLabels,
+  type ResponsiveGridEditorProps,
+} from "./components/ResponsiveGridEditor.js";
+export {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
   type StyleRulesEditorProps,

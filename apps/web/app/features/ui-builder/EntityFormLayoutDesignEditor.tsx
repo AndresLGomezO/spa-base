@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
+import type { ResponsiveGridBreakpoint } from "@repo/ui-builder-core";
 import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
 import { useTranslation } from "react-i18next";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
@@ -34,7 +35,15 @@ import { WizardProgress } from "../../components/forms/WizardProgress";
 import { WizardStepHost } from "../../components/forms/WizardStepHost";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder";
 import { DesignLayoutEditorShell } from "./DesignLayoutEditorShell";
+import {
+  DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
+  LayoutPreviewBreakpointSelect,
+  LayoutPreviewPanel,
+  LayoutPreviewViewport,
+} from "./LayoutPreviewPanel";
 import { createEntityFormRenderContext } from "./create-entity-form-render-context";
+import { responsiveGridEditorLabels } from "./responsive-grid-editor-labels";
+import { componentDisplayRangeEditorLabels } from "./component-display-range-editor-labels";
 import {
   useEntityFormLayoutEditor,
   type UseEntityFormLayoutEditorResult,
@@ -61,6 +70,8 @@ export function EntityFormLayoutDesignEditor({
     buildInitialValues(editor.definition, "create"),
   );
   const [previewModalOpen, setPreviewModalOpen] = useState(false);
+  const [previewBreakpoint, setPreviewBreakpoint] =
+    useState<ResponsiveGridBreakpoint>(DEFAULT_LAYOUT_PREVIEW_BREAKPOINT);
 
   const usesDesignedModalFooter =
     editor.modalFooterLayout != null ||
@@ -130,6 +141,9 @@ export function EntityFormLayoutDesignEditor({
         vertical: t("entity.viewSettings.stackVertical"),
         horizontal: t("entity.viewSettings.stackHorizontal"),
       },
+      responsiveGrid: responsiveGridEditorLabels(t),
+      displayRange: componentDisplayRangeEditorLabels(t),
+      rowLayoutStyles: t("entity.viewSettings.responsiveGrid.rowLayoutStyles"),
       styleRules: {
         addStyleRule: t("entity.viewSettings.addStyleRule"),
         removeStyleRule: t("entity.viewSettings.removeStyleRule"),
@@ -602,11 +616,11 @@ export function EntityFormLayoutDesignEditor({
   const preview = (
     <div className="flex flex-col gap-3">
       {wizardPreviewControls}
-      <div className="bg-card border-border rounded-lg border p-4">
-        <div className="mb-3 flex items-center justify-between gap-2">
-          <Text className="text-muted-foreground text-sm">
-            {t("entity.viewSettings.preview")}
-          </Text>
+      <LayoutPreviewPanel
+        title={t("entity.viewSettings.preview")}
+        breakpoint={previewBreakpoint}
+        onBreakpointChange={setPreviewBreakpoint}
+        actions={
           <Button
             type="button"
             size="sm"
@@ -615,7 +629,8 @@ export function EntityFormLayoutDesignEditor({
           >
             {t("designLayout.openFormPreview")}
           </Button>
-        </div>
+        }
+      >
         <FormModal
           variant="inline"
           open
@@ -630,7 +645,7 @@ export function EntityFormLayoutDesignEditor({
         >
           {formPreviewContent}
         </FormModal>
-      </div>
+      </LayoutPreviewPanel>
     </div>
   );
 
@@ -894,7 +909,15 @@ export function EntityFormLayoutDesignEditor({
         contentPadding={previewContentPadding}
         footer={usesDesignedModalFooter ? previewFooter : undefined}
       >
-        {formPreviewContent}
+        <div className="flex flex-col gap-3">
+          <LayoutPreviewBreakpointSelect
+            breakpoint={previewBreakpoint}
+            onBreakpointChange={setPreviewBreakpoint}
+          />
+          <LayoutPreviewViewport breakpoint={previewBreakpoint}>
+            {formPreviewContent}
+          </LayoutPreviewViewport>
+        </div>
       </FormModal>
     </>
   );

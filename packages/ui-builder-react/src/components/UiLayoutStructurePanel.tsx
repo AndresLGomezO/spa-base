@@ -10,6 +10,7 @@ import {
   updateRootColumnStackDirection,
   type MotionPreset,
   updateRootColumnStyles,
+  updateRootNodeStyles,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { Text } from "@repo/ui";
@@ -71,6 +72,15 @@ import {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
+import {
+  ResponsiveGridEditor,
+  type ResponsiveGridEditorLabels,
+} from "./ResponsiveGridEditor.js";
+import type { ComponentDisplayRangeEditorLabels } from "./ComponentDisplayRangeEditor.js";
+import {
+  filterStyleRulesForGenericEditor,
+  isResponsiveGridStyleProperty,
+} from "./responsive-grid-state.js";
 
 export interface UiLayoutStructurePanelLabels extends LayoutColumnControlsLabels {
   readonly structure: string;
@@ -81,6 +91,9 @@ export interface UiLayoutStructurePanelLabels extends LayoutColumnControlsLabels
   readonly motion?: MotionPresetEditorLabels;
   readonly layoutEffects?: string;
   readonly rowStyles?: string;
+  readonly rowLayoutStyles?: string;
+  readonly responsiveGrid: ResponsiveGridEditorLabels;
+  readonly displayRange: ComponentDisplayRangeEditorLabels;
   readonly rowEffects?: string;
   readonly componentEditor: ComponentConfigEditorLabels;
   readonly addRow: string;
@@ -186,6 +199,9 @@ export function UiLayoutStructurePanel({
     styleRules: labels.styleRules,
     motion: labels.motion,
     rowStyles: labels.rowStyles,
+    rowLayoutStyles: labels.rowLayoutStyles,
+    responsiveGrid: labels.responsiveGrid,
+    displayRange: labels.displayRange,
     rowEffects: labels.rowEffects,
     componentEditor: labels.componentEditor,
     layoutJsonImport: labels.layoutJsonImport,
@@ -326,6 +342,33 @@ export function UiLayoutStructurePanel({
           <span>{labels.showActions}</span>
         </label>
       ) : null}
+
+      {layout.root.columnCount >= 1 ? (
+        <ResponsiveGridEditor
+          styles={layout.root.styles}
+          columnCount={layout.root.columnCount}
+          labels={labels.responsiveGrid}
+          onChange={(styles) =>
+            onLayoutChange(updateRootNodeStyles(layout, styles))
+          }
+        />
+      ) : null}
+
+      <StyleRulesEditor
+        styles={filterStyleRulesForGenericEditor(layout.root.styles)}
+        onChange={(genericStyles) => {
+          const gridStyles = (layout.root.styles ?? []).filter((rule) =>
+            isResponsiveGridStyleProperty(rule.property),
+          );
+          onLayoutChange(
+            updateRootNodeStyles(layout, [...genericStyles, ...gridStyles]),
+          );
+        }}
+        labels={{
+          ...labels.styleRules,
+          title: labels.rowLayoutStyles ?? labels.styleRules.title,
+        }}
+      />
 
       {labels.motion ? (
         <CollapsibleSection title={labels.layoutEffects} defaultOpen={false}>

@@ -1,6 +1,9 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { updateLayoutMeta } from "@repo/ui-builder-core";
-import type { MotionEntrance } from "@repo/ui-builder-core";
+import type {
+  MotionEntrance,
+  ResponsiveGridBreakpoint,
+} from "@repo/ui-builder-core";
 import { SegmentedSwitch, Text, type SegmentedSwitchOption } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
@@ -13,6 +16,10 @@ import {
   MIN_CARDS_PER_ROW,
 } from "../../components/entity/entity-card-list-grid.js";
 import { EntityCardLayoutBuilder } from "./EntityCardLayoutBuilder.js";
+import {
+  DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
+  LayoutPreviewPanel,
+} from "./LayoutPreviewPanel.js";
 import { DockedCardLayoutPreview } from "./DockedCardLayoutPreview.js";
 import { DockedExpandableTableLayoutPreview } from "./DockedExpandableTableLayoutPreview.js";
 import { EntityListTableLayoutPreview } from "./EntityListTableLayoutPreview.js";
@@ -23,6 +30,8 @@ import {
   type UseEntityListLayoutEditorResult,
 } from "./use-entity-list-layout-editor.js";
 import { motionPresetEditorLabels } from "./ui-builder-motion-labels.js";
+import { responsiveGridEditorLabels } from "./responsive-grid-editor-labels.js";
+import { componentDisplayRangeEditorLabels } from "./component-display-range-editor-labels.js";
 
 const CARDS_PER_ROW_SELECT_CLASS =
   "border-input bg-background ring-offset-background focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
@@ -49,6 +58,8 @@ export function EntityListLayoutDesignEditor({
   const { getDefinition } = useEntityCatalog();
   const internalEditor = useEntityListLayoutEditor(entityName);
   const editor = editorProp ?? internalEditor;
+  const [previewBreakpoint, setPreviewBreakpoint] =
+    useState<ResponsiveGridBreakpoint>(DEFAULT_LAYOUT_PREVIEW_BREAKPOINT);
 
   const viewTypeOptions = useMemo(
     (): readonly SegmentedSwitchOption<
@@ -90,6 +101,9 @@ export function EntityListLayoutDesignEditor({
         vertical: t("entity.viewSettings.stackVertical"),
         horizontal: t("entity.viewSettings.stackHorizontal"),
       },
+      responsiveGrid: responsiveGridEditorLabels(t),
+      displayRange: componentDisplayRangeEditorLabels(t),
+      rowLayoutStyles: t("entity.viewSettings.responsiveGrid.rowLayoutStyles"),
       styleRules,
       motion: motionPresetEditorLabels(t),
       layoutEffects: t("entity.viewSettings.layoutEffects"),
@@ -167,11 +181,13 @@ export function EntityListLayoutDesignEditor({
     );
   };
 
+  const previewTitle = t("entity.viewSettings.preview");
+
   const cardPreviewProps = {
     layout: editor.layout,
     definition: editor.definition,
     previewItem,
-    title: t("entity.viewSettings.preview"),
+    title: "",
     locale: i18n.language,
     getDefinition,
   };
@@ -185,7 +201,7 @@ export function EntityListLayoutDesignEditor({
             tableFields={editor.tableFields}
             showActions={editor.tableShowActions}
             previewItem={previewItem}
-            title={t("entity.viewSettings.preview")}
+            title=""
             locale={i18n.language}
           />
         );
@@ -198,13 +214,15 @@ export function EntityListLayoutDesignEditor({
             rowExpandLayout={editor.rowExpandLayout}
             showActions={editor.expandableShowActions}
             previewItem={previewItem}
-            title={t("entity.viewSettings.preview")}
+            title=""
             locale={i18n.language}
             getDefinition={getDefinition}
           />
         );
       case "card":
-        return <DockedCardLayoutPreview enabled {...cardPreviewProps} />;
+        return (
+          <DockedCardLayoutPreview enabled {...cardPreviewProps} title="" />
+        );
     }
   })();
 
@@ -224,7 +242,13 @@ export function EntityListLayoutDesignEditor({
               : editor.viewType
         }
       >
-        {listPreview}
+        <LayoutPreviewPanel
+          title={previewTitle}
+          breakpoint={previewBreakpoint}
+          onBreakpointChange={setPreviewBreakpoint}
+        >
+          {listPreview}
+        </LayoutPreviewPanel>
       </div>
 
       <div className="flex flex-col gap-2">

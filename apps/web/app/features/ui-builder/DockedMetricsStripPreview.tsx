@@ -15,6 +15,8 @@ interface DockedMetricsStripPreviewProps {
   readonly stripLayout: UiLayoutDocument;
   readonly entityDefinition: SerializableEntityDefinition;
   readonly locale: string;
+  /** When true, omits outer card chrome (parent provides LayoutPreviewPanel). */
+  readonly embedded?: boolean;
 }
 
 export function DockedMetricsStripPreview({
@@ -22,6 +24,7 @@ export function DockedMetricsStripPreview({
   stripLayout,
   entityDefinition,
   locale,
+  embedded = false,
 }: DockedMetricsStripPreviewProps) {
   const { t } = useTranslation("common");
 
@@ -41,22 +44,27 @@ export function DockedMetricsStripPreview({
 
   const hasContent = metricStripHasContent(stripLayout);
 
+  const previewBody = hasContent ? (
+    <RecursiveLayoutRenderer layout={stripLayout} context={previewContext} />
+  ) : (
+    <Text variant="muted" className="text-sm">
+      {t("entity.viewSettings.addSlot")}
+    </Text>
+  );
+
+  if (embedded) {
+    return (
+      <DockedLayoutPreview enabled={enabled}>{previewBody}</DockedLayoutPreview>
+    );
+  }
+
   return (
     <DockedLayoutPreview enabled={enabled}>
       <div className="bg-card border-border rounded-lg border p-4">
         <Text className="text-muted-foreground mb-3 text-sm">
           {t("designLayout.metricsPreview")}
         </Text>
-        {hasContent ? (
-          <RecursiveLayoutRenderer
-            layout={stripLayout}
-            context={previewContext}
-          />
-        ) : (
-          <Text variant="muted" className="text-sm">
-            {t("entity.viewSettings.addSlot")}
-          </Text>
-        )}
+        {previewBody}
       </div>
     </DockedLayoutPreview>
   );
