@@ -1,9 +1,9 @@
-import { Button, IconButton } from "@repo/ui";
-import { Settings } from "lucide-react";
+import { Button } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { LayoutPreviewBreakpointSwitcher } from "../ui-builder/LayoutPreviewPanel";
-import { useFormDesigner } from "./FormDesignerProvider";
+import { useFormDesigner } from "./form-designer-context";
+import { FormDesignerHeaderSettingsMenu } from "./FormDesignerHeaderSettingsMenu";
 
 export function FormDesignerHeaderActions() {
   const { t } = useTranslation("common");
@@ -24,14 +24,7 @@ export function FormDesignerHeaderActions() {
         breakpoint={previewBreakpoint}
         onBreakpointChange={setPreviewBreakpoint}
       />
-      <IconButton
-        type="button"
-        label={t("formDesigner.settings")}
-        size="sm"
-        disabled
-      >
-        <Settings className="size-4" />
-      </IconButton>
+      <FormDesignerHeaderSettingsMenu />
     </div>
   );
 }

@@ -77,19 +77,100 @@
       "fullDescription": "Ancho completo"
     },
     "settings": "Configuración",
+    "headerTools": {
+      "title": "Herramientas del formulario",
+      "view": "Ver",
+      "import": "Importar"
+    },
     "tabs": {
       "ariaLabel": "Secciones del diseñador de formularios",
       "settings": "Configuración",
       "layout": "Layout",
-      "components": "Componentes",
-      "layoutTabPlaceholder": "El editor de layout estará disponible pronto.",
-      "componentsTabPlaceholder": "El editor de componentes estará disponible pronto.",
-      "layoutPreviewPlaceholder": "La vista previa del layout aparecerá aquí cuando el editor de layout esté disponible.",
-      "componentsPreviewPlaceholder": "La vista previa de componentes aparecerá aquí cuando el editor de componentes esté disponible."
+      "components": "Componentes"
+    },
+    "layout": {
+      "columnPanelTitle": "Columna {{column}}",
+      "columnPanel": {
+        "jsonTitleColumn": "Importar JSON de columna",
+        "jsonViewTitleColumn": "JSON de columna",
+        "missingColumn": "Columna no encontrada.",
+        "tools": {
+          "gear": "Herramientas",
+          "insert": "Insertar",
+          "save": "Guardar",
+          "view": "Ver",
+          "import": "Importar"
+        }
+      },
+      "moveColumnLeft": "Mover columna a la izquierda",
+      "moveColumnRight": "Mover columna a la derecha",
+      "removeColumn": "Eliminar columna {{column}}",
+      "selectColumn": "Editar columna {{column}}"
+    },
+    "components": {
+      "panelTitle": "Estructura",
+      "expandPanel": "Expandir panel de estructura",
+      "collapsePanel": "Contraer panel de estructura",
+      "emptyColumn": "Aún no hay componentes en esta columna.",
+      "nestedLayout": "Diseño anidado ({{count}} columnas)",
+      "section": "Sección",
+      "actions": "Acciones",
+      "insertAbove": "Añadir componente encima de {{label}}",
+      "insertBelow": "Añadir componente debajo de {{label}}",
+      "insertInColumn": "Añadir componente a {{label}}",
+      "modalTitle": "Añadir componente",
+      "modalCancel": "Cancelar",
+      "wizardScopeShell": "Carcasa",
+      "wizardScopeStep": "Contenido del paso",
+      "wizardScopeFooter": "Pie",
+      "wizardScopeContent": "Contenido",
+      "wizardScopeAriaLabel": "Ámbito del árbol de estructura",
+      "wizardStepLabel": "Paso",
+      "expandNode": "Expandir {{label}}",
+      "collapseNode": "Contraer {{label}}",
+      "selectRow": "Editar componente",
+      "deleteRow": "Eliminar componente",
+      "rowPanel": {
+        "missingRow": "Componente no encontrado.",
+        "tools": {
+          "gear": "Herramientas",
+          "insert": "Insertar",
+          "save": "Guardar",
+          "view": "Ver",
+          "import": "Importar"
+        }
+      },
+      "sections": {
+        "layout": "Componentes de diseño",
+        "content": "Componentes de contenido",
+        "form": "Componentes de formulario"
+      },
+      "options": {
+        "nestedLayout": "Columna anidada",
+        "text": "Texto",
+        "image": "Imagen",
+        "icon": "Icono",
+        "date": "Fecha",
+        "numeric": "Número",
+        "badge": "Insignia",
+        "formField": "Campo de formulario",
+        "entityFieldSelector": "Campo seleccionable",
+        "formSection": "Sección de formulario",
+        "formActions": "Acciones del formulario",
+        "wizardProgress": "Progreso del asistente",
+        "wizardStepHost": "Contenedor de paso",
+        "wizardActions": "Acciones del asistente"
+      }
     },
     "unsavedChanges": {
       "title": "Cambios sin guardar",
       "message": "Tienes cambios de configuración sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
+      "layoutMessage": "Tienes cambios de layout sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
+      "componentsMessage": "Tienes cambios de componentes sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
+      "columnPanelMessage": "Tienes cambios sin guardar en la columna. Guárdalos para conservar tus ediciones o descártalos para revertir.",
+      "columnPanelSave": "Guardar cambios de columna",
+      "componentRowPanelMessage": "Tienes cambios sin guardar en el componente. Guárdalos para conservar tus ediciones o descártalos para revertir.",
+      "componentRowPanelSave": "Guardar cambios del componente",
       "save": "Guardar cambios",
       "discard": "Descartar cambios",
       "keepEditing": "Seguir editando"
@@ -410,7 +491,6 @@
         "breakpointMd": "Mediano (768px+)",
         "breakpointLg": "Grande (1024px+)",
         "breakpointXl": "Extra grande (1280px+)",
-        "stackOnMobilePreset": "Aplicar apilar en móvil",
         "rowLayoutStyles": "Estilos de fila"
       },
       "displayRange": {
@@ -482,7 +562,7 @@
       "slotColumns": "Columnas de la celda",
       "cardsPerRow": "Máximo de tarjetas por fila",
       "columnTab": "Columna {{column}}",
-      "columnWidthPercent": "Ancho de columna (%)",
+      "columnWidthPercent": "Ancho (%)",
       "columnWidthAutoHint": "{{percent}}% (automático)",
       "emptyColumn": "Aún no hay celdas en esta columna.",
       "moveSlotUp": "Mover celda arriba",

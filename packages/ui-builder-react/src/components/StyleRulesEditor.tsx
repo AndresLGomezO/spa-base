@@ -30,6 +30,7 @@ export interface StyleRulesEditorLabels {
   readonly title?: string;
   readonly rowStyles?: string;
   readonly addStyleRule: string;
+  readonly saveStyleRule?: string;
   readonly removeStyleRule: string;
   readonly styleProperty: string;
   readonly styleValue: string;

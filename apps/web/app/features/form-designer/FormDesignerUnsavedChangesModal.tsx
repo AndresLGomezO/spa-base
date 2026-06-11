@@ -1,17 +1,37 @@
 import { Button, Modal, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
-import { useFormDesigner } from "./FormDesignerProvider";
+import { useFormDesigner } from "./form-designer-context";
 
 export function FormDesignerUnsavedChangesModal() {
   const { t } = useTranslation("common");
   const {
     unsavedChangesOpen,
+    unsavedTabId,
+    unsavedReason,
     editor,
     confirmUnsavedSave,
     confirmUnsavedDiscard,
     cancelUnsavedChanges,
   } = useFormDesigner();
+
+  const messageKey =
+    unsavedReason === "columnPanel"
+      ? "formDesigner.unsavedChanges.columnPanelMessage"
+      : unsavedReason === "componentRowPanel"
+        ? "formDesigner.unsavedChanges.componentRowPanelMessage"
+        : unsavedTabId === "layout"
+          ? "formDesigner.unsavedChanges.layoutMessage"
+          : unsavedTabId === "components"
+            ? "formDesigner.unsavedChanges.componentsMessage"
+            : "formDesigner.unsavedChanges.message";
+
+  const saveLabelKey =
+    unsavedReason === "columnPanel"
+      ? "formDesigner.unsavedChanges.columnPanelSave"
+      : unsavedReason === "componentRowPanel"
+        ? "formDesigner.unsavedChanges.componentRowPanelSave"
+        : "formDesigner.unsavedChanges.save";
 
   return (
     <Modal
@@ -19,20 +39,16 @@ export function FormDesignerUnsavedChangesModal() {
       onClose={cancelUnsavedChanges}
       title={t("formDesigner.unsavedChanges.title")}
     >
-      <Text>{t("formDesigner.unsavedChanges.message")}</Text>
+      <Text>{t(messageKey)}</Text>
       <div className="flex flex-wrap items-center gap-3">
         <Button
           type="button"
-          loading={editor.isSaving}
+          loading={unsavedReason === "tab" ? editor.isSaving : false}
           onClick={() => void confirmUnsavedSave()}
         >
-          {t("formDesigner.unsavedChanges.save")}
+          {t(saveLabelKey)}
         </Button>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={confirmUnsavedDiscard}
-        >
+        <Button type="button" variant="outline" onClick={confirmUnsavedDiscard}>
           {t("formDesigner.unsavedChanges.discard")}
         </Button>
         <Button type="button" variant="ghost" onClick={cancelUnsavedChanges}>

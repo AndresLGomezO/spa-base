@@ -27,8 +27,10 @@ export function ThirdRailProvider({
 
   const close = useCallback(() => {
     const current = optionsRef.current;
-    current?.onClose?.();
-    setOptions(null);
+    const shouldClose = current?.onClose?.() !== false;
+    if (shouldClose) {
+      setOptions(null);
+    }
   }, []);
 
   const open = useCallback((next: OpenThirdRailOptions) => {

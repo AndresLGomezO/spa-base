@@ -13,6 +13,7 @@ import {
   setRootColumnCount,
   setRootColumnWidthPercent,
   updateComponentRowMetaAt,
+  updateRootColumnDisplayRange,
 } from "./mutations.js";
 
 describe("addComponentRowAt", () => {
@@ -134,6 +135,31 @@ describe("setRootColumnWidthPercent", () => {
     const layout = setRootColumnWidthPercent(createEmptyLayout(2), 0, 30);
     const next = setRootColumnWidthPercent(layout, 0, undefined);
     expect(next.root.columns[0]?.widthPercent).toBeUndefined();
+  });
+});
+
+describe("updateRootColumnDisplayRange", () => {
+  it("sets displayFrom and displayTo on a root column", () => {
+    const layout = createEmptyLayout(2);
+    const next = updateRootColumnDisplayRange(layout, 1, {
+      displayFrom: "md",
+      displayTo: "xl",
+    });
+    expect(next.root.columns[1]?.displayFrom).toBe("md");
+    expect(next.root.columns[1]?.displayTo).toBe("xl");
+  });
+
+  it("strips display range when set to all screens", () => {
+    let layout = updateRootColumnDisplayRange(createEmptyLayout(1), 0, {
+      displayFrom: "base",
+      displayTo: "xl",
+    });
+    layout = updateRootColumnDisplayRange(layout, 0, {
+      displayFrom: "base",
+      displayTo: "xl",
+    });
+    expect(layout.root.columns[0]?.displayFrom).toBeUndefined();
+    expect(layout.root.columns[0]?.displayTo).toBeUndefined();
   });
 });
 

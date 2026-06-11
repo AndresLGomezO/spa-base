@@ -3,7 +3,9 @@ import { describe, expect, it } from "vitest";
 import type { ColumnNode } from "../types/layout.js";
 import {
   buildGridTemplateColumnsFromPercents,
+  resolveColumnWidthPercentInput,
   resolveColumnWidthPercents,
+  resolveMaxColumnWidthPercent,
 } from "./resolve-column-width-percents.js";
 
 function col(widthPercent?: number): ColumnNode {
@@ -42,6 +44,30 @@ describe("resolveColumnWidthPercents", () => {
 
   it("keeps values when all explicit and sum is 100", () => {
     expect(resolveColumnWidthPercents([col(20), col(80)])).toEqual([20, 80]);
+  });
+});
+
+describe("resolveMaxColumnWidthPercent", () => {
+  it("returns remaining width when other columns are explicit", () => {
+    expect(resolveMaxColumnWidthPercent([col(30), col()], 1)).toBe(70);
+    expect(resolveMaxColumnWidthPercent([col(20), col(30), col()], 2)).toBe(50);
+  });
+
+  it("returns 100 when no other explicit widths exist", () => {
+    expect(resolveMaxColumnWidthPercent([col(), col()], 0)).toBe(100);
+  });
+});
+
+describe("resolveColumnWidthPercentInput", () => {
+  it("clamps input to the max allowed for the column", () => {
+    expect(resolveColumnWidthPercentInput([col(70), col()], 1, 50)).toBe(30);
+    expect(resolveColumnWidthPercentInput([col(70), col()], 1, 80)).toBe(30);
+  });
+
+  it("returns undefined for auto width", () => {
+    expect(resolveColumnWidthPercentInput([col(70), col()], 1, undefined)).toBe(
+      undefined,
+    );
   });
 });
 

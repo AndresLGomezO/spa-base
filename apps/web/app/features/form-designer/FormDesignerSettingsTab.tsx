@@ -9,7 +9,7 @@ import type { FormModalSize, FormPresentation } from "@repo/entities";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import { useFormDesigner } from "./FormDesignerProvider";
+import { useFormDesigner } from "./form-designer-context";
 import { FormDesignerPreview } from "./FormDesignerPreview";
 
 export function FormDesignerSettingsTab() {

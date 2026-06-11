@@ -322,6 +322,8 @@ export const columnNodeSchema: z.ZodType<{
   stackDirection?: "column" | "row";
   widthPercent?: number;
   styles?: unknown[];
+  displayFrom?: "base" | "sm" | "md" | "lg" | "xl";
+  displayTo?: "base" | "sm" | "md" | "lg" | "xl";
 }> = z.lazy(() =>
   z
     .object({
@@ -330,6 +332,8 @@ export const columnNodeSchema: z.ZodType<{
       stackDirection: z.enum(["column", "row"]).optional(),
       widthPercent: z.number().int().min(1).max(100).optional(),
       styles: z.array(styleRuleSchema).optional(),
+      displayFrom: responsiveGridBreakpointSchema.optional(),
+      displayTo: responsiveGridBreakpointSchema.optional(),
     })
     .strict(),
 );

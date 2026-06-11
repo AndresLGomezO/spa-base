@@ -521,6 +521,55 @@ export function updateNestedColumnStyles(
   }));
 }
 
+export function updateRootColumnDisplayRange(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  patch: Partial<Pick<ColumnNode, "displayFrom" | "displayTo">>,
+): UiLayoutDocument {
+  const columns = layout.root.columns.map((column, index) =>
+    index === columnIndex
+      ? stripDisplayRangeIfFull({ ...column, ...patch })
+      : column,
+  );
+
+  return {
+    ...layout,
+    root: { ...layout.root, columns },
+  };
+}
+
+export function updateNestedColumnDisplayRange(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  rowId: string,
+  nestedColumnIndex: number,
+  patch: Partial<Pick<ColumnNode, "displayFrom" | "displayTo">>,
+): UiLayoutDocument {
+  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
+    ...row,
+    columns: row.columns.map((column, index) =>
+      index === nestedColumnIndex
+        ? stripDisplayRangeIfFull({ ...column, ...patch })
+        : column,
+    ),
+  }));
+}
+
+export function replaceNestedColumnAt(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  rowId: string,
+  nestedColumnIndex: number,
+  column: ColumnNode,
+): UiLayoutDocument {
+  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
+    ...row,
+    columns: row.columns.map((entry, index) =>
+      index === nestedColumnIndex ? { ...column, id: entry.id } : entry,
+    ),
+  }));
+}
+
 export function updateRootColumnStackDirection(
   layout: UiLayoutDocument,
   columnIndex: number,

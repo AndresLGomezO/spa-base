@@ -34,3 +34,4 @@ data/emulator/
 
 # Local GCP tenant ingestion / seeding (not deployed)
 .local/
+**/tsconfig.bisect*.json

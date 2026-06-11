@@ -44,7 +44,7 @@ describe("BuilderPageShell", () => {
 
     const body = container.querySelector(".min-h-0.flex-1");
     expect(body).not.toBeNull();
-    expect(body).toHaveClass("overflow-hidden");
+    expect(body).toHaveClass("flex", "flex-col", "overflow-hidden");
     expect(body).not.toHaveClass("overflow-y-auto");
   });
 

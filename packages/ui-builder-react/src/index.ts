@@ -40,10 +40,26 @@ export {
   type ResponsiveGridEditorProps,
 } from "./components/ResponsiveGridEditor.js";
 export {
+  filterStyleRulesForGenericEditor,
+  isResponsiveGridStyleProperty,
+} from "./components/responsive-grid-state.js";
+export {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
   type StyleRulesEditorProps,
 } from "./components/StyleRulesEditor.js";
+export {
+  CollapsibleEditorCard,
+  type CollapsibleEditorCardProps,
+} from "./components/CollapsibleEditorCard.js";
+export {
+  CollapsibleStyleRulesEditor,
+  type CollapsibleStyleRulesEditorProps,
+} from "./components/CollapsibleStyleRulesEditor.js";
+export {
+  CollapsibleMotionPresetSection,
+  type CollapsibleMotionPresetSectionProps,
+} from "./components/CollapsibleMotionPresetSection.js";
 export {
   MotionPresetEditor,
   type MotionPresetEditorLabels,

@@ -10,3 +10,4 @@ cypress/screenshots
 **/storybook-static
 **/playwright-report
 **/test-results
+**/tsconfig.bisect*.json

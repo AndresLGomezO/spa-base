@@ -120,8 +120,9 @@ export function resolveFormModalHasLayoutActions(
 export function resolveFormPresentation(
   definition: SerializableEntityDefinition,
 ): FormPresentation {
-  if (definition.ui.forms.presentation === "wizard") {
-    return "wizard";
+  const explicit = definition.ui.forms.presentation;
+  if (explicit === "plain" || explicit === "wizard") {
+    return explicit;
   }
   if (definition.ui.forms.wizard) {
     return "wizard";

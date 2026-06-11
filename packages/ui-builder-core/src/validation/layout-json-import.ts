@@ -5,6 +5,7 @@ import {
   createEmptyLayout,
 } from "../builder/mutations.js";
 import {
+  columnNodeSchema,
   componentRowSchema,
   nestedLayoutRowSchema,
   uiLayoutDocumentSchema,
@@ -16,6 +17,7 @@ import {
 import type { DesignSurface } from "../types/design-surface.js";
 import { componentKindsForSurface } from "../types/design-surface.js";
 import type {
+  ColumnNode,
   ComponentRowNode,
   NestedLayoutRowNode,
   UiLayoutDocument,
@@ -35,6 +37,7 @@ import {
 
 export type LayoutJsonImportScope =
   | { readonly type: "layout-document" }
+  | { readonly type: "column" }
   | { readonly type: "component-row" }
   | { readonly type: "nested-layout-row" };
 
@@ -45,7 +48,11 @@ export interface LayoutJsonImportError {
 
 export interface LayoutJsonImportValidationResult {
   readonly ok: boolean;
-  readonly data?: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode;
+  readonly data?:
+    | UiLayoutDocument
+    | ColumnNode
+    | ComponentRowNode
+    | NestedLayoutRowNode;
   readonly errors: readonly LayoutJsonImportError[];
 }
 
@@ -259,6 +266,18 @@ export function validateLayoutJsonImport(
     return postProcessLayoutDocument(result.data as UiLayoutDocument, options);
   }
 
+  if (scope.type === "column") {
+    const result = columnNodeSchema.safeParse(parsed);
+    if (!result.success) {
+      return { ok: false, errors: zodErrorsToImportErrors(result.error) };
+    }
+    return {
+      ok: true,
+      data: result.data as ColumnNode,
+      errors: [],
+    };
+  }
+
   if (scope.type === "component-row") {
     const result = componentRowSchema.safeParse(parsed);
     if (!result.success) {
@@ -285,13 +304,24 @@ export function createLayoutJsonSkeleton(
   scope: LayoutJsonImportScope,
   designSurface: DesignSurface,
   defaultFieldPath: string,
-  referenceData?: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode,
+  referenceData?:
+    | UiLayoutDocument
+    | ColumnNode
+    | ComponentRowNode
+    | NestedLayoutRowNode,
 ): string {
   if (referenceData !== undefined) {
     if (
       scope.type === "layout-document" &&
       "root" in referenceData &&
       referenceData.root.type === "root"
+    ) {
+      return JSON.stringify(referenceData, null, 2);
+    }
+    if (
+      scope.type === "column" &&
+      "rows" in referenceData &&
+      !("type" in referenceData)
     ) {
       return JSON.stringify(referenceData, null, 2);
     }
@@ -341,6 +371,27 @@ export function createLayoutJsonSkeleton(
             },
           };
     return JSON.stringify(document, null, 2);
+  }
+
+  if (scope.type === "column") {
+    const column = createEmptyLayout(1).root.columns[0];
+    if (column === undefined) {
+      return JSON.stringify({ id: "col-example", rows: [] }, null, 2);
+    }
+    return JSON.stringify(
+      {
+        ...column,
+        rows: [
+          {
+            type: "component" as const,
+            id: "row-example",
+            component: createDefaultComponent(kind, defaultFieldPath),
+          },
+        ],
+      },
+      null,
+      2,
+    );
   }
 
   if (scope.type === "component-row") {

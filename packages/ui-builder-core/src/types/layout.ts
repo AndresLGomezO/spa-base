@@ -31,6 +31,8 @@ export interface ColumnNode {
   /** User-set share of the row (1–100). Omitted = auto (split remainder equally). */
   readonly widthPercent?: number;
   readonly styles?: readonly StyleRule[];
+  readonly displayFrom?: ResponsiveGridBreakpoint;
+  readonly displayTo?: ResponsiveGridBreakpoint;
 }
 
 export type RowNode = ComponentRowNode | NestedLayoutRowNode;

@@ -11,7 +11,9 @@ export interface OpenThirdRailOptions {
   readonly resizeContent?: boolean;
   readonly widths?: ThirdRailWidthConfig;
   readonly closeLabel?: string;
-  readonly onClose?: () => void;
+  readonly headerActions?: ReactNode;
+  /** Return false to keep the rail open (e.g. unsaved-changes guard). */
+  readonly onClose?: () => void | boolean;
 }
 
 export interface ThirdRailContextValue {

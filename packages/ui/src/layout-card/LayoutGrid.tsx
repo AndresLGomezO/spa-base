@@ -14,6 +14,8 @@ export interface LayoutGridProps extends HTMLAttributes<HTMLDivElement> {
   readonly direction?: LayoutDirection;
   readonly gap?: number;
   readonly columns?: number | string;
+  /** Force CSS grid layout (e.g. when using Tailwind grid-cols-* classes). */
+  readonly display?: "grid" | "flex";
   readonly className?: string;
   readonly align?: LayoutNodeBase["align"];
   readonly justify?: LayoutNodeBase["justify"];
@@ -29,6 +31,7 @@ export function LayoutGrid({
   direction = "row",
   gap = 12,
   columns,
+  display,
   className,
   align,
   justify,
@@ -48,14 +51,16 @@ export function LayoutGrid({
     flex,
   });
 
-  const useCssGrid = columns !== undefined && direction === "row";
+  const useCssGrid =
+    display === "grid" || (columns !== undefined && direction === "row");
+  const useFlex = !useCssGrid;
 
   return (
     <div
       className={cn(
         useCssGrid ? "grid" : "flex",
-        !useCssGrid && direction === "row" ? "flex-row" : "",
-        !useCssGrid && direction === "column" ? "flex-col" : "",
+        useFlex && direction === "row" ? "flex-row" : "",
+        useFlex && direction === "column" ? "flex-col" : "",
         getLayoutAlignClass(align),
         getLayoutJustifyClass(justify),
         className,

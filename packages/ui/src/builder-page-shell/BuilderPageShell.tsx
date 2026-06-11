@@ -43,7 +43,7 @@ export function BuilderPageShell({
           "min-h-0 flex-1",
           bodyScrollable
             ? "overflow-y-auto overflow-x-hidden"
-            : "overflow-hidden",
+            : "flex flex-col overflow-hidden",
         )}
       >
         {children}

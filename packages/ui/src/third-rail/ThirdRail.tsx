@@ -18,6 +18,7 @@ export type ThirdRailVariant = "push" | "overlay";
 export interface ThirdRailProps {
   readonly title: string;
   readonly subtitle?: string;
+  readonly headerActions?: ReactNode;
   readonly body: ReactNode;
   readonly footer?: ReactNode;
   readonly variant: ThirdRailVariant;
@@ -31,6 +32,7 @@ export interface ThirdRailProps {
 export function ThirdRail({
   title,
   subtitle,
+  headerActions,
   body,
   footer,
   variant,
@@ -71,6 +73,7 @@ export function ThirdRail({
         titleId={titleId}
         title={title}
         subtitle={subtitle}
+        headerActions={headerActions}
         closeLabel={closeLabel}
         onClose={onClose}
       />

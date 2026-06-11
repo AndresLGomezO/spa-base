@@ -20,6 +20,10 @@ import { WizardStepHost } from "../../components/forms/WizardStepHost";
 import { createEntityFormRenderContext } from "../ui-builder/create-entity-form-render-context";
 import type { UseEntityFormLayoutEditorResult } from "../ui-builder/use-entity-form-layout-editor";
 
+export type UseFormDesignerPreviewResult = ReturnType<
+  typeof useFormDesignerPreview
+>;
+
 export function useFormDesignerPreview(
   editor: UseEntityFormLayoutEditorResult,
 ) {
@@ -339,5 +343,10 @@ export function useFormDesignerPreview(
     modalSize: editor.modalSize,
     showHeader: editor.modalChrome.showHeader ?? true,
     usesDesignedModalFooter,
+    plainPreviewContext,
+    plainFooterContext,
+    wizardPreviewContext,
+    wizardStepPreviewContext,
+    wizardFooterContext,
   };
 }

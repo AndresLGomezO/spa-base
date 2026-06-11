@@ -19,6 +19,11 @@ export interface ComponentDisplayRangeEditorLabels {
   readonly breakpointMd: string;
   readonly breakpointLg: string;
   readonly breakpointXl: string;
+  readonly breakpointShortBase: string;
+  readonly breakpointShortSm: string;
+  readonly breakpointShortMd: string;
+  readonly breakpointShortLg: string;
+  readonly breakpointShortXl: string;
 }
 
 export const BREAKPOINT_LABEL_KEYS: Record<
@@ -30,6 +35,17 @@ export const BREAKPOINT_LABEL_KEYS: Record<
   md: "breakpointMd",
   lg: "breakpointLg",
   xl: "breakpointXl",
+};
+
+export const BREAKPOINT_SHORT_LABEL_KEYS: Record<
+  ResponsiveGridBreakpoint,
+  keyof ComponentDisplayRangeEditorLabels
+> = {
+  base: "breakpointShortBase",
+  sm: "breakpointShortSm",
+  md: "breakpointShortMd",
+  lg: "breakpointShortLg",
+  xl: "breakpointShortXl",
 };
 
 export interface DisplayRangePatch {

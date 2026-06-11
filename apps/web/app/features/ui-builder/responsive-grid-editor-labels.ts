@@ -18,8 +18,10 @@ export function responsiveGridEditorLabels(
     breakpointMd: t("entity.viewSettings.responsiveGrid.breakpointMd"),
     breakpointLg: t("entity.viewSettings.responsiveGrid.breakpointLg"),
     breakpointXl: t("entity.viewSettings.responsiveGrid.breakpointXl"),
-    stackOnMobilePreset: t(
-      "entity.viewSettings.responsiveGrid.stackOnMobilePreset",
-    ),
+    breakpointShortBase: t("formDesigner.previewBreakpoints.base"),
+    breakpointShortSm: t("formDesigner.previewBreakpoints.sm"),
+    breakpointShortMd: t("formDesigner.previewBreakpoints.md"),
+    breakpointShortLg: t("formDesigner.previewBreakpoints.lg"),
+    breakpointShortXl: t("formDesigner.previewBreakpoints.xl"),
   };
 }

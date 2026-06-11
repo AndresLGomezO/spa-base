@@ -1,4 +1,9 @@
 import type { StylePropertyKey, StyleRule } from "../styles/style-types.js";
+import type { ColumnNode } from "../types/layout.js";
+import {
+  buildGridTemplateColumnsFromPercents,
+  resolveColumnWidthPercents,
+} from "./resolve-column-width-percents.js";
 
 export const MAX_GRID_COLUMNS = 6;
 
@@ -28,6 +33,7 @@ export interface ResolveResponsiveGridLayoutOptions {
   readonly styles: readonly StyleRule[] | undefined;
   readonly columnCount: number;
   readonly slotCount: number;
+  readonly columns?: readonly ColumnNode[];
   /** When set, returns a single grid-cols class for this breakpoint (preview mode). */
   readonly atBreakpoint?: ResponsiveGridBreakpoint;
 }
@@ -50,6 +56,8 @@ export interface ResolvedResponsiveGridLayout {
   readonly mode: ResponsiveGridMode;
   readonly className?: string;
   readonly columnsTemplate?: string;
+  /** Inline grid-template-columns value for proportional responsive grids. */
+  readonly proportionalColumnsTemplate?: string;
 }
 
 const GRID_COLS_CLASS: Record<number, string> = {
@@ -103,17 +111,57 @@ function parseColumnCount(raw: string | undefined): number | undefined {
   return Math.min(MAX_GRID_COLUMNS, Math.max(1, parsed));
 }
 
-function clampColumnCount(
-  value: number,
-  columnCount: number,
-  slotCount: number,
-): number {
-  const max = Math.min(
-    MAX_GRID_COLUMNS,
-    Math.max(1, columnCount),
-    Math.max(1, slotCount),
-  );
+function clampColumnCount(value: number, columnCount: number): number {
+  const max = Math.min(MAX_GRID_COLUMNS, Math.max(1, columnCount));
   return Math.min(max, Math.max(1, value));
+}
+
+export function hasExplicitColumnWidthPercents(
+  columns: readonly ColumnNode[] | undefined,
+): boolean {
+  return columns?.some((column) => column.widthPercent !== undefined) ?? false;
+}
+
+/** Static Tailwind class; actual tracks come from --layout-proportional-cols. */
+export const PROPORTIONAL_GRID_TEMPLATE_CLASS =
+  "[grid-template-columns:var(--layout-proportional-cols)]";
+
+export function buildProportionalGridColsClass(breakpointPrefix = ""): string {
+  return breakpointPrefix.length > 0
+    ? `${breakpointPrefix}${PROPORTIONAL_GRID_TEMPLATE_CLASS}`
+    : PROPORTIONAL_GRID_TEMPLATE_CLASS;
+}
+
+export function buildProportionalResponsiveGridClassName(
+  counts: ResponsiveGridBreakpointCounts,
+  columnCount: number,
+): string {
+  const classes: string[] = [];
+  let previousClass: string | undefined;
+
+  for (const { key, prefix } of RESPONSIVE_BREAKPOINTS) {
+    const cols = counts[key];
+    let colClass: string;
+    if (cols === 1) {
+      colClass = prefix.length > 0 ? `${prefix}grid-cols-1` : "grid-cols-1";
+    } else if (cols === columnCount) {
+      colClass = buildProportionalGridColsClass(prefix);
+    } else {
+      const equalClass = GRID_COLS_CLASS[cols];
+      if (!equalClass) {
+        continue;
+      }
+      colClass = prefix.length > 0 ? `${prefix}${equalClass}` : equalClass;
+    }
+
+    if (colClass === previousClass) {
+      continue;
+    }
+    previousClass = colClass;
+    classes.push(colClass);
+  }
+
+  return classes.join(" ");
 }
 
 export function hasExplicitResponsiveGridColumns(
@@ -173,7 +221,6 @@ export function buildAutoDefaultGridCounts(
 export function resolveResponsiveGridCounts(
   styles: readonly StyleRule[] | undefined,
   columnCount: number,
-  slotCount: number,
 ): ResponsiveGridBreakpointCounts {
   const defaults = buildAutoDefaultGridCounts(columnCount);
   const resolved: Record<ResponsiveGridBreakpoint, number> = { ...defaults };
@@ -182,9 +229,9 @@ export function resolveResponsiveGridCounts(
     const property = GRID_COLUMNS_PROPERTY_BY_BREAKPOINT[key];
     const explicit = parseColumnCount(styleValue(styles, property));
     if (explicit !== undefined) {
-      resolved[key] = clampColumnCount(explicit, columnCount, slotCount);
+      resolved[key] = clampColumnCount(explicit, columnCount);
     } else {
-      resolved[key] = clampColumnCount(resolved[key], columnCount, slotCount);
+      resolved[key] = clampColumnCount(resolved[key], columnCount);
     }
   }
 
@@ -243,9 +290,11 @@ export function usesResponsiveGridLayout(
 export function resolveResponsiveGridLayout(
   options: ResolveResponsiveGridLayoutOptions,
 ): ResolvedResponsiveGridLayout {
-  const { styles, columnCount, slotCount, atBreakpoint } = options;
-  const effectiveSlotCount = Math.max(1, slotCount);
+  const { styles, columnCount, columns, atBreakpoint } = options;
   const effectiveColumnCount = Math.max(1, columnCount);
+  const useProportionalWidths = hasExplicitColumnWidthPercents(columns);
+  const resolvedPercents =
+    columns !== undefined ? resolveColumnWidthPercents(columns) : undefined;
 
   const autoFitMinWidth = parseGridAutoFitMinWidth(styles);
   if (autoFitMinWidth !== undefined) {
@@ -267,17 +316,44 @@ export function resolveResponsiveGridLayout(
     (hasExplicitResponsiveGridColumns(styles) ||
       parseGridResponsiveMode(styles) !== "fixed")
   ) {
-    const counts = resolveResponsiveGridCounts(
-      styles,
-      effectiveColumnCount,
-      effectiveSlotCount,
-    );
+    const counts = resolveResponsiveGridCounts(styles, effectiveColumnCount);
+
+    if (atBreakpoint !== undefined) {
+      const colsAtBreakpoint = counts[atBreakpoint];
+      if (
+        colsAtBreakpoint > 1 &&
+        useProportionalWidths &&
+        resolvedPercents !== undefined
+      ) {
+        return {
+          mode: "fixed",
+          columnsTemplate:
+            buildGridTemplateColumnsFromPercents(resolvedPercents),
+        };
+      }
+
+      return {
+        mode: "responsive",
+        className: buildResponsiveGridClassNameAtBreakpoint(
+          counts,
+          atBreakpoint,
+        ),
+      };
+    }
+
     return {
       mode: "responsive",
       className:
-        atBreakpoint !== undefined
-          ? buildResponsiveGridClassNameAtBreakpoint(counts, atBreakpoint)
+        useProportionalWidths && resolvedPercents !== undefined
+          ? buildProportionalResponsiveGridClassName(
+              counts,
+              effectiveColumnCount,
+            )
           : buildResponsiveGridClassName(counts),
+      proportionalColumnsTemplate:
+        useProportionalWidths && resolvedPercents !== undefined
+          ? buildGridTemplateColumnsFromPercents(resolvedPercents)
+          : undefined,
     };
   }
 
@@ -316,4 +392,9 @@ export const RESPONSIVE_GRID_TAILWIND_SAFELIST = [
   "xl:grid-cols-4",
   "xl:grid-cols-5",
   "xl:grid-cols-6",
+  PROPORTIONAL_GRID_TEMPLATE_CLASS,
+  "sm:[grid-template-columns:var(--layout-proportional-cols)]",
+  "md:[grid-template-columns:var(--layout-proportional-cols)]",
+  "lg:[grid-template-columns:var(--layout-proportional-cols)]",
+  "xl:[grid-template-columns:var(--layout-proportional-cols)]",
 ] as const;

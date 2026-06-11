@@ -1,4 +1,5 @@
 import type { ReactElement } from "react";
+import { FieldLabel, SegmentedSwitch } from "@repo/ui";
 import type { ColumnStackDirection } from "@repo/ui-builder-core";
 
 export interface ColumnStackDirectionEditorLabels {
@@ -23,18 +24,27 @@ export function ColumnStackDirectionEditor({
   const value = stackDirection ?? "column";
 
   return (
-    <label className={className ?? "flex flex-col gap-1 text-sm"}>
-      <span>{labels.title}</span>
-      <select
-        className="border-input bg-background rounded-md border px-2 py-1"
+    <div className={className ?? "flex flex-col gap-1 text-sm"}>
+      <FieldLabel className="text-muted-foreground font-normal">
+        {labels.title}
+      </FieldLabel>
+      <SegmentedSwitch
         value={value}
-        onChange={(event) =>
-          onChange(event.target.value as ColumnStackDirection)
-        }
-      >
-        <option value="column">{labels.vertical}</option>
-        <option value="row">{labels.horizontal}</option>
-      </select>
-    </label>
+        options={[
+          {
+            value: "column",
+            label: labels.vertical,
+            ariaLabel: labels.vertical,
+          },
+          {
+            value: "row",
+            label: labels.horizontal,
+            ariaLabel: labels.horizontal,
+          },
+        ]}
+        onChange={onChange}
+        ariaLabel={labels.title}
+      />
+    </div>
   );
 }

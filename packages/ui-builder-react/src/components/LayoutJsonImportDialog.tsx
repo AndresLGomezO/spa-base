@@ -1,7 +1,8 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import {
   createLayoutJsonSkeleton,
   validateLayoutJsonImport,
+  type ColumnNode,
   type ComponentRowNode,
   type DesignSurface,
   type FieldPathValidationDefinition,
@@ -15,6 +16,7 @@ import { Button, Modal, Text } from "@repo/ui";
 export interface LayoutJsonImportLabels {
   readonly trigger: string;
   readonly titleRoot: string;
+  readonly titleColumn?: string;
   readonly titleComponentRow: string;
   readonly titleNestedRow: string;
   readonly pasteLabel: string;
@@ -29,6 +31,7 @@ export interface LayoutJsonImportLabels {
   readonly readOnlyHint: string;
   readonly viewTrigger: string;
   readonly viewTitleRoot: string;
+  readonly viewTitleColumn?: string;
   readonly viewTitleComponentRow: string;
   readonly viewTitleNestedRow: string;
   readonly viewDescription: string;
@@ -44,14 +47,22 @@ export interface LayoutJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: LayoutJsonImportLabels;
   readonly onApply: (
-    data: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode,
+    data:
+      | UiLayoutDocument
+      | ColumnNode
+      | ComponentRowNode
+      | NestedLayoutRowNode,
   ) => void;
   readonly referenceData?:
     | UiLayoutDocument
+    | ColumnNode
     | ComponentRowNode
     | NestedLayoutRowNode;
   readonly actionsInModalFooter?: boolean;
   readonly triggerSize?: "sm" | "md" | "lg";
+  readonly renderTrigger?: (options: { open: () => void }) => ReactNode;
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
 }
 
 function titleForScope(
@@ -61,6 +72,8 @@ function titleForScope(
   switch (scope.type) {
     case "layout-document":
       return labels.titleRoot;
+    case "column":
+      return labels.titleColumn ?? labels.titleNestedRow;
     case "component-row":
       return labels.titleComponentRow;
     case "nested-layout-row":
@@ -79,8 +92,13 @@ export function LayoutJsonImportDialog({
   referenceData,
   actionsInModalFooter = false,
   triggerSize = "sm",
+  renderTrigger,
+  open: openProp,
+  onOpenChange,
 }: LayoutJsonImportDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [jsonText, setJsonText] = useState("");
   const [showSkeleton, setShowSkeleton] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -134,16 +152,22 @@ export function LayoutJsonImportDialog({
     setOpen(false);
   };
 
+  const openDialog = () => setOpen(true);
+
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
-        onClick={() => setOpen(true)}
-      >
-        {labels.trigger}
-      </Button>
+      {renderTrigger ? (
+        renderTrigger({ open: openDialog })
+      ) : openProp === undefined ? (
+        <Button
+          type="button"
+          variant="outline"
+          size={triggerSize}
+          onClick={openDialog}
+        >
+          {labels.trigger}
+        </Button>
+      ) : null}
 
       <Modal
         open={open}

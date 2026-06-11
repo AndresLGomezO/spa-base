@@ -1,48 +1,30 @@
 import { useTranslation } from "react-i18next";
 
+import { getEntityLabel } from "../../entities/entity-catalog";
 import { FormModal } from "../../components/forms/FormModal";
-import {
-  LayoutPreviewBreakpointSwitcher,
-  LayoutPreviewViewport,
-} from "../ui-builder/LayoutPreviewPanel";
-import { useFormDesigner } from "./FormDesignerProvider";
-import { useFormDesignerPreview } from "./use-form-designer-preview";
+import { FormDesignerProductionPreviewContent } from "./FormDesignerProductionPreviewContent";
+import { useFormDesigner } from "./form-designer-context";
 
 export function FormDesignerOverlayPreview() {
   const { t } = useTranslation("common");
-  const {
-    editor,
-    previewBreakpoint,
-    setPreviewBreakpoint,
-    overlayPreviewOpen,
-    closeOverlayPreview,
-  } = useFormDesigner();
-  const preview = useFormDesignerPreview(editor);
+  const { editor, preview, overlayPreviewOpen, closeOverlayPreview } =
+    useFormDesigner();
+  const entityLabel = getEntityLabel(editor.definition);
 
   return (
     <FormModal
       variant="overlay"
       open={overlayPreviewOpen}
       onClose={closeOverlayPreview}
-      title={t("entity.viewSettings.preview")}
+      title={t("entity.createTitle", { entity: entityLabel })}
       size={preview.modalSize}
       scrollable={preview.previewFormScrollable}
       showHeader={preview.showHeader}
       showCloseButton={preview.showHeader}
       contentPadding={preview.previewContentPadding}
-      footer={
-        preview.usesDesignedModalFooter ? preview.previewFooter : undefined
-      }
+      footer={preview.previewFooter}
     >
-      <div className="flex flex-col gap-3">
-        <LayoutPreviewBreakpointSwitcher
-          breakpoint={previewBreakpoint}
-          onBreakpointChange={setPreviewBreakpoint}
-        />
-        <LayoutPreviewViewport breakpoint={previewBreakpoint}>
-          {preview.formPreviewContent}
-        </LayoutPreviewViewport>
-      </div>
+      <FormDesignerProductionPreviewContent />
     </FormModal>
   );
 }

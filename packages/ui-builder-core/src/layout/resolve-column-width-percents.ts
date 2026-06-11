@@ -110,3 +110,32 @@ export function buildGridTemplateColumnsFromPercents(
 ): string {
   return percents.map((percent) => `minmax(0, ${percent}fr)`).join(" ");
 }
+
+/** Maximum assignable width % for a column given other columns' explicit values. */
+export function resolveMaxColumnWidthPercent(
+  columns: readonly ColumnNode[],
+  columnIndex: number,
+): number {
+  const otherExplicitSum = columns.reduce((total, column, index) => {
+    if (index === columnIndex) {
+      return total;
+    }
+    return total + (column.widthPercent ?? 0);
+  }, 0);
+
+  return Math.max(1, 100 - otherExplicitSum);
+}
+
+/** Clamps a width % input to the allowed range; undefined clears auto width. */
+export function resolveColumnWidthPercentInput(
+  columns: readonly ColumnNode[],
+  columnIndex: number,
+  percent: number | undefined,
+): number | undefined {
+  if (percent === undefined) {
+    return undefined;
+  }
+
+  const clamped = Math.min(100, Math.max(1, Math.round(percent)));
+  return Math.min(clamped, resolveMaxColumnWidthPercent(columns, columnIndex));
+}

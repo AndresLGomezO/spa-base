@@ -13,6 +13,8 @@ interface DesignLayoutSliceJsonViewDialogProps {
   readonly data: DesignLayoutSliceData;
   readonly labels: DesignLayoutSliceJsonLabels;
   readonly triggerSize?: "sm" | "md" | "lg";
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
 }
 
 export function DesignLayoutSliceJsonViewDialog({
@@ -20,8 +22,12 @@ export function DesignLayoutSliceJsonViewDialog({
   data,
   labels,
   triggerSize = "sm",
+  open: openProp,
+  onOpenChange,
 }: DesignLayoutSliceJsonViewDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [copied, setCopied] = useState(false);
 
   const jsonText = useMemo(
@@ -42,14 +48,16 @@ export function DesignLayoutSliceJsonViewDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
-        onClick={() => setOpen(true)}
-      >
-        {labels.viewTrigger}
-      </Button>
+      {openProp === undefined ? (
+        <Button
+          type="button"
+          variant="outline"
+          size={triggerSize}
+          onClick={() => setOpen(true)}
+        >
+          {labels.viewTrigger}
+        </Button>
+      ) : null}
 
       <Modal
         open={open}

@@ -17,6 +17,10 @@ export {
 export {
   RecursiveLayoutRenderer,
   type RecursiveLayoutRendererProps,
+  type NestedColumnWrapper,
+  type NestedColumnWrapperContext,
+  type RootColumnWrapper,
+  type RowWrapper,
 } from "./layout/RecursiveLayoutRenderer.js";
 export {
   PreviewBreakpointProvider,

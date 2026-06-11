@@ -1,6 +1,6 @@
 import type { ReactNode } from "react";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { useMemo } from "react";
+import type { TFunction } from "i18next";
 import { useTranslation } from "react-i18next";
 import {
   RESPONSIVE_BREAKPOINT_ORDER,
@@ -9,7 +9,7 @@ import {
 } from "@repo/ui-builder-core";
 import type { ResponsiveGridEditorLabels } from "@repo/ui-builder-react";
 import { PreviewBreakpointProvider } from "@repo/ui-builder-renderer";
-import { Text } from "@repo/ui";
+import { CollapsibleSegmentedSwitcher, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { responsiveGridEditorLabels } from "./responsive-grid-editor-labels.js";
@@ -18,8 +18,10 @@ export const DEFAULT_LAYOUT_PREVIEW_BREAKPOINT: ResponsiveGridBreakpoint = "lg";
 
 export type LayoutPreviewBreakpoint = ResponsiveGridBreakpoint | "full";
 
-export const LAYOUT_PREVIEW_BREAKPOINT_ORDER: readonly LayoutPreviewBreakpoint[] =
-  [...RESPONSIVE_BREAKPOINT_ORDER, "full"];
+const LAYOUT_PREVIEW_BREAKPOINT_ORDER: readonly LayoutPreviewBreakpoint[] = [
+  ...RESPONSIVE_BREAKPOINT_ORDER,
+  "full",
+];
 
 const BREAKPOINT_LABEL_KEY: Record<
   ResponsiveGridBreakpoint,
@@ -32,7 +34,18 @@ const BREAKPOINT_LABEL_KEY: Record<
   xl: "breakpointXl",
 };
 
-const BREAKPOINT_SHORT_LABEL_KEY: Record<LayoutPreviewBreakpoint, string> = {
+type PreviewBreakpointShortLabelKey =
+  | "formDesigner.previewBreakpoints.base"
+  | "formDesigner.previewBreakpoints.sm"
+  | "formDesigner.previewBreakpoints.md"
+  | "formDesigner.previewBreakpoints.lg"
+  | "formDesigner.previewBreakpoints.xl"
+  | "formDesigner.previewBreakpoints.full";
+
+const BREAKPOINT_SHORT_LABEL_KEY: Record<
+  LayoutPreviewBreakpoint,
+  PreviewBreakpointShortLabelKey
+> = {
   base: "formDesigner.previewBreakpoints.base",
   sm: "formDesigner.previewBreakpoints.sm",
   md: "formDesigner.previewBreakpoints.md",
@@ -41,13 +54,7 @@ const BREAKPOINT_SHORT_LABEL_KEY: Record<LayoutPreviewBreakpoint, string> = {
   full: "formDesigner.previewBreakpoints.full",
 };
 
-const PREVIEW_SWITCHER_TRACK_CLASS =
-  "bg-muted/90 ring-border/40 relative inline-flex w-fit max-w-full rounded-lg p-1 ring-1 ring-inset";
-
-const PREVIEW_SWITCHER_SEGMENT_CLASS =
-  "relative z-10 box-border flex min-h-8 w-11 shrink-0 items-center justify-center gap-1 rounded-md border-0 bg-transparent px-2 py-1 text-xs font-medium whitespace-nowrap transition-[opacity,transform] duration-200 ease-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40 focus-visible:ring-offset-1 focus-visible:ring-offset-background";
-
-function resolvePreviewRenderBreakpoint(
+function resolveLayoutPreviewRenderBreakpoint(
   breakpoint: LayoutPreviewBreakpoint,
 ): ResponsiveGridBreakpoint {
   return breakpoint === "full" ? "xl" : breakpoint;
@@ -56,7 +63,7 @@ function resolvePreviewRenderBreakpoint(
 function resolvePreviewBreakpointLabel(
   breakpoint: LayoutPreviewBreakpoint,
   labels: ResponsiveGridEditorLabels,
-  t: (key: string) => string,
+  t: TFunction<"common">,
 ): string {
   if (breakpoint === "full") {
     return t("formDesigner.previewBreakpoints.fullDescription");
@@ -118,118 +125,27 @@ export function LayoutPreviewBreakpointSwitcher({
 }: LayoutPreviewBreakpointSwitcherProps) {
   const { t } = useTranslation("common");
   const labels = useMemo(() => responsiveGridEditorLabels(t), [t]);
-  const shortLabels = useMemo(
+  const switcherOptions = useMemo(
     () =>
-      Object.fromEntries(
-        LAYOUT_PREVIEW_BREAKPOINT_ORDER.map((entry) => [
-          entry,
-          t(BREAKPOINT_SHORT_LABEL_KEY[entry]),
-        ]),
-      ) as Record<LayoutPreviewBreakpoint, string>,
-    [t],
+      LAYOUT_PREVIEW_BREAKPOINT_ORDER.map((entry) => ({
+        value: entry,
+        label: t(BREAKPOINT_SHORT_LABEL_KEY[entry]),
+        ariaLabel: resolvePreviewBreakpointLabel(entry, labels, t),
+      })),
+    [labels, t],
   );
-  const rootRef = useRef<HTMLDivElement>(null);
-  const [expanded, setExpanded] = useState(false);
   const screenSizeLabel = t("formDesigner.previewScreenSize");
-  const activeIndex = LAYOUT_PREVIEW_BREAKPOINT_ORDER.indexOf(breakpoint);
-  const safeIndex = activeIndex >= 0 ? activeIndex : 0;
-  const segmentSize = "2.75rem";
-  const thumbLeft = `calc(0.25rem + ${safeIndex} * (2.75rem + 0.25rem))`;
-
-  const collapse = useCallback(() => {
-    setExpanded(false);
-  }, []);
-
-  const handleSelect = useCallback(
-    (entry: LayoutPreviewBreakpoint) => {
-      onBreakpointChange(entry);
-      collapse();
-    },
-    [collapse, onBreakpointChange],
-  );
-
-  useEffect(() => {
-    if (!expanded) {
-      return;
-    }
-
-    const handlePointerDown = (event: MouseEvent) => {
-      if (!rootRef.current?.contains(event.target as Node)) {
-        collapse();
-      }
-    };
-
-    document.addEventListener("mousedown", handlePointerDown);
-    return () => document.removeEventListener("mousedown", handlePointerDown);
-  }, [collapse, expanded]);
-
-  const activeShortLabel = shortLabels[breakpoint];
-  const activeLabel = resolvePreviewBreakpointLabel(breakpoint, labels, t);
 
   return (
-    <div ref={rootRef} className={cn("flex flex-col gap-1 text-sm", className)}>
+    <div className={cn("flex flex-col gap-1 text-sm", className)}>
       <span className="text-muted-foreground">{screenSizeLabel}</span>
-      <div
-        role="radiogroup"
-        aria-label={screenSizeLabel}
-        className={cn(
-          PREVIEW_SWITCHER_TRACK_CLASS,
-          expanded ? "gap-1" : "gap-0",
-        )}
-      >
-        {expanded ? (
-          <>
-            <span
-              aria-hidden
-              className="bg-background pointer-events-none absolute top-1 bottom-1 rounded-md shadow-sm transition-[left] duration-200 ease-out"
-              style={{
-                width: segmentSize,
-                left: thumbLeft,
-              }}
-            />
-            {LAYOUT_PREVIEW_BREAKPOINT_ORDER.map((entry) => {
-              const isActive = entry === breakpoint;
-              const label = resolvePreviewBreakpointLabel(entry, labels, t);
-              const shortLabel = shortLabels[entry];
-
-              return (
-                <button
-                  key={entry}
-                  type="button"
-                  role="radio"
-                  aria-checked={isActive}
-                  aria-label={label}
-                  onClick={() => handleSelect(entry)}
-                  className={cn(
-                    PREVIEW_SWITCHER_SEGMENT_CLASS,
-                    isActive
-                      ? "text-foreground"
-                      : "text-text-tertiary hover:text-foreground",
-                  )}
-                >
-                  {shortLabel}
-                </button>
-              );
-            })}
-          </>
-        ) : (
-          <button
-            type="button"
-            role="radio"
-            aria-checked
-            aria-label={activeLabel}
-            aria-expanded={false}
-            onClick={() => setExpanded(true)}
-            className={cn(
-              PREVIEW_SWITCHER_SEGMENT_CLASS,
-              "bg-background text-foreground w-auto min-w-11 px-2.5 shadow-sm",
-            )}
-          >
-            {activeShortLabel}
-            <ChevronDown aria-hidden className="size-3.5 shrink-0 opacity-70" />
-          </button>
-        )}
-      </div>
+      <CollapsibleSegmentedSwitcher
+        value={breakpoint}
+        ariaLabel={screenSizeLabel}
+        segmentWidth="2.75rem"
+        options={switcherOptions}
+        onChange={onBreakpointChange}
+      />
     </div>
   );
 }
@@ -238,19 +154,31 @@ interface LayoutPreviewViewportProps {
   readonly breakpoint: LayoutPreviewBreakpoint;
   readonly children: ReactNode;
   readonly className?: string;
+  readonly showFrame?: boolean;
 }
 
 export function LayoutPreviewViewport({
   breakpoint,
   children,
   className,
+  showFrame = true,
 }: LayoutPreviewViewportProps) {
   const isFullWidth = breakpoint === "full";
-  const renderBreakpoint = resolvePreviewRenderBreakpoint(breakpoint);
+  const renderBreakpoint = resolveLayoutPreviewRenderBreakpoint(breakpoint);
+
+  if (!showFrame) {
+    return (
+      <PreviewBreakpointProvider breakpoint={renderBreakpoint}>
+        <div className={cn("w-full", className)}>{children}</div>
+      </PreviewBreakpointProvider>
+    );
+  }
 
   return (
     <PreviewBreakpointProvider breakpoint={renderBreakpoint}>
-      <div className={cn("max-w-full overflow-x-auto", className, "min-h-full")}>
+      <div
+        className={cn("max-w-full overflow-x-auto", className, "min-h-full")}
+      >
         <div
           className={cn(
             "border-border bg-background box-border flex min-h-full flex-col border border-dashed",

@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type {
   ColumnNode,
   ComponentRowNode,
@@ -38,6 +38,7 @@ export interface SavePresetDialogProps {
   readonly labels: LayoutPresetLabels;
   readonly onSave: (input: CreateUiBuilderPresetInput) => Promise<void>;
   readonly triggerSize?: "sm" | "md" | "lg";
+  readonly renderTrigger?: (options: { open: () => void }) => ReactNode;
 }
 
 export function SavePresetDialog({
@@ -49,6 +50,7 @@ export function SavePresetDialog({
   labels,
   onSave,
   triggerSize = "sm",
+  renderTrigger,
 }: SavePresetDialogProps) {
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
@@ -93,19 +95,25 @@ export function SavePresetDialog({
     }
   };
 
+  const openDialog = () => {
+    setError(null);
+    setOpen(true);
+  };
+
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
-        onClick={() => {
-          setError(null);
-          setOpen(true);
-        }}
-      >
-        {labels.saveTrigger}
-      </Button>
+      {renderTrigger ? (
+        renderTrigger({ open: openDialog })
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size={triggerSize}
+          onClick={openDialog}
+        >
+          {labels.saveTrigger}
+        </Button>
+      )}
 
       <Modal
         open={open}

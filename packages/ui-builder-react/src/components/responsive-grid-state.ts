@@ -21,7 +21,11 @@ export interface ResponsiveGridEditorLabels {
   readonly breakpointMd: string;
   readonly breakpointLg: string;
   readonly breakpointXl: string;
-  readonly stackOnMobilePreset: string;
+  readonly breakpointShortBase: string;
+  readonly breakpointShortSm: string;
+  readonly breakpointShortMd: string;
+  readonly breakpointShortLg: string;
+  readonly breakpointShortXl: string;
 }
 
 const GRID_COLUMNS_PROPERTIES = [

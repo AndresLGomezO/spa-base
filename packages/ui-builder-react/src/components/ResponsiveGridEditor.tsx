@@ -1,15 +1,16 @@
-import { Input, SegmentedSwitch, Text } from "@repo/ui";
+import { CollapsibleSegmentedSwitcher, FieldLabel, Input } from "@repo/ui";
+import {
+  RESPONSIVE_BREAKPOINT_ORDER,
+  type ResponsiveGridBreakpoint,
+} from "@repo/ui-builder-core";
 import type { StyleRule } from "@repo/ui-builder-core";
 
 import {
-  applyStackOnMobilePreset,
   buildResponsiveGridStyles,
   inferResponsiveGridEditorMode,
   readResponsiveGridCounts,
   type ResponsiveGridEditorLabels,
   type ResponsiveGridEditorMode,
-  BREAKPOINT_LABEL_KEYS,
-  GRID_COLUMNS_PROPERTY_BY_BREAKPOINT,
 } from "./responsive-grid-state.js";
 
 export interface ResponsiveGridEditorProps {
@@ -17,6 +18,7 @@ export interface ResponsiveGridEditorProps {
   readonly columnCount: number;
   readonly labels: ResponsiveGridEditorLabels;
   readonly onChange: (styles: readonly StyleRule[]) => void;
+  readonly className?: string;
 }
 
 const MODE_OPTIONS: readonly {
@@ -29,11 +31,23 @@ const MODE_OPTIONS: readonly {
   { value: "fixed", labelKey: "modeFixed" },
 ];
 
+const BREAKPOINT_SHORT_LABEL_KEYS: Record<
+  ResponsiveGridBreakpoint,
+  keyof ResponsiveGridEditorLabels
+> = {
+  base: "breakpointShortBase",
+  sm: "breakpointShortSm",
+  md: "breakpointShortMd",
+  lg: "breakpointShortLg",
+  xl: "breakpointShortXl",
+};
+
 export function ResponsiveGridEditor({
   styles,
   columnCount,
   labels,
   onChange,
+  className,
 }: ResponsiveGridEditorProps) {
   const mode = inferResponsiveGridEditorMode(styles);
   const counts = readResponsiveGridCounts(styles, columnCount);
@@ -54,39 +68,45 @@ export function ResponsiveGridEditor({
   }
 
   return (
-    <div className="flex flex-col gap-3 rounded-md border p-3">
-      <Text className="text-sm font-medium">{labels.title}</Text>
-
-      <label className="flex flex-col gap-1 text-sm">
-        <span className="text-muted-foreground">{labels.mode}</span>
-        <SegmentedSwitch
+    <div
+      className={
+        className ??
+        "border-primary/30 bg-primary/5 flex flex-wrap items-end gap-3 rounded-lg border border-dashed p-3"
+      }
+    >
+      <div className="flex min-w-0 flex-col gap-1 text-sm">
+        <FieldLabel className="text-muted-foreground">
+          {labels.title}
+        </FieldLabel>
+        <CollapsibleSegmentedSwitcher
           value={mode}
+          segmentWidth="3.5rem"
+          ariaLabel={labels.mode}
           options={MODE_OPTIONS.map((option) => ({
             value: option.value,
             label: labels[option.labelKey],
-            ariaLabel: labels[option.labelKey],
+            ariaLabel: String(labels[option.labelKey]),
           }))}
           onChange={updateMode}
-          ariaLabel={labels.mode}
         />
-      </label>
+      </div>
 
       {mode === "custom" ? (
-        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
-          {(
-            Object.keys(GRID_COLUMNS_PROPERTY_BY_BREAKPOINT) as Array<
-              keyof typeof GRID_COLUMNS_PROPERTY_BY_BREAKPOINT
+        <div className="flex flex-wrap items-end gap-2">
+          {RESPONSIVE_BREAKPOINT_ORDER.map((breakpoint) => (
+            <label
+              key={breakpoint}
+              className="flex w-14 flex-col gap-1 text-sm"
             >
-          ).map((breakpoint) => (
-            <label key={breakpoint} className="flex flex-col gap-1 text-sm">
-              <span className="text-muted-foreground">
-                {labels[BREAKPOINT_LABEL_KEYS[breakpoint]]}
+              <span className="text-muted-foreground text-xs">
+                {labels[BREAKPOINT_SHORT_LABEL_KEYS[breakpoint]]}
               </span>
               <Input
                 type="number"
                 min={1}
                 max={columnCount}
                 value={counts[breakpoint]}
+                aria-label={`${labels[BREAKPOINT_SHORT_LABEL_KEYS[breakpoint]]} ${labels.modeCustom}`}
                 onChange={(event) => {
                   onChange(
                     buildResponsiveGridStyles({
@@ -107,14 +127,15 @@ export function ResponsiveGridEditor({
       ) : null}
 
       {mode === "autoFit" ? (
-        <label className="flex flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">
+        <label className="flex w-28 flex-col gap-1 text-sm">
+          <span className="text-muted-foreground text-xs">
             {labels.autoFitMinWidth}
           </span>
           <Input
             type="number"
             min={120}
             value={String(autoFitMinWidth)}
+            aria-label={labels.autoFitMinWidth}
             onChange={(event) => {
               onChange(
                 buildResponsiveGridStyles({
@@ -127,18 +148,6 @@ export function ResponsiveGridEditor({
             }}
           />
         </label>
-      ) : null}
-
-      {columnCount >= 2 && mode !== "fixed" ? (
-        <button
-          type="button"
-          className="text-primary text-left text-sm underline-offset-2 hover:underline"
-          onClick={() =>
-            onChange(applyStackOnMobilePreset(styles, columnCount))
-          }
-        >
-          {labels.stackOnMobilePreset}
-        </button>
       ) : null}
     </div>
   );

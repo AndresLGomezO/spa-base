@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import type {
+  ColumnNode,
   ComponentRowNode,
   LayoutJsonImportScope,
   NestedLayoutRowNode,
@@ -11,9 +12,16 @@ import type { LayoutJsonImportLabels } from "./LayoutJsonImportDialog.js";
 
 export interface LayoutJsonViewDialogProps {
   readonly scope: LayoutJsonImportScope;
-  readonly data: UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode;
+  readonly data:
+    | UiLayoutDocument
+    | ColumnNode
+    | ComponentRowNode
+    | NestedLayoutRowNode;
   readonly labels: LayoutJsonImportLabels;
   readonly triggerSize?: "sm" | "md" | "lg";
+  readonly renderTrigger?: (options: { open: () => void }) => ReactNode;
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
 }
 
 function titleForScope(
@@ -23,6 +31,8 @@ function titleForScope(
   switch (scope.type) {
     case "layout-document":
       return labels.viewTitleRoot;
+    case "column":
+      return labels.viewTitleColumn ?? labels.viewTitleNestedRow;
     case "component-row":
       return labels.viewTitleComponentRow;
     case "nested-layout-row":
@@ -35,8 +45,13 @@ export function LayoutJsonViewDialog({
   data,
   labels,
   triggerSize = "sm",
+  renderTrigger,
+  open: openProp,
+  onOpenChange,
 }: LayoutJsonViewDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [copied, setCopied] = useState(false);
 
   const jsonText = useMemo(() => JSON.stringify(data, null, 2), [data]);
@@ -51,16 +66,22 @@ export function LayoutJsonViewDialog({
     }
   };
 
+  const openDialog = () => setOpen(true);
+
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
-        onClick={() => setOpen(true)}
-      >
-        {labels.viewTrigger}
-      </Button>
+      {renderTrigger ? (
+        renderTrigger({ open: openDialog })
+      ) : openProp === undefined ? (
+        <Button
+          type="button"
+          variant="outline"
+          size={triggerSize}
+          onClick={openDialog}
+        >
+          {labels.viewTrigger}
+        </Button>
+      ) : null}
 
       <Modal
         open={open}

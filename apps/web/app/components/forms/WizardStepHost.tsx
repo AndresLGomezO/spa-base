@@ -17,7 +17,10 @@ export function WizardStepHost({ config, children }: WizardStepHostProps) {
 
   return (
     <div
-      className={cn("flex w-full min-w-0 flex-col", containerClassName)}
+      className={cn(
+        "flex min-h-0 flex-1 w-full min-w-0 flex-col overflow-hidden overflow-x-hidden",
+        containerClassName,
+      )}
       style={style}
     >
       {children}

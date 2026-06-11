@@ -1,12 +1,24 @@
 import { describe, expect, it } from "vitest";
 
+import type { ColumnNode } from "../types/layout.js";
 import {
   buildAutoFitGridTemplate,
+  buildProportionalGridColsClass,
+  buildProportionalResponsiveGridClassName,
   buildResponsiveGridClassName,
   buildResponsiveGridClassNameAtBreakpoint,
+  PROPORTIONAL_GRID_TEMPLATE_CLASS,
   resolveResponsiveGridCounts,
   resolveResponsiveGridLayout,
 } from "./responsive-grid.js";
+
+function column(id: string, widthPercent?: number): ColumnNode {
+  return {
+    id,
+    rows: [],
+    ...(widthPercent !== undefined ? { widthPercent } : {}),
+  };
+}
 
 describe("resolveResponsiveGridLayout", () => {
   it("uses fixed mode for single column layouts", () => {
@@ -50,14 +62,14 @@ describe("resolveResponsiveGridLayout", () => {
     expect(resolved.className).toBe("grid-cols-1 sm:grid-cols-2");
   });
 
-  it("clamps counts to slotCount when a column is empty", () => {
-    const counts = resolveResponsiveGridCounts(undefined, 2, 1);
+  it("keeps full column count when a column slot is empty", () => {
+    const counts = resolveResponsiveGridCounts(undefined, 2);
     expect(counts).toEqual({
       base: 1,
-      sm: 1,
-      md: 1,
-      lg: 1,
-      xl: 1,
+      sm: 2,
+      md: 2,
+      lg: 2,
+      xl: 2,
     });
   });
 
@@ -83,6 +95,51 @@ describe("resolveResponsiveGridLayout", () => {
       columnsTemplate: "repeat(auto-fit, minmax(min(100%, 280px), 1fr))",
     });
   });
+
+  it("uses proportional responsive classes when widthPercent is set", () => {
+    const resolved = resolveResponsiveGridLayout({
+      styles: undefined,
+      columnCount: 2,
+      slotCount: 2,
+      columns: [column("a", 70), column("b", 30)],
+    });
+
+    expect(resolved.mode).toBe("responsive");
+    expect(resolved.className).toBe(
+      `grid-cols-1 sm:${PROPORTIONAL_GRID_TEMPLATE_CLASS} md:${PROPORTIONAL_GRID_TEMPLATE_CLASS} lg:${PROPORTIONAL_GRID_TEMPLATE_CLASS} xl:${PROPORTIONAL_GRID_TEMPLATE_CLASS}`,
+    );
+    expect(resolved.proportionalColumnsTemplate).toBe(
+      "minmax(0, 70fr) minmax(0, 30fr)",
+    );
+  });
+
+  it("uses fixed proportional template at preview breakpoint when multi-column", () => {
+    const resolved = resolveResponsiveGridLayout({
+      styles: undefined,
+      columnCount: 2,
+      slotCount: 2,
+      columns: [column("a", 70), column("b", 30)],
+      atBreakpoint: "sm",
+    });
+
+    expect(resolved).toEqual({
+      mode: "fixed",
+      columnsTemplate: "minmax(0, 70fr) minmax(0, 30fr)",
+    });
+  });
+
+  it("stacks at preview breakpoint base even with widthPercent", () => {
+    const resolved = resolveResponsiveGridLayout({
+      styles: undefined,
+      columnCount: 2,
+      slotCount: 2,
+      columns: [column("a", 70), column("b", 30)],
+      atBreakpoint: "base",
+    });
+
+    expect(resolved.mode).toBe("responsive");
+    expect(resolved.className).toBe("grid-cols-1");
+  });
 });
 
 describe("buildAutoFitGridTemplate", () => {
@@ -104,6 +161,50 @@ describe("buildResponsiveGridClassName", () => {
         xl: 2,
       }),
     ).toBe("grid-cols-1 sm:grid-cols-2");
+  });
+});
+
+describe("buildProportionalResponsiveGridClassName", () => {
+  it("stacks on mobile and applies proportional template from sm", () => {
+    expect(
+      buildProportionalResponsiveGridClassName(
+        {
+          base: 1,
+          sm: 2,
+          md: 2,
+          lg: 2,
+          xl: 2,
+        },
+        2,
+      ),
+    ).toBe(
+      `grid-cols-1 sm:${PROPORTIONAL_GRID_TEMPLATE_CLASS} md:${PROPORTIONAL_GRID_TEMPLATE_CLASS} lg:${PROPORTIONAL_GRID_TEMPLATE_CLASS} xl:${PROPORTIONAL_GRID_TEMPLATE_CLASS}`,
+    );
+  });
+
+  it("falls back to equal columns when breakpoint count differs from columnCount", () => {
+    expect(
+      buildProportionalResponsiveGridClassName(
+        {
+          base: 1,
+          sm: 2,
+          md: 2,
+          lg: 3,
+          xl: 3,
+        },
+        3,
+      ),
+    ).toBe(
+      `grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:${PROPORTIONAL_GRID_TEMPLATE_CLASS} xl:${PROPORTIONAL_GRID_TEMPLATE_CLASS}`,
+    );
+  });
+});
+
+describe("buildProportionalGridColsClass", () => {
+  it("builds breakpoint-prefixed proportional template class", () => {
+    expect(buildProportionalGridColsClass("md:")).toBe(
+      `md:${PROPORTIONAL_GRID_TEMPLATE_CLASS}`,
+    );
   });
 });
 

@@ -77,19 +77,100 @@
       "fullDescription": "Full width"
     },
     "settings": "Settings",
+    "headerTools": {
+      "title": "Form tools",
+      "view": "View",
+      "import": "Import"
+    },
     "tabs": {
       "ariaLabel": "Form designer sections",
       "settings": "Settings",
       "layout": "Layout",
-      "components": "Components",
-      "layoutTabPlaceholder": "Layout editor coming soon.",
-      "componentsTabPlaceholder": "Components editor coming soon.",
-      "layoutPreviewPlaceholder": "Layout preview will appear here once the layout editor is available.",
-      "componentsPreviewPlaceholder": "Components preview will appear here once the components editor is available."
+      "components": "Components"
+    },
+    "layout": {
+      "columnPanelTitle": "Column {{column}}",
+      "columnPanel": {
+        "jsonTitleColumn": "Import column JSON",
+        "jsonViewTitleColumn": "Column JSON",
+        "missingColumn": "Column not found.",
+        "tools": {
+          "gear": "Tools",
+          "insert": "Insert",
+          "save": "Save",
+          "view": "View",
+          "import": "Import"
+        }
+      },
+      "moveColumnLeft": "Move column left",
+      "moveColumnRight": "Move column right",
+      "removeColumn": "Remove column {{column}}",
+      "selectColumn": "Edit column {{column}}"
+    },
+    "components": {
+      "panelTitle": "Structure",
+      "expandPanel": "Expand structure panel",
+      "collapsePanel": "Collapse structure panel",
+      "emptyColumn": "No components in this column yet.",
+      "nestedLayout": "Nested layout ({{count}} columns)",
+      "section": "Section",
+      "actions": "Actions",
+      "insertAbove": "Add component above {{label}}",
+      "insertBelow": "Add component below {{label}}",
+      "insertInColumn": "Add component to {{label}}",
+      "modalTitle": "Add component",
+      "modalCancel": "Cancel",
+      "wizardScopeShell": "Shell",
+      "wizardScopeStep": "Step content",
+      "wizardScopeFooter": "Footer",
+      "wizardScopeContent": "Content",
+      "wizardScopeAriaLabel": "Structure tree scope",
+      "wizardStepLabel": "Step",
+      "expandNode": "Expand {{label}}",
+      "collapseNode": "Collapse {{label}}",
+      "selectRow": "Edit component",
+      "deleteRow": "Remove component",
+      "rowPanel": {
+        "missingRow": "Component not found.",
+        "tools": {
+          "gear": "Tools",
+          "insert": "Insert",
+          "save": "Save",
+          "view": "View",
+          "import": "Import"
+        }
+      },
+      "sections": {
+        "layout": "Layout components",
+        "content": "Content components",
+        "form": "Form components"
+      },
+      "options": {
+        "nestedLayout": "Nested column",
+        "text": "Text",
+        "image": "Image",
+        "icon": "Icon",
+        "date": "Date",
+        "numeric": "Number",
+        "badge": "Badge",
+        "formField": "Form field",
+        "entityFieldSelector": "Selectable field",
+        "formSection": "Form section",
+        "formActions": "Form actions",
+        "wizardProgress": "Wizard progress",
+        "wizardStepHost": "Step host",
+        "wizardActions": "Wizard actions"
+      }
     },
     "unsavedChanges": {
       "title": "Unsaved changes",
       "message": "You have unsaved settings changes. Save them before leaving this tab, or discard your changes.",
+      "layoutMessage": "You have unsaved layout changes. Save them before leaving this tab, or discard your changes.",
+      "componentsMessage": "You have unsaved component changes. Save them before leaving this tab, or discard your changes.",
+      "columnPanelMessage": "You have unsaved column changes. Save them to keep your edits, or discard to revert.",
+      "columnPanelSave": "Save column changes",
+      "componentRowPanelMessage": "You have unsaved component changes. Save them to keep your edits, or discard to revert.",
+      "componentRowPanelSave": "Save component changes",
       "save": "Save changes",
       "discard": "Discard changes",
       "keepEditing": "Keep editing"
@@ -410,7 +491,6 @@
         "breakpointMd": "Medium (768px+)",
         "breakpointLg": "Large (1024px+)",
         "breakpointXl": "Extra large (1280px+)",
-        "stackOnMobilePreset": "Apply stack on mobile preset",
         "rowLayoutStyles": "Row layout styles"
       },
       "displayRange": {
@@ -482,7 +562,7 @@
       "slotColumns": "Slot columns",
       "cardsPerRow": "Max cards per row",
       "columnTab": "Column {{column}}",
-      "columnWidthPercent": "Column width (%)",
+      "columnWidthPercent": "Width (%)",
       "columnWidthAutoHint": "{{percent}}% (auto)",
       "emptyColumn": "No slots in this column yet.",
       "moveSlotUp": "Move slot up",

@@ -9,6 +9,7 @@ import {
   resolveEffectiveFormModalContentPadding,
   resolveFormModalFooterLayout,
   resolveFormModalHasLayoutActions,
+  resolveFormPresentation,
   resolveFormUsesModalBuilderFooter,
 } from "./resolve-form-config.js";
 import type { SerializableEntityDefinition } from "./types.js";
@@ -28,6 +29,57 @@ const baseDefinition: SerializableEntityDefinition = {
     },
   },
 };
+
+describe("resolveFormPresentation", () => {
+  it("infers wizard when wizard config exists without explicit presentation", () => {
+    const definition: SerializableEntityDefinition = {
+      ...baseDefinition,
+      ui: {
+        ...baseDefinition.ui,
+        forms: {
+          ...baseDefinition.ui.forms,
+          wizard: {
+            shellLayout: createDefaultWizardShellLayout(),
+            steps: [
+              {
+                id: "step-1",
+                label: "Details",
+                layout: createDefaultFormLayout(["name"]),
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    expect(resolveFormPresentation(definition)).toBe("wizard");
+  });
+
+  it("honors explicit plain presentation even when wizard config is retained", () => {
+    const definition: SerializableEntityDefinition = {
+      ...baseDefinition,
+      ui: {
+        ...baseDefinition.ui,
+        forms: {
+          ...baseDefinition.ui.forms,
+          presentation: "plain",
+          wizard: {
+            shellLayout: createDefaultWizardShellLayout(),
+            steps: [
+              {
+                id: "step-1",
+                label: "Details",
+                layout: createDefaultFormLayout(["name"]),
+              },
+            ],
+          },
+        },
+      },
+    };
+
+    expect(resolveFormPresentation(definition)).toBe("plain");
+  });
+});
 
 describe("resolveFormModalChrome", () => {
   it("defaults to visible header and padded content", () => {

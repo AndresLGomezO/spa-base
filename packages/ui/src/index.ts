@@ -108,6 +108,13 @@ export {
   type SegmentedSwitchOption,
   type SegmentedSwitchProps,
 } from "./segmented-switch/SegmentedSwitch";
+export {
+  CollapsibleSegmentedSwitcher,
+  COLLAPSIBLE_SEGMENTED_SWITCHER_SEGMENT_CLASS,
+  COLLAPSIBLE_SEGMENTED_SWITCHER_TRACK_CLASS,
+  type CollapsibleSegmentedSwitcherOption,
+  type CollapsibleSegmentedSwitcherProps,
+} from "./collapsible-segmented-switcher/CollapsibleSegmentedSwitcher";
 export { Heading, type HeadingProps } from "./typography/Heading";
 export { Text, type TextProps } from "./typography/Text";
 export { PageLoader, type PageLoaderProps } from "./loading/PageLoader";

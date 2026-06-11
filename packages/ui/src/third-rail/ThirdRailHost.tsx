@@ -49,6 +49,7 @@ export function ThirdRailHost() {
       titleId={titleId}
       title={options.title}
       subtitle={options.subtitle}
+      headerActions={options.headerActions}
       body={options.body}
       footer={options.footer}
       variant={resizeContent ? "push" : "overlay"}

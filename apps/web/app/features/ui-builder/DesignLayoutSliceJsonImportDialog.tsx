@@ -20,6 +20,8 @@ interface DesignLayoutSliceJsonImportDialogProps {
   readonly labels: DesignLayoutSliceJsonLabels;
   readonly onApply: (data: DesignLayoutSliceData) => void;
   readonly triggerSize?: "sm" | "md" | "lg";
+  readonly open?: boolean;
+  readonly onOpenChange?: (open: boolean) => void;
 }
 
 export function DesignLayoutSliceJsonImportDialog({
@@ -29,8 +31,12 @@ export function DesignLayoutSliceJsonImportDialog({
   labels,
   onApply,
   triggerSize = "sm",
+  open: openProp,
+  onOpenChange,
 }: DesignLayoutSliceJsonImportDialogProps) {
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = openProp ?? internalOpen;
+  const setOpen = onOpenChange ?? setInternalOpen;
   const [jsonText, setJsonText] = useState("");
   const [showSkeleton, setShowSkeleton] = useState(true);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -88,14 +94,16 @@ export function DesignLayoutSliceJsonImportDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
-        onClick={() => setOpen(true)}
-      >
-        {labels.importTrigger}
-      </Button>
+      {openProp === undefined ? (
+        <Button
+          type="button"
+          variant="outline"
+          size={triggerSize}
+          onClick={() => setOpen(true)}
+        >
+          {labels.importTrigger}
+        </Button>
+      ) : null}
 
       <Modal
         open={open}

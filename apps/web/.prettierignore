@@ -2,3 +2,4 @@ build
 .react-router
 node_modules
 coverage
+tsconfig.bisect*.json

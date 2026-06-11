@@ -30,8 +30,7 @@ function LongPanelContent({ label }: { readonly label: string }) {
 }
 
 function TabbedPanelStory() {
-  const [activeTabId, setActiveTabId] =
-    useState<TabbedPanelTabId>("settings");
+  const [activeTabId, setActiveTabId] = useState<TabbedPanelTabId>("settings");
 
   return (
     <div className="flex h-dvh overflow-hidden p-6">

@@ -12,6 +12,8 @@ export type {
 export { resolveColumnStackDirection } from "./types/layout.js";
 export {
   resolveColumnWidthPercents,
+  resolveMaxColumnWidthPercent,
+  resolveColumnWidthPercentInput,
   buildGridTemplateColumnsFromPercents,
 } from "./layout/resolve-column-width-percents.js";
 export {
@@ -27,6 +29,10 @@ export {
   parseGridAutoFitMinWidth,
   parseGridResponsiveMode,
   buildAutoDefaultGridCounts,
+  buildProportionalGridColsClass,
+  buildProportionalResponsiveGridClassName,
+  hasExplicitColumnWidthPercents,
+  PROPORTIONAL_GRID_TEMPLATE_CLASS,
   resolveResponsiveGridCounts,
   resolveResponsiveGridLayout,
   usesResponsiveGridLayout,
@@ -269,6 +275,9 @@ export {
   updateNestedLayoutRowStyles,
   updateNestedLayoutRowDisplayRange,
   updateNestedColumnStyles,
+  updateRootColumnDisplayRange,
+  updateNestedColumnDisplayRange,
+  replaceNestedColumnAt,
   updateRootColumnStackDirection,
   updateNestedColumnStackDirection,
   addComponentRow,

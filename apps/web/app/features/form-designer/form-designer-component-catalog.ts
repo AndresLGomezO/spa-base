@@ -1,0 +1,115 @@
+import type { LucideIcon } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Badge,
+  Calendar,
+  Columns2,
+  Hash,
+  Image,
+  Layers,
+  ListChecks,
+  MousePointerClick,
+  PanelTop,
+  Route,
+  Sparkles,
+  TextCursorInput,
+  Type,
+} from "lucide-react";
+import {
+  componentKindsForSurface,
+  type DesignSurface,
+  type UiComponentKind,
+} from "@repo/ui-builder-core";
+
+export type CatalogEntryKind = UiComponentKind | "nested-layout";
+
+export type CatalogSectionId = "layout" | "content" | "form";
+
+interface ComponentCatalogEntry {
+  readonly kind: CatalogEntryKind;
+  readonly icon: LucideIcon;
+}
+
+interface ComponentCatalogSection {
+  readonly id: CatalogSectionId;
+  readonly entries: readonly ComponentCatalogEntry[];
+}
+
+const LAYOUT_SECTION: ComponentCatalogSection = {
+  id: "layout",
+  entries: [
+    { kind: "nested-layout", icon: Columns2 },
+    { kind: "wizard-progress", icon: Route },
+    { kind: "wizard-step-host", icon: Layers },
+  ],
+};
+
+const CONTENT_SECTION: ComponentCatalogSection = {
+  id: "content",
+  entries: [
+    { kind: "text", icon: Type },
+    { kind: "image", icon: Image },
+    { kind: "icon", icon: Sparkles },
+    { kind: "date", icon: Calendar },
+    { kind: "numeric", icon: Hash },
+    { kind: "badge", icon: Badge },
+  ],
+};
+
+const FORM_SECTION: ComponentCatalogSection = {
+  id: "form",
+  entries: [
+    { kind: "form-field", icon: TextCursorInput },
+    { kind: "entity-field-selector", icon: ListChecks },
+    { kind: "form-section", icon: PanelTop },
+    { kind: "form-actions", icon: MousePointerClick },
+    { kind: "wizard-actions", icon: ArrowRightLeft },
+  ],
+};
+
+const ALL_SECTIONS: readonly ComponentCatalogSection[] = [
+  LAYOUT_SECTION,
+  CONTENT_SECTION,
+  FORM_SECTION,
+];
+
+function isAllowedOnSurface(
+  kind: CatalogEntryKind,
+  allowedKinds: readonly UiComponentKind[],
+): boolean {
+  if (kind === "nested-layout") {
+    return true;
+  }
+
+  return allowedKinds.includes(kind);
+}
+
+export function getFilteredComponentCatalog(
+  designSurface: DesignSurface,
+): readonly ComponentCatalogSection[] {
+  const allowedKinds = componentKindsForSurface(designSurface);
+
+  return ALL_SECTIONS.map((section) => ({
+    ...section,
+    entries: section.entries.filter((entry) =>
+      isAllowedOnSurface(entry.kind, allowedKinds),
+    ),
+  })).filter((section) => section.entries.length > 0);
+}
+
+function getComponentCatalogIcon(
+  kind: CatalogEntryKind,
+): LucideIcon | undefined {
+  for (const section of ALL_SECTIONS) {
+    const entry = section.entries.find((item) => item.kind === kind);
+    if (entry) {
+      return entry.icon;
+    }
+  }
+
+  return undefined;
+}
+
+export function getTreeNodeIcon(kind: CatalogEntryKind): LucideIcon {
+  return getComponentCatalogIcon(kind) ?? Columns2;
+}

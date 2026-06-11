@@ -1,3 +1,5 @@
+import type { ReactNode } from "react";
+
 import { cn } from "@repo/theme/utils";
 
 import { IconButton } from "../icon-button/IconButton";
@@ -7,6 +9,7 @@ export interface ThirdRailHeaderProps {
   readonly titleId: string;
   readonly title: string;
   readonly subtitle?: string;
+  readonly headerActions?: ReactNode;
   readonly closeLabel: string;
   readonly onClose: () => void;
 }
@@ -15,6 +18,7 @@ export function ThirdRailHeader({
   titleId,
   title,
   subtitle,
+  headerActions,
   closeLabel,
   onClose,
 }: ThirdRailHeaderProps) {
@@ -30,16 +34,19 @@ export function ThirdRailHeader({
           </Text>
         ) : null}
       </div>
-      <IconButton
-        label={closeLabel}
-        size="sm"
-        className="shrink-0"
-        onClick={onClose}
-      >
-        <span aria-hidden className="text-lg leading-none">
-          ×
-        </span>
-      </IconButton>
+      <div className="flex shrink-0 items-center gap-1">
+        {headerActions}
+        <IconButton
+          label={closeLabel}
+          size="sm"
+          className="shrink-0"
+          onClick={onClose}
+        >
+          <span aria-hidden className="text-lg leading-none">
+            ×
+          </span>
+        </IconButton>
+      </div>
     </div>
   );
 }

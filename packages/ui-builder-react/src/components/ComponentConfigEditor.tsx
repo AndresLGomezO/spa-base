@@ -192,6 +192,7 @@ export interface ComponentConfigEditorProps {
   readonly getDefinition?: (
     entityName: string,
   ) => SerializableEntityDefinition | undefined;
+  readonly hideComponentStyles?: boolean;
 }
 
 function updatePrimaryField(
@@ -609,6 +610,7 @@ export function ComponentConfigEditor({
   displayFieldDescriptors,
   definition,
   getDefinition,
+  hideComponentStyles = false,
 }: ComponentConfigEditorProps) {
   const componentKinds = allowedKinds;
   const kind = config.kind;
@@ -682,14 +684,16 @@ export function ComponentConfigEditor({
           </select>
         </label>
         {metricKpiEditor?.(config, onChange)}
-        <StyleRulesEditor
-          styles={config.styles}
-          onChange={(styles) => onChange({ ...config, styles })}
-          labels={{
-            ...labels.styleRules,
-            title: labels.componentStyles,
-          }}
-        />
+        {hideComponentStyles ? null : (
+          <StyleRulesEditor
+            styles={config.styles}
+            onChange={(styles) => onChange({ ...config, styles })}
+            labels={{
+              ...labels.styleRules,
+              title: labels.componentStyles,
+            }}
+          />
+        )}
       </div>
     );
   }
@@ -1013,14 +1017,16 @@ export function ComponentConfigEditor({
         config.kind === "entity-field-selector" ||
         config.kind === "form-field" ||
         config.kind === "icon" ? (
-          <StyleRulesEditor
-            styles={config.styles}
-            onChange={(styles) => onChange({ ...config, styles })}
-            labels={{
-              ...labels.styleRules,
-              title: labels.componentStyles,
-            }}
-          />
+          hideComponentStyles ? null : (
+            <StyleRulesEditor
+              styles={config.styles}
+              onChange={(styles) => onChange({ ...config, styles })}
+              labels={{
+                ...labels.styleRules,
+                title: labels.componentStyles,
+              }}
+            />
+          )
         ) : null}
       </div>
     );
@@ -1310,14 +1316,16 @@ export function ComponentConfigEditor({
           </>
         ) : null}
 
-        <StyleRulesEditor
-          styles={fieldConfig.styles}
-          onChange={updateStyles}
-          labels={{
-            ...labels.styleRules,
-            title: labels.componentStyles,
-          }}
-        />
+        {hideComponentStyles ? null : (
+          <StyleRulesEditor
+            styles={fieldConfig.styles}
+            onChange={updateStyles}
+            labels={{
+              ...labels.styleRules,
+              title: labels.componentStyles,
+            }}
+          />
+        )}
 
         {fieldConfig.kind === "badge" ? (
           <div className="flex flex-col gap-2">

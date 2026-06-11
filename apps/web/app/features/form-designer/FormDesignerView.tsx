@@ -36,7 +36,9 @@ function FormDesignerPageContent({
 export function FormDesignerView({ entityName }: FormDesignerViewProps) {
   return (
     <FormDesignerProvider entityName={entityName}>
-      <FormDesignerPageContent entityName={entityName} />
+      <div className="flex min-h-0 flex-1 flex-col">
+        <FormDesignerPageContent entityName={entityName} />
+      </div>
       <FormDesignerOverlayPreview />
     </FormDesignerProvider>
   );

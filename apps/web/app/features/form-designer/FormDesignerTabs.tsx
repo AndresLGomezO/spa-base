@@ -3,12 +3,10 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { FormDesignerTabId } from "./form-designer-tabs";
-import { useFormDesigner } from "./FormDesignerProvider";
+import { useFormDesigner } from "./form-designer-context";
+import { FormDesignerLayoutTab } from "./FormDesignerLayoutTab";
 import { FormDesignerSettingsTab } from "./FormDesignerSettingsTab";
-import {
-  FormDesignerComponentsTabPlaceholder,
-  FormDesignerLayoutTabPlaceholder,
-} from "./FormDesignerTabPlaceholders";
+import { FormDesignerComponentsTab } from "./FormDesignerComponentsTab";
 import { FormDesignerUnsavedChangesModal } from "./FormDesignerUnsavedChangesModal";
 
 export function FormDesignerTabs() {
@@ -25,26 +23,27 @@ export function FormDesignerTabs() {
       {
         id: "layout" as const,
         label: t("formDesigner.tabs.layout"),
-        panel: <FormDesignerLayoutTabPlaceholder />,
+        panel: <FormDesignerLayoutTab />,
       },
       {
         id: "components" as const,
         label: t("formDesigner.tabs.components"),
-        panel: <FormDesignerComponentsTabPlaceholder />,
+        panel: <FormDesignerComponentsTab />,
       },
     ],
     [t],
   );
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <TabbedPanel
         ariaLabel={t("formDesigner.tabs.ariaLabel")}
         activeTabId={activeTabId}
         onTabChange={(tabId) => requestTabChange(tabId as FormDesignerTabId)}
         tabs={tabs}
+        className="min-h-0 flex-1"
       />
       <FormDesignerUnsavedChangesModal />
-    </>
+    </div>
   );
 }

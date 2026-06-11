@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import {
   applyPresetSlots,
   type ColumnNode,
@@ -44,6 +44,7 @@ export interface InsertPresetDialogProps {
   ) => void;
   readonly actionsInModalFooter?: boolean;
   readonly triggerSize?: "sm" | "md" | "lg";
+  readonly renderTrigger?: (options: { open: () => void }) => ReactNode;
 }
 
 export function InsertPresetDialog({
@@ -57,6 +58,7 @@ export function InsertPresetDialog({
   onApply,
   actionsInModalFooter = false,
   triggerSize = "sm",
+  renderTrigger,
 }: InsertPresetDialogProps) {
   const [open, setOpen] = useState(false);
   const [selectedPresetId, setSelectedPresetId] = useState("");
@@ -115,16 +117,22 @@ export function InsertPresetDialog({
     setOpen(false);
   };
 
+  const openDialog = () => setOpen(true);
+
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
-        onClick={() => setOpen(true)}
-      >
-        {labels.insertTrigger}
-      </Button>
+      {renderTrigger ? (
+        renderTrigger({ open: openDialog })
+      ) : (
+        <Button
+          type="button"
+          variant="outline"
+          size={triggerSize}
+          onClick={openDialog}
+        >
+          {labels.insertTrigger}
+        </Button>
+      )}
 
       <Modal
         open={open}
