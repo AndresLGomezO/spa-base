@@ -52,6 +52,21 @@ export {
 } from "./popover/Popover";
 export { Sheet, type SheetProps } from "./sheet/Sheet";
 export {
+  ThirdRail,
+  ThirdRailHeader,
+  ThirdRailHost,
+  ThirdRailProvider,
+  resolveThirdRailWidthClasses,
+  useThirdRail,
+  type OpenThirdRailOptions,
+  type ThirdRailContextValue,
+  type ThirdRailHeaderProps,
+  type ThirdRailProps,
+  type ThirdRailVariant,
+  type ThirdRailWidthConfig,
+  type ThirdRailWidthFraction,
+} from "./third-rail";
+export {
   Sidebar,
   SidebarCollapseButton,
   SidebarContent,

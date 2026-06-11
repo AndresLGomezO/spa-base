@@ -14,6 +14,7 @@ In `apps/web`, all modal and overlay UI must come from `@repo/ui`.
 |----------|-----------|--------|
 | Centered dialogs (confirm, forms, previews) | `Modal` | `@repo/ui` |
 | Slide-over panels (mobile nav drawer) | `Sheet` | `@repo/ui` |
+| Right-side detail panel (global third rail) | `ThirdRailProvider`, `ThirdRailHost`, `useThirdRail` | `@repo/ui` |
 | Image select, crop, upload, expand | `PhotoUpload` | `@repo/ui` |
 
 Storybook reference: `Components/Modal`, `Components/PhotoUpload`.
