@@ -133,6 +133,48 @@ describe("EntityField", () => {
     expect(onChange).toHaveBeenCalledWith("tags", ["alpha", "beta"]);
   });
 
+  it("renders a multiline textarea when textFieldOptions requests multiline", () => {
+    const onChange = vi.fn();
+    const widgetWithDescription: EntityCatalogEntry = {
+      ...MOCK_ENTITY_CATALOG[0]!,
+      fields: {
+        ...MOCK_ENTITY_CATALOG[0]!.fields,
+        description: {
+          type: "string",
+          required: false,
+          optional: true,
+        },
+      },
+      ui: {
+        ...MOCK_ENTITY_CATALOG[0]!.ui,
+        fields: {
+          ...MOCK_ENTITY_CATALOG[0]!.ui.fields,
+          description: { label: "Description", component: "input" },
+        },
+      },
+    };
+
+    render(
+      <TestEntityCatalogProvider items={[widgetWithDescription]}>
+        <EntityField
+          entityName="widget"
+          fieldName="description"
+          value="Long text"
+          textFieldOptions={{ multiline: true, multilineRows: 5 }}
+          onChange={onChange}
+        />
+      </TestEntityCatalogProvider>,
+    );
+
+    const textarea = screen.getByLabelText(/Description/i);
+    expect(textarea.tagName).toBe("TEXTAREA");
+    expect(textarea).toHaveAttribute("rows", "5");
+    expect(textarea).toHaveValue("Long text");
+
+    fireEvent.change(textarea, { target: { value: "Updated text" } });
+    expect(onChange).toHaveBeenCalledWith("description", "Updated text");
+  });
+
   it("renders a date picker for date fields", () => {
     render(
       <TestEntityCatalogProvider items={[WIDGET_WITH_DATE]}>

@@ -17,7 +17,7 @@ import {
   type WizardProgressComponentConfig,
   type WizardStepStatusKind,
 } from "@repo/ui-builder-core";
-import { Button, Input, Text, clampCardImageSizePx } from "@repo/ui";
+import { Button, Checkbox, Input, Text, clampCardImageSizePx } from "@repo/ui";
 
 import {
   filterFieldsForComponentKind,
@@ -150,6 +150,8 @@ export interface ComponentConfigEditorLabels {
   readonly booleanFieldSwitchVariantSquared?: string;
   readonly booleanFieldSwitchWidth?: string;
   readonly booleanFieldSwitchHeight?: string;
+  readonly textFieldMultiline?: string;
+  readonly textFieldMultilineRows?: string;
   readonly styleRules: StyleRulesEditorLabels;
   readonly label: LabelConfigEditorLabels;
 }
@@ -342,6 +344,75 @@ function FormBooleanFieldConfigFields({
             </label>
           </div>
         </>
+      ) : null}
+    </>
+  );
+}
+
+function FormTextFieldConfigFields({
+  config,
+  labels,
+  definition,
+  onChange,
+}: {
+  readonly config: FormFieldComponentConfig;
+  readonly labels: ComponentConfigEditorLabels;
+  readonly definition?: SerializableEntityDefinition;
+  readonly onChange: (config: UiComponentConfig) => void;
+}) {
+  const fieldMeta = definition?.fields[config.fieldPath];
+  if (fieldMeta?.type !== "string" || fieldMeta.isArray) {
+    return null;
+  }
+
+  const multiline = config.multiline === true;
+
+  function parseRows(raw: string): number | undefined {
+    const trimmed = raw.trim();
+    if (!trimmed) {
+      return undefined;
+    }
+    const parsed = Number.parseInt(trimmed, 10);
+    if (!Number.isFinite(parsed) || parsed < 2 || parsed > 20) {
+      return undefined;
+    }
+    return parsed;
+  }
+
+  return (
+    <>
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox
+          checked={multiline}
+          onChange={(event) =>
+            onChange({
+              ...config,
+              multiline: event.target.checked || undefined,
+            })
+          }
+        />
+        <span>{labels.textFieldMultiline ?? "Multiline text input"}</span>
+      </label>
+
+      {multiline ? (
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">
+            {labels.textFieldMultilineRows ?? "Initial rows"}
+          </span>
+          <Input
+            type="number"
+            min={2}
+            max={20}
+            placeholder="3"
+            value={config.multilineRows ?? ""}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                multilineRows: parseRows(event.target.value),
+              })
+            }
+          />
+        </label>
       ) : null}
     </>
   );
@@ -633,6 +704,12 @@ export function ComponentConfigEditor({
               </select>
             </label>
             <FormBooleanFieldConfigFields
+              config={config}
+              labels={labels}
+              definition={definition}
+              onChange={onChange}
+            />
+            <FormTextFieldConfigFields
               config={config}
               labels={labels}
               definition={definition}

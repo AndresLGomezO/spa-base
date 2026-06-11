@@ -198,6 +198,8 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
       switchVariant: z.enum(["ios", "squared"]).optional(),
       switchWidth: z.number().int().min(28).max(120).optional(),
       switchHeight: z.number().int().min(16).max(64).optional(),
+      multiline: z.boolean().optional(),
+      multilineRows: z.number().int().min(2).max(20).optional(),
       styles: z.array(styleRuleSchema).optional(),
     })
     .strict(),

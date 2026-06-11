@@ -6,6 +6,7 @@ import {
   Input,
   Switch,
   Text,
+  Textarea,
   type DatePickerLabels,
   type SwitchVariant,
 } from "@repo/ui";
@@ -35,6 +36,11 @@ interface BooleanFieldOptions {
   readonly switchHeight?: number;
 }
 
+interface TextFieldOptions {
+  readonly multiline?: boolean;
+  readonly multilineRows?: number;
+}
+
 interface EntityFieldProps {
   readonly entityName: EntityName;
   readonly fieldName: string;
@@ -43,6 +49,7 @@ interface EntityFieldProps {
   readonly readOnly?: boolean;
   readonly recordId?: string;
   readonly booleanFieldOptions?: BooleanFieldOptions;
+  readonly textFieldOptions?: TextFieldOptions;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -54,6 +61,7 @@ export function EntityField({
   readOnly = false,
   recordId,
   booleanFieldOptions,
+  textFieldOptions,
   onChange,
 }: EntityFieldProps) {
   const { t } = useTranslation("common");
@@ -327,15 +335,27 @@ export function EntityField({
       <FieldLabel htmlFor={inputId} required={meta.required}>
         {label}
       </FieldLabel>
-      <Input
-        id={inputId}
-        type="text"
-        hasError={Boolean(error)}
-        disabled={readOnly}
-        placeholder={fieldUI?.placeholder}
-        value={typeof value === "string" ? value : ""}
-        onChange={(event) => onChange(fieldName, event.target.value)}
-      />
+      {textFieldOptions?.multiline ? (
+        <Textarea
+          id={inputId}
+          hasError={Boolean(error)}
+          disabled={readOnly}
+          placeholder={fieldUI?.placeholder}
+          rows={textFieldOptions.multilineRows ?? 3}
+          value={typeof value === "string" ? value : ""}
+          onChange={(event) => onChange(fieldName, event.target.value)}
+        />
+      ) : (
+        <Input
+          id={inputId}
+          type="text"
+          hasError={Boolean(error)}
+          disabled={readOnly}
+          placeholder={fieldUI?.placeholder}
+          value={typeof value === "string" ? value : ""}
+          onChange={(event) => onChange(fieldName, event.target.value)}
+        />
+      )}
       {error ? <FieldError>{error}</FieldError> : null}
     </div>
   );

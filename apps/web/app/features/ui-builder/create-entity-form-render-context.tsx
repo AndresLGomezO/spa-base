@@ -79,6 +79,12 @@ export function createEntityFormRenderContext(options: {
               switchHeight: config.switchHeight,
             }
           : undefined;
+      const textFieldOptions = config.multiline
+        ? {
+            multiline: true,
+            multilineRows: config.multilineRows,
+          }
+        : undefined;
       return (
         <div className={formComponentContainerClassName(containerClassName)}>
           <EntityField
@@ -89,6 +95,7 @@ export function createEntityFormRenderContext(options: {
             readOnly={!isFieldEditable(fieldUI, canWrite, access)}
             recordId={options.recordId}
             booleanFieldOptions={booleanFieldOptions}
+            textFieldOptions={textFieldOptions}
             onChange={options.onChange}
           />
         </div>

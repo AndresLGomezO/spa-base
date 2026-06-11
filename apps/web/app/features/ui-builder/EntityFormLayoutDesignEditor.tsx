@@ -227,6 +227,8 @@ export function EntityFormLayoutDesignEditor({
         booleanFieldSwitchHeight: t(
           "entity.viewSettings.booleanFieldSwitchHeight",
         ),
+        textFieldMultiline: t("entity.viewSettings.textFieldMultiline"),
+        textFieldMultilineRows: t("entity.viewSettings.textFieldMultilineRows"),
         styleRules: {
           addStyleRule: t("entity.viewSettings.addStyleRule"),
           removeStyleRule: t("entity.viewSettings.removeStyleRule"),

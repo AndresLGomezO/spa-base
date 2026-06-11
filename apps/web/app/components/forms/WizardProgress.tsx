@@ -21,6 +21,21 @@ function statusForStep(
   return wizard.stepStatuses[stepId] ?? "pending";
 }
 
+function defaultStatusBackgroundClass(
+  status: WizardStepStatusKind,
+): string | undefined {
+  switch (status) {
+    case "active":
+      return "bg-muted/50";
+    case "completed":
+      return "bg-badge-info/10";
+    case "invalid":
+      return "bg-badge-warning/20";
+    default:
+      return undefined;
+  }
+}
+
 export function WizardProgress({ config, wizard }: WizardProgressProps) {
   const { containerClassName } = splitStyleRuleClasses(config.styles);
 
@@ -35,7 +50,7 @@ export function WizardProgress({ config, wizard }: WizardProgressProps) {
           );
           const rowClassName = [
             "flex items-start gap-3 rounded-md px-3 py-2 text-sm",
-            status === "active" ? "bg-muted/60" : "",
+            defaultStatusBackgroundClass(status),
             matched.className,
           ]
             .filter(Boolean)

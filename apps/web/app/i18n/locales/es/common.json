@@ -406,6 +406,8 @@
       "booleanFieldSwitchVariantSquared": "Cuadrado",
       "booleanFieldSwitchWidth": "Ancho del interruptor (px)",
       "booleanFieldSwitchHeight": "Alto del interruptor (px)",
+      "textFieldMultiline": "Entrada de texto multilínea",
+      "textFieldMultilineRows": "Filas iniciales",
       "labelColor": "Color de etiqueta",
       "labelAlignLeft": "Izquierda",
       "labelAlignCenter": "Centro",

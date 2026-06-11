@@ -406,6 +406,8 @@
       "booleanFieldSwitchVariantSquared": "Squared",
       "booleanFieldSwitchWidth": "Switch width (px)",
       "booleanFieldSwitchHeight": "Switch height (px)",
+      "textFieldMultiline": "Multiline text input",
+      "textFieldMultilineRows": "Initial rows",
       "labelColor": "Label color",
       "labelAlignLeft": "Left",
       "labelAlignCenter": "Center",

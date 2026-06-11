@@ -114,6 +114,8 @@ export interface FormFieldComponentConfig {
   readonly switchVariant?: SwitchVariant;
   readonly switchWidth?: number;
   readonly switchHeight?: number;
+  readonly multiline?: boolean;
+  readonly multilineRows?: number;
   readonly styles?: readonly StyleRule[];
 }
 
