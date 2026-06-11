@@ -408,6 +408,7 @@
       "booleanFieldSwitchHeight": "Alto del interruptor (px)",
       "textFieldMultiline": "Entrada de texto multilínea",
       "textFieldMultilineRows": "Filas iniciales",
+      "formFieldHideLabel": "Ocultar etiqueta del campo",
       "labelColor": "Color de etiqueta",
       "labelAlignLeft": "Izquierda",
       "labelAlignCenter": "Centro",

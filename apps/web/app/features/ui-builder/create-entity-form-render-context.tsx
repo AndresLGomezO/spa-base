@@ -96,6 +96,7 @@ export function createEntityFormRenderContext(options: {
             recordId={options.recordId}
             booleanFieldOptions={booleanFieldOptions}
             textFieldOptions={textFieldOptions}
+            hideLabel={config.hideLabel}
             onChange={options.onChange}
           />
         </div>

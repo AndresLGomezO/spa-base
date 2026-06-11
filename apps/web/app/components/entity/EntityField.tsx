@@ -50,6 +50,7 @@ interface EntityFieldProps {
   readonly recordId?: string;
   readonly booleanFieldOptions?: BooleanFieldOptions;
   readonly textFieldOptions?: TextFieldOptions;
+  readonly hideLabel?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -62,6 +63,7 @@ export function EntityField({
   recordId,
   booleanFieldOptions,
   textFieldOptions,
+  hideLabel = false,
   onChange,
 }: EntityFieldProps) {
   const { t } = useTranslation("common");
@@ -72,6 +74,12 @@ export function EntityField({
   const fieldUI = definition.ui.fields?.[fieldName];
   const inputId = `${entityName}-${fieldName}`;
   const label = fieldUI?.label ?? formatFieldLabel(fieldName, definition);
+  const controlAriaLabel = hideLabel ? label : undefined;
+  const inlineLabel = hideLabel ? (
+    <span className="sr-only">{label}</span>
+  ) : (
+    label
+  );
   const componentId = resolveComponentId(fieldUI?.component, meta.type);
   const CustomField = resolveFieldComponent(componentId);
   const fileFieldMaxSizeBytes =
@@ -97,6 +105,7 @@ export function EntityField({
         error={error}
         readOnly={readOnly}
         inputId={inputId}
+        hideLabel={hideLabel}
         onChange={onChange}
       />
     );
@@ -115,6 +124,7 @@ export function EntityField({
         recordId={recordId}
         maxSizeBytes={fileFieldMaxSizeBytes}
         defaultImageUrl={defaultImageUrl}
+        hideLabel={hideLabel}
         onChange={onChange}
       />
     );
@@ -135,6 +145,7 @@ export function EntityField({
           required={meta.required}
           error={error}
           readOnly={readOnly}
+          hideLabel={hideLabel}
           onChange={onChange}
         />
       );
@@ -143,9 +154,11 @@ export function EntityField({
     if (!isDocumentStoredField(meta)) {
       return (
         <div className="flex flex-col gap-1">
-          <FieldLabel>
-            {label || formatFieldLabel(fieldName, definition)}
-          </FieldLabel>
+          {hideLabel ? null : (
+            <FieldLabel>
+              {label || formatFieldLabel(fieldName, definition)}
+            </FieldLabel>
+          )}
           <Text className="text-muted-foreground text-sm">
             {t("entity.relationOneToManyReadOnly")}
           </Text>
@@ -163,6 +176,7 @@ export function EntityField({
         required={meta.required}
         error={error}
         readOnly={readOnly}
+        hideLabel={hideLabel}
         onChange={onChange}
       />
     );
@@ -179,9 +193,15 @@ export function EntityField({
 
         return (
           <div className="flex flex-col gap-1">
-            <FieldLabel id={squaredLabelId} required={meta.required}>
-              {label}
-            </FieldLabel>
+            {hideLabel ? (
+              <span id={squaredLabelId} className="sr-only">
+                {label}
+              </span>
+            ) : (
+              <FieldLabel id={squaredLabelId} required={meta.required}>
+                {label}
+              </FieldLabel>
+            )}
             <Switch
               checked={Boolean(value)}
               disabled={readOnly}
@@ -202,7 +222,7 @@ export function EntityField({
         <div className="flex flex-col gap-1">
           <Switch
             id={inputId}
-            label={label}
+            label={inlineLabel}
             checked={Boolean(value)}
             disabled={readOnly}
             variant="ios"
@@ -219,7 +239,7 @@ export function EntityField({
       <div className="flex flex-col gap-1">
         <Checkbox
           id={inputId}
-          label={label}
+          label={inlineLabel}
           checked={Boolean(value)}
           disabled={readOnly}
           onChange={(event) => onChange(fieldName, event.target.checked)}
@@ -244,7 +264,11 @@ export function EntityField({
 
     return (
       <div className="flex flex-col gap-1">
-        <FieldLabel htmlFor={inputId} required={meta.required}>
+        <FieldLabel
+          htmlFor={inputId}
+          className={hideLabel ? "sr-only" : undefined}
+          required={meta.required}
+        >
           {label}
         </FieldLabel>
         <DatePicker
@@ -265,11 +289,14 @@ export function EntityField({
     const enumValues = meta.enumValues ?? [];
     return (
       <div className="flex flex-col gap-1">
-        <FieldLabel htmlFor={inputId} required={meta.required}>
-          {label}
-        </FieldLabel>
+        {hideLabel ? null : (
+          <FieldLabel htmlFor={inputId} required={meta.required}>
+            {label}
+          </FieldLabel>
+        )}
         <select
           id={inputId}
+          aria-label={controlAriaLabel}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm"
           disabled={readOnly}
           value={typeof value === "string" ? value : ""}
@@ -306,12 +333,15 @@ export function EntityField({
 
     return (
       <div className="flex flex-col gap-1">
-        <FieldLabel htmlFor={inputId} required={meta.required}>
-          {label}
-        </FieldLabel>
+        {hideLabel ? null : (
+          <FieldLabel htmlFor={inputId} required={meta.required}>
+            {label}
+          </FieldLabel>
+        )}
         <Input
           id={inputId}
           type="number"
+          aria-label={controlAriaLabel}
           step={isInteger ? 1 : "any"}
           hasError={Boolean(error)}
           disabled={readOnly}
@@ -332,12 +362,15 @@ export function EntityField({
 
   return (
     <div className="flex flex-col gap-1">
-      <FieldLabel htmlFor={inputId} required={meta.required}>
-        {label}
-      </FieldLabel>
+      {hideLabel ? null : (
+        <FieldLabel htmlFor={inputId} required={meta.required}>
+          {label}
+        </FieldLabel>
+      )}
       {textFieldOptions?.multiline ? (
         <Textarea
           id={inputId}
+          aria-label={controlAriaLabel}
           hasError={Boolean(error)}
           disabled={readOnly}
           placeholder={fieldUI?.placeholder}
@@ -349,6 +382,7 @@ export function EntityField({
         <Input
           id={inputId}
           type="text"
+          aria-label={controlAriaLabel}
           hasError={Boolean(error)}
           disabled={readOnly}
           placeholder={fieldUI?.placeholder}

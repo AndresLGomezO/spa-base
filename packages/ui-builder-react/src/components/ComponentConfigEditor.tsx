@@ -152,6 +152,7 @@ export interface ComponentConfigEditorLabels {
   readonly booleanFieldSwitchHeight?: string;
   readonly textFieldMultiline?: string;
   readonly textFieldMultilineRows?: string;
+  readonly formFieldHideLabel?: string;
   readonly styleRules: StyleRulesEditorLabels;
   readonly label: LabelConfigEditorLabels;
 }
@@ -715,6 +716,18 @@ export function ComponentConfigEditor({
               definition={definition}
               onChange={onChange}
             />
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={config.hideLabel === true}
+                onChange={(event) =>
+                  onChange({
+                    ...config,
+                    hideLabel: event.target.checked || undefined,
+                  })
+                }
+              />
+              <span>{labels.formFieldHideLabel ?? "Hide field label"}</span>
+            </label>
           </>
         ) : null}
         {config.kind === "entity-field-selector" ? (

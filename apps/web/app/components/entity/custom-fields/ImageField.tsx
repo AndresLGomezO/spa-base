@@ -21,6 +21,7 @@ export function ImageField({
   recordId,
   maxSizeBytes,
   defaultImageUrl,
+  hideLabel = false,
   onChange,
 }: FieldComponentProps) {
   const { t } = useTranslation("common");
@@ -59,7 +60,12 @@ export function ImageField({
 
   return (
     <div className="flex flex-col gap-1">
-      <FieldLabel required={required}>{label}</FieldLabel>
+      <FieldLabel
+        className={hideLabel ? "sr-only" : undefined}
+        required={required}
+      >
+        {label}
+      </FieldLabel>
       <PhotoUpload
         value={previewUrl}
         placeholderUrl={previewUrl ? null : defaultImageUrl}

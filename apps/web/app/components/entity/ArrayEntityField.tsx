@@ -33,6 +33,7 @@ interface ArrayEntityFieldProps {
   readonly error?: string;
   readonly readOnly?: boolean;
   readonly inputId: string;
+  readonly hideLabel?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -53,6 +54,7 @@ export function ArrayEntityField({
   error,
   readOnly = false,
   inputId,
+  hideLabel = false,
   onChange,
 }: ArrayEntityFieldProps) {
   const { t, i18n } = useTranslation("common");
@@ -258,7 +260,11 @@ export function ArrayEntityField({
 
   return (
     <div className="flex flex-col gap-2">
-      <FieldLabel htmlFor={inputId} required={required}>
+      <FieldLabel
+        htmlFor={inputId}
+        className={hideLabel ? "sr-only" : undefined}
+        required={required}
+      >
         {label}
       </FieldLabel>
 

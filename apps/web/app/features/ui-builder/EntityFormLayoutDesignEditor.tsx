@@ -229,6 +229,7 @@ export function EntityFormLayoutDesignEditor({
         ),
         textFieldMultiline: t("entity.viewSettings.textFieldMultiline"),
         textFieldMultilineRows: t("entity.viewSettings.textFieldMultilineRows"),
+        formFieldHideLabel: t("entity.viewSettings.formFieldHideLabel"),
         styleRules: {
           addStyleRule: t("entity.viewSettings.addStyleRule"),
           removeStyleRule: t("entity.viewSettings.removeStyleRule"),

@@ -194,6 +194,7 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
     .object({
       kind: z.literal("form-field"),
       fieldPath: z.string().trim().min(1),
+      hideLabel: z.boolean().optional(),
       booleanDisplay: z.enum(["checkbox", "switch"]).optional(),
       switchVariant: z.enum(["ios", "squared"]).optional(),
       switchWidth: z.number().int().min(28).max(120).optional(),

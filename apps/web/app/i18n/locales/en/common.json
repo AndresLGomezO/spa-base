@@ -408,6 +408,7 @@
       "booleanFieldSwitchHeight": "Switch height (px)",
       "textFieldMultiline": "Multiline text input",
       "textFieldMultilineRows": "Initial rows",
+      "formFieldHideLabel": "Hide field label",
       "labelColor": "Label color",
       "labelAlignLeft": "Left",
       "labelAlignCenter": "Center",

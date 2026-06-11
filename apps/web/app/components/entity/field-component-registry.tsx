@@ -13,6 +13,7 @@ export interface FieldComponentProps {
   readonly recordId?: string;
   readonly maxSizeBytes?: number;
   readonly defaultImageUrl?: string | null;
+  readonly hideLabel?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 

@@ -110,6 +110,7 @@ export type SwitchVariant = "ios" | "squared";
 export interface FormFieldComponentConfig {
   readonly kind: "form-field";
   readonly fieldPath: string;
+  readonly hideLabel?: boolean;
   readonly booleanDisplay?: BooleanFieldDisplay;
   readonly switchVariant?: SwitchVariant;
   readonly switchWidth?: number;

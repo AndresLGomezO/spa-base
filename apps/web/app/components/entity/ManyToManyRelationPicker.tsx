@@ -18,6 +18,7 @@ interface ManyToManyRelationPickerProps {
   readonly required?: boolean;
   readonly error?: string;
   readonly readOnly?: boolean;
+  readonly hideLabel?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -42,6 +43,7 @@ export function ManyToManyRelationPicker({
   required,
   error,
   readOnly = false,
+  hideLabel = false,
   onChange,
 }: ManyToManyRelationPickerProps) {
   const definition = useEntityDefinition(entityName);
@@ -88,9 +90,11 @@ export function ManyToManyRelationPicker({
 
   return (
     <div className="flex flex-col gap-2">
-      <FieldLabel required={required}>
-        {label || formatFieldLabel(fieldName, definition)}
-      </FieldLabel>
+      {hideLabel ? null : (
+        <FieldLabel required={required}>
+          {label || formatFieldLabel(fieldName, definition)}
+        </FieldLabel>
+      )}
       {isLoading ? (
         <RelationPickerSkeleton />
       ) : options.length === 0 ? (

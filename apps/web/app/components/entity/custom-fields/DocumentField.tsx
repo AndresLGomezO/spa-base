@@ -20,6 +20,7 @@ export function DocumentField({
   readOnly = false,
   recordId,
   maxSizeBytes,
+  hideLabel = false,
   onChange,
 }: FieldComponentProps & { readonly recordId?: string }) {
   const { t } = useTranslation("common");
@@ -61,7 +62,12 @@ export function DocumentField({
 
   return (
     <div className="flex flex-col gap-1">
-      <FieldLabel required={required}>{label}</FieldLabel>
+      <FieldLabel
+        className={hideLabel ? "sr-only" : undefined}
+        required={required}
+      >
+        {label}
+      </FieldLabel>
       <DocumentUpload
         fileName={fileRef?.fileName ?? null}
         downloadUrl={fileRef?.downloadUrl ?? null}

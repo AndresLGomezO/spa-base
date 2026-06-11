@@ -17,6 +17,7 @@ interface RelationPickerProps {
   readonly required?: boolean;
   readonly error?: string;
   readonly readOnly?: boolean;
+  readonly hideLabel?: boolean;
   readonly onChange: (fieldName: string, value: unknown) => void;
 }
 
@@ -34,6 +35,7 @@ export function RelationPicker({
   required,
   error,
   readOnly = false,
+  hideLabel = false,
   onChange,
 }: RelationPickerProps) {
   const definition = useEntityDefinition(entityName);
@@ -70,11 +72,18 @@ export function RelationPicker({
 
   return (
     <div className="flex flex-col gap-1">
-      <FieldLabel htmlFor={inputId} required={required}>
-        {label || formatFieldLabel(fieldName, definition)}
-      </FieldLabel>
+      {hideLabel ? null : (
+        <FieldLabel htmlFor={inputId} required={required}>
+          {label || formatFieldLabel(fieldName, definition)}
+        </FieldLabel>
+      )}
       <select
         id={inputId}
+        aria-label={
+          hideLabel
+            ? label || formatFieldLabel(fieldName, definition)
+            : undefined
+        }
         className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm"
         disabled={isLoading || readOnly}
         value={typeof value === "string" ? value : ""}
