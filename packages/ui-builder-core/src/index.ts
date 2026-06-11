@@ -27,6 +27,7 @@ export type {
   DateComponentConfig,
   NumericComponentConfig,
   BadgeComponentConfig,
+  IconComponentConfig,
   FormFieldComponentConfig,
   BooleanFieldDisplay,
   SwitchVariant,
@@ -40,6 +41,7 @@ export type {
 export {
   isMetricKpiComponent,
   isFieldUiComponent,
+  isIconComponent,
   isEntityFieldSelectorComponent,
   isPageUiComponent,
 } from "./types/component.js";
@@ -53,6 +55,7 @@ export {
 export {
   createDefaultWizardShellLayout,
   createDefaultWizardStepLayout,
+  createDefaultWizardSummaryStepLayout,
   createDefaultWizardFormConfig,
 } from "./layout/default-wizard-form-layout.js";
 export {
@@ -158,6 +161,8 @@ export {
   assertLayoutFieldPaths,
   assertFormLayoutFieldPaths,
   collectLayoutFieldPaths,
+  collectLayoutInputFieldPaths,
+  layoutHasInputFields,
   listLayoutFieldOptions,
   listFormFieldOptions,
   listEntityFieldSelectorFieldOptions,

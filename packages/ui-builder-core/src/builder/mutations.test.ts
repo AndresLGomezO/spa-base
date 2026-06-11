@@ -288,4 +288,11 @@ describe("createDefaultComponent", () => {
       enableSearch: true,
     });
   });
+
+  it("creates icon defaults", () => {
+    expect(createDefaultComponent("icon")).toEqual({
+      kind: "icon",
+      iconName: "CircleCheck",
+    });
+  });
 });

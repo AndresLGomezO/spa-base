@@ -52,7 +52,11 @@ interface EntityFieldSelectorProps {
   readonly readOnly?: boolean;
   readonly containerClassName?: string;
   readonly listScrollContained?: boolean;
-  readonly onChange: (fieldName: string, value: unknown) => void;
+  readonly onChange: (
+    fieldName: string,
+    value: unknown,
+    displayRecord?: Record<string, unknown> | null,
+  ) => void;
 }
 
 function selectionClassName(selected: boolean): string {
@@ -301,7 +305,9 @@ export function EntityFieldSelector({
     if (readOnly) {
       return;
     }
-    onChange(fieldName, toggleSelectorValue(value, optionId, multiSelect));
+    const nextValue = toggleSelectorValue(value, optionId, multiSelect);
+    const option = options.find((entry) => entry.id === optionId);
+    onChange(fieldName, nextValue, option?.record ?? null);
   }
 
   const gridClass =

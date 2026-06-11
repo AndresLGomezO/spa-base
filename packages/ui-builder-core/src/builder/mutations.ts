@@ -47,6 +47,10 @@ export function createDefaultComponent(
     return { kind: "form-section", title: "Section" };
   }
 
+  if (kind === "icon") {
+    return { kind: "icon", iconName: "CircleCheck" };
+  }
+
   if (kind === "form-actions") {
     return { kind: "form-actions" };
   }

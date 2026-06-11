@@ -6,6 +6,7 @@ import {
 } from "@repo/entities";
 
 import { fieldPathRoot } from "./validate-wizard-step-fields";
+import { isFormDisplayCacheKey } from "./form-relation-display-cache";
 
 function uniqueFieldRootsFromSections(
   sections: FormLayout["sections"],
@@ -41,6 +42,9 @@ export function buildFormSubmitValues(
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
   for (const root of uniqueFieldRootsFromSections(sections)) {
+    if (isFormDisplayCacheKey(root)) {
+      continue;
+    }
     if (!(root in values)) {
       continue;
     }
@@ -72,6 +76,9 @@ export function splitEntityFormPayload(
   const joinRelations: Record<string, readonly string[]> = {};
 
   for (const [fieldName, value] of Object.entries(values)) {
+    if (isFormDisplayCacheKey(fieldName)) {
+      continue;
+    }
     const meta = definition.fields[fieldName];
     if (!meta) {
       continue;

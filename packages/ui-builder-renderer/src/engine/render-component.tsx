@@ -4,6 +4,7 @@ import {
   conditionalRulesToBadgeVariants,
   fontSizePxFromStyles,
   isFieldUiComponent,
+  isIconComponent,
   isMetricKpiComponent,
   isPageUiComponent,
   matchConditionalStyles,
@@ -30,6 +31,7 @@ import {
 } from "@repo/ui";
 
 import type { LayoutRenderContext } from "../context.js";
+import type { FieldDisplayMeta } from "../context.js";
 
 function resolveFieldDisplayValue(
   fieldPath: string,
@@ -55,6 +57,41 @@ function sampleValueClassName(
   return [textClassName, isSample ? "text-muted-foreground" : ""]
     .filter(Boolean)
     .join(" ");
+}
+
+function formatRawDisplayValue(
+  rawValue: unknown,
+  fieldPath: string,
+  meta: FieldDisplayMeta,
+  context: LayoutRenderContext,
+): string {
+  const rootField = fieldPathRoot(fieldPath);
+
+  if (meta.isArray && Array.isArray(rawValue)) {
+    if (rawValue.length === 0) {
+      return "—";
+    }
+
+    return rawValue
+      .map((item) =>
+        formatDisplayValue(item, {
+          fieldType: meta.fieldType,
+          displayFormat: meta.displayFormat,
+          dateDisplayFormat: meta.dateDisplayFormat,
+          fieldName: rootField,
+          locale: context.locale,
+        }),
+      )
+      .join(", ");
+  }
+
+  return formatDisplayValue(rawValue, {
+    fieldType: meta.fieldType,
+    displayFormat: meta.displayFormat,
+    dateDisplayFormat: meta.dateDisplayFormat,
+    fieldName: rootField,
+    locale: context.locale,
+  });
 }
 
 function fieldPathRoot(fieldPath: string): string {
@@ -220,6 +257,10 @@ export function renderUiComponent(
     }
   }
 
+  if (isIconComponent(config)) {
+    return context.lucideIconRenderer?.(config) ?? null;
+  }
+
   if (!isFieldUiComponent(config)) {
     return null;
   }
@@ -268,7 +309,6 @@ export function renderUiComponent(
     return null;
   }
   const rawValue = chain.rawValue;
-  const rootField = fieldPathRoot(fieldPath);
   const meta = context.resolveFieldMeta?.(fieldPath) ?? {};
   const label =
     labelFromConfig(config, fieldPath, context) ??
@@ -278,14 +318,12 @@ export function renderUiComponent(
     if (context.resolveImage) {
       const primaryFieldPath =
         config.primary.type === "field" ? config.primary.path.trim() : "";
-      return (
-        <div className={containerClassName} style={containerStyle}>
-          {context.resolveImage(fieldPath, rawValue, {
-            primaryFieldPath,
-            imageSize: config.imageSize,
-          })}
-        </div>
-      );
+      return context.resolveImage(fieldPath, rawValue, {
+        primaryFieldPath,
+        imageSize: config.imageSize,
+        className: containerClassName,
+        style: containerStyle,
+      });
     }
 
     const src = resolveStaticImageSrc(rawValue);
@@ -302,13 +340,7 @@ export function renderUiComponent(
   }
 
   if (config.kind === "badge") {
-    const formatted = formatDisplayValue(rawValue, {
-      fieldType: meta.fieldType,
-      displayFormat: meta.displayFormat,
-      dateDisplayFormat: meta.dateDisplayFormat,
-      fieldName: rootField,
-      locale: context.locale,
-    });
+    const formatted = formatRawDisplayValue(rawValue, fieldPath, meta, context);
     const { value: badgeValue } = resolveFieldDisplayValue(
       fieldPath,
       formatted,
@@ -338,29 +370,33 @@ export function renderUiComponent(
     const displayFormat = config.displayFormat ?? "plain";
     const showCurrency = config.showCurrency ?? false;
     const showToneColors = config.showToneColors ?? false;
-    const formatted = formatDisplayValue(rawValue, {
-      fieldType: meta.fieldType ?? "number",
-      displayFormat,
-      fieldName: rootField,
-      locale: context.locale,
-    });
+    const formatted = formatRawDisplayValue(
+      rawValue,
+      fieldPath,
+      {
+        ...meta,
+        fieldType: meta.fieldType ?? "number",
+        displayFormat,
+      },
+      context,
+    );
     const { value: displayValue, isSample } = resolveFieldDisplayValue(
       fieldPath,
       formatted,
       context,
     );
 
-    if (isSample) {
+    if (isSample || (meta.isArray && Array.isArray(rawValue))) {
       return (
         <CardFieldValue
           label={label}
           value={displayValue}
-          allowEmpty
+          allowEmpty={isSample}
           className={containerClassName}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
             config.styles,
-            sampleValueClassName(textClassName, true),
+            sampleValueClassName(textClassName, isSample),
           )}
           textSize={textSize}
           valueStyle={valueStyle}
@@ -385,30 +421,34 @@ export function renderUiComponent(
   }
 
   if (config.kind === "date") {
-    const formatted = formatDisplayValue(rawValue, {
-      fieldType: meta.fieldType ?? "date",
-      dateDisplayFormat:
-        config.dateDisplayFormat ?? meta.dateDisplayFormat ?? "datetime",
-      fieldName: rootField,
-      locale: context.locale,
-    });
+    const formatted = formatRawDisplayValue(
+      rawValue,
+      fieldPath,
+      {
+        ...meta,
+        fieldType: meta.fieldType ?? "date",
+        dateDisplayFormat:
+          config.dateDisplayFormat ?? meta.dateDisplayFormat ?? "datetime",
+      },
+      context,
+    );
     const { value: displayValue, isSample } = resolveFieldDisplayValue(
       fieldPath,
       formatted,
       context,
     );
 
-    if (isSample) {
+    if (isSample || (meta.isArray && Array.isArray(rawValue))) {
       return (
         <CardFieldValue
           label={label}
           value={displayValue}
-          allowEmpty
+          allowEmpty={isSample}
           className={containerClassName}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
             config.styles,
-            sampleValueClassName(textClassName, true),
+            sampleValueClassName(textClassName, isSample),
           )}
           textSize={textSize}
           valueStyle={valueStyle}
@@ -455,13 +495,12 @@ export function renderUiComponent(
     );
   }
 
-  const formattedValue = formatDisplayValue(rawValue, {
-    fieldType: meta.fieldType,
-    displayFormat: meta.displayFormat,
-    dateDisplayFormat: meta.dateDisplayFormat,
-    fieldName: rootField,
-    locale: context.locale,
-  });
+  const formattedValue = formatRawDisplayValue(
+    rawValue,
+    fieldPath,
+    meta,
+    context,
+  );
   const { value: displayValue, isSample } = resolveFieldDisplayValue(
     fieldPath,
     formattedValue,

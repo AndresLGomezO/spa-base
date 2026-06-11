@@ -54,6 +54,16 @@ export function createDefaultWizardStepLayout(
   );
 }
 
+export function createDefaultWizardSummaryStepLayout(): UiLayoutDocument {
+  const layout = createEmptyLayout(1);
+  const locator = { scope: "root" as const, columnIndex: 0 };
+
+  return addComponentRowAt(layout, locator, {
+    kind: "form-section",
+    title: "Review your information",
+  });
+}
+
 export function createDefaultWizardFormConfig(fieldPaths: readonly string[]): {
   shellLayout: UiLayoutDocument;
   steps: readonly [

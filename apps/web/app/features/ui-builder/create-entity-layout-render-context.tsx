@@ -13,6 +13,7 @@ import {
   resolveLayoutSlotLabel,
 } from "../../components/entity/resolve-layout-slot-display";
 import { EntityLayoutImageField } from "../../components/entity/EntityLayoutImageField";
+import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
 import { MetricValueDisplay } from "../../components/metrics/MetricValueDisplay";
 import { readLayoutStaticImageUrl } from "@repo/entities";
 
@@ -106,6 +107,8 @@ export function createEntityLayoutRenderContext(options: {
         getDefinition={getDefinition}
         primaryFieldPath={imageOptions.primaryFieldPath}
         imageSize={imageOptions.imageSize}
+        className={imageOptions.className}
+        style={imageOptions.style}
         usePreviewPlaceholder={usePreviewPlaceholder}
       />
     ),
@@ -122,5 +125,6 @@ export function createEntityLayoutRenderContext(options: {
         textSize={presentation?.textSize}
       />
     ),
+    lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
   };
 }

@@ -24,7 +24,9 @@ import {
 } from "@repo/entities";
 
 import type { EntityName } from "../../entities/entity-catalog";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { CollapsibleSection } from "../../components/CollapsibleSection.js";
+import { applyFormFieldChange } from "../../components/entity/form-relation-display-cache";
 import { FormModal } from "../../components/forms/FormModal";
 import { resolveEntityFormModalFooter } from "../../components/entity/use-entity-form-modal-footer";
 import { WizardActions } from "../../components/forms/WizardActions";
@@ -48,6 +50,7 @@ export function EntityFormLayoutDesignEditor({
   editor: editorProp,
 }: EntityFormLayoutDesignEditorProps) {
   const { t, i18n } = useTranslation("common");
+  const { getDefinition } = useEntityCatalog();
   const internalEditor = useEntityFormLayoutEditor(entityName);
   const editor = editorProp ?? internalEditor;
   const [previewStepIndex, setPreviewStepIndex] = useState(0);
@@ -230,6 +233,9 @@ export function EntityFormLayoutDesignEditor({
         textFieldMultiline: t("entity.viewSettings.textFieldMultiline"),
         textFieldMultilineRows: t("entity.viewSettings.textFieldMultilineRows"),
         formFieldHideLabel: t("entity.viewSettings.formFieldHideLabel"),
+        iconName: t("designLayout.iconName"),
+        iconSize: t("entity.viewSettings.imageSize"),
+        iconNameHint: t("designLayout.iconNameHint"),
         styleRules: {
           addStyleRule: t("entity.viewSettings.addStyleRule"),
           removeStyleRule: t("entity.viewSettings.removeStyleRule"),
@@ -277,6 +283,25 @@ export function EntityFormLayoutDesignEditor({
 
   const previewWizardStepCancel = useCallback(() => undefined, []);
 
+  const handlePreviewFieldChange = useCallback(
+    (
+      fieldName: string,
+      value: unknown,
+      displayRecord?: Record<string, unknown> | null,
+    ) => {
+      setValues((current) =>
+        applyFormFieldChange(
+          editor.definition,
+          current,
+          fieldName,
+          value,
+          displayRecord,
+        ),
+      );
+    },
+    [editor.definition],
+  );
+
   const plainPreviewContext = useMemo(
     () =>
       createEntityFormRenderContext({
@@ -289,16 +314,18 @@ export function EntityFormLayoutDesignEditor({
         fieldAccess: {},
         canRead: true,
         canWrite: true,
-        onChange: (name, value) =>
-          setValues((current) => ({ ...current, [name]: value })),
+        onChange: handlePreviewFieldChange,
         onCancel: () => undefined,
         hideActions: usesDesignedModalFooter,
         cancelLabel: t("entity.cancel"),
         saveLabel: t("entity.create"),
+        getDefinition,
       }),
     [
       editor.definition,
       entityName,
+      getDefinition,
+      handlePreviewFieldChange,
       i18n.language,
       t,
       usesDesignedModalFooter,
@@ -318,17 +345,20 @@ export function EntityFormLayoutDesignEditor({
         fieldAccess: {},
         canRead: true,
         canWrite: true,
-        onChange: (name, value) =>
-          setValues((current) => ({ ...current, [name]: value })),
+        onChange: handlePreviewFieldChange,
         onCancel: () => undefined,
         hideActions: usesDesignedModalFooter,
         cancelLabel: t("entity.cancel"),
         saveLabel: t("entity.create"),
         wizardStepContent: true,
+        getDefinition,
+        usePreviewSamples: true,
       }),
     [
       editor.definition,
       entityName,
+      getDefinition,
+      handlePreviewFieldChange,
       i18n.language,
       t,
       usesDesignedModalFooter,
@@ -823,17 +853,30 @@ export function EntityFormLayoutDesignEditor({
                       }
                       labels={structureLabels}
                       designSurface="formWizardStep"
+                      getDefinition={getDefinition}
                     />
                   </>
                 ) : null}
 
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={editor.addStep}
-                >
-                  {t("designLayout.addWizardStep")}
-                </Button>
+                <div className="flex flex-wrap gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={editor.addStep}
+                  >
+                    {t("designLayout.addWizardStep")}
+                  </Button>
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={editor.addSummaryStep}
+                  >
+                    {t("designLayout.addSummaryStep")}
+                  </Button>
+                </div>
+                <Text className="text-muted-foreground text-xs">
+                  {t("designLayout.summaryStepHint")}
+                </Text>
               </div>
             </CollapsibleSection>
           </div>

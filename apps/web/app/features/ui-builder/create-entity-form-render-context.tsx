@@ -6,11 +6,21 @@ import type {
 } from "@repo/entities";
 import { isFieldEditable, isFieldVisible } from "@repo/ui-builder";
 
-import type { EntityName } from "../../entities/entity-catalog";
+import type {
+  EntityCatalogEntry,
+  EntityName,
+} from "../../entities/entity-catalog";
 import { formatFieldLabel } from "../../entities/entity-catalog";
 import { EntityField } from "../../components/entity/EntityField";
 import { EntityFieldSelector } from "../../components/entity/EntityFieldSelector";
+import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
 import { ENTITY_FORM_ID } from "../../components/entity/entity-form-constants";
+import { resolveEntityCellValue } from "../../components/entity/resolve-entity-cell-value";
+import { resolveEntityFieldPath } from "../../components/entity/resolve-entity-field-path";
+import {
+  resolveLayoutSlotDisplayMeta,
+  resolveLayoutSlotLabel,
+} from "../../components/entity/resolve-layout-slot-display";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context";
 import { formComponentContainerClassName } from "./form-component-container-class-name";
@@ -26,29 +36,73 @@ export function createEntityFormRenderContext(options: {
   readonly canRead: boolean;
   readonly canWrite: boolean;
   readonly recordId?: string;
-  readonly onChange: (fieldName: string, value: unknown) => void;
+  readonly onChange: (
+    fieldName: string,
+    value: unknown,
+    displayRecord?: Record<string, unknown> | null,
+  ) => void;
   readonly onCancel: () => void;
   readonly hideActions?: boolean;
   readonly isSubmitting?: boolean;
   readonly cancelLabel: string;
   readonly saveLabel: string;
   readonly wizardStepContent?: boolean;
+  readonly getDefinition?: (
+    entityName: string,
+  ) => EntityCatalogEntry | undefined;
+  readonly usePreviewSamples?: boolean;
 }): LayoutRenderContext {
   const canWrite = options.canWrite;
+  const getDefinition = options.getDefinition;
 
   const layoutImageContext = createEntityLayoutRenderContext({
     item: options.values,
     definition: options.definition,
     locale: options.locale,
+    getDefinition,
     usePreviewPlaceholder: true,
+    usePreviewSamples: options.usePreviewSamples,
   });
+
+  const resolvePreviewSampleValue = options.usePreviewSamples
+    ? (fieldPath: string) =>
+        resolveLayoutSlotLabel(fieldPath, options.definition, getDefinition)
+    : layoutImageContext.resolvePreviewSampleValue;
 
   return {
     mode: "form",
     wizardStepContent: options.wizardStepContent,
     data: options.values,
     locale: options.locale,
-    resolveField: (path) => options.values[path],
+    resolveField: (path) =>
+      resolveEntityFieldPath(
+        options.values,
+        path,
+        options.definition,
+        () => null,
+      ),
+    resolveFieldMeta: (path) => {
+      const meta = resolveLayoutSlotDisplayMeta(
+        path,
+        options.definition,
+        getDefinition,
+      );
+      const root = path.includes(".") ? (path.split(".")[0] ?? path) : path;
+      const fieldMeta = options.definition.fields[root];
+      return fieldMeta?.isArray ? { ...meta, isArray: true as const } : meta;
+    },
+    resolveFieldLabel: (path) =>
+      resolveLayoutSlotLabel(path, options.definition, getDefinition),
+    resolvePreviewSampleValue,
+    resolveCurrencyCode: () =>
+      options.definition.fields.currencyId
+        ? resolveEntityCellValue(
+            options.values,
+            "currencyId",
+            options.definition,
+            () => null,
+          )
+        : undefined,
     fieldAccessFilter: (fieldPath) => {
       const root = fieldPath.includes(".")
         ? (fieldPath.split(".")[0] ?? fieldPath)
@@ -150,5 +204,6 @@ export function createEntityFormRenderContext(options: {
       ),
     resolveImage: layoutImageContext.resolveImage,
     isImagePresent: layoutImageContext.isImagePresent,
+    lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
   };
 }

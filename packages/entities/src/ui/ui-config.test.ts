@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   createDefaultModalFooterLayout,
+  createDefaultWizardShellLayout,
   ensureWizardShellLayout,
 } from "@repo/ui-builder-core";
 import { defineEntity } from "../defineEntity.js";
@@ -195,6 +196,63 @@ describe("validateEntityUIConfig", () => {
         fields: {
           logo: { component: "image" },
           brochure: { component: "document" },
+        },
+      }),
+    ).not.toThrow();
+  });
+
+  it("accepts wizard step display paths with relation subfields", () => {
+    const entity = defineEntity({
+      name: "contract",
+      fields: {
+        name: { type: "string", required: true },
+        categoryId: {
+          type: "relation",
+          relation: { target: "category", type: "many-to-one" },
+        },
+      },
+    });
+
+    expect(() =>
+      validateEntityUIConfig(entity as unknown as AnyDefinedEntity, {
+        ...getDefaultEntityUI(entity as unknown as AnyDefinedEntity),
+        forms: {
+          ...getDefaultEntityUI(entity as unknown as AnyDefinedEntity).forms,
+          presentation: "wizard",
+          wizard: {
+            shellLayout: createDefaultWizardShellLayout(),
+            steps: [
+              {
+                id: "step-review",
+                label: "Review",
+                layout: {
+                  root: {
+                    type: "root",
+                    id: "root-step",
+                    columnCount: 1,
+                    columns: [
+                      {
+                        id: "col-step",
+                        rows: [
+                          {
+                            type: "component",
+                            id: "row-category",
+                            component: {
+                              kind: "text",
+                              primary: {
+                                type: "field",
+                                path: "category.name",
+                              },
+                            },
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              },
+            ],
+          },
         },
       }),
     ).not.toThrow();

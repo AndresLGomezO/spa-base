@@ -17,6 +17,7 @@ export type DesignSurface =
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
   "image",
+  "icon",
   "date",
   "numeric",
   "badge",
@@ -48,6 +49,7 @@ const FORM_WIZARD_SHELL_KINDS: readonly UiComponentKind[] = [
   "wizard-actions",
   "text",
   "image",
+  "icon",
   "date",
   "numeric",
   "badge",
@@ -59,6 +61,7 @@ const FORM_WIZARD_STEP_KINDS: readonly UiComponentKind[] = [
   "form-section",
   "text",
   "image",
+  "icon",
   "date",
   "numeric",
   "badge",

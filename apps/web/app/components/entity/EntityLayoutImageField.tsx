@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import { useQuery } from "@tanstack/react-query";
 import type { SerializableEntityDefinition } from "@repo/entities";
 import { CardFieldImage } from "@repo/ui";
@@ -25,6 +26,7 @@ interface EntityLayoutImageFieldProps {
   readonly rawValue: unknown;
   readonly definition: SerializableEntityDefinition;
   readonly className?: string | undefined;
+  readonly style?: CSSProperties;
   readonly imageSize?: number;
   readonly getDefinition?: (
     entityName: string,
@@ -40,6 +42,7 @@ export function EntityLayoutImageField({
   rawValue,
   definition,
   className,
+  style,
   imageSize,
   getDefinition,
   primaryFieldPath,
@@ -125,6 +128,7 @@ export function EntityLayoutImageField({
       src={src}
       alt={fileName}
       className={className}
+      style={style}
       sizePx={imageSize}
     />
   );

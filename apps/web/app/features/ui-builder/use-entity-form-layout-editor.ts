@@ -3,6 +3,7 @@ import {
   createDefaultModalFooterLayout,
   createDefaultWizardFormConfig,
   createDefaultWizardStepLayout,
+  createDefaultWizardSummaryStepLayout,
   createLayoutId,
   ensureWizardShellLayout,
   type UiLayoutDocument,
@@ -144,6 +145,21 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     }));
     setSelectedStepIndex(wizard.steps.length);
   }, [fieldPaths, wizard.steps.length]);
+
+  const addSummaryStep = useCallback(() => {
+    setWizard((current) => ({
+      ...current,
+      steps: [
+        ...current.steps,
+        {
+          id: createLayoutId("step"),
+          label: "Review",
+          layout: createDefaultWizardSummaryStepLayout(),
+        },
+      ],
+    }));
+    setSelectedStepIndex(wizard.steps.length);
+  }, [wizard.steps.length]);
 
   const removeStep = useCallback(
     (index: number) => {
@@ -381,6 +397,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     selectedStep,
     updateStep,
     addStep,
+    addSummaryStep,
     removeStep,
     moveStep,
     isSaving,

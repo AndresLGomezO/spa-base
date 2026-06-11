@@ -130,4 +130,35 @@ describe("entity-form-payload", () => {
       },
     });
   });
+
+  it("excludes display cache from submit payload", () => {
+    expect(
+      buildFormSubmitValues([{ fields: ["name", "bankId", "_populated"] }], {
+        name: "Loan",
+        bankId: "bank_1",
+        _populated: {
+          bankId: { id: "bank_1", name: "First Bank" },
+        },
+      }),
+    ).toEqual({
+      name: "Loan",
+      bankId: "bank_1",
+    });
+
+    expect(
+      splitEntityFormPayload(definition, {
+        name: "Example",
+        otherModelId: "om_1",
+        _populated: {
+          otherModelId: { id: "om_1", name: "Other" },
+        },
+      }),
+    ).toEqual({
+      documentPayload: {
+        name: "Example",
+        otherModelId: "om_1",
+      },
+      joinRelations: {},
+    });
+  });
 });

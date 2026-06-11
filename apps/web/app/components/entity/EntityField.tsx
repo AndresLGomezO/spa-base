@@ -51,7 +51,11 @@ interface EntityFieldProps {
   readonly booleanFieldOptions?: BooleanFieldOptions;
   readonly textFieldOptions?: TextFieldOptions;
   readonly hideLabel?: boolean;
-  readonly onChange: (fieldName: string, value: unknown) => void;
+  readonly onChange: (
+    fieldName: string,
+    value: unknown,
+    displayRecord?: Record<string, unknown> | null,
+  ) => void;
 }
 
 export function EntityField({

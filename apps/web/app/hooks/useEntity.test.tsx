@@ -12,22 +12,25 @@ vi.mock("../lib/api-client", () => ({
   isApiClientError: vi.fn(() => false),
 }));
 
+const mockUseEntityDefinition = vi.fn(() => ({
+  name: "widget",
+  collection: "widgets",
+  permissions: [],
+  fields: {},
+  ui: {
+    views: [],
+    forms: { create: { sections: [] }, edit: { sections: [] } },
+  },
+}));
+
 vi.mock("../entities/entity-catalog-context", () => ({
-  useEntityDefinition: vi.fn(() => ({
-    name: "widget",
-    collection: "widgets",
-    permissions: [],
-    fields: {},
-    ui: {
-      views: [],
-      forms: { create: { sections: [] }, edit: { sections: [] } },
-    },
-  })),
+  useEntityDefinition: () => mockUseEntityDefinition(),
 }));
 
 import {
   createEntity,
   deleteEntity,
+  getEntity,
   listEntity,
   updateEntity,
 } from "../lib/api-client";
@@ -51,6 +54,16 @@ function createWrapper() {
 
 describe("useEntity", () => {
   beforeEach(() => {
+    mockUseEntityDefinition.mockReturnValue({
+      name: "widget",
+      collection: "widgets",
+      permissions: [],
+      fields: {},
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+      },
+    });
     vi.mocked(listEntity).mockResolvedValue({
       items: [
         {
@@ -100,6 +113,58 @@ describe("useEntity", () => {
 
     const created = await result.current.create({ name: "New" });
     expect(created?.id).toBe("2");
+  });
+
+  it("loads a record by id with relation populate params", async () => {
+    mockUseEntityDefinition.mockReturnValue({
+      name: "contract",
+      collection: "contracts",
+      permissions: [],
+      fields: {
+        categoryId: {
+          type: "relation",
+          relation: { target: "category", type: "many-to-one" },
+        },
+        providerId: {
+          type: "relation",
+          relation: { target: "provider", type: "many-to-one" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+      },
+    });
+    vi.mocked(getEntity).mockResolvedValue({
+      id: "contract_1",
+      tenantId: "tenant_a",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+      categoryId: "cat_1",
+      providerId: "prov_1",
+      _populated: {
+        categoryId: { id: "cat_1", name: "Retail" },
+        providerId: { id: "prov_1", name: "Acme Provider" },
+      },
+    });
+
+    const { result } = renderHook(() => useEntity("contract"), {
+      wrapper: createWrapper(),
+    });
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const record = await result.current.getById("contract_1");
+
+    expect(getEntity).toHaveBeenCalledWith("contract", "contract_1", {
+      populate: "categoryId,providerId",
+    });
+    expect(record?._populated).toEqual({
+      categoryId: { id: "cat_1", name: "Retail" },
+      providerId: { id: "prov_1", name: "Acme Provider" },
+    });
   });
 
   it("deletes records through the API", async () => {

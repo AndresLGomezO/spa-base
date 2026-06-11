@@ -97,6 +97,7 @@ export interface ColumnRowsEditorProps {
   readonly labels: ColumnRowsEditorLabels;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
   readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
+  readonly lucideIconEditor?: ComponentConfigEditorProps["lucideIconEditor"];
   readonly allowedKinds?: readonly UiComponentKind[];
   readonly depth?: number;
   readonly canApplyImport?: boolean;
@@ -106,6 +107,7 @@ export interface ColumnRowsEditorProps {
     entityName: string,
   ) => SerializableEntityDefinition | undefined;
   readonly entityFieldSelectorFieldDescriptors?: readonly FieldDescriptor[];
+  readonly displayFieldDescriptors?: readonly FieldDescriptor[];
   readonly presetStore?: {
     readonly presets: readonly UiBuilderPresetRecord[];
     readonly canApplyPresets: boolean;
@@ -129,6 +131,7 @@ export function ColumnRowsEditor({
   labels,
   metricKpiEditor,
   staticImageEditor,
+  lucideIconEditor,
   allowedKinds,
   depth = 0,
   canApplyImport = false,
@@ -136,6 +139,7 @@ export function ColumnRowsEditor({
   definition,
   getDefinition,
   entityFieldSelectorFieldDescriptors,
+  displayFieldDescriptors,
   presetStore,
 }: ColumnRowsEditorProps) {
   const [expandedRowId, setExpandedRowId] = useState<string | null>(
@@ -318,12 +322,14 @@ export function ColumnRowsEditor({
                 labels={labels.componentEditor}
                 metricKpiEditor={metricKpiEditor}
                 staticImageEditor={staticImageEditor}
+                lucideIconEditor={lucideIconEditor}
                 allowedKinds={allowedKinds}
                 definition={definition}
                 getDefinition={getDefinition}
                 entityFieldSelectorFieldDescriptors={
                   entityFieldSelectorFieldDescriptors
                 }
+                displayFieldDescriptors={displayFieldDescriptors}
                 onChange={(component: UiComponentConfig) =>
                   onLayoutChange(
                     updateComponentRowAt(layout, locator, row.id, component),
@@ -376,6 +382,7 @@ export function ColumnRowsEditor({
               labels={labels}
               metricKpiEditor={metricKpiEditor}
               staticImageEditor={staticImageEditor}
+              lucideIconEditor={lucideIconEditor}
               allowedKinds={allowedKinds}
               depth={depth}
               canApplyImport={canApplyImport}
@@ -385,6 +392,7 @@ export function ColumnRowsEditor({
               entityFieldSelectorFieldDescriptors={
                 entityFieldSelectorFieldDescriptors
               }
+              displayFieldDescriptors={displayFieldDescriptors}
               presetStore={presetStore}
             />
           ) : null}
@@ -432,6 +440,7 @@ function NestedLayoutRowEditor({
   labels,
   metricKpiEditor,
   staticImageEditor,
+  lucideIconEditor,
   allowedKinds,
   depth,
   canApplyImport = false,
@@ -439,6 +448,7 @@ function NestedLayoutRowEditor({
   definition,
   getDefinition,
   entityFieldSelectorFieldDescriptors,
+  displayFieldDescriptors,
   presetStore,
 }: {
   readonly layout: UiLayoutDocument;
@@ -450,6 +460,7 @@ function NestedLayoutRowEditor({
   readonly labels: ColumnRowsEditorLabels;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
   readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
+  readonly lucideIconEditor?: ComponentConfigEditorProps["lucideIconEditor"];
   readonly allowedKinds?: readonly UiComponentKind[];
   readonly depth: number;
   readonly canApplyImport?: boolean;
@@ -459,6 +470,7 @@ function NestedLayoutRowEditor({
     entityName: string,
   ) => SerializableEntityDefinition | undefined;
   readonly entityFieldSelectorFieldDescriptors?: readonly FieldDescriptor[];
+  readonly displayFieldDescriptors?: readonly FieldDescriptor[];
   readonly presetStore?: ColumnRowsEditorProps["presetStore"];
 }) {
   const [activeColumn, setActiveColumn] = useState(0);
@@ -592,6 +604,7 @@ function NestedLayoutRowEditor({
           labels={labels}
           metricKpiEditor={metricKpiEditor}
           staticImageEditor={staticImageEditor}
+          lucideIconEditor={lucideIconEditor}
           allowedKinds={allowedKinds}
           depth={depth + 1}
           canApplyImport={canApplyImport}
@@ -601,6 +614,7 @@ function NestedLayoutRowEditor({
           entityFieldSelectorFieldDescriptors={
             entityFieldSelectorFieldDescriptors
           }
+          displayFieldDescriptors={displayFieldDescriptors}
           presetStore={presetStore}
         />
       ) : null}

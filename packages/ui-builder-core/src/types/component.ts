@@ -4,6 +4,7 @@ import type { ConditionalStyleRule, LabelConfig } from "./styling.js";
 export type UiComponentKind =
   | "text"
   | "image"
+  | "icon"
   | "date"
   | "numeric"
   | "badge"
@@ -94,6 +95,14 @@ export interface NumericComponentConfig extends FieldComponentConfigBase {
 
 export interface BadgeComponentConfig extends FieldComponentConfigBase {
   readonly kind: "badge";
+}
+
+export interface IconComponentConfig {
+  readonly kind: "icon";
+  readonly iconName: string;
+  readonly iconSize?: number;
+  readonly label?: LabelConfig;
+  readonly styles?: readonly StyleRule[];
 }
 
 export type FieldUiComponentConfig =
@@ -202,6 +211,7 @@ export type PageUiComponentConfig =
 
 export type UiComponentConfig =
   | FieldUiComponentConfig
+  | IconComponentConfig
   | MetricKpiComponentConfig
   | FormFieldComponentConfig
   | EntityFieldSelectorComponentConfig
@@ -241,6 +251,12 @@ export function isMetricKpiComponent(
   config: UiComponentConfig,
 ): config is MetricKpiComponentConfig {
   return config.kind === "metric-kpi";
+}
+
+export function isIconComponent(
+  config: UiComponentConfig,
+): config is IconComponentConfig {
+  return config.kind === "icon";
 }
 
 export function isFieldUiComponent(

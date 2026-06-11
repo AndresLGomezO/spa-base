@@ -102,6 +102,7 @@ export interface UiLayoutStructurePanelProps {
   readonly className?: string;
   readonly metricKpiEditor?: ComponentConfigEditorProps["metricKpiEditor"];
   readonly staticImageEditor?: ComponentConfigEditorProps["staticImageEditor"];
+  readonly lucideIconEditor?: ComponentConfigEditorProps["lucideIconEditor"];
   readonly showStructureHeading?: boolean;
   readonly showShowActionsControl?: boolean;
   readonly getDefinition?: EntityDefinitionLookup;
@@ -130,6 +131,7 @@ export function UiLayoutStructurePanel({
   className,
   metricKpiEditor,
   staticImageEditor,
+  lucideIconEditor,
   showStructureHeading = true,
   showShowActionsControl = true,
   getDefinition,
@@ -139,12 +141,21 @@ export function UiLayoutStructurePanel({
   presetStore,
 }: UiLayoutStructurePanelProps) {
   const allowedKinds = componentKindsForSurface(designSurface);
-  const { fieldDescriptors } = useMemo(() => {
+  const { fieldDescriptors: formFieldDescriptors } = useMemo(() => {
     if (designSurface === "formPlain" || designSurface === "formWizardStep") {
       return entityFormFieldAdapter(definition);
     }
     return entityCardViewAdapter(definition, getDefinition);
   }, [definition, designSurface, getDefinition]);
+
+  const displayFieldDescriptors = useMemo((): readonly FieldDescriptor[] => {
+    if (designSurface === "formWizardStep") {
+      return entityCardViewAdapter(definition, getDefinition).fieldDescriptors;
+    }
+    return formFieldDescriptors;
+  }, [definition, designSurface, formFieldDescriptors, getDefinition]);
+
+  const fieldDescriptors = formFieldDescriptors;
 
   const entityFieldSelectorFieldDescriptors = useMemo(() => {
     if (designSurface !== "formPlain" && designSurface !== "formWizardStep") {
@@ -364,11 +375,13 @@ export function UiLayoutStructurePanel({
           rootColumnIndex={activeColumn}
           rows={activeColumnNode.rows}
           fieldDescriptors={fieldDescriptors}
+          displayFieldDescriptors={displayFieldDescriptors}
           defaultFieldPath={defaultFieldPath}
           onLayoutChange={onLayoutChange}
           labels={columnLabels}
           metricKpiEditor={metricKpiEditor}
           staticImageEditor={staticImageEditor}
+          lucideIconEditor={lucideIconEditor}
           allowedKinds={allowedKinds}
           canApplyImport={canApplyImport}
           designSurface={designSurface}

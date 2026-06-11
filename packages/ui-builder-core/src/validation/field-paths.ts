@@ -102,6 +102,7 @@ function collectComponentPaths(
 
   if (
     component.kind === "form-section" ||
+    component.kind === "icon" ||
     component.kind === "form-actions" ||
     component.kind === "wizard-progress" ||
     component.kind === "wizard-step-host" ||
@@ -116,6 +117,20 @@ function collectComponentPaths(
   }
 
   return listDataSourcePaths(component.primary, component.fallbacks);
+}
+
+function collectInputComponentPaths(
+  component: UiComponentConfig,
+): readonly string[] {
+  if (component.kind === "form-field") {
+    return [component.fieldPath];
+  }
+
+  if (component.kind === "entity-field-selector") {
+    return [component.fieldPath];
+  }
+
+  return [];
 }
 
 function walkRows(rows: readonly RowNode[], paths: Set<string>): void {
@@ -137,14 +152,51 @@ function walkColumn(column: ColumnNode, paths: Set<string>): void {
   walkRows(column.rows, paths);
 }
 
-export function collectLayoutFieldPaths(
+function collectLayoutPathsFromLayout(
   layout: UiLayoutDocument,
+  collectPaths: (component: UiComponentConfig) => readonly string[],
 ): readonly string[] {
   const paths = new Set<string>();
   for (const column of layout.root.columns) {
-    walkColumn(column, paths);
+    walkRowsWithCollector(column.rows, paths, collectPaths);
   }
   return [...paths];
+}
+
+function walkRowsWithCollector(
+  rows: readonly RowNode[],
+  paths: Set<string>,
+  collectPaths: (component: UiComponentConfig) => readonly string[],
+): void {
+  for (const row of rows) {
+    if (row.type === "component") {
+      for (const path of collectPaths(row.component)) {
+        paths.add(path);
+      }
+      continue;
+    }
+
+    for (const column of row.columns) {
+      walkRowsWithCollector(column.rows, paths, collectPaths);
+    }
+  }
+}
+
+export function collectLayoutFieldPaths(
+  layout: UiLayoutDocument,
+): readonly string[] {
+  return collectLayoutPathsFromLayout(layout, collectComponentPaths);
+}
+
+/** Field paths from editable form slots only (`form-field`, `entity-field-selector`). */
+export function collectLayoutInputFieldPaths(
+  layout: UiLayoutDocument,
+): readonly string[] {
+  return collectLayoutPathsFromLayout(layout, collectInputComponentPaths);
+}
+
+export function layoutHasInputFields(layout: UiLayoutDocument): boolean {
+  return collectLayoutInputFieldPaths(layout).length > 0;
 }
 
 export function assertLayoutFieldPaths(

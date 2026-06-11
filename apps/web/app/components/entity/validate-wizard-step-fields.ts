@@ -1,5 +1,5 @@
 import {
-  collectLayoutFieldPaths,
+  collectLayoutInputFieldPaths,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import type { SerializableEntityDefinition } from "@repo/entities";
@@ -14,7 +14,7 @@ export function fieldPathRoot(fieldPath: string): string {
 function uniqueStepFieldRoots(stepLayout: UiLayoutDocument): readonly string[] {
   const roots: string[] = [];
   const seen = new Set<string>();
-  for (const path of collectLayoutFieldPaths(stepLayout)) {
+  for (const path of collectLayoutInputFieldPaths(stepLayout)) {
     const root = fieldPathRoot(path);
     if (seen.has(root)) {
       continue;

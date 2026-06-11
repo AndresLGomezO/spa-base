@@ -234,14 +234,17 @@ export function useEntity(
       try {
         return await queryClient.fetchQuery({
           queryKey: entityRecordQueryKey(entityName, id),
-          queryFn: () => getEntity<EntityRecord>(entityName, id),
+          queryFn: () =>
+            getEntity<EntityRecord>(entityName, id, {
+              populate: populateParam,
+            }),
         });
       } catch (error) {
         setMutationError(getErrorMessage(error));
         return null;
       }
     },
-    [entityName, queryClient],
+    [entityName, populateParam, queryClient],
   );
 
   return useMemo(

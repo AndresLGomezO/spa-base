@@ -17,7 +17,15 @@ import {
   type WizardProgressComponentConfig,
   type WizardStepStatusKind,
 } from "@repo/ui-builder-core";
-import { Button, Checkbox, Input, Text, clampCardImageSizePx } from "@repo/ui";
+import {
+  Button,
+  Checkbox,
+  Input,
+  Text,
+  MAX_CARD_IMAGE_SIZE_PX,
+  MIN_CARD_IMAGE_SIZE_PX,
+  clampCardImageSizePx,
+} from "@repo/ui";
 
 import {
   filterFieldsForComponentKind,
@@ -153,6 +161,9 @@ export interface ComponentConfigEditorLabels {
   readonly textFieldMultiline?: string;
   readonly textFieldMultilineRows?: string;
   readonly formFieldHideLabel?: string;
+  readonly iconName?: string;
+  readonly iconSize?: string;
+  readonly iconNameHint?: string;
   readonly styleRules: StyleRulesEditorLabels;
   readonly label: LabelConfigEditorLabels;
 }
@@ -170,8 +181,13 @@ export interface ComponentConfigEditorProps {
     readonly value: string;
     readonly onChange: (value: string) => void;
   }) => ReactNode;
+  readonly lucideIconEditor?: (options: {
+    readonly value: string;
+    readonly onChange: (value: string) => void;
+  }) => ReactNode;
   readonly allowedKinds?: readonly UiComponentKind[];
   readonly entityFieldSelectorFieldDescriptors?: readonly FieldDescriptor[];
+  readonly displayFieldDescriptors?: readonly FieldDescriptor[];
   readonly definition?: SerializableEntityDefinition;
   readonly getDefinition?: (
     entityName: string,
@@ -587,18 +603,28 @@ export function ComponentConfigEditor({
   labels,
   metricKpiEditor,
   staticImageEditor,
+  lucideIconEditor,
   allowedKinds = DEFAULT_COMPONENT_KINDS,
   entityFieldSelectorFieldDescriptors,
+  displayFieldDescriptors,
   definition,
   getDefinition,
 }: ComponentConfigEditorProps) {
   const componentKinds = allowedKinds;
   const kind = config.kind;
-  const filtered = filterFieldsForComponentKind(fieldDescriptors, kind);
+  const displayDescriptorSource = displayFieldDescriptors ?? fieldDescriptors;
+  const filtered = filterFieldsForComponentKind(displayDescriptorSource, kind);
 
   const handleKindChange = (nextKind: UiComponentKind) => {
+    const nextDisplayFiltered = filterFieldsForComponentKind(
+      displayDescriptorSource,
+      nextKind,
+    );
     const defaultPath =
-      filtered[0]?.path ?? fieldDescriptors[0]?.path ?? "name";
+      nextDisplayFiltered[0]?.path ??
+      displayDescriptorSource[0]?.path ??
+      fieldDescriptors[0]?.path ??
+      "name";
     if (nextKind === "metric-kpi") {
       onChange({
         kind: "metric-kpi",
@@ -613,6 +639,7 @@ export function ComponentConfigEditor({
       nextKind === "form-field" ||
       nextKind === "entity-field-selector" ||
       nextKind === "form-section" ||
+      nextKind === "icon" ||
       nextKind === "form-actions" ||
       nextKind === "wizard-progress" ||
       nextKind === "wizard-step-host" ||
@@ -752,6 +779,59 @@ export function ComponentConfigEditor({
               }
             />
           </label>
+        ) : null}
+        {config.kind === "icon" ? (
+          <>
+            {lucideIconEditor ? (
+              lucideIconEditor({
+                value: config.iconName,
+                onChange: (iconName) => onChange({ ...config, iconName }),
+              })
+            ) : (
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-muted-foreground">
+                  {labels.iconName ?? "Icon (Lucide name)"}
+                </span>
+                <Input
+                  value={config.iconName}
+                  placeholder="CircleCheck"
+                  onChange={(event) =>
+                    onChange({ ...config, iconName: event.target.value })
+                  }
+                />
+                {labels.iconNameHint ? (
+                  <Text className="text-muted-foreground text-xs">
+                    {labels.iconNameHint}
+                  </Text>
+                ) : null}
+              </label>
+            )}
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {labels.iconSize ?? "Icon size (px)"}
+              </span>
+              <Input
+                type="number"
+                min={12}
+                max={96}
+                value={config.iconSize ?? ""}
+                placeholder="20"
+                onChange={(event) => {
+                  const parsed = Number.parseInt(event.target.value, 10);
+                  onChange({
+                    ...config,
+                    iconSize:
+                      Number.isNaN(parsed) || parsed <= 0 ? undefined : parsed,
+                  });
+                }}
+              />
+            </label>
+            <LabelConfigEditor
+              label={config.label}
+              onChange={(label) => onChange({ ...config, label })}
+              labels={labels.label}
+            />
+          </>
         ) : null}
         {config.kind === "related-records" ? (
           <>
@@ -931,7 +1011,8 @@ export function ComponentConfigEditor({
         config.kind === "wizard-actions" ||
         config.kind === "wizard-progress" ||
         config.kind === "entity-field-selector" ||
-        config.kind === "form-field" ? (
+        config.kind === "form-field" ||
+        config.kind === "icon" ? (
           <StyleRulesEditor
             styles={config.styles}
             onChange={(styles) => onChange({ ...config, styles })}
@@ -1128,8 +1209,8 @@ export function ComponentConfigEditor({
             <span className="text-muted-foreground">{labels.imageSize}</span>
             <Input
               type="number"
-              min={24}
-              max={96}
+              min={MIN_CARD_IMAGE_SIZE_PX}
+              max={MAX_CARD_IMAGE_SIZE_PX}
               step={1}
               value={fieldConfig.imageSize ?? ""}
               onChange={(event) => {

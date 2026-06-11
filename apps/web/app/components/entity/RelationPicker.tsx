@@ -18,12 +18,17 @@ interface RelationPickerProps {
   readonly error?: string;
   readonly readOnly?: boolean;
   readonly hideLabel?: boolean;
-  readonly onChange: (fieldName: string, value: unknown) => void;
+  readonly onChange: (
+    fieldName: string,
+    value: unknown,
+    displayRecord?: Record<string, unknown> | null,
+  ) => void;
 }
 
 interface RelationOption {
   readonly id: string;
   readonly label: string;
+  readonly record: Record<string, unknown>;
 }
 
 export function RelationPicker({
@@ -56,6 +61,7 @@ export function RelationPicker({
           result.items.map((item) => ({
             id: String(item.id),
             label: typeof item.name === "string" ? item.name : String(item.id),
+            record: item,
           })),
         );
       } finally {
@@ -87,7 +93,15 @@ export function RelationPicker({
         className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm"
         disabled={isLoading || readOnly}
         value={typeof value === "string" ? value : ""}
-        onChange={(event) => onChange(fieldName, event.target.value)}
+        onChange={(event) => {
+          const nextValue = event.target.value;
+          if (!nextValue) {
+            onChange(fieldName, "", null);
+            return;
+          }
+          const option = options.find((entry) => entry.id === nextValue);
+          onChange(fieldName, nextValue, option?.record ?? null);
+        }}
       >
         <option value="">{isLoading ? "Loading..." : "Select..."}</option>
         {options.map((option) => (

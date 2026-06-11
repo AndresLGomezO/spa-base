@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useMemo,
   useRef,
@@ -24,7 +25,10 @@ import { Button, Form, Heading, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
-import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import {
+  useEntityCatalog,
+  useEntityDefinition,
+} from "../../entities/entity-catalog-context";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import {
@@ -45,6 +49,7 @@ import {
   getJoinRelationFieldNames,
   splitEntityFormPayload,
 } from "./entity-form-payload";
+import { applyFormFieldChange } from "./form-relation-display-cache";
 import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
 
 export { ENTITY_FORM_ID } from "./entity-form-constants";
@@ -76,6 +81,7 @@ export function EntityForm({
 }: EntityFormProps) {
   const { t, i18n } = useTranslation("common");
   const definition = useEntityDefinition(entityName);
+  const { getDefinition } = useEntityCatalog();
   const entityPermissions = useEntityPermissions(entityName);
   const fieldAccess = useFieldAccess(entityName);
   const canWrite =
@@ -103,6 +109,24 @@ export function EntityForm({
   });
   const valuesRef = useRef(values);
   valuesRef.current = values;
+  const applyFieldChange = useCallback(
+    (
+      fieldName: string,
+      value: unknown,
+      displayRecord?: Record<string, unknown> | null,
+    ) => {
+      setValues((current) =>
+        applyFormFieldChange(
+          definition,
+          current,
+          fieldName,
+          value,
+          displayRecord,
+        ),
+      );
+    },
+    [definition],
+  );
   const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
   const lastToastedError = useRef<string | null>(null);
 
@@ -259,13 +283,13 @@ export function EntityForm({
         canRead: entityPermissions.canRead,
         canWrite,
         recordId,
-        onChange: (name, value) =>
-          setValues((current) => ({ ...current, [name]: value })),
+        onChange: applyFieldChange,
         onCancel,
         hideActions: suppressInlineActions,
         isSubmitting,
         cancelLabel: t("entity.cancel"),
         saveLabel,
+        getDefinition,
       }),
     [
       definition,
@@ -273,7 +297,9 @@ export function EntityForm({
       entityPermissions.canRead,
       fieldAccess,
       fieldErrors,
+      applyFieldChange,
       canWrite,
+      getDefinition,
       i18n.language,
       isSubmitting,
       mode,
@@ -299,21 +325,23 @@ export function EntityForm({
         canRead: entityPermissions.canRead,
         canWrite,
         recordId,
-        onChange: (name, value) =>
-          setValues((current) => ({ ...current, [name]: value })),
+        onChange: applyFieldChange,
         onCancel,
         hideActions: false,
         isSubmitting,
         cancelLabel: t("entity.cancel"),
         saveLabel,
+        getDefinition,
       }),
     [
+      applyFieldChange,
       definition,
       entityName,
       entityPermissions.canRead,
       fieldAccess,
       fieldErrors,
       canWrite,
+      getDefinition,
       i18n.language,
       isSubmitting,
       mode,
@@ -354,9 +382,7 @@ export function EntityForm({
         canRead={entityPermissions.canRead}
         canWrite={canWrite}
         recordId={recordId}
-        onChange={(name, value) =>
-          setValues((current) => ({ ...current, [name]: value }))
-        }
+        onChange={applyFieldChange}
         onCancel={onCancel}
         hideActions={suppressInlineActions}
         modalActionPlacement={modalActionPlacement}
@@ -405,9 +431,7 @@ export function EntityForm({
                 error={fieldErrors[fieldName]}
                 readOnly={!isFieldEditable(fieldUI, canWrite, access)}
                 recordId={recordId}
-                onChange={(name, value) =>
-                  setValues((current) => ({ ...current, [name]: value }))
-                }
+                onChange={applyFieldChange}
               />
             );
           })}

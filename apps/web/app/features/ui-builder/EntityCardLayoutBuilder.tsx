@@ -19,6 +19,7 @@ import {
   listUiBuilderPresets,
 } from "../../lib/api-client.js";
 import { LayoutStaticImageValueEditor } from "./LayoutStaticImageValueEditor.js";
+import { LucideIconField } from "../../components/shared/LucideIconField.js";
 import { layoutJsonImportLabels } from "./layout-json-import-labels.js";
 import {
   layoutPresetInsertLabels,
@@ -129,6 +130,15 @@ export function EntityCardLayoutBuilder({
           value={value}
           onChange={onChange}
           canEdit={canApplyImport}
+        />
+      )}
+      lucideIconEditor={({ value, onChange }) => (
+        <LucideIconField
+          id={`${definition.name}-layout-icon`}
+          label={t("designLayout.iconName")}
+          hint={t("designLayout.iconNameHint")}
+          value={value}
+          onChange={onChange}
         />
       )}
     />

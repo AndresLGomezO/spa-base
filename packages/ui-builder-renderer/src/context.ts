@@ -1,8 +1,9 @@
-import type { ReactNode } from "react";
+import type { CSSProperties, ReactNode } from "react";
 
 import type {
   EntityFieldSelectorComponentConfig,
   FormFieldComponentConfig,
+  IconComponentConfig,
   MetricKpiComponentConfig,
   MetricKpiPresentation,
   WizardActionsComponentConfig,
@@ -21,13 +22,16 @@ export interface FieldDisplayMeta {
   readonly fieldType?: DisplayFieldType;
   readonly displayFormat?: DisplayFormat;
   readonly dateDisplayFormat?: DateDisplayFormat;
+  readonly isArray?: boolean;
 }
 
 export interface ImageResolveOptions {
   /** Primary image field from layout config; used for field `defaultImage` fallback. */
   readonly primaryFieldPath: string;
-  /** Square image box size in px (24–96). */
+  /** Square image box size in px (8–96). */
   readonly imageSize?: number;
+  readonly className?: string;
+  readonly style?: CSSProperties;
 }
 
 export type LayoutRenderMode = "listItem" | "detail" | "form" | "mainPage";
@@ -61,6 +65,7 @@ export interface LayoutRenderContext {
     rawValue: unknown,
     options: ImageResolveOptions,
   ) => ReactNode;
+  readonly lucideIconRenderer?: (config: IconComponentConfig) => ReactNode;
   readonly resolveCurrencyCode?: () => string | undefined;
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;
   readonly metricKpiRenderer?: (

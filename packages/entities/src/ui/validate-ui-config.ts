@@ -5,7 +5,6 @@ import {
   assertFormLayoutFieldPaths,
   assertLayoutFieldPaths,
   assertWizardShellLayout,
-  collectLayoutFieldPaths,
   uiLayoutDocumentSchema,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -345,15 +344,11 @@ export function validateEntityUIConfig(
         step.layout as UiLayoutDocument,
         `wizard step ${index + 1} (${step.id})`,
       );
-      for (const fieldPath of collectLayoutFieldPaths(
+      assertLayoutFieldPaths(
+        layoutEntityShape,
         step.layout as UiLayoutDocument,
-      )) {
-        assertFieldRefs(
-          entity,
-          [fieldPath],
-          `wizard step ${index + 1} (${step.id})`,
-        );
-      }
+        `wizard step ${index + 1} (${step.id})`,
+      );
     }
   }
 

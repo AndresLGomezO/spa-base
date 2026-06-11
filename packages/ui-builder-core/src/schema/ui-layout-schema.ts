@@ -162,7 +162,7 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
   fieldComponentBaseSchema
     .extend({
       kind: z.literal("image"),
-      imageSize: z.number().int().min(24).max(96).optional(),
+      imageSize: z.number().int().min(8).max(96).optional(),
     })
     .strict(),
   fieldComponentBaseSchema
@@ -219,6 +219,15 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
     .object({
       kind: z.literal("form-section"),
       title: z.string().trim().min(1).optional(),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
+      kind: z.literal("icon"),
+      iconName: z.string().trim().min(1),
+      iconSize: z.number().int().min(12).max(96).optional(),
+      label: labelConfigSchema.optional(),
       styles: z.array(styleRuleSchema).optional(),
     })
     .strict(),

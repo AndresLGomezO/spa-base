@@ -23,14 +23,14 @@ export function CardFieldImage({
   sizePx,
 }: CardFieldImageProps) {
   const size = clampCardImageSizePx(sizePx);
-  const boxStyle = { width: size, height: size };
+  const boxStyle: CSSProperties = { width: size, height: size };
 
   if (!src) {
     return (
       <div
         style={{ ...boxStyle, ...style }}
         className={cn(
-          "bg-muted text-muted-foreground flex shrink-0 items-center justify-center rounded-full text-xs",
+          "bg-muted text-muted-foreground m-0 flex shrink-0 items-center justify-center rounded-full p-0 text-xs",
           className,
         )}
       >
@@ -40,16 +40,15 @@ export function CardFieldImage({
   }
 
   return (
-    <div
-      className={cn("flex shrink-0 items-center justify-center", className)}
+    <img
+      src={src}
+      alt={alt}
       style={{ ...boxStyle, ...style }}
-    >
-      <img
-        src={src}
-        alt={alt}
-        style={boxStyle}
-        className={cn("rounded-md object-contain", imageClassName)}
-      />
-    </div>
+      className={cn(
+        "m-0 block shrink-0 object-contain p-0",
+        imageClassName,
+        className,
+      )}
+    />
   );
 }

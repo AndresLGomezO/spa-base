@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  layoutHasInputFields,
   type UiLayoutDocument,
   type WizardActionsComponentConfig,
   type WizardProgressComponentConfig,
@@ -28,6 +29,7 @@ import {
   formatFieldLabel,
   type EntityName,
 } from "../../entities/entity-catalog";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
 import { WizardActions } from "../forms/WizardActions";
 import { WizardProgress } from "../forms/WizardProgress";
@@ -53,7 +55,11 @@ interface EntityWizardFormProps {
   readonly canRead: boolean;
   readonly canWrite: boolean;
   readonly recordId?: string;
-  readonly onChange: (fieldName: string, value: unknown) => void;
+  readonly onChange: (
+    fieldName: string,
+    value: unknown,
+    displayRecord?: Record<string, unknown> | null,
+  ) => void;
   readonly onCancel: () => void;
   readonly hideActions?: boolean;
   readonly modalActionPlacement?: "inline" | "footer";
@@ -89,6 +95,7 @@ export function EntityWizardForm({
   onSubmit,
 }: EntityWizardFormProps) {
   const { t } = useTranslation("common");
+  const { getDefinition } = useEntityCatalog();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [invalidStepIds, setInvalidStepIds] = useState<ReadonlySet<string>>(
     () => new Set(),
@@ -137,8 +144,12 @@ export function EntityWizardForm({
   }, [activeStep, buildStepValidationState]);
 
   const handleFieldChange = useCallback(
-    (fieldName: string, value: unknown) => {
-      onChange(fieldName, value);
+    (
+      fieldName: string,
+      value: unknown,
+      displayRecord?: Record<string, unknown> | null,
+    ) => {
+      onChange(fieldName, value, displayRecord);
       setStepFieldErrors((current) => {
         if (!current[fieldName]) {
           return current;
@@ -190,6 +201,7 @@ export function EntityWizardForm({
       isSubmitting,
       cancelLabel,
       saveLabel,
+      getDefinition,
     }),
     [
       entityName,
@@ -207,6 +219,7 @@ export function EntityWizardForm({
       isSubmitting,
       cancelLabel,
       saveLabel,
+      getDefinition,
     ],
   );
 
@@ -261,6 +274,16 @@ export function EntityWizardForm({
   }, [applyStepValidation, currentStepIndex, wizard.steps]);
 
   const submitCurrentStep = useCallback(() => {
+    for (const [index, step] of wizard.steps.entries()) {
+      if (!layoutHasInputFields(step.layout)) {
+        continue;
+      }
+      if (applyStepValidation(step.layout, step.id)) {
+        setCurrentStepIndex(index);
+        return;
+      }
+    }
+
     const step = wizard.steps[currentStepIndex];
     if (step && applyStepValidation(step.layout, step.id)) {
       return;

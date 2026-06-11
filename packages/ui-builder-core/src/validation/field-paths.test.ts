@@ -2,13 +2,21 @@ import { describe, expect, it } from "vitest";
 
 import type { FieldPathValidationDefinition } from "./field-paths.js";
 import {
+  collectLayoutFieldPaths,
+  collectLayoutInputFieldPaths,
   isValidLayoutFieldPath,
   isValidEntityFieldSelectorFieldPath,
+  layoutHasInputFields,
   listEntityFieldSelectorFieldOptions,
   listFormFieldOptions,
   listLayoutFieldOptions,
   relationAliasFieldPath,
 } from "./field-paths.js";
+import {
+  addComponentRowAt,
+  createDefaultComponent,
+  createEmptyLayout,
+} from "../builder/mutations.js";
 
 const accountDefinition: FieldPathValidationDefinition = {
   name: "account",
@@ -140,5 +148,35 @@ describe("listEntityFieldSelectorFieldOptions", () => {
   it("lists only eligible selector fields", () => {
     const options = listEntityFieldSelectorFieldOptions(selectorDefinition);
     expect(options).toEqual(["bankId", "providerIds", "status"]);
+  });
+});
+
+describe("collectLayoutInputFieldPaths", () => {
+  it("collects only editable form slots", () => {
+    const locator = { scope: "root" as const, columnIndex: 0 };
+    let layout = createEmptyLayout(1);
+    layout = addComponentRowAt(
+      layout,
+      locator,
+      createDefaultComponent("form-field", "name"),
+    );
+    layout = addComponentRowAt(
+      layout,
+      locator,
+      createDefaultComponent("text", "bank.name"),
+    );
+    layout = addComponentRowAt(
+      layout,
+      locator,
+      createDefaultComponent("entity-field-selector", "status"),
+    );
+
+    expect(collectLayoutInputFieldPaths(layout)).toEqual(["name", "status"]);
+    expect(collectLayoutFieldPaths(layout)).toEqual([
+      "name",
+      "bank.name",
+      "status",
+    ]);
+    expect(layoutHasInputFields(layout)).toBe(true);
   });
 });
