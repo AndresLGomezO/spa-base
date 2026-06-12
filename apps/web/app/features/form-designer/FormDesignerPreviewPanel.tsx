@@ -14,6 +14,8 @@ import type { FormDesignerTabId } from "./form-designer-tabs";
 import { FormDesignerColumnChrome } from "./FormDesignerColumnChrome";
 import { FormDesignerMobileDeviceSelect } from "./FormDesignerMobileDeviceSelect";
 import { MobileDevicePreviewFrame } from "./MobileDevicePreviewFrame";
+import { FormDesignerPreviewThemeScope } from "./FormDesignerPreviewThemeScope";
+import { FormDesignerPreviewThemeSelect } from "./FormDesignerPreviewThemeSelect";
 import { getFormDesignerOuterLayout } from "./form-designer-layout";
 import { FormDesignerFormPreviewBody } from "./FormDesignerFormPreviewBody";
 import {
@@ -41,6 +43,7 @@ function FormDesignerPreviewPanelContent({
     preview,
     previewBreakpoint,
     previewMobileDeviceId,
+    previewColorScheme,
     requestLayoutColumnPanel,
     requestCloseLayoutColumnPanel,
     selectedLayoutColumnIndex,
@@ -215,8 +218,14 @@ function FormDesignerPreviewPanelContent({
     </LayoutPreviewViewport>
   );
 
+  const themedViewport = (
+    <FormDesignerPreviewThemeScope colorScheme={previewColorScheme}>
+      {viewport}
+    </FormDesignerPreviewThemeScope>
+  );
+
   if (!showCard) {
-    return viewport;
+    return themedViewport;
   }
 
   return (
@@ -225,11 +234,14 @@ function FormDesignerPreviewPanelContent({
         <Text className="text-muted-foreground text-sm">
           {t("entity.viewSettings.preview")}
         </Text>
-        {previewBreakpoint === "base" ? (
-          <FormDesignerMobileDeviceSelect />
-        ) : null}
+        <div className="flex flex-wrap items-end gap-3">
+          <FormDesignerPreviewThemeSelect />
+          {previewBreakpoint === "base" ? (
+            <FormDesignerMobileDeviceSelect />
+          ) : null}
+        </div>
       </div>
-      <div className="min-h-96 overflow-auto py-2">{viewport}</div>
+      <div className="min-h-96 overflow-auto py-2">{themedViewport}</div>
     </div>
   );
 }

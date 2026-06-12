@@ -116,6 +116,36 @@ export function buildDisplayRangeClassName(
   return classes.length > 0 ? classes.join(" ") : undefined;
 }
 
+export interface ResolvedDisplayRangeVisibility {
+  readonly hidden: boolean;
+  readonly className?: string;
+}
+
+export function resolveDisplayRangeVisibility(
+  displayFrom: ResponsiveGridBreakpoint | undefined,
+  displayTo: ResponsiveGridBreakpoint | undefined,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
+  displayClassName: "flex" | "block" = "flex",
+): ResolvedDisplayRangeVisibility {
+  if (
+    atBreakpoint !== undefined &&
+    !isVisibleAtBreakpoint(displayFrom, displayTo, atBreakpoint)
+  ) {
+    return { hidden: true };
+  }
+
+  if (atBreakpoint !== undefined) {
+    return { hidden: false };
+  }
+
+  return {
+    hidden: false,
+    className: buildDisplayRangeClassName(displayFrom, displayTo, {
+      display: displayClassName,
+    }),
+  };
+}
+
 /** Tailwind safelist: keep display-range utilities in the CSS bundle. */
 export const DISPLAY_RANGE_TAILWIND_SAFELIST = [
   "hidden",

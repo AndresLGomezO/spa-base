@@ -12,9 +12,14 @@ import {
   getFirebaseAdminApp,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
-import { validateStorageObjectId } from "./tenant-storage.js";
+import {
+  buildFirebaseStorageDownloadUrl,
+  validateStorageObjectId,
+} from "./tenant-storage.js";
 
 export type EntityFileFieldType = "image" | "document";
+
+const FIREBASE_DOWNLOAD_TOKEN_METADATA_KEY = "firebaseStorageDownloadTokens";
 
 const CONTENT_TYPES_BY_FIELD_TYPE: Record<
   EntityFileFieldType,
@@ -46,6 +51,47 @@ function buildEntityFileObjectPath(params: {
 }): string {
   const extension = extensionForContentType(params.contentType);
   return `tenants/${params.tenantId}/entity-files/${params.entityName}/${params.objectId}.${extension}`;
+}
+
+function buildEmulatorDownloadUrl(
+  config: FirebaseAdminConfig,
+  bucketName: string,
+  storagePath: string,
+): string {
+  const publicHost =
+    config.storageEmulatorPublicHost?.trim() || config.storageEmulatorHost;
+  const encodedPath = encodeURIComponent(storagePath);
+  return `http://${publicHost}/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
+}
+
+async function resolveOrCreateDownloadToken(file: {
+  getMetadata: () => Promise<
+    [
+      {
+        metadata?: Readonly<Record<string, string | number | boolean | null>>;
+      },
+      ...unknown[],
+    ]
+  >;
+  setMetadata: (metadata: {
+    metadata: Record<string, string>;
+  }) => Promise<unknown>;
+}): Promise<string> {
+  const [metadata] = await file.getMetadata();
+  const customMetadata = metadata.metadata ?? {};
+  const existingToken = customMetadata[FIREBASE_DOWNLOAD_TOKEN_METADATA_KEY];
+  if (typeof existingToken === "string" && existingToken.trim()) {
+    return existingToken.trim();
+  }
+
+  const downloadToken = randomUUID();
+  await file.setMetadata({
+    metadata: {
+      ...customMetadata,
+      [FIREBASE_DOWNLOAD_TOKEN_METADATA_KEY]: downloadToken,
+    },
+  });
+  return downloadToken;
 }
 
 /** Opaque storage key for entity file objects. Never derived from user filenames. */
@@ -99,22 +145,38 @@ export async function uploadEntityFile(params: {
     contentType: params.contentType,
   });
   const file = bucket.file(objectPath);
+  const customMetadata = {
+    tenantId: params.tenantId,
+    uploadedBy: params.uploadedBy,
+    entityName: params.entityName,
+    fieldName: params.fieldName,
+    fieldType: params.fieldType,
+    fileName: params.fileName,
+  };
 
-  await file.save(params.buffer, {
-    metadata: {
-      contentType: params.contentType,
-      cacheControl: "private, max-age=0",
+  if (params.config.storageEmulatorHost) {
+    await file.save(params.buffer, {
       metadata: {
-        tenantId: params.tenantId,
-        uploadedBy: params.uploadedBy,
-        entityName: params.entityName,
-        fieldName: params.fieldName,
-        fieldType: params.fieldType,
-        fileName: params.fileName,
+        contentType: params.contentType,
+        cacheControl: "private, max-age=0",
+        metadata: customMetadata,
       },
-    },
-    resumable: false,
-  });
+      resumable: false,
+    });
+  } else {
+    const downloadToken = randomUUID();
+    await file.save(params.buffer, {
+      metadata: {
+        contentType: params.contentType,
+        cacheControl: "private, max-age=0",
+        metadata: {
+          ...customMetadata,
+          [FIREBASE_DOWNLOAD_TOKEN_METADATA_KEY]: downloadToken,
+        },
+      },
+      resumable: false,
+    });
+  }
 
   return {
     storagePath: objectPath,
@@ -126,7 +188,6 @@ export async function uploadEntityFile(params: {
 export async function createEntityFileDownloadUrl(params: {
   readonly config: FirebaseAdminConfig;
   readonly storagePath: string;
-  readonly expiresInMs?: number;
 }): Promise<string> {
   const bucketName = resolveStorageBucket(params.config);
   const app = getFirebaseAdminApp(params.config);
@@ -134,17 +195,17 @@ export async function createEntityFileDownloadUrl(params: {
   const file = bucket.file(params.storagePath);
 
   if (params.config.storageEmulatorHost) {
-    const publicHost =
-      params.config.storageEmulatorPublicHost?.trim() ||
-      params.config.storageEmulatorHost;
-    const encodedPath = encodeURIComponent(params.storagePath);
-    return `http://${publicHost}/v0/b/${bucketName}/o/${encodedPath}?alt=media`;
+    return buildEmulatorDownloadUrl(
+      params.config,
+      bucketName,
+      params.storagePath,
+    );
   }
 
-  const expiresInMs = params.expiresInMs ?? 15 * 60 * 1000;
-  const [signedUrl] = await file.getSignedUrl({
-    action: "read",
-    expires: Date.now() + expiresInMs,
-  });
-  return signedUrl;
+  const downloadToken = await resolveOrCreateDownloadToken(file);
+  return buildFirebaseStorageDownloadUrl(
+    bucketName,
+    params.storagePath,
+    downloadToken,
+  );
 }

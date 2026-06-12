@@ -1,4 +1,4 @@
-@custom-variant dark (&:where(.dark, .dark *));
+@custom-variant dark (&:where(.dark, .dark *):not(.preview-theme-light, .preview-theme-light *));
 
 /* Explicit html.dark selectors so remaps win when palette scales are inlined on :root. */
 @layer theme {

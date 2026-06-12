@@ -506,8 +506,28 @@ export function updateNestedLayoutRowDisplayRange(
   rowId: string,
   patch: Partial<Pick<NestedLayoutRowNode, "displayFrom" | "displayTo">>,
 ): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) =>
-    stripDisplayRangeIfFull({ ...row, ...patch }),
+  return updateNestedLayoutRowMetaAt(
+    layout,
+    { scope: "root", columnIndex },
+    rowId,
+    patch,
+  );
+}
+
+export function updateNestedLayoutRowMetaAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  rowId: string,
+  patch: Partial<
+    Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo">
+  >,
+): UiLayoutDocument {
+  return updateRowsAtLocator(layout, locator, (rows) =>
+    rows.map((row) =>
+      row.type === "nested-layout" && row.id === rowId
+        ? stripDisplayRangeIfFull({ ...row, ...patch })
+        : row,
+    ),
   );
 }
 

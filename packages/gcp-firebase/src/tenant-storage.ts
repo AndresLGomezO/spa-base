@@ -27,13 +27,21 @@ export function validateStorageObjectId(objectId: string): boolean {
   return STORAGE_OBJECT_ID_PATTERN.test(objectId);
 }
 
-export function buildTenantLogoDownloadUrl(
+export function buildFirebaseStorageDownloadUrl(
   bucketName: string,
   objectPath: string,
   downloadToken: string,
 ): string {
   const encodedPath = encodeURIComponent(objectPath);
   return `https://firebasestorage.googleapis.com/v0/b/${bucketName}/o/${encodedPath}?alt=media&token=${downloadToken}`;
+}
+
+export function buildTenantLogoDownloadUrl(
+  bucketName: string,
+  objectPath: string,
+  downloadToken: string,
+): string {
+  return buildFirebaseStorageDownloadUrl(bucketName, objectPath, downloadToken);
 }
 
 export async function uploadTenantLogo(params: {

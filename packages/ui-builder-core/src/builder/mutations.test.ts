@@ -15,6 +15,7 @@ import {
   setRootColumnCount,
   setRootColumnWidthPercent,
   updateComponentRowMetaAt,
+  updateNestedLayoutRowMetaAt,
   updateRootColumnDisplayRange,
 } from "./mutations.js";
 
@@ -447,6 +448,103 @@ describe("replaceNestedLayoutRowAt", () => {
     expect(next.root.columns[0]?.rows[0]).toMatchObject({
       id: nestedRowId,
       columnCount: 2,
+    });
+  });
+});
+
+describe("updateNestedLayoutRowMetaAt display range", () => {
+  it("sets displayFrom and displayTo on a root nested layout row", () => {
+    const layout = createEmptyLayout(1);
+    const nestedRowId = createLayoutId("nested");
+    const withNested = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...layout.root.columns[0]!,
+            rows: [
+              {
+                type: "nested-layout" as const,
+                id: nestedRowId,
+                columnCount: 1,
+                columns: [createEmptyColumn()],
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const next = updateNestedLayoutRowMetaAt(
+      withNested,
+      { scope: "root", columnIndex: 0 },
+      nestedRowId,
+      { displayFrom: "md", displayTo: "xl" },
+    );
+
+    expect(next.root.columns[0]?.rows[0]).toMatchObject({
+      type: "nested-layout",
+      id: nestedRowId,
+      displayFrom: "md",
+      displayTo: "xl",
+    });
+  });
+
+  it("sets displayFrom and displayTo on a nested layout inside another nested column", () => {
+    const layout = createEmptyLayout(1);
+    const outerNestedId = createLayoutId("nested_outer");
+    const innerNestedId = createLayoutId("nested_inner");
+
+    const innerNested = {
+      type: "nested-layout" as const,
+      id: innerNestedId,
+      columnCount: 1,
+      columns: [createEmptyColumn()],
+    };
+
+    const outerNested = {
+      type: "nested-layout" as const,
+      id: outerNestedId,
+      columnCount: 2,
+      columns: [
+        createEmptyColumn(),
+        { ...createEmptyColumn(), rows: [innerNested] },
+      ],
+    };
+
+    const withNested = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [{ ...layout.root.columns[0]!, rows: [outerNested] }],
+      },
+    };
+
+    const next = updateNestedLayoutRowMetaAt(
+      withNested,
+      {
+        scope: "nested",
+        columnIndex: 0,
+        rowId: outerNestedId,
+        nestedColumnIndex: 1,
+      },
+      innerNestedId,
+      { displayFrom: "lg", displayTo: "xl" },
+    );
+
+    const outer = next.root.columns[0]?.rows[0];
+    expect(outer?.type).toBe("nested-layout");
+    if (outer?.type !== "nested-layout") {
+      return;
+    }
+
+    const inner = outer.columns[1]?.rows[0];
+    expect(inner).toMatchObject({
+      type: "nested-layout",
+      id: innerNestedId,
+      displayFrom: "lg",
+      displayTo: "xl",
     });
   });
 });

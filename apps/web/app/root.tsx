@@ -14,6 +14,7 @@ import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 import { AuthProvider } from "./auth/AuthProvider";
 import { I18nSync } from "./components/I18nSync";
 import { SiteTitleSync } from "./components/SiteTitleSync";
+import { DEV_CONTENT_SECURITY_POLICY } from "./dev-content-security-policy";
 import { bootstrapWebPlatform } from "./platform/bootstrap";
 import "./i18n";
 import { i18n } from "./i18n";
@@ -30,6 +31,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        {import.meta.env.DEV ? (
+          <meta
+            httpEquiv="Content-Security-Policy"
+            content={DEV_CONTENT_SECURITY_POLICY}
+          />
+        ) : null}
         <script
           dangerouslySetInnerHTML={{
             __html: `(function(){try{if(localStorage.getItem("${COLOR_SCHEME_KEY}")==="dark"){document.documentElement.classList.add("dark")}}catch(e){}})();`,

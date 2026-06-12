@@ -5,6 +5,7 @@ import {
   isFullDisplayRange,
   isVisibleAtBreakpoint,
   normalizeDisplayRange,
+  resolveDisplayRangeVisibility,
 } from "./component-display-range.js";
 
 describe("normalizeDisplayRange", () => {
@@ -55,6 +56,35 @@ describe("buildDisplayRangeClassName", () => {
     expect(buildDisplayRangeClassName("md", "xl", { display: "block" })).toBe(
       "hidden md:block",
     );
+  });
+});
+
+describe("resolveDisplayRangeVisibility", () => {
+  it("hides rows outside the simulated preview breakpoint", () => {
+    expect(resolveDisplayRangeVisibility("base", "base", "sm", "flex")).toEqual(
+      { hidden: true },
+    );
+  });
+
+  it("shows mobile-only rows at the base preview breakpoint without css classes", () => {
+    expect(
+      resolveDisplayRangeVisibility("base", "base", "base", "flex"),
+    ).toEqual({ hidden: false });
+  });
+
+  it("uses css classes in production rendering", () => {
+    expect(
+      resolveDisplayRangeVisibility("base", "base", undefined, "flex"),
+    ).toEqual({
+      hidden: false,
+      className: "sm:hidden",
+    });
+  });
+
+  it("omits css classes for full-range rows in production rendering", () => {
+    expect(
+      resolveDisplayRangeVisibility(undefined, undefined, undefined, "flex"),
+    ).toEqual({ hidden: false });
   });
 });
 

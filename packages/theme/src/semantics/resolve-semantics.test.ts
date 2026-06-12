@@ -100,4 +100,21 @@ describe("appearanceToCssVariables with preset", () => {
 
     expect(vars["--color-primary-600"]).toBe("#e1306c");
   });
+
+  it("inlines dark semantics for scoped preview without custom palettes", () => {
+    const lightVars = appearanceToCssVariables(
+      {},
+      { colorScheme: "light", scopedPreview: true },
+    );
+    const darkVars = appearanceToCssVariables(
+      {},
+      { colorScheme: "dark", scopedPreview: true },
+    );
+
+    expect(lightVars["--color-background"]).toBe("#f7f7f8");
+    expect(darkVars["--color-background"]).toBe("#18181b");
+    expect(lightVars["--color-background"]).not.toBe(
+      darkVars["--color-background"],
+    );
+  });
 });

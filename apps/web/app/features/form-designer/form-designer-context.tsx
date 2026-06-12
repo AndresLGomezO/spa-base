@@ -1,4 +1,5 @@
 import { createContext, useContext } from "react";
+import type { ColorScheme } from "@repo/theme/react";
 
 import type { LayoutPreviewBreakpoint } from "../ui-builder/LayoutPreviewPanel";
 import type { UseEntityFormLayoutEditorResult } from "../ui-builder/use-entity-form-layout-editor";
@@ -18,6 +19,8 @@ export interface FormDesignerContextValue {
   readonly setPreviewBreakpoint: (breakpoint: LayoutPreviewBreakpoint) => void;
   readonly previewMobileDeviceId: MobilePreviewDeviceId;
   readonly setPreviewMobileDeviceId: (deviceId: MobilePreviewDeviceId) => void;
+  readonly previewColorScheme: ColorScheme;
+  readonly setPreviewColorScheme: (colorScheme: ColorScheme) => void;
   readonly activeTabId: FormDesignerTabId;
   readonly settingsIsDirty: boolean;
   readonly layoutIsDirty: boolean;

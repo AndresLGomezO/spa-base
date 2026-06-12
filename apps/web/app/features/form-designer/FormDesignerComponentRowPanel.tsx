@@ -181,32 +181,44 @@ function NestedLayoutRowPanel({
 }) {
   return (
     <div className="flex flex-col gap-3">
-      <FormDesignerPanelPrimaryControls className="flex-wrap items-end gap-3">
-        <div className="flex w-24 flex-col gap-1 text-sm">
-          <FieldLabel htmlFor={`nested-layout-columns-${row.id}`}>
-            {labels.layoutColumns}
-          </FieldLabel>
-          <Input
-            id={`nested-layout-columns-${row.id}`}
-            type="number"
-            min={1}
-            max={MAX_NESTED_COLUMNS}
-            value={row.columnCount}
-            onChange={(event) => {
-              const count = Number.parseInt(event.target.value, 10);
-              if (!Number.isFinite(count)) {
-                return;
-              }
-              binding.setNestedRowColumnCount(rowRef, count);
-            }}
+      <FormDesignerPanelPrimaryControls className="flex-col gap-3">
+        <div className="flex flex-wrap items-end gap-3">
+          <div className="flex w-24 flex-col gap-1 text-sm">
+            <FieldLabel htmlFor={`nested-layout-columns-${row.id}`}>
+              {labels.layoutColumns}
+            </FieldLabel>
+            <Input
+              id={`nested-layout-columns-${row.id}`}
+              type="number"
+              min={1}
+              max={MAX_NESTED_COLUMNS}
+              value={row.columnCount}
+              onChange={(event) => {
+                const count = Number.parseInt(event.target.value, 10);
+                if (!Number.isFinite(count)) {
+                  return;
+                }
+                binding.setNestedRowColumnCount(rowRef, count);
+              }}
+            />
+          </div>
+
+          <ResponsiveGridEditor
+            styles={row.styles}
+            columnCount={row.columnCount}
+            labels={labels.responsiveGrid}
+            onChange={(styles) =>
+              binding.updateNestedRowMeta(rowRef, { styles })
+            }
           />
         </div>
 
-        <ResponsiveGridEditor
-          styles={row.styles}
-          columnCount={row.columnCount}
-          labels={labels.responsiveGrid}
-          onChange={(styles) => binding.updateNestedRowMeta(rowRef, { styles })}
+        <ComponentDisplayRangeEditor
+          displayFrom={row.displayFrom}
+          displayTo={row.displayTo}
+          labels={labels.displayRange}
+          variant="inline"
+          onChange={(patch) => binding.updateNestedRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
 

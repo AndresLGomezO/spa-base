@@ -7,7 +7,10 @@ import {
   uploadEntityFile,
   validateEntityFileContentType,
 } from "./entity-file-storage.js";
-import { validateStorageObjectId } from "./tenant-storage.js";
+import {
+  buildFirebaseStorageDownloadUrl,
+  validateStorageObjectId,
+} from "./tenant-storage.js";
 
 describe("validateEntityFileContentType", () => {
   it("accepts image MIME types for image fields", () => {
@@ -69,6 +72,19 @@ const PNG_BUFFER = Buffer.from(
   "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
   "base64",
 );
+
+describe("createEntityFileDownloadUrl (production URL shape)", () => {
+  it("uses Firebase Storage download URLs instead of GCS signed URLs", () => {
+    const url = buildFirebaseStorageDownloadUrl(
+      "entitysystem-development.appspot.com",
+      "tenants/t1/entity-files/bank/abc.png",
+      "token-123",
+    );
+    expect(url).toContain("firebasestorage.googleapis.com");
+    expect(url).toContain("token=token-123");
+    expect(url).not.toContain("GoogleAccessId");
+  });
+});
 
 describe.skipIf(!storageEmulatorConfigured)(
   "uploadEntityFile (Storage emulator)",

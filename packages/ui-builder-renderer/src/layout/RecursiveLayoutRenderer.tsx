@@ -1,15 +1,15 @@
-import type { CSSProperties, ReactNode } from "react";
+import { Fragment, type CSSProperties, type ReactNode } from "react";
 import {
   buildGridTemplateColumnsFromPercents,
-  buildDisplayRangeClassName,
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
   flexWrapClassFromStyles,
   gapPxFromStyles,
-  isVisibleAtBreakpoint,
+  hasExplicitColumnWidthPercents,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
   resolveColumnWidthPercents,
+  resolveDisplayRangeVisibility,
   resolveResponsiveGridLayout,
   resolveStyleRules,
   usesFlexWrapLayout,
@@ -141,7 +141,8 @@ function nestedColumnGridOptions(
     rowWrapper: options.rowWrapper,
     nestedColumnWrapper: options.nestedColumnWrapper,
     renderEmptyRootColumns: options.renderEmptyRootColumns,
-    stretchRootColumns: options.stretchRootColumns,
+    // Nested grids should follow row content height, not inherit root fill behavior.
+    stretchRootColumns: false,
   };
 }
 
@@ -165,8 +166,24 @@ function resolveColumnRenderFlags(
   const isMultiColumn = columnCount > 1;
   return {
     allowEmpty: isMultiColumn || (options?.renderEmptyRootColumns ?? false),
-    stretchColumn: isMultiColumn || (options?.stretchRootColumns ?? false),
+    stretchColumn: options?.stretchRootColumns ?? false,
   };
+}
+
+function shouldFillLayoutGridHeight(
+  columnCount: number,
+  columns: readonly ColumnNode[],
+  options?: ColumnGridRenderOptions,
+): boolean {
+  if (!(options?.stretchRootColumns ?? false)) {
+    return false;
+  }
+
+  if (columnCount >= 2 && hasExplicitColumnWidthPercents(columns)) {
+    return false;
+  }
+
+  return true;
 }
 
 function renderRows(
@@ -206,17 +223,19 @@ function renderRows(
       align={columnFlex.align}
       justify={columnFlex.justify}
     >
-      {rows.map((row, rowIndex) =>
-        renderRow(
-          row,
-          context,
-          stackDirection,
-          atBreakpoint,
-          rowScope,
-          rowIndex + rowMotionIndexOffset,
-          columnGridOptions,
-        ),
-      )}
+      {rows.map((row, rowIndex) => (
+        <Fragment key={row.id}>
+          {renderRow(
+            row,
+            context,
+            stackDirection,
+            atBreakpoint,
+            rowScope,
+            rowIndex + rowMotionIndexOffset,
+            columnGridOptions,
+          )}
+        </Fragment>
+      ))}
     </LayoutStack>
   );
 }
@@ -308,6 +327,15 @@ function renderLayoutColumnGrid(
   },
 ): ReactNode {
   const columnRenderFlags = resolveColumnRenderFlags(columnCount, options);
+  const fillGridHeight = shouldFillLayoutGridHeight(
+    columnCount,
+    columns,
+    options,
+  );
+  const columnFlags: ColumnRenderFlags = {
+    ...columnRenderFlags,
+    stretchColumn: columnRenderFlags.stretchColumn && fillGridHeight,
+  };
   const responsiveLayout = resolveResponsiveGridLayout({
     styles,
     columnCount,
@@ -317,8 +345,8 @@ function renderLayoutColumnGrid(
   });
   const stretchClass = layoutGridStretchClassName(
     context,
-    options?.stretchRootColumns,
-    columnRenderFlags.stretchColumn,
+    fillGridHeight,
+    columnFlags.stretchColumn,
   );
 
   const renderColumnNode = (column: ColumnNode, index: number) =>
@@ -331,7 +359,7 @@ function renderLayoutColumnGrid(
         atBreakpoint,
         resolveColumnRowScope(index, nestedContext),
         {
-          ...columnRenderFlags,
+          ...columnFlags,
           columnGridOptions: options,
         },
       ),
@@ -359,7 +387,9 @@ function renderLayoutColumnGrid(
           .join(" ")}
         style={proportionalStyle}
       >
-        {columns.map((column, index) => renderColumnNode(column, index))}
+        {columns.map((column, index) => (
+          <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
+        ))}
       </LayoutGrid>
     );
   }
@@ -373,7 +403,9 @@ function renderLayoutColumnGrid(
         align="stretch"
         className={stretchClass}
       >
-        {columns.map((column, index) => renderColumnNode(column, index))}
+        {columns.map((column, index) => (
+          <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
+        ))}
       </LayoutGrid>
     );
   }
@@ -391,7 +423,9 @@ function renderLayoutColumnGrid(
       align="stretch"
       className={stretchClass}
     >
-      {columns.map((column, index) => renderColumnNode(column, index))}
+      {columns.map((column, index) => (
+        <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
+      ))}
     </LayoutGrid>
   );
 }
@@ -409,6 +443,15 @@ function renderWrappedColumns(
   },
 ): ReactNode {
   const columnRenderFlags = resolveColumnRenderFlags(columnCount, options);
+  const fillGridHeight = shouldFillLayoutGridHeight(
+    columnCount,
+    columns,
+    options,
+  );
+  const columnFlags: ColumnRenderFlags = {
+    ...columnRenderFlags,
+    stretchColumn: columnRenderFlags.stretchColumn && fillGridHeight,
+  };
   const percents = resolveColumnWidthPercents(columns);
   const gap = gapPxFromStyles(styles);
 
@@ -418,7 +461,7 @@ function renderWrappedColumns(
       gap={gap}
       className={[
         "flex w-full min-w-0",
-        columnRenderFlags.stretchColumn && "h-full min-h-0",
+        columnFlags.stretchColumn && "h-full min-h-0",
         flexWrapClassFromStyles(styles),
       ]
         .filter(Boolean)
@@ -432,7 +475,7 @@ function renderWrappedColumns(
           atBreakpoint,
           resolveColumnRowScope(index, nestedContext),
           {
-            ...columnRenderFlags,
+            ...columnFlags,
             flexBasisPercent: percents[index],
             columnGridOptions: options,
           },
@@ -441,31 +484,14 @@ function renderWrappedColumns(
           return null;
         }
 
-        return wrapColumn(index, column, columnContent, options, nestedContext);
+        return (
+          <Fragment key={column.id}>
+            {wrapColumn(index, column, columnContent, options, nestedContext)}
+          </Fragment>
+        );
       })}
     </LayoutStack>
   );
-}
-
-function resolveDisplayRangeVisibility(
-  displayFrom: ResponsiveGridBreakpoint | undefined,
-  displayTo: ResponsiveGridBreakpoint | undefined,
-  atBreakpoint: ResponsiveGridBreakpoint | undefined,
-  displayClassName: "flex" | "block",
-): { readonly hidden: boolean; readonly className?: string } {
-  if (
-    atBreakpoint !== undefined &&
-    !isVisibleAtBreakpoint(displayFrom, displayTo, atBreakpoint)
-  ) {
-    return { hidden: true };
-  }
-
-  return {
-    hidden: false,
-    className: buildDisplayRangeClassName(displayFrom, displayTo, {
-      display: displayClassName,
-    }),
-  };
 }
 
 function resolveRowDisplayRange(
@@ -594,12 +620,9 @@ function renderRow(
 
   const rowStyles = resolveStyleRules(row.styles);
   const isFormFill = context.mode === "form";
-  const isWizardForm = isWizardFormContext(context);
   const formNestedRowClass =
     isFormFill && stackDirection === "column"
-      ? isWizardForm
-        ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-        : "flex w-full min-w-0 shrink-0 flex-col"
+      ? "flex w-full min-w-0 shrink-0 flex-col"
       : undefined;
   const nestedContext = {
     rootColumnIndex: rowScope.rootColumnIndex,

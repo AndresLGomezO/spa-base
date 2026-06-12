@@ -16,6 +16,7 @@ import {
   inferPaletteFromLegacyColors,
   isPaletteCssVar,
   normalizeHexColor,
+  paletteToCssVariables,
   type ColorPaletteConfig,
 } from "./palette/generate-scale.js";
 import {
@@ -121,6 +122,18 @@ export interface TenantAppearanceLike {
 
 export interface AppearanceToCssVariablesOptions {
   readonly colorScheme?: AppearanceColorScheme;
+  /**
+   * When true, always inlines full light/dark semantics for a nested preview scope.
+   * Uses default palette scales when the tenant has no custom palettes.
+   */
+  readonly scopedPreview?: boolean;
+}
+
+function defaultPaletteScaleVariables(): Record<string, string> {
+  return {
+    ...paletteToCssVariables("primary", DEFAULT_PRIMARY_SCALE),
+    ...paletteToCssVariables("neutral", DEFAULT_NEUTRAL_SCALE),
+  };
 }
 
 export function appearanceToCssVariables(
@@ -130,6 +143,10 @@ export function appearanceToCssVariables(
   const colorScheme = options?.colorScheme ?? "light";
   const resolved = applyAppearancePreset(appearance);
   const vars = expandAppearancePalettes(resolved);
+
+  if (options?.scopedPreview && !hasPaletteScaleVariables(vars)) {
+    Object.assign(vars, defaultPaletteScaleVariables());
+  }
 
   if (hasPaletteScaleVariables(vars)) {
     Object.assign(vars, resolveSemanticsFromPalette(vars, colorScheme));

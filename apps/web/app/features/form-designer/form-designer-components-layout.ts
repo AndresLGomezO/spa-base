@@ -11,8 +11,7 @@ import {
   updateNestedColumnDisplayRange,
   updateNestedColumnStackDirection,
   updateNestedColumnStyles,
-  updateNestedLayoutRowDisplayRange,
-  updateNestedLayoutRowStyles,
+  updateNestedLayoutRowMetaAt,
   setNestedColumnCount,
   setNestedColumnWidthPercent,
   setRootColumnWidthPercent,
@@ -375,28 +374,14 @@ export function resolveComponentsLayoutBinding(
       );
     },
     updateNestedRowMeta: (rowRef, patch) => {
-      if (rowRef.locator.scope !== "root") {
-        return;
-      }
-
-      let next = layout;
-      if (patch.styles !== undefined) {
-        next = updateNestedLayoutRowStyles(
-          next,
-          rowRef.locator.columnIndex,
-          rowRef.rowId,
-          patch.styles,
-        );
-      }
-      if ("displayFrom" in patch || "displayTo" in patch) {
-        next = updateNestedLayoutRowDisplayRange(
-          next,
-          rowRef.locator.columnIndex,
+      setLayout(
+        updateNestedLayoutRowMetaAt(
+          layout,
+          rowRef.locator,
           rowRef.rowId,
           patch,
-        );
-      }
-      setLayout(next);
+        ),
+      );
     },
     setNestedRowColumnCount: (rowRef, columnCount) => {
       setLayout(

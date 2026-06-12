@@ -11,6 +11,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
+import { useColorScheme } from "@repo/theme/react";
 
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import type { EntityName } from "../../entities/entity-catalog";
@@ -216,11 +217,13 @@ export function FormDesignerProvider({
   const definition = useEntityDefinition(entityName);
   const canSave = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
   const [searchParams, setSearchParams] = useSearchParams();
+  const { colorScheme: appColorScheme } = useColorScheme();
   const [previewBreakpoint, setPreviewBreakpoint] =
     useState<LayoutPreviewBreakpoint>(DEFAULT_LAYOUT_PREVIEW_BREAKPOINT);
   const preview = useFormDesignerPreview(editor, previewBreakpoint);
   const [previewMobileDeviceId, setPreviewMobileDeviceId] =
     useState<MobilePreviewDeviceId>(DEFAULT_MOBILE_PREVIEW_DEVICE_ID);
+  const [previewColorScheme, setPreviewColorScheme] = useState(appColorScheme);
   const [savedSettingsBaseline, setSavedSettingsBaseline] =
     useState<FormDesignerSettingsSnapshot>(() =>
       readSettingsSnapshotFromDefinition(definition),
@@ -364,11 +367,22 @@ export function FormDesignerProvider({
       return null;
     }
     return readScopedLayoutSnapshot(
-      editor,
+      {
+        presentation: editor.presentation,
+        plainLayout: editor.plainLayout,
+        wizard: editor.wizard,
+        modalFooterLayout: editor.modalFooterLayout,
+      },
       componentRowPanelSession.treeScope,
       componentRowPanelSession.stepIndex,
     );
-  }, [componentRowPanelSession, editor]);
+  }, [
+    componentRowPanelSession,
+    editor.modalFooterLayout,
+    editor.plainLayout,
+    editor.presentation,
+    editor.wizard,
+  ]);
 
   const componentRowPanelIsDirty = useMemo(() => {
     if (!componentRowPanelSession || !currentScopedLayoutSnapshot) {
@@ -1247,6 +1261,8 @@ export function FormDesignerProvider({
       setPreviewBreakpoint,
       previewMobileDeviceId,
       setPreviewMobileDeviceId,
+      previewColorScheme,
+      setPreviewColorScheme,
       activeTabId,
       settingsIsDirty,
       layoutIsDirty,
@@ -1326,6 +1342,7 @@ export function FormDesignerProvider({
       requestComponentRowPanel,
       previewBreakpoint,
       previewMobileDeviceId,
+      previewColorScheme,
       requestCloseLayoutColumnPanel,
       requestCloseRootLayoutPanel,
       requestLayoutColumnPanel,
@@ -1372,6 +1389,7 @@ export function FormDesignerProvider({
     columnPanelSession,
     currentLayoutSnapshot,
     isThirdRailOpen,
+    previewColorScheme,
     updateThirdRail,
   ]);
 
@@ -1398,6 +1416,7 @@ export function FormDesignerProvider({
   }, [
     currentLayoutSnapshot,
     isThirdRailOpen,
+    previewColorScheme,
     rootLayoutPanelIsDirty,
     rootLayoutPanelSession,
     updateThirdRail,
@@ -1421,6 +1440,7 @@ export function FormDesignerProvider({
     componentRowPanelSession,
     currentScopedLayoutSnapshot,
     isThirdRailOpen,
+    previewColorScheme,
     updateThirdRail,
   ]);
 

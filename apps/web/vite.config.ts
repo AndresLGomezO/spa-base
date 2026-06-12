@@ -3,8 +3,14 @@ import { reactRouter } from "@react-router/dev/vite";
 import tailwindcss from "@tailwindcss/vite";
 import { defineConfig } from "vite";
 
-export default defineConfig({
-  plugins: [tailwindcss(), reactRouter()],
+import { devDocumentCspPlugin } from "./vite-dev-document-csp-plugin";
+
+export default defineConfig(({ command }) => ({
+  plugins: [
+    tailwindcss(),
+    reactRouter(),
+    ...(command === "serve" ? [devDocumentCspPlugin()] : []),
+  ],
   server: {
     host: "0.0.0.0",
     port: 5173,
@@ -12,4 +18,4 @@ export default defineConfig({
       allow: [__dirname, path.resolve(__dirname, "../..")],
     },
   },
-});
+}));
