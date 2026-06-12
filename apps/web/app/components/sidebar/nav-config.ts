@@ -32,7 +32,6 @@ export type NavLabelKey =
   | "designLayout"
   | "designLayoutMain"
   | "designLayoutList"
-  | "designLayoutNewList"
   | "designLayoutDetail"
   | "designLayoutForms"
   | "designLayoutMetrics"

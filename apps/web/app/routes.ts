@@ -31,7 +31,7 @@ export default [
     ),
     route(
       "settings/design-layout/new-list/:entityName",
-      "./routes/settings/design-layout/new-list.tsx",
+      "./routes/settings/design-layout/new-list-redirect.tsx",
     ),
     route(
       "settings/design-layout/main/:entityName",

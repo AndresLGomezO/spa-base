@@ -654,7 +654,7 @@ mergeUsedKeys(
 mergeUsedKeys(
   usedKeys,
   extractBadgeVariantKeys(corpus),
-  path.join(SRC_DIR, "features/ui-builder/EntityListLayoutDesignEditor.tsx"),
+  path.join(SRC_DIR, "features/item-list-designer/ItemListDesignerView.tsx"),
 );
 const appearanceEditorFile = path.join(
   SRC_DIR,

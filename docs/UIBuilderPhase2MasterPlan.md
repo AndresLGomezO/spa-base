@@ -8,7 +8,7 @@
 
 ## 1. Executive summary
 
-Phase 1 delivered a **recursive layout JSON** (`UiLayoutDocument`), a **shared render engine** (`RecursiveLayoutRenderer`), and a **single admin surface** for entity list configuration: **Settings → Design layout → Item list** (`EntityListLayoutDesignEditor`). That surface is still **card-centric**: `listViewType` toggles table vs card, but only the **card** view persists `layout`; the table view remains a flat `fields[]` column list.
+Phase 1 delivered a **recursive layout JSON** (`UiLayoutDocument`), a **shared render engine** (`RecursiveLayoutRenderer`), and an admin surface for entity list configuration: **Settings → Design layout → Item list**. That legacy monolithic editor has been **replaced** by the tabbed **Item List Designer** (`apps/web/app/features/item-list-designer/`) at `/settings/design-layout/list/:entityName`, covering table columns, expandable table (grouped columns + expanded row), and card layout with structure trees and preview.
 
 Phase 2 extends the same platform to:
 
@@ -27,7 +27,7 @@ The guiding principle: **one schema-driven layout model, multiple render context
 
 | Route | Path | State |
 |-------|------|--------|
-| Item list | `/settings/design-layout/list/:entityName` | **Live** — `EntityListLayoutDesignEditor`, save via `putEntityUiOverride` |
+| Item list | `/settings/design-layout/list/:entityName` | **Live** — Item List Designer (`ItemListDesignerView`), save via `putEntityUiOverride` |
 | Main View | `/settings/design-layout/main/:entityName` | **Live** — `EntityMainPageLayoutDesignEditor`, saves `mainPage` |
 | Detailed View | `/settings/design-layout/detail/:entityName` | **Live** — `EntityRecordDetailLayoutDesignEditor`, saves `recordDetail` |
 | Forms | `/settings/design-layout/forms/:entityName` | **Live** — Form Designer (`FormDesignerView`) |
@@ -262,7 +262,7 @@ Split or extend to:
 
 ### 5.3 Editor shell abstraction
 
-Extract from `EntityListLayoutDesignEditor`:
+Extract shared editor shell patterns (used by main/detail/metrics list editors):
 
 - `DesignLayoutEditorShell` — header, save, collapsible sections, preview slot
 - `useEntityUiOverrideEditor(entityName, slice)` — load/save slice (`listItem`, `detail`, `forms.create`, …)
@@ -407,11 +407,12 @@ Recommend **C3b** as the target; ship **C3a** first for low risk.
 - Card: current `EntityLayoutCardView` reads `listItem` instead of `cardView.layout`.
 - Compact: single-column stack, same `listItem`, different outer shell (no grid).
 
-### C.5 `EntityListLayoutDesignEditor` refactor
+### C.5 Item List Designer (done)
 
-- Rename → `EntityListItemDesignEditor` (file rename optional; re-export old name during transition).
-- `viewType` table/card switch becomes `listPresentation`.
-- Docked preview works for all presentations (preview switcher: “Preview as card / table row / compact”).
+- Implemented as `apps/web/app/features/item-list-designer/` (`ItemListDesignerView`).
+- Settings tab: presentation (table / expandable table / card).
+- Columns tab: grouped columns + expanded row (expandable table).
+- Layout tab: card layout with structure tree + preview.
 
 ### C.6 Acceptance criteria
 
@@ -481,7 +482,7 @@ Parallelization: **A** and **C1** can split across two engineers after step 1.
 | `apps/web` | Editor hooks save payload; `EntityForm` / `EntityRecordDetail` integration tests |
 | E2E (manual) | Design layout save → list/detail/form reflect changes |
 
-**Regression grep targets:** `cardView.layout`-only assumptions, `EntityListLayoutDesignEditor` card-only branches, `FormLayout`-only tests.
+**Regression grep targets:** `cardView.layout`-only assumptions, legacy list editor branches, `FormLayout`-only tests.
 
 ---
 
@@ -549,7 +550,7 @@ packages/entities/src/ui/
 apps/web/app/features/ui-builder/
   EntityDetailLayoutDesignEditor.tsx
   EntityFormLayoutDesignEditor.tsx
-  EntityListItemDesignEditor.tsx    # evolved from EntityListLayoutDesignEditor
+  EntityListItemDesignEditor.tsx    # → item-list-designer/ (ItemListDesignerView)
   use-entity-ui-override-editor.ts
 
 apps/web/app/components/entity/
@@ -569,7 +570,7 @@ apps/web/app/routes/settings/design-layout/
 
 ## 17. References (implementation anchors)
 
-- List editor: `apps/web/app/features/ui-builder/EntityListLayoutDesignEditor.tsx`
+- List designer: `apps/web/app/features/item-list-designer/ItemListDesignerView.tsx`
 - Override hook: `apps/web/app/features/ui-builder/use-entity-list-layout-editor.ts`
 - Card render: `apps/web/app/components/entity/EntityLayoutCardView.tsx`
 - Detail (legacy): `apps/web/app/components/entity/EntityRecordDetail.tsx`

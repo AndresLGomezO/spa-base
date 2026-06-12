@@ -366,20 +366,21 @@ export function ItemListDesignerProvider({
   }, [editor]);
 
   useEffect(() => {
+    const currentEditor = editorRef.current;
     const settingsBaseline = readSettingsSnapshotFromDefinition(definition);
     setSavedSettingsBaseline(settingsBaseline);
     setSavedColumnsBaseline(
       readColumnsSnapshotFromDefinition(
         definition,
         editor.fieldPaths,
-        editor,
+        currentEditor,
         settingsBaseline.viewType,
       ),
     );
     setSavedLayoutBaseline(
-      readLayoutSnapshotFromDefinition(definition, editor),
+      readLayoutSnapshotFromDefinition(definition, currentEditor),
     );
-  }, [definition, editor, editor.fieldPaths]);
+  }, [definition, editor.fieldPaths]);
 
   useEffect(() => {
     if (editor.viewType === "card" && activeTabId === "columns") {

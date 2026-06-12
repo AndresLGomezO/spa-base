@@ -25,7 +25,7 @@ Visual layout builder packages and documentation index.
 - Entity list header **Design layout** link — `/settings/design-layout/list/:entityName` (same editor; requires `entityUiOverride.update`)
   - Requires `entityUiOverride.read` (+ per-entity `.read` for nav links)
   - Save requires `entityUiOverride.update` (or admin / superadmin)
-  - **Item list** — unified **list item** layout + table/card/compact presentation (`EntityListLayoutDesignEditor`)
+  - **Item list** — tabbed Item List Designer (`apps/web/app/features/item-list-designer/`): table, expandable table, and card presentation
   - **Main View** — main page layout builder (`EntityMainPageLayoutDesignEditor`)
   - **Detailed View** — record detail layout builder (`EntityRecordDetailLayoutDesignEditor`)
   - **Forms** — Form Designer (`FormDesignerView`): shared layout for create/edit, wizard shell + steps, tabbed settings/layout/components UX with preview
