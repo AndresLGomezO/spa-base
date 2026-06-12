@@ -10,8 +10,10 @@ export default defineConfig({
   snapshotPathTemplate:
     "{testDir}/{testFileDir}/{testFileName}-snapshots/{arg}-{projectName}{ext}",
   fullyParallel: true,
+  // Headless Chromium can SIGSEGV when many browsers launch at once in Docker/CI.
+  workers: process.env.CI ? 2 : undefined,
   forbidOnly: !!process.env.CI,
-  retries: process.env.CI ? 1 : 0,
+  retries: process.env.CI ? 2 : 0,
   reporter: [["html", { open: "never" }], ["list"]],
   expect: {
     toHaveScreenshot: {
