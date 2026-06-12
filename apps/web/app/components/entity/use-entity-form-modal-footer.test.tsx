@@ -1,3 +1,4 @@
+import { render } from "@testing-library/react";
 import { renderHook } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
@@ -33,6 +34,36 @@ const wizardShellLayout = {
   },
 } as UiLayoutDocument;
 
+const wizardFooterLayoutWithProgress = {
+  root: {
+    type: "root",
+    id: "root",
+    columnCount: 1,
+    columns: [
+      {
+        id: "col",
+        rows: [
+          {
+            type: "component",
+            id: "progress",
+            component: {
+              kind: "wizard-progress",
+              variant: "bar",
+            },
+          },
+          {
+            type: "component",
+            id: "actions",
+            component: {
+              kind: "wizard-actions",
+            },
+          },
+        ],
+      },
+    ],
+  },
+} as UiLayoutDocument;
+
 const footerContext = {
   mode: "form",
   data: {},
@@ -54,6 +85,30 @@ describe("resolveEntityFormModalFooter", () => {
     });
 
     expect(footer).not.toBeNull();
+  });
+
+  it("renders wizard progress from a dedicated footer layout", () => {
+    const footer = resolveEntityFormModalFooter({
+      enabled: true,
+      modalFooterLayout: wizardFooterLayoutWithProgress,
+      footerContext: {
+        ...footerContext,
+        wizard: {
+          steps: [
+            { id: "step-1", label: "Step 1" },
+            { id: "step-2", label: "Step 2" },
+          ],
+          currentStepIndex: 0,
+          stepStatuses: { "step-1": "active", "step-2": "pending" },
+        },
+        wizardProgressRenderer: () => (
+          <div role="progressbar" aria-label="Wizard progress" />
+        ),
+      },
+    });
+
+    const { getByRole } = render(<>{footer}</>);
+    expect(getByRole("progressbar")).toBeInTheDocument();
   });
 });
 

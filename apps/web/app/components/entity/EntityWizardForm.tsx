@@ -6,6 +6,7 @@ import {
   type ReactNode,
 } from "react";
 import {
+  ensureWizardShellLayout,
   layoutHasInputFields,
   type UiLayoutDocument,
   type WizardActionsComponentConfig,
@@ -326,6 +327,14 @@ export function EntityWizardForm({
     [currentStepIndex, stepStatuses, wizard.steps],
   );
 
+  const shellLayout = useMemo(
+    () =>
+      ensureWizardShellLayout(wizard.shellLayout, {
+        actionsInModalFooter: modalFooterLayout != null,
+      }),
+    [modalFooterLayout, wizard.shellLayout],
+  );
+
   const renderContext = useMemo(() => {
     return {
       ...baseContext,
@@ -377,10 +386,11 @@ export function EntityWizardForm({
 
   const wizardFooterContext = useMemo(
     (): LayoutRenderContext => ({
-      mode: "form",
-      data: values,
-      locale,
-      resolveField: (path) => values[path],
+      ...baseContext,
+      wizard: wizardState,
+      wizardProgressRenderer: (config: WizardProgressComponentConfig) => (
+        <WizardProgress config={config} wizard={wizardState} />
+      ),
       wizardActionsRenderer: (config: WizardActionsComponentConfig) => (
         <WizardActions
           config={config}
@@ -398,17 +408,17 @@ export function EntityWizardForm({
       ),
     }),
     [
+      baseContext,
       currentStepIndex,
       handleBack,
       handleNext,
       isCurrentStepValid,
       isSubmitting,
-      locale,
       mode,
       onCancel,
       submitCurrentStep,
-      values,
       wizard.steps.length,
+      wizardState,
     ],
   );
 
@@ -416,7 +426,7 @@ export function EntityWizardForm({
     enabled: modalActionPlacement === "footer",
     onFooterChange,
     modalFooterLayout,
-    fallbackLayout: wizard.shellLayout,
+    fallbackLayout: shellLayout,
     footerContext: wizardFooterContext,
     wizardMode: mode,
     wizardCurrentStepIndex: currentStepIndex,
@@ -436,12 +446,13 @@ export function EntityWizardForm({
   return (
     <Form
       id={ENTITY_FORM_ID}
-      className="flex w-full min-w-0 flex-col gap-0"
+      className="flex h-full min-h-0 w-full min-w-0 flex-1 flex-col gap-0"
       onSubmit={(event) => void handleFormSubmit(event)}
     >
       <RecursiveLayoutRenderer
-        layout={wizard.shellLayout}
+        layout={shellLayout}
         context={renderContext}
+        stretchRootColumns
       />
     </Form>
   );

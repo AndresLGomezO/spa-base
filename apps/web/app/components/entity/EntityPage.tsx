@@ -540,7 +540,13 @@ export function EntityPage({ entityName }: EntityPageProps) {
         contentPadding={formModalContentPadding}
         footer={formModalFooterSlot}
       >
-        <div className={isWizardFormModal ? "w-full min-w-0" : "w-full"}>
+        <div
+          className={
+            isWizardFormModal
+              ? "flex min-h-0 w-full min-w-0 flex-1 flex-col"
+              : "w-full"
+          }
+        >
           {formModal?.mode === "create" ? (
             <RequireEntityPermission entityName={entityName} action="create">
               <EntityForm
