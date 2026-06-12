@@ -1,5 +1,8 @@
 import type { DesignSurface } from "@repo/ui-builder-core";
 import {
+  createDefaultComponent,
+  insertComponentRowAt,
+  insertNestedLayoutRowAt,
   moveRowAt,
   removeRowAt,
   updateComponentRowAt,
@@ -10,6 +13,7 @@ import {
   updateNestedColumnStyles,
   updateNestedLayoutRowDisplayRange,
   updateNestedLayoutRowStyles,
+  setNestedColumnCount,
   setNestedColumnWidthPercent,
   setRootColumnWidthPercent,
   updateRootColumnDisplayRange,
@@ -25,11 +29,19 @@ import {
   type UiComponentConfig,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
+import type { FieldDescriptor } from "@repo/ui-builder-react";
 
 import type { UseEntityFormLayoutEditorResult } from "../ui-builder/use-entity-form-layout-editor";
+import type { CatalogEntryKind } from "./form-designer-component-catalog";
 import type { ComponentColumnRef } from "./form-designer-component-column-ref";
 import { isNestedComponentColumnRef } from "./form-designer-component-column-ref";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
+import { toComponentRowRef } from "./form-designer-component-row-ref";
+import type {
+  InsertAnchor,
+  StructureTreeLabels,
+} from "./form-designer-structure-tree";
+import { resolveComponentRowLabel } from "./form-designer-structure-tree";
 
 export type ComponentsTreeScope = "shell" | "step" | "footer" | "main";
 
@@ -68,6 +80,10 @@ interface ComponentsLayoutBinding {
     patch: Partial<
       Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo">
     >,
+  ) => void;
+  readonly setNestedRowColumnCount: (
+    rowRef: ComponentRowRef,
+    columnCount: number,
   ) => void;
   readonly updateLayoutMotion: (motion: MotionPreset | undefined) => void;
   readonly updateNestedColumn: (
@@ -382,6 +398,16 @@ export function resolveComponentsLayoutBinding(
       }
       setLayout(next);
     },
+    setNestedRowColumnCount: (rowRef, columnCount) => {
+      setLayout(
+        setNestedColumnCount(
+          layout,
+          rowRef.locator.columnIndex,
+          rowRef.rowId,
+          columnCount,
+        ),
+      );
+    },
     updateLayoutMotion: (motion) => {
       setLayout(updateLayoutMeta(layout, { motion }));
     },
@@ -455,5 +481,45 @@ export function resolveComponentsLayoutBinding(
     updateRootLayoutStyles: (styles) => {
       setLayout(updateRootNodeStyles(layout, styles));
     },
+  };
+}
+
+export function insertCatalogEntryAtAnchor(
+  binding: ComponentsLayoutBinding,
+  anchor: InsertAnchor,
+  kind: CatalogEntryKind,
+  defaultFieldPath: string,
+  treeLabels: StructureTreeLabels,
+  fieldDescriptors: readonly FieldDescriptor[],
+): { readonly rowRef: ComponentRowRef; readonly label: string } {
+  const insert = {
+    position: anchor.position,
+    referenceRowId: anchor.referenceRowId,
+  };
+
+  if (kind === "nested-layout") {
+    const { layout, rowId } = insertNestedLayoutRowAt(
+      binding.layout,
+      anchor.locator,
+      insert,
+    );
+    binding.setLayout(layout);
+    return {
+      rowRef: toComponentRowRef(rowId, anchor.locator),
+      label: treeLabels.nestedLayout(1),
+    };
+  }
+
+  const component = createDefaultComponent(kind, defaultFieldPath);
+  const { layout, rowId } = insertComponentRowAt(
+    binding.layout,
+    anchor.locator,
+    insert,
+    component,
+  );
+  binding.setLayout(layout);
+  return {
+    rowRef: toComponentRowRef(rowId, anchor.locator),
+    label: resolveComponentRowLabel(component, fieldDescriptors, treeLabels),
   };
 }

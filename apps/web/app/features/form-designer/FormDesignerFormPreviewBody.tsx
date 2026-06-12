@@ -1,5 +1,4 @@
 import { Form } from "@repo/ui";
-import { cn } from "@repo/theme/utils";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import type { RootColumnWrapper } from "@repo/ui-builder-renderer";
 
@@ -19,7 +18,7 @@ export function FormDesignerFormPreviewBody({
   const rendererProps = {
     rootColumnWrapper,
     renderEmptyRootColumns: layoutChromeActive,
-    stretchRootColumns: layoutChromeActive,
+    stretchRootColumns: false,
   } as const;
 
   const formPreviewBody =
@@ -38,17 +37,8 @@ export function FormDesignerFormPreviewBody({
     );
 
   return (
-    <div
-      className={cn("w-full", layoutChromeActive && "flex min-h-0 flex-col")}
-    >
-      <Form
-        className={cn(
-          "flex w-full flex-col gap-0",
-          layoutChromeActive && "min-h-0 flex-1",
-        )}
-      >
-        {formPreviewBody}
-      </Form>
+    <div className="w-full">
+      <Form className="flex w-full flex-col gap-0">{formPreviewBody}</Form>
     </div>
   );
 }

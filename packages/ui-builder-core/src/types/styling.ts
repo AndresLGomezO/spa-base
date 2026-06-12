@@ -25,7 +25,7 @@ export interface LabelConfig {
 
 export interface ConditionalStyleRule {
   readonly matchValue: string;
-  readonly background?: TextColorToken;
-  readonly textColor?: TextColorToken;
+  readonly background?: string;
+  readonly textColor?: string;
   readonly badgeVariant?: CardBadgeVariant;
 }

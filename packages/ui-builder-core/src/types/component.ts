@@ -155,8 +155,39 @@ export interface FormActionsComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export type WizardProgressVariant = "steps" | "bar" | "stepper";
+
+export type WizardStepLabelPosition =
+  | "top"
+  | "bottom"
+  | "left"
+  | "right"
+  | "hidden";
+
+export interface WizardStepLabelConfig {
+  readonly show?: boolean;
+  readonly position?: WizardStepLabelPosition;
+  readonly bold?: boolean;
+  readonly thin?: boolean;
+  readonly italic?: boolean;
+  readonly underline?: boolean;
+  readonly color?: string;
+  readonly align?: "left" | "center" | "right";
+  readonly fontSize?: number;
+}
+
 export interface WizardProgressComponentConfig {
   readonly kind: "wizard-progress";
+  readonly variant?: WizardProgressVariant;
+  readonly stepLabel?: WizardStepLabelConfig;
+  readonly barTrackColor?: string;
+  readonly barFillColor?: string;
+  /** Stepper: minimum connector width between steps in px. Default 16. */
+  readonly stepSpacing?: number;
+  /** Stepper: step circle diameter in px. Default 32. */
+  readonly circleSize?: number;
+  /** Stepper: max width of each step label container in px. */
+  readonly labelMaxWidth?: number;
   readonly conditionalStyles?: readonly ConditionalStyleRule[];
   readonly styles?: readonly StyleRule[];
 }

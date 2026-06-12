@@ -42,7 +42,7 @@ export function FormDesignerColumnChrome({
   return (
     <div
       className={cn(
-        "relative flex h-full min-h-0 w-full min-w-0 flex-col self-stretch",
+        "relative flex w-full min-w-0 shrink-0 flex-col",
         isDimmed && "opacity-30 saturate-0",
       )}
       onMouseEnter={() => onHover(columnIndex)}
@@ -78,7 +78,7 @@ export function FormDesignerColumnChrome({
 
       <div
         className={cn(
-          "relative z-10 flex min-h-0 w-full flex-1 flex-col",
+          "relative z-10 flex w-full min-w-0 shrink-0 flex-col",
           hasColumnFocus && "pointer-events-none select-none",
         )}
       >

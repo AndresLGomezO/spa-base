@@ -126,6 +126,7 @@
       "wizardScopeContent": "Contenido",
       "wizardScopeAriaLabel": "Ámbito del árbol de estructura",
       "wizardStepLabel": "Paso",
+      "collapsedStepSelectAriaLabel": "Seleccionar paso del asistente",
       "expandNode": "Expandir {{label}}",
       "collapseNode": "Contraer {{label}}",
       "selectRow": "Editar componente",
@@ -158,6 +159,30 @@
         "formSection": "Sección de formulario",
         "formActions": "Acciones del formulario",
         "wizardProgress": "Progreso del asistente",
+        "wizardProgressVariant": "Estilo de progreso",
+        "wizardProgressVariantSteps": "Lista de pasos",
+        "wizardProgressVariantBar": "Barra de progreso",
+        "wizardProgressVariantStepper": "Stepper",
+        "wizardProgressBarTrackColor": "Color de la pista",
+        "wizardProgressBarFillColor": "Color de relleno",
+        "wizardStepLabelPosition": "Posición de la etiqueta",
+        "wizardStepLabelTop": "Arriba",
+        "wizardStepLabelBottom": "Abajo",
+        "wizardStepLabelLeft": "Izquierda",
+        "wizardStepLabelRight": "Derecha",
+        "wizardStepLabelHidden": "Oculta",
+        "wizardStepLabelFontWeight": "Peso de fuente",
+        "wizardStepLabelFontDefault": "Predeterminado",
+        "wizardStepLabelFontBold": "Negrita",
+        "wizardStepLabelFontThin": "Fina",
+        "wizardStepLabelFontNormal": "Normal",
+        "wizardStepLabelItalic": "Cursiva",
+        "wizardStepLabelUnderline": "Subrayado",
+        "wizardStepLabelFontSize": "Tamaño de texto (px)",
+        "wizardStepLabelAlignment": "Alineación",
+        "wizardStepperStepSpacing": "Espaciado entre pasos (px)",
+        "wizardStepperCircleSize": "Tamaño del círculo (px)",
+        "wizardStepperLabelMaxWidth": "Ancho máximo de etiqueta (px)",
         "wizardStepHost": "Contenedor de paso",
         "wizardActions": "Acciones del asistente"
       }
@@ -175,6 +200,9 @@
       "discard": "Descartar cambios",
       "keepEditing": "Seguir editando"
     }
+  },
+  "forms": {
+    "stepIndicator": "Paso {{step}} de {{total}}"
   },
   "designLayout": {
     "forbidden": "No tienes permiso para configurar layouts de entidades.",

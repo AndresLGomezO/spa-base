@@ -1,8 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, toast } from "@repo/ui";
+import { entityFormFieldAdapter } from "@repo/ui-builder-react";
 import type { DesignSurface } from "@repo/ui-builder-core";
 
+import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { FormDesignerAddComponentModal } from "./FormDesignerAddComponentModal";
 import {
   FormDesignerComponentsSessionProvider,
@@ -12,7 +14,12 @@ import { FormDesignerPreviewPanel } from "./FormDesignerPreviewPanel";
 import { FormDesignerStructureTreePanel } from "./FormDesignerStructureTreePanel";
 import type { CatalogEntryKind } from "./form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
-import type { ComponentsTreeScope } from "./form-designer-components-layout";
+import {
+  clampComponentsStepIndex,
+  insertCatalogEntryAtAnchor,
+  resolveComponentsLayoutBinding,
+  type ComponentsTreeScope,
+} from "./form-designer-components-layout";
 import type { InsertAnchor } from "./form-designer-structure-tree";
 import { useFormDesigner } from "./form-designer-context";
 
@@ -33,13 +40,41 @@ function resolveDesignSurface(
 
 function FormDesignerComponentsTabContent() {
   const { t } = useTranslation("common");
-  const { editor, canSave, componentsIsDirty, saveComponents } =
-    useFormDesigner();
-  const { treeScope } = useFormDesignerComponentsSession();
+  const {
+    editor,
+    canSave,
+    componentsIsDirty,
+    saveComponents,
+    markComponentsDirty,
+    requestComponentRowPanel,
+  } = useFormDesigner();
+  const {
+    treeScope,
+    stepIndex,
+    setFocusedRow,
+    setSelectedRow,
+    clearColumnHover,
+  } = useFormDesignerComponentsSession();
+  const definition = useEntityDefinition(editor.definition.name);
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
   const designSurface = resolveDesignSurface(editor.presentation, treeScope);
   const [insertAnchor, setInsertAnchor] = useState<InsertAnchor | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
+
+  const fieldDescriptors = useMemo(
+    () => entityFormFieldAdapter(definition).fieldDescriptors,
+    [definition],
+  );
+
+  const clampedStepIndex = clampComponentsStepIndex(
+    stepIndex,
+    editor.wizard.steps.length,
+  );
+
+  const binding = useMemo(
+    () => resolveComponentsLayoutBinding(editor, treeScope, clampedStepIndex),
+    [clampedStepIndex, editor, treeScope],
+  );
 
   const handleInsert = useCallback((anchor: InsertAnchor) => {
     setInsertAnchor(anchor);
@@ -48,11 +83,37 @@ function FormDesignerComponentsTabContent() {
 
   const handleSelect = useCallback(
     (anchor: InsertAnchor, kind: CatalogEntryKind) => {
-      void anchor;
-      void kind;
-      // Persistence integration will be added in a follow-up iteration.
+      const { rowRef, label } = insertCatalogEntryAtAnchor(
+        binding,
+        anchor,
+        kind,
+        editor.defaultFieldPath,
+        labels.tree,
+        fieldDescriptors,
+      );
+
+      markComponentsDirty();
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label, {
+        treeScope,
+        stepIndex: clampedStepIndex,
+      });
     },
-    [],
+    [
+      binding,
+      clampedStepIndex,
+      clearColumnHover,
+      editor.defaultFieldPath,
+      fieldDescriptors,
+      labels.tree,
+      markComponentsDirty,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+      treeScope,
+    ],
   );
 
   const handleCloseModal = useCallback(() => {

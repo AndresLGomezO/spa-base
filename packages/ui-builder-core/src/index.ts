@@ -105,8 +105,11 @@ export {
 } from "./layout/wizard-shell.js";
 export type {
   WizardProgressComponentConfig,
+  WizardProgressVariant,
   WizardStepHostComponentConfig,
   WizardActionsComponentConfig,
+  WizardStepLabelConfig,
+  WizardStepLabelPosition,
   WizardStepStatusKind,
 } from "./types/component.js";
 export { isWizardUiComponent } from "./types/component.js";
@@ -143,6 +146,12 @@ export {
   isCustomColorValue,
   isThemeTokenValue,
 } from "./styles/color-values.js";
+export {
+  resolveBackgroundComponentColor,
+  resolveTextComponentColor,
+  type ResolvedBackgroundColor,
+  type ResolvedTextColor,
+} from "./styles/resolve-component-color.js";
 export {
   applyStyleRules,
   resolveStyleRules,
@@ -289,6 +298,10 @@ export {
   normalizeLayout,
   addComponentRowAt,
   addNestedLayoutRowAt,
+  insertRowAt,
+  insertComponentRowAt,
+  insertNestedLayoutRowAt,
+  type RowInsertPosition,
   removeRowAt,
   moveRowAt,
   updateComponentRowAt,

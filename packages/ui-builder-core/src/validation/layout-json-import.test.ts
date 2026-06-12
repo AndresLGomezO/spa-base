@@ -278,6 +278,204 @@ describe("validateLayoutJsonImport", () => {
     expect(result.ok).toBe(true);
     expect(result.errors).toEqual([]);
   });
+
+  it("accepts wizard-progress bar variant with step label config", () => {
+    const document = {
+      root: {
+        type: "root" as const,
+        id: "root",
+        columnCount: 2,
+        columns: [
+          {
+            id: "c1",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r1",
+                component: {
+                  kind: "wizard-progress" as const,
+                  variant: "bar" as const,
+                  stepLabel: {
+                    show: true,
+                    position: "top" as const,
+                    bold: true,
+                    align: "left" as const,
+                  },
+                  barTrackColor: "muted" as const,
+                  barFillColor: "primary" as const,
+                },
+              },
+            ],
+          },
+          {
+            id: "c2",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r2",
+                component: { kind: "wizard-step-host" as const },
+              },
+              {
+                type: "component" as const,
+                id: "r3",
+                component: { kind: "wizard-actions" as const },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(document),
+      { type: "layout-document" },
+      {
+        designSurface: "formWizardShell",
+        definition,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("accepts wizard-progress stepper variant with step labels and conditional styles", () => {
+    const document = {
+      root: {
+        type: "root" as const,
+        id: "root",
+        columnCount: 2,
+        columns: [
+          {
+            id: "c1",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r1",
+                component: {
+                  kind: "wizard-progress" as const,
+                  variant: "stepper" as const,
+                  stepLabel: {
+                    show: true,
+                    position: "bottom" as const,
+                    align: "center" as const,
+                  },
+                  conditionalStyles: [
+                    {
+                      matchValue: "active",
+                      background: "primary",
+                      textColor: "default",
+                    },
+                    {
+                      matchValue: "completed",
+                      background: "success",
+                      textColor: "default",
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+          {
+            id: "c2",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r2",
+                component: { kind: "wizard-step-host" as const },
+              },
+              {
+                type: "component" as const,
+                id: "r3",
+                component: { kind: "wizard-actions" as const },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(document),
+      { type: "layout-document" },
+      {
+        designSurface: "formWizardShell",
+        definition,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
+
+  it("accepts wizard-progress stepper variant with step labels and conditional styles", () => {
+    const document = {
+      root: {
+        type: "root" as const,
+        id: "root",
+        columnCount: 2,
+        columns: [
+          {
+            id: "c1",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r1",
+                component: {
+                  kind: "wizard-progress" as const,
+                  variant: "stepper" as const,
+                  stepLabel: {
+                    show: true,
+                    position: "bottom" as const,
+                    align: "center" as const,
+                  },
+                  conditionalStyles: [
+                    {
+                      matchValue: "active",
+                      background: "primary",
+                      textColor: "default",
+                    },
+                    {
+                      matchValue: "completed",
+                      background: "success",
+                      textColor: "default",
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+          {
+            id: "c2",
+            rows: [
+              {
+                type: "component" as const,
+                id: "r2",
+                component: { kind: "wizard-step-host" as const },
+              },
+              {
+                type: "component" as const,
+                id: "r3",
+                component: { kind: "wizard-actions" as const },
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(document),
+      { type: "layout-document" },
+      {
+        designSurface: "formWizardShell",
+        definition,
+      },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.errors).toEqual([]);
+  });
 });
 
 describe("regenerateLayoutDocumentIds", () => {

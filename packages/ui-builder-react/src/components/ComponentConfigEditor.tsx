@@ -36,10 +36,18 @@ import {
   type LabelConfigEditorLabels,
 } from "./LabelConfigEditor.js";
 import {
+  WizardStepLabelConfigEditor,
+  type WizardStepLabelConfigEditorLabels,
+} from "./WizardStepLabelConfigEditor.js";
+import {
+  WizardStepperLayoutEditor,
+  type WizardStepperLayoutEditorLabels,
+} from "./WizardStepperLayoutEditor.js";
+import { ColorValueEditor } from "./ColorValueEditor.js";
+import {
   StyleRulesEditor,
   type StyleRulesEditorLabels,
 } from "./StyleRulesEditor.js";
-import { TEXT_COLOR_TOKEN_OPTIONS } from "./style-rules-state.js";
 
 const DEFAULT_COMPONENT_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -124,6 +132,12 @@ function updateWizardProgressConditionalRules(
   });
 }
 
+function resolveWizardProgressVariant(
+  config: WizardProgressComponentConfig,
+): "steps" | "bar" | "stepper" {
+  return config.variant ?? "steps";
+}
+
 export interface ComponentConfigEditorLabels {
   readonly component: string;
   readonly staticValue: string;
@@ -164,6 +178,14 @@ export interface ComponentConfigEditorLabels {
   readonly iconName?: string;
   readonly iconSize?: string;
   readonly iconNameHint?: string;
+  readonly wizardProgressVariant?: string;
+  readonly wizardProgressVariantSteps?: string;
+  readonly wizardProgressVariantBar?: string;
+  readonly wizardProgressVariantStepper?: string;
+  readonly wizardProgressBarTrackColor?: string;
+  readonly wizardProgressBarFillColor?: string;
+  readonly wizardStepLabel?: WizardStepLabelConfigEditorLabels;
+  readonly wizardStepperLayout?: WizardStepperLayoutEditorLabels;
   readonly styleRules: StyleRulesEditorLabels;
   readonly label: LabelConfigEditorLabels;
 }
@@ -886,129 +908,233 @@ export function ComponentConfigEditor({
           </div>
         ) : null}
         {config.kind === "wizard-progress" ? (
-          <Text variant="muted" className="text-xs">
-            Style each status (pending, active, completed, invalid) using
-            conditional rules below.
-          </Text>
-        ) : null}
-        {config.kind === "wizard-progress" ? (
-          <div className="flex flex-col gap-2">
-            <Text className="text-muted-foreground text-sm">
-              {labels.badgeColorRules}
-            </Text>
-            {(config.conditionalStyles ?? []).map((rule, index) => (
-              <div key={index} className="flex flex-wrap gap-2">
-                <select
-                  className={SELECT_CLASS}
-                  value={rule.matchValue ?? ""}
-                  onChange={(event) => {
-                    const rules = [...(config.conditionalStyles ?? [])];
-                    rules[index] = {
-                      ...rule,
-                      matchValue: event.target.value,
-                    };
-                    updateWizardProgressConditionalRules(
-                      config,
-                      rules,
-                      onChange,
-                    );
-                  }}
-                >
-                  <option value="">{labels.matchValue}</option>
-                  {WIZARD_STEP_STATUS_OPTIONS.map((status) => (
-                    <option key={status} value={status}>
-                      {status}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className={SELECT_CLASS}
-                  value={rule.background ?? ""}
-                  onChange={(event) => {
-                    const rules = [...(config.conditionalStyles ?? [])];
-                    rules[index] = {
-                      ...rule,
-                      background:
-                        event.target.value.length > 0
-                          ? (event.target
-                              .value as ConditionalStyleRule["background"])
-                          : undefined,
-                    };
-                    updateWizardProgressConditionalRules(
-                      config,
-                      rules,
-                      onChange,
-                    );
-                  }}
-                >
-                  <option value="">Background</option>
-                  {TEXT_COLOR_TOKEN_OPTIONS.map((token) => (
-                    <option key={token} value={token}>
-                      {token}
-                    </option>
-                  ))}
-                </select>
-                <select
-                  className={SELECT_CLASS}
-                  value={rule.textColor ?? ""}
-                  onChange={(event) => {
-                    const rules = [...(config.conditionalStyles ?? [])];
-                    rules[index] = {
-                      ...rule,
-                      textColor:
-                        event.target.value.length > 0
-                          ? (event.target
-                              .value as ConditionalStyleRule["textColor"])
-                          : undefined,
-                    };
-                    updateWizardProgressConditionalRules(
-                      config,
-                      rules,
-                      onChange,
-                    );
-                  }}
-                >
-                  <option value="">Text color</option>
-                  {TEXT_COLOR_TOKEN_OPTIONS.map((token) => (
-                    <option key={token} value={token}>
-                      {token}
-                    </option>
-                  ))}
-                </select>
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => {
-                    updateWizardProgressConditionalRules(
-                      config,
-                      (config.conditionalStyles ?? []).filter(
-                        (_, ruleIndex) => ruleIndex !== index,
-                      ),
-                      onChange,
-                    );
-                  }}
-                >
-                  {labels.remove}
-                </Button>
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {labels.wizardProgressVariant ?? "Progress style"}
+              </span>
+              <select
+                className={SELECT_CLASS}
+                value={resolveWizardProgressVariant(config)}
+                onChange={(event) =>
+                  onChange({
+                    ...config,
+                    variant: event.target
+                      .value as WizardProgressComponentConfig["variant"],
+                  })
+                }
+              >
+                <option value="steps">
+                  {labels.wizardProgressVariantSteps ?? "Step list"}
+                </option>
+                <option value="bar">
+                  {labels.wizardProgressVariantBar ?? "Progress bar"}
+                </option>
+                <option value="stepper">
+                  {labels.wizardProgressVariantStepper ?? "Stepper"}
+                </option>
+              </select>
+            </label>
+            {resolveWizardProgressVariant(config) === "bar" ||
+            resolveWizardProgressVariant(config) === "stepper" ? (
+              <WizardStepLabelConfigEditor
+                stepLabel={config.stepLabel}
+                onChange={(stepLabel) => onChange({ ...config, stepLabel })}
+                colorLabels={labels.styleRules}
+                labels={
+                  labels.wizardStepLabel ?? {
+                    showLabel: labels.label.showLabel,
+                    labelPosition: labels.label.labelPosition,
+                    labelTop: "Top",
+                    labelBottom: "Bottom",
+                    labelLeft: "Left",
+                    labelRight: "Right",
+                    labelHidden: "Hidden",
+                    labelAlignLeft: labels.label.labelAlignLeft,
+                    labelAlignCenter: labels.label.labelAlignCenter,
+                    labelAlignRight: labels.label.labelAlignRight,
+                    labelAlignment: "Alignment",
+                    labelColor: labels.label.labelColor,
+                  }
+                }
+              />
+            ) : null}
+            {resolveWizardProgressVariant(config) === "stepper" ? (
+              <WizardStepperLayoutEditor
+                config={config}
+                onChange={(next) => onChange(next)}
+                labels={
+                  labels.wizardStepperLayout ?? {
+                    stepSpacing: "Step spacing (px)",
+                    circleSize: "Circle size (px)",
+                    labelMaxWidth: "Label max width (px)",
+                  }
+                }
+              />
+            ) : null}
+            {resolveWizardProgressVariant(config) === "bar" ? (
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-muted-foreground">
+                    {labels.wizardProgressBarTrackColor ?? "Bar track color"}
+                  </span>
+                  <ColorValueEditor
+                    value={config.barTrackColor ?? "muted"}
+                    onChange={(barTrackColor) =>
+                      onChange({ ...config, barTrackColor })
+                    }
+                    labels={labels.styleRules}
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-sm">
+                  <span className="text-muted-foreground">
+                    {labels.wizardProgressBarFillColor ?? "Bar fill color"}
+                  </span>
+                  <ColorValueEditor
+                    value={config.barFillColor ?? "primary"}
+                    onChange={(barFillColor) =>
+                      onChange({ ...config, barFillColor })
+                    }
+                    labels={labels.styleRules}
+                  />
+                </label>
               </div>
-            ))}
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                updateWizardProgressConditionalRules(
-                  config,
-                  [
-                    ...(config.conditionalStyles ?? []),
-                    { matchValue: "active" },
-                  ],
-                  onChange,
-                );
-              }}
-            >
-              {labels.addRule}
-            </Button>
-          </div>
+            ) : null}
+            {resolveWizardProgressVariant(config) === "steps" ||
+            resolveWizardProgressVariant(config) === "stepper" ? (
+              <>
+                <Text variant="muted" className="text-xs">
+                  Style each status (pending, active, completed, invalid) using
+                  conditional rules below.
+                </Text>
+                <div className="flex flex-col gap-2">
+                  <Text className="text-muted-foreground text-sm">
+                    {labels.badgeColorRules}
+                  </Text>
+                  {(config.conditionalStyles ?? []).map((rule, index) => (
+                    <div
+                      key={index}
+                      className="border-border flex flex-col gap-3 rounded-lg border p-3"
+                    >
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <label className="flex flex-col gap-1 text-sm">
+                          <span className="text-muted-foreground">
+                            {labels.matchValue}
+                          </span>
+                          <select
+                            className={SELECT_CLASS}
+                            value={rule.matchValue ?? ""}
+                            onChange={(event) => {
+                              const rules = [
+                                ...(config.conditionalStyles ?? []),
+                              ];
+                              rules[index] = {
+                                ...rule,
+                                matchValue: event.target.value,
+                              };
+                              updateWizardProgressConditionalRules(
+                                config,
+                                rules,
+                                onChange,
+                              );
+                            }}
+                          >
+                            <option value="">{labels.matchValue}</option>
+                            {WIZARD_STEP_STATUS_OPTIONS.map((status) => (
+                              <option key={status} value={status}>
+                                {status}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                        <div className="flex items-end justify-end">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              updateWizardProgressConditionalRules(
+                                config,
+                                (config.conditionalStyles ?? []).filter(
+                                  (_, ruleIndex) => ruleIndex !== index,
+                                ),
+                                onChange,
+                              );
+                            }}
+                          >
+                            {labels.remove}
+                          </Button>
+                        </div>
+                      </div>
+                      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                        <label className="flex flex-col gap-1 text-sm">
+                          <span className="text-muted-foreground">
+                            Background
+                          </span>
+                          <ColorValueEditor
+                            value={rule.background ?? "default"}
+                            onChange={(background) => {
+                              const rules = [
+                                ...(config.conditionalStyles ?? []),
+                              ];
+                              rules[index] = {
+                                ...rule,
+                                background,
+                              };
+                              updateWizardProgressConditionalRules(
+                                config,
+                                rules,
+                                onChange,
+                              );
+                            }}
+                            labels={labels.styleRules}
+                          />
+                        </label>
+                        <label className="flex flex-col gap-1 text-sm">
+                          <span className="text-muted-foreground">
+                            Text color
+                          </span>
+                          <ColorValueEditor
+                            value={rule.textColor ?? "default"}
+                            onChange={(textColor) => {
+                              const rules = [
+                                ...(config.conditionalStyles ?? []),
+                              ];
+                              rules[index] = {
+                                ...rule,
+                                textColor,
+                              };
+                              updateWizardProgressConditionalRules(
+                                config,
+                                rules,
+                                onChange,
+                              );
+                            }}
+                            labels={labels.styleRules}
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => {
+                      updateWizardProgressConditionalRules(
+                        config,
+                        [
+                          ...(config.conditionalStyles ?? []),
+                          { matchValue: "active" },
+                        ],
+                        onChange,
+                      );
+                    }}
+                  >
+                    {labels.addRule}
+                  </Button>
+                </div>
+              </>
+            ) : null}
+          </>
         ) : null}
         {isPageUiComponent(config) ||
         config.kind === "wizard-step-host" ||

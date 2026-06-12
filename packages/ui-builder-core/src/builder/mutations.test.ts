@@ -6,6 +6,8 @@ import {
   createDefaultComponent,
   createEmptyColumn,
   createEmptyLayout,
+  insertComponentRowAt,
+  insertNestedLayoutRowAt,
   moveRootColumn,
   replaceComponentRowAt,
   replaceLayoutDocument,
@@ -114,6 +116,149 @@ describe("addComponentRowAt", () => {
       type: "component",
       component: { kind: "text", primary: { path: "balance" } },
     });
+  });
+});
+
+describe("insertComponentRowAt", () => {
+  it("inserts before the first row in a column", () => {
+    let layout = createEmptyLayout(1);
+    const first = insertComponentRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "after" },
+      createDefaultComponent("form-field", "name"),
+    );
+    layout = first.layout;
+    const firstRowId = first.rowId;
+
+    const second = insertComponentRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "before", referenceRowId: firstRowId },
+      createDefaultComponent("text", "email"),
+    );
+
+    const rows = second.layout.root.columns[0]?.rows ?? [];
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.id).toBe(second.rowId);
+    expect(rows[1]?.id).toBe(firstRowId);
+  });
+
+  it("inserts after a row in a column", () => {
+    let layout = createEmptyLayout(1);
+    const first = insertComponentRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "after" },
+      createDefaultComponent("form-field", "name"),
+    );
+    layout = first.layout;
+
+    const second = insertComponentRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "after", referenceRowId: first.rowId },
+      createDefaultComponent("text", "email"),
+    );
+
+    const rows = second.layout.root.columns[0]?.rows ?? [];
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.id).toBe(first.rowId);
+    expect(rows[1]?.id).toBe(second.rowId);
+  });
+
+  it("prepends into an empty column when inserting before without reference", () => {
+    const layout = createEmptyLayout(1);
+    const result = insertComponentRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "before" },
+      createDefaultComponent("text", "name"),
+    );
+
+    const rows = result.layout.root.columns[0]?.rows ?? [];
+    expect(rows).toHaveLength(1);
+    expect(rows[0]?.id).toBe(result.rowId);
+  });
+
+  it("inserts into a nested column at the requested position", () => {
+    const layout = createEmptyLayout(1);
+    const nestedRowId = createLayoutId("nested");
+    const nested = {
+      type: "nested-layout" as const,
+      id: nestedRowId,
+      columnCount: 2,
+      columns: [createEmptyColumn(), createEmptyColumn()],
+    };
+
+    const withNested = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [{ ...layout.root.columns[0]!, rows: [nested] }],
+      },
+    };
+
+    const first = insertComponentRowAt(
+      withNested,
+      {
+        scope: "nested",
+        columnIndex: 0,
+        rowId: nestedRowId,
+        nestedColumnIndex: 1,
+      },
+      { position: "after" },
+      createDefaultComponent("text", "name"),
+    );
+
+    const second = insertComponentRowAt(
+      first.layout,
+      {
+        scope: "nested",
+        columnIndex: 0,
+        rowId: nestedRowId,
+        nestedColumnIndex: 1,
+      },
+      { position: "before", referenceRowId: first.rowId },
+      createDefaultComponent("badge", "status"),
+    );
+
+    const outer = second.layout.root.columns[0]?.rows[0];
+    expect(outer?.type).toBe("nested-layout");
+    if (outer?.type !== "nested-layout") {
+      return;
+    }
+
+    const rows = outer.columns[1]?.rows ?? [];
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.id).toBe(second.rowId);
+    expect(rows[1]?.id).toBe(first.rowId);
+  });
+});
+
+describe("insertNestedLayoutRowAt", () => {
+  it("inserts a nested layout row before a reference row", () => {
+    let layout = createEmptyLayout(1);
+    const component = insertComponentRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "after" },
+      createDefaultComponent("text", "name"),
+    );
+    layout = component.layout;
+
+    const nested = insertNestedLayoutRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "before", referenceRowId: component.rowId },
+      2,
+    );
+
+    const rows = nested.layout.root.columns[0]?.rows ?? [];
+    expect(rows).toHaveLength(2);
+    expect(rows[0]?.id).toBe(nested.rowId);
+    expect(rows[0]).toMatchObject({ type: "nested-layout", columnCount: 2 });
+    expect(rows[1]?.id).toBe(component.rowId);
   });
 });
 

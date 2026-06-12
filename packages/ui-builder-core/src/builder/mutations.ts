@@ -75,7 +75,12 @@ export function createDefaultComponent(
   }
 
   if (kind === "wizard-progress") {
-    return { kind: "wizard-progress", conditionalStyles: [] };
+    return {
+      kind: "wizard-progress",
+      variant: "bar",
+      stepLabel: { show: true, position: "top", bold: true },
+      conditionalStyles: [],
+    };
   }
 
   if (kind === "wizard-step-host") {
@@ -730,17 +735,88 @@ function updateRowsAtLocator(
   );
 }
 
+export type RowInsertPosition = {
+  readonly position: "before" | "after";
+  readonly referenceRowId?: string;
+};
+
+function resolveRowInsertIndex(
+  rows: readonly RowNode[],
+  insert: RowInsertPosition,
+): number {
+  if (insert.referenceRowId) {
+    const index = rows.findIndex((row) => row.id === insert.referenceRowId);
+    if (index >= 0) {
+      return insert.position === "before" ? index : index + 1;
+    }
+  }
+
+  if (insert.position === "before") {
+    return 0;
+  }
+
+  return rows.length;
+}
+
+export function insertRowAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  insert: RowInsertPosition,
+  row: RowNode,
+): UiLayoutDocument {
+  return updateRowsAtLocator(layout, locator, (rows) => {
+    const index = resolveRowInsertIndex(rows, insert);
+    const next = [...rows];
+    next.splice(index, 0, row);
+    return next;
+  });
+}
+
+export function insertComponentRowAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  insert: RowInsertPosition,
+  component: UiComponentConfig,
+): { readonly layout: UiLayoutDocument; readonly rowId: string } {
+  const rowId = createLayoutId("row");
+  const row: ComponentRowNode = {
+    type: "component",
+    id: rowId,
+    component,
+  };
+  return {
+    layout: insertRowAt(layout, locator, insert, row),
+    rowId,
+  };
+}
+
+export function insertNestedLayoutRowAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  insert: RowInsertPosition,
+  nestedColumnCount = 1,
+): { readonly layout: UiLayoutDocument; readonly rowId: string } {
+  const count = Math.min(Math.max(1, nestedColumnCount), MAX_NESTED_COLUMNS);
+  const rowId = createLayoutId("nested");
+  const row: NestedLayoutRowNode = {
+    type: "nested-layout",
+    id: rowId,
+    columnCount: count,
+    columns: Array.from({ length: count }, () => createEmptyColumn()),
+  };
+  return {
+    layout: insertRowAt(layout, locator, insert, row),
+    rowId,
+  };
+}
+
 export function addComponentRowAt(
   layout: UiLayoutDocument,
   locator: RowLocator,
   component: UiComponentConfig,
 ): UiLayoutDocument {
-  const row: ComponentRowNode = {
-    type: "component",
-    id: createLayoutId("row"),
-    component,
-  };
-  return updateRowsAtLocator(layout, locator, (rows) => [...rows, row]);
+  return insertComponentRowAt(layout, locator, { position: "after" }, component)
+    .layout;
 }
 
 export function addNestedLayoutRowAt(
@@ -748,14 +824,12 @@ export function addNestedLayoutRowAt(
   locator: RowLocator,
   nestedColumnCount = 1,
 ): UiLayoutDocument {
-  const count = Math.min(Math.max(1, nestedColumnCount), MAX_NESTED_COLUMNS);
-  const row: NestedLayoutRowNode = {
-    type: "nested-layout",
-    id: createLayoutId("nested"),
-    columnCount: count,
-    columns: Array.from({ length: count }, () => createEmptyColumn()),
-  };
-  return updateRowsAtLocator(layout, locator, (rows) => [...rows, row]);
+  return insertNestedLayoutRowAt(
+    layout,
+    locator,
+    { position: "after" },
+    nestedColumnCount,
+  ).layout;
 }
 
 export function removeRowAt(

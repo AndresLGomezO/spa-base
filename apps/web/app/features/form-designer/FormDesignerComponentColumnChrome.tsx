@@ -20,7 +20,7 @@ interface FormDesignerComponentColumnChromeProps {
   readonly hasPeerColumnFocus: boolean;
   readonly focusedColumn: ComponentColumnRef | null;
   readonly focusedRow: ComponentRowRef | null;
-  readonly onHover: (column: ComponentColumnRef | null) => void;
+  readonly onHover?: (column: ComponentColumnRef | null) => void;
   readonly onSelect: (column: ComponentColumnRef) => void;
   readonly children: ReactNode;
 }
@@ -59,11 +59,11 @@ export function FormDesignerComponentColumnChrome({
   return (
     <div
       className={cn(
-        "relative flex h-full min-h-0 w-full min-w-0 flex-col self-stretch",
+        "relative flex w-full min-w-0 shrink-0 flex-col",
         isColumnFocused && "bg-primary/10 ring-primary ring-2 ring-inset",
       )}
-      onMouseEnter={() => onHover(columnRef)}
-      onMouseLeave={() => onHover(null)}
+      onMouseEnter={onHover ? () => onHover(columnRef) : undefined}
+      onMouseLeave={onHover ? () => onHover(null) : undefined}
       onClick={isColumnFocused ? () => onSelect(columnRef) : undefined}
       onKeyDown={
         isColumnFocused
@@ -95,7 +95,7 @@ export function FormDesignerComponentColumnChrome({
 
       <div
         className={cn(
-          "relative z-10 flex min-h-0 w-full flex-1 flex-col",
+          "relative z-10 flex w-full min-w-0 shrink-0 flex-col",
           showColumnFocus && "pointer-events-none select-none",
         )}
       >

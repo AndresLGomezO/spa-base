@@ -14,6 +14,10 @@ import { useTranslation } from "react-i18next";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import { FormDesignerStructureTree } from "./FormDesignerStructureTree";
+import {
+  FormDesignerStructureTreeCollapsedScopeMenu,
+  FormDesignerStructureTreeCollapsedStepMenu,
+} from "./FormDesignerStructureTreeCollapsedScopeMenu";
 import { useFormDesignerComponentsSession } from "./FormDesignerComponentsSession";
 import {
   clampComponentsStepIndex,
@@ -102,14 +106,20 @@ export function FormDesignerStructureTreePanel({
     setTreeScope,
     stepIndex,
     setStepIndex,
-    resolvedRowFocus,
-    resolvedColumnFocus,
+    focusedRow,
+    focusedColumn,
+    selectedRow,
+    selectedColumn,
+    treeRowFocus,
+    treeColumnFocus,
     setFocusedRow,
     setFocusedColumn,
     setSelectedRow,
     setSelectedColumn,
     clearColumnHover,
     clearRowHover,
+    hoverRow,
+    hoverColumn,
   } = useFormDesignerComponentsSession();
   const definition = useEntityDefinition(editor.definition.name);
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
@@ -233,52 +243,101 @@ export function FormDesignerStructureTreePanel({
   ]);
 
   useEffect(() => {
-    if (resolvedRowFocus) {
+    if (treeRowFocus) {
       const treeNode = document.querySelector(
-        `[data-tree-node-id="row-${resolvedRowFocus.rowId}"]`,
+        `[data-tree-node-id="row-${treeRowFocus.rowId}"]`,
       );
       treeNode?.scrollIntoView({ block: "nearest", behavior: "smooth" });
       return;
     }
 
-    if (!resolvedColumnFocus) {
+    if (!treeColumnFocus) {
       return;
     }
 
     const nestedId =
-      resolvedColumnFocus.nestedParentRowId != null &&
-      resolvedColumnFocus.nestedColumnIndex != null
-        ? `col-${resolvedColumnFocus.nestedParentRowId}-${resolvedColumnFocus.nestedColumnIndex}`
-        : `col-root-${resolvedColumnFocus.rootColumnIndex}`;
+      treeColumnFocus.nestedParentRowId != null &&
+      treeColumnFocus.nestedColumnIndex != null
+        ? `col-${treeColumnFocus.nestedParentRowId}-${treeColumnFocus.nestedColumnIndex}`
+        : `col-root-${treeColumnFocus.rootColumnIndex}`;
     const treeNode = document.querySelector(
       `[data-tree-node-id="${nestedId}"]`,
     );
     treeNode?.scrollIntoView({ block: "nearest", behavior: "smooth" });
-  }, [resolvedColumnFocus, resolvedRowFocus]);
+  }, [treeColumnFocus, treeRowFocus]);
 
   if (collapsed) {
     return (
-      <div className="bg-card border-border flex min-h-[28rem] w-10 shrink-0 flex-col items-center rounded-xl border py-3 shadow-sm">
-        <IconButton
-          type="button"
-          size="sm"
-          label={labels.expandPanel}
-          onClick={() => setCollapsed(false)}
-        >
-          <PanelLeftOpen aria-hidden className="size-4" />
-        </IconButton>
-      </div>
+      <aside
+        className={cn(
+          "bg-card border-border flex min-h-[28rem] w-12 shrink-0 flex-col items-center rounded-xl border shadow-sm",
+          "transition-[width,opacity] duration-300 ease-out",
+        )}
+      >
+        <div className="border-border flex w-full flex-col items-center gap-2 border-b px-1.5 py-2.5">
+          <IconButton
+            type="button"
+            size="sm"
+            label={labels.expandPanel}
+            onClick={() => setCollapsed(false)}
+          >
+            <PanelLeftOpen aria-hidden className="size-4" />
+          </IconButton>
+
+          {showScopeSwitcher ? (
+            <FormDesignerStructureTreeCollapsedScopeMenu
+              value={treeScope}
+              options={scopeOptions}
+              onChange={setTreeScope}
+              ariaLabel={labels.wizardScopeAriaLabel}
+            />
+          ) : null}
+
+          {editor.presentation === "wizard" && treeScope === "step" ? (
+            <FormDesignerStructureTreeCollapsedStepMenu
+              stepIndex={clampedStepIndex}
+              steps={editor.wizard.steps}
+              onChange={setStepIndex}
+              ariaLabel={labels.collapsedStepSelectAriaLabel}
+              stepLabel={labels.wizardStepLabel}
+            />
+          ) : null}
+        </div>
+
+        <div className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden px-1.5 pb-3">
+          <FormDesignerStructureTree
+            variant="util"
+            layout={binding.layout}
+            labels={labels}
+            fieldDescriptors={fieldDescriptors}
+            onInsert={onInsert}
+            insertDisabled={componentRowPanelOpen}
+            onMoveRowUp={handleMoveRowUp}
+            onMoveRowDown={handleMoveRowDown}
+            onRemoveRow={handleRemoveRow}
+            hoveredRow={focusedRow}
+            hoveredColumn={focusedColumn}
+            selectedRow={selectedRow}
+            selectedColumn={selectedColumn}
+            componentRowPanelOpen={componentRowPanelOpen}
+            onRowHover={hoverRow}
+            onRowSelect={handleRowSelect}
+            onColumnHover={hoverColumn}
+            onColumnSelect={handleColumnSelect}
+          />
+        </div>
+      </aside>
     );
   }
 
   return (
     <aside
       className={cn(
-        "bg-card border-border flex min-h-[28rem] w-[min(100%,20rem)] shrink-0 flex-col overflow-hidden rounded-xl border shadow-sm",
+        "bg-card border-border flex min-h-[28rem] w-fit max-w-full shrink-0 flex-col rounded-xl border shadow-sm",
         "transition-[width,opacity] duration-300 ease-out",
       )}
     >
-      <div className="border-border flex items-center justify-between gap-2 border-b px-3 py-2.5">
+      <div className="border-border flex w-full min-w-0 items-center justify-between gap-2 border-b px-3 py-2.5">
         <Text className="text-foreground text-sm font-semibold tracking-tight">
           {labels.panelTitle}
         </Text>
@@ -293,7 +352,7 @@ export function FormDesignerStructureTreePanel({
       </div>
 
       {showScopeSwitcher ? (
-        <div className="border-border flex flex-col gap-2 border-b px-3 py-2.5">
+        <div className="border-border flex w-full min-w-0 flex-col gap-2 border-b px-3 py-2.5">
           <SegmentedSwitch
             value={treeScope}
             options={scopeOptions}
@@ -323,38 +382,24 @@ export function FormDesignerStructureTreePanel({
         </div>
       ) : null}
 
-      <div className="min-h-0 flex-1 overflow-auto px-2 pb-3">
+      <div className="min-h-0 w-max max-w-full flex-1 overflow-y-auto overflow-x-auto px-2 pb-3">
         <FormDesignerStructureTree
           layout={binding.layout}
           labels={labels}
           fieldDescriptors={fieldDescriptors}
           onInsert={onInsert}
+          insertDisabled={componentRowPanelOpen}
           onMoveRowUp={handleMoveRowUp}
           onMoveRowDown={handleMoveRowDown}
           onRemoveRow={handleRemoveRow}
-          focusedRow={resolvedRowFocus}
-          focusedColumn={resolvedColumnFocus}
-          onRowHover={(rowRef) => {
-            if (rowRef) {
-              clearColumnHover();
-              setFocusedRow(rowRef);
-              return;
-            }
-            if (!componentRowPanelOpen) {
-              setFocusedRow(null);
-            }
-          }}
+          hoveredRow={focusedRow}
+          hoveredColumn={focusedColumn}
+          selectedRow={selectedRow}
+          selectedColumn={selectedColumn}
+          componentRowPanelOpen={componentRowPanelOpen}
+          onRowHover={hoverRow}
           onRowSelect={handleRowSelect}
-          onColumnHover={(columnRef) => {
-            if (columnRef) {
-              clearRowHover();
-              setFocusedColumn(columnRef);
-              return;
-            }
-            if (!componentRowPanelOpen) {
-              setFocusedColumn(null);
-            }
-          }}
+          onColumnHover={hoverColumn}
           onColumnSelect={handleColumnSelect}
         />
       </div>

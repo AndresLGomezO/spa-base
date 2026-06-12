@@ -62,7 +62,7 @@ export function FormDesignerStructureTreeRowActions({
   return (
     <div
       className={cn(
-        "ml-1 flex shrink-0 items-center gap-0.5",
+        "ml-auto flex shrink-0 items-center gap-0.5 pl-2",
         "opacity-0 transition-opacity duration-150",
         "group-hover/node:opacity-100 group-focus-within/node:opacity-100",
       )}

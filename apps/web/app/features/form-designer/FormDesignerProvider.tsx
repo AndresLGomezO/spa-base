@@ -453,6 +453,7 @@ export function FormDesignerProvider({
   );
 
   const closeColumnPanel = useCallback(() => {
+    columnPanelSessionRef.current = null;
     setColumnPanelSession(null);
     closeThirdRail();
   }, [closeThirdRail]);
@@ -478,6 +479,7 @@ export function FormDesignerProvider({
   }, []);
 
   const closeComponentRowPanel = useCallback(() => {
+    componentRowPanelSessionRef.current = null;
     setComponentRowPanelSession(null);
     closeThirdRail();
   }, [closeThirdRail]);
@@ -567,6 +569,13 @@ export function FormDesignerProvider({
       if (
         areComponentPanelTargetsEqual(componentRowPanelSession.target, target)
       ) {
+        if (componentRowPanelIsDirty) {
+          setPendingComponentRowAction({ type: "close" });
+          setUnsavedReason("componentRowPanel");
+          setUnsavedChangesOpen(true);
+          return;
+        }
+        closeComponentRowPanel();
         return;
       }
       if (componentRowPanelIsDirty) {
@@ -584,6 +593,7 @@ export function FormDesignerProvider({
       switchComponentPanel(target, label, scope.treeScope, scope.stepIndex);
     },
     [
+      closeComponentRowPanel,
       componentRowPanelIsDirty,
       componentRowPanelSession,
       openComponentPanelAt,
@@ -659,10 +669,12 @@ export function FormDesignerProvider({
       closeComponentRowPanel();
       return;
     }
-    setComponentRowPanelSession({
+    const savedSession: ComponentRowPanelSession = {
       ...componentRowPanelSession,
       baseline: currentScopedLayoutSnapshot,
-    });
+    };
+    componentRowPanelSessionRef.current = savedSession;
+    setComponentRowPanelSession(savedSession);
     markComponentsDirty();
     closeComponentRowPanel();
   }, [
@@ -824,10 +836,12 @@ export function FormDesignerProvider({
       closeColumnPanel();
       return;
     }
-    setColumnPanelSession({
+    const savedSession = {
       columnIndex: columnPanelSession.columnIndex,
       baseline: currentLayoutSnapshot,
-    });
+    };
+    columnPanelSessionRef.current = savedSession;
+    setColumnPanelSession(savedSession);
     closeColumnPanel();
   }, [closeColumnPanel, columnPanelSession, currentLayoutSnapshot]);
 
@@ -990,33 +1004,13 @@ export function FormDesignerProvider({
   ]);
 
   const cancelUnsavedChanges = useCallback(() => {
-    const reason = unsavedReason;
-    const columnSession = columnPanelSession;
-    const componentSession = componentRowPanelSession;
     setUnsavedChangesOpen(false);
     setPendingTabId(null);
     setUnsavedTabId(null);
     setPendingColumnAction(null);
     setPendingComponentRowAction(null);
     setUnsavedReason(null);
-    if (reason === "columnPanel" && columnSession) {
-      openColumnPanelAt(columnSession.columnIndex);
-    }
-    if (reason === "componentRowPanel" && componentSession) {
-      openComponentPanelAt(
-        componentSession.target,
-        componentSession.label,
-        componentSession.treeScope,
-        componentSession.stepIndex,
-      );
-    }
-  }, [
-    columnPanelSession,
-    componentRowPanelSession,
-    openColumnPanelAt,
-    openComponentPanelAt,
-    unsavedReason,
-  ]);
+  }, []);
 
   const openLayoutColumnPanel = requestLayoutColumnPanel;
 

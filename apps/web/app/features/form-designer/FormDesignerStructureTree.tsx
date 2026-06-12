@@ -1,10 +1,11 @@
-import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useRef, useState, type ReactNode } from "react";
 import { Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import type { FormDesignerComponentsLabels } from "./form-designer-components-labels";
 import { FormDesignerStructureTreeInsertSlot } from "./FormDesignerStructureTreeInsertSlot";
 import { FormDesignerStructureTreeNode } from "./FormDesignerStructureTreeNode";
+import { FormDesignerStructureTreeUtilNode } from "./FormDesignerStructureTreeUtilNode";
 import {
   buildStructureTree,
   collectDefaultExpandedNodeIds,
@@ -29,20 +30,124 @@ import {
   type ComponentRowRef,
 } from "./form-designer-component-row-ref";
 
-interface FormDesignerStructureTreeProps {
+type TreeRowFocusState = "focused" | "selected" | "dimmed" | "none";
+type StructureTreeVariant = "full" | "util";
+
+const FLYOUT_CLOSE_DELAY_MS = 150;
+
+interface TreeFocusProps {
+  readonly hoveredRow?: ComponentRowRef | null;
+  readonly hoveredColumn?: ComponentColumnRef | null;
+  readonly selectedRow?: ComponentRowRef | null;
+  readonly selectedColumn?: ComponentColumnRef | null;
+  readonly componentRowPanelOpen?: boolean;
+}
+
+interface BranchSharedProps {
   readonly layout: UiLayoutDocument;
   readonly labels: FormDesignerComponentsLabels;
-  readonly fieldDescriptors: readonly FieldDescriptor[];
+  readonly treeFocus: TreeFocusProps;
+  readonly expandedIds: ReadonlySet<string>;
+  readonly onToggle: (id: string) => void;
   readonly onInsert: (anchor: InsertAnchor) => void;
+  readonly insertDisabled?: boolean;
   readonly onMoveRowUp: (row: StructureRowNode) => void;
   readonly onMoveRowDown: (row: StructureRowNode) => void;
   readonly onRemoveRow: (row: StructureRowNode) => void;
-  readonly focusedRow?: ComponentRowRef | null;
-  readonly focusedColumn?: ComponentColumnRef | null;
   readonly onRowHover?: (row: ComponentRowRef | null) => void;
   readonly onRowSelect?: (row: StructureRowNode) => void;
   readonly onColumnHover?: (column: ComponentColumnRef | null) => void;
   readonly onColumnSelect?: (column: StructureColumnNode) => void;
+}
+
+interface FormDesignerStructureTreeProps extends TreeFocusProps {
+  readonly layout: UiLayoutDocument;
+  readonly labels: FormDesignerComponentsLabels;
+  readonly fieldDescriptors: readonly FieldDescriptor[];
+  readonly variant?: StructureTreeVariant;
+  readonly onInsert: (anchor: InsertAnchor) => void;
+  readonly insertDisabled?: boolean;
+  readonly onMoveRowUp: (row: StructureRowNode) => void;
+  readonly onMoveRowDown: (row: StructureRowNode) => void;
+  readonly onRemoveRow: (row: StructureRowNode) => void;
+  readonly onRowHover?: (row: ComponentRowRef | null) => void;
+  readonly onRowSelect?: (row: StructureRowNode) => void;
+  readonly onColumnHover?: (column: ComponentColumnRef | null) => void;
+  readonly onColumnSelect?: (column: StructureColumnNode) => void;
+}
+
+function resolveRowFocusState(
+  rowRef: ComponentRowRef,
+  {
+    hoveredRow = null,
+    selectedRow = null,
+    hoveredColumn = null,
+    selectedColumn = null,
+    componentRowPanelOpen = false,
+  }: TreeFocusProps,
+): TreeRowFocusState {
+  if (areComponentRowRefsEqual(hoveredRow, rowRef)) {
+    return "focused";
+  }
+
+  if (
+    componentRowPanelOpen &&
+    selectedColumn == null &&
+    areComponentRowRefsEqual(selectedRow, rowRef)
+  ) {
+    return "selected";
+  }
+
+  const hasActiveContext =
+    hoveredRow != null ||
+    hoveredColumn != null ||
+    (componentRowPanelOpen && (selectedRow != null || selectedColumn != null));
+
+  return hasActiveContext ? "dimmed" : "none";
+}
+
+function resolveColumnFocusState(
+  columnRef: ComponentColumnRef,
+  {
+    hoveredRow = null,
+    selectedRow = null,
+    hoveredColumn = null,
+    selectedColumn = null,
+    componentRowPanelOpen = false,
+  }: TreeFocusProps,
+): TreeRowFocusState {
+  if (areComponentColumnRefsEqual(hoveredColumn, columnRef)) {
+    return "focused";
+  }
+
+  if (
+    componentRowPanelOpen &&
+    areComponentColumnRefsEqual(selectedColumn, columnRef)
+  ) {
+    return "selected";
+  }
+
+  const hasActiveContext =
+    hoveredRow != null ||
+    hoveredColumn != null ||
+    (componentRowPanelOpen && (selectedRow != null || selectedColumn != null));
+
+  return hasActiveContext ? "dimmed" : "none";
+}
+
+function areRowActionsEnabled(
+  rowRef: ComponentRowRef,
+  treeFocus: TreeFocusProps,
+): boolean {
+  if (!treeFocus.componentRowPanelOpen) {
+    return true;
+  }
+
+  return (
+    treeFocus.selectedColumn == null &&
+    treeFocus.selectedRow != null &&
+    areComponentRowRefsEqual(treeFocus.selectedRow, rowRef)
+  );
 }
 
 function CollapsibleChildren({
@@ -66,6 +171,76 @@ function CollapsibleChildren({
   );
 }
 
+function StructureColumnBody({
+  column,
+  depth,
+  layout,
+  labels,
+  expandedIds,
+  onToggle,
+  onInsert,
+  insertDisabled = false,
+  onMoveRowUp,
+  onMoveRowDown,
+  onRemoveRow,
+  treeFocus,
+  onRowHover,
+  onRowSelect,
+  onColumnHover,
+  onColumnSelect,
+}: BranchSharedProps & {
+  readonly column: StructureColumnNode;
+  readonly depth: number;
+}) {
+  return (
+    <div className="border-border/60 ml-3 w-full min-w-max border-l pl-1.5">
+      {column.rows.length === 0 ? (
+        <div className="flex flex-col px-2 py-1">
+          <Text className="text-muted-foreground text-xs">
+            {labels.emptyColumn}
+          </Text>
+          <FormDesignerStructureTreeInsertSlot
+            ariaLabel={labels.insertInColumn(column.label)}
+            anchor={createColumnTopInsertAnchor(column)}
+            disabled={insertDisabled}
+            onInsert={onInsert}
+          />
+        </div>
+      ) : (
+        <>
+          <FormDesignerStructureTreeInsertSlot
+            ariaLabel={labels.insertInColumn(column.label)}
+            anchor={createColumnTopInsertAnchor(column)}
+            disabled={insertDisabled}
+            onInsert={onInsert}
+          />
+          {column.rows.map((row) => (
+            <StructureRowBranch
+              key={row.id}
+              row={row}
+              depth={depth + 1}
+              layout={layout}
+              labels={labels}
+              expandedIds={expandedIds}
+              onToggle={onToggle}
+              insertDisabled={insertDisabled}
+              onInsert={onInsert}
+              onMoveRowUp={onMoveRowUp}
+              onMoveRowDown={onMoveRowDown}
+              onRemoveRow={onRemoveRow}
+              treeFocus={treeFocus}
+              onRowHover={onRowHover}
+              onRowSelect={onRowSelect}
+              onColumnHover={onColumnHover}
+              onColumnSelect={onColumnSelect}
+            />
+          ))}
+        </>
+      )}
+    </div>
+  );
+}
+
 function StructureRowBranch({
   row,
   depth,
@@ -74,48 +249,29 @@ function StructureRowBranch({
   expandedIds,
   onToggle,
   onInsert,
+  insertDisabled = false,
   onMoveRowUp,
   onMoveRowDown,
   onRemoveRow,
-  focusedRow,
-  focusedColumn,
+  treeFocus,
   onRowHover,
   onRowSelect,
   onColumnHover,
   onColumnSelect,
-}: {
+}: BranchSharedProps & {
   readonly row: StructureRowNode;
   readonly depth: number;
-  readonly layout: UiLayoutDocument;
-  readonly labels: FormDesignerComponentsLabels;
-  readonly expandedIds: ReadonlySet<string>;
-  readonly onToggle: (id: string) => void;
-  readonly onInsert: (anchor: InsertAnchor) => void;
-  readonly onMoveRowUp: (row: StructureRowNode) => void;
-  readonly onMoveRowDown: (row: StructureRowNode) => void;
-  readonly onRemoveRow: (row: StructureRowNode) => void;
-  readonly focusedRow?: ComponentRowRef | null;
-  readonly focusedColumn?: ComponentColumnRef | null;
-  readonly onRowHover?: (row: ComponentRowRef | null) => void;
-  readonly onRowSelect?: (row: StructureRowNode) => void;
-  readonly onColumnHover?: (column: ComponentColumnRef | null) => void;
-  readonly onColumnSelect?: (column: StructureColumnNode) => void;
 }) {
   const isNested = row.type === "nested-layout";
   const expanded = expandedIds.has(row.id);
   const kind = isNested ? "nested-layout" : row.kind;
   const moveState = getRowMoveState(layout, row);
   const rowRef = toComponentRowRef(row.rowId, row.locator);
-  const hasRowFocus = focusedRow != null;
-  const hasColumnFocus = focusedColumn != null;
-  const rowFocusState = areComponentRowRefsEqual(focusedRow, rowRef)
-    ? "focused"
-    : hasRowFocus || hasColumnFocus
-      ? "dimmed"
-      : "none";
+  const rowFocusState = resolveRowFocusState(rowRef, treeFocus);
+  const rowActionsEnabled = areRowActionsEnabled(rowRef, treeFocus);
 
   return (
-    <div className="group/branch flex w-max min-w-full flex-col">
+    <div className="group/branch flex w-full min-w-max flex-col">
       <FormDesignerStructureTreeNode
         id={row.id}
         label={row.label}
@@ -136,6 +292,7 @@ function StructureRowBranch({
         onMoveDown={() => onMoveRowDown(row)}
         onDelete={() => onRemoveRow(row)}
         rowFocusState={rowFocusState}
+        rowActionsEnabled={rowActionsEnabled}
         onRowHover={() => onRowHover?.(rowRef)}
         onRowLeave={() => onRowHover?.(null)}
         onRowSelect={() => onRowSelect?.(row)}
@@ -143,7 +300,7 @@ function StructureRowBranch({
 
       {isNested ? (
         <CollapsibleChildren expanded={expanded}>
-          <div className="border-border/60 ml-3 w-max min-w-full border-l pl-1.5">
+          <div className="border-border/60 ml-3 w-full min-w-max border-l pl-1.5">
             {row.columns.map((column) => (
               <StructureColumnBranch
                 key={column.id}
@@ -153,12 +310,12 @@ function StructureRowBranch({
                 labels={labels}
                 expandedIds={expandedIds}
                 onToggle={onToggle}
+                insertDisabled={insertDisabled}
                 onInsert={onInsert}
                 onMoveRowUp={onMoveRowUp}
                 onMoveRowDown={onMoveRowDown}
                 onRemoveRow={onRemoveRow}
-                focusedRow={focusedRow}
-                focusedColumn={focusedColumn}
+                treeFocus={treeFocus}
                 onRowHover={onRowHover}
                 onRowSelect={onRowSelect}
                 onColumnHover={onColumnHover}
@@ -172,6 +329,7 @@ function StructureRowBranch({
       <FormDesignerStructureTreeInsertSlot
         ariaLabel={labels.insertBelow(row.label)}
         anchor={createRowBottomInsertAnchor(row)}
+        disabled={insertDisabled}
         onInsert={onInsert}
       />
     </div>
@@ -186,45 +344,25 @@ function StructureColumnBranch({
   expandedIds,
   onToggle,
   onInsert,
+  insertDisabled = false,
   onMoveRowUp,
   onMoveRowDown,
   onRemoveRow,
-  focusedRow,
-  focusedColumn,
+  treeFocus,
   onRowHover,
   onRowSelect,
   onColumnHover,
   onColumnSelect,
-}: {
+}: BranchSharedProps & {
   readonly column: StructureColumnNode;
   readonly depth: number;
-  readonly layout: UiLayoutDocument;
-  readonly labels: FormDesignerComponentsLabels;
-  readonly expandedIds: ReadonlySet<string>;
-  readonly onToggle: (id: string) => void;
-  readonly onInsert: (anchor: InsertAnchor) => void;
-  readonly onMoveRowUp: (row: StructureRowNode) => void;
-  readonly onMoveRowDown: (row: StructureRowNode) => void;
-  readonly onRemoveRow: (row: StructureRowNode) => void;
-  readonly focusedRow?: ComponentRowRef | null;
-  readonly focusedColumn?: ComponentColumnRef | null;
-  readonly onRowHover?: (row: ComponentRowRef | null) => void;
-  readonly onRowSelect?: (row: StructureRowNode) => void;
-  readonly onColumnHover?: (column: ComponentColumnRef | null) => void;
-  readonly onColumnSelect?: (column: StructureColumnNode) => void;
 }) {
   const expanded = expandedIds.has(column.id);
   const columnRef = toComponentColumnRef(column);
-  const hasRowFocus = focusedRow != null;
-  const hasColumnFocus = focusedColumn != null;
-  const columnFocusState = areComponentColumnRefsEqual(focusedColumn, columnRef)
-    ? "focused"
-    : hasRowFocus || hasColumnFocus
-      ? "dimmed"
-      : "none";
+  const columnFocusState = resolveColumnFocusState(columnRef, treeFocus);
 
   return (
-    <div className="group/branch flex w-max min-w-full flex-col">
+    <div className="group/branch flex w-full min-w-max flex-col">
       <FormDesignerStructureTreeNode
         id={column.id}
         label={column.label}
@@ -242,50 +380,99 @@ function StructureColumnBranch({
       />
 
       <CollapsibleChildren expanded={expanded}>
-        <div className="border-border/60 ml-3 w-max min-w-full border-l pl-1.5">
-          {column.rows.length === 0 ? (
-            <div className="flex flex-col px-2 py-1">
-              <Text className="text-muted-foreground text-xs">
-                {labels.emptyColumn}
-              </Text>
-              <FormDesignerStructureTreeInsertSlot
-                ariaLabel={labels.insertInColumn(column.label)}
-                anchor={createColumnTopInsertAnchor(column)}
-                onInsert={onInsert}
-              />
-            </div>
-          ) : (
-            <>
-              <FormDesignerStructureTreeInsertSlot
-                ariaLabel={labels.insertInColumn(column.label)}
-                anchor={createColumnTopInsertAnchor(column)}
-                onInsert={onInsert}
-              />
-              {column.rows.map((row) => (
-                <StructureRowBranch
-                  key={row.id}
-                  row={row}
-                  depth={depth + 1}
-                  layout={layout}
-                  labels={labels}
-                  expandedIds={expandedIds}
-                  onToggle={onToggle}
-                  onInsert={onInsert}
-                  onMoveRowUp={onMoveRowUp}
-                  onMoveRowDown={onMoveRowDown}
-                  onRemoveRow={onRemoveRow}
-                  focusedRow={focusedRow}
-                  focusedColumn={focusedColumn}
-                  onRowHover={onRowHover}
-                  onRowSelect={onRowSelect}
-                  onColumnHover={onColumnHover}
-                  onColumnSelect={onColumnSelect}
-                />
-              ))}
-            </>
-          )}
-        </div>
+        <StructureColumnBody
+          column={column}
+          depth={depth}
+          layout={layout}
+          labels={labels}
+          expandedIds={expandedIds}
+          onToggle={onToggle}
+          insertDisabled={insertDisabled}
+          onInsert={onInsert}
+          onMoveRowUp={onMoveRowUp}
+          onMoveRowDown={onMoveRowDown}
+          onRemoveRow={onRemoveRow}
+          treeFocus={treeFocus}
+          onRowHover={onRowHover}
+          onRowSelect={onRowSelect}
+          onColumnHover={onColumnHover}
+          onColumnSelect={onColumnSelect}
+        />
       </CollapsibleChildren>
+    </div>
+  );
+}
+
+function FormDesignerStructureUtilTree({
+  columns,
+  branchProps,
+  onColumnHover,
+  onColumnSelect,
+}: {
+  readonly columns: readonly StructureColumnNode[];
+  readonly branchProps: BranchSharedProps;
+  readonly onColumnHover?: (column: ComponentColumnRef | null) => void;
+  readonly onColumnSelect?: (column: StructureColumnNode) => void;
+}) {
+  const closeFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
+    null,
+  );
+  const [openFlyoutId, setOpenFlyoutId] = useState<string | null>(null);
+
+  const clearFlyoutCloseTimer = useCallback(() => {
+    if (closeFlyoutTimerRef.current) {
+      clearTimeout(closeFlyoutTimerRef.current);
+      closeFlyoutTimerRef.current = null;
+    }
+  }, []);
+
+  const handleFlyoutOpenChange = useCallback(
+    (id: string, open: boolean) => {
+      clearFlyoutCloseTimer();
+      if (open) {
+        setOpenFlyoutId(id);
+        return;
+      }
+
+      closeFlyoutTimerRef.current = setTimeout(() => {
+        setOpenFlyoutId((current) => (current === id ? null : current));
+      }, FLYOUT_CLOSE_DELAY_MS);
+    },
+    [clearFlyoutCloseTimer],
+  );
+
+  return (
+    <div
+      role="tree"
+      aria-label={branchProps.labels.panelTitle}
+      className="flex w-full flex-col items-center gap-1 py-1"
+    >
+      {columns.map((column) => {
+        const columnRef = toComponentColumnRef(column);
+        const columnFocusState = resolveColumnFocusState(
+          columnRef,
+          branchProps.treeFocus,
+        );
+
+        return (
+          <FormDesignerStructureTreeUtilNode
+            key={column.id}
+            id={column.id}
+            label={column.label}
+            kind="nested-layout"
+            rowFocusState={columnFocusState}
+            flyoutOpen={openFlyoutId === column.id}
+            onFlyoutOpenChange={(open) =>
+              handleFlyoutOpenChange(column.id, open)
+            }
+            onHover={() => onColumnHover?.(columnRef)}
+            onLeave={() => onColumnHover?.(null)}
+            onSelect={() => onColumnSelect?.(column)}
+          >
+            <StructureColumnBody column={column} depth={0} {...branchProps} />
+          </FormDesignerStructureTreeUtilNode>
+        );
+      })}
     </div>
   );
 }
@@ -294,17 +481,38 @@ export function FormDesignerStructureTree({
   layout,
   labels,
   fieldDescriptors,
+  variant = "full",
   onInsert,
+  insertDisabled = false,
   onMoveRowUp,
   onMoveRowDown,
   onRemoveRow,
-  focusedRow = null,
-  focusedColumn = null,
+  hoveredRow = null,
+  hoveredColumn = null,
+  selectedRow = null,
+  selectedColumn = null,
+  componentRowPanelOpen = false,
   onRowHover,
   onRowSelect,
   onColumnHover,
   onColumnSelect,
 }: FormDesignerStructureTreeProps) {
+  const treeFocus = useMemo(
+    (): TreeFocusProps => ({
+      hoveredRow,
+      hoveredColumn,
+      selectedRow,
+      selectedColumn,
+      componentRowPanelOpen,
+    }),
+    [
+      componentRowPanelOpen,
+      hoveredColumn,
+      hoveredRow,
+      selectedColumn,
+      selectedRow,
+    ],
+  );
   const columns = useMemo(
     () => buildStructureTree(layout, labels.tree, fieldDescriptors),
     [fieldDescriptors, labels.tree, layout],
@@ -326,6 +534,34 @@ export function FormDesignerStructureTree({
     });
   }, []);
 
+  const branchProps: BranchSharedProps = {
+    layout,
+    labels,
+    treeFocus,
+    expandedIds,
+    onToggle: handleToggle,
+    insertDisabled,
+    onInsert,
+    onMoveRowUp,
+    onMoveRowDown,
+    onRemoveRow,
+    onRowHover,
+    onRowSelect,
+    onColumnHover,
+    onColumnSelect,
+  };
+
+  if (variant === "util") {
+    return (
+      <FormDesignerStructureUtilTree
+        columns={columns}
+        branchProps={branchProps}
+        onColumnHover={onColumnHover}
+        onColumnSelect={onColumnSelect}
+      />
+    );
+  }
+
   return (
     <div
       role="tree"
@@ -337,20 +573,7 @@ export function FormDesignerStructureTree({
           key={column.id}
           column={column}
           depth={0}
-          layout={layout}
-          labels={labels}
-          expandedIds={expandedIds}
-          onToggle={handleToggle}
-          onInsert={onInsert}
-          onMoveRowUp={onMoveRowUp}
-          onMoveRowDown={onMoveRowDown}
-          onRemoveRow={onRemoveRow}
-          focusedRow={focusedRow}
-          focusedColumn={focusedColumn}
-          onRowHover={onRowHover}
-          onRowSelect={onRowSelect}
-          onColumnHover={onColumnHover}
-          onColumnSelect={onColumnSelect}
+          {...branchProps}
         />
       ))}
     </div>

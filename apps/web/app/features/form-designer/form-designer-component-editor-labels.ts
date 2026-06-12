@@ -73,6 +73,73 @@ export function formDesignerComponentEditorLabels(
     iconName: t("designLayout.iconName"),
     iconSize: t("entity.viewSettings.imageSize"),
     iconNameHint: t("designLayout.iconNameHint"),
+    wizardProgressVariant: t(
+      "formDesigner.components.options.wizardProgressVariant",
+    ),
+    wizardProgressVariantSteps: t(
+      "formDesigner.components.options.wizardProgressVariantSteps",
+    ),
+    wizardProgressVariantBar: t(
+      "formDesigner.components.options.wizardProgressVariantBar",
+    ),
+    wizardProgressVariantStepper: t(
+      "formDesigner.components.options.wizardProgressVariantStepper",
+    ),
+    wizardProgressBarTrackColor: t(
+      "formDesigner.components.options.wizardProgressBarTrackColor",
+    ),
+    wizardProgressBarFillColor: t(
+      "formDesigner.components.options.wizardProgressBarFillColor",
+    ),
+    wizardStepLabel: {
+      showLabel: t("entity.viewSettings.showLabel"),
+      labelPosition: t(
+        "formDesigner.components.options.wizardStepLabelPosition",
+      ),
+      labelTop: t("formDesigner.components.options.wizardStepLabelTop"),
+      labelBottom: t("formDesigner.components.options.wizardStepLabelBottom"),
+      labelLeft: t("formDesigner.components.options.wizardStepLabelLeft"),
+      labelRight: t("formDesigner.components.options.wizardStepLabelRight"),
+      labelHidden: t("formDesigner.components.options.wizardStepLabelHidden"),
+      labelAlignLeft: t("entity.viewSettings.labelAlignLeft"),
+      labelAlignCenter: t("entity.viewSettings.labelAlignCenter"),
+      labelAlignRight: t("entity.viewSettings.labelAlignRight"),
+      labelAlignment: t(
+        "formDesigner.components.options.wizardStepLabelAlignment",
+      ),
+      labelColor: t("entity.viewSettings.labelColor"),
+      labelFontWeight: t(
+        "formDesigner.components.options.wizardStepLabelFontWeight",
+      ),
+      labelFontDefault: t(
+        "formDesigner.components.options.wizardStepLabelFontDefault",
+      ),
+      labelFontBold: t(
+        "formDesigner.components.options.wizardStepLabelFontBold",
+      ),
+      labelFontThin: t(
+        "formDesigner.components.options.wizardStepLabelFontThin",
+      ),
+      labelFontNormal: t(
+        "formDesigner.components.options.wizardStepLabelFontNormal",
+      ),
+      labelItalic: t("formDesigner.components.options.wizardStepLabelItalic"),
+      labelUnderline: t(
+        "formDesigner.components.options.wizardStepLabelUnderline",
+      ),
+      labelFontSize: t(
+        "formDesigner.components.options.wizardStepLabelFontSize",
+      ),
+    },
+    wizardStepperLayout: {
+      stepSpacing: t(
+        "formDesigner.components.options.wizardStepperStepSpacing",
+      ),
+      circleSize: t("formDesigner.components.options.wizardStepperCircleSize"),
+      labelMaxWidth: t(
+        "formDesigner.components.options.wizardStepperLabelMaxWidth",
+      ),
+    },
     styleRules: {
       addStyleRule: t("entity.viewSettings.addStyleRule"),
       removeStyleRule: t("entity.viewSettings.removeStyleRule"),

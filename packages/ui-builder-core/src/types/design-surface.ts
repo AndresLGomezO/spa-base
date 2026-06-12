@@ -67,10 +67,32 @@ const FORM_WIZARD_STEP_KINDS: readonly UiComponentKind[] = [
   "badge",
 ];
 
-const FORM_MODAL_FOOTER_KINDS: readonly UiComponentKind[] = [
+const FORM_MODAL_FOOTER_EXCLUDED_KINDS = new Set<UiComponentKind>([
+  "wizard-step-host",
   "form-actions",
-  "wizard-actions",
-];
+]);
+
+function mergeComponentKinds(
+  ...groups: readonly (readonly UiComponentKind[])[]
+): readonly UiComponentKind[] {
+  const merged = new Set<UiComponentKind>();
+
+  for (const group of groups) {
+    for (const kind of group) {
+      if (!FORM_MODAL_FOOTER_EXCLUDED_KINDS.has(kind)) {
+        merged.add(kind);
+      }
+    }
+  }
+
+  return [...merged];
+}
+
+const FORM_MODAL_FOOTER_KINDS = mergeComponentKinds(
+  FORM_PLAIN_KINDS,
+  FORM_WIZARD_SHELL_KINDS,
+  FORM_WIZARD_STEP_KINDS,
+);
 
 export function componentKindsForSurface(
   surface: DesignSurface,

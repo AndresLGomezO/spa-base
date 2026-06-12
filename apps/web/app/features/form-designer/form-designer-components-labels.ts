@@ -25,6 +25,7 @@ export interface FormDesignerComponentsLabels {
   readonly wizardScopeContent: string;
   readonly wizardScopeAriaLabel: string;
   readonly wizardStepLabel: string;
+  readonly collapsedStepSelectAriaLabel: string;
   readonly expandNode: (label: string) => string;
   readonly collapseNode: (label: string) => string;
   readonly moveRowUp: string;
@@ -95,6 +96,9 @@ export function formDesignerComponentsLabels(
     wizardScopeContent: t("formDesigner.components.wizardScopeContent"),
     wizardScopeAriaLabel: t("formDesigner.components.wizardScopeAriaLabel"),
     wizardStepLabel: t("formDesigner.components.wizardStepLabel"),
+    collapsedStepSelectAriaLabel: t(
+      "formDesigner.components.collapsedStepSelectAriaLabel",
+    ),
     expandNode: (label) => t("formDesigner.components.expandNode", { label }),
     collapseNode: (label) =>
       t("formDesigner.components.collapseNode", { label }),

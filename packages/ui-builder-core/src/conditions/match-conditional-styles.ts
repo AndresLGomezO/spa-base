@@ -1,13 +1,17 @@
 import type { CardBadgeVariant } from "../types/component.js";
 import type { ConditionalStyleRule } from "../types/styling.js";
 import {
-  themeTokenBackgroundClass,
-  themeTokenTextClass,
-} from "../styles/theme-token-classes.js";
+  resolveBackgroundComponentColor,
+  resolveTextComponentColor,
+} from "../styles/resolve-component-color.js";
 
 export interface MatchedConditionalStyles {
   readonly badgeVariant?: CardBadgeVariant;
   readonly className?: string;
+  readonly style?: {
+    readonly backgroundColor?: string;
+    readonly color?: string;
+  };
 }
 
 export function matchConditionalStyles(
@@ -29,15 +33,27 @@ export function matchConditionalStyles(
     }
     if (matchValue === normalized) {
       const classes: string[] = [];
-      if (rule.background) {
-        classes.push(themeTokenBackgroundClass(rule.background));
+      const style: { backgroundColor?: string; color?: string } = {};
+      const background = resolveBackgroundComponentColor(rule.background);
+      const textColor = resolveTextComponentColor(rule.textColor);
+
+      if (background.className) {
+        classes.push(background.className);
       }
-      if (rule.textColor) {
-        classes.push(themeTokenTextClass(rule.textColor));
+      if (background.backgroundColor) {
+        style.backgroundColor = background.backgroundColor;
       }
+      if (textColor.className) {
+        classes.push(textColor.className);
+      }
+      if (textColor.color) {
+        style.color = textColor.color;
+      }
+
       return {
         badgeVariant: rule.badgeVariant,
         className: classes.length > 0 ? classes.join(" ") : undefined,
+        style: Object.keys(style).length > 0 ? style : undefined,
       };
     }
   }

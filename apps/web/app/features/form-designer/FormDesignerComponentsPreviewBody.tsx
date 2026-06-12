@@ -1,6 +1,5 @@
 import { useCallback, useMemo, type ReactNode } from "react";
 import { Form } from "@repo/ui";
-import { cn } from "@repo/theme/utils";
 import {
   RecursiveLayoutRenderer,
   type NestedColumnWrapper,
@@ -50,8 +49,8 @@ export function FormDesignerComponentsPreviewBody() {
     treeScope,
     stepIndex,
     focusedRow,
-    resolvedRowFocus,
-    resolvedColumnFocus,
+    previewRowFocus,
+    previewColumnFocus,
     setFocusedRow,
     setFocusedColumn,
     setSelectedRow,
@@ -123,16 +122,6 @@ export function FormDesignerComponentsPreviewBody() {
     ],
   );
 
-  const handleColumnHover = useCallback(
-    (columnRef: ComponentColumnRef | null) => {
-      if (columnRef) {
-        clearRowHover();
-      }
-      setFocusedColumn(columnRef);
-    },
-    [clearRowHover, setFocusedColumn],
-  );
-
   const handleSelectRow = useCallback(
     (rowRef: ReturnType<typeof toComponentRowRef>) => {
       const row = findRowByRef(binding.layout, rowRef);
@@ -182,37 +171,24 @@ export function FormDesignerComponentsPreviewBody() {
     (row, locator, children) => (
       <FormDesignerComponentRowChrome
         rowRef={toComponentRowRef(row.id, locator)}
-        focusedRow={resolvedRowFocus}
-        focusedColumn={resolvedColumnFocus}
-        onHover={(rowRef) => {
-          if (rowRef) {
-            clearColumnHover();
-          }
-          setFocusedRow(rowRef);
-        }}
+        focusedRow={previewRowFocus}
+        focusedColumn={previewColumnFocus}
         onSelect={handleSelectRow}
         onDelete={handleDeleteRow}
       >
         {children}
       </FormDesignerComponentRowChrome>
     ),
-    [
-      clearColumnHover,
-      handleDeleteRow,
-      handleSelectRow,
-      resolvedColumnFocus,
-      resolvedRowFocus,
-      setFocusedRow,
-    ],
+    [handleDeleteRow, handleSelectRow, previewColumnFocus, previewRowFocus],
   );
 
   const focusedColumnKey = useMemo(
     () =>
-      resolvedColumnFocus ? componentColumnRefKey(resolvedColumnFocus) : null,
-    [resolvedColumnFocus],
+      previewColumnFocus ? componentColumnRefKey(previewColumnFocus) : null,
+    [previewColumnFocus],
   );
 
-  const hasPeerColumnFocus = resolvedColumnFocus != null;
+  const hasPeerColumnFocus = previewColumnFocus != null;
 
   const rootColumnWrapper = useCallback<RootColumnWrapper>(
     (index, column: ColumnNode, children: ReactNode) => {
@@ -227,9 +203,8 @@ export function FormDesignerComponentsPreviewBody() {
             focusedColumnKey === componentColumnRefKey(columnRef)
           }
           hasPeerColumnFocus={hasPeerColumnFocus}
-          focusedColumn={resolvedColumnFocus}
-          focusedRow={resolvedRowFocus}
-          onHover={handleColumnHover}
+          focusedColumn={previewColumnFocus}
+          focusedRow={previewRowFocus}
           onSelect={handleSelectColumn}
         >
           {children}
@@ -238,11 +213,10 @@ export function FormDesignerComponentsPreviewBody() {
     },
     [
       focusedColumnKey,
-      handleColumnHover,
       handleSelectColumn,
       hasPeerColumnFocus,
-      resolvedColumnFocus,
-      resolvedRowFocus,
+      previewColumnFocus,
+      previewRowFocus,
     ],
   );
 
@@ -263,9 +237,8 @@ export function FormDesignerComponentsPreviewBody() {
             focusedColumnKey === componentColumnRefKey(columnRef)
           }
           hasPeerColumnFocus={hasPeerColumnFocus}
-          focusedColumn={resolvedColumnFocus}
-          focusedRow={resolvedRowFocus}
-          onHover={handleColumnHover}
+          focusedColumn={previewColumnFocus}
+          focusedRow={previewRowFocus}
           onSelect={handleSelectColumn}
         >
           {children}
@@ -274,11 +247,10 @@ export function FormDesignerComponentsPreviewBody() {
     },
     [
       focusedColumnKey,
-      handleColumnHover,
       handleSelectColumn,
       hasPeerColumnFocus,
-      resolvedColumnFocus,
-      resolvedRowFocus,
+      previewColumnFocus,
+      previewRowFocus,
     ],
   );
 
@@ -288,7 +260,7 @@ export function FormDesignerComponentsPreviewBody() {
       rootColumnWrapper,
       nestedColumnWrapper,
       renderEmptyRootColumns: true,
-      stretchRootColumns: true,
+      stretchRootColumns: false,
     }),
     [nestedColumnWrapper, rootColumnWrapper, rowWrapper],
   );
@@ -348,8 +320,8 @@ export function FormDesignerComponentsPreviewBody() {
   ]);
 
   return (
-    <div className={cn("flex h-full min-h-0 w-full flex-1 flex-col")}>
-      <Form className="flex min-h-0 w-full flex-1 flex-col gap-0">
+    <div className="w-full">
+      <Form className="flex w-full flex-col gap-0">
         <RecursiveLayoutRenderer
           layout={binding.layout}
           context={previewContext}

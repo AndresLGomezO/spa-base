@@ -111,8 +111,8 @@ const labelConfigSchema = z
 const conditionalStyleRuleSchema = z
   .object({
     matchValue: z.string(),
-    background: themeTokenSchema.optional(),
-    textColor: themeTokenSchema.optional(),
+    background: z.string().trim().min(1).optional(),
+    textColor: z.string().trim().min(1).optional(),
     badgeVariant: z
       .enum([
         "success",
@@ -249,6 +249,28 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
   z
     .object({
       kind: z.literal("wizard-progress"),
+      variant: z.enum(["steps", "bar", "stepper"]).optional(),
+      stepLabel: z
+        .object({
+          show: z.boolean().optional(),
+          position: z
+            .enum(["top", "bottom", "left", "right", "hidden"])
+            .optional(),
+          bold: z.boolean().optional(),
+          thin: z.boolean().optional(),
+          italic: z.boolean().optional(),
+          underline: z.boolean().optional(),
+          color: z.string().trim().min(1).optional(),
+          align: z.enum(["left", "center", "right"]).optional(),
+          fontSize: z.number().int().min(8).max(48).optional(),
+        })
+        .strict()
+        .optional(),
+      barTrackColor: z.string().trim().min(1).optional(),
+      barFillColor: z.string().trim().min(1).optional(),
+      stepSpacing: z.number().int().min(8).max(96).optional(),
+      circleSize: z.number().int().min(20).max(56).optional(),
+      labelMaxWidth: z.number().int().min(48).max(320).optional(),
       conditionalStyles: z.array(conditionalStyleRuleSchema).optional(),
       styles: z.array(styleRuleSchema).optional(),
     })

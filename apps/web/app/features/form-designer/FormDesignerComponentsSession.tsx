@@ -28,6 +28,12 @@ interface FormDesignerComponentsSessionContextValue {
   readonly setSelectedColumn: (column: ComponentColumnRef | null) => void;
   readonly resolvedRowFocus: ComponentRowRef | null;
   readonly resolvedColumnFocus: ComponentColumnRef | null;
+  readonly treeRowFocus: ComponentRowRef | null;
+  readonly treeColumnFocus: ComponentColumnRef | null;
+  readonly previewRowFocus: ComponentRowRef | null;
+  readonly previewColumnFocus: ComponentColumnRef | null;
+  readonly hoverRow: (row: ComponentRowRef | null) => void;
+  readonly hoverColumn: (column: ComponentColumnRef | null) => void;
   readonly clearRowHover: () => void;
   readonly clearColumnHover: () => void;
   readonly clearPanelFocus: () => void;
@@ -49,6 +55,7 @@ export function FormDesignerComponentsSessionProvider({
   presentation,
   children,
 }: FormDesignerComponentsSessionProviderProps) {
+  const { componentRowPanelOpen } = useFormDesigner();
   const [treeScope, setTreeScope] = useState<ComponentsTreeScope>(
     presentation === "wizard" ? "shell" : "main",
   );
@@ -76,12 +83,40 @@ export function FormDesignerComponentsSessionProvider({
     setSelectedColumn(null);
   }, []);
 
+  const hoverRow = useCallback(
+    (row: ComponentRowRef | null) => {
+      if (row) {
+        clearColumnHover();
+      }
+      setFocusedRow(row);
+    },
+    [clearColumnHover],
+  );
+
+  const hoverColumn = useCallback(
+    (column: ComponentColumnRef | null) => {
+      if (column) {
+        clearRowHover();
+      }
+      setFocusedColumn(column);
+    },
+    [clearRowHover],
+  );
+
   useEffect(() => {
     clearPanelFocus();
   }, [clearPanelFocus, stepIndex, treeScope]);
 
   const resolvedRowFocus = selectedRow ?? focusedRow;
   const resolvedColumnFocus = selectedColumn ?? focusedColumn;
+  const treeRowFocus = focusedRow ?? selectedRow;
+  const treeColumnFocus = focusedColumn ?? selectedColumn;
+  const previewRowFocus = componentRowPanelOpen
+    ? selectedRow
+    : (selectedRow ?? focusedRow);
+  const previewColumnFocus = componentRowPanelOpen
+    ? selectedColumn
+    : (selectedColumn ?? focusedColumn);
 
   const value = useMemo(
     (): FormDesignerComponentsSessionContextValue => ({
@@ -99,6 +134,12 @@ export function FormDesignerComponentsSessionProvider({
       setSelectedColumn,
       resolvedRowFocus,
       resolvedColumnFocus,
+      treeRowFocus,
+      treeColumnFocus,
+      previewRowFocus,
+      previewColumnFocus,
+      hoverRow,
+      hoverColumn,
       clearRowHover,
       clearColumnHover,
       clearPanelFocus,
@@ -109,11 +150,17 @@ export function FormDesignerComponentsSessionProvider({
       clearColumnHover,
       clearPanelFocus,
       clearRowHover,
+      hoverColumn,
+      hoverRow,
       focusedColumn,
       focusedRow,
+      previewColumnFocus,
+      previewRowFocus,
       resolvedColumnFocus,
       resolvedRowFocus,
       selectedColumn,
+      treeColumnFocus,
+      treeRowFocus,
       selectedRow,
       stepIndex,
       treeScope,
@@ -129,14 +176,38 @@ export function FormDesignerComponentsSessionProvider({
 }
 
 function ComponentPanelSync() {
-  const { componentRowPanelOpen } = useFormDesigner();
-  const { clearPanelFocus } = useFormDesignerComponentsSession();
+  const {
+    componentRowPanelOpen,
+    selectedComponentRowRef,
+    selectedComponentColumnRef,
+  } = useFormDesigner();
+  const { clearPanelFocus, setSelectedRow, setSelectedColumn } =
+    useFormDesignerComponentsSession();
 
   useEffect(() => {
     if (!componentRowPanelOpen) {
       clearPanelFocus();
+      return;
     }
-  }, [clearPanelFocus, componentRowPanelOpen]);
+
+    if (selectedComponentRowRef) {
+      setSelectedRow(selectedComponentRowRef);
+      setSelectedColumn(null);
+      return;
+    }
+
+    if (selectedComponentColumnRef) {
+      setSelectedColumn(selectedComponentColumnRef);
+      setSelectedRow(null);
+    }
+  }, [
+    clearPanelFocus,
+    componentRowPanelOpen,
+    selectedComponentColumnRef,
+    selectedComponentRowRef,
+    setSelectedColumn,
+    setSelectedRow,
+  ]);
 
   return null;
 }

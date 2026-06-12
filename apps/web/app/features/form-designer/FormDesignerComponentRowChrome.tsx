@@ -19,7 +19,7 @@ interface FormDesignerComponentRowChromeProps {
   readonly rowRef: ComponentRowRef;
   readonly focusedRow: ComponentRowRef | null;
   readonly focusedColumn: ComponentColumnRef | null;
-  readonly onHover: (row: ComponentRowRef | null) => void;
+  readonly onHover?: (row: ComponentRowRef | null) => void;
   readonly onSelect: (row: ComponentRowRef) => void;
   readonly onDelete: (row: ComponentRowRef) => void;
   readonly children: ReactNode;
@@ -53,11 +53,11 @@ export function FormDesignerComponentRowChrome({
   return (
     <div
       className={cn(
-        "relative flex h-full min-h-0 w-full min-w-0 flex-1 flex-col",
+        "relative flex min-w-0 max-w-full shrink-0 flex-col",
         showRowFocus && "bg-primary/10 ring-primary ring-2 ring-inset",
       )}
-      onMouseEnter={() => onHover(rowRef)}
-      onMouseLeave={() => onHover(null)}
+      onMouseEnter={onHover ? () => onHover(rowRef) : undefined}
+      onMouseLeave={onHover ? () => onHover(null) : undefined}
       onClick={showRowFocus ? () => onSelect(rowRef) : undefined}
       onKeyDown={
         showRowFocus
@@ -82,7 +82,7 @@ export function FormDesignerComponentRowChrome({
 
       <div
         className={cn(
-          "relative z-10 flex h-full min-h-0 w-full min-w-0 flex-1 flex-col",
+          "relative z-10 flex min-w-0 max-w-full shrink-0 flex-col",
           hasActiveFocus &&
             !containsFocus &&
             !isInsideFocusedColumn &&

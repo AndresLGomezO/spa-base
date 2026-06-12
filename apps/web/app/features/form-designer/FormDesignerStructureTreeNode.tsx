@@ -24,7 +24,8 @@ interface FormDesignerStructureTreeNodeProps {
   readonly onMoveUp?: () => void;
   readonly onMoveDown?: () => void;
   readonly onDelete?: () => void;
-  readonly rowFocusState?: "focused" | "dimmed" | "none";
+  readonly rowFocusState?: "focused" | "selected" | "dimmed" | "none";
+  readonly rowActionsEnabled?: boolean;
   readonly onRowHover?: () => void;
   readonly onRowLeave?: () => void;
   readonly onRowSelect?: () => void;
@@ -50,6 +51,7 @@ export function FormDesignerStructureTreeNode({
   onMoveDown,
   onDelete,
   rowFocusState = "none",
+  rowActionsEnabled = true,
   onRowHover,
   onRowLeave,
   onRowSelect,
@@ -65,8 +67,8 @@ export function FormDesignerStructureTreeNode({
       aria-labelledby={`${id}-label`}
       data-tree-node-id={id}
       className={cn(
-        "group/node flex w-max min-w-full items-center gap-1 rounded-md py-1.5 pr-2 transition-all duration-150",
-        rowFocusState === "focused" &&
+        "group/node flex w-full min-w-max items-center gap-1 rounded-md py-1.5 pr-2 transition-all duration-150",
+        (rowFocusState === "focused" || rowFocusState === "selected") &&
           "bg-primary/10 ring-primary ring-2 ring-inset",
         rowFocusState === "dimmed" && "opacity-30 saturate-0",
         rowFocusState === "none" && "hover:bg-muted/50",
@@ -75,7 +77,9 @@ export function FormDesignerStructureTreeNode({
       onMouseEnter={onRowHover}
       onMouseLeave={onRowLeave}
       onClick={
-        isRowInteractive && rowFocusState === "focused" && onRowSelect
+        isRowInteractive &&
+        (rowFocusState === "focused" || rowFocusState === "selected") &&
+        onRowSelect
           ? (event) => {
               event.stopPropagation();
               onRowSelect();
@@ -112,7 +116,11 @@ export function FormDesignerStructureTreeNode({
         {label}
       </span>
 
-      {showRowActions && onMoveUp && onMoveDown && onDelete ? (
+      {showRowActions &&
+      rowActionsEnabled &&
+      onMoveUp &&
+      onMoveDown &&
+      onDelete ? (
         <FormDesignerStructureTreeRowActions
           moveUpLabel={moveUpLabel}
           moveDownLabel={moveDownLabel}

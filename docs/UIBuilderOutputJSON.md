@@ -307,7 +307,7 @@ Does **not** use `primary` / `fallbacks` / `label` / `conditionalStyles`.
 | `form-field` | `formPlain`, `formWizardStep` | `fieldPath` required |
 | `form-section` | plain / wizard step | optional `title` |
 | `form-actions` | `formPlain` only | submit/cancel row |
-| `wizard-progress` | `formWizardShell` | left sidebar; `conditionalStyles` match `pending` \| `active` \| `completed` \| `invalid` |
+| `wizard-progress` | `formWizardShell` | `variant`: `"steps"` (default), `"bar"`, or `"stepper"`. Steps variant: `conditionalStyles` match `pending` \| `active` \| `completed` \| `invalid`. Bar variant: optional `stepLabel` (aggregate "Step x of N" label), `barTrackColor`, `barFillColor`. Stepper variant: horizontal circles + connectors; per-step labels from wizard step definitions styled via `stepLabel` (`position`, stylization, `fontSize`, hide); layout via optional `stepSpacing`, `circleSize`, `labelMaxWidth` (px); circle/label/connector colors via `conditionalStyles` |
 | `wizard-step-host` | `formWizardShell` | mounts active step layout at runtime |
 | `wizard-actions` | `formWizardShell` | footer: optional `nextLabel`, `backLabel`, `cancelLabel`, `submitCreateLabel`, `submitEditLabel` |
 

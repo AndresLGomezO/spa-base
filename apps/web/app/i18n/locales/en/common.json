@@ -126,6 +126,7 @@
       "wizardScopeContent": "Content",
       "wizardScopeAriaLabel": "Structure tree scope",
       "wizardStepLabel": "Step",
+      "collapsedStepSelectAriaLabel": "Select wizard step",
       "expandNode": "Expand {{label}}",
       "collapseNode": "Collapse {{label}}",
       "selectRow": "Edit component",
@@ -158,6 +159,30 @@
         "formSection": "Form section",
         "formActions": "Form actions",
         "wizardProgress": "Wizard progress",
+        "wizardProgressVariant": "Progress style",
+        "wizardProgressVariantSteps": "Step list",
+        "wizardProgressVariantBar": "Progress bar",
+        "wizardProgressVariantStepper": "Stepper",
+        "wizardProgressBarTrackColor": "Bar track color",
+        "wizardProgressBarFillColor": "Bar fill color",
+        "wizardStepLabelPosition": "Step label position",
+        "wizardStepLabelTop": "Top",
+        "wizardStepLabelBottom": "Bottom",
+        "wizardStepLabelLeft": "Left",
+        "wizardStepLabelRight": "Right",
+        "wizardStepLabelHidden": "Hidden",
+        "wizardStepLabelFontWeight": "Font weight",
+        "wizardStepLabelFontDefault": "Default",
+        "wizardStepLabelFontBold": "Bold",
+        "wizardStepLabelFontThin": "Thin",
+        "wizardStepLabelFontNormal": "Normal",
+        "wizardStepLabelItalic": "Italic",
+        "wizardStepLabelUnderline": "Underline",
+        "wizardStepLabelFontSize": "Text size (px)",
+        "wizardStepLabelAlignment": "Alignment",
+        "wizardStepperStepSpacing": "Step spacing (px)",
+        "wizardStepperCircleSize": "Circle size (px)",
+        "wizardStepperLabelMaxWidth": "Label max width (px)",
         "wizardStepHost": "Step host",
         "wizardActions": "Wizard actions"
       }
@@ -175,6 +200,9 @@
       "discard": "Discard changes",
       "keepEditing": "Keep editing"
     }
+  },
+  "forms": {
+    "stepIndicator": "Step {{step}} of {{total}}"
   },
   "designLayout": {
     "forbidden": "You do not have permission to configure entity layouts.",

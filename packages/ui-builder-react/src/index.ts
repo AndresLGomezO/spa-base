@@ -71,6 +71,16 @@ export {
   type LabelConfigEditorProps,
 } from "./components/LabelConfigEditor.js";
 export {
+  WizardStepLabelConfigEditor,
+  type WizardStepLabelConfigEditorLabels,
+  type WizardStepLabelConfigEditorProps,
+} from "./components/WizardStepLabelConfigEditor.js";
+export {
+  WizardStepperLayoutEditor,
+  type WizardStepperLayoutEditorLabels,
+  type WizardStepperLayoutEditorProps,
+} from "./components/WizardStepperLayoutEditor.js";
+export {
   LayoutJsonImportDialog,
   type LayoutJsonImportLabels,
   type LayoutJsonImportDialogProps,
