@@ -73,7 +73,7 @@ describe("EntityCatalogProvider", () => {
     });
 
     await waitFor(() => {
-      expect(result.current.items).toHaveLength(1);
+      expect(result.current.items).toHaveLength(MOCK_ENTITY_CATALOG.length);
       expect(result.current.items[0]?.name).toBe("widget");
     });
   });

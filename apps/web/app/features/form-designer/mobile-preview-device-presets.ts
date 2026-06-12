@@ -54,7 +54,7 @@ export interface MobilePreviewDevicePreset {
   readonly frame: MobilePreviewDeviceFrameConfig;
 }
 
-export const MOBILE_PREVIEW_FRAME_MAX_HEIGHT_PX = 640;
+const MOBILE_PREVIEW_FRAME_MAX_HEIGHT_PX = 640;
 
 const IPHONE_DYNAMIC_ISLAND_FRAME: MobilePreviewDeviceFrameConfig = {
   style: "iphone-dynamic-island",
@@ -272,7 +272,7 @@ export function resolveMobilePreviewChassisSize(
   };
 }
 
-export interface MobilePreviewDisplayMetrics {
+interface MobilePreviewDisplayMetrics {
   /** Exact CSS viewport used for responsive layout inside the frame. */
   readonly screenWidth: number;
   readonly screenHeight: number;

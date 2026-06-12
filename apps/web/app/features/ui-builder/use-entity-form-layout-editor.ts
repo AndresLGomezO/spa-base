@@ -297,6 +297,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
             return current;
           }
           const { xl: _removed, ...rest } = current;
+          void _removed;
           return rest;
         });
         return;
@@ -322,6 +323,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
           return current;
         }
         const { [breakpoint]: _removed, ...rest } = current;
+        void _removed;
         return rest;
       });
     },

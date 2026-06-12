@@ -187,7 +187,11 @@ function extractNavLabelKeys(files) {
   const keys = new Set();
   for (const file of files) {
     for (const match of file.content.matchAll(/labelKey:\s*"([^"]+)"/g)) {
-      keys.add(`${DEFAULT_NAMESPACE}:nav.${match[1]}`);
+      const labelKey = match[1];
+      if (labelKey.includes(".")) {
+        continue;
+      }
+      keys.add(`${DEFAULT_NAMESPACE}:nav.${labelKey}`);
     }
   }
   return [...keys];
@@ -394,6 +398,41 @@ function extractUiBuilderPresetKindKeys(corpus) {
   return Object.keys(kinds).map(
     (key) => `${DEFAULT_NAMESPACE}:designLayout.presets.kind.${key}`,
   );
+}
+
+/** formDesigner.previewDevices.* in source → keys under formDesigner.previewDevices */
+function extractFormDesignerPreviewDeviceKeys(corpus) {
+  const needsBrands = corpus.includes("formDesigner.previewDevices.brands.${");
+  const needsDevices = corpus.includes(
+    'labelKey: "formDesigner.previewDevices.',
+  );
+  if (!needsBrands && !needsDevices) return [];
+
+  const refFormDesigner = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).formDesigner;
+
+  const previewDevices = refFormDesigner?.previewDevices;
+  if (!previewDevices || typeof previewDevices !== "object") return [];
+
+  const keys = [];
+  for (const [key, value] of Object.entries(previewDevices)) {
+    if (key === "brands" && value && typeof value === "object") {
+      if (needsBrands) {
+        for (const brandKey of Object.keys(value)) {
+          keys.push(
+            `${DEFAULT_NAMESPACE}:formDesigner.previewDevices.brands.${brandKey}`,
+          );
+        }
+      }
+      continue;
+    }
+
+    if (needsDevices && typeof value === "string") {
+      keys.push(`${DEFAULT_NAMESPACE}:formDesigner.previewDevices.${key}`);
+    }
+  }
+  return keys;
 }
 
 /** metrics.dateGranularity.formats|options.${granularity} in source → keys under those objects */
@@ -671,6 +710,15 @@ mergeUsedKeys(
   usedKeys,
   extractUiBuilderPresetKindKeys(corpus),
   uiBuilderPresetManagerFile,
+);
+const formDesignerMobileDeviceSelectFile = path.join(
+  SRC_DIR,
+  "features/form-designer/FormDesignerMobileDeviceSelect.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractFormDesignerPreviewDeviceKeys(corpus),
+  formDesignerMobileDeviceSelectFile,
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

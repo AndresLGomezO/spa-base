@@ -24,7 +24,7 @@ interface TenantSessionSelectResult {
   readonly tenantAppearance?: TenantAppearance | null;
 }
 
-export interface MergedTenantSessionFields {
+interface MergedTenantSessionFields {
   readonly tenantId: string;
   readonly availableTenants: readonly string[];
   readonly tenantOptions: readonly TenantOption[];
