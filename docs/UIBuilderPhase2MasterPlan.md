@@ -30,7 +30,7 @@ The guiding principle: **one schema-driven layout model, multiple render context
 | Item list | `/settings/design-layout/list/:entityName` | **Live** — `EntityListLayoutDesignEditor`, save via `putEntityUiOverride` |
 | Main View | `/settings/design-layout/main/:entityName` | **Live** — `EntityMainPageLayoutDesignEditor`, saves `mainPage` |
 | Detailed View | `/settings/design-layout/detail/:entityName` | **Live** — `EntityRecordDetailLayoutDesignEditor`, saves `recordDetail` |
-| Forms | `/settings/design-layout/forms/:entityName` | **Live** — `EntityFormLayoutDesignEditor` |
+| Forms | `/settings/design-layout/forms/:entityName` | **Live** — Form Designer (`FormDesignerView`) |
 | Legacy redirect | `/settings/design-layout/page/:entityName` | Redirects to `main` |
 
 Permissions: `entityUiOverride.read` / `entityUiOverride.update` (+ per-entity `.read` for nav). Entity list header **Design layout** button deep-links to the list editor only.

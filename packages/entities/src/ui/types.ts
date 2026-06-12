@@ -127,11 +127,10 @@ export interface FormSection {
   readonly fields: readonly string[];
 }
 
-/** @deprecated Prefer `forms.*.layout` (`UiLayoutDocument`) on entity UI overrides. */
 export interface FormLayout {
-  readonly sections: readonly FormSection[];
-  /** Designed form layout (override); sections remain fallback metadata. */
   readonly layout?: UiLayoutDocument;
+  /** Legacy section-based shape; migrated to `layout` at read time. */
+  readonly sections?: readonly FormSection[];
 }
 
 export type FormModalSize = "sm" | "md" | "lg" | "xl" | "2xl";

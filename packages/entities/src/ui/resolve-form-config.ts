@@ -1,9 +1,10 @@
 import {
-  collectLayoutFieldPaths,
+  createDefaultFormLayout,
   findLayoutComponent,
   RESPONSIVE_BREAKPOINT_ORDER,
   type ResponsiveGridBreakpoint,
   type UiComponentKind,
+  type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 
 import type {
@@ -14,11 +15,11 @@ import type {
   WizardFormConfig,
 } from "./form-config.js";
 import type {
-  FormLayout,
   FormModalSize,
   FormModalSizeByBreakpoint,
   SerializableEntityDefinition,
 } from "./types.js";
+import { readLegacyFormSectionFields } from "./sync-form-layout.js";
 
 const FORM_MODAL_SIZES = new Set<FormModalSize>([
   "sm",
@@ -258,9 +259,39 @@ export function resolveFormModalActionComponentKind(
 
 function sharedPlainLayout(
   definition: SerializableEntityDefinition,
-): import("@repo/ui-builder-core").UiLayoutDocument | undefined {
+): UiLayoutDocument | undefined {
   const forms = definition.ui.forms;
   return forms.create.layout ?? forms.edit.layout ?? undefined;
+}
+
+function getEditableFieldNames(
+  definition: SerializableEntityDefinition,
+): readonly string[] {
+  return Object.keys(definition.fields).filter((fieldName) => {
+    if (definition.fields[fieldName]?.type === "document") {
+      return false;
+    }
+    return true;
+  });
+}
+
+function upgradeLegacyFormLayout(
+  definition: SerializableEntityDefinition,
+): UiLayoutDocument {
+  const createForm = definition.ui.forms.create;
+  if (createForm.layout) {
+    return createForm.layout;
+  }
+
+  const sectionFields = readLegacyFormSectionFields(createForm);
+  if (sectionFields.length > 0) {
+    return createDefaultFormLayout(sectionFields);
+  }
+
+  const editableFields = getEditableFieldNames(definition);
+  return createDefaultFormLayout(
+    editableFields.length > 0 ? editableFields : ["id"],
+  );
 }
 
 export function resolveFormModalActionLayout(
@@ -306,16 +337,13 @@ export function resolveFormPresentation(
 
 export function resolvePlainFormLayout(
   definition: SerializableEntityDefinition,
-): FormLayout {
+): UiLayoutDocument {
   const layout = sharedPlainLayout(definition);
   if (layout) {
-    const fields = collectLayoutFieldPaths(layout);
-    return {
-      sections: [{ fields: fields.length > 0 ? fields : ["id"] }],
-      layout,
-    };
+    return layout;
   }
-  return definition.ui.forms.create;
+
+  return upgradeLegacyFormLayout(definition);
 }
 
 export function resolveWizardForm(
@@ -327,14 +355,14 @@ export function resolveWizardForm(
 /** @deprecated Use resolvePlainFormLayout */
 export function resolveCreateFormFromLayout(
   definition: SerializableEntityDefinition,
-): FormLayout {
+): UiLayoutDocument {
   return resolvePlainFormLayout(definition);
 }
 
 /** @deprecated Use resolvePlainFormLayout */
 export function resolveEditFormFromUi(
   definition: SerializableEntityDefinition,
-): FormLayout {
+): UiLayoutDocument {
   return resolvePlainFormLayout(definition);
 }
 

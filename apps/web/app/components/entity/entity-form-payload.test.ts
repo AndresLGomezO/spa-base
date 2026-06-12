@@ -35,7 +35,7 @@ const definition = {
   },
   ui: {
     views: [],
-    forms: { create: { sections: [] }, edit: { sections: [] } },
+    forms: { create: { layout: undefined }, edit: { layout: undefined } },
   },
 } satisfies SerializableEntityDefinition;
 
@@ -50,7 +50,7 @@ const contractLikeDefinition = {
   },
   ui: {
     views: [],
-    forms: { create: { sections: [] }, edit: { sections: [] } },
+    forms: { create: { layout: undefined }, edit: { layout: undefined } },
   },
 } satisfies SerializableEntityDefinition;
 
@@ -58,17 +58,7 @@ describe("entity-form-payload", () => {
   it("builds wizard submit values from layout field roots", () => {
     expect(
       buildFormSubmitValues(
-        [
-          {
-            fields: [
-              "name",
-              "description",
-              "tags",
-              "description",
-              "providerId",
-            ],
-          },
-        ],
+        ["name", "description", "tags", "description", "providerId"],
         {
           name: "Loan",
           description: "Longer text",
@@ -87,7 +77,7 @@ describe("entity-form-payload", () => {
 
   it("includes optional wizard fields in the create payload", () => {
     const submitValues = buildFormSubmitValues(
-      [{ fields: ["name", "description", "tags"] }],
+      ["name", "description", "tags"],
       {
         name: "Loan",
         description: "Product notes",
@@ -133,7 +123,7 @@ describe("entity-form-payload", () => {
 
   it("excludes display cache from submit payload", () => {
     expect(
-      buildFormSubmitValues([{ fields: ["name", "bankId", "_populated"] }], {
+      buildFormSubmitValues(["name", "bankId", "_populated"], {
         name: "Loan",
         bankId: "bank_1",
         _populated: {

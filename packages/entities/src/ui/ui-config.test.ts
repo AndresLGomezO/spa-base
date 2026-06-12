@@ -1,10 +1,12 @@
-import { describe, expect, it } from "vitest";
-
 import {
+  collectLayoutFieldPaths,
+  createDefaultFormLayout,
   createDefaultModalFooterLayout,
   createDefaultWizardShellLayout,
   ensureWizardShellLayout,
 } from "@repo/ui-builder-core";
+import { describe, expect, it } from "vitest";
+
 import { defineEntity } from "../defineEntity.js";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
 import { getDefaultEntityUI } from "./default-ui-config.js";
@@ -31,10 +33,10 @@ const Widget = defineEntity({
     ],
     forms: {
       create: {
-        sections: [{ fields: ["name", "email", "isActive"] }],
+        layout: createDefaultFormLayout(["name", "email", "isActive"]),
       },
       edit: {
-        sections: [{ fields: ["name", "email", "isActive"] }],
+        layout: createDefaultFormLayout(["name", "email", "isActive"]),
       },
     },
     fields: {
@@ -343,6 +345,9 @@ describe("getDefaultEntityUI", () => {
     const ui = getDefaultEntityUI(entity as unknown as AnyDefinedEntity);
     expect(ui.views[0]?.type).toBe("table");
     expect(ui.views[0]?.fields).toEqual(["title", "body"]);
-    expect(ui.forms.create.sections[0]?.fields).toEqual(["title", "body"]);
+    expect(collectLayoutFieldPaths(ui.forms.create.layout!)).toEqual([
+      "title",
+      "body",
+    ]);
   });
 });

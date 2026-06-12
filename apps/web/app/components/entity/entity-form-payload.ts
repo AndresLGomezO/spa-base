@@ -1,4 +1,3 @@
-import type { FormLayout } from "@repo/entities";
 import {
   isDocumentStoredField,
   isJoinCollectionRelationField,
@@ -8,20 +7,16 @@ import {
 import { fieldPathRoot } from "./validate-wizard-step-fields";
 import { isFormDisplayCacheKey } from "./form-relation-display-cache";
 
-function uniqueFieldRootsFromSections(
-  sections: FormLayout["sections"],
-): readonly string[] {
+function uniqueFieldRoots(fieldPaths: readonly string[]): readonly string[] {
   const roots: string[] = [];
   const seen = new Set<string>();
-  for (const section of sections) {
-    for (const fieldPath of section.fields) {
-      const root = fieldPathRoot(fieldPath);
-      if (seen.has(root)) {
-        continue;
-      }
-      seen.add(root);
-      roots.push(root);
+  for (const fieldPath of fieldPaths) {
+    const root = fieldPathRoot(fieldPath);
+    if (seen.has(root)) {
+      continue;
     }
+    seen.add(root);
+    roots.push(root);
   }
   return roots;
 }
@@ -37,11 +32,11 @@ function isEmptySubmitValue(value: unknown): boolean {
 }
 
 export function buildFormSubmitValues(
-  sections: FormLayout["sections"],
+  fieldPaths: readonly string[],
   values: Record<string, unknown>,
 ): Record<string, unknown> {
   const payload: Record<string, unknown> = {};
-  for (const root of uniqueFieldRootsFromSections(sections)) {
+  for (const root of uniqueFieldRoots(fieldPaths)) {
     if (isFormDisplayCacheKey(root)) {
       continue;
     }

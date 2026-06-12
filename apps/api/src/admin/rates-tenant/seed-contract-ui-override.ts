@@ -119,8 +119,7 @@ function mergeUiLikeApiRoute(
     parsedBody.views as EntityUIConfig["views"],
   );
   const overrideForms = parsedBody.forms;
-  const sharedPlainLayout =
-    overrideForms?.layout ?? overrideForms?.create ?? overrideForms?.edit;
+  const sharedPlainLayout = overrideForms?.layout;
   const presentation =
     overrideForms?.presentation ??
     (overrideForms?.wizard ? ("wizard" as const) : undefined) ??
@@ -141,17 +140,13 @@ function mergeUiLikeApiRoute(
         ...serialized.ui.forms.create,
         ...(sharedPlainLayout && presentation !== "wizard"
           ? { layout: sharedPlainLayout as UiLayoutDocument }
-          : parsedBody.forms?.create
-            ? { layout: parsedBody.forms.create as UiLayoutDocument }
-            : {}),
+          : {}),
       },
       edit: {
         ...serialized.ui.forms.edit,
         ...(sharedPlainLayout && presentation !== "wizard"
           ? { layout: sharedPlainLayout as UiLayoutDocument }
-          : parsedBody.forms?.edit
-            ? { layout: parsedBody.forms.edit as UiLayoutDocument }
-            : {}),
+          : {}),
       },
     },
     ...(parsedBody.listViewType

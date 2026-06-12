@@ -1,4 +1,14 @@
 import {
+  buildInitialValuesFromLayout,
+  resolveFormPresentation,
+  resolvePlainFormLayout,
+  resolveWizardForm,
+} from "@repo/entities";
+import { Form, toast } from "@repo/ui";
+import type { UiLayoutDocument } from "@repo/ui-builder-core";
+import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
+import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import {
   useCallback,
   useEffect,
   useMemo,
@@ -7,21 +17,6 @@ import {
   type FormEvent,
   type ReactNode,
 } from "react";
-import type { UiLayoutDocument } from "@repo/ui-builder-core";
-import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import {
-  resolveFormPresentation,
-  resolvePlainFormLayout,
-  resolveWizardForm,
-} from "@repo/entities";
-import {
-  buildInitialValues,
-  getFormSections,
-  isFieldEditable,
-  isFieldVisible,
-} from "@repo/ui-builder";
-import { Button, Form, Heading, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
@@ -29,27 +24,23 @@ import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
-import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
+import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
-import {
-  getFieldAccessLevel,
-  useFieldAccess,
-} from "../../hooks/useFieldAccess";
+import { useFieldAccess } from "../../hooks/useFieldAccess";
 import { useEntity } from "../../hooks/useEntity";
 import {
   getEntityRelationTargets,
   syncEntityRelationTargets,
 } from "../../lib/api-client";
-import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
-import { ENTITY_FORM_ID } from "./entity-form-constants";
-import { EntityField } from "./EntityField";
-import { EntityWizardForm } from "./EntityWizardForm";
+import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import {
   buildFormSubmitValues,
   getJoinRelationFieldNames,
   splitEntityFormPayload,
 } from "./entity-form-payload";
+import { ENTITY_FORM_ID } from "./entity-form-constants";
 import { applyFormFieldChange } from "./form-relation-display-cache";
+import { EntityWizardForm } from "./EntityWizardForm";
 import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
 
 export { ENTITY_FORM_ID } from "./entity-form-constants";
@@ -92,16 +83,14 @@ export function EntityForm({
   const { getById, fieldErrors, error, isSubmitting, create, update } =
     entityState;
   const presentation = resolveFormPresentation(definition);
-  const layout = resolvePlainFormLayout(definition);
+  const plainLayout = resolvePlainFormLayout(definition);
   const wizardConfig = resolveWizardForm(definition);
-  const sections = getFormSections(layout, definition.ui.fields);
-  const designedLayout = presentation === "wizard" ? undefined : layout.layout;
   const joinRelationFieldNames = useMemo(
     () => getJoinRelationFieldNames(definition),
     [definition],
   );
   const [values, setValues] = useState<Record<string, unknown>>(() => {
-    const initial = buildInitialValues(definition, mode);
+    const initial = buildInitialValuesFromLayout(definition, mode);
     for (const fieldName of getJoinRelationFieldNames(definition)) {
       initial[fieldName] = [];
     }
@@ -140,8 +129,8 @@ export function EntityForm({
       if (cancelled) return;
 
       const nextValues = record
-        ? buildInitialValues(definition, "edit", record)
-        : buildInitialValues(definition, "edit");
+        ? buildInitialValuesFromLayout(definition, "edit", record)
+        : buildInitialValuesFromLayout(definition, "edit");
 
       if (record) {
         const relationEntries = await Promise.all(
@@ -183,20 +172,14 @@ export function EntityForm({
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
-    const cleanSections =
+    const submitFieldPaths =
       presentation === "wizard" && wizardConfig
-        ? [
-            {
-              fields: wizardConfig.steps.flatMap((step) =>
-                collectLayoutFieldPaths(step.layout),
-              ),
-            },
-          ]
-        : designedLayout
-          ? [{ fields: collectLayoutFieldPaths(designedLayout) }]
-          : sections;
+        ? wizardConfig.steps.flatMap((step) =>
+            collectLayoutFieldPaths(step.layout),
+          )
+        : collectLayoutFieldPaths(plainLayout);
     const cleanedValues = buildFormSubmitValues(
-      cleanSections,
+      submitFieldPaths,
       valuesRef.current,
     );
     const { documentPayload, joinRelations } = splitEntityFormPayload(
@@ -354,13 +337,10 @@ export function EntityForm({
   );
 
   useEntityFormModalFooter({
-    enabled:
-      modalActionPlacement === "footer" &&
-      presentation !== "wizard" &&
-      designedLayout != null,
+    enabled: modalActionPlacement === "footer" && presentation !== "wizard",
     onFooterChange,
     modalFooterLayout,
-    fallbackLayout: designedLayout,
+    fallbackLayout: plainLayout,
     footerContext: footerFormContext,
   });
 
@@ -396,57 +376,12 @@ export function EntityForm({
     );
   }
 
-  if (designedLayout) {
-    return (
-      <Form id={ENTITY_FORM_ID} onSubmit={(event) => void handleSubmit(event)}>
-        <RecursiveLayoutRenderer
-          layout={designedLayout}
-          context={designedFormContext}
-        />
-      </Form>
-    );
-  }
-
   return (
     <Form id={ENTITY_FORM_ID} onSubmit={(event) => void handleSubmit(event)}>
-      {sections.map((section, index) => (
-        <div
-          key={`${section.title ?? "section"}-${index}`}
-          className="flex flex-col gap-4"
-        >
-          {section.title ? <Heading level={2}>{section.title}</Heading> : null}
-          {section.fields.map((fieldName) => {
-            const fieldUI = definition.ui.fields?.[fieldName];
-            const access = getFieldAccessLevel(fieldAccess, fieldName);
-            if (!isFieldVisible(fieldUI, entityPermissions.canRead, access)) {
-              return null;
-            }
-
-            return (
-              <EntityField
-                key={fieldName}
-                entityName={entityName}
-                fieldName={fieldName}
-                value={values[fieldName]}
-                error={fieldErrors[fieldName]}
-                readOnly={!isFieldEditable(fieldUI, canWrite, access)}
-                recordId={recordId}
-                onChange={applyFieldChange}
-              />
-            );
-          })}
-        </div>
-      ))}
-      {!hideActions ? (
-        <div className="flex items-center gap-3">
-          <Button type="submit" loading={isSubmitting}>
-            {saveLabel}
-          </Button>
-          <Button type="button" variant="outline" onClick={onCancel}>
-            {t("entity.cancel")}
-          </Button>
-        </div>
-      ) : null}
+      <RecursiveLayoutRenderer
+        layout={plainLayout}
+        context={designedFormContext}
+      />
     </Form>
   );
 }

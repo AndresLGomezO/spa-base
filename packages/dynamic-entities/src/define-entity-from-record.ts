@@ -3,6 +3,7 @@ import {
   extendEntitySchemaWithSearchMirrors,
   getAllEntities,
   getEntity,
+  createDefaultFormLayout,
   type DefinedEntity,
   type EntityUIConfig,
   type FieldComponentType,
@@ -158,10 +159,10 @@ export function buildDefaultUiForNewDefinition(input: {
     ],
     forms: {
       create: {
-        sections: [{ title: input.label, fields: fieldNames }],
+        layout: createDefaultFormLayout(fieldNames),
       },
       edit: {
-        sections: [{ title: input.label, fields: fieldNames }],
+        layout: createDefaultFormLayout(fieldNames),
       },
     },
     fields: Object.fromEntries(

@@ -1,11 +1,13 @@
-import { createDefaultExpandableTableView, defineEntity } from "@repo/entities";
+import {
+  createDefaultExpandableTableView,
+  createDefaultFormLayout,
+  defineEntity,
+} from "@repo/entities";
 import { describe, expect, it } from "vitest";
 
 import {
-  buildInitialValues,
   buildListQueryConfig,
   filterNavEntities,
-  getFormSections,
   getExpandableTableColumns,
   getExpandableTableRowExpandLayout,
   getExpandableTableShowActions,
@@ -14,7 +16,6 @@ import {
   getTableViewShowActions,
   registerComponent,
   resolveComponentId,
-  resolveCreateForm,
   resolveEntityActionPermissions,
 } from "./index.js";
 
@@ -27,8 +28,8 @@ const Widget = defineEntity({
   ui: {
     views: [{ type: "table", name: "default", fields: ["name", "isActive"] }],
     forms: {
-      create: { sections: [{ fields: ["name", "isActive"] }] },
-      edit: { sections: [{ fields: ["name", "isActive"] }] },
+      create: { layout: createDefaultFormLayout(["name", "isActive"]) },
+      edit: { layout: createDefaultFormLayout(["name", "isActive"]) },
     },
     fields: {
       isActive: { order: 0 },
@@ -99,40 +100,6 @@ describe("@repo/ui-builder", () => {
     expect(getTableViewShowActions(hidden)).toBe(false);
   });
 
-  it("sorts form sections by field order metadata", () => {
-    expect(
-      getFormSections(definition.ui.forms.create, definition.ui.fields),
-    ).toEqual([{ fields: ["isActive", "name"] }]);
-  });
-
-  it("builds initial form values from metadata", () => {
-    expect(buildInitialValues(definition, "create")).toEqual({
-      name: "",
-      isActive: true,
-    });
-  });
-
-  it("initializes array fields as empty arrays", () => {
-    const withTags = {
-      ...definition,
-      fields: {
-        ...definition.fields,
-        tags: {
-          type: "string" as const,
-          required: false,
-          optional: true,
-          isArray: true,
-        },
-      },
-    };
-
-    expect(buildInitialValues(withTags, "create")).toEqual({
-      name: "",
-      isActive: true,
-      tags: [],
-    });
-  });
-
   it("builds query config for filters and sort", () => {
     const config = buildListQueryConfig({
       filters: [{ field: "name", operator: "==", value: "Acme" }],
@@ -162,29 +129,6 @@ describe("@repo/ui-builder", () => {
       canUpdate: false,
       canDelete: false,
     });
-  });
-
-  it("includes entity fields missing from the saved create form layout", () => {
-    const layout = resolveCreateForm({
-      ...definition,
-      fields: {
-        ...definition.fields,
-        statement: { type: "document", required: false, optional: true },
-      },
-      ui: {
-        ...definition.ui,
-        forms: {
-          create: { sections: [{ fields: ["name", "isActive"] }] },
-          edit: { sections: [{ fields: ["name", "isActive"] }] },
-        },
-      },
-    });
-
-    expect(layout.sections[0]?.fields).toEqual([
-      "name",
-      "isActive",
-      "statement",
-    ]);
   });
 
   it("supports custom component registration", () => {

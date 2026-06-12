@@ -1,3 +1,4 @@
+import { collectLayoutFieldPaths } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
 import { buildEntityDefinitionUiForSave } from "./build-entity-definition-ui-patch";
@@ -82,7 +83,9 @@ describe("buildEntityDefinitionUiForSave", () => {
       navIcon: "Camera",
     });
 
-    expect(ui?.forms?.create.sections[0]?.fields).toEqual([
+    const createLayout = ui?.forms?.create.layout;
+    expect(createLayout).toBeDefined();
+    expect(collectLayoutFieldPaths(createLayout!)).toEqual([
       "productId",
       "date",
       "statement",

@@ -20,5 +20,11 @@ export function createDefaultFormLayout(
     );
   }
 
+  layout = addComponentRowAt(
+    layout,
+    locator,
+    createDefaultComponent("form-actions"),
+  );
+
   return layout;
 }

@@ -34,8 +34,4 @@ export interface EntityUiOverrideForms {
   readonly modalSizeByBreakpoint?: FormModalSizeByBreakpoint;
   readonly modalChrome?: FormModalChrome;
   readonly modalFooterLayout?: UiLayoutDocument;
-  /** @deprecated Prefer unified `layout`. */
-  readonly create?: UiLayoutDocument;
-  /** @deprecated Prefer unified `layout`. */
-  readonly edit?: UiLayoutDocument;
 }

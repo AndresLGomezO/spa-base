@@ -33,8 +33,8 @@ const baseDefinition: SerializableEntityDefinition = {
   ui: {
     views: [{ type: "table", name: "default", fields: ["name"] }],
     forms: {
-      create: { sections: [{ fields: ["name"] }] },
-      edit: { sections: [{ fields: ["name"] }] },
+      create: { layout: createDefaultFormLayout(["name"]) },
+      edit: { layout: createDefaultFormLayout(["name"]) },
     },
   },
 };

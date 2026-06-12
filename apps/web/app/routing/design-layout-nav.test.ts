@@ -9,9 +9,9 @@ describe("designLayoutEntityPath", () => {
     );
   });
 
-  it("builds new forms layout path", () => {
-    expect(designLayoutEntityPath("newForms", "account")).toBe(
-      "/settings/design-layout/new-forms/account",
+  it("builds forms layout path", () => {
+    expect(designLayoutEntityPath("forms", "account")).toBe(
+      "/settings/design-layout/forms/account",
     );
   });
 });

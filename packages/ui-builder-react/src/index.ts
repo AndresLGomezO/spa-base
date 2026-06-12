@@ -8,13 +8,10 @@ export {
 export { entityFormFieldAdapter } from "./adapters/entity-form-field-adapter.js";
 
 export {
-  UiLayoutBuilder,
   UiLayoutStructurePanel,
-  type UiLayoutBuilderProps,
-  type UiLayoutBuilderLabels,
   type UiLayoutStructurePanelProps,
   type UiLayoutStructurePanelLabels,
-} from "./components/UiLayoutBuilder.js";
+} from "./components/UiLayoutStructurePanel.js";
 export {
   LayoutPreview,
   type LayoutPreviewProps,

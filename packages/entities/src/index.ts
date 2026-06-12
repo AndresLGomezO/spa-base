@@ -247,6 +247,11 @@ export {
   resolveWizardForm,
   type ResolvedFormModalChrome,
 } from "./ui/resolve-form-config.js";
+export { buildInitialValuesFromLayout } from "./ui/build-form-initial-values.js";
+export {
+  readLegacyFormSectionFields,
+  syncFormLayoutWithFieldNames,
+} from "./ui/sync-form-layout.js";
 export type {
   FormPresentation,
   FormModalChrome,
@@ -283,7 +288,6 @@ export type {
   FormLayout,
   FormModalSize,
   FormModalSizeByBreakpoint,
-  FormSection,
   FieldAccessLevel,
   SerializableEntityDefinition,
   SerializableFieldMeta,

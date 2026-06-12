@@ -14,7 +14,7 @@ Visual layout builder packages and documentation index.
 |---------|------|
 | `@repo/ui-builder-core` | Types, Zod schema, resolvers, validation, builder mutations |
 | `@repo/ui-builder-renderer` | Production + preview render engine (`RecursiveLayoutRenderer`) |
-| `@repo/ui-builder-react` | Builder UI (`UiLayoutBuilder`) |
+| `@repo/ui-builder-react` | Builder UI (`UiLayoutStructurePanel`, column/row editors) |
 | `@repo/ui-builder` | Catalog/table/form/query engine (unchanged; not the visual builder) |
 
 ## App integration
@@ -28,7 +28,7 @@ Visual layout builder packages and documentation index.
   - **Item list** — unified **list item** layout + table/card/compact presentation (`EntityListLayoutDesignEditor`)
   - **Main View** — main page layout builder (`EntityMainPageLayoutDesignEditor`)
   - **Detailed View** — record detail layout builder (`EntityRecordDetailLayoutDesignEditor`)
-  - **Forms** — unified plain or wizard form designer (`EntityFormLayoutDesignEditor`): shared layout for create/edit, wizard shell + steps, preview with step/status simulator
+  - **Forms** — Form Designer (`FormDesignerView`): shared layout for create/edit, wizard shell + steps, tabbed settings/layout/components UX with preview
 
 ## Persisted shape
 

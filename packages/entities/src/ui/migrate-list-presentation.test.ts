@@ -1,4 +1,7 @@
-import { createDefaultUiLayout } from "@repo/ui-builder-core";
+import {
+  createDefaultFormLayout,
+  createDefaultUiLayout,
+} from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
 import { migrateListPresentation } from "./migrate-list-presentation.js";
@@ -11,8 +14,8 @@ function baseUi(overrides: Partial<EntityUIConfig> = {}): EntityUIConfig {
       { type: "card", name: "card", fields: ["name", "balance"] },
     ],
     forms: {
-      create: { sections: [{ fields: ["name"] }] },
-      edit: { sections: [{ fields: ["name"] }] },
+      create: { layout: createDefaultFormLayout(["name"]) },
+      edit: { layout: createDefaultFormLayout(["name"]) },
     },
     ...overrides,
   };

@@ -1,5 +1,4 @@
 import {
-  createDefaultFormLayout,
   resolveFormModalFooterLayout,
   resolvePlainFormLayout,
   resolveWizardForm,
@@ -125,9 +124,7 @@ export function readComponentsSnapshotFromDefinition(
 ): FormDesignerComponentsSnapshot {
   const fieldPaths = defaultPlainLayoutFieldPaths(definition);
   const footerLayout = resolveFormModalFooterLayout(definition);
-  const plainLayout =
-    resolvePlainFormLayout(definition).layout ??
-    createDefaultFormLayout(fieldPaths);
+  const plainLayout = resolvePlainFormLayout(definition);
   const wizard =
     resolveWizardForm(definition) ?? createDefaultWizardFormConfig(fieldPaths);
 

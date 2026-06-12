@@ -2,14 +2,10 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createDefaultModalFooterLayout,
   createDefaultWizardFormConfig,
-  createDefaultWizardStepLayout,
-  createDefaultWizardSummaryStepLayout,
-  createLayoutId,
   ensureWizardShellLayout,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import {
-  createDefaultFormLayout,
   normalizeEntityViews,
   resolveFormModalChrome,
   resolveFormModalFooterLayout,
@@ -83,10 +79,8 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   const [modalFooterLayout, setModalFooterLayout] = useState<
     UiLayoutDocument | undefined
   >(() => resolveFormModalFooterLayout(definition));
-  const [plainLayout, setPlainLayout] = useState<UiLayoutDocument>(
-    () =>
-      resolvePlainFormLayout(definition).layout ??
-      createDefaultFormLayout(fieldPaths),
+  const [plainLayout, setPlainLayout] = useState<UiLayoutDocument>(() =>
+    resolvePlainFormLayout(definition),
   );
   const [wizard, setWizard] = useState<WizardFormConfig>(() => {
     const initial =
@@ -100,7 +94,6 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
       }),
     };
   });
-  const [selectedStepIndex, setSelectedStepIndex] = useState(0);
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
@@ -112,12 +105,8 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     );
     setModalChrome(resolveFormModalChrome(definition));
     setModalFooterLayout(resolveFormModalFooterLayout(definition));
-    const resolvedPlain = resolvePlainFormLayout(definition).layout;
-    if (resolvedPlain) {
-      setPlainLayout(resolvedPlain);
-    } else {
-      setPlainLayout(createDefaultFormLayout(fieldPaths));
-    }
+    const resolvedPlain = resolvePlainFormLayout(definition);
+    setPlainLayout(resolvedPlain);
     const resolvedWizard =
       resolveWizardForm(definition) ??
       createDefaultWizardFormConfig(fieldPaths);
@@ -131,8 +120,6 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     setLayoutEditorKey((current) => current + 1);
   }, [definition, fieldPaths]);
 
-  const selectedStep = wizard.steps[selectedStepIndex];
-
   const updateStep = useCallback(
     (index: number, patch: Partial<WizardStepConfig>) => {
       setWizard((current) => ({
@@ -144,76 +131,6 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     },
     [],
   );
-
-  const addStep = useCallback(() => {
-    const nextIndex = wizard.steps.length + 1;
-    setWizard((current) => ({
-      ...current,
-      steps: [
-        ...current.steps,
-        {
-          id: createLayoutId("step"),
-          label: `Step ${nextIndex}`,
-          layout: createDefaultWizardStepLayout(fieldPaths),
-        },
-      ],
-    }));
-    setSelectedStepIndex(wizard.steps.length);
-  }, [fieldPaths, wizard.steps.length]);
-
-  const addSummaryStep = useCallback(() => {
-    setWizard((current) => ({
-      ...current,
-      steps: [
-        ...current.steps,
-        {
-          id: createLayoutId("step"),
-          label: "Review",
-          layout: createDefaultWizardSummaryStepLayout(),
-        },
-      ],
-    }));
-    setSelectedStepIndex(wizard.steps.length);
-  }, [wizard.steps.length]);
-
-  const removeStep = useCallback(
-    (index: number) => {
-      if (wizard.steps.length <= 1) {
-        return;
-      }
-      setWizard((current) => ({
-        ...current,
-        steps: current.steps.filter((_, stepIndex) => stepIndex !== index),
-      }));
-      setSelectedStepIndex((current) =>
-        Math.min(current, Math.max(0, wizard.steps.length - 2)),
-      );
-    },
-    [wizard.steps.length],
-  );
-
-  const moveStep = useCallback((index: number, direction: -1 | 1) => {
-    setWizard((current) => {
-      const target = index + direction;
-      if (target < 0 || target >= current.steps.length) {
-        return current;
-      }
-      const steps = [...current.steps];
-      const [item] = steps.splice(index, 1);
-      if (!item) {
-        return current;
-      }
-      steps.splice(target, 0, item);
-      return { ...current, steps };
-    });
-    setSelectedStepIndex((current) => {
-      const target = current + direction;
-      if (current === index) {
-        return target;
-      }
-      return current;
-    });
-  }, []);
 
   const setShowModalHeader = useCallback((showHeader: boolean) => {
     setModalChrome((current) => ({ ...current, showHeader }));
@@ -470,7 +387,6 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
             actionsInModalFooter: formsData.modalFooterLayout != null,
           }),
         });
-        setSelectedStepIndex(0);
       }
       setLayoutEditorKey((current) => current + 1);
     },
@@ -511,14 +427,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
           actionsInModalFooter: modalFooterLayout != null,
         }),
       })),
-    selectedStepIndex,
-    setSelectedStepIndex,
-    selectedStep,
     updateStep,
-    addStep,
-    addSummaryStep,
-    removeStep,
-    moveStep,
     isSaving,
     save,
     layoutEditorKey,

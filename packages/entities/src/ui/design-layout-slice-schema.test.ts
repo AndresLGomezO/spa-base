@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultUiLayout } from "@repo/ui-builder-core";
+import {
+  createDefaultFormLayout,
+  createDefaultUiLayout,
+} from "@repo/ui-builder-core";
 
 import { defineEntity } from "../defineEntity.js";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
@@ -31,10 +34,10 @@ const Widget = defineEntity({
     ],
     forms: {
       create: {
-        sections: [{ fields: ["name", "email", "isActive"] }],
+        layout: createDefaultFormLayout(["name", "email", "isActive"]),
       },
       edit: {
-        sections: [{ fields: ["name", "email", "isActive"] }],
+        layout: createDefaultFormLayout(["name", "email", "isActive"]),
       },
     },
   },
@@ -114,8 +117,8 @@ describe("entityUiConfigToPutOverrideInput", () => {
       mainPageLayout: layout,
       recordDetailLayout: layout,
       forms: {
-        create: { sections: [{ fields: ["name"] }], layout },
-        edit: { sections: [{ fields: ["name"] }], layout },
+        create: { layout },
+        edit: { layout },
         presentation: "plain" as const,
         modalSize: "lg" as const,
       },

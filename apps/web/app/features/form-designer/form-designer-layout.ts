@@ -1,5 +1,4 @@
 import {
-  createDefaultFormLayout,
   resolveFormPresentation,
   resolvePlainFormLayout,
   resolveWizardForm,
@@ -51,15 +50,6 @@ export function readLayoutSnapshot(
   };
 }
 
-function defaultPlainLayoutFieldPaths(
-  definition: SerializableEntityDefinition,
-): readonly string[] {
-  const fieldPaths = Object.keys(definition.fields).filter(
-    (field) => definition.fields[field]?.type !== "document",
-  );
-  return fieldPaths.length > 0 ? fieldPaths : ["name"];
-}
-
 export function readLayoutSnapshotFromDefinition(
   definition: SerializableEntityDefinition,
   presentation: FormPresentation = resolveFormPresentation(definition),
@@ -73,9 +63,7 @@ export function readLayoutSnapshotFromDefinition(
     };
   }
 
-  const plain =
-    resolvePlainFormLayout(definition).layout ??
-    createDefaultFormLayout(defaultPlainLayoutFieldPaths(definition));
+  const plain = resolvePlainFormLayout(definition);
 
   return {
     layout: structuredClone(plain),

@@ -8,7 +8,7 @@ import type {
   WizardStepStatusKind,
 } from "@repo/ui-builder-core";
 import { Form } from "@repo/ui";
-import { buildInitialValues } from "@repo/ui-builder";
+import { buildInitialValuesFromLayout } from "@repo/entities";
 import {
   resolveEffectiveFormModalContentPadding,
   type FormModalPreviewBreakpoint,
@@ -36,7 +36,7 @@ export function useFormDesignerPreview(
   const entityName = editor.entityName;
 
   const [values, setValues] = useState(() =>
-    buildInitialValues(editor.definition, "create"),
+    buildInitialValuesFromLayout(editor.definition, "create"),
   );
   const [previewStepIndex, setPreviewStepIndex] = useState(0);
   const [previewStepStatus] = useState<WizardStepStatusKind>("active");

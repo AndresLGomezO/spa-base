@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { createDefaultUiLayout } from "@repo/ui-builder-core";
+import {
+  createDefaultFormLayout,
+  createDefaultUiLayout,
+} from "@repo/ui-builder-core";
 
 import { mergeEntityUiOverrides } from "./merge-entity-ui-overrides.js";
 import { normalizeListItemLayout } from "./normalize-list-item-layout.js";
@@ -15,8 +18,8 @@ const baseDefinition: SerializableEntityDefinition = {
   ui: {
     views: [{ type: "table", name: "default", fields: ["name"] }],
     forms: {
-      create: { sections: [{ fields: ["name"] }] },
-      edit: { sections: [{ fields: ["name"] }] },
+      create: { layout: createDefaultFormLayout(["name"]) },
+      edit: { layout: createDefaultFormLayout(["name"]) },
     },
   },
 };
@@ -72,7 +75,7 @@ describe("mergeEntityUiOverrides", () => {
       listItem,
       mainPage,
       recordDetail,
-      forms: { create: createLayout },
+      forms: { layout: createLayout },
     });
 
     expect(merged.ui.listItem).toEqual(listItem);

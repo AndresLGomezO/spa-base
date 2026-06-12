@@ -1,3 +1,4 @@
+import { createEmptyLayout } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
 import type { SerializableEntityDefinition } from "../ui/types.js";
@@ -17,7 +18,10 @@ function buildDefinition(
     fields,
     ui: {
       views: [],
-      forms: { create: { sections: [] }, edit: { sections: [] } },
+      forms: {
+        create: { layout: createEmptyLayout(1) },
+        edit: { layout: createEmptyLayout(1) },
+      },
     },
   };
 }

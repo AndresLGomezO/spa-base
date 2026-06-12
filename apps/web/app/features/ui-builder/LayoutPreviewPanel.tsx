@@ -100,7 +100,7 @@ interface LayoutPreviewBreakpointSelectProps {
   readonly className?: string;
 }
 
-export function LayoutPreviewBreakpointSelect({
+function LayoutPreviewBreakpointSelect({
   breakpoint,
   onBreakpointChange,
   className,

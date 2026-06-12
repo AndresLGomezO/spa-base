@@ -13,9 +13,11 @@ describe("findLayoutComponent", () => {
     expect(actions?.kind).toBe("wizard-actions");
   });
 
-  it("returns undefined when the kind is missing", () => {
+  it("seeds form-actions in default form layouts", () => {
     const layout = createDefaultFormLayout(["name"]);
-    expect(findLayoutComponent(layout, "form-actions")).toBeUndefined();
+    expect(findLayoutComponent(layout, "form-actions")?.kind).toBe(
+      "form-actions",
+    );
   });
 });
 

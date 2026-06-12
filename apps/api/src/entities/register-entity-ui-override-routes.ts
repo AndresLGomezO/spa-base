@@ -49,10 +49,7 @@ function mergeUiOverridePutInput(
 ): PutEntityUiOverrideInput {
   const incomingForms = incoming.forms;
   const existingForms = existing?.forms;
-  const sharedLayout = incomingForms?.layout ?? existingForms?.layout;
-  const createLayout = incomingForms?.create ?? existingForms?.create;
-  const editLayout = incomingForms?.edit ?? existingForms?.edit;
-  const plainLayout = sharedLayout ?? createLayout ?? editLayout;
+  const plainLayout = incomingForms?.layout ?? existingForms?.layout;
   const presentation =
     incomingForms?.presentation ?? existingForms?.presentation;
   const wizard = incomingForms?.wizard ?? existingForms?.wizard;
@@ -68,8 +65,6 @@ function mergeUiOverridePutInput(
     plainLayout ||
     presentation ||
     wizard ||
-    createLayout ||
-    editLayout ||
     modalSize ||
     modalSizeByBreakpoint ||
     modalChrome ||
@@ -82,8 +77,6 @@ function mergeUiOverridePutInput(
           ...(modalSizeByBreakpoint ? { modalSizeByBreakpoint } : {}),
           ...(modalChrome ? { modalChrome } : {}),
           ...(modalFooterLayout ? { modalFooterLayout } : {}),
-          ...(createLayout && !plainLayout ? { create: createLayout } : {}),
-          ...(editLayout && !plainLayout ? { edit: editLayout } : {}),
         }
       : undefined;
 

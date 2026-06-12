@@ -1,20 +1,24 @@
+import { createDefaultFormLayout } from "@repo/ui-builder-core";
 import type { DefinedEntity, FieldDefinitions } from "../types.js";
-import type { EntityUIConfig, FormLayout, ViewConfig } from "./types.js";
+import type { EntityUIConfig, ViewConfig } from "./types.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 
 const SYSTEM_FIELD_KEYS = new Set(["id", "tenantId", "createdAt", "updatedAt"]);
 
 function getEditableFieldNames(entity: AnyDefinedEntity): string[] {
-  return Object.keys(entity.metadata.fields).filter(
-    (fieldName) => !SYSTEM_FIELD_KEYS.has(fieldName),
-  );
+  return Object.keys(entity.metadata.fields).filter((fieldName) => {
+    if (SYSTEM_FIELD_KEYS.has(fieldName)) {
+      return false;
+    }
+    return entity.metadata.fields[fieldName]?.type !== "document";
+  });
 }
 
-function buildDefaultFormLayout(entity: AnyDefinedEntity): FormLayout {
+function buildDefaultFormLayout(entity: AnyDefinedEntity) {
   const fields = getEditableFieldNames(entity);
   return {
-    sections: [{ fields }],
+    layout: createDefaultFormLayout(fields),
   };
 }
 

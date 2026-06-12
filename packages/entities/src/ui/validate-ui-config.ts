@@ -101,7 +101,7 @@ const viewConfigSchema = z.discriminatedUnion("type", [
   expandableTableViewConfigSchema,
 ]);
 
-const formSectionSchema = z
+const legacyFormSectionSchema = z
   .object({
     title: z.string().trim().min(1).optional(),
     fields: z.array(z.string().trim().min(1)).min(1),
@@ -140,10 +140,18 @@ const wizardFormConfigSchema = z
 
 const formLayoutSchema = z
   .object({
-    sections: z.array(formSectionSchema).min(1),
     layout: uiLayoutDocumentSchema.optional(),
+    sections: z.array(legacyFormSectionSchema).min(1).optional(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    if (!value.layout && !value.sections?.length) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Form layout must define layout or legacy sections.",
+      });
+    }
+  });
 
 const entityUISchema = z
   .object({
@@ -328,15 +336,17 @@ export function validateEntityUIConfig(
   }
 
   for (const mode of ["create", "edit"] as const) {
-    for (const section of parsed.forms[mode].sections) {
-      assertFieldRefs(entity, section.fields, `${mode} form`);
-    }
-    if (parsed.forms[mode].layout) {
+    const formLayout = parsed.forms[mode];
+    if (formLayout.layout) {
       assertFormLayoutFieldPaths(
         layoutEntityShape,
-        parsed.forms[mode].layout as UiLayoutDocument,
+        formLayout.layout as UiLayoutDocument,
         `${mode} form layout`,
       );
+    } else if (formLayout.sections) {
+      for (const section of formLayout.sections) {
+        assertFieldRefs(entity, section.fields, `${mode} form`);
+      }
     }
   }
 

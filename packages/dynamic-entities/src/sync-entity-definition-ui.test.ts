@@ -2,6 +2,23 @@ import { describe, expect, it } from "vitest";
 
 import { syncEntityDefinitionUiWithFields } from "./sync-entity-definition-ui.js";
 
+function readFormFieldPaths(
+  layout: NonNullable<
+    NonNullable<
+      ReturnType<typeof syncEntityDefinitionUiWithFields>["forms"]
+    >["create"]["layout"]
+  >,
+): string[] {
+  return layout.root.columns.flatMap((column) =>
+    column.rows.flatMap((row) => {
+      if (row.type === "component" && row.component.kind === "form-field") {
+        return [row.component.fieldPath];
+      }
+      return [];
+    }),
+  );
+}
+
 describe("syncEntityDefinitionUiWithFields", () => {
   it("appends new fields to forms, table view, and field ui metadata", () => {
     const synced = syncEntityDefinitionUiWithFields({
@@ -31,12 +48,12 @@ describe("syncEntityDefinitionUiWithFields", () => {
       },
     });
 
-    expect(synced.forms?.create.sections[0]?.fields).toEqual([
+    expect(readFormFieldPaths(synced.forms!.create.layout!)).toEqual([
       "productId",
       "date",
       "statement",
     ]);
-    expect(synced.forms?.edit.sections[0]?.fields).toEqual([
+    expect(readFormFieldPaths(synced.forms!.edit.layout!)).toEqual([
       "productId",
       "date",
       "statement",

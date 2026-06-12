@@ -1,3 +1,4 @@
+import { createDefaultFormLayout } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
 import { defineEntity } from "../defineEntity.js";
@@ -23,8 +24,8 @@ const AccountEntity = defineEntity({
   ui: {
     views: [{ type: "table", name: "default", fields: ["name", "secret"] }],
     forms: {
-      create: { sections: [{ fields: ["name", "secret"] }] },
-      edit: { sections: [{ fields: ["name", "secret"] }] },
+      create: { layout: createDefaultFormLayout(["name", "secret"]) },
+      edit: { layout: createDefaultFormLayout(["name", "secret"]) },
     },
     fields: {
       name: { searchable: true },
@@ -69,8 +70,8 @@ describe("applySearchMirrorFields", () => {
       ui: {
         views: [{ type: "table", name: "default", fields: ["tags"] }],
         forms: {
-          create: { sections: [{ fields: ["tags"] }] },
-          edit: { sections: [{ fields: ["tags"] }] },
+          create: { layout: createDefaultFormLayout(["tags"]) },
+          edit: { layout: createDefaultFormLayout(["tags"]) },
         },
         fields: { tags: { searchable: true } },
       },
@@ -170,8 +171,8 @@ describe("extendEntitySchemaWithSearchMirrors", () => {
       ui: {
         views: [{ type: "table", name: "default", fields: ["label"] }],
         forms: {
-          create: { sections: [{ fields: ["label"] }] },
-          edit: { sections: [{ fields: ["label"] }] },
+          create: { layout: createDefaultFormLayout(["label"]) },
+          edit: { layout: createDefaultFormLayout(["label"]) },
         },
         fields: { label: { searchable: true } },
       },

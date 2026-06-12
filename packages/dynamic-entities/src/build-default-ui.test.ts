@@ -2,6 +2,23 @@ import { describe, expect, it } from "vitest";
 
 import { buildDefaultUiForNewDefinition } from "./define-entity-from-record.js";
 
+function readFormFieldPaths(
+  layout: NonNullable<
+    NonNullable<
+      ReturnType<typeof buildDefaultUiForNewDefinition>["forms"]
+    >["create"]["layout"]
+  >,
+): string[] {
+  return layout.root.columns.flatMap((column) =>
+    column.rows.flatMap((row) => {
+      if (row.type === "component" && row.component.kind === "form-field") {
+        return [row.component.fieldPath];
+      }
+      return [];
+    }),
+  );
+}
+
 describe("buildDefaultUiForNewDefinition", () => {
   it("builds table, forms, and field metadata without nav icon", () => {
     const ui = buildDefaultUiForNewDefinition({
@@ -14,7 +31,10 @@ describe("buildDefaultUiForNewDefinition", () => {
 
     expect(ui.nav).toEqual({ label: "Loans" });
     expect(ui.views).toHaveLength(1);
-    expect(ui.forms?.create.sections[0]?.fields).toEqual(["amount", "title"]);
+    expect(readFormFieldPaths(ui.forms!.create.layout!)).toEqual([
+      "amount",
+      "title",
+    ]);
     expect(ui.fields?.amount.component).toBe("number");
     expect(ui.fields?.title.component).toBe("input");
   });

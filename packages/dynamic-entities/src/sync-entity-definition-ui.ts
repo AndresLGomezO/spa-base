@@ -2,46 +2,16 @@ import type {
   EntityUIConfig,
   FieldComponentType,
   FieldUIConfig,
-  FormLayout,
+} from "@repo/entities";
+import {
+  createDefaultFormLayout,
+  syncFormLayoutWithFieldNames,
 } from "@repo/entities";
 
 import {
   buildDefaultUiForNewDefinition,
   type FieldInputForDefaultUi,
 } from "./define-entity-from-record.js";
-
-function appendMissingFieldNames(
-  layoutFields: readonly string[],
-  fieldNames: readonly string[],
-): string[] {
-  const fieldNameSet = new Set(fieldNames);
-  const existing = new Set(
-    layoutFields.filter((name) => fieldNameSet.has(name)),
-  );
-  const missing = fieldNames.filter((name) => !existing.has(name));
-  return [...layoutFields.filter((name) => fieldNameSet.has(name)), ...missing];
-}
-
-function syncFormLayout(
-  layout: FormLayout | undefined,
-  fieldNames: readonly string[],
-  fallback: FormLayout,
-): FormLayout {
-  if (!layout || layout.sections.length === 0) {
-    return fallback;
-  }
-
-  const lastIndex = layout.sections.length - 1;
-  return {
-    sections: layout.sections.map((section, index) => ({
-      ...section,
-      fields:
-        index === lastIndex
-          ? appendMissingFieldNames(section.fields, fieldNames)
-          : section.fields.filter((name) => fieldNames.includes(name)),
-    })),
-  };
-}
 
 function mergeFieldUiFromDefinition(
   field: FieldInputForDefaultUi,
@@ -79,6 +49,18 @@ function mergeFieldUiFromDefinition(
   };
 }
 
+function appendMissingFieldNames(
+  layoutFields: readonly string[],
+  fieldNames: readonly string[],
+): string[] {
+  const fieldNameSet = new Set(fieldNames);
+  const existing = new Set(
+    layoutFields.filter((name) => fieldNameSet.has(name)),
+  );
+  const missing = fieldNames.filter((name) => !existing.has(name));
+  return [...layoutFields.filter((name) => fieldNameSet.has(name)), ...missing];
+}
+
 export function syncEntityDefinitionUiWithFields(input: {
   readonly ui: EntityUIConfig;
   readonly label: string;
@@ -89,6 +71,7 @@ export function syncEntityDefinitionUiWithFields(input: {
     label: input.label,
     fields: input.fields,
   });
+  const fallbackLayout = createDefaultFormLayout(fieldNames);
 
   const syncedFields: Record<string, FieldUIConfig> = {
     ...(input.ui.fields ?? {}),
@@ -121,15 +104,15 @@ export function syncEntityDefinitionUiWithFields(input: {
     fields: syncedFields,
     views: syncedViews,
     forms: {
-      create: syncFormLayout(
+      create: syncFormLayoutWithFieldNames(
         input.ui.forms?.create,
         fieldNames,
-        defaults.forms!.create,
+        fallbackLayout,
       ),
-      edit: syncFormLayout(
+      edit: syncFormLayoutWithFieldNames(
         input.ui.forms?.edit,
         fieldNames,
-        defaults.forms!.edit,
+        fallbackLayout,
       ),
     },
   };

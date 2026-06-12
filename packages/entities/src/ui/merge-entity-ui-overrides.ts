@@ -17,8 +17,7 @@ function mergeFormConfig(
     return base;
   }
 
-  const sharedLayout =
-    overrideForms.layout ?? overrideForms.create ?? overrideForms.edit;
+  const sharedLayout = overrideForms.layout;
   const presentation =
     overrideForms.presentation ??
     (overrideForms.wizard ? ("wizard" as const) : undefined) ??
