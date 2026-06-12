@@ -17,6 +17,11 @@ export function layoutPreviewActions(
       triggerLabel={t("entity.actions")}
       actions={[
         {
+          id: "view",
+          label: t("entity.view"),
+          onSelect: () => undefined,
+        },
+        {
           id: "edit",
           label: t("entity.edit"),
           onSelect: () => undefined,

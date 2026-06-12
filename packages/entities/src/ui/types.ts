@@ -67,7 +67,7 @@ export interface GroupedTableColumn {
 
 export interface TableViewConfig extends ViewConfigBase {
   readonly type: "table";
-  /** Show row actions column (edit/share/delete). Default true when omitted. */
+  /** Show row actions column (view/edit/share/delete). Default true when omitted. */
   readonly showActions?: boolean;
   /** Full metrics strip layout (columns, rows, slots, styles). */
   readonly metricStripLayout?: UiLayoutDocument;

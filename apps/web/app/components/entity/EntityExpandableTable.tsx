@@ -19,9 +19,10 @@ import {
   TableCard,
   Text,
 } from "@repo/ui";
-import { ChevronRight, Pencil, Share2, Trash2 } from "lucide-react";
+import { ChevronRight, Eye, Pencil, Share2, Trash2 } from "lucide-react";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 
 import {
   getEntityLabel,
@@ -91,6 +92,7 @@ export function EntityExpandableTable({
   onRequestShare,
 }: EntityExpandableTableProps) {
   const { t, i18n } = useTranslation("common");
+  const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const { getDefinition: getDefinitionOrThrow, items: catalogItems } =
     useEntityCatalog();
@@ -146,7 +148,10 @@ export function EntityExpandableTable({
   const currentUserId = user?.uid ?? "";
   const showActionsColumn =
     getExpandableTableShowActions(definition) &&
-    (permissions.canUpdate || permissions.canDelete || !!onRequestShare);
+    (permissions.canRead ||
+      permissions.canUpdate ||
+      permissions.canDelete ||
+      !!onRequestShare);
   const useCursorPagination =
     hasNextPage !== undefined || hasPreviousPage !== undefined;
 
@@ -273,6 +278,19 @@ export function EntityExpandableTable({
                             onClick={(event) => event.stopPropagation()}
                           >
                             <div className="flex items-center justify-center gap-1">
+                              {permissions.canRead ? (
+                                <IconButton
+                                  type="button"
+                                  label={t("entity.view")}
+                                  onClick={() =>
+                                    navigate(
+                                      `/app/${entityName}/${String(item.id)}`,
+                                    )
+                                  }
+                                >
+                                  <Eye className="size-4" />
+                                </IconButton>
+                              ) : null}
                               {permissions.canUpdate &&
                               (!item.ownerId || canEditRow(item)) &&
                               onRequestEdit ? (

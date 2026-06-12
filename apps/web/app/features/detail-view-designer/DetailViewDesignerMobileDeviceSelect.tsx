@@ -1,0 +1,64 @@
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { cn } from "@repo/theme/utils";
+
+import { PREVIEW_SELECT_CLASS } from "../ui-builder/LayoutPreviewPanel";
+import {
+  groupMobilePreviewDevicesByBrand,
+  MOBILE_PREVIEW_DEVICE_BRAND_ORDER,
+  type MobilePreviewDeviceId,
+} from "../form-designer/mobile-preview-device-presets";
+import { useDetailViewDesigner } from "./detail-view-designer-context";
+
+interface DetailViewDesignerMobileDeviceSelectProps {
+  readonly className?: string;
+}
+
+function formatDeviceOptionLabel(
+  name: string,
+  width: number,
+  height: number,
+): string {
+  return `${name} (${width} × ${height})`;
+}
+
+export function DetailViewDesignerMobileDeviceSelect({
+  className,
+}: DetailViewDesignerMobileDeviceSelectProps) {
+  const { t } = useTranslation("common");
+  const { previewMobileDeviceId, setPreviewMobileDeviceId } =
+    useDetailViewDesigner();
+  const devicesByBrand = useMemo(() => groupMobilePreviewDevicesByBrand(), []);
+  const label = t("formDesigner.previewDevice");
+
+  return (
+    <label className={cn("flex flex-col gap-1 text-sm", className)}>
+      <span className="text-muted-foreground">{label}</span>
+      <select
+        className={PREVIEW_SELECT_CLASS}
+        value={previewMobileDeviceId}
+        aria-label={label}
+        onChange={(event) =>
+          setPreviewMobileDeviceId(event.target.value as MobilePreviewDeviceId)
+        }
+      >
+        {MOBILE_PREVIEW_DEVICE_BRAND_ORDER.map((brand) => (
+          <optgroup
+            key={brand}
+            label={t(`formDesigner.previewDevices.brands.${brand}`)}
+          >
+            {devicesByBrand[brand].map((device) => (
+              <option key={device.id} value={device.id}>
+                {formatDeviceOptionLabel(
+                  t(device.labelKey),
+                  device.width,
+                  device.height,
+                )}
+              </option>
+            ))}
+          </optgroup>
+        ))}
+      </select>
+    </label>
+  );
+}

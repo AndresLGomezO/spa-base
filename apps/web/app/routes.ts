@@ -38,8 +38,16 @@ export default [
       "./routes/settings/design-layout/main.tsx",
     ),
     route(
+      "settings/design-layout/new-main/:entityName",
+      "./routes/settings/design-layout/new-main-redirect.tsx",
+    ),
+    route(
       "settings/design-layout/detail/:entityName",
       "./routes/settings/design-layout/detail.tsx",
+    ),
+    route(
+      "settings/design-layout/new-detail/:entityName",
+      "./routes/settings/design-layout/new-detail-redirect.tsx",
     ),
     route(
       "settings/design-layout/page/:entityName",

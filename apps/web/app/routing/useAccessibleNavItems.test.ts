@@ -308,6 +308,28 @@ describe("useAccessibleNavItems", () => {
     expect(designLayout && isNavGroup(designLayout)).toBe(true);
     if (designLayout && isNavGroup(designLayout)) {
       expect(designLayout.children.length).toBe(5);
+      const detailSubgroup = designLayout.children.find(
+        (child) => child.id === "design-layout-detail",
+      );
+      expect(detailSubgroup && isNavSubGroup(detailSubgroup)).toBe(true);
+      if (detailSubgroup && isNavSubGroup(detailSubgroup)) {
+        expect(
+          detailSubgroup.children.some((link) =>
+            link.to.includes("/settings/design-layout/detail/"),
+          ),
+        ).toBe(true);
+      }
+      const mainSubgroup = designLayout.children.find(
+        (child) => child.id === "design-layout-main",
+      );
+      expect(mainSubgroup && isNavSubGroup(mainSubgroup)).toBe(true);
+      if (mainSubgroup && isNavSubGroup(mainSubgroup)) {
+        expect(
+          mainSubgroup.children.some((link) =>
+            link.to.includes("/settings/design-layout/main/"),
+          ),
+        ).toBe(true);
+      }
       const listSubgroup = designLayout.children.find(
         (child) => child.id === "design-layout-list",
       );

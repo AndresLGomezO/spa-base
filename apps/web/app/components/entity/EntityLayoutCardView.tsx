@@ -185,6 +185,16 @@ export function EntityLayoutCardView({
                 <CardActionsMenu
                   triggerLabel={t("entity.actions")}
                   actions={[
+                    ...(permissions.canRead
+                      ? [
+                          {
+                            id: "view",
+                            label: t("entity.view"),
+                            onSelect: () =>
+                              navigate(`/app/${entityName}/${String(item.id)}`),
+                          },
+                        ]
+                      : []),
                     ...(permissions.canUpdate &&
                     (!item.ownerId || canEditRow(item)) &&
                     onRequestEdit

@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
+import { ensureMainPageNestedLayoutRoot } from "./ensure-main-page-nested-layout-root";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
 export function useEntityMainPageLayoutEditor(entityName: EntityName) {
@@ -21,21 +22,19 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
   const uiViews = definition.ui.views;
 
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
-    createDefaultMainPageLayout(),
+    ensureMainPageNestedLayoutRoot(createDefaultMainPageLayout()),
   );
   const [isSaving, setIsSaving] = useState(false);
-  const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
   useEffect(() => {
     const existing = definition.ui.mainPageLayout;
-    if (existing) {
-      setLayout(existing);
-      setLayoutEditorKey((current) => current + 1);
-      return;
-    }
-    setLayout(createDefaultMainPageLayout());
-    setLayoutEditorKey((current) => current + 1);
+    const source = existing ?? createDefaultMainPageLayout();
+    setLayout(ensureMainPageNestedLayoutRoot(source));
   }, [definition.ui.mainPageLayout]);
+
+  const setLayoutNormalized = useCallback((next: UiLayoutDocument) => {
+    setLayout(ensureMainPageNestedLayoutRoot(next));
+  }, []);
 
   const save = useCallback(async (): Promise<boolean> => {
     setIsSaving(true);
@@ -61,18 +60,18 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
   }, [layout]);
 
   const applySlice = useCallback((data: DesignLayoutSliceData) => {
-    setLayout((data as MainPageSliceData).mainPage);
-    setLayoutEditorKey((current) => current + 1);
+    setLayout(
+      ensureMainPageNestedLayoutRoot((data as MainPageSliceData).mainPage),
+    );
   }, []);
 
   return {
     entityName,
     definition,
     layout,
-    setLayout,
+    setLayout: setLayoutNormalized,
     isSaving,
     save,
-    layoutEditorKey,
     exportSlice,
     applySlice,
   };

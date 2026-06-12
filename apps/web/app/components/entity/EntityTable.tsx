@@ -19,8 +19,9 @@ import {
   TableCard,
   Text,
 } from "@repo/ui";
-import { Lock, Pencil, Share2, Trash2 } from "lucide-react";
+import { Eye, Lock, Pencil, Share2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 
 import {
   formatFieldLabel,
@@ -78,6 +79,7 @@ export function EntityTable({
   onRequestShare,
 }: EntityTableProps) {
   const { t, i18n } = useTranslation("common");
+  const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const { getDefinition: getDefinitionOrThrow } = useEntityCatalog();
   const { user } = useAuth();
@@ -129,7 +131,10 @@ export function EntityTable({
   const currentUserId = user?.uid ?? "";
   const showActionsColumn =
     getTableViewShowActions(definition) &&
-    (permissions.canUpdate || permissions.canDelete || !!onRequestShare);
+    (permissions.canRead ||
+      permissions.canUpdate ||
+      permissions.canDelete ||
+      !!onRequestShare);
   const useCursorPagination =
     hasNextPage !== undefined || hasPreviousPage !== undefined;
 
@@ -220,6 +225,19 @@ export function EntityTable({
                     {showActionsColumn ? (
                       <TableCell className="text-center">
                         <div className="flex items-center justify-center gap-1">
+                          {permissions.canRead ? (
+                            <IconButton
+                              type="button"
+                              label={t("entity.view")}
+                              onClick={() =>
+                                navigate(
+                                  `/app/${entityName}/${String(item.id)}`,
+                                )
+                              }
+                            >
+                              <Eye className="size-4" />
+                            </IconButton>
+                          ) : null}
                           {permissions.canUpdate &&
                           (!item.ownerId || canEditRow(item)) &&
                           onRequestEdit ? (

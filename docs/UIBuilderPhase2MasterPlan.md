@@ -28,8 +28,8 @@ The guiding principle: **one schema-driven layout model, multiple render context
 | Route | Path | State |
 |-------|------|--------|
 | Item list | `/settings/design-layout/list/:entityName` | **Live** — Item List Designer (`ItemListDesignerView`), save via `putEntityUiOverride` |
-| Main View | `/settings/design-layout/main/:entityName` | **Live** — `EntityMainPageLayoutDesignEditor`, saves `mainPage` |
-| Detailed View | `/settings/design-layout/detail/:entityName` | **Live** — `EntityRecordDetailLayoutDesignEditor`, saves `recordDetail` |
+| Main View | `/settings/design-layout/main/:entityName` | **Live** — `MainViewDesignerView` (`main-view-designer/`), saves `mainPage` |
+| Detailed View | `/settings/design-layout/detail/:entityName` | **Live** — `DetailViewDesignerView` (`detail-view-designer/`), saves `recordDetail` |
 | Forms | `/settings/design-layout/forms/:entityName` | **Live** — Form Designer (`FormDesignerView`) |
 | Legacy redirect | `/settings/design-layout/page/:entityName` | Redirects to `main` |
 
@@ -264,8 +264,8 @@ Split or extend to:
 
 Extract shared editor shell patterns (used by main/detail/metrics list editors):
 
-- `DesignLayoutEditorShell` — header, save, collapsible sections, preview slot
-- `useEntityUiOverrideEditor(entityName, slice)` — load/save slice (`listItem`, `detail`, `forms.create`, …)
+- `DesignLayoutEditorShell` — header, save, collapsible sections, preview slot (metrics legacy shell)
+- Dedicated layout editor hooks per surface (`useEntityRecordDetailLayoutEditor`, `useEntityMainPageLayoutEditor`, …)
 
 Replace duplicated route placeholders in `page.tsx` / `forms.tsx` with real editors.
 
@@ -294,7 +294,7 @@ Replace duplicated route placeholders in `page.tsx` / `forms.tsx` with real edit
 
 ### A.2 Builder
 
-1. `EntityRecordDetailLayoutDesignEditor` on `design-layout/detail.tsx`.
+1. `DetailViewDesignerView` on `design-layout/detail.tsx` (`detail-view-designer/`).
 2. Preview: load record by id selector (pick from recent list) or synthetic fixture from schema.
 3. Palette: read-only components + `related-records` + section titles.
 4. Save: `putEntityUiOverride({ recordDetail: layout })` (`detail` read alias only).
@@ -548,10 +548,10 @@ packages/entities/src/ui/
   validate-ui-config.ts
 
 apps/web/app/features/ui-builder/
-  EntityDetailLayoutDesignEditor.tsx
-  EntityFormLayoutDesignEditor.tsx
-  EntityListItemDesignEditor.tsx    # → item-list-designer/ (ItemListDesignerView)
-  use-entity-ui-override-editor.ts
+  use-entity-record-detail-layout-editor.ts
+
+apps/web/app/features/detail-view-designer/
+  DetailViewDesignerView.tsx
 
 apps/web/app/components/entity/
   EntityLayoutDetailView.tsx

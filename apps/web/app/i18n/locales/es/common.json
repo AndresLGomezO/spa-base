@@ -232,6 +232,57 @@
       "keepEditing": "Seguir editando"
     }
   },
+  "mainViewDesigner": {
+    "title": "Diseñador de vista principal",
+    "entitySubtitle": "Entidad: {{entity}}",
+    "settings": "Configuración",
+    "tabs": {
+      "settings": "Configuración",
+      "layout": "Layout",
+      "ariaLabel": "Secciones del diseñador de vista principal"
+    },
+    "components": {
+      "pageHeader": "Encabezado de página",
+      "pageToolbar": "Barra de herramientas",
+      "pageMetrics": "Métricas de página",
+      "pageList": "Lista de página"
+    },
+    "unsavedChanges": {
+      "title": "Cambios sin guardar",
+      "settingsMessage": "Tienes cambios de configuración sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "layoutMessage": "Tienes cambios de layout sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "structurePanelMessage": "Tienes cambios de estructura sin guardar en el panel. Guárdalos antes de cerrar o cambiar, o descarta los cambios.",
+      "structurePanelSave": "Guardar cambios de estructura",
+      "save": "Guardar cambios",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando"
+    }
+  },
+  "detailViewDesigner": {
+    "title": "Diseñador de vista detallada",
+    "entitySubtitle": "Entidad: {{entity}}",
+    "settings": "Configuración",
+    "previewNoRecords": "Crea al menos un elemento para visualizar la vista previa.",
+    "tabs": {
+      "settings": "Configuración",
+      "layout": "Layout",
+      "ariaLabel": "Secciones del diseñador de vista detallada"
+    },
+    "components": {
+      "metricKpi": "KPI de métrica",
+      "relatedRecords": "Registros relacionados"
+    },
+    "unsavedChanges": {
+      "title": "Cambios sin guardar",
+      "settingsMessage": "Tienes cambios de configuración sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "layoutMessage": "Tienes cambios de layout sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "structurePanelMessage": "Tienes cambios de estructura sin guardar en el panel. Guárdalos antes de cerrar o cambiar, o descarta los cambios.",
+      "structurePanelSave": "Guardar cambios de estructura",
+      "save": "Guardar cambios",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando"
+    }
+  },
   "itemListDesigner": {
     "title": "Diseñador de lista de ítems",
     "entitySubtitle": "Entidad: {{entity}}",
@@ -270,8 +321,6 @@
     "readOnly": "Puedes previsualizar este layout pero necesitas permiso de override de UI para guardar cambios.",
     "presentation": "Presentación",
     "listItemStructure": "Layout de ítem de lista",
-    "previewRecord": "Registro de vista previa",
-    "previewRecordId": "ID de registro",
     "formModalSize": "Tamaño del modal crear/editar",
     "formModalSizeSm": "Pequeño",
     "formModalSizeMd": "Mediano",
@@ -306,16 +355,13 @@
     "expandableTableColumnLabel": "Encabezado de columna",
     "addExpandableTableColumn": "Añadir columna",
     "expandableTableExpandRow": "Contenido de fila expandida",
-    "mainTitle": "Layout de Vista principal",
-    "mainDescription": "Configura barra de herramientas y contenedor de lista en la página principal.",
     "metricsTitle": "Fila de métricas",
     "metricsDescription": "Diseña la fila de métricas encima de la lista con el mismo builder de layout que los ítems.",
     "metricsConfigureLink": "Configurar fila de métricas",
     "metricsPreview": "Vista previa de la franja de métricas",
     "metricsStripStructure": "Rejilla de la franja",
     "mainPageStructure": "Estructura de página principal",
-    "detailTitle": "Layout de Vista detallada",
-    "detailDescription": "Configura el layout de la página de detalle del registro en /app/:entity/:id.",
+    "recordDetailStructure": "Estructura de vista detallada",
     "layoutJsonImport": {
       "trigger": "Importar JSON",
       "titleRoot": "Importar JSON del layout",

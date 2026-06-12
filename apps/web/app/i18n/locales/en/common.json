@@ -232,6 +232,57 @@
       "keepEditing": "Keep editing"
     }
   },
+  "mainViewDesigner": {
+    "title": "Main view Designer",
+    "entitySubtitle": "Entity: {{entity}}",
+    "settings": "Settings",
+    "tabs": {
+      "settings": "Settings",
+      "layout": "Layout",
+      "ariaLabel": "Main view designer sections"
+    },
+    "components": {
+      "pageHeader": "Page header",
+      "pageToolbar": "Page toolbar",
+      "pageMetrics": "Page metrics",
+      "pageList": "Page list"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "settingsMessage": "You have unsaved settings changes. Save them before leaving this tab, or discard your changes.",
+      "layoutMessage": "You have unsaved layout changes. Save them before leaving this tab, or discard your changes.",
+      "structurePanelMessage": "You have unsaved structure changes in the panel. Save them before closing or switching, or discard your changes.",
+      "structurePanelSave": "Save structure changes",
+      "save": "Save changes",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing"
+    }
+  },
+  "detailViewDesigner": {
+    "title": "Detailed View Designer",
+    "entitySubtitle": "Entity: {{entity}}",
+    "settings": "Settings",
+    "previewNoRecords": "Create at least one element to visualize the preview.",
+    "tabs": {
+      "settings": "Settings",
+      "layout": "Layout",
+      "ariaLabel": "Detailed view designer sections"
+    },
+    "components": {
+      "metricKpi": "Metric KPI",
+      "relatedRecords": "Related records"
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "settingsMessage": "You have unsaved settings changes. Save them before leaving this tab, or discard your changes.",
+      "layoutMessage": "You have unsaved layout changes. Save them before leaving this tab, or discard your changes.",
+      "structurePanelMessage": "You have unsaved structure changes in the panel. Save them before closing or switching, or discard your changes.",
+      "structurePanelSave": "Save structure changes",
+      "save": "Save changes",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing"
+    }
+  },
   "itemListDesigner": {
     "title": "Item list Designer",
     "entitySubtitle": "Entity: {{entity}}",
@@ -282,8 +333,6 @@
     "removeColumn": "Remove column",
     "addTableColumn": "Add column",
     "addTableColumnPlaceholder": "Select a field…",
-    "previewRecord": "Preview record",
-    "previewRecordId": "Record ID",
     "formModalSize": "Create/edit modal size",
     "formModalSizeSm": "Small",
     "formModalSizeMd": "Medium",
@@ -306,16 +355,13 @@
     "staticImageClear": "Remove uploaded image",
     "backToHome": "Back to home",
     "entityContext": "Entity: {{entity}}",
-    "mainTitle": "Main View layout",
-    "mainDescription": "Configure toolbar and list container for the entity main page.",
     "metricsTitle": "Metrics row",
     "metricsDescription": "Design the metrics row above the entity list using the same layout builder as list items.",
     "metricsConfigureLink": "Configure metrics row",
     "metricsPreview": "Metrics strip preview",
     "metricsStripStructure": "Strip grid",
     "mainPageStructure": "Main page structure",
-    "detailTitle": "Detailed View layout",
-    "detailDescription": "Configure the record detail page layout for /app/:entity/:id.",
+    "recordDetailStructure": "Record detail structure",
     "layoutJsonImport": {
       "trigger": "Import JSON",
       "titleRoot": "Import layout JSON",

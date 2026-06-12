@@ -52,6 +52,12 @@ export function formDesignerComponentsLabels(
     "wizard-progress": t("formDesigner.components.options.wizardProgress"),
     "wizard-step-host": t("formDesigner.components.options.wizardStepHost"),
     "wizard-actions": t("formDesigner.components.options.wizardActions"),
+    "page-header": t("mainViewDesigner.components.pageHeader"),
+    "page-toolbar": t("mainViewDesigner.components.pageToolbar"),
+    "page-metrics": t("mainViewDesigner.components.pageMetrics"),
+    "page-list": t("mainViewDesigner.components.pageList"),
+    "metric-kpi": t("detailViewDesigner.components.metricKpi"),
+    "related-records": t("detailViewDesigner.components.relatedRecords"),
   };
 
   return {
