@@ -20,7 +20,7 @@ export interface NormalizedDisplayRange {
 }
 
 export interface BuildDisplayRangeClassNameOptions {
-  readonly display?: "flex" | "block";
+  readonly display?: "flex" | "block" | "table-cell";
 }
 
 function breakpointIndex(breakpoint: ResponsiveGridBreakpoint): number {
@@ -125,7 +125,7 @@ export function resolveDisplayRangeVisibility(
   displayFrom: ResponsiveGridBreakpoint | undefined,
   displayTo: ResponsiveGridBreakpoint | undefined,
   atBreakpoint: ResponsiveGridBreakpoint | undefined,
-  displayClassName: "flex" | "block" = "flex",
+  displayClassName: "flex" | "block" | "table-cell" = "flex",
 ): ResolvedDisplayRangeVisibility {
   if (
     atBreakpoint !== undefined &&
@@ -161,4 +161,8 @@ export const DISPLAY_RANGE_TAILWIND_SAFELIST = [
   "md:block",
   "lg:block",
   "xl:block",
+  "sm:table-cell",
+  "md:table-cell",
+  "lg:table-cell",
+  "xl:table-cell",
 ] as const;

@@ -56,6 +56,7 @@
     "designLayout": "Diseño de layout",
     "designLayoutMain": "Vista principal",
     "designLayoutList": "Lista de ítems",
+    "designLayoutNewList": "(Nueva) Lista de ítems",
     "designLayoutDetail": "Vista detallada",
     "designLayoutForms": "Formularios",
     "designLayoutMetrics": "Fila de métricas",
@@ -227,6 +228,36 @@
       "rootLayoutPanelSave": "Guardar cambios del layout",
       "componentRowPanelMessage": "Tienes cambios sin guardar en el componente. Guárdalos para conservar tus ediciones o descártalos para revertir.",
       "componentRowPanelSave": "Guardar cambios del componente",
+      "save": "Guardar cambios",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando"
+    }
+  },
+  "itemListDesigner": {
+    "title": "Diseñador de lista de ítems",
+    "entitySubtitle": "Entidad: {{entity}}",
+    "settings": "Configuración",
+    "tabs": {
+      "settings": "Configuración",
+      "columns": "Columnas",
+      "layout": "Layout",
+      "groupedColumns": "Columnas agrupadas",
+      "expandedRow": "Fila expandida",
+      "ariaLabel": "Secciones del diseñador de lista de ítems"
+    },
+    "columnsScope": {
+      "ariaLabel": "Ámbito de columnas de tabla expandible"
+    },
+    "columnsPanelTitle": "Columnas",
+    "unsavedChanges": {
+      "title": "Cambios sin guardar",
+      "settingsMessage": "Tienes cambios de configuración sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "columnsMessage": "Tienes cambios de columnas sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "layoutMessage": "Tienes cambios de layout sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "columnsScopeMessage": "Tienes cambios de estructura sin guardar. Guárdalos antes de cambiar de ámbito de columnas o descarta los cambios.",
+      "structurePanelMessage": "Tienes cambios de estructura sin guardar en el panel. Guárdalos antes de cerrar o cambiar, o descarta los cambios.",
+      "columnsScopeSave": "Guardar cambios de estructura",
+      "structurePanelSave": "Guardar cambios de estructura",
       "save": "Guardar cambios",
       "discard": "Descartar cambios",
       "keepEditing": "Seguir editando"

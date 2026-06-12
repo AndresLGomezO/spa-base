@@ -56,6 +56,7 @@
     "designLayout": "Design layout",
     "designLayoutMain": "Main View",
     "designLayoutList": "Item list",
+    "designLayoutNewList": "(New) Item list",
     "designLayoutDetail": "Detailed View",
     "designLayoutForms": "Forms",
     "designLayoutMetrics": "Metrics row",
@@ -227,6 +228,36 @@
       "rootLayoutPanelSave": "Save layout changes",
       "componentRowPanelMessage": "You have unsaved component changes. Save them to keep your edits, or discard to revert.",
       "componentRowPanelSave": "Save component changes",
+      "save": "Save changes",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing"
+    }
+  },
+  "itemListDesigner": {
+    "title": "Item list Designer",
+    "entitySubtitle": "Entity: {{entity}}",
+    "settings": "Settings",
+    "tabs": {
+      "settings": "Settings",
+      "columns": "Columns",
+      "layout": "Layout",
+      "groupedColumns": "Grouped columns",
+      "expandedRow": "Expanded row",
+      "ariaLabel": "Item list designer sections"
+    },
+    "columnsScope": {
+      "ariaLabel": "Expandable table column scope"
+    },
+    "columnsPanelTitle": "Columns",
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "settingsMessage": "You have unsaved settings changes. Save them before leaving this tab, or discard your changes.",
+      "columnsMessage": "You have unsaved column changes. Save them before leaving this tab, or discard your changes.",
+      "layoutMessage": "You have unsaved layout changes. Save them before leaving this tab, or discard your changes.",
+      "columnsScopeMessage": "You have unsaved structure changes. Save them before switching column scope, or discard your changes.",
+      "structurePanelMessage": "You have unsaved structure changes in the panel. Save them before closing or switching, or discard your changes.",
+      "columnsScopeSave": "Save structure changes",
+      "structurePanelSave": "Save structure changes",
       "save": "Save changes",
       "discard": "Discard changes",
       "keepEditing": "Keep editing"

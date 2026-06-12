@@ -39,6 +39,8 @@ const groupedTableColumnSchema = z
   .object({
     id: z.string().trim().min(1),
     label: z.string().trim().min(1).optional(),
+    displayFrom: z.enum(["base", "sm", "md", "lg", "xl"]).optional(),
+    displayTo: z.enum(["base", "sm", "md", "lg", "xl"]).optional(),
     cellLayout: uiLayoutDocumentSchema,
   })
   .strict();

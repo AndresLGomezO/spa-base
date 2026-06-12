@@ -7,10 +7,12 @@ import type {
   UiLayoutDocument,
   ViewConfig,
 } from "@repo/entities";
+import { createDefaultExpandableTableView } from "@repo/entities";
 import {
-  createDefaultExpandableTableView,
-  createDefaultUiLayout,
-} from "@repo/entities";
+  createDefaultListCardLayout,
+  ensureListCardNestedRootLayout,
+  ensureRowExpandNestedRootLayout,
+} from "@repo/ui-builder-core";
 import { useQueryClient } from "@tanstack/react-query";
 
 import type { EntityName } from "../../entities/entity-catalog";
@@ -56,12 +58,15 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const [expandableColumns, setExpandableColumns] = useState<
     readonly GroupedTableColumn[]
   >(() => createDefaultExpandableTableView(fieldPaths).columns);
-  const [rowExpandLayout, setRowExpandLayout] = useState<UiLayoutDocument>(
-    () => createDefaultExpandableTableView(fieldPaths).rowExpandLayout,
+  const [rowExpandLayout, setRowExpandLayout] = useState<UiLayoutDocument>(() =>
+    ensureRowExpandNestedRootLayout(
+      createDefaultExpandableTableView(fieldPaths).rowExpandLayout,
+      fieldPaths,
+    ),
   );
   const [expandableShowActions, setExpandableShowActions] = useState(true);
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
-    createDefaultUiLayout(fieldPaths),
+    createDefaultListCardLayout(fieldPaths),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
@@ -88,23 +93,30 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
 
     if (expandableView) {
       setExpandableColumns([...expandableView.columns]);
-      setRowExpandLayout(expandableView.rowExpandLayout);
+      setRowExpandLayout(
+        ensureRowExpandNestedRootLayout(
+          expandableView.rowExpandLayout,
+          fieldPaths,
+        ),
+      );
       setExpandableShowActions(expandableView.showActions !== false);
     } else {
       const defaults = createDefaultExpandableTableView(fieldPaths);
       setExpandableColumns(defaults.columns);
-      setRowExpandLayout(defaults.rowExpandLayout);
+      setRowExpandLayout(
+        ensureRowExpandNestedRootLayout(defaults.rowExpandLayout, fieldPaths),
+      );
       setExpandableShowActions(true);
     }
 
     const listItem = definition.ui.listItem ?? cardView?.layout;
     if (listItem) {
-      setLayout(listItem);
+      setLayout(ensureListCardNestedRootLayout(listItem, fieldPaths));
       setLayoutEditorKey((current) => current + 1);
       return;
     }
 
-    setLayout(createDefaultUiLayout(fieldPaths));
+    setLayout(createDefaultListCardLayout(fieldPaths));
     setLayoutEditorKey((current) => current + 1);
   }, [definition.ui.listItem, fieldPaths, listViewType, uiViews]);
 
@@ -249,23 +261,33 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     viewType,
   ]);
 
-  const applySlice = useCallback((data: DesignLayoutSliceData) => {
-    const listData = data as ListSliceData;
-    const nextViewType =
-      listData.listViewType === "compact"
-        ? "expandableTable"
-        : listData.listViewType;
-    setViewType(nextViewType);
-    setTableFields([...listData.table.fields]);
-    setTableShowActions(listData.table.showActions !== false);
-    setExpandableColumns([...listData.expandableTable.columns]);
-    setRowExpandLayout(listData.expandableTable.rowExpandLayout);
-    setExpandableShowActions(listData.expandableTable.showActions !== false);
-    if (listData.listItem) {
-      setLayout(listData.listItem);
-    }
-    setLayoutEditorKey((current) => current + 1);
-  }, []);
+  const applySlice = useCallback(
+    (data: DesignLayoutSliceData) => {
+      const listData = data as ListSliceData;
+      const nextViewType =
+        listData.listViewType === "compact"
+          ? "expandableTable"
+          : listData.listViewType;
+      setViewType(nextViewType);
+      setTableFields([...listData.table.fields]);
+      setTableShowActions(listData.table.showActions !== false);
+      setExpandableColumns([...listData.expandableTable.columns]);
+      setRowExpandLayout(
+        ensureRowExpandNestedRootLayout(
+          listData.expandableTable.rowExpandLayout,
+          fieldPaths,
+        ),
+      );
+      setExpandableShowActions(listData.expandableTable.showActions !== false);
+      if (listData.listItem) {
+        setLayout(
+          ensureListCardNestedRootLayout(listData.listItem, fieldPaths),
+        );
+      }
+      setLayoutEditorKey((current) => current + 1);
+    },
+    [fieldPaths],
+  );
 
   return {
     entityName,

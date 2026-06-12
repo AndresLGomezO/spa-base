@@ -24,11 +24,15 @@ import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 
 import {
-  formatFieldLabel,
   getEntityLabel,
   tryGetEntityDefinition,
   type EntityName,
 } from "../../entities/entity-catalog";
+import { resolveExpandableTableGroupedColumnDisplayLabel } from "../../features/ui-builder/expandable-table-grouped-column-label";
+import {
+  groupedTableColumnVisibilityClassName,
+  shouldRenderGroupedTableColumn,
+} from "../../features/ui-builder/grouped-table-column-display-range";
 import {
   useEntityCatalog,
   useEntityDefinition,
@@ -174,11 +178,23 @@ export function EntityExpandableTable({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10 px-2" aria-hidden />
-                {groupedColumns.map((column) => (
-                  <TableHead key={column.id}>
-                    {column.label ?? formatFieldLabel(column.id, definition)}
-                  </TableHead>
-                ))}
+                {groupedColumns.map((column, columnIndex) =>
+                  shouldRenderGroupedTableColumn(column) ? (
+                    <TableHead
+                      key={column.id}
+                      className={groupedTableColumnVisibilityClassName(column)}
+                    >
+                      {resolveExpandableTableGroupedColumnDisplayLabel(
+                        column,
+                        columnIndex,
+                        (oneBasedIndex) =>
+                          t("entity.viewSettings.columnTab", {
+                            column: oneBasedIndex,
+                          }),
+                      )}
+                    </TableHead>
+                  ) : null,
+                )}
                 {showActionsColumn ? (
                   <TableHead className="text-center">
                     {t("entity.actions")}
@@ -236,14 +252,21 @@ export function EntityExpandableTable({
                             />
                           </button>
                         </TableCell>
-                        {groupedColumns.map((column) => (
-                          <TableCell key={column.id}>
-                            <RecursiveLayoutRenderer
-                              layout={column.cellLayout}
-                              context={renderContext}
-                            />
-                          </TableCell>
-                        ))}
+                        {groupedColumns.map((column) =>
+                          shouldRenderGroupedTableColumn(column) ? (
+                            <TableCell
+                              key={column.id}
+                              className={groupedTableColumnVisibilityClassName(
+                                column,
+                              )}
+                            >
+                              <RecursiveLayoutRenderer
+                                layout={column.cellLayout}
+                                context={renderContext}
+                              />
+                            </TableCell>
+                          ) : null,
+                        )}
                         {showActionsColumn ? (
                           <TableCell
                             className="text-center"

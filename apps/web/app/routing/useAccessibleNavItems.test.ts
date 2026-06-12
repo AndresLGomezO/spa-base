@@ -42,6 +42,14 @@ const DESIGN_LAYOUT_SUBGROUPS_FIXTURE: readonly NavSubGroupConfig[] = [
     ],
   },
   {
+    id: "design-layout-new-list",
+    labelKey: "designLayoutNewList",
+    children: [
+      designLayoutEntityLink("new-list", "testItem"),
+      designLayoutEntityLink("new-list", "widget"),
+    ],
+  },
+  {
     id: "design-layout-detail",
     labelKey: "designLayoutDetail",
     children: [
@@ -307,11 +315,15 @@ describe("useAccessibleNavItems", () => {
 
     expect(designLayout && isNavGroup(designLayout)).toBe(true);
     if (designLayout && isNavGroup(designLayout)) {
-      expect(designLayout.children.length).toBe(5);
+      expect(designLayout.children.length).toBe(6);
       const listSubgroup = designLayout.children.find(
         (child) => child.id === "design-layout-list",
       );
+      const newListSubgroup = designLayout.children.find(
+        (child) => child.id === "design-layout-new-list",
+      );
       expect(listSubgroup && isNavSubGroup(listSubgroup)).toBe(true);
+      expect(newListSubgroup && isNavSubGroup(newListSubgroup)).toBe(true);
       if (listSubgroup && isNavSubGroup(listSubgroup)) {
         expect(listSubgroup.children.length).toBeGreaterThan(0);
         expect(
@@ -319,6 +331,14 @@ describe("useAccessibleNavItems", () => {
             link.to.includes("/settings/design-layout/list/"),
           ),
         ).toBe(true);
+        expect(
+          flattenNavGroupLinks(designLayout).some((link) =>
+            link.to.includes("/settings/design-layout/new-list/"),
+          ),
+        ).toBe(true);
+      }
+      if (newListSubgroup && isNavSubGroup(newListSubgroup)) {
+        expect(newListSubgroup.children.length).toBeGreaterThan(0);
       }
     }
   });

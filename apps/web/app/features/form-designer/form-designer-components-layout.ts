@@ -59,7 +59,7 @@ export function resolveComponentsDesignSurface(
   return "formPlain";
 }
 
-interface ComponentsLayoutBinding {
+export interface ComponentsLayoutBinding {
   readonly layout: UiLayoutDocument;
   readonly setLayout: (layout: UiLayoutDocument) => void;
   readonly removeRow: (rowRef: ComponentRowRef) => void;
@@ -303,57 +303,10 @@ export function areScopedLayoutSnapshotsEqual(
   return JSON.stringify(left) === JSON.stringify(right);
 }
 
-export function resolveComponentsLayoutBinding(
-  editor: Pick<
-    UseEntityFormLayoutEditorResult,
-    | "presentation"
-    | "plainLayout"
-    | "wizard"
-    | "modalFooterLayout"
-    | "setPlainLayout"
-    | "setShellLayout"
-    | "updateStep"
-    | "setModalFooterLayout"
-  >,
-  treeScope: ComponentsTreeScope,
-  stepIndex: number,
+export function createComponentsLayoutBinding(
+  layout: UiLayoutDocument,
+  setLayout: (layout: UiLayoutDocument) => void,
 ): ComponentsLayoutBinding {
-  const clampedStepIndex = clampComponentsStepIndex(
-    stepIndex,
-    editor.wizard.steps.length,
-  );
-  const stepLayout = editor.wizard.steps[clampedStepIndex]?.layout;
-
-  const layout = resolveActiveLayout(
-    editor.presentation,
-    editor.plainLayout,
-    editor.wizard.shellLayout,
-    stepLayout,
-    editor.modalFooterLayout,
-    treeScope,
-  );
-
-  const setLayout = (nextLayout: UiLayoutDocument) => {
-    if (treeScope === "footer" && editor.modalFooterLayout) {
-      editor.setModalFooterLayout(nextLayout);
-      return;
-    }
-
-    if (editor.presentation === "wizard") {
-      if (treeScope === "shell") {
-        editor.setShellLayout(nextLayout);
-        return;
-      }
-
-      if (treeScope === "step") {
-        editor.updateStep(clampedStepIndex, { layout: nextLayout });
-        return;
-      }
-    }
-
-    editor.setPlainLayout(nextLayout);
-  };
-
   return {
     layout,
     setLayout,
@@ -467,6 +420,60 @@ export function resolveComponentsLayoutBinding(
       setLayout(updateRootNodeStyles(layout, styles));
     },
   };
+}
+
+export function resolveComponentsLayoutBinding(
+  editor: Pick<
+    UseEntityFormLayoutEditorResult,
+    | "presentation"
+    | "plainLayout"
+    | "wizard"
+    | "modalFooterLayout"
+    | "setPlainLayout"
+    | "setShellLayout"
+    | "updateStep"
+    | "setModalFooterLayout"
+  >,
+  treeScope: ComponentsTreeScope,
+  stepIndex: number,
+): ComponentsLayoutBinding {
+  const clampedStepIndex = clampComponentsStepIndex(
+    stepIndex,
+    editor.wizard.steps.length,
+  );
+  const stepLayout = editor.wizard.steps[clampedStepIndex]?.layout;
+
+  const layout = resolveActiveLayout(
+    editor.presentation,
+    editor.plainLayout,
+    editor.wizard.shellLayout,
+    stepLayout,
+    editor.modalFooterLayout,
+    treeScope,
+  );
+
+  const setLayout = (nextLayout: UiLayoutDocument) => {
+    if (treeScope === "footer" && editor.modalFooterLayout) {
+      editor.setModalFooterLayout(nextLayout);
+      return;
+    }
+
+    if (editor.presentation === "wizard") {
+      if (treeScope === "shell") {
+        editor.setShellLayout(nextLayout);
+        return;
+      }
+
+      if (treeScope === "step") {
+        editor.updateStep(clampedStepIndex, { layout: nextLayout });
+        return;
+      }
+    }
+
+    editor.setPlainLayout(nextLayout);
+  };
+
+  return createComponentsLayoutBinding(layout, setLayout);
 }
 
 export function insertCatalogEntryAtAnchor(

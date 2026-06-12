@@ -30,6 +30,10 @@ export default [
       "./routes/settings/design-layout/list.tsx",
     ),
     route(
+      "settings/design-layout/new-list/:entityName",
+      "./routes/settings/design-layout/new-list.tsx",
+    ),
+    route(
       "settings/design-layout/main/:entityName",
       "./routes/settings/design-layout/main.tsx",
     ),

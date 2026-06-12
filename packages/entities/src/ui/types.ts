@@ -1,5 +1,8 @@
 import type { EntityFileReference } from "../schema/entityFileReference.js";
-import type { UiLayoutDocument } from "@repo/ui-builder-core";
+import type {
+  ResponsiveGridBreakpoint,
+  UiLayoutDocument,
+} from "@repo/ui-builder-core";
 import type {
   EntityUiOverrideForms,
   FormModalChrome,
@@ -57,6 +60,8 @@ export interface ViewConfigBase {
 export interface GroupedTableColumn {
   readonly id: string;
   readonly label?: string;
+  readonly displayFrom?: ResponsiveGridBreakpoint;
+  readonly displayTo?: ResponsiveGridBreakpoint;
   readonly cellLayout: UiLayoutDocument;
 }
 

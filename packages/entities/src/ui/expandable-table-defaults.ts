@@ -1,6 +1,6 @@
 import {
   createDefaultTableCellLayout,
-  createDefaultUiLayout,
+  createDefaultRowExpandLayout,
   createLayoutId,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -35,10 +35,9 @@ export function createDefaultExpandableTableView(
     name: "expandable",
     fields: [...fieldPaths],
     columns,
-    rowExpandLayout:
-      expandFields.length > 0
-        ? createDefaultUiLayout(expandFields)
-        : createDefaultUiLayout(fieldPaths),
+    rowExpandLayout: createDefaultRowExpandLayout(
+      expandFields.length > 0 ? expandFields : fieldPaths,
+    ),
     showActions: true,
   };
 }

@@ -15,11 +15,18 @@ import type {
 import { metricStripHasContent } from "@repo/entities";
 import { entityHasActiveMetrics } from "./entity-metrics-nav.js";
 
-type DesignLayoutKind = "main" | "list" | "detail" | "forms" | "metrics";
+type DesignLayoutKind =
+  | "main"
+  | "list"
+  | "new-list"
+  | "detail"
+  | "forms"
+  | "metrics";
 
 const DESIGN_LAYOUT_KIND_PATH_SEGMENT: Record<DesignLayoutKind, string> = {
   main: "main",
   list: "list",
+  "new-list": "new-list",
   detail: "detail",
   forms: "forms",
   metrics: "metrics",
@@ -47,7 +54,7 @@ function compareEntityLabels(left: string, right: string): number {
 }
 
 function useDesignLayoutEntityLinks(
-  kind: Exclude<DesignLayoutKind, "metrics">,
+  kind: Exclude<DesignLayoutKind, "metrics" | "new-list">,
 ): readonly NavLinkConfig[] {
   const { permissions, isSuperAdmin } = useAuth();
   const { items } = useEntityCatalog();
@@ -142,9 +149,41 @@ function useDesignLayoutMetricsEntityLinks(): readonly NavLinkConfig[] {
   }, [definitionsQuery.data, isSuperAdmin, items, permissions]);
 }
 
+function useDesignLayoutNewListEntityLinks(): readonly NavLinkConfig[] {
+  const { permissions, isSuperAdmin } = useAuth();
+  const { items } = useEntityCatalog();
+
+  return useMemo(() => {
+    const links = items
+      .filter((definition) => {
+        if (
+          !hasPermission("entityUiOverride.read", permissions, {
+            isSuperAdmin,
+          })
+        ) {
+          return false;
+        }
+        return hasPermission(`${definition.name}.read`, permissions, {
+          isSuperAdmin,
+        });
+      })
+      .map((definition) => ({
+        id: `design-layout-new-list-${definition.name}`,
+        label: getEntityLabel(definition),
+        to: designLayoutEntityPath("new-list", definition.name),
+        matchPath: designLayoutEntityPath("new-list", definition.name),
+        icon: resolveLucideIcon(getEntityIconName(definition)),
+      }))
+      .sort((left, right) => compareEntityLabels(left.label, right.label));
+
+    return links;
+  }, [items, isSuperAdmin, permissions]);
+}
+
 export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
   const mainLinks = useDesignLayoutEntityLinks("main");
   const listLinks = useDesignLayoutEntityLinks("list");
+  const newListLinks = useDesignLayoutNewListEntityLinks();
   const detailLinks = useDesignLayoutEntityLinks("detail");
   const formsLinks = useDesignLayoutEntityLinks("forms");
   const metricsLinks = useDesignLayoutMetricsEntityLinks();
@@ -165,6 +204,14 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
         id: "design-layout-list",
         labelKey: "designLayoutList",
         children: listLinks,
+      });
+    }
+
+    if (newListLinks.length > 0) {
+      subgroups.push({
+        id: "design-layout-new-list",
+        labelKey: "designLayoutNewList",
+        children: newListLinks,
       });
     }
 
@@ -193,5 +240,12 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
     }
 
     return subgroups;
-  }, [detailLinks, formsLinks, listLinks, mainLinks, metricsLinks]);
+  }, [
+    detailLinks,
+    formsLinks,
+    listLinks,
+    mainLinks,
+    metricsLinks,
+    newListLinks,
+  ]);
 }

@@ -1,5 +1,11 @@
 import { Fragment, useMemo, useState } from "react";
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import {
+  RecursiveLayoutRenderer,
+  type NestedColumnWrapper,
+  type RootColumnWrapper,
+  type RowWrapper,
+  usePreviewBreakpoint,
+} from "@repo/ui-builder-renderer";
 import type {
   GroupedTableColumn,
   SerializableEntityDefinition,
@@ -18,11 +24,21 @@ import { ChevronRight } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { cn } from "@repo/theme/utils";
 
-import { formatFieldLabel } from "../../entities/entity-catalog";
+import { resolveExpandableTableGroupedColumnDisplayLabel } from "./expandable-table-grouped-column-label.js";
+import {
+  groupedTableColumnVisibilityClassName,
+  shouldRenderGroupedTableColumn,
+} from "./grouped-table-column-display-range.js";
 import { ExpandableTableRowExpandPanel } from "../../components/entity/ExpandableTableRowExpandPanel";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
 import type { EntityDefinitionLookup } from "@repo/ui-builder-react";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
+
+export interface LayoutPreviewRendererChromeProps {
+  readonly rowWrapper?: RowWrapper;
+  readonly rootColumnWrapper?: RootColumnWrapper;
+  readonly nestedColumnWrapper?: NestedColumnWrapper;
+}
 
 export interface EntityExpandableTableLayoutPreviewProps {
   readonly definition: SerializableEntityDefinition;
@@ -33,6 +49,11 @@ export interface EntityExpandableTableLayoutPreviewProps {
   readonly title: string;
   readonly locale: string;
   readonly getDefinition?: EntityDefinitionLookup;
+  readonly highlightedGroupedColumnIndex?: number | null;
+  readonly getCellLayoutRendererProps?: (
+    columnIndex: number,
+  ) => LayoutPreviewRendererChromeProps | undefined;
+  readonly rowExpandLayoutRendererProps?: LayoutPreviewRendererChromeProps;
 }
 
 export function EntityExpandableTableLayoutPreview({
@@ -44,8 +65,12 @@ export function EntityExpandableTableLayoutPreview({
   title,
   locale,
   getDefinition,
+  highlightedGroupedColumnIndex = null,
+  getCellLayoutRendererProps,
+  rowExpandLayoutRendererProps,
 }: EntityExpandableTableLayoutPreviewProps) {
   const { t } = useTranslation("common");
+  const atBreakpoint = usePreviewBreakpoint();
   const [expanded, setExpanded] = useState(true);
   const renderContext = useMemo(
     () =>
@@ -69,11 +94,29 @@ export function EntityExpandableTableLayoutPreview({
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10 px-2" aria-hidden />
-                {columns.map((column) => (
-                  <TableHead key={column.id}>
-                    {column.label ?? formatFieldLabel(column.id, definition)}
-                  </TableHead>
-                ))}
+                {columns.map((column, columnIndex) =>
+                  shouldRenderGroupedTableColumn(column, atBreakpoint) ? (
+                    <TableHead
+                      key={column.id}
+                      className={groupedTableColumnVisibilityClassName(
+                        column,
+                        atBreakpoint,
+                        highlightedGroupedColumnIndex === columnIndex
+                          ? "bg-primary/10 ring-primary ring-2 ring-inset"
+                          : undefined,
+                      )}
+                    >
+                      {resolveExpandableTableGroupedColumnDisplayLabel(
+                        column,
+                        columnIndex,
+                        (oneBasedIndex) =>
+                          t("entity.viewSettings.columnTab", {
+                            column: oneBasedIndex,
+                          }),
+                      )}
+                    </TableHead>
+                  ) : null,
+                )}
                 {showActions ? (
                   <TableHead className="text-center">
                     {t("entity.actions")}
@@ -110,14 +153,26 @@ export function EntityExpandableTableLayoutPreview({
                       />
                     </button>
                   </TableCell>
-                  {columns.map((column) => (
-                    <TableCell key={column.id}>
-                      <RecursiveLayoutRenderer
-                        layout={column.cellLayout}
-                        context={renderContext}
-                      />
-                    </TableCell>
-                  ))}
+                  {columns.map((column, columnIndex) =>
+                    shouldRenderGroupedTableColumn(column, atBreakpoint) ? (
+                      <TableCell
+                        key={column.id}
+                        className={groupedTableColumnVisibilityClassName(
+                          column,
+                          atBreakpoint,
+                          highlightedGroupedColumnIndex === columnIndex
+                            ? "bg-primary/10 ring-primary ring-2 ring-inset"
+                            : undefined,
+                        )}
+                      >
+                        <RecursiveLayoutRenderer
+                          layout={column.cellLayout}
+                          context={renderContext}
+                          {...(getCellLayoutRendererProps?.(columnIndex) ?? {})}
+                        />
+                      </TableCell>
+                    ) : null,
+                  )}
                   {showActions ? (
                     <TableCell className="text-muted-foreground text-center text-sm">
                       …
@@ -133,6 +188,7 @@ export function EntityExpandableTableLayoutPreview({
                       <RecursiveLayoutRenderer
                         layout={rowExpandLayout}
                         context={renderContext}
+                        {...(rowExpandLayoutRendererProps ?? {})}
                       />
                     </ExpandableTableRowExpandPanel>
                   </TableCell>

@@ -8,12 +8,14 @@ import { FormDesignerStructureTreeNode } from "./FormDesignerStructureTreeNode";
 import { FormDesignerStructureTreeUtilNode } from "./FormDesignerStructureTreeUtilNode";
 import {
   buildStructureTree,
-  collectDefaultExpandedNodeIds,
+  collectDefaultExpandedNodeIdsForLayout,
   createColumnTopInsertAnchor,
   createRowBottomInsertAnchor,
   getRowMoveState,
+  resolvePromotedNestedLayoutRootRow,
   type InsertAnchor,
   type StructureColumnNode,
+  type StructureNestedLayoutRowNode,
   type StructureRowNode,
 } from "./form-designer-structure-tree";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
@@ -65,6 +67,8 @@ interface FormDesignerStructureTreeProps extends TreeFocusProps {
   readonly labels: FormDesignerComponentsLabels;
   readonly fieldDescriptors: readonly FieldDescriptor[];
   readonly variant?: StructureTreeVariant;
+  readonly flattenSingleRootColumn?: boolean;
+  readonly promoteSingleNestedLayoutRoot?: boolean;
   readonly onInsert: (anchor: InsertAnchor) => void;
   readonly insertDisabled?: boolean;
   readonly onMoveRowUp: (row: StructureRowNode) => void;
@@ -188,12 +192,19 @@ function StructureColumnBody({
   onRowSelect,
   onColumnHover,
   onColumnSelect,
+  plain = false,
 }: BranchSharedProps & {
   readonly column: StructureColumnNode;
   readonly depth: number;
+  readonly plain?: boolean;
 }) {
   return (
-    <div className="border-border/60 ml-3 w-full min-w-max border-l pl-1.5">
+    <div
+      className={cn(
+        "w-full min-w-max",
+        !plain && "border-border/60 ml-3 border-l pl-1.5",
+      )}
+    >
       {column.rows.length === 0 ? (
         <div className="flex flex-col px-2 py-1">
           <Text className="text-muted-foreground text-xs">
@@ -408,11 +419,13 @@ function FormDesignerStructureUtilTree({
   branchProps,
   onColumnHover,
   onColumnSelect,
+  promotedNestedLayoutRoot = null,
 }: {
   readonly columns: readonly StructureColumnNode[];
   readonly branchProps: BranchSharedProps;
   readonly onColumnHover?: (column: ComponentColumnRef | null) => void;
   readonly onColumnSelect?: (column: StructureColumnNode) => void;
+  readonly promotedNestedLayoutRoot?: StructureNestedLayoutRowNode | null;
 }) {
   const closeFlyoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
@@ -447,32 +460,74 @@ function FormDesignerStructureUtilTree({
       aria-label={branchProps.labels.panelTitle}
       className="flex w-full flex-col items-center gap-1 py-1"
     >
-      {columns.map((column) => {
-        const columnRef = toComponentColumnRef(column);
-        const columnFocusState = resolveColumnFocusState(
-          columnRef,
-          branchProps.treeFocus,
-        );
+      {promotedNestedLayoutRoot
+        ? (() => {
+            const rowRef = toComponentRowRef(
+              promotedNestedLayoutRoot.rowId,
+              promotedNestedLayoutRoot.locator,
+            );
+            const rowFocusState = resolveRowFocusState(
+              rowRef,
+              branchProps.treeFocus,
+            );
 
-        return (
-          <FormDesignerStructureTreeUtilNode
-            key={column.id}
-            id={column.id}
-            label={column.label}
-            kind="nested-layout"
-            rowFocusState={columnFocusState}
-            flyoutOpen={openFlyoutId === column.id}
-            onFlyoutOpenChange={(open) =>
-              handleFlyoutOpenChange(column.id, open)
-            }
-            onHover={() => onColumnHover?.(columnRef)}
-            onLeave={() => onColumnHover?.(null)}
-            onSelect={() => onColumnSelect?.(column)}
-          >
-            <StructureColumnBody column={column} depth={0} {...branchProps} />
-          </FormDesignerStructureTreeUtilNode>
-        );
-      })}
+            return (
+              <FormDesignerStructureTreeUtilNode
+                id={promotedNestedLayoutRoot.id}
+                label={promotedNestedLayoutRoot.label}
+                kind="nested-layout"
+                rowFocusState={rowFocusState}
+                flyoutOpen={openFlyoutId === promotedNestedLayoutRoot.id}
+                onFlyoutOpenChange={(open) =>
+                  handleFlyoutOpenChange(promotedNestedLayoutRoot.id, open)
+                }
+                onHover={() => branchProps.onRowHover?.(rowRef)}
+                onLeave={() => branchProps.onRowHover?.(null)}
+                onSelect={() =>
+                  branchProps.onRowSelect?.(promotedNestedLayoutRoot)
+                }
+              >
+                {promotedNestedLayoutRoot.columns.map((column) => (
+                  <StructureColumnBody
+                    key={column.id}
+                    column={column}
+                    depth={1}
+                    {...branchProps}
+                  />
+                ))}
+              </FormDesignerStructureTreeUtilNode>
+            );
+          })()
+        : columns.map((column) => {
+            const columnRef = toComponentColumnRef(column);
+            const columnFocusState = resolveColumnFocusState(
+              columnRef,
+              branchProps.treeFocus,
+            );
+
+            return (
+              <FormDesignerStructureTreeUtilNode
+                key={column.id}
+                id={column.id}
+                label={column.label}
+                kind="nested-layout"
+                rowFocusState={columnFocusState}
+                flyoutOpen={openFlyoutId === column.id}
+                onFlyoutOpenChange={(open) =>
+                  handleFlyoutOpenChange(column.id, open)
+                }
+                onHover={() => onColumnHover?.(columnRef)}
+                onLeave={() => onColumnHover?.(null)}
+                onSelect={() => onColumnSelect?.(column)}
+              >
+                <StructureColumnBody
+                  column={column}
+                  depth={0}
+                  {...branchProps}
+                />
+              </FormDesignerStructureTreeUtilNode>
+            );
+          })}
     </div>
   );
 }
@@ -482,6 +537,8 @@ export function FormDesignerStructureTree({
   labels,
   fieldDescriptors,
   variant = "full",
+  flattenSingleRootColumn = false,
+  promoteSingleNestedLayoutRoot = false,
   onInsert,
   insertDisabled = false,
   onMoveRowUp,
@@ -519,8 +576,20 @@ export function FormDesignerStructureTree({
   );
 
   const [expandedIds, setExpandedIds] = useState<ReadonlySet<string>>(() => {
-    return new Set(collectDefaultExpandedNodeIds(columns));
+    return new Set(
+      collectDefaultExpandedNodeIdsForLayout(columns, {
+        promoteSingleNestedLayoutRoot,
+      }),
+    );
   });
+
+  const promotedNestedLayoutRoot = useMemo(() => {
+    if (!promoteSingleNestedLayoutRoot) {
+      return null;
+    }
+
+    return resolvePromotedNestedLayoutRootRow(columns);
+  }, [columns, promoteSingleNestedLayoutRoot]);
 
   const handleToggle = useCallback((id: string) => {
     setExpandedIds((current) => {
@@ -558,9 +627,16 @@ export function FormDesignerStructureTree({
         branchProps={branchProps}
         onColumnHover={onColumnHover}
         onColumnSelect={onColumnSelect}
+        promotedNestedLayoutRoot={promotedNestedLayoutRoot}
       />
     );
   }
+
+  const shouldFlattenRootColumn =
+    flattenSingleRootColumn &&
+    columns.length === 1 &&
+    !promotedNestedLayoutRoot;
+  const flattenedColumn = shouldFlattenRootColumn ? columns[0] : null;
 
   return (
     <div
@@ -568,14 +644,29 @@ export function FormDesignerStructureTree({
       aria-label={labels.panelTitle}
       className="flex w-max min-w-full flex-col gap-1 py-1"
     >
-      {columns.map((column) => (
-        <StructureColumnBranch
-          key={column.id}
-          column={column}
+      {promotedNestedLayoutRoot ? (
+        <StructureRowBranch
+          row={promotedNestedLayoutRoot}
           depth={0}
           {...branchProps}
         />
-      ))}
+      ) : flattenedColumn ? (
+        <StructureColumnBody
+          column={flattenedColumn}
+          depth={0}
+          plain
+          {...branchProps}
+        />
+      ) : (
+        columns.map((column) => (
+          <StructureColumnBranch
+            key={column.id}
+            column={column}
+            depth={0}
+            {...branchProps}
+          />
+        ))
+      )}
     </div>
   );
 }

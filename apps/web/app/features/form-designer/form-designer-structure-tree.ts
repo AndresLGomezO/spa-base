@@ -226,6 +226,41 @@ export function buildStructureTree(
   );
 }
 
+export function resolvePromotedNestedLayoutRootRow(
+  columns: readonly StructureColumnNode[],
+): StructureNestedLayoutRowNode | null {
+  if (columns.length !== 1) {
+    return null;
+  }
+
+  const rootColumn = columns[0];
+  if (!rootColumn || rootColumn.rows.length !== 1) {
+    return null;
+  }
+
+  const row = rootColumn.rows[0];
+  return row?.type === "nested-layout" ? row : null;
+}
+
+export function collectDefaultExpandedNodeIdsForLayout(
+  columns: readonly StructureColumnNode[],
+  options?: { readonly promoteSingleNestedLayoutRoot?: boolean },
+): string[] {
+  if (options?.promoteSingleNestedLayoutRoot) {
+    const promoted = resolvePromotedNestedLayoutRootRow(columns);
+    if (promoted) {
+      const ids: string[] = [promoted.id];
+      for (const column of promoted.columns) {
+        ids.push(column.id);
+        collectExpandedRowIds(column.rows, ids);
+      }
+      return ids;
+    }
+  }
+
+  return collectDefaultExpandedNodeIds(columns);
+}
+
 function createInsertAnchor(
   locator: RowLocator,
   position: "before" | "after",

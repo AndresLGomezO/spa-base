@@ -1,0 +1,129 @@
+import { useCallback, useMemo, useState } from "react";
+import { entityCardViewAdapter } from "@repo/ui-builder-react";
+import { useTranslation } from "react-i18next";
+
+import {
+  useEntityCatalog,
+  useEntityDefinition,
+} from "../../entities/entity-catalog-context";
+import { FormDesignerAddComponentModal } from "../form-designer/FormDesignerAddComponentModal";
+import type { CatalogEntryKind } from "../form-designer/form-designer-component-catalog";
+import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
+import { insertCatalogEntryAtAnchor } from "../form-designer/form-designer-components-layout";
+import type { InsertAnchor } from "../form-designer/form-designer-structure-tree";
+import { resolveScopeLayoutBinding } from "./item-list-designer-layout-binding";
+import { useItemListDesigner } from "./item-list-designer-context";
+import { useItemListDesignerStructureSession } from "./ItemListDesignerStructureSession";
+import { ItemListDesignerStructureTreePanel } from "./ItemListDesignerStructureTreePanel";
+
+interface ItemListDesignerExpandableRowTreePanelProps {
+  readonly embedded?: boolean;
+  readonly embeddedVariant?: "expanded" | "collapsed";
+}
+
+export function ItemListDesignerExpandableRowTreePanel({
+  embedded = false,
+  embeddedVariant = "expanded",
+}: ItemListDesignerExpandableRowTreePanelProps = {}) {
+  const { t } = useTranslation("common");
+  const { editor, requestComponentRowPanel } = useItemListDesigner();
+  const { setFocusedRow, setSelectedRow, clearColumnHover } =
+    useItemListDesignerStructureSession();
+  const { getDefinition } = useEntityCatalog();
+  const definition = useEntityDefinition(editor.entityName);
+  const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
+  const [insertAnchor, setInsertAnchor] = useState<InsertAnchor | null>(null);
+  const [modalOpen, setModalOpen] = useState(false);
+
+  const fieldDescriptors = useMemo(
+    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
+    [definition, getDefinition],
+  );
+
+  const binding = useMemo(
+    () =>
+      resolveScopeLayoutBinding(editor, {
+        kind: "expandableRow",
+      }),
+    [editor],
+  );
+
+  const handleInsert = useCallback((anchor: InsertAnchor) => {
+    setInsertAnchor(anchor);
+    setModalOpen(true);
+  }, []);
+
+  const handleSelect = useCallback(
+    (anchor: InsertAnchor, kind: CatalogEntryKind) => {
+      const { rowRef, label } = insertCatalogEntryAtAnchor(
+        binding,
+        anchor,
+        kind,
+        editor.defaultFieldPath,
+        labels.tree,
+        fieldDescriptors,
+      );
+
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label);
+    },
+    [
+      binding,
+      clearColumnHover,
+      editor.defaultFieldPath,
+      fieldDescriptors,
+      labels.tree,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+    ],
+  );
+
+  const handleCloseModal = useCallback(() => {
+    setModalOpen(false);
+    setInsertAnchor(null);
+  }, []);
+
+  const treePanel = (
+    <ItemListDesignerStructureTreePanel
+      panelTitle={
+        embedded ? undefined : t("designLayout.expandableTableExpandRow")
+      }
+      onInsert={handleInsert}
+      embedded={embedded}
+      embeddedVariant={embeddedVariant}
+    />
+  );
+
+  if (embedded) {
+    return (
+      <>
+        {treePanel}
+        <FormDesignerAddComponentModal
+          open={modalOpen}
+          designSurface="tableRowExpand"
+          labels={labels}
+          insertAnchor={insertAnchor}
+          onClose={handleCloseModal}
+          onSelect={handleSelect}
+        />
+      </>
+    );
+  }
+
+  return (
+    <>
+      {treePanel}
+      <FormDesignerAddComponentModal
+        open={modalOpen}
+        designSurface="tableRowExpand"
+        labels={labels}
+        insertAnchor={insertAnchor}
+        onClose={handleCloseModal}
+        onSelect={handleSelect}
+      />
+    </>
+  );
+}
