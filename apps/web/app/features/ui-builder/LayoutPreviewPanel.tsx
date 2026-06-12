@@ -81,6 +81,19 @@ interface LayoutPreviewBreakpointSwitcherProps {
 const PREVIEW_SELECT_CLASS =
   "border-input bg-background ring-offset-background focus-visible:ring-ring rounded-md border px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
+export { PREVIEW_SELECT_CLASS };
+
+interface LayoutPreviewFrameSize {
+  readonly width: number;
+  readonly height: number;
+}
+
+const PREVIEW_FRAME_MAX_HEIGHT = "40rem";
+
+function resolvePreviewFrameHeight(height: number): string {
+  return `min(${height}px, ${PREVIEW_FRAME_MAX_HEIGHT})`;
+}
+
 interface LayoutPreviewBreakpointSelectProps {
   readonly breakpoint: ResponsiveGridBreakpoint;
   readonly onBreakpointChange: (breakpoint: ResponsiveGridBreakpoint) => void;
@@ -155,6 +168,7 @@ interface LayoutPreviewViewportProps {
   readonly children: ReactNode;
   readonly className?: string;
   readonly showFrame?: boolean;
+  readonly frameSize?: LayoutPreviewFrameSize;
 }
 
 export function LayoutPreviewViewport({
@@ -162,6 +176,7 @@ export function LayoutPreviewViewport({
   children,
   className,
   showFrame = true,
+  frameSize,
 }: LayoutPreviewViewportProps) {
   const isFullWidth = breakpoint === "full";
   const renderBreakpoint = resolveLayoutPreviewRenderBreakpoint(breakpoint);
@@ -174,6 +189,15 @@ export function LayoutPreviewViewport({
     );
   }
 
+  const framedWidth =
+    frameSize?.width ??
+    (isFullWidth
+      ? undefined
+      : RESPONSIVE_BREAKPOINT_PREVIEW_WIDTHS[breakpoint]);
+  const framedHeight = frameSize
+    ? resolvePreviewFrameHeight(frameSize.height)
+    : undefined;
+
   return (
     <PreviewBreakpointProvider breakpoint={renderBreakpoint}>
       <div
@@ -181,16 +205,28 @@ export function LayoutPreviewViewport({
       >
         <div
           className={cn(
-            "border-border bg-background box-border flex min-h-full flex-col border border-dashed",
-            isFullWidth ? "w-full" : "mx-auto",
+            "border-border bg-background box-border flex flex-col border border-dashed",
+            isFullWidth ? "w-full min-h-full" : "mx-auto",
+            frameSize
+              ? "overflow-hidden rounded-[2rem] shadow-sm"
+              : "min-h-full",
           )}
           style={
             isFullWidth
               ? undefined
-              : { width: RESPONSIVE_BREAKPOINT_PREVIEW_WIDTHS[breakpoint] }
+              : {
+                  width: framedWidth,
+                  ...(framedHeight ? { height: framedHeight } : {}),
+                }
           }
         >
-          {children}
+          {frameSize ? (
+            <div className="flex h-full min-h-0 flex-1 flex-col">
+              {children}
+            </div>
+          ) : (
+            children
+          )}
         </div>
       </div>
     </PreviewBreakpointProvider>

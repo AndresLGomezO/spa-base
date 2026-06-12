@@ -42,6 +42,16 @@ export const uiOverrideFormsSchema = z
     layout: uiLayoutDocumentSchema.optional(),
     wizard: wizardFormConfigSchema.optional(),
     modalSize: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+    modalSizeByBreakpoint: z
+      .object({
+        base: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        sm: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        md: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        lg: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        xl: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+      })
+      .strict()
+      .optional(),
     modalChrome: formModalChromeSchema.optional(),
     modalFooterLayout: uiLayoutDocumentSchema.optional(),
     create: uiLayoutDocumentSchema.optional(),

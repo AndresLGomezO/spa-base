@@ -1,18 +1,31 @@
 import { useQuery } from "@tanstack/react-query";
 
+import { useAuth } from "../auth/AuthContext";
 import { listEntityCategories } from "../lib/api-client";
+import { fetchWithTenantNotResolvedRetry } from "../lib/fetch-with-tenant-not-resolved-retry";
+import {
+  entityCategoriesQueryKey,
+  entityCategoriesQueryKeyForTenant,
+} from "../query/query-client";
 
-export const entityCategoriesQueryKey = ["entity-categories"] as const;
+export { entityCategoriesQueryKey } from "../query/query-client";
 
 export function useEntityNavCategories() {
+  const { tenantId, isSessionResolved } = useAuth();
+
   return useQuery({
-    queryKey: entityCategoriesQueryKey,
+    queryKey: tenantId
+      ? entityCategoriesQueryKeyForTenant(tenantId)
+      : entityCategoriesQueryKey,
     queryFn: async () => {
-      const response = await listEntityCategories();
+      const response =
+        await fetchWithTenantNotResolvedRetry(listEntityCategories);
       return [...response.items].sort(
         (left, right) => left.order - right.order,
       );
     },
     staleTime: 30_000,
+    enabled: isSessionResolved && Boolean(tenantId),
+    refetchOnWindowFocus: true,
   });
 }

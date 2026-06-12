@@ -7,6 +7,7 @@ import type { ComponentColumnRef } from "./form-designer-component-column-ref";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
 import type { ComponentsTreeScope } from "./form-designer-components-layout";
 import type { FormDesignerTabId } from "./form-designer-tabs";
+import type { MobilePreviewDeviceId } from "./mobile-preview-device-presets";
 import type { UseFormDesignerPreviewResult } from "./use-form-designer-preview";
 
 export interface FormDesignerContextValue {
@@ -15,6 +16,8 @@ export interface FormDesignerContextValue {
   readonly canSave: boolean;
   readonly previewBreakpoint: LayoutPreviewBreakpoint;
   readonly setPreviewBreakpoint: (breakpoint: LayoutPreviewBreakpoint) => void;
+  readonly previewMobileDeviceId: MobilePreviewDeviceId;
+  readonly setPreviewMobileDeviceId: (deviceId: MobilePreviewDeviceId) => void;
   readonly activeTabId: FormDesignerTabId;
   readonly settingsIsDirty: boolean;
   readonly layoutIsDirty: boolean;
@@ -39,6 +42,11 @@ export interface FormDesignerContextValue {
   readonly requestLayoutColumnPanel: (columnIndex: number) => void;
   readonly requestCloseLayoutColumnPanel: () => void;
   readonly commitColumnPanelSave: () => void;
+  readonly rootLayoutPanelOpen: boolean;
+  readonly rootLayoutPanelIsDirty: boolean;
+  readonly requestRootLayoutPanel: () => void;
+  readonly requestCloseRootLayoutPanel: () => void;
+  readonly commitRootLayoutPanelSave: () => void;
   /** @deprecated Use requestLayoutColumnPanel */
   readonly openLayoutColumnPanel: (columnIndex: number) => void;
   readonly overlayPreviewOpen: boolean;

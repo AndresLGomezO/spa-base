@@ -18,20 +18,24 @@ export function FormDesignerUnsavedChangesModal() {
   const messageKey =
     unsavedReason === "columnPanel"
       ? "formDesigner.unsavedChanges.columnPanelMessage"
-      : unsavedReason === "componentRowPanel"
-        ? "formDesigner.unsavedChanges.componentRowPanelMessage"
-        : unsavedTabId === "layout"
-          ? "formDesigner.unsavedChanges.layoutMessage"
-          : unsavedTabId === "components"
-            ? "formDesigner.unsavedChanges.componentsMessage"
-            : "formDesigner.unsavedChanges.message";
+      : unsavedReason === "rootLayoutPanel"
+        ? "formDesigner.unsavedChanges.rootLayoutPanelMessage"
+        : unsavedReason === "componentRowPanel"
+          ? "formDesigner.unsavedChanges.componentRowPanelMessage"
+          : unsavedTabId === "layout"
+            ? "formDesigner.unsavedChanges.layoutMessage"
+            : unsavedTabId === "components"
+              ? "formDesigner.unsavedChanges.componentsMessage"
+              : "formDesigner.unsavedChanges.message";
 
   const saveLabelKey =
     unsavedReason === "columnPanel"
       ? "formDesigner.unsavedChanges.columnPanelSave"
-      : unsavedReason === "componentRowPanel"
-        ? "formDesigner.unsavedChanges.componentRowPanelSave"
-        : "formDesigner.unsavedChanges.save";
+      : unsavedReason === "rootLayoutPanel"
+        ? "formDesigner.unsavedChanges.rootLayoutPanelSave"
+        : unsavedReason === "componentRowPanel"
+          ? "formDesigner.unsavedChanges.componentRowPanelSave"
+          : "formDesigner.unsavedChanges.save";
 
   return (
     <Modal

@@ -76,6 +76,31 @@
       "full": "full",
       "fullDescription": "Ancho completo"
     },
+    "previewDevice": "Dispositivo",
+    "previewDevices": {
+      "brands": {
+        "apple": "Apple",
+        "samsung": "Samsung",
+        "google": "Google",
+        "xiaomi": "Xiaomi",
+        "oneplus": "OnePlus",
+        "honor": "Honor"
+      },
+      "iphone-17-pro-max": "iPhone 17 Pro Max",
+      "iphone-16-pro-max": "iPhone 16 Pro Max",
+      "iphone-16-pro": "iPhone 16 Pro",
+      "iphone-16": "iPhone 16",
+      "iphone-se": "iPhone SE",
+      "galaxy-s25-ultra": "Galaxy S25 Ultra",
+      "galaxy-s24": "Galaxy S24",
+      "galaxy-a54": "Galaxy A54",
+      "pixel-9-pro": "Pixel 9 Pro",
+      "pixel-8": "Pixel 8",
+      "xiaomi-15": "Xiaomi 15",
+      "redmi-note-13": "Redmi Note 13",
+      "oneplus-13": "OnePlus 13",
+      "honor-400": "Honor 400 Smart"
+    },
     "settings": "Configuración",
     "headerTools": {
       "title": "Herramientas del formulario",
@@ -89,6 +114,10 @@
       "components": "Componentes"
     },
     "layout": {
+      "rootLayoutPanelTitle": "Propiedades del layout",
+      "rootLayoutPanel": {
+        "open": "Editar propiedades del layout"
+      },
       "columnPanelTitle": "Columna {{column}}",
       "columnPanel": {
         "jsonTitleColumn": "Importar JSON de columna",
@@ -194,6 +223,8 @@
       "componentsMessage": "Tienes cambios de componentes sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
       "columnPanelMessage": "Tienes cambios sin guardar en la columna. Guárdalos para conservar tus ediciones o descártalos para revertir.",
       "columnPanelSave": "Guardar cambios de columna",
+      "rootLayoutPanelMessage": "Tienes cambios sin guardar en las propiedades del layout. Guárdalos para conservar tus ediciones o descártalos para revertir.",
+      "rootLayoutPanelSave": "Guardar cambios del layout",
       "componentRowPanelMessage": "Tienes cambios sin guardar en el componente. Guárdalos para conservar tus ediciones o descártalos para revertir.",
       "componentRowPanelSave": "Guardar cambios del componente",
       "save": "Guardar cambios",
@@ -218,6 +249,8 @@
     "formModalSizeLg": "Grande",
     "formModalSizeXl": "Extra grande",
     "formModalSize2xl": "Ancho completo",
+    "formModalSizeInherited": "Usando {{size}} de {{breakpoint}}",
+    "formModalSizeResetOverride": "Restablecer al valor heredado",
     "formModalShowHeader": "Mostrar encabezado del modal",
     "formModalFlushContent": "Contenido a ras (sin relleno)",
     "formModalFooter": "Pie del modal",

@@ -6,6 +6,15 @@ import {
 
 import {
   resolveFormModalChrome,
+  resolveFormModalSize,
+  resolveFormModalSizeEditBreakpoint,
+  resolveFormModalSizeForPreviewBreakpoint,
+  resolveFormModalSizeInheritanceSource,
+  resolveFormModalSizes,
+  resolveFormModalSizeAtBreakpoint,
+  resolveEntityFormModalSizing,
+  isFormModalSizeExplicitAtBreakpoint,
+  serializeFormModalSizeByBreakpoint,
   resolveEffectiveFormModalContentPadding,
   resolveFormModalFooterLayout,
   resolveFormModalHasLayoutActions,
@@ -29,6 +38,130 @@ const baseDefinition: SerializableEntityDefinition = {
     },
   },
 };
+
+describe("resolveFormModalSizes", () => {
+  it("uses modalSize as the xl anchor and cascades to smaller breakpoints", () => {
+    expect(
+      resolveFormModalSizes({
+        modalSize: "xl",
+      }),
+    ).toEqual({
+      base: "xl",
+      sm: "xl",
+      md: "xl",
+      lg: "xl",
+      xl: "xl",
+    });
+  });
+
+  it("applies sparse base override while keeping larger breakpoints on the anchor", () => {
+    expect(
+      resolveFormModalSizes({
+        modalSize: "xl",
+        modalSizeByBreakpoint: { base: "2xl" },
+      }),
+    ).toEqual({
+      base: "2xl",
+      sm: "xl",
+      md: "xl",
+      lg: "xl",
+      xl: "xl",
+    });
+  });
+
+  it("defaults to lg when modalSize is missing", () => {
+    expect(resolveFormModalSizes({})).toEqual({
+      base: "lg",
+      sm: "lg",
+      md: "lg",
+      lg: "lg",
+      xl: "lg",
+    });
+  });
+
+  it("maps full preview breakpoint to xl resolution", () => {
+    expect(
+      resolveFormModalSizeForPreviewBreakpoint(
+        { modalSize: "xl", modalSizeByBreakpoint: { base: "2xl" } },
+        "full",
+      ),
+    ).toBe("xl");
+    expect(resolveFormModalSizeEditBreakpoint("full")).toBe("xl");
+  });
+
+  it("detects inheritance source for smaller breakpoints", () => {
+    const forms = {
+      modalSize: "xl" as const,
+      modalSizeByBreakpoint: { base: "2xl" as const },
+    };
+    expect(isFormModalSizeExplicitAtBreakpoint(forms, "base")).toBe(true);
+    expect(isFormModalSizeExplicitAtBreakpoint(forms, "lg")).toBe(false);
+    expect(resolveFormModalSizeInheritanceSource(forms, "lg")).toBe("xl");
+    expect(resolveFormModalSizeAtBreakpoint(forms, "lg")).toBe("xl");
+  });
+
+  it("serializes only overrides that change the resolved cascade", () => {
+    expect(
+      serializeFormModalSizeByBreakpoint("xl", { base: "2xl", lg: "xl" }),
+    ).toEqual({ base: "2xl" });
+  });
+
+  it("keeps resolveFormModalSize as the xl resolved value", () => {
+    const definition: SerializableEntityDefinition = {
+      ...baseDefinition,
+      ui: {
+        ...baseDefinition.ui,
+        forms: {
+          ...baseDefinition.ui.forms,
+          modalSize: "xl",
+          modalSizeByBreakpoint: { base: "2xl" },
+        },
+      },
+    };
+
+    expect(resolveFormModalSize(definition)).toBe("xl");
+  });
+});
+
+describe("resolveEntityFormModalSizing", () => {
+  it("returns simulated size for preview breakpoints", () => {
+    const forms = {
+      modalSize: "xl" as const,
+      modalSizeByBreakpoint: { base: "2xl" as const },
+    };
+
+    expect(
+      resolveEntityFormModalSizing(forms, { simulatedBreakpoint: "lg" }),
+    ).toEqual({
+      mode: "simulated",
+      size: "xl",
+    });
+    expect(
+      resolveEntityFormModalSizing(forms, { simulatedBreakpoint: "base" }),
+    ).toEqual({
+      mode: "simulated",
+      size: "2xl",
+    });
+  });
+
+  it("returns responsive sizes for production rendering", () => {
+    const forms = {
+      modalSize: "xl" as const,
+      modalSizeByBreakpoint: { base: "2xl" as const },
+    };
+
+    expect(resolveEntityFormModalSizing(forms)).toEqual({
+      mode: "responsive",
+      responsiveSizes: {
+        base: "2xl",
+        sm: "xl",
+        md: "xl",
+        lg: "xl",
+        xl: "xl",
+      },
+    });
+  });
+});
 
 describe("resolveFormPresentation", () => {
   it("infers wizard when wizard config exists without explicit presentation", () => {

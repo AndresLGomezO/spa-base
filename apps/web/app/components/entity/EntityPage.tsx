@@ -19,7 +19,6 @@ import {
   resolveEffectiveFormModalContentPadding,
   resolveFormModalFooterLayout,
   resolveFormModalHasLayoutActions,
-  resolveFormModalSize,
   resolveFormPresentation,
   resolveFormUsesModalBuilderFooter,
 } from "@repo/entities";
@@ -31,7 +30,7 @@ import { useEntity } from "../../hooks/useEntity";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useEntityFilterOptions } from "../../hooks/useEntityFilterOptions";
 import { useServerQueryConfig } from "../../hooks/useServerQueryConfig";
-import { FormModal } from "../forms/FormModal";
+import { DesignedEntityFormModal } from "../forms/DesignedEntityFormModal";
 import { WebDataViewToolbar } from "../data-view";
 import { RequireEntityPermission } from "./RequireEntityPermission";
 import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
@@ -529,11 +528,11 @@ export function EntityPage({ entityName }: EntityPageProps) {
         </div>
       )}
 
-      <FormModal
+      <DesignedEntityFormModal
         open={formModal != null}
         onClose={closeFormModal}
         title={formModalTitle}
-        size={resolveFormModalSize(definition)}
+        forms={definition.ui.forms}
         scrollable={formModalScrollable}
         showHeader={formModalChrome.showHeader}
         showCloseButton={formModalChrome.showHeader}
@@ -568,7 +567,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
             </RequireEntityPermission>
           ) : null}
         </div>
-      </FormModal>
+      </DesignedEntityFormModal>
 
       <Modal
         open={deleteId !== null}

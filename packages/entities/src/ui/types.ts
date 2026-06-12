@@ -136,12 +136,20 @@ export interface FormLayout {
 
 export type FormModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
 
+export type FormModalSizeByBreakpoint = Partial<
+  Record<
+    import("@repo/ui-builder-core").ResponsiveGridBreakpoint,
+    FormModalSize
+  >
+>;
+
 export interface FormConfig {
   readonly create: FormLayout;
   readonly edit: FormLayout;
   readonly presentation?: FormPresentation;
   readonly wizard?: WizardFormConfig;
   readonly modalSize?: FormModalSize;
+  readonly modalSizeByBreakpoint?: FormModalSizeByBreakpoint;
   readonly modalChrome?: FormModalChrome;
   readonly modalFooterLayout?: UiLayoutDocument;
 }

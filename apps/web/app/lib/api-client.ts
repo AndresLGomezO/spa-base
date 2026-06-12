@@ -897,6 +897,13 @@ export async function putEntityUiOverride(
     readonly forms?: {
       readonly presentation?: "plain" | "wizard";
       readonly modalSize?: "sm" | "md" | "lg" | "xl" | "2xl";
+      readonly modalSizeByBreakpoint?: {
+        readonly base?: "sm" | "md" | "lg" | "xl" | "2xl";
+        readonly sm?: "sm" | "md" | "lg" | "xl" | "2xl";
+        readonly md?: "sm" | "md" | "lg" | "xl" | "2xl";
+        readonly lg?: "sm" | "md" | "lg" | "xl" | "2xl";
+        readonly xl?: "sm" | "md" | "lg" | "xl" | "2xl";
+      };
       readonly modalChrome?: {
         readonly showHeader?: boolean;
         readonly contentPadding?: "default" | "none";

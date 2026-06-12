@@ -28,7 +28,7 @@ import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { CollapsibleSection } from "../../components/CollapsibleSection.js";
 import { applyFormFieldChange } from "../../components/entity/form-relation-display-cache";
-import { FormModal } from "../../components/forms/FormModal";
+import { DesignedEntityFormModal } from "../../components/forms/DesignedEntityFormModal";
 import { resolveEntityFormModalFooter } from "../../components/entity/use-entity-form-modal-footer";
 import { WizardActions } from "../../components/forms/WizardActions";
 import { WizardProgress } from "../../components/forms/WizardProgress";
@@ -631,20 +631,24 @@ export function EntityFormLayoutDesignEditor({
           </Button>
         }
       >
-        <FormModal
+        <DesignedEntityFormModal
           variant="inline"
           open
           scrollable={false}
           onClose={() => undefined}
           title={t("entity.viewSettings.preview")}
-          size={editor.modalSize}
+          forms={{
+            modalSize: editor.modalSize,
+            modalSizeByBreakpoint: editor.modalSizeByBreakpoint,
+          }}
+          simulatedBreakpoint={previewBreakpoint}
           showHeader={editor.modalChrome.showHeader}
           showCloseButton={false}
           contentPadding={previewContentPadding}
           footer={usesDesignedModalFooter ? previewFooter : undefined}
         >
           {formPreviewContent}
-        </FormModal>
+        </DesignedEntityFormModal>
       </LayoutPreviewPanel>
     </div>
   );
@@ -662,9 +666,14 @@ export function EntityFormLayoutDesignEditor({
               {t("designLayout.formModalSize")}
             </span>
             <SegmentedSwitch
-              value={editor.modalSize}
+              value={editor.getResolvedModalSizeAtBreakpoint(previewBreakpoint)}
               options={modalSizeOptions}
-              onChange={(value) => editor.setModalSize(value)}
+              onChange={(value) =>
+                editor.setModalSizeForPreviewBreakpoint(
+                  previewBreakpoint,
+                  value,
+                )
+              }
               ariaLabel={t("designLayout.formModalSize")}
             />
           </label>
@@ -897,12 +906,16 @@ export function EntityFormLayoutDesignEditor({
           </div>
         )}
       </DesignLayoutEditorShell>
-      <FormModal
+      <DesignedEntityFormModal
         variant="overlay"
         open={previewModalOpen}
         onClose={() => setPreviewModalOpen(false)}
         title={t("entity.viewSettings.preview")}
-        size={editor.modalSize}
+        forms={{
+          modalSize: editor.modalSize,
+          modalSizeByBreakpoint: editor.modalSizeByBreakpoint,
+        }}
+        simulatedBreakpoint={previewBreakpoint}
         scrollable={previewFormScrollable}
         showHeader={editor.modalChrome.showHeader}
         showCloseButton={editor.modalChrome.showHeader}
@@ -918,7 +931,7 @@ export function EntityFormLayoutDesignEditor({
             {formPreviewContent}
           </LayoutPreviewViewport>
         </div>
-      </FormModal>
+      </DesignedEntityFormModal>
     </>
   );
 }

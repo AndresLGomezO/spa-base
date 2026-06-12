@@ -1,6 +1,6 @@
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
-import type { FormModalSize } from "./types.js";
+import type { FormModalSize, FormModalSizeByBreakpoint } from "./types.js";
 
 export type FormPresentation = "plain" | "wizard";
 
@@ -31,6 +31,7 @@ export interface EntityUiOverrideForms {
   readonly layout?: UiLayoutDocument;
   readonly wizard?: WizardFormConfig;
   readonly modalSize?: FormModalSize;
+  readonly modalSizeByBreakpoint?: FormModalSizeByBreakpoint;
   readonly modalChrome?: FormModalChrome;
   readonly modalFooterLayout?: UiLayoutDocument;
   /** @deprecated Prefer unified `layout`. */

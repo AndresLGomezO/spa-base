@@ -20,13 +20,22 @@ export type ModalContentPadding = "default" | "none";
 
 export type ModalVariant = "overlay" | "inline";
 
+export type ModalEmbeddedLayout = "centered" | "fill";
+
+export type ModalSize = "sm" | "md" | "lg" | "xl" | "2xl";
+
+export type ModalResponsiveBreakpoint = "base" | "sm" | "md" | "lg" | "xl";
+
+export type ModalResponsiveSizes = Record<ModalResponsiveBreakpoint, ModalSize>;
+
 export interface ModalProps {
   readonly open: boolean;
   readonly onClose: () => void;
   readonly title: string;
   readonly children: ReactNode;
   readonly footer?: ReactNode;
-  readonly size?: "sm" | "md" | "lg" | "xl" | "2xl";
+  readonly size?: ModalSize;
+  readonly responsiveSizes?: ModalResponsiveSizes;
   readonly scrollable?: boolean;
   readonly showHeader?: boolean;
   readonly showCloseButton?: boolean;
@@ -35,6 +44,10 @@ export interface ModalProps {
   readonly layer?: "default" | "nested";
   /** Inline renders the dialog panel in place without a portal or backdrop. */
   readonly variant?: ModalVariant;
+  /** Inline only: centered keeps padding; fill stretches to the parent height. */
+  readonly embeddedLayout?: ModalEmbeddedLayout;
+  /** Overrides the default sticky-layout max height (e.g. device preview fill). */
+  readonly panelMaxHeight?: string;
 }
 
 export const MODAL_PANEL_MAX_HEIGHT = "min(90vh, calc(100vh - 2rem))";
@@ -47,28 +60,159 @@ export function modalContentIsScrollable(options: {
 
 export function modalPanelViewportStyle(options: {
   readonly useStickyLayout: boolean;
-}): { readonly maxHeight?: string } {
+  readonly panelMaxHeight?: string;
+  readonly fullscreen?: boolean;
+  readonly embedded?: boolean;
+}): {
+  readonly maxHeight?: string;
+  readonly height?: string;
+  readonly minHeight?: string;
+} {
+  if (options.fullscreen) {
+    if (options.embedded) {
+      return {
+        height: "100%",
+        minHeight: "100%",
+        maxHeight: options.panelMaxHeight ?? "100%",
+      };
+    }
+
+    return {};
+  }
+
   if (!options.useStickyLayout) {
     return {};
   }
 
-  return { maxHeight: MODAL_PANEL_MAX_HEIGHT };
+  return {
+    maxHeight: options.panelMaxHeight ?? MODAL_PANEL_MAX_HEIGHT,
+  };
 }
 
-const panelSizeClasses = {
+export const MODAL_PANEL_SIZE_CLASSES: Record<ModalSize, string> = {
   sm: "max-w-sm",
   md: "max-w-lg",
   lg: "max-w-3xl",
   xl: "max-w-6xl",
   "2xl": "max-w-[96rem]",
-} as const;
+};
+
+export const MODAL_RESPONSIVE_BREAKPOINT_ORDER: readonly ModalResponsiveBreakpoint[] =
+  ["base", "sm", "md", "lg", "xl"];
+
+export function isModalFullscreenAtBase(
+  sizes: ModalResponsiveSizes | undefined,
+  size: ModalSize,
+): boolean {
+  return (sizes?.base ?? size) === "2xl";
+}
+
+const MODAL_FULLSCREEN_BASE_PANEL_CLASSES =
+  "h-[100dvh] max-h-[100dvh] w-full max-w-none rounded-none border-0 shadow-none";
+
+const MODAL_FULLSCREEN_RESET_FROM_SM_PANEL_CLASSES =
+  "sm:min-h-0 sm:h-auto sm:max-h-[min(90vh,calc(100vh-2rem))] sm:rounded-xl sm:border sm:border-border sm:shadow-xl";
+
+export const MODAL_OVERLAY_CONTENT_FULLSCREEN_CLASSES =
+  "flex h-full min-h-[100dvh] flex-col p-0 sm:min-h-0 sm:items-center sm:justify-center sm:p-4";
+
+export function buildModalResponsiveSizeClassName(
+  sizes: ModalResponsiveSizes,
+): string {
+  const classes: string[] = [];
+  let previous: ModalSize | undefined;
+
+  for (const breakpoint of MODAL_RESPONSIVE_BREAKPOINT_ORDER) {
+    const value = sizes[breakpoint];
+    if (value === previous) {
+      continue;
+    }
+    const prefix = breakpoint === "base" ? "" : `${breakpoint}:`;
+    classes.push(`${prefix}${MODAL_PANEL_SIZE_CLASSES[value]}`);
+    previous = value;
+  }
+
+  return classes.join(" ");
+}
+
+export function buildUniformModalResponsiveSizes(
+  size: ModalSize,
+): ModalResponsiveSizes {
+  return {
+    base: size,
+    sm: size,
+    md: size,
+    lg: size,
+    xl: size,
+  };
+}
+
+export function buildModalResponsivePanelClassName(
+  sizes: ModalResponsiveSizes,
+): string {
+  if (sizes.base !== "2xl") {
+    return buildModalResponsiveSizeClassName(sizes);
+  }
+
+  const classes = ["min-h-[100dvh] " + MODAL_FULLSCREEN_BASE_PANEL_CLASSES];
+  classes.push(`sm:${MODAL_PANEL_SIZE_CLASSES[sizes.sm]}`);
+  classes.push(MODAL_FULLSCREEN_RESET_FROM_SM_PANEL_CLASSES);
+
+  let previous: ModalSize = sizes.sm;
+
+  for (const breakpoint of MODAL_RESPONSIVE_BREAKPOINT_ORDER) {
+    if (breakpoint === "base" || breakpoint === "sm") {
+      continue;
+    }
+    const value = sizes[breakpoint];
+    if (value === previous) {
+      continue;
+    }
+    classes.push(`${breakpoint}:${MODAL_PANEL_SIZE_CLASSES[value]}`);
+    previous = value;
+  }
+
+  return classes.join(" ");
+}
+
+function resolveEmbeddedFullscreenPanelClassName(): string {
+  return "min-h-full h-full max-h-full flex-1 w-full max-w-none rounded-none border-0 shadow-none";
+}
+
+function resolveModalPanelSizeClassName(options: {
+  readonly size: ModalSize;
+  readonly responsiveSizes?: ModalResponsiveSizes;
+  readonly embedded?: boolean;
+}): string {
+  const sizes =
+    options.responsiveSizes ?? buildUniformModalResponsiveSizes(options.size);
+
+  if (options.embedded) {
+    if (options.size === "2xl" && !options.responsiveSizes) {
+      return resolveEmbeddedFullscreenPanelClassName();
+    }
+    return buildModalResponsiveSizeClassName(sizes);
+  }
+
+  return buildModalResponsivePanelClassName(sizes);
+}
+
+function resolveModalOverlayContentClassName(options: {
+  readonly size: ModalSize;
+  readonly responsiveSizes?: ModalResponsiveSizes;
+}): string {
+  if (isModalFullscreenAtBase(options.responsiveSizes, options.size)) {
+    return MODAL_OVERLAY_CONTENT_FULLSCREEN_CLASSES;
+  }
+  return "flex items-center justify-center p-4";
+}
 
 function ModalPanel({
   titleId,
   title,
   children,
   footer,
-  size,
+  panelSizeClassName,
   scrollable,
   showHeader,
   showCloseButton,
@@ -77,12 +221,16 @@ function ModalPanel({
   onClose,
   panelRef,
   embedded = false,
+  embeddedFill = false,
+  panelMaxHeight,
+  suppressEntranceAnimation = false,
+  fullscreenAtBase = false,
 }: {
   readonly titleId: string;
   readonly title: string;
   readonly children: ReactNode;
   readonly footer?: ReactNode;
-  readonly size: NonNullable<ModalProps["size"]>;
+  readonly panelSizeClassName: string;
   readonly scrollable: boolean;
   readonly showHeader: boolean;
   readonly showCloseButton: boolean;
@@ -91,6 +239,10 @@ function ModalPanel({
   readonly onClose: () => void;
   readonly panelRef: RefObject<HTMLDivElement | null>;
   readonly embedded?: boolean;
+  readonly embeddedFill?: boolean;
+  readonly panelMaxHeight?: string;
+  readonly suppressEntranceAnimation?: boolean;
+  readonly fullscreenAtBase?: boolean;
 }) {
   const visible = useOverlayTransitionVisible();
   const durationMs = useOverlayTransitionDurationMs();
@@ -99,7 +251,12 @@ function ModalPanel({
   const useStickyLayout = scrollable || hasFooter;
   const contentScrollable = modalContentIsScrollable({ scrollable });
   const flushContent = contentPadding === "none";
-  const panelViewportStyle = modalPanelViewportStyle({ useStickyLayout });
+  const panelViewportStyle = modalPanelViewportStyle({
+    useStickyLayout,
+    panelMaxHeight,
+    fullscreen: fullscreenAtBase,
+    embedded,
+  });
 
   return (
     <div
@@ -111,11 +268,13 @@ function ModalPanel({
         "bg-popover text-popover-foreground pointer-events-auto relative flex w-full origin-center flex-col shadow-xl",
         useStickyLayout && "min-h-0",
         flushContent ? "rounded-xl" : "border-border rounded-xl border",
-        panelSizeClasses[size],
-        embedded && "mx-auto",
+        panelSizeClassName,
+        embedded && !embeddedFill && "mx-auto",
+        embeddedFill && "min-h-full h-full max-h-full flex-1",
         useStickyLayout && !contentScrollable && "overflow-hidden",
         !useStickyLayout && !flushContent && "p-5",
         animate &&
+          !suppressEntranceAnimation &&
           (visible ? "scale-100 opacity-100" : "scale-[0.92] opacity-0"),
       )}
       style={{
@@ -185,6 +344,7 @@ export function Modal({
   children,
   footer,
   size = "sm",
+  responsiveSizes,
   scrollable = false,
   showHeader = true,
   showCloseButton = true,
@@ -192,10 +352,17 @@ export function Modal({
   closeLabel = "Close dialog",
   layer = "default",
   variant = "overlay",
+  embeddedLayout = "centered",
+  panelMaxHeight,
 }: ModalProps) {
   const titleId = useId();
   const panelRef = useRef<HTMLDivElement>(null);
   const embedded = variant === "inline";
+  const fullscreenAtBase = isModalFullscreenAtBase(responsiveSizes, size);
+  const embeddedFill =
+    embedded && (embeddedLayout === "fill" || fullscreenAtBase);
+  const resolvedPanelMaxHeight =
+    embeddedFill && panelMaxHeight === undefined ? "100%" : panelMaxHeight;
 
   const focusPanel = useCallback(() => {
     const focusable = panelRef.current?.querySelector<HTMLElement>(
@@ -204,12 +371,21 @@ export function Modal({
     focusable?.focus();
   }, []);
 
+  const panelSizeClassName = resolveModalPanelSizeClassName({
+    size,
+    responsiveSizes,
+    embedded,
+  });
+  const overlayContentClassName = resolveModalOverlayContentClassName({
+    size,
+    responsiveSizes,
+  });
   const panel = (
     <ModalPanel
       titleId={titleId}
       title={title}
       footer={footer}
-      size={size}
+      panelSizeClassName={panelSizeClassName}
       scrollable={scrollable}
       showHeader={showHeader}
       showCloseButton={showCloseButton}
@@ -218,6 +394,10 @@ export function Modal({
       onClose={onClose}
       panelRef={panelRef}
       embedded={embedded}
+      embeddedFill={embeddedFill}
+      panelMaxHeight={resolvedPanelMaxHeight}
+      suppressEntranceAnimation={fullscreenAtBase}
+      fullscreenAtBase={fullscreenAtBase}
     >
       {children}
     </ModalPanel>
@@ -229,7 +409,14 @@ export function Modal({
     }
 
     return (
-      <div className="flex min-h-0 w-full flex-1 items-center justify-center p-4">
+      <div
+        className={cn(
+          "flex min-h-0 w-full",
+          embeddedFill || fullscreenAtBase
+            ? "h-full flex-col"
+            : "flex-1 items-center justify-center p-4",
+        )}
+      >
         {panel}
       </div>
     );
@@ -241,7 +428,7 @@ export function Modal({
       onClose={onClose}
       closeLabel={closeLabel}
       layer={layer}
-      contentClassName="flex items-center justify-center p-4"
+      contentClassName={overlayContentClassName}
       focusPanel={focusPanel}
     >
       {panel}

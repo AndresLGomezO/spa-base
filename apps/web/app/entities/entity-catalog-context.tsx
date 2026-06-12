@@ -7,8 +7,14 @@ import {
 } from "react";
 import { useQuery } from "@tanstack/react-query";
 
+import { useAuth } from "../auth/AuthContext";
 import { listEntities } from "../lib/api-client";
-import { entityCatalogQueryKey, queryClient } from "../query/query-client";
+import { fetchWithTenantNotResolvedRetry } from "../lib/fetch-with-tenant-not-resolved-retry";
+import {
+  entityCatalogQueryKey,
+  entityCatalogQueryKeyForTenant,
+  queryClient,
+} from "../query/query-client";
 import {
   getEntityDefinition,
   isEntityName,
@@ -34,13 +40,19 @@ function EntityCatalogProviderFromQuery({
 }: {
   readonly children: ReactNode;
 }) {
+  const { tenantId, isSessionResolved } = useAuth();
   const catalogQuery = useQuery({
-    queryKey: entityCatalogQueryKey,
-    queryFn: listEntities,
+    queryKey: tenantId
+      ? entityCatalogQueryKeyForTenant(tenantId)
+      : entityCatalogQueryKey,
+    queryFn: () => fetchWithTenantNotResolvedRetry(listEntities),
     staleTime: 30_000,
+    enabled: isSessionResolved && Boolean(tenantId),
+    refetchOnWindowFocus: true,
   });
 
-  const isLoading = catalogQuery.isLoading;
+  const isLoading =
+    isSessionResolved && Boolean(tenantId) ? catalogQuery.isLoading : false;
   const error =
     catalogQuery.error instanceof Error
       ? catalogQuery.error.message

@@ -2,8 +2,16 @@ import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import { FormDesignerFormPreviewBody } from "./FormDesignerFormPreviewBody";
 import { useFormDesigner } from "./form-designer-context";
 
-export function FormDesignerProductionPreviewBody() {
-  return <FormDesignerFormPreviewBody />;
+export function FormDesignerProductionPreviewBody({
+  simulateMobileViewport = false,
+}: {
+  readonly simulateMobileViewport?: boolean;
+} = {}) {
+  return (
+    <FormDesignerFormPreviewBody
+      simulateMobileViewport={simulateMobileViewport}
+    />
+  );
 }
 
 export function FormDesignerProductionPreviewContent() {

@@ -12,9 +12,34 @@ import { useTranslation } from "react-i18next";
 import { useFormDesigner } from "./form-designer-context";
 import { FormDesignerPreview } from "./FormDesignerPreview";
 
+const MODAL_SIZE_LABEL_KEY: Record<
+  FormModalSize,
+  | "designLayout.formModalSizeSm"
+  | "designLayout.formModalSizeMd"
+  | "designLayout.formModalSizeLg"
+  | "designLayout.formModalSizeXl"
+  | "designLayout.formModalSize2xl"
+> = {
+  sm: "designLayout.formModalSizeSm",
+  md: "designLayout.formModalSizeMd",
+  lg: "designLayout.formModalSizeLg",
+  xl: "designLayout.formModalSizeXl",
+  "2xl": "designLayout.formModalSize2xl",
+};
+
+const PREVIEW_BREAKPOINT_LABEL_KEY = {
+  base: "formDesigner.previewBreakpoints.base",
+  sm: "formDesigner.previewBreakpoints.sm",
+  md: "formDesigner.previewBreakpoints.md",
+  lg: "formDesigner.previewBreakpoints.lg",
+  xl: "formDesigner.previewBreakpoints.xl",
+  full: "formDesigner.previewBreakpoints.full",
+} as const;
+
 export function FormDesignerSettingsTab() {
   const { t } = useTranslation("common");
-  const { editor, canSave, settingsIsDirty, saveSettings } = useFormDesigner();
+  const { editor, canSave, settingsIsDirty, saveSettings, previewBreakpoint } =
+    useFormDesigner();
 
   const presentationOptions = useMemo(
     (): readonly SegmentedSwitchOption<FormPresentation>[] => [
@@ -90,17 +115,45 @@ export function FormDesignerSettingsTab() {
             ariaLabel={t("designLayout.presentation")}
           />
         </div>
-        <label className="flex min-w-0 flex-col gap-1 text-sm">
-          <span className="text-muted-foreground">
+        <div className="flex min-w-0 flex-col gap-1">
+          <span className="text-muted-foreground text-sm">
             {t("designLayout.formModalSize")}
           </span>
           <SegmentedSwitch
-            value={editor.modalSize}
+            value={editor.getResolvedModalSizeAtBreakpoint(previewBreakpoint)}
             options={modalSizeOptions}
-            onChange={(value) => editor.setModalSize(value)}
+            onChange={(value) =>
+              editor.setModalSizeForPreviewBreakpoint(previewBreakpoint, value)
+            }
             ariaLabel={t("designLayout.formModalSize")}
           />
-        </label>
+          {editor.isModalSizeExplicitAtBreakpoint(previewBreakpoint) ? (
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="h-auto self-start px-0 py-0 text-xs"
+              onClick={() => editor.clearModalSizeOverride(previewBreakpoint)}
+            >
+              {t("designLayout.formModalSizeResetOverride")}
+            </Button>
+          ) : editor.getModalSizeInheritanceSource(previewBreakpoint) ? (
+            <span className="text-muted-foreground text-xs">
+              {t("designLayout.formModalSizeInherited", {
+                size: t(
+                  MODAL_SIZE_LABEL_KEY[
+                    editor.getResolvedModalSizeAtBreakpoint(previewBreakpoint)
+                  ],
+                ),
+                breakpoint: t(
+                  PREVIEW_BREAKPOINT_LABEL_KEY[
+                    editor.getModalSizeInheritanceSource(previewBreakpoint)!
+                  ],
+                ),
+              })}
+            </span>
+          ) : null}
+        </div>
         <Button
           type="button"
           className="ml-auto"

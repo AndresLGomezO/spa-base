@@ -33,6 +33,13 @@ function mergeFormConfig(
     ...(overrideForms.modalSize !== undefined || base.modalSize !== undefined
       ? { modalSize: overrideForms.modalSize ?? base.modalSize }
       : {}),
+    ...(overrideForms.modalSizeByBreakpoint !== undefined ||
+    base.modalSizeByBreakpoint !== undefined
+      ? {
+          modalSizeByBreakpoint:
+            overrideForms.modalSizeByBreakpoint ?? base.modalSizeByBreakpoint,
+        }
+      : {}),
     ...(overrideForms.modalChrome !== undefined ||
     base.modalChrome !== undefined
       ? { modalChrome: overrideForms.modalChrome ?? base.modalChrome }

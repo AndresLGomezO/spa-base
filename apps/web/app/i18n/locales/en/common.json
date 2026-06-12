@@ -76,6 +76,31 @@
       "full": "full",
       "fullDescription": "Full width"
     },
+    "previewDevice": "Device",
+    "previewDevices": {
+      "brands": {
+        "apple": "Apple",
+        "samsung": "Samsung",
+        "google": "Google",
+        "xiaomi": "Xiaomi",
+        "oneplus": "OnePlus",
+        "honor": "Honor"
+      },
+      "iphone-17-pro-max": "iPhone 17 Pro Max",
+      "iphone-16-pro-max": "iPhone 16 Pro Max",
+      "iphone-16-pro": "iPhone 16 Pro",
+      "iphone-16": "iPhone 16",
+      "iphone-se": "iPhone SE",
+      "galaxy-s25-ultra": "Galaxy S25 Ultra",
+      "galaxy-s24": "Galaxy S24",
+      "galaxy-a54": "Galaxy A54",
+      "pixel-9-pro": "Pixel 9 Pro",
+      "pixel-8": "Pixel 8",
+      "xiaomi-15": "Xiaomi 15",
+      "redmi-note-13": "Redmi Note 13",
+      "oneplus-13": "OnePlus 13",
+      "honor-400": "Honor 400 Smart"
+    },
     "settings": "Settings",
     "headerTools": {
       "title": "Form tools",
@@ -89,6 +114,10 @@
       "components": "Components"
     },
     "layout": {
+      "rootLayoutPanelTitle": "Layout properties",
+      "rootLayoutPanel": {
+        "open": "Edit layout properties"
+      },
       "columnPanelTitle": "Column {{column}}",
       "columnPanel": {
         "jsonTitleColumn": "Import column JSON",
@@ -194,6 +223,8 @@
       "componentsMessage": "You have unsaved component changes. Save them before leaving this tab, or discard your changes.",
       "columnPanelMessage": "You have unsaved column changes. Save them to keep your edits, or discard to revert.",
       "columnPanelSave": "Save column changes",
+      "rootLayoutPanelMessage": "You have unsaved layout property changes. Save them to keep your edits, or discard to revert.",
+      "rootLayoutPanelSave": "Save layout changes",
       "componentRowPanelMessage": "You have unsaved component changes. Save them to keep your edits, or discard to revert.",
       "componentRowPanelSave": "Save component changes",
       "save": "Save changes",
@@ -234,6 +265,8 @@
     "formModalSizeLg": "Large",
     "formModalSizeXl": "Extra large",
     "formModalSize2xl": "Full width",
+    "formModalSizeInherited": "Using {{size}} from {{breakpoint}}",
+    "formModalSizeResetOverride": "Reset to inherited",
     "formModalShowHeader": "Show modal header",
     "formModalFlushContent": "Flush modal content (no padding)",
     "formModalFooter": "Modal footer",

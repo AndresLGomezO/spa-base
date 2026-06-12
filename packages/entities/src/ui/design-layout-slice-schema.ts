@@ -356,6 +356,9 @@ function formsSliceToUiConfig(
       ...baseUi.forms,
       presentation,
       ...(data.modalSize ? { modalSize: data.modalSize } : {}),
+      ...(data.modalSizeByBreakpoint
+        ? { modalSizeByBreakpoint: data.modalSizeByBreakpoint }
+        : {}),
       ...(data.modalChrome ? { modalChrome: data.modalChrome } : {}),
       ...(data.modalFooterLayout
         ? { modalFooterLayout: data.modalFooterLayout }
@@ -484,6 +487,9 @@ export function entityUiConfigToPutOverrideInput(
   const formsPayload = {
     ...(ui.forms.presentation ? { presentation: ui.forms.presentation } : {}),
     ...(ui.forms.modalSize ? { modalSize: ui.forms.modalSize } : {}),
+    ...(ui.forms.modalSizeByBreakpoint
+      ? { modalSizeByBreakpoint: ui.forms.modalSizeByBreakpoint }
+      : {}),
     ...(ui.forms.modalChrome ? { modalChrome: ui.forms.modalChrome } : {}),
     ...(ui.forms.modalFooterLayout
       ? { modalFooterLayout: ui.forms.modalFooterLayout }
@@ -563,6 +569,9 @@ export function validatePutEntityUiOverrideInput(
               : {}),
             ...(input.forms.modalSize
               ? { modalSize: input.forms.modalSize }
+              : {}),
+            ...(input.forms.modalSizeByBreakpoint
+              ? { modalSizeByBreakpoint: input.forms.modalSizeByBreakpoint }
               : {}),
             ...(input.forms.modalChrome
               ? { modalChrome: input.forms.modalChrome }

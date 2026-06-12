@@ -49,6 +49,8 @@ import { useFormDesignerPreview } from "./use-form-designer-preview";
 import {
   type ColumnPanelPendingAction,
   type FormDesignerUnsavedReason,
+  type RootLayoutPanelPendingAction,
+  type RootLayoutPanelSession,
   isColumnPanelDirty,
 } from "./form-designer-column-panel-session";
 import type { ComponentColumnRef } from "./form-designer-component-column-ref";
@@ -77,6 +79,12 @@ import { FormDesignerComponentRowPanelHeaderMenu } from "./FormDesignerComponent
 import { FormDesignerLayoutColumnPanel } from "./FormDesignerLayoutColumnPanel";
 import { FormDesignerLayoutColumnPanelFooter } from "./FormDesignerLayoutColumnPanelFooter";
 import { FormDesignerLayoutColumnPanelHeaderMenu } from "./FormDesignerLayoutColumnPanelHeaderMenu";
+import { FormDesignerRootLayoutPanel } from "./FormDesignerRootLayoutPanel";
+import { FormDesignerRootLayoutPanelFooter } from "./FormDesignerRootLayoutPanelFooter";
+import {
+  DEFAULT_MOBILE_PREVIEW_DEVICE_ID,
+  type MobilePreviewDeviceId,
+} from "./mobile-preview-device-presets";
 
 function withFormDesignerContext(
   value: FormDesignerContextValue,
@@ -205,12 +213,14 @@ export function FormDesignerProvider({
     isOpen: isThirdRailOpen,
   } = useThirdRail();
   const editor = useEntityFormLayoutEditor(entityName);
-  const preview = useFormDesignerPreview(editor);
   const definition = useEntityDefinition(entityName);
   const canSave = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
   const [searchParams, setSearchParams] = useSearchParams();
   const [previewBreakpoint, setPreviewBreakpoint] =
     useState<LayoutPreviewBreakpoint>(DEFAULT_LAYOUT_PREVIEW_BREAKPOINT);
+  const preview = useFormDesignerPreview(editor, previewBreakpoint);
+  const [previewMobileDeviceId, setPreviewMobileDeviceId] =
+    useState<MobilePreviewDeviceId>(DEFAULT_MOBILE_PREVIEW_DEVICE_ID);
   const [savedSettingsBaseline, setSavedSettingsBaseline] =
     useState<FormDesignerSettingsSnapshot>(() =>
       readSettingsSnapshotFromDefinition(definition),
@@ -236,18 +246,24 @@ export function FormDesignerProvider({
     useState<FormDesignerUnsavedReason | null>(null);
   const [pendingColumnAction, setPendingColumnAction] =
     useState<ColumnPanelPendingAction | null>(null);
+  const [pendingRootLayoutAction, setPendingRootLayoutAction] =
+    useState<RootLayoutPanelPendingAction | null>(null);
   const [columnPanelSession, setColumnPanelSession] = useState<{
     readonly columnIndex: number;
     readonly baseline: FormDesignerLayoutSnapshot;
   } | null>(null);
+  const [rootLayoutPanelSession, setRootLayoutPanelSession] =
+    useState<RootLayoutPanelSession | null>(null);
   const [overlayPreviewOpen, setOverlayPreviewOpen] = useState(false);
   const [componentRowPanelSession, setComponentRowPanelSession] =
     useState<ComponentRowPanelSession | null>(null);
   const [pendingComponentRowAction, setPendingComponentRowAction] =
     useState<ComponentRowPanelPendingAction | null>(null);
   const columnPanelSessionRef = useRef(columnPanelSession);
+  const rootLayoutPanelSessionRef = useRef(rootLayoutPanelSession);
   const componentRowPanelSessionRef = useRef(componentRowPanelSession);
   columnPanelSessionRef.current = columnPanelSession;
+  rootLayoutPanelSessionRef.current = rootLayoutPanelSession;
   componentRowPanelSessionRef.current = componentRowPanelSession;
   const editorRef = useRef(editor);
   editorRef.current = editor;
@@ -330,6 +346,18 @@ export function FormDesignerProvider({
       currentLayoutSnapshot,
     );
   }, [columnPanelSession, currentLayoutSnapshot]);
+
+  const rootLayoutPanelOpen = rootLayoutPanelSession != null;
+
+  const rootLayoutPanelIsDirty = useMemo(() => {
+    if (!rootLayoutPanelSession) {
+      return false;
+    }
+    return isColumnPanelDirty(
+      rootLayoutPanelSession.baseline,
+      currentLayoutSnapshot,
+    );
+  }, [rootLayoutPanelSession, currentLayoutSnapshot]);
 
   const currentScopedLayoutSnapshot = useMemo(() => {
     if (!componentRowPanelSession) {
@@ -776,19 +804,161 @@ export function FormDesignerProvider({
     [t, updateThirdRail],
   );
 
+  const closeRootLayoutPanel = useCallback(() => {
+    rootLayoutPanelSessionRef.current = null;
+    setRootLayoutPanelSession(null);
+    closeThirdRail();
+  }, [closeThirdRail]);
+
+  const guardRootLayoutPanelClose = useCallback((): void | boolean => {
+    const session = rootLayoutPanelSessionRef.current;
+    if (!session) {
+      return;
+    }
+    const currentEditor = editorRef.current;
+    const current = readLayoutSnapshot(
+      currentEditor.presentation === "wizard"
+        ? currentEditor.wizard.shellLayout
+        : currentEditor.plainLayout,
+    );
+    if (isColumnPanelDirty(session.baseline, current)) {
+      setPendingRootLayoutAction({ type: "close" });
+      setUnsavedReason("rootLayoutPanel");
+      setUnsavedChangesOpen(true);
+      return false;
+    }
+    setRootLayoutPanelSession(null);
+  }, []);
+
+  const openRootLayoutPanelAt = useCallback(() => {
+    const currentEditor = editorRef.current;
+    const baseline = readLayoutSnapshot(
+      currentEditor.presentation === "wizard"
+        ? currentEditor.wizard.shellLayout
+        : currentEditor.plainLayout,
+    );
+    const session = { baseline };
+    rootLayoutPanelSessionRef.current = session;
+    setRootLayoutPanelSession(session);
+    const contextValue = contextValueRef.current;
+    if (!contextValue) {
+      return;
+    }
+    openThirdRail({
+      title: t("formDesigner.layout.rootLayoutPanelTitle"),
+      body: withFormDesignerContext(
+        contextValue,
+        <FormDesignerRootLayoutPanel />,
+      ),
+      footer: withFormDesignerContext(
+        contextValue,
+        <FormDesignerRootLayoutPanelFooter />,
+      ),
+      resizeContent: true,
+      onClose: guardRootLayoutPanelClose,
+    });
+  }, [guardRootLayoutPanelClose, openThirdRail, t]);
+
+  const executePendingRootLayoutAction = useCallback(
+    (action: RootLayoutPanelPendingAction) => {
+      if (action.type === "close") {
+        closeRootLayoutPanel();
+        return;
+      }
+      closeRootLayoutPanel();
+      openColumnPanelAt(action.columnIndex);
+    },
+    [closeRootLayoutPanel, openColumnPanelAt],
+  );
+
   const executePendingColumnAction = useCallback(
     (action: ColumnPanelPendingAction) => {
       if (action.type === "close") {
         closeColumnPanel();
         return;
       }
+      if (action.type === "openRootLayout") {
+        columnPanelSessionRef.current = null;
+        setColumnPanelSession(null);
+        openRootLayoutPanelAt();
+        return;
+      }
       switchColumnPanel(action.columnIndex);
     },
-    [closeColumnPanel, switchColumnPanel],
+    [closeColumnPanel, openRootLayoutPanelAt, switchColumnPanel],
   );
+
+  const requestCloseRootLayoutPanel = useCallback(() => {
+    if (!rootLayoutPanelSession) {
+      closeThirdRail();
+      return;
+    }
+    if (rootLayoutPanelIsDirty) {
+      setPendingRootLayoutAction({ type: "close" });
+      setUnsavedReason("rootLayoutPanel");
+      setUnsavedChangesOpen(true);
+      return;
+    }
+    closeRootLayoutPanel();
+  }, [
+    closeRootLayoutPanel,
+    closeThirdRail,
+    rootLayoutPanelIsDirty,
+    rootLayoutPanelSession,
+  ]);
+
+  const requestRootLayoutPanel = useCallback(() => {
+    if (rootLayoutPanelSession) {
+      requestCloseRootLayoutPanel();
+      return;
+    }
+
+    if (columnPanelSession) {
+      if (columnPanelIsDirty) {
+        setPendingColumnAction({ type: "openRootLayout" });
+        setUnsavedReason("columnPanel");
+        setUnsavedChangesOpen(true);
+        return;
+      }
+      columnPanelSessionRef.current = null;
+      setColumnPanelSession(null);
+    }
+
+    openRootLayoutPanelAt();
+  }, [
+    columnPanelIsDirty,
+    columnPanelSession,
+    openRootLayoutPanelAt,
+    requestCloseRootLayoutPanel,
+    rootLayoutPanelSession,
+  ]);
+
+  const commitRootLayoutPanelSave = useCallback(() => {
+    if (!rootLayoutPanelSession) {
+      closeRootLayoutPanel();
+      return;
+    }
+    const savedSession = {
+      baseline: currentLayoutSnapshot,
+    };
+    rootLayoutPanelSessionRef.current = savedSession;
+    setRootLayoutPanelSession(savedSession);
+    closeRootLayoutPanel();
+  }, [closeRootLayoutPanel, currentLayoutSnapshot, rootLayoutPanelSession]);
 
   const requestLayoutColumnPanel = useCallback(
     (columnIndex: number) => {
+      if (rootLayoutPanelSession) {
+        if (rootLayoutPanelIsDirty) {
+          setPendingRootLayoutAction({ type: "openColumn", columnIndex });
+          setUnsavedReason("rootLayoutPanel");
+          setUnsavedChangesOpen(true);
+          return;
+        }
+        rootLayoutPanelSessionRef.current = null;
+        setRootLayoutPanelSession(null);
+      }
+
       if (!columnPanelSession) {
         openColumnPanelAt(columnIndex);
         return;
@@ -808,6 +978,8 @@ export function FormDesignerProvider({
       columnPanelIsDirty,
       columnPanelSession,
       openColumnPanelAt,
+      rootLayoutPanelIsDirty,
+      rootLayoutPanelSession,
       switchColumnPanel,
     ],
   );
@@ -863,6 +1035,24 @@ export function FormDesignerProvider({
       return;
     }
 
+    if (unsavedReason === "rootLayoutPanel") {
+      const action = pendingRootLayoutAction;
+      if (!action || !rootLayoutPanelSession) {
+        setUnsavedChangesOpen(false);
+        return;
+      }
+      const savedSession = {
+        baseline: currentLayoutSnapshot,
+      };
+      rootLayoutPanelSessionRef.current = savedSession;
+      setRootLayoutPanelSession(savedSession);
+      setUnsavedChangesOpen(false);
+      setPendingRootLayoutAction(null);
+      setUnsavedReason(null);
+      executePendingRootLayoutAction(action);
+      return;
+    }
+
     if (unsavedReason === "componentRowPanel") {
       const action = pendingComponentRowAction;
       if (
@@ -914,11 +1104,14 @@ export function FormDesignerProvider({
     currentScopedLayoutSnapshot,
     executePendingColumnAction,
     executePendingComponentRowAction,
+    executePendingRootLayoutAction,
     markComponentsDirty,
     navigateToTab,
     pendingColumnAction,
     pendingComponentRowAction,
+    pendingRootLayoutAction,
     pendingTabId,
+    rootLayoutPanelSession,
     saveComponents,
     saveLayout,
     saveSettings,
@@ -943,6 +1136,25 @@ export function FormDesignerProvider({
       setPendingColumnAction(null);
       setUnsavedReason(null);
       executePendingColumnAction(action);
+      return;
+    }
+
+    if (unsavedReason === "rootLayoutPanel") {
+      const action = pendingRootLayoutAction;
+      const session = rootLayoutPanelSession;
+      if (!action || !session) {
+        setUnsavedChangesOpen(false);
+        return;
+      }
+      applyLayoutSnapshotToEditor(
+        editor,
+        session.baseline,
+        editor.presentation,
+      );
+      setUnsavedChangesOpen(false);
+      setPendingRootLayoutAction(null);
+      setUnsavedReason(null);
+      executePendingRootLayoutAction(action);
       return;
     }
 
@@ -995,10 +1207,13 @@ export function FormDesignerProvider({
     editor,
     executePendingColumnAction,
     executePendingComponentRowAction,
+    executePendingRootLayoutAction,
     navigateToTab,
     pendingColumnAction,
     pendingComponentRowAction,
+    pendingRootLayoutAction,
     pendingTabId,
+    rootLayoutPanelSession,
     unsavedReason,
     unsavedTabId,
   ]);
@@ -1008,6 +1223,7 @@ export function FormDesignerProvider({
     setPendingTabId(null);
     setUnsavedTabId(null);
     setPendingColumnAction(null);
+    setPendingRootLayoutAction(null);
     setPendingComponentRowAction(null);
     setUnsavedReason(null);
   }, []);
@@ -1029,6 +1245,8 @@ export function FormDesignerProvider({
       canSave,
       previewBreakpoint,
       setPreviewBreakpoint,
+      previewMobileDeviceId,
+      setPreviewMobileDeviceId,
       activeTabId,
       settingsIsDirty,
       layoutIsDirty,
@@ -1053,6 +1271,11 @@ export function FormDesignerProvider({
       requestLayoutColumnPanel,
       requestCloseLayoutColumnPanel,
       commitColumnPanelSave,
+      rootLayoutPanelOpen,
+      rootLayoutPanelIsDirty,
+      requestRootLayoutPanel,
+      requestCloseRootLayoutPanel,
+      commitRootLayoutPanelSave,
       openLayoutColumnPanel,
       overlayPreviewOpen,
       openOverlayPreview,
@@ -1082,6 +1305,7 @@ export function FormDesignerProvider({
       columnPanelSession,
       commitColumnPanelSave,
       commitComponentRowPanelSave,
+      commitRootLayoutPanelSave,
       componentRowPanelIsDirty,
       confirmUnsavedDiscard,
       confirmUnsavedSave,
@@ -1101,9 +1325,14 @@ export function FormDesignerProvider({
       requestComponentColumnPanel,
       requestComponentRowPanel,
       previewBreakpoint,
+      previewMobileDeviceId,
       requestCloseLayoutColumnPanel,
+      requestCloseRootLayoutPanel,
       requestLayoutColumnPanel,
+      requestRootLayoutPanel,
       requestTabChange,
+      rootLayoutPanelIsDirty,
+      rootLayoutPanelOpen,
       saveComponents,
       saveLayout,
       saveSettings,
@@ -1143,6 +1372,34 @@ export function FormDesignerProvider({
     columnPanelSession,
     currentLayoutSnapshot,
     isThirdRailOpen,
+    updateThirdRail,
+  ]);
+
+  useEffect(() => {
+    if (!rootLayoutPanelSession || !isThirdRailOpen) {
+      return;
+    }
+
+    const contextValue = contextValueRef.current;
+    if (!contextValue) {
+      return;
+    }
+
+    updateThirdRail({
+      body: withFormDesignerContext(
+        contextValue,
+        <FormDesignerRootLayoutPanel />,
+      ),
+      footer: withFormDesignerContext(
+        contextValue,
+        <FormDesignerRootLayoutPanelFooter />,
+      ),
+    });
+  }, [
+    currentLayoutSnapshot,
+    isThirdRailOpen,
+    rootLayoutPanelIsDirty,
+    rootLayoutPanelSession,
     updateThirdRail,
   ]);
 

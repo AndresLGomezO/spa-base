@@ -14,11 +14,19 @@ import {
   resolveFormModalChrome,
   resolveFormModalFooterLayout,
   resolveFormModalSize,
+  resolveFormModalSizeByBreakpointFromDefinition,
+  resolveFormModalSizeEditBreakpoint,
+  resolveFormModalSizeForPreviewBreakpoint,
+  resolveFormModalSizeInheritanceSource,
+  isFormModalSizeExplicitAtBreakpoint,
+  serializeFormModalSizeByBreakpoint,
   resolveFormPresentation,
   resolvePlainFormLayout,
   resolveWizardForm,
   type FormModalChrome,
+  type FormModalPreviewBreakpoint,
   type FormModalSize,
+  type FormModalSizeByBreakpoint,
   type FormPresentation,
   type DesignLayoutSliceData,
   type FormsSliceData,
@@ -65,6 +73,10 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   const [modalSize, setModalSize] = useState<FormModalSize>(() =>
     resolveFormModalSize(definition),
   );
+  const [modalSizeByBreakpoint, setModalSizeByBreakpoint] =
+    useState<FormModalSizeByBreakpoint>(() =>
+      resolveFormModalSizeByBreakpointFromDefinition(definition),
+    );
   const [modalChrome, setModalChrome] = useState<FormModalChrome>(() =>
     resolveFormModalChrome(definition),
   );
@@ -95,6 +107,9 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   useEffect(() => {
     setPresentation(resolveFormPresentation(definition));
     setModalSize(resolveFormModalSize(definition));
+    setModalSizeByBreakpoint(
+      resolveFormModalSizeByBreakpointFromDefinition(definition),
+    );
     setModalChrome(resolveFormModalChrome(definition));
     setModalFooterLayout(resolveFormModalFooterLayout(definition));
     const resolvedPlain = resolvePlainFormLayout(definition).layout;
@@ -237,6 +252,82 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     }));
   }, []);
 
+  const modalSizeFormsState = useMemo(
+    () => ({
+      modalSize,
+      modalSizeByBreakpoint,
+    }),
+    [modalSize, modalSizeByBreakpoint],
+  );
+
+  const getResolvedModalSizeAtBreakpoint = useCallback(
+    (previewBreakpoint: FormModalPreviewBreakpoint) =>
+      resolveFormModalSizeForPreviewBreakpoint(
+        modalSizeFormsState,
+        previewBreakpoint,
+      ),
+    [modalSizeFormsState],
+  );
+
+  const isModalSizeExplicitAtBreakpoint = useCallback(
+    (previewBreakpoint: FormModalPreviewBreakpoint) =>
+      isFormModalSizeExplicitAtBreakpoint(
+        modalSizeFormsState,
+        previewBreakpoint,
+      ),
+    [modalSizeFormsState],
+  );
+
+  const getModalSizeInheritanceSource = useCallback(
+    (previewBreakpoint: FormModalPreviewBreakpoint) =>
+      resolveFormModalSizeInheritanceSource(
+        modalSizeFormsState,
+        previewBreakpoint,
+      ),
+    [modalSizeFormsState],
+  );
+
+  const setModalSizeForPreviewBreakpoint = useCallback(
+    (previewBreakpoint: FormModalPreviewBreakpoint, size: FormModalSize) => {
+      const breakpoint = resolveFormModalSizeEditBreakpoint(previewBreakpoint);
+      if (breakpoint === "xl") {
+        setModalSize(size);
+        setModalSizeByBreakpoint((current) => {
+          if (current.xl === undefined) {
+            return current;
+          }
+          const { xl: _removed, ...rest } = current;
+          return rest;
+        });
+        return;
+      }
+
+      setModalSizeByBreakpoint((current) => ({
+        ...current,
+        [breakpoint]: size,
+      }));
+    },
+    [],
+  );
+
+  const clearModalSizeOverride = useCallback(
+    (previewBreakpoint: FormModalPreviewBreakpoint) => {
+      const breakpoint = resolveFormModalSizeEditBreakpoint(previewBreakpoint);
+      if (breakpoint === "xl") {
+        return;
+      }
+
+      setModalSizeByBreakpoint((current) => {
+        if (current[breakpoint] === undefined) {
+          return current;
+        }
+        const { [breakpoint]: _removed, ...rest } = current;
+        return rest;
+      });
+    },
+    [],
+  );
+
   const save = useCallback(async (): Promise<string | null> => {
     setIsSaving(true);
     try {
@@ -263,9 +354,17 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
         modalChrome.contentPadding !== "default" ||
         definition.ui.forms.modalChrome != null;
 
+      const persistedModalSizeByBreakpoint = serializeFormModalSizeByBreakpoint(
+        modalSize,
+        modalSizeByBreakpoint,
+      );
+
       const formsPayload = {
         presentation,
         modalSize,
+        ...(persistedModalSizeByBreakpoint
+          ? { modalSizeByBreakpoint: persistedModalSizeByBreakpoint }
+          : {}),
         ...(shouldPersistModalChrome ? { modalChrome } : {}),
         ...(modalFooterLayout ? { modalFooterLayout } : {}),
         ...(presentation === "wizard"
@@ -293,6 +392,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     modalChrome,
     modalFooterLayout,
     modalSize,
+    modalSizeByBreakpoint,
     plainLayout,
     presentation,
     queryClient,
@@ -315,9 +415,17 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
       modalChrome.contentPadding !== "default" ||
       definition.ui.forms.modalChrome != null;
 
+    const persistedModalSizeByBreakpoint = serializeFormModalSizeByBreakpoint(
+      modalSize,
+      modalSizeByBreakpoint,
+    );
+
     return {
       presentation,
       modalSize,
+      ...(persistedModalSizeByBreakpoint
+        ? { modalSizeByBreakpoint: persistedModalSizeByBreakpoint }
+        : {}),
       ...(shouldPersistModalChrome ? { modalChrome } : {}),
       ...(modalFooterLayout ? { modalFooterLayout } : {}),
       ...(presentation === "wizard"
@@ -329,6 +437,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     modalChrome,
     modalFooterLayout,
     modalSize,
+    modalSizeByBreakpoint,
     plainLayout,
     presentation,
     wizard,
@@ -342,6 +451,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
       if (formsData.modalSize) {
         setModalSize(formsData.modalSize);
       }
+      setModalSizeByBreakpoint(formsData.modalSizeByBreakpoint ?? {});
       if (formsData.modalChrome) {
         setModalChrome(formsData.modalChrome);
       } else {
@@ -372,6 +482,13 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     defaultFieldPath,
     modalSize,
     setModalSize,
+    modalSizeByBreakpoint,
+    setModalSizeByBreakpoint,
+    setModalSizeForPreviewBreakpoint,
+    clearModalSizeOverride,
+    getResolvedModalSizeAtBreakpoint,
+    isModalSizeExplicitAtBreakpoint,
+    getModalSizeInheritanceSource,
     modalChrome,
     setShowModalHeader,
     setFlushModalContent,

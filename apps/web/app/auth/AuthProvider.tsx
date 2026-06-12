@@ -14,6 +14,8 @@ import type {
   LoginResult,
   SelectTenantResult,
 } from "./auth.types";
+import { mergeTenantSessionFields } from "./merge-tenant-session-fields";
+import { waitForTenantJwtClaim } from "./wait-for-tenant-jwt-claim";
 import { selectTenantSession, syncAuthSession } from "../lib/auth-session";
 import {
   GoogleAuthProvider,
@@ -54,11 +56,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
         };
       }
 
-      await firebaseUser.getIdToken(true);
+      await waitForTenantJwtClaim(firebaseUser, tenantId);
       const syncResult = await syncAuthSession(firebaseUser);
 
       if (!syncResult.ok || !syncResult.user) {
         if (syncResult.transient) {
+          dispatch({
+            type: "TENANT_SELECTED",
+            ...mergeTenantSessionFields(tenantId, selectResult, {
+              tenantId: null,
+              availableTenants: [],
+              tenantOptions: [],
+              permissions: [],
+              isSuperAdmin: false,
+              tenantRoleNames: [],
+              activeTenantName: null,
+              tenantAppearance: null,
+            }),
+          });
           return { success: true };
         }
         return {
@@ -69,14 +84,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
       dispatch({
         type: "TENANT_SELECTED",
-        tenantId: syncResult.user.tenantId ?? tenantId,
-        availableTenants: syncResult.user.availableTenants,
-        tenantOptions: syncResult.user.tenantOptions,
-        permissions: syncResult.user.permissions,
-        isSuperAdmin: syncResult.user.isSuperAdmin,
-        tenantRoleNames: syncResult.user.tenantRoleNames,
-        activeTenantName: syncResult.user.activeTenantName,
-        tenantAppearance: syncResult.user.tenantAppearance,
+        ...mergeTenantSessionFields(tenantId, selectResult, syncResult.user),
       });
 
       return { success: true };

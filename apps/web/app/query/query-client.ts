@@ -12,6 +12,20 @@ export const queryClient = new QueryClient({
 
 export const entityCatalogQueryKey = ["entities"] as const;
 
+export function entityCatalogQueryKeyForTenant(
+  tenantId: string,
+): readonly ["entities", string] {
+  return ["entities", tenantId];
+}
+
+export const entityCategoriesQueryKey = ["entity-categories"] as const;
+
+export function entityCategoriesQueryKeyForTenant(
+  tenantId: string,
+): readonly ["entity-categories", string] {
+  return ["entity-categories", tenantId];
+}
+
 export function entityListQueryKey(
   entityName: string,
   queryConfig?: unknown,

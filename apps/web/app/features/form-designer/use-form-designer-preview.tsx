@@ -9,7 +9,10 @@ import type {
 } from "@repo/ui-builder-core";
 import { Form } from "@repo/ui";
 import { buildInitialValues } from "@repo/ui-builder";
-import { resolveEffectiveFormModalContentPadding } from "@repo/entities";
+import {
+  resolveEffectiveFormModalContentPadding,
+  type FormModalPreviewBreakpoint,
+} from "@repo/entities";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { applyFormFieldChange } from "../../components/entity/form-relation-display-cache";
@@ -26,6 +29,7 @@ export type UseFormDesignerPreviewResult = ReturnType<
 
 export function useFormDesignerPreview(
   editor: UseEntityFormLayoutEditorResult,
+  previewBreakpoint: FormModalPreviewBreakpoint,
 ) {
   const { t, i18n } = useTranslation("common");
   const { getDefinition } = useEntityCatalog();
@@ -340,7 +344,7 @@ export function useFormDesignerPreview(
     previewFooter,
     formPreviewContent,
     previewFormScrollable,
-    modalSize: editor.modalSize,
+    modalSize: editor.getResolvedModalSizeAtBreakpoint(previewBreakpoint),
     showHeader: editor.modalChrome.showHeader ?? true,
     usesDesignedModalFooter,
     plainPreviewContext,

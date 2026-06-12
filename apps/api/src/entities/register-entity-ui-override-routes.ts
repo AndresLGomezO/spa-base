@@ -57,6 +57,9 @@ function mergeUiOverridePutInput(
     incomingForms?.presentation ?? existingForms?.presentation;
   const wizard = incomingForms?.wizard ?? existingForms?.wizard;
   const modalSize = incomingForms?.modalSize ?? existingForms?.modalSize;
+  const modalSizeByBreakpoint =
+    incomingForms?.modalSizeByBreakpoint ??
+    existingForms?.modalSizeByBreakpoint;
   const modalChrome = incomingForms?.modalChrome ?? existingForms?.modalChrome;
   const modalFooterLayout =
     incomingForms?.modalFooterLayout ?? existingForms?.modalFooterLayout;
@@ -68,6 +71,7 @@ function mergeUiOverridePutInput(
     createLayout ||
     editLayout ||
     modalSize ||
+    modalSizeByBreakpoint ||
     modalChrome ||
     modalFooterLayout
       ? {
@@ -75,6 +79,7 @@ function mergeUiOverridePutInput(
           ...(plainLayout ? { layout: plainLayout } : {}),
           ...(wizard ? { wizard } : {}),
           ...(modalSize ? { modalSize } : {}),
+          ...(modalSizeByBreakpoint ? { modalSizeByBreakpoint } : {}),
           ...(modalChrome ? { modalChrome } : {}),
           ...(modalFooterLayout ? { modalFooterLayout } : {}),
           ...(createLayout && !plainLayout ? { create: createLayout } : {}),
@@ -232,6 +237,9 @@ export async function registerEntityUiOverrideRoutes(
         | undefined;
       const modalSize =
         overrideForms?.modalSize ?? serialized.ui.forms.modalSize;
+      const modalSizeByBreakpoint =
+        overrideForms?.modalSizeByBreakpoint ??
+        serialized.ui.forms.modalSizeByBreakpoint;
       const modalChrome =
         overrideForms?.modalChrome ?? serialized.ui.forms.modalChrome;
       const modalFooterLayout =
@@ -242,6 +250,7 @@ export async function registerEntityUiOverrideRoutes(
         ...(presentation ? { presentation } : {}),
         ...(wizard ? { wizard } : {}),
         ...(modalSize ? { modalSize } : {}),
+        ...(modalSizeByBreakpoint ? { modalSizeByBreakpoint } : {}),
         ...(modalChrome ? { modalChrome } : {}),
         ...(modalFooterLayout
           ? { modalFooterLayout: modalFooterLayout as UiLayoutDocument }

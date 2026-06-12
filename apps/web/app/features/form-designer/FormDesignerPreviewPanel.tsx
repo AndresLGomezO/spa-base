@@ -8,10 +8,12 @@ import { useCallback, type ReactNode } from "react";
 import { useTranslation } from "react-i18next";
 
 import { getEntityLabel } from "../../entities/entity-catalog";
-import { FormModal } from "../../components/forms/FormModal";
+import { DesignedEntityFormModal } from "../../components/forms/DesignedEntityFormModal";
 import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import type { FormDesignerTabId } from "./form-designer-tabs";
 import { FormDesignerColumnChrome } from "./FormDesignerColumnChrome";
+import { FormDesignerMobileDeviceSelect } from "./FormDesignerMobileDeviceSelect";
+import { MobileDevicePreviewFrame } from "./MobileDevicePreviewFrame";
 import { getFormDesignerOuterLayout } from "./form-designer-layout";
 import { FormDesignerFormPreviewBody } from "./FormDesignerFormPreviewBody";
 import {
@@ -22,6 +24,7 @@ import { FormDesignerComponentsPreviewBody } from "./FormDesignerComponentsPrevi
 import { useOptionalFormDesignerComponentsSession } from "./FormDesignerComponentsSession";
 import { FormDesignerProductionPreviewBody } from "./FormDesignerProductionPreviewContent";
 import { useFormDesigner } from "./form-designer-context";
+import { resolveMobilePreviewDevice } from "./mobile-preview-device-presets";
 
 interface FormDesignerPreviewPanelProps {
   readonly previewTabId: FormDesignerTabId;
@@ -37,6 +40,7 @@ function FormDesignerPreviewPanelContent({
     editor,
     preview,
     previewBreakpoint,
+    previewMobileDeviceId,
     requestLayoutColumnPanel,
     requestCloseLayoutColumnPanel,
     selectedLayoutColumnIndex,
@@ -142,17 +146,30 @@ function FormDesignerPreviewPanelContent({
       resolvedModalFooter
     );
 
+  const mobilePreviewDevice =
+    previewBreakpoint === "base"
+      ? resolveMobilePreviewDevice(previewMobileDeviceId)
+      : null;
+  const simulateMobileViewport = mobilePreviewDevice != null;
+  const isWizardMobilePreview =
+    simulateMobileViewport && editor.presentation === "wizard";
+
   const modalContent =
     previewTabId === "layout" ? (
-      <FormDesignerFormPreviewBody rootColumnWrapper={rootColumnWrapper} />
+      <FormDesignerFormPreviewBody
+        rootColumnWrapper={rootColumnWrapper}
+        simulateMobileViewport={simulateMobileViewport}
+      />
     ) : previewTabId === "components" ? (
       <FormDesignerComponentsPreviewBody />
     ) : (
-      <FormDesignerProductionPreviewBody />
+      <FormDesignerProductionPreviewBody
+        simulateMobileViewport={simulateMobileViewport}
+      />
     );
 
   const inlineFormPreview = (
-    <FormModal
+    <DesignedEntityFormModal
       variant="inline"
       open
       scrollable={
@@ -161,19 +178,38 @@ function FormDesignerPreviewPanelContent({
             preview.previewContentPadding !== "none"
           : preview.previewFormScrollable
       }
+      embeddedLayout={simulateMobileViewport ? "fill" : undefined}
       onClose={() => undefined}
       title={t("entity.createTitle", { entity: entityLabel })}
-      size={preview.modalSize}
+      forms={{
+        modalSize: editor.modalSize,
+        modalSizeByBreakpoint: editor.modalSizeByBreakpoint,
+      }}
+      simulatedBreakpoint={previewBreakpoint}
       showHeader={preview.showHeader}
       showCloseButton={preview.showHeader}
       contentPadding={preview.previewContentPadding}
       footer={modalFooter}
     >
-      {modalContent}
-    </FormModal>
+      {isWizardMobilePreview ? (
+        <div className="flex min-h-0 w-full min-w-0 flex-1 flex-col">
+          {modalContent}
+        </div>
+      ) : (
+        modalContent
+      )}
+    </DesignedEntityFormModal>
   );
 
-  const viewport = (
+  const viewport = mobilePreviewDevice ? (
+    <MobileDevicePreviewFrame
+      device={mobilePreviewDevice}
+      breakpoint={previewBreakpoint}
+      className="h-full"
+    >
+      {inlineFormPreview}
+    </MobileDevicePreviewFrame>
+  ) : (
     <LayoutPreviewViewport breakpoint={previewBreakpoint} className="h-full">
       {inlineFormPreview}
     </LayoutPreviewViewport>
@@ -185,10 +221,15 @@ function FormDesignerPreviewPanelContent({
 
   return (
     <div className="bg-card border-border flex flex-col gap-3 rounded-lg border p-4">
-      <Text className="text-muted-foreground text-sm">
-        {t("entity.viewSettings.preview")}
-      </Text>
-      <div className="min-h-96">{viewport}</div>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <Text className="text-muted-foreground text-sm">
+          {t("entity.viewSettings.preview")}
+        </Text>
+        {previewBreakpoint === "base" ? (
+          <FormDesignerMobileDeviceSelect />
+        ) : null}
+      </div>
+      <div className="min-h-96 overflow-auto py-2">{viewport}</div>
     </div>
   );
 }

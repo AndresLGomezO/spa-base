@@ -20,8 +20,19 @@ export { IconButton, type IconButtonProps } from "./icon-button/IconButton";
 export { Logo, type LogoProps } from "./logo/Logo";
 export {
   Modal,
+  MODAL_PANEL_SIZE_CLASSES,
+  MODAL_RESPONSIVE_BREAKPOINT_ORDER,
+  buildModalResponsiveSizeClassName,
+  buildModalResponsivePanelClassName,
+  buildUniformModalResponsiveSizes,
+  isModalFullscreenAtBase,
+  MODAL_OVERLAY_CONTENT_FULLSCREEN_CLASSES,
   type ModalContentPadding,
+  type ModalEmbeddedLayout,
   type ModalProps,
+  type ModalResponsiveBreakpoint,
+  type ModalResponsiveSizes,
+  type ModalSize,
   type ModalVariant,
 } from "./modal/Modal";
 export {
