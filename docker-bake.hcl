@@ -22,8 +22,8 @@ target "api" {
   dockerfile = "apps/api/Dockerfile"
   context    = "."
   tags       = ["${REGISTRY}/api:${TAG}", "${REGISTRY}/api:latest"]
-  cache-from = ["type=gha,scope=api"]
-  cache-to   = ["type=gha,scope=api,mode=max"]
+  cache-from = ["type=gha,scope=api-v2"]
+  cache-to   = ["type=gha,scope=api-v2,mode=max"]
 }
 
 target "worker-aggregation" {

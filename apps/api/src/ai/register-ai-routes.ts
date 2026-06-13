@@ -1,10 +1,8 @@
 import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 
-import {
-  AI_FEATURE_RUN_PERMISSION,
-  AI_TASK_ROUTES,
-  submitAiChatRequestSchema,
-} from "@repo/ai-engine";
+import { AI_FEATURE_RUN_PERMISSION } from "@repo/ai-engine/permissions";
+import { submitAiChatRequestSchema } from "@repo/ai-engine/schemas";
+import { AI_TASK_ROUTES } from "@repo/ai-engine/task-routes";
 import type { AiJobRepository } from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";

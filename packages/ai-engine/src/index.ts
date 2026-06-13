@@ -7,7 +7,6 @@ export {
   AI_UI_BUILDER_PERMISSIONS,
   type AiFeature,
 } from "./permissions.js";
-export { processAiChat } from "./process-ai-chat.js";
 export {
   AI_JOBS_COLLECTION,
   aiChatOutputSchema,
@@ -28,8 +27,3 @@ export {
   type SubmitAiChatRequest,
 } from "./schemas/ai-chat.schema.js";
 export { AI_TASK_ROUTES } from "./task-routes.js";
-export {
-  extractResponseText,
-  generateChatAnswer,
-  type VertexAiConfig,
-} from "./vertex-ai.client.js";
