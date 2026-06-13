@@ -14,7 +14,30 @@ import { useItemListDesigner } from "./item-list-designer-context";
 import { useOptionalItemListDesignerStructureSession } from "./ItemListDesignerStructureSession";
 import { ItemListDesignerMobileDeviceSelect } from "./ItemListDesignerMobileDeviceSelect";
 import { ItemListDesignerPreviewThemeSelect } from "./ItemListDesignerPreviewThemeSelect";
-import { useItemListDesignerExpandablePreviewRendererProps } from "./use-item-list-designer-layout-preview-wrappers";
+import {
+  useItemListDesignerCardPreviewRendererProps,
+  useItemListDesignerExpandablePreviewRendererProps,
+} from "./use-item-list-designer-layout-preview-wrappers";
+
+function ItemListDesignerCardPreviewBody() {
+  const { i18n } = useTranslation("common");
+  const { getDefinition } = useEntityCatalog();
+  const { editor, previewItem } = useItemListDesigner();
+  const cardLayoutRendererProps = useItemListDesignerCardPreviewRendererProps();
+
+  return (
+    <DockedCardLayoutPreview
+      enabled
+      layout={editor.layout}
+      definition={editor.definition}
+      previewItem={previewItem}
+      title=""
+      locale={i18n.language}
+      getDefinition={getDefinition}
+      {...cardLayoutRendererProps}
+    />
+  );
+}
 
 function ItemListDesignerExpandableTablePreviewBody() {
   const { i18n } = useTranslation("common");
@@ -96,6 +119,10 @@ export function ItemListDesignerPreviewPanel() {
           />
         );
       case "card":
+        if (structureSession) {
+          return <ItemListDesignerCardPreviewBody />;
+        }
+
         return (
           <DockedCardLayoutPreview
             enabled

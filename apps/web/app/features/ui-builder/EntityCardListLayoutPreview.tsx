@@ -13,9 +13,10 @@ import {
 } from "../../components/entity/entity-card-list-grid.js";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
+import type { LayoutPreviewRendererChromeProps } from "./EntityExpandableTableLayoutPreview.js";
 import { layoutPreviewActions } from "./layout-preview-actions.js";
 
-export interface EntityCardListLayoutPreviewProps {
+export interface EntityCardListLayoutPreviewProps extends LayoutPreviewRendererChromeProps {
   readonly layout: UiLayoutDocument;
   readonly definition: SerializableEntityDefinition;
   readonly previewItem: Record<string, unknown> | null;
@@ -40,6 +41,9 @@ export function EntityCardListLayoutPreview({
   getDefinition,
   getOneToManyCellValue,
   compact = false,
+  rowWrapper,
+  rootColumnWrapper,
+  nestedColumnWrapper,
 }: EntityCardListLayoutPreviewProps) {
   const { t } = useTranslation("common");
   const previewActions = useMemo(
@@ -93,6 +97,9 @@ export function EntityCardListLayoutPreview({
             layout={layout}
             context={previewContext}
             actions={previewActions}
+            rowWrapper={rowWrapper}
+            rootColumnWrapper={rootColumnWrapper}
+            nestedColumnWrapper={nestedColumnWrapper}
           />
         ))}
       </div>

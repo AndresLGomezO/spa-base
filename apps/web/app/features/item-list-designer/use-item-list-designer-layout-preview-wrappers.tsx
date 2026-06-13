@@ -257,6 +257,12 @@ function useLayoutPreviewWrappers(
   };
 }
 
+export function useItemListDesignerCardPreviewRendererProps():
+  | ItemListDesignerLayoutPreviewRendererProps
+  | undefined {
+  return useLayoutPreviewWrappers({ kind: "listItem" }, true);
+}
+
 export function useItemListDesignerExpandablePreviewRendererProps(): {
   readonly highlightedGroupedColumnIndex: number | null;
   readonly getCellLayoutRendererProps: (
