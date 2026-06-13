@@ -1,7 +1,9 @@
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { SerializableEntityDefinition } from "@repo/entities";
+import type { TFunction } from "i18next";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
+import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
 import { resolveEntityCellValue } from "../../components/entity/resolve-entity-cell-value";
 import { resolveEntityFieldPath } from "../../components/entity/resolve-entity-field-path";
 import {
@@ -37,6 +39,7 @@ export function createEntityLayoutRenderContext(options: {
   readonly usePreviewPlaceholder?: boolean;
   /** When true, empty field values show the field label as sample text. */
   readonly usePreviewSamples?: boolean;
+  readonly t?: TFunction;
 }): LayoutRenderContext {
   const {
     item,
@@ -48,6 +51,7 @@ export function createEntityLayoutRenderContext(options: {
     routeParams,
     usePreviewPlaceholder = false,
     usePreviewSamples = false,
+    t,
   } = options;
 
   const resolvePreviewSampleValue = usePreviewSamples
@@ -125,6 +129,26 @@ export function createEntityLayoutRenderContext(options: {
         textSize={presentation?.textSize}
       />
     ),
+    metricWidgetRenderer:
+      getDefinition && t
+        ? createMetricWidgetRenderer({
+            getDefinition: (entityName) =>
+              getDefinition(entityName) as EntityCatalogEntry | undefined,
+            t,
+            buildLayoutContext: (nestedDefinition, nestedItem) =>
+              createEntityLayoutRenderContext({
+                item: nestedItem,
+                definition: nestedDefinition,
+                locale,
+                getDefinition,
+                listFilters,
+                routeParams,
+                usePreviewPlaceholder,
+                usePreviewSamples,
+                t,
+              }),
+          })
+        : undefined,
     lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
   };
 }

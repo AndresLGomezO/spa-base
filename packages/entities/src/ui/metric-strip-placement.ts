@@ -18,12 +18,6 @@ export function metricStripColumnCount(
   return layout?.root.columnCount ?? DEFAULT_METRIC_STRIP_COLUMN_COUNT;
 }
 
-export function metricStripLayoutFromView(
-  layout: UiLayoutDocument | undefined,
-): UiLayoutDocument {
-  return layout ?? createDefaultMetricStripLayout();
-}
-
 /** True when any strip column has at least one row (gates strip visibility). */
 export function metricStripHasContent(
   layout: UiLayoutDocument | undefined,

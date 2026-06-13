@@ -14,6 +14,8 @@ import {
 } from "./entity-ui-override-schema.js";
 import type { EntityUiOverrideForms } from "./form-config.js";
 import { normalizeEntityViews } from "./normalize-entity-views.js";
+import { metricWidgetsSchema } from "./metric-widget-types.js";
+import type { MetricWidgetDefinition } from "./metric-widget-types.js";
 import type {
   EntityUIConfig,
   ExpandableTableViewConfig,
@@ -28,7 +30,7 @@ export type DesignLayoutSurface =
   | "forms"
   | "mainPage"
   | "recordDetail"
-  | "metricStrip";
+  | "metricsRowDesigner";
 
 export interface DesignLayoutSliceError {
   readonly path: string;
@@ -77,9 +79,10 @@ const recordDetailSliceDataSchema = z
   })
   .strict();
 
-const metricStripSliceDataSchema = z
+const metricsRowDesignerSliceDataSchema = z
   .object({
-    metricStripLayout: uiLayoutDocumentSchema,
+    metricWidgets: metricWidgetsSchema,
+    metricRowLayout: uiLayoutDocumentSchema,
   })
   .strict();
 
@@ -107,8 +110,9 @@ export interface RecordDetailSliceData {
   readonly recordDetail: UiLayoutDocument;
 }
 
-export interface MetricStripSliceData {
-  readonly metricStripLayout: UiLayoutDocument;
+export interface MetricsRowDesignerSliceData {
+  readonly metricWidgets: readonly MetricWidgetDefinition[];
+  readonly metricRowLayout: UiLayoutDocument;
 }
 
 export type DesignLayoutSliceData =
@@ -116,7 +120,7 @@ export type DesignLayoutSliceData =
   | FormsSliceData
   | MainPageSliceData
   | RecordDetailSliceData
-  | MetricStripSliceData;
+  | MetricsRowDesignerSliceData;
 
 const designLayoutSliceEnvelopeSchema = z
   .object({
@@ -126,7 +130,7 @@ const designLayoutSliceEnvelopeSchema = z
       "forms",
       "mainPage",
       "recordDetail",
-      "metricStrip",
+      "metricsRowDesigner",
     ]),
     version: z.literal(1),
     data: z.unknown(),
@@ -152,8 +156,8 @@ function dataSchemaForSurface(surface: DesignLayoutSurface): z.ZodType {
       return mainPageSliceDataSchema;
     case "recordDetail":
       return recordDetailSliceDataSchema;
-    case "metricStrip":
-      return metricStripSliceDataSchema;
+    case "metricsRowDesigner":
+      return metricsRowDesignerSliceDataSchema;
   }
 }
 
@@ -205,8 +209,9 @@ export function createDesignLayoutSliceSkeleton(
     recordDetail: {
       recordDetail: emptyLayout,
     },
-    metricStrip: {
-      metricStripLayout: emptyLayout,
+    metricsRowDesigner: {
+      metricWidgets: [],
+      metricRowLayout: emptyLayout,
     },
   };
 
@@ -290,9 +295,6 @@ function listSliceToUiConfig(
     name: tableView?.name ?? "default",
     fields: data.table.fields,
     showActions: data.table.showActions,
-    ...(tableView?.type === "table" && tableView.metricStripLayout
-      ? { metricStripLayout: tableView.metricStripLayout }
-      : {}),
     ...(tableView?.type === "table" && tableView.filters
       ? { filters: tableView.filters }
       : {}),
@@ -402,30 +404,13 @@ function sliceDataToUiConfig(
         ...baseUi,
         recordDetailLayout: (data as RecordDetailSliceData).recordDetail,
       };
-    case "metricStrip": {
-      const tableView = baseUi.views.find((view) => view.type === "table");
-      const metricStripLayout = (data as MetricStripSliceData)
-        .metricStripLayout;
-      const views = baseUi.views.map((view) => {
-        if (view.type !== "table") {
-          return view;
-        }
-        return {
-          ...view,
-          metricStripLayout,
-        };
-      });
-      if (!tableView) {
-        views.unshift({
-          type: "table",
-          name: "default",
-          fields: Object.keys(baseUi.fields ?? {}).length
-            ? Object.keys(baseUi.fields!)
-            : ["name"],
-          metricStripLayout,
-        });
-      }
-      return { ...baseUi, views };
+    case "metricsRowDesigner": {
+      const slice = data as MetricsRowDesignerSliceData;
+      return {
+        ...baseUi,
+        metricWidgets: slice.metricWidgets,
+        metricRowLayout: slice.metricRowLayout,
+      };
     }
   }
 }
@@ -514,6 +499,8 @@ export function entityUiConfigToPutOverrideInput(
     ...(ui.listItem ? { listItem: ui.listItem } : {}),
     ...(ui.mainPageLayout ? { mainPage: ui.mainPageLayout } : {}),
     ...(recordDetail ? { recordDetail } : {}),
+    ...(ui.metricWidgets ? { metricWidgets: ui.metricWidgets } : {}),
+    ...(ui.metricRowLayout ? { metricRowLayout: ui.metricRowLayout } : {}),
     ...(hasFormsPayload ? { forms: formsPayload } : {}),
   };
 }
@@ -562,6 +549,10 @@ export function validatePutEntityUiOverrideInput(
     ...(input.listItem ? { listItem: input.listItem } : {}),
     ...(input.mainPage ? { mainPageLayout: input.mainPage } : {}),
     ...(input.recordDetail ? { recordDetailLayout: input.recordDetail } : {}),
+    ...(input.metricWidgets ? { metricWidgets: input.metricWidgets } : {}),
+    ...(input.metricRowLayout
+      ? { metricRowLayout: input.metricRowLayout }
+      : {}),
     ...(input.forms
       ? {
           forms: {

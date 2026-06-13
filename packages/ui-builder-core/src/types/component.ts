@@ -9,6 +9,7 @@ export type UiComponentKind =
   | "numeric"
   | "badge"
   | "metric-kpi"
+  | "metric-widget"
   | "form-field"
   | "entity-field-selector"
   | "form-section"
@@ -58,6 +59,14 @@ export interface MetricKpiComponentConfig {
   readonly metricDefinitionId: string;
   readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly label?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface MetricWidgetComponentConfig {
+  readonly kind: "metric-widget";
+  readonly entityName: string;
+  readonly widgetId: string;
   readonly label?: string;
   readonly styles?: readonly StyleRule[];
 }
@@ -244,6 +253,7 @@ export type UiComponentConfig =
   | FieldUiComponentConfig
   | IconComponentConfig
   | MetricKpiComponentConfig
+  | MetricWidgetComponentConfig
   | FormFieldComponentConfig
   | EntityFieldSelectorComponentConfig
   | FormSectionComponentConfig
@@ -282,6 +292,12 @@ export function isMetricKpiComponent(
   config: UiComponentConfig,
 ): config is MetricKpiComponentConfig {
   return config.kind === "metric-kpi";
+}
+
+export function isMetricWidgetComponent(
+  config: UiComponentConfig,
+): config is MetricWidgetComponentConfig {
+  return config.kind === "metric-widget";
 }
 
 export function isIconComponent(

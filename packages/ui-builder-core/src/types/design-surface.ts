@@ -12,7 +12,8 @@ export type DesignSurface =
   | "formWizardShell"
   | "formWizardStep"
   | "formModalFooter"
-  | "metricStrip";
+  | "metricStrip"
+  | "metricRow";
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -22,6 +23,11 @@ const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "numeric",
   "badge",
   "metric-kpi",
+];
+
+const METRIC_ROW_KINDS: readonly UiComponentKind[] = [
+  ...LIST_ITEM_KINDS,
+  "metric-widget",
 ];
 
 const MAIN_PAGE_KINDS: readonly UiComponentKind[] = [
@@ -103,6 +109,8 @@ export function componentKindsForSurface(
     case "tableRowExpand":
     case "metricStrip":
       return LIST_ITEM_KINDS;
+    case "metricRow":
+      return METRIC_ROW_KINDS;
     case "mainPage":
       return MAIN_PAGE_KINDS;
     case "recordDetail":

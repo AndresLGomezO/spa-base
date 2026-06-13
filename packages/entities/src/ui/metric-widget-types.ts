@@ -1,3 +1,7 @@
+import {
+  uiLayoutDocumentSchema,
+  type UiLayoutDocument,
+} from "@repo/ui-builder-core";
 import { z } from "zod";
 
 export const metricBindingSourceSchema = z.discriminatedUnion("type", [
@@ -37,3 +41,19 @@ export const metricWidgetBindingsSchema = z
   .strict();
 
 export type MetricWidgetBindings = z.infer<typeof metricWidgetBindingsSchema>;
+
+export interface MetricWidgetDefinition {
+  readonly id: string;
+  readonly name: string;
+  readonly layout: UiLayoutDocument;
+}
+
+export const metricWidgetDefinitionSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    name: z.string().trim().min(1),
+    layout: uiLayoutDocumentSchema,
+  })
+  .strict();
+
+export const metricWidgetsSchema = z.array(metricWidgetDefinitionSchema);

@@ -5,10 +5,12 @@ import {
 import { z } from "zod";
 
 import type { EntityUiOverrideForms } from "./form-config.js";
+import { metricWidgetsSchema } from "./metric-widget-types.js";
 import type {
   EntityUiOverrideRecord,
   LegacyEntityListViewType,
 } from "./types.js";
+import type { MetricWidgetDefinition } from "./metric-widget-types.js";
 
 export const ENTITY_UI_OVERRIDES_COLLECTION = "entity_ui_overrides";
 
@@ -25,7 +27,7 @@ const wizardStepConfigSchema = z
 const wizardFormConfigSchema = z
   .object({
     shellLayout: uiLayoutDocumentSchema,
-    steps: z.array(wizardStepConfigSchema).min(1),
+    steps: z.array(wizardStepConfigSchema),
   })
   .strict();
 
@@ -71,6 +73,8 @@ export const entityUiOverrideRecordSchema = z
     recordDetail: uiLayoutDocumentSchema.optional(),
     /** @deprecated Use recordDetail; read-only alias for migration */
     detail: uiLayoutDocumentSchema.optional(),
+    metricWidgets: metricWidgetsSchema.optional(),
+    metricRowLayout: uiLayoutDocumentSchema.optional(),
     forms: uiOverrideFormsSchema.optional(),
     updatedAt: z.string().datetime(),
   })
@@ -85,6 +89,8 @@ export const putEntityUiOverrideInputSchema = z
     listItem: uiLayoutDocumentSchema.optional(),
     mainPage: uiLayoutDocumentSchema.optional(),
     recordDetail: uiLayoutDocumentSchema.optional(),
+    metricWidgets: metricWidgetsSchema.optional(),
+    metricRowLayout: uiLayoutDocumentSchema.optional(),
     forms: uiOverrideFormsSchema.optional(),
   })
   .strict();
@@ -95,6 +101,8 @@ export interface PutEntityUiOverrideInput {
   readonly listItem?: UiLayoutDocument;
   readonly mainPage?: UiLayoutDocument;
   readonly recordDetail?: UiLayoutDocument;
+  readonly metricWidgets?: readonly MetricWidgetDefinition[];
+  readonly metricRowLayout?: UiLayoutDocument;
   readonly forms?: EntityUiOverrideForms;
 }
 

@@ -40,13 +40,11 @@ import { resolveViewComponent } from "./view-component-registry";
 import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
 import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
-import {
-  metricStripHasContent,
-  metricStripLayoutFromView,
-} from "@repo/entities";
+import { metricStripHasContent } from "@repo/entities";
 import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { createEntityMainPageRenderContext } from "../../features/ui-builder/create-entity-main-page-render-context";
+import { createDefaultMetricRowLayout } from "../../features/ui-builder/create-default-metric-row-layout";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -351,18 +349,11 @@ export function EntityPage({ entityName }: EntityPageProps) {
     [searchParams],
   );
 
-  const tableView = useMemo(
-    () => definition.ui.views.find((view) => view.type === "table"),
-    [definition.ui.views],
+  const metricRowLayout = useMemo(
+    () => definition.ui.metricRowLayout ?? createDefaultMetricRowLayout(),
+    [definition.ui.metricRowLayout],
   );
-  const metricStripLayout = useMemo(
-    () =>
-      metricStripLayoutFromView(
-        tableView?.type === "table" ? tableView.metricStripLayout : undefined,
-      ),
-    [tableView],
-  );
-  const showMetricsStrip = metricStripHasContent(metricStripLayout);
+  const showMetricsStrip = metricStripHasContent(metricRowLayout);
   const mainPageLayout = definition.ui.mainPageLayout;
 
   const listViewProps = useMemo(
@@ -399,7 +390,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
         locale: i18n.language,
         canCreate: permissions.canCreate,
         entityDefinition: definition,
-        metricStripLayout,
+        metricRowLayout,
         listFilters: filters,
         routeParams,
         toolbar: {
@@ -437,7 +428,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
       filtersOpen,
       i18n.language,
       listViewProps,
-      metricStripLayout,
+      metricRowLayout,
       openCreateFormModal,
       permissions.canCreate,
       routeParams,
@@ -498,7 +489,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
 
       {showMetricsStrip ? (
         <EntityViewMetricsStrip
-          stripLayout={metricStripLayout}
+          rowLayout={metricRowLayout}
           entityDefinition={definition}
           context={{ listFilters: filters, routeParams }}
           locale={i18n.language}

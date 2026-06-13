@@ -894,6 +894,8 @@ export async function putEntityUiOverride(
     readonly listItem?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly mainPage?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly recordDetail?: import("@repo/ui-builder-core").UiLayoutDocument;
+    readonly metricWidgets?: readonly import("@repo/entities").MetricWidgetDefinition[];
+    readonly metricRowLayout?: import("@repo/ui-builder-core").UiLayoutDocument;
     readonly forms?: {
       readonly presentation?: "plain" | "wizard";
       readonly modalSize?: "sm" | "md" | "lg" | "xl" | "2xl";

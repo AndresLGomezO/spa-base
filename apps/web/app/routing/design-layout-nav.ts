@@ -47,7 +47,7 @@ function compareEntityLabels(left: string, right: string): number {
 }
 
 function useDesignLayoutEntityLinks(
-  kind: Exclude<DesignLayoutKind, "metrics">,
+  kind: DesignLayoutKind,
 ): readonly NavLinkConfig[] {
   const { permissions, isSuperAdmin } = useAuth();
   const { items } = useEntityCatalog();
@@ -119,14 +119,10 @@ function useDesignLayoutMetricsEntityLinks(): readonly NavLinkConfig[] {
         ) {
           return false;
         }
-        const tableView = definition.ui.views.find(
-          (view) => view.type === "table",
-        );
         return entityHasActiveMetrics(
           definition.name,
           definitions,
-          tableView?.type === "table" &&
-            metricStripHasContent(tableView.metricStripLayout),
+          metricStripHasContent(definition.ui.metricRowLayout),
         );
       })
       .map((definition) => ({

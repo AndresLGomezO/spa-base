@@ -9,6 +9,7 @@ import {
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { metricStripHasContent } from "./metric-strip-placement.js";
+import { metricWidgetsSchema } from "./metric-widget-types.js";
 import { migrateListPresentation } from "./migrate-list-presentation.js";
 import type { EntityUIConfig } from "./types.js";
 
@@ -75,7 +76,6 @@ const tableViewConfigSchema = z
     type: z.literal("table"),
     ...viewConfigSharedSchema,
     showActions: z.boolean().optional(),
-    metricStripLayout: uiLayoutDocumentSchema.optional(),
   })
   .strict();
 
@@ -123,7 +123,7 @@ const wizardStepConfigSchema = z
 const wizardFormConfigSchema = z
   .object({
     shellLayout: uiLayoutDocumentSchema,
-    steps: z.array(wizardStepConfigSchema).min(1),
+    steps: z.array(wizardStepConfigSchema),
   })
   .strict()
   .superRefine((wizard, ctx) => {
@@ -206,6 +206,8 @@ const entityUISchema = z
       .strict()
       .optional(),
     fields: z.record(z.string(), fieldUISchema).optional(),
+    metricWidgets: metricWidgetsSchema.optional(),
+    metricRowLayout: uiLayoutDocumentSchema.optional(),
   })
   .strict();
 
@@ -310,17 +312,6 @@ export function validateEntityUIConfig(
         `view "${view.name}"`,
       );
     }
-    if (
-      view.type === "table" &&
-      view.metricStripLayout &&
-      metricStripHasContent(view.metricStripLayout as UiLayoutDocument)
-    ) {
-      assertLayoutFieldPaths(
-        layoutEntityShape,
-        view.metricStripLayout as UiLayoutDocument,
-        `view "${view.name}" metricStripLayout`,
-      );
-    }
     if (view.type === "expandableTable") {
       for (const column of view.columns) {
         assertLayoutFieldPaths(
@@ -376,6 +367,29 @@ export function validateEntityUIConfig(
 
   if (parsed.detail) {
     assertFieldRefs(entity, parsed.detail.fields, "detail");
+  }
+
+  if (parsed.metricWidgets) {
+    for (const [index, widget] of parsed.metricWidgets.entries()) {
+      if (metricStripHasContent(widget.layout as UiLayoutDocument)) {
+        assertLayoutFieldPaths(
+          layoutEntityShape,
+          widget.layout as UiLayoutDocument,
+          `metricWidgets[${index}] (${widget.name})`,
+        );
+      }
+    }
+  }
+
+  if (
+    parsed.metricRowLayout &&
+    metricStripHasContent(parsed.metricRowLayout as UiLayoutDocument)
+  ) {
+    assertLayoutFieldPaths(
+      layoutEntityShape,
+      parsed.metricRowLayout as UiLayoutDocument,
+      "metricRowLayout",
+    );
   }
 
   if (parsed.fields) {

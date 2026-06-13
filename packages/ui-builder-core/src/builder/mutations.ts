@@ -32,6 +32,14 @@ export function createDefaultComponent(
     };
   }
 
+  if (kind === "metric-widget") {
+    return {
+      kind: "metric-widget",
+      entityName: "",
+      widgetId: "",
+    };
+  }
+
   if (kind === "form-field") {
     return { kind: "form-field", fieldPath };
   }

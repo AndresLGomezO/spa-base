@@ -159,9 +159,6 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       name: tableView?.name ?? "default",
       fields: resolvedTableFields,
       showActions: tableShowActions,
-      ...(tableView?.type === "table" && tableView.metricStripLayout
-        ? { metricStripLayout: tableView.metricStripLayout }
-        : {}),
       ...(tableView?.type === "table" && tableView.filters
         ? { filters: tableView.filters }
         : {}),

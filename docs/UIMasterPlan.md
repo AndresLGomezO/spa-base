@@ -19,7 +19,8 @@ Visual layout builder packages and documentation index.
 
 ## App integration
 
-- `apps/web/app/features/ui-builder/` — entity card view adapter and `EntityCardLayoutBuilder`
+- `apps/web/app/features/ui-builder/` — entity layout render context and shared layout preview helpers
+- `apps/web/app/features/metrics-row-designer/` — metrics row designer (widgets + row layout tabs)
 - `EntityLayoutCardView` — list card rendering
 - **Design layout** (sidebar) — `/settings/design-layout/{list|page|forms}/:entityName` (primary configuration surface)
 - Entity list header **Design layout** link — `/settings/design-layout/list/:entityName` (same editor; requires `entityUiOverride.update`)

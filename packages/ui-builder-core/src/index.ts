@@ -62,6 +62,7 @@ export type {
   DataSource,
   FieldUiComponentConfig,
   MetricKpiComponentConfig,
+  MetricWidgetComponentConfig,
   MetricBindingSource,
   TextComponentConfig,
   ImageComponentConfig,
@@ -81,6 +82,7 @@ export type {
 
 export {
   isMetricKpiComponent,
+  isMetricWidgetComponent,
   isFieldUiComponent,
   isIconComponent,
   isEntityFieldSelectorComponent,

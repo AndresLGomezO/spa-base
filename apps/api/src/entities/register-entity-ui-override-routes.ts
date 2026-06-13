@@ -9,6 +9,7 @@ import {
   serializeEntityDefinition,
   type EntityUIConfig,
   type EntityUiOverrideRecord,
+  type MetricWidgetDefinition,
   type PutEntityUiOverrideInput,
   type UiLayoutDocument,
   type WizardFormConfig,
@@ -95,6 +96,18 @@ function mergeUiOverridePutInput(
       ? { mainPage: incoming.mainPage ?? existing?.mainPage }
       : {}),
     ...(recordDetail ? { recordDetail } : {}),
+    ...((incoming.metricWidgets ?? existing?.metricWidgets)
+      ? {
+          metricWidgets:
+            incoming.metricWidgets ?? existing?.metricWidgets ?? undefined,
+        }
+      : {}),
+    ...((incoming.metricRowLayout ?? existing?.metricRowLayout)
+      ? {
+          metricRowLayout:
+            incoming.metricRowLayout ?? existing?.metricRowLayout ?? undefined,
+        }
+      : {}),
     ...(forms ? { forms } : {}),
   } as PutEntityUiOverrideInput;
 }
@@ -286,6 +299,18 @@ export async function registerEntityUiOverrideRoutes(
               detailLayout: parsedBody.data.recordDetail as UiLayoutDocument,
             }
           : {}),
+        ...(parsedBody.data.metricWidgets
+          ? {
+              metricWidgets: parsedBody.data
+                .metricWidgets as readonly MetricWidgetDefinition[],
+            }
+          : {}),
+        ...(parsedBody.data.metricRowLayout
+          ? {
+              metricRowLayout: parsedBody.data
+                .metricRowLayout as UiLayoutDocument,
+            }
+          : {}),
       });
 
       try {
@@ -324,6 +349,12 @@ export async function registerEntityUiOverrideRoutes(
               : {}),
             ...(parsedBody.data.recordDetail
               ? { recordDetail: parsedBody.data.recordDetail }
+              : {}),
+            ...(parsedBody.data.metricWidgets
+              ? { metricWidgets: parsedBody.data.metricWidgets }
+              : {}),
+            ...(parsedBody.data.metricRowLayout
+              ? { metricRowLayout: parsedBody.data.metricRowLayout }
               : {}),
             ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
           } as PutEntityUiOverrideInput),

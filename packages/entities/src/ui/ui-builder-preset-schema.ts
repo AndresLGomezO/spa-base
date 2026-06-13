@@ -37,6 +37,7 @@ export const designSurfaceSchema = z.enum([
   "formWizardStep",
   "formModalFooter",
   "metricStrip",
+  "metricRow",
 ]);
 
 export const uiBuilderPresetRecordSchema = z

@@ -11,6 +11,7 @@ import type {
   WizardStepConfig,
   WizardStepStatus,
 } from "./form-config.js";
+import type { MetricWidgetDefinition } from "./metric-widget-types.js";
 export type FieldComponentType =
   | "input"
   | "number"
@@ -69,8 +70,6 @@ export interface TableViewConfig extends ViewConfigBase {
   readonly type: "table";
   /** Show row actions column (view/edit/share/delete). Default true when omitted. */
   readonly showActions?: boolean;
-  /** Full metrics strip layout (columns, rows, slots, styles). */
-  readonly metricStripLayout?: UiLayoutDocument;
 }
 
 export interface CardViewConfig extends ViewConfigBase {
@@ -112,6 +111,8 @@ export type {
   WizardStepStatus,
 };
 
+export type { MetricWidgetDefinition } from "./metric-widget-types.js";
+
 export interface EntityUiOverride {
   readonly entityName: string;
   readonly views: readonly ViewConfig[];
@@ -121,6 +122,8 @@ export interface EntityUiOverride {
   readonly recordDetail?: UiLayoutDocument;
   /** @deprecated Use recordDetail; read-only alias for migration */
   readonly detail?: UiLayoutDocument;
+  readonly metricWidgets?: readonly MetricWidgetDefinition[];
+  readonly metricRowLayout?: UiLayoutDocument;
   readonly forms?: EntityUiOverrideForms;
   readonly updatedAt: string;
 }
@@ -189,6 +192,10 @@ export interface EntityUIConfig {
   readonly detail?: DetailConfig;
   readonly nav?: EntityNavConfig;
   readonly fields?: Readonly<Record<string, FieldUIConfig>>;
+  /** Reusable metric widget layouts for metrics row composition. */
+  readonly metricWidgets?: readonly MetricWidgetDefinition[];
+  /** Designed metrics row layout (entity-level strip composition). */
+  readonly metricRowLayout?: UiLayoutDocument;
 }
 
 export interface SerializableFieldMeta {

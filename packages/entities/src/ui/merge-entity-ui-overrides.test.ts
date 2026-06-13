@@ -7,6 +7,7 @@ import {
 import { mergeEntityUiOverrides } from "./merge-entity-ui-overrides.js";
 import { normalizeListItemLayout } from "./normalize-list-item-layout.js";
 import type { SerializableEntityDefinition } from "./types.js";
+import type { EntityUiOverrideRecord } from "./types.js";
 
 const baseDefinition: SerializableEntityDefinition = {
   name: "account",
@@ -82,6 +83,42 @@ describe("mergeEntityUiOverrides", () => {
     expect(merged.ui.mainPageLayout).toEqual(mainPage);
     expect(merged.ui.recordDetailLayout).toEqual(recordDetail);
     expect(merged.ui.forms.create.layout).toEqual(createLayout);
+  });
+
+  it("merges metricWidgets from override", () => {
+    const widgetLayout = createDefaultUiLayout(["name"]);
+    const merged = mergeEntityUiOverrides(baseDefinition, {
+      entityName: "account",
+      updatedAt: new Date().toISOString(),
+      views: [{ type: "table", name: "default", fields: ["name"] }],
+      metricWidgets: [
+        {
+          id: "widget-1",
+          name: "Widget 1",
+          layout: widgetLayout,
+        },
+      ],
+    } as EntityUiOverrideRecord);
+
+    expect(merged.ui.metricWidgets).toEqual([
+      {
+        id: "widget-1",
+        name: "Widget 1",
+        layout: widgetLayout,
+      },
+    ]);
+  });
+
+  it("merges metricRowLayout from override", () => {
+    const rowLayout = createDefaultUiLayout(["name"]);
+    const merged = mergeEntityUiOverrides(baseDefinition, {
+      entityName: "account",
+      updatedAt: new Date().toISOString(),
+      views: [{ type: "table", name: "default", fields: ["name"] }],
+      metricRowLayout: rowLayout,
+    } as EntityUiOverrideRecord);
+
+    expect(merged.ui.metricRowLayout).toEqual(rowLayout);
   });
 
   it("applies forms.modalSize", () => {

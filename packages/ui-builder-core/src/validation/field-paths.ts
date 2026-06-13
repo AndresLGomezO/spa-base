@@ -1,5 +1,8 @@
 import type { UiLayoutDocument } from "../types/layout.js";
-import { isMetricKpiComponent } from "../types/component.js";
+import {
+  isMetricKpiComponent,
+  isMetricWidgetComponent,
+} from "../types/component.js";
 import type { UiComponentConfig } from "../types/component.js";
 import { listDataSourcePaths } from "../resolver/data-source.js";
 import type { ColumnNode, RowNode } from "../types/layout.js";
@@ -88,7 +91,7 @@ function resolveRelationFieldName(
 function collectComponentPaths(
   component: UiComponentConfig,
 ): readonly string[] {
-  if (isMetricKpiComponent(component)) {
+  if (isMetricKpiComponent(component) || isMetricWidgetComponent(component)) {
     return [];
   }
 

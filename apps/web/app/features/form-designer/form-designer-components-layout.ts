@@ -307,29 +307,50 @@ export function createComponentsLayoutBinding(
   layout: UiLayoutDocument,
   setLayout: (layout: UiLayoutDocument) => void,
 ): ComponentsLayoutBinding {
-  return {
-    layout,
-    setLayout,
+  let currentLayout = layout;
+
+  const applyLayout = (next: UiLayoutDocument) => {
+    currentLayout = next;
+    setLayout(next);
+  };
+
+  const binding: ComponentsLayoutBinding = {
+    get layout() {
+      return currentLayout;
+    },
+    setLayout: applyLayout,
     removeRow: (rowRef: ComponentRowRef) => {
-      setLayout(removeRowAt(layout, rowRef.locator, rowRef.rowId));
+      applyLayout(removeRowAt(currentLayout, rowRef.locator, rowRef.rowId));
     },
     moveRow: (rowRef: ComponentRowRef, direction: -1 | 1) => {
-      setLayout(moveRowAt(layout, rowRef.locator, rowRef.rowId, direction));
+      applyLayout(
+        moveRowAt(currentLayout, rowRef.locator, rowRef.rowId, direction),
+      );
     },
     updateComponent: (rowRef, component) => {
-      setLayout(
-        updateComponentRowAt(layout, rowRef.locator, rowRef.rowId, component),
+      applyLayout(
+        updateComponentRowAt(
+          currentLayout,
+          rowRef.locator,
+          rowRef.rowId,
+          component,
+        ),
       );
     },
     updateRowMeta: (rowRef, patch) => {
-      setLayout(
-        updateComponentRowMetaAt(layout, rowRef.locator, rowRef.rowId, patch),
+      applyLayout(
+        updateComponentRowMetaAt(
+          currentLayout,
+          rowRef.locator,
+          rowRef.rowId,
+          patch,
+        ),
       );
     },
     updateNestedRowMeta: (rowRef, patch) => {
-      setLayout(
+      applyLayout(
         updateNestedLayoutRowMetaAt(
-          layout,
+          currentLayout,
           rowRef.locator,
           rowRef.rowId,
           patch,
@@ -337,9 +358,9 @@ export function createComponentsLayoutBinding(
       );
     },
     setNestedRowColumnCount: (rowRef, columnCount) => {
-      setLayout(
+      applyLayout(
         setNestedColumnCount(
-          layout,
+          currentLayout,
           rowRef.locator.columnIndex,
           rowRef.rowId,
           columnCount,
@@ -347,14 +368,14 @@ export function createComponentsLayoutBinding(
       );
     },
     updateLayoutMotion: (motion) => {
-      setLayout(updateLayoutMeta(layout, { motion }));
+      applyLayout(updateLayoutMeta(currentLayout, { motion }));
     },
     updateNestedColumn: (rowRef, nestedColumnIndex, patch) => {
       if (rowRef.locator.scope !== "root") {
         return;
       }
 
-      let next = layout;
+      let next = currentLayout;
       if ("widthPercent" in patch) {
         next = setNestedColumnWidthPercent(
           next,
@@ -394,10 +415,10 @@ export function createComponentsLayoutBinding(
           },
         );
       }
-      setLayout(next);
+      applyLayout(next);
     },
     updateRootColumn: (columnIndex, patch) => {
-      let next = layout;
+      let next = currentLayout;
       if ("widthPercent" in patch) {
         next = setRootColumnWidthPercent(next, columnIndex, patch.widthPercent);
       }
@@ -414,12 +435,14 @@ export function createComponentsLayoutBinding(
       if ("displayFrom" in patch || "displayTo" in patch) {
         next = updateRootColumnDisplayRange(next, columnIndex, patch);
       }
-      setLayout(next);
+      applyLayout(next);
     },
     updateRootLayoutStyles: (styles) => {
-      setLayout(updateRootNodeStyles(layout, styles));
+      applyLayout(updateRootNodeStyles(currentLayout, styles));
     },
   };
+
+  return binding;
 }
 
 export function resolveComponentsLayoutBinding(

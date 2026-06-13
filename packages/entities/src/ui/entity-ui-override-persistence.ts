@@ -14,6 +14,8 @@ export const persistedEntityUiOverrideSchema = z
     listItemLayoutJson: z.string().min(2).optional(),
     mainPageLayoutJson: z.string().min(2).optional(),
     recordDetailLayoutJson: z.string().min(2).optional(),
+    metricWidgetsJson: z.string().min(2).optional(),
+    metricRowLayoutJson: z.string().min(2).optional(),
     formsJson: z.string().min(2).optional(),
   })
   .strict();
@@ -51,6 +53,12 @@ export function toPersistedUiOverride(
     ...(recordDetail
       ? { recordDetailLayoutJson: JSON.stringify(recordDetail) }
       : {}),
+    ...(record.metricWidgets
+      ? { metricWidgetsJson: JSON.stringify(record.metricWidgets) }
+      : {}),
+    ...(record.metricRowLayout
+      ? { metricRowLayoutJson: JSON.stringify(record.metricRowLayout) }
+      : {}),
     ...(record.forms ? { formsJson: JSON.stringify(record.forms) } : {}),
   });
 }
@@ -84,6 +92,22 @@ function toDomainRecord(
           recordDetail: parseJsonField(
             data.recordDetailLayoutJson,
             "recordDetailLayoutJson",
+          ),
+        }
+      : {}),
+    ...(data.metricWidgetsJson
+      ? {
+          metricWidgets: parseJsonField(
+            data.metricWidgetsJson,
+            "metricWidgetsJson",
+          ),
+        }
+      : {}),
+    ...(data.metricRowLayoutJson
+      ? {
+          metricRowLayout: parseJsonField(
+            data.metricRowLayoutJson,
+            "metricRowLayoutJson",
           ),
         }
       : {}),

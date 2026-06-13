@@ -25,7 +25,8 @@ A hand-written JSON file that satisfies this spec should render the same as a la
 | `forms.wizard` | Forms | Wizard shell + steps (when `presentation` is `"wizard"`) |
 | `forms.create` / `forms.edit` | Forms | Legacy per-mode layouts; still read if `forms.layout` is absent |
 | `views[].layout` | Legacy | Card view layout; used when `listItem` is absent |
-| `views[].metricStripLayout` | Metrics row | Full strip layout above the entity list (columns, rows, slots, styles; table view only) |
+| `metricWidgets` | Metrics row | Reusable metric widget definitions (inner layouts) |
+| `metricRowLayout` | Metrics row | Row layout with `metric-widget` components above the entity list |
 
 Example override document:
 
@@ -89,51 +90,64 @@ Replaces the legacy `compact` list presentation. Persist with `listViewType: "ex
 
 ---
 
-## Metrics row (`views[].metricStripLayout`, table view)
+## Metrics row (`metricWidgets` + `metricRowLayout`)
 
-Configured in **Design layout → Metrics row**. The strip is a full `UiLayoutDocument` (same tree model as list item / card layouts): root columns, component rows, nested layouts, style rules, and motion presets.
+Configured in **Design layout → Metrics row** (`MetricsRowDesigner`). Widget inner layouts use design surface `metricStrip` with `metric-kpi` slots. The row layout uses design surface `metricRow` with `metric-widget` components that reference widget definitions.
 
-**Design surface:** `metricStrip`. Allowed slot kinds: `text`, `image`, `date`, `numeric`, `badge`, `metric-kpi`.
+**Runtime:** `EntityViewMetricsStrip` renders `metricRowLayout` with `RecursiveLayoutRenderer`. `metric-widget` slots resolve widget inner layouts; `metric-kpi` slots hold bindings and render fetched values.
 
-**Runtime:** `EntityViewMetricsStrip` renders the layout with `RecursiveLayoutRenderer`. `metric-kpi` slots hold `metricDefinitionId`, `groupBindings`, and `dimensionBindings`; the slot renders only the fetched value (labels/chrome are sibling slots).
-
-### Example strip layout
+### Example metrics row override keys
 
 ```json
 {
-  "metricStripLayout": {
-    "root": {
-      "type": "root",
-      "id": "metric-strip-root",
-      "columnCount": 2,
-      "columns": [
-        {
-          "id": "col_label",
-          "rows": [
+  "metricWidgets": [
+    {
+      "id": "widget-total",
+      "name": "Total balance",
+      "layout": {
+        "root": {
+          "type": "root",
+          "id": "widget-root",
+          "columnCount": 1,
+          "columns": [
             {
-              "type": "component",
-              "id": "row_label",
-              "component": {
-                "kind": "text",
-                "primary": { "type": "static", "value": "Total balance" },
-                "styles": [{ "property": "fontWeight", "value": "bold" }]
-              }
+              "id": "col_kpi",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row_kpi",
+                  "component": {
+                    "kind": "metric-kpi",
+                    "metricDefinitionId": "total-balance-usd",
+                    "groupBindings": {
+                      "currency": { "type": "listFilter", "field": "currency" }
+                    },
+                    "dimensionBindings": {}
+                  }
+                }
+              ]
             }
           ]
-        },
+        }
+      }
+    }
+  ],
+  "metricRowLayout": {
+    "root": {
+      "type": "root",
+      "id": "metric-row-root",
+      "columnCount": 1,
+      "columns": [
         {
-          "id": "col_value",
+          "id": "col_widget",
           "rows": [
             {
               "type": "component",
-              "id": "row_kpi",
+              "id": "row_widget",
               "component": {
-                "kind": "metric-kpi",
-                "metricDefinitionId": "total-balance-usd",
-                "groupBindings": {
-                  "currency": { "type": "listFilter", "field": "currency" }
-                },
-                "dimensionBindings": {}
+                "kind": "metric-widget",
+                "entityName": "account",
+                "widgetId": "widget-total"
               }
             }
           ]

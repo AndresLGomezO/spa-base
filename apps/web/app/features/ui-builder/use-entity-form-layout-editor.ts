@@ -1,7 +1,9 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createDefaultModalFooterLayout,
-  createDefaultWizardFormConfig,
+  createDefaultWizardShellLayout,
+  createDefaultWizardStepLayout,
+  createLayoutId,
   ensureWizardShellLayout,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -82,18 +84,35 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   const [plainLayout, setPlainLayout] = useState<UiLayoutDocument>(() =>
     resolvePlainFormLayout(definition),
   );
-  const [wizard, setWizard] = useState<WizardFormConfig>(() => {
-    const initial =
-      resolveWizardForm(definition) ??
-      createDefaultWizardFormConfig(fieldPaths);
-    const footerLayout = resolveFormModalFooterLayout(definition);
-    return {
-      ...initial,
-      shellLayout: ensureWizardShellLayout(initial.shellLayout, {
-        actionsInModalFooter: footerLayout != null,
-      }),
-    };
-  });
+  const resolveWizardState = useCallback(
+    (
+      sourceDefinition: ReturnType<typeof useEntityDefinition>,
+    ): WizardFormConfig => {
+      const footerLayout = resolveFormModalFooterLayout(sourceDefinition);
+      const resolved = resolveWizardForm(sourceDefinition);
+
+      if (resolved) {
+        return {
+          ...resolved,
+          shellLayout: ensureWizardShellLayout(resolved.shellLayout, {
+            actionsInModalFooter: footerLayout != null,
+          }),
+        };
+      }
+
+      return {
+        shellLayout: ensureWizardShellLayout(createDefaultWizardShellLayout(), {
+          actionsInModalFooter: footerLayout != null,
+        }),
+        steps: [],
+      };
+    },
+    [],
+  );
+
+  const [wizard, setWizard] = useState<WizardFormConfig>(() =>
+    resolveWizardState(definition),
+  );
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
@@ -107,18 +126,9 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     setModalFooterLayout(resolveFormModalFooterLayout(definition));
     const resolvedPlain = resolvePlainFormLayout(definition);
     setPlainLayout(resolvedPlain);
-    const resolvedWizard =
-      resolveWizardForm(definition) ??
-      createDefaultWizardFormConfig(fieldPaths);
-    const footerLayout = resolveFormModalFooterLayout(definition);
-    setWizard({
-      ...resolvedWizard,
-      shellLayout: ensureWizardShellLayout(resolvedWizard.shellLayout, {
-        actionsInModalFooter: footerLayout != null,
-      }),
-    });
+    setWizard(resolveWizardState(definition));
     setLayoutEditorKey((current) => current + 1);
-  }, [definition, fieldPaths]);
+  }, [definition, resolveWizardState]);
 
   const updateStep = useCallback(
     (index: number, patch: Partial<WizardStepConfig>) => {
@@ -131,6 +141,40 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     },
     [],
   );
+
+  const addStep = useCallback(
+    (
+      fields: Pick<WizardStepConfig, "label"> &
+        Partial<Pick<WizardStepConfig, "subtitle" | "icon">>,
+    ): number => {
+      const step: WizardStepConfig = {
+        id: createLayoutId("step"),
+        label: fields.label,
+        subtitle: fields.subtitle,
+        icon: fields.icon,
+        layout: createDefaultWizardStepLayout(fieldPaths),
+      };
+
+      let nextIndex = 0;
+      setWizard((current) => {
+        nextIndex = current.steps.length;
+        return {
+          ...current,
+          steps: [...current.steps, step],
+        };
+      });
+
+      return nextIndex;
+    },
+    [fieldPaths],
+  );
+
+  const removeStep = useCallback((index: number) => {
+    setWizard((current) => ({
+      ...current,
+      steps: current.steps.filter((_, stepIndex) => stepIndex !== index),
+    }));
+  }, []);
 
   const setShowModalHeader = useCallback((showHeader: boolean) => {
     setModalChrome((current) => ({ ...current, showHeader }));
@@ -428,6 +472,8 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
         }),
       })),
     updateStep,
+    addStep,
+    removeStep,
     isSaving,
     save,
     layoutEditorKey,

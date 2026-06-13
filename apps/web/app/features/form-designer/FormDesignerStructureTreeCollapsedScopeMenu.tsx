@@ -6,8 +6,14 @@ import {
   PanelBottom,
   type LucideIcon,
 } from "lucide-react";
-import { IconButton, Popover, type SegmentedSwitchOption } from "@repo/ui";
+import {
+  IconButton,
+  Popover,
+  Text,
+  type SegmentedSwitchOption,
+} from "@repo/ui";
 import { cn } from "@repo/theme/utils";
+import { useTranslation } from "react-i18next";
 
 import type { ComponentsTreeScope } from "./form-designer-components-layout";
 
@@ -106,8 +112,10 @@ export function FormDesignerStructureTreeCollapsedStepMenu({
   ariaLabel,
   stepLabel,
 }: FormDesignerStructureTreeCollapsedStepMenuProps) {
+  const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
   const activeStep = steps[stepIndex];
+  const hasSteps = steps.length > 0;
 
   return (
     <Popover
@@ -121,45 +129,57 @@ export function FormDesignerStructureTreeCollapsedStepMenu({
         <IconButton
           type="button"
           size="sm"
-          label={activeStep ? `${stepLabel}: ${activeStep.label}` : ariaLabel}
+          label={
+            activeStep
+              ? `${stepLabel}: ${activeStep.label}`
+              : hasSteps
+                ? ariaLabel
+                : t("formDesigner.components.wizardSteps.emptyDropdown")
+          }
           aria-expanded={open}
           className="text-xs font-semibold tabular-nums"
         >
-          <ListOrdered aria-hidden className="size-4" />
+          <LayoutGrid aria-hidden className="size-4" />
         </IconButton>
       }
     >
-      <ul className="flex min-w-max flex-col gap-0.5" role="menu">
-        {steps.map((step, index) => {
-          const isActive = index === stepIndex;
+      {!hasSteps ? (
+        <Text className="text-muted-foreground px-2 py-1 text-sm">
+          {t("formDesigner.components.wizardSteps.emptyTree")}
+        </Text>
+      ) : (
+        <ul className="flex min-w-max flex-col gap-0.5" role="menu">
+          {steps.map((step, index) => {
+            const isActive = index === stepIndex;
 
-          return (
-            <li key={step.id} role="none">
-              <button
-                type="button"
-                role="menuitemradio"
-                aria-checked={isActive}
-                onClick={() => {
-                  onChange(index);
-                  setOpen(false);
-                }}
-                className={cn(
-                  "flex w-full min-w-max items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm font-medium whitespace-nowrap transition-colors",
-                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40",
-                  isActive
-                    ? "bg-primary/10 text-primary"
-                    : "text-foreground hover:bg-muted/60",
-                )}
-              >
-                <span className="text-muted-foreground w-5 shrink-0 text-xs tabular-nums">
-                  {index + 1}
-                </span>
-                {step.label}
-              </button>
-            </li>
-          );
-        })}
-      </ul>
+            return (
+              <li key={step.id} role="none">
+                <button
+                  type="button"
+                  role="menuitemradio"
+                  aria-checked={isActive}
+                  onClick={() => {
+                    onChange(index);
+                    setOpen(false);
+                  }}
+                  className={cn(
+                    "flex w-full min-w-max items-center gap-2 rounded-md px-2.5 py-1.5 text-left text-sm font-medium whitespace-nowrap transition-colors",
+                    "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/40",
+                    isActive
+                      ? "bg-primary/10 text-primary"
+                      : "text-foreground hover:bg-muted/60",
+                  )}
+                >
+                  <span className="text-muted-foreground w-5 shrink-0 text-xs tabular-nums">
+                    {index + 1}
+                  </span>
+                  {step.label}
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+      )}
     </Popover>
   );
 }

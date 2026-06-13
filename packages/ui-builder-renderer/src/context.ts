@@ -6,6 +6,7 @@ import type {
   IconComponentConfig,
   MetricKpiComponentConfig,
   MetricKpiPresentation,
+  MetricWidgetComponentConfig,
   WizardActionsComponentConfig,
   WizardProgressComponentConfig,
   WizardStepHostComponentConfig,
@@ -71,6 +72,9 @@ export interface LayoutRenderContext {
   readonly metricKpiRenderer?: (
     config: MetricKpiComponentConfig,
     presentation?: MetricKpiPresentation,
+  ) => ReactNode;
+  readonly metricWidgetRenderer?: (
+    config: MetricWidgetComponentConfig,
   ) => ReactNode;
   readonly formFieldRenderer?: (
     config: FormFieldComponentConfig,

@@ -33,7 +33,7 @@ describe("form-designer-components", () => {
     const snapshot = readComponentsSnapshotFromDefinition(baseDefinition);
 
     expect(snapshot.plainLayout.root.columnCount).toBeGreaterThan(0);
-    expect(snapshot.wizard.steps.length).toBeGreaterThan(0);
+    expect(snapshot.wizard.steps.length).toBe(0);
   });
 
   it("ignores layout-only shell changes when comparing component trees", () => {

@@ -9,7 +9,7 @@ import {
 } from "@repo/ui-builder-core";
 import type { ResponsiveGridEditorLabels } from "@repo/ui-builder-react";
 import { PreviewBreakpointProvider } from "@repo/ui-builder-renderer";
-import { CollapsibleSegmentedSwitcher, Text } from "@repo/ui";
+import { CollapsibleSegmentedSwitcher } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { responsiveGridEditorLabels } from "./responsive-grid-editor-labels.js";
@@ -92,43 +92,6 @@ const PREVIEW_FRAME_MAX_HEIGHT = "40rem";
 
 function resolvePreviewFrameHeight(height: number): string {
   return `min(${height}px, ${PREVIEW_FRAME_MAX_HEIGHT})`;
-}
-
-interface LayoutPreviewBreakpointSelectProps {
-  readonly breakpoint: ResponsiveGridBreakpoint;
-  readonly onBreakpointChange: (breakpoint: ResponsiveGridBreakpoint) => void;
-  readonly className?: string;
-}
-
-function LayoutPreviewBreakpointSelect({
-  breakpoint,
-  onBreakpointChange,
-  className,
-}: LayoutPreviewBreakpointSelectProps) {
-  const { t } = useTranslation("common");
-  const labels = useMemo(() => responsiveGridEditorLabels(t), [t]);
-
-  return (
-    <label className={cn("flex flex-col gap-1 text-sm", className)}>
-      <span className="text-muted-foreground">
-        {t("designLayout.previewScreenSize")}
-      </span>
-      <select
-        className={PREVIEW_SELECT_CLASS}
-        value={breakpoint}
-        aria-label={t("designLayout.previewScreenSize")}
-        onChange={(event) =>
-          onBreakpointChange(event.target.value as ResponsiveGridBreakpoint)
-        }
-      >
-        {RESPONSIVE_BREAKPOINT_ORDER.map((entry) => (
-          <option key={entry} value={entry}>
-            {labels[BREAKPOINT_LABEL_KEY[entry]]}
-          </option>
-        ))}
-      </select>
-    </label>
-  );
 }
 
 export function LayoutPreviewBreakpointSwitcher({
@@ -230,46 +193,5 @@ export function LayoutPreviewViewport({
         </div>
       </div>
     </PreviewBreakpointProvider>
-  );
-}
-
-interface LayoutPreviewPanelProps {
-  readonly title: string;
-  readonly breakpoint: ResponsiveGridBreakpoint;
-  readonly onBreakpointChange: (breakpoint: ResponsiveGridBreakpoint) => void;
-  readonly children: ReactNode;
-  readonly actions?: ReactNode;
-  readonly className?: string;
-}
-
-export function LayoutPreviewPanel({
-  title,
-  breakpoint,
-  onBreakpointChange,
-  children,
-  actions,
-  className,
-}: LayoutPreviewPanelProps) {
-  return (
-    <div
-      className={cn(
-        "bg-card border-border flex flex-col gap-3 rounded-lg border p-4",
-        className,
-      )}
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <Text className="text-muted-foreground text-sm">{title}</Text>
-        <div className="flex flex-wrap items-end gap-3">
-          <LayoutPreviewBreakpointSelect
-            breakpoint={breakpoint}
-            onBreakpointChange={onBreakpointChange}
-          />
-          {actions}
-        </div>
-      </div>
-      <LayoutPreviewViewport breakpoint={breakpoint}>
-        {children}
-      </LayoutPreviewViewport>
-    </div>
   );
 }

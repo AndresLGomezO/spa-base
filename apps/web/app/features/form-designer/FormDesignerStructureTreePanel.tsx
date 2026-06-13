@@ -34,6 +34,7 @@ import type {
   StructureColumnNode,
   StructureRowNode,
 } from "./form-designer-structure-tree";
+import { FormDesignerWizardStepScopeControls } from "./FormDesignerWizardStepScopeControls";
 import { useFormDesigner } from "./form-designer-context";
 
 interface FormDesignerStructureTreePanelProps {
@@ -137,9 +138,21 @@ export function FormDesignerStructureTreePanel({
     editor.wizard.steps.length,
   );
 
-  const binding = useMemo(
-    () => resolveComponentsLayoutBinding(editor, treeScope, clampedStepIndex),
-    [clampedStepIndex, editor, treeScope],
+  const isStepScope = editor.presentation === "wizard" && treeScope === "step";
+  const hasSteps = editor.wizard.steps.length > 0;
+
+  const binding = useMemo(() => {
+    if (isStepScope && !hasSteps) {
+      return null;
+    }
+
+    return resolveComponentsLayoutBinding(editor, treeScope, clampedStepIndex);
+  }, [clampedStepIndex, editor, hasSteps, isStepScope, treeScope]);
+
+  const emptyStepTreeMessage = (
+    <Text className="text-muted-foreground px-2 py-4 text-sm">
+      {t("formDesigner.components.wizardSteps.emptyTree")}
+    </Text>
   );
 
   const scopeOptions = useMemo(
@@ -151,6 +164,10 @@ export function FormDesignerStructureTreePanel({
 
   const handleMoveRowUp = useCallback(
     (row: StructureRowNode) => {
+      if (!binding) {
+        return;
+      }
+
       binding.setLayout(moveRowAt(binding.layout, row.locator, row.rowId, -1));
       markComponentsDirty();
     },
@@ -159,6 +176,10 @@ export function FormDesignerStructureTreePanel({
 
   const handleMoveRowDown = useCallback(
     (row: StructureRowNode) => {
+      if (!binding) {
+        return;
+      }
+
       binding.setLayout(moveRowAt(binding.layout, row.locator, row.rowId, 1));
       markComponentsDirty();
     },
@@ -167,6 +188,10 @@ export function FormDesignerStructureTreePanel({
 
   const handleRemoveRow = useCallback(
     (row: StructureRowNode) => {
+      if (!binding) {
+        return;
+      }
+
       const rowRef = toComponentRowRef(row.rowId, row.locator);
       binding.removeRow(rowRef);
       markComponentsDirty();
@@ -266,6 +291,40 @@ export function FormDesignerStructureTreePanel({
     treeNode?.scrollIntoView({ block: "nearest", behavior: "smooth" });
   }, [treeColumnFocus, treeRowFocus]);
 
+  const treeProps = binding
+    ? {
+        layout: binding.layout,
+        labels,
+        fieldDescriptors,
+        onInsert,
+        insertDisabled: componentRowPanelOpen,
+        onMoveRowUp: handleMoveRowUp,
+        onMoveRowDown: handleMoveRowDown,
+        onRemoveRow: handleRemoveRow,
+        hoveredRow: focusedRow,
+        hoveredColumn: focusedColumn,
+        selectedRow,
+        selectedColumn,
+        componentRowPanelOpen,
+        onRowHover: hoverRow,
+        onRowSelect: handleRowSelect,
+        onColumnHover: hoverColumn,
+        onColumnSelect: handleColumnSelect,
+      }
+    : null;
+
+  const structureTree = treeProps ? (
+    <FormDesignerStructureTree {...treeProps} />
+  ) : (
+    emptyStepTreeMessage
+  );
+
+  const collapsedStructureTree = treeProps ? (
+    <FormDesignerStructureTree variant="util" {...treeProps} />
+  ) : (
+    emptyStepTreeMessage
+  );
+
   if (collapsed) {
     return (
       <aside
@@ -293,38 +352,25 @@ export function FormDesignerStructureTreePanel({
             />
           ) : null}
 
-          {editor.presentation === "wizard" && treeScope === "step" ? (
-            <FormDesignerStructureTreeCollapsedStepMenu
-              stepIndex={clampedStepIndex}
-              steps={editor.wizard.steps}
-              onChange={setStepIndex}
-              ariaLabel={labels.collapsedStepSelectAriaLabel}
-              stepLabel={labels.wizardStepLabel}
-            />
+          {isStepScope ? (
+            <>
+              <FormDesignerStructureTreeCollapsedStepMenu
+                stepIndex={clampedStepIndex}
+                steps={editor.wizard.steps}
+                onChange={setStepIndex}
+                ariaLabel={labels.collapsedStepSelectAriaLabel}
+                stepLabel={labels.wizardStepLabel}
+              />
+              <FormDesignerWizardStepScopeControls
+                stepIndex={clampedStepIndex}
+                variant="collapsed"
+              />
+            </>
           ) : null}
         </div>
 
         <div className="min-h-0 w-full flex-1 overflow-y-auto overflow-x-hidden px-1.5 pb-3">
-          <FormDesignerStructureTree
-            variant="util"
-            layout={binding.layout}
-            labels={labels}
-            fieldDescriptors={fieldDescriptors}
-            onInsert={onInsert}
-            insertDisabled={componentRowPanelOpen}
-            onMoveRowUp={handleMoveRowUp}
-            onMoveRowDown={handleMoveRowDown}
-            onRemoveRow={handleRemoveRow}
-            hoveredRow={focusedRow}
-            hoveredColumn={focusedColumn}
-            selectedRow={selectedRow}
-            selectedColumn={selectedColumn}
-            componentRowPanelOpen={componentRowPanelOpen}
-            onRowHover={hoverRow}
-            onRowSelect={handleRowSelect}
-            onColumnHover={hoverColumn}
-            onColumnSelect={handleColumnSelect}
-          />
+          {collapsedStructureTree}
         </div>
       </aside>
     );
@@ -359,49 +405,17 @@ export function FormDesignerStructureTreePanel({
             onChange={setTreeScope}
             ariaLabel={labels.wizardScopeAriaLabel}
           />
-          {editor.presentation === "wizard" && treeScope === "step" ? (
-            <label className="flex flex-col gap-1">
-              <span className="text-muted-foreground text-xs">
-                {labels.wizardStepLabel}
-              </span>
-              <select
-                className="border-input bg-background rounded-md border px-2 py-1.5 text-sm"
-                value={clampedStepIndex}
-                onChange={(event) =>
-                  setStepIndex(Number.parseInt(event.target.value, 10))
-                }
-              >
-                {editor.wizard.steps.map((step, index) => (
-                  <option key={step.id} value={index}>
-                    {step.label}
-                  </option>
-                ))}
-              </select>
-            </label>
+          {isStepScope ? (
+            <FormDesignerWizardStepScopeControls
+              stepIndex={clampedStepIndex}
+              variant="expanded"
+            />
           ) : null}
         </div>
       ) : null}
 
       <div className="min-h-0 w-max max-w-full flex-1 overflow-y-auto overflow-x-auto px-2 pb-3">
-        <FormDesignerStructureTree
-          layout={binding.layout}
-          labels={labels}
-          fieldDescriptors={fieldDescriptors}
-          onInsert={onInsert}
-          insertDisabled={componentRowPanelOpen}
-          onMoveRowUp={handleMoveRowUp}
-          onMoveRowDown={handleMoveRowDown}
-          onRemoveRow={handleRemoveRow}
-          hoveredRow={focusedRow}
-          hoveredColumn={focusedColumn}
-          selectedRow={selectedRow}
-          selectedColumn={selectedColumn}
-          componentRowPanelOpen={componentRowPanelOpen}
-          onRowHover={hoverRow}
-          onRowSelect={handleRowSelect}
-          onColumnHover={hoverColumn}
-          onColumnSelect={handleColumnSelect}
-        />
+        {structureTree}
       </div>
     </aside>
   );

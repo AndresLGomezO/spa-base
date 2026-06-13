@@ -110,18 +110,21 @@ export {
 export {
   metricBindingSourceSchema,
   metricWidgetBindingsSchema,
+  metricWidgetDefinitionSchema,
+  metricWidgetsSchema,
 } from "./ui/metric-widget-types.js";
 export type {
   MetricBindingSource,
   MetricWidgetBindings,
+  MetricWidgetDefinition,
 } from "./ui/metric-widget-types.js";
 export {
   createDefaultMetricStripLayout,
   DEFAULT_METRIC_STRIP_COLUMN_COUNT,
   metricStripColumnCount,
   metricStripHasContent,
-  metricStripLayoutFromView,
 } from "./ui/metric-strip-placement.js";
+export { migrateMetricStripToMetricsRow } from "./ui/migrate-metric-strip-to-metrics-row.js";
 export type {
   UiLayoutDocument,
   UiComponentConfig,
@@ -177,7 +180,7 @@ export {
   type FormsSliceData,
   type ListSliceData,
   type MainPageSliceData,
-  type MetricStripSliceData,
+  type MetricsRowDesignerSliceData,
   type PutEntityUiOverrideParseResult,
   type RecordDetailSliceData,
 } from "./ui/design-layout-slice-schema.js";

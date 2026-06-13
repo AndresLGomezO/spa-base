@@ -19,7 +19,7 @@ import {
   type StructureRowNode,
 } from "./form-designer-structure-tree";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
-import type { UiLayoutDocument } from "@repo/ui-builder-core";
+import type { RowLocator, UiLayoutDocument } from "@repo/ui-builder-core";
 
 import {
   areComponentColumnRefsEqual,
@@ -45,6 +45,10 @@ interface TreeFocusProps {
   readonly componentRowPanelOpen?: boolean;
 }
 
+function isRootScopeLocator(locator: RowLocator): boolean {
+  return locator.scope === "root";
+}
+
 interface BranchSharedProps {
   readonly layout: UiLayoutDocument;
   readonly labels: FormDesignerComponentsLabels;
@@ -53,6 +57,7 @@ interface BranchSharedProps {
   readonly onToggle: (id: string) => void;
   readonly onInsert: (anchor: InsertAnchor) => void;
   readonly insertDisabled?: boolean;
+  readonly lockRootScopeInserts?: boolean;
   readonly onMoveRowUp: (row: StructureRowNode) => void;
   readonly onMoveRowDown: (row: StructureRowNode) => void;
   readonly onRemoveRow: (row: StructureRowNode) => void;
@@ -184,6 +189,7 @@ function StructureColumnBody({
   onToggle,
   onInsert,
   insertDisabled = false,
+  lockRootScopeInserts = false,
   onMoveRowUp,
   onMoveRowDown,
   onRemoveRow,
@@ -198,6 +204,9 @@ function StructureColumnBody({
   readonly depth: number;
   readonly plain?: boolean;
 }) {
+  const showColumnInserts =
+    !lockRootScopeInserts || !isRootScopeLocator(column.locator);
+
   return (
     <div
       className={cn(
@@ -210,21 +219,25 @@ function StructureColumnBody({
           <Text className="text-muted-foreground text-xs">
             {labels.emptyColumn}
           </Text>
-          <FormDesignerStructureTreeInsertSlot
-            ariaLabel={labels.insertInColumn(column.label)}
-            anchor={createColumnTopInsertAnchor(column)}
-            disabled={insertDisabled}
-            onInsert={onInsert}
-          />
+          {showColumnInserts ? (
+            <FormDesignerStructureTreeInsertSlot
+              ariaLabel={labels.insertInColumn(column.label)}
+              anchor={createColumnTopInsertAnchor(column)}
+              disabled={insertDisabled}
+              onInsert={onInsert}
+            />
+          ) : null}
         </div>
       ) : (
         <>
-          <FormDesignerStructureTreeInsertSlot
-            ariaLabel={labels.insertInColumn(column.label)}
-            anchor={createColumnTopInsertAnchor(column)}
-            disabled={insertDisabled}
-            onInsert={onInsert}
-          />
+          {showColumnInserts ? (
+            <FormDesignerStructureTreeInsertSlot
+              ariaLabel={labels.insertInColumn(column.label)}
+              anchor={createColumnTopInsertAnchor(column)}
+              disabled={insertDisabled}
+              onInsert={onInsert}
+            />
+          ) : null}
           {column.rows.map((row) => (
             <StructureRowBranch
               key={row.id}
@@ -235,6 +248,7 @@ function StructureColumnBody({
               expandedIds={expandedIds}
               onToggle={onToggle}
               insertDisabled={insertDisabled}
+              lockRootScopeInserts={lockRootScopeInserts}
               onInsert={onInsert}
               onMoveRowUp={onMoveRowUp}
               onMoveRowDown={onMoveRowDown}
@@ -261,6 +275,7 @@ function StructureRowBranch({
   onToggle,
   onInsert,
   insertDisabled = false,
+  lockRootScopeInserts = false,
   onMoveRowUp,
   onMoveRowDown,
   onRemoveRow,
@@ -273,6 +288,8 @@ function StructureRowBranch({
   readonly row: StructureRowNode;
   readonly depth: number;
 }) {
+  const showRowBottomInsert =
+    !lockRootScopeInserts || !isRootScopeLocator(row.locator);
   const isNested = row.type === "nested-layout";
   const expanded = expandedIds.has(row.id);
   const kind = isNested ? "nested-layout" : row.kind;
@@ -322,6 +339,7 @@ function StructureRowBranch({
                 expandedIds={expandedIds}
                 onToggle={onToggle}
                 insertDisabled={insertDisabled}
+                lockRootScopeInserts={lockRootScopeInserts}
                 onInsert={onInsert}
                 onMoveRowUp={onMoveRowUp}
                 onMoveRowDown={onMoveRowDown}
@@ -337,12 +355,14 @@ function StructureRowBranch({
         </CollapsibleChildren>
       ) : null}
 
-      <FormDesignerStructureTreeInsertSlot
-        ariaLabel={labels.insertBelow(row.label)}
-        anchor={createRowBottomInsertAnchor(row)}
-        disabled={insertDisabled}
-        onInsert={onInsert}
-      />
+      {showRowBottomInsert ? (
+        <FormDesignerStructureTreeInsertSlot
+          ariaLabel={labels.insertBelow(row.label)}
+          anchor={createRowBottomInsertAnchor(row)}
+          disabled={insertDisabled}
+          onInsert={onInsert}
+        />
+      ) : null}
     </div>
   );
 }
@@ -356,6 +376,7 @@ function StructureColumnBranch({
   onToggle,
   onInsert,
   insertDisabled = false,
+  lockRootScopeInserts = false,
   onMoveRowUp,
   onMoveRowDown,
   onRemoveRow,
@@ -399,6 +420,7 @@ function StructureColumnBranch({
           expandedIds={expandedIds}
           onToggle={onToggle}
           insertDisabled={insertDisabled}
+          lockRootScopeInserts={lockRootScopeInserts}
           onInsert={onInsert}
           onMoveRowUp={onMoveRowUp}
           onMoveRowDown={onMoveRowDown}
@@ -610,6 +632,7 @@ export function FormDesignerStructureTree({
     expandedIds,
     onToggle: handleToggle,
     insertDisabled,
+    lockRootScopeInserts: promoteSingleNestedLayoutRoot,
     onInsert,
     onMoveRowUp,
     onMoveRowDown,

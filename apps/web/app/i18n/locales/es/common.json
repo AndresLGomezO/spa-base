@@ -156,6 +156,19 @@
       "wizardScopeAriaLabel": "Ámbito del árbol de estructura",
       "wizardStepLabel": "Paso",
       "collapsedStepSelectAriaLabel": "Seleccionar paso del asistente",
+      "wizardSteps": {
+        "add": "Agregar paso",
+        "edit": "Editar paso",
+        "remove": "Eliminar paso",
+        "save": "Guardar paso",
+        "addModalTitle": "Agregar paso del asistente",
+        "editModalTitle": "Editar paso del asistente",
+        "titleLabel": "Título",
+        "subtitleLabel": "Subtítulo",
+        "iconLabel": "Icono",
+        "emptyDropdown": "—",
+        "emptyTree": "Aún no hay pasos. Usa + para crear uno."
+      },
       "expandNode": "Expandir {{label}}",
       "collapseNode": "Contraer {{label}}",
       "selectRow": "Editar componente",
@@ -283,6 +296,54 @@
       "keepEditing": "Seguir editando"
     }
   },
+  "metricsRowDesigner": {
+    "title": "Diseñador de fila de métricas",
+    "entitySubtitle": "Entidad: {{entity}}",
+    "settings": "Configuración",
+    "tabs": {
+      "widgets": "Widgets",
+      "row": "Layout de fila",
+      "ariaLabel": "Secciones del diseñador de fila de métricas"
+    },
+    "row": {
+      "structureTitle": "Estructura de la fila"
+    },
+    "components": {
+      "metricWidget": "Widget de métrica"
+    },
+    "metricWidgetEditor": {
+      "entity": "Entidad",
+      "widget": "Widget",
+      "selectWidget": "Seleccionar un widget…",
+      "unconfigured": "Sin widget seleccionado",
+      "noWidgetsForEntity": "No hay widgets de métrica definidos para esta entidad."
+    },
+    "widgets": {
+      "selectLabel": "Widget",
+      "add": "Agregar widget",
+      "edit": "Editar widget",
+      "remove": "Eliminar widget",
+      "save": "Guardar widget",
+      "addModalTitle": "Agregar widget de métrica",
+      "editModalTitle": "Editar widget de métrica",
+      "nameLabel": "Nombre del widget",
+      "structureTitle": "Estructura del widget",
+      "emptyDropdown": "—",
+      "emptyTree": "Aún no hay widgets. Usa + para crear uno.",
+      "noWidgetSelected": "Selecciona un widget para previsualizar su layout."
+    },
+    "unsavedChanges": {
+      "title": "Cambios sin guardar",
+      "widgetsMessage": "Tienes cambios de widgets sin guardar. Guárdalos antes de salir o descarta los cambios.",
+      "rowMessage": "Tienes cambios de layout de fila sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "widgetMessage": "Tienes cambios de widgets sin guardar. Guárdalos antes de cambiar de widget o descarta los cambios.",
+      "structurePanelMessage": "Tienes cambios de estructura sin guardar en el panel. Guárdalos antes de cerrar o cambiar, o descarta los cambios.",
+      "structurePanelSave": "Guardar cambios de estructura",
+      "save": "Guardar cambios",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando"
+    }
+  },
   "itemListDesigner": {
     "title": "Diseñador de lista de ítems",
     "entitySubtitle": "Entidad: {{entity}}",
@@ -336,13 +397,10 @@
     "formPresentationWizard": "Asistente",
     "iconName": "Icono (nombre Lucide)",
     "iconNameHint": "Usa un nombre de icono Lucide, por ejemplo CircleCheck o Database.",
-    "previewScreenSize": "Tamaño de pantalla de vista previa",
     "staticImage": "Imagen estática",
     "staticImageUrl": "URL de imagen",
     "staticImageUpload": "Subir imagen",
     "staticImageClear": "Quitar imagen subida",
-    "backToHome": "Volver al inicio",
-    "entityContext": "Entidad: {{entity}}",
     "tableColumnOrder": "Orden de columnas",
     "tableColumnsEmpty": "Añade al menos una columna.",
     "moveColumnUp": "Subir columna",
@@ -355,11 +413,7 @@
     "expandableTableColumnLabel": "Encabezado de columna",
     "addExpandableTableColumn": "Añadir columna",
     "expandableTableExpandRow": "Contenido de fila expandida",
-    "metricsTitle": "Fila de métricas",
-    "metricsDescription": "Diseña la fila de métricas encima de la lista con el mismo builder de layout que los ítems.",
     "metricsConfigureLink": "Configurar fila de métricas",
-    "metricsPreview": "Vista previa de la franja de métricas",
-    "metricsStripStructure": "Rejilla de la franja",
     "mainPageStructure": "Estructura de página principal",
     "recordDetailStructure": "Estructura de vista detallada",
     "layoutJsonImport": {
@@ -393,14 +447,14 @@
         "forms": "JSON actual de configuración de formularios",
         "mainPage": "JSON actual de configuración de página principal",
         "recordDetail": "JSON actual de configuración de detalle",
-        "metricStrip": "JSON actual de configuración de métricas"
+        "metricsRowDesigner": "JSON actual de configuración del diseñador de fila de métricas"
       },
       "importTitle": {
         "list": "Importar JSON de configuración de lista",
         "forms": "Importar JSON de configuración de formularios",
         "mainPage": "Importar JSON de configuración de página principal",
         "recordDetail": "Importar JSON de configuración de detalle",
-        "metricStrip": "Importar JSON de configuración de métricas"
+        "metricsRowDesigner": "Importar JSON de configuración del diseñador de fila de métricas"
       },
       "pasteLabel": "Pegar JSON",
       "uploadLabel": "Subir archivo JSON",
@@ -416,28 +470,6 @@
       "importDescription": "Importa la configuración completa de esta pestaña de diseño. Los cambios se aplican al editor de inmediato; haz clic en Guardar para persistir.",
       "viewCopy": "Copiar al portapapeles",
       "viewCopied": "Copiado"
-    },
-    "fullOverrideJson": {
-      "viewTrigger": "Ver toda la UI",
-      "importTrigger": "Importar toda la UI",
-      "viewTitle": "JSON completo del override de UI de entidad",
-      "importTitle": "Importar override completo de UI de entidad",
-      "pasteLabel": "Pegar JSON",
-      "uploadLabel": "Subir archivo JSON",
-      "skeletonTitle": "Estructura esperada",
-      "skeletonShow": "Mostrar ejemplo",
-      "skeletonHide": "Ocultar ejemplo",
-      "valid": "El JSON es válido para el override de UI de esta entidad.",
-      "invalid": "El JSON tiene errores de validación.",
-      "apply": "Aplicar y guardar",
-      "cancel": "Cancelar",
-      "readOnlyHint": "Puedes validar JSON aquí, pero necesitas permiso de override de UI de entidad para aplicar cambios.",
-      "viewDescription": "Instantánea de solo lectura del override completo de UI de entidad (todas las pestañas de diseño combinadas).",
-      "importDescription": "Importa un override completo de UI de entidad. El JSON válido se guarda de inmediato y reemplaza todas las secciones proporcionadas.",
-      "viewCopy": "Copiar al portapapeles",
-      "viewCopied": "Copiado",
-      "importSaved": "Override completo de UI importado correctamente.",
-      "importFailed": "Error al importar el override completo de UI."
     },
     "presets": {
       "title": "Presets de componentes",
@@ -581,7 +613,6 @@
       "labelAbove": "Arriba del texto",
       "labelBelow": "Debajo del texto",
       "label": "Etiqueta",
-      "addSlot": "Agregar celda",
       "preview": "Vista previa",
       "structure": "Estructura",
       "slotSettings": "Configuración de celda",
@@ -671,12 +702,10 @@
       "labelAlignRight": "Derecha",
       "showActions": "Mostrar menú de acciones",
       "layoutColumns": "Columnas del diseño",
-      "slotColumns": "Columnas de la celda",
       "cardsPerRow": "Máximo de tarjetas por fila",
       "columnTab": "Columna {{column}}",
       "columnWidthPercent": "Ancho (%)",
       "columnWidthAutoHint": "{{percent}}% (automático)",
-      "emptyColumn": "Aún no hay celdas en esta columna.",
       "moveSlotUp": "Mover celda arriba",
       "moveSlotDown": "Mover celda abajo",
       "moveColumnLeft": "Mover columna a la izquierda",

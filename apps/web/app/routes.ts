@@ -63,7 +63,11 @@ export default [
     ),
     route(
       "settings/design-layout/metrics/:entityName",
-      "./routes/settings/design-layout/metrics-layout.tsx",
+      "./routes/settings/design-layout/metrics.tsx",
+    ),
+    route(
+      "settings/design-layout/new-metrics/:entityName",
+      "./routes/settings/design-layout/new-metrics-redirect.tsx",
     ),
     route(
       "settings/design-layout/presets",

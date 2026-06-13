@@ -222,7 +222,7 @@ Runtime, **user-scoped** metric slots on entity list views. No hardcoded metrics
 | Location | Role |
 | --- | --- |
 | `MetricValueDisplay` | Fetches and formats a metric row; `presentation: "inline"` in layout slots (value only) |
-| `EntityViewMetricsStrip` | Renders `metricStripLayout` above the list via `RecursiveLayoutRenderer` |
+| `EntityViewMetricsStrip` | Renders `metricRowLayout` above the list via `RecursiveLayoutRenderer` and `metric-widget` resolution |
 | `useMetricDefinition` / `useMetricRow` | React Query; `enabled` when `metricValue.read` or `{sourceModel}.read` and bindings resolve |
 | `metric-binding-resolution.ts` | Resolves `MetricBindingSource` → `MetricRowQuery` |
 
@@ -238,9 +238,10 @@ usePermission("metricValue.read")
 
 ### Schema (`@repo/entities`)
 
-- `TableViewConfig.metricStripLayout?: UiLayoutDocument` — full strip layout (columns, rows, nested layouts, styles, `metric-kpi` slots)
-- `metricStripHasContent(layout)` — true when any column has at least one row (gates strip visibility)
-- Card / list slot `kind: "metric-kpi"` — bindings on layout JSON (no `fieldPath`)
+- `EntityUIConfig.metricWidgets` — reusable metric widget definitions (inner `metricStrip` layouts with `metric-kpi` slots)
+- `EntityUIConfig.metricRowLayout` — row layout with `metric-widget` components referencing widgets
+- `metricStripHasContent(layout)` — true when any column has at least one row (gates metrics row visibility)
+- Widget inner layouts use slot `kind: "metric-kpi"` — bindings on layout JSON (no `fieldPath`)
 
 `MetricBindingSource` kinds:
 
@@ -251,15 +252,15 @@ usePermission("metricValue.read")
 
 ### Builder entry points
 
-1. **Settings → Design layout → Metrics row** — `EntityCardLayoutBuilder` with `designSurface: "metricStrip"`; persists `metricStripLayout` on the table view.
-2. **Card / list / main layout builders** — slot component `metric-kpi`: full definition picker, bindings, and styles via `MetricKpiComponentEditor` (emphasize `entityField` for row-scoped dimensions).
+1. **Settings → Design layout → Metrics row** — `MetricsRowDesigner` with Widgets + Row layout tabs; persists `metricWidgets` and `metricRowLayout` on entity UI config.
+2. **Widgets tab** — inner widget layouts (`designSurface: "metricStrip"`) with `metric-kpi` slots via `MetricKpiComponentEditor`.
 
 Runtime fetch: `metricValue.read` or `{sourceModel}.read`. Builder: `entityUiOverride.update` + `metricDefinition.read` (save layout via `ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS`).
 
 ### Runtime wiring
 
-- `EntityPage` renders `EntityViewMetricsStrip` when `metricStripHasContent(metricStripLayout)`; passes `listFilters` and `routeParams` as binding context.
-- `EntityLayoutCardView` passes the same context into `metric-kpi` components via `RecursiveLayoutRenderer` / `createEntityLayoutRenderContext`.
+- `EntityPage` renders `EntityViewMetricsStrip` when `metricStripHasContent(metricRowLayout)`; passes `listFilters` and `routeParams` as binding context.
+- `metric-widget` slots resolve widget inner layouts; `metric-kpi` components use `createEntityLayoutRenderContext`.
 
 ### Permission gating
 

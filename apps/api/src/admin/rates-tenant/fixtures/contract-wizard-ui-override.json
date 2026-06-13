@@ -4,238 +4,7 @@
       "type": "table",
       "name": "default",
       "fields": ["variability", "name"],
-      "showActions": true,
-      "metricStripLayout": {
-        "root": {
-          "type": "root",
-          "id": "root-58b7fdcf-08a1-4455-a377-fdca9ff8663c",
-          "columnCount": 1,
-          "columns": [
-            {
-              "id": "col-4524b4f4-225a-4d35-ac2e-4c8458ea7e0f",
-              "rows": [
-                {
-                  "type": "nested-layout",
-                  "id": "nested-0917f6c7-c447-4785-a8f0-e701bcad7a54",
-                  "columnCount": 1,
-                  "columns": [
-                    {
-                      "id": "col-7a306fb3-9d32-49d8-9d4f-d31a6bf82835",
-                      "rows": [
-                        {
-                          "type": "nested-layout",
-                          "id": "nested-ce8f955e-64af-4426-8f6d-5992e4aa970f",
-                          "columnCount": 1,
-                          "columns": [
-                            {
-                              "id": "col-7fba5a94-f7b7-4213-adda-62fd5b5c925d",
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-1a1a776b-701b-4779-a1db-81bc6131a57c",
-                                  "component": {
-                                    "kind": "text",
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Saldo Total"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "justifyContent",
-                                        "value": "end"
-                                      },
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "thin"
-                                      },
-                                      {
-                                        "property": "fontSize",
-                                        "value": "16"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "muted"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-6b4926ab-ea82-4b4e-9457-316f9900eef7",
-                                  "component": {
-                                    "kind": "metric-kpi",
-                                    "metricDefinitionId": "metric_X1OpNRgVRet7",
-                                    "groupBindings": {},
-                                    "dimensionBindings": {},
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "20"
-                                      },
-                                      {
-                                        "property": "justifyContent",
-                                        "value": "end"
-                                      }
-                                    ]
-                                  }
-                                }
-                              ],
-                              "styles": [
-                                {
-                                  "property": "backgroundColor",
-                                  "value": "info"
-                                },
-                                {
-                                  "property": "padding",
-                                  "value": "16"
-                                },
-                                {
-                                  "property": "borderRadius",
-                                  "value": "12"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "nested-layout",
-                          "id": "nested-cc59a6bd-bc7b-48ad-9074-5b48b5a74621",
-                          "columnCount": 1,
-                          "columns": [
-                            {
-                              "id": "col-7e90ec26-b1bf-4d61-8cad-b6f3e9a47638",
-                              "rows": [
-                                {
-                                  "type": "component",
-                                  "id": "row-07a4a9bc-4fca-40aa-8c47-17a6d9f13aa4",
-                                  "component": {
-                                    "kind": "text",
-                                    "primary": {
-                                      "type": "static",
-                                      "value": "Saldo Promedio"
-                                    },
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "16"
-                                      },
-                                      {
-                                        "property": "justifyContent",
-                                        "value": "end"
-                                      },
-                                      {
-                                        "property": "fontWeight",
-                                        "value": "thin"
-                                      },
-                                      {
-                                        "property": "color",
-                                        "value": "muted"
-                                      }
-                                    ]
-                                  }
-                                },
-                                {
-                                  "type": "component",
-                                  "id": "row-cc5331ea-bbb4-439c-aaa2-0fc7980f7c9e",
-                                  "component": {
-                                    "kind": "metric-kpi",
-                                    "metricDefinitionId": "metric_CnjkRmTY4Czu",
-                                    "groupBindings": {},
-                                    "dimensionBindings": {},
-                                    "styles": [
-                                      {
-                                        "property": "fontSize",
-                                        "value": "20"
-                                      },
-                                      {
-                                        "property": "justifyContent",
-                                        "value": "end"
-                                      }
-                                    ]
-                                  }
-                                }
-                              ],
-                              "styles": [
-                                {
-                                  "property": "padding",
-                                  "value": "16"
-                                },
-                                {
-                                  "property": "backgroundColor",
-                                  "value": "info"
-                                },
-                                {
-                                  "property": "borderRadius",
-                                  "value": "12"
-                                }
-                              ]
-                            }
-                          ]
-                        },
-                        {
-                          "type": "component",
-                          "id": "row-bb53ea7c-ba9d-44dc-b731-7a4b9a86eb38",
-                          "component": {
-                            "kind": "text",
-                            "primary": {
-                              "type": "static",
-                              "value": "|"
-                            },
-                            "styles": [
-                              {
-                                "property": "fontSize",
-                                "value": "20"
-                              },
-                              {
-                                "property": "fontWeight",
-                                "value": "thin"
-                              },
-                              {
-                                "property": "color",
-                                "value": "muted"
-                              },
-                              {
-                                "property": "alignItems",
-                                "value": "center"
-                              }
-                            ]
-                          }
-                        }
-                      ],
-                      "stackDirection": "row",
-                      "styles": [
-                        {
-                          "property": "gap",
-                          "value": "15"
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ],
-              "stackDirection": "column",
-              "styles": [
-                {
-                  "property": "overflowX",
-                  "value": "scroll"
-                },
-                {
-                  "property": "paddingBottom",
-                  "value": "10"
-                }
-              ]
-            }
-          ],
-          "styles": []
-        },
-        "motion": {
-          "entrance": "scale",
-          "hover": "none",
-          "transition": "none",
-          "staggerIndex": false,
-          "durationMs": 900
-        }
-      }
+      "showActions": true
     },
     {
       "type": "expandableTable",
@@ -1288,5 +1057,272 @@
         }
       ]
     }
+  },
+  "metricWidgets": [
+    {
+      "id": "widget-a223716d-3b2a-4d87-bb51-1bcca557f085",
+      "name": "Column 1",
+      "layout": {
+        "root": {
+          "type": "root",
+          "id": "root-58b7fdcf-08a1-4455-a377-fdca9ff8663c",
+          "columnCount": 1,
+          "columns": [
+            {
+              "id": "col-f69cd8f3-ed2a-4215-b343-82b290495a78",
+              "rows": [
+                {
+                  "type": "nested-layout",
+                  "id": "nested-0917f6c7-c447-4785-a8f0-e701bcad7a54",
+                  "columnCount": 1,
+                  "columns": [
+                    {
+                      "id": "col-7a306fb3-9d32-49d8-9d4f-d31a6bf82835",
+                      "rows": [
+                        {
+                          "type": "nested-layout",
+                          "id": "nested-ce8f955e-64af-4426-8f6d-5992e4aa970f",
+                          "columnCount": 1,
+                          "columns": [
+                            {
+                              "id": "col-7fba5a94-f7b7-4213-adda-62fd5b5c925d",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-1a1a776b-701b-4779-a1db-81bc6131a57c",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Saldo Total"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "thin"
+                                      },
+                                      {
+                                        "property": "fontSize",
+                                        "value": "16"
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "muted"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-6b4926ab-ea82-4b4e-9457-316f9900eef7",
+                                  "component": {
+                                    "kind": "metric-kpi",
+                                    "metricDefinitionId": "metric_X1OpNRgVRet7",
+                                    "groupBindings": {},
+                                    "dimensionBindings": {},
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "styles": [
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "info"
+                                },
+                                {
+                                  "property": "padding",
+                                  "value": "16"
+                                },
+                                {
+                                  "property": "borderRadius",
+                                  "value": "12"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "nested-layout",
+                          "id": "nested-cc59a6bd-bc7b-48ad-9074-5b48b5a74621",
+                          "columnCount": 1,
+                          "columns": [
+                            {
+                              "id": "col-7e90ec26-b1bf-4d61-8cad-b6f3e9a47638",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-07a4a9bc-4fca-40aa-8c47-17a6d9f13aa4",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "static",
+                                      "value": "Saldo Promedio"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "16"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      },
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "thin"
+                                      },
+                                      {
+                                        "property": "color",
+                                        "value": "muted"
+                                      }
+                                    ]
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-cc5331ea-bbb4-439c-aaa2-0fc7980f7c9e",
+                                  "component": {
+                                    "kind": "metric-kpi",
+                                    "metricDefinitionId": "metric_CnjkRmTY4Czu",
+                                    "groupBindings": {},
+                                    "dimensionBindings": {},
+                                    "styles": [
+                                      {
+                                        "property": "fontSize",
+                                        "value": "20"
+                                      },
+                                      {
+                                        "property": "justifyContent",
+                                        "value": "end"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ],
+                              "styles": [
+                                {
+                                  "property": "padding",
+                                  "value": "16"
+                                },
+                                {
+                                  "property": "backgroundColor",
+                                  "value": "info"
+                                },
+                                {
+                                  "property": "borderRadius",
+                                  "value": "12"
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "type": "component",
+                          "id": "row-bb53ea7c-ba9d-44dc-b731-7a4b9a86eb38",
+                          "component": {
+                            "kind": "text",
+                            "primary": {
+                              "type": "static",
+                              "value": "|"
+                            },
+                            "styles": [
+                              {
+                                "property": "fontSize",
+                                "value": "20"
+                              },
+                              {
+                                "property": "fontWeight",
+                                "value": "thin"
+                              },
+                              {
+                                "property": "color",
+                                "value": "muted"
+                              },
+                              {
+                                "property": "alignItems",
+                                "value": "center"
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "stackDirection": "row",
+                      "styles": [
+                        {
+                          "property": "gap",
+                          "value": "15"
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ],
+              "stackDirection": "column",
+              "styles": [
+                {
+                  "property": "overflowX",
+                  "value": "scroll"
+                },
+                {
+                  "property": "paddingBottom",
+                  "value": "10"
+                }
+              ]
+            }
+          ],
+          "styles": []
+        }
+      }
+    }
+  ],
+  "metricRowLayout": {
+    "root": {
+      "type": "root",
+      "id": "root-ed5fb3e7-36bb-4e2d-af73-59e4f6cc6a38",
+      "columnCount": 1,
+      "columns": [
+        {
+          "id": "col-9239b9b7-d9a8-47f3-b79f-faa957a81b92",
+          "rows": [
+            {
+              "type": "nested-layout",
+              "id": "nested-8bad44be-7acd-47e9-a990-a421cb5aaf37",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-6f8ef7f5-3194-4545-9969-083d711f5a2a",
+                  "rows": [
+                    {
+                      "type": "component",
+                      "id": "row-4790e89d-7c5e-449f-b460-1117d49b36ce",
+                      "component": {
+                        "kind": "metric-widget",
+                        "entityName": "contract",
+                        "widgetId": "widget-a223716d-3b2a-4d87-bb51-1bcca557f085"
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    },
+    "showActions": true,
+    "cardsPerRow": 1
   }
 }

@@ -30,7 +30,11 @@ function nextSlotId(index: number): string {
 }
 
 function assertNoUnsupportedComponents(component: UiComponentConfig): void {
-  if (component.kind === "metric-kpi" || component.kind === "related-records") {
+  if (
+    component.kind === "metric-kpi" ||
+    component.kind === "metric-widget" ||
+    component.kind === "related-records"
+  ) {
     throw new GenericizeLayoutNodeError(
       `Presets cannot include "${component.kind}" components in v1. Remove them before saving.`,
     );

@@ -1,11 +1,11 @@
 import { Text } from "@repo/ui";
-import { metricStripLayoutFromView } from "@repo/entities";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { createEntityMainPageRenderContext } from "../ui-builder/create-entity-main-page-render-context";
+import { createDefaultMetricRowLayout } from "../ui-builder/create-default-metric-row-layout";
 import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import { FormDesignerPreviewThemeScope } from "../form-designer/FormDesignerPreviewThemeScope";
 import { MobileDevicePreviewFrame } from "../form-designer/MobileDevicePreviewFrame";
@@ -33,14 +33,11 @@ export function MainViewDesignerPreviewPanel({
   const structureWrappers =
     useMainViewDesignerLayoutPreviewWrappers(withStructureChrome);
 
-  const metricStripLayoutForPreview = useMemo(() => {
-    const tableView = editor.definition.ui.views.find(
-      (view) => view.type === "table",
-    );
-    return metricStripLayoutFromView(
-      tableView?.type === "table" ? tableView.metricStripLayout : undefined,
-    );
-  }, [editor.definition.ui.views]);
+  const metricRowLayoutForPreview = useMemo(
+    () =>
+      editor.definition.ui.metricRowLayout ?? createDefaultMetricRowLayout(),
+    [editor.definition.ui.metricRowLayout],
+  );
 
   const previewContext = useMemo(
     () =>
@@ -49,7 +46,7 @@ export function MainViewDesignerPreviewPanel({
         entityLabel: editor.definition.ui.nav?.label ?? editor.entityName,
         locale: i18n.language,
         canCreate: true,
-        metricStripLayout: metricStripLayoutForPreview,
+        metricRowLayout: metricRowLayoutForPreview,
         entityDefinition: editor.definition,
         listFilters: {},
         routeParams: {},
@@ -82,7 +79,7 @@ export function MainViewDesignerPreviewPanel({
       editor.definition,
       editor.entityName,
       i18n.language,
-      metricStripLayoutForPreview,
+      metricRowLayoutForPreview,
     ],
   );
 

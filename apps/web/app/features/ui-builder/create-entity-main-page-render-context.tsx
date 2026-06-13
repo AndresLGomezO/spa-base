@@ -1,10 +1,7 @@
 import type { ComponentType } from "react";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { SerializableEntityDefinition } from "@repo/entities";
-import {
-  metricStripHasContent,
-  metricStripLayoutFromView,
-} from "@repo/entities";
+import { metricStripHasContent } from "@repo/entities";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
 import type { EntityName } from "../../entities/entity-catalog";
@@ -16,12 +13,14 @@ import { Link, useNavigate } from "react-router";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
+import { createDefaultMetricRowLayout } from "./create-default-metric-row-layout";
+
 interface MainPageRenderContextInput {
   readonly entityName: EntityName;
   readonly entityLabel: string;
   readonly locale: string;
   readonly canCreate: boolean;
-  readonly metricStripLayout?: UiLayoutDocument;
+  readonly metricRowLayout?: UiLayoutDocument;
   readonly entityDefinition: SerializableEntityDefinition;
   readonly listFilters: Readonly<Record<string, readonly string[]>>;
   readonly routeParams: Readonly<Record<string, string | undefined>>;
@@ -40,7 +39,7 @@ export function createEntityMainPageRenderContext(
   const {
     entityName,
     entityLabel,
-    metricStripLayout,
+    metricRowLayout,
     entityDefinition,
     listFilters,
     routeParams,
@@ -53,8 +52,8 @@ export function createEntityMainPageRenderContext(
     metricsDesignerPath,
   } = input;
 
-  const stripLayout = metricStripLayoutFromView(metricStripLayout);
-  const showMetricsStrip = metricStripHasContent(stripLayout);
+  const rowLayout = metricRowLayout ?? createDefaultMetricRowLayout();
+  const showMetricsRow = metricStripHasContent(rowLayout);
 
   return {
     mode: "mainPage",
@@ -63,9 +62,9 @@ export function createEntityMainPageRenderContext(
     resolveField: () => undefined,
     pageToolbarRenderer: () => <WebDataViewToolbar {...toolbar} />,
     pageMetricsRenderer: () =>
-      showMetricsStrip ? (
+      showMetricsRow ? (
         <EntityViewMetricsStrip
-          stripLayout={stripLayout}
+          rowLayout={rowLayout}
           entityDefinition={entityDefinition}
           context={{ listFilters, routeParams }}
           locale={input.locale}

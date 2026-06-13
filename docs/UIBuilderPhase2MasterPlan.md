@@ -264,7 +264,7 @@ Split or extend to:
 
 Extract shared editor shell patterns (used by main/detail/metrics list editors):
 
-- `DesignLayoutEditorShell` — header, save, collapsible sections, preview slot (metrics legacy shell)
+- Metrics row designer (`MetricsRowDesigner`) — widgets + row layout tabs; persists `metricWidgets` and `metricRowLayout`
 - Dedicated layout editor hooks per surface (`useEntityRecordDetailLayoutEditor`, `useEntityMainPageLayoutEditor`, …)
 
 Replace duplicated route placeholders in `page.tsx` / `forms.tsx` with real editors.

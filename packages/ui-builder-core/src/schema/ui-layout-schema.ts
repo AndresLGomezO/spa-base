@@ -201,6 +201,15 @@ const fieldComponentSchema = z.discriminatedUnion("kind", [
     .strict(),
   z
     .object({
+      kind: z.literal("metric-widget"),
+      entityName: z.string(),
+      widgetId: z.string(),
+      label: z.string().optional(),
+      styles: z.array(styleRuleSchema).optional(),
+    })
+    .strict(),
+  z
+    .object({
       kind: z.literal("form-field"),
       fieldPath: z.string().trim().min(1),
       hideLabel: z.boolean().optional(),

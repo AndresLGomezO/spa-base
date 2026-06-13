@@ -6,6 +6,7 @@ import {
   isFieldUiComponent,
   isIconComponent,
   isMetricKpiComponent,
+  isMetricWidgetComponent,
   isPageUiComponent,
   matchConditionalStyles,
   resolveFieldChain,
@@ -163,6 +164,10 @@ export function renderUiComponent(
         resolveMetricKpiPresentation(config.styles),
       ) ?? null
     );
+  }
+
+  if (isMetricWidgetComponent(config)) {
+    return context.metricWidgetRenderer?.(config) ?? null;
   }
 
   if (config.kind === "form-field") {

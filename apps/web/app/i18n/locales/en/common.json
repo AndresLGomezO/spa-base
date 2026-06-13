@@ -156,6 +156,19 @@
       "wizardScopeAriaLabel": "Structure tree scope",
       "wizardStepLabel": "Step",
       "collapsedStepSelectAriaLabel": "Select wizard step",
+      "wizardSteps": {
+        "add": "Add step",
+        "edit": "Edit step",
+        "remove": "Remove step",
+        "save": "Save step",
+        "addModalTitle": "Add wizard step",
+        "editModalTitle": "Edit wizard step",
+        "titleLabel": "Title",
+        "subtitleLabel": "Subtitle",
+        "iconLabel": "Icon",
+        "emptyDropdown": "—",
+        "emptyTree": "No steps yet. Use + to create one."
+      },
       "expandNode": "Expand {{label}}",
       "collapseNode": "Collapse {{label}}",
       "selectRow": "Edit component",
@@ -283,6 +296,54 @@
       "keepEditing": "Keep editing"
     }
   },
+  "metricsRowDesigner": {
+    "title": "Metrics Row Designer",
+    "entitySubtitle": "Entity: {{entity}}",
+    "settings": "Settings",
+    "tabs": {
+      "widgets": "Widgets",
+      "row": "Row layout",
+      "ariaLabel": "Metrics row designer sections"
+    },
+    "row": {
+      "structureTitle": "Row structure"
+    },
+    "components": {
+      "metricWidget": "Metric widget"
+    },
+    "metricWidgetEditor": {
+      "entity": "Entity",
+      "widget": "Widget",
+      "selectWidget": "Select a widget…",
+      "unconfigured": "No widget selected",
+      "noWidgetsForEntity": "No metric widgets are defined for this entity."
+    },
+    "widgets": {
+      "selectLabel": "Widget",
+      "add": "Add widget",
+      "edit": "Edit widget",
+      "remove": "Remove widget",
+      "save": "Save widget",
+      "addModalTitle": "Add metric widget",
+      "editModalTitle": "Edit metric widget",
+      "nameLabel": "Widget name",
+      "structureTitle": "Widget structure",
+      "emptyDropdown": "—",
+      "emptyTree": "No widgets yet. Use + to create one.",
+      "noWidgetSelected": "Select a widget to preview its layout."
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "widgetsMessage": "You have unsaved widget changes. Save them before leaving, or discard your changes.",
+      "rowMessage": "You have unsaved row layout changes. Save them before leaving this tab, or discard your changes.",
+      "widgetMessage": "You have unsaved widget changes. Save them before switching widgets, or discard your changes.",
+      "structurePanelMessage": "You have unsaved structure changes in the panel. Save them before closing or switching, or discard your changes.",
+      "structurePanelSave": "Save structure changes",
+      "save": "Save changes",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing"
+    }
+  },
   "itemListDesigner": {
     "title": "Item list Designer",
     "entitySubtitle": "Entity: {{entity}}",
@@ -348,18 +409,11 @@
     "formPresentationWizard": "Wizard",
     "iconName": "Icon (Lucide name)",
     "iconNameHint": "Use a Lucide icon name, for example CircleCheck or Database.",
-    "previewScreenSize": "Preview screen size",
     "staticImage": "Static image",
     "staticImageUrl": "Image URL",
     "staticImageUpload": "Upload image",
     "staticImageClear": "Remove uploaded image",
-    "backToHome": "Back to home",
-    "entityContext": "Entity: {{entity}}",
-    "metricsTitle": "Metrics row",
-    "metricsDescription": "Design the metrics row above the entity list using the same layout builder as list items.",
     "metricsConfigureLink": "Configure metrics row",
-    "metricsPreview": "Metrics strip preview",
-    "metricsStripStructure": "Strip grid",
     "mainPageStructure": "Main page structure",
     "recordDetailStructure": "Record detail structure",
     "layoutJsonImport": {
@@ -393,14 +447,14 @@
         "forms": "Current form configuration JSON",
         "mainPage": "Current main page configuration JSON",
         "recordDetail": "Current detail page configuration JSON",
-        "metricStrip": "Current metrics configuration JSON"
+        "metricsRowDesigner": "Current metrics row designer configuration JSON"
       },
       "importTitle": {
         "list": "Import list configuration JSON",
         "forms": "Import form configuration JSON",
         "mainPage": "Import main page configuration JSON",
         "recordDetail": "Import detail page configuration JSON",
-        "metricStrip": "Import metrics configuration JSON"
+        "metricsRowDesigner": "Import metrics row designer configuration JSON"
       },
       "pasteLabel": "Paste JSON",
       "uploadLabel": "Upload JSON file",
@@ -416,28 +470,6 @@
       "importDescription": "Import the full configuration for this design tab. Changes apply to the editor immediately; click Save to persist.",
       "viewCopy": "Copy to clipboard",
       "viewCopied": "Copied"
-    },
-    "fullOverrideJson": {
-      "viewTrigger": "View all UI",
-      "importTrigger": "Import all UI",
-      "viewTitle": "Full entity UI override JSON",
-      "importTitle": "Import full entity UI override",
-      "pasteLabel": "Paste JSON",
-      "uploadLabel": "Upload JSON file",
-      "skeletonTitle": "Expected structure",
-      "skeletonShow": "Show example",
-      "skeletonHide": "Hide example",
-      "valid": "JSON is valid for this entity UI override.",
-      "invalid": "JSON has validation errors.",
-      "apply": "Apply and save",
-      "cancel": "Cancel",
-      "readOnlyHint": "You can validate JSON here, but you need entity UI override permission to apply changes.",
-      "viewDescription": "Read-only snapshot of the full entity UI override (all design tabs combined).",
-      "importDescription": "Import a full entity UI override. Valid JSON is saved immediately and replaces all provided slices.",
-      "viewCopy": "Copy to clipboard",
-      "viewCopied": "Copied",
-      "importSaved": "Full UI override imported successfully.",
-      "importFailed": "Failed to import full UI override."
     },
     "presets": {
       "title": "Component presets",
@@ -581,7 +613,6 @@
       "labelAbove": "Above text",
       "labelBelow": "Below text",
       "label": "Label",
-      "addSlot": "Add slot",
       "preview": "Preview",
       "structure": "Structure",
       "slotSettings": "Slot settings",
@@ -671,12 +702,10 @@
       "labelAlignRight": "Right",
       "showActions": "Show actions menu",
       "layoutColumns": "Layout columns",
-      "slotColumns": "Slot columns",
       "cardsPerRow": "Max cards per row",
       "columnTab": "Column {{column}}",
       "columnWidthPercent": "Width (%)",
       "columnWidthAutoHint": "{{percent}}% (auto)",
-      "emptyColumn": "No slots in this column yet.",
       "moveSlotUp": "Move slot up",
       "moveSlotDown": "Move slot down",
       "moveColumnLeft": "Move column left",

@@ -6,7 +6,7 @@ import {
   type WizardFormConfig,
 } from "@repo/entities";
 import {
-  createDefaultWizardFormConfig,
+  createDefaultWizardShellLayout,
   ensureWizardShellLayout,
   type ColumnNode,
   type ComponentRowNode,
@@ -45,15 +45,6 @@ export interface FormDesignerComponentsTreeSnapshot {
     readonly layout: ComponentsLayoutTree;
   }[];
   readonly modalFooterLayout?: ComponentsLayoutTree;
-}
-
-function defaultPlainLayoutFieldPaths(
-  definition: SerializableEntityDefinition,
-): readonly string[] {
-  const fieldPaths = Object.keys(definition.fields).filter(
-    (field) => definition.fields[field]?.type !== "document",
-  );
-  return fieldPaths.length > 0 ? fieldPaths : ["name"];
 }
 
 function extractRowTree(row: RowNode): ComponentsRowTree {
@@ -122,20 +113,26 @@ export function readComponentsTreeSnapshotFromFull(
 export function readComponentsSnapshotFromDefinition(
   definition: SerializableEntityDefinition,
 ): FormDesignerComponentsSnapshot {
-  const fieldPaths = defaultPlainLayoutFieldPaths(definition);
   const footerLayout = resolveFormModalFooterLayout(definition);
   const plainLayout = resolvePlainFormLayout(definition);
-  const wizard =
-    resolveWizardForm(definition) ?? createDefaultWizardFormConfig(fieldPaths);
+  const resolvedWizard = resolveWizardForm(definition);
+  const wizard = resolvedWizard
+    ? structuredClone({
+        ...resolvedWizard,
+        shellLayout: ensureWizardShellLayout(resolvedWizard.shellLayout, {
+          actionsInModalFooter: footerLayout != null,
+        }),
+      })
+    : structuredClone({
+        shellLayout: ensureWizardShellLayout(createDefaultWizardShellLayout(), {
+          actionsInModalFooter: footerLayout != null,
+        }),
+        steps: [],
+      });
 
   return {
     plainLayout: structuredClone(plainLayout),
-    wizard: structuredClone({
-      ...wizard,
-      shellLayout: ensureWizardShellLayout(wizard.shellLayout, {
-        actionsInModalFooter: footerLayout != null,
-      }),
-    }),
+    wizard,
     modalFooterLayout: footerLayout ? structuredClone(footerLayout) : undefined,
   };
 }

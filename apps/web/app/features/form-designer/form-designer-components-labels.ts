@@ -57,6 +57,7 @@ export function formDesignerComponentsLabels(
     "page-metrics": t("mainViewDesigner.components.pageMetrics"),
     "page-list": t("mainViewDesigner.components.pageList"),
     "metric-kpi": t("detailViewDesigner.components.metricKpi"),
+    "metric-widget": t("metricsRowDesigner.components.metricWidget"),
     "related-records": t("detailViewDesigner.components.relatedRecords"),
   };
 

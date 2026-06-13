@@ -7,6 +7,7 @@ import {
   Hash,
   Image,
   Layers,
+  LayoutGrid,
   ListChecks,
   MousePointerClick,
   PanelTop,
@@ -89,12 +90,30 @@ export function getFilteredComponentCatalog(
 ): readonly ComponentCatalogSection[] {
   const allowedKinds = componentKindsForSurface(designSurface);
 
-  return ALL_SECTIONS.map((section) => ({
+  const sections = ALL_SECTIONS.map((section) => ({
     ...section,
     entries: section.entries.filter((entry) =>
       isAllowedOnSurface(entry.kind, allowedKinds),
     ),
   })).filter((section) => section.entries.length > 0);
+
+  if (designSurface !== "metricRow") {
+    return sections;
+  }
+
+  return sections.map((section) => {
+    if (section.id !== "content") {
+      return section;
+    }
+
+    return {
+      ...section,
+      entries: [
+        ...section.entries,
+        { kind: "metric-widget" as const, icon: LayoutGrid },
+      ],
+    };
+  });
 }
 
 function getComponentCatalogIcon(

@@ -1,4 +1,5 @@
 import { migrateListPresentation } from "./migrate-list-presentation.js";
+import { migrateMetricStripToMetricsRow } from "./migrate-metric-strip-to-metrics-row.js";
 import { normalizeEntityViews } from "./normalize-entity-views.js";
 import type { EntityUiOverrideForms } from "./form-config.js";
 import { isCardViewConfig } from "./types.js";
@@ -62,7 +63,10 @@ export function mergeEntityUiOverrides(
   override: EntityUiOverrideRecord | null | undefined,
 ): SerializableEntityDefinition {
   if (!override || override.views.length === 0) {
-    return definition;
+    return {
+      ...definition,
+      ui: migrateMetricStripToMetricsRow(definition.ui, definition.name),
+    };
   }
 
   const baseTableView = definition.ui.views.find(
@@ -126,12 +130,18 @@ export function mergeEntityUiOverrides(
           detailLayout: recordDetailLayout,
         }
       : {}),
+    ...(override.metricWidgets
+      ? { metricWidgets: override.metricWidgets }
+      : {}),
+    ...(override.metricRowLayout
+      ? { metricRowLayout: override.metricRowLayout }
+      : {}),
     forms: mergeFormConfig(definition.ui.forms, override.forms),
   });
 
   return {
     ...definition,
-    ui: mergedUi,
+    ui: migrateMetricStripToMetricsRow(mergedUi, definition.name),
   };
 }
 
