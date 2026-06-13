@@ -1,6 +1,6 @@
 import { nanoid } from "nanoid";
 
-import { aiJobRecordSchema, type AiJobRecord } from "@repo/ai-engine";
+import { aiJobRecordSchema, type AiJobRecord } from "@repo/ai-engine/schemas";
 
 import type { AiJobRepository } from "./repository-contract.js";
 

@@ -1,9 +1,9 @@
-import type { AiChatInput } from "@repo/ai-engine";
+import type { AiChatInput } from "@repo/ai-engine/schemas";
 import {
   aiJobRecordSchema,
   type AiJobRecord,
   type AiJobStatus,
-} from "@repo/ai-engine";
+} from "@repo/ai-engine/schemas";
 
 export { aiJobRecordSchema, type AiJobRecord, type AiJobStatus };
 

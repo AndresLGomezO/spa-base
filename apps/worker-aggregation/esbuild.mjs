@@ -3,6 +3,7 @@ import * as esbuild from "esbuild";
 const external = [
   "@google-cloud/firestore",
   "@google-cloud/pubsub",
+  "@google-cloud/vertexai",
   "firebase-admin",
   "zod",
 ];

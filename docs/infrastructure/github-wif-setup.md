@@ -95,7 +95,8 @@ for ROLE in \
   roles/serviceusage.serviceUsageAdmin \
   roles/resourcemanager.projectIamAdmin \
   roles/secretmanager.admin \
-  roles/pubsub.admin
+  roles/pubsub.admin \
+  roles/cloudtasks.admin
 do
   gcloud projects add-iam-policy-binding "$PROJECT_ID" \
     --member="serviceAccount:${DEPLOYER_EMAIL}" \
@@ -178,6 +179,8 @@ See [`packages/infrastructure/terraform/ci_deployer.tf`](../../packages/infrastr
 | Auth works but 403 on later steps        | Wrong `attribute-condition` on provider — must be `assertion.repository=='owner/repo'`, not repo name alone |
 | `Permission denied` on `terraform apply` | Re-run `setup-github-wif.sh` (deployer needs `roles/iam.serviceAccountAdmin`) |
 | `pubsub.topics.create` / `google_pubsub_topic` 403 | Grant `roles/pubsub.admin` on `github-deployer` (included in `setup-github-wif.sh`) and re-run deploy |
+| `cloudtasks.queues.create` 403 | Grant `roles/cloudtasks.admin` on `github-deployer` (included in `setup-github-wif.sh`) and re-run deploy |
+| Cloud Run worker-aggregation startup probe failed | Check logs; often caused by bundling `@google-cloud/vertexai` into the worker image — rebuild after pulling latest worker-aggregation esbuild fix |
 | `iam.serviceAccounts.create` denied    | Same — `serviceAccountAdmin` on `github-deployer`                          |
 | Terraform 409 (AR / Firestore / rules)   | Run `scripts/terraform-import-brownfield.sh` before plan/apply             |
 | Secret `payload required`              | Add version with `gcloud secrets versions add` (Terraform creates secret only) |

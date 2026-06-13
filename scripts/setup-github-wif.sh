@@ -92,6 +92,8 @@ BOOTSTRAP_APIS=(
   firebasehosting.googleapis.com
   firebase.googleapis.com
   pubsub.googleapis.com
+  cloudtasks.googleapis.com
+  aiplatform.googleapis.com
 )
 
 DEPLOYER_ROLES=(
@@ -106,6 +108,7 @@ DEPLOYER_ROLES=(
   roles/resourcemanager.projectIamAdmin
   roles/secretmanager.admin
   roles/pubsub.admin
+  roles/cloudtasks.admin
 )
 
 github_secret_names() {

@@ -1,7 +1,9 @@
 import { METRIC_CONTRIBUTIONS_ROOT } from "@repo/metrics-engine";
 
-import type { MetricContributionRepository } from "@repo/firestore-converters";
-import { metricContributionRecordSchema } from "@repo/firestore-converters";
+import {
+  metricContributionRecordSchema,
+  type MetricContributionRepository,
+} from "@repo/firestore-converters/metric-contribution";
 
 import {
   getFirestoreAdmin,
