@@ -97,7 +97,13 @@ export interface LayoutRenderContext {
   readonly resolveRecordFieldLink?: (fieldPath: string) => {
     readonly href: string;
     readonly label: string;
+    readonly state?: unknown;
   } | null;
+  readonly recordFieldLinkRenderer?: (link: {
+    readonly href: string;
+    readonly label: string;
+    readonly state?: unknown;
+  }) => ReactNode;
   readonly pageHeaderRenderer?: () => ReactNode;
   readonly pageToolbarRenderer?: () => ReactNode;
   readonly pageMetricsRenderer?: () => ReactNode;

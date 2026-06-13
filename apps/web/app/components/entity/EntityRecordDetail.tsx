@@ -2,9 +2,9 @@ import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { Alert, Button, Heading, Text } from "@repo/ui";
-import { Link, useNavigate } from "react-router";
+import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
-import { ArrowLeft, Pencil } from "lucide-react";
+import { Pencil } from "lucide-react";
 
 import type { EntityName } from "../../entities/entity-catalog";
 import {
@@ -24,6 +24,8 @@ import { entityRecordQueryKey } from "../../query/query-client";
 import { formatRecordDisplayLabel } from "./format-record-display-label";
 import { RelatedRecords } from "./RelatedRecords";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
+import { EntityBackButton } from "../navigation/EntityBackButton";
+import { useEntityReturnNavigation } from "../../routing/entity-navigation";
 
 interface EntityRecordDetailProps {
   readonly entityName: EntityName;
@@ -37,8 +39,8 @@ export function EntityRecordDetail({
   tenantId,
 }: EntityRecordDetailProps) {
   const { t } = useTranslation("common");
-  const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
+  const { returnTo, buildEditPath } = useEntityReturnNavigation(entityName);
   const permissions = useEntityPermissions(entityName);
   const canConfigureLayout = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
@@ -117,15 +119,7 @@ export function EntityRecordDetail({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <Button
-          type="button"
-          variant="ghost"
-          size="sm"
-          onClick={() => navigate(`/app/${entityName}`)}
-        >
-          <ArrowLeft className="mr-1 size-4" />
-          {entityLabel}
-        </Button>
+        <EntityBackButton entityName={entityName} label={entityLabel} />
       </div>
 
       <div className="flex items-center justify-between gap-4">
@@ -141,7 +135,7 @@ export function EntityRecordDetail({
             </Link>
           ) : null}
           {permissions.canUpdate ? (
-            <Link to={`/app/${entityName}?edit=${recordId}`}>
+            <Link to={buildEditPath(recordId)}>
               <Button type="button" variant="outline" size="sm">
                 <Pencil className="mr-1 size-4" />
                 {t("entity.edit")}
@@ -153,7 +147,11 @@ export function EntityRecordDetail({
 
       {recordDetailLayout ? (
         <div className="bg-card border-border rounded-lg border p-4">
-          <EntityLayoutDetailView record={record} definition={definition} />
+          <EntityLayoutDetailView
+            record={record}
+            definition={definition}
+            returnTo={returnTo}
+          />
         </div>
       ) : (
         <div className="bg-card border-border rounded-lg border p-4">
@@ -187,6 +185,7 @@ export function EntityRecordDetail({
                       populatedRecord ? (
                         <Link
                           to={`/app/${fieldMeta.relation!.target}/${rawValue}`}
+                          state={{ returnTo }}
                           className="text-primary underline"
                         >
                           {formatRecordDisplayLabel(populatedRecord)}
@@ -223,6 +222,7 @@ export function EntityRecordDetail({
               childEntityName={rel.childEntityName}
               foreignKeyField={rel.foreignKeyField}
               tenantId={tenantId}
+              returnTo={returnTo}
             />
           ))}
         </div>

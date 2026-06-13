@@ -1,5 +1,5 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
-import { useCallback } from "react";
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 
 import { cn } from "@repo/theme/utils";
 
@@ -51,12 +51,37 @@ export function SortControls({
   const directionLabel =
     sort.direction === "asc" ? sortAscendingLabel : sortDescendingLabel;
 
+  const selectedLabel = useMemo(() => {
+    if (sort.columnId === null) {
+      return sortDefaultLabel;
+    }
+
+    return (
+      options.find((option) => option.id === sort.columnId)?.label ??
+      sortDefaultLabel
+    );
+  }, [options, sort.columnId, sortDefaultLabel]);
+
+  const measureRef = useRef<HTMLSpanElement>(null);
+  const [selectWidth, setSelectWidth] = useState<number | undefined>();
+
+  useLayoutEffect(() => {
+    const measureElement = measureRef.current;
+    if (!measureElement) {
+      return;
+    }
+
+    // Padding (px-2 / px-3) plus native select chevron space.
+    const paddingAndChrome = 40;
+    setSelectWidth(measureElement.offsetWidth + paddingAndChrome);
+  }, [selectedLabel]);
+
   return (
     <div
       className={cn(
-        "ml-auto flex min-w-0 shrink-0",
+        "flex min-w-0 shrink-0",
         "max-md:flex-col max-md:items-start max-md:gap-0.5",
-        "md:flex-row md:items-center md:gap-2",
+        "md:ml-auto md:flex-row md:items-center md:gap-2",
       )}
       data-testid="data-view-sort-controls"
     >
@@ -64,12 +89,24 @@ export function SortControls({
         {sortByLabel}:
       </span>
 
-      <div className="flex min-w-0 items-center gap-2">
+      <div className="relative flex min-w-0 items-center gap-1 md:gap-2">
+        <span
+          ref={measureRef}
+          className="pointer-events-none invisible absolute top-0 left-0 whitespace-nowrap text-sm"
+          aria-hidden
+        >
+          {selectedLabel}
+        </span>
         <select
           value={sort.columnId ?? ""}
           onChange={handleSelectChange}
           disabled={disabled || options.length === 0}
-          className="border-input bg-transparent focus:ring-ring h-9 min-w-[140px] rounded-xl border px-3 py-1.5 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none"
+          style={selectWidth == null ? undefined : { width: selectWidth }}
+          className={cn(
+            "border-input bg-transparent focus:ring-ring max-w-full shrink-0 rounded-xl border text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none",
+            "h-8 px-2 py-1",
+            "md:h-9 md:px-3 md:py-1.5",
+          )}
           aria-label={sortByLabel}
           data-testid="data-view-sort-select"
         >
@@ -86,7 +123,7 @@ export function SortControls({
           label={directionLabel}
           onClick={onDirectionToggle}
           disabled={disabled || sort.columnId === null}
-          className="h-9 w-9 shrink-0 rounded-xl"
+          className="h-8 w-8 shrink-0 rounded-xl md:h-9 md:w-9"
           data-testid="data-view-sort-direction"
         >
           {sort.direction === "asc" ? (

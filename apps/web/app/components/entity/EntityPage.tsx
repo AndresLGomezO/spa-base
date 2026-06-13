@@ -515,10 +515,10 @@ function EntityPageInner({ entityName }: EntityPageProps) {
       className={cn(
         "relative z-0 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden",
         ENTITY_PAGE_CHROME_TRANSITION,
-        isCompact ? "max-lg:gap-2 gap-6" : "gap-6 max-lg:gap-4",
+        isCompact ? "max-lg:gap-1 gap-6" : "gap-6 max-lg:gap-4",
       )}
     >
-      <div className="shrink-0">
+      <div className="shrink-0 max-lg:overflow-visible">
         <EntityPageCompactHeader
           entityLabel={getEntityLabel(definition)}
           canConfigureView={canConfigureView}
@@ -544,7 +544,7 @@ function EntityPageInner({ entityName }: EntityPageProps) {
           className={cn(
             "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
             ENTITY_PAGE_CHROME_TRANSITION,
-            isCompact ? "max-lg:gap-2 gap-6" : "gap-6 max-lg:gap-4",
+            isCompact ? "max-lg:gap-1 gap-6" : "gap-6 max-lg:gap-4",
           )}
         >
           {legacyMainBody}

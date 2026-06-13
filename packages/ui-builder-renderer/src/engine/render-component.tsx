@@ -499,6 +499,21 @@ export function renderUiComponent(
 
   const recordLink = context.resolveRecordFieldLink?.(fieldPath);
   if (recordLink) {
+    if (context.recordFieldLinkRenderer) {
+      return (
+        <CardFieldValue
+          label={label}
+          value={context.recordFieldLinkRenderer(recordLink)}
+          allowEmpty
+          className={containerClassName}
+          style={containerStyle}
+          valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
+          textSize={textSize}
+          {...textPropsFromLabel(config)}
+        />
+      );
+    }
+
     return (
       <CardFieldValue
         label={label}

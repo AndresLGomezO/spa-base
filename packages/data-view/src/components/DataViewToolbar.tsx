@@ -56,6 +56,8 @@ export function DataViewToolbar<T>({
     .filter((column) => column.sortable !== false)
     .map((column) => ({ id: column.id, label: column.label }));
 
+  const searchFieldClassName = "max-w-none min-w-0 w-full md:flex-1";
+
   if (compact) {
     if (activeBadges.length === 0) {
       return null;
@@ -93,6 +95,21 @@ export function DataViewToolbar<T>({
         <p className="text-muted-foreground text-sm">{warningMessage}</p>
       ) : null}
 
+      {showSearch ? (
+        <div
+          className="w-full min-w-0 md:hidden"
+          data-testid="data-view-toolbar-search-row"
+        >
+          <SearchField
+            value={search}
+            onChange={setSearch}
+            placeholder={labels.searchPlaceholder}
+            ariaLabel={labels.searchPlaceholder}
+            className={searchFieldClassName}
+          />
+        </div>
+      ) : null}
+
       <FilterPanel
         open={filtersOpen}
         onOpenChange={onFiltersOpenChange}
@@ -104,13 +121,15 @@ export function DataViewToolbar<T>({
         badgesBelowToolbar
         toolbarPrefix={
           showSearch ? (
-            <SearchField
-              value={search}
-              onChange={setSearch}
-              placeholder={labels.searchPlaceholder}
-              ariaLabel={labels.searchPlaceholder}
-              className="max-w-none min-w-0 flex-1"
-            />
+            <div className="hidden min-w-0 flex-1 md:block">
+              <SearchField
+                value={search}
+                onChange={setSearch}
+                placeholder={labels.searchPlaceholder}
+                ariaLabel={labels.searchPlaceholder}
+                className={searchFieldClassName}
+              />
+            </div>
           ) : undefined
         }
         sibling={

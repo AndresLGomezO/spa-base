@@ -95,7 +95,7 @@ function FilterPanelToolbar({
 }: FilterPanelToolbarProps) {
   return (
     <div className="flex w-full min-w-0 flex-col gap-2">
-      <div className="flex w-full min-w-0 items-end gap-2 md:items-center">
+      <div className="flex w-full min-w-0 items-end gap-1.5 md:items-center md:gap-2">
         {triggerButton}
         {toolbarPrefix}
         {inlineBadges && badgesContent ? (
@@ -180,7 +180,8 @@ export function FilterPanel({
     <Button
       type="button"
       variant="outline"
-      className="flex shrink-0 items-center gap-2 rounded-xl"
+      size="sm"
+      className="flex shrink-0 items-center gap-1 rounded-xl max-md:px-2.5 md:gap-2"
       disabled={disabled}
       onClick={() => onOpenChange(!open)}
       aria-expanded={open}

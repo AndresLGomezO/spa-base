@@ -1,10 +1,12 @@
 import type { FieldAccessLevel } from "@repo/entities";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { SerializableEntityDefinition } from "@repo/entities";
+import { Link } from "react-router";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { formatRecordDisplayLabel } from "../../components/entity/format-record-display-label";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
+import type { EntityReturnToState } from "../../routing/entity-navigation";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
 
 export function createEntityRecordRenderContext(options: {
@@ -16,6 +18,7 @@ export function createEntityRecordRenderContext(options: {
     entityName: string,
   ) => EntityCatalogEntry | undefined;
   readonly usePreviewSamples?: boolean;
+  readonly returnTo?: string;
 }): LayoutRenderContext {
   const base = createEntityLayoutRenderContext({
     ...options,
@@ -26,6 +29,10 @@ export function createEntityRecordRenderContext(options: {
     string,
     Record<string, unknown> | null
   >;
+
+  const linkState: EntityReturnToState | undefined = options.returnTo
+    ? { returnTo: options.returnTo }
+    : undefined;
 
   return {
     ...base,
@@ -39,6 +46,15 @@ export function createEntityRecordRenderContext(options: {
       }
       return getFieldAccessLevel(options.fieldAccess, root) !== "none";
     },
+    recordFieldLinkRenderer: (link) => (
+      <Link
+        to={link.href}
+        state={link.state}
+        className="text-primary underline"
+      >
+        {link.label}
+      </Link>
+    ),
     resolveRecordFieldLink: (fieldPath) => {
       const root = fieldPath.includes(".")
         ? (fieldPath.split(".")[0] ?? fieldPath)
@@ -60,6 +76,7 @@ export function createEntityRecordRenderContext(options: {
       return {
         href: `/app/${meta.relation.target}/${rawId}`,
         label,
+        state: linkState,
       };
     },
   };

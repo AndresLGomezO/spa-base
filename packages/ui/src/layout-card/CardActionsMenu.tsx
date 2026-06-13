@@ -50,13 +50,14 @@ export function CardActionsMenu({
           label={triggerLabel}
           size="sm"
           className="hover:bg-muted size-8 rounded-lg"
+          data-card-action=""
           onClick={handleTriggerClick}
         >
           <MoreVertical className="size-4" />
         </IconButton>
       }
     >
-      <div className="flex flex-col gap-1">
+      <div className="flex flex-col gap-1" data-card-action="">
         {actions.map((action) => (
           <button
             key={action.id}

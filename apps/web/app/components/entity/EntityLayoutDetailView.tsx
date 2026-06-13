@@ -10,11 +10,13 @@ import { useEntityCatalog } from "../../entities/entity-catalog-context";
 interface EntityLayoutDetailViewProps {
   readonly record: Record<string, unknown>;
   readonly definition: SerializableEntityDefinition;
+  readonly returnTo?: string;
 }
 
 export function EntityLayoutDetailView({
   record,
   definition,
+  returnTo,
 }: EntityLayoutDetailViewProps) {
   const { i18n } = useTranslation("common");
   const fieldAccess = useFieldAccess(
@@ -35,6 +37,7 @@ export function EntityLayoutDetailView({
         definition,
         locale: i18n.language,
         fieldAccess,
+        returnTo,
         getDefinition: (name) =>
           catalogItems.find((entry) => entry.name === name),
       })}

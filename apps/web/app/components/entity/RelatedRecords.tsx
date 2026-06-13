@@ -21,12 +21,14 @@ interface RelatedRecordsProps {
   readonly childEntityName: EntityName;
   readonly foreignKeyField: string;
   readonly tenantId: string;
+  readonly returnTo?: string;
 }
 
 export function RelatedRecords({
   parentId,
   childEntityName,
   foreignKeyField,
+  returnTo,
 }: RelatedRecordsProps) {
   const { t } = useTranslation("common");
   const { isKnownEntity } = useEntityCatalog();
@@ -99,6 +101,7 @@ export function RelatedRecords({
             cell: (item) => (
               <Link
                 to={`/app/${childEntityName}/${String(item.id)}`}
+                state={returnTo ? { returnTo } : undefined}
                 className="text-primary text-sm underline"
               >
                 {t("entity.view", { defaultValue: "View" })}

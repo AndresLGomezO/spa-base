@@ -21,7 +21,6 @@ import {
 } from "@repo/ui";
 import { Eye, Lock, Pencil, Share2, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 
 import {
   formatFieldLabel,
@@ -47,6 +46,7 @@ import {
   getEntityCellDisplayMeta,
   getEntityCellSchemaValue,
 } from "./resolve-entity-cell-value";
+import { useEntityReturnNavigation } from "../../routing/entity-navigation";
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
@@ -79,7 +79,7 @@ export function EntityTable({
   onRequestShare,
 }: EntityTableProps) {
   const { t, i18n } = useTranslation("common");
-  const navigate = useNavigate();
+  const { navigateToDetail } = useEntityReturnNavigation(entityName);
   const definition = useEntityDefinition(entityName);
   const { getDefinition: getDefinitionOrThrow } = useEntityCatalog();
   const { user } = useAuth();
@@ -228,9 +228,7 @@ export function EntityTable({
                           <IconButton
                             type="button"
                             label={t("entity.view")}
-                            onClick={() =>
-                              navigate(`/app/${entityName}/${String(item.id)}`)
-                            }
+                            onClick={() => navigateToDetail(String(item.id))}
                           >
                             <Eye className="size-4" />
                           </IconButton>

@@ -101,6 +101,21 @@
   /* Skeleton shimmer */
   --animate-shimmer: shimmer 4s cubic-bezier(0.4, 0, 0.6, 1) infinite;
 
+  /* Interactive card click feedback */
+  --animate-layout-card-sweep: layout-card-sweep 520ms cubic-bezier(0.22, 1, 0.36, 1)
+    forwards;
+
+  @keyframes layout-card-sweep {
+    0% {
+      transform: translate3d(-72%, -72%, 0);
+      opacity: 1;
+    }
+    100% {
+      transform: translate3d(72%, 72%, 0);
+      opacity: 0;
+    }
+  }
+
   @keyframes shimmer {
     0% {
       transform: translateX(-90%);

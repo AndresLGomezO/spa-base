@@ -128,7 +128,9 @@ export function EntityPageListScrollContainer({
 }: EntityPageListScrollContainerProps) {
   const { registerScrollContainer, compactProgress } =
     useEntityPageScrollCompact();
-  const fadeOpacity = 0.4 + compactProgress * 0.6;
+  const fadeOpacity = compactProgress * 0.85;
+  const fadeHeightPx =
+    compactProgress <= 0 ? 0 : 14 + (1 - compactProgress) * 10;
 
   return (
     <div className="relative flex min-h-0 min-w-0 flex-1 flex-col">
@@ -142,11 +144,11 @@ export function EntityPageListScrollContainer({
       <div
         aria-hidden
         className={cn(
-          "pointer-events-none absolute inset-x-0 top-0 z-10 h-12",
-          "bg-gradient-to-b from-background via-background/85 to-transparent",
+          "pointer-events-none absolute inset-x-0 top-0 z-10",
+          "bg-gradient-to-b from-background from-35% via-background/75 to-transparent",
           ENTITY_PAGE_CHROME_TRANSITION,
         )}
-        style={{ opacity: fadeOpacity }}
+        style={{ opacity: fadeOpacity, height: fadeHeightPx }}
       />
     </div>
   );

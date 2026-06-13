@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from "react";
+import { useCallback, useMemo, type KeyboardEvent, type MouseEvent } from "react";
 import { cn } from "@repo/theme/utils";
 import { normalizeListItemLayout } from "@repo/entities";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
@@ -34,6 +34,16 @@ import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import { createEntityLayoutRenderContext } from "../../features/ui-builder";
 import { getEntityCardListGridClass } from "./entity-card-list-grid";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
+import { useEntityReturnNavigation } from "../../routing/entity-navigation";
+
+function shouldIgnoreCardNavigation(target: EventTarget | null): boolean {
+  return (
+    target instanceof HTMLElement &&
+    target.closest(
+      "a, button, [role='button'], input, select, textarea, [data-card-action]",
+    ) != null
+  );
+}
 
 type EntityListState = Pick<
   ReturnType<typeof useEntity>,
@@ -67,6 +77,7 @@ export function EntityLayoutCardView({
 }: EntityLayoutCardViewProps) {
   const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
+  const { navigateToDetail } = useEntityReturnNavigation(entityName);
   const definition = useEntityDefinition(entityName);
   const canConfigureLayout = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
@@ -112,6 +123,40 @@ export function EntityLayoutCardView({
   function canShareRow(item: Record<string, unknown>): boolean {
     return permissions.canShare && item.ownerId === currentUserId;
   }
+
+  const openRecordDetail = useCallback(
+    (recordId: string) => {
+      navigateToDetail(recordId);
+    },
+    [navigateToDetail],
+  );
+
+  const handleCardClick = useCallback(
+    (recordId: string, event: MouseEvent<HTMLElement>) => {
+      if (!permissions.canRead || shouldIgnoreCardNavigation(event.target)) {
+        return;
+      }
+
+      openRecordDetail(recordId);
+    },
+    [openRecordDetail, permissions.canRead],
+  );
+
+  const handleCardKeyDown = useCallback(
+    (recordId: string, event: KeyboardEvent<HTMLElement>) => {
+      if (!permissions.canRead) {
+        return;
+      }
+
+      if (event.key !== "Enter" && event.key !== " ") {
+        return;
+      }
+
+      event.preventDefault();
+      openRecordDetail(recordId);
+    },
+    [openRecordDetail, permissions.canRead],
+  );
 
   if (indexStatus.phase === "building" || indexStatus.phase === "error") {
     return (
@@ -190,8 +235,7 @@ export function EntityLayoutCardView({
                           {
                             id: "view",
                             label: t("entity.view"),
-                            onSelect: () =>
-                              navigate(`/app/${entityName}/${String(item.id)}`),
+                            onSelect: () => openRecordDetail(String(item.id)),
                           },
                         ]
                       : []),
@@ -235,8 +279,12 @@ export function EntityLayoutCardView({
             return (
               <LayoutCard
                 key={String(item.id)}
-                interactive
+                interactive={permissions.canRead}
                 actions={cardActions}
+                role={permissions.canRead ? "link" : undefined}
+                tabIndex={permissions.canRead ? 0 : undefined}
+                onClick={(event) => handleCardClick(String(item.id), event)}
+                onKeyDown={(event) => handleCardKeyDown(String(item.id), event)}
               >
                 <RecursiveLayoutRenderer
                   layout={layout}

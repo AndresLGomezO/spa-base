@@ -21,7 +21,6 @@ import {
 import { ChevronRight } from "lucide-react";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
-import { useNavigate } from "react-router";
 
 import {
   getEntityLabel,
@@ -45,6 +44,7 @@ import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStat
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import { createEntityLayoutRenderContext } from "../../features/ui-builder";
+import { useEntityReturnNavigation } from "../../routing/entity-navigation";
 import {
   ExpandableTableRowActions,
   ExpandableTableRowActionsOverlay,
@@ -96,7 +96,7 @@ export function EntityExpandableTable({
   onRequestShare,
 }: EntityExpandableTableProps) {
   const { t, i18n } = useTranslation("common");
-  const navigate = useNavigate();
+  const { navigateToDetail } = useEntityReturnNavigation(entityName);
   const definition = useEntityDefinition(entityName);
   const { getDefinition: getDefinitionOrThrow, items: catalogItems } =
     useEntityCatalog();
@@ -288,9 +288,7 @@ export function EntityExpandableTable({
                                     share: t("share.title"),
                                     delete: t("entity.delete"),
                                   }}
-                                  onView={(id) =>
-                                    navigate(`/app/${entityName}/${id}`)
-                                  }
+                                  onView={(id) => navigateToDetail(id)}
                                   onEdit={onRequestEdit}
                                   onShare={onRequestShare}
                                   onDelete={onRequestDelete}

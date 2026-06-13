@@ -61,8 +61,11 @@ describe("DataViewToolbar", () => {
   it("renders search input and filter trigger", () => {
     renderToolbar();
 
-    expect(screen.getByTestId("data-view-search")).toBeInTheDocument();
+    expect(screen.getAllByTestId("data-view-search")).toHaveLength(2);
     expect(screen.getByTestId("filter-panel-trigger")).toBeInTheDocument();
+    expect(
+      screen.getByTestId("data-view-toolbar-search-row"),
+    ).toBeInTheDocument();
   });
 
   it("shows active badges and clears filters", () => {

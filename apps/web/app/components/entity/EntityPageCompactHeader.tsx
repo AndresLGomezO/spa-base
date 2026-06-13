@@ -27,20 +27,27 @@ export function EntityPageCompactHeader({
   onOpenDesignLayout,
   onCreate,
 }: EntityPageCompactHeaderProps) {
-  const { compactProgress } = useEntityPageScrollCompact();
+  const { compactProgress, isCompact } = useEntityPageScrollCompact();
 
   return (
-    <div className="flex shrink-0 items-center justify-between gap-3 max-lg:gap-2">
+    <div
+      className={cn(
+        "flex shrink-0 items-center justify-between gap-3 max-lg:gap-2",
+        isCompact && "max-lg:gap-1.5",
+      )}
+    >
       <Heading
         level={1}
         className={cn(
           "min-w-0 origin-left truncate max-lg:leading-tight",
+          compactProgress > 0 && "max-lg:leading-none",
           ENTITY_PAGE_CHROME_TRANSITION,
         )}
         style={
           compactProgress > 0
             ? {
                 fontSize: `calc(1rem + ${1 - compactProgress} * 0.5rem)`,
+                lineHeight: 1.25,
               }
             : undefined
         }
@@ -98,12 +105,12 @@ export function EntityPageCompactHeader({
               size="sm"
               onClick={onCreate}
               className={cn(
-                "text-primary hover:text-primary absolute right-0 lg:hidden",
+                "text-primary hover:text-primary absolute right-0 top-1/2 lg:hidden",
                 ENTITY_PAGE_CHROME_TRANSITION,
               )}
               style={{
                 opacity: compactProgress,
-                transform: `scale(${0.82 + compactProgress * 0.18})`,
+                transform: `translateY(-50%) scale(${0.82 + compactProgress * 0.18})`,
               }}
               aria-hidden={compactProgress <= 0 ? true : undefined}
               tabIndex={compactProgress <= 0 ? -1 : undefined}
