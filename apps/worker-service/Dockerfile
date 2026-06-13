@@ -71,6 +71,24 @@ COPY --from=installer --chown=appuser:appgroup /app/packages/worker-firestore/pa
 COPY --from=installer --chown=appuser:appgroup /app/packages/ai-engine/dist ./packages/ai-engine/dist
 COPY --from=installer --chown=appuser:appgroup /app/packages/ai-engine/package.json ./packages/ai-engine/package.json
 
+# Node production resolves compiled workspace packages from dist/, not src/*.ts
+RUN node -e " \
+  const fs = require('node:fs'); \
+  const patch = (file, subs) => { \
+    const pkg = JSON.parse(fs.readFileSync(file, 'utf8')); \
+    for (const [subpath, target] of Object.entries(subs)) pkg.exports[subpath] = target; \
+    fs.writeFileSync(file, JSON.stringify(pkg, null, 2)); \
+  }; \
+  patch('packages/ai-engine/package.json', { \
+    './permissions': './dist/permissions.js', \
+    './schemas': './dist/schemas/index.js', \
+    './task-routes': './dist/task-routes.js', \
+  }); \
+  patch('packages/worker-firestore/package.json', { \
+    '.': { types: './dist/index.d.ts', default: './dist/index.js' }, \
+  }); \
+"
+
 USER appuser
 WORKDIR /app/apps/worker-service
 

@@ -379,9 +379,6 @@ importers:
       '@react-router/node':
         specifier: 'catalog:'
         version: 7.15.1(react-router@7.15.1(react-dom@19.2.6(react@19.2.6))(react@19.2.6))(typescript@5.9.3)
-      '@repo/ai-engine':
-        specifier: workspace:*
-        version: link:../../packages/ai-engine
       '@repo/data-view':
         specifier: workspace:*
         version: link:../../packages/data-view

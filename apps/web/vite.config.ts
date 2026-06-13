@@ -11,6 +11,9 @@ export default defineConfig(({ command }) => ({
     reactRouter(),
     ...(command === "serve" ? [devDocumentCspPlugin()] : []),
   ],
+  ssr: {
+    noExternal: [/^@repo\//, /^@app\//],
+  },
   server: {
     host: "0.0.0.0",
     port: 5173,

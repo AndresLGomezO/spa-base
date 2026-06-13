@@ -27,7 +27,6 @@
     "@repo/theme": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
-    "@repo/ai-engine": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/firestore-indexes": "workspace:*",
     "@repo/modules": "workspace:*",
