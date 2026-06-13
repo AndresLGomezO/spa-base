@@ -4,12 +4,13 @@ import {
   useMemo,
   useRef,
   useState,
+  type ComponentProps,
   type ComponentType,
   type ReactNode,
 } from "react";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
-import { Button, Heading, Modal, Text, toast } from "@repo/ui";
+import { Button, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 
@@ -23,6 +24,8 @@ import {
   resolveFormUsesModalBuilderFooter,
 } from "@repo/entities";
 
+import { cn } from "@repo/theme/utils";
+
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
@@ -31,7 +34,7 @@ import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useEntityFilterOptions } from "../../hooks/useEntityFilterOptions";
 import { useServerQueryConfig } from "../../hooks/useServerQueryConfig";
 import { DesignedEntityFormModal } from "../forms/DesignedEntityFormModal";
-import { WebDataViewToolbar } from "../data-view";
+import { WebDataViewToolbar } from "../data-view/WebDataViewToolbar";
 import { RequireEntityPermission } from "./RequireEntityPermission";
 import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { EntityTable } from "./EntityTable";
@@ -41,11 +44,19 @@ import { resolveRelationFilterValues } from "./resolve-relation-filter-values";
 import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
 import { metricStripHasContent } from "@repo/entities";
-import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { createEntityMainPageRenderContext } from "../../features/ui-builder/create-entity-main-page-render-context";
 import { createDefaultMetricRowLayout } from "../../features/ui-builder/create-default-metric-row-layout";
-import { entityListPageSlotClassName } from "./entity-list-table-layout";
+import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
+import { EntityPageCompactHeader } from "./EntityPageCompactHeader";
+import { EntityPageCompactMetrics } from "./EntityPageCompactMetrics";
+import { EntityPageCompactToolbar } from "./EntityPageCompactToolbar";
+import {
+  EntityPageListScrollContainer,
+  EntityPageScrollCompactProvider,
+  ENTITY_PAGE_CHROME_TRANSITION,
+  useEntityPageScrollCompact,
+} from "./entity-page-scroll-compact";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -70,6 +81,14 @@ function serializeFilters(
 }
 
 export function EntityPage({ entityName }: EntityPageProps) {
+  return (
+    <EntityPageScrollCompactProvider>
+      <EntityPageInner entityName={entityName} />
+    </EntityPageScrollCompactProvider>
+  );
+}
+
+function EntityPageInner({ entityName }: EntityPageProps) {
   const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
@@ -383,6 +402,8 @@ export function EntityPage({ entityName }: EntityPageProps) {
     ],
   );
 
+  const { registerScrollContainer, isCompact } = useEntityPageScrollCompact();
+
   const mainPageContext = useMemo(
     () =>
       createEntityMainPageRenderContext({
@@ -394,6 +415,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
         metricRowLayout,
         listFilters: filters,
         routeParams,
+        registerPageListScrollElement: registerScrollContainer,
         toolbar: {
           search,
           setSearch,
@@ -405,9 +427,9 @@ export function EntityPage({ entityName }: EntityPageProps) {
           filterOptions,
           activeBadges: dataViewControls.activeBadges,
           clearAll,
-          columns: columnDescriptors as Parameters<
+          columns: columnDescriptors as ComponentProps<
             typeof WebDataViewToolbar
-          >[0]["columns"],
+          >["columns"],
           filtersOpen,
           onFiltersOpenChange: setFiltersOpen,
           showSearch,
@@ -432,6 +454,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
       metricRowLayout,
       openCreateFormModal,
       permissions.canCreate,
+      registerScrollContainer,
       routeParams,
       search,
       setFilter,
@@ -444,70 +467,70 @@ export function EntityPage({ entityName }: EntityPageProps) {
     ],
   );
 
-  const pageHeader = (
-    <div className="flex shrink-0 items-center justify-between gap-4">
-      <Heading level={1}>{getEntityLabel(definition)}</Heading>
-      <div className="flex items-center gap-2">
-        {canConfigureView ? (
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => navigate(designLayoutEntityPath("main", entityName))}
-          >
-            {t("entity.openDesignLayout")}
-          </Button>
-        ) : null}
-        {permissions.canCreate ? (
-          <Button type="button" onClick={openCreateFormModal}>
-            {t("entity.create")}
-          </Button>
-        ) : null}
-      </div>
-    </div>
-  );
+  const toolbarProps: Omit<
+    ComponentProps<typeof WebDataViewToolbar>,
+    "labels"
+  > = {
+    search,
+    setSearch,
+    filters,
+    setFilter,
+    sort,
+    setSortColumn,
+    toggleSortDirection,
+    filterOptions,
+    activeBadges: dataViewControls.activeBadges,
+    clearAll,
+    columns: columnDescriptors as ComponentProps<
+      typeof WebDataViewToolbar
+    >["columns"],
+    filtersOpen,
+    onFiltersOpenChange: setFiltersOpen,
+    showSearch,
+  };
 
   const legacyMainBody = (
     <>
-      <div className="relative z-20 shrink-0">
-        <WebDataViewToolbar
-          search={search}
-          setSearch={setSearch}
-          filters={filters}
-          setFilter={setFilter}
-          sort={sort}
-          setSortColumn={setSortColumn}
-          toggleSortDirection={toggleSortDirection}
-          filterOptions={filterOptions}
-          activeBadges={dataViewControls.activeBadges}
-          clearAll={clearAll}
-          columns={columnDescriptors}
-          filtersOpen={filtersOpen}
-          onFiltersOpenChange={setFiltersOpen}
-          showSearch={showSearch}
-        />
-      </div>
+      <EntityPageCompactToolbar toolbar={toolbarProps} />
 
       {showMetricsStrip ? (
-        <div className="shrink-0">
+        <EntityPageCompactMetrics>
           <EntityViewMetricsStrip
             rowLayout={metricRowLayout}
             entityDefinition={definition}
             context={{ listFilters: filters, routeParams }}
             locale={i18n.language}
           />
-        </div>
+        </EntityPageCompactMetrics>
       ) : null}
 
-      <div className={entityListPageSlotClassName}>
+      <EntityPageListScrollContainer>
         <ViewComponent {...listViewProps} />
-      </div>
+      </EntityPageListScrollContainer>
     </>
   );
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-6 overflow-hidden">
-      <div className="shrink-0">{pageHeader}</div>
+    <div
+      className={cn(
+        "relative z-0 flex h-full min-h-0 w-full min-w-0 flex-col overflow-hidden",
+        ENTITY_PAGE_CHROME_TRANSITION,
+        isCompact ? "max-lg:gap-2 gap-6" : "gap-6 max-lg:gap-4",
+      )}
+    >
+      <div className="shrink-0">
+        <EntityPageCompactHeader
+          entityLabel={getEntityLabel(definition)}
+          canConfigureView={canConfigureView}
+          canCreate={permissions.canCreate}
+          designLayoutLabel={t("entity.openDesignLayout")}
+          createLabel={t("entity.create")}
+          onOpenDesignLayout={() =>
+            navigate(designLayoutEntityPath("main", entityName))
+          }
+          onCreate={openCreateFormModal}
+        />
+      </div>
 
       {mainPageLayout ? (
         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
@@ -517,7 +540,13 @@ export function EntityPage({ entityName }: EntityPageProps) {
           />
         </div>
       ) : (
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden">
+        <div
+          className={cn(
+            "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden",
+            ENTITY_PAGE_CHROME_TRANSITION,
+            isCompact ? "max-lg:gap-2 gap-6" : "gap-6 max-lg:gap-4",
+          )}
+        >
           {legacyMainBody}
         </div>
       )}

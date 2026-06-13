@@ -102,6 +102,10 @@ export interface LayoutRenderContext {
   readonly pageToolbarRenderer?: () => ReactNode;
   readonly pageMetricsRenderer?: () => ReactNode;
   readonly pageListRenderer?: () => ReactNode;
+  readonly registerPageListScrollElement?: (
+    element: HTMLElement | null,
+  ) => void;
+  readonly wrapPageListScroll?: (listContent: ReactNode) => ReactNode;
   readonly wizard?: WizardRenderState;
   readonly wizardProgressRenderer?: (
     config: WizardProgressComponentConfig,

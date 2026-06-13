@@ -27,7 +27,7 @@ export default function PrivateLayoutRoute() {
                     <AppSidebar />
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                       <AppHeader />
-                      <main className="mx-0 flex min-h-0 min-w-0 w-full max-w-none flex-1 flex-col overflow-hidden p-6">
+                      <main className="mx-0 flex min-h-0 min-w-0 w-full max-w-none flex-1 flex-col overflow-hidden p-4">
                         <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                           <Outlet />
                         </div>

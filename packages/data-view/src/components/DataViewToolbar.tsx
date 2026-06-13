@@ -1,4 +1,9 @@
-import { FilterPanel, SearchField, SortControls } from "@repo/ui";
+import {
+  FilterPanel,
+  FilterValueBadge,
+  SearchField,
+  SortControls,
+} from "@repo/ui";
 
 import type { UseDataViewControlsResult } from "../hooks/useDataViewControls";
 import type { DataViewColumnDescriptor, DataViewToolbarLabels } from "../types";
@@ -23,6 +28,8 @@ export interface DataViewToolbarProps<T> extends Pick<
   readonly onFiltersOpenChange: (open: boolean) => void;
   readonly warningMessage?: string;
   readonly showSearch?: boolean;
+  readonly compact?: boolean;
+  readonly transitionClassName?: string;
 }
 
 export function DataViewToolbar<T>({
@@ -42,13 +49,46 @@ export function DataViewToolbar<T>({
   onFiltersOpenChange,
   warningMessage,
   showSearch = true,
+  compact = false,
+  transitionClassName,
 }: DataViewToolbarProps<T>) {
   const sortableColumns = columns
     .filter((column) => column.sortable !== false)
     .map((column) => ({ id: column.id, label: column.label }));
 
+  if (compact) {
+    if (activeBadges.length === 0) {
+      return null;
+    }
+
+    return (
+      <div
+        className={
+          transitionClassName
+            ? `flex flex-wrap items-center gap-2 ${transitionClassName}`
+            : "flex flex-wrap items-center gap-2 transition-opacity duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+        }
+      >
+        {activeBadges.map(({ id, label, onRemove }) => (
+          <FilterValueBadge
+            key={id}
+            label={label}
+            onRemove={onRemove}
+            removeAriaLabel={labels.removeBadge(label)}
+          />
+        ))}
+      </div>
+    );
+  }
+
   return (
-    <div className="flex flex-col gap-4">
+    <div
+      className={
+        transitionClassName
+          ? `flex flex-col gap-4 ${transitionClassName}`
+          : "flex flex-col gap-4 transition-all duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none"
+      }
+    >
       {warningMessage ? (
         <p className="text-muted-foreground text-sm">{warningMessage}</p>
       ) : null}

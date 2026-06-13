@@ -7,6 +7,9 @@ import type { UiLayoutDocument } from "@repo/ui-builder-core";
 import type { EntityName } from "../../entities/entity-catalog";
 import { WebDataViewToolbar } from "../../components/data-view/WebDataViewToolbar";
 import { EntityViewMetricsStrip } from "../../components/metrics/EntityViewMetricsStrip";
+import { EntityPageCompactMetrics } from "../../components/entity/EntityPageCompactMetrics";
+import { EntityPageCompactToolbar } from "../../components/entity/EntityPageCompactToolbar";
+import { EntityPageListScrollContainer } from "../../components/entity/entity-page-scroll-compact";
 import { Heading, Button } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
@@ -31,6 +34,9 @@ interface MainPageRenderContextInput {
   readonly onCreate: () => void;
   readonly previewMode?: boolean;
   readonly metricsDesignerPath?: string;
+  readonly registerPageListScrollElement?: (
+    element: HTMLElement | null,
+  ) => void;
 }
 
 export function createEntityMainPageRenderContext(
@@ -50,6 +56,7 @@ export function createEntityMainPageRenderContext(
     canCreate,
     previewMode = false,
     metricsDesignerPath,
+    registerPageListScrollElement,
   } = input;
 
   const rowLayout = metricRowLayout ?? createDefaultMetricRowLayout();
@@ -60,16 +67,18 @@ export function createEntityMainPageRenderContext(
     data: {},
     locale: input.locale,
     resolveField: () => undefined,
-    pageToolbarRenderer: () => <WebDataViewToolbar {...toolbar} />,
+    pageToolbarRenderer: () => <EntityPageCompactToolbar toolbar={toolbar} />,
     pageMetricsRenderer: () =>
       showMetricsRow ? (
-        <EntityViewMetricsStrip
-          rowLayout={rowLayout}
-          entityDefinition={entityDefinition}
-          context={{ listFilters, routeParams }}
-          locale={input.locale}
-          previewMode={previewMode}
-        />
+        <EntityPageCompactMetrics>
+          <EntityViewMetricsStrip
+            rowLayout={rowLayout}
+            entityDefinition={entityDefinition}
+            context={{ listFilters, routeParams }}
+            locale={input.locale}
+            previewMode={previewMode}
+          />
+        </EntityPageCompactMetrics>
       ) : previewMode ? (
         <MetricsPreviewPlaceholder metricsDesignerPath={metricsDesignerPath} />
       ) : null,
@@ -90,6 +99,12 @@ export function createEntityMainPageRenderContext(
         onCreate={onCreate}
         previewMode={previewMode}
       />
+    ),
+    registerPageListScrollElement,
+    wrapPageListScroll: (listContent) => (
+      <EntityPageListScrollContainer>
+        {listContent}
+      </EntityPageListScrollContainer>
     ),
   };
 }

@@ -121,7 +121,7 @@ export function AppHeader() {
   const { t } = useTranslation("common");
 
   return (
-    <header className="border-border flex h-14 shrink-0 items-center border-b px-4 md:hidden">
+    <header className="border-border relative z-20 flex h-14 shrink-0 items-center border-b px-4 md:hidden">
       <SidebarTrigger label={t("nav.open")} />
     </header>
   );

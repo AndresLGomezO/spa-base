@@ -552,7 +552,7 @@ function renderRow(
     const mainPageRowClass =
       isMainPage && stackDirection === "column"
         ? isPageListRow
-          ? "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          ? "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col"
           : isPageToolbarRow
             ? "relative z-20 shrink-0"
             : "shrink-0"

@@ -121,4 +121,32 @@ describe("DataViewToolbar", () => {
     fireEvent.pointerDown(screen.getByTestId("filter-panel-trigger"));
     expect(onFiltersOpenChange).not.toHaveBeenCalled();
   });
+
+  it("renders only active badges in compact mode", () => {
+    renderToolbar({
+      compact: true,
+      activeBadges: [
+        {
+          id: "name:Alpha",
+          label: "Name: Alpha",
+          onRemove: vi.fn(),
+        },
+      ],
+    });
+
+    expect(screen.getByText("Name: Alpha")).toBeInTheDocument();
+    expect(screen.queryByTestId("data-view-search")).not.toBeInTheDocument();
+    expect(
+      screen.queryByTestId("filter-panel-trigger"),
+    ).not.toBeInTheDocument();
+  });
+
+  it("renders nothing in compact mode when there are no active badges", () => {
+    const { container } = renderToolbar({
+      compact: true,
+      activeBadges: [],
+    });
+
+    expect(container).toBeEmptyDOMElement();
+  });
 });

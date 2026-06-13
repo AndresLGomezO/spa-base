@@ -229,10 +229,25 @@ export function renderUiComponent(
   }
 
   if (isPageUiComponent(config)) {
-    const wrap = (node: ReactNode, extraClassName?: string) => {
+    const wrap = (
+      node: ReactNode,
+      extraClassName?: string,
+      options?: { readonly attachPageListScrollRef?: boolean },
+    ) => {
       const slotWrapper = resolvePageSlotWrapper(config.styles, extraClassName);
       return (
-        <div className={slotWrapper.className} style={slotWrapper.style}>
+        <div
+          ref={
+            options?.attachPageListScrollRef
+              ? context.registerPageListScrollElement
+              : undefined
+          }
+          data-entity-page-list-scroll={
+            options?.attachPageListScrollRef ? "" : undefined
+          }
+          className={slotWrapper.className}
+          style={slotWrapper.style}
+        >
           {node}
         </div>
       );
@@ -249,11 +264,17 @@ export function renderUiComponent(
         return wrap(context.pageMetricsRenderer?.() ?? null);
       case "page-list": {
         const list = context.pageListRenderer?.() ?? null;
+        if (context.mode === "mainPage" && context.wrapPageListScroll) {
+          return context.wrapPageListScroll(list);
+        }
         return wrap(
           list,
           context.mode === "mainPage"
             ? "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
             : undefined,
+          {
+            attachPageListScrollRef: context.mode === "mainPage",
+          },
         );
       }
     }
