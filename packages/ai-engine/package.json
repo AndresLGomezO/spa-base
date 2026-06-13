@@ -15,16 +15,22 @@
     ".": "./src/index.ts",
     "./permissions": {
       "types": "./src/permissions.ts",
-      "default": "./dist/permissions.js"
+      "node": "./dist/permissions.js",
+      "import": "./src/permissions.ts",
+      "default": "./src/permissions.ts"
     },
     "./schemas": {
       "types": "./src/schemas/index.ts",
-      "default": "./dist/schemas/index.js"
+      "node": "./dist/schemas/index.js",
+      "import": "./src/schemas/index.ts",
+      "default": "./src/schemas/index.ts"
     },
     "./process-ai-chat": "./src/process-ai-chat.ts",
     "./task-routes": {
       "types": "./src/task-routes.ts",
-      "default": "./dist/task-routes.js"
+      "node": "./dist/task-routes.js",
+      "import": "./src/task-routes.ts",
+      "default": "./src/task-routes.ts"
     },
     "./vertex-ai.client": "./src/vertex-ai.client.ts"
   },
