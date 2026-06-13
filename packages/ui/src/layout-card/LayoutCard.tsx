@@ -2,7 +2,6 @@ import {
   type HTMLAttributes,
   type ReactNode,
   useCallback,
-  useRef,
   useState,
 } from "react";
 
@@ -28,42 +27,23 @@ export function LayoutCard({
   actions,
   interactive = false,
   className,
-  onPointerDown,
   onClick,
   ...props
 }: LayoutCardProps) {
   const [flashTick, setFlashTick] = useState(0);
-  const flashFromPointerRef = useRef(false);
 
   const triggerFlash = useCallback(() => {
     setFlashTick((tick) => tick + 1);
   }, []);
 
-  const handlePointerDown = useCallback(
-    (event: React.PointerEvent<HTMLDivElement>) => {
-      if (interactive && !shouldIgnoreCardFlash(event.target)) {
-        flashFromPointerRef.current = true;
-        triggerFlash();
-      }
-
-      onPointerDown?.(event);
-    },
-    [interactive, onPointerDown, triggerFlash],
-  );
-
   const handleClick = useCallback<
     NonNullable<HTMLAttributes<HTMLDivElement>["onClick"]>
   >(
     (event) => {
-      if (
-        interactive &&
-        !shouldIgnoreCardFlash(event.target) &&
-        !flashFromPointerRef.current
-      ) {
+      if (interactive && !shouldIgnoreCardFlash(event.target)) {
         triggerFlash();
       }
 
-      flashFromPointerRef.current = false;
       onClick?.(event);
     },
     [interactive, onClick, triggerFlash],
@@ -77,7 +57,6 @@ export function LayoutCard({
           "hover:border-border/80 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.995]",
         className,
       )}
-      onPointerDown={handlePointerDown}
       onClick={handleClick}
       {...props}
     >
