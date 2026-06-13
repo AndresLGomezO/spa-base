@@ -49,6 +49,7 @@ jobs:
     outputs:
       web: ${{ steps.filter.outputs.web }}
       api: ${{ steps.filter.outputs.api }}
+      worker-service: ${{ steps.filter.outputs.worker-service }}
       ui: ${{ steps.filter.outputs.ui }}
       any: ${{ steps.filter.outputs.any }}
     steps:
@@ -74,6 +75,17 @@ jobs:
               - "apps/api/**"
               - "apps/*/Dockerfile*"
               - "packages/**"
+              - "package.json"
+              - "pnpm-lock.yaml"
+              - "pnpm-workspace.yaml"
+              - "docker-bake.hcl"
+              - "docker-compose.dev.yml"
+            worker-service:
+              - "apps/worker-service/**"
+              - "packages/ai-engine/**"
+              - "packages/gcp-firebase/**"
+              - "packages/firestore-converters/**"
+              - "apps/*/Dockerfile*"
               - "package.json"
               - "pnpm-lock.yaml"
               - "pnpm-workspace.yaml"
@@ -160,6 +172,7 @@ jobs:
       - name: Validate shared packages
         run: |
           pnpm --filter @repo/shared-types run validate
+          pnpm --filter @repo/ai-engine run validate
           pnpm --filter @repo/gcp-firebase run validate
           pnpm --filter @repo/typescript-config run validate
           pnpm --filter @repo/eslint-config run validate
@@ -426,6 +439,9 @@ jobs:
           if [ "${{ needs.changes.outputs.api }}" = "true" ]; then
             WORKSPACES+=("\"api\"")
           fi
+          if [ "${{ needs.changes.outputs.worker-service }}" = "true" ]; then
+            WORKSPACES+=("\"worker-service\"")
+          fi
 
           if [ ${#WORKSPACES[@]} -eq 0 ]; then
             echo "matrix={\"workspace\":[]}" >> $GITHUB_OUTPUT
@@ -481,6 +497,30 @@ jobs:
           cache-to: type=gha,scope=api,mode=max
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  # DOCKER-WORKER-SERVICE — production AI worker image (turbo prune, matches deploy)
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  docker-worker-service:
+    name: Docker build (worker-service)
+    needs: [changes]
+    if: needs.changes.outputs.worker-service == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build worker-service production image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: apps/worker-service/Dockerfile
+          push: false
+          tags: worker-service:ci
+          cache-from: type=gha,scope=worker-service
+          cache-to: type=gha,scope=worker-service,mode=max
+
+  # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # GATE — fail only if a required job failed (skipped is OK)
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   ci-ok:
@@ -494,17 +534,19 @@ jobs:
       - storybook
       - build
       - docker-api
+      - docker-worker-service
     runs-on: ubuntu-latest
     steps:
       - name: Evaluate results
         run: |
-          echo "changes:          ${{ needs.changes.result }}"
-          echo "validate-core:    ${{ needs.validate-core.result }}"
-          echo "validate-cypress: ${{ needs.validate-cypress.result }}"
-          echo "validate-static:  ${{ needs.validate-static.result }}"
-          echo "storybook:        ${{ needs.storybook.result }}"
-          echo "build:            ${{ needs.build.result }}"
-          echo "docker-api:       ${{ needs.docker-api.result }}"
+          echo "changes:               ${{ needs.changes.result }}"
+          echo "validate-core:         ${{ needs.validate-core.result }}"
+          echo "validate-cypress:      ${{ needs.validate-cypress.result }}"
+          echo "validate-static:       ${{ needs.validate-static.result }}"
+          echo "storybook:             ${{ needs.storybook.result }}"
+          echo "build:                 ${{ needs.build.result }}"
+          echo "docker-api:            ${{ needs.docker-api.result }}"
+          echo "docker-worker-service: ${{ needs.docker-worker-service.result }}"
 
           for result in \
             "${{ needs.validate-core.result }}" \
@@ -512,7 +554,8 @@ jobs:
             "${{ needs.validate-static.result }}" \
             "${{ needs.storybook.result }}" \
             "${{ needs.build.result }}" \
-            "${{ needs.docker-api.result }}"; do
+            "${{ needs.docker-api.result }}" \
+            "${{ needs.docker-worker-service.result }}"; do
             if [ "$result" = "failure" ]; then
               echo ""
               echo "❌ One or more required checks failed."

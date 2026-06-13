@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "test": "vitest run",
+    "test": "vitest run --passWithNoTests",
     "lint": "pnpm exec eslint .",
     "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
