@@ -92,6 +92,13 @@ export {
   backfillJobRecordSchema,
 } from "./backfill-job/repository-contract.js";
 export { createInMemoryBackfillJobRepository } from "./backfill-job/in-memory-repository.js";
+export {
+  type AiJobRepository,
+  type AiJobRecord,
+  type AiJobStatus,
+  aiJobRecordSchema,
+} from "./ai-job/repository-contract.js";
+export { createInMemoryAiJobRepository } from "./ai-job/in-memory-repository.js";
 export { type EntityCategoryRepository } from "./entity-category/repository-contract.js";
 export { createInMemoryEntityCategoryRepository } from "./entity-category/in-memory-repository.js";
 export { type TenantRoleRepository } from "./tenant-role/repository-contract.js";

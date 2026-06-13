@@ -25,6 +25,7 @@ export default [
       "./routes/settings/entity-categories.tsx",
     ),
     route("settings/roles", "./routes/settings/roles.tsx"),
+    route("ai/chat", "./routes/ai/chat.tsx"),
     route(
       "settings/design-layout/list/:entityName",
       "./routes/settings/design-layout/list.tsx",

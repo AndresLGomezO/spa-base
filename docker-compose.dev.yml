@@ -90,6 +90,9 @@ services:
       - PUBSUB_EMULATOR_HOST=firebase-emulator:8085
       - AGGREGATION_EVENTS_PUBSUB=true
       - AGGREGATION_EVENTS_TOPIC=aggregation-events
+      - WORKER_SERVICE_URL=http://worker-service:3001
+      - AI_TASKS_LOCAL_DISPATCH=true
+      - CLOUD_TASKS_QUEUE_NAME=ai-jobs
     healthcheck:
       test:
         [
@@ -107,6 +110,8 @@ services:
         condition: service_healthy
       pubsub-init:
         condition: service_completed_successfully
+      worker-service:
+        condition: service_started
 
   worker-aggregation:
     build:
@@ -135,6 +140,37 @@ services:
         condition: service_healthy
       pubsub-init:
         condition: service_completed_successfully
+
+  worker-service:
+    build:
+      context: .
+      dockerfile: apps/worker-service/Dockerfile.dev
+    container_name: project-base_worker_service_dev
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    volumes:
+      - ./package.json:/app/package.json
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
+      - ./apps/worker-service:/app/apps/worker-service
+      - ./packages:/app/packages
+      - ./scripts:/app/scripts
+      - /app/node_modules
+      - /app/apps/worker-service/node_modules
+      - /app/packages/eslint-config/node_modules
+    environment:
+      - NODE_ENV=development
+      - IS_LOCAL=true
+      - PORT=3001
+      - GCP_PROJECT_ID=demo-project-base
+      - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
+      - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
+      - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+      - TASKS_SA_EMAIL=local-tasks-sa@demo-project-base.iam.gserviceaccount.com
+    depends_on:
+      firebase-emulator:
+        condition: service_healthy
 
   web:
     build:
@@ -174,6 +210,8 @@ services:
       api:
         condition: service_healthy
       worker-aggregation:
+        condition: service_started
+      worker-service:
         condition: service_started
 
 volumes: {}

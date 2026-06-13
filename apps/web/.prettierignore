@@ -2,4 +2,7 @@ build
 .react-router
 node_modules
 coverage
+cypress/screenshots
+cypress/videos
+cypress/downloads
 tsconfig.bisect*.json

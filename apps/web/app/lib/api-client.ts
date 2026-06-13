@@ -974,3 +974,29 @@ export async function deleteUiBuilderPreset(presetId: string): Promise<void> {
     method: "DELETE",
   });
 }
+
+export type AiJobStatus = "pending" | "running" | "completed" | "failed";
+
+export interface AiJobRecord {
+  readonly id: string;
+  readonly status: AiJobStatus;
+  readonly feature: string;
+  readonly input: { readonly question: string };
+  readonly output: { readonly answer: string } | null;
+  readonly error: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function submitAiChat(
+  question: string,
+): Promise<{ readonly jobId: string }> {
+  return apiRequest<{ readonly jobId: string }>("/api/ai/chat", {
+    method: "POST",
+    body: { question },
+  });
+}
+
+export async function getAiJob(jobId: string): Promise<AiJobRecord> {
+  return apiRequest<AiJobRecord>(`/api/ai/jobs/${encodeURIComponent(jobId)}`);
+}

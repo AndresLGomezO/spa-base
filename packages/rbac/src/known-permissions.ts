@@ -1,3 +1,4 @@
+import { AI_PERMISSIONS } from "@repo/ai-engine/permissions";
 import { ENTITY_CATEGORY_PERMISSIONS } from "@repo/entity-categories";
 import {
   ENTITY_DEFINITION_PERMISSIONS,
@@ -26,6 +27,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
     ...INTERNAL_ENTITY_PERMISSIONS,
     ...HOOK_PERMISSIONS,
     ...METRIC_PERMISSIONS,
+    ...AI_PERMISSIONS,
     ...ROLE_PERMISSIONS,
     ...TENANT_USER_PERMISSIONS,
     ...(tenantId ? getDynamicPermissionsForTenant(tenantId) : []),

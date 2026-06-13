@@ -266,6 +266,7 @@ jobs:
             -var="region=${{ env.REGION }}" \
             -var="api_image=$REGISTRY/api:$TAG" \
             -var="worker_aggregation_image=$REGISTRY/worker-aggregation:$TAG" \
+            -var="worker_service_image=$REGISTRY/worker-service:$TAG" \
             -var="ci_deployer_sa_email=$CI_DEPLOYER_SA" \
             -no-color -out=tfplan
 
@@ -294,6 +295,7 @@ jobs:
               -var="region=${{ env.REGION }}" \
               -var="api_image=$REGISTRY/api:$TAG" \
               -var="worker_aggregation_image=$REGISTRY/worker-aggregation:$TAG" \
+              -var="worker_service_image=$REGISTRY/worker-service:$TAG" \
               -var="ci_deployer_sa_email=$CI_DEPLOYER_SA"
             exit $?
           fi

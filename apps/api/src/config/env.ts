@@ -59,6 +59,14 @@ const ApiEnvSchema = z.object({
     .trim()
     .min(1)
     .default("aggregation-events"),
+  GCP_REGION: z.string().trim().min(1).default("us-central1"),
+  WORKER_SERVICE_URL: z.string().trim().default("http://127.0.0.1:3001"),
+  CLOUD_TASKS_QUEUE_NAME: z.string().trim().default("ai-jobs"),
+  TASKS_SA_EMAIL: z.string().trim().optional(),
+  AI_TASKS_LOCAL_DISPATCH: z
+    .enum(["true", "false"])
+    .default(process.env.NODE_ENV === "production" ? "false" : "true")
+    .transform((value) => value === "true"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

@@ -15,7 +15,7 @@ variable "TAG" {
 }
 
 group "default" {
-  targets = ["api", "worker-aggregation"]
+  targets = ["api", "worker-aggregation", "worker-service"]
 }
 
 target "api" {
@@ -32,4 +32,12 @@ target "worker-aggregation" {
   tags       = ["${REGISTRY}/worker-aggregation:${TAG}", "${REGISTRY}/worker-aggregation:latest"]
   cache-from = ["type=gha,scope=worker-aggregation"]
   cache-to   = ["type=gha,scope=worker-aggregation,mode=max"]
+}
+
+target "worker-service" {
+  dockerfile = "apps/worker-service/Dockerfile"
+  context    = "."
+  tags       = ["${REGISTRY}/worker-service:${TAG}", "${REGISTRY}/worker-service:latest"]
+  cache-from = ["type=gha,scope=worker-service"]
+  cache-to   = ["type=gha,scope=worker-service,mode=max"]
 }

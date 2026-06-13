@@ -13,6 +13,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 
 COPY apps/worker-aggregation/package.json ./apps/worker-aggregation/
 COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/
+COPY packages/ai-engine/package.json ./packages/ai-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/

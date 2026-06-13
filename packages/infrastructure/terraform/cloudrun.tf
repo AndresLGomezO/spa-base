@@ -125,6 +125,46 @@ resource "google_cloud_run_v2_service" "backend" {
           value = google_pubsub_topic.aggregation_events[0].name
         }
       }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "WORKER_SERVICE_URL"
+          value = local.worker_service_url_full
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "CLOUD_TASKS_QUEUE_NAME"
+          value = google_cloud_tasks_queue.ai_jobs[0].name
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "TASKS_SA_EMAIL"
+          value = google_service_account.tasks_sa[0].email
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "GCP_REGION"
+          value = var.region
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "AI_TASKS_LOCAL_DISPATCH"
+          value = "false"
+        }
+      }
     }
 
     scaling {

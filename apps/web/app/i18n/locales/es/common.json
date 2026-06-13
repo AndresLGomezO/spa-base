@@ -59,7 +59,18 @@
     "designLayoutDetail": "Vista detallada",
     "designLayoutForms": "Formularios",
     "designLayoutMetrics": "Métricas",
-    "designLayoutPresets": "Presets de componentes"
+    "designLayoutPresets": "Presets de componentes",
+    "aiChat": "Chat IA"
+  },
+  "aiChat": {
+    "title": "Chat IA",
+    "description": "Haz una pregunta y recibe una respuesta generada por IA.",
+    "questionPlaceholder": "Escribe tu pregunta…",
+    "submit": "Preguntar",
+    "submitting": "Pensando…",
+    "submitError": "No se pudo enviar tu pregunta. Inténtalo de nuevo.",
+    "forbidden": "No tienes permiso para usar el chat IA.",
+    "status": "Estado: {{status}}"
   },
   "formDesigner": {
     "title": "Diseñador de formularios",
