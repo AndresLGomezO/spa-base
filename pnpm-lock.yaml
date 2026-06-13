@@ -607,12 +607,9 @@ importers:
       '@repo/ai-engine':
         specifier: workspace:*
         version: link:../../packages/ai-engine
-      '@repo/firestore-converters':
+      '@repo/worker-firestore':
         specifier: workspace:*
-        version: link:../../packages/firestore-converters
-      '@repo/gcp-firebase':
-        specifier: workspace:*
-        version: link:../../packages/gcp-firebase
+        version: link:../../packages/worker-firestore
       fastify:
         specifier: 'catalog:'
         version: 5.8.5
@@ -632,9 +629,6 @@ importers:
       '@types/node':
         specifier: 'catalog:'
         version: 22.19.19
-      esbuild:
-        specifier: 'catalog:'
-        version: 0.25.12
       eslint:
         specifier: 'catalog:'
         version: 9.39.4(jiti@2.7.0)
@@ -1612,6 +1606,40 @@ importers:
       vitest:
         specifier: 'catalog:'
         version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
+
+  packages/worker-firestore:
+    dependencies:
+      '@repo/ai-engine':
+        specifier: workspace:*
+        version: link:../ai-engine
+      firebase-admin:
+        specifier: 'catalog:'
+        version: 13.10.0
+      nanoid:
+        specifier: 'catalog:'
+        version: 5.1.11
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
 
 packages:
 

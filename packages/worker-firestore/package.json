@@ -1,21 +1,26 @@
 {
-  "name": "worker-service",
+  "name": "@repo/worker-firestore",
   "private": true,
   "type": "module",
   "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
   "scripts": {
-    "dev": "pnpm exec turbo run build --filter=worker-service^... && tsx watch src/index.ts",
     "build": "tsc -p tsconfig.build.json",
-    "start": "node dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
-    "lint": "eslint ."
+    "lint": "pnpm exec eslint .",
+    "format": "prettier --write --log-level silent .",
+    "format:check": "prettier --check ."
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
   },
   "dependencies": {
-    "@google-cloud/vertexai": "catalog:",
     "@repo/ai-engine": "workspace:*",
-    "@repo/worker-firestore": "workspace:*",
-    "fastify": "catalog:",
     "firebase-admin": "catalog:",
+    "nanoid": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
@@ -23,7 +28,7 @@
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
-    "tsx": "catalog:",
+    "prettier": "catalog:",
     "typescript": "catalog:"
   }
 }

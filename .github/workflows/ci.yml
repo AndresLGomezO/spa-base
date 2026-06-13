@@ -517,8 +517,21 @@ jobs:
           file: apps/worker-service/Dockerfile
           push: false
           tags: worker-service:ci
-          cache-from: type=gha,scope=worker-service
-          cache-to: type=gha,scope=worker-service,mode=max
+          cache-from: type=gha,scope=worker-service-v2
+          cache-to: type=gha,scope=worker-service-v2,mode=max
+
+      - name: Assert worker-service dist is not an esbuild bundle
+        run: |
+          LINES=$(docker run --rm worker-service:ci wc -l /app/apps/worker-service/dist/index.js | awk '{print $1}')
+          echo "worker-service dist/index.js: ${LINES} lines"
+          if [ "$LINES" -gt 2000 ]; then
+            echo "::error::worker-service dist/index.js has ${LINES} lines (expected tsc output, not esbuild bundle)"
+            exit 1
+          fi
+          if docker run --rm worker-service:ci grep -rq __require2 /app/apps/worker-service/dist/; then
+            echo "::error::worker-service dist contains esbuild CJS shim (__require2)"
+            exit 1
+          fi
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # GATE — fail only if a required job failed (skipped is OK)

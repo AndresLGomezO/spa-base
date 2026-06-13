@@ -29,9 +29,22 @@ RUN pnpm install --frozen-lockfile
 
 COPY --from=builder /app/out/full/ ./
 
-RUN pnpm exec turbo run build --filter=worker-service
+RUN pnpm exec turbo run build --filter=worker-service...
 
-RUN pnpm --filter=worker-service deploy --prod --legacy /app/worker-deploy
+# ===== PROD-DEPS =====
+FROM node:22-slim AS prod-deps
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
+
+COPY --from=builder /app/out/json/ ./
+COPY --from=builder /app/out/pnpm-lock.yaml ./pnpm-lock.yaml
+COPY --from=builder /app/out/pnpm-workspace.yaml ./pnpm-workspace.yaml
+
+RUN pnpm install --frozen-lockfile --prod
 
 # ===== RUNNER =====
 FROM node:22-slim AS runner
@@ -47,9 +60,19 @@ WORKDIR /app
 RUN addgroup --system --gid 1001 appgroup \
   && adduser --system --uid 1001 --ingroup appgroup appuser
 
-COPY --from=installer --chown=appuser:appgroup /app/worker-deploy ./
+# Production workspace structure (node_modules + symlinks, no devDeps)
+COPY --from=prod-deps --chown=appuser:appgroup /app .
+
+# Overlay compiled artifacts
+COPY --from=installer --chown=appuser:appgroup /app/apps/worker-service/dist ./apps/worker-service/dist
+COPY --from=installer --chown=appuser:appgroup /app/apps/worker-service/package.json ./apps/worker-service/package.json
+COPY --from=installer --chown=appuser:appgroup /app/packages/worker-firestore/dist ./packages/worker-firestore/dist
+COPY --from=installer --chown=appuser:appgroup /app/packages/worker-firestore/package.json ./packages/worker-firestore/package.json
+COPY --from=installer --chown=appuser:appgroup /app/packages/ai-engine/dist ./packages/ai-engine/dist
+COPY --from=installer --chown=appuser:appgroup /app/packages/ai-engine/package.json ./packages/ai-engine/package.json
 
 USER appuser
+WORKDIR /app/apps/worker-service
 
 EXPOSE 3001
 

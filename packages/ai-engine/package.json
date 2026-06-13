@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "scripts": {
+    "build": "tsc -p tsconfig.build.json",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
     "lint": "pnpm exec eslint .",
@@ -12,10 +13,19 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./permissions": "./src/permissions.ts",
-    "./schemas": "./src/schemas/index.ts",
+    "./permissions": {
+      "types": "./src/permissions.ts",
+      "default": "./dist/permissions.js"
+    },
+    "./schemas": {
+      "types": "./src/schemas/index.ts",
+      "default": "./dist/schemas/index.js"
+    },
     "./process-ai-chat": "./src/process-ai-chat.ts",
-    "./task-routes": "./src/task-routes.ts",
+    "./task-routes": {
+      "types": "./src/task-routes.ts",
+      "default": "./dist/task-routes.js"
+    },
     "./vertex-ai.client": "./src/vertex-ai.client.ts"
   },
   "dependencies": {

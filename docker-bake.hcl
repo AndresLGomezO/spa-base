@@ -38,6 +38,6 @@ target "worker-service" {
   dockerfile = "apps/worker-service/Dockerfile"
   context    = "."
   tags       = ["${REGISTRY}/worker-service:${TAG}", "${REGISTRY}/worker-service:latest"]
-  cache-from = ["type=gha,scope=worker-service"]
-  cache-to   = ["type=gha,scope=worker-service,mode=max"]
+  cache-from = ["type=gha,scope=worker-service-v2"]
+  cache-to   = ["type=gha,scope=worker-service-v2,mode=max"]
 }

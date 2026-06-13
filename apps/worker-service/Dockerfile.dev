@@ -26,13 +26,13 @@ COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
+COPY packages/worker-firestore/package.json ./packages/worker-firestore/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/ ./packages/typescript-config/
 
 RUN pnpm install --frozen-lockfile
 
 COPY packages/shared-types ./packages/shared-types
-COPY packages/firestore-converters ./packages/firestore-converters
 COPY packages/firestore-indexes ./packages/firestore-indexes
 COPY packages/dynamic-entities ./packages/dynamic-entities
 COPY packages/entities ./packages/entities
@@ -44,7 +44,7 @@ COPY packages/query-engine ./packages/query-engine
 COPY packages/rbac ./packages/rbac
 COPY packages/ui-builder-core ./packages/ui-builder-core
 COPY packages/ai-engine ./packages/ai-engine
-COPY packages/gcp-firebase ./packages/gcp-firebase
+COPY packages/worker-firestore ./packages/worker-firestore
 COPY packages/eslint-config ./packages/eslint-config
 COPY packages/typescript-config ./packages/typescript-config
 COPY apps/worker-service ./apps/worker-service

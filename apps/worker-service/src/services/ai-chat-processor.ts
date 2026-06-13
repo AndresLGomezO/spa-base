@@ -1,4 +1,4 @@
-import type { AiJobRepository } from "@repo/firestore-converters";
+import type { AiJobRepository } from "@repo/worker-firestore";
 import { AI_FEATURE_RUN_PERMISSION } from "@repo/ai-engine/permissions";
 import { processAiChatTaskPayloadSchema } from "@repo/ai-engine/schemas";
 
