@@ -18,6 +18,7 @@ export interface CardFieldCurrencyProps {
   readonly className?: string;
   readonly style?: CSSProperties;
   readonly valueClassName?: string;
+  readonly labelClassName?: string;
   readonly textSize?: number;
 }
 
@@ -69,6 +70,7 @@ export function CardFieldCurrency({
   className,
   style,
   valueClassName,
+  labelClassName,
   textSize,
 }: CardFieldCurrencyProps) {
   const displayAmount =
@@ -77,7 +79,12 @@ export function CardFieldCurrency({
 
   const labelElement =
     showLabel && label ? (
-      <Text className="text-muted-foreground text-[11px] uppercase tracking-wide">
+      <Text
+        className={cn(
+          "text-muted-foreground text-[11px] uppercase tracking-wide",
+          labelClassName,
+        )}
+      >
         {label}
       </Text>
     ) : null;

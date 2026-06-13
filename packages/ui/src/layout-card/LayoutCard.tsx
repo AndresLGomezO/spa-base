@@ -28,9 +28,7 @@ export function LayoutCard({
       {actions ? (
         <div className="absolute end-3 top-3 z-10 shrink-0">{actions}</div>
       ) : null}
-      <div className={cn("min-h-0 w-full min-w-0", actions && "pe-11")}>
-        {children}
-      </div>
+      <div className="min-h-0 w-full min-w-0">{children}</div>
     </article>
   );
 }

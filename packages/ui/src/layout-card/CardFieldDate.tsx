@@ -21,6 +21,7 @@ export interface CardFieldDateProps {
   readonly className?: string;
   readonly style?: CSSProperties;
   readonly valueClassName?: string;
+  readonly labelClassName?: string;
   readonly textSize?: number;
   readonly textThin?: boolean;
   readonly textBold?: boolean;
@@ -62,6 +63,7 @@ export function CardFieldDate({
   className,
   style,
   valueClassName,
+  labelClassName,
   textSize,
   textThin,
   textBold,
@@ -77,7 +79,12 @@ export function CardFieldDate({
 
   const labelElement =
     showLabel && label ? (
-      <Text className="text-muted-foreground text-[11px] uppercase tracking-wide">
+      <Text
+        className={cn(
+          "text-muted-foreground text-[11px] uppercase tracking-wide",
+          labelClassName,
+        )}
+      >
         {label}
       </Text>
     ) : null;

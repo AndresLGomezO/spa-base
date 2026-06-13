@@ -8,7 +8,6 @@ import {
 import {
   Alert,
   CursorPagination,
-  IconButton,
   Pagination,
   Table,
   TableBody,
@@ -19,7 +18,7 @@ import {
   TableCard,
   Text,
 } from "@repo/ui";
-import { ChevronRight, Eye, Pencil, Share2, Trash2 } from "lucide-react";
+import { ChevronRight } from "lucide-react";
 import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 import { useNavigate } from "react-router";
@@ -46,6 +45,11 @@ import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStat
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import { createEntityLayoutRenderContext } from "../../features/ui-builder";
+import {
+  ExpandableTableRowActions,
+  ExpandableTableRowActionsOverlay,
+  resolveLastVisibleGroupedColumnIndex,
+} from "./ExpandableTableRowActions";
 import { ExpandableTableRowExpandPanel } from "./ExpandableTableRowExpandPanel";
 
 type EntityListState = Pick<
@@ -169,7 +173,11 @@ export function EntityExpandableTable({
     return permissions.canShare && item.ownerId === currentUserId;
   }
 
-  const columnCount = 1 + groupedColumns.length + (showActionsColumn ? 1 : 0);
+  const columnCount = 1 + groupedColumns.length;
+  const lastVisibleGroupedColumnIndex = resolveLastVisibleGroupedColumnIndex(
+    groupedColumns,
+    (column) => shouldRenderGroupedTableColumn(column),
+  );
 
   function toggleRow(rowId: string) {
     setExpandedRowIds((current) => toggleExpandedId(current, rowId));
@@ -200,11 +208,6 @@ export function EntityExpandableTable({
                     </TableHead>
                   ) : null,
                 )}
-                {showActionsColumn ? (
-                  <TableHead className="text-center">
-                    {t("entity.actions")}
-                  </TableHead>
-                ) : null}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -231,7 +234,7 @@ export function EntityExpandableTable({
                   return (
                     <Fragment key={rowId}>
                       <TableRow
-                        className="cursor-pointer"
+                        className="relative cursor-pointer"
                         aria-expanded={isExpanded}
                         onClick={() => toggleRow(rowId)}
                       >
@@ -257,7 +260,7 @@ export function EntityExpandableTable({
                             />
                           </button>
                         </TableCell>
-                        {groupedColumns.map((column) =>
+                        {groupedColumns.map((column, columnIndex) =>
                           shouldRenderGroupedTableColumn(column) ? (
                             <TableCell
                               key={column.id}
@@ -269,85 +272,35 @@ export function EntityExpandableTable({
                                 layout={column.cellLayout}
                                 context={renderContext}
                               />
+                              {showActionsColumn &&
+                              columnIndex === lastVisibleGroupedColumnIndex ? (
+                                <ExpandableTableRowActionsOverlay>
+                                  <ExpandableTableRowActions
+                                    canRead={permissions.canRead}
+                                    canUpdate={permissions.canUpdate}
+                                    canDelete={permissions.canDelete}
+                                    canEditRow={canEditRow(item)}
+                                    canDeleteRow={canDeleteRow(item)}
+                                    canShareRow={canShareRow(item)}
+                                    item={item}
+                                    labels={{
+                                      view: t("entity.view"),
+                                      edit: t("entity.edit"),
+                                      share: t("share.title"),
+                                      delete: t("entity.delete"),
+                                    }}
+                                    onView={(id) =>
+                                      navigate(`/app/${entityName}/${id}`)
+                                    }
+                                    onEdit={onRequestEdit}
+                                    onShare={onRequestShare}
+                                    onDelete={onRequestDelete}
+                                  />
+                                </ExpandableTableRowActionsOverlay>
+                              ) : null}
                             </TableCell>
                           ) : null,
                         )}
-                        {showActionsColumn ? (
-                          <TableCell
-                            className="text-center"
-                            onClick={(event) => event.stopPropagation()}
-                          >
-                            <div className="flex items-center justify-center gap-1">
-                              {permissions.canRead ? (
-                                <IconButton
-                                  type="button"
-                                  label={t("entity.view")}
-                                  onClick={() =>
-                                    navigate(
-                                      `/app/${entityName}/${String(item.id)}`,
-                                    )
-                                  }
-                                >
-                                  <Eye className="size-4" />
-                                </IconButton>
-                              ) : null}
-                              {permissions.canUpdate &&
-                              (!item.ownerId || canEditRow(item)) &&
-                              onRequestEdit ? (
-                                <IconButton
-                                  type="button"
-                                  label={t("entity.edit")}
-                                  onClick={() => onRequestEdit(String(item.id))}
-                                >
-                                  <Pencil className="size-4" />
-                                </IconButton>
-                              ) : null}
-                              {item.ownerId !== undefined &&
-                              canShareRow(item) &&
-                              onRequestShare
-                                ? (() => {
-                                    const sharedWith = item.sharedWith as
-                                      | Record<string, string>
-                                      | undefined;
-                                    const shareCount = sharedWith
-                                      ? Object.keys(sharedWith).length
-                                      : 0;
-                                    return (
-                                      <IconButton
-                                        type="button"
-                                        label={t("share.title")}
-                                        onClick={() =>
-                                          onRequestShare(String(item.id))
-                                        }
-                                      >
-                                        <span className="relative inline-flex">
-                                          <Share2 className="size-4" />
-                                          {shareCount > 0 ? (
-                                            <span className="bg-primary text-primary-foreground absolute -top-2 -right-2 flex size-4 items-center justify-center rounded-full text-[10px] font-medium leading-none">
-                                              {shareCount}
-                                            </span>
-                                          ) : null}
-                                        </span>
-                                      </IconButton>
-                                    );
-                                  })()
-                                : null}
-                              {permissions.canDelete &&
-                              (!item.ownerId || canDeleteRow(item)) &&
-                              onRequestDelete ? (
-                                <IconButton
-                                  type="button"
-                                  label={t("entity.delete")}
-                                  onClick={() =>
-                                    onRequestDelete(String(item.id))
-                                  }
-                                >
-                                  <Trash2 className="text-destructive size-4" />
-                                </IconButton>
-                              ) : null}
-                            </div>
-                          </TableCell>
-                        ) : null}
                       </TableRow>
                       <TableRow key={`${rowId}-expand`}>
                         <TableCell colSpan={columnCount} className="p-0">

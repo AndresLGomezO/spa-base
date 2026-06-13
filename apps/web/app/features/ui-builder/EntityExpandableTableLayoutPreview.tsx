@@ -29,8 +29,13 @@ import {
   groupedTableColumnVisibilityClassName,
   shouldRenderGroupedTableColumn,
 } from "./grouped-table-column-display-range.js";
+import {
+  ExpandableTableRowActionsOverlay,
+  resolveLastVisibleGroupedColumnIndex,
+} from "../../components/entity/ExpandableTableRowActions";
 import { ExpandableTableRowExpandPanel } from "../../components/entity/ExpandableTableRowExpandPanel";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
+import { layoutPreviewActions } from "./layout-preview-actions.js";
 import type { EntityDefinitionLookup } from "@repo/ui-builder-react";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
@@ -83,7 +88,14 @@ export function EntityExpandableTableLayoutPreview({
     [definition, getDefinition, locale, previewItem],
   );
 
-  const columnCount = 1 + columns.length + (showActions ? 1 : 0);
+  const columnCount = 1 + columns.length;
+  const lastVisibleGroupedColumnIndex = resolveLastVisibleGroupedColumnIndex(
+    columns,
+    (column) => shouldRenderGroupedTableColumn(column, atBreakpoint),
+  );
+  const previewActions = showActions
+    ? layoutPreviewActions({ ...rowExpandLayout, showActions: true }, t)
+    : null;
 
   return (
     <div className="flex flex-col gap-2">
@@ -117,17 +129,12 @@ export function EntityExpandableTableLayoutPreview({
                     </TableHead>
                   ) : null,
                 )}
-                {showActions ? (
-                  <TableHead className="text-center">
-                    {t("entity.actions")}
-                  </TableHead>
-                ) : null}
               </TableRow>
             </TableHeader>
             <TableBody>
               <Fragment>
                 <TableRow
-                  className="cursor-pointer"
+                  className="relative cursor-pointer"
                   aria-expanded={expanded}
                   onClick={() => setExpanded((value) => !value)}
                 >
@@ -170,14 +177,16 @@ export function EntityExpandableTableLayoutPreview({
                           context={renderContext}
                           {...(getCellLayoutRendererProps?.(columnIndex) ?? {})}
                         />
+                        {showActions &&
+                        previewActions &&
+                        columnIndex === lastVisibleGroupedColumnIndex ? (
+                          <ExpandableTableRowActionsOverlay>
+                            {previewActions}
+                          </ExpandableTableRowActionsOverlay>
+                        ) : null}
                       </TableCell>
                     ) : null,
                   )}
-                  {showActions ? (
-                    <TableCell className="text-muted-foreground text-center text-sm">
-                      …
-                    </TableCell>
-                  ) : null}
                 </TableRow>
                 <TableRow>
                   <TableCell colSpan={columnCount} className="p-0">
