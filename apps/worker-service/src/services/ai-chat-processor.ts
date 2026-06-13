@@ -1,8 +1,8 @@
 import type { AiJobRepository } from "@repo/firestore-converters";
 import { AI_FEATURE_RUN_PERMISSION } from "@repo/ai-engine/permissions";
 import { processAiChatTaskPayloadSchema } from "@repo/ai-engine/schemas";
-import { processAiChat } from "@repo/ai-engine/process-ai-chat";
-import type { VertexAiConfig } from "@repo/ai-engine/vertex-ai.client";
+
+import { processAiChat, type VertexAiConfig } from "../process-ai-chat.js";
 
 export interface AiChatProcessorDeps {
   readonly aiJobRepository: AiJobRepository;

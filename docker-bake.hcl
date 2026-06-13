@@ -30,7 +30,6 @@ target "worker-aggregation" {
   dockerfile = "apps/worker-aggregation/Dockerfile"
   context    = "."
   tags       = ["${REGISTRY}/worker-aggregation:${TAG}", "${REGISTRY}/worker-aggregation:latest"]
-  args       = { SOURCE_REVISION = "${TAG}" }
   cache-from = ["type=gha,scope=worker-aggregation"]
   cache-to   = ["type=gha,scope=worker-aggregation,mode=max"]
 }
@@ -39,7 +38,6 @@ target "worker-service" {
   dockerfile = "apps/worker-service/Dockerfile"
   context    = "."
   tags       = ["${REGISTRY}/worker-service:${TAG}", "${REGISTRY}/worker-service:latest"]
-  args       = { SOURCE_REVISION = "${TAG}" }
   cache-from = ["type=gha,scope=worker-service"]
   cache-to   = ["type=gha,scope=worker-service,mode=max"]
 }

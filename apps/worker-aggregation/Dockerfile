@@ -14,7 +14,6 @@ RUN pnpm dlx turbo prune --scope=worker-aggregation --docker
 # ===== INSTALLER =====
 FROM node:22-slim AS installer
 
-ARG SOURCE_REVISION=local
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
 RUN corepack enable
@@ -30,9 +29,7 @@ RUN pnpm install --frozen-lockfile
 
 COPY --from=builder /app/out/full/ ./
 
-# SOURCE_REVISION busts stale GHA BuildKit cache that can reuse an old dist/ bundle.
-RUN echo "Building worker-aggregation revision ${SOURCE_REVISION}" \
-  && pnpm exec turbo run build --filter=worker-aggregation --force
+RUN pnpm exec turbo run build --filter=worker-aggregation
 
 RUN pnpm --filter=worker-aggregation deploy --prod --legacy /app/worker-deploy
 
