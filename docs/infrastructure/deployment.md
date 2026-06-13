@@ -126,7 +126,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Stale App Engine in Terraform state | `terraform state rm google_app_engine_application.default` if a prior apply added it |
 | Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. Deploy sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so `/health` is available before Firestore seeds |
 | Cloud Run worker-aggregation startup probe failed | Check revision logs for `Dynamic require of "child_process" is not supported` — rebuild worker-aggregation after the Vertex bundle fix; redeploy |
-| Cloud Run worker-service startup probe failed | Check logs for `Dynamic require of "stream" is not supported` — `@google-cloud/firestore` was bundled into ESM; rebuild worker-service (esbuild must externalize Firestore/Vertex); redeploy |
+| Cloud Run worker-service startup probe failed | Check logs for `Dynamic require of "stream"` or `"child_process"` — GCP SDK was bundled into ESM. Rebuild worker-service (esbuild externals + narrow imports). If logs show a multi-MB `dist/index.js`, clear stale GHA BuildKit cache (`SOURCE_REVISION` / `--force` in worker Dockerfiles) and redeploy |
 | `cloudtasks.queues.create` 403 on Terraform apply | Re-run `bash scripts/setup-github-wif.sh entitysystem` to grant `roles/cloudtasks.admin` on `github-deployer`, then re-run deploy |
 | `Cannot find package 'firebase-admin'` | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
 | `Dynamic require of "stream" is not supported` | Add `@google-cloud/firestore` to [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` and `api` dependencies (do not bundle; CJS-only) |
