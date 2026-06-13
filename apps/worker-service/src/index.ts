@@ -1,7 +1,7 @@
 import {
   createFirestoreAdminAiJobRepository,
   initializeFirebaseAdmin,
-} from "@repo/gcp-firebase";
+} from "@repo/gcp-firebase/ai-job-repository";
 
 import { vertexAiConfig, workerEnv } from "./config/env.js";
 import { buildWorkerServer } from "./server.js";

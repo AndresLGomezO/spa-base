@@ -1,6 +1,14 @@
 import * as esbuild from "esbuild";
 
-const external = ["@google-cloud/vertexai", "firebase-admin", "fastify", "zod"];
+// Bundle workspace TypeScript; keep npm packages with native/dynamic loads external.
+const external = [
+  "@google-cloud/firestore",
+  "@google-cloud/pubsub",
+  "@google-cloud/vertexai",
+  "firebase-admin",
+  "fastify",
+  "zod",
+];
 
 await esbuild.build({
   entryPoints: ["src/index.ts"],

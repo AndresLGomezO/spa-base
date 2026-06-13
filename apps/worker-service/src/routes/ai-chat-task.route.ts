@@ -1,6 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
-import { AI_TASK_ROUTES } from "@repo/ai-engine";
+import { AI_TASK_ROUTES } from "@repo/ai-engine/task-routes";
 
 import type { AiChatProcessorDeps } from "../services/ai-chat-processor.js";
 import {

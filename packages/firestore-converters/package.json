@@ -12,7 +12,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./metric-contribution": "./src/metric-contribution/repository-contract.ts"
+    "./metric-contribution": "./src/metric-contribution/repository-contract.ts",
+    "./ai-job": "./src/ai-job/repository-contract.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

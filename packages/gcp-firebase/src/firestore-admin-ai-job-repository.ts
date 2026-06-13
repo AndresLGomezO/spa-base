@@ -1,7 +1,7 @@
 import { AI_JOBS_COLLECTION, aiJobRecordSchema } from "@repo/ai-engine/schemas";
 import { nanoid } from "nanoid";
 
-import type { AiJobRepository } from "@repo/firestore-converters";
+import type { AiJobRepository } from "@repo/firestore-converters/ai-job";
 
 import {
   getFirestoreAdmin,
