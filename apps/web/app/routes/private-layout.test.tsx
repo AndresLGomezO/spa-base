@@ -65,9 +65,10 @@ describe("PrivateLayoutRoute", () => {
     const pageScroll = main.firstElementChild;
     expect(pageScroll).toHaveClass(
       "min-h-0",
+      "min-w-0",
       "flex-1",
-      "overflow-y-auto",
-      "overflow-x-hidden",
+      "overflow-hidden",
     );
+    expect(pageScroll).not.toHaveClass("overflow-y-auto");
   });
 });

@@ -85,4 +85,40 @@ describe("DataViewToolbar", () => {
     fireEvent.click(screen.getByTestId("filter-panel-clear-all"));
     expect(clearAll).toHaveBeenCalled();
   });
+
+  it("closes filters when clicking outside the panel", () => {
+    const onFiltersOpenChange = vi.fn();
+
+    renderToolbar({
+      filtersOpen: true,
+      onFiltersOpenChange,
+    });
+
+    fireEvent.pointerDown(document.body);
+    expect(onFiltersOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("closes filters when touching outside the panel", () => {
+    const onFiltersOpenChange = vi.fn();
+
+    renderToolbar({
+      filtersOpen: true,
+      onFiltersOpenChange,
+    });
+
+    fireEvent.pointerDown(document.body, { pointerType: "touch" });
+    expect(onFiltersOpenChange).toHaveBeenCalledWith(false);
+  });
+
+  it("does not close filters when clicking inside the panel", () => {
+    const onFiltersOpenChange = vi.fn();
+
+    renderToolbar({
+      filtersOpen: true,
+      onFiltersOpenChange,
+    });
+
+    fireEvent.pointerDown(screen.getByTestId("filter-panel-trigger"));
+    expect(onFiltersOpenChange).not.toHaveBeenCalled();
+  });
 });

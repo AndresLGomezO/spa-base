@@ -1,6 +1,8 @@
 import { ArrowDown, ArrowUp } from "lucide-react";
 import { useCallback } from "react";
 
+import { cn } from "@repo/theme/utils";
+
 import { IconButton } from "../icon-button/IconButton";
 
 export interface SortControlsOption {
@@ -51,43 +53,49 @@ export function SortControls({
 
   return (
     <div
-      className="ml-auto flex shrink-0 flex-wrap items-center gap-2"
+      className={cn(
+        "ml-auto flex min-w-0 shrink-0",
+        "max-md:flex-col max-md:items-start max-md:gap-0.5",
+        "md:flex-row md:items-center md:gap-2",
+      )}
       data-testid="data-view-sort-controls"
     >
-      <span className="text-sm font-medium whitespace-nowrap">
+      <span className="text-sm font-medium leading-none md:whitespace-nowrap">
         {sortByLabel}:
       </span>
 
-      <select
-        value={sort.columnId ?? ""}
-        onChange={handleSelectChange}
-        disabled={disabled || options.length === 0}
-        className="border-input bg-transparent focus:ring-ring h-9 min-w-[140px] rounded-xl border px-3 py-1.5 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none"
-        aria-label={sortByLabel}
-        data-testid="data-view-sort-select"
-      >
-        <option value="">{sortDefaultLabel}</option>
-        {options.map((option) => (
-          <option key={option.id} value={option.id}>
-            {option.label}
-          </option>
-        ))}
-      </select>
+      <div className="flex min-w-0 items-center gap-2">
+        <select
+          value={sort.columnId ?? ""}
+          onChange={handleSelectChange}
+          disabled={disabled || options.length === 0}
+          className="border-input bg-transparent focus:ring-ring h-9 min-w-[140px] rounded-xl border px-3 py-1.5 text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none"
+          aria-label={sortByLabel}
+          data-testid="data-view-sort-select"
+        >
+          <option value="">{sortDefaultLabel}</option>
+          {options.map((option) => (
+            <option key={option.id} value={option.id}>
+              {option.label}
+            </option>
+          ))}
+        </select>
 
-      <IconButton
-        type="button"
-        label={directionLabel}
-        onClick={onDirectionToggle}
-        disabled={disabled || sort.columnId === null}
-        className="h-9 w-9 rounded-xl"
-        data-testid="data-view-sort-direction"
-      >
-        {sort.direction === "asc" ? (
-          <ArrowUp className="h-4 w-4" />
-        ) : (
-          <ArrowDown className="h-4 w-4" />
-        )}
-      </IconButton>
+        <IconButton
+          type="button"
+          label={directionLabel}
+          onClick={onDirectionToggle}
+          disabled={disabled || sort.columnId === null}
+          className="h-9 w-9 shrink-0 rounded-xl"
+          data-testid="data-view-sort-direction"
+        >
+          {sort.direction === "asc" ? (
+            <ArrowUp className="h-4 w-4" />
+          ) : (
+            <ArrowDown className="h-4 w-4" />
+          )}
+        </IconButton>
+      </div>
     </div>
   );
 }

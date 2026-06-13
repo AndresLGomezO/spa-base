@@ -241,21 +241,18 @@ export function renderUiComponent(
       case "page-header":
         return wrap(context.pageHeaderRenderer?.() ?? null);
       case "page-toolbar":
-        return wrap(context.pageToolbarRenderer?.() ?? null);
+        return wrap(
+          context.pageToolbarRenderer?.() ?? null,
+          "relative z-20 shrink-0",
+        );
       case "page-metrics":
         return wrap(context.pageMetricsRenderer?.() ?? null);
       case "page-list": {
         const list = context.pageListRenderer?.() ?? null;
         return wrap(
-          context.mode === "mainPage" ? (
-            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-              {list}
-            </div>
-          ) : (
-            list
-          ),
+          list,
           context.mode === "mainPage"
-            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
+            ? "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
             : undefined,
         );
       }

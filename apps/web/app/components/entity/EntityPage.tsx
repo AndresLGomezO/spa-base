@@ -469,7 +469,7 @@ export function EntityPage({ entityName }: EntityPageProps) {
 
   const legacyMainBody = (
     <>
-      <div className="shrink-0">
+      <div className="relative z-20 shrink-0">
         <WebDataViewToolbar
           search={search}
           setSearch={setSearch}
@@ -489,12 +489,14 @@ export function EntityPage({ entityName }: EntityPageProps) {
       </div>
 
       {showMetricsStrip ? (
-        <EntityViewMetricsStrip
-          rowLayout={metricRowLayout}
-          entityDefinition={definition}
-          context={{ listFilters: filters, routeParams }}
-          locale={i18n.language}
-        />
+        <div className="shrink-0">
+          <EntityViewMetricsStrip
+            rowLayout={metricRowLayout}
+            entityDefinition={definition}
+            context={{ listFilters: filters, routeParams }}
+            locale={i18n.language}
+          />
+        </div>
       ) : null}
 
       <div className={entityListPageSlotClassName}>
@@ -504,18 +506,18 @@ export function EntityPage({ entityName }: EntityPageProps) {
   );
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col gap-6 overflow-hidden">
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-6 overflow-hidden">
       <div className="shrink-0">{pageHeader}</div>
 
       {mainPageLayout ? (
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
           <RecursiveLayoutRenderer
             layout={mainPageLayout}
             context={mainPageContext}
           />
         </div>
       ) : (
-        <div className="flex min-h-0 flex-1 flex-col gap-6 overflow-hidden">
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col gap-6 overflow-hidden">
           {legacyMainBody}
         </div>
       )}

@@ -38,7 +38,7 @@ export function DynamicFilterFields<T>({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
       {filterableColumns.map((column) => {
         const options = filterOptions[column.id] ?? [];
         if (options.length === 0) {
@@ -46,7 +46,7 @@ export function DynamicFilterFields<T>({
         }
 
         return (
-          <div key={column.id} className="space-y-1">
+          <div key={column.id} className="min-w-0 space-y-1">
             <FieldLabel>{column.label}</FieldLabel>
             <SearchableMultiSelectDropdown
               options={options}

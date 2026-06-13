@@ -69,7 +69,7 @@ export function DataViewToolbar<T>({
               onChange={setSearch}
               placeholder={labels.searchPlaceholder}
               ariaLabel={labels.searchPlaceholder}
-              className="max-w-none flex-1"
+              className="max-w-none min-w-0 flex-1"
             />
           ) : undefined
         }

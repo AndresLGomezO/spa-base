@@ -28,7 +28,7 @@ export default function PrivateLayoutRoute() {
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                       <AppHeader />
                       <main className="mx-0 flex min-h-0 min-w-0 w-full max-w-none flex-1 flex-col overflow-hidden p-6">
-                        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto overflow-x-hidden">
+                        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                           <Outlet />
                         </div>
                       </main>

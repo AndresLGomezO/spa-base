@@ -50,11 +50,6 @@ import {
   ExpandableTableRowActionsOverlay,
   resolveLastVisibleGroupedColumnIndex,
 } from "./ExpandableTableRowActions";
-import {
-  entityListTableCellClassName,
-  entityListTableClassName,
-  entityListTableScrollClassName,
-} from "./entity-list-table-layout";
 import { ExpandableTableRowExpandPanel } from "./ExpandableTableRowExpandPanel";
 
 type EntityListState = Pick<
@@ -189,146 +184,142 @@ export function EntityExpandableTable({
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4">
-      <TableCard className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className={entityListTableScrollClassName}>
-          <Table className={entityListTableClassName}>
-            <TableHeader>
+    <div className="flex w-full min-w-0 flex-col gap-4">
+      <TableCard className="w-full overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              <TableHead className="w-10 px-2" aria-hidden />
+              {groupedColumns.map((column, columnIndex) =>
+                shouldRenderGroupedTableColumn(column) ? (
+                  <TableHead
+                    key={column.id}
+                    className={groupedTableColumnVisibilityClassName(column)}
+                  >
+                    {resolveExpandableTableGroupedColumnDisplayLabel(
+                      column,
+                      columnIndex,
+                      (oneBasedIndex) =>
+                        t("entity.viewSettings.columnTab", {
+                          column: oneBasedIndex,
+                        }),
+                    )}
+                  </TableHead>
+                ) : null,
+              )}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.length === 0 ? (
               <TableRow>
-                <TableHead className="w-10 px-2" aria-hidden />
-                {groupedColumns.map((column, columnIndex) =>
-                  shouldRenderGroupedTableColumn(column) ? (
-                    <TableHead
-                      key={column.id}
-                      className={groupedTableColumnVisibilityClassName(column)}
-                    >
-                      {resolveExpandableTableGroupedColumnDisplayLabel(
-                        column,
-                        columnIndex,
-                        (oneBasedIndex) =>
-                          t("entity.viewSettings.columnTab", {
-                            column: oneBasedIndex,
-                          }),
-                      )}
-                    </TableHead>
-                  ) : null,
-                )}
+                <TableCell colSpan={columnCount} className="h-32 text-center">
+                  <Text className="text-muted-foreground">
+                    {t("entity.empty")}
+                  </Text>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columnCount} className="h-32 text-center">
-                    <Text className="text-muted-foreground">
-                      {t("entity.empty")}
-                    </Text>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                (items as readonly Record<string, unknown>[]).map((item) => {
-                  const rowId = String(item.id);
-                  const isExpanded = expandedRowIds.has(rowId);
-                  const renderContext = createEntityLayoutRenderContext({
-                    item,
-                    definition,
-                    locale: i18n.language,
-                    getOneToManyCellValue,
-                    getDefinition,
-                  });
+            ) : (
+              (items as readonly Record<string, unknown>[]).map((item) => {
+                const rowId = String(item.id);
+                const isExpanded = expandedRowIds.has(rowId);
+                const renderContext = createEntityLayoutRenderContext({
+                  item,
+                  definition,
+                  locale: i18n.language,
+                  getOneToManyCellValue,
+                  getDefinition,
+                });
 
-                  return (
-                    <Fragment key={rowId}>
-                      <TableRow
-                        className="relative cursor-pointer"
-                        aria-expanded={isExpanded}
-                        onClick={() => toggleRow(rowId)}
-                      >
-                        <TableCell className="w-10 px-2">
-                          <button
-                            type="button"
-                            className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md"
-                            aria-label={
-                              isExpanded
-                                ? t("entity.expandableTable.collapseRow")
-                                : t("entity.expandableTable.expandRow")
-                            }
-                            onClick={(event) => {
-                              event.stopPropagation();
-                              toggleRow(rowId);
-                            }}
-                          >
-                            <ChevronRight
-                              className={cn(
-                                "size-4 transition-transform duration-300 ease-out motion-reduce:transition-none",
-                                isExpanded && "rotate-90",
-                              )}
-                            />
-                          </button>
-                        </TableCell>
-                        {groupedColumns.map((column, columnIndex) =>
-                          shouldRenderGroupedTableColumn(column) ? (
-                            <TableCell
-                              key={column.id}
-                              className={groupedTableColumnVisibilityClassName(
-                                column,
-                                undefined,
-                                entityListTableCellClassName,
-                              )}
-                            >
-                              <RecursiveLayoutRenderer
-                                layout={column.cellLayout}
-                                context={renderContext}
-                              />
-                              {showActionsColumn &&
-                              columnIndex === lastVisibleGroupedColumnIndex ? (
-                                <ExpandableTableRowActionsOverlay>
-                                  <ExpandableTableRowActions
-                                    canRead={permissions.canRead}
-                                    canUpdate={permissions.canUpdate}
-                                    canDelete={permissions.canDelete}
-                                    canEditRow={canEditRow(item)}
-                                    canDeleteRow={canDeleteRow(item)}
-                                    canShareRow={canShareRow(item)}
-                                    item={item}
-                                    labels={{
-                                      view: t("entity.view"),
-                                      edit: t("entity.edit"),
-                                      share: t("share.title"),
-                                      delete: t("entity.delete"),
-                                    }}
-                                    onView={(id) =>
-                                      navigate(`/app/${entityName}/${id}`)
-                                    }
-                                    onEdit={onRequestEdit}
-                                    onShare={onRequestShare}
-                                    onDelete={onRequestDelete}
-                                  />
-                                </ExpandableTableRowActionsOverlay>
-                              ) : null}
-                            </TableCell>
-                          ) : null,
-                        )}
-                      </TableRow>
-                      <TableRow key={`${rowId}-expand`}>
-                        <TableCell colSpan={columnCount} className="p-0">
-                          <ExpandableTableRowExpandPanel
-                            expanded={isExpanded}
-                            contentClassName="bg-muted/30 p-4"
+                return (
+                  <Fragment key={rowId}>
+                    <TableRow
+                      className="relative cursor-pointer"
+                      aria-expanded={isExpanded}
+                      onClick={() => toggleRow(rowId)}
+                    >
+                      <TableCell className="w-10 px-2">
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-foreground inline-flex size-8 items-center justify-center rounded-md"
+                          aria-label={
+                            isExpanded
+                              ? t("entity.expandableTable.collapseRow")
+                              : t("entity.expandableTable.expandRow")
+                          }
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            toggleRow(rowId);
+                          }}
+                        >
+                          <ChevronRight
+                            className={cn(
+                              "size-4 transition-transform duration-300 ease-out motion-reduce:transition-none",
+                              isExpanded && "rotate-90",
+                            )}
+                          />
+                        </button>
+                      </TableCell>
+                      {groupedColumns.map((column, columnIndex) =>
+                        shouldRenderGroupedTableColumn(column) ? (
+                          <TableCell
+                            key={column.id}
+                            className={groupedTableColumnVisibilityClassName(
+                              column,
+                            )}
                           >
                             <RecursiveLayoutRenderer
-                              layout={rowExpandLayout}
+                              layout={column.cellLayout}
                               context={renderContext}
                             />
-                          </ExpandableTableRowExpandPanel>
-                        </TableCell>
-                      </TableRow>
-                    </Fragment>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                            {showActionsColumn &&
+                            columnIndex === lastVisibleGroupedColumnIndex ? (
+                              <ExpandableTableRowActionsOverlay>
+                                <ExpandableTableRowActions
+                                  canRead={permissions.canRead}
+                                  canUpdate={permissions.canUpdate}
+                                  canDelete={permissions.canDelete}
+                                  canEditRow={canEditRow(item)}
+                                  canDeleteRow={canDeleteRow(item)}
+                                  canShareRow={canShareRow(item)}
+                                  item={item}
+                                  labels={{
+                                    view: t("entity.view"),
+                                    edit: t("entity.edit"),
+                                    share: t("share.title"),
+                                    delete: t("entity.delete"),
+                                  }}
+                                  onView={(id) =>
+                                    navigate(`/app/${entityName}/${id}`)
+                                  }
+                                  onEdit={onRequestEdit}
+                                  onShare={onRequestShare}
+                                  onDelete={onRequestDelete}
+                                />
+                              </ExpandableTableRowActionsOverlay>
+                            ) : null}
+                          </TableCell>
+                        ) : null,
+                      )}
+                    </TableRow>
+                    <TableRow key={`${rowId}-expand`}>
+                      <TableCell colSpan={columnCount} className="p-0">
+                        <ExpandableTableRowExpandPanel
+                          expanded={isExpanded}
+                          contentClassName="bg-muted/30 p-4"
+                        >
+                          <RecursiveLayoutRenderer
+                            layout={rowExpandLayout}
+                            context={renderContext}
+                          />
+                        </ExpandableTableRowExpandPanel>
+                      </TableCell>
+                    </TableRow>
+                  </Fragment>
+                );
+              })
+            )}
+          </TableBody>
+        </Table>
       </TableCard>
 
       {useCursorPagination ? (

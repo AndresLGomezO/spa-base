@@ -42,11 +42,6 @@ import {
 import type { useEntity } from "../../hooks/useEntity";
 import { useIndexProvisioningStatus } from "../../hooks/useIndexProvisioningStatus";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
-import {
-  entityListTableCellClassName,
-  entityListTableClassName,
-  entityListTableScrollClassName,
-} from "./entity-list-table-layout";
 import { IndexProvisioningPanel } from "./IndexProvisioningPanel";
 import {
   getEntityCellDisplayMeta,
@@ -160,153 +155,146 @@ export function EntityTable({
   const columnCount = columns.length + (showActionsColumn ? 1 : 0);
 
   return (
-    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4">
-      <TableCard className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-        <div className={entityListTableScrollClassName}>
-          <Table className={entityListTableClassName}>
-            <TableHeader>
-              <TableRow>
-                {columns.map((column) => {
-                  const isSensitive =
-                    definition.fields[column]?.sensitive === true;
-                  return (
-                    <TableHead key={column}>
-                      <span className="inline-flex items-center gap-1">
-                        {formatFieldLabel(column, definition)}
-                        {isSensitive ? (
-                          <Lock className="text-muted-foreground size-3.5" />
-                        ) : null}
-                      </span>
-                    </TableHead>
-                  );
-                })}
-                {showActionsColumn ? (
-                  <TableHead className="text-center">
-                    {t("entity.actions")}
+    <div className="flex w-full min-w-0 flex-col gap-4">
+      <TableCard className="w-full overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow>
+              {columns.map((column) => {
+                const isSensitive =
+                  definition.fields[column]?.sensitive === true;
+                return (
+                  <TableHead key={column}>
+                    <span className="inline-flex items-center gap-1">
+                      {formatFieldLabel(column, definition)}
+                      {isSensitive ? (
+                        <Lock className="text-muted-foreground size-3.5" />
+                      ) : null}
+                    </span>
                   </TableHead>
-                ) : null}
+                );
+              })}
+              {showActionsColumn ? (
+                <TableHead className="text-center">
+                  {t("entity.actions")}
+                </TableHead>
+              ) : null}
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {items.length === 0 ? (
+              <TableRow>
+                <TableCell colSpan={columnCount} className="h-32 text-center">
+                  <Text className="text-muted-foreground">
+                    {t("entity.empty")}
+                  </Text>
+                </TableCell>
               </TableRow>
-            </TableHeader>
-            <TableBody>
-              {items.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={columnCount} className="h-32 text-center">
-                    <Text className="text-muted-foreground">
-                      {t("entity.empty")}
-                    </Text>
-                  </TableCell>
-                </TableRow>
-              ) : (
-                (items as readonly Record<string, unknown>[]).map((item) => (
-                  <TableRow key={String(item.id)}>
-                    {columns.map((column) => {
-                      const {
-                        fieldType,
-                        displayFormat,
-                        dateDisplayFormat,
-                        fallbackImageUrl,
-                      } = getEntityCellDisplayMeta(column, definition);
-                      return (
-                        <TableCell
-                          key={column}
-                          className={entityListTableCellClassName}
-                        >
-                          <SchemaCell
-                            value={getEntityCellSchemaValue(
-                              item,
-                              column,
-                              definition,
-                              getOneToManyCellValue,
-                            )}
-                            fieldType={fieldType}
-                            displayFormat={displayFormat}
-                            dateDisplayFormat={dateDisplayFormat}
-                            fieldName={column}
-                            fallbackImageUrl={fallbackImageUrl}
-                            locale={i18n.language}
-                            trueLabel={t("table.booleanYes")}
-                            falseLabel={t("table.booleanNo")}
-                          />
-                        </TableCell>
-                      );
-                    })}
-                    {showActionsColumn ? (
-                      <TableCell className="text-center">
-                        <div className="flex items-center justify-center gap-1">
-                          {permissions.canRead ? (
-                            <IconButton
-                              type="button"
-                              label={t("entity.view")}
-                              onClick={() =>
-                                navigate(
-                                  `/app/${entityName}/${String(item.id)}`,
-                                )
-                              }
-                            >
-                              <Eye className="size-4" />
-                            </IconButton>
-                          ) : null}
-                          {permissions.canUpdate &&
-                          (!item.ownerId || canEditRow(item)) &&
-                          onRequestEdit ? (
-                            <IconButton
-                              type="button"
-                              label={t("entity.edit")}
-                              onClick={() => onRequestEdit(String(item.id))}
-                            >
-                              <Pencil className="size-4" />
-                            </IconButton>
-                          ) : null}
-                          {item.ownerId !== undefined &&
-                          canShareRow(item) &&
-                          onRequestShare
-                            ? (() => {
-                                const sharedWith = item.sharedWith as
-                                  | Record<string, string>
-                                  | undefined;
-                                const shareCount = sharedWith
-                                  ? Object.keys(sharedWith).length
-                                  : 0;
-                                return (
-                                  <IconButton
-                                    type="button"
-                                    label={t("share.title")}
-                                    onClick={() =>
-                                      onRequestShare(String(item.id))
-                                    }
-                                  >
-                                    <span className="relative inline-flex">
-                                      <Share2 className="size-4" />
-                                      {shareCount > 0 ? (
-                                        <span className="bg-primary text-primary-foreground absolute -top-2 -right-2 flex size-4 items-center justify-center rounded-full text-[10px] font-medium leading-none">
-                                          {shareCount}
-                                        </span>
-                                      ) : null}
-                                    </span>
-                                  </IconButton>
-                                );
-                              })()
-                            : null}
-                          {permissions.canDelete &&
-                          (!item.ownerId || canDeleteRow(item)) &&
-                          onRequestDelete ? (
-                            <IconButton
-                              type="button"
-                              label={t("entity.delete")}
-                              onClick={() => onRequestDelete(String(item.id))}
-                            >
-                              <Trash2 className="text-destructive size-4" />
-                            </IconButton>
-                          ) : null}
-                        </div>
+            ) : (
+              (items as readonly Record<string, unknown>[]).map((item) => (
+                <TableRow key={String(item.id)}>
+                  {columns.map((column) => {
+                    const {
+                      fieldType,
+                      displayFormat,
+                      dateDisplayFormat,
+                      fallbackImageUrl,
+                    } = getEntityCellDisplayMeta(column, definition);
+                    return (
+                      <TableCell key={column}>
+                        <SchemaCell
+                          value={getEntityCellSchemaValue(
+                            item,
+                            column,
+                            definition,
+                            getOneToManyCellValue,
+                          )}
+                          fieldType={fieldType}
+                          displayFormat={displayFormat}
+                          dateDisplayFormat={dateDisplayFormat}
+                          fieldName={column}
+                          fallbackImageUrl={fallbackImageUrl}
+                          locale={i18n.language}
+                          trueLabel={t("table.booleanYes")}
+                          falseLabel={t("table.booleanNo")}
+                        />
                       </TableCell>
-                    ) : null}
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </div>
+                    );
+                  })}
+                  {showActionsColumn ? (
+                    <TableCell className="text-center">
+                      <div className="flex items-center justify-center gap-1">
+                        {permissions.canRead ? (
+                          <IconButton
+                            type="button"
+                            label={t("entity.view")}
+                            onClick={() =>
+                              navigate(`/app/${entityName}/${String(item.id)}`)
+                            }
+                          >
+                            <Eye className="size-4" />
+                          </IconButton>
+                        ) : null}
+                        {permissions.canUpdate &&
+                        (!item.ownerId || canEditRow(item)) &&
+                        onRequestEdit ? (
+                          <IconButton
+                            type="button"
+                            label={t("entity.edit")}
+                            onClick={() => onRequestEdit(String(item.id))}
+                          >
+                            <Pencil className="size-4" />
+                          </IconButton>
+                        ) : null}
+                        {item.ownerId !== undefined &&
+                        canShareRow(item) &&
+                        onRequestShare
+                          ? (() => {
+                              const sharedWith = item.sharedWith as
+                                | Record<string, string>
+                                | undefined;
+                              const shareCount = sharedWith
+                                ? Object.keys(sharedWith).length
+                                : 0;
+                              return (
+                                <IconButton
+                                  type="button"
+                                  label={t("share.title")}
+                                  onClick={() =>
+                                    onRequestShare(String(item.id))
+                                  }
+                                >
+                                  <span className="relative inline-flex">
+                                    <Share2 className="size-4" />
+                                    {shareCount > 0 ? (
+                                      <span className="bg-primary text-primary-foreground absolute -top-2 -right-2 flex size-4 items-center justify-center rounded-full text-[10px] font-medium leading-none">
+                                        {shareCount}
+                                      </span>
+                                    ) : null}
+                                  </span>
+                                </IconButton>
+                              );
+                            })()
+                          : null}
+                        {permissions.canDelete &&
+                        (!item.ownerId || canDeleteRow(item)) &&
+                        onRequestDelete ? (
+                          <IconButton
+                            type="button"
+                            label={t("entity.delete")}
+                            onClick={() => onRequestDelete(String(item.id))}
+                          >
+                            <Trash2 className="text-destructive size-4" />
+                          </IconButton>
+                        ) : null}
+                      </div>
+                    </TableCell>
+                  ) : null}
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </TableCard>
 
       {useCursorPagination ? (

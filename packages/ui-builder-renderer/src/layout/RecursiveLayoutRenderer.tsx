@@ -543,6 +543,7 @@ function renderRow(
     const isWizardForm = isWizardFormContext(context);
     const isWizardStepContent = isWizardStepContentContext(context);
     const isPageListRow = row.component.kind === "page-list";
+    const isPageToolbarRow = row.component.kind === "page-toolbar";
     const isWizardActionsRow = row.component.kind === "wizard-actions";
     const isWizardStepHostRow = row.component.kind === "wizard-step-host";
     const isWizardProgressRow = row.component.kind === "wizard-progress";
@@ -551,8 +552,10 @@ function renderRow(
     const mainPageRowClass =
       isMainPage && stackDirection === "column"
         ? isPageListRow
-          ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-          : "shrink-0"
+          ? "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-y-auto overflow-x-hidden"
+          : isPageToolbarRow
+            ? "relative z-20 shrink-0"
+            : "shrink-0"
         : undefined;
     const formRowClass =
       isFormFill &&
