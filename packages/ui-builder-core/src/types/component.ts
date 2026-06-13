@@ -1,3 +1,8 @@
+/**
+ * @ai-context-sync
+ * When changing component kinds or props, run: pnpm generate:ai-context
+ * Affected fragments: ui.components.*
+ */
 import type { StyleRule } from "../styles/style-types.js";
 import type { ConditionalStyleRule, LabelConfig } from "./styling.js";
 

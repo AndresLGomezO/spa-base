@@ -1,4 +1,4 @@
-import type { AiChatInput } from "@repo/ai-engine/schemas";
+import type { AiJobInput } from "@repo/ai-engine/schemas";
 import {
   aiJobRecordSchema,
   type AiJobRecord,
@@ -12,7 +12,7 @@ export interface AiJobRepository {
     tenantId: string,
     input: {
       readonly feature: AiJobRecord["feature"];
-      readonly input: AiChatInput;
+      readonly input: AiJobInput;
       readonly requestedBy: string;
       readonly permission: string;
     },
@@ -21,6 +21,8 @@ export interface AiJobRepository {
   update(
     tenantId: string,
     id: string,
-    patch: Partial<Pick<AiJobRecord, "status" | "output" | "error">>,
+    patch: Partial<
+      Pick<AiJobRecord, "status" | "output" | "error" | "progress" | "draft">
+    >,
   ): Promise<AiJobRecord>;
 }

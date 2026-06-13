@@ -22,6 +22,10 @@ import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
+import {
+  syncEntityAiContextsForTenant,
+  type SyncTenantAiContextsDeps,
+} from "../ai/sync-tenant-ai-contexts.js";
 
 interface RegisterEntityDefinitionRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
@@ -29,6 +33,7 @@ interface RegisterEntityDefinitionRoutesOptions {
   readonly entityRuntime: EntityRuntimeContext;
   readonly entityCategoryRepository: EntityCategoryRepository;
   readonly firebaseAdminConfig: FirebaseAdminConfig;
+  readonly tenantAiContextSync?: SyncTenantAiContextsDeps;
 }
 
 const tenantIdQuerySchema = z.object({
@@ -197,6 +202,12 @@ export async function registerEntityDefinitionRoutes(
             parsedBody.data,
           );
         await options.entityRuntime.syncDefinition(created);
+        if (options.tenantAiContextSync) {
+          await syncEntityAiContextsForTenant(
+            options.tenantAiContextSync,
+            tenantId,
+          );
+        }
         return reply.status(201).send(successEnvelope(created));
       } catch (error) {
         const message =
@@ -296,6 +307,12 @@ export async function registerEntityDefinitionRoutes(
             parsedBody.data,
           );
         await options.entityRuntime.syncDefinition(updated, current);
+        if (options.tenantAiContextSync) {
+          await syncEntityAiContextsForTenant(
+            options.tenantAiContextSync,
+            tenantId,
+          );
+        }
         return reply.send(successEnvelope(updated));
       } catch (error) {
         const message =

@@ -31,6 +31,8 @@ export function createFirestoreAdminAiJobRepository(
         input: input.input,
         output: null,
         error: null,
+        progress: null,
+        draft: null,
         requestedBy: input.requestedBy,
         permission: input.permission,
         createdAt: now,

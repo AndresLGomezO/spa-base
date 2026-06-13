@@ -11,3 +11,4 @@ cypress/screenshots
 **/playwright-report
 **/test-results
 **/tsconfig.bisect*.json
+packages/ai-context/src/generated/**

@@ -64,6 +64,7 @@ describe("EntityRuntimeContext", () => {
     expect(knownPermissions).toContain("widget.read");
     expect(knownPermissions).toContain("widget.create");
     expect(knownPermissions).toContain("lead.read");
+    expect(knownPermissions).toContain("ai.uiBuilder.read");
   });
 
   it("persists tenantWideRead on create and update", async () => {

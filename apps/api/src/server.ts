@@ -15,6 +15,7 @@ import type {
   AggregationEventRepository,
   BackfillJobRepository,
   AiJobRepository,
+  UiBuilderAiSuggestionRepository,
   HookRepository,
   JoinCollectionRepository,
   MetricContributionRepository,
@@ -26,6 +27,7 @@ import {
   createInMemoryAggregationEventRepository,
   createInMemoryBackfillJobRepository,
   createInMemoryAiJobRepository,
+  createInMemoryUiBuilderAiSuggestionRepository,
   createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
   createInMemoryEntityUiOverrideRepository,
@@ -34,6 +36,7 @@ import {
   createInMemoryMetricDefinitionRepository,
   createInMemoryMetricContributionRepository,
   createInMemoryMetricValueRepository,
+  createInMemoryTenantAiContextRepository,
   createInMemoryTenantRoleRepository,
   createInMemoryTenantUserInviteRepository,
 } from "@repo/firestore-converters";
@@ -41,6 +44,7 @@ import {
   createFirestoreAdminAggregationEventRepository,
   createFirestoreAdminBackfillJobRepository,
   createFirestoreAdminAiJobRepository,
+  createFirestoreAdminUiBuilderAiSuggestionRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityUiOverrideRepository,
@@ -54,6 +58,8 @@ import {
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRoleRepository,
   createFirestoreAdminTenantUserInviteRepository,
+  createFirestoreAdminTenantRepository,
+  createFirestoreAdminTenantAiContextRepository,
   createFirestoreIndexStatusStore,
 } from "@repo/gcp-firebase";
 import { createMetricRuntimeContext } from "./aggregation/metric-runtime-context.js";
@@ -87,6 +93,8 @@ import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
+import { registerUiBuilderAiSuggestionRoutes } from "./ai/register-ui-builder-ai-suggestion-routes.js";
+import type { SyncTenantAiContextsDeps } from "./ai/sync-tenant-ai-contexts.js";
 import { registerRoleRoutes } from "./roles/register-role-routes.js";
 import { registerModuleRoutes } from "./modules/register-module-routes.js";
 import {
@@ -128,6 +136,7 @@ interface BuildServerOptions {
   readonly metricContributionRepository?: MetricContributionRepository;
   readonly backfillJobRepository?: BackfillJobRepository;
   readonly aiJobRepository?: AiJobRepository;
+  readonly uiBuilderAiSuggestionRepository?: UiBuilderAiSuggestionRepository;
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
@@ -313,6 +322,22 @@ export async function buildServer(options: BuildServerOptions = {}) {
       ? createInMemoryAiJobRepository()
       : createFirestoreAdminAiJobRepository(firebaseAdminConfig));
 
+  const uiBuilderAiSuggestionRepository =
+    options.uiBuilderAiSuggestionRepository ??
+    (options.repositories
+      ? createInMemoryUiBuilderAiSuggestionRepository()
+      : createFirestoreAdminUiBuilderAiSuggestionRepository(
+          firebaseAdminConfig,
+        ));
+
+  const tenantAiContextRepository = options.repositories
+    ? createInMemoryTenantAiContextRepository()
+    : createFirestoreAdminTenantAiContextRepository(firebaseAdminConfig);
+
+  const tenantRepositoryForAiContext = options.repositories
+    ? null
+    : createFirestoreAdminTenantRepository(firebaseAdminConfig);
+
   const metricContributionRepository =
     options.metricContributionRepository ??
     (options.repositories
@@ -364,6 +389,16 @@ export async function buildServer(options: BuildServerOptions = {}) {
     repositories: options.repositories,
     queryExecutors: options.queryExecutors,
   });
+
+  const tenantAiContextSync: SyncTenantAiContextsDeps | undefined =
+    tenantRepositoryForAiContext
+      ? {
+          repository: tenantAiContextRepository,
+          tenantRepository: tenantRepositoryForAiContext,
+          entityCategoryRepository,
+          entityRuntime,
+        }
+      : undefined;
 
   if (!options.skipPlatformTenantSeed) {
     const { seedPlatformTenants } =
@@ -440,6 +475,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     firebaseAdminConfig,
     registeredUserRepository,
     permissionDeps,
+    tenantAiContextSync,
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
@@ -486,6 +522,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     entityCategoryRepository,
     firebaseAdminConfig,
+    tenantAiContextSync,
   });
 
   await registerEntityCategoryRoutes(server, {
@@ -506,6 +543,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     aiJobRepository,
+    tenantAiContextDeps: tenantAiContextSync,
     cloudTasksConfig: {
       projectId: apiEnv.GCP_PROJECT_ID,
       region: apiEnv.GCP_REGION,
@@ -514,6 +552,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
       serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
       localDispatch: apiEnv.AI_TASKS_LOCAL_DISPATCH,
     },
+  });
+
+  await registerUiBuilderAiSuggestionRoutes(server, {
+    authenticate,
+    permissionDeps,
+    uiBuilderAiSuggestionRepository,
   });
 
   await registerMetricDefinitionRoutes(server, {

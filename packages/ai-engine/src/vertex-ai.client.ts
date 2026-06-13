@@ -1,5 +1,17 @@
 import { VertexAI } from "@google-cloud/vertexai";
 
+import {
+  buildMockChatAnswer,
+  buildMockUiBuilderStepAnswer,
+} from "./vertex-mock-responses.js";
+import {
+  isVertexRateLimitError,
+  normalizeVertexError,
+  parseVertexRetryDelayMs,
+  sleep,
+  VERTEX_MAX_RETRIES,
+} from "./vertex-retry.js";
+
 export interface VertexAiConfig {
   readonly projectId: string;
   readonly region: string;
@@ -37,29 +49,102 @@ export async function generateChatAnswer(
   config: VertexAiConfig,
   question: string,
 ): Promise<string> {
+  return generateModelAnswer(config, {
+    systemInstruction:
+      "You are a helpful assistant for an entity management platform. Answer clearly and concisely.",
+    userText: question,
+  });
+}
+
+export interface GenerateModelAnswerInput {
+  readonly systemInstruction: string;
+  readonly userText: string;
+  readonly contextBlocks?: readonly {
+    readonly id: string;
+    readonly content: string;
+  }[];
+}
+
+export interface GenerateModelAnswerOptions {
+  readonly maxOutputTokens?: number;
+  readonly responseMimeType?: "text/plain" | "application/json";
+  readonly stepId?: string;
+}
+
+const DEFAULT_MAX_OUTPUT_TOKENS = 4096;
+/** List/card layouts can be large; allow headroom above chat defaults. */
+export const UI_BUILDER_MAX_OUTPUT_TOKENS = 16_384;
+
+export async function generateModelAnswer(
+  config: VertexAiConfig,
+  input: GenerateModelAnswerInput,
+  options?: GenerateModelAnswerOptions,
+): Promise<string> {
   if (config.mockEnabled) {
-    return `[mock] You asked: ${question.slice(0, 200)}`;
+    if (options?.stepId) {
+      return buildMockUiBuilderStepAnswer(options.stepId, input.contextBlocks);
+    }
+    if (input.contextBlocks && input.contextBlocks.length > 0) {
+      return buildMockUiBuilderStepAnswer(
+        "list.selectViewType",
+        input.contextBlocks,
+      );
+    }
+    return buildMockChatAnswer(input.userText);
   }
+
+  const contextText =
+    input.contextBlocks && input.contextBlocks.length > 0
+      ? input.contextBlocks
+          .map((block) => `<!-- ${block.id} -->\n${block.content}`)
+          .join("\n\n")
+      : "";
+
+  const userText = contextText
+    ? `${contextText}\n\n---\n\n${input.userText}`
+    : input.userText;
 
   const model = getVertexClient(config).getGenerativeModel({
     model: config.modelId,
     systemInstruction: {
       role: "system",
-      parts: [
-        {
-          text: "You are a helpful assistant for an entity management platform. Answer clearly and concisely.",
+      parts: [{ text: input.systemInstruction }],
+    },
+  });
+
+  for (let attempt = 0; attempt <= VERTEX_MAX_RETRIES; attempt += 1) {
+    try {
+      const result = await model.generateContent({
+        contents: [{ role: "user", parts: [{ text: userText }] }],
+        generationConfig: {
+          temperature: 0.2,
+          maxOutputTokens:
+            options?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
+          ...(options?.responseMimeType
+            ? { responseMimeType: options.responseMimeType }
+            : {}),
         },
-      ],
-    },
-  });
+      });
 
-  const result = await model.generateContent({
-    contents: [{ role: "user", parts: [{ text: question }] }],
-    generationConfig: {
-      temperature: 0.2,
-      maxOutputTokens: 2048,
-    },
-  });
+      const response = result.response;
+      const finishReason = response.candidates?.[0]?.finishReason;
+      const text = extractResponseText(response);
+      if (finishReason === "MAX_TOKENS") {
+        if (options?.stepId) {
+          return text;
+        }
+        throw new Error(
+          "Model response was truncated (max output tokens reached).",
+        );
+      }
+      return text;
+    } catch (error) {
+      if (!isVertexRateLimitError(error) || attempt === VERTEX_MAX_RETRIES) {
+        throw new Error(normalizeVertexError(error));
+      }
+      await sleep(parseVertexRetryDelayMs(error, attempt));
+    }
+  }
 
-  return extractResponseText(result.response);
+  throw new Error(normalizeVertexError("Vertex AI request failed."));
 }

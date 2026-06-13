@@ -1,3 +1,7 @@
+/**
+ * @ai-context-sync
+ * MotionPreset — keep in sync with packages/ai-context/src/atoms/ui/motion.ts
+ */
 export type MotionEntrance = "none" | "fade" | "slide-up" | "scale";
 export type MotionHover = "none" | "lift" | "glow";
 export type MotionTransition = "none" | "layout" | "all";

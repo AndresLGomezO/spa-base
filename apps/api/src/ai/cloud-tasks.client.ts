@@ -50,7 +50,8 @@ async function enqueueLocal(
       "X-Local-Task-Dispatcher": "true",
     },
     body: JSON.stringify(options.payload),
-    signal: AbortSignal.timeout(30_000),
+    // Worker accepts the task quickly (202) and processes async, like Cloud Tasks.
+    signal: AbortSignal.timeout(10_000),
   });
 
   if (!response.ok) {

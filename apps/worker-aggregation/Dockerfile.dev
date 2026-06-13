@@ -14,6 +14,7 @@ COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
 COPY apps/worker-aggregation/package.json ./apps/worker-aggregation/
 COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/
 COPY packages/ai-engine/package.json ./packages/ai-engine/
+COPY packages/ai-context/package.json ./packages/ai-context/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
@@ -27,6 +28,7 @@ COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
+COPY packages/theme/package.json ./packages/theme/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/ ./packages/typescript-config/
 
@@ -46,6 +48,8 @@ COPY packages/event-engine ./packages/event-engine
 COPY packages/metrics-engine ./packages/metrics-engine
 COPY packages/aggregation-engine ./packages/aggregation-engine
 COPY packages/ai-engine ./packages/ai-engine
+COPY packages/ai-context ./packages/ai-context
+COPY packages/theme ./packages/theme
 COPY packages/gcp-firebase ./packages/gcp-firebase
 COPY packages/eslint-config ./packages/eslint-config
 COPY packages/typescript-config ./packages/typescript-config

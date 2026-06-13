@@ -9,6 +9,7 @@ import {
   insertComponentRowAt,
   insertNestedLayoutRowAt,
   moveRootColumn,
+  normalizeLayout,
   replaceComponentRowAt,
   replaceLayoutDocument,
   replaceNestedLayoutRowAt,
@@ -603,5 +604,35 @@ describe("createDefaultComponent", () => {
       kind: "icon",
       iconName: "CircleCheck",
     });
+  });
+});
+
+describe("normalizeLayout", () => {
+  it("repairs nested-layout columnCount to match columns.length", () => {
+    const layout = createEmptyLayout(1);
+    const nestedRowId = createLayoutId("nested");
+    const nested: (typeof layout.root.columns)[0]["rows"][0] = {
+      type: "nested-layout",
+      id: nestedRowId,
+      columnCount: 3,
+      columns: [createEmptyColumn(), createEmptyColumn()],
+    };
+    const withNested = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columnCount: 3,
+        columns: [{ ...layout.root.columns[0]!, rows: [nested] }],
+      },
+    };
+
+    const normalized = normalizeLayout(withNested);
+    const row = normalized.root.columns[0]?.rows[0];
+    expect(row?.type).toBe("nested-layout");
+    if (row?.type === "nested-layout") {
+      expect(row.columnCount).toBe(2);
+      expect(row.columns).toHaveLength(2);
+    }
+    expect(normalized.root.columnCount).toBe(1);
   });
 });

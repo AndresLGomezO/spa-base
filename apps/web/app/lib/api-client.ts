@@ -977,13 +977,25 @@ export async function deleteUiBuilderPreset(presetId: string): Promise<void> {
 
 export type AiJobStatus = "pending" | "running" | "completed" | "failed";
 
+export interface AiJobProgress {
+  readonly stepIndex: number;
+  readonly totalSteps: number;
+  readonly stepId: string;
+  readonly stepLabel: string;
+  readonly phase: string;
+}
+
 export interface AiJobRecord {
   readonly id: string;
   readonly status: AiJobStatus;
   readonly feature: string;
   readonly input: { readonly question: string };
-  readonly output: { readonly answer: string } | null;
+  readonly output:
+    | { readonly answer: string }
+    | { readonly summary: string; readonly stepCount: number }
+    | null;
   readonly error: string | null;
+  readonly progress?: AiJobProgress | null;
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -999,4 +1011,60 @@ export async function submitAiChat(
 
 export async function getAiJob(jobId: string): Promise<AiJobRecord> {
   return apiRequest<AiJobRecord>(`/api/ai/jobs/${encodeURIComponent(jobId)}`);
+}
+
+export interface SubmitAiUiBuilderInput {
+  readonly question: string;
+  readonly entityName: string;
+  readonly surface:
+    | "list"
+    | "forms"
+    | "mainPage"
+    | "recordDetail"
+    | "metricsRowDesigner";
+  readonly listViewType?: "table" | "card" | "expandableTable";
+  readonly formPresentation?: "plain" | "wizard";
+  readonly currentLayoutJson?: string;
+}
+
+export async function submitAiUiBuilder(
+  input: SubmitAiUiBuilderInput,
+): Promise<{ readonly jobId: string }> {
+  return apiRequest<{ readonly jobId: string }>("/api/ai/ui-builder", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export type UiBuilderSuggestionStatus = "ready" | "failed";
+
+export interface UiBuilderSuggestionRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly entityName: string;
+  readonly surface: string;
+  readonly listViewType?: "table" | "card" | "expandableTable";
+  readonly jobId: string;
+  readonly status: UiBuilderSuggestionStatus;
+  readonly userContext?: string;
+  readonly sliceData?: import("@repo/entities").ListSliceData;
+  readonly validationErrors?: readonly {
+    readonly path: string;
+    readonly message: string;
+  }[];
+  readonly rawAnswer?: string;
+  readonly createdBy: string;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listUiBuilderAiSuggestions(
+  entityName: string,
+  surface = "list",
+): Promise<{ readonly suggestions: readonly UiBuilderSuggestionRecord[] }> {
+  return apiRequest<{
+    readonly suggestions: readonly UiBuilderSuggestionRecord[];
+  }>(
+    `/api/entities/${encodeURIComponent(entityName)}/ui-builder/ai-suggestions?surface=${encodeURIComponent(surface)}`,
+  );
 }

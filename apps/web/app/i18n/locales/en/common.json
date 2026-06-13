@@ -383,6 +383,32 @@
       "save": "Save changes",
       "discard": "Discard changes",
       "keepEditing": "Keep editing"
+    },
+    "ai": {
+      "openLabel": "AI layout assistant",
+      "historyLabel": "AI suggestion history",
+      "designingLayout": "Designing layout…",
+      "stepProgress": "{{current}} / {{total}} — {{label}}",
+      "requestTitle": "AI item list designer",
+      "requestDescription": "Recommend the single best list presentation for {{entity}} (table, card, or expandable table) and generate a complete layout for that choice.",
+      "contextLabel": "Additional context (optional)",
+      "contextHelper": "Describe goals, audience, or constraints to guide the AI. You can prefer a presentation type (e.g. \"prefer card\"); leave empty to let the AI choose the best fit from your entity fields.",
+      "contextExample": "Example: Mobile-first card with status badge and bank name; show amount on tablet+ only; use nested two-column card layout.",
+      "defaultPrompt": "Choose the best listViewType for this entity and design a production-ready layout for that presentation only.",
+      "buildButton": "Build it!",
+      "cancel": "Cancel",
+      "resultTitle": "AI suggestion ready",
+      "resultReady": "Recommended presentation: {{listViewType}}. Apply to load the suggestion into the designer (save manually when ready).",
+      "resultFailed": "The AI output could not be validated. Try again with more specific context or review the history entry.",
+      "dismiss": "Dismiss",
+      "apply": "Apply",
+      "historyTitle": "AI suggestions",
+      "historyEmpty": "No AI suggestions yet. Use the AI button to generate one.",
+      "historyFailedItem": "Validation failed",
+      "jobInProgress": "An AI layout job is already running for this list. Wait for it to finish before starting another.",
+      "rateLimitError": "Vertex AI rate limit exceeded. Please wait a moment and try again.",
+      "lastRunAt": "Last run: {{date}}",
+      "resultPendingSuggestion": "The last run completed successfully. Refreshing the saved suggestion…"
     }
   },
   "forms": {

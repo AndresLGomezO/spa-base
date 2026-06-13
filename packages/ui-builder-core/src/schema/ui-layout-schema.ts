@@ -1,3 +1,8 @@
+/**
+ * @ai-context-sync
+ * When changing UI builder layout schemas, run: pnpm generate:ai-context
+ * Affected fragments: ui.layout.base, ui.style-rules, ui.data-sources, ui.components.*
+ */
 import { z } from "zod";
 
 import { motionPresetSchema } from "./motion-schema.js";

@@ -99,6 +99,10 @@ export {
   aiJobRecordSchema,
 } from "./ai-job/repository-contract.js";
 export { createInMemoryAiJobRepository } from "./ai-job/in-memory-repository.js";
+export {
+  type UiBuilderAiSuggestionRepository,
+  createInMemoryUiBuilderAiSuggestionRepository,
+} from "./ui-builder-ai-suggestion/index.js";
 export { type EntityCategoryRepository } from "./entity-category/repository-contract.js";
 export { createInMemoryEntityCategoryRepository } from "./entity-category/in-memory-repository.js";
 export { type TenantRoleRepository } from "./tenant-role/repository-contract.js";
@@ -110,6 +114,11 @@ export {
   type TenantUserInviteRecord,
 } from "./tenant-user-invite/repository-contract.js";
 export { createInMemoryTenantUserInviteRepository } from "./tenant-user-invite/in-memory-repository.js";
+export {
+  type TenantAiContextRepository,
+  type TenantAiContextRecord,
+} from "./tenant-ai-context/repository-contract.js";
+export { createInMemoryTenantAiContextRepository } from "./tenant-ai-context/in-memory-repository.js";
 export {
   createRegisteredUserFromAuthUser,
   mergeRegisteredUserFromAuthUser,

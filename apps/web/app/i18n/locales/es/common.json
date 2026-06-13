@@ -383,6 +383,32 @@
       "save": "Guardar cambios",
       "discard": "Descartar cambios",
       "keepEditing": "Seguir editando"
+    },
+    "ai": {
+      "openLabel": "Asistente de layout con IA",
+      "historyLabel": "Historial de sugerencias IA",
+      "designingLayout": "Diseñando layout…",
+      "stepProgress": "{{current}} / {{total}} — {{label}}",
+      "requestTitle": "Diseñador de lista con IA",
+      "requestDescription": "Recomienda la mejor presentación de lista para {{entity}} (tabla, tarjeta o tabla expandible) y genera un layout completo solo para esa opción.",
+      "contextLabel": "Contexto adicional (opcional)",
+      "contextHelper": "Describe objetivos, audiencia o restricciones. Puedes preferir un tipo de presentación (p. ej. \"preferir tarjeta\"); déjalo vacío para que la IA elija la mejor opción según los campos de la entidad.",
+      "contextExample": "Ejemplo: Tarjeta mobile-first con badge de estado y nombre del banco; mostrar monto solo en tablet+; layout anidado de dos columnas.",
+      "defaultPrompt": "Elige el mejor listViewType para esta entidad y diseña un layout listo para producción solo para esa presentación.",
+      "buildButton": "¡Construir!",
+      "cancel": "Cancelar",
+      "resultTitle": "Sugerencia IA lista",
+      "resultReady": "Presentación recomendada: {{listViewType}}. Aplica para cargar la sugerencia en el diseñador (guarda manualmente cuando estés listo).",
+      "resultFailed": "No se pudo validar la salida de la IA. Intenta de nuevo con más contexto o revisa el historial.",
+      "dismiss": "Cerrar",
+      "apply": "Aplicar",
+      "historyTitle": "Sugerencias IA",
+      "historyEmpty": "Aún no hay sugerencias IA. Usa el botón de IA para generar una.",
+      "historyFailedItem": "Validación fallida",
+      "jobInProgress": "Ya hay un trabajo de layout con IA en curso para esta lista. Espera a que termine antes de iniciar otro.",
+      "rateLimitError": "Se superó el límite de solicitudes de Vertex AI. Espera un momento e inténtalo de nuevo.",
+      "lastRunAt": "Última ejecución: {{date}}",
+      "resultPendingSuggestion": "La última ejecución terminó correctamente. Actualizando la sugerencia guardada…"
     }
   },
   "forms": {

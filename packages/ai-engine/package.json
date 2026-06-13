@@ -16,16 +16,27 @@
     "./permissions": "./src/permissions.ts",
     "./schemas": "./src/schemas/index.ts",
     "./process-ai-chat": "./src/process-ai-chat.ts",
+    "./process-ai-ui-builder": "./src/process-ai-ui-builder.ts",
     "./task-routes": "./src/task-routes.ts",
-    "./vertex-ai.client": "./src/vertex-ai.client.ts"
+    "./vertex-ai.client": "./src/vertex-ai.client.ts",
+    "./vertex-mock-responses": "./src/vertex-mock-responses.ts",
+    "./extract-json-from-model-answer": "./src/extract-json-from-model-answer.ts",
+    "./ui-builder-output-prompts": "./src/ui-builder-output-prompts.ts",
+    "./parse-ui-builder-list-suggestion": "./src/parse-ui-builder-list-suggestion.ts",
+    "./normalize-ai-list-slice-suggestion": "./src/normalize-ai-list-slice-suggestion.ts",
+    "./ui-builder-orchestrator": "./src/ui-builder-orchestrator/index.ts"
   },
   "dependencies": {
     "@google-cloud/vertexai": "catalog:",
+    "@repo/ai-context": "workspace:*",
+    "@repo/entities": "workspace:*",
+    "@repo/ui-builder-core": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
     "@repo/typescript-config": "workspace:*",
+    "@repo/ui-builder-core": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "prettier": "catalog:",

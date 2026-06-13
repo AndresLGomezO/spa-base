@@ -13,7 +13,8 @@
   "exports": {
     ".": "./src/index.ts",
     "./metric-contribution": "./src/metric-contribution/repository-contract.ts",
-    "./ai-job": "./src/ai-job/repository-contract.ts"
+    "./ai-job": "./src/ai-job/repository-contract.ts",
+    "./tenant-ai-context": "./src/tenant-ai-context/repository-contract.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -25,6 +26,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",

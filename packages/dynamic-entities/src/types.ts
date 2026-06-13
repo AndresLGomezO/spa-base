@@ -1,3 +1,8 @@
+/**
+ * @ai-context-sync
+ * When changing entity definition or field schemas, run: pnpm generate:ai-context
+ * Affected fragments: model.*
+ */
 import { z } from "zod";
 
 import {

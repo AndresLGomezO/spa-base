@@ -9,6 +9,7 @@ const workerEnvSchema = z.object({
     .default("false")
     .transform((value) => value === "true"),
   GCP_PROJECT_ID: z.string().trim().min(1),
+  VERTEX_GCP_PROJECT_ID: z.string().trim().optional(),
   GCP_REGION: z.string().trim().min(1).default("us-central1"),
   GCP_STORAGE_BUCKET: z.string().trim().optional(),
   FIRESTORE_EMULATOR_HOST: z.string().trim().optional(),
@@ -38,7 +39,7 @@ if (!parsed.success) {
 export const workerEnv = parsed.data;
 
 export const vertexAiConfig = {
-  projectId: workerEnv.GCP_PROJECT_ID,
+  projectId: workerEnv.VERTEX_GCP_PROJECT_ID ?? workerEnv.GCP_PROJECT_ID,
   region: workerEnv.GCP_REGION,
   modelId: workerEnv.VERTEX_MODEL_ID,
   mockEnabled: workerEnv.IS_LOCAL && !workerEnv.USE_REAL_VERTEX,

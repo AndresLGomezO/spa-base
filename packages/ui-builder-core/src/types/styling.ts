@@ -1,3 +1,7 @@
+/**
+ * @ai-context-sync
+ * LabelConfig — keep in sync with packages/ai-context/src/atoms/ui/label-config.ts
+ */
 import type { CardBadgeVariant } from "./component.js";
 
 export type LabelPosition = "above" | "below";

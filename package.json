@@ -32,8 +32,10 @@
     "firestore:doc": "tsx scripts/firestore-doc-manager/firestore-doc.ts",
     "entity:api": "tsx scripts/firestore-doc-manager/entity-api.ts",
     "generate:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts",
+    "generate:ai-context": "tsx scripts/generate-ai-context.ts",
     "prune:firestore-indexes": "tsx scripts/prune-all-firestore-composite-indexes.ts",
     "check:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts && git diff --exit-code firestore.indexes.json",
+    "check:ai-context": "tsx scripts/generate-ai-context.ts && git diff --exit-code packages/ai-context/src/generated/",
     "check:docker-workspace": "tsx scripts/check-docker-workspace.ts",
     "validate": "tsx scripts/validate.ts",
     "validate:ci": "tsx scripts/validate.ts --ci",
@@ -46,6 +48,7 @@
     "dev:docker:reset": "tsx scripts/docker-dev-reset.ts"
   },
   "devDependencies": {
+    "@repo/ai-context": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/firestore-indexes": "workspace:*",

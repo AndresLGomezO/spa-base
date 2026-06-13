@@ -706,12 +706,40 @@ export function updateLayoutMeta(
   return { ...layout, ...patch };
 }
 
+function normalizeColumnNode(column: ColumnNode): ColumnNode {
+  return {
+    ...column,
+    rows: column.rows.map(normalizeRowNode),
+  };
+}
+
+function normalizeRowNode(row: RowNode): RowNode {
+  if (row.type === "component") {
+    return row;
+  }
+
+  return normalizeNestedLayoutRow(row);
+}
+
+function normalizeNestedLayoutRow(
+  row: NestedLayoutRowNode,
+): NestedLayoutRowNode {
+  const columns = row.columns.map(normalizeColumnNode);
+  return {
+    ...row,
+    columns,
+    columnCount: columns.length,
+  };
+}
+
 export function normalizeLayout(layout: UiLayoutDocument): UiLayoutDocument {
+  const columns = layout.root.columns.map(normalizeColumnNode);
   return {
     ...layout,
     root: {
       ...layout.root,
-      columnCount: layout.root.columns.length,
+      columns,
+      columnCount: columns.length,
     },
   };
 }

@@ -80,9 +80,13 @@ export interface PopoverProps {
   readonly panelClassName?: string;
   readonly fullWidth?: boolean;
   readonly layer?: PopoverLayer;
+  readonly openOnClick?: boolean;
+  readonly hoverable?: boolean;
+  readonly onHoverOpenChange?: (open: boolean) => void;
 }
 
 const TRANSITION_MS = 200;
+const HOVER_CLOSE_DELAY_MS = 200;
 
 export function Popover({
   open,
@@ -95,10 +99,14 @@ export function Popover({
   panelClassName,
   fullWidth = false,
   layer = "default",
+  openOnClick = true,
+  hoverable = false,
+  onHoverOpenChange,
 }: PopoverProps) {
   const titleId = useId();
   const rootRef = useRef<HTMLDivElement>(null);
   const panelRef = useRef<HTMLDivElement>(null);
+  const hoverCloseTimerRef = useRef<number | null>(null);
   const [mounted, setMounted] = useState(open);
   const [visible, setVisible] = useState(open);
   const [sidePanelStyle, setSidePanelStyle] = useState<CSSProperties>({});
@@ -117,6 +125,44 @@ export function Popover({
   const toggle = useCallback(() => {
     onOpenChange(!open);
   }, [onOpenChange, open]);
+
+  const clearHoverCloseTimer = useCallback(() => {
+    if (hoverCloseTimerRef.current != null) {
+      window.clearTimeout(hoverCloseTimerRef.current);
+      hoverCloseTimerRef.current = null;
+    }
+  }, []);
+
+  const scheduleHoverClose = useCallback(() => {
+    if (!hoverable || !onHoverOpenChange) {
+      return;
+    }
+
+    clearHoverCloseTimer();
+    hoverCloseTimerRef.current = window.setTimeout(() => {
+      onHoverOpenChange(false);
+      hoverCloseTimerRef.current = null;
+    }, HOVER_CLOSE_DELAY_MS);
+  }, [clearHoverCloseTimer, hoverable, onHoverOpenChange]);
+
+  const handleHoverEnter = useCallback(() => {
+    if (!hoverable || !onHoverOpenChange) {
+      return;
+    }
+
+    clearHoverCloseTimer();
+    onHoverOpenChange(true);
+  }, [clearHoverCloseTimer, hoverable, onHoverOpenChange]);
+
+  const handleHoverLeave = useCallback(() => {
+    scheduleHoverClose();
+  }, [scheduleHoverClose]);
+
+  useEffect(() => {
+    return () => {
+      clearHoverCloseTimer();
+    };
+  }, [clearHoverCloseTimer]);
 
   useEffect(() => {
     if (open) {
@@ -235,9 +281,27 @@ export function Popover({
             }>
           ).props.onClick;
           originalOnClick?.(event);
-          if (!event.defaultPrevented) {
+          if (!event.defaultPrevented && openOnClick) {
             toggle();
           }
+        },
+        onMouseEnter: (event: MouseEvent<HTMLElement>) => {
+          const originalOnMouseEnter = (
+            trigger as ReactElement<{
+              onMouseEnter?: (e: MouseEvent<HTMLElement>) => void;
+            }>
+          ).props.onMouseEnter;
+          originalOnMouseEnter?.(event);
+          handleHoverEnter();
+        },
+        onMouseLeave: (event: MouseEvent<HTMLElement>) => {
+          const originalOnMouseLeave = (
+            trigger as ReactElement<{
+              onMouseLeave?: (e: MouseEvent<HTMLElement>) => void;
+            }>
+          ).props.onMouseLeave;
+          originalOnMouseLeave?.(event);
+          handleHoverLeave();
         },
         "aria-expanded": open,
         "aria-haspopup": "dialog",
@@ -273,6 +337,8 @@ export function Popover({
       aria-label={title}
       style={usePortal ? sidePanelStyle : undefined}
       className={resolvedPanelClassName}
+      onMouseEnter={handleHoverEnter}
+      onMouseLeave={handleHoverLeave}
     >
       {title ? (
         <p className="text-foreground mb-3 text-sm font-semibold">{title}</p>

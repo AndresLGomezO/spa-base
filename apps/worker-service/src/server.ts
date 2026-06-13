@@ -1,6 +1,6 @@
 import fastify, { type FastifyInstance, type FastifyRequest } from "fastify";
 
-import type { AiChatProcessorDeps } from "./services/ai-chat-processor.js";
+import type { WorkerTaskScopeDeps } from "./routes/task.scope.js";
 import { healthRoute } from "./routes/health.route.js";
 import { taskScope } from "./routes/task.scope.js";
 
@@ -29,7 +29,7 @@ function registerLenientJsonParser(app: FastifyInstance): void {
 }
 
 export async function buildWorkerServer(
-  deps: AiChatProcessorDeps,
+  deps: WorkerTaskScopeDeps,
 ): Promise<FastifyInstance> {
   const app = fastify({ logger: true });
   registerLenientJsonParser(app);

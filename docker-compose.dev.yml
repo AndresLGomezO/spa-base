@@ -159,11 +159,12 @@ services:
       - /app/node_modules
       - /app/apps/worker-service/node_modules
       - /app/packages/eslint-config/node_modules
+    env_file:
+      - ./apps/worker-service/.env.dev
     environment:
       - NODE_ENV=development
       - IS_LOCAL=true
       - PORT=3001
-      - GCP_PROJECT_ID=demo-project-base
       - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
       - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199

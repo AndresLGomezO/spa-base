@@ -30,6 +30,7 @@
   },
   "dependencies": {
     "@repo/ai-engine": "workspace:*",
+    "@repo/ai-context": "workspace:*",
     "@google-cloud/firestore": "catalog:",
     "@google-cloud/pubsub": "catalog:",
     "@repo/dynamic-entities": "workspace:*",

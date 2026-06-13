@@ -1,5 +1,8 @@
 import {
   createFirestoreAdminAiJobRepository,
+  createFirestoreAdminEntityDefinitionRepository,
+  createFirestoreAdminTenantAiContextRepository,
+  createFirestoreAdminUiBuilderAiSuggestionRepository,
   initializeFirebaseAdmin,
 } from "@repo/worker-firestore";
 
@@ -19,9 +22,18 @@ initializeFirebaseAdmin(firebaseAdminConfig);
 
 const aiJobRepository =
   createFirestoreAdminAiJobRepository(firebaseAdminConfig);
+const tenantAiContextRepository =
+  createFirestoreAdminTenantAiContextRepository(firebaseAdminConfig);
+const uiBuilderAiSuggestionRepository =
+  createFirestoreAdminUiBuilderAiSuggestionRepository(firebaseAdminConfig);
+const entityDefinitionRepository =
+  createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
 
 const server = await buildWorkerServer({
   aiJobRepository,
+  tenantAiContextRepository,
+  uiBuilderAiSuggestionRepository,
+  entityDefinitionRepository,
   vertexAiConfig,
 });
 
@@ -35,6 +47,9 @@ console.log(
     message: "worker-service started",
     port: workerEnv.PORT,
     isLocal: workerEnv.IS_LOCAL,
-    vertexMock: !workerEnv.USE_REAL_VERTEX && workerEnv.IS_LOCAL,
+    useRealVertex: workerEnv.USE_REAL_VERTEX,
+    gcpProjectId: workerEnv.GCP_PROJECT_ID,
+    vertexProjectId: vertexAiConfig.projectId,
+    vertexMock: vertexAiConfig.mockEnabled,
   }),
 );

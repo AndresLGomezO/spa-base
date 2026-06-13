@@ -16,6 +16,8 @@ import type {
 import { tenantStatusSchema, tenantAppearanceSchema } from "@repo/shared-types";
 import { uploadTenantLogo } from "@repo/gcp-firebase";
 
+import { syncThemeAiContextForTenant } from "../ai/sync-tenant-ai-contexts.js";
+import type { SyncTenantAiContextsDeps } from "../ai/sync-tenant-ai-contexts.js";
 import { validateActiveTenantIds } from "../admin/list-available-tenants.js";
 import { seedTenantRolesFromTemplates } from "../admin/seed-tenant-roles-from-templates.js";
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
@@ -73,6 +75,7 @@ export const adminRoutes: FastifyPluginAsync<{
   firebaseAdminConfig: FirebaseAdminConfig;
   registeredUserRepository: RegisteredUserRepository;
   permissionDeps: LoadRequestPermissionsDeps;
+  tenantAiContextSync?: SyncTenantAiContextsDeps;
 }> = async (fastify, opts) => {
   const authenticate = createAuthenticatePreHandler(opts.firebaseAdminConfig, {
     requireTenant: false,
@@ -205,6 +208,16 @@ export const adminRoutes: FastifyPluginAsync<{
         });
       }
 
+      if (
+        parsedBody.data.appearance !== undefined &&
+        opts.tenantAiContextSync
+      ) {
+        await syncThemeAiContextForTenant(
+          opts.tenantAiContextSync,
+          parsedParams.data.id,
+        );
+      }
+
       return reply.send({ ok: true, tenant: updated });
     },
   );
@@ -257,6 +270,13 @@ export const adminRoutes: FastifyPluginAsync<{
             logoUrl,
           },
         });
+
+        if (opts.tenantAiContextSync) {
+          await syncThemeAiContextForTenant(
+            opts.tenantAiContextSync,
+            parsedParams.data.id,
+          );
+        }
 
         return reply.send({ ok: true, logoUrl, tenant: updated });
       } catch (error) {

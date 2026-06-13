@@ -1,0 +1,41 @@
+{
+  "surface": "list",
+  "entityName": "contract",
+  "userPrompt": "Mobile-first cards",
+  "listViewType": "card",
+  "layoutTargets": {
+    "listItem": {
+      "pathKey": "listItem",
+      "label": "Card list item layout",
+      "componentConfigs": {
+        "root/0/col1/3": {
+          "kind": "badge",
+          "primary": { "type": "field", "path": "contractType" },
+          "conditionalStyles": [
+            { "matchValue": "SAVINGS", "badgeVariant": "primary" },
+            { "matchValue": "FIXED_TERM", "badgeVariant": "primary" }
+          ]
+        }
+      },
+      "skeleton": [
+        {
+          "kind": "nested-layout",
+          "columnCount": 2,
+          "columns": [
+            { "components": [{ "kind": "text", "fieldPath": "name" }] },
+            {
+              "components": [
+                {
+                  "kind": "badge",
+                  "fieldPath": "contractType",
+                  "displayFrom": "md"
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  },
+  "completedStepIds": []
+}

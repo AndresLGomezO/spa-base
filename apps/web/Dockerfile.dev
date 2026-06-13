@@ -32,6 +32,7 @@ COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/hooks/package.json ./packages/hooks/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/ai-engine/package.json ./packages/ai-engine/
+COPY packages/ai-context/package.json ./packages/ai-context/
 COPY packages/event-engine/package.json ./packages/event-engine/
 COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/rbac/package.json ./packages/rbac/

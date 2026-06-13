@@ -238,6 +238,74 @@ export function listFormFieldOptions(
   return options.sort((a, b) => a.localeCompare(b));
 }
 
+/** Top-level entity fields assignable to table / expandableTable view columns. */
+export function listTableColumnFieldOptions(
+  definition: FieldPathValidationDefinition,
+): readonly string[] {
+  return listFormFieldOptions(definition);
+}
+
+export function isValidTableColumnFieldPath(
+  definition: FieldPathValidationDefinition,
+  fieldPath: string,
+): boolean {
+  const trimmed = fieldPath.trim();
+  if (trimmed.length === 0 || trimmed.includes(".")) {
+    return false;
+  }
+
+  if (trimmed === "id" || trimmed === "createdAt") {
+    return true;
+  }
+
+  if (ALLOWED_SYSTEM_FIELDS.has(trimmed)) {
+    return false;
+  }
+
+  const meta = definition.fields[trimmed];
+  if (!meta) {
+    return false;
+  }
+
+  return meta.type !== "document";
+}
+
+export function normalizeTableColumnFieldPath(
+  definition: FieldPathValidationDefinition,
+  fieldPath: string,
+): string {
+  const trimmed = fieldPath.trim();
+  if (!trimmed.includes(".")) {
+    return trimmed;
+  }
+
+  const [firstSegment] = trimmed.split(".", 2);
+  if (!firstSegment) {
+    return trimmed;
+  }
+
+  const relationField = resolveRelationFieldName(definition, firstSegment);
+  return relationField ?? trimmed;
+}
+
+export function sanitizeTableColumnFieldPaths(
+  definition: FieldPathValidationDefinition,
+  fields: readonly string[],
+): readonly string[] {
+  const normalized = fields.map((field) =>
+    normalizeTableColumnFieldPath(definition, field),
+  );
+  const filtered = normalized.filter((field) =>
+    isValidTableColumnFieldPath(definition, field),
+  );
+  if (filtered.length > 0) {
+    return [...new Set(filtered)];
+  }
+
+  const fallback = listTableColumnFieldOptions(definition);
+  return fallback.length > 0 ? fallback.slice(0, 4) : ["name"];
+}
+
 export function isValidFormFieldPath(
   definition: FieldPathValidationDefinition,
   fieldPath: string,

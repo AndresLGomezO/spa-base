@@ -17,6 +17,11 @@ export {
 export { Card, type CardProps } from "./card/Card";
 export { cardVariants, type CardVariant } from "./card/card.variants";
 export { IconButton, type IconButtonProps } from "./icon-button/IconButton";
+export { AiSparkIcon, type AiSparkIconProps } from "./icons/AiSparkIcon";
+export {
+  AiBuilderLoadingIcon,
+  type AiBuilderLoadingIconProps,
+} from "./ai/AiBuilderLoadingIcon";
 export { Logo, type LogoProps } from "./logo/Logo";
 export {
   Modal,

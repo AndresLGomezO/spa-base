@@ -111,7 +111,10 @@ export default function AiChatRoute() {
           {job.status === "failed" && job.error ? (
             <Alert>{job.error}</Alert>
           ) : null}
-          {job.status === "completed" && job.output?.answer ? (
+          {job.status === "completed" &&
+          job.output &&
+          "answer" in job.output &&
+          job.output.answer ? (
             <div className="whitespace-pre-wrap rounded-md bg-muted p-3 text-sm">
               {job.output.answer}
             </div>

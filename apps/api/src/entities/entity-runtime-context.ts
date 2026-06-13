@@ -3,6 +3,7 @@ import {
   type DefinedEntity,
   type FieldDefinitions,
 } from "@repo/entities";
+import { AI_PERMISSIONS } from "@repo/ai-engine/permissions";
 import {
   getDynamicPermissionsForTenant,
   getEntitiesForTenant,
@@ -129,6 +130,7 @@ export class EntityRuntimeContext {
         "entityCategory.update",
         ...HOOK_PERMISSIONS,
         ...METRIC_PERMISSIONS,
+        ...AI_PERMISSIONS,
         ...ROLE_PERMISSIONS,
         ...TENANT_USER_PERMISSIONS,
       ]),

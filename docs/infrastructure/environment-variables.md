@@ -31,8 +31,42 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `PUBSUB_EMULATOR_HOST` | `127.0.0.1:8085` / `firebase-emulator:8085` (Firebase Emulator Suite) | **unset** | Firebase Pub/Sub emulator (local only) |
 | `AGGREGATION_EVENTS_PUBSUB` | `false` (host); `true` in Docker compose and Cloud Run | `true` when aggregation enabled | Publish aggregation events to Pub/Sub instead of inline processing |
 | `AGGREGATION_EVENTS_TOPIC` | `aggregation-events` | `aggregation-events` | Pub/Sub topic for aggregation events |
+| `WORKER_SERVICE_URL` | `http://127.0.0.1:3001` (host); `http://worker-service:3001` (Docker) | Cloud Run worker-service URL | Base URL for AI task workers |
+| `AI_TASKS_LOCAL_DISPATCH` | `true` (default non-prod) | `false` | POST AI jobs directly to worker instead of Cloud Tasks |
+| `CLOUD_TASKS_QUEUE_NAME` | `ai-jobs` | `ai-jobs` | Cloud Tasks queue for AI jobs (production) |
 
 Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps/api/.env.example`](../../apps/api/.env.example).
+
+---
+
+## Worker service — AI (`apps/worker-service`)
+
+| Variable | Local (Docker) | Cloud Run (Terraform) | Description |
+| -------- | -------------- | --------------------- | ----------- |
+| `IS_LOCAL` | `true` (Docker compose) | **unset** / `false` | Enables local task auth bypass and mock eligibility |
+| `USE_REAL_VERTEX` | `false` (default in `.env.dev`) | **unset** / `false` | When `IS_LOCAL=true`, set `true` to call real Vertex AI instead of mock |
+| `GCP_PROJECT_ID` | `demo-project-base` | workspace project ID | Firebase / Firestore project (keep `demo-project-base` locally for emulators) |
+| `VERTEX_GCP_PROJECT_ID` | optional; your GCP project for real Vertex | **unset** (falls back to `GCP_PROJECT_ID`) | Vertex AI billing project when it differs from emulator project |
+| `GCP_REGION` | `us-central1` | `us-central1` | Vertex AI region |
+| `VERTEX_MODEL_ID` | `gemini-2.5-flash` | `gemini-2.5-flash` | Gemini model for chat and UI builder |
+| `GOOGLE_APPLICATION_CREDENTIALS` | mounted ADC path (real mode only) | **unset** (Cloud Run SA) | Path to gcloud application-default credentials |
+| `FIRESTORE_EMULATOR_HOST` | `firebase-emulator:8080` | **unset** | Firestore emulator |
+| `FIREBASE_AUTH_EMULATOR_HOST` | `firebase-emulator:9099` | **unset** | Auth emulator |
+| `FIREBASE_STORAGE_EMULATOR_HOST` | `firebase-emulator:9199` | **unset** | Storage emulator |
+| `TASKS_SA_EMAIL` | local SA email | Cloud Tasks SA | Expected OIDC email when worker auth is enabled |
+| `WORKER_AUTH_ENABLED` | `false` | `true` in prod | Force OIDC verification even when `IS_LOCAL=true` |
+
+Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env.dev.example).
+
+### AI dev mode (Docker)
+
+| Mode | Command | Vertex behavior |
+| ---- | ------- | ----------------- |
+| **Mock** (default) | `pnpm dev:docker` | No GCP calls; chat and UI builder return local fixtures |
+| **Real GCP** | `pnpm dev:docker:reset -- --only ai --use-real-vertex` | Calls Vertex via `gcloud auth application-default login` credentials |
+| **Back to mock** | `pnpm dev:docker:reset -- --only ai --mock-vertex` | Restores local Vertex mock |
+
+**Real mode prerequisites:** Vertex AI API enabled, `gcloud auth application-default login`, and `VERTEX_GCP_PROJECT_ID` (or `GCP_PROJECT_ID`) set in [`apps/worker-service/.env.dev`](../../apps/worker-service/.env.dev). Keep `GCP_PROJECT_ID=demo-project-base` so Firestore emulator data matches the API.
 
 ---
 

@@ -1,6 +1,9 @@
 export const AI_CHAT_PERMISSIONS = ["ai.chat.run", "ai.chat.read"] as const;
 
-export const AI_UI_BUILDER_PERMISSIONS = ["ai.uiBuilder.run"] as const;
+export const AI_UI_BUILDER_PERMISSIONS = [
+  "ai.uiBuilder.run",
+  "ai.uiBuilder.read",
+] as const;
 
 export const AI_DATA_MODEL_BUILDER_PERMISSIONS = [
   "ai.dataModelBuilder.run",

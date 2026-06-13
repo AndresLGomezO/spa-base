@@ -18,7 +18,9 @@
     }
   },
   "dependencies": {
+    "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
+    "@repo/dynamic-entities": "workspace:*",
     "firebase-admin": "catalog:",
     "nanoid": "catalog:",
     "zod": "catalog:"

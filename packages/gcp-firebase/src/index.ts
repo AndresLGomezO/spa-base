@@ -64,6 +64,8 @@ export { createFirestoreAdminMetricValueRepository } from "./firestore-admin-met
 export { createFirestoreAdminMetricContributionRepository } from "./firestore-admin-metric-contribution-repository.js";
 export { createFirestoreAdminBackfillJobRepository } from "./firestore-admin-backfill-job-repository.js";
 export { createFirestoreAdminAiJobRepository } from "./firestore-admin-ai-job-repository.js";
+export { createFirestoreAdminUiBuilderAiSuggestionRepository } from "./firestore-admin-ui-builder-ai-suggestion-repository.js";
+export { createFirestoreAdminTenantAiContextRepository } from "./firestore-admin-tenant-ai-context-repository.js";
 export {
   AGGREGATION_EVENTS_TOPIC,
   ensureAggregationEventsTopic,

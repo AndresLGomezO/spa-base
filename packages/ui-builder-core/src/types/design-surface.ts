@@ -1,3 +1,8 @@
+/**
+ * @ai-context-sync
+ * When changing design surfaces or allowed component kinds, run: pnpm generate:ai-context
+ * Affected fragments: ui.surface.*
+ */
 import type { UiComponentKind } from "./component.js";
 
 export type DesignSurface =

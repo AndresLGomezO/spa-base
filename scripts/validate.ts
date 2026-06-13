@@ -81,6 +81,10 @@ const VALIDATE_CI_STEPS: ValidateStep[] = [
     label: "Docker workspace COPY alignment",
     command: "pnpm run check:docker-workspace",
   },
+  {
+    label: "AI context fragments",
+    command: "pnpm run check:ai-context",
+  },
 ];
 
 function runStep(step: ValidateStep): Promise<{ ok: boolean; output: string }> {

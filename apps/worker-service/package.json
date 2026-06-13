@@ -8,11 +8,15 @@
     "build": "tsc -p tsconfig.build.json",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run --passWithNoTests",
     "lint": "eslint ."
   },
   "dependencies": {
     "@google-cloud/vertexai": "catalog:",
+    "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
+    "@repo/dynamic-entities": "workspace:*",
+    "@repo/entities": "workspace:*",
     "@repo/worker-firestore": "workspace:*",
     "fastify": "catalog:",
     "firebase-admin": "catalog:",
@@ -20,10 +24,12 @@
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
+    "@repo/firestore-converters": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "eslint": "catalog:",
     "tsx": "catalog:",
-    "typescript": "catalog:"
+    "typescript": "catalog:",
+    "vitest": "catalog:"
   }
 }

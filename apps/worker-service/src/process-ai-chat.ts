@@ -1,6 +1,8 @@
 import type { AiChatInput, AiChatOutput } from "@repo/ai-engine/schemas";
-
-import { generateChatAnswer, type VertexAiConfig } from "./vertex.js";
+import {
+  generateChatAnswer,
+  type VertexAiConfig,
+} from "@repo/ai-engine/vertex-ai.client";
 
 export async function processAiChat(
   config: VertexAiConfig,

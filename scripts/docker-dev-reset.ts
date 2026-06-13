@@ -8,14 +8,23 @@
  *   pnpm dev:docker:reset -- --only api,web          # reset multiple services
  *   pnpm dev:docker:reset -- --hard                  # full wipe: remove images + build cache
  *   pnpm dev:docker:reset -- --hard --only api       # rebuild api from scratch
+ *   pnpm dev:docker:reset -- --only ai --use-real-vertex
+ *   pnpm dev:docker:reset -- --only ai --mock-vertex
  */
 
 import { spawnSync } from "node:child_process";
+import { copyFileSync, existsSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const COMPOSE_FILE = "docker-compose.dev.yml";
+const COMPOSE_AI_REAL_FILE = "docker-compose.dev.ai-real.yml";
+const WORKER_ENV_DEV = resolve(repoRoot, "apps/worker-service/.env.dev");
+const WORKER_ENV_EXAMPLE = resolve(
+  repoRoot,
+  "apps/worker-service/.env.dev.example",
+);
 
 /** Services started by `dev:docker` (pubsub-init runs once after firebase is healthy). */
 const ALL_SERVICES = [
@@ -28,6 +37,7 @@ const ALL_SERVICES = [
 ] as const;
 
 type ServiceName = (typeof ALL_SERVICES)[number];
+type VertexMode = "unchanged" | "mock" | "real";
 
 const SERVICE_ALIASES: Record<string, ServiceName> = {
   firebase: "firebase-emulator",
@@ -49,8 +59,10 @@ Recreate dev Docker Compose services.
 
 Options:
   --only, --services <names>   Comma-separated services to reset (default: all).
-                               Aliases: firebase, pubsub, worker, aggregation
+                               Aliases: firebase, pubsub, worker, aggregation, ai
   --hard                       Remove images and build cache before recreate
+  --use-real-vertex            Set USE_REAL_VERTEX=true and mount gcloud ADC
+  --mock-vertex                Set USE_REAL_VERTEX=false (local Vertex mock)
   --help, -h                   Show this help
 
 Services: ${ALL_SERVICES.join(", ")}
@@ -58,14 +70,79 @@ Services: ${ALL_SERVICES.join(", ")}
 Examples:
   pnpm dev:docker:reset
   pnpm dev:docker:reset -- --only api
-  pnpm dev:docker:reset -- --only api,web
+  pnpm dev:docker:reset -- --only ai --use-real-vertex
+  pnpm dev:docker:reset -- --only ai --mock-vertex
   pnpm dev:docker:reset -- --hard
 `);
 }
 
-function parseArgs(): { services: ServiceName[]; hard: boolean } {
-  const argv = process.argv.slice(2);
+function ensureWorkerEnvDev(): void {
+  if (existsSync(WORKER_ENV_DEV)) {
+    return;
+  }
 
+  if (existsSync(WORKER_ENV_EXAMPLE)) {
+    copyFileSync(WORKER_ENV_EXAMPLE, WORKER_ENV_DEV);
+    return;
+  }
+
+  writeFileSync(
+    WORKER_ENV_DEV,
+    [
+      "USE_REAL_VERTEX=false",
+      "GCP_PROJECT_ID=demo-project-base",
+      "GCP_REGION=us-central1",
+      "VERTEX_MODEL_ID=gemini-2.5-flash",
+      "",
+    ].join("\n"),
+  );
+}
+
+function readUseRealVertex(): boolean {
+  ensureWorkerEnvDev();
+  const match = readFileSync(WORKER_ENV_DEV, "utf8").match(
+    /^USE_REAL_VERTEX=(.*)$/m,
+  );
+  return match?.[1]?.trim() === "true";
+}
+
+function setUseRealVertex(value: boolean): void {
+  ensureWorkerEnvDev();
+  const line = `USE_REAL_VERTEX=${value}`;
+  const content = readFileSync(WORKER_ENV_DEV, "utf8");
+
+  if (/^USE_REAL_VERTEX=.*$/m.test(content)) {
+    writeFileSync(
+      WORKER_ENV_DEV,
+      content.replace(/^USE_REAL_VERTEX=.*$/m, line),
+    );
+    return;
+  }
+
+  writeFileSync(WORKER_ENV_DEV, `${content.trimEnd()}\n${line}\n`);
+}
+
+function parseVertexMode(argv: string[]): VertexMode {
+  const hasReal = argv.includes("--use-real-vertex");
+  const hasMock = argv.includes("--mock-vertex");
+
+  if (hasReal && hasMock) {
+    console.error("Use only one of --use-real-vertex or --mock-vertex.");
+    process.exit(1);
+  }
+
+  if (hasReal) return "real";
+  if (hasMock) return "mock";
+  return "unchanged";
+}
+
+function filterResetArgs(argv: string[]): string[] {
+  return argv.filter(
+    (arg) => arg !== "--use-real-vertex" && arg !== "--mock-vertex",
+  );
+}
+
+function parseArgs(argv: string[]): { services: ServiceName[]; hard: boolean } {
   if (argv.includes("--help") || argv.includes("-h")) {
     printHelp();
     process.exit(0);
@@ -142,16 +219,23 @@ function composeArgs(services: ServiceName[]): string {
   return services.length > 0 ? services.join(" ") : "";
 }
 
+function composeFiles(useRealVertex: boolean): string {
+  return useRealVertex
+    ? `-f ${COMPOSE_FILE} -f ${COMPOSE_AI_REAL_FILE}`
+    : `-f ${COMPOSE_FILE}`;
+}
+
 function needsEmulatorsPrepare(services: ServiceName[]): boolean {
   return services.includes("firebase-emulator") || services.includes("web");
 }
 
-function resetAll(hard: boolean): void {
+function resetAll(hard: boolean, useRealVertex: boolean): void {
+  const compose = composeFiles(useRealVertex);
   const downFlags = hard
     ? "down -v --rmi all --remove-orphans"
     : "down --remove-orphans";
 
-  run(`docker compose -f ${COMPOSE_FILE} ${downFlags}`);
+  run(`docker compose ${compose} ${downFlags}`);
 
   if (hard) {
     run("docker builder prune -af");
@@ -161,48 +245,78 @@ function resetAll(hard: boolean): void {
 
   const upServices = composeArgs([...ALL_SERVICES]);
   run(
-    `docker compose -f ${COMPOSE_FILE} up -d --force-recreate --build ${upServices}`,
+    `docker compose ${compose} up -d --force-recreate --build ${upServices}`,
   );
 }
 
-function resetSelected(services: ServiceName[], hard: boolean): void {
+function resetSelected(
+  services: ServiceName[],
+  hard: boolean,
+  useRealVertex: boolean,
+): void {
+  const compose = composeFiles(useRealVertex);
+
   if (needsEmulatorsPrepare(services)) {
     run("pnpm run emulators:prepare");
   }
 
   const serviceList = composeArgs(services);
 
-  run(`docker compose -f ${COMPOSE_FILE} rm -sf ${serviceList}`);
+  run(`docker compose ${compose} rm -sf ${serviceList}`);
 
   if (hard) {
     for (const service of services) {
-      run(`docker compose -f ${COMPOSE_FILE} build --no-cache ${service}`, {
+      run(`docker compose ${compose} build --no-cache ${service}`, {
         allowFailure: true,
       });
     }
   }
 
   run(
-    `docker compose -f ${COMPOSE_FILE} up -d --force-recreate --build ${serviceList}`,
+    `docker compose ${compose} up -d --force-recreate --build ${serviceList}`,
   );
 }
 
-function main(): void {
-  const { services, hard } = parseArgs();
-  const isFullReset = services.length === ALL_SERVICES.length &&
-    ALL_SERVICES.every((s) => services.includes(s));
-
-  console.log(
-    `${hard ? "Hard" : "Soft"} reset: ${services.join(", ")}`,
-  );
-
-  if (isFullReset) {
-    resetAll(hard);
-  } else {
-    resetSelected(services, hard);
+function applyVertexMode(vertexMode: VertexMode): boolean {
+  if (vertexMode === "real") {
+    setUseRealVertex(true);
+    console.log("Vertex mode: real GCP (USE_REAL_VERTEX=true)");
+    return true;
   }
 
-  console.log("\nDone. Follow logs with: docker compose -f docker-compose.dev.yml logs -f");
+  if (vertexMode === "mock") {
+    setUseRealVertex(false);
+    console.log("Vertex mode: mock (USE_REAL_VERTEX=false)");
+    return false;
+  }
+
+  const useRealVertex = readUseRealVertex();
+  console.log(
+    `Vertex mode: ${useRealVertex ? "real GCP" : "mock"} (unchanged)`,
+  );
+  return useRealVertex;
+}
+
+function main(): void {
+  const rawArgv = process.argv.slice(2);
+  const vertexMode = parseVertexMode(rawArgv);
+  const { services, hard } = parseArgs(filterResetArgs(rawArgv));
+  const useRealVertex = applyVertexMode(vertexMode);
+  const isFullReset =
+    services.length === ALL_SERVICES.length &&
+    ALL_SERVICES.every((service) => services.includes(service));
+
+  console.log(`${hard ? "Hard" : "Soft"} reset: ${services.join(", ")}`);
+
+  if (isFullReset) {
+    resetAll(hard, useRealVertex);
+  } else {
+    resetSelected(services, hard, useRealVertex);
+  }
+
+  console.log(
+    "\nDone. Follow logs with: docker compose -f docker-compose.dev.yml logs -f",
+  );
 }
 
 main();

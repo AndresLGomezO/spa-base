@@ -3,7 +3,6 @@
   "ignoreDependencies": [
     "@google-cloud/firestore",
     "@google-cloud/pubsub",
-    "@google-cloud/tasks",
     "@app/platform",
     "@repo/dynamic-entities",
     "@repo/encryption",
@@ -14,6 +13,7 @@
     "@repo/firestore-converters",
     "@repo/gcp-firebase",
     "@repo/aggregation-engine",
+    "@repo/ai-context",
     "@repo/ai-engine",
     "@repo/event-engine",
     "@repo/metrics-engine",
@@ -21,7 +21,8 @@
     "@repo/modules",
     "@repo/query-engine",
     "@repo/rbac",
-    "@repo/shared-types"
+    "@repo/shared-types",
+    "@repo/ui-builder-core"
   ],
   "project": ["src/**/*.ts"]
 }

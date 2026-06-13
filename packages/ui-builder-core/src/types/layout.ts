@@ -1,3 +1,8 @@
+/**
+ * @ai-context-sync
+ * Layout node visibility (displayFrom/displayTo) — keep in sync with
+ * packages/ai-context/src/atoms/ui/responsive-visibility.ts
+ */
 import type { StyleRule } from "../styles/style-types.js";
 import type { UiComponentConfig } from "./component.js";
 import type { MotionPreset } from "./motion.js";

@@ -92,7 +92,7 @@ describe("AI chat routes", () => {
 
     const job = await aiJobRepository.getById("tenant_a", body.data.jobId);
     expect(job?.status).toBe("completed");
-    expect(job?.output?.answer).toBe("mock answer");
+    expect(job?.output).toEqual({ answer: "mock answer" });
 
     await server.close();
   });

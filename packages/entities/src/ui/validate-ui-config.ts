@@ -1,3 +1,8 @@
+/**
+ * @ai-context-sync
+ * When changing entity UI config enums or shapes, run: pnpm generate:ai-context
+ * Affected fragments: ui.surface.*
+ */
 import { z } from "zod";
 
 import type { DefinedEntity, FieldDefinitions } from "../types.js";

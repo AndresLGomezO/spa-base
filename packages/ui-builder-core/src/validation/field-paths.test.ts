@@ -6,11 +6,14 @@ import {
   collectLayoutInputFieldPaths,
   isValidLayoutFieldPath,
   isValidEntityFieldSelectorFieldPath,
+  isValidTableColumnFieldPath,
   layoutHasInputFields,
   listEntityFieldSelectorFieldOptions,
   listFormFieldOptions,
   listLayoutFieldOptions,
+  normalizeTableColumnFieldPath,
   relationAliasFieldPath,
+  sanitizeTableColumnFieldPaths,
 } from "./field-paths.js";
 import {
   addComponentRowAt,
@@ -98,6 +101,31 @@ describe("isValidLayoutFieldPath", () => {
   it("accepts relation subfields", () => {
     expect(isValidLayoutFieldPath(accountDefinition, "bankId.logo")).toBe(true);
     expect(isValidLayoutFieldPath(accountDefinition, "bank.logo")).toBe(true);
+  });
+});
+
+describe("table column field paths", () => {
+  it("rejects relation display paths for table columns", () => {
+    expect(isValidTableColumnFieldPath(accountDefinition, "bank.name")).toBe(
+      false,
+    );
+    expect(isValidTableColumnFieldPath(accountDefinition, "bankId")).toBe(true);
+  });
+
+  it("normalizes relation display paths to FK field names", () => {
+    expect(normalizeTableColumnFieldPath(accountDefinition, "bank.name")).toBe(
+      "bankId",
+    );
+  });
+
+  it("sanitizes table column lists to top-level queryable fields", () => {
+    expect(
+      sanitizeTableColumnFieldPaths(accountDefinition, [
+        "name",
+        "bank.name",
+        "missing",
+      ]),
+    ).toEqual(["name", "bankId"]);
   });
 });
 

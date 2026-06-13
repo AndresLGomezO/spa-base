@@ -1,3 +1,8 @@
+/**
+ * @ai-context-sync
+ * When changing design layout slice envelopes, run: pnpm generate:ai-context
+ * Affected fragments: ui.surface.*
+ */
 import {
   createDefaultUiLayout,
   uiLayoutDocumentSchema,
