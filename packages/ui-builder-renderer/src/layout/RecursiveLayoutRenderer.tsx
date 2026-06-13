@@ -551,7 +551,7 @@ function renderRow(
     const mainPageRowClass =
       isMainPage && stackDirection === "column"
         ? isPageListRow
-          ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+          ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
           : "shrink-0"
         : undefined;
     const formRowClass =

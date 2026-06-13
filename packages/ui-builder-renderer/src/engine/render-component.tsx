@@ -248,14 +248,14 @@ export function renderUiComponent(
         const list = context.pageListRenderer?.() ?? null;
         return wrap(
           context.mode === "mainPage" ? (
-            <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
               {list}
             </div>
           ) : (
             list
           ),
           context.mode === "mainPage"
-            ? "flex min-h-0 flex-1 flex-col overflow-hidden"
+            ? "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
             : undefined,
         );
       }

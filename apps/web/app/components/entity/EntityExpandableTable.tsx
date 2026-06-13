@@ -50,6 +50,11 @@ import {
   ExpandableTableRowActionsOverlay,
   resolveLastVisibleGroupedColumnIndex,
 } from "./ExpandableTableRowActions";
+import {
+  entityListTableCellClassName,
+  entityListTableClassName,
+  entityListTableScrollClassName,
+} from "./entity-list-table-layout";
 import { ExpandableTableRowExpandPanel } from "./ExpandableTableRowExpandPanel";
 
 type EntityListState = Pick<
@@ -184,10 +189,10 @@ export function EntityExpandableTable({
   }
 
   return (
-    <div className="flex h-full min-h-0 w-full flex-col gap-4">
-      <TableCard className="flex min-h-0 flex-1 flex-col overflow-hidden">
-        <div className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden">
-          <Table>
+    <div className="flex h-full min-h-0 w-full min-w-0 flex-col gap-4">
+      <TableCard className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+        <div className={entityListTableScrollClassName}>
+          <Table className={entityListTableClassName}>
             <TableHeader>
               <TableRow>
                 <TableHead className="w-10 px-2" aria-hidden />
@@ -266,6 +271,8 @@ export function EntityExpandableTable({
                               key={column.id}
                               className={groupedTableColumnVisibilityClassName(
                                 column,
+                                undefined,
+                                entityListTableCellClassName,
                               )}
                             >
                               <RecursiveLayoutRenderer
