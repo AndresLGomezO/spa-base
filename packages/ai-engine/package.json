@@ -12,7 +12,8 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./permissions": "./src/permissions.ts"
+    "./permissions": "./src/permissions.ts",
+    "./schemas": "./src/schemas/index.ts"
   },
   "dependencies": {
     "@google-cloud/vertexai": "catalog:",

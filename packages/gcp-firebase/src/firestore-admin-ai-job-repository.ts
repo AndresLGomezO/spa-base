@@ -1,4 +1,4 @@
-import { AI_JOBS_COLLECTION, aiJobRecordSchema } from "@repo/ai-engine";
+import { AI_JOBS_COLLECTION, aiJobRecordSchema } from "@repo/ai-engine/schemas";
 import { nanoid } from "nanoid";
 
 import type { AiJobRepository } from "@repo/firestore-converters";
