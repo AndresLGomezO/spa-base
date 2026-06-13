@@ -507,7 +507,10 @@ export function renderUiComponent(
           allowEmpty
           className={containerClassName}
           style={containerStyle}
-          valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
+          valueClassName={valueClassNameFromStyles(
+            config.styles,
+            textClassName,
+          )}
           textSize={textSize}
           {...textPropsFromLabel(config)}
         />

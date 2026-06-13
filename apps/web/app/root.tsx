@@ -13,6 +13,7 @@ import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 
 import { AuthProvider } from "./auth/AuthProvider";
 import { I18nSync } from "./components/I18nSync";
+import { PwaRegistration } from "./components/PwaRegistration";
 import { SiteTitleSync } from "./components/SiteTitleSync";
 import { DEV_CONTENT_SECURITY_POLICY } from "./dev-content-security-policy";
 import { bootstrapWebPlatform } from "./platform/bootstrap";
@@ -21,6 +22,8 @@ import { i18n } from "./i18n";
 import "./app.css";
 
 export const links: LinksFunction = () => [
+  { rel: "manifest", href: "/manifest.webmanifest" },
+  { rel: "apple-touch-icon", href: "/icons/icon-192.png" },
   { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
   { rel: "icon", href: "/favicon.ico", sizes: "any" },
 ];
@@ -31,6 +34,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <meta name="theme-color" content="#00a1e5" />
         {import.meta.env.DEV ? (
           <meta
             httpEquiv="Content-Security-Policy"
@@ -61,6 +65,7 @@ export function HydrateFallback() {
 function AppShell() {
   return (
     <>
+      <PwaRegistration />
       <I18nSync />
       <SiteTitleSync />
       <Outlet />

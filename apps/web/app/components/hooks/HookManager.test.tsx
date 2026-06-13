@@ -1,14 +1,16 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { HookManager } from "./HookManager";
-
-const mockListHooks = vi.fn();
+const { mockListHooks } = vi.hoisted(() => ({
+  mockListHooks: vi.fn(),
+}));
 
 vi.mock("../../lib/api-client", () => ({
-  listHooks: (...args: unknown[]) => mockListHooks(...args),
+  listHooks: mockListHooks,
 }));
+
+import { HookManager } from "./HookManager";
 
 vi.mock("../../entities/entity-catalog-context", () => ({
   useEntityCatalog: () => ({
@@ -21,13 +23,19 @@ vi.mock("../../entities/entity-catalog-context", () => ({
   }),
 }));
 
+const mockT = (key: string) => key;
+
 vi.mock("react-i18next", () => ({
   useTranslation: () => ({
-    t: (key: string) => key,
+    t: mockT,
   }),
 }));
 
 describe("HookManager", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("loads and lists hooks", async () => {
     mockListHooks.mockResolvedValue({
       items: [
@@ -55,9 +63,7 @@ describe("HookManager", () => {
       </MemoryRouter>,
     );
 
-    await waitFor(() => {
-      expect(screen.getByText("Set status")).toBeInTheDocument();
-    });
+    expect(await screen.findByText("Set status")).toBeInTheDocument();
 
     expect(screen.getByText("loan.beforeCreate")).toBeInTheDocument();
   });

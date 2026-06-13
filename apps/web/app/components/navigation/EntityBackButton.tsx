@@ -7,7 +7,7 @@ import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityReturnNavigation } from "../../routing/entity-navigation";
 
-export interface EntityBackButtonProps {
+interface EntityBackButtonProps {
   readonly entityName: EntityName;
   readonly label?: string;
 }

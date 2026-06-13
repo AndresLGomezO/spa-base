@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "react-router dev",
     "build": "react-router build",
-    "preview": "vite preview --port 4173 --strictPort",
+    "preview": "vite preview --outDir build/client --port 4173 --strictPort",
     "lint": "eslint .",
     "format": "prettier --write --log-level silent .",
     "format:check": "prettier --check .",
@@ -47,7 +47,8 @@
     "react": "catalog:",
     "react-dom": "catalog:",
     "react-i18next": "catalog:",
-    "react-router": "catalog:"
+    "react-router": "catalog:",
+    "workbox-window": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "catalog:",
@@ -68,6 +69,7 @@
     "tailwindcss": "catalog:",
     "typescript": "catalog:",
     "vite": "catalog:",
+    "vite-plugin-pwa": "catalog:",
     "@vitest/coverage-v8": "catalog:",
     "vitest": "catalog:"
   },

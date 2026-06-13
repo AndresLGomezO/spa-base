@@ -8,8 +8,6 @@ import {
 
 import type { EntityName } from "../entities/entity-catalog";
 
-export const ENTITY_RETURN_TO_STATE_KEY = "returnTo";
-
 export interface EntityReturnToState {
   readonly returnTo?: string;
 }
@@ -18,7 +16,9 @@ export function buildEntityListPath(entityName: EntityName): string {
   return `/app/${entityName}`;
 }
 
-export function buildCurrentReturnTo(location: Pick<Location, "pathname" | "search">): string {
+export function buildCurrentReturnTo(
+  location: Pick<Location, "pathname" | "search">,
+): string {
   return `${location.pathname}${location.search}`;
 }
 
@@ -53,14 +53,18 @@ export function resolveEntityReturnTo(
   return readReturnToFromLocation(location) ?? buildEntityListPath(entityName);
 }
 
-export function navigateToEntityDetail(
+function navigateToEntityDetail(
   navigate: NavigateFunction,
   entityName: EntityName,
   recordId: string,
   returnTo: string,
 ): void {
   navigate(`/app/${entityName}/${recordId}`, {
-    state: { returnTo: isSafeAppReturnTo(returnTo) ? returnTo : buildEntityListPath(entityName) },
+    state: {
+      returnTo: isSafeAppReturnTo(returnTo)
+        ? returnTo
+        : buildEntityListPath(entityName),
+    },
   });
 }
 
@@ -75,15 +79,16 @@ export function buildEntityListEditPath(
   const questionIndex = basePath.indexOf("?");
   const pathname =
     questionIndex === -1 ? basePath : basePath.slice(0, questionIndex);
-  const search =
-    questionIndex === -1 ? "" : basePath.slice(questionIndex + 1);
+  const search = questionIndex === -1 ? "" : basePath.slice(questionIndex + 1);
   const params = new URLSearchParams(search);
 
   params.delete("create");
   params.set("edit", recordId);
 
   const query = params.toString();
-  return query.length > 0 ? `${pathname}?${query}` : `${pathname}?edit=${recordId}`;
+  return query.length > 0
+    ? `${pathname}?${query}`
+    : `${pathname}?edit=${recordId}`;
 }
 
 export function useEntityReturnNavigation(entityName: EntityName) {
@@ -92,7 +97,7 @@ export function useEntityReturnNavigation(entityName: EntityName) {
 
   const listReturnTo = useMemo(
     () => buildCurrentReturnTo(location),
-    [location.pathname, location.search],
+    [location],
   );
 
   const returnTo = useMemo(
@@ -112,7 +117,8 @@ export function useEntityReturnNavigation(entityName: EntityName) {
   }, [navigate, returnTo]);
 
   const buildEditPath = useCallback(
-    (recordId: string) => buildEntityListEditPath(entityName, recordId, returnTo),
+    (recordId: string) =>
+      buildEntityListEditPath(entityName, recordId, returnTo),
     [entityName, returnTo],
   );
 

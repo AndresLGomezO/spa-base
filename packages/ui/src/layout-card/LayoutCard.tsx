@@ -93,10 +93,7 @@ export function LayoutCard({
         </div>
       ) : null}
       {actions ? (
-        <div
-          className="absolute end-3 top-3 z-10 shrink-0"
-          data-card-action=""
-        >
+        <div className="absolute end-3 top-3 z-10 shrink-0" data-card-action="">
           {actions}
         </div>
       ) : null}
