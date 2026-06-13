@@ -64,7 +64,7 @@ export default [
     ),
     route(
       "settings/design-layout/metrics/:entityName",
-      "./routes/settings/design-layout/metrics.tsx",
+      "./routes/settings/design-layout/metrics-row-designer.tsx",
     ),
     route(
       "settings/design-layout/new-metrics/:entityName",

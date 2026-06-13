@@ -3,6 +3,7 @@
   "ignoreDependencies": [
     "@app/platform",
     "@repo/data-view",
+    "@repo/ai-engine",
     "@repo/dynamic-entities",
     "@repo/entities",
     "@repo/firestore-indexes",
