@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { buildRoleCatalog } from "@repo/rbac";
 import { createInMemoryAiJobRepository } from "@repo/firestore-converters";
 
+import { buildServer } from "../server.js";
+
 vi.hoisted(() => {
   process.env.WORKER_SERVICE_URL = "http://127.0.0.1:3999";
   process.env.AI_TASKS_LOCAL_DISPATCH = "true";
@@ -56,8 +58,6 @@ describe("AI chat routes", () => {
   });
 
   async function buildTestServer() {
-    const { buildServer } = await import("../server.js");
-
     return buildServer({
       logger: false,
       repositories: {},

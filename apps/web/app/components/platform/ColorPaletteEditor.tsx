@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type { ColorPaletteConfig, ColorScaleStep } from "@repo/shared-types";
-import { Button, FieldLabel, Input, Text } from "@repo/ui";
+import { Button, FieldLabel, Input, Text, Select } from "@repo/ui";
 import {
   COLOR_SCALE_STEPS,
   generateColorScale,
@@ -127,7 +127,7 @@ export function ColorPaletteEditor({
           <FieldLabel htmlFor={`${kind}-anchor-step`}>
             {t("platform.appearance.palette.anchorStep")}
           </FieldLabel>
-          <select
+          <Select
             id={`${kind}-anchor-step`}
             className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm shadow-sm"
             value={anchorStep}
@@ -140,7 +140,7 @@ export function ColorPaletteEditor({
                 {step}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div className="flex flex-col gap-1">

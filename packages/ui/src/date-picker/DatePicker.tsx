@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from "react";
 import { cn } from "@repo/theme/utils";
 
 import { Button } from "../button/Button.js";
+import { usePreferNativePickers } from "../hooks/usePreferNativePickers.js";
 import { Input } from "../input/Input.js";
 import { Popover } from "../popover/Popover.js";
 import { DatePickerCalendar } from "./DatePickerCalendar.js";
@@ -17,6 +18,8 @@ import type {
 import {
   buildIsoForMode,
   formatPickerDisplayValue,
+  isoToNativeInputValue,
+  nativeInputValueToIso,
   resolvePickerParts,
 } from "./date-picker.utils.js";
 
@@ -34,7 +37,49 @@ export interface DatePickerProps {
   readonly className?: string;
 }
 
-export function DatePicker({
+function DatePickerNative({
+  mode,
+  value,
+  onChange,
+  disabled = false,
+  hasError = false,
+  id,
+  placeholder,
+  labels,
+  className,
+}: DatePickerProps) {
+  const nativeType = mode === "datetime" ? "datetime-local" : mode;
+
+  return (
+    <div className={cn("flex flex-col gap-1", className)}>
+      <Input
+        id={id}
+        type={nativeType}
+        disabled={disabled}
+        hasError={hasError}
+        value={isoToNativeInputValue(mode, value)}
+        placeholder={placeholder ?? labels.placeholder ?? "Select date"}
+        onChange={(event) => {
+          onChange(nativeInputValueToIso(mode, event.target.value));
+        }}
+      />
+      {value ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          className="h-7 self-start px-2"
+          disabled={disabled}
+          onClick={() => onChange(undefined)}
+        >
+          {labels.clear ?? "Clear"}
+        </Button>
+      ) : null}
+    </div>
+  );
+}
+
+function DatePickerPopover({
   mode,
   value,
   onChange,
@@ -205,4 +250,14 @@ export function DatePicker({
       {panel}
     </Popover>
   );
+}
+
+export function DatePicker(props: DatePickerProps) {
+  const preferNative = usePreferNativePickers();
+
+  if (preferNative) {
+    return <DatePickerNative {...props} />;
+  }
+
+  return <DatePickerPopover {...props} />;
 }

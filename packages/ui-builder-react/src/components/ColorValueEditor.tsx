@@ -1,5 +1,5 @@
 import { isCssColorValue, isThemeTokenValue } from "@repo/ui-builder-core";
-import { Input, SegmentedSwitch, Text } from "@repo/ui";
+import { Input, SegmentedSwitch, Text, Select } from "@repo/ui";
 
 import type { StyleRulesEditorLabels } from "./StyleRulesEditor.js";
 import {
@@ -8,9 +8,6 @@ import {
   SEMANTIC_COLOR_OPTIONS,
   THEME_TOKEN_OPTIONS,
 } from "./style-rules-state.js";
-
-const SELECT_CLASS =
-  "border-border bg-background w-full rounded-md border px-2 py-1 text-sm";
 
 export interface ColorValueEditorProps {
   readonly value: string;
@@ -82,8 +79,7 @@ export function ColorValueEditor({
         <div className="flex flex-col gap-2">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{themeTokensLabel}</span>
-            <select
-              className={SELECT_CLASS}
+            <Select
               value={isThemeTokenValue(rawValue) ? rawValue : ""}
               onChange={(event) => {
                 if (event.target.value) {
@@ -99,12 +95,11 @@ export function ColorValueEditor({
                   {token}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">{semanticTokensLabel}</span>
-            <select
-              className={SELECT_CLASS}
+            <Select
               value={isSemanticCssVarStyleValue(rawValue) ? rawValue : ""}
               onChange={(event) => {
                 if (event.target.value) {
@@ -120,7 +115,7 @@ export function ColorValueEditor({
                   {option.label}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
         </div>
       ) : (

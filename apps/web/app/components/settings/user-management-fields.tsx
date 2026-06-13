@@ -1,4 +1,4 @@
-import { FieldLabel } from "@repo/ui";
+import { FieldLabel, Select } from "@repo/ui";
 
 export function RoleSelect(props: {
   readonly id: string;
@@ -10,7 +10,7 @@ export function RoleSelect(props: {
   return (
     <div className="flex flex-col gap-2">
       <FieldLabel htmlFor={props.id}>{props.label}</FieldLabel>
-      <select
+      <Select
         id={props.id}
         multiple
         className="border-border min-h-28 rounded-md border px-3 py-2"
@@ -27,7 +27,7 @@ export function RoleSelect(props: {
             {roleName}
           </option>
         ))}
-      </select>
+      </Select>
     </div>
   );
 }

@@ -1,4 +1,4 @@
-import { FieldLabel, Text } from "@repo/ui";
+import { FieldLabel, Text, Select } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
@@ -6,9 +6,6 @@ import { formatFieldLabel } from "../../entities/entity-catalog";
 import type { MetricDateGranularity } from "@repo/metrics-engine/browser";
 
 import { listDateFieldsInKeys } from "./metric-field-utils";
-
-const SELECT_CLASS =
-  "border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm";
 
 const GRANULARITIES: readonly MetricDateGranularity[] = [
   "day",
@@ -55,9 +52,8 @@ export function DateFieldGranularityPicker({
           <FieldLabel htmlFor={`metric-date-granularity-${field}`}>
             {formatFieldLabel(field, entity)}
           </FieldLabel>
-          <select
+          <Select
             id={`metric-date-granularity-${field}`}
-            className={SELECT_CLASS}
             value={dateFieldGranularity[field] ?? ""}
             onChange={(event) => {
               const value = event.target.value as MetricDateGranularity | "";
@@ -77,7 +73,7 @@ export function DateFieldGranularityPicker({
                 {t(`metrics.dateGranularity.options.${granularity}`)}
               </option>
             ))}
-          </select>
+          </Select>
           {dateFieldGranularity[field] ? (
             <Text className="text-muted-foreground mt-1 text-xs">
               {t("metrics.dateGranularity.hint", {

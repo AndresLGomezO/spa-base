@@ -12,6 +12,7 @@ import {
   Alert,
   Button,
   CardActionsMenu,
+  LAYOUT_CARD_FLASH_ACTIVATION_DELAY_MS,
   LayoutCard,
   Pagination,
   Text,
@@ -157,10 +158,14 @@ export function EntityLayoutCardView({
         return;
       }
 
+      if (shouldIgnoreCardNavigation(event.target)) {
+        return;
+      }
+
       event.preventDefault();
-      openRecordDetail(recordId);
+      event.currentTarget.click();
     },
-    [openRecordDetail, permissions.canRead],
+    [permissions.canRead],
   );
 
   if (indexStatus.phase === "building" || indexStatus.phase === "error") {
@@ -285,6 +290,7 @@ export function EntityLayoutCardView({
               <LayoutCard
                 key={String(item.id)}
                 interactive={permissions.canRead}
+                clickActivationDelayMs={LAYOUT_CARD_FLASH_ACTIVATION_DELAY_MS}
                 actions={cardActions}
                 role={permissions.canRead ? "link" : undefined}
                 tabIndex={permissions.canRead ? 0 : undefined}

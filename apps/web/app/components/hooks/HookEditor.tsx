@@ -11,6 +11,7 @@ import {
   Input,
   Text,
   toast,
+  Select,
 } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -163,7 +164,7 @@ export function HookEditor({
 
         <div>
           <FieldLabel htmlFor="hook-entity">{t("hooks.entity")}</FieldLabel>
-          <select
+          <Select
             id="hook-entity"
             className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             value={entity}
@@ -175,12 +176,12 @@ export function HookEditor({
                 {option.label}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
 
         <div>
           <FieldLabel htmlFor="hook-event">{t("hooks.event")}</FieldLabel>
-          <select
+          <Select
             id="hook-event"
             className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             value={eventSuffix}
@@ -194,7 +195,7 @@ export function HookEditor({
                 {t(`hooks.events.${suffix}` as "hooks.events.beforeCreate")}
               </option>
             ))}
-          </select>
+          </Select>
           {event ? (
             <Text className="text-muted-foreground mt-1 text-sm">{event}</Text>
           ) : null}

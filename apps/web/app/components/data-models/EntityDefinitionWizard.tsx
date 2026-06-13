@@ -17,6 +17,7 @@ import {
   Input,
   Text,
   toast,
+  Select,
 } from "@repo/ui";
 
 import { buildDefaultUiForNewDefinition } from "@repo/dynamic-entities";
@@ -378,7 +379,7 @@ export function EntityDefinitionWizard({
                   defaultValue: "Display Field",
                 })}
               </FieldLabel>
-              <select
+              <Select
                 id="wizard-display-field"
                 className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
                 value={displayField}
@@ -392,7 +393,7 @@ export function EntityDefinitionWizard({
                       {f.name}
                     </option>
                   ))}
-              </select>
+              </Select>
               <Text className="text-muted-foreground mt-1 text-sm">
                 {t("dataModels.displayFieldHint", {
                   defaultValue:
@@ -425,7 +426,7 @@ export function EntityDefinitionWizard({
             <FieldLabel htmlFor="wizard-nav-category">
               {t("dataModels.navCategory")}
             </FieldLabel>
-            <select
+            <Select
               id="wizard-nav-category"
               className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
               value={navCategoryId}
@@ -443,7 +444,7 @@ export function EntityDefinitionWizard({
                   {category.name}
                 </option>
               ))}
-            </select>
+            </Select>
             <Text className="text-muted-foreground mt-1 text-sm">
               {t("dataModels.navCategoryHint")}
             </Text>

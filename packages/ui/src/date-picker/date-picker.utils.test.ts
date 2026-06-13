@@ -12,6 +12,8 @@ import {
   getYearPageYears,
   parseIsoToUtcParts,
   resolvePickerParts,
+  isoToNativeInputValue,
+  nativeInputValueToIso,
   to12Hour,
 } from "./date-picker.utils.js";
 
@@ -131,5 +133,24 @@ describe("date-picker.utils", () => {
   it("formats a live time preview", () => {
     expect(formatTimePreview(14, 30, "en")).toMatch(/2:30/);
     expect(formatTimePreview(9, 5, "en")).toMatch(/9:05/);
+  });
+
+  it("converts ISO values to native input strings", () => {
+    expect(isoToNativeInputValue("date", "2025-03-15T00:00:00.000Z")).toBe(
+      "2025-03-15",
+    );
+    expect(isoToNativeInputValue("time", "1970-01-01T09:15:00.000Z")).toBe(
+      "09:15",
+    );
+  });
+
+  it("converts native input strings back to ISO values", () => {
+    expect(nativeInputValueToIso("date", "2025-03-15")).toBe(
+      "2025-03-15T00:00:00.000Z",
+    );
+    expect(nativeInputValueToIso("time", "09:15")).toBe(
+      "1970-01-01T09:15:00.000Z",
+    );
+    expect(nativeInputValueToIso("date", "")).toBeUndefined();
   });
 });

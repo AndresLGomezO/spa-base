@@ -5,6 +5,12 @@ export { FieldError, type FieldErrorProps } from "./field/FieldError";
 export { FieldLabel, type FieldLabelProps } from "./field/FieldLabel";
 export { Form, type FormProps } from "./form/Form";
 export { Input, type InputProps } from "./input/Input";
+export { Select, type SelectProps, type SelectSize } from "./select/Select";
+export {
+  MOBILE_BREAKPOINT,
+  usePreferNativePickers,
+} from "./hooks/usePreferNativePickers";
+export { useMediaQuery } from "./hooks/useMediaQuery";
 export { Textarea, type TextareaProps } from "./textarea/Textarea";
 export { Avatar, type AvatarProps } from "./avatar/Avatar";
 export { Button, type ButtonProps } from "./button/Button";
@@ -57,6 +63,8 @@ export {
   type DatePickerProps,
   buildIsoForMode,
   formatPickerDisplayValue,
+  isoToNativeInputValue,
+  nativeInputValueToIso,
   parseIsoToUtcParts,
   resolvePickerParts,
 } from "./date-picker";
@@ -166,6 +174,8 @@ export {
   DEFAULT_CARD_IMAGE_SIZE_PX,
   DEFAULT_CARD_TEXT_SIZE_PX,
   LayoutCard,
+  LAYOUT_CARD_FLASH_ACTIVATION_DELAY_MS,
+  LAYOUT_CARD_FLASH_SWEEP_MS,
   MAX_CARD_IMAGE_SIZE_PX,
   MAX_CARD_TEXT_SIZE_PX,
   MIN_CARD_IMAGE_SIZE_PX,

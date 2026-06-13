@@ -1,10 +1,7 @@
 import type { LabelConfig } from "@repo/ui-builder-core";
-import { Input } from "@repo/ui";
+import { Input, Select } from "@repo/ui";
 
 import { TEXT_COLOR_TOKEN_OPTIONS } from "./style-rules-state.js";
-
-const SELECT_CLASS =
-  "border-border bg-background w-full rounded-md border px-2 py-1 text-sm";
 
 export interface LabelConfigEditorLabels {
   readonly showLabel: string;
@@ -67,8 +64,7 @@ export function LabelConfigEditor({
             <span className="text-muted-foreground">
               {labels.labelPosition}
             </span>
-            <select
-              className={SELECT_CLASS}
+            <Select
               value={label?.position ?? "above"}
               onChange={(event) =>
                 updateLabel({
@@ -79,7 +75,7 @@ export function LabelConfigEditor({
             >
               <option value="above">{labels.labelAbove}</option>
               <option value="below">{labels.labelBelow}</option>
-            </select>
+            </Select>
           </label>
 
           <div className="flex flex-wrap gap-3 text-sm">
@@ -128,8 +124,7 @@ export function LabelConfigEditor({
           {labels.labelColor ? (
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{labels.labelColor}</span>
-              <select
-                className={SELECT_CLASS}
+              <Select
                 value={label?.color ?? "default"}
                 onChange={(event) =>
                   updateLabel({
@@ -143,14 +138,13 @@ export function LabelConfigEditor({
                     {token}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
           ) : null}
 
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">Alignment</span>
-            <select
-              className={SELECT_CLASS}
+            <Select
               value={label?.align ?? "left"}
               onChange={(event) =>
                 updateLabel({
@@ -164,7 +158,7 @@ export function LabelConfigEditor({
                 {labels.labelAlignCenter ?? "Center"}
               </option>
               <option value="right">{labels.labelAlignRight ?? "Right"}</option>
-            </select>
+            </Select>
           </label>
         </>
       ) : null}

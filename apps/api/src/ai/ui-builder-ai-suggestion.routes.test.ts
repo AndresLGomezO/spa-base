@@ -6,6 +6,8 @@ import {
   createInMemoryUiBuilderAiSuggestionRepository,
 } from "@repo/firestore-converters";
 
+import { buildServer } from "../server.js";
+
 vi.mock("@repo/gcp-firebase", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@repo/gcp-firebase")>();
   return {
@@ -35,8 +37,6 @@ describe("UI builder AI suggestion routes", () => {
   async function buildTestServer(
     roles: Record<string, readonly string[]> = { tenant_a: ["admin"] },
   ) {
-    const { buildServer } = await import("../server.js");
-
     return buildServer({
       logger: false,
       repositories: {},

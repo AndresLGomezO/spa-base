@@ -7,14 +7,12 @@ import type { SerializableEntityDefinition } from "@repo/entities";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Select } from "@repo/ui";
 
 import { useAnyPermission } from "../../auth/useAnyPermission.js";
 import { usePermission } from "../../auth/usePermission.js";
 import { listMetricDefinitions } from "../../lib/api-client.js";
 import { MetricBindingsEditor } from "./MetricBindingsEditor.js";
-
-const SELECT_CLASS =
-  "border-input bg-background ring-offset-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 interface MetricKpiComponentEditorProps {
   readonly config: MetricKpiComponentConfig;
@@ -63,8 +61,7 @@ export function MetricKpiComponentEditor({
         <span className="text-muted-foreground text-xs">
           {t("entity.viewSettings.metrics.definition")}
         </span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={config.metricDefinitionId}
           onChange={(event) =>
             onChange({
@@ -78,7 +75,7 @@ export function MetricKpiComponentEditor({
               {item.name}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-1">
@@ -86,7 +83,6 @@ export function MetricKpiComponentEditor({
           {t("entity.viewSettings.label")}
         </span>
         <input
-          className={SELECT_CLASS}
           value={config.label ?? ""}
           onChange={(event) =>
             onChange({

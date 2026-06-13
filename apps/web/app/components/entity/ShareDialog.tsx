@@ -1,5 +1,5 @@
 import { useCallback, useState } from "react";
-import { Button, Input, Modal, Text } from "@repo/ui";
+import { Button, Input, Modal, Text, Select } from "@repo/ui";
 import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 
@@ -59,7 +59,7 @@ export function ShareDialog({
             <Text className="text-sm font-medium mb-1">
               {t("share.permission")}
             </Text>
-            <select
+            <Select
               className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
               value={permission}
               onChange={(e) =>
@@ -68,7 +68,7 @@ export function ShareDialog({
             >
               <option value="read">{t("share.read")}</option>
               <option value="write">{t("share.write")}</option>
-            </select>
+            </Select>
           </div>
           <Button
             type="button"

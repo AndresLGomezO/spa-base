@@ -5,10 +5,7 @@ import {
   type MotionPreset,
   type MotionTransition,
 } from "@repo/ui-builder-core";
-import { Button, Input, Text } from "@repo/ui";
-
-const SELECT_CLASS =
-  "border-border bg-background w-full rounded-md border px-2 py-1 text-sm";
+import { Button, Input, Text, Select } from "@repo/ui";
 
 export interface MotionPresetEditorLabels {
   readonly title?: string;
@@ -95,8 +92,7 @@ export function MotionPresetEditor({
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.entrance}</span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={entrance}
           onChange={(event) =>
             onChange(
@@ -111,13 +107,12 @@ export function MotionPresetEditor({
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.hover}</span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={hover}
           onChange={(event) =>
             onChange(
@@ -132,13 +127,12 @@ export function MotionPresetEditor({
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.transition}</span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={transition}
           onChange={(event) =>
             onChange(
@@ -153,7 +147,7 @@ export function MotionPresetEditor({
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-1 text-sm">

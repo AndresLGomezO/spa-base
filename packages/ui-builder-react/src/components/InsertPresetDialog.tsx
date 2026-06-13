@@ -10,7 +10,7 @@ import {
 } from "@repo/ui-builder-core";
 import type { UiBuilderPresetRecord } from "@repo/entities";
 import type { FieldPathValidationDefinition } from "@repo/ui-builder-core";
-import { Button, Modal, Text } from "@repo/ui";
+import { Button, Modal, Text, Select } from "@repo/ui";
 
 import type { FieldDescriptor } from "../adapters/entity-card-view-adapter.js";
 
@@ -174,7 +174,7 @@ export function InsertPresetDialog({
             <>
               <label className="flex flex-col gap-1 text-sm">
                 <span>{labels.selectPreset}</span>
-                <select
+                <Select
                   className="border-input bg-background rounded-md border px-3 py-2 text-sm"
                   value={selectedPresetId}
                   onChange={(event) => setSelectedPresetId(event.target.value)}
@@ -185,7 +185,7 @@ export function InsertPresetDialog({
                       {preset.name}
                     </option>
                   ))}
-                </select>
+                </Select>
               </label>
 
               {selectedPreset && selectedPreset.fieldSlots.length > 0 ? (
@@ -202,7 +202,7 @@ export function InsertPresetDialog({
                         {labels.slotLabel}: {slot.label ?? slot.id}
                         {slot.sourceHint ? ` (${slot.sourceHint})` : ""}
                       </span>
-                      <select
+                      <Select
                         className="border-input bg-background rounded-md border px-3 py-2 text-sm"
                         value={slotValues[slot.id] ?? ""}
                         onChange={(event) =>
@@ -217,7 +217,7 @@ export function InsertPresetDialog({
                             {descriptor.label}
                           </option>
                         ))}
-                      </select>
+                      </Select>
                     </label>
                   ))}
                 </div>

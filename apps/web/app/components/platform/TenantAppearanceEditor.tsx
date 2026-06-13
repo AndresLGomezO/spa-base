@@ -17,6 +17,7 @@ import {
   PhotoUpload,
   Text,
   toast,
+  Select,
 } from "@repo/ui";
 
 import {
@@ -531,7 +532,7 @@ export function TenantAppearanceEditor({
                 <FieldLabel htmlFor="appearance-preset">
                   {t("platform.appearance.preset")}
                 </FieldLabel>
-                <select
+                <Select
                   id="appearance-preset"
                   className="border-border bg-background text-foreground w-full rounded-md border px-3 py-2 text-sm shadow-sm"
                   value={preset}
@@ -547,7 +548,7 @@ export function TenantAppearanceEditor({
                       {t(`platform.appearance.presets.${presetId}` as never)}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
             </section>
 

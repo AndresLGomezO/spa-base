@@ -1,8 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
+import { Select } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
-import { PREVIEW_SELECT_CLASS } from "../ui-builder/LayoutPreviewPanel";
 import {
   groupMobilePreviewDevicesByBrand,
   MOBILE_PREVIEW_DEVICE_BRAND_ORDER,
@@ -34,8 +34,7 @@ export function DetailViewDesignerMobileDeviceSelect({
   return (
     <label className={cn("flex flex-col gap-1 text-sm", className)}>
       <span className="text-muted-foreground">{label}</span>
-      <select
-        className={PREVIEW_SELECT_CLASS}
+      <Select
         value={previewMobileDeviceId}
         aria-label={label}
         onChange={(event) =>
@@ -58,7 +57,7 @@ export function DetailViewDesignerMobileDeviceSelect({
             ))}
           </optgroup>
         ))}
-      </select>
+      </Select>
     </label>
   );
 }

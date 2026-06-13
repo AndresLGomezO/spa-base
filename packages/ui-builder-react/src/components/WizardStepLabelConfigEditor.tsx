@@ -4,6 +4,7 @@ import {
   SegmentedSwitch,
   Switch,
   type SegmentedSwitchOption,
+  Select,
 } from "@repo/ui";
 
 import type { StyleRulesEditorLabels } from "./StyleRulesEditor.js";
@@ -18,9 +19,6 @@ function clampStepLabelFontSizePx(value: number): number {
     Math.max(MIN_STEP_LABEL_FONT_SIZE_PX, Math.round(value)),
   );
 }
-
-const SELECT_CLASS =
-  "border-border bg-background w-full rounded-md border px-2 py-1 text-sm";
 
 type FontWeightOption = "default" | "bold" | "thin" | "normal";
 
@@ -150,8 +148,7 @@ export function WizardStepLabelConfigEditor({
               <span className="text-muted-foreground">
                 {labels.labelPosition}
               </span>
-              <select
-                className={SELECT_CLASS}
+              <Select
                 value={stepLabel?.position ?? "top"}
                 onChange={(event) =>
                   updateStepLabel({
@@ -166,15 +163,14 @@ export function WizardStepLabelConfigEditor({
                 <option value="left">{labels.labelLeft}</option>
                 <option value="right">{labels.labelRight}</option>
                 <option value="hidden">{labels.labelHidden}</option>
-              </select>
+              </Select>
             </label>
 
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">
                 {labels.labelAlignment ?? "Alignment"}
               </span>
-              <select
-                className={SELECT_CLASS}
+              <Select
                 value={stepLabel?.align ?? "left"}
                 onChange={(event) =>
                   updateStepLabel({
@@ -190,7 +186,7 @@ export function WizardStepLabelConfigEditor({
                 <option value="right">
                   {labels.labelAlignRight ?? "Right"}
                 </option>
-              </select>
+              </Select>
             </label>
           </div>
 

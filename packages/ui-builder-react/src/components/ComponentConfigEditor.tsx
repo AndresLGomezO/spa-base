@@ -21,6 +21,7 @@ import {
   Button,
   Checkbox,
   Input,
+  Select,
   Text,
   MAX_CARD_IMAGE_SIZE_PX,
   MIN_CARD_IMAGE_SIZE_PX,
@@ -57,9 +58,6 @@ const DEFAULT_COMPONENT_KINDS: readonly UiComponentKind[] = [
   "badge",
   "metric-kpi",
 ];
-
-const SELECT_CLASS =
-  "border-border bg-background w-full rounded-md border px-2 py-1 text-sm";
 
 function formatFieldOptionLabel(field: FieldDescriptor): string {
   return `${field.label} (${field.path})`;
@@ -299,8 +297,7 @@ function FormBooleanFieldConfigFields({
         <span className="text-muted-foreground">
           {labels.booleanFieldDisplay ?? "Boolean display"}
         </span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={booleanDisplay}
           onChange={(event) =>
             onChange({
@@ -316,7 +313,7 @@ function FormBooleanFieldConfigFields({
           <option value="switch">
             {labels.booleanFieldDisplaySwitch ?? "Switch"}
           </option>
-        </select>
+        </Select>
       </label>
 
       {showSwitchOptions ? (
@@ -325,8 +322,7 @@ function FormBooleanFieldConfigFields({
             <span className="text-muted-foreground">
               {labels.booleanFieldSwitchVariant ?? "Switch style"}
             </span>
-            <select
-              className={SELECT_CLASS}
+            <Select
               value={config.switchVariant ?? "ios"}
               onChange={(event) =>
                 onChange({
@@ -342,7 +338,7 @@ function FormBooleanFieldConfigFields({
               <option value="squared">
                 {labels.booleanFieldSwitchVariantSquared ?? "Squared"}
               </option>
-            </select>
+            </Select>
           </label>
 
           <div className="grid gap-2 sm:grid-cols-2">
@@ -503,8 +499,7 @@ function EntityFieldSelectorConfigFields({
     <>
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.field}</span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={config.fieldPath}
           onChange={(event) =>
             onChange({ ...config, fieldPath: event.target.value })
@@ -515,15 +510,14 @@ function EntityFieldSelectorConfigFields({
               {formatFieldOptionLabel(field)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">
           {labels.entityFieldSelectorLayout ?? "Layout"}
         </span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={config.layout}
           onChange={(event) =>
             onChange({
@@ -542,7 +536,7 @@ function EntityFieldSelectorConfigFields({
           <option value="mini-cards">
             {labels.entityFieldSelectorLayoutMiniCards ?? "Mini cards"}
           </option>
-        </select>
+        </Select>
       </label>
 
       {isEnumField &&
@@ -569,8 +563,7 @@ function EntityFieldSelectorConfigFields({
           <span className="text-muted-foreground">
             {labels.entityFieldSelectorCardsPerRow ?? "Cards per row"}
           </span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={config.cardsPerRow ?? 1}
             onChange={(event) =>
               onChange({
@@ -584,7 +577,7 @@ function EntityFieldSelectorConfigFields({
                 {count}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
 
@@ -593,8 +586,7 @@ function EntityFieldSelectorConfigFields({
           <span className="text-muted-foreground">
             {labels.entityFieldSelectorImageField ?? "Image field"}
           </span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={config.imageFieldPath ?? defaultImageField ?? ""}
             onChange={(event) =>
               onChange({
@@ -612,7 +604,7 @@ function EntityFieldSelectorConfigFields({
                 {fieldName}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
     </>
@@ -691,8 +683,7 @@ export function ComponentConfigEditor({
       <div className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.component}</span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={config.kind}
             onChange={(event) =>
               handleKindChange(event.target.value as UiComponentKind)
@@ -703,7 +694,7 @@ export function ComponentConfigEditor({
                 {option}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         {metricKpiEditor?.(config, onChange)}
         {hideComponentStyles ? null : (
@@ -725,8 +716,7 @@ export function ComponentConfigEditor({
       <div className="flex flex-col gap-3">
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.component}</span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={config.kind}
             onChange={(event) =>
               handleKindChange(event.target.value as UiComponentKind)
@@ -737,14 +727,13 @@ export function ComponentConfigEditor({
                 {option}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
         {config.kind === "form-field" ? (
           <>
             <label className="flex flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{labels.field}</span>
-              <select
-                className={SELECT_CLASS}
+              <Select
                 value={config.fieldPath}
                 onChange={(event) =>
                   onChange({ ...config, fieldPath: event.target.value })
@@ -755,7 +744,7 @@ export function ComponentConfigEditor({
                     {formatFieldOptionLabel(field)}
                   </option>
                 ))}
-              </select>
+              </Select>
             </label>
             <FormBooleanFieldConfigFields
               config={config}
@@ -913,8 +902,7 @@ export function ComponentConfigEditor({
               <span className="text-muted-foreground">
                 {labels.wizardProgressVariant ?? "Progress style"}
               </span>
-              <select
-                className={SELECT_CLASS}
+              <Select
                 value={resolveWizardProgressVariant(config)}
                 onChange={(event) =>
                   onChange({
@@ -933,7 +921,7 @@ export function ComponentConfigEditor({
                 <option value="stepper">
                   {labels.wizardProgressVariantStepper ?? "Stepper"}
                 </option>
-              </select>
+              </Select>
             </label>
             {resolveWizardProgressVariant(config) === "bar" ||
             resolveWizardProgressVariant(config) === "stepper" ? (
@@ -1021,8 +1009,7 @@ export function ComponentConfigEditor({
                           <span className="text-muted-foreground">
                             {labels.matchValue}
                           </span>
-                          <select
-                            className={SELECT_CLASS}
+                          <Select
                             value={rule.matchValue ?? ""}
                             onChange={(event) => {
                               const rules = [
@@ -1045,7 +1032,7 @@ export function ComponentConfigEditor({
                                 {status}
                               </option>
                             ))}
-                          </select>
+                          </Select>
                         </label>
                         <div className="flex items-end justify-end">
                           <Button
@@ -1194,8 +1181,7 @@ export function ComponentConfigEditor({
     <div className="flex flex-col gap-3">
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.component}</span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={fieldConfig.kind}
           onChange={(event) =>
             handleKindChange(event.target.value as UiComponentKind)
@@ -1206,7 +1192,7 @@ export function ComponentConfigEditor({
               {option}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex items-center gap-2 text-sm">
@@ -1251,8 +1237,7 @@ export function ComponentConfigEditor({
       ) : (
         <label className="flex flex-col gap-1 text-sm">
           <span className="text-muted-foreground">{labels.field}</span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={
               fieldConfig.primary.type === "field"
                 ? fieldConfig.primary.path
@@ -1267,7 +1252,7 @@ export function ComponentConfigEditor({
                 {formatFieldOptionLabel(field)}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       )}
 
@@ -1284,8 +1269,7 @@ export function ComponentConfigEditor({
 
           return (
             <div key={`${index}-${source.type}`} className="flex gap-2">
-              <select
-                className={SELECT_CLASS}
+              <Select
                 value={source.type === "field" ? source.path : ""}
                 disabled={source.type !== "field"}
                 onChange={(event) => {
@@ -1302,7 +1286,7 @@ export function ComponentConfigEditor({
                     {formatFieldOptionLabel(field)}
                   </option>
                 ))}
-              </select>
+              </Select>
               <Button
                 type="button"
                 variant="outline"
@@ -1369,8 +1353,7 @@ export function ComponentConfigEditor({
             <span className="text-muted-foreground">
               {labels.dateDisplayFormat}
             </span>
-            <select
-              className={SELECT_CLASS}
+            <Select
               value={fieldConfig.dateDisplayFormat ?? "datetime"}
               onChange={(event) =>
                 onChange({
@@ -1385,7 +1368,7 @@ export function ComponentConfigEditor({
               <option value="date">date</option>
               <option value="datetime">datetime</option>
               <option value="time">time</option>
-            </select>
+            </Select>
           </label>
         ) : null}
 
@@ -1395,8 +1378,7 @@ export function ComponentConfigEditor({
               <span className="text-muted-foreground">
                 {labels.displayFormat}
               </span>
-              <select
-                className={SELECT_CLASS}
+              <Select
                 value={fieldConfig.displayFormat ?? "plain"}
                 onChange={(event) =>
                   onChange({
@@ -1411,7 +1393,7 @@ export function ComponentConfigEditor({
                 <option value="plain">plain</option>
                 <option value="currency">currency</option>
                 <option value="percentage">percentage</option>
-              </select>
+              </Select>
             </label>
             <label className="flex items-center gap-2 text-sm">
               <input
@@ -1472,8 +1454,7 @@ export function ComponentConfigEditor({
                   }}
                   placeholder={labels.matchValue}
                 />
-                <select
-                  className={SELECT_CLASS}
+                <Select
                   value={rule.badgeVariant ?? "default"}
                   onChange={(event) => {
                     const rules = [...(fieldConfig.conditionalStyles ?? [])];
@@ -1490,7 +1471,7 @@ export function ComponentConfigEditor({
                       {variant}
                     </option>
                   ))}
-                </select>
+                </Select>
                 <Button
                   type="button"
                   variant="outline"

@@ -4,6 +4,7 @@ import {
   FieldError,
   FieldLabel,
   Input,
+  Select,
   Switch,
   Text,
   Textarea,
@@ -298,7 +299,7 @@ export function EntityField({
             {label}
           </FieldLabel>
         )}
-        <select
+        <Select
           id={inputId}
           aria-label={controlAriaLabel}
           className="rounded-md border border-border bg-background px-3 py-2 text-sm"
@@ -312,7 +313,7 @@ export function EntityField({
               {option}
             </option>
           ))}
-        </select>
+        </Select>
         {error ? <FieldError>{error}</FieldError> : null}
       </div>
     );

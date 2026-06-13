@@ -78,11 +78,6 @@ interface LayoutPreviewBreakpointSwitcherProps {
   readonly className?: string;
 }
 
-const PREVIEW_SELECT_CLASS =
-  "border-input bg-background ring-offset-background focus-visible:ring-ring rounded-md border px-2 py-1 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
-
-export { PREVIEW_SELECT_CLASS };
-
 interface LayoutPreviewFrameSize {
   readonly width: number;
   readonly height: number;

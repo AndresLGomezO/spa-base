@@ -18,6 +18,7 @@ import {
   resolveEntityLayoutFieldDefaultImageSrc,
   resolveEntityLayoutImageDownloadTarget,
   resolveEntityLayoutImagePlaceholderSrc,
+  shouldFetchEntityLayoutImageDownload,
 } from "./resolve-entity-layout-image-src";
 
 interface EntityLayoutImageFieldProps {
@@ -60,7 +61,10 @@ export function EntityLayoutImageField({
           definition,
         })
       : null;
-  const shouldFetchRecord = directUrl === null && downloadTarget !== null;
+  const shouldFetchRecord =
+    directUrl === null &&
+    downloadTarget !== null &&
+    shouldFetchEntityLayoutImageDownload({ item, fieldPath, rawValue });
   const shouldFetchStorage = directUrl === null && staticFileRef !== null;
 
   const defaultFieldPath = (primaryFieldPath ?? fieldPath).trim();

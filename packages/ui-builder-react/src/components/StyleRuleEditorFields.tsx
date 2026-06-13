@@ -3,7 +3,7 @@ import {
   type StylePropertyKey,
   type StyleRule,
 } from "@repo/ui-builder-core";
-import { Input } from "@repo/ui";
+import { Input, Select } from "@repo/ui";
 
 import type { StyleRulesEditorLabels } from "./StyleRulesEditor.js";
 import {
@@ -15,9 +15,6 @@ import {
   numericStyleInputMin,
 } from "./style-rules-state.js";
 import { ColorValueEditor } from "./ColorValueEditor.js";
-
-const SELECT_CLASS =
-  "border-border bg-background w-full rounded-md border px-2 py-1 text-sm";
 
 function formatPropertyLabel(property: StylePropertyKey): string {
   return property
@@ -64,8 +61,7 @@ function StyleRuleValueInput({
 
   if (isEnumStyleProperty(rule.property)) {
     return (
-      <select
-        className={SELECT_CLASS}
+      <Select
         value={String(rule.value)}
         onChange={(event) => onChange({ value: event.target.value })}
       >
@@ -74,7 +70,7 @@ function StyleRuleValueInput({
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
     );
   }
 
@@ -117,8 +113,7 @@ export function StyleRuleEditorFields({
     <div className="flex flex-col gap-3">
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.styleProperty}</span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={rule.property}
           onChange={(event) =>
             onChange({ property: event.target.value as StylePropertyKey })
@@ -129,7 +124,7 @@ export function StyleRuleEditorFields({
               {formatPropertyLabel(property)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
       <label className="flex flex-col gap-1 text-sm">
         <span className="text-muted-foreground">{labels.styleValue}</span>

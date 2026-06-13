@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 
-import { Button, FieldLabel, Input, Text } from "@repo/ui";
+import { Button, FieldLabel, Input, Text, Select } from "@repo/ui";
 
 import type { HookAction } from "../../lib/api-client";
 
@@ -80,7 +80,7 @@ export function HookActionEditor({
             <FieldLabel htmlFor={`hook-action-type-${index}`}>
               {t("hooks.actionType")}
             </FieldLabel>
-            <select
+            <Select
               id={`hook-action-type-${index}`}
               className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
               value={action.type}
@@ -116,7 +116,7 @@ export function HookActionEditor({
               <option value="sendNotification">
                 {t("hooks.actionTypes.sendNotification")}
               </option>
-            </select>
+            </Select>
           </div>
 
           {action.type === "updateField" ? (
@@ -170,7 +170,7 @@ export function HookActionEditor({
                 <FieldLabel htmlFor={`hook-action-entity-${index}`}>
                   {t("hooks.targetEntity")}
                 </FieldLabel>
-                <select
+                <Select
                   id={`hook-action-entity-${index}`}
                   className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
                   value={action.entity}
@@ -187,7 +187,7 @@ export function HookActionEditor({
                       {entity.label}
                     </option>
                   ))}
-                </select>
+                </Select>
               </div>
               <div>
                 <FieldLabel htmlFor={`hook-action-data-${index}`}>

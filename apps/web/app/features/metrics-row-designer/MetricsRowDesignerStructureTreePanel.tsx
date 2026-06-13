@@ -1,6 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { Button, FieldLabel, IconButton, Input, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  FieldLabel,
+  IconButton,
+  Input,
+  Modal,
+  Text,
+  Select,
+} from "@repo/ui";
 import { moveRowAt } from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
@@ -266,7 +274,7 @@ export function MetricsRowDesignerStructureTreePanel({
           {widgetSelectLabel}
         </span>
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             id="metrics-row-widget-select"
             className="border-input bg-background min-w-0 flex-1 rounded-md border px-2 py-1.5 text-sm"
             value={hasSelectedWidget ? editor.selectedWidgetId : ""}
@@ -284,7 +292,7 @@ export function MetricsRowDesignerStructureTreePanel({
                 </option>
               ))
             )}
-          </select>
+          </Select>
           <IconButton
             type="button"
             size="sm"

@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
-import { FieldLabel, Text, toast } from "@repo/ui";
+import { FieldLabel, Text, toast, Select } from "@repo/ui";
 
 import {
   listEntityDefinitions,
@@ -101,7 +101,7 @@ export function DataModelManager({
           <FieldLabel htmlFor="data-model-tenant">
             {t("dataModels.tenant")}
           </FieldLabel>
-          <select
+          <Select
             id="data-model-tenant"
             className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
             value={tenantId}
@@ -112,7 +112,7 @@ export function DataModelManager({
                 {tenant.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       ) : null}
 

@@ -2,7 +2,7 @@ import type {
   MetricWidgetComponentConfig,
   UiComponentConfig,
 } from "@repo/ui-builder-core";
-import { FieldLabel, Text } from "@repo/ui";
+import { FieldLabel, Text, Select } from "@repo/ui";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -12,9 +12,6 @@ import {
 } from "../../entities/entity-catalog-context";
 import type { EntityName } from "../../entities/entity-catalog";
 import { getEntityLabel } from "../../entities/entity-catalog";
-
-const SELECT_CLASS =
-  "border-input bg-background ring-offset-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 interface MetricWidgetComponentEditorProps {
   readonly config: MetricWidgetComponentConfig;
@@ -98,8 +95,7 @@ export function MetricWidgetComponentEditor({
         <FieldLabel>
           {t("metricsRowDesigner.metricWidgetEditor.entity")}
         </FieldLabel>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={selectedEntityName}
           onChange={(event) => handleEntityChange(event.target.value)}
         >
@@ -108,7 +104,7 @@ export function MetricWidgetComponentEditor({
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       <label className="flex flex-col gap-1">
@@ -120,8 +116,7 @@ export function MetricWidgetComponentEditor({
             {t("metricsRowDesigner.metricWidgetEditor.noWidgetsForEntity")}
           </Text>
         ) : (
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={config.widgetId}
             onChange={(event) => handleWidgetChange(event.target.value)}
           >
@@ -133,7 +128,7 @@ export function MetricWidgetComponentEditor({
                 {widget.name}
               </option>
             ))}
-          </select>
+          </Select>
         )}
       </label>
     </div>

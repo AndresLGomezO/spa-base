@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FieldError, FieldLabel } from "@repo/ui";
+import { FieldError, FieldLabel, Select } from "@repo/ui";
 
 import {
   formatFieldLabel,
@@ -83,7 +83,7 @@ export function RelationPicker({
           {label || formatFieldLabel(fieldName, definition)}
         </FieldLabel>
       )}
-      <select
+      <Select
         id={inputId}
         aria-label={
           hideLabel
@@ -109,7 +109,7 @@ export function RelationPicker({
             {option.label}
           </option>
         ))}
-      </select>
+      </Select>
       {error ? <FieldError>{error}</FieldError> : null}
     </div>
   );

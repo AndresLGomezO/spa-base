@@ -221,3 +221,90 @@ export function formatTimePreview(
     timeZone: "UTC",
   }).format(new Date(Date.UTC(1970, 0, 1, hour, minute)));
 }
+
+function padTwo(value: number): string {
+  return String(value).padStart(2, "0");
+}
+
+/**
+ * Maps a stored ISO string to a native `<input>` value.
+ * Date mode uses UTC calendar parts; datetime uses local time; time uses UTC clock parts.
+ */
+export function isoToNativeInputValue(
+  mode: DatePickerMode,
+  value: string | null | undefined,
+): string {
+  if (!value?.trim()) {
+    return "";
+  }
+
+  if (mode === "date") {
+    const parts = parseIsoToUtcParts(value);
+    if (!parts) {
+      return "";
+    }
+    return `${padTwo(parts.year)}-${padTwo(parts.month + 1)}-${padTwo(parts.day)}`;
+  }
+
+  if (mode === "time") {
+    const parts = parseIsoToUtcParts(value);
+    if (!parts) {
+      return "";
+    }
+    return `${padTwo(parts.hour)}:${padTwo(parts.minute)}`;
+  }
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "";
+  }
+  return `${padTwo(date.getFullYear())}-${padTwo(date.getMonth() + 1)}-${padTwo(date.getDate())}T${padTwo(date.getHours())}:${padTwo(date.getMinutes())}`;
+}
+
+/**
+ * Maps a native `<input>` value back to a stored ISO string.
+ * Date mode uses UTC calendar parts; datetime uses local parsing; time uses UTC clock parts.
+ */
+export function nativeInputValueToIso(
+  mode: DatePickerMode,
+  nativeValue: string,
+): string | undefined {
+  const trimmed = nativeValue.trim();
+  if (!trimmed) {
+    return undefined;
+  }
+
+  if (mode === "date") {
+    const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(trimmed);
+    if (!match) {
+      return undefined;
+    }
+    return buildIsoForMode("date", {
+      year: Number(match[1]),
+      month: Number(match[2]) - 1,
+      day: Number(match[3]),
+      hour: 0,
+      minute: 0,
+    });
+  }
+
+  if (mode === "time") {
+    const match = /^(\d{2}):(\d{2})$/.exec(trimmed);
+    if (!match) {
+      return undefined;
+    }
+    return buildIsoForMode("time", {
+      year: TIME_ONLY_REFERENCE_DATE.year,
+      month: TIME_ONLY_REFERENCE_DATE.month,
+      day: TIME_ONLY_REFERENCE_DATE.day,
+      hour: Number(match[1]),
+      minute: Number(match[2]),
+    });
+  }
+
+  const date = new Date(trimmed);
+  if (Number.isNaN(date.getTime())) {
+    return undefined;
+  }
+  return date.toISOString();
+}

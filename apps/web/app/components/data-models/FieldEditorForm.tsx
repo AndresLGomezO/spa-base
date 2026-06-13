@@ -14,6 +14,7 @@ import {
   PhotoUpload,
   Text,
   toast,
+  Select,
 } from "@repo/ui";
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
@@ -157,7 +158,7 @@ export function FieldEditorForm({
         <FieldLabel htmlFor={`${idPrefix}-field-type`}>
           {t("dataModels.fieldType")}
         </FieldLabel>
-        <select
+        <Select
           id={`${idPrefix}-field-type`}
           className={selectClassName}
           value={field.type}
@@ -213,7 +214,7 @@ export function FieldEditorForm({
               {t(`dataModels.fieldTypes.${type}`)}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div className="space-y-2">
@@ -429,7 +430,7 @@ export function FieldEditorForm({
             <FieldLabel htmlFor={`${idPrefix}-relation-target`}>
               {t("dataModels.relationTarget")}
             </FieldLabel>
-            <select
+            <Select
               id={`${idPrefix}-relation-target`}
               className={selectClassName}
               value={field.relation?.target ?? ""}
@@ -443,7 +444,7 @@ export function FieldEditorForm({
                   {target.label}
                 </option>
               ))}
-            </select>
+            </Select>
             <Text className="text-muted-foreground mt-1 text-sm">
               {t("dataModels.relationTargetHint")}
             </Text>
@@ -455,7 +456,7 @@ export function FieldEditorForm({
               </FieldLabel>
               <RelationTypeInfo relationType={relationType} />
             </div>
-            <select
+            <Select
               id={`${idPrefix}-relation-type`}
               className={selectClassName}
               value={field.relation?.type ?? "many-to-one"}
@@ -469,7 +470,7 @@ export function FieldEditorForm({
               <option value="one-to-many">one-to-many</option>
               <option value="many-to-one">many-to-one</option>
               <option value="many-to-many">many-to-many</option>
-            </select>
+            </Select>
             {relationType === "one-to-many" && field.relation?.target ? (
               <Text className="text-muted-foreground mt-2 text-sm">
                 {t("dataModels.oneToManyInlineWarning", {
@@ -483,7 +484,7 @@ export function FieldEditorForm({
               <FieldLabel htmlFor={`${idPrefix}-relation-ondelete`}>
                 {t("dataModels.onDelete", { defaultValue: "On Delete" })}
               </FieldLabel>
-              <select
+              <Select
                 id={`${idPrefix}-relation-ondelete`}
                 className={selectClassName}
                 value={field.relation?.onDelete ?? "restrict"}
@@ -511,7 +512,7 @@ export function FieldEditorForm({
                     defaultValue: "Set null (clear reference)",
                   })}
                 </option>
-              </select>
+              </Select>
               <Text className="text-muted-foreground mt-1 text-sm">
                 {t("dataModels.onDeleteHint", {
                   defaultValue:
@@ -529,7 +530,7 @@ export function FieldEditorForm({
             <FieldLabel htmlFor={`${idPrefix}-number-kind`}>
               {t("dataModels.numberKind")}
             </FieldLabel>
-            <select
+            <Select
               id={`${idPrefix}-number-kind`}
               className={selectClassName}
               value={field.numberKind ?? "decimal"}
@@ -545,13 +546,13 @@ export function FieldEditorForm({
               <option value="integer">
                 {t("dataModels.numberKinds.integer")}
               </option>
-            </select>
+            </Select>
           </div>
           <div>
             <FieldLabel htmlFor={`${idPrefix}-display-format`}>
               {t("dataModels.numberDisplayFormat")}
             </FieldLabel>
-            <select
+            <Select
               id={`${idPrefix}-display-format`}
               className={selectClassName}
               value={field.ui?.displayFormat ?? "plain"}
@@ -573,7 +574,7 @@ export function FieldEditorForm({
               <option value="percentage">
                 {t("dataModels.numberDisplayFormats.percentage")}
               </option>
-            </select>
+            </Select>
           </div>
         </>
       ) : null}
@@ -583,7 +584,7 @@ export function FieldEditorForm({
           <FieldLabel htmlFor={`${idPrefix}-date-display-format`}>
             {t("dataModels.dateDisplayFormat")}
           </FieldLabel>
-          <select
+          <Select
             id={`${idPrefix}-date-display-format`}
             className={selectClassName}
             value={field.ui?.dateDisplayFormat ?? "datetime"}
@@ -605,7 +606,7 @@ export function FieldEditorForm({
             <option value="time">
               {t("dataModels.dateDisplayFormats.time")}
             </option>
-          </select>
+          </Select>
         </div>
       ) : null}
 

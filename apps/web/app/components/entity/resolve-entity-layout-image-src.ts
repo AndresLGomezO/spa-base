@@ -165,6 +165,38 @@ export function resolveEntityLayoutImageSrc(options: {
   });
 }
 
+/** True when the client should call `/api/entity-files/download` for this field value. */
+export function shouldFetchEntityLayoutImageDownload(options: {
+  readonly item: Record<string, unknown>;
+  readonly fieldPath: string;
+  readonly rawValue: unknown;
+}): boolean {
+  if (readEntityFileDownloadUrl(options.rawValue)) {
+    return false;
+  }
+
+  if (isEntityFileReferenceWithDownload(options.rawValue)) {
+    return true;
+  }
+
+  const trimmedPath = options.fieldPath.trim();
+  if (!trimmedPath.includes(".")) {
+    return false;
+  }
+
+  const relationField = trimmedPath.split(".", 1)[0] ?? "";
+  const populated = options.item._populated as
+    | Record<string, Record<string, unknown> | null>
+    | undefined;
+
+  if (populated && relationField in populated) {
+    return false;
+  }
+
+  const foreignKey = options.item[relationField];
+  return typeof foreignKey === "string" && foreignKey.length > 0;
+}
+
 export function resolveEntityLayoutImageDownloadTarget(options: {
   readonly item: Record<string, unknown>;
   readonly fieldPath: string;

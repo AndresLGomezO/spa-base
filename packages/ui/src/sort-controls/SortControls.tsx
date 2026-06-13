@@ -4,6 +4,7 @@ import { useCallback, useLayoutEffect, useMemo, useRef, useState } from "react";
 import { cn } from "@repo/theme/utils";
 
 import { IconButton } from "../icon-button/IconButton";
+import { Select } from "../select/Select.js";
 
 export interface SortControlsOption {
   readonly id: string;
@@ -97,15 +98,15 @@ export function SortControls({
         >
           {selectedLabel}
         </span>
-        <select
+        <Select
+          selectSize="sm"
           value={sort.columnId ?? ""}
           onChange={handleSelectChange}
           disabled={disabled || options.length === 0}
           style={selectWidth == null ? undefined : { width: selectWidth }}
           className={cn(
-            "border-input bg-transparent focus:ring-ring max-w-full shrink-0 rounded-xl border text-sm focus:ring-2 focus:ring-offset-2 focus:outline-none",
-            "h-8 px-2 py-1",
-            "md:h-9 md:px-3 md:py-1.5",
+            "border-input bg-transparent focus:ring-ring max-w-full shrink-0 rounded-xl shadow-none",
+            "focus-visible:ring-ring focus:ring-2 focus:ring-offset-2 focus:outline-none",
           )}
           aria-label={sortByLabel}
           data-testid="data-view-sort-select"
@@ -116,7 +117,7 @@ export function SortControls({
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
 
         <IconButton
           type="button"

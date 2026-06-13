@@ -1,6 +1,6 @@
 import { useCallback, useState } from "react";
 import { Pencil, Plus, Trash2 } from "lucide-react";
-import { IconButton } from "@repo/ui";
+import { IconButton, Select } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useFormDesignerComponentsSession } from "./FormDesignerComponentsSession";
@@ -183,7 +183,7 @@ export function FormDesignerWizardStepScopeControls({
           {t("formDesigner.components.wizardStepLabel")}
         </span>
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <Select
             id="form-designer-wizard-step-select"
             className="border-input bg-background min-w-0 flex-1 rounded-md border px-2 py-1.5 text-sm"
             value={hasSelectedStep ? stepIndex : ""}
@@ -203,7 +203,7 @@ export function FormDesignerWizardStepScopeControls({
                 </option>
               ))
             )}
-          </select>
+          </Select>
           {actionButtons}
         </div>
       </label>

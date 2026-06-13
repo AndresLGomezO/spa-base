@@ -50,6 +50,13 @@ export const DateOnly: Story = {
   render: () => <DatePickerDemo mode="date" />,
 };
 
+export const DateOnlyMobileViewport: Story = {
+  render: () => <DatePickerDemo mode="date" />,
+  parameters: {
+    viewport: { defaultViewport: "mobile1" },
+  },
+};
+
 export const DateTime: Story = {
   render: () => <DatePickerDemo mode="datetime" />,
 };

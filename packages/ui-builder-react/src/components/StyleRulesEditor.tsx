@@ -3,7 +3,7 @@ import {
   type StylePropertyKey,
   type StyleRule,
 } from "@repo/ui-builder-core";
-import { Button, Input, Text } from "@repo/ui";
+import { Button, Input, Text, Select } from "@repo/ui";
 
 import {
   addStyleRule,
@@ -17,9 +17,6 @@ import {
   upsertStyleRule,
 } from "./style-rules-state.js";
 import { ColorValueEditor } from "./ColorValueEditor.js";
-
-const SELECT_CLASS =
-  "border-border bg-background w-full rounded-md border px-2 py-1 text-sm";
 
 export interface StyleRulesEditorLabels {
   readonly title?: string;
@@ -90,8 +87,7 @@ export function StyleRulesEditor({
             <span className="text-muted-foreground">
               {labels.styleProperty}
             </span>
-            <select
-              className={SELECT_CLASS}
+            <Select
               value={rule.property}
               onChange={(event) =>
                 updateRule(index, {
@@ -104,7 +100,7 @@ export function StyleRulesEditor({
                   {formatPropertyLabel(property)}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
 
           {isColorStyleProperty(rule.property) ? (
@@ -120,8 +116,7 @@ export function StyleRulesEditor({
             <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-sm">
               <span className="text-muted-foreground">{labels.styleValue}</span>
               {isEnumStyleProperty(rule.property) ? (
-                <select
-                  className={SELECT_CLASS}
+                <Select
                   value={String(rule.value)}
                   onChange={(event) =>
                     updateRule(index, { value: event.target.value })
@@ -132,7 +127,7 @@ export function StyleRulesEditor({
                       {option.label}
                     </option>
                   ))}
-                </select>
+                </Select>
               ) : isNumericStyleProperty(rule.property) ? (
                 <Input
                   type="number"

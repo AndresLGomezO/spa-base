@@ -8,6 +8,7 @@ import {
   IconButton,
   Text,
   toast,
+  Select,
 } from "@repo/ui";
 import { Pencil } from "lucide-react";
 
@@ -177,7 +178,7 @@ export function RoleManager({
       {showTenantPicker ? (
         <div className="max-w-md">
           <FieldLabel htmlFor="role-tenant">{t("roles.tenant")}</FieldLabel>
-          <select
+          <Select
             id="role-tenant"
             className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             value={tenantId}
@@ -188,7 +189,7 @@ export function RoleManager({
                 {tenant.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       ) : null}
 

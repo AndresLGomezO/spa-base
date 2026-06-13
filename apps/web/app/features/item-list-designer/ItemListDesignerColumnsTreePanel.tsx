@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
 import { Columns2 } from "lucide-react";
-import { Text } from "@repo/ui";
+import { Text, Select } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { formatFieldLabel } from "../../entities/entity-catalog";
@@ -9,9 +9,6 @@ import { FormDesignerStructureTreeRowActions } from "../form-designer/FormDesign
 import { FormDesignerStructureTreeUtilNode } from "../form-designer/FormDesignerStructureTreeUtilNode";
 import { useItemListDesigner } from "./item-list-designer-context";
 import { ItemListDesignerTreePanelShell } from "./ItemListDesignerTreePanelShell";
-
-const SELECT_CLASS =
-  "border-input bg-background ring-offset-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 const FLYOUT_CLOSE_DELAY_MS = 150;
 
@@ -139,8 +136,7 @@ export function ItemListDesignerColumnsTreePanel() {
           <span className="text-muted-foreground">
             {t("designLayout.addTableColumn")}
           </span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value=""
             onChange={(event) => {
               addField(event.target.value);
@@ -155,7 +151,7 @@ export function ItemListDesignerColumnsTreePanel() {
                 {formatFieldLabel(fieldName, definition)} ({fieldName})
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       </div>
     ) : null;

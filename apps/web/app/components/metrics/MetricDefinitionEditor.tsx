@@ -9,6 +9,7 @@ import {
   Heading,
   Input,
   SearchableMultiSelectDropdown,
+  Select,
   Text,
   toast,
 } from "@repo/ui";
@@ -393,7 +394,7 @@ export function MetricDefinitionEditor({
         <FieldLabel htmlFor="metric-source-model">
           {t("metrics.sourceModel")}
         </FieldLabel>
-        <select
+        <Select
           id="metric-source-model"
           className={selectClassName}
           value={sourceModel}
@@ -412,14 +413,14 @@ export function MetricDefinitionEditor({
               {option.label}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       <div>
         <FieldLabel htmlFor="metric-operation">
           {t("metrics.operation")}
         </FieldLabel>
-        <select
+        <Select
           id="metric-operation"
           className={selectClassName}
           value={aggregationOperation}
@@ -432,7 +433,7 @@ export function MetricDefinitionEditor({
               {t(`metrics.operations.${operation}`)}
             </option>
           ))}
-        </select>
+        </Select>
       </div>
 
       {requiresNumericField ? (
@@ -441,7 +442,7 @@ export function MetricDefinitionEditor({
             <FieldLabel htmlFor="metric-aggregation-field">
               {t("metrics.aggregationField")}
             </FieldLabel>
-            <select
+            <Select
               id="metric-aggregation-field"
               className={selectClassName}
               value={aggregationField}
@@ -469,7 +470,7 @@ export function MetricDefinitionEditor({
                   {field}
                 </option>
               ))}
-            </select>
+            </Select>
           </div>
         ) : sourceModel ? (
           <Alert>{t("metrics.noNumericFields")}</Alert>
@@ -544,7 +545,7 @@ export function MetricDefinitionEditor({
         <FieldLabel htmlFor="metric-value-display-format">
           {t("metrics.valueDisplayFormat.label")}
         </FieldLabel>
-        <select
+        <Select
           id="metric-value-display-format"
           className={selectClassName}
           value={valueDisplayFormat}
@@ -560,12 +561,12 @@ export function MetricDefinitionEditor({
           <option value="currency">
             {t("metrics.valueDisplayFormat.currency")}
           </option>
-        </select>
+        </Select>
       </div>
 
       <div>
         <FieldLabel htmlFor="metric-status">{t("metrics.status")}</FieldLabel>
-        <select
+        <Select
           id="metric-status"
           className={selectClassName}
           value={status}
@@ -575,7 +576,7 @@ export function MetricDefinitionEditor({
         >
           <option value="ACTIVE">ACTIVE</option>
           <option value="PAUSED">PAUSED</option>
-        </select>
+        </Select>
       </div>
 
       {!isCreate ? (

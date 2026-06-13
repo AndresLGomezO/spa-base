@@ -1,5 +1,5 @@
 import { updateLayoutMeta } from "@repo/ui-builder-core";
-import { Button, Switch, toast } from "@repo/ui";
+import { Button, Switch, toast, Select } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -11,9 +11,6 @@ import { useItemListDesigner } from "./item-list-designer-context";
 import { ItemListDesignerCardLayoutTreePanel } from "./ItemListDesignerCardLayoutTreePanel";
 import { ItemListDesignerPreviewPanel } from "./ItemListDesignerPreviewPanel";
 import { ItemListDesignerStructureSessionProvider } from "./ItemListDesignerStructureSession";
-
-const CARDS_PER_ROW_SELECT_CLASS =
-  "border-input bg-background ring-offset-background focus-visible:ring-ring rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 export function ItemListDesignerLayoutTab() {
   const { t } = useTranslation("common");
@@ -42,8 +39,7 @@ export function ItemListDesignerLayoutTab() {
             <span className="text-muted-foreground">
               {t("entity.viewSettings.cardsPerRow")}
             </span>
-            <select
-              className={CARDS_PER_ROW_SELECT_CLASS}
+            <Select
               value={cardsPerRow}
               onChange={(event) =>
                 editor.setLayout(
@@ -66,7 +62,7 @@ export function ItemListDesignerLayoutTab() {
                   );
                 },
               )}
-            </select>
+            </Select>
           </label>
           <Switch
             variant="ios"

@@ -8,7 +8,9 @@ import { resolveEntityCellValue } from "../../components/entity/resolve-entity-c
 import { resolveEntityFieldPath } from "../../components/entity/resolve-entity-field-path";
 import {
   readEntityFileDownloadUrl,
-  resolveEntityLayoutImageDownloadTarget,
+  resolveEntityLayoutFieldDefaultImageSrc,
+  resolveEntityLayoutImagePlaceholderSrc,
+  shouldFetchEntityLayoutImageDownload,
 } from "../../components/entity/resolve-entity-layout-image-src";
 import {
   resolveLayoutSlotDisplayMeta,
@@ -94,13 +96,32 @@ export function createEntityLayoutRenderContext(options: {
           return true;
         }
       }
-      return (
-        resolveEntityLayoutImageDownloadTarget({
-          item,
+      if (shouldFetchEntityLayoutImageDownload({ item, fieldPath, rawValue })) {
+        return true;
+      }
+
+      if (
+        resolveEntityLayoutFieldDefaultImageSrc({
           fieldPath,
           definition,
-        }) !== null
-      );
+          getDefinition,
+        })
+      ) {
+        return true;
+      }
+
+      if (
+        usePreviewPlaceholder &&
+        resolveEntityLayoutImagePlaceholderSrc({
+          fieldPath,
+          definition,
+          getDefinition,
+        })
+      ) {
+        return true;
+      }
+
+      return false;
     },
     resolveImage: (fieldPath, rawValue, imageOptions) => (
       <EntityLayoutImageField

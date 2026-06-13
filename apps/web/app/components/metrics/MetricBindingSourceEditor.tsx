@@ -1,13 +1,10 @@
 import type { MetricBindingSource } from "@repo/entities";
-import { Input, Text } from "@repo/ui";
+import { Input, Text, Select } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { SerializableEntityDefinition } from "@repo/entities";
 import type { MetricDateGranularity } from "@repo/metrics-engine/browser";
 import { listLayoutFieldOptions } from "@repo/entities";
-
-const SELECT_CLASS =
-  "border-input bg-background ring-offset-background focus-visible:ring-ring w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2";
 
 interface MetricBindingSourceEditorProps {
   readonly fieldName: string;
@@ -53,8 +50,7 @@ export function MetricBindingSourceEditor({
         <span className="text-muted-foreground text-xs">
           {t("entity.viewSettings.metrics.bindingType")}
         </span>
-        <select
-          className={SELECT_CLASS}
+        <Select
           value={type}
           onChange={(event) => {
             const nextType = event.target
@@ -88,7 +84,7 @@ export function MetricBindingSourceEditor({
               {t(`entity.viewSettings.metrics.binding.${bindingType}`)}
             </option>
           ))}
-        </select>
+        </Select>
       </label>
 
       {type === "static" ? (
@@ -110,8 +106,7 @@ export function MetricBindingSourceEditor({
           <span className="text-muted-foreground text-xs">
             {t("entity.viewSettings.field")}
           </span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={
               source?.type === "entityField" ? source.fieldPath : fieldName
             }
@@ -124,7 +119,7 @@ export function MetricBindingSourceEditor({
                 {fieldPath}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
 
@@ -133,8 +128,7 @@ export function MetricBindingSourceEditor({
           <span className="text-muted-foreground text-xs">
             {t("entity.viewSettings.metrics.filterField")}
           </span>
-          <select
-            className={SELECT_CLASS}
+          <Select
             value={source?.type === "listFilter" ? source.field : fieldName}
             onChange={(event) =>
               onChange({ type: "listFilter", field: event.target.value })
@@ -145,7 +139,7 @@ export function MetricBindingSourceEditor({
                 {field}
               </option>
             ))}
-          </select>
+          </Select>
         </label>
       ) : null}
 

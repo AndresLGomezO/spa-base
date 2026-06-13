@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
-import { FieldLabel, toast } from "@repo/ui";
+import { FieldLabel, toast, Select } from "@repo/ui";
 
 import { listHooks, type HookRecord } from "../../lib/api-client";
 import { FormModal } from "../forms/FormModal";
@@ -95,7 +95,7 @@ export function HookManager({
       {showTenantPicker ? (
         <div className="max-w-md">
           <FieldLabel htmlFor="hook-tenant">{t("hooks.tenant")}</FieldLabel>
-          <select
+          <Select
             id="hook-tenant"
             className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
             value={tenantId}
@@ -106,7 +106,7 @@ export function HookManager({
                 {tenant.name}
               </option>
             ))}
-          </select>
+          </Select>
         </div>
       ) : null}
 

@@ -6,6 +6,7 @@ import {
   resolveEntityLayoutImageDownloadTarget,
   resolveEntityLayoutImagePlaceholderSrc,
   resolveEntityLayoutImageSrc,
+  shouldFetchEntityLayoutImageDownload,
 } from "./resolve-entity-layout-image-src";
 
 const accountDefinition = {
@@ -148,5 +149,56 @@ describe("resolveEntityLayoutImageDownloadTarget", () => {
       recordId: "bank_banco_bogota",
       fieldName: "logo",
     });
+  });
+});
+
+describe("shouldFetchEntityLayoutImageDownload", () => {
+  it("does not fetch top-level image fields without a file reference", () => {
+    expect(
+      shouldFetchEntityLayoutImageDownload({
+        item: { id: "rd_prov_06" },
+        fieldPath: "logo",
+        rawValue: null,
+      }),
+    ).toBe(false);
+  });
+
+  it("fetches top-level image fields with a storagePath reference", () => {
+    expect(
+      shouldFetchEntityLayoutImageDownload({
+        item: { id: "rd_prov_06" },
+        fieldPath: "logo",
+        rawValue: {
+          storagePath: "tenants/t1/entity-files/provider/abc.png",
+          fileName: "logo.png",
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("does not fetch populated relation image fields when the target has no file", () => {
+    expect(
+      shouldFetchEntityLayoutImageDownload({
+        item: {
+          id: "acc_1",
+          bankId: "bank_banco_bogota",
+          _populated: {
+            bankId: { id: "bank_banco_bogota", logo: null },
+          },
+        },
+        fieldPath: "bankId.logo",
+        rawValue: null,
+      }),
+    ).toBe(false);
+  });
+
+  it("fetches unpopulated relation image fields when a foreign key is set", () => {
+    expect(
+      shouldFetchEntityLayoutImageDownload({
+        item: { id: "acc_1", bankId: "bank_banco_bogota" },
+        fieldPath: "bankId.logo",
+        rawValue: null,
+      }),
+    ).toBe(true);
   });
 });

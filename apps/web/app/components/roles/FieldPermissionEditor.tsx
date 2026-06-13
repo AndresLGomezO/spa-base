@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import type { FieldAccessLevel } from "@repo/entities";
-import { FieldLabel } from "@repo/ui";
+import { FieldLabel, Select } from "@repo/ui";
 
 import {
   formatFieldLabel,
@@ -90,7 +90,7 @@ export function FieldPermissionEditor({
                   <span className="text-sm">
                     {formatFieldLabel(fieldName, entity)}
                   </span>
-                  <select
+                  <Select
                     className="rounded-md border border-border bg-background px-2 py-1 text-sm"
                     value={getAccess(entityName, fieldName)}
                     onChange={(event) =>
@@ -104,7 +104,7 @@ export function FieldPermissionEditor({
                     <option value="write">Write</option>
                     <option value="read">Read</option>
                     <option value="none">None</option>
-                  </select>
+                  </Select>
                 </div>
               ))}
             </div>

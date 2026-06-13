@@ -22,6 +22,7 @@ import {
   Input,
   Text,
   toast,
+  Select,
 } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -425,7 +426,7 @@ export function EntityDefinitionEditor({
               <FieldLabel htmlFor="edit-nav-category">
                 {t("dataModels.navCategory")}
               </FieldLabel>
-              <select
+              <Select
                 id="edit-nav-category"
                 className="border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm"
                 value={navCategoryId}
@@ -444,7 +445,7 @@ export function EntityDefinitionEditor({
                     {category.name}
                   </option>
                 ))}
-              </select>
+              </Select>
               <Text className="text-muted-foreground mt-1 text-sm">
                 {t("dataModels.navCategoryHint")}
               </Text>
@@ -499,7 +500,7 @@ export function EntityDefinitionEditor({
                 defaultValue: "Display Field",
               })}
             </FieldLabel>
-            <select
+            <Select
               id="edit-display-field"
               className="border-input bg-background ring-offset-background focus-visible:ring-ring flex h-10 w-full rounded-md border px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2"
               value={displayField}
@@ -514,7 +515,7 @@ export function EntityDefinitionEditor({
                     {f.name}
                   </option>
                 ))}
-            </select>
+            </Select>
             <Text className="text-muted-foreground mt-1 text-sm">
               {t("dataModels.displayFieldHint", {
                 defaultValue:

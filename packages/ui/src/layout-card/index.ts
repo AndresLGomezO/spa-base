@@ -34,7 +34,12 @@ export { CardFieldImage, type CardFieldImageProps } from "./CardFieldImage.js";
 export { CardFieldDate, type CardFieldDateProps } from "./CardFieldDate.js";
 export { CardFieldValue, type CardFieldValueProps } from "./CardFieldValue.js";
 export { CARD_TEXT_COLOR_OPTIONS, type CardTextColor } from "./text-colors.js";
-export { LayoutCard, type LayoutCardProps } from "./LayoutCard.js";
+export {
+  LayoutCard,
+  LAYOUT_CARD_FLASH_ACTIVATION_DELAY_MS,
+  LAYOUT_CARD_FLASH_SWEEP_MS,
+  type LayoutCardProps,
+} from "./LayoutCard.js";
 export {
   LayoutGrid,
   LayoutStack,

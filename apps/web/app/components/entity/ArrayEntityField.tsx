@@ -11,6 +11,7 @@ import {
   IconButton,
   Input,
   type DatePickerLabels,
+  Select,
 } from "@repo/ui";
 
 import {
@@ -198,7 +199,7 @@ export function ArrayEntityField({
 
     if (meta.type === "boolean") {
       return (
-        <select
+        <Select
           id={inputId}
           className={`${selectClassName} min-w-0 flex-1`}
           disabled={readOnly}
@@ -208,7 +209,7 @@ export function ArrayEntityField({
           <option value="">{t("entity.arrayBooleanPlaceholder")}</option>
           <option value="true">{t("entity.arrayBooleanTrue")}</option>
           <option value="false">{t("entity.arrayBooleanFalse")}</option>
-        </select>
+        </Select>
       );
     }
 
@@ -222,7 +223,7 @@ export function ArrayEntityField({
       );
 
       return (
-        <select
+        <Select
           id={inputId}
           className={`${selectClassName} min-w-0 flex-1`}
           disabled={readOnly || availableValues.length === 0}
@@ -235,7 +236,7 @@ export function ArrayEntityField({
               {option}
             </option>
           ))}
-        </select>
+        </Select>
       );
     }
 
