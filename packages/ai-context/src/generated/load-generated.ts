@@ -44,9 +44,23 @@ export interface AiContextManifest {
   readonly fragments: Record<string, string>;
 }
 
-const generatedDir = dirname(fileURLToPath(import.meta.url));
+function resolveGeneratedDir(): string {
+  const moduleDir = dirname(fileURLToPath(import.meta.url));
+
+  const bundledDir = join(moduleDir, "ai-context-generated");
+  if (existsSync(join(bundledDir, "manifest.json"))) {
+    return bundledDir;
+  }
+
+  if (existsSync(join(moduleDir, "manifest.json"))) {
+    return moduleDir;
+  }
+
+  return moduleDir;
+}
 
 function loadManifestFromDisk(): AiContextManifest | null {
+  const generatedDir = resolveGeneratedDir();
   const manifestPath = join(generatedDir, "manifest.json");
   if (!existsSync(manifestPath)) {
     return null;

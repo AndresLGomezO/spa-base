@@ -4,8 +4,8 @@
   "type": "module",
   "main": "./dist/index.js",
   "scripts": {
-    "dev": "pnpm exec turbo run build --filter=worker-service^... && tsx watch src/index.ts",
-    "build": "tsc -p tsconfig.build.json",
+    "dev": "tsx watch src/index.ts",
+    "build": "node esbuild.mjs",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run --passWithNoTests",
@@ -27,6 +27,7 @@
     "@repo/firestore-converters": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
+    "esbuild": "catalog:",
     "eslint": "catalog:",
     "tsx": "catalog:",
     "typescript": "catalog:",

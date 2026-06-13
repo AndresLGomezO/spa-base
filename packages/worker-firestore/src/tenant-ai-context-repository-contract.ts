@@ -1,4 +1,4 @@
 export type {
   TenantAiContextRecord,
   TenantAiContextRepository,
-} from "@repo/ai-context/storage";
+} from "@repo/ai-context";

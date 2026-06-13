@@ -1,7 +1,7 @@
 import {
   TENANT_AI_CONTEXTS_COLLECTION,
   tenantAiContextRecordSchema,
-} from "@repo/ai-context/storage";
+} from "@repo/ai-context";
 
 import type { TenantAiContextRepository } from "./tenant-ai-context-repository-contract.js";
 import {
