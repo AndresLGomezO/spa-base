@@ -23,6 +23,7 @@ const ALL_SERVICES = [
   "pubsub-init",
   "api",
   "worker-aggregation",
+  "worker-service",
   "web",
 ] as const;
 
@@ -37,6 +38,8 @@ const SERVICE_ALIASES: Record<string, ServiceName> = {
   worker: "worker-aggregation",
   aggregation: "worker-aggregation",
   "worker-aggregation": "worker-aggregation",
+  "worker-service": "worker-service",
+  ai: "worker-service",
   web: "web",
 };
 
