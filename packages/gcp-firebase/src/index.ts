@@ -63,6 +63,7 @@ export { createFirestoreAdminAggregationEventRepository } from "./firestore-admi
 export { createFirestoreAdminMetricValueRepository } from "./firestore-admin-metric-value-repository.js";
 export { createFirestoreAdminMetricContributionRepository } from "./firestore-admin-metric-contribution-repository.js";
 export { createFirestoreAdminBackfillJobRepository } from "./firestore-admin-backfill-job-repository.js";
+export { createFirestoreAdminAiJobRepository } from "./firestore-admin-ai-job-repository.js";
 export {
   AGGREGATION_EVENTS_TOPIC,
   ensureAggregationEventsTopic,

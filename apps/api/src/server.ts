@@ -14,6 +14,7 @@ import type {
   UiBuilderPresetRepository,
   AggregationEventRepository,
   BackfillJobRepository,
+  AiJobRepository,
   HookRepository,
   JoinCollectionRepository,
   MetricContributionRepository,
@@ -24,6 +25,7 @@ import type {
 import {
   createInMemoryAggregationEventRepository,
   createInMemoryBackfillJobRepository,
+  createInMemoryAiJobRepository,
   createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
   createInMemoryEntityUiOverrideRepository,
@@ -38,6 +40,7 @@ import {
 import {
   createFirestoreAdminAggregationEventRepository,
   createFirestoreAdminBackfillJobRepository,
+  createFirestoreAdminAiJobRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityUiOverrideRepository,
@@ -83,6 +86,7 @@ import { registerIndexRoutes } from "./indexes/register-index-routes.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
+import { registerAiRoutes } from "./ai/register-ai-routes.js";
 import { registerRoleRoutes } from "./roles/register-role-routes.js";
 import { registerModuleRoutes } from "./modules/register-module-routes.js";
 import {
@@ -123,6 +127,7 @@ interface BuildServerOptions {
   readonly metricValueRepository?: MetricValueRepository;
   readonly metricContributionRepository?: MetricContributionRepository;
   readonly backfillJobRepository?: BackfillJobRepository;
+  readonly aiJobRepository?: AiJobRepository;
   readonly getUserAccessProfile?: (
     uid: string,
   ) => Promise<UserAccessProfile | null>;
@@ -301,6 +306,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryBackfillJobRepository()
       : createFirestoreAdminBackfillJobRepository(firebaseAdminConfig));
+
+  const aiJobRepository =
+    options.aiJobRepository ??
+    (options.repositories
+      ? createInMemoryAiJobRepository()
+      : createFirestoreAdminAiJobRepository(firebaseAdminConfig));
 
   const metricContributionRepository =
     options.metricContributionRepository ??
@@ -489,6 +500,20 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     hookRuntime,
+  });
+
+  await registerAiRoutes(server, {
+    authenticate,
+    permissionDeps,
+    aiJobRepository,
+    cloudTasksConfig: {
+      projectId: apiEnv.GCP_PROJECT_ID,
+      region: apiEnv.GCP_REGION,
+      queueName: apiEnv.CLOUD_TASKS_QUEUE_NAME,
+      workerBaseUrl: apiEnv.WORKER_SERVICE_URL,
+      serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
+      localDispatch: apiEnv.AI_TASKS_LOCAL_DISPATCH,
+    },
   });
 
   await registerMetricDefinitionRoutes(server, {

@@ -11,6 +11,8 @@ catalog:
   firebase-admin: ^13.5.0
   "@google-cloud/firestore": ^7.11.6
   "@google-cloud/pubsub": ^4.11.0
+  "@google-cloud/tasks": ^4.0.0
+  "@google-cloud/vertexai": ^1.9.0
   fastify: ^5.6.1
   "@fastify/cors": ^11.0.0
   "@fastify/compress": ^8.1.0

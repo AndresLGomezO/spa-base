@@ -52,6 +52,24 @@ variable "worker_aggregation_image" {
   default     = "us-central1-docker.pkg.dev/entitysystem-development/entitysystem-repo/worker-aggregation:latest"
 }
 
+variable "worker_service_image" {
+  description = "Docker image URI for the AI worker Cloud Run service. Set by CI on every deploy."
+  type        = string
+  default     = "us-central1-docker.pkg.dev/entitysystem-development/entitysystem-repo/worker-service:latest"
+}
+
+variable "vertex_gemini_model_id" {
+  description = "Vertex AI Gemini model id for the AI worker (VERTEX_MODEL_ID)."
+  type        = string
+  default     = "gemini-2.5-flash"
+}
+
+variable "enable_ai_worker" {
+  description = "Create Cloud Tasks queue, AI worker Cloud Run, and backend enqueue IAM."
+  type        = bool
+  default     = true
+}
+
 variable "enable_aggregation_pubsub" {
   description = "Create Pub/Sub topic, subscription, worker Cloud Run, and backend publish IAM for aggregation events."
   type        = bool

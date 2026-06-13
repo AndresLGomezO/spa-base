@@ -52,3 +52,13 @@ output "worker_aggregation_service_name" {
   description = "Cloud Run service name for the aggregation worker (empty when disabled)"
   value       = local.enable_aggregation_pubsub ? google_cloud_run_v2_service.worker_aggregation[0].name : ""
 }
+
+output "worker_service_url" {
+  description = "Cloud Run URL for the AI worker service (empty when disabled)"
+  value       = local.worker_service_url_full
+}
+
+output "ai_jobs_queue_name" {
+  description = "Cloud Tasks queue for AI jobs (empty when disabled)"
+  value       = local.enable_ai_worker ? google_cloud_tasks_queue.ai_jobs[0].name : ""
+}

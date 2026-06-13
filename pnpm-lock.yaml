@@ -24,6 +24,12 @@ catalogs:
     '@google-cloud/pubsub':
       specifier: ^4.11.0
       version: 4.11.0
+    '@google-cloud/tasks':
+      specifier: ^4.0.0
+      version: 4.1.0
+    '@google-cloud/vertexai':
+      specifier: ^1.9.0
+      version: 1.12.0
     '@playwright/test':
       specifier: ^1.52.0
       version: 1.60.0
@@ -257,9 +263,15 @@ importers:
       '@google-cloud/pubsub':
         specifier: 'catalog:'
         version: 4.11.0
+      '@google-cloud/tasks':
+        specifier: 'catalog:'
+        version: 4.1.0
       '@repo/aggregation-engine':
         specifier: workspace:*
         version: link:../../packages/aggregation-engine
+      '@repo/ai-engine':
+        specifier: workspace:*
+        version: link:../../packages/ai-engine
       '@repo/dynamic-entities':
         specifier: workspace:*
         version: link:../../packages/dynamic-entities
@@ -587,6 +599,52 @@ importers:
         specifier: 'catalog:'
         version: 5.9.3
 
+  apps/worker-service:
+    dependencies:
+      '@google-cloud/vertexai':
+        specifier: 'catalog:'
+        version: 1.12.0
+      '@repo/ai-engine':
+        specifier: workspace:*
+        version: link:../../packages/ai-engine
+      '@repo/firestore-converters':
+        specifier: workspace:*
+        version: link:../../packages/firestore-converters
+      '@repo/gcp-firebase':
+        specifier: workspace:*
+        version: link:../../packages/gcp-firebase
+      fastify:
+        specifier: 'catalog:'
+        version: 5.8.5
+      firebase-admin:
+        specifier: 'catalog:'
+        version: 13.10.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../../packages/eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../../packages/typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      esbuild:
+        specifier: 'catalog:'
+        version: 0.25.12
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      tsx:
+        specifier: 'catalog:'
+        version: 4.22.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+
   packages/aggregation-engine:
     dependencies:
       '@repo/event-engine':
@@ -598,6 +656,37 @@ importers:
       '@repo/metrics-engine':
         specifier: workspace:*
         version: link:../metrics-engine
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(tsx@4.22.3)(yaml@2.9.0)
+
+  packages/ai-engine:
+    dependencies:
+      '@google-cloud/vertexai':
+        specifier: 'catalog:'
+        version: 1.12.0
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -884,6 +973,9 @@ importers:
 
   packages/firestore-converters:
     dependencies:
+      '@repo/ai-engine':
+        specifier: workspace:*
+        version: link:../ai-engine
       '@repo/dynamic-entities':
         specifier: workspace:*
         version: link:../dynamic-entities
@@ -973,6 +1065,9 @@ importers:
       '@google-cloud/pubsub':
         specifier: 'catalog:'
         version: 4.11.0
+      '@repo/ai-engine':
+        specifier: workspace:*
+        version: link:../ai-engine
       '@repo/dynamic-entities':
         specifier: workspace:*
         version: link:../dynamic-entities
@@ -1170,6 +1265,9 @@ importers:
 
   packages/rbac:
     dependencies:
+      '@repo/ai-engine':
+        specifier: workspace:*
+        version: link:../ai-engine
       '@repo/dynamic-entities':
         specifier: workspace:*
         version: link:../dynamic-entities
@@ -2358,6 +2456,23 @@ packages:
     resolution: {integrity: sha512-n2FjE7NAOYyshogdc7KQOl/VZb4sneqPjWouSyia9CMDdMhRX5+RIbqalNmC7LOLzuLAN89VlF2HvG8na9G+zQ==}
     engines: {node: '>=14'}
 
+  '@google-cloud/tasks@4.1.0':
+    resolution: {integrity: sha512-9n6Aw0JZS/c6dqP1wmK9tmzwqayS/E62BM1rOtzDhwYeWhtAhFsdXjCDZZ9+H+kGOrpsLf+4NPIs5lu5mQvapg==}
+    engines: {node: '>=v14'}
+
+  '@google-cloud/vertexai@1.12.0':
+    resolution: {integrity: sha512-XMJIk7GIeavFLP5A3YEUlowKa5Y5PZRrnnuTJcqR0k+lFKkv7+IWpdRp+Xbqb8xNDrvQaE2hP2RYPUylyD5EdA==}
+    engines: {node: '>=18.0.0'}
+
+  '@google/genai@1.52.0':
+    resolution: {integrity: sha512-gwSvbpiN/17O9TbsqSsE/OzZcpv5Fo4RQjdngGgogtuB9RsyJ8ZHhX5KjHj1bp5N9snN2eK8LDGXSaWW2hof8Q==}
+    engines: {node: '>=20.0.0'}
+    peerDependencies:
+      '@modelcontextprotocol/sdk': ^1.25.2
+    peerDependenciesMeta:
+      '@modelcontextprotocol/sdk':
+        optional: true
+
   '@googleapis/sqladmin@35.2.0':
     resolution: {integrity: sha512-ajR9EGLs1pCkKfsXxfbVRnQ7ZPyktKNAuahHoU06CVKguWwQo3b9aFmq06PYnGk1oXc0+tlW+XEamNa/HF4pbQ==}
     engines: {node: '>=12.0.0'}
@@ -3365,6 +3480,9 @@ packages:
 
   '@types/resolve@1.20.6':
     resolution: {integrity: sha512-A4STmOXPhMUtHH+S6ymgE2GiBSMqf4oTvcQZMcHzokuTLVYzXTB8ttjcgxOVaAp2lGwEdzZ0J+cRbbeevQj1UQ==}
+
+  '@types/retry@0.12.0':
+    resolution: {integrity: sha512-wWKOClTTiizcZhXnPY4wikVAwmdYHp8q6DmC+EJUzAMsycb7HB32Kh9RN4+0gExjmPmZSAQjgURXIGATPegAvA==}
 
   '@types/sinonjs__fake-timers@8.1.1':
     resolution: {integrity: sha512-0kSuKjAS0TrGLJ0M/+8MaFkGsQhZpB6pxOmvS3K8FYI72K//YmdfoW9X2qPsAKh1mkwxGD5zib9s1FIFed6E8g==}
@@ -6286,6 +6404,10 @@ packages:
     resolution: {integrity: sha512-tkAQEw8ysMzmkhgw8k+1U/iPhWNhykKnSk4Rd5zLoPJCuJaGRPo6YposrZgaxHKzDHdDWWZvE/Sk7hsL2X/CpQ==}
     engines: {node: '>=18'}
 
+  p-retry@4.6.2:
+    resolution: {integrity: sha512-312Id396EbJdvRONlngUx0NydfrIQ5lsYu0znKVUzVvArzEIt08V1qhtyESbGVd1FGX7UKtiFp5uwKZdM8wIuQ==}
+    engines: {node: '>=8'}
+
   p-throttle@7.0.0:
     resolution: {integrity: sha512-aio0v+S0QVkH1O+9x4dHtD4dgCExACcL+3EtNaGqC01GBudS9ijMuUsmN8OVScyV4OOp0jqdLShZFuSlbL/AsA==}
     engines: {node: '>=18'}
@@ -8887,6 +9009,35 @@ snapshots:
       - supports-color
     optional: true
 
+  '@google-cloud/tasks@4.1.0':
+    dependencies:
+      google-gax: 4.6.1
+    transitivePeerDependencies:
+      - encoding
+      - supports-color
+
+  '@google-cloud/vertexai@1.12.0':
+    dependencies:
+      '@google/genai': 1.52.0
+      google-auth-library: 9.15.1
+    transitivePeerDependencies:
+      - '@modelcontextprotocol/sdk'
+      - bufferutil
+      - encoding
+      - supports-color
+      - utf-8-validate
+
+  '@google/genai@1.52.0':
+    dependencies:
+      google-auth-library: 10.6.2
+      p-retry: 4.6.2
+      protobufjs: 7.6.1
+      ws: 8.21.0
+    transitivePeerDependencies:
+      - bufferutil
+      - supports-color
+      - utf-8-validate
+
   '@googleapis/sqladmin@35.2.0':
     dependencies:
       googleapis-common: 8.0.1
@@ -9832,6 +9983,8 @@ snapshots:
       form-data: 2.5.5
 
   '@types/resolve@1.20.6': {}
+
+  '@types/retry@0.12.0': {}
 
   '@types/sinonjs__fake-timers@8.1.1': {}
 
@@ -13344,6 +13497,11 @@ snapshots:
       aggregate-error: 3.1.0
 
   p-map@7.0.4: {}
+
+  p-retry@4.6.2:
+    dependencies:
+      '@types/retry': 0.12.0
+      retry: 0.13.1
 
   p-throttle@7.0.0: {}
 

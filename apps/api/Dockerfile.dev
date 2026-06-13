@@ -1,7 +1,5 @@
 # When adding workspace:* deps to the app or root package.json, run:
 #   pnpm check:docker-workspace
-#
-# TODO: worker-service — add package.json COPY + volumes when introduced
 
 FROM node:22-slim
 
@@ -26,6 +24,7 @@ COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/aggregation-engine/package.json ./packages/aggregation-engine/
+COPY packages/ai-engine/package.json ./packages/ai-engine/
 COPY packages/event-engine/package.json ./packages/event-engine/
 COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/

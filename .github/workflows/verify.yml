@@ -138,6 +138,7 @@ jobs:
             -var="region=${{ env.REGION }}" \
             -var="api_image=${{ env.REGISTRY }}/api:placeholder" \
             -var="worker_aggregation_image=${{ env.REGISTRY }}/worker-aggregation:placeholder" \
+            -var="worker_service_image=${{ env.REGISTRY }}/worker-service:placeholder" \
             -var="ci_deployer_sa_email=${{ secrets.GCP_SERVICE_ACCOUNT }}" \
             -no-color -out=tfplan
 

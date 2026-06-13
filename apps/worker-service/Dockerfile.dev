@@ -1,0 +1,58 @@
+# When adding workspace:* deps to the app or root package.json, run:
+#   pnpm check:docker-workspace
+
+FROM node:22-slim
+
+ENV PNPM_HOME="/pnpm"
+ENV PATH="$PNPM_HOME:$PATH"
+RUN corepack enable
+
+WORKDIR /app
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+
+COPY apps/worker-service/package.json ./apps/worker-service/
+COPY packages/ai-engine/package.json ./packages/ai-engine/
+COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
+COPY packages/entities/package.json ./packages/entities/
+COPY packages/entity-categories/package.json ./packages/entity-categories/
+COPY packages/event-engine/package.json ./packages/event-engine/
+COPY packages/firestore-converters/package.json ./packages/firestore-converters/
+COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
+COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
+COPY packages/hooks/package.json ./packages/hooks/
+COPY packages/metrics-engine/package.json ./packages/metrics-engine/
+COPY packages/query-engine/package.json ./packages/query-engine/
+COPY packages/rbac/package.json ./packages/rbac/
+COPY packages/shared-types/package.json ./packages/shared-types/
+COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
+COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/typescript-config/ ./packages/typescript-config/
+
+RUN pnpm install --frozen-lockfile
+
+COPY packages/shared-types ./packages/shared-types
+COPY packages/firestore-converters ./packages/firestore-converters
+COPY packages/firestore-indexes ./packages/firestore-indexes
+COPY packages/dynamic-entities ./packages/dynamic-entities
+COPY packages/entities ./packages/entities
+COPY packages/entity-categories ./packages/entity-categories
+COPY packages/event-engine ./packages/event-engine
+COPY packages/hooks ./packages/hooks
+COPY packages/metrics-engine ./packages/metrics-engine
+COPY packages/query-engine ./packages/query-engine
+COPY packages/rbac ./packages/rbac
+COPY packages/ui-builder-core ./packages/ui-builder-core
+COPY packages/ai-engine ./packages/ai-engine
+COPY packages/gcp-firebase ./packages/gcp-firebase
+COPY packages/eslint-config ./packages/eslint-config
+COPY packages/typescript-config ./packages/typescript-config
+COPY apps/worker-service ./apps/worker-service
+
+COPY apps/worker-service/docker-dev-entrypoint.sh /docker-dev-entrypoint.sh
+RUN sed -i 's/\r$//' /docker-dev-entrypoint.sh
+RUN chmod +x /docker-dev-entrypoint.sh
+
+WORKDIR /app/apps/worker-service
+ENTRYPOINT ["/docker-dev-entrypoint.sh"]
+CMD ["pnpm", "dev"]

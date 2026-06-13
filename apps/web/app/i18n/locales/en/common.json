@@ -59,7 +59,18 @@
     "designLayoutDetail": "Detailed View",
     "designLayoutForms": "Forms",
     "designLayoutMetrics": "Metrics",
-    "designLayoutPresets": "Component presets"
+    "designLayoutPresets": "Component presets",
+    "aiChat": "AI Chat"
+  },
+  "aiChat": {
+    "title": "AI Chat",
+    "description": "Ask a question and receive an AI-generated answer.",
+    "questionPlaceholder": "Type your question…",
+    "submit": "Ask",
+    "submitting": "Thinking…",
+    "submitError": "Could not submit your question. Try again.",
+    "forbidden": "You do not have permission to use AI chat.",
+    "status": "Status: {{status}}"
   },
   "formDesigner": {
     "title": "Form Designer",

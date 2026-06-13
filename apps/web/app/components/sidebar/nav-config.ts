@@ -12,6 +12,7 @@ import {
   Shield,
   Users,
   Workflow,
+  Bot,
 } from "lucide-react";
 
 export type NavLabelKey =
@@ -35,7 +36,8 @@ export type NavLabelKey =
   | "designLayoutDetail"
   | "designLayoutForms"
   | "designLayoutMetrics"
-  | "designLayoutPresets";
+  | "designLayoutPresets"
+  | "aiChat";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -118,6 +120,14 @@ export const DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM: NavLinkConfig = {
   to: "/settings/data-models",
   matchPath: "/settings/data-models",
   icon: Database,
+};
+
+export const SETTINGS_AI_CHAT_NAV_ITEM: NavLinkConfig = {
+  id: "ai-chat",
+  labelKey: "aiChat",
+  to: "/ai/chat",
+  matchPath: "/ai/chat",
+  icon: Bot,
 };
 
 export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {

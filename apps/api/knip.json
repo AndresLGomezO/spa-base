@@ -3,6 +3,7 @@
   "ignoreDependencies": [
     "@google-cloud/firestore",
     "@google-cloud/pubsub",
+    "@google-cloud/tasks",
     "@app/platform",
     "@repo/dynamic-entities",
     "@repo/encryption",
@@ -13,6 +14,7 @@
     "@repo/firestore-converters",
     "@repo/gcp-firebase",
     "@repo/aggregation-engine",
+    "@repo/ai-engine",
     "@repo/event-engine",
     "@repo/metrics-engine",
     "@repo/hooks",

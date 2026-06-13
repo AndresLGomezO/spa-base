@@ -1,11 +1,19 @@
 locals {
   backend_image            = var.api_image
   worker_aggregation_image = var.worker_aggregation_image
+  worker_service_image     = var.worker_service_image
 
   enable_aggregation_pubsub = try(
     local.environment_config.enable_aggregation_pubsub,
     var.enable_aggregation_pubsub,
   )
+
+  enable_ai_worker = try(
+    local.environment_config.enable_ai_worker,
+    var.enable_ai_worker,
+  )
+
+  worker_service_url_full = local.enable_ai_worker ? "https://${google_cloud_run_v2_service.worker_service[0].name}-${data.google_project.project.number}.${var.region}.run.app" : ""
 
   environment_tier = contains(["dev", "staging", "default"], local.workspace) ? "development" : (
     local.workspace == "prod" ? "production" : "development"

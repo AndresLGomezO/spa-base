@@ -10,6 +10,7 @@ locals {
       node_env                  = "production"
       ensure_firestore_indexes  = "true"
       enable_aggregation_pubsub = true
+      enable_ai_worker          = true
     }
     dev = {
       env_suffix                = "dev"
@@ -17,6 +18,7 @@ locals {
       node_env                  = "production"
       ensure_firestore_indexes  = "true"
       enable_aggregation_pubsub = true
+      enable_ai_worker          = true
     }
     staging = {
       env_suffix                = "stg"
@@ -24,6 +26,7 @@ locals {
       node_env                  = "production"
       ensure_firestore_indexes  = "true"
       enable_aggregation_pubsub = true
+      enable_ai_worker          = true
     }
     prod = {
       env_suffix                = "prod"
@@ -31,6 +34,7 @@ locals {
       node_env                  = "production"
       ensure_firestore_indexes  = "true"
       enable_aggregation_pubsub = true
+      enable_ai_worker          = true
     }
   }
 

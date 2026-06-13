@@ -28,6 +28,7 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/ai-engine": "workspace:*",
     "@google-cloud/firestore": "catalog:",
     "@google-cloud/pubsub": "catalog:",
     "@repo/dynamic-entities": "workspace:*",
