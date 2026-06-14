@@ -10,6 +10,7 @@ import { EntityViewMetricsStrip } from "../../components/metrics/EntityViewMetri
 import { EntityPageCompactMetrics } from "../../components/entity/EntityPageCompactMetrics";
 import { EntityPageCompactToolbar } from "../../components/entity/EntityPageCompactToolbar";
 import { EntityPageListScrollContainer } from "../../components/entity/entity-page-scroll-compact";
+import { entityListPageSlotClassName } from "../../components/entity/entity-list-table-layout";
 import { Heading, Button } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
@@ -67,21 +68,33 @@ export function createEntityMainPageRenderContext(
     data: {},
     locale: input.locale,
     resolveField: () => undefined,
-    pageToolbarRenderer: () => <EntityPageCompactToolbar toolbar={toolbar} />,
-    pageMetricsRenderer: () =>
-      showMetricsRow ? (
-        <EntityPageCompactMetrics>
-          <EntityViewMetricsStrip
-            rowLayout={rowLayout}
-            entityDefinition={entityDefinition}
-            context={{ listFilters, routeParams }}
-            locale={input.locale}
-            previewMode={previewMode}
-          />
-        </EntityPageCompactMetrics>
+    pageToolbarRenderer: () =>
+      previewMode ? (
+        <WebDataViewToolbar {...toolbar} compact={false} />
+      ) : (
+        <EntityPageCompactToolbar toolbar={toolbar} />
+      ),
+    pageMetricsRenderer: () => {
+      const metricsContent = showMetricsRow ? (
+        <EntityViewMetricsStrip
+          rowLayout={rowLayout}
+          entityDefinition={entityDefinition}
+          context={{ listFilters, routeParams }}
+          locale={input.locale}
+          previewMode={previewMode}
+        />
       ) : previewMode ? (
         <MetricsPreviewPlaceholder metricsDesignerPath={metricsDesignerPath} />
-      ) : null,
+      ) : null;
+
+      if (previewMode || metricsContent == null) {
+        return metricsContent;
+      }
+
+      return (
+        <EntityPageCompactMetrics>{metricsContent}</EntityPageCompactMetrics>
+      );
+    },
     pageListRenderer: () =>
       previewMode ? (
         <div className="text-muted-foreground rounded-md border border-dashed p-6 text-sm">
@@ -101,11 +114,12 @@ export function createEntityMainPageRenderContext(
       />
     ),
     registerPageListScrollElement,
-    wrapPageListScroll: (listContent) => (
-      <EntityPageListScrollContainer>
-        {listContent}
-      </EntityPageListScrollContainer>
-    ),
+    wrapPageListScroll: (listContent) =>
+      previewMode ? (
+        <div className={entityListPageSlotClassName}>{listContent}</div>
+      ) : (
+        <EntityPageListScrollContainer>{listContent}</EntityPageListScrollContainer>
+      ),
   };
 }
 
