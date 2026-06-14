@@ -39,11 +39,15 @@ export function usePersistedUiBuilderAiJob(
   tenantId: string | null | undefined,
   entityName: string,
   surface = "list",
+  outputMode: "structure" | "render" = "structure",
 ) {
-  const storageScope = useMemo(
-    () => buildStorageScope(tenantId, entityName, surface),
-    [tenantId, entityName, surface],
-  );
+  const storageScope = useMemo(() => {
+    const scope = buildStorageScope(tenantId, entityName, surface);
+    if (!scope) {
+      return null;
+    }
+    return { ...scope, outputMode };
+  }, [tenantId, entityName, surface, outputMode]);
 
   const [activeJobId, setActiveJobIdState] = useState<string | null>(() => {
     if (!storageScope) {

@@ -19,6 +19,7 @@
     "./process-ai-ui-builder": "./src/process-ai-ui-builder.ts",
     "./task-routes": "./src/task-routes.ts",
     "./vertex-ai.client": "./src/vertex-ai.client.ts",
+    "./vertex-imagen.client": "./src/vertex-imagen.client.ts",
     "./vertex-mock-responses": "./src/vertex-mock-responses.ts",
     "./extract-json-from-model-answer": "./src/extract-json-from-model-answer.ts",
     "./ui-builder-output-prompts": "./src/ui-builder-output-prompts.ts",
@@ -28,6 +29,7 @@
   },
   "dependencies": {
     "@google-cloud/vertexai": "catalog:",
+    "@google/genai": "catalog:",
     "@repo/ai-context": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/ui-builder-core": "workspace:*",

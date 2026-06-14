@@ -12,7 +12,7 @@ export const DEV_CONTENT_SECURITY_POLICY = [
   "img-src 'self' data: blob: https: http:",
   "connect-src 'self' ws: wss: http: https:",
   [
-    "frame-src 'self'",
+    "frame-src 'self' blob:",
     "https://accounts.google.com",
     "https://*.google.com",
     "https://*.firebaseapp.com",

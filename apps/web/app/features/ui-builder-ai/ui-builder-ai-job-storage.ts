@@ -5,6 +5,7 @@ export interface UiBuilderAiJobStorageScope {
   readonly tenantId: string;
   readonly entityName: string;
   readonly surface: string;
+  readonly outputMode?: "structure" | "render";
 }
 
 export interface UiBuilderLastRun {
@@ -14,12 +15,16 @@ export interface UiBuilderLastRun {
   readonly finishedAt: string;
 }
 
+function scopeOutputModeSuffix(outputMode?: "structure" | "render"): string {
+  return outputMode && outputMode !== "structure" ? `:${outputMode}` : "";
+}
+
 function storageKey(scope: UiBuilderAiJobStorageScope): string {
-  return `${STORAGE_KEY_PREFIX}:${scope.tenantId}:${scope.entityName}:${scope.surface}`;
+  return `${STORAGE_KEY_PREFIX}:${scope.tenantId}:${scope.entityName}:${scope.surface}${scopeOutputModeSuffix(scope.outputMode)}`;
 }
 
 function lastRunStorageKey(scope: UiBuilderAiJobStorageScope): string {
-  return `${LAST_RUN_KEY_PREFIX}:${scope.tenantId}:${scope.entityName}:${scope.surface}`;
+  return `${LAST_RUN_KEY_PREFIX}:${scope.tenantId}:${scope.entityName}:${scope.surface}${scopeOutputModeSuffix(scope.outputMode)}`;
 }
 
 function canUseSessionStorage(): boolean {

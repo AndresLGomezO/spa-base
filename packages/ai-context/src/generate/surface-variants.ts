@@ -1,6 +1,7 @@
 import {
   componentKindsForSurface,
   createDefaultListCardLayout,
+  createDefaultWizardFormConfig,
   type DesignSurface,
 } from "@repo/ui-builder-core";
 import type { DesignLayoutSurface } from "@repo/entities";
@@ -95,6 +96,26 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     description: "Multi-step wizard with shell + step layouts.",
     extraNotes:
       'Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-actions. Steps: form-field, form-section.',
+    buildSkeleton: () => {
+      const wizard = createDefaultWizardFormConfig(["name"]);
+      return stabilizeLayoutJson(
+        JSON.stringify(
+          createDesignLayoutSliceEnvelope("forms", {
+            presentation: "wizard",
+            modalSize: "md",
+            wizard: {
+              shellLayout: wizard.shellLayout,
+              steps: wizard.steps.map((step) => ({
+                ...step,
+                id: "step-example",
+              })),
+            },
+          }),
+          null,
+          2,
+        ),
+      );
+    },
   },
   {
     fragmentId: "ui.surface.mainPage",

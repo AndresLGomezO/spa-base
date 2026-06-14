@@ -2,7 +2,10 @@ import { Alert, Button, Popover, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { UiBuilderSuggestionRecord } from "../../lib/api-client";
+import { resolveBrowserStorageUrl } from "../../lib/resolve-browser-storage-url";
 import { formatAiJobError } from "./use-ai-ui-builder";
+import { isRenderSuggestion } from "./UiBuilderAiRenderViewModal";
+import { RenderHtmlPreviewIframe } from "./RenderHtmlPreviewIframe";
 
 function formatDate(value: string): string {
   try {
@@ -13,6 +16,21 @@ function formatDate(value: string): string {
   } catch {
     return value;
   }
+}
+
+function resolvePresentationLabel(
+  suggestion: UiBuilderSuggestionRecord,
+): string {
+  if (suggestion.listViewType) {
+    return suggestion.listViewType;
+  }
+  const slicePresentation = (
+    suggestion.sliceData as Record<string, unknown> | undefined
+  )?.presentation;
+  if (typeof slicePresentation === "string") {
+    return slicePresentation;
+  }
+  return suggestion.surface;
 }
 
 interface UiBuilderAiResultPopoverProps {
@@ -26,6 +44,8 @@ interface UiBuilderAiResultPopoverProps {
   readonly openOnClick?: boolean;
   readonly onHoverOpenChange?: (open: boolean) => void;
   readonly onApply: (suggestion: UiBuilderSuggestionRecord) => void;
+  readonly onView?: (suggestion: UiBuilderSuggestionRecord) => void;
+  readonly translationPrefix?: string;
 }
 
 export function UiBuilderAiResultPopover({
@@ -39,12 +59,17 @@ export function UiBuilderAiResultPopover({
   openOnClick = true,
   onHoverOpenChange,
   onApply,
+  onView,
+  translationPrefix = "itemListDesigner.ai",
 }: UiBuilderAiResultPopoverProps) {
   const { t } = useTranslation("common");
-  const translateError = (key: string): string => t(key as never);
+  const key = (suffix: string) => `${translationPrefix}.${suffix}` as const;
+  const translateError = (errorKey: string): string => t(errorKey as never);
   const formattedJobError = jobError
     ? formatAiJobError(jobError, translateError)
     : null;
+  const renderSuggestion =
+    suggestion != null ? isRenderSuggestion(suggestion) : false;
 
   return (
     <Popover
@@ -52,7 +77,7 @@ export function UiBuilderAiResultPopover({
       onOpenChange={onOpenChange}
       trigger={trigger}
       placement="bottom-end"
-      title={t("itemListDesigner.ai.resultTitle")}
+      title={t(key("resultTitle") as never)}
       panelClassName="w-80"
       hoverable={hoverable}
       openOnClick={openOnClick}
@@ -61,7 +86,7 @@ export function UiBuilderAiResultPopover({
       <div className="space-y-3 p-1">
         {finishedAt ? (
           <Text className="text-xs text-muted-foreground">
-            {t("itemListDesigner.ai.lastRunAt", {
+            {t(key("lastRunAt") as never, {
               date: formatDate(finishedAt),
             })}
           </Text>
@@ -69,7 +94,7 @@ export function UiBuilderAiResultPopover({
         {formattedJobError ? <Alert>{formattedJobError}</Alert> : null}
         {suggestion?.status === "failed" ? (
           <div className="space-y-2">
-            <Alert>{t("itemListDesigner.ai.resultFailed")}</Alert>
+            <Alert>{t(key("resultFailed") as never)}</Alert>
             {suggestion.validationErrors?.slice(0, 3).map((error) => (
               <Text
                 key={`${error.path}:${error.message}`}
@@ -82,10 +107,34 @@ export function UiBuilderAiResultPopover({
         ) : null}
         {suggestion?.status === "ready" ? (
           <div className="space-y-3">
+            {renderSuggestion && suggestion.renderHtml ? (
+              <RenderHtmlPreviewIframe
+                html={suggestion.renderHtml}
+                title=""
+                className="max-h-32 w-full rounded border border-border bg-white"
+              />
+            ) : null}
+            {renderSuggestion &&
+            !suggestion.renderHtml &&
+            suggestion.imageUrl ? (
+              <img
+                src={resolveBrowserStorageUrl(suggestion.imageUrl)}
+                alt=""
+                className="max-h-32 w-full rounded border border-border object-cover"
+              />
+            ) : null}
             <Text className="text-sm">
-              {t("itemListDesigner.ai.resultReady", {
-                listViewType: suggestion.listViewType ?? "table",
-              })}
+              {renderSuggestion
+                ? t(key("renderResultReady") as never)
+                : translationPrefix === "formDesigner.ai"
+                  ? t("formDesigner.ai.resultReady" as never, {
+                      presentation: suggestion
+                        ? resolvePresentationLabel(suggestion)
+                        : "",
+                    })
+                  : t("itemListDesigner.ai.resultReady" as never, {
+                      listViewType: suggestion?.listViewType ?? "table",
+                    })}
             </Text>
             <div className="flex justify-end gap-2">
               <Button
@@ -94,21 +143,31 @@ export function UiBuilderAiResultPopover({
                 size="sm"
                 onClick={() => onOpenChange(false)}
               >
-                {t("itemListDesigner.ai.dismiss")}
+                {t(key("dismiss") as never)}
               </Button>
-              <Button
-                type="button"
-                size="sm"
-                onClick={() => onApply(suggestion)}
-              >
-                {t("itemListDesigner.ai.apply")}
-              </Button>
+              {renderSuggestion && onView ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => onView(suggestion)}
+                >
+                  {t(key("view") as never)}
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={() => onApply(suggestion)}
+                >
+                  {t(key("apply") as never)}
+                </Button>
+              )}
             </div>
           </div>
         ) : null}
         {!formattedJobError && !suggestion && finishedAt ? (
           <Text className="text-sm text-muted-foreground">
-            {t("itemListDesigner.ai.resultPendingSuggestion")}
+            {t(key("resultPendingSuggestion") as never)}
           </Text>
         ) : null}
       </div>

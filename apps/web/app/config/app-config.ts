@@ -8,6 +8,7 @@ interface FirebaseConfig {
   readonly messagingSenderId: string;
   readonly appId: string;
   readonly authEmulatorHost: string;
+  readonly storageEmulatorPublicHost: string;
 }
 
 interface AppConfig {
@@ -16,6 +17,8 @@ interface AppConfig {
   readonly firebase: FirebaseConfig;
   readonly appCheckRecaptchaSiteKey: string;
   readonly appCheckDebugToken: string;
+  readonly formsAiCreative: boolean;
+  readonly formsAiRender: boolean;
 }
 
 function normalizeEnvMode(value: string | undefined): AppEnv {
@@ -30,6 +33,11 @@ function readEnv(name: string, fallback: string): string {
   return typeof value === "string" && value.trim().length > 0
     ? value
     : fallback;
+}
+
+function readEnvBoolean(name: string): boolean {
+  const value = import.meta.env[name];
+  return value === true || value === "true";
 }
 
 export const appConfig: Readonly<AppConfig> = Object.freeze({
@@ -49,7 +57,15 @@ export const appConfig: Readonly<AppConfig> = Object.freeze({
     ),
     appId: readEnv("VITE_FIREBASE_APP_ID", "1:123456789:web:abcdef"),
     authEmulatorHost: readEnv("VITE_FIREBASE_AUTH_EMULATOR_HOST", ""),
+    storageEmulatorPublicHost: readEnv(
+      "VITE_FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST",
+      "127.0.0.1:9199",
+    ),
   },
   appCheckRecaptchaSiteKey: readEnv("VITE_APP_CHECK_RECAPTCHA_SITE_KEY", ""),
   appCheckDebugToken: readEnv("VITE_FIREBASE_APPCHECK_DEBUG_TOKEN", ""),
+  formsAiCreative: readEnvBoolean("VITE_FORMS_AI_CREATIVE"),
+  formsAiRender:
+    readEnvBoolean("VITE_FORMS_AI_RENDER") ||
+    normalizeEnvMode(import.meta.env.VITE_ENV) === "dev",
 });

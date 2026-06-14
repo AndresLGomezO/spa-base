@@ -67,6 +67,7 @@ function buildMockContext(draft: ListUiBuilderDraft): SurfaceRecipeContext {
     fieldPathDefinition,
     layoutFieldPaths: ["name", "email", "status"],
     tableFieldPaths: ["name", "email", "status"],
+    formFieldPaths: [],
     themeFragments: {},
     entityTenantFragment: "tenant",
     entityCatalogFragment: "catalog",

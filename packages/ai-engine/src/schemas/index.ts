@@ -7,6 +7,8 @@ export {
   aiJobProgressSchema,
   aiJobRecordSchema,
   aiJobStatusSchema,
+  aiJobStepTraceEntrySchema,
+  aiJobStepTraceSchema,
   aiUiBuilderOrchestratorOutputSchema,
   processAiChatTaskPayloadSchema,
   uiBuilderDraftSchema,
@@ -17,6 +19,8 @@ export {
   type AiJobProgress,
   type AiJobRecord,
   type AiJobStatus,
+  type AiJobStepTrace,
+  type AiJobStepTraceEntry,
   type AiUiBuilderOrchestratorOutput,
   type ProcessAiChatTaskPayload,
 } from "./ai-job.schema.js";
@@ -34,11 +38,13 @@ export {
   listViewTypeSchema,
   processAiUiBuilderTaskPayloadSchema,
   submitAiUiBuilderRequestSchema,
+  uiBuilderOutputModeSchema,
   type AiUiBuilderInput,
   type AiUiBuilderOutput,
   type DesignLayoutSurfaceInput,
   type ProcessAiUiBuilderTaskPayload,
   type SubmitAiUiBuilderRequest,
+  type UiBuilderOutputMode,
 } from "./ai-ui-builder.schema.js";
 export {
   createUiBuilderSuggestionInputSchema,

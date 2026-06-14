@@ -1,11 +1,14 @@
-import type { ListUiBuilderDraft, LayoutTargetDraft } from "./types.js";
+import type {
+  LayoutTargetDraft,
+  UiBuilderDraftWithLayoutTargets,
+} from "./types.js";
 
 export function formatLayoutPathKey(pathKey: string): string {
   return pathKey.replace(/@/g, " > ").replace(/:/g, ": ");
 }
 
 export function describeHierarchyContext(
-  draft: ListUiBuilderDraft,
+  draft: UiBuilderDraftWithLayoutTargets,
   pathKey: string,
 ): string {
   const target = draft.layoutTargets[pathKey];
@@ -34,6 +37,19 @@ export function getLayoutTargetLabel(pathKey: string): string {
   if (pathKey === "listItem") {
     return "Card list item layout";
   }
+  if (pathKey === "plain.root") {
+    return "Plain form root layout";
+  }
+  if (pathKey === "wizard.shell") {
+    return "Wizard shell layout";
+  }
+  if (pathKey === "wizard.modalFooter") {
+    return "Wizard modal footer layout";
+  }
+  const wizardStepMatch = pathKey.match(/^wizard\.steps\[(\d+)\]$/);
+  if (wizardStepMatch) {
+    return `Wizard step ${Number(wizardStepMatch[1]) + 1} layout`;
+  }
   if (pathKey === "expandableTable.rowExpandLayout") {
     return "Expandable row detail layout";
   }
@@ -47,7 +63,7 @@ export function getLayoutTargetLabel(pathKey: string): string {
 }
 
 export function ensureLayoutTarget(
-  draft: ListUiBuilderDraft,
+  draft: UiBuilderDraftWithLayoutTargets,
   pathKey: string,
 ): LayoutTargetDraft {
   const existing = draft.layoutTargets[pathKey];

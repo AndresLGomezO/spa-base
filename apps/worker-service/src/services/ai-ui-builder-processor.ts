@@ -7,7 +7,21 @@ import {
   ENTITY_TENANT_FRAGMENT_ID,
 } from "@repo/ai-context";
 import { defineEntityFromRecord } from "@repo/dynamic-entities";
-import { runListUiBuilderOrchestrator } from "@repo/ai-engine/ui-builder-orchestrator";
+import {
+  runFormsUiBuilderOrchestrator,
+  runFormsRenderOrchestrator,
+  runListUiBuilderOrchestrator,
+  buildFormFieldPaths,
+  toFieldPathDefinition,
+} from "@repo/ai-engine/ui-builder-orchestrator";
+import {
+  createOrchestratorTraceCallbacks,
+  isAiStepTraceEnabled,
+  sanitizeStepTraceForPersistence,
+  slimUiBuilderDraftForPersistence,
+  stripCurrentLayoutJsonFromJobInput,
+  type OrchestratorCallbacks,
+} from "@repo/ai-engine/ui-builder-orchestrator";
 import { appendSurfaceOutputInstruction } from "@repo/ai-engine/ui-builder-output-prompts";
 import type { TenantAiContextRepository } from "@repo/worker-firestore";
 import type { UiBuilderAiSuggestionRepository } from "@repo/worker-firestore";
@@ -21,6 +35,52 @@ import {
 import { assembleUiBuilderContextFromRecords } from "@repo/ai-context";
 
 export { processAiUiBuilderTaskPayloadSchema };
+
+function extractHtmlFromLegacyRenderBrief(
+  renderBrief: string | undefined,
+): string | undefined {
+  if (!renderBrief?.trim()) {
+    return undefined;
+  }
+  try {
+    const parsed = JSON.parse(renderBrief) as { htmlDocument?: string };
+    return typeof parsed.htmlDocument === "string"
+      ? parsed.htmlDocument
+      : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+function buildOrchestratorCallbacks(
+  deps: AiUiBuilderProcessorDeps,
+  tenantId: string,
+  jobId: string,
+): OrchestratorCallbacks {
+  const traceEnabled = isAiStepTraceEnabled();
+  const { callbacks: traceCallbacks } = createOrchestratorTraceCallbacks(
+    traceEnabled,
+    async (trace) => {
+      await deps.aiJobRepository.update(tenantId, jobId, {
+        stepTrace: sanitizeStepTraceForPersistence(trace),
+      });
+    },
+  );
+
+  return {
+    onProgress: async (progress) => {
+      await deps.aiJobRepository.update(tenantId, jobId, { progress });
+    },
+    onDraftUpdate: async (draft) => {
+      await deps.aiJobRepository.update(tenantId, jobId, {
+        draft: slimUiBuilderDraftForPersistence(
+          draft as unknown as Record<string, unknown>,
+        ),
+      });
+    },
+    ...traceCallbacks,
+  };
+}
 
 export interface AiUiBuilderProcessorDeps {
   readonly aiJobRepository: import("@repo/worker-firestore").AiJobRepository;
@@ -57,6 +117,8 @@ export async function processAiUiBuilderJob(
     status: "running",
     progress: null,
     draft: null,
+    stepTrace: [],
+    input: stripCurrentLayoutJsonFromJobInput(parsedInput.data),
   });
 
   try {
@@ -81,6 +143,34 @@ export async function processAiUiBuilderJob(
 
     if (parsedInput.data.surface === "list") {
       await processListSurfaceJob(deps, tenantId, jobId, parsedInput.data, {
+        themeRecord,
+        catalogRecord,
+        entityRecord,
+        requestedBy: job.requestedBy,
+        question: parsedInput.data.question,
+      });
+      return;
+    }
+
+    if (parsedInput.data.surface === "forms") {
+      if (parsedInput.data.outputMode === "render") {
+        await processFormsRenderSurfaceJob(
+          deps,
+          tenantId,
+          jobId,
+          parsedInput.data,
+          {
+            themeRecord,
+            catalogRecord,
+            entityRecord,
+            requestedBy: job.requestedBy,
+            question: parsedInput.data.question,
+          },
+        );
+        return;
+      }
+
+      await processFormsSurfaceJob(deps, tenantId, jobId, parsedInput.data, {
         themeRecord,
         catalogRecord,
         entityRecord,
@@ -186,16 +276,7 @@ async function processListSurfaceJob(
     entityCatalogFragment: catalogFragment,
     entityCurrentFragment: currentFragment,
     entityFieldPaths,
-    callbacks: {
-      onProgress: async (progress) => {
-        await deps.aiJobRepository.update(tenantId, jobId, { progress });
-      },
-      onDraftUpdate: async (draft) => {
-        await deps.aiJobRepository.update(tenantId, jobId, {
-          draft: draft as unknown as Record<string, unknown>,
-        });
-      },
-    },
+    callbacks: buildOrchestratorCallbacks(deps, tenantId, jobId),
   });
 
   await deps.aiJobRepository.update(tenantId, jobId, {
@@ -219,6 +300,230 @@ async function processListSurfaceJob(
       unknown
     >,
     ...(listViewType ? { listViewType } : {}),
+    createdBy: context.requestedBy,
+  });
+}
+
+async function processFormsSurfaceJob(
+  deps: AiUiBuilderProcessorDeps,
+  tenantId: string,
+  jobId: string,
+  input: import("@repo/ai-engine/schemas").AiUiBuilderInput,
+  context: {
+    readonly themeRecord: NonNullable<
+      Awaited<ReturnType<TenantAiContextRepository["get"]>>
+    >;
+    readonly catalogRecord: NonNullable<
+      Awaited<ReturnType<TenantAiContextRepository["get"]>>
+    >;
+    readonly entityRecord: NonNullable<
+      Awaited<ReturnType<TenantAiContextRepository["get"]>>
+    >;
+    readonly requestedBy: string;
+    readonly question: string;
+  },
+): Promise<void> {
+  const definitionRecord = await deps.entityDefinitionRepository.getByName(
+    tenantId,
+    input.entityName,
+  );
+  if (!definitionRecord) {
+    await deps.uiBuilderAiSuggestionRepository.create(tenantId, {
+      entityName: input.entityName,
+      surface: "forms",
+      jobId,
+      status: "failed",
+      userContext: input.question,
+      validationErrors: [
+        {
+          path: "(entity)",
+          message: `Entity definition not found: ${input.entityName}`,
+        },
+      ],
+      createdBy: context.requestedBy,
+    });
+    await deps.aiJobRepository.update(tenantId, jobId, {
+      status: "failed",
+      error: `Entity definition not found: ${input.entityName}`,
+      progress: null,
+    });
+    return;
+  }
+
+  const entity = defineEntityFromRecord(definitionRecord);
+  const entityFieldPaths = Object.keys(entity.metadata.fields);
+  const tenantFragment =
+    context.catalogRecord.fragments[ENTITY_TENANT_FRAGMENT_ID] ??
+    context.catalogRecord.assembled ??
+    "";
+  const catalogFragment =
+    context.catalogRecord.fragments[ENTITY_CATALOG_FRAGMENT_ID] ?? "";
+  const currentFragment =
+    context.entityRecord.fragments[ENTITY_CURRENT_FRAGMENT_ID] ??
+    context.entityRecord.assembled ??
+    "";
+
+  const orchestratorResult = await runFormsUiBuilderOrchestrator({
+    vertexConfig: deps.vertexAiConfig,
+    entityName: input.entityName,
+    userPrompt: input.question,
+    ...(input.presentationHint
+      ? { presentationHint: input.presentationHint }
+      : input.formPresentation
+        ? { presentationHint: input.formPresentation }
+        : {}),
+    ...(input.allowCreative ? { allowCreative: true } : {}),
+    ...(input.currentLayoutJson
+      ? { currentLayoutJson: input.currentLayoutJson }
+      : {}),
+    entityDefinition: definitionRecord,
+    themeFragments: context.themeRecord.fragments,
+    entityTenantFragment: tenantFragment,
+    entityCatalogFragment: catalogFragment,
+    entityCurrentFragment: currentFragment,
+    entityFieldPaths,
+    callbacks: buildOrchestratorCallbacks(deps, tenantId, jobId),
+  });
+
+  await deps.aiJobRepository.update(tenantId, jobId, {
+    status: "completed",
+    output: orchestratorResult.output,
+    error: null,
+    progress: null,
+    draft: null,
+  });
+
+  await deps.uiBuilderAiSuggestionRepository.create(tenantId, {
+    entityName: input.entityName,
+    surface: "forms",
+    jobId,
+    status: "ready",
+    userContext: input.question,
+    sliceData: orchestratorResult.sliceData as unknown as Record<
+      string,
+      unknown
+    >,
+    ...(orchestratorResult.draft.formBlueprint
+      ? {
+          rawAnswer: JSON.stringify(orchestratorResult.draft.formBlueprint),
+        }
+      : {}),
+    createdBy: context.requestedBy,
+  });
+}
+
+async function processFormsRenderSurfaceJob(
+  deps: AiUiBuilderProcessorDeps,
+  tenantId: string,
+  jobId: string,
+  input: import("@repo/ai-engine/schemas").AiUiBuilderInput,
+  context: {
+    readonly themeRecord: NonNullable<
+      Awaited<ReturnType<TenantAiContextRepository["get"]>>
+    >;
+    readonly catalogRecord: NonNullable<
+      Awaited<ReturnType<TenantAiContextRepository["get"]>>
+    >;
+    readonly entityRecord: NonNullable<
+      Awaited<ReturnType<TenantAiContextRepository["get"]>>
+    >;
+    readonly requestedBy: string;
+    readonly question: string;
+  },
+): Promise<void> {
+  const definitionRecord = await deps.entityDefinitionRepository.getByName(
+    tenantId,
+    input.entityName,
+  );
+  if (!definitionRecord) {
+    await deps.uiBuilderAiSuggestionRepository.create(tenantId, {
+      entityName: input.entityName,
+      surface: "forms",
+      jobId,
+      status: "failed",
+      outputMode: "render",
+      userContext: input.question,
+      validationErrors: [
+        {
+          path: "(entity)",
+          message: `Entity definition not found: ${input.entityName}`,
+        },
+      ],
+      createdBy: context.requestedBy,
+    });
+    await deps.aiJobRepository.update(tenantId, jobId, {
+      status: "failed",
+      error: `Entity definition not found: ${input.entityName}`,
+      progress: null,
+    });
+    return;
+  }
+
+  const currentFragment =
+    context.entityRecord.fragments[ENTITY_CURRENT_FRAGMENT_ID] ??
+    context.entityRecord.assembled ??
+    "";
+
+  let previousHtmlDocument: string | undefined;
+  let parentIterationNumber = 0;
+
+  if (input.parentSuggestionId) {
+    const parentSuggestion = await deps.uiBuilderAiSuggestionRepository.getById(
+      tenantId,
+      input.parentSuggestionId,
+    );
+    if (!parentSuggestion?.renderHtml && !parentSuggestion?.renderBrief) {
+      throw new Error("Parent render suggestion not found or missing HTML.");
+    }
+    previousHtmlDocument =
+      parentSuggestion.renderHtml ??
+      extractHtmlFromLegacyRenderBrief(parentSuggestion.renderBrief);
+    parentIterationNumber = parentSuggestion.iterationNumber ?? 0;
+  }
+
+  const entity = defineEntityFromRecord(definitionRecord);
+  const formFieldPaths = buildFormFieldPaths(toFieldPathDefinition(entity));
+
+  const orchestratorResult = await runFormsRenderOrchestrator({
+    vertexConfig: deps.vertexAiConfig,
+    entityName: input.entityName,
+    userPrompt: input.question,
+    formFieldPaths,
+    ...(input.presentationHint
+      ? { presentationHint: input.presentationHint }
+      : input.formPresentation
+        ? { presentationHint: input.formPresentation }
+        : {}),
+    ...(input.modificationRequest
+      ? { modificationRequest: input.modificationRequest }
+      : {}),
+    ...(previousHtmlDocument ? { previousHtmlDocument } : {}),
+    iterationNumber: input.parentSuggestionId ? parentIterationNumber + 1 : 0,
+    entityCurrentFragment: currentFragment,
+    callbacks: buildOrchestratorCallbacks(deps, tenantId, jobId),
+  });
+
+  await deps.aiJobRepository.update(tenantId, jobId, {
+    status: "completed",
+    output: orchestratorResult.output,
+    error: null,
+    progress: null,
+    draft: null,
+  });
+
+  await deps.uiBuilderAiSuggestionRepository.create(tenantId, {
+    entityName: input.entityName,
+    surface: "forms",
+    jobId,
+    status: "ready",
+    outputMode: "render",
+    userContext: input.question,
+    renderHtml: orchestratorResult.renderHtml,
+    renderBrief: orchestratorResult.renderBrief,
+    iterationNumber: orchestratorResult.iterationNumber,
+    ...(input.parentSuggestionId
+      ? { parentSuggestionId: input.parentSuggestionId }
+      : {}),
     createdBy: context.requestedBy,
   });
 }

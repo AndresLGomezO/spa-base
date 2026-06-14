@@ -16,7 +16,12 @@ const workerEnvSchema = z.object({
   FIREBASE_AUTH_EMULATOR_HOST: z.string().trim().optional(),
   FIREBASE_STORAGE_EMULATOR_HOST: z.string().trim().optional(),
   FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST: z.string().trim().optional(),
-  VERTEX_MODEL_ID: z.string().trim().min(1).default("gemini-2.5-flash"),
+  VERTEX_MODEL_ID: z.string().trim().min(1).default("gemini-2.5-pro"),
+  VERTEX_IMAGEN_MODEL_ID: z
+    .string()
+    .trim()
+    .min(1)
+    .default("imagen-3.0-generate-002"),
   USE_REAL_VERTEX: z
     .enum(["true", "false"])
     .default("false")
@@ -42,6 +47,7 @@ export const vertexAiConfig = {
   projectId: workerEnv.VERTEX_GCP_PROJECT_ID ?? workerEnv.GCP_PROJECT_ID,
   region: workerEnv.GCP_REGION,
   modelId: workerEnv.VERTEX_MODEL_ID,
+  imagenModelId: workerEnv.VERTEX_IMAGEN_MODEL_ID,
   mockEnabled: workerEnv.IS_LOCAL && !workerEnv.USE_REAL_VERTEX,
 };
 

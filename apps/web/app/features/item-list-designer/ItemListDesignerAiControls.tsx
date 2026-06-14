@@ -17,9 +17,12 @@ import type { UiBuilderSuggestionRecord } from "../../lib/api-client";
 import type { UseEntityListLayoutEditorResult } from "../ui-builder/use-entity-list-layout-editor";
 import { toValidationEntity } from "../ui-builder/to-validation-entity";
 import { mergeListSliceForApply } from "../ui-builder-ai/merge-list-slice-for-apply";
+import { UiBuilderAiProgressPopover } from "../ui-builder-ai/UiBuilderAiProgressPopover";
 import { UiBuilderAiRequestModal } from "../ui-builder-ai/UiBuilderAiRequestModal";
 import { UiBuilderAiResultPopover } from "../ui-builder-ai/UiBuilderAiResultPopover";
 import { UiBuilderAiSuggestionsPopover } from "../ui-builder-ai/UiBuilderAiSuggestionsPopover";
+import { useUiBuilderAiProgressPopoverState } from "../ui-builder-ai/use-ui-builder-ai-progress-popover-state";
+import { useUiBuilderAiProgressTimeline } from "../ui-builder-ai/use-ui-builder-ai-progress-timeline";
 import {
   findSuggestionByJobId,
   resolveLastUiBuilderRunDisplay,
@@ -63,6 +66,9 @@ export function ItemListDesignerAiControls({
     canRead,
   );
   const invalidateSuggestions = useInvalidateUiBuilderAiSuggestions();
+  const progressTimeline = useUiBuilderAiProgressTimeline("list", job);
+  const { progressOpen, onProgressOpenChange, onProgressHoverOpenChange } =
+    useUiBuilderAiProgressPopoverState(isWorking);
 
   const lastRunDisplay = useMemo(
     () => resolveLastUiBuilderRunDisplay(lastRun, suggestionsQuery.data ?? []),
@@ -159,10 +165,9 @@ export function ItemListDesignerAiControls({
           type="button"
           size="sm"
           label={aiButtonLabel}
-          disabled={!canRun || isWorking}
+          disabled={!canRun && !isWorking}
           className={cn(
             "bg-primary/5 text-primary hover:bg-primary/10 hover:text-primary",
-            isWorking && "pointer-events-none",
           )}
           onClick={() => {
             if (!hasActiveJob) {
@@ -224,25 +229,38 @@ export function ItemListDesignerAiControls({
         ) : null}
         {canRun ? (
           <>
-            <UiBuilderAiResultPopover
-              open={previewOpen}
-              onOpenChange={(open) => {
-                if (!open) {
-                  setResultOpen(false);
-                  setHoverOpen(false);
+            {isWorking ? (
+              <UiBuilderAiProgressPopover
+                open={progressOpen}
+                onOpenChange={onProgressOpenChange}
+                hoverable
+                onHoverOpenChange={onProgressHoverOpenChange}
+                trigger={<span className="inline-flex">{aiButton}</span>}
+                timeline={progressTimeline}
+                progress={job?.progress}
+                jobError={job?.status === "failed" ? job.error : null}
+              />
+            ) : (
+              <UiBuilderAiResultPopover
+                open={previewOpen}
+                onOpenChange={(open) => {
+                  if (!open) {
+                    setResultOpen(false);
+                    setHoverOpen(false);
+                  }
+                }}
+                hoverable={lastRunDisplay != null && !isWorking}
+                openOnClick={false}
+                onHoverOpenChange={setHoverOpen}
+                trigger={aiButton}
+                suggestion={
+                  resultSuggestion ?? lastRunDisplay?.suggestion ?? null
                 }
-              }}
-              hoverable={lastRunDisplay != null && !isWorking}
-              openOnClick={false}
-              onHoverOpenChange={setHoverOpen}
-              trigger={aiButton}
-              suggestion={
-                resultSuggestion ?? lastRunDisplay?.suggestion ?? null
-              }
-              jobError={previewJobError}
-              finishedAt={lastRunDisplay?.finishedAt ?? null}
-              onApply={applySuggestion}
-            />
+                jobError={previewJobError}
+                finishedAt={lastRunDisplay?.finishedAt ?? null}
+                onApply={applySuggestion}
+              />
+            )}
             <UiBuilderAiRequestModal
               open={requestOpen}
               onOpenChange={setRequestOpen}

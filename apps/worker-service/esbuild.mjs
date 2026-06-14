@@ -5,7 +5,12 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 // Bundle workspace TypeScript packages into dist; keep npm packages with native/dynamic loads external.
-const npmExternals = ["@google-cloud/vertexai", "firebase-admin", "fastify"];
+const npmExternals = [
+  "@google-cloud/vertexai",
+  "@google/genai",
+  "firebase-admin",
+  "fastify",
+];
 
 const forceExternalPlugin = {
   name: "force-gcp-external",

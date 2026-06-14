@@ -16,13 +16,22 @@ export const listViewTypeSchema = z.enum(["table", "card", "expandableTable"]);
 
 export const formPresentationSchema = z.enum(["plain", "wizard"]);
 
+export const uiBuilderOutputModeSchema = z.enum(["structure", "render"]);
+
+export type UiBuilderOutputMode = z.infer<typeof uiBuilderOutputModeSchema>;
+
 export const aiUiBuilderInputSchema = z.object({
   question: z.string().trim().min(1).max(8000),
   entityName: z.string().trim().min(1),
   surface: designLayoutSurfaceSchema,
   listViewType: listViewTypeSchema.optional(),
   formPresentation: formPresentationSchema.optional(),
+  presentationHint: formPresentationSchema.optional(),
+  allowCreative: z.boolean().optional(),
   currentLayoutJson: z.string().max(50000).optional(),
+  outputMode: uiBuilderOutputModeSchema.optional().default("structure"),
+  parentSuggestionId: z.string().trim().min(1).optional(),
+  modificationRequest: z.string().trim().max(8000).optional(),
 });
 
 export type AiUiBuilderInput = z.infer<typeof aiUiBuilderInputSchema>;

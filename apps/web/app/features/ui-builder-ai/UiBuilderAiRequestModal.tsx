@@ -1,6 +1,15 @@
-import { Alert, Button, Modal, Text, Textarea } from "@repo/ui";
-import { useEffect, useState } from "react";
+import {
+  Alert,
+  Button,
+  Modal,
+  SegmentedSwitch,
+  Text,
+  Textarea,
+} from "@repo/ui";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+export type UiBuilderAiRequestMode = "structure" | "render";
 
 interface UiBuilderAiRequestModalProps {
   readonly open: boolean;
@@ -8,7 +17,12 @@ interface UiBuilderAiRequestModalProps {
   readonly entityLabel: string;
   readonly isSubmitting: boolean;
   readonly jobInProgress?: boolean;
-  readonly onSubmit: (userContext: string) => void;
+  readonly translationPrefix?: string;
+  readonly modes?: readonly UiBuilderAiRequestMode[];
+  readonly onSubmit: (
+    userContext: string,
+    mode: UiBuilderAiRequestMode,
+  ) => void;
 }
 
 export function UiBuilderAiRequestModal({
@@ -17,22 +31,62 @@ export function UiBuilderAiRequestModal({
   entityLabel,
   isSubmitting,
   jobInProgress = false,
+  translationPrefix = "itemListDesigner.ai",
+  modes,
   onSubmit,
 }: UiBuilderAiRequestModalProps) {
   const { t } = useTranslation("common");
+  const key = (suffix: string) => `${translationPrefix}.${suffix}` as const;
+  const availableModes = useMemo(
+    () => modes ?? (["structure"] as const),
+    [modes],
+  );
   const [userContext, setUserContext] = useState("");
+  const [activeMode, setActiveMode] = useState<UiBuilderAiRequestMode>(
+    availableModes[0] ?? "structure",
+  );
 
   useEffect(() => {
     if (!open) {
       setUserContext("");
+      setActiveMode(availableModes[0] ?? "structure");
     }
-  }, [open]);
+  }, [availableModes, open]);
+
+  const isRenderMode = activeMode === "render";
+
+  const modeOptions = useMemo(
+    () =>
+      availableModes.map((mode) => {
+        const labelKey =
+          mode === "render"
+            ? `${translationPrefix}.modeRender`
+            : `${translationPrefix}.modeStructure`;
+        const label = String(t(labelKey as never));
+        return {
+          value: mode,
+          label,
+          ariaLabel: label,
+        };
+      }),
+    [availableModes, t, translationPrefix],
+  );
+  const descriptionKey = isRenderMode
+    ? "renderRequestDescription"
+    : "requestDescription";
+  const contextHelperKey = isRenderMode
+    ? "renderContextHelper"
+    : "contextHelper";
+  const contextExampleKey = isRenderMode
+    ? "renderContextExample"
+    : "contextExample";
+  const buildButtonKey = isRenderMode ? "renderBuildButton" : "buildButton";
 
   return (
     <Modal
       open={open}
       onClose={() => onOpenChange(false)}
-      title={t("itemListDesigner.ai.requestTitle")}
+      title={t(key("requestTitle") as never)}
       size="lg"
       footer={
         <div className="flex justify-end gap-2">
@@ -42,38 +96,45 @@ export function UiBuilderAiRequestModal({
             onClick={() => onOpenChange(false)}
             disabled={isSubmitting}
           >
-            {t("itemListDesigner.ai.cancel")}
+            {t(key("cancel") as never)}
           </Button>
           <Button
             type="button"
             loading={isSubmitting}
             disabled={jobInProgress}
-            onClick={() => onSubmit(userContext.trim())}
+            onClick={() => onSubmit(userContext.trim(), activeMode)}
           >
-            {t("itemListDesigner.ai.buildButton")}
+            {t(key(buildButtonKey) as never)}
           </Button>
         </div>
       }
     >
       <div className="space-y-4">
         {jobInProgress ? (
-          <Alert>{t("itemListDesigner.ai.jobInProgress")}</Alert>
+          <Alert>{t(key("jobInProgress") as never)}</Alert>
         ) : null}
-        <Text>
-          {t("itemListDesigner.ai.requestDescription", { entity: entityLabel })}
-        </Text>
+        {availableModes.length > 1 ? (
+          <SegmentedSwitch
+            value={activeMode}
+            onChange={setActiveMode}
+            ariaLabel={t(key("modeSwitchLabel") as never)}
+            fullWidth
+            options={modeOptions}
+          />
+        ) : null}
+        <Text>{t(key(descriptionKey) as never, { entity: entityLabel })}</Text>
         <div className="space-y-2">
           <Text className="text-sm font-medium text-foreground">
-            {t("itemListDesigner.ai.contextLabel")}
+            {t(key("contextLabel") as never)}
           </Text>
           <Text className="text-sm text-muted-foreground">
-            {t("itemListDesigner.ai.contextHelper")}
+            {t(key(contextHelperKey) as never)}
           </Text>
           <Textarea
             value={userContext}
             onChange={(event) => setUserContext(event.target.value)}
             rows={5}
-            placeholder={t("itemListDesigner.ai.contextExample")}
+            placeholder={t(key(contextExampleKey) as never)}
             disabled={isSubmitting}
           />
         </div>

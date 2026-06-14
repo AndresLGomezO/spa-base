@@ -83,6 +83,11 @@ export {
 } from "./firestore-admin-tenant-user-invite-repository.js";
 export { uploadTenantLogo, validateStorageObjectId } from "./tenant-storage.js";
 export {
+  downloadAiUiRenderImage,
+  uploadAiUiRenderImage,
+  type UploadAiUiRenderImageResult,
+} from "./ai-render-storage.js";
+export {
   buildInMemoryListSnapshotCacheKey,
   buildInMemoryListSnapshotInvalidationPrefix,
   buildOwnershipScope,

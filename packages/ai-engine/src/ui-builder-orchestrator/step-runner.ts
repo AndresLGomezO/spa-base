@@ -1,4 +1,5 @@
 import { extractJsonFromModelAnswer } from "../extract-json-from-model-answer.js";
+import type { AiJobStepTraceEntry } from "../schemas/ai-job.schema.js";
 import {
   generateModelAnswer,
   type GenerateModelAnswerOptions,
@@ -15,12 +16,23 @@ export interface RunStepOptions {
   readonly vertexConfig: VertexAiConfig;
   readonly stepContext: StepContextInput;
   readonly stepId: string;
+  readonly draftBeforeStep?: unknown;
+  readonly onAttempt?: (entry: AiJobStepTraceEntry) => void | Promise<void>;
 }
 
 function isTruncatedResponseError(error: unknown): boolean {
   return (
     error instanceof Error && error.message.includes(TRUNCATED_RESPONSE_ERROR)
   );
+}
+
+async function recordAttempt(
+  options: RunStepOptions,
+  entry: AiJobStepTraceEntry,
+): Promise<void> {
+  if (options.onAttempt) {
+    await options.onAttempt(entry);
+  }
 }
 
 export async function runStepWithRetries(
@@ -41,12 +53,27 @@ export async function runStepWithRetries(
         "Your last response was truncated. Return the smallest valid JSON object only — no comments, no extra keys, no pretty-print padding.",
       );
     }
+    if (
+      lastErrors.some(
+        (error) =>
+          error.includes("JSON") ||
+          error.includes("Unexpected token") ||
+          error.includes("Expected ','") ||
+          error.includes("Expected '}'"),
+      )
+    ) {
+      retryParts.push(
+        "Your last response was invalid JSON. Return ONE minimal valid JSON object only — no markdown fences, no trailing commas, no comments, and no styles/conditionalStyles arrays unless required.",
+      );
+    }
     const retryHint =
       retryParts.length > 0
         ? `\n\n${retryParts.join("\n\n")}\nFix these issues and return valid JSON only.`
         : "";
 
-    let rawAnswer: string;
+    const startedAt = Date.now();
+    let rawAnswer = "";
+
     try {
       rawAnswer = await generateModelAnswer(
         options.vertexConfig,
@@ -64,6 +91,22 @@ export async function runStepWithRetries(
     } catch (error) {
       if (isTruncatedResponseError(error)) {
         lastErrors = [TRUNCATED_RESPONSE_ERROR];
+        await recordAttempt(options, {
+          stepId: options.stepId,
+          attempt,
+          systemInstruction: options.stepContext.systemInstruction,
+          contextBlocks: [...options.stepContext.contextBlocks],
+          userText: options.stepContext.userText,
+          outputInstruction: options.stepContext.outputInstruction,
+          ...(retryHint ? { retryHint } : {}),
+          rawModelAnswer: "",
+          validationErrors: [...lastErrors],
+          validationOk: false,
+          durationMs: Date.now() - startedAt,
+          ...(options.draftBeforeStep !== undefined
+            ? { draftBeforeStep: options.draftBeforeStep }
+            : {}),
+        });
         continue;
       }
       throw error;
@@ -78,14 +121,64 @@ export async function runStepWithRetries(
           ? error.message
           : "Failed to parse JSON response.";
       lastErrors = [message];
+      await recordAttempt(options, {
+        stepId: options.stepId,
+        attempt,
+        systemInstruction: options.stepContext.systemInstruction,
+        contextBlocks: [...options.stepContext.contextBlocks],
+        userText: options.stepContext.userText,
+        outputInstruction: options.stepContext.outputInstruction,
+        ...(retryHint ? { retryHint } : {}),
+        rawModelAnswer: rawAnswer,
+        validationErrors: [...lastErrors],
+        validationOk: false,
+        durationMs: Date.now() - startedAt,
+        ...(options.draftBeforeStep !== undefined
+          ? { draftBeforeStep: options.draftBeforeStep }
+          : {}),
+      });
       continue;
     }
 
     const result = validate(parsed);
     if (result.ok) {
+      await recordAttempt(options, {
+        stepId: options.stepId,
+        attempt,
+        systemInstruction: options.stepContext.systemInstruction,
+        contextBlocks: [...options.stepContext.contextBlocks],
+        userText: options.stepContext.userText,
+        outputInstruction: options.stepContext.outputInstruction,
+        ...(retryHint ? { retryHint } : {}),
+        rawModelAnswer: rawAnswer,
+        parsedJson: parsed,
+        validationOk: true,
+        durationMs: Date.now() - startedAt,
+        ...(options.draftBeforeStep !== undefined
+          ? { draftBeforeStep: options.draftBeforeStep }
+          : {}),
+      });
       return result;
     }
+
     lastErrors = result.errors;
+    await recordAttempt(options, {
+      stepId: options.stepId,
+      attempt,
+      systemInstruction: options.stepContext.systemInstruction,
+      contextBlocks: [...options.stepContext.contextBlocks],
+      userText: options.stepContext.userText,
+      outputInstruction: options.stepContext.outputInstruction,
+      ...(retryHint ? { retryHint } : {}),
+      rawModelAnswer: rawAnswer,
+      parsedJson: parsed,
+      validationErrors: [...result.errors],
+      validationOk: false,
+      durationMs: Date.now() - startedAt,
+      ...(options.draftBeforeStep !== undefined
+        ? { draftBeforeStep: options.draftBeforeStep }
+        : {}),
+    });
   }
 
   throw new Error(

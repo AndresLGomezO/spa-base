@@ -3,6 +3,7 @@ import { z } from "zod";
 import {
   designLayoutSurfaceSchema,
   listViewTypeSchema,
+  uiBuilderOutputModeSchema,
 } from "./ai-ui-builder.schema.js";
 
 export const UI_BUILDER_AI_SUGGESTIONS_COLLECTION = "ui_builder_ai_suggestions";
@@ -42,6 +43,15 @@ export const uiBuilderSuggestionRecordSchema = z.object({
     .array(uiBuilderSuggestionValidationErrorSchema)
     .optional(),
   rawAnswer: z.string().optional(),
+  outputMode: uiBuilderOutputModeSchema.optional(),
+  imageUrl: z.string().url().optional(),
+  imageStoragePath: z.string().trim().min(1).optional(),
+  renderPrompt: z.string().optional(),
+  renderBrief: z.string().optional(),
+  renderHtml: z.string().max(200_000).optional(),
+  parentSuggestionId: z.string().trim().min(1).optional(),
+  iterationNumber: z.number().int().min(0).optional(),
+  critiqueNotes: z.string().optional(),
   createdBy: z.string().trim().min(1),
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),
@@ -63,6 +73,15 @@ export const createUiBuilderSuggestionInputSchema = z.object({
     .optional(),
   rawAnswer: z.string().optional(),
   listViewType: listViewTypeSchema.optional(),
+  outputMode: uiBuilderOutputModeSchema.optional(),
+  imageUrl: z.string().url().optional(),
+  imageStoragePath: z.string().trim().min(1).optional(),
+  renderPrompt: z.string().optional(),
+  renderBrief: z.string().optional(),
+  renderHtml: z.string().max(200_000).optional(),
+  parentSuggestionId: z.string().trim().min(1).optional(),
+  iterationNumber: z.number().int().min(0).optional(),
+  critiqueNotes: z.string().optional(),
   createdBy: z.string().trim().min(1),
 });
 

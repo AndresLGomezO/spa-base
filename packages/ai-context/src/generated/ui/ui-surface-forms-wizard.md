@@ -22,59 +22,88 @@ Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-a
   "surface": "forms",
   "version": 1,
   "data": {
-    "presentation": "plain",
+    "presentation": "wizard",
     "modalSize": "md",
-    "layout": {
-      "root": {
-        "type": "root",
-        "id": "root-example",
-        "columnCount": 2,
-        "columns": [
-          {
-            "id": "col-example",
-            "rows": [
-              {
-                "type": "component",
-                "id": "row-example",
-                "component": {
-                  "kind": "text",
-                  "primary": {
-                    "type": "field",
-                    "path": "name"
-                  },
-                  "label": {
-                    "show": true
+    "wizard": {
+      "shellLayout": {
+        "root": {
+          "type": "root",
+          "id": "root-example",
+          "columnCount": 2,
+          "columns": [
+            {
+              "id": "col-example",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row-example",
+                  "component": {
+                    "kind": "wizard-progress",
+                    "variant": "bar",
+                    "stepLabel": {
+                      "show": true,
+                      "position": "top",
+                      "bold": true
+                    },
+                    "conditionalStyles": []
                   }
                 }
-              }
-            ]
-          },
-          {
-            "id": "col-example",
-            "rows": [
-              {
-                "type": "component",
-                "id": "row-example",
-                "component": {
-                  "kind": "text",
-                  "primary": {
-                    "type": "field",
-                    "path": "name"
-                  },
-                  "styles": [
+              ]
+            },
+            {
+              "id": "col-example",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row-example",
+                  "component": {
+                    "kind": "wizard-step-host"
+                  }
+                },
+                {
+                  "type": "component",
+                  "id": "row-example",
+                  "component": {
+                    "kind": "wizard-actions"
+                  }
+                }
+              ]
+            }
+          ]
+        },
+        "showActions": true,
+        "cardsPerRow": 1
+      },
+      "steps": [
+        {
+          "id": "step-example",
+          "label": "Step 1",
+          "layout": {
+            "root": {
+              "type": "root",
+              "id": "root-example",
+              "columnCount": 1,
+              "columns": [
+                {
+                  "id": "col-example",
+                  "rows": [
                     {
-                      "property": "fontWeight",
-                      "value": "bold"
+                      "type": "component",
+                      "id": "row-example",
+                      "component": {
+                        "kind": "form-field",
+                        "fieldPath": "name"
+                      }
                     }
                   ]
                 }
-              }
-            ]
+              ]
+            },
+            "showActions": true,
+            "cardsPerRow": 1
           }
-        ]
-      },
-      "showActions": true,
-      "cardsPerRow": 1
+        }
+      ]
     }
   }
 }

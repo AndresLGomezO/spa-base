@@ -472,6 +472,53 @@ function extractMetricsDateGranularityKeys(corpus) {
   return keys;
 }
 
+/** translationPrefix / key("suffix") in ui-builder-ai → keys under formDesigner.ai / itemListDesigner.ai */
+function extractUiBuilderAiDesignerKeys(corpus) {
+  const needsFormDesigner =
+    corpus.includes('TRANSLATION_PREFIX = "formDesigner.ai"') ||
+    corpus.includes('translationPrefix = "formDesigner.ai"') ||
+    corpus.includes("translationPrefix={TRANSLATION_PREFIX}");
+  const needsItemListDesigner =
+    corpus.includes('translationPrefix = "itemListDesigner.ai"') ||
+    corpus.includes("itemListDesigner.ai.");
+
+  if (!needsFormDesigner && !needsItemListDesigner) {
+    return [];
+  }
+
+  const refCommon = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  );
+  const keys = [];
+
+  if (needsFormDesigner && refCommon.formDesigner?.ai) {
+    keys.push(...flattenKeys(refCommon.formDesigner.ai, "formDesigner.ai"));
+  }
+  if (needsItemListDesigner && refCommon.itemListDesigner?.ai) {
+    keys.push(
+      ...flattenKeys(refCommon.itemListDesigner.ai, "itemListDesigner.ai"),
+    );
+  }
+
+  return keys.map((key) => `${DEFAULT_NAMESPACE}:${key}`);
+}
+
+/** aiDebugger.tabs.${item} in source → all keys under aiDebugger.tabs */
+function extractAiDebuggerTabKeys(corpus) {
+  if (!corpus.includes("aiDebugger.tabs.${")) return [];
+
+  const refAiDebugger = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).aiDebugger;
+
+  const tabs = refAiDebugger?.tabs;
+  if (!tabs || typeof tabs !== "object") return [];
+
+  return Object.keys(tabs).map(
+    (key) => `${DEFAULT_NAMESPACE}:aiDebugger.tabs.${key}`,
+  );
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -720,6 +767,20 @@ mergeUsedKeys(
   extractFormDesignerPreviewDeviceKeys(corpus),
   formDesignerMobileDeviceSelectFile,
 );
+const uiBuilderAiRequestModalFile = path.join(
+  SRC_DIR,
+  "features/ui-builder-ai/UiBuilderAiRequestModal.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractUiBuilderAiDesignerKeys(corpus),
+  uiBuilderAiRequestModalFile,
+);
+const aiDebuggerViewFile = path.join(
+  SRC_DIR,
+  "features/ai-debugger/AiDebuggerView.tsx",
+);
+mergeUsedKeys(usedKeys, extractAiDebuggerTabKeys(corpus), aiDebuggerViewFile);
 
 console.log("── 1. Key Parity ──────────────────────────────");
 const parityErrs = checkKeyParity();

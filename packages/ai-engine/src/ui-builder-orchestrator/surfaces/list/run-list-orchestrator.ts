@@ -70,6 +70,7 @@ export async function runListUiBuilderOrchestrator(
     fieldPathDefinition,
     layoutFieldPaths,
     tableFieldPaths,
+    formFieldPaths: [],
     themeFragments: input.themeFragments,
     entityTenantFragment: input.entityTenantFragment,
     entityCatalogFragment: input.entityCatalogFragment,

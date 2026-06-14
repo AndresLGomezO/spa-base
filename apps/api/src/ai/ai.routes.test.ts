@@ -131,4 +131,60 @@ describe("AI chat routes", () => {
 
     await server.close();
   });
+
+  it("returns progress and draft for ui builder job polling", async () => {
+    const server = await buildTestServer();
+    await server.ready();
+
+    const created = await aiJobRepository.create("tenant_a", {
+      feature: "uiBuilder",
+      input: {
+        question: "Design a card list",
+        entityName: "contract",
+        surface: "list",
+      },
+      requestedBy: authState.uid,
+      permission: "ai.uiBuilder.run",
+    });
+    await aiJobRepository.update("tenant_a", created.id, {
+      status: "running",
+      progress: {
+        stepIndex: 2,
+        totalSteps: 5,
+        stepId: "list.layoutSkeleton:listItem",
+        stepLabel: "Designing layout skeleton (listItem)",
+        phase: "layout",
+      },
+      draft: {
+        surface: "list",
+        listViewType: "card",
+        completedStepIds: ["list.selectViewType"],
+        layoutTargets: {},
+      },
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: `/api/ai/jobs/${created.id}`,
+      headers: {
+        authorization: "Bearer test-token",
+        "x-firebase-appcheck": "test-app-check",
+      },
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: {
+        status: string;
+        progress: { stepId: string; stepLabel: string } | null;
+        draft: { listViewType: string; completedStepIds: string[] } | null;
+      };
+    };
+    expect(body.data.status).toBe("running");
+    expect(body.data.progress?.stepId).toBe("list.layoutSkeleton:listItem");
+    expect(body.data.draft?.listViewType).toBe("card");
+    expect(body.data.draft?.completedStepIds).toEqual(["list.selectViewType"]);
+
+    await server.close();
+  });
 });

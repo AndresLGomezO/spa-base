@@ -52,5 +52,14 @@ export function createInMemoryAiJobRepository(): AiJobRepository & {
       records.set(key(tenantId, id), next);
       return next;
     },
+    async listRecent(tenantId, options) {
+      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 50);
+      const feature = options?.feature;
+      return [...records.values()]
+        .filter((record) => record.tenantId === tenantId)
+        .filter((record) => (feature ? record.feature === feature : true))
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+        .slice(0, limit);
+    },
   };
 }

@@ -168,6 +168,7 @@ services:
       - FIRESTORE_EMULATOR_HOST=firebase-emulator:8080
       - FIREBASE_AUTH_EMULATOR_HOST=firebase-emulator:9099
       - FIREBASE_STORAGE_EMULATOR_HOST=firebase-emulator:9199
+      - FIREBASE_STORAGE_EMULATOR_PUBLIC_HOST=127.0.0.1:9199
       - TASKS_SA_EMAIL=local-tasks-sa@demo-project-base.iam.gserviceaccount.com
     depends_on:
       firebase-emulator:

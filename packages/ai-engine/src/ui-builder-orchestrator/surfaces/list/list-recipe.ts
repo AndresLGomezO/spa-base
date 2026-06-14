@@ -254,6 +254,7 @@ export const listSurfaceRecipe: SurfaceRecipe = {
 
   mergeStepIntoDraft(step, data, draft, appendSteps = []) {
     void appendSteps;
+    const listDraft = draft as ListUiBuilderDraft;
     const stepType = stepTypeFromStep(step);
 
     switch (stepType) {
@@ -261,12 +262,12 @@ export const listSurfaceRecipe: SurfaceRecipe = {
         const output = data as {
           listViewType: ListUiBuilderDraft["listViewType"];
         };
-        return { ...draft, listViewType: output.listViewType };
+        return { ...listDraft, listViewType: output.listViewType };
       }
       case LIST_STEP_TYPES.TABLE_SELECT_FIELDS: {
         const output = data as { fields: string[]; showActions?: boolean };
         return {
-          ...draft,
+          ...listDraft,
           table: {
             fields: [...output.fields],
             ...(output.showActions !== undefined
@@ -281,7 +282,7 @@ export const listSurfaceRecipe: SurfaceRecipe = {
           showActions?: boolean;
         };
         return {
-          ...draft,
+          ...listDraft,
           expandableColumns: output.columns ? [...output.columns] : [],
           ...(output.showActions !== undefined
             ? { showActions: output.showActions }
@@ -293,11 +294,11 @@ export const listSurfaceRecipe: SurfaceRecipe = {
           pathKey: string;
           components: SkeletonComponentSpec[];
         };
-        const existing = ensureLayoutTarget(draft, output.pathKey);
+        const existing = ensureLayoutTarget(listDraft, output.pathKey);
         return {
-          ...draft,
+          ...listDraft,
           layoutTargets: {
-            ...draft.layoutTargets,
+            ...listDraft.layoutTargets,
             [output.pathKey]: {
               ...existing,
               label: getLayoutTargetLabel(output.pathKey),
@@ -310,11 +311,11 @@ export const listSurfaceRecipe: SurfaceRecipe = {
         const output = data as { component: UiComponentConfig };
         const pathKey = String(step.payload?.pathKey ?? "");
         const componentPath = String(step.payload?.componentPath ?? "");
-        const existing = ensureLayoutTarget(draft, pathKey);
-        const nextDraft: ListUiBuilderDraft = {
-          ...draft,
+        const existing = ensureLayoutTarget(listDraft, pathKey);
+        return {
+          ...listDraft,
           layoutTargets: {
-            ...draft.layoutTargets,
+            ...listDraft.layoutTargets,
             [pathKey]: {
               ...existing,
               componentConfigs: {
@@ -324,10 +325,9 @@ export const listSurfaceRecipe: SurfaceRecipe = {
             },
           },
         };
-        return nextDraft;
       }
       default:
-        return draft;
+        return listDraft;
     }
   },
 
@@ -335,21 +335,18 @@ export const listSurfaceRecipe: SurfaceRecipe = {
     void context;
     return draft;
   },
-};
 
-export function appendStepsAfterMerge(
-  step: UiBuilderStep,
-  draft: ListUiBuilderDraft,
-  validationAppendSteps: readonly UiBuilderStep[],
-): readonly UiBuilderStep[] {
-  if (step.type === LIST_STEP_TYPES.CONFIGURE_COMPONENT) {
-    const extra = appendNextExpandableSkeletonIfReady(draft);
-    return [...validationAppendSteps, ...extra];
-  }
-  if (step.type === LIST_STEP_TYPES.LAYOUT_SKELETON) {
+  appendStepsAfterMerge(step, draft, validationAppendSteps) {
+    const listDraft = draft as ListUiBuilderDraft;
+    if (step.type === LIST_STEP_TYPES.CONFIGURE_COMPONENT) {
+      const extra = appendNextExpandableSkeletonIfReady(listDraft);
+      return [...validationAppendSteps, ...extra];
+    }
+    if (step.type === LIST_STEP_TYPES.LAYOUT_SKELETON) {
+      return validationAppendSteps;
+    }
     return validationAppendSteps;
-  }
-  return validationAppendSteps;
-}
+  },
+};
 
 export { sanitizeTableFields, assembleListSliceData };

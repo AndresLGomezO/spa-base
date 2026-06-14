@@ -54,6 +54,34 @@ export const aiJobProgressSchema = z.object({
 
 export type AiJobProgress = z.infer<typeof aiJobProgressSchema>;
 
+export const aiJobStepTraceContextBlockSchema = z.object({
+  id: z.string().trim().min(1),
+  content: z.string(),
+});
+
+export const aiJobStepTraceEntrySchema = z.object({
+  stepId: z.string().trim().min(1),
+  attempt: z.number().int().min(0),
+  systemInstruction: z.string(),
+  contextBlocks: z.array(aiJobStepTraceContextBlockSchema),
+  userText: z.string(),
+  outputInstruction: z.string(),
+  retryHint: z.string().optional(),
+  rawModelAnswer: z.string(),
+  parsedJson: z.unknown().optional(),
+  validationErrors: z.array(z.string()).optional(),
+  validationOk: z.boolean(),
+  durationMs: z.number().int().min(0).optional(),
+  draftBeforeStep: z.unknown().optional(),
+  draftAfterStep: z.unknown().optional(),
+});
+
+export type AiJobStepTraceEntry = z.infer<typeof aiJobStepTraceEntrySchema>;
+
+export const aiJobStepTraceSchema = z.array(aiJobStepTraceEntrySchema);
+
+export type AiJobStepTrace = z.infer<typeof aiJobStepTraceSchema>;
+
 export const uiBuilderDraftSchema = z
   .record(z.string(), z.unknown())
   .nullable();
@@ -75,6 +103,7 @@ export const aiJobRecordSchema = z.object({
   error: z.string().nullable(),
   progress: aiJobProgressSchema.nullable().optional(),
   draft: uiBuilderDraftSchema.optional(),
+  stepTrace: aiJobStepTraceSchema.optional(),
   requestedBy: z.string().trim().min(1),
   permission: z.string().trim().min(1),
   createdAt: z.string().trim().min(1),

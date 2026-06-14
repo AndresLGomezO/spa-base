@@ -118,7 +118,9 @@ export function createEntityMainPageRenderContext(
       previewMode ? (
         <div className={entityListPageSlotClassName}>{listContent}</div>
       ) : (
-        <EntityPageListScrollContainer>{listContent}</EntityPageListScrollContainer>
+        <EntityPageListScrollContainer>
+          {listContent}
+        </EntityPageListScrollContainer>
       ),
   };
 }

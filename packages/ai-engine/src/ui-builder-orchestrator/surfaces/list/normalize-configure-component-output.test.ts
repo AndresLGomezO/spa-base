@@ -95,6 +95,7 @@ describe("listSurfaceRecipe configureComponent validation", () => {
     },
     layoutFieldPaths: ["name"],
     tableFieldPaths: ["name"],
+    formFieldPaths: [],
     themeFragments: {},
     entityTenantFragment: "",
     entityCatalogFragment: "",

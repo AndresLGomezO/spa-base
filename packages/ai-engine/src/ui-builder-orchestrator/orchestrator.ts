@@ -1,10 +1,8 @@
 import { MAX_TOTAL_STEPS, STEP_COOLDOWN_MS } from "./limits.js";
 import { buildProgress } from "./progress.js";
 import { runStepWithRetries } from "./step-runner.js";
-import { appendStepsAfterMerge } from "./surfaces/list/list-recipe.js";
 import { sleep } from "../vertex-retry.js";
 import type {
-  ListUiBuilderDraft,
   RunOrchestratorOptions,
   OrchestratorResult,
   StepValidationResult,
@@ -15,7 +13,7 @@ export async function runOrchestrator(
   options: RunOrchestratorOptions,
 ): Promise<OrchestratorResult> {
   const { recipe, context, callbacks, vertexConfig } = options;
-  let draft = context.draft as ListUiBuilderDraft;
+  let draft = context.draft;
   const queue: UiBuilderStep[] = [
     ...(options.initialSteps ?? recipe.createInitialSteps(context)),
   ];
@@ -39,11 +37,24 @@ export async function runOrchestrator(
       draft,
     });
 
+    const draftBeforeStep = draft;
+
     const validation = await runStepWithRetries(
       {
         vertexConfig,
         stepContext,
         stepId: step.id,
+        draftBeforeStep,
+        ...(callbacks.onStepTrace
+          ? {
+              onAttempt: async (entry) => {
+                await callbacks.onStepTrace!({
+                  ...entry,
+                  draftBeforeStep,
+                });
+              },
+            }
+          : {}),
       },
       (raw): StepValidationResult =>
         recipe.validateStepOutput(step, raw, { ...context, draft }),
@@ -60,9 +71,13 @@ export async function runOrchestrator(
       completedStepIds: [...draft.completedStepIds, step.id],
     };
 
+    if (callbacks.onStepMerged) {
+      await callbacks.onStepMerged(step.id, draft);
+    }
+
     await callbacks.onDraftUpdate(draft);
 
-    const stepsToAppend = appendStepsAfterMerge(
+    const stepsToAppend = recipe.appendStepsAfterMerge(
       step,
       draft,
       validation.appendSteps ?? [],

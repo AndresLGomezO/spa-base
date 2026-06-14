@@ -4,6 +4,7 @@ import {
   buildMockChatAnswer,
   buildMockUiBuilderStepAnswer,
 } from "./vertex-mock-responses.js";
+import { getStepTemperature } from "./ui-builder-orchestrator/limits.js";
 import {
   isVertexRateLimitError,
   normalizeVertexError,
@@ -16,6 +17,7 @@ export interface VertexAiConfig {
   readonly projectId: string;
   readonly region: string;
   readonly modelId: string;
+  readonly imagenModelId?: string;
   readonly mockEnabled: boolean;
 }
 
@@ -63,6 +65,10 @@ export interface GenerateModelAnswerInput {
     readonly id: string;
     readonly content: string;
   }[];
+  readonly inlineImage?: {
+    readonly mimeType: string;
+    readonly base64Data: string;
+  };
 }
 
 export interface GenerateModelAnswerOptions {
@@ -114,10 +120,24 @@ export async function generateModelAnswer(
 
   for (let attempt = 0; attempt <= VERTEX_MAX_RETRIES; attempt += 1) {
     try {
+      const userParts: Array<
+        { text: string } | { inlineData: { mimeType: string; data: string } }
+      > = [{ text: userText }];
+      if (input.inlineImage) {
+        userParts.push({
+          inlineData: {
+            mimeType: input.inlineImage.mimeType,
+            data: input.inlineImage.base64Data,
+          },
+        });
+      }
+
       const result = await model.generateContent({
-        contents: [{ role: "user", parts: [{ text: userText }] }],
+        contents: [{ role: "user", parts: userParts }],
         generationConfig: {
-          temperature: 0.2,
+          temperature: options?.stepId
+            ? getStepTemperature(options.stepId)
+            : 0.2,
           maxOutputTokens:
             options?.maxOutputTokens ?? DEFAULT_MAX_OUTPUT_TOKENS,
           ...(options?.responseMimeType

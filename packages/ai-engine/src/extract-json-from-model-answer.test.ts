@@ -35,4 +35,17 @@ describe("extractJsonFromModelAnswer", () => {
       extractJsonFromModelAnswer('```json\n{"kind":"design-layout-slice"'),
     ).toThrow("truncated");
   });
+
+  it("repairs trailing commas in arrays and objects", () => {
+    const result = extractJsonFromModelAnswer(
+      '{"component":{"kind":"form-field","fieldPath":"name","label":{"show":true,},},}',
+    );
+    expect(result).toEqual({
+      component: {
+        kind: "form-field",
+        fieldPath: "name",
+        label: { show: true },
+      },
+    });
+  });
 });

@@ -5,8 +5,11 @@ import {
   AI_UI_BUILDER_PERMISSIONS,
 } from "@repo/ai-engine/permissions";
 import {
+  aiJobProgressSchema,
+  aiJobStepTraceSchema,
   submitAiChatRequestSchema,
   submitAiUiBuilderRequestSchema,
+  uiBuilderDraftSchema,
 } from "@repo/ai-engine/schemas";
 import { AI_TASK_ROUTES } from "@repo/ai-engine/task-routes";
 import type { AiJobRepository } from "@repo/firestore-converters";
@@ -46,6 +49,10 @@ export async function registerAiRoutes(
   const requireAiUiBuilderRun = createRequirePermission(
     options.permissionDeps,
     AI_UI_BUILDER_PERMISSIONS[0]!,
+  );
+  const requireAiUiBuilderRead = createRequirePermission(
+    options.permissionDeps,
+    "ai.uiBuilder.read",
   );
   const requireAiJobRead = createRequireAnyPermission(options.permissionDeps, [
     "ai.chat.read",
@@ -235,6 +242,9 @@ export async function registerAiRoutes(
         );
       }
 
+      const canReadStepTrace =
+        request.ctx?.permissions?.includes("ai.uiBuilder.read");
+
       return reply.send(
         successEnvelope({
           id: job.id,
@@ -243,8 +253,62 @@ export async function registerAiRoutes(
           input: job.input,
           output: job.output,
           error: job.error,
+          progress: aiJobProgressSchema.nullable().safeParse(job.progress)
+            .success
+            ? (job.progress ?? null)
+            : null,
+          draft: uiBuilderDraftSchema.safeParse(job.draft ?? null).success
+            ? (job.draft ?? null)
+            : null,
+          ...(canReadStepTrace &&
+          aiJobStepTraceSchema.safeParse(job.stepTrace ?? []).success
+            ? { stepTrace: job.stepTrace ?? [] }
+            : {}),
           createdAt: job.createdAt,
           updatedAt: job.updatedAt,
+        }),
+      );
+    },
+  );
+
+  app.get(
+    "/api/ai/jobs",
+    {
+      preHandler: [options.authenticate, requireAiUiBuilderRead],
+    },
+    async (request, reply) => {
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const query = request.query as {
+        feature?: string;
+        limit?: string;
+      };
+      const feature =
+        query.feature === "uiBuilder" ||
+        query.feature === "chat" ||
+        query.feature === "dataModelBuilder"
+          ? query.feature
+          : "uiBuilder";
+      const limit = Number.parseInt(query.limit ?? "20", 10);
+
+      const jobs = await options.aiJobRepository.listRecent(tenantId, {
+        feature,
+        limit: Number.isFinite(limit) ? limit : 20,
+      });
+
+      return reply.send(
+        successEnvelope({
+          jobs: jobs.map((job) => ({
+            id: job.id,
+            status: job.status,
+            feature: job.feature,
+            input: job.input,
+            error: job.error,
+            progress: job.progress ?? null,
+            createdAt: job.createdAt,
+            updatedAt: job.updatedAt,
+          })),
         }),
       );
     },

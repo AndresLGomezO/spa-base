@@ -985,17 +985,74 @@ export interface AiJobProgress {
   readonly phase: string;
 }
 
+export interface UiBuilderJobDraft {
+  readonly surface?: string;
+  readonly outputMode?: "structure" | "render";
+  readonly completedStepIds?: readonly string[];
+  readonly listViewType?: string;
+  readonly presentation?: string;
+  readonly wizardSteps?: readonly {
+    readonly id: string;
+    readonly label: string;
+  }[];
+  readonly table?: { readonly fields?: readonly string[] };
+  readonly expandableColumns?: readonly {
+    readonly id: string;
+    readonly label?: string;
+  }[];
+  readonly layoutTargets?: Readonly<
+    Record<
+      string,
+      {
+        readonly skeleton?: readonly unknown[];
+        readonly componentConfigs?: Readonly<Record<string, unknown>>;
+      }
+    >
+  >;
+}
+
+export interface AiJobStepTraceEntry {
+  readonly stepId: string;
+  readonly attempt: number;
+  readonly systemInstruction: string;
+  readonly contextBlocks: readonly {
+    readonly id: string;
+    readonly content: string;
+  }[];
+  readonly userText: string;
+  readonly outputInstruction: string;
+  readonly retryHint?: string;
+  readonly rawModelAnswer: string;
+  readonly parsedJson?: unknown;
+  readonly validationErrors?: readonly string[];
+  readonly validationOk: boolean;
+  readonly durationMs?: number;
+  readonly draftBeforeStep?: unknown;
+  readonly draftAfterStep?: unknown;
+}
+
+export interface AiJobUiBuilderInput {
+  readonly question: string;
+  readonly entityName?: string;
+  readonly surface?: string;
+  readonly formPresentation?: string;
+  readonly presentationHint?: string;
+  readonly listViewType?: string;
+}
+
 export interface AiJobRecord {
   readonly id: string;
   readonly status: AiJobStatus;
   readonly feature: string;
-  readonly input: { readonly question: string };
+  readonly input: AiJobUiBuilderInput | { readonly question: string };
   readonly output:
     | { readonly answer: string }
     | { readonly summary: string; readonly stepCount: number }
     | null;
   readonly error: string | null;
   readonly progress?: AiJobProgress | null;
+  readonly draft?: UiBuilderJobDraft | null;
+  readonly stepTrace?: readonly AiJobStepTraceEntry[];
   readonly createdAt: string;
   readonly updatedAt: string;
 }
@@ -1013,6 +1070,23 @@ export async function getAiJob(jobId: string): Promise<AiJobRecord> {
   return apiRequest<AiJobRecord>(`/api/ai/jobs/${encodeURIComponent(jobId)}`);
 }
 
+export async function listAiJobs(options?: {
+  readonly feature?: "uiBuilder" | "chat" | "dataModelBuilder";
+  readonly limit?: number;
+}): Promise<{
+  readonly jobs: readonly Omit<AiJobRecord, "output" | "draft" | "stepTrace">[];
+}> {
+  const params = new URLSearchParams();
+  if (options?.feature) {
+    params.set("feature", options.feature);
+  }
+  if (options?.limit != null) {
+    params.set("limit", String(options.limit));
+  }
+  const query = params.toString();
+  return apiRequest(`/api/ai/jobs${query ? `?${query}` : ""}`);
+}
+
 export interface SubmitAiUiBuilderInput {
   readonly question: string;
   readonly entityName: string;
@@ -1023,8 +1097,13 @@ export interface SubmitAiUiBuilderInput {
     | "recordDetail"
     | "metricsRowDesigner";
   readonly listViewType?: "table" | "card" | "expandableTable";
+  readonly presentationHint?: "plain" | "wizard";
   readonly formPresentation?: "plain" | "wizard";
+  readonly allowCreative?: boolean;
   readonly currentLayoutJson?: string;
+  readonly outputMode?: "structure" | "render";
+  readonly parentSuggestionId?: string;
+  readonly modificationRequest?: string;
 }
 
 export async function submitAiUiBuilder(
@@ -1053,6 +1132,15 @@ export interface UiBuilderSuggestionRecord {
     readonly message: string;
   }[];
   readonly rawAnswer?: string;
+  readonly outputMode?: "structure" | "render";
+  readonly imageUrl?: string;
+  readonly imageStoragePath?: string;
+  readonly renderPrompt?: string;
+  readonly renderBrief?: string;
+  readonly renderHtml?: string;
+  readonly parentSuggestionId?: string;
+  readonly iterationNumber?: number;
+  readonly critiqueNotes?: string;
   readonly createdBy: string;
   readonly createdAt: string;
   readonly updatedAt: string;

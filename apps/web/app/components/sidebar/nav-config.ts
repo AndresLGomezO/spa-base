@@ -13,6 +13,7 @@ import {
   Users,
   Workflow,
   Bot,
+  ScanSearch,
 } from "lucide-react";
 
 export type NavLabelKey =
@@ -37,7 +38,8 @@ export type NavLabelKey =
   | "designLayoutForms"
   | "designLayoutMetrics"
   | "designLayoutPresets"
-  | "aiChat";
+  | "aiChat"
+  | "aiDebugger";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -128,6 +130,14 @@ export const SETTINGS_AI_CHAT_NAV_ITEM: NavLinkConfig = {
   to: "/ai/chat",
   matchPath: "/ai/chat",
   icon: Bot,
+};
+
+export const SETTINGS_AI_DEBUGGER_NAV_ITEM: NavLinkConfig = {
+  id: "ai-debugger",
+  labelKey: "aiDebugger",
+  to: "/settings/ai-debugger",
+  matchPath: "/settings/ai-debugger",
+  icon: ScanSearch,
 };
 
 export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {

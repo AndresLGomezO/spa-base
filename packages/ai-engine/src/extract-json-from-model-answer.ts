@@ -35,11 +35,31 @@ export function extractJsonFromModelAnswer(answer: string): unknown {
   }
 
   const jsonText = candidate.slice(jsonStart, jsonEnd + 1);
+  return parseJsonObjectText(jsonText);
+}
+
+/** Fix common LLM JSON mistakes before parsing. */
+export function repairJsonText(text: string): string {
+  return text.replace(/,\s*([}\]])/g, "$1");
+}
+
+function parseJsonObjectText(jsonText: string): unknown {
   try {
     return JSON.parse(jsonText) as unknown;
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Invalid JSON in model answer.";
-    throw new Error(message);
+  } catch (firstError) {
+    try {
+      return JSON.parse(repairJsonText(jsonText)) as unknown;
+    } catch {
+      const message =
+        firstError instanceof Error
+          ? firstError.message
+          : "Invalid JSON in model answer.";
+      throw new Error(message);
+    }
   }
+}
+
+/** @internal exported for tests that need parse without full answer extraction */
+export function parseJsonFromModelAnswerSlice(jsonText: string): unknown {
+  return parseJsonObjectText(jsonText);
 }

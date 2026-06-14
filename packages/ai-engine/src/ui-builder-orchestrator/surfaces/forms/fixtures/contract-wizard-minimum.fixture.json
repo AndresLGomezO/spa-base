@@ -1,0 +1,45 @@
+{
+  "entityName": "contract",
+  "presentation": "wizard",
+  "wizardSteps": [
+    {
+      "id": "step-1",
+      "label": "Basics",
+      "fieldPaths": ["name", "contractType"]
+    },
+    {
+      "id": "step-2",
+      "label": "Parties",
+      "fieldPaths": ["providerId", "categoryId"]
+    },
+    { "id": "step-3", "label": "Terms", "fieldPaths": ["currency", "status"] },
+    { "id": "step-4", "label": "Review", "fieldPaths": [] }
+  ],
+  "layoutTargets": {
+    "wizard.shell": {
+      "pathKey": "wizard.shell",
+      "label": "Wizard shell layout",
+      "skeleton": [
+        { "kind": "wizard-progress" },
+        { "kind": "wizard-step-host" },
+        { "kind": "wizard-actions" }
+      ],
+      "componentConfigs": {
+        "root/0": {
+          "kind": "wizard-progress",
+          "variant": "stepper",
+          "stepLabel": { "show": true, "position": "bottom", "bold": true },
+          "conditionalStyles": [
+            {
+              "matchValue": "active",
+              "background": "primary",
+              "textColor": "white"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "minimumStepCount": 4,
+  "minimumWizardProgressVariant": "stepper"
+}

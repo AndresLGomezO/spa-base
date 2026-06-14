@@ -36,6 +36,19 @@ export interface LayoutTargetDraft {
   readonly componentConfigs: Readonly<Record<string, UiComponentConfig>>;
 }
 
+import type { FormBlueprint } from "./surfaces/forms/forms-blueprint.schema.js";
+
+export type FormPresentationChoice = "plain" | "wizard";
+
+export interface WizardStepMeta {
+  readonly id: string;
+  readonly label: string;
+  readonly fieldPaths?: readonly string[];
+  readonly helperKind?: "info-box" | "callout-warning";
+  readonly helperText?: string;
+  readonly readOnly?: boolean;
+}
+
 export interface ListUiBuilderDraft {
   readonly surface: "list";
   readonly entityName: string;
@@ -52,7 +65,26 @@ export interface ListUiBuilderDraft {
   readonly completedStepIds: readonly string[];
 }
 
-export type UiBuilderDraft = ListUiBuilderDraft;
+export interface FormsUiBuilderDraft {
+  readonly surface: "forms";
+  readonly entityName: string;
+  readonly userPrompt: string;
+  readonly currentLayoutJson?: string;
+  readonly presentation?: FormPresentationChoice;
+  readonly creativeMode?: boolean;
+  readonly formBlueprint?: FormBlueprint;
+  readonly blueprintVisualTheme?: string;
+  readonly wizardProgressVariant?: "steps" | "bar" | "stepper";
+  readonly wizardSteps?: readonly WizardStepMeta[];
+  readonly layoutTargets: Readonly<Record<string, LayoutTargetDraft>>;
+  readonly completedStepIds: readonly string[];
+}
+
+export type UiBuilderDraft = ListUiBuilderDraft | FormsUiBuilderDraft;
+
+export interface UiBuilderDraftWithLayoutTargets {
+  readonly layoutTargets: Readonly<Record<string, LayoutTargetDraft>>;
+}
 
 export interface UiBuilderStep {
   readonly id: string;
@@ -76,7 +108,7 @@ export type StepValidationResult =
   | {
       readonly ok: true;
       readonly data: unknown;
-      readonly draftPatch?: Partial<ListUiBuilderDraft>;
+      readonly draftPatch?: Partial<UiBuilderDraft>;
       readonly appendSteps?: readonly UiBuilderStep[];
     }
   | {
@@ -91,6 +123,10 @@ export interface SurfaceRecipeContext {
   readonly fieldPathDefinition: FieldPathValidationDefinition;
   readonly layoutFieldPaths: readonly string[];
   readonly tableFieldPaths: readonly string[];
+  readonly formFieldPaths: readonly string[];
+  readonly formPresentation?: FormPresentationChoice;
+  readonly presentationHint?: FormPresentationChoice;
+  readonly allowCreative?: boolean;
   readonly themeFragments: Record<string, string>;
   readonly entityTenantFragment: string;
   readonly entityCatalogFragment: string;
@@ -113,18 +149,30 @@ export interface SurfaceRecipe {
   mergeStepIntoDraft(
     step: UiBuilderStep,
     data: unknown,
-    draft: ListUiBuilderDraft,
+    draft: UiBuilderDraft,
     appendSteps?: readonly UiBuilderStep[],
-  ): ListUiBuilderDraft;
+  ): UiBuilderDraft;
   assembleFinalOutput(
-    draft: ListUiBuilderDraft,
+    draft: UiBuilderDraft,
     context: SurfaceRecipeContext,
   ): unknown;
+  appendStepsAfterMerge(
+    step: UiBuilderStep,
+    draft: UiBuilderDraft,
+    validationAppendSteps: readonly UiBuilderStep[],
+  ): readonly UiBuilderStep[];
 }
 
 export interface OrchestratorCallbacks {
   readonly onProgress: (progress: OrchestratorProgress) => Promise<void>;
   readonly onDraftUpdate: (draft: UiBuilderDraft) => Promise<void>;
+  readonly onStepTrace?: (
+    entry: import("../schemas/ai-job.schema.js").AiJobStepTraceEntry,
+  ) => Promise<void>;
+  readonly onStepMerged?: (
+    stepId: string,
+    draftAfter: UiBuilderDraft,
+  ) => Promise<void>;
 }
 
 export interface OrchestratorResult {

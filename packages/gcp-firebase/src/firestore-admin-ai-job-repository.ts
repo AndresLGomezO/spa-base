@@ -64,5 +64,24 @@ export function createFirestoreAdminAiJobRepository(
       await collection(tenantId).doc(id).set(next);
       return next;
     },
+    async listRecent(tenantId, options) {
+      const limit = Math.min(Math.max(options?.limit ?? 20, 1), 50);
+      const snapshot = await collection(tenantId)
+        .orderBy("updatedAt", "desc")
+        .limit(limit * 3)
+        .get();
+      const records = snapshot.docs
+        .map((doc) =>
+          aiJobRecordSchema.parse({
+            id: doc.id,
+            ...doc.data(),
+          }),
+        )
+        .filter((record) =>
+          options?.feature ? record.feature === options.feature : true,
+        )
+        .slice(0, limit);
+      return records;
+    },
   };
 }
