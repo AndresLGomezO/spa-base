@@ -77,7 +77,10 @@ export function buildThemeStyleRulesAtom(): string {
 **Semantic CSS vars:** ${SEMANTIC_CSS_VARS.join(", ")}
 
 ## Layout properties (${pixelProps}, …)
-- Use **pixel strings** (e.g. \`"8px"\`, \`"16px"\`).
+- Use **pixel strings** (e.g. \`"8"\`, \`"-40"\`) — renderer adds \`px\`.
+- **Margin** (\`marginTop\`, \`marginBottom\`, \`marginLeft\`, \`marginRight\`): integers from \`-999\` through any positive value. Applied on the **row wrapper** (layout slot), including when set under component styles.
+- **Overflow** (\`overflowX\`, \`overflowY\`): applied on the row wrapper with margins.
+- **Padding** and other spacing: non-negative integers only, on the component/container node.
 - Do not use theme spacing tokens in style rules.
 
 ## All style properties

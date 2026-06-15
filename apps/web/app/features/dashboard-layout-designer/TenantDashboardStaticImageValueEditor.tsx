@@ -6,6 +6,7 @@ import { Button, Input, PhotoUpload, Text, toast } from "@repo/ui";
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { readFileAsBase64 } from "../../lib/entity-file-client";
+import { imagePhotoUploadLabels } from "../../lib/photo-upload-labels";
 import { uploadTenantDashboardLayoutImage } from "../../lib/api-client";
 
 interface TenantDashboardStaticImageValueEditorProps {
@@ -74,16 +75,7 @@ export function TenantDashboardStaticImageValueEditor({
           uploading={uploading}
           disabled={!canEdit || uploading}
           maxSizeBytes={DEFAULT_IMAGE_MAX_SIZE_BYTES}
-          labels={{
-            select: t("entity.fileSelectImage"),
-            change: t("entity.fileChangeImage"),
-            cropTitle: t("platform.appearance.photoCropTitle"),
-            cropDescription: t("platform.appearance.photoCropDescription"),
-            upload: t("platform.appearance.photoUpload"),
-            cancel: t("platform.appearance.photoCancel"),
-            reset: t("platform.appearance.photoReset"),
-            expand: t("platform.appearance.photoExpand"),
-          }}
+          labels={imagePhotoUploadLabels(t)}
           onUpload={handleUpload}
           onError={(message) => toast.error(message)}
         />

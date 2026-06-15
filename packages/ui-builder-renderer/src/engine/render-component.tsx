@@ -12,6 +12,7 @@ import {
   isPageUiComponent,
   matchConditionalStyles,
   resolveFieldChain,
+  filterComponentInnerStyleRules,
   resolvePageSlotWrapper,
   resolveMetricKpiPresentation,
   resolveStyleRules,
@@ -298,12 +299,13 @@ export function renderUiComponent(
     return null;
   }
 
-  const { containerClassName, textClassName } = splitStyleRuleClasses(
-    config.styles,
-  );
-  const containerStyle = layoutInlineStyleFromStyleRules(config.styles);
-  const valueStyle = textInlineStyleFromStyleRules(config.styles);
-  const textSize = fontSizePxFromStyles(config.styles);
+  const innerStyles = filterComponentInnerStyleRules(config.styles);
+
+  const { containerClassName, textClassName } =
+    splitStyleRuleClasses(innerStyles);
+  const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
+  const valueStyle = textInlineStyleFromStyleRules(innerStyles);
+  const textSize = fontSizePxFromStyles(innerStyles);
 
   const chain = resolveFieldChain({
     primary: config.primary,
@@ -324,7 +326,7 @@ export function renderUiComponent(
         allowEmpty
         className={containerClassName}
         style={containerStyle}
-        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
+        valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
         valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
@@ -380,7 +382,7 @@ export function renderUiComponent(
       context,
     );
     const matched = matchConditionalStyles(rawValue, config.conditionalStyles);
-    const badgeContainer = resolveStyleRules(config.styles, matched.className);
+    const badgeContainer = resolveStyleRules(innerStyles, matched.className);
 
     return (
       <CardFieldBadge
@@ -428,7 +430,7 @@ export function renderUiComponent(
           className={containerClassName}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
-            config.styles,
+            innerStyles,
             sampleValueClassName(textClassName, isSample),
           )}
           textSize={textSize}
@@ -446,7 +448,7 @@ export function renderUiComponent(
         label={label}
         className={containerClassName}
         style={containerStyle}
-        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
+        valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
         {...textPropsFromLabel(config)}
       />
@@ -480,7 +482,7 @@ export function renderUiComponent(
           className={containerClassName}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
-            config.styles,
+            innerStyles,
             sampleValueClassName(textClassName, isSample),
           )}
           textSize={textSize}
@@ -500,7 +502,7 @@ export function renderUiComponent(
         label={label}
         className={containerClassName}
         style={containerStyle}
-        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
+        valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
         {...textPropsFromLabel(config)}
       />
@@ -517,10 +519,7 @@ export function renderUiComponent(
           allowEmpty
           className={containerClassName}
           style={containerStyle}
-          valueClassName={valueClassNameFromStyles(
-            config.styles,
-            textClassName,
-          )}
+          valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
           textSize={textSize}
           {...textPropsFromLabel(config)}
         />
@@ -538,7 +537,7 @@ export function renderUiComponent(
         allowEmpty
         className={containerClassName}
         style={containerStyle}
-        valueClassName={valueClassNameFromStyles(config.styles, textClassName)}
+        valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
         valueStyle={valueStyle}
         {...textPropsFromLabel(config)}
@@ -566,7 +565,7 @@ export function renderUiComponent(
       className={containerClassName}
       style={containerStyle}
       valueClassName={valueClassNameFromStyles(
-        config.styles,
+        innerStyles,
         sampleValueClassName(textClassName, isSample),
       )}
       textSize={textSize}

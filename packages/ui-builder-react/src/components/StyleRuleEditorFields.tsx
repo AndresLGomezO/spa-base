@@ -8,6 +8,7 @@ import { Input, Select } from "@repo/ui";
 import type { StyleRulesEditorLabels } from "./StyleRulesEditor.js";
 import {
   coerceNumericStyleValue,
+  defaultValueForProperty,
   enumOptionsForProperty,
   isColorStyleProperty,
   isEnumStyleProperty,
@@ -115,9 +116,16 @@ export function StyleRuleEditorFields({
         <span className="text-muted-foreground">{labels.styleProperty}</span>
         <Select
           value={rule.property}
-          onChange={(event) =>
-            onChange({ property: event.target.value as StylePropertyKey })
-          }
+          onChange={(event) => {
+            const property = event.target.value as StylePropertyKey;
+            if (property === rule.property) {
+              return;
+            }
+            onChange({
+              property,
+              value: defaultValueForProperty(property),
+            });
+          }}
         >
           {STYLE_PROPERTY_OPTIONS.map((property) => (
             <option key={property} value={property}>

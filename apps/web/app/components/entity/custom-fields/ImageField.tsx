@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import { FieldError, FieldLabel, PhotoUpload, toast } from "@repo/ui";
 
+import { imagePhotoUploadLabels } from "../../../lib/photo-upload-labels";
 import {
   isEntityFileReferenceWithDownload,
   readFileAsBase64,
@@ -74,16 +75,7 @@ export function ImageField({
         uploading={uploading}
         disabled={readOnly || uploading}
         maxSizeBytes={maxSizeBytes}
-        labels={{
-          select: t("entity.fileSelectImage"),
-          change: t("entity.fileChangeImage"),
-          cropTitle: t("platform.appearance.photoCropTitle"),
-          cropDescription: t("platform.appearance.photoCropDescription"),
-          upload: t("platform.appearance.photoUpload"),
-          cancel: t("platform.appearance.photoCancel"),
-          reset: t("platform.appearance.photoReset"),
-          expand: t("platform.appearance.photoExpand"),
-        }}
+        labels={imagePhotoUploadLabels(t)}
         onUpload={handleUpload}
         onError={(message) => toast.error(message)}
       />

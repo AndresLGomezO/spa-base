@@ -1,10 +1,14 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { FormDesignerAddComponentModal } from "../form-designer/FormDesignerAddComponentModal";
 import type { CatalogEntryKind } from "../form-designer/form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
-import { insertCatalogEntryAtAnchor } from "../form-designer/form-designer-components-layout";
+import {
+  insertCatalogEntryAtAnchor,
+  insertImportedRowAtAnchor,
+} from "../form-designer/form-designer-components-layout";
 import type { InsertAnchor } from "../form-designer/form-designer-structure-tree";
 import { resolveLayoutBinding } from "./main-view-designer-layout-binding";
 import { useMainViewDesigner } from "./main-view-designer-context";
@@ -14,6 +18,7 @@ import { MainViewDesignerStructureTreePanel } from "./MainViewDesignerStructureT
 export function MainViewDesignerLayoutTreePanel() {
   const { t } = useTranslation("common");
   const { editor, requestComponentRowPanel } = useMainViewDesigner();
+  const definition = useEntityDefinition(editor.entityName);
   const { setFocusedRow, setSelectedRow, clearColumnHover } =
     useMainViewDesignerStructureSession();
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
@@ -53,6 +58,36 @@ export function MainViewDesignerLayoutTreePanel() {
     ],
   );
 
+  const handleImportRow = useCallback(
+    (
+      anchor: InsertAnchor,
+      row:
+        | import("@repo/ui-builder-core").ComponentRowNode
+        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+    ) => {
+      const { rowRef, label } = insertImportedRowAtAnchor(
+        binding,
+        anchor,
+        row,
+        [],
+        labels.tree,
+      );
+
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label);
+    },
+    [
+      binding,
+      clearColumnHover,
+      labels.tree,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+    ],
+  );
+
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setInsertAnchor(null);
@@ -67,10 +102,13 @@ export function MainViewDesignerLayoutTreePanel() {
       <FormDesignerAddComponentModal
         open={modalOpen}
         designSurface="mainPage"
+        definition={definition}
+        defaultFieldPath="name"
         labels={labels}
         insertAnchor={insertAnchor}
         onClose={handleCloseModal}
         onSelect={handleSelect}
+        onImportRow={handleImportRow}
       />
     </>
   );

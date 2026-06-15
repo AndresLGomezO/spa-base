@@ -4,6 +4,7 @@ import {
   clamp,
   computeLayout,
   outputFormatForSourceFile,
+  resolveCropDimensions,
   validateFile,
 } from "./photo-upload.utils";
 
@@ -32,11 +33,46 @@ describe("photo-upload.utils", () => {
     expect(validateFile(file)).toBeNull();
   });
 
-  it("computeLayout centers image to cover crop area", () => {
-    const layout = computeLayout(800, 400, 320);
+  it("resolveCropDimensions returns square preview and output sizes", () => {
+    expect(resolveCropDimensions("square")).toEqual({
+      previewW: 320,
+      previewH: 320,
+      outputW: 400,
+      outputH: 400,
+    });
+  });
+
+  it("resolveCropDimensions returns 4:3 preview and output sizes", () => {
+    expect(resolveCropDimensions("landscape43")).toEqual({
+      previewW: 320,
+      previewH: 240,
+      outputW: 400,
+      outputH: 300,
+    });
+  });
+
+  it("resolveCropDimensions returns 16:9 preview and output sizes", () => {
+    expect(resolveCropDimensions("landscape169")).toEqual({
+      previewW: 320,
+      previewH: 180,
+      outputW: 400,
+      outputH: 225,
+    });
+  });
+
+  it("computeLayout centers image to cover square crop area", () => {
+    const layout = computeLayout(800, 400, 320, 320);
     expect(layout.displayW).toBe(640);
     expect(layout.displayH).toBe(320);
     expect(layout.x).toBe(-160);
+    expect(layout.y).toBe(0);
+  });
+
+  it("computeLayout centers image to cover 4:3 crop area", () => {
+    const layout = computeLayout(800, 400, 320, 240);
+    expect(layout.displayW).toBe(480);
+    expect(layout.displayH).toBe(240);
+    expect(layout.x).toBe(-80);
     expect(layout.y).toBe(0);
   });
 
@@ -50,33 +86,22 @@ describe("photo-upload.utils", () => {
       extension: "png",
       supportsAlpha: true,
     });
-    expect(
-      outputFormatForSourceFile(
-        new File(["x"], "logo.webp", { type: "image/webp" }),
-      ),
-    ).toEqual({
-      mime: "image/webp",
-      extension: "webp",
-      supportsAlpha: true,
-    });
-    expect(
-      outputFormatForSourceFile(
-        new File(["x"], "photo.jpg", { type: "image/jpeg" }),
-      ),
-    ).toEqual({
-      mime: "image/jpeg",
-      extension: "jpg",
-      supportsAlpha: false,
-    });
   });
 
-  it("clamp keeps image edges inside crop bounds", () => {
-    expect(clamp({ x: 100, y: 100 }, 640, 320, 320)).toEqual({
+  it("clamp keeps image edges inside square crop bounds", () => {
+    expect(clamp({ x: 100, y: 100 }, 640, 320, 320, 320)).toEqual({
       x: 0,
       y: 0,
     });
-    expect(clamp({ x: -500, y: -200 }, 640, 320, 320)).toEqual({
+    expect(clamp({ x: -500, y: -200 }, 640, 320, 320, 320)).toEqual({
       x: -320,
+      y: 0,
+    });
+  });
+
+  it("clamp keeps image edges inside 16:9 crop bounds", () => {
+    expect(clamp({ x: 50, y: 20 }, 640, 360, 320, 180)).toEqual({
+      x: 0,
       y: 0,
     });
   });

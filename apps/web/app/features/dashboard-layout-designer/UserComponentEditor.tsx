@@ -18,6 +18,8 @@ export function UserComponentEditor({
   const { t } = useTranslation("common");
   const showImageSize =
     config.display === "photo" || config.display === "photo-and-name";
+  const showNameFormat =
+    config.display === "name" || config.display === "photo-and-name";
 
   return (
     <div className="flex flex-col gap-4">
@@ -29,12 +31,18 @@ export function UserComponentEditor({
           id="dashboard-user-display"
           className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
           value={config.display}
-          onChange={(event) =>
+          onChange={(event) => {
+            const display = event.target
+              .value as UserComponentConfig["display"];
             onChange({
               ...config,
-              display: event.target.value as UserComponentConfig["display"],
-            })
-          }
+              display,
+              nameFormat:
+                display === "name" || display === "photo-and-name"
+                  ? config.nameFormat
+                  : undefined,
+            });
+          }}
         >
           <option value="name">
             {t("dashboardLayoutDesigner.userComponent.displayName")}
@@ -50,6 +58,33 @@ export function UserComponentEditor({
           </option>
         </Select>
       </div>
+
+      {showNameFormat ? (
+        <div className="flex flex-col gap-2">
+          <FieldLabel htmlFor="dashboard-user-name-format">
+            {t("dashboardLayoutDesigner.userComponent.nameFormat")}
+          </FieldLabel>
+          <Select
+            id="dashboard-user-name-format"
+            className="border-input bg-background w-full rounded-md border px-2 py-1.5 text-sm"
+            value={config.nameFormat ?? "full"}
+            onChange={(event) =>
+              onChange({
+                ...config,
+                nameFormat: event.target
+                  .value as UserComponentConfig["nameFormat"],
+              })
+            }
+          >
+            <option value="full">
+              {t("dashboardLayoutDesigner.userComponent.nameFormatFull")}
+            </option>
+            <option value="first">
+              {t("dashboardLayoutDesigner.userComponent.nameFormatFirst")}
+            </option>
+          </Select>
+        </div>
+      ) : null}
 
       {showImageSize ? (
         <label className="flex flex-col gap-1 text-sm">

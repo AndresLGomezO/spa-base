@@ -1,6 +1,9 @@
 import {
   STYLE_PROPERTY_OPTIONS,
   isThemeTokenValue,
+  isMarginStyleProperty,
+  NEGATIVE_MARGIN_MIN_PX,
+  parseMarginPx,
   type StylePropertyKey,
   type StyleRule,
   type ThemeToken,
@@ -207,6 +210,9 @@ export function isNumericStyleProperty(property: StylePropertyKey): boolean {
 
 /** Minimum allowed value for numeric style inputs (pixels). */
 export function numericStyleInputMin(property: StylePropertyKey): number {
+  if (isMarginStyleProperty(property)) {
+    return NEGATIVE_MARGIN_MIN_PX;
+  }
   if (property === "borderWidth" || property === "fontSize") {
     return 1;
   }
@@ -217,6 +223,10 @@ export function coerceNumericStyleValue(
   property: StylePropertyKey,
   raw: string,
 ): string {
+  if (isMarginStyleProperty(property)) {
+    return String(parseMarginPx(raw) ?? 0);
+  }
+
   const min = numericStyleInputMin(property);
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
@@ -319,4 +329,21 @@ export function enumOptionsForProperty(
     default:
       return [];
   }
+}
+
+export function formatStyleRuleValuePreview(rule: StyleRule): string {
+  if (isEnumStyleProperty(rule.property)) {
+    const match = enumOptionsForProperty(rule.property).find(
+      (option) => option.value === String(rule.value),
+    );
+    if (match) {
+      return match.label;
+    }
+  }
+
+  const raw = String(rule.value);
+  if (raw.length > 48) {
+    return `${raw.slice(0, 45)}...`;
+  }
+  return raw;
 }

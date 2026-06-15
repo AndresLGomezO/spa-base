@@ -7,6 +7,7 @@ export function layoutJsonImportLabels(t: TFunction): LayoutJsonImportLabels {
     titleRoot: t("designLayout.layoutJsonImport.titleRoot"),
     titleComponentRow: t("designLayout.layoutJsonImport.titleComponentRow"),
     titleNestedRow: t("designLayout.layoutJsonImport.titleNestedRow"),
+    titleInsertableRow: t("designLayout.layoutJsonImport.titleInsertableRow"),
     pasteLabel: t("designLayout.layoutJsonImport.pasteLabel"),
     uploadLabel: t("designLayout.layoutJsonImport.uploadLabel"),
     skeletonTitle: t("designLayout.layoutJsonImport.skeletonTitle"),

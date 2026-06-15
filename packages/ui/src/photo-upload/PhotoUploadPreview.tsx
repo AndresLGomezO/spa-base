@@ -38,7 +38,7 @@ export function PhotoUploadPreview({
           aria-label={expandLabel}
           disabled={disabled || isPlaceholder}
           className={cn(
-            "border-border bg-muted/30 hover:bg-muted/50 focus-visible:ring-primary inline-flex max-w-fit items-center justify-center rounded-lg border p-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
+            "border-border bg-muted/30 hover:bg-muted/50 focus-visible:ring-primary inline-block max-w-fit overflow-hidden rounded-lg border transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60",
             isPlaceholder ? "opacity-80" : undefined,
             previewClassName,
           )}
@@ -47,7 +47,7 @@ export function PhotoUploadPreview({
           <img
             src={previewUrl}
             alt={alt}
-            className="max-h-24 max-w-xs object-contain"
+            className="block max-h-24 max-w-xs object-contain"
           />
         </button>
       ) : (

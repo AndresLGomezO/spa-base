@@ -12,6 +12,7 @@ import { formDesignerComponentsLabels } from "../form-designer/form-designer-com
 import {
   findRowByRef,
   insertCatalogEntryAtAnchor,
+  insertImportedRowAtAnchor,
 } from "../form-designer/form-designer-components-layout";
 import type { InsertAnchor } from "../form-designer/form-designer-structure-tree";
 import { resolveRowLayoutBinding } from "./metrics-row-designer-layout-binding";
@@ -83,6 +84,37 @@ export function MetricsRowDesignerRowTreePanel() {
     ],
   );
 
+  const handleImportRow = useCallback(
+    (
+      anchor: InsertAnchor,
+      row:
+        | import("@repo/ui-builder-core").ComponentRowNode
+        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+    ) => {
+      const { rowRef, label } = insertImportedRowAtAnchor(
+        binding,
+        anchor,
+        row,
+        fieldDescriptors,
+        labels.tree,
+      );
+
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label);
+    },
+    [
+      binding,
+      clearColumnHover,
+      fieldDescriptors,
+      labels.tree,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+    ],
+  );
+
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setInsertAnchor(null);
@@ -98,10 +130,13 @@ export function MetricsRowDesignerRowTreePanel() {
       <FormDesignerAddComponentModal
         open={modalOpen}
         designSurface="metricRow"
+        definition={definition}
+        defaultFieldPath="name"
         labels={labels}
         insertAnchor={insertAnchor}
         onClose={handleCloseModal}
         onSelect={handleSelect}
+        onImportRow={handleImportRow}
       />
     </>
   );

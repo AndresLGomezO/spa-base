@@ -1,7 +1,17 @@
-export const CROP_PREVIEW_SIZE = 320;
-export const CROP_OUTPUT_SIZE = 400;
-const JPEG_QUALITY = 0.9;
+const CROP_PREVIEW_MAX_EDGE = 320;
+const CROP_OUTPUT_MAX_EDGE = 400;
 export const KEYBOARD_STEP = 10;
+
+export type PhotoCropFrame = "square" | "landscape43" | "landscape169";
+
+interface CropDimensions {
+  readonly previewW: number;
+  readonly previewH: number;
+  readonly outputW: number;
+  readonly outputH: number;
+}
+
+const JPEG_QUALITY = 0.9;
 
 const ALLOWED_MIME_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
 export const DEFAULT_IMAGE_MAX_SIZE_BYTES = 5 * 1024 * 1024;
@@ -24,16 +34,64 @@ export function validateFile(
   return null;
 }
 
+function scaleDimensions(
+  width: number,
+  height: number,
+  maxEdge: number,
+): { readonly w: number; readonly h: number } {
+  const scale = maxEdge / Math.max(width, height);
+  return {
+    w: Math.round(width * scale),
+    h: Math.round(height * scale),
+  };
+}
+
+export function resolveCropDimensions(frame: PhotoCropFrame): CropDimensions {
+  switch (frame) {
+    case "square": {
+      const preview = scaleDimensions(1, 1, CROP_PREVIEW_MAX_EDGE);
+      const output = scaleDimensions(1, 1, CROP_OUTPUT_MAX_EDGE);
+      return {
+        previewW: preview.w,
+        previewH: preview.h,
+        outputW: output.w,
+        outputH: output.h,
+      };
+    }
+    case "landscape43": {
+      const preview = scaleDimensions(4, 3, CROP_PREVIEW_MAX_EDGE);
+      const output = scaleDimensions(4, 3, CROP_OUTPUT_MAX_EDGE);
+      return {
+        previewW: preview.w,
+        previewH: preview.h,
+        outputW: output.w,
+        outputH: output.h,
+      };
+    }
+    case "landscape169": {
+      const preview = scaleDimensions(16, 9, CROP_PREVIEW_MAX_EDGE);
+      const output = scaleDimensions(16, 9, CROP_OUTPUT_MAX_EDGE);
+      return {
+        previewW: preview.w,
+        previewH: preview.h,
+        outputW: output.w,
+        outputH: output.h,
+      };
+    }
+  }
+}
+
 export function computeLayout(
   naturalW: number,
   naturalH: number,
-  cropSize: number,
+  cropW: number,
+  cropH: number,
 ) {
-  const scale = Math.max(cropSize / naturalW, cropSize / naturalH);
+  const scale = Math.max(cropW / naturalW, cropH / naturalH);
   const displayW = naturalW * scale;
   const displayH = naturalH * scale;
-  const x = (cropSize - displayW) / 2;
-  const y = (cropSize - displayH) / 2;
+  const x = (cropW - displayW) / 2;
+  const y = (cropH - displayH) / 2;
   return { scale, displayW, displayH, x, y };
 }
 
@@ -41,11 +99,12 @@ export function clamp(
   pos: { x: number; y: number },
   displayW: number,
   displayH: number,
-  cropSize: number,
+  cropW: number,
+  cropH: number,
 ) {
   return {
-    x: Math.max(cropSize - displayW, Math.min(0, pos.x)),
-    y: Math.max(cropSize - displayH, Math.min(0, pos.y)),
+    x: Math.max(cropW - displayW, Math.min(0, pos.x)),
+    y: Math.max(cropH - displayH, Math.min(0, pos.y)),
   };
 }
 
@@ -69,17 +128,20 @@ export function cropImageToBlob(params: {
   readonly file: File;
   readonly position: { readonly x: number; readonly y: number };
   readonly scale: number;
-  readonly cropSize: number;
-  readonly outputSize: number;
+  readonly cropW: number;
+  readonly cropH: number;
+  readonly outputW: number;
+  readonly outputH: number;
 }): Promise<File> {
-  const { img, file, position, scale, cropSize, outputSize } = params;
+  const { img, file, position, scale, cropW, cropH, outputW, outputH } = params;
   const sx = -position.x / scale;
   const sy = -position.y / scale;
-  const size = cropSize / scale;
+  const sw = cropW / scale;
+  const sh = cropH / scale;
 
   const canvas = document.createElement("canvas");
-  canvas.width = outputSize;
-  canvas.height = outputSize;
+  canvas.width = outputW;
+  canvas.height = outputH;
   const ctx = canvas.getContext("2d");
   if (!ctx) {
     return Promise.reject(new Error("Failed to initialize canvas."));
@@ -87,10 +149,10 @@ export function cropImageToBlob(params: {
 
   const output = outputFormatForSourceFile(file);
   if (output.supportsAlpha) {
-    ctx.clearRect(0, 0, outputSize, outputSize);
+    ctx.clearRect(0, 0, outputW, outputH);
   }
 
-  ctx.drawImage(img, sx, sy, size, size, 0, 0, outputSize, outputSize);
+  ctx.drawImage(img, sx, sy, sw, sh, 0, 0, outputW, outputH);
 
   return new Promise((resolve, reject) => {
     canvas.toBlob(

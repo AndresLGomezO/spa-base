@@ -23,6 +23,7 @@ import {
   readFileAsBase64,
   uploadEntityFile,
 } from "../../lib/entity-file-client";
+import { imagePhotoUploadLabels } from "../../lib/photo-upload-labels";
 
 import { fieldSupportsArray } from "./array-field-eligibility";
 import { FIELD_TYPES } from "./field-types";
@@ -740,18 +741,7 @@ function FieldFileMetadataEditor({
                 uploading={uploadingDefault}
                 maxSizeBytes={effectiveMaxBytes}
                 dialogLayer="nested"
-                labels={{
-                  select: t("entity.fileSelectImage"),
-                  change: t("entity.fileChangeImage"),
-                  cropTitle: t("platform.appearance.photoCropTitle"),
-                  cropDescription: t(
-                    "platform.appearance.photoCropDescription",
-                  ),
-                  upload: t("platform.appearance.photoUpload"),
-                  cancel: t("platform.appearance.photoCancel"),
-                  reset: t("platform.appearance.photoReset"),
-                  expand: t("platform.appearance.photoExpand"),
-                }}
+                labels={imagePhotoUploadLabels(t)}
                 onUpload={handleDefaultImageUpload}
                 onError={(message) => toast.error(message)}
               />

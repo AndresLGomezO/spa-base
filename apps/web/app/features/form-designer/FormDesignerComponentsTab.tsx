@@ -2,7 +2,11 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, toast } from "@repo/ui";
 import { entityFormFieldAdapter } from "@repo/ui-builder-react";
-import type { DesignSurface } from "@repo/ui-builder-core";
+import type {
+  DesignSurface,
+  ComponentRowNode,
+  NestedLayoutRowNode,
+} from "@repo/ui-builder-core";
 
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { FormDesignerAddComponentModal } from "./FormDesignerAddComponentModal";
@@ -17,6 +21,7 @@ import { formDesignerComponentsLabels } from "./form-designer-components-labels"
 import {
   clampComponentsStepIndex,
   insertCatalogEntryAtAnchor,
+  insertImportedRowAtAnchor,
   resolveComponentsLayoutBinding,
   type ComponentsTreeScope,
 } from "./form-designer-components-layout";
@@ -116,6 +121,39 @@ function FormDesignerComponentsTabContent() {
     ],
   );
 
+  const handleImportRow = useCallback(
+    (anchor: InsertAnchor, row: ComponentRowNode | NestedLayoutRowNode) => {
+      const { rowRef, label } = insertImportedRowAtAnchor(
+        binding,
+        anchor,
+        row,
+        fieldDescriptors,
+        labels.tree,
+      );
+
+      markComponentsDirty();
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label, {
+        treeScope,
+        stepIndex: clampedStepIndex,
+      });
+    },
+    [
+      binding,
+      clampedStepIndex,
+      clearColumnHover,
+      fieldDescriptors,
+      labels.tree,
+      markComponentsDirty,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+      treeScope,
+    ],
+  );
+
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setInsertAnchor(null);
@@ -158,10 +196,14 @@ function FormDesignerComponentsTabContent() {
         <FormDesignerAddComponentModal
           open={modalOpen}
           designSurface={designSurface}
+          definition={definition}
+          defaultFieldPath={editor.defaultFieldPath}
           labels={labels}
           insertAnchor={insertAnchor}
+          actionsInModalFooter={treeScope === "footer"}
           onClose={handleCloseModal}
           onSelect={handleSelect}
+          onImportRow={handleImportRow}
         />
       </div>
     </div>

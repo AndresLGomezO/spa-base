@@ -150,9 +150,18 @@ export function componentKindsForSurface(
   }
 }
 
+/** Structural kinds insertable on any design surface (matches component catalog). */
+const UNIVERSAL_SURFACE_COMPONENT_KINDS = new Set<UiComponentKind>([
+  "container",
+]);
+
 export function isComponentKindAllowedOnSurface(
   kind: UiComponentKind,
   surface: DesignSurface,
 ): boolean {
+  if (UNIVERSAL_SURFACE_COMPONENT_KINDS.has(kind)) {
+    return true;
+  }
+
   return componentKindsForSurface(surface).includes(kind);
 }

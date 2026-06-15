@@ -35,6 +35,8 @@ function titleForScope(
       return labels.viewTitleColumn ?? labels.viewTitleNestedRow;
     case "component-row":
       return labels.viewTitleComponentRow;
+    case "insertable-row":
+      return labels.titleInsertableRow;
     case "nested-layout-row":
       return labels.viewTitleNestedRow;
   }

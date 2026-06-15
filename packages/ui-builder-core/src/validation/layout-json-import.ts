@@ -15,7 +15,10 @@ import {
   collectLayoutComponentKinds,
 } from "../layout/wizard-shell.js";
 import type { DesignSurface } from "../types/design-surface.js";
-import { componentKindsForSurface } from "../types/design-surface.js";
+import {
+  componentKindsForSurface,
+  isComponentKindAllowedOnSurface,
+} from "../types/design-surface.js";
 import type {
   ColumnNode,
   ComponentRowNode,
@@ -33,13 +36,15 @@ import {
 import {
   regenerateComponentRowSubtree,
   regenerateLayoutDocumentIds,
+  regenerateNestedLayoutRowSubtree,
 } from "./regenerate-layout-ids.js";
 
 export type LayoutJsonImportScope =
   | { readonly type: "layout-document" }
   | { readonly type: "column" }
   | { readonly type: "component-row" }
-  | { readonly type: "nested-layout-row" };
+  | { readonly type: "nested-layout-row" }
+  | { readonly type: "insertable-row" };
 
 export interface LayoutJsonImportError {
   readonly path: string;
@@ -84,13 +89,12 @@ function assertSurfaceComponentKinds(
   surface: DesignSurface,
 ): LayoutJsonImportError[] {
   const errors: LayoutJsonImportError[] = [];
-  const allowed = new Set(componentKindsForSurface(surface));
 
   for (const kind of collectLayoutComponentKinds(layout)) {
-    if (!allowed.has(kind)) {
+    if (!isComponentKindAllowedOnSurface(kind, surface)) {
       errors.push({
         path: "component.kind",
-        message: `Component kind "${kind}" is not allowed on surface "${surface}". Allowed: ${[...allowed].join(", ")}.`,
+        message: `Component kind "${kind}" is not allowed on surface "${surface}".`,
       });
     }
   }
@@ -233,9 +237,19 @@ function postProcessNestedLayoutRow(
 
   return {
     ok: true,
-    data: row,
+    data: regenerateNestedLayoutRowSubtree(row),
     errors: [],
   };
+}
+
+function isInsertableRowJson(
+  value: unknown,
+): value is ComponentRowNode | NestedLayoutRowNode {
+  if (typeof value !== "object" || value === null || !("type" in value)) {
+    return false;
+  }
+
+  return value.type === "component" || value.type === "nested-layout";
 }
 
 export function validateLayoutJsonImport(
@@ -284,6 +298,38 @@ export function validateLayoutJsonImport(
       return { ok: false, errors: zodErrorsToImportErrors(result.error) };
     }
     return postProcessComponentRow(result.data as ComponentRowNode, options);
+  }
+
+  if (scope.type === "insertable-row") {
+    if (!isInsertableRowJson(parsed)) {
+      return {
+        ok: false,
+        errors: [
+          {
+            path: "type",
+            message:
+              'Expected a component row ("type": "component") or nested layout row ("type": "nested-layout").',
+          },
+        ],
+      };
+    }
+
+    if (parsed.type === "component") {
+      const result = componentRowSchema.safeParse(parsed);
+      if (!result.success) {
+        return { ok: false, errors: zodErrorsToImportErrors(result.error) };
+      }
+      return postProcessComponentRow(result.data as ComponentRowNode, options);
+    }
+
+    const result = nestedLayoutRowSchema.safeParse(parsed);
+    if (!result.success) {
+      return { ok: false, errors: zodErrorsToImportErrors(result.error) };
+    }
+    return postProcessNestedLayoutRow(
+      result.data as NestedLayoutRowNode,
+      options,
+    );
   }
 
   const result = nestedLayoutRowSchema.safeParse(parsed);
@@ -394,7 +440,7 @@ export function createLayoutJsonSkeleton(
     );
   }
 
-  if (scope.type === "component-row") {
+  if (scope.type === "component-row" || scope.type === "insertable-row") {
     const row: ComponentRowNode = {
       type: "component",
       id: "row-example",

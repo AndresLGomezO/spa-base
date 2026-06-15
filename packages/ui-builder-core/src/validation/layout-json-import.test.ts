@@ -169,6 +169,93 @@ describe("validateLayoutJsonImport", () => {
     expect(result.data).toMatchObject({ type: "nested-layout" });
   });
 
+  it("accepts container components inside nested layouts on dashboardSection", () => {
+    const nested = {
+      type: "nested-layout" as const,
+      id: "nested-1",
+      columnCount: 1,
+      columns: [
+        {
+          id: "col-1",
+          rows: [
+            {
+              type: "component" as const,
+              id: "row-container",
+              component: {
+                kind: "container" as const,
+                rows: [
+                  {
+                    type: "component" as const,
+                    id: "row-user",
+                    component: {
+                      kind: "user" as const,
+                      display: "photo-and-name" as const,
+                    },
+                  },
+                ],
+              },
+            },
+          ],
+        },
+      ],
+    };
+
+    const result = validateLayoutJsonImport(
+      JSON.stringify(nested),
+      { type: "nested-layout-row" },
+      { designSurface: "dashboardSection", definition },
+    );
+
+    expect(result.ok).toBe(true);
+    expect(result.data).toMatchObject({
+      type: "nested-layout",
+      columns: [
+        {
+          rows: [
+            {
+              component: {
+                kind: "container",
+              },
+            },
+          ],
+        },
+      ],
+    });
+  });
+
+  it("validates insertable-row scope for component and nested rows", () => {
+    const componentRow = {
+      type: "component" as const,
+      id: "row-text",
+      component: {
+        kind: "text" as const,
+        primary: { type: "static" as const, value: "Hello" },
+      },
+    };
+
+    expect(
+      validateLayoutJsonImport(
+        JSON.stringify(componentRow),
+        { type: "insertable-row" },
+        { designSurface: "dashboardSection", definition },
+      ).ok,
+    ).toBe(true);
+
+    const nested = createLayoutJsonSkeleton(
+      { type: "nested-layout-row" },
+      "dashboardSection",
+      "name",
+    );
+
+    expect(
+      validateLayoutJsonImport(
+        nested,
+        { type: "insertable-row" },
+        { designSurface: "dashboardSection", definition },
+      ).ok,
+    ).toBe(true);
+  });
+
   it("accepts a single image component row on formWizardShell without wizard shell slots", () => {
     const row = {
       type: "component" as const,

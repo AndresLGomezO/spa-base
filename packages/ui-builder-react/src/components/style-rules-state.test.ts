@@ -3,10 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   addStyleRule,
   coerceNumericStyleValue,
+  formatStyleRuleValuePreview,
   numericStyleInputMin,
   removeStyleRule,
   upsertStyleRule,
 } from "./style-rules-state.js";
+import { NEGATIVE_MARGIN_MIN_PX } from "@repo/ui-builder-core";
 
 describe("style-rules-state", () => {
   it("replaces duplicate property when property changes", () => {
@@ -39,6 +41,13 @@ describe("style-rules-state", () => {
     expect(coerceNumericStyleValue("fontSize", "abc")).toBe("1");
   });
 
+  it("allows negative margin values", () => {
+    expect(numericStyleInputMin("marginTop")).toBe(NEGATIVE_MARGIN_MIN_PX);
+    expect(coerceNumericStyleValue("marginTop", "-40")).toBe("-40");
+    expect(coerceNumericStyleValue("marginTop", "-1000")).toBe("-999");
+    expect(coerceNumericStyleValue("paddingTop", "-5")).toBe("0");
+  });
+
   it("removes a rule by index", () => {
     const next = removeStyleRule(
       [
@@ -48,5 +57,14 @@ describe("style-rules-state", () => {
       0,
     );
     expect(next).toEqual([{ property: "fontWeight", value: "bold" }]);
+  });
+
+  it("formats enum style values for preview labels", () => {
+    expect(
+      formatStyleRuleValuePreview({ property: "fontWeight", value: "bold" }),
+    ).toBe("Bold");
+    expect(
+      formatStyleRuleValuePreview({ property: "fontWeight", value: "0" }),
+    ).toBe("0");
   });
 });

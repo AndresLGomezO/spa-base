@@ -79,7 +79,6 @@ export function DashboardLayoutDesignerStructureSessionProvider({
 }: {
   readonly children: ReactNode;
 }) {
-  const { structurePanelOpen } = useDashboardLayoutDesigner();
   const [focusedRow, setFocusedRow] = useState<ComponentRowRef | null>(null);
   const [focusedColumn, setFocusedColumn] = useState<ComponentColumnRef | null>(
     null,
@@ -117,12 +116,8 @@ export function DashboardLayoutDesignerStructureSessionProvider({
     [clearRowHover],
   );
 
-  const previewRowFocus = structurePanelOpen
-    ? selectedRow
-    : (selectedRow ?? focusedRow);
-  const previewColumnFocus = structurePanelOpen
-    ? selectedColumn
-    : (selectedColumn ?? focusedColumn);
+  const previewRowFocus = focusedRow ?? selectedRow;
+  const previewColumnFocus = focusedColumn ?? selectedColumn;
 
   const value = useMemo(
     (): DashboardLayoutDesignerStructureSessionContextValue => ({

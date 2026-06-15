@@ -1270,7 +1270,7 @@ export function appendNestedLayoutRowAt(
 function patchContainerComponent(
   layout: UiLayoutDocument,
   locator: Extract<RowLocator, { readonly scope: "container" }>,
-  patch: Partial<Pick<ContainerComponentConfig, "styles">>,
+  patch: Partial<Pick<ContainerComponentConfig, "styles" | "stackDirection">>,
 ): UiLayoutDocument {
   return updateColumnRows(layout, locator.columnIndex, (rows) =>
     rows.map((row) => {

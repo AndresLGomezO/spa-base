@@ -9,7 +9,10 @@ import {
 import { FormDesignerAddComponentModal } from "../form-designer/FormDesignerAddComponentModal";
 import type { CatalogEntryKind } from "../form-designer/form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
-import { insertCatalogEntryAtAnchor } from "../form-designer/form-designer-components-layout";
+import {
+  insertCatalogEntryAtAnchor,
+  insertImportedRowAtAnchor,
+} from "../form-designer/form-designer-components-layout";
 import type { InsertAnchor } from "../form-designer/form-designer-structure-tree";
 import { resolveScopeLayoutBinding } from "./item-list-designer-layout-binding";
 import { useItemListDesigner } from "./item-list-designer-context";
@@ -81,6 +84,37 @@ export function ItemListDesignerExpandableRowTreePanel({
     ],
   );
 
+  const handleImportRow = useCallback(
+    (
+      anchor: InsertAnchor,
+      row:
+        | import("@repo/ui-builder-core").ComponentRowNode
+        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+    ) => {
+      const { rowRef, label } = insertImportedRowAtAnchor(
+        binding,
+        anchor,
+        row,
+        fieldDescriptors,
+        labels.tree,
+      );
+
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label);
+    },
+    [
+      binding,
+      clearColumnHover,
+      fieldDescriptors,
+      labels.tree,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+    ],
+  );
+
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setInsertAnchor(null);
@@ -104,10 +138,13 @@ export function ItemListDesignerExpandableRowTreePanel({
         <FormDesignerAddComponentModal
           open={modalOpen}
           designSurface="tableRowExpand"
+          definition={definition}
+          defaultFieldPath={editor.defaultFieldPath}
           labels={labels}
           insertAnchor={insertAnchor}
           onClose={handleCloseModal}
           onSelect={handleSelect}
+          onImportRow={handleImportRow}
         />
       </>
     );
@@ -119,10 +156,13 @@ export function ItemListDesignerExpandableRowTreePanel({
       <FormDesignerAddComponentModal
         open={modalOpen}
         designSurface="tableRowExpand"
+        definition={definition}
+        defaultFieldPath={editor.defaultFieldPath}
         labels={labels}
         insertAnchor={insertAnchor}
         onClose={handleCloseModal}
         onSelect={handleSelect}
+        onImportRow={handleImportRow}
       />
     </>
   );

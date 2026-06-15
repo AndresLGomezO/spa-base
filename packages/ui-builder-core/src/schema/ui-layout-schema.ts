@@ -271,6 +271,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
       .object({
         kind: z.literal("user"),
         display: z.enum(["name", "email", "photo", "photo-and-name"]),
+        nameFormat: z.enum(["full", "first"]).optional(),
         imageSize: z.number().int().min(8).max(1024).optional(),
         label: labelConfigSchema.optional(),
         styles: z.array(styleRuleSchema).optional(),
@@ -364,6 +365,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
       .object({
         kind: z.literal("container"),
         rows: z.array(rowNodeSchema),
+        stackDirection: z.enum(["column", "row"]).optional(),
         styles: z.array(styleRuleSchema).optional(),
       })
       .strict(),

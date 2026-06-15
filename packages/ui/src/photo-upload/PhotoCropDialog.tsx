@@ -10,15 +10,16 @@ import {
 
 import { Button } from "../button/Button";
 import { Modal } from "../modal/Modal";
+import { SegmentedSwitch } from "../segmented-switch/SegmentedSwitch";
 import { Text } from "../typography/Text";
 import {
   clamp,
   computeLayout,
-  CROP_OUTPUT_SIZE,
-  CROP_PREVIEW_SIZE,
   cropImageToBlob,
   KEYBOARD_STEP,
+  resolveCropDimensions,
   validateFile,
+  type PhotoCropFrame,
 } from "./photo-upload.utils";
 
 export type PhotoCropShape = "circle" | "rect";
@@ -27,19 +28,32 @@ interface PhotoCropDialogLabels {
   readonly title?: string;
   readonly description?: string;
   readonly upload?: string;
+  readonly uploadOriginal?: string;
+  readonly uploadCropped?: string;
   readonly cancel?: string;
   readonly reset?: string;
+  readonly cropFrameSquare?: string;
+  readonly cropFrameLandscape43?: string;
+  readonly cropFrameLandscape169?: string;
+  readonly cropMaskCircle?: string;
+  readonly cropMaskRect?: string;
+  readonly cropFrameAriaLabel?: string;
+  readonly cropMaskAriaLabel?: string;
 }
 
 interface PhotoCropDialogProps {
   readonly open: boolean;
   readonly file: File | null;
   readonly cropShape?: PhotoCropShape;
+  readonly defaultCropFrame?: PhotoCropFrame;
+  readonly allowOriginalUpload?: boolean;
+  readonly allowCrop?: boolean;
   readonly uploading?: boolean;
   readonly layer?: "default" | "nested";
   readonly labels?: PhotoCropDialogLabels;
   readonly onOpenChange: (open: boolean) => void;
   readonly onCropComplete: (file: File) => void;
+  readonly onOriginalUpload?: (file: File) => void;
 }
 
 function useValidationError(open: boolean, file: File | null): string | null {
@@ -73,15 +87,20 @@ export function PhotoCropDialog({
   open,
   file,
   cropShape = "rect",
+  defaultCropFrame = "square",
+  allowOriginalUpload = true,
+  allowCrop = true,
   uploading = false,
   layer = "nested",
   labels,
   onOpenChange,
   onCropComplete,
+  onOriginalUpload,
 }: PhotoCropDialogProps) {
   const validationError = useValidationError(open, file);
   const imageUrl = useImageUrl(open, file, validationError);
-  const cropKey = open && file ? `${file.name}-${file.size}` : "closed";
+  const cropKey =
+    open && file ? `${file.name}-${file.size}-${defaultCropFrame}` : "closed";
 
   const handleOpenChange = useCallback(
     (next: boolean) => {
@@ -95,7 +114,7 @@ export function PhotoCropDialog({
     <Modal
       open={open}
       onClose={() => handleOpenChange(false)}
-      title={labels?.title ?? "Crop photo"}
+      title={labels?.title ?? "Adjust image"}
       layer={layer}
     >
       <CropDialogContent
@@ -103,10 +122,14 @@ export function PhotoCropDialog({
         imageUrl={imageUrl}
         validationError={validationError}
         file={file}
-        cropShape={cropShape}
+        defaultCropFrame={defaultCropFrame}
+        defaultCropShape={cropShape}
+        allowOriginalUpload={allowOriginalUpload}
+        allowCrop={allowCrop}
         uploading={uploading}
         labels={labels}
         onCropComplete={onCropComplete}
+        onOriginalUpload={onOriginalUpload}
         onOpenChange={handleOpenChange}
       />
     </Modal>
@@ -117,10 +140,14 @@ interface CropDialogContentProps {
   readonly imageUrl: string | null;
   readonly validationError: string | null;
   readonly file: File | null;
-  readonly cropShape: PhotoCropShape;
+  readonly defaultCropFrame: PhotoCropFrame;
+  readonly defaultCropShape: PhotoCropShape;
+  readonly allowOriginalUpload: boolean;
+  readonly allowCrop: boolean;
   readonly uploading: boolean;
   readonly labels?: PhotoCropDialogLabels;
   readonly onCropComplete: (file: File) => void;
+  readonly onOriginalUpload?: (file: File) => void;
   readonly onOpenChange: (open: boolean) => void;
 }
 
@@ -128,13 +155,21 @@ function CropDialogContent({
   imageUrl,
   validationError,
   file,
-  cropShape,
+  defaultCropFrame,
+  defaultCropShape,
+  allowOriginalUpload,
+  allowCrop,
   uploading,
   labels,
   onCropComplete,
+  onOriginalUpload,
   onOpenChange,
 }: CropDialogContentProps) {
-  const S = CROP_PREVIEW_SIZE;
+  const [cropFrame, setCropFrame] = useState<PhotoCropFrame>(defaultCropFrame);
+  const [cropMask, setCropMask] = useState<PhotoCropShape>(defaultCropShape);
+  const cropDimensions = resolveCropDimensions(cropFrame);
+  const cropW = cropDimensions.previewW;
+  const cropH = cropDimensions.previewH;
 
   const [imageLoaded, setImageLoaded] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -158,32 +193,46 @@ function CropDialogContent({
     positionRef.current = position;
   }, [position]);
 
-  const handleImageLoad = useCallback(() => {
+  const initializeLayout = useCallback(() => {
     const img = imgRef.current;
     if (!img) return;
     const { naturalWidth: w, naturalHeight: h } = img;
     if (w <= 0 || h <= 0) return;
-    const layout = computeLayout(w, h, S);
+    const layout = computeLayout(w, h, cropW, cropH);
     scaleRef.current = layout.scale;
     imgSizeRef.current = { w, h };
     setDisplaySize({ w: layout.displayW, h: layout.displayH });
     setInitialPosition({ x: layout.x, y: layout.y });
     setPosition({ x: layout.x, y: layout.y });
     setImageLoaded(true);
-  }, [S]);
+  }, [cropH, cropW]);
+
+  const handleImageLoad = useCallback(() => {
+    initializeLayout();
+  }, [initializeLayout]);
+
+  useEffect(() => {
+    setImageLoaded(false);
+    setCropError(null);
+  }, [cropFrame, file]);
+
+  useEffect(() => {
+    if (!imageLoaded) return;
+    initializeLayout();
+  }, [cropFrame, imageLoaded, initializeLayout]);
 
   const clampPosition = useCallback(
     (x: number, y: number) => {
       const { w, h } = imgSizeRef.current;
       const scale = scaleRef.current;
-      return clamp({ x, y }, w * scale, h * scale, S);
+      return clamp({ x, y }, w * scale, h * scale, cropW, cropH);
     },
-    [S],
+    [cropH, cropW],
   );
 
   const handlePointerDown = useCallback(
     (event: PointerEvent<HTMLDivElement>) => {
-      if (!imageLoaded) return;
+      if (!imageLoaded || !allowCrop) return;
       event.preventDefault();
       dragRef.current = {
         startX: event.clientX,
@@ -192,7 +241,7 @@ function CropDialogContent({
       };
       overlayRef.current?.setPointerCapture(event.pointerId);
     },
-    [imageLoaded],
+    [allowCrop, imageLoaded],
   );
 
   const handlePointerMove = useCallback(
@@ -218,7 +267,7 @@ function CropDialogContent({
 
   const handleKeyDown = useCallback(
     (event: KeyboardEvent<HTMLDivElement>) => {
-      if (!imageLoaded) return;
+      if (!imageLoaded || !allowCrop) return;
       let dx = 0;
       let dy = 0;
       switch (event.key) {
@@ -240,7 +289,7 @@ function CropDialogContent({
       event.preventDefault();
       setPosition((prev) => clampPosition(prev.x + dx, prev.y + dy));
     },
-    [clampPosition, imageLoaded],
+    [allowCrop, clampPosition, imageLoaded],
   );
 
   const handleReset = useCallback(() => {
@@ -258,8 +307,10 @@ function CropDialogContent({
         file,
         position: positionRef.current,
         scale: scaleRef.current,
-        cropSize: S,
-        outputSize: CROP_OUTPUT_SIZE,
+        cropW,
+        cropH,
+        outputW: cropDimensions.outputW,
+        outputH: cropDimensions.outputH,
       });
       onCropComplete(croppedFile);
     } catch (error) {
@@ -267,17 +318,68 @@ function CropDialogContent({
         error instanceof Error ? error.message : "Failed to process image.",
       );
     }
-  }, [file, imageLoaded, onCropComplete, S]);
+  }, [
+    cropDimensions.outputH,
+    cropDimensions.outputW,
+    cropH,
+    cropW,
+    file,
+    imageLoaded,
+    onCropComplete,
+  ]);
+
+  const handleOriginalUpload = useCallback(() => {
+    if (!file) return;
+    onOriginalUpload?.(file);
+  }, [file, onOriginalUpload]);
 
   useEffect(() => {
     return () => cancelAnimationFrame(rafRef.current);
   }, []);
 
   const errorMessage = validationError ?? cropError;
+  const activeMask = cropFrame === "square" ? cropMask : "rect";
   const maskClassName =
-    cropShape === "circle"
+    activeMask === "circle"
       ? "rounded-full border-2 border-dashed border-primary/80"
       : "rounded-lg border-2 border-dashed border-primary/80";
+
+  const frameOptions = useMemo(
+    () => [
+      {
+        value: "square" as const,
+        label: labels?.cropFrameSquare ?? "Square",
+        ariaLabel: labels?.cropFrameSquare ?? "Square crop frame",
+      },
+      {
+        value: "landscape43" as const,
+        label: labels?.cropFrameLandscape43 ?? "4:3",
+        ariaLabel: labels?.cropFrameLandscape43 ?? "4:3 crop frame",
+      },
+      {
+        value: "landscape169" as const,
+        label: labels?.cropFrameLandscape169 ?? "16:9",
+        ariaLabel: labels?.cropFrameLandscape169 ?? "16:9 crop frame",
+      },
+    ],
+    [labels],
+  );
+
+  const maskOptions = useMemo(
+    () => [
+      {
+        value: "rect" as const,
+        label: labels?.cropMaskRect ?? "Rectangle",
+        ariaLabel: labels?.cropMaskRect ?? "Rectangle crop mask",
+      },
+      {
+        value: "circle" as const,
+        label: labels?.cropMaskCircle ?? "Circle",
+        ariaLabel: labels?.cropMaskCircle ?? "Circle crop mask",
+      },
+    ],
+    [labels],
+  );
 
   return (
     <>
@@ -288,14 +390,35 @@ function CropDialogContent({
       ) : null}
 
       <div className="space-y-4 py-2">
+        {allowCrop ? (
+          <div className="flex flex-col gap-3">
+            <SegmentedSwitch
+              value={cropFrame}
+              onChange={setCropFrame}
+              options={frameOptions}
+              ariaLabel={labels?.cropFrameAriaLabel ?? "Crop frame"}
+              fullWidth
+            />
+            {cropFrame === "square" ? (
+              <SegmentedSwitch
+                value={cropMask}
+                onChange={setCropMask}
+                options={maskOptions}
+                ariaLabel={labels?.cropMaskAriaLabel ?? "Crop mask"}
+                fullWidth
+              />
+            ) : null}
+          </div>
+        ) : null}
+
         {errorMessage ? (
           <Text className="text-destructive text-sm" role="alert">
             {errorMessage}
           </Text>
-        ) : file && imageUrl ? (
+        ) : file && imageUrl && allowCrop ? (
           <div
             className="bg-muted relative mx-auto overflow-hidden rounded-lg"
-            style={{ width: S, height: S }}
+            style={{ width: cropW, height: cropH }}
           >
             <img
               ref={imgRef}
@@ -330,10 +453,10 @@ function CropDialogContent({
               aria-hidden
             />
           </div>
-        ) : file ? (
+        ) : file && allowCrop ? (
           <div
             className="bg-muted mx-auto flex items-center justify-center rounded-lg"
-            style={{ width: S, height: S }}
+            style={{ width: cropW, height: cropH }}
           >
             <Text className="text-muted-foreground text-sm">Loading…</Text>
           </div>
@@ -341,7 +464,7 @@ function CropDialogContent({
       </div>
 
       <div className="flex flex-wrap justify-end gap-2">
-        {imageLoaded ? (
+        {imageLoaded && allowCrop ? (
           <Button
             type="button"
             variant="outline"
@@ -359,14 +482,27 @@ function CropDialogContent({
         >
           {labels?.cancel ?? "Cancel"}
         </Button>
-        <Button
-          type="button"
-          onClick={() => void handleCrop()}
-          disabled={!imageLoaded || uploading || Boolean(validationError)}
-          loading={uploading}
-        >
-          {labels?.upload ?? "Upload"}
-        </Button>
+        {allowOriginalUpload ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handleOriginalUpload}
+            disabled={!file || uploading || Boolean(validationError)}
+            loading={uploading}
+          >
+            {labels?.uploadOriginal ?? "Upload original"}
+          </Button>
+        ) : null}
+        {allowCrop ? (
+          <Button
+            type="button"
+            onClick={() => void handleCrop()}
+            disabled={!imageLoaded || uploading || Boolean(validationError)}
+            loading={uploading}
+          >
+            {labels?.uploadCropped ?? labels?.upload ?? "Upload cropped"}
+          </Button>
+        ) : null}
       </div>
     </>
   );

@@ -86,7 +86,6 @@ export function ItemListDesignerStructureSessionProvider({
 }: {
   readonly children: ReactNode;
 }) {
-  const { structurePanelOpen } = useItemListDesigner();
   const [focusedRow, setFocusedRow] = useState<ComponentRowRef | null>(null);
   const [focusedColumn, setFocusedColumn] = useState<ComponentColumnRef | null>(
     null,
@@ -131,12 +130,8 @@ export function ItemListDesignerStructureSessionProvider({
     setFocusedGroupedColumnIndex(columnIndex);
   }, []);
 
-  const previewRowFocus = structurePanelOpen
-    ? selectedRow
-    : (selectedRow ?? focusedRow);
-  const previewColumnFocus = structurePanelOpen
-    ? selectedColumn
-    : (selectedColumn ?? focusedColumn);
+  const previewRowFocus = focusedRow ?? selectedRow;
+  const previewColumnFocus = focusedColumn ?? selectedColumn;
 
   const value = useMemo(
     (): ItemListDesignerStructureSessionContextValue => ({

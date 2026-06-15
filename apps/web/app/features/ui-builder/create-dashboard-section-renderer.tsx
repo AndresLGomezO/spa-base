@@ -36,10 +36,12 @@ export function createDashboardSectionRenderer(
     }
 
     return (
-      <RecursiveLayoutRenderer
-        layout={section.layout}
-        context={buildLayoutContext()}
-      />
+      <div className="min-w-0 w-full">
+        <RecursiveLayoutRenderer
+          layout={section.layout}
+          context={buildLayoutContext()}
+        />
+      </div>
     );
   };
 }

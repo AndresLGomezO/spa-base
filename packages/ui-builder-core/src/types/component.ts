@@ -4,7 +4,7 @@
  * Affected fragments: ui.components.*
  */
 import type { StyleRule } from "../styles/style-types.js";
-import type { RowNode } from "./layout.js";
+import type { RowNode, ColumnStackDirection } from "./layout.js";
 import type { ConditionalStyleRule, LabelConfig } from "./styling.js";
 
 export type UiComponentKind =
@@ -132,9 +132,12 @@ export interface IconComponentConfig {
 
 export type UserDisplayMode = "name" | "email" | "photo" | "photo-and-name";
 
+export type UserNameFormat = "full" | "first";
+
 export interface UserComponentConfig {
   readonly kind: "user";
   readonly display: UserDisplayMode;
+  readonly nameFormat?: UserNameFormat;
   readonly imageSize?: number;
   readonly label?: LabelConfig;
   readonly styles?: readonly StyleRule[];
@@ -272,6 +275,8 @@ export interface PageListComponentConfig {
 export interface ContainerComponentConfig {
   readonly kind: "container";
   readonly rows: readonly RowNode[];
+  /** Vertical (default) or horizontal stacking of child rows. */
+  readonly stackDirection?: ColumnStackDirection;
   readonly styles?: readonly StyleRule[];
 }
 

@@ -12,7 +12,7 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
   container: {
     summary:
       "Structural wrapper (plain div). Holds child rows; insertable from the layout section.",
-    properties: ["rows", "styles?"],
+    properties: ["rows", "stackDirection?", "styles?"],
     example: JSON.stringify(
       {
         kind: "container",
@@ -245,6 +245,7 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
       "Displays the signed-in user (name, email, photo, or photo with name).",
     properties: [
       "display: name | email | photo | photo-and-name",
+      "nameFormat?: full | first",
       "imageSize?",
       "label?",
       "styles?",

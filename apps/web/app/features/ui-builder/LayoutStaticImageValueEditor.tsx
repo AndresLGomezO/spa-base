@@ -14,6 +14,7 @@ import {
   readFileAsBase64,
   uploadEntityFile,
 } from "../../lib/entity-file-client";
+import { imagePhotoUploadLabels } from "../../lib/photo-upload-labels";
 import {
   parseLayoutStaticImageRef,
   readLayoutStaticImageUrl,
@@ -126,16 +127,7 @@ export function LayoutStaticImageValueEditor({
           uploading={uploading}
           disabled={!canEdit || uploading}
           maxSizeBytes={maxSizeBytes}
-          labels={{
-            select: t("entity.fileSelectImage"),
-            change: t("entity.fileChangeImage"),
-            cropTitle: t("platform.appearance.photoCropTitle"),
-            cropDescription: t("platform.appearance.photoCropDescription"),
-            upload: t("platform.appearance.photoUpload"),
-            cancel: t("platform.appearance.photoCancel"),
-            reset: t("platform.appearance.photoReset"),
-            expand: t("platform.appearance.photoExpand"),
-          }}
+          labels={imagePhotoUploadLabels(t)}
           onUpload={handleUpload}
           onError={(message) => toast.error(message)}
         />

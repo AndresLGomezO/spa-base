@@ -1,6 +1,7 @@
 import {
   CollapsibleMotionPresetSection,
   CollapsibleStyleRulesEditor,
+  ColumnStackDirectionEditor,
   ComponentDisplayRangeEditor,
 } from "@repo/ui-builder-react";
 import {
@@ -36,9 +37,18 @@ export function ContainerComponentRowPanel({
     return null;
   }
 
+  const container = row.component;
+
   return (
     <div className="flex flex-col gap-3">
       <FormDesignerPanelPrimaryControls className="flex-col gap-3">
+        <ColumnStackDirectionEditor
+          stackDirection={container.stackDirection}
+          onChange={(stackDirection) =>
+            binding.updateComponent(rowRef, { ...container, stackDirection })
+          }
+          labels={labels.stackDirection}
+        />
         <ComponentDisplayRangeEditor
           displayFrom={row.displayFrom}
           displayTo={row.displayTo}
@@ -50,9 +60,9 @@ export function ContainerComponentRowPanel({
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}
-        styles={row.component.styles}
+        styles={container.styles}
         onChange={(styles) =>
-          binding.updateComponent(rowRef, { ...row.component, styles })
+          binding.updateComponent(rowRef, { ...container, styles })
         }
         labels={labels.styleRules}
       />

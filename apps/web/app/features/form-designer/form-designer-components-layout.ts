@@ -4,6 +4,7 @@ import {
   createDefaultStaticComponent,
   insertComponentRowAt,
   insertNestedLayoutRowAt,
+  insertRowAt,
   isContainerComponent,
   moveRowAt,
   removeRowAt,
@@ -45,7 +46,19 @@ import type {
 } from "./form-designer-structure-tree";
 import { resolveComponentRowLabel } from "./form-designer-structure-tree";
 
+export {
+  resolvePreviewColumnChromeProps,
+  resolvePreviewRowFocusState,
+} from "./preview-focus-state";
+
 export type ComponentsTreeScope = "shell" | "step" | "footer" | "main";
+
+export function isStructuralPreviewRow(row: RowNode): boolean {
+  return (
+    row.type === "nested-layout" ||
+    (row.type === "component" && isContainerComponent(row.component))
+  );
+}
 
 export function resolveComponentsDesignSurface(
   presentation: "plain" | "wizard",
@@ -576,5 +589,34 @@ export function insertCatalogEntryAtAnchor(
   return {
     rowRef: toComponentRowRef(rowId, anchor.locator),
     label: resolveComponentRowLabel(component, fieldDescriptors, treeLabels),
+  };
+}
+
+export function insertImportedRowAtAnchor(
+  binding: ComponentsLayoutBinding,
+  anchor: InsertAnchor,
+  row: ComponentRowNode | NestedLayoutRowNode,
+  fieldDescriptors: readonly FieldDescriptor[],
+  treeLabels: StructureTreeLabels,
+): { readonly rowRef: ComponentRowRef; readonly label: string } {
+  const layout = insertRowAt(
+    binding.layout,
+    anchor.locator,
+    {
+      position: anchor.position,
+      referenceRowId: anchor.referenceRowId,
+    },
+    row,
+  );
+  binding.setLayout(layout);
+
+  const label =
+    row.type === "nested-layout"
+      ? treeLabels.nestedLayout(row.columnCount)
+      : resolveComponentRowLabel(row.component, fieldDescriptors, treeLabels);
+
+  return {
+    rowRef: toComponentRowRef(row.id, anchor.locator),
+    label,
   };
 }

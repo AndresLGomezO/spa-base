@@ -32,7 +32,7 @@ UiLayoutDocument
 | Root | \`root\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\` |
 | Column | — | \`id\`, \`rows[]\`, \`widthPercent?\`, \`stackDirection?\`, \`styles?\`, \`displayFrom?\`, \`displayTo?\` |
 | Component row | \`component\` | \`id\`, \`component\`, \`styles?\`, \`motion?\`, \`displayFrom?\`, \`displayTo?\` |
-| Container component | \`container\` (in component row) | \`rows[]\`, \`styles?\` |
+| Container component | \`container\` (in component row) | \`rows[]\`, \`stackDirection?\`, \`styles?\` |
 | Nested layout | \`nested-layout\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\`, \`displayFrom?\`, \`displayTo?\` |
 
 Optional document fields: \`showActions\`, \`cardsPerRow\` (1–4), \`motion\`.

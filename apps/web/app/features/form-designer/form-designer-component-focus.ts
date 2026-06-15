@@ -33,6 +33,13 @@ export function rowContainsRowFocus(
     return true;
   }
 
+  if (
+    focusedRow.locator.scope === "container" &&
+    focusedRow.locator.containerRowId === containerRowRef.rowId
+  ) {
+    return true;
+  }
+
   return (
     focusedRow.locator.scope === "nested" &&
     focusedRow.locator.rowId === containerRowRef.rowId
@@ -65,7 +72,7 @@ export function rowBelongsToColumn(
   }
 
   return (
-    rowRef.locator.scope === "root" &&
+    (rowRef.locator.scope === "root" || rowRef.locator.scope === "container") &&
     rowRef.locator.columnIndex === columnRef.rootColumnIndex
   );
 }

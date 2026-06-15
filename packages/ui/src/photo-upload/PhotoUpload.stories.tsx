@@ -5,6 +5,27 @@ import { toast } from "sonner";
 import { Text } from "../typography/Text";
 import { PhotoUpload } from "./PhotoUpload";
 
+const defaultLabels = {
+  select: "Select photo",
+  change: "Change photo",
+  cropTitle: "Adjust image",
+  cropDescription:
+    "Drag the image to position the crop area, or upload the original file.",
+  upload: "Upload",
+  uploadOriginal: "Upload original",
+  uploadCropped: "Upload cropped",
+  cancel: "Cancel",
+  reset: "Reset",
+  expand: "Photo preview",
+  cropFrameSquare: "Square",
+  cropFrameLandscape43: "4:3",
+  cropFrameLandscape169: "16:9",
+  cropMaskCircle: "Circle",
+  cropMaskRect: "Rectangle",
+  cropFrameAriaLabel: "Crop frame",
+  cropMaskAriaLabel: "Crop mask",
+};
+
 const meta = {
   title: "Components/PhotoUpload",
   component: PhotoUpload,
@@ -20,8 +41,12 @@ type Story = StoryObj<typeof PhotoUpload>;
 
 function PhotoUploadDemo({
   cropShape = "rect" as const,
+  allowOriginalUpload = true,
+  allowCrop = true,
 }: {
   readonly cropShape?: "circle" | "rect";
+  readonly allowOriginalUpload?: boolean;
+  readonly allowCrop?: boolean;
 }) {
   const [value, setValue] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -32,17 +57,10 @@ function PhotoUploadDemo({
         value={value}
         alt="Sample photo"
         cropShape={cropShape}
+        allowOriginalUpload={allowOriginalUpload}
+        allowCrop={allowCrop}
         uploading={uploading}
-        labels={{
-          select: "Select photo",
-          change: "Change photo",
-          cropTitle: "Crop photo",
-          cropDescription: "Drag the image to position the crop area.",
-          upload: "Upload",
-          cancel: "Cancel",
-          reset: "Reset",
-          expand: "Photo preview",
-        }}
+        labels={defaultLabels}
         onUpload={async ({ file }) => {
           setUploading(true);
           await new Promise((resolve) => setTimeout(resolve, 800));
@@ -62,8 +80,14 @@ function PhotoUploadDemo({
   );
 }
 
-export const RectCrop: Story = {
+export const Default: Story = {
   render: () => <PhotoUploadDemo cropShape="rect" />,
+};
+
+export const CropOnly: Story = {
+  render: () => (
+    <PhotoUploadDemo cropShape="rect" allowOriginalUpload={false} />
+  ),
 };
 
 export const CircleCrop: Story = {

@@ -3,24 +3,22 @@ import { describe, expect, it } from "vitest";
 import { componentRowSchema } from "./ui-layout-schema.js";
 import type { ComponentRowNode } from "../types/layout.js";
 
-describe("componentRowSchema user", () => {
-  it("parses user component rows", () => {
+describe("componentRowSchema container", () => {
+  it("parses container component rows with stack direction", () => {
     const parsed = componentRowSchema.parse({
       type: "component",
       id: "row-1",
       component: {
-        kind: "user",
-        display: "photo-and-name",
-        nameFormat: "first",
-        imageSize: 48,
+        kind: "container",
+        stackDirection: "row",
+        rows: [],
       },
     }) as ComponentRowNode;
 
     expect(parsed.component).toMatchObject({
-      kind: "user",
-      display: "photo-and-name",
-      nameFormat: "first",
-      imageSize: 48,
+      kind: "container",
+      stackDirection: "row",
+      rows: [],
     });
   });
 });

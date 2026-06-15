@@ -3,7 +3,9 @@ import { randomUUID } from "node:crypto";
 import { z } from "zod";
 
 import {
+  DEFAULT_IMAGE_MAX_SIZE_BYTES,
   ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  MAX_IMAGE_UPLOAD_REQUEST_BODY_BYTES,
   putTenantDashboardLayoutInputSchema,
   tenantDashboardLayoutRecordSchema,
 } from "@repo/entities";
@@ -129,6 +131,7 @@ export async function registerTenantDashboardLayoutRoutes(
         options.authenticate,
         requireWrite as preHandlerAsyncHookHandler,
       ],
+      bodyLimit: MAX_IMAGE_UPLOAD_REQUEST_BODY_BYTES,
     },
     async (request, reply) => {
       const tenantId = requireJwtTenant(request, reply);
@@ -148,6 +151,15 @@ export async function registerTenantDashboardLayoutRoutes(
 
       try {
         const buffer = Buffer.from(parsedBody.data.data, "base64");
+        if (buffer.length > DEFAULT_IMAGE_MAX_SIZE_BYTES) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            `File exceeds maximum size of ${DEFAULT_IMAGE_MAX_SIZE_BYTES} bytes.`,
+          );
+        }
+
         const imageUrl = await uploadTenantDashboardImage({
           config: options.firebaseAdminConfig,
           tenantId,

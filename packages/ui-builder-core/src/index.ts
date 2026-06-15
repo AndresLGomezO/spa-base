@@ -73,6 +73,7 @@ export type {
   IconComponentConfig,
   UserComponentConfig,
   UserDisplayMode,
+  UserNameFormat,
   ContainerComponentConfig,
   FormFieldComponentConfig,
   BooleanFieldDisplay,
@@ -192,6 +193,14 @@ export {
   textWrapClassFromStyles,
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
+  containerRowWrapperClassName,
+  rowPrefersContentWidth,
+  prefersInlineContentWidth,
+  inlineContentRowClassName,
+  flexWrapRowItemClassName,
+  isFlexWrapRowStack,
+  stackShellWidthClassName,
+  stackShellLayoutClasses,
   gapPxFromStyles,
   fontSizePxFromStyles,
   FONT_SIZE_STYLE_PROPERTY,
@@ -203,6 +212,19 @@ export {
   type FlexJustify,
   type FlexWrap,
 } from "./styles/apply-style-rules.js";
+export {
+  isMarginStyleProperty,
+  parseMarginPx,
+  parseNonNegativeSpacingPx,
+  NEGATIVE_MARGIN_MIN_PX,
+} from "./styles/spacing-style-values.js";
+export {
+  filterComponentInnerStyleRules,
+  filterHoistedRowSlotStyleRules,
+  isRowSlotHoistedStyleProperty,
+  mergeRowWrapperStyles,
+  ROW_SLOT_HOISTED_STYLE_PROPERTIES,
+} from "./styles/row-slot-styles.js";
 export {
   resolveMetricKpiPresentation,
   type MetricKpiPresentation,

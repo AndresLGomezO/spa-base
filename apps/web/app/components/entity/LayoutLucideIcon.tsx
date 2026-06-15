@@ -1,5 +1,6 @@
 import type { IconComponentConfig } from "@repo/ui-builder-core";
 import {
+  filterComponentInnerStyleRules,
   fontSizePxFromStyles,
   layoutInlineStyleFromStyleRules,
   splitStyleRuleClasses,
@@ -26,9 +27,10 @@ export function LayoutLucideIcon({
   readonly config: IconComponentConfig;
 }) {
   const Icon = resolveLucideIcon(config.iconName);
-  const { containerClassName } = splitStyleRuleClasses(config.styles);
-  const containerStyle = layoutInlineStyleFromStyleRules(config.styles);
-  const iconSize = config.iconSize ?? fontSizePxFromStyles(config.styles) ?? 20;
+  const innerStyles = filterComponentInnerStyleRules(config.styles);
+  const { containerClassName } = splitStyleRuleClasses(innerStyles);
+  const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
+  const iconSize = config.iconSize ?? fontSizePxFromStyles(innerStyles) ?? 20;
   const labelText = config.label?.text?.trim();
   const showLabel = config.label?.show === true && Boolean(labelText);
 

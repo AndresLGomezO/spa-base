@@ -55,7 +55,6 @@ export function FormDesignerComponentsSessionProvider({
   presentation,
   children,
 }: FormDesignerComponentsSessionProviderProps) {
-  const { componentRowPanelOpen } = useFormDesigner();
   const [treeScope, setTreeScope] = useState<ComponentsTreeScope>(
     presentation === "wizard" ? "shell" : "main",
   );
@@ -111,12 +110,8 @@ export function FormDesignerComponentsSessionProvider({
   const resolvedColumnFocus = selectedColumn ?? focusedColumn;
   const treeRowFocus = focusedRow ?? selectedRow;
   const treeColumnFocus = focusedColumn ?? selectedColumn;
-  const previewRowFocus = componentRowPanelOpen
-    ? selectedRow
-    : (selectedRow ?? focusedRow);
-  const previewColumnFocus = componentRowPanelOpen
-    ? selectedColumn
-    : (selectedColumn ?? focusedColumn);
+  const previewRowFocus = focusedRow ?? selectedRow;
+  const previewColumnFocus = focusedColumn ?? selectedColumn;
 
   const value = useMemo(
     (): FormDesignerComponentsSessionContextValue => ({

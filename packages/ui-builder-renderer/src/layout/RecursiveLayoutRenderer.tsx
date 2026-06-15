@@ -16,11 +16,20 @@ import {
   usesResponsiveGridLayout,
   usesTextWrap,
   isContainerComponent,
+  mergeRowWrapperStyles,
+  containerRowWrapperClassName,
+  flexWrapRowItemClassName,
+  inlineContentRowClassName,
+  isFlexWrapRowStack,
+  prefersInlineContentWidth,
+  stackShellLayoutClasses,
+  stackShellWidthClassName,
   type ColumnNode,
   type ColumnStackDirection,
   type ResponsiveGridBreakpoint,
   type RowLocator,
   type RowNode,
+  type UiComponentConfig,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { LayoutGrid, LayoutStack } from "@repo/ui";
@@ -276,7 +285,7 @@ function renderRows(
       direction={stackDirection}
       gap={gapPxFromStyles(column.styles)}
       className={[
-        "flex w-full min-w-0",
+        stackShellLayoutClasses(column.styles, stackDirection),
         (isMainPage || isStretchedSurfaceFill) &&
           stackDirection === "column" &&
           "min-h-0 flex-1",
@@ -303,6 +312,7 @@ function renderRows(
             atBreakpoint,
             rowScope,
             rowIndex + rowMotionIndexOffset,
+            column,
             columnGridOptions,
           )}
         </Fragment>
@@ -313,13 +323,20 @@ function renderRows(
 
 function rowStackShellClassName(
   stackDirection: ColumnStackDirection,
-  componentStyles?: readonly import("@repo/ui-builder-core").StyleRule[],
+  component?: UiComponentConfig,
+  parentIsFlexWrapRow = false,
 ): string | undefined {
   if (stackDirection !== "row") {
     return undefined;
   }
 
-  if (usesTextWrap(componentStyles)) {
+  if (component && prefersInlineContentWidth(component)) {
+    return parentIsFlexWrapRow
+      ? "max-w-full shrink-0"
+      : "w-fit max-w-full shrink-0";
+  }
+
+  if (usesTextWrap(component?.styles)) {
     return "min-w-0 w-full shrink";
   }
 
@@ -376,6 +393,7 @@ function resolveColumnRowScope(
   nestedContext?: {
     readonly rootColumnIndex: number;
     readonly nestedParentRowId: string;
+    readonly containerParentRowId?: string;
   },
 ): RowRenderScope {
   if (nestedContext) {
@@ -383,6 +401,7 @@ function resolveColumnRowScope(
       rootColumnIndex: nestedContext.rootColumnIndex,
       nestedParentRowId: nestedContext.nestedParentRowId,
       nestedColumnIndex: columnIndex,
+      containerParentRowId: nestedContext.containerParentRowId,
     };
   }
 
@@ -600,6 +619,7 @@ function renderRow(
   atBreakpoint: ResponsiveGridBreakpoint | undefined,
   rowScope: RowRenderScope,
   rowIndex = 0,
+  parentColumn?: ColumnNode,
   columnGridOptions?: ColumnGridRenderOptions,
 ): ReactNode {
   const displayRange = resolveRowDisplayRange(row, atBreakpoint);
@@ -608,11 +628,27 @@ function renderRow(
   }
 
   const rowLocator = buildRowLocator(rowScope);
+  const parentStackDirection = parentColumn
+    ? resolveColumnStackDirection(parentColumn)
+    : stackDirection;
+  const parentIsFlexWrapRow = parentColumn
+    ? isFlexWrapRowStack(parentStackDirection, parentColumn.styles)
+    : false;
+  const usesPreviewRowWrapper = Boolean(columnGridOptions?.rowWrapper);
+  const flexWrapRowItemClass =
+    usesPreviewRowWrapper || !parentColumn
+      ? ""
+      : flexWrapRowItemClassName(
+          parentStackDirection,
+          parentColumn.styles,
+          row,
+        );
   const stackShellClass = rowStackShellClassName(stackDirection);
 
   if (row.type === "component") {
     if (isContainerComponent(row.component)) {
       const containerStyles = resolveStyleRules(row.component.styles);
+      const containerStackDirection = row.component.stackDirection ?? "column";
       const stretchedContainerClass = shouldStretchRootContainerRow(
         row,
         context,
@@ -625,18 +661,31 @@ function renderRow(
         id: `${row.id}-container`,
         rows: row.component.rows,
         styles: row.component.styles,
+        stackDirection: row.component.stackDirection,
       };
       const containerScope: RowRenderScope = {
         rootColumnIndex: rowScope.rootColumnIndex,
         containerParentRowId: row.id,
       };
+      const containerWidthClass =
+        flexWrapRowItemClass ||
+        stackShellWidthClassName(row.component.styles, containerStackDirection);
 
       return wrapRowContent(
         row,
         rowLocator,
         <div
           key={row.id}
-          className={[stretchedContainerClass, containerStyles.className]
+          className={[
+            stretchedContainerClass,
+            flexWrapRowItemClass,
+            !flexWrapRowItemClass ? containerWidthClass : undefined,
+            containerRowWrapperClassName(
+              row.component.styles,
+              containerStackDirection,
+            ),
+            containerStyles.className,
+          ]
             .filter(Boolean)
             .join(" ")}
           style={containerStyles.style}
@@ -661,7 +710,7 @@ function renderRow(
       );
     }
 
-    const rowStyles = resolveStyleRules(row.styles);
+    const rowStyles = mergeRowWrapperStyles(row.styles, row.component.styles);
     const motionClass = resolveMotionPreset(row.motion, rowIndex);
     const isMainPage = context.mode === "mainPage";
     const isFormFill = context.mode === "form";
@@ -706,6 +755,10 @@ function renderRow(
       isWizardForm && stackDirection === "column" && isWizardProgressRow
         ? "shrink-0"
         : undefined;
+    const inlineContentRowClass =
+      usesPreviewRowWrapper || !parentIsFlexWrapRow
+        ? inlineContentRowClassName(row.component, false)
+        : inlineContentRowClassName(row.component, parentIsFlexWrapRow);
     const formSlotClassName =
       isFormFill && stackDirection === "column"
         ? componentSlotWrapperClassName(row.component.styles)
@@ -725,12 +778,18 @@ function renderRow(
       <div
         key={row.id}
         className={[
-          rowStackShellClassName(stackDirection, row.component.styles),
+          flexWrapRowItemClass,
+          rowStackShellClassName(
+            stackDirection,
+            row.component,
+            usesPreviewRowWrapper ? false : parentIsFlexWrapRow,
+          ),
           mainPageRowClass,
           formRowClass,
           wizardActionsRowClass,
           wizardStepHostRowClass,
           wizardProgressRowClass,
+          inlineContentRowClass,
           formSlotClassName,
           rowStyles.className,
           motionClass,
@@ -943,7 +1002,7 @@ export function RecursiveLayoutRenderer({
   const fillRootClass = isMainPage
     ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
     : isStretchedSurfaceFill
-      ? "flex h-full min-h-0 min-w-0 w-full flex-1 flex-col"
+      ? "flex h-full min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-x-clip"
       : isWizardForm || isWizardStepContent
         ? stretchRootColumns
           ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
@@ -951,8 +1010,8 @@ export function RecursiveLayoutRenderer({
         : isFormFill
           ? stretchRootColumns
             ? "flex h-full min-h-0 w-full min-w-0 flex-col"
-            : "flex w-full min-w-0 flex-col"
-          : undefined;
+            : "flex w-full min-w-0 flex-col overflow-x-clip"
+          : "flex w-full min-w-0 max-w-full flex-col overflow-x-clip";
   const rootStylesResolved = resolveStyleRules(layout.root.styles, className);
   const columnGridOptions: ColumnGridRenderOptions = {
     rootColumnWrapper,

@@ -2,7 +2,7 @@
 
 Displays the signed-in user (name, email, photo, or photo with name).
 
-**Properties:** display: name | email | photo | photo-and-name, imageSize?, label?, styles?
+**Properties:** display: name | email | photo | photo-and-name, nameFormat?: full | first, imageSize?, label?, styles?
 
 ```json
 {

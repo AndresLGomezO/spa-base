@@ -10,6 +10,7 @@ import {
 } from "./StyleRuleEditorFields.js";
 import {
   addStyleRule,
+  formatStyleRuleValuePreview,
   removeStyleRule,
   upsertStyleRule,
 } from "./style-rules-state.js";
@@ -80,11 +81,7 @@ function TrashIcon() {
 }
 
 function formatValuePreview(rule: StyleRule): string {
-  const raw = String(rule.value);
-  if (raw.length > 48) {
-    return `${raw.slice(0, 45)}...`;
-  }
-  return raw;
+  return formatStyleRuleValuePreview(rule);
 }
 
 export function CollapsibleStyleRulesEditor({

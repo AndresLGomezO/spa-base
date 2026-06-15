@@ -1,10 +1,14 @@
 import type { UserComponentConfig } from "@repo/ui-builder-core";
 import {
+  filterComponentInnerStyleRules,
   fontSizePxFromStyles,
   layoutInlineStyleFromStyleRules,
   splitStyleRuleClasses,
+  textInlineStyleFromStyleRules,
+  textWrapClassFromStyles,
 } from "@repo/ui-builder-core";
-import { Avatar, CardFieldValue, Text } from "@repo/ui";
+import { Avatar, CardFieldValue } from "@repo/ui";
+import { cn } from "@repo/theme/utils";
 
 export interface LayoutUserInfo {
   readonly displayName: string | null;
@@ -38,10 +42,16 @@ function resolveLayoutUserDisplayName(
   );
 }
 
-interface LayoutUserDisplayProps {
-  readonly config: UserComponentConfig;
-  readonly user: LayoutUserInfo | null | undefined;
-  readonly fallbackName: string;
+function formatUserName(
+  fullName: string,
+  nameFormat: UserComponentConfig["nameFormat"],
+): string {
+  if (nameFormat !== "first") {
+    return fullName;
+  }
+
+  const firstName = fullName.trim().split(/\s+/).filter(Boolean)[0];
+  return firstName ?? fullName;
 }
 
 function labelAlignClassName(
@@ -56,16 +66,32 @@ function labelAlignClassName(
   return undefined;
 }
 
+interface LayoutUserDisplayProps {
+  readonly config: UserComponentConfig;
+  readonly user: LayoutUserInfo | null | undefined;
+  readonly fallbackName: string;
+}
+
 export function LayoutUserDisplay({
   config,
   user,
   fallbackName,
 }: LayoutUserDisplayProps) {
-  const { containerClassName } = splitStyleRuleClasses(config.styles);
-  const containerStyle = layoutInlineStyleFromStyleRules(config.styles);
+  const innerStyles = filterComponentInnerStyleRules(config.styles);
+  const { containerClassName, textClassName } =
+    splitStyleRuleClasses(innerStyles);
+  const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
+  const valueStyle = textInlineStyleFromStyleRules(innerStyles);
+  const textSize = fontSizePxFromStyles(innerStyles);
+  const valueClassName = [textWrapClassFromStyles(innerStyles), textClassName]
+    .filter(Boolean)
+    .join(" ");
   const imageSize =
     config.imageSize ?? fontSizePxFromStyles(config.styles) ?? 40;
-  const displayName = resolveLayoutUserDisplayName(user, fallbackName);
+  const displayName = formatUserName(
+    resolveLayoutUserDisplayName(user, fallbackName),
+    config.nameFormat,
+  );
   const email = user?.email?.trim() ?? "";
   const labelText = config.label?.text?.trim();
   const showLabel = config.label?.show === true && Boolean(labelText);
@@ -87,19 +113,19 @@ export function LayoutUserDisplay({
   const value = (() => {
     switch (config.display) {
       case "email":
-        return <Text className="text-sm">{email || fallbackName}</Text>;
+        return email || fallbackName;
       case "photo":
         return photo;
       case "photo-and-name":
         return (
           <div className="flex min-w-0 items-center gap-3">
             {photo}
-            <Text className="truncate text-sm font-medium">{displayName}</Text>
+            <span className="truncate">{displayName}</span>
           </div>
         );
       case "name":
       default:
-        return <Text className="text-sm font-medium">{displayName}</Text>;
+        return displayName;
     }
   })();
 
@@ -110,10 +136,12 @@ export function LayoutUserDisplay({
       labelPosition={config.label?.position ?? "above"}
       value={value}
       allowEmpty
-      className={containerClassName}
+      className={cn("w-fit max-w-full shrink-0", containerClassName)}
       style={containerStyle}
       labelClassName={labelAlignClassName(config.label?.align)}
-      valueClassName="min-w-0"
+      valueClassName={valueClassName}
+      valueStyle={valueStyle}
+      textSize={textSize}
       textBold={config.label?.bold}
       textThin={config.label?.thin}
       textItalic={config.label?.italic}

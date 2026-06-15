@@ -4,7 +4,11 @@ import { useTranslation } from "react-i18next";
 import { FormDesignerAddComponentModal } from "../form-designer/FormDesignerAddComponentModal";
 import type { CatalogEntryKind } from "../form-designer/form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
-import { insertCatalogEntryAtAnchor } from "../form-designer/form-designer-components-layout";
+import {
+  insertCatalogEntryAtAnchor,
+  insertImportedRowAtAnchor,
+} from "../form-designer/form-designer-components-layout";
+import { TENANT_DASHBOARD_LAYOUT_VALIDATION_DEFINITION } from "./tenant-dashboard-layout-validation-definition";
 import type { InsertAnchor } from "../form-designer/form-designer-structure-tree";
 import { resolveSectionsLayoutBinding } from "./dashboard-layout-designer-layout-binding";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
@@ -64,6 +68,40 @@ export function DashboardLayoutDesignerSectionsTreePanel() {
     ],
   );
 
+  const handleImportRow = useCallback(
+    (
+      anchor: InsertAnchor,
+      row:
+        | import("@repo/ui-builder-core").ComponentRowNode
+        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+    ) => {
+      if (!binding) {
+        return;
+      }
+
+      const { rowRef, label } = insertImportedRowAtAnchor(
+        binding,
+        anchor,
+        row,
+        [],
+        labels.tree,
+      );
+
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label);
+    },
+    [
+      binding,
+      clearColumnHover,
+      labels.tree,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+    ],
+  );
+
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setInsertAnchor(null);
@@ -79,10 +117,13 @@ export function DashboardLayoutDesignerSectionsTreePanel() {
       <FormDesignerAddComponentModal
         open={modalOpen}
         designSurface="dashboardSection"
+        definition={TENANT_DASHBOARD_LAYOUT_VALIDATION_DEFINITION}
+        defaultFieldPath="name"
         labels={labels}
         insertAnchor={insertAnchor}
         onClose={handleCloseModal}
         onSelect={handleSelect}
+        onImportRow={handleImportRow}
       />
     </>
   );

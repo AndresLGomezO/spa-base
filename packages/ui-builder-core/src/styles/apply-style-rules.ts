@@ -1,6 +1,11 @@
 import type { StyleRule, StylePropertyKey, ThemeToken } from "./style-types.js";
 import { isCssColorValue, isThemeTokenValue } from "./color-values.js";
 import {
+  isMarginStyleProperty,
+  parseMarginPx,
+  parseNonNegativeSpacingPx,
+} from "./spacing-style-values.js";
+import {
   themeTokenBackgroundClass,
   themeTokenBorderClass,
   themeTokenTextClass,
@@ -377,6 +382,155 @@ export function textWrapClassFromStyles(
   return "truncate";
 }
 
+export function rowPrefersContentWidth(
+  styles: readonly StyleRule[] | undefined,
+): boolean {
+  const flex = parseFlexLayoutFromStyles(styles);
+  const hasFlexZero =
+    styles?.some(
+      (rule) => rule.property === "flex" && String(rule.value) === "0",
+    ) ?? false;
+  const hasAlignSelfStartEnd =
+    flex.selfClassName.includes("self-start") ||
+    flex.selfClassName.includes("self-end");
+
+  return hasFlexZero || hasAlignSelfStartEnd;
+}
+
+/** Text, user, and image rows hug content unless they explicitly use flex: 1. */
+export function prefersInlineContentWidth(component: {
+  readonly kind: string;
+  readonly styles?: readonly StyleRule[];
+}): boolean {
+  if (
+    component.kind !== "text" &&
+    component.kind !== "user" &&
+    component.kind !== "image"
+  ) {
+    return false;
+  }
+
+  return !(
+    component.styles?.some(
+      (rule) => rule.property === "flex" && String(rule.value) === "1",
+    ) ?? false
+  );
+}
+
+export function inlineContentRowClassName(
+  component: {
+    readonly kind: string;
+    readonly styles?: readonly StyleRule[];
+  },
+  parentIsFlexWrapRow = false,
+): string {
+  if (!prefersInlineContentWidth(component)) {
+    return "";
+  }
+
+  if (parentIsFlexWrapRow) {
+    return "max-w-full shrink-0";
+  }
+
+  return "w-fit max-w-full shrink-0";
+}
+
+export function flexWrapRowItemClassName(
+  parentStackDirection: "column" | "row",
+  parentStyles: readonly StyleRule[] | undefined,
+  row: {
+    readonly type: string;
+    readonly component?: { readonly kind: string };
+  },
+): string {
+  if (parentStackDirection !== "row" || !usesFlexWrapLayout(parentStyles)) {
+    return "";
+  }
+
+  if (row.type !== "component") {
+    return "";
+  }
+
+  if (row.component?.kind === "image") {
+    return "min-w-0 max-w-full shrink-0 grow-0 basis-auto";
+  }
+
+  if (row.component?.kind === "container") {
+    return "min-w-0 max-w-full flex-[1_1_0] basis-0";
+  }
+
+  return "";
+}
+
+export function isFlexWrapRowStack(
+  stackDirection: "column" | "row",
+  styles: readonly StyleRule[] | undefined,
+): boolean {
+  return stackDirection === "row" && usesFlexWrapLayout(styles);
+}
+
+/** Width class for layout stacks; avoids forcing full width when children should hug content. */
+export function stackShellWidthClassName(
+  styles: readonly StyleRule[] | undefined,
+  stackDirection: "column" | "row",
+): string {
+  const { align, justify, wrap } = parseFlexLayoutFromStyles(styles);
+
+  if (
+    stackDirection === "row" &&
+    (wrap === "wrap" || wrap === "wrap-reverse")
+  ) {
+    return "w-full max-w-full min-w-0";
+  }
+
+  if (stackDirection === "column" && (align === "start" || align === "end")) {
+    return "w-fit max-w-full";
+  }
+
+  if (stackDirection === "row" && (justify === "start" || justify === "end")) {
+    return "w-fit max-w-full";
+  }
+
+  return "w-full";
+}
+
+/** Flex stack shell classes for layout rows/columns. */
+export function stackShellLayoutClasses(
+  styles: readonly StyleRule[] | undefined,
+  stackDirection: "column" | "row",
+): string {
+  const widthClass = stackShellWidthClassName(styles, stackDirection);
+  const minWidthClass =
+    widthClass.includes("w-fit") && !widthClass.includes("max-w-full")
+      ? "min-w-max"
+      : "min-w-0";
+
+  return ["flex", minWidthClass, widthClass].join(" ");
+}
+
+/** Flex self-alignment and content width for container row wrappers. */
+export function containerRowWrapperClassName(
+  styles: readonly StyleRule[] | undefined,
+  stackDirection: "column" | "row" = "column",
+): string {
+  const flex = parseFlexLayoutFromStyles(styles);
+  const parts: string[] = [];
+
+  if (flex.selfClassName) {
+    parts.push(flex.selfClassName);
+  }
+
+  if (rowPrefersContentWidth(styles)) {
+    if (stackDirection === "row" && usesFlexWrapLayout(styles)) {
+      parts.push("w-full", "max-w-full", "min-w-0");
+    } else {
+      parts.push("w-fit", "max-w-full", "min-w-0", "shrink-0");
+    }
+  }
+
+  return parts.join(" ");
+}
+
 export function componentSlotWrapperClassName(
   styles: readonly StyleRule[] | undefined,
 ): string {
@@ -384,7 +538,13 @@ export function componentSlotWrapperClassName(
   const wrapLayout = usesTextWrap(styles)
     ? "min-w-0 w-full shrink max-w-full"
     : "";
-  return [flex.selfClassName, flex.slotFlexClassName, wrapLayout]
+  const contentWidth =
+    rowPrefersContentWidth(styles) &&
+    !flex.slotFlexClassName.split(/\s+/).includes("w-full")
+      ? "w-fit max-w-full min-w-0 shrink-0"
+      : "";
+
+  return [flex.selfClassName, flex.slotFlexClassName, wrapLayout, contentWidth]
     .filter(Boolean)
     .join(" ");
 }
@@ -472,8 +632,10 @@ export function spacingStyleFromStyleRules(
       continue;
     }
 
-    const px = Number.parseInt(String(rule.value), 10);
-    if (!Number.isFinite(px) || px < 0) {
+    const px = isMarginStyleProperty(rule.property)
+      ? parseMarginPx(String(rule.value))
+      : parseNonNegativeSpacingPx(String(rule.value));
+    if (px === undefined) {
       continue;
     }
 

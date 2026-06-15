@@ -19,7 +19,7 @@ import {
   UserRound,
 } from "lucide-react";
 import {
-  componentKindsForSurface,
+  isComponentKindAllowedOnSurface,
   type DesignSurface,
   type UiComponentKind,
 } from "@repo/ui-builder-core";
@@ -79,24 +79,22 @@ const ALL_SECTIONS: readonly ComponentCatalogSection[] = [
 
 function isAllowedOnSurface(
   kind: CatalogEntryKind,
-  allowedKinds: readonly UiComponentKind[],
+  designSurface: DesignSurface,
 ): boolean {
-  if (kind === "nested-layout" || kind === "container") {
+  if (kind === "nested-layout") {
     return true;
   }
 
-  return allowedKinds.includes(kind);
+  return isComponentKindAllowedOnSurface(kind, designSurface);
 }
 
 export function getFilteredComponentCatalog(
   designSurface: DesignSurface,
 ): readonly ComponentCatalogSection[] {
-  const allowedKinds = componentKindsForSurface(designSurface);
-
   const sections = ALL_SECTIONS.map((section) => ({
     ...section,
     entries: section.entries.filter((entry) =>
-      isAllowedOnSurface(entry.kind, allowedKinds),
+      isAllowedOnSurface(entry.kind, designSurface),
     ),
   })).filter((section) => section.entries.length > 0);
 

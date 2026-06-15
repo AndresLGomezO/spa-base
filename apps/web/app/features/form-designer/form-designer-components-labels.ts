@@ -1,4 +1,7 @@
 import type { TFunction } from "i18next";
+import type { LayoutJsonImportLabels } from "@repo/ui-builder-react";
+
+import { layoutJsonImportLabels } from "../ui-builder/layout-json-import-labels";
 import type {
   CatalogEntryKind,
   CatalogSectionId,
@@ -17,6 +20,9 @@ export interface FormDesignerComponentsLabels {
   readonly insertInColumn: (label: string) => string;
   readonly modalTitle: string;
   readonly modalCancel: string;
+  readonly importSectionTitle: string;
+  readonly importJsonOption: string;
+  readonly layoutJsonImport: LayoutJsonImportLabels;
   readonly sectionTitle: (section: CatalogSectionId) => string;
   readonly optionLabel: (kind: CatalogEntryKind) => string;
   readonly wizardScopeShell: string;
@@ -85,6 +91,9 @@ export function formDesignerComponentsLabels(
       t("formDesigner.components.insertInColumn", { label }),
     modalTitle: t("formDesigner.components.modalTitle"),
     modalCancel: t("formDesigner.components.modalCancel"),
+    importSectionTitle: t("formDesigner.components.importSectionTitle"),
+    importJsonOption: t("formDesigner.components.importJsonOption"),
+    layoutJsonImport: layoutJsonImportLabels(t),
     sectionTitle: (section) => {
       switch (section) {
         case "layout":

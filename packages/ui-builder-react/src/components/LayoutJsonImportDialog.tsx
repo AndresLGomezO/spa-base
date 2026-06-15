@@ -19,6 +19,7 @@ export interface LayoutJsonImportLabels {
   readonly titleColumn?: string;
   readonly titleComponentRow: string;
   readonly titleNestedRow: string;
+  readonly titleInsertableRow: string;
   readonly pasteLabel: string;
   readonly uploadLabel: string;
   readonly skeletonTitle: string;
@@ -76,6 +77,8 @@ function titleForScope(
       return labels.titleColumn ?? labels.titleNestedRow;
     case "component-row":
       return labels.titleComponentRow;
+    case "insertable-row":
+      return labels.titleInsertableRow;
     case "nested-layout-row":
       return labels.titleNestedRow;
   }

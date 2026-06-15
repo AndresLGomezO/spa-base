@@ -2,14 +2,20 @@ import { describe, expect, it } from "vitest";
 
 import {
   componentSlotWrapperClassName,
+  containerRowWrapperClassName,
+  flexWrapRowItemClassName,
   flexWrapClassFromStyles,
   fontSizePxFromStyles,
   gapPxFromStyles,
+  inlineContentRowClassName,
   parseFlexLayoutFromStyles,
+  prefersInlineContentWidth,
   resolvePageSlotWrapper,
   resolveStyleRules,
   spacingStyleFromStyleRules,
   splitStyleRuleClasses,
+  stackShellWidthClassName,
+  stackShellLayoutClasses,
   textWrapClassFromStyles,
   usesFlexWrapLayout,
   usesTextWrap,
@@ -89,6 +95,15 @@ describe("applyStyleRules", () => {
     expect(resolved.className).not.toContain("pt-[");
   });
 
+  it("applies negative margins as inline styles", () => {
+    expect(
+      spacingStyleFromStyleRules([{ property: "marginTop", value: "-40" }]),
+    ).toEqual({ marginTop: "-40px" });
+    expect(
+      spacingStyleFromStyleRules([{ property: "paddingTop", value: "-4" }]),
+    ).toEqual({});
+  });
+
   it("maps overflow axis rules to tailwind utilities", () => {
     const resolved = resolveStyleRules([
       { property: "overflowX", value: "hidden" },
@@ -124,6 +139,111 @@ describe("applyStyleRules", () => {
         { property: "alignSelf", value: "center" },
       ]),
     ).toBe("self-center");
+  });
+
+  it("uses content width classes when flex is zero", () => {
+    expect(
+      componentSlotWrapperClassName([
+        { property: "flex", value: "0" },
+        { property: "alignSelf", value: "start" },
+      ]),
+    ).toBe("self-start w-fit max-w-full min-w-0 shrink-0");
+  });
+
+  it("uses fit width for column stacks aligned to start", () => {
+    expect(
+      stackShellWidthClassName(
+        [{ property: "alignItems", value: "start" }],
+        "column",
+      ),
+    ).toBe("w-fit max-w-full");
+  });
+
+  it("builds stack shell classes with min-w-0 when width is capped", () => {
+    expect(
+      stackShellLayoutClasses(
+        [{ property: "alignItems", value: "start" }],
+        "column",
+      ),
+    ).toBe("flex min-w-0 w-fit max-w-full");
+  });
+
+  it("keeps full width for default column stacks", () => {
+    expect(stackShellWidthClassName(undefined, "column")).toBe("w-full");
+  });
+
+  it("sizes flex-wrap row items for responsive stacking", () => {
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        { type: "component", component: { kind: "container" } },
+      ),
+    ).toBe("min-w-0 max-w-full flex-[1_1_0] basis-0");
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        { type: "component", component: { kind: "image" } },
+      ),
+    ).toBe("min-w-0 max-w-full shrink-0 grow-0 basis-auto");
+    expect(
+      inlineContentRowClassName(
+        { kind: "text", styles: [{ property: "fontWeight", value: "bold" }] },
+        true,
+      ),
+    ).toBe("max-w-full shrink-0");
+  });
+
+  it("uses full width for row stacks that wrap", () => {
+    expect(
+      stackShellWidthClassName(
+        [{ property: "flexWrap", value: "wrap" }],
+        "row",
+      ),
+    ).toBe("w-full max-w-full min-w-0");
+  });
+
+  it("uses content width for text rows by default", () => {
+    expect(
+      prefersInlineContentWidth({
+        kind: "text",
+        styles: [{ property: "fontWeight", value: "bold" }],
+      }),
+    ).toBe(true);
+    expect(
+      inlineContentRowClassName({
+        kind: "user",
+        styles: [{ property: "fontSize", value: "35" }],
+      }),
+    ).toBe("w-fit max-w-full shrink-0");
+    expect(
+      prefersInlineContentWidth({
+        kind: "text",
+        styles: [{ property: "flex", value: "1" }],
+      }),
+    ).toBe(false);
+  });
+
+  it("uses full width for wrapping container row wrappers with flex zero", () => {
+    expect(
+      containerRowWrapperClassName(
+        [
+          { property: "flex", value: "0" },
+          { property: "flexWrap", value: "wrap" },
+        ],
+        "row",
+      ),
+    ).toBe("w-full max-w-full min-w-0");
+  });
+
+  it("adds content width classes to container row wrappers", () => {
+    expect(
+      containerRowWrapperClassName([
+        { property: "flex", value: "0" },
+        { property: "alignSelf", value: "start" },
+      ]),
+    ).toBe("self-start w-fit max-w-full min-w-0 shrink-0");
   });
 
   it("reads gap from styles for layout primitives only", () => {

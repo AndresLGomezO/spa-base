@@ -19,7 +19,6 @@ import {
 import { FormDesignerComponentColumnChrome } from "../form-designer/FormDesignerComponentColumnChrome";
 import { FormDesignerComponentRowChrome } from "../form-designer/FormDesignerComponentRowChrome";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
-import { componentColumnRefKey } from "../form-designer/form-designer-component-column-ref";
 import {
   areComponentRowRefsEqual,
   toComponentRowRef,
@@ -27,6 +26,9 @@ import {
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import {
   findRowByRef,
+  isStructuralPreviewRow,
+  resolvePreviewColumnChromeProps,
+  resolvePreviewRowFocusState,
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
 import { resolveComponentRowLabel } from "../form-designer/form-designer-structure-tree";
@@ -70,6 +72,8 @@ export function useDetailViewDesignerLayoutPreviewWrappers(
   const previewRowFocus = structureSession?.previewRowFocus ?? null;
   const previewColumnFocus = structureSession?.previewColumnFocus ?? null;
   const focusedRow = structureSession?.focusedRow ?? null;
+  const hoverRow = structureSession?.hoverRow;
+  const hoverColumn = structureSession?.hoverColumn;
 
   const resolveRowLabel = useCallback(
     (row: RowNode) => {
@@ -146,27 +150,38 @@ export function useDetailViewDesignerLayoutPreviewWrappers(
     ],
   );
 
-  const focusedColumnKey = useMemo(
-    () =>
-      previewColumnFocus ? componentColumnRefKey(previewColumnFocus) : null,
-    [previewColumnFocus],
-  );
-
-  const hasPeerColumnFocus = previewColumnFocus != null;
-
   const rowWrapper = useCallback<RowWrapper>(
-    (row, locator, children) => (
-      <FormDesignerComponentRowChrome
-        rowRef={toComponentRowRef(row.id, locator)}
-        focusedRow={previewRowFocus}
-        focusedColumn={previewColumnFocus}
-        onSelect={handleSelectRow}
-        onDelete={handleDeleteRow}
-      >
-        {children}
-      </FormDesignerComponentRowChrome>
-    ),
-    [handleDeleteRow, handleSelectRow, previewColumnFocus, previewRowFocus],
+    (row, locator, children) => {
+      const rowRef = toComponentRowRef(row.id, locator);
+
+      return (
+        <FormDesignerComponentRowChrome
+          rowRef={rowRef}
+          row={row}
+          layout={binding.layout}
+          focusState={resolvePreviewRowFocusState(
+            binding.layout,
+            rowRef,
+            previewRowFocus,
+            previewColumnFocus,
+          )}
+          isStructuralRow={isStructuralPreviewRow(row)}
+          onHover={hoverRow}
+          onSelect={handleSelectRow}
+          onDelete={handleDeleteRow}
+        >
+          {children}
+        </FormDesignerComponentRowChrome>
+      );
+    },
+    [
+      binding.layout,
+      handleDeleteRow,
+      handleSelectRow,
+      hoverRow,
+      previewColumnFocus,
+      previewRowFocus,
+    ],
   );
 
   const rootColumnWrapper = useCallback<RootColumnWrapper>(
@@ -177,26 +192,19 @@ export function useDetailViewDesignerLayoutPreviewWrappers(
         <FormDesignerComponentColumnChrome
           key={column.id}
           columnRef={columnRef}
-          isColumnFocused={
-            focusedColumnKey != null &&
-            focusedColumnKey === componentColumnRefKey(columnRef)
-          }
-          hasPeerColumnFocus={hasPeerColumnFocus}
-          focusedColumn={previewColumnFocus}
-          focusedRow={previewRowFocus}
+          {...resolvePreviewColumnChromeProps(
+            columnRef,
+            previewRowFocus,
+            previewColumnFocus,
+          )}
+          onHover={hoverColumn}
           onSelect={handleSelectColumn}
         >
           {children}
         </FormDesignerComponentColumnChrome>
       );
     },
-    [
-      focusedColumnKey,
-      handleSelectColumn,
-      hasPeerColumnFocus,
-      previewColumnFocus,
-      previewRowFocus,
-    ],
+    [handleSelectColumn, hoverColumn, previewColumnFocus, previewRowFocus],
   );
 
   const nestedColumnWrapper = useCallback<NestedColumnWrapper>(
@@ -211,26 +219,19 @@ export function useDetailViewDesignerLayoutPreviewWrappers(
         <FormDesignerComponentColumnChrome
           key={column.id}
           columnRef={columnRef}
-          isColumnFocused={
-            focusedColumnKey != null &&
-            focusedColumnKey === componentColumnRefKey(columnRef)
-          }
-          hasPeerColumnFocus={hasPeerColumnFocus}
-          focusedColumn={previewColumnFocus}
-          focusedRow={previewRowFocus}
+          {...resolvePreviewColumnChromeProps(
+            columnRef,
+            previewRowFocus,
+            previewColumnFocus,
+          )}
+          onHover={hoverColumn}
           onSelect={handleSelectColumn}
         >
           {children}
         </FormDesignerComponentColumnChrome>
       );
     },
-    [
-      focusedColumnKey,
-      handleSelectColumn,
-      hasPeerColumnFocus,
-      previewColumnFocus,
-      previewRowFocus,
-    ],
+    [handleSelectColumn, hoverColumn, previewColumnFocus, previewRowFocus],
   );
 
   if (!enabled || !structureSession) {

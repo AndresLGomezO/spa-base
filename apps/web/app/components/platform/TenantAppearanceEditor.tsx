@@ -502,6 +502,7 @@ export function TenantAppearanceEditor({
                 value={logoPreview}
                 alt={t("platform.appearance.logoPreview")}
                 cropShape="rect"
+                allowOriginalUpload={false}
                 uploading={isSaving}
                 disabled={isSaving}
                 labels={{
@@ -512,9 +513,27 @@ export function TenantAppearanceEditor({
                     "platform.appearance.photoCropDescription",
                   ),
                   upload: t("platform.appearance.photoUpload"),
+                  uploadCropped: t("platform.appearance.photoUploadCropped"),
                   cancel: t("platform.appearance.photoCancel"),
                   reset: t("platform.appearance.photoReset"),
                   expand: t("platform.appearance.photoExpand"),
+                  cropFrameSquare: t(
+                    "platform.appearance.photoCropFrameSquare",
+                  ),
+                  cropFrameLandscape43: t(
+                    "platform.appearance.photoCropFrame43",
+                  ),
+                  cropFrameLandscape169: t(
+                    "platform.appearance.photoCropFrame169",
+                  ),
+                  cropMaskCircle: t("platform.appearance.photoCropMaskCircle"),
+                  cropMaskRect: t("platform.appearance.photoCropMaskRect"),
+                  cropFrameAriaLabel: t(
+                    "platform.appearance.photoCropFrameAriaLabel",
+                  ),
+                  cropMaskAriaLabel: t(
+                    "platform.appearance.photoCropMaskAriaLabel",
+                  ),
                 }}
                 onUpload={handleLogoUpload}
                 onError={(message) => toast.error(message)}

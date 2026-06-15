@@ -1,7 +1,16 @@
-import { useMemo, type ComponentType } from "react";
+import { useMemo, useState, type ComponentType } from "react";
+import { FileJson } from "lucide-react";
+import { LayoutJsonImportDialog } from "@repo/ui-builder-react";
+import type {
+  ColumnNode,
+  ComponentRowNode,
+  DesignSurface,
+  FieldPathValidationDefinition,
+  NestedLayoutRowNode,
+  UiLayoutDocument,
+} from "@repo/ui-builder-core";
 import { Button, Modal, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
-import type { DesignSurface } from "@repo/ui-builder-core";
 
 import {
   getFilteredComponentCatalog,
@@ -13,10 +22,17 @@ import type { InsertAnchor } from "./form-designer-structure-tree";
 interface FormDesignerAddComponentModalProps {
   readonly open: boolean;
   readonly designSurface: DesignSurface;
+  readonly definition: FieldPathValidationDefinition;
+  readonly defaultFieldPath: string;
   readonly labels: FormDesignerComponentsLabels;
   readonly onClose: () => void;
   readonly onSelect: (anchor: InsertAnchor, kind: CatalogEntryKind) => void;
+  readonly onImportRow: (
+    anchor: InsertAnchor,
+    row: ComponentRowNode | NestedLayoutRowNode,
+  ) => void;
   readonly insertAnchor: InsertAnchor | null;
+  readonly actionsInModalFooter?: boolean;
 }
 
 function ComponentOptionTile({
@@ -51,11 +67,16 @@ function ComponentOptionTile({
 export function FormDesignerAddComponentModal({
   open,
   designSurface,
+  definition,
+  defaultFieldPath,
   labels,
   onClose,
   onSelect,
+  onImportRow,
   insertAnchor,
+  actionsInModalFooter = false,
 }: FormDesignerAddComponentModalProps) {
+  const [importOpen, setImportOpen] = useState(false);
   const sections = useMemo(
     () => getFilteredComponentCatalog(designSurface),
     [designSurface],
@@ -70,38 +91,94 @@ export function FormDesignerAddComponentModal({
     onClose();
   };
 
+  const handleImportOpen = () => {
+    if (!insertAnchor) {
+      return;
+    }
+    setImportOpen(true);
+  };
+
+  const handleImportApply = (
+    data:
+      | UiLayoutDocument
+      | ColumnNode
+      | ComponentRowNode
+      | NestedLayoutRowNode,
+  ) => {
+    if (!insertAnchor) {
+      return;
+    }
+
+    if (
+      "type" in data &&
+      (data.type === "component" || data.type === "nested-layout")
+    ) {
+      onImportRow(insertAnchor, data);
+      setImportOpen(false);
+      onClose();
+    }
+  };
+
   return (
-    <Modal
-      open={open}
-      onClose={onClose}
-      title={labels.modalTitle}
-      size="lg"
-      scrollable
-      footer={
-        <Button type="button" variant="outline" onClick={onClose}>
-          {labels.modalCancel}
-        </Button>
-      }
-    >
-      <div className="flex flex-col gap-6">
-        {sections.map((section) => (
-          <section key={section.id} className="flex flex-col gap-3">
+    <>
+      <Modal
+        open={open}
+        onClose={onClose}
+        title={labels.modalTitle}
+        size="lg"
+        scrollable
+        footer={
+          <Button type="button" variant="outline" onClick={onClose}>
+            {labels.modalCancel}
+          </Button>
+        }
+      >
+        <div className="flex flex-col gap-6">
+          <section className="flex flex-col gap-3">
             <Text className="text-foreground text-sm font-semibold tracking-tight">
-              {labels.sectionTitle(section.id)}
+              {labels.importSectionTitle}
             </Text>
             <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
-              {section.entries.map((entry) => (
-                <ComponentOptionTile
-                  key={entry.kind}
-                  label={labels.optionLabel(entry.kind)}
-                  icon={entry.icon}
-                  onClick={() => handleSelect(entry.kind)}
-                />
-              ))}
+              <ComponentOptionTile
+                label={labels.importJsonOption}
+                icon={FileJson}
+                onClick={handleImportOpen}
+              />
             </div>
           </section>
-        ))}
-      </div>
-    </Modal>
+
+          {sections.map((section) => (
+            <section key={section.id} className="flex flex-col gap-3">
+              <Text className="text-foreground text-sm font-semibold tracking-tight">
+                {labels.sectionTitle(section.id)}
+              </Text>
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+                {section.entries.map((entry) => (
+                  <ComponentOptionTile
+                    key={entry.kind}
+                    label={labels.optionLabel(entry.kind)}
+                    icon={entry.icon}
+                    onClick={() => handleSelect(entry.kind)}
+                  />
+                ))}
+              </div>
+            </section>
+          ))}
+        </div>
+      </Modal>
+
+      <LayoutJsonImportDialog
+        scope={{ type: "insertable-row" }}
+        designSurface={designSurface}
+        definition={definition}
+        defaultFieldPath={defaultFieldPath}
+        canApply={insertAnchor != null}
+        labels={labels.layoutJsonImport}
+        actionsInModalFooter={actionsInModalFooter}
+        open={importOpen}
+        onOpenChange={setImportOpen}
+        onApply={handleImportApply}
+      />
+    </>
   );
 }

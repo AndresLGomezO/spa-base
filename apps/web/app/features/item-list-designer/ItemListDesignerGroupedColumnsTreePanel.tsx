@@ -21,7 +21,10 @@ import {
   areComponentRowRefsEqual,
   toComponentRowRef,
 } from "../form-designer/form-designer-component-row-ref";
-import { insertCatalogEntryAtAnchor } from "../form-designer/form-designer-components-layout";
+import {
+  insertCatalogEntryAtAnchor,
+  insertImportedRowAtAnchor,
+} from "../form-designer/form-designer-components-layout";
 import { FormDesignerStructureTree } from "../form-designer/FormDesignerStructureTree";
 import { FormDesignerStructureTreeInsertSlot } from "../form-designer/FormDesignerStructureTreeInsertSlot";
 import { FormDesignerStructureTreeNode } from "../form-designer/FormDesignerStructureTreeNode";
@@ -377,6 +380,49 @@ export function ItemListDesignerGroupedColumnsTreePanel({
     ],
   );
 
+  const handleImportComponent = useCallback(
+    (
+      anchor: InsertAnchor,
+      row:
+        | import("@repo/ui-builder-core").ComponentRowNode
+        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+    ) => {
+      if (insertColumnIndex == null) {
+        return;
+      }
+
+      const scope = {
+        kind: "groupedColumnCell" as const,
+        columnIndex: insertColumnIndex,
+      };
+      const binding = resolveScopeLayoutBinding(editor, scope);
+      const { rowRef, label } = insertImportedRowAtAnchor(
+        binding,
+        anchor,
+        row,
+        fieldDescriptors,
+        labels.tree,
+      );
+
+      setActiveGroupedColumnIndex(insertColumnIndex);
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label);
+    },
+    [
+      clearColumnHover,
+      editor,
+      fieldDescriptors,
+      insertColumnIndex,
+      labels.tree,
+      requestComponentRowPanel,
+      setActiveGroupedColumnIndex,
+      setFocusedRow,
+      setSelectedRow,
+    ],
+  );
+
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setInsertAnchor(null);
@@ -652,10 +698,13 @@ export function ItemListDesignerGroupedColumnsTreePanel({
         <FormDesignerAddComponentModal
           open={modalOpen}
           designSurface="tableColumnCell"
+          definition={definition}
+          defaultFieldPath={editor.defaultFieldPath}
           labels={labels}
           insertAnchor={insertAnchor}
           onClose={handleCloseModal}
           onSelect={handleSelectComponent}
+          onImportRow={handleImportComponent}
         />
       </>
     );
@@ -676,10 +725,13 @@ export function ItemListDesignerGroupedColumnsTreePanel({
       <FormDesignerAddComponentModal
         open={modalOpen}
         designSurface="tableColumnCell"
+        definition={definition}
+        defaultFieldPath={editor.defaultFieldPath}
         labels={labels}
         insertAnchor={insertAnchor}
         onClose={handleCloseModal}
         onSelect={handleSelectComponent}
+        onImportRow={handleImportComponent}
       />
     </>
   );

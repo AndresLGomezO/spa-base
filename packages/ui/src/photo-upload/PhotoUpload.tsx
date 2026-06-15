@@ -7,7 +7,10 @@ import {
   createUploadId,
   DEFAULT_IMAGE_MAX_SIZE_BYTES,
   validateFile,
+  type PhotoCropFrame,
 } from "./photo-upload.utils";
+
+export type { PhotoCropFrame, PhotoCropShape };
 
 export interface PhotoUploadLabels {
   readonly select?: string;
@@ -15,9 +18,18 @@ export interface PhotoUploadLabels {
   readonly cropTitle?: string;
   readonly cropDescription?: string;
   readonly upload?: string;
+  readonly uploadOriginal?: string;
+  readonly uploadCropped?: string;
   readonly cancel?: string;
   readonly reset?: string;
   readonly expand?: string;
+  readonly cropFrameSquare?: string;
+  readonly cropFrameLandscape43?: string;
+  readonly cropFrameLandscape169?: string;
+  readonly cropMaskCircle?: string;
+  readonly cropMaskRect?: string;
+  readonly cropFrameAriaLabel?: string;
+  readonly cropMaskAriaLabel?: string;
 }
 
 export interface PhotoUploadProps {
@@ -27,6 +39,9 @@ export interface PhotoUploadProps {
   readonly uploading?: boolean;
   readonly disabled?: boolean;
   readonly cropShape?: PhotoCropShape;
+  readonly defaultCropFrame?: PhotoCropFrame;
+  readonly allowOriginalUpload?: boolean;
+  readonly allowCrop?: boolean;
   readonly previewClassName?: string;
   readonly uploadId?: string;
   readonly maxSizeBytes?: number;
@@ -48,6 +63,9 @@ export function PhotoUpload({
   uploading = false,
   disabled = false,
   cropShape = "rect",
+  defaultCropFrame = "square",
+  allowOriginalUpload = true,
+  allowCrop = true,
   previewClassName,
   uploadId,
   maxSizeBytes = DEFAULT_IMAGE_MAX_SIZE_BYTES,
@@ -57,18 +75,35 @@ export function PhotoUpload({
   labels,
 }: PhotoUploadProps) {
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const [cropOpen, setCropOpen] = useState(false);
+  const [dialogOpen, setDialogOpen] = useState(false);
   const [expandOpen, setExpandOpen] = useState(false);
   const [pendingFile, setPendingFile] = useState<File | null>(null);
 
   const selectLabel = labels?.select ?? "Select photo";
   const changeLabel = labels?.change ?? "Change photo";
   const expandLabel = labels?.expand ?? "Expand photo";
+  const showDialog = allowCrop || allowOriginalUpload;
 
   const openFilePicker = useCallback(() => {
     if (disabled || uploading) return;
     fileInputRef.current?.click();
   }, [disabled, uploading]);
+
+  const handleUploadFile = useCallback(
+    async (file: File) => {
+      const nextUploadId = uploadId ?? createUploadId();
+      try {
+        await onUpload({ file, uploadId: nextUploadId });
+        setDialogOpen(false);
+        setPendingFile(null);
+      } catch (error) {
+        onError?.(
+          error instanceof Error ? error.message : "Unable to upload photo.",
+        );
+      }
+    },
+    [onError, onUpload, uploadId],
+  );
 
   const handleFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
@@ -82,32 +117,21 @@ export function PhotoUpload({
         return;
       }
 
-      setPendingFile(file);
-      setCropOpen(true);
-    },
-    [maxSizeBytes, onError],
-  );
-
-  const handleCropComplete = useCallback(
-    async (croppedFile: File) => {
-      const nextUploadId = uploadId ?? createUploadId();
-      try {
-        await onUpload({ file: croppedFile, uploadId: nextUploadId });
-        setCropOpen(false);
-        setPendingFile(null);
-      } catch (error) {
-        onError?.(
-          error instanceof Error ? error.message : "Unable to upload photo.",
-        );
+      if (!showDialog) {
+        void handleUploadFile(file);
+        return;
       }
+
+      setPendingFile(file);
+      setDialogOpen(true);
     },
-    [onError, onUpload, uploadId],
+    [handleUploadFile, maxSizeBytes, onError, showDialog],
   );
 
-  const handleCropOpenChange = useCallback(
+  const handleDialogOpenChange = useCallback(
     (open: boolean) => {
       if (uploading) return;
-      setCropOpen(open);
+      setDialogOpen(open);
       if (!open) {
         setPendingFile(null);
       }
@@ -142,20 +166,33 @@ export function PhotoUpload({
       />
 
       <PhotoCropDialog
-        open={cropOpen}
+        open={dialogOpen && showDialog}
         file={pendingFile}
         cropShape={cropShape}
+        defaultCropFrame={defaultCropFrame}
+        allowOriginalUpload={allowOriginalUpload}
+        allowCrop={allowCrop}
         uploading={uploading}
         layer={dialogLayer}
         labels={{
           title: labels?.cropTitle,
           description: labels?.cropDescription,
           upload: labels?.upload,
+          uploadOriginal: labels?.uploadOriginal,
+          uploadCropped: labels?.uploadCropped,
           cancel: labels?.cancel,
           reset: labels?.reset,
+          cropFrameSquare: labels?.cropFrameSquare,
+          cropFrameLandscape43: labels?.cropFrameLandscape43,
+          cropFrameLandscape169: labels?.cropFrameLandscape169,
+          cropMaskCircle: labels?.cropMaskCircle,
+          cropMaskRect: labels?.cropMaskRect,
+          cropFrameAriaLabel: labels?.cropFrameAriaLabel,
+          cropMaskAriaLabel: labels?.cropMaskAriaLabel,
         }}
-        onOpenChange={handleCropOpenChange}
-        onCropComplete={(file) => void handleCropComplete(file)}
+        onOpenChange={handleDialogOpenChange}
+        onCropComplete={(file) => void handleUploadFile(file)}
+        onOriginalUpload={(file) => void handleUploadFile(file)}
       />
 
       <PhotoExpandDialog

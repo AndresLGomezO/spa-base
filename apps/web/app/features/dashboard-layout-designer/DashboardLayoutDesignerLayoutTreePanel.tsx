@@ -7,7 +7,9 @@ import { formDesignerComponentsLabels } from "../form-designer/form-designer-com
 import {
   findRowByRef,
   insertCatalogEntryAtAnchor,
+  insertImportedRowAtAnchor,
 } from "../form-designer/form-designer-components-layout";
+import { TENANT_DASHBOARD_LAYOUT_VALIDATION_DEFINITION } from "./tenant-dashboard-layout-validation-definition";
 import type { InsertAnchor } from "../form-designer/form-designer-structure-tree";
 import { resolveDashboardLayoutBinding } from "./dashboard-layout-designer-layout-binding";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
@@ -74,6 +76,36 @@ export function DashboardLayoutDesignerLayoutTreePanel() {
     ],
   );
 
+  const handleImportRow = useCallback(
+    (
+      anchor: InsertAnchor,
+      row:
+        | import("@repo/ui-builder-core").ComponentRowNode
+        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+    ) => {
+      const { rowRef, label } = insertImportedRowAtAnchor(
+        binding,
+        anchor,
+        row,
+        [],
+        labels.tree,
+      );
+
+      clearColumnHover();
+      setFocusedRow(rowRef);
+      setSelectedRow(rowRef);
+      requestComponentRowPanel(rowRef, label);
+    },
+    [
+      binding,
+      clearColumnHover,
+      labels.tree,
+      requestComponentRowPanel,
+      setFocusedRow,
+      setSelectedRow,
+    ],
+  );
+
   const handleCloseModal = useCallback(() => {
     setModalOpen(false);
     setInsertAnchor(null);
@@ -89,10 +121,13 @@ export function DashboardLayoutDesignerLayoutTreePanel() {
       <FormDesignerAddComponentModal
         open={modalOpen}
         designSurface="dashboardLayout"
+        definition={TENANT_DASHBOARD_LAYOUT_VALIDATION_DEFINITION}
+        defaultFieldPath="name"
         labels={labels}
         insertAnchor={insertAnchor}
         onClose={handleCloseModal}
         onSelect={handleSelect}
+        onImportRow={handleImportRow}
       />
     </>
   );
