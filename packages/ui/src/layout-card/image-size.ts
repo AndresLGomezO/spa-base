@@ -1,7 +1,7 @@
 export const DEFAULT_CARD_IMAGE_SIZE_PX = 40;
 const CARD_IMAGE_SIZE_STEP_PX = 8;
 export const MIN_CARD_IMAGE_SIZE_PX = 8;
-export const MAX_CARD_IMAGE_SIZE_PX = 96;
+export const MAX_CARD_IMAGE_SIZE_PX = 1024;
 
 export function clampCardImageSizePx(size: number | undefined): number {
   const resolved = size ?? DEFAULT_CARD_IMAGE_SIZE_PX;

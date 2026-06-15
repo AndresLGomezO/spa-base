@@ -29,7 +29,7 @@ Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-a
         "root": {
           "type": "root",
           "id": "root-example",
-          "columnCount": 2,
+          "columnCount": 1,
           "columns": [
             {
               "id": "col-example",
@@ -38,33 +38,54 @@ Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-a
                   "type": "component",
                   "id": "row-example",
                   "component": {
-                    "kind": "wizard-progress",
-                    "variant": "bar",
-                    "stepLabel": {
-                      "show": true,
-                      "position": "top",
-                      "bold": true
-                    },
-                    "conditionalStyles": []
-                  }
-                }
-              ]
-            },
-            {
-              "id": "col-example",
-              "rows": [
-                {
-                  "type": "component",
-                  "id": "row-example",
-                  "component": {
-                    "kind": "wizard-step-host"
-                  }
-                },
-                {
-                  "type": "component",
-                  "id": "row-example",
-                  "component": {
-                    "kind": "wizard-actions"
+                    "kind": "container",
+                    "rows": [
+                      {
+                        "type": "nested-layout",
+                        "id": "nested-example",
+                        "columnCount": 2,
+                        "columns": [
+                          {
+                            "id": "col-example",
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-example",
+                                "component": {
+                                  "kind": "wizard-progress",
+                                  "variant": "bar",
+                                  "stepLabel": {
+                                    "show": true,
+                                    "position": "top",
+                                    "bold": true
+                                  },
+                                  "conditionalStyles": []
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "id": "col-example",
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-example",
+                                "component": {
+                                  "kind": "wizard-step-host"
+                                }
+                              },
+                              {
+                                "type": "component",
+                                "id": "row-example",
+                                "component": {
+                                  "kind": "wizard-actions"
+                                }
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
                   }
                 }
               ]
@@ -91,8 +112,17 @@ Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-a
                       "type": "component",
                       "id": "row-example",
                       "component": {
-                        "kind": "form-field",
-                        "fieldPath": "name"
+                        "kind": "container",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "form-field",
+                              "fieldPath": "name"
+                            }
+                          }
+                        ]
                       }
                     }
                   ]

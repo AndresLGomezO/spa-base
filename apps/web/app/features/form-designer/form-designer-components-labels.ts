@@ -58,6 +58,10 @@ export function formDesignerComponentsLabels(
     "page-list": t("mainViewDesigner.components.pageList"),
     "metric-kpi": t("detailViewDesigner.components.metricKpi"),
     "metric-widget": t("metricsRowDesigner.components.metricWidget"),
+    "dashboard-section": t(
+      "dashboardLayoutDesigner.components.dashboardSection",
+    ),
+    user: t("dashboardLayoutDesigner.components.user"),
     "related-records": t("detailViewDesigner.components.relatedRecords"),
   };
 
@@ -66,6 +70,7 @@ export function formDesignerComponentsLabels(
       column: (column) => t("entity.viewSettings.columnTab", { column }),
       nestedLayout: (columnCount) =>
         t("formDesigner.components.nestedLayout", { count: columnCount }),
+      container: t("formDesigner.components.container"),
       section: t("formDesigner.components.section"),
       actions: t("formDesigner.components.actions"),
       kindDefaults,
@@ -93,6 +98,9 @@ export function formDesignerComponentsLabels(
     optionLabel: (kind) => {
       if (kind === "nested-layout") {
         return t("formDesigner.components.options.nestedLayout");
+      }
+      if (kind === "container") {
+        return t("formDesigner.components.container");
       }
 
       return kindDefaults[kind] ?? kind;

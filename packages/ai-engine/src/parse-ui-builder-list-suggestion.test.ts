@@ -3,6 +3,7 @@ import {
   createDefaultFormLayout,
   createDefaultUiLayout,
   createEmptyColumn,
+  isContainerComponent,
 } from "@repo/ui-builder-core";
 
 import { defineEntity } from "@repo/entities";
@@ -177,19 +178,33 @@ describe("normalizeAiListSliceSuggestion", () => {
       },
     });
 
-    const cellNested =
+    const cellContainer =
       normalized?.expandableTable.columns[0]?.cellLayout.root.columns[0]
         ?.rows[0];
-    expect(cellNested?.type).toBe("nested-layout");
-    if (cellNested?.type === "nested-layout") {
-      expect(cellNested.columnCount).toBe(2);
+    expect(cellContainer?.type).toBe("component");
+    if (
+      cellContainer?.type === "component" &&
+      isContainerComponent(cellContainer.component)
+    ) {
+      const cellNested = cellContainer.component.rows[0];
+      expect(cellNested?.type).toBe("nested-layout");
+      if (cellNested?.type === "nested-layout") {
+        expect(cellNested.columnCount).toBe(2);
+      }
     }
 
-    const expandNested =
+    const expandContainer =
       normalized?.expandableTable.rowExpandLayout.root.columns[0]?.rows[0];
-    expect(expandNested?.type).toBe("nested-layout");
-    if (expandNested?.type === "nested-layout") {
-      expect(expandNested.columnCount).toBe(2);
+    expect(expandContainer?.type).toBe("component");
+    if (
+      expandContainer?.type === "component" &&
+      isContainerComponent(expandContainer.component)
+    ) {
+      const expandNested = expandContainer.component.rows[0];
+      expect(expandNested?.type).toBe("nested-layout");
+      if (expandNested?.type === "nested-layout") {
+        expect(expandNested.columnCount).toBe(2);
+      }
     }
   });
 });

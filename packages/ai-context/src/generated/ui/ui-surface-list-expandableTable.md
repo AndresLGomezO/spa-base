@@ -8,10 +8,7 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
 - `text`
 - `image`
 - `icon`
-- `date`
-- `numeric`
-- `badge`
-- `metric-kpi`
+- `user`
 
 ## Slice envelope example
 ```json
@@ -36,7 +33,7 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
             "root": {
               "type": "root",
               "id": "root-example",
-              "columnCount": 2,
+              "columnCount": 1,
               "columns": [
                 {
                   "id": "col-example",
@@ -45,34 +42,55 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
                       "type": "component",
                       "id": "row-example",
                       "component": {
-                        "kind": "text",
-                        "primary": {
-                          "type": "field",
-                          "path": "name"
-                        },
-                        "label": {
-                          "show": true
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "id": "col-example",
-                  "rows": [
-                    {
-                      "type": "component",
-                      "id": "row-example",
-                      "component": {
-                        "kind": "text",
-                        "primary": {
-                          "type": "field",
-                          "path": "name"
-                        },
-                        "styles": [
+                        "kind": "container",
+                        "rows": [
                           {
-                            "property": "fontWeight",
-                            "value": "bold"
+                            "type": "nested-layout",
+                            "id": "nested-example",
+                            "columnCount": 2,
+                            "columns": [
+                              {
+                                "id": "col-example",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "label": {
+                                        "show": true
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "col-example",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "styles": [
+                                        {
+                                          "property": "fontWeight",
+                                          "value": "bold"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
                           }
                         ]
                       }
@@ -90,7 +108,7 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
         "root": {
           "type": "root",
           "id": "root-example",
-          "columnCount": 2,
+          "columnCount": 1,
           "columns": [
             {
               "id": "col-example",
@@ -99,34 +117,55 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
                   "type": "component",
                   "id": "row-example",
                   "component": {
-                    "kind": "text",
-                    "primary": {
-                      "type": "field",
-                      "path": "name"
-                    },
-                    "label": {
-                      "show": true
-                    }
-                  }
-                }
-              ]
-            },
-            {
-              "id": "col-example",
-              "rows": [
-                {
-                  "type": "component",
-                  "id": "row-example",
-                  "component": {
-                    "kind": "text",
-                    "primary": {
-                      "type": "field",
-                      "path": "name"
-                    },
-                    "styles": [
+                    "kind": "container",
+                    "rows": [
                       {
-                        "property": "fontWeight",
-                        "value": "bold"
+                        "type": "nested-layout",
+                        "id": "nested-example",
+                        "columnCount": 2,
+                        "columns": [
+                          {
+                            "id": "col-example",
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-example",
+                                "component": {
+                                  "kind": "text",
+                                  "primary": {
+                                    "type": "field",
+                                    "path": "name"
+                                  },
+                                  "label": {
+                                    "show": true
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "id": "col-example",
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-example",
+                                "component": {
+                                  "kind": "text",
+                                  "primary": {
+                                    "type": "field",
+                                    "path": "name"
+                                  },
+                                  "styles": [
+                                    {
+                                      "property": "fontWeight",
+                                      "value": "bold"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }

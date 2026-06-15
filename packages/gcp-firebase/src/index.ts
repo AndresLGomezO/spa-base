@@ -57,6 +57,7 @@ export { createFirestoreAdminTenantRepository } from "./firestore-admin-tenant-r
 export { createFirestoreAdminEntityDefinitionRepository } from "./firestore-admin-entity-definition-repository.js";
 export { createFirestoreAdminEntityUiOverrideRepository } from "./firestore-admin-entity-ui-override-repository.js";
 export { createFirestoreAdminUiBuilderPresetRepository } from "./firestore-admin-ui-builder-preset-repository.js";
+export { createFirestoreAdminTenantDashboardLayoutRepository } from "./firestore-admin-tenant-dashboard-layout-repository.js";
 export { createFirestoreAdminHookRepository } from "./firestore-admin-hook-repository.js";
 export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admin-metric-definition-repository.js";
 export { createFirestoreAdminAggregationEventRepository } from "./firestore-admin-aggregation-event-repository.js";
@@ -81,7 +82,11 @@ export {
   createFirestoreAdminTenantUserInviteRepository,
   TENANT_USER_INVITES_SUBCOLLECTION,
 } from "./firestore-admin-tenant-user-invite-repository.js";
-export { uploadTenantLogo, validateStorageObjectId } from "./tenant-storage.js";
+export {
+  uploadTenantLogo,
+  uploadTenantDashboardImage,
+  validateStorageObjectId,
+} from "./tenant-storage.js";
 export {
   downloadAiUiRenderImage,
   uploadAiUiRenderImage,

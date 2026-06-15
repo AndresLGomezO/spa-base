@@ -5,6 +5,8 @@ import {
   fontSizePxFromStyles,
   isFieldUiComponent,
   isIconComponent,
+  isUserComponent,
+  isDashboardSectionComponent,
   isMetricKpiComponent,
   isMetricWidgetComponent,
   isPageUiComponent,
@@ -170,6 +172,10 @@ export function renderUiComponent(
     return context.metricWidgetRenderer?.(config) ?? null;
   }
 
+  if (isDashboardSectionComponent(config)) {
+    return context.dashboardSectionRenderer?.(config) ?? null;
+  }
+
   if (config.kind === "form-field") {
     if (
       context.fieldAccessFilter &&
@@ -282,6 +288,10 @@ export function renderUiComponent(
 
   if (isIconComponent(config)) {
     return context.lucideIconRenderer?.(config) ?? null;
+  }
+
+  if (isUserComponent(config)) {
+    return context.userRenderer?.(config) ?? null;
   }
 
   if (!isFieldUiComponent(config)) {

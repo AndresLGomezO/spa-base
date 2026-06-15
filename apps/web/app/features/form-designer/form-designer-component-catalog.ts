@@ -2,6 +2,7 @@ import type { LucideIcon } from "lucide-react";
 import {
   ArrowRightLeft,
   Badge,
+  Box,
   Calendar,
   Columns2,
   Hash,
@@ -15,6 +16,7 @@ import {
   Sparkles,
   TextCursorInput,
   Type,
+  UserRound,
 } from "lucide-react";
 import {
   componentKindsForSurface,
@@ -39,6 +41,7 @@ interface ComponentCatalogSection {
 const LAYOUT_SECTION: ComponentCatalogSection = {
   id: "layout",
   entries: [
+    { kind: "container", icon: Box },
     { kind: "nested-layout", icon: Columns2 },
     { kind: "wizard-progress", icon: Route },
     { kind: "wizard-step-host", icon: Layers },
@@ -78,7 +81,7 @@ function isAllowedOnSurface(
   kind: CatalogEntryKind,
   allowedKinds: readonly UiComponentKind[],
 ): boolean {
-  if (kind === "nested-layout") {
+  if (kind === "nested-layout" || kind === "container") {
     return true;
   }
 
@@ -97,7 +100,11 @@ export function getFilteredComponentCatalog(
     ),
   })).filter((section) => section.entries.length > 0);
 
-  if (designSurface !== "metricRow") {
+  if (
+    designSurface !== "metricRow" &&
+    designSurface !== "dashboardLayout" &&
+    designSurface !== "dashboardSection"
+  ) {
     return sections;
   }
 
@@ -106,12 +113,20 @@ export function getFilteredComponentCatalog(
       return section;
     }
 
+    const dashboardExtras =
+      designSurface === "dashboardLayout" ||
+      designSurface === "dashboardSection"
+        ? [
+            { kind: "user" as const, icon: UserRound },
+            ...(designSurface === "dashboardLayout"
+              ? [{ kind: "dashboard-section" as const, icon: LayoutGrid }]
+              : []),
+          ]
+        : [{ kind: "metric-widget" as const, icon: LayoutGrid }];
+
     return {
       ...section,
-      entries: [
-        ...section.entries,
-        { kind: "metric-widget" as const, icon: LayoutGrid },
-      ],
+      entries: [...section.entries, ...dashboardExtras],
     };
   });
 }

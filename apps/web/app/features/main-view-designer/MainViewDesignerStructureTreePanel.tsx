@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from "react";
-import { moveRowAt } from "@repo/ui-builder-core";
+import { isRootContainerRow, moveRowAt } from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
@@ -15,7 +15,6 @@ import type {
   StructureRowNode,
 } from "../form-designer/form-designer-structure-tree";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
-import { isMainPageRootNestedLayoutRow } from "../ui-builder/ensure-main-page-nested-layout-root";
 import { resolveLayoutBinding } from "./main-view-designer-layout-binding";
 import { useMainViewDesigner } from "./main-view-designer-context";
 import { useMainViewDesignerStructureSession } from "./MainViewDesignerStructureSession";
@@ -74,7 +73,7 @@ export function MainViewDesignerStructureTreePanel({
 
   const handleRemoveRow = useCallback(
     (row: StructureRowNode) => {
-      if (isMainPageRootNestedLayoutRow(binding.layout, row.rowId)) {
+      if (isRootContainerRow(binding.layout, row.rowId)) {
         return;
       }
 
@@ -142,7 +141,7 @@ export function MainViewDesignerStructureTreePanel({
     layout: binding.layout,
     labels,
     fieldDescriptors: [] as const,
-    promoteSingleNestedLayoutRoot: true,
+    promoteSingleContainerRoot: true,
     onInsert,
     insertDisabled: structurePanelOpen,
     onMoveRowUp: handleMoveRowUp,

@@ -157,7 +157,7 @@ export function ItemListDesignerStructureTreePanel({
     layout: binding.layout,
     labels,
     fieldDescriptors,
-    promoteSingleNestedLayoutRoot:
+    promoteSingleContainerRoot:
       structureScope.kind === "expandableRow" ||
       structureScope.kind === "listItem",
     onInsert,

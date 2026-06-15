@@ -1,7 +1,10 @@
 import type { UiLayoutDocument } from "../types/layout.js";
 import {
+  isContainerComponent,
+  isDashboardSectionComponent,
   isMetricKpiComponent,
   isMetricWidgetComponent,
+  isUserComponent,
 } from "../types/component.js";
 import type { UiComponentConfig } from "../types/component.js";
 import { listDataSourcePaths } from "../resolver/data-source.js";
@@ -91,7 +94,12 @@ function resolveRelationFieldName(
 function collectComponentPaths(
   component: UiComponentConfig,
 ): readonly string[] {
-  if (isMetricKpiComponent(component) || isMetricWidgetComponent(component)) {
+  if (
+    isMetricKpiComponent(component) ||
+    isMetricWidgetComponent(component) ||
+    isDashboardSectionComponent(component) ||
+    isUserComponent(component)
+  ) {
     return [];
   }
 
@@ -104,6 +112,7 @@ function collectComponentPaths(
   }
 
   if (
+    isContainerComponent(component) ||
     component.kind === "form-section" ||
     component.kind === "icon" ||
     component.kind === "form-actions" ||
@@ -139,6 +148,11 @@ function collectInputComponentPaths(
 function walkRows(rows: readonly RowNode[], paths: Set<string>): void {
   for (const row of rows) {
     if (row.type === "component") {
+      if (isContainerComponent(row.component)) {
+        walkRows(row.component.rows, paths);
+        continue;
+      }
+
       for (const path of collectComponentPaths(row.component)) {
         paths.add(path);
       }
@@ -173,6 +187,11 @@ function walkRowsWithCollector(
 ): void {
   for (const row of rows) {
     if (row.type === "component") {
+      if (isContainerComponent(row.component)) {
+        walkRowsWithCollector(row.component.rows, paths, collectPaths);
+        continue;
+      }
+
       for (const path of collectPaths(row.component)) {
         paths.add(path);
       }

@@ -209,7 +209,7 @@ function clampImageSize(value: unknown): number | undefined {
     return undefined;
   }
 
-  return Math.min(96, Math.max(8, Math.round(value)));
+  return Math.min(1024, Math.max(8, Math.round(value)));
 }
 
 export function sanitizeListComponentConfig(

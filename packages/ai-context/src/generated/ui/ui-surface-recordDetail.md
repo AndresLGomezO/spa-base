@@ -25,7 +25,7 @@ Display components + related-records. Stored as `recordDetail`.
       "root": {
         "type": "root",
         "id": "root-example",
-        "columnCount": 2,
+        "columnCount": 1,
         "columns": [
           {
             "id": "col-example",
@@ -34,34 +34,55 @@ Display components + related-records. Stored as `recordDetail`.
                 "type": "component",
                 "id": "row-example",
                 "component": {
-                  "kind": "text",
-                  "primary": {
-                    "type": "field",
-                    "path": "name"
-                  },
-                  "label": {
-                    "show": true
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "id": "col-example",
-            "rows": [
-              {
-                "type": "component",
-                "id": "row-example",
-                "component": {
-                  "kind": "text",
-                  "primary": {
-                    "type": "field",
-                    "path": "name"
-                  },
-                  "styles": [
+                  "kind": "container",
+                  "rows": [
                     {
-                      "property": "fontWeight",
-                      "value": "bold"
+                      "type": "nested-layout",
+                      "id": "nested-example",
+                      "columnCount": 2,
+                      "columns": [
+                        {
+                          "id": "col-example",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "name"
+                                },
+                                "label": {
+                                  "show": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "col-example",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "name"
+                                },
+                                "styles": [
+                                  {
+                                    "property": "fontWeight",
+                                    "value": "bold"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }

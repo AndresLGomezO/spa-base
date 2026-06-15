@@ -11,6 +11,7 @@ import {
 } from "@repo/ui-builder-react";
 import {
   componentKindsForSurface,
+  isContainerComponent,
   MAX_NESTED_COLUMNS,
   type MotionPreset,
   type NestedLayoutRowNode,
@@ -37,6 +38,7 @@ import {
   type ComponentsTreeScope,
 } from "./form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
+import { ContainerComponentRowPanel } from "./ContainerComponentRowPanel";
 import { useFormDesigner } from "./form-designer-context";
 
 interface FormDesignerComponentRowPanelProps {
@@ -95,6 +97,18 @@ export function FormDesignerComponentRowPanel({
         rowRef={rowRef}
         binding={binding}
         labels={labels}
+      />
+    );
+  }
+
+  if (row.type === "component" && isContainerComponent(row.component)) {
+    return (
+      <ContainerComponentRowPanel
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        labels={labels}
+        componentEditorLabels={componentEditorLabels}
       />
     );
   }

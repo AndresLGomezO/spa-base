@@ -75,6 +75,10 @@ export default [
       "settings/design-layout/presets",
       "./routes/settings/design-layout/presets.tsx",
     ),
+    route(
+      "settings/design-layout/dashboard",
+      "./routes/settings/design-layout/dashboard.tsx",
+    ),
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
       ...buildEntityRouteConfig(),

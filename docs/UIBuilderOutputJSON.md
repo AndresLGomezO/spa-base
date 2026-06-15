@@ -171,10 +171,11 @@ Configured in **Design layout → Metrics row** (`MetricsRowDesigner`). Widget i
 ### Invariants (enforced by schema)
 
 1. **`root.columnCount` must equal `root.columns.length`** (integer `1`–`6`). Enforced by `uiLayoutDocumentSchema.superRefine`.
-2. For every **`nested-layout`** row, **`columnCount` must equal `columns.length`** (integer `1`–`6`). Not enforced by Zod today, but the renderer passes `columnCount` into the grid API — a mismatch will produce incorrect column tracks.
-3. Objects are **strict**: unknown keys are rejected by validation.
-4. All `id` fields: non-empty string after trim.
-5. Discriminator fields (`type`, `kind`) must match the documented literals exactly.
+2. **Root container:** persisted layouts use a **single root column** with exactly **one** `container` component row. User content (display components, `nested-layout` rows) lives in `container.rows`. Legacy flat root rows or a root-level `nested-layout` are normalized to this shape via `ensureContainerRoot()`.
+3. For every **`nested-layout`** row, **`columnCount` must equal `columns.length`** (integer `1`–`6`). Not enforced by Zod today, but the renderer passes `columnCount` into the grid API — a mismatch will produce incorrect column tracks.
+4. Objects are **strict**: unknown keys are rejected by validation.
+5. All `id` fields: non-empty string after trim.
+6. Discriminator fields (`type`, `kind`) must match the documented literals exactly.
 
 ---
 
@@ -634,10 +635,19 @@ Order of operations in [`resolveFieldChain`](../packages/ui-builder-core/src/res
         "rows": [
           {
             "type": "component",
-            "id": "row_1",
+            "id": "row_container",
             "component": {
-              "kind": "text",
-              "primary": { "type": "field", "path": "name" }
+              "kind": "container",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "row_1",
+                  "component": {
+                    "kind": "text",
+                    "primary": { "type": "field", "path": "name" }
+                  }
+                }
+              ]
             }
           }
         ]
@@ -761,6 +771,8 @@ This matches [`createAccountCardSeedLayout()`](../packages/ui-builder-core/src/b
 
 ## Nested layout example
 
+Root uses a **container** row; the **nested-layout** sits inside `container.rows` for multi-column content:
+
 ```json
 {
   "root": {
@@ -772,40 +784,49 @@ This matches [`createAccountCardSeedLayout()`](../packages/ui-builder-core/src/b
         "id": "col_1",
         "rows": [
           {
-            "type": "nested-layout",
-            "id": "row_nested_1",
-            "columnCount": 2,
-            "styles": [{ "property": "gap", "value": "12" }],
-            "columns": [
-              {
-                "id": "col_left",
-                "rows": [
-                  {
-                    "type": "component",
-                    "id": "row_a",
-                    "component": {
-                      "kind": "text",
-                      "primary": { "type": "field", "path": "name" }
+            "type": "component",
+            "id": "row_container",
+            "component": {
+              "kind": "container",
+              "rows": [
+                {
+                  "type": "nested-layout",
+                  "id": "row_nested_1",
+                  "columnCount": 2,
+                  "styles": [{ "property": "gap", "value": "12" }],
+                  "columns": [
+                    {
+                      "id": "col_left",
+                      "rows": [
+                        {
+                          "type": "component",
+                          "id": "row_a",
+                          "component": {
+                            "kind": "text",
+                            "primary": { "type": "field", "path": "name" }
+                          }
+                        }
+                      ]
+                    },
+                    {
+                      "id": "col_right",
+                      "styles": [{ "property": "backgroundColor", "value": "muted" }],
+                      "rows": [
+                        {
+                          "type": "component",
+                          "id": "row_b",
+                          "component": {
+                            "kind": "numeric",
+                            "primary": { "type": "field", "path": "balance" },
+                            "displayFormat": "plain"
+                          }
+                        }
+                      ]
                     }
-                  }
-                ]
-              },
-              {
-                "id": "col_right",
-                "styles": [{ "property": "backgroundColor", "value": "muted" }],
-                "rows": [
-                  {
-                    "type": "component",
-                    "id": "row_b",
-                    "component": {
-                      "kind": "numeric",
-                      "primary": { "type": "field", "path": "balance" },
-                      "displayFormat": "plain"
-                    }
-                  }
-                ]
-              }
-            ]
+                  ]
+                }
+              ]
+            }
           }
         ]
       }

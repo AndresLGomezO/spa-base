@@ -1,21 +1,33 @@
 import { describe, expect, it } from "vitest";
 
+import { isContainerComponent } from "../types/component.js";
 import {
   createDefaultListCardLayout,
-  isListCardNestedRootLayout,
+  isListCardContainerRootLayout,
 } from "./list-card-defaults.js";
 
 describe("createDefaultListCardLayout", () => {
-  it("creates a root nested-layout row with two inner columns and default field components", () => {
+  it("creates a root container with nested-layout and default field components", () => {
     const layout = createDefaultListCardLayout(["name", "balance", "status"]);
 
-    expect(isListCardNestedRootLayout(layout)).toBe(true);
+    expect(isListCardContainerRootLayout(layout)).toBe(true);
     expect(layout.showActions).toBe(true);
 
     const rootColumn = layout.root.columns[0];
     expect(rootColumn?.rows).toHaveLength(1);
 
-    const nestedRow = rootColumn?.rows[0];
+    const containerRow = rootColumn?.rows[0];
+    expect(containerRow?.type).toBe("component");
+    if (
+      containerRow?.type !== "component" ||
+      !isContainerComponent(containerRow.component)
+    ) {
+      return;
+    }
+
+    expect(containerRow.component.rows).toHaveLength(1);
+
+    const nestedRow = containerRow.component.rows[0];
     expect(nestedRow?.type).toBe("nested-layout");
     if (nestedRow?.type !== "nested-layout") {
       return;

@@ -18,7 +18,9 @@ export type DesignSurface =
   | "formWizardStep"
   | "formModalFooter"
   | "metricStrip"
-  | "metricRow";
+  | "metricRow"
+  | "dashboardSection"
+  | "dashboardLayout";
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -99,6 +101,18 @@ function mergeComponentKinds(
   return [...merged];
 }
 
+const DASHBOARD_CONTENT_KINDS: readonly UiComponentKind[] = [
+  "text",
+  "image",
+  "icon",
+  "user",
+];
+
+const DASHBOARD_LAYOUT_KINDS: readonly UiComponentKind[] = [
+  ...DASHBOARD_CONTENT_KINDS,
+  "dashboard-section",
+];
+
 const FORM_MODAL_FOOTER_KINDS = mergeComponentKinds(
   FORM_PLAIN_KINDS,
   FORM_WIZARD_SHELL_KINDS,
@@ -113,9 +127,12 @@ export function componentKindsForSurface(
     case "tableColumnCell":
     case "tableRowExpand":
     case "metricStrip":
-      return LIST_ITEM_KINDS;
+    case "dashboardSection":
+      return DASHBOARD_CONTENT_KINDS;
     case "metricRow":
       return METRIC_ROW_KINDS;
+    case "dashboardLayout":
+      return DASHBOARD_LAYOUT_KINDS;
     case "mainPage":
       return MAIN_PAGE_KINDS;
     case "recordDetail":

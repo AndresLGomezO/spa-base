@@ -1,6 +1,9 @@
 /** @vitest-environment jsdom */
 
-import { createDefaultFormLayout } from "@repo/ui-builder-core";
+import {
+  createDefaultFormLayout,
+  resolveRootContainer,
+} from "@repo/ui-builder-core";
 import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it } from "vitest";
 
@@ -18,10 +21,11 @@ const minimalContext: LayoutRenderContext = {
 };
 
 describe("RecursiveLayoutRenderer rowWrapper", () => {
-  it("passes root row locator to the row wrapper", () => {
+  it("passes container and child row locators to the row wrapper", () => {
     const fieldPath = "name";
     const layout = createDefaultFormLayout([fieldPath]);
-    const rowId = layout.root.columns[0]?.rows[0]?.id;
+    const rootContainer = resolveRootContainer(layout);
+    const fieldRowId = rootContainer?.config.rows[0]?.id;
     const captures: Array<{ rowId: string; locator: unknown }> = [];
 
     const rowWrapper: RowWrapper = (row, locator, children) => {
@@ -37,12 +41,18 @@ describe("RecursiveLayoutRenderer rowWrapper", () => {
       />,
     );
 
-    expect(rowId).toBeDefined();
-    expect(captures).toEqual([
-      {
-        rowId,
-        locator: { scope: "root", columnIndex: 0 },
+    expect(rootContainer).not.toBeNull();
+    expect(captures).toContainEqual({
+      rowId: rootContainer!.row.id,
+      locator: { scope: "root", columnIndex: 0 },
+    });
+    expect(captures).toContainEqual({
+      rowId: fieldRowId,
+      locator: {
+        scope: "container",
+        columnIndex: 0,
+        containerRowId: rootContainer!.row.id,
       },
-    ]);
+    });
   });
 });

@@ -11,6 +11,7 @@ import type {
   EntityDefinitionRepository,
   EntityQueryExecutor,
   EntityUiOverrideRepository,
+  TenantDashboardLayoutRepository,
   UiBuilderPresetRepository,
   AggregationEventRepository,
   BackfillJobRepository,
@@ -31,6 +32,7 @@ import {
   createInMemoryEntityCategoryRepository,
   createInMemoryEntityDefinitionRepository,
   createInMemoryEntityUiOverrideRepository,
+  createInMemoryTenantDashboardLayoutRepository,
   createInMemoryUiBuilderPresetRepository,
   createInMemoryHookRepository,
   createInMemoryMetricDefinitionRepository,
@@ -48,6 +50,7 @@ import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityUiOverrideRepository,
+  createFirestoreAdminTenantDashboardLayoutRepository,
   createFirestoreAdminUiBuilderPresetRepository,
   createFirestoreAdminHookRepository,
   createFirestoreAdminJoinCollectionRepository,
@@ -86,6 +89,7 @@ import { registerEntityRelationRoutes } from "./entities/register-entity-relatio
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
 import { registerEntityUiOverrideRoutes } from "./entities/register-entity-ui-override-routes.js";
 import { registerUiBuilderPresetRoutes } from "./ui-builder-presets/register-ui-builder-preset-routes.js";
+import { registerTenantDashboardLayoutRoutes } from "./tenant-dashboard-layout/register-tenant-dashboard-layout-routes.js";
 import { registerEntityCategoryRoutes } from "./entity-categories/register-entity-category-routes.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import { registerIndexRoutes } from "./indexes/register-index-routes.js";
@@ -127,6 +131,7 @@ interface BuildServerOptions {
   readonly queryExecutors?: Record<string, EntityQueryExecutor>;
   readonly entityDefinitionRepository?: EntityDefinitionRepository;
   readonly entityUiOverrideRepository?: EntityUiOverrideRepository;
+  readonly tenantDashboardLayoutRepository?: TenantDashboardLayoutRepository;
   readonly uiBuilderPresetRepository?: UiBuilderPresetRepository;
   readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: HookRepository;
@@ -271,6 +276,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryUiBuilderPresetRepository()
       : createFirestoreAdminUiBuilderPresetRepository(firebaseAdminConfig));
+
+  const tenantDashboardLayoutRepository =
+    options.tenantDashboardLayoutRepository ??
+    (options.repositories
+      ? createInMemoryTenantDashboardLayoutRepository()
+      : createFirestoreAdminTenantDashboardLayoutRepository(
+          firebaseAdminConfig,
+        ));
 
   const entityCategoryRepository =
     options.entityCategoryRepository ??
@@ -507,6 +520,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     uiBuilderPresetRepository,
+  });
+
+  await registerTenantDashboardLayoutRoutes(server, {
+    authenticate,
+    permissionDeps,
+    tenantDashboardLayoutRepository,
+    firebaseAdminConfig,
   });
 
   registerEntityFileRoutes(server, {

@@ -3,6 +3,7 @@ import {
   createDefaultComponent,
   createEmptyLayout,
 } from "../builder/mutations.js";
+import { isContainerComponent } from "../types/component.js";
 import type { UiComponentKind } from "../types/component.js";
 import type { ColumnNode, RowNode, UiLayoutDocument } from "../types/layout.js";
 
@@ -18,6 +19,9 @@ function walkRows(rows: readonly RowNode[], kinds: Set<UiComponentKind>): void {
   for (const row of rows) {
     if (row.type === "component") {
       kinds.add(row.component.kind);
+      if (isContainerComponent(row.component)) {
+        walkRows(row.component.rows, kinds);
+      }
       continue;
     }
     for (const column of row.columns) {

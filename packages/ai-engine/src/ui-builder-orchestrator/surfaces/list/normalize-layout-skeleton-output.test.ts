@@ -51,6 +51,45 @@ describe("coerceLayoutSkeletonOutput", () => {
     });
   });
 
+  it("converts a container-root layout document into skeleton components", () => {
+    expect(
+      coerceLayoutSkeletonOutput({
+        root: {
+          type: "root",
+          id: "root-1",
+          columnCount: 1,
+          columns: [
+            {
+              id: "col-1",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-container",
+                  component: {
+                    kind: "container",
+                    rows: [
+                      {
+                        type: "component",
+                        id: "row-1",
+                        component: {
+                          kind: "text",
+                          primary: { type: "field", path: "name" },
+                          label: { show: true },
+                        },
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ).toEqual({
+      components: [{ kind: "text", fieldPath: "name" }],
+    });
+  });
+
   it("normalizes nested-layout skeletons and repairs columnCount", () => {
     expect(
       coerceLayoutSkeletonOutput({

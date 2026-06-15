@@ -21,7 +21,7 @@ Stored as `mainPage` on entity UI override. Slot kinds: page-header, page-toolba
       "root": {
         "type": "root",
         "id": "root-example",
-        "columnCount": 2,
+        "columnCount": 1,
         "columns": [
           {
             "id": "col-example",
@@ -30,34 +30,55 @@ Stored as `mainPage` on entity UI override. Slot kinds: page-header, page-toolba
                 "type": "component",
                 "id": "row-example",
                 "component": {
-                  "kind": "text",
-                  "primary": {
-                    "type": "field",
-                    "path": "name"
-                  },
-                  "label": {
-                    "show": true
-                  }
-                }
-              }
-            ]
-          },
-          {
-            "id": "col-example",
-            "rows": [
-              {
-                "type": "component",
-                "id": "row-example",
-                "component": {
-                  "kind": "text",
-                  "primary": {
-                    "type": "field",
-                    "path": "name"
-                  },
-                  "styles": [
+                  "kind": "container",
+                  "rows": [
                     {
-                      "property": "fontWeight",
-                      "value": "bold"
+                      "type": "nested-layout",
+                      "id": "nested-example",
+                      "columnCount": 2,
+                      "columns": [
+                        {
+                          "id": "col-example",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "name"
+                                },
+                                "label": {
+                                  "show": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "col-example",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "name"
+                                },
+                                "styles": [
+                                  {
+                                    "property": "fontWeight",
+                                    "value": "bold"
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
+                      ]
                     }
                   ]
                 }

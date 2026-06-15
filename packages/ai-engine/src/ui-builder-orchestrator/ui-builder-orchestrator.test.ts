@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
+import { isContainerComponent } from "@repo/ui-builder-core";
 import { createDefaultFormLayout } from "@repo/ui-builder-core";
 
 import { defineEntity, validateDesignLayoutSlice } from "@repo/entities";
@@ -217,10 +218,17 @@ describe("layout skeleton repair", () => {
     };
 
     const slice = assembleListSliceData(entity, draft);
-    const nested = slice.listItem?.root.columns[0]?.rows[0];
-    expect(nested?.type).toBe("nested-layout");
-    if (nested?.type === "nested-layout") {
-      expect(nested.columnCount).toBe(2);
+    const container = slice.listItem?.root.columns[0]?.rows[0];
+    expect(container?.type).toBe("component");
+    if (
+      container?.type === "component" &&
+      isContainerComponent(container.component)
+    ) {
+      const nested = container.component.rows[0];
+      expect(nested?.type).toBe("nested-layout");
+      if (nested?.type === "nested-layout") {
+        expect(nested.columnCount).toBe(2);
+      }
     }
     expect(validateDesignLayoutSlice(entity, "list", slice).ok).toBe(true);
   });

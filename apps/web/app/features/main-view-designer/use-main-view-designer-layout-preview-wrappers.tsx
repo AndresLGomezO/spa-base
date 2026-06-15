@@ -4,7 +4,11 @@ import type {
   RootColumnWrapper,
   RowWrapper,
 } from "@repo/ui-builder-renderer";
-import type { ColumnNode, RowNode } from "@repo/ui-builder-core";
+import {
+  isRootContainerRow,
+  type ColumnNode,
+  type RowNode,
+} from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
 import { FormDesignerComponentColumnChrome } from "../form-designer/FormDesignerComponentColumnChrome";
@@ -20,7 +24,6 @@ import {
   findRowByRef,
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
-import { isMainPageRootNestedLayoutRow } from "../ui-builder/ensure-main-page-nested-layout-root";
 import { resolveComponentRowLabel } from "../form-designer/form-designer-structure-tree";
 import { resolveLayoutBinding } from "./main-view-designer-layout-binding";
 import { useMainViewDesigner } from "./main-view-designer-context";
@@ -105,7 +108,7 @@ export function useMainViewDesignerLayoutPreviewWrappers(
 
   const handleDeleteRow = useCallback(
     (rowRef: ReturnType<typeof toComponentRowRef>) => {
-      if (isMainPageRootNestedLayoutRow(binding.layout, rowRef.rowId)) {
+      if (isRootContainerRow(binding.layout, rowRef.rowId)) {
         return;
       }
 

@@ -1,5 +1,6 @@
-import { Outlet } from "react-router";
+import { Outlet, useLocation } from "react-router";
 import { QueryClientProvider } from "@tanstack/react-query";
+import { cn } from "@repo/theme/utils";
 
 import { SidebarProvider, ThirdRailHost, ThirdRailProvider } from "@repo/ui";
 
@@ -11,6 +12,29 @@ import { TenantBrandingProvider } from "../theme/TenantBrandingProvider";
 import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
 import { CreateTenantModal } from "../components/platform/CreateTenantModal";
+
+function MainOutlet() {
+  const location = useLocation();
+  const isHomeDashboard = location.pathname === "/";
+
+  return (
+    <main
+      className={cn(
+        "mx-0 flex min-h-0 min-w-0 w-full max-w-none flex-1 flex-col overflow-hidden",
+        !isHomeDashboard && "p-4",
+      )}
+    >
+      <div
+        className={cn(
+          "flex min-h-0 min-w-0 flex-1 flex-col",
+          isHomeDashboard ? "w-full overflow-y-auto" : "overflow-hidden",
+        )}
+      >
+        <Outlet />
+      </div>
+    </main>
+  );
+}
 
 export default function PrivateLayoutRoute() {
   useLockDocumentScroll();
@@ -27,11 +51,7 @@ export default function PrivateLayoutRoute() {
                     <AppSidebar />
                     <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
                       <AppHeader />
-                      <main className="mx-0 flex min-h-0 min-w-0 w-full max-w-none flex-1 flex-col overflow-hidden p-4">
-                        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                          <Outlet />
-                        </div>
-                      </main>
+                      <MainOutlet />
                     </div>
                     <ThirdRailHost />
                   </div>

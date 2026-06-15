@@ -3,6 +3,7 @@ import type { SerializableEntityDefinition } from "@repo/entities";
 import { findFirstImageFieldName } from "@repo/entities";
 import {
   createDefaultComponent,
+  createDefaultStaticComponent,
   type BadgeComponentConfig,
   type ConditionalStyleRule,
   type DataSource,
@@ -213,6 +214,7 @@ export interface ComponentConfigEditorProps {
     entityName: string,
   ) => SerializableEntityDefinition | undefined;
   readonly hideComponentStyles?: boolean;
+  readonly staticContentOnly?: boolean;
 }
 
 function updatePrimaryField(
@@ -625,6 +627,7 @@ export function ComponentConfigEditor({
   definition,
   getDefinition,
   hideComponentStyles = false,
+  staticContentOnly = false,
 }: ComponentConfigEditorProps) {
   const componentKinds = allowedKinds;
   const kind = config.kind;
@@ -641,6 +644,12 @@ export function ComponentConfigEditor({
       displayDescriptorSource[0]?.path ??
       fieldDescriptors[0]?.path ??
       "name";
+
+    if (staticContentOnly) {
+      onChange(createDefaultStaticComponent(nextKind));
+      return;
+    }
+
     if (nextKind === "metric-kpi") {
       onChange({
         kind: "metric-kpi",
@@ -656,6 +665,7 @@ export function ComponentConfigEditor({
       nextKind === "entity-field-selector" ||
       nextKind === "form-section" ||
       nextKind === "icon" ||
+      nextKind === "user" ||
       nextKind === "form-actions" ||
       nextKind === "wizard-progress" ||
       nextKind === "wizard-step-host" ||
@@ -1146,7 +1156,7 @@ export function ComponentConfigEditor({
   }
 
   const fieldConfig = config;
-  const useStatic = fieldConfig.primary.type === "static";
+  const useStatic = staticContentOnly || fieldConfig.primary.type === "static";
 
   const updateFallbacks = (fallbacks: readonly DataSource[]) => {
     onChange({ ...fieldConfig, fallbacks });
@@ -1195,21 +1205,23 @@ export function ComponentConfigEditor({
         </Select>
       </label>
 
-      <label className="flex items-center gap-2 text-sm">
-        <input
-          type="checkbox"
-          checked={useStatic}
-          onChange={(event) => {
-            if (event.target.checked) {
-              onChange(updateStaticPrimary(fieldConfig, ""));
-            } else {
-              const path = filtered[0]?.path ?? "name";
-              onChange(updatePrimaryField(fieldConfig, path));
-            }
-          }}
-        />
-        <span>{labels.staticValue}</span>
-      </label>
+      {staticContentOnly ? null : (
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="checkbox"
+            checked={useStatic}
+            onChange={(event) => {
+              if (event.target.checked) {
+                onChange(updateStaticPrimary(fieldConfig, ""));
+              } else {
+                const path = filtered[0]?.path ?? "name";
+                onChange(updatePrimaryField(fieldConfig, path));
+              }
+            }}
+          />
+          <span>{labels.staticValue}</span>
+        </label>
+      )}
 
       {useStatic ? (
         fieldConfig.kind === "image" && staticImageEditor ? (
@@ -1256,60 +1268,64 @@ export function ComponentConfigEditor({
         </label>
       )}
 
-      <div className="flex flex-col gap-2">
-        <Text className="text-muted-foreground text-sm">
-          {labels.fallbacks}
-        </Text>
-        {(fieldConfig.fallbacks ?? []).map((source, index) => {
-          const fallbackOptions = getFallbackFieldOptions(
-            filtered,
-            fieldConfig,
-            index,
-          );
+      {staticContentOnly ? null : (
+        <div className="flex flex-col gap-2">
+          <Text className="text-muted-foreground text-sm">
+            {labels.fallbacks}
+          </Text>
+          {(fieldConfig.fallbacks ?? []).map((source, index) => {
+            const fallbackOptions = getFallbackFieldOptions(
+              filtered,
+              fieldConfig,
+              index,
+            );
 
-          return (
-            <div key={`${index}-${source.type}`} className="flex gap-2">
-              <Select
-                value={source.type === "field" ? source.path : ""}
-                disabled={source.type !== "field"}
-                onChange={(event) => {
-                  const fallbacks = [...(fieldConfig.fallbacks ?? [])];
-                  fallbacks[index] = {
-                    type: "field",
-                    path: event.target.value,
-                  };
-                  updateFallbacks(fallbacks);
-                }}
-              >
-                {fallbackOptions.map((field) => (
-                  <option key={field.path} value={field.path}>
-                    {formatFieldOptionLabel(field)}
-                  </option>
-                ))}
-              </Select>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  updateFallbacks(
-                    (fieldConfig.fallbacks ?? []).filter((_, i) => i !== index),
-                  );
-                }}
-              >
-                {labels.remove}
-              </Button>
-            </div>
-          );
-        })}
-        <Button
-          type="button"
-          variant="outline"
-          disabled={!canAddFallback}
-          onClick={addFallback}
-        >
-          {labels.addFallback}
-        </Button>
-      </div>
+            return (
+              <div key={`${index}-${source.type}`} className="flex gap-2">
+                <Select
+                  value={source.type === "field" ? source.path : ""}
+                  disabled={source.type !== "field"}
+                  onChange={(event) => {
+                    const fallbacks = [...(fieldConfig.fallbacks ?? [])];
+                    fallbacks[index] = {
+                      type: "field",
+                      path: event.target.value,
+                    };
+                    updateFallbacks(fallbacks);
+                  }}
+                >
+                  {fallbackOptions.map((field) => (
+                    <option key={field.path} value={field.path}>
+                      {formatFieldOptionLabel(field)}
+                    </option>
+                  ))}
+                </Select>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => {
+                    updateFallbacks(
+                      (fieldConfig.fallbacks ?? []).filter(
+                        (_, i) => i !== index,
+                      ),
+                    );
+                  }}
+                >
+                  {labels.remove}
+                </Button>
+              </div>
+            );
+          })}
+          <Button
+            type="button"
+            variant="outline"
+            disabled={!canAddFallback}
+            onClick={addFallback}
+          >
+            {labels.addFallback}
+          </Button>
+        </div>
+      )}
 
       <div className="border-border flex flex-col gap-3 rounded-md border p-3">
         <Text className="font-medium text-sm">{labels.slotSettings}</Text>

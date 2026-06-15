@@ -1,4 +1,10 @@
-import type { RowNode, UiLayoutDocument } from "@repo/ui-builder-core";
+import {
+  ensureContainerRoot,
+  isContainerComponent,
+  resolveRootContainer,
+  type RowNode,
+  type UiLayoutDocument,
+} from "@repo/ui-builder-core";
 
 import type { SkeletonComponentSpec } from "../../types.js";
 import { formatLayoutSkeletonValidationErrors } from "../list/normalize-layout-skeleton-output.js";
@@ -184,6 +190,20 @@ function normalizeFormSkeletonComponent(
 }
 
 function rowNodeToSkeleton(row: RowNode): SkeletonComponentSpec | null {
+  if (row.type === "component" && isContainerComponent(row.component)) {
+    const components = row.component.rows
+      .map((innerRow) => rowNodeToSkeleton(innerRow))
+      .filter(
+        (component): component is SkeletonComponentSpec => component != null,
+      );
+
+    if (components.length === 1) {
+      return components[0]!;
+    }
+
+    return null;
+  }
+
   if (row.type === "nested-layout") {
     const columns = row.columns
       .map((column) => {
@@ -219,14 +239,17 @@ function rowNodeToSkeleton(row: RowNode): SkeletonComponentSpec | null {
 function layoutDocumentToSkeleton(
   layout: UiLayoutDocument,
 ): SkeletonComponentSpec[] {
+  const normalized = ensureContainerRoot(layout);
+  const rootContainer = resolveRootContainer(normalized);
+  const rows =
+    rootContainer?.config.rows ??
+    normalized.root.columns.flatMap((column) => column.rows);
   const components: SkeletonComponentSpec[] = [];
 
-  for (const column of layout.root.columns) {
-    for (const row of column.rows) {
-      const skeleton = rowNodeToSkeleton(row);
-      if (skeleton) {
-        components.push(skeleton);
-      }
+  for (const row of rows) {
+    const skeleton = rowNodeToSkeleton(row);
+    if (skeleton) {
+      components.push(skeleton);
     }
   }
 

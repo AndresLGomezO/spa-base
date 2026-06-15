@@ -9,7 +9,9 @@ import {
   createDefaultFormLayout,
   createDefaultWizardFormConfig,
   createLayoutId,
+  ensureContainerRoot,
   normalizeLayout,
+  resolveRootContainerLocator,
   type ColumnNode,
   type RowNode,
   type UiLayoutDocument,
@@ -89,21 +91,23 @@ function buildLayoutFromTarget(
     "root",
   );
 
-  return normalizeLayout({
-    root: {
-      type: "root",
-      id: createLayoutId("root"),
-      columnCount: 1,
-      columns: [
-        {
-          id: createLayoutId("col"),
-          rows,
-        },
-      ],
-    },
-    showActions: true,
-    cardsPerRow: 1,
-  });
+  return ensureContainerRoot(
+    normalizeLayout({
+      root: {
+        type: "root",
+        id: createLayoutId("root"),
+        columnCount: 1,
+        columns: [
+          {
+            id: createLayoutId("col"),
+            rows,
+          },
+        ],
+      },
+      showActions: true,
+      cardsPerRow: 1,
+    }),
+  );
 }
 
 function hasFormActions(rows: readonly SkeletonComponentSpec[]): boolean {
@@ -129,9 +133,12 @@ function ensurePlainFormActions(
   if (hasFormActions(skeleton)) {
     return layout;
   }
+  const locator =
+    resolveRootContainerLocator(layout) ??
+    ({ scope: "root", columnIndex: 0 } as const);
   return addComponentRowAt(
     layout,
-    { scope: "root", columnIndex: 0 },
+    locator,
     createDefaultComponent("form-actions"),
   );
 }

@@ -15,6 +15,7 @@ import {
   usesFlexWrapLayout,
   usesResponsiveGridLayout,
   usesTextWrap,
+  isContainerComponent,
   type ColumnNode,
   type ColumnStackDirection,
   type ResponsiveGridBreakpoint,
@@ -63,6 +64,16 @@ function columnContainsComponentKind(
   return false;
 }
 
+function isStretchedSurfaceFillContext(
+  context: LayoutRenderContext,
+  stretchRootColumns: boolean,
+): boolean {
+  return (
+    stretchRootColumns &&
+    (context.mode === "listItem" || context.mode === "detail")
+  );
+}
+
 function columnShellClassName(
   context: LayoutRenderContext,
   column?: ColumnNode,
@@ -70,6 +81,12 @@ function columnShellClassName(
 ): string {
   const baseClass = (() => {
     if (context.mode === "mainPage") {
+      return COLUMN_SHELL_CLASS;
+    }
+    if (
+      stretchColumn &&
+      (context.mode === "listItem" || context.mode === "detail")
+    ) {
       return COLUMN_SHELL_CLASS;
     }
     if (isWizardStepContentContext(context)) {
@@ -100,6 +117,7 @@ interface ColumnRenderFlags {
 
 interface RowRenderScope {
   readonly rootColumnIndex: number;
+  readonly containerParentRowId?: string;
   readonly nestedParentRowId?: string;
   readonly nestedColumnIndex?: number;
 }
@@ -111,6 +129,15 @@ function buildRowLocator(scope: RowRenderScope): RowLocator {
       columnIndex: scope.rootColumnIndex,
       rowId: scope.nestedParentRowId,
       nestedColumnIndex: scope.nestedColumnIndex,
+      containerRowId: scope.containerParentRowId,
+    };
+  }
+
+  if (scope.containerParentRowId != null) {
+    return {
+      scope: "container",
+      columnIndex: scope.rootColumnIndex,
+      containerRowId: scope.containerParentRowId,
     };
   }
 
@@ -131,19 +158,57 @@ interface ColumnGridRenderOptions {
 }
 
 function nestedColumnGridOptions(
+  context: LayoutRenderContext,
   options?: ColumnGridRenderOptions,
 ): ColumnGridRenderOptions | undefined {
   if (options === undefined) {
     return undefined;
   }
 
+  const preserveStretch = isStretchedSurfaceFillContext(
+    context,
+    options.stretchRootColumns ?? false,
+  );
+
   return {
     rowWrapper: options.rowWrapper,
     nestedColumnWrapper: options.nestedColumnWrapper,
     renderEmptyRootColumns: options.renderEmptyRootColumns,
-    // Nested grids should follow row content height, not inherit root fill behavior.
-    stretchRootColumns: false,
+    stretchRootColumns: preserveStretch ? options.stretchRootColumns : false,
   };
+}
+
+function shouldStretchRootContainerRow(
+  row: RowNode,
+  context: LayoutRenderContext,
+  rowScope: RowRenderScope,
+  columnGridOptions?: ColumnGridRenderOptions,
+): boolean {
+  return (
+    row.type === "component" &&
+    isContainerComponent(row.component) &&
+    rowScope.nestedParentRowId == null &&
+    rowScope.containerParentRowId == null &&
+    isStretchedSurfaceFillContext(
+      context,
+      columnGridOptions?.stretchRootColumns ?? false,
+    )
+  );
+}
+
+function shouldStretchContainerChildRow(
+  context: LayoutRenderContext,
+  rowScope: RowRenderScope,
+  columnGridOptions?: ColumnGridRenderOptions,
+): boolean {
+  return (
+    rowScope.containerParentRowId != null &&
+    rowScope.nestedParentRowId == null &&
+    isStretchedSurfaceFillContext(
+      context,
+      columnGridOptions?.stretchRootColumns ?? false,
+    )
+  );
 }
 
 function wrapRowContent(
@@ -201,6 +266,10 @@ function renderRows(
   const isMainPage = context.mode === "mainPage";
   const isWizardForm = isWizardFormContext(context);
   const isWizardStepContent = isWizardStepContentContext(context);
+  const isStretchedSurfaceFill = isStretchedSurfaceFillContext(
+    context,
+    columnGridOptions?.stretchRootColumns ?? false,
+  );
 
   return (
     <LayoutStack
@@ -208,10 +277,12 @@ function renderRows(
       gap={gapPxFromStyles(column.styles)}
       className={[
         "flex w-full min-w-0",
-        isMainPage && stackDirection === "column" && "min-h-0 flex-1",
-        isMainPage && stackDirection === "column"
-          ? "h-full overflow-hidden"
-          : "",
+        (isMainPage || isStretchedSurfaceFill) &&
+          stackDirection === "column" &&
+          "min-h-0 flex-1",
+        (isMainPage || isStretchedSurfaceFill) &&
+          stackDirection === "column" &&
+          "h-full overflow-hidden",
         isWizardForm && stackDirection === "column" && "min-h-0 w-full",
         isWizardStepContent && stackDirection === "column" && "min-h-0 w-full",
         stretchColumn && stackDirection === "column" && "min-h-0 flex-1 h-full",
@@ -266,8 +337,12 @@ function layoutGridStretchClassName(
   const isWizardStepContent = isWizardStepContentContext(context);
   const shouldStretch = stretchRootColumns || stretchColumns;
   const stretchSuffix = shouldStretch ? " h-full min-h-0" : "";
+  const isStretchedSurfaceFill = isStretchedSurfaceFillContext(
+    context,
+    stretchRootColumns,
+  );
 
-  if (isMainPage) {
+  if (isMainPage || isStretchedSurfaceFill) {
     return `h-full min-h-0 w-full flex-1 items-stretch${stretchSuffix}`;
   }
   if (isWizardForm || isWizardStepContent || isFormFill) {
@@ -536,6 +611,56 @@ function renderRow(
   const stackShellClass = rowStackShellClassName(stackDirection);
 
   if (row.type === "component") {
+    if (isContainerComponent(row.component)) {
+      const containerStyles = resolveStyleRules(row.component.styles);
+      const stretchedContainerClass = shouldStretchRootContainerRow(
+        row,
+        context,
+        rowScope,
+        columnGridOptions,
+      )
+        ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
+        : undefined;
+      const syntheticColumn: ColumnNode = {
+        id: `${row.id}-container`,
+        rows: row.component.rows,
+        styles: row.component.styles,
+      };
+      const containerScope: RowRenderScope = {
+        rootColumnIndex: rowScope.rootColumnIndex,
+        containerParentRowId: row.id,
+      };
+
+      return wrapRowContent(
+        row,
+        rowLocator,
+        <div
+          key={row.id}
+          className={[stretchedContainerClass, containerStyles.className]
+            .filter(Boolean)
+            .join(" ")}
+          style={containerStyles.style}
+        >
+          {renderRows(
+            row.component.rows,
+            context,
+            syntheticColumn,
+            atBreakpoint,
+            containerScope,
+            rowIndex,
+            shouldStretchRootContainerRow(
+              row,
+              context,
+              rowScope,
+              columnGridOptions,
+            ),
+            columnGridOptions,
+          )}
+        </div>,
+        columnGridOptions,
+      );
+    }
+
     const rowStyles = resolveStyleRules(row.styles);
     const motionClass = resolveMotionPreset(row.motion, rowIndex);
     const isMainPage = context.mode === "mainPage";
@@ -623,12 +748,20 @@ function renderRow(
 
   const rowStyles = resolveStyleRules(row.styles);
   const isFormFill = context.mode === "form";
+  const stretchedSurfaceNestedRowClass = shouldStretchContainerChildRow(
+    context,
+    rowScope,
+    columnGridOptions,
+  )
+    ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
+    : undefined;
   const formNestedRowClass =
     isFormFill && stackDirection === "column"
       ? "flex w-full min-w-0 shrink-0 flex-col"
       : undefined;
   const nestedContext = {
     rootColumnIndex: rowScope.rootColumnIndex,
+    containerParentRowId: rowScope.containerParentRowId,
     nestedParentRowId: row.id,
   };
 
@@ -643,6 +776,7 @@ function renderRow(
         key={row.id}
         className={[
           stackShellClass,
+          stretchedSurfaceNestedRowClass,
           formNestedRowClass,
           rowStyles.className,
           displayRange.className,
@@ -657,7 +791,7 @@ function renderRow(
           row.styles,
           atBreakpoint,
           row.columnCount,
-          nestedColumnGridOptions(columnGridOptions),
+          nestedColumnGridOptions(context, columnGridOptions),
           nestedContext,
         )}
       </div>,
@@ -672,6 +806,7 @@ function renderRow(
       key={row.id}
       className={[
         stackShellClass,
+        stretchedSurfaceNestedRowClass,
         formNestedRowClass,
         rowStyles.className,
         displayRange.className,
@@ -686,7 +821,7 @@ function renderRow(
         row.styles,
         row.columnCount,
         atBreakpoint,
-        nestedColumnGridOptions(columnGridOptions),
+        nestedColumnGridOptions(context, columnGridOptions),
         nestedContext,
       )}
     </div>,
@@ -748,7 +883,7 @@ function renderColumn(
             rowScope,
             0,
             options?.stretchColumn,
-            nestedColumnGridOptions(options?.columnGridOptions),
+            nestedColumnGridOptions(context, options?.columnGridOptions),
           )
         : null}
     </div>
@@ -801,17 +936,23 @@ export function RecursiveLayoutRenderer({
   const isFormFill = context.mode === "form";
   const isWizardForm = isWizardFormContext(context);
   const isWizardStepContent = isWizardStepContentContext(context);
+  const isStretchedSurfaceFill = isStretchedSurfaceFillContext(
+    context,
+    stretchRootColumns,
+  );
   const fillRootClass = isMainPage
     ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
-    : isWizardForm || isWizardStepContent
-      ? stretchRootColumns
-        ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
-        : "flex w-full min-w-0 flex-col"
-      : isFormFill
+    : isStretchedSurfaceFill
+      ? "flex h-full min-h-0 min-w-0 w-full flex-1 flex-col"
+      : isWizardForm || isWizardStepContent
         ? stretchRootColumns
-          ? "flex h-full min-h-0 w-full min-w-0 flex-col"
+          ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
           : "flex w-full min-w-0 flex-col"
-        : undefined;
+        : isFormFill
+          ? stretchRootColumns
+            ? "flex h-full min-h-0 w-full min-w-0 flex-col"
+            : "flex w-full min-w-0 flex-col"
+          : undefined;
   const rootStylesResolved = resolveStyleRules(layout.root.styles, className);
   const columnGridOptions: ColumnGridRenderOptions = {
     rootColumnWrapper,

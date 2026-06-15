@@ -27,11 +27,9 @@
     "rightsReserved": "© {{year}} Entity System - ESP. All rights reserved."
   },
   "home": {
-    "title": "Home",
-    "sessionActive": "Authenticated session active.",
-    "signedInAs": "Signed in as",
-    "unknownUser": "unknown user",
-    "logout": "Logout"
+    "dashboardLoading": "Loading dashboard...",
+    "dashboardLoadFailed": "Unable to load the dashboard.",
+    "dashboardEmpty": "Your dashboard is empty. Configure it in Settings → Design layout → Dashboard."
   },
   "nav": {
     "home": "Home",
@@ -60,6 +58,7 @@
     "designLayoutForms": "Forms",
     "designLayoutMetrics": "Metrics",
     "designLayoutPresets": "Component presets",
+    "designLayoutDashboard": "Dashboard layout",
     "aiChat": "AI Chat",
     "aiDebugger": "AI Debugger"
   },
@@ -227,6 +226,7 @@
       "collapsePanel": "Collapse structure panel",
       "emptyColumn": "No components in this column yet.",
       "nestedLayout": "Nested layout ({{count}} columns)",
+      "container": "Container",
       "section": "Section",
       "actions": "Actions",
       "insertAbove": "Add component above {{label}}",
@@ -422,6 +422,63 @@
       "widgetsMessage": "You have unsaved widget changes. Save them before leaving, or discard your changes.",
       "rowMessage": "You have unsaved row layout changes. Save them before leaving this tab, or discard your changes.",
       "widgetMessage": "You have unsaved widget changes. Save them before switching widgets, or discard your changes.",
+      "structurePanelMessage": "You have unsaved structure changes in the panel. Save them before closing or switching, or discard your changes.",
+      "structurePanelSave": "Save structure changes",
+      "save": "Save changes",
+      "discard": "Discard changes",
+      "keepEditing": "Keep editing"
+    }
+  },
+  "dashboardLayoutDesigner": {
+    "title": "Dashboard Layout Designer",
+    "subtitle": "Configure tenant dashboard sections and layout",
+    "settings": "Settings",
+    "tabs": {
+      "sections": "Sections",
+      "layout": "Dashboard layout",
+      "ariaLabel": "Dashboard layout designer sections"
+    },
+    "layout": {
+      "structureTitle": "Dashboard structure"
+    },
+    "sectionComponent": {
+      "section": "Section",
+      "selectSection": "Select a section…",
+      "noSections": "No sections are defined yet.",
+      "unconfigured": "No section selected",
+      "notFound": "The selected section could not be found."
+    },
+    "components": {
+      "dashboardSection": "Dashboard section",
+      "user": "Signed-in user"
+    },
+    "userComponent": {
+      "display": "Show",
+      "displayName": "Name",
+      "displayEmail": "Email",
+      "displayPhoto": "Photo",
+      "displayPhotoAndName": "Photo and name",
+      "imageSize": "Photo size (px)"
+    },
+    "sections": {
+      "selectLabel": "Section",
+      "add": "Add section",
+      "edit": "Edit section",
+      "remove": "Remove section",
+      "save": "Save section",
+      "addModalTitle": "Add dashboard section",
+      "editModalTitle": "Edit dashboard section",
+      "nameLabel": "Section name",
+      "structureTitle": "Section structure",
+      "emptyDropdown": "—",
+      "emptyTree": "No sections yet. Use + to create one.",
+      "noSectionSelected": "Select a section to preview its layout."
+    },
+    "unsavedChanges": {
+      "title": "Unsaved changes",
+      "sectionsMessage": "You have unsaved section changes. Save them before leaving, or discard your changes.",
+      "layoutMessage": "You have unsaved dashboard layout changes. Save them before leaving this tab, or discard your changes.",
+      "sectionMessage": "You have unsaved section changes. Save them before switching sections, or discard your changes.",
       "structurePanelMessage": "You have unsaved structure changes in the panel. Save them before closing or switching, or discard your changes.",
       "structurePanelSave": "Save structure changes",
       "save": "Save changes",

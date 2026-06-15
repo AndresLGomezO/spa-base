@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { entityCardViewAdapter } from "@repo/ui-builder-react";
-import { moveRowAt } from "@repo/ui-builder-core";
+import { isRootContainerRow, moveRowAt } from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -20,7 +20,6 @@ import type {
   StructureRowNode,
 } from "../form-designer/form-designer-structure-tree";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
-import { isRecordDetailRootNestedLayoutRow } from "../ui-builder/ensure-record-detail-nested-layout-root";
 import { resolveLayoutBinding } from "./detail-view-designer-layout-binding";
 import { useDetailViewDesigner } from "./detail-view-designer-context";
 import { useDetailViewDesignerStructureSession } from "./DetailViewDesignerStructureSession";
@@ -86,7 +85,7 @@ export function DetailViewDesignerStructureTreePanel({
 
   const handleRemoveRow = useCallback(
     (row: StructureRowNode) => {
-      if (isRecordDetailRootNestedLayoutRow(binding.layout, row.rowId)) {
+      if (isRootContainerRow(binding.layout, row.rowId)) {
         return;
       }
 
@@ -154,7 +153,7 @@ export function DetailViewDesignerStructureTreePanel({
     layout: binding.layout,
     labels,
     fieldDescriptors,
-    promoteSingleNestedLayoutRoot: true,
+    promoteSingleContainerRoot: true,
     onInsert,
     insertDisabled: structurePanelOpen,
     onMoveRowUp: handleMoveRowUp,

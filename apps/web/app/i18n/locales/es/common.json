@@ -27,11 +27,9 @@
     "rightsReserved": "© {{year}} Entity System - ESP. Todos los derechos reservados."
   },
   "home": {
-    "title": "Inicio",
-    "sessionActive": "Sesión autenticada activa.",
-    "signedInAs": "Conectado como",
-    "unknownUser": "usuario desconocido",
-    "logout": "Cerrar sesión"
+    "dashboardLoading": "Cargando panel...",
+    "dashboardLoadFailed": "No se pudo cargar el panel.",
+    "dashboardEmpty": "Tu panel está vacío. Configúralo en Configuración → Diseño de layout → Panel."
   },
   "nav": {
     "home": "Inicio",
@@ -60,6 +58,7 @@
     "designLayoutForms": "Formularios",
     "designLayoutMetrics": "Métricas",
     "designLayoutPresets": "Presets de componentes",
+    "designLayoutDashboard": "Layout del dashboard",
     "aiChat": "Chat IA",
     "aiDebugger": "Depurador IA"
   },
@@ -227,6 +226,7 @@
       "collapsePanel": "Contraer panel de estructura",
       "emptyColumn": "Aún no hay componentes en esta columna.",
       "nestedLayout": "Diseño anidado ({{count}} columnas)",
+      "container": "Contenedor",
       "section": "Sección",
       "actions": "Acciones",
       "insertAbove": "Añadir componente encima de {{label}}",
@@ -422,6 +422,63 @@
       "widgetsMessage": "Tienes cambios de widgets sin guardar. Guárdalos antes de salir o descarta los cambios.",
       "rowMessage": "Tienes cambios de layout de fila sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
       "widgetMessage": "Tienes cambios de widgets sin guardar. Guárdalos antes de cambiar de widget o descarta los cambios.",
+      "structurePanelMessage": "Tienes cambios de estructura sin guardar en el panel. Guárdalos antes de cerrar o cambiar, o descarta los cambios.",
+      "structurePanelSave": "Guardar cambios de estructura",
+      "save": "Guardar cambios",
+      "discard": "Descartar cambios",
+      "keepEditing": "Seguir editando"
+    }
+  },
+  "dashboardLayoutDesigner": {
+    "title": "Diseñador de layout del dashboard",
+    "subtitle": "Configura las secciones y el layout del dashboard del tenant",
+    "settings": "Configuración",
+    "tabs": {
+      "sections": "Secciones",
+      "layout": "Layout del dashboard",
+      "ariaLabel": "Secciones del diseñador de layout del dashboard"
+    },
+    "layout": {
+      "structureTitle": "Estructura del dashboard"
+    },
+    "sectionComponent": {
+      "section": "Sección",
+      "selectSection": "Seleccionar una sección…",
+      "noSections": "Aún no hay secciones definidas.",
+      "unconfigured": "Sin sección seleccionada",
+      "notFound": "No se encontró la sección seleccionada."
+    },
+    "components": {
+      "dashboardSection": "Sección del dashboard",
+      "user": "Usuario conectado"
+    },
+    "userComponent": {
+      "display": "Mostrar",
+      "displayName": "Nombre",
+      "displayEmail": "Correo",
+      "displayPhoto": "Foto",
+      "displayPhotoAndName": "Foto y nombre",
+      "imageSize": "Tamaño de foto (px)"
+    },
+    "sections": {
+      "selectLabel": "Sección",
+      "add": "Agregar sección",
+      "edit": "Editar sección",
+      "remove": "Eliminar sección",
+      "save": "Guardar sección",
+      "addModalTitle": "Agregar sección del dashboard",
+      "editModalTitle": "Editar sección del dashboard",
+      "nameLabel": "Nombre de la sección",
+      "structureTitle": "Estructura de la sección",
+      "emptyDropdown": "—",
+      "emptyTree": "Aún no hay secciones. Usa + para crear una.",
+      "noSectionSelected": "Selecciona una sección para previsualizar su layout."
+    },
+    "unsavedChanges": {
+      "title": "Cambios sin guardar",
+      "sectionsMessage": "Tienes cambios de secciones sin guardar. Guárdalos antes de salir o descarta los cambios.",
+      "layoutMessage": "Tienes cambios de layout del dashboard sin guardar. Guárdalos antes de salir de esta pestaña o descarta los cambios.",
+      "sectionMessage": "Tienes cambios de secciones sin guardar. Guárdalos antes de cambiar de sección o descarta los cambios.",
       "structurePanelMessage": "Tienes cambios de estructura sin guardar en el panel. Guárdalos antes de cerrar o cambiar, o descarta los cambios.",
       "structurePanelSave": "Guardar cambios de estructura",
       "save": "Guardar cambios",

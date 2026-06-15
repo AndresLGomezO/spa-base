@@ -119,6 +119,25 @@ export type {
   MetricWidgetDefinition,
 } from "./ui/metric-widget-types.js";
 export {
+  dashboardSectionDefinitionSchema,
+  dashboardSectionsSchema,
+  putTenantDashboardLayoutInputSchema,
+  tenantDashboardLayoutRecordSchema,
+  TENANT_DASHBOARD_LAYOUTS_COLLECTION,
+} from "./ui/dashboard-layout-types.js";
+export type {
+  DashboardSectionDefinition,
+  PutTenantDashboardLayoutInput,
+  TenantDashboardLayoutRecord,
+} from "./ui/dashboard-layout-types.js";
+export {
+  fromPersistedTenantDashboardLayout,
+  parseTenantDashboardLayoutRecord,
+  persistedTenantDashboardLayoutSchema,
+  safeFromPersistedTenantDashboardLayout,
+  toPersistedTenantDashboardLayout,
+} from "./ui/tenant-dashboard-layout-persistence.js";
+export {
   createDefaultMetricStripLayout,
   DEFAULT_METRIC_STRIP_COLUMN_COUNT,
   metricStripColumnCount,

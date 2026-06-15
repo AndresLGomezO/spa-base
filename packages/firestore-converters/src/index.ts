@@ -71,6 +71,8 @@ export { type EntityUiOverrideRepository } from "./entity-ui-override/repository
 export { createInMemoryEntityUiOverrideRepository } from "./entity-ui-override/in-memory-repository.js";
 export { type UiBuilderPresetRepository } from "./ui-builder-preset/repository-contract.js";
 export { createInMemoryUiBuilderPresetRepository } from "./ui-builder-preset/in-memory-repository.js";
+export { type TenantDashboardLayoutRepository } from "./tenant-dashboard-layout/repository-contract.js";
+export { createInMemoryTenantDashboardLayoutRepository } from "./tenant-dashboard-layout/in-memory-repository.js";
 export { type HookRepository } from "./hook/repository-contract.js";
 export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
 export { type MetricDefinitionRepository } from "./metric-definition/repository-contract.js";

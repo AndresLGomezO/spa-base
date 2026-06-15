@@ -4,17 +4,21 @@
  * Affected fragments: ui.components.*
  */
 import type { StyleRule } from "../styles/style-types.js";
+import type { RowNode } from "./layout.js";
 import type { ConditionalStyleRule, LabelConfig } from "./styling.js";
 
 export type UiComponentKind =
+  | "container"
   | "text"
   | "image"
   | "icon"
+  | "user"
   | "date"
   | "numeric"
   | "badge"
   | "metric-kpi"
   | "metric-widget"
+  | "dashboard-section"
   | "form-field"
   | "entity-field-selector"
   | "form-section"
@@ -76,6 +80,13 @@ export interface MetricWidgetComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export interface DashboardSectionComponentConfig {
+  readonly kind: "dashboard-section";
+  readonly sectionId: string;
+  readonly label?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
 export interface FieldComponentConfigBase {
   readonly primary: DataSource;
   readonly fallbacks?: readonly DataSource[];
@@ -115,6 +126,16 @@ export interface IconComponentConfig {
   readonly kind: "icon";
   readonly iconName: string;
   readonly iconSize?: number;
+  readonly label?: LabelConfig;
+  readonly styles?: readonly StyleRule[];
+}
+
+export type UserDisplayMode = "name" | "email" | "photo" | "photo-and-name";
+
+export interface UserComponentConfig {
+  readonly kind: "user";
+  readonly display: UserDisplayMode;
+  readonly imageSize?: number;
   readonly label?: LabelConfig;
   readonly styles?: readonly StyleRule[];
 }
@@ -248,6 +269,12 @@ export interface PageListComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export interface ContainerComponentConfig {
+  readonly kind: "container";
+  readonly rows: readonly RowNode[];
+  readonly styles?: readonly StyleRule[];
+}
+
 export type PageUiComponentConfig =
   | PageHeaderComponentConfig
   | PageToolbarComponentConfig
@@ -255,10 +282,13 @@ export type PageUiComponentConfig =
   | PageListComponentConfig;
 
 export type UiComponentConfig =
+  | ContainerComponentConfig
   | FieldUiComponentConfig
   | IconComponentConfig
+  | UserComponentConfig
   | MetricKpiComponentConfig
   | MetricWidgetComponentConfig
+  | DashboardSectionComponentConfig
   | FormFieldComponentConfig
   | EntityFieldSelectorComponentConfig
   | FormSectionComponentConfig
@@ -305,10 +335,22 @@ export function isMetricWidgetComponent(
   return config.kind === "metric-widget";
 }
 
+export function isDashboardSectionComponent(
+  config: UiComponentConfig,
+): config is DashboardSectionComponentConfig {
+  return config.kind === "dashboard-section";
+}
+
 export function isIconComponent(
   config: UiComponentConfig,
 ): config is IconComponentConfig {
   return config.kind === "icon";
+}
+
+export function isUserComponent(
+  config: UiComponentConfig,
+): config is UserComponentConfig {
+  return config.kind === "user";
 }
 
 export function isFieldUiComponent(
@@ -327,4 +369,10 @@ export function isEntityFieldSelectorComponent(
   config: UiComponentConfig,
 ): config is EntityFieldSelectorComponentConfig {
   return config.kind === "entity-field-selector";
+}
+
+export function isContainerComponent(
+  config: UiComponentConfig,
+): config is ContainerComponentConfig {
+  return config.kind === "container";
 }

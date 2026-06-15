@@ -1,6 +1,7 @@
 import type { UiLayoutDocument } from "../types/layout.js";
 import { createLayoutId } from "./id.js";
 import { createEmptyLayout } from "./mutations.js";
+import { ensureContainerRoot } from "../layout/ensure-container-root.js";
 
 export function createDefaultTableCellLayout(
   fieldPaths: readonly string[],
@@ -18,14 +19,14 @@ export function createDefaultTableCellLayout(
 
   const column = layout.root.columns[0];
   if (!column) {
-    return layout;
+    return ensureContainerRoot(layout);
   }
 
-  return {
+  return ensureContainerRoot({
     ...layout,
     root: {
       ...layout.root,
       columns: [{ ...column, rows }],
     },
-  };
+  });
 }

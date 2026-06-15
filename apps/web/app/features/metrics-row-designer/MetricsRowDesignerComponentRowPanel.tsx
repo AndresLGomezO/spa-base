@@ -10,6 +10,7 @@ import {
 } from "@repo/ui-builder-react";
 import {
   componentKindsForSurface,
+  isContainerComponent,
   isMetricWidgetComponent,
   MAX_NESTED_COLUMNS,
   type MotionPreset,
@@ -30,6 +31,7 @@ import {
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
+import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentRowPanel";
 import { resolveActiveLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { MetricWidgetComponentEditor } from "./MetricWidgetComponentEditor";
 import { MetricKpiComponentEditor } from "../../components/metrics/MetricKpiComponentEditor";
@@ -86,6 +88,18 @@ export function MetricsRowDesignerComponentRowPanel({
         rowRef={rowRef}
         binding={binding}
         labels={labels}
+      />
+    );
+  }
+
+  if (row.type === "component" && isContainerComponent(row.component)) {
+    return (
+      <ContainerComponentRowPanel
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        labels={labels}
+        componentEditorLabels={componentEditorLabels}
       />
     );
   }

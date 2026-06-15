@@ -1,9 +1,10 @@
 import type { UiLayoutDocument } from "../types/layout.js";
+import { addComponentRowAt, insertNestedLayoutRowAt } from "./mutations.js";
 import {
-  addComponentRowAt,
-  createEmptyLayout,
-  insertNestedLayoutRowAt,
-} from "./mutations.js";
+  beginContainerRootLayout,
+  ensureContainerRoot,
+  resolveRootContainer,
+} from "../layout/ensure-container-root.js";
 
 export function createDefaultRowExpandLayout(
   fieldPaths: readonly string[],
@@ -12,11 +13,11 @@ export function createDefaultRowExpandLayout(
   const expandFields =
     fieldPaths.length > 1 ? fieldPaths.slice(1) : [primaryField];
 
-  let layout = createEmptyLayout(1);
-  const rootColumnIndex = 0;
+  const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
+  let layout = beganLayout;
   const { layout: withNested, rowId: nestedRowId } = insertNestedLayoutRowAt(
     layout,
-    { scope: "root", columnIndex: rootColumnIndex },
+    containerLocator,
     { position: "after" },
     1,
   );
@@ -27,7 +28,8 @@ export function createDefaultRowExpandLayout(
       layout,
       {
         scope: "nested",
-        columnIndex: rootColumnIndex,
+        columnIndex: containerLocator.columnIndex,
+        containerRowId: containerLocator.containerRowId,
         rowId: nestedRowId,
         nestedColumnIndex: 0,
       },
@@ -42,23 +44,24 @@ export function createDefaultRowExpandLayout(
   return layout;
 }
 
-export function isRowExpandNestedRootLayout(layout: UiLayoutDocument): boolean {
-  const rootColumn = layout.root.columns[0];
-  if (!rootColumn || rootColumn.rows.length !== 1) {
-    return false;
-  }
-
-  const row = rootColumn.rows[0];
-  return row?.type === "nested-layout";
+export function isRowExpandContainerRootLayout(
+  layout: UiLayoutDocument,
+): boolean {
+  return resolveRootContainer(layout) != null;
 }
 
-export function ensureRowExpandNestedRootLayout(
+export function ensureRowExpandContainerRootLayout(
   layout: UiLayoutDocument,
   fieldPaths: readonly string[],
 ): UiLayoutDocument {
-  if (isRowExpandNestedRootLayout(layout)) {
-    return layout;
+  const normalized = ensureContainerRoot(layout);
+  if (isRowExpandContainerRootLayout(normalized)) {
+    return normalized;
   }
 
   return createDefaultRowExpandLayout(fieldPaths);
 }
+
+export const isRowExpandNestedRootLayout = isRowExpandContainerRootLayout;
+export const ensureRowExpandNestedRootLayout =
+  ensureRowExpandContainerRootLayout;

@@ -1,9 +1,9 @@
 import type { MetricWidgetDefinition } from "@repo/entities";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
-import { ensureMetricsRowNestedLayoutRoot } from "../ui-builder/ensure-metrics-row-nested-layout-root";
+import { ensureContainerRoot } from "@repo/ui-builder-core";
+
 import { createDefaultMetricRowLayout } from "../ui-builder/create-default-metric-row-layout";
-import { ensureMetricsWidgetNestedLayoutRoot } from "../ui-builder/ensure-metrics-widget-nested-layout-root";
 import type { UseEntityMetricsWidgetsEditorResult } from "../ui-builder/use-entity-metrics-widgets-editor";
 
 export interface MetricsRowDesignerWidgetsSnapshot {
@@ -19,7 +19,7 @@ function normalizeWidgets(
 ): MetricWidgetDefinition[] {
   return widgets.map((widget) => ({
     ...widget,
-    layout: ensureMetricsWidgetNestedLayoutRoot(widget.layout),
+    layout: ensureContainerRoot(widget.layout),
   }));
 }
 
@@ -56,7 +56,7 @@ export function applyWidgetsSnapshotToEditor(
 }
 
 function normalizeMetricRowLayout(layout: UiLayoutDocument): UiLayoutDocument {
-  return ensureMetricsRowNestedLayoutRoot(layout);
+  return ensureContainerRoot(layout);
 }
 
 function defaultMetricRowLayout(): UiLayoutDocument {

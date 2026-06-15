@@ -4,6 +4,7 @@ import {
   createEmptyColumn,
   createEmptyLayout,
   createLayoutId,
+  ensureContainerRoot,
   setNestedColumnWidthPercent,
   setRootColumnWidthPercent,
   type UiLayoutDocument,
@@ -95,6 +96,46 @@ describe("RecursiveLayoutRenderer nested layout stretch", () => {
       <RecursiveLayoutRenderer
         layout={layout}
         context={wizardContext}
+        stretchRootColumns
+      />,
+    );
+
+    expect(html).toMatch(/\bflex-1\b/);
+    expect(html).toMatch(/\bh-full\b/);
+  });
+
+  it("stretches dashboard-style root container layouts for listItem surfaces", () => {
+    const layout = ensureContainerRoot({
+      showActions: true,
+      root: {
+        type: "root",
+        id: createLayoutId("root"),
+        columnCount: 1,
+        columns: [
+          {
+            id: createLayoutId("col"),
+            rows: [
+              {
+                type: "nested-layout",
+                id: createLayoutId("nested"),
+                columnCount: 1,
+                columns: [createEmptyColumn()],
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const html = renderToStaticMarkup(
+      <RecursiveLayoutRenderer
+        layout={layout}
+        context={{
+          mode: "listItem",
+          data: {},
+          locale: "en",
+          resolveField: () => undefined,
+        }}
         stretchRootColumns
       />,
     );

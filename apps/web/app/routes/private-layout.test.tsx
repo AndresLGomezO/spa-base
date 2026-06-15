@@ -44,7 +44,7 @@ vi.mock("@repo/ui", async (importOriginal) => {
 describe("PrivateLayoutRoute", () => {
   it("uses a fixed viewport shell with scroll contained in the page outlet", () => {
     render(
-      <MemoryRouter>
+      <MemoryRouter initialEntries={["/settings/users"]}>
         <PrivateLayoutRoute />
       </MemoryRouter>,
     );
@@ -70,5 +70,23 @@ describe("PrivateLayoutRoute", () => {
       "overflow-hidden",
     );
     expect(pageScroll).not.toHaveClass("overflow-y-auto");
+  });
+
+  it("allows vertical scrolling in the home dashboard outlet", () => {
+    render(
+      <MemoryRouter initialEntries={["/"]}>
+        <PrivateLayoutRoute />
+      </MemoryRouter>,
+    );
+
+    const pageScroll = screen.getByRole("main").firstElementChild;
+    expect(pageScroll).toHaveClass(
+      "min-h-0",
+      "min-w-0",
+      "flex-1",
+      "w-full",
+      "overflow-y-auto",
+    );
+    expect(pageScroll).not.toHaveClass("overflow-hidden");
   });
 });

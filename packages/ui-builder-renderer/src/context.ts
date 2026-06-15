@@ -4,6 +4,8 @@ import type {
   EntityFieldSelectorComponentConfig,
   FormFieldComponentConfig,
   IconComponentConfig,
+  UserComponentConfig,
+  DashboardSectionComponentConfig,
   MetricKpiComponentConfig,
   MetricKpiPresentation,
   MetricWidgetComponentConfig,
@@ -29,7 +31,7 @@ export interface FieldDisplayMeta {
 export interface ImageResolveOptions {
   /** Primary image field from layout config; used for field `defaultImage` fallback. */
   readonly primaryFieldPath: string;
-  /** Square image box size in px (8–96). */
+  /** Square image box size in px (8–1024). */
   readonly imageSize?: number;
   readonly className?: string;
   readonly style?: CSSProperties;
@@ -67,6 +69,7 @@ export interface LayoutRenderContext {
     options: ImageResolveOptions,
   ) => ReactNode;
   readonly lucideIconRenderer?: (config: IconComponentConfig) => ReactNode;
+  readonly userRenderer?: (config: UserComponentConfig) => ReactNode;
   readonly resolveCurrencyCode?: () => string | undefined;
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;
   readonly metricKpiRenderer?: (
@@ -75,6 +78,9 @@ export interface LayoutRenderContext {
   ) => ReactNode;
   readonly metricWidgetRenderer?: (
     config: MetricWidgetComponentConfig,
+  ) => ReactNode;
+  readonly dashboardSectionRenderer?: (
+    config: DashboardSectionComponentConfig,
   ) => ReactNode;
   readonly formFieldRenderer?: (
     config: FormFieldComponentConfig,

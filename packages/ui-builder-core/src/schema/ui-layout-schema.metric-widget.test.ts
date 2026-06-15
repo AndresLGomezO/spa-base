@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { componentRowSchema } from "./ui-layout-schema.js";
+import type { ComponentRowNode } from "../types/layout.js";
 
 describe("componentRowSchema metric-widget", () => {
   it("parses metric-widget component rows", () => {
@@ -12,7 +13,7 @@ describe("componentRowSchema metric-widget", () => {
         entityName: "account",
         widgetId: "widget-1",
       },
-    });
+    }) as ComponentRowNode;
 
     expect(parsed.component).toEqual({
       kind: "metric-widget",

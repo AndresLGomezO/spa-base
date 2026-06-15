@@ -8,10 +8,7 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
 - `text`
 - `image`
 - `icon`
-- `date`
-- `numeric`
-- `badge`
-- `metric-kpi`
+- `user`
 
 ## Slice envelope example
 ```json
@@ -39,80 +36,89 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
             "id": "col-example",
             "rows": [
               {
-                "type": "nested-layout",
-                "id": "nested-example",
-                "columnCount": 2,
-                "columns": [
-                  {
-                    "id": "col-example",
-                    "rows": [
-                      {
-                        "type": "component",
-                        "id": "row-example",
-                        "component": {
-                          "kind": "text",
-                          "primary": {
-                            "type": "field",
-                            "path": "name"
-                          },
-                          "label": {
-                            "show": true
-                          }
-                        }
-                      },
-                      {
-                        "type": "component",
-                        "id": "row-example",
-                        "component": {
-                          "kind": "text",
-                          "primary": {
-                            "type": "field",
-                            "path": "status"
-                          },
-                          "label": {
-                            "show": true
-                          }
-                        }
-                      },
-                      {
-                        "type": "component",
-                        "id": "row-example",
-                        "component": {
-                          "kind": "text",
-                          "primary": {
-                            "type": "field",
-                            "path": "amount"
-                          },
-                          "label": {
-                            "show": true
-                          }
-                        }
-                      }
-                    ]
-                  },
-                  {
-                    "id": "col-example",
-                    "rows": [
-                      {
-                        "type": "component",
-                        "id": "row-example",
-                        "component": {
-                          "kind": "text",
-                          "primary": {
-                            "type": "field",
-                            "path": "name"
-                          },
-                          "styles": [
+                "type": "component",
+                "id": "row-example",
+                "component": {
+                  "kind": "container",
+                  "rows": [
+                    {
+                      "type": "nested-layout",
+                      "id": "nested-example",
+                      "columnCount": 2,
+                      "columns": [
+                        {
+                          "id": "col-example",
+                          "rows": [
                             {
-                              "property": "fontWeight",
-                              "value": "bold"
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "name"
+                                },
+                                "label": {
+                                  "show": true
+                                }
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "status"
+                                },
+                                "label": {
+                                  "show": true
+                                }
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "amount"
+                                },
+                                "label": {
+                                  "show": true
+                                }
+                              }
+                            }
+                          ]
+                        },
+                        {
+                          "id": "col-example",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "text",
+                                "primary": {
+                                  "type": "field",
+                                  "path": "name"
+                                },
+                                "styles": [
+                                  {
+                                    "property": "fontWeight",
+                                    "value": "bold"
+                                  }
+                                ]
+                              }
                             }
                           ]
                         }
-                      }
-                    ]
-                  }
-                ]
+                      ]
+                    }
+                  ]
+                }
               }
             ]
           }
@@ -130,7 +136,7 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
             "root": {
               "type": "root",
               "id": "root-example",
-              "columnCount": 2,
+              "columnCount": 1,
               "columns": [
                 {
                   "id": "col-example",
@@ -139,34 +145,55 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
                       "type": "component",
                       "id": "row-example",
                       "component": {
-                        "kind": "text",
-                        "primary": {
-                          "type": "field",
-                          "path": "name"
-                        },
-                        "label": {
-                          "show": true
-                        }
-                      }
-                    }
-                  ]
-                },
-                {
-                  "id": "col-example",
-                  "rows": [
-                    {
-                      "type": "component",
-                      "id": "row-example",
-                      "component": {
-                        "kind": "text",
-                        "primary": {
-                          "type": "field",
-                          "path": "name"
-                        },
-                        "styles": [
+                        "kind": "container",
+                        "rows": [
                           {
-                            "property": "fontWeight",
-                            "value": "bold"
+                            "type": "nested-layout",
+                            "id": "nested-example",
+                            "columnCount": 2,
+                            "columns": [
+                              {
+                                "id": "col-example",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "label": {
+                                        "show": true
+                                      }
+                                    }
+                                  }
+                                ]
+                              },
+                              {
+                                "id": "col-example",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "styles": [
+                                        {
+                                          "property": "fontWeight",
+                                          "value": "bold"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            ]
                           }
                         ]
                       }
@@ -184,7 +211,7 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
         "root": {
           "type": "root",
           "id": "root-example",
-          "columnCount": 2,
+          "columnCount": 1,
           "columns": [
             {
               "id": "col-example",
@@ -193,34 +220,55 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
                   "type": "component",
                   "id": "row-example",
                   "component": {
-                    "kind": "text",
-                    "primary": {
-                      "type": "field",
-                      "path": "name"
-                    },
-                    "label": {
-                      "show": true
-                    }
-                  }
-                }
-              ]
-            },
-            {
-              "id": "col-example",
-              "rows": [
-                {
-                  "type": "component",
-                  "id": "row-example",
-                  "component": {
-                    "kind": "text",
-                    "primary": {
-                      "type": "field",
-                      "path": "name"
-                    },
-                    "styles": [
+                    "kind": "container",
+                    "rows": [
                       {
-                        "property": "fontWeight",
-                        "value": "bold"
+                        "type": "nested-layout",
+                        "id": "nested-example",
+                        "columnCount": 2,
+                        "columns": [
+                          {
+                            "id": "col-example",
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-example",
+                                "component": {
+                                  "kind": "text",
+                                  "primary": {
+                                    "type": "field",
+                                    "path": "name"
+                                  },
+                                  "label": {
+                                    "show": true
+                                  }
+                                }
+                              }
+                            ]
+                          },
+                          {
+                            "id": "col-example",
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-example",
+                                "component": {
+                                  "kind": "text",
+                                  "primary": {
+                                    "type": "field",
+                                    "path": "name"
+                                  },
+                                  "styles": [
+                                    {
+                                      "property": "fontWeight",
+                                      "value": "bold"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        ]
                       }
                     ]
                   }

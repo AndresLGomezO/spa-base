@@ -1,20 +1,32 @@
 import { describe, expect, it } from "vitest";
 
+import { isContainerComponent } from "../types/component.js";
 import {
   createDefaultRowExpandLayout,
-  isRowExpandNestedRootLayout,
+  isRowExpandContainerRootLayout,
 } from "./row-expand-defaults.js";
 
 describe("createDefaultRowExpandLayout", () => {
-  it("creates a root nested-layout row with default field components", () => {
+  it("creates a root container with nested-layout and default field components", () => {
     const layout = createDefaultRowExpandLayout(["name", "balance", "status"]);
 
-    expect(isRowExpandNestedRootLayout(layout)).toBe(true);
+    expect(isRowExpandContainerRootLayout(layout)).toBe(true);
 
     const rootColumn = layout.root.columns[0];
     expect(rootColumn?.rows).toHaveLength(1);
 
-    const nestedRow = rootColumn?.rows[0];
+    const containerRow = rootColumn?.rows[0];
+    expect(containerRow?.type).toBe("component");
+    if (
+      containerRow?.type !== "component" ||
+      !isContainerComponent(containerRow.component)
+    ) {
+      return;
+    }
+
+    expect(containerRow.component.rows).toHaveLength(1);
+
+    const nestedRow = containerRow.component.rows[0];
     expect(nestedRow?.type).toBe("nested-layout");
     if (nestedRow?.type !== "nested-layout") {
       return;

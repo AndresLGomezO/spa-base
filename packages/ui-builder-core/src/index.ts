@@ -63,6 +63,7 @@ export type {
   FieldUiComponentConfig,
   MetricKpiComponentConfig,
   MetricWidgetComponentConfig,
+  DashboardSectionComponentConfig,
   MetricBindingSource,
   TextComponentConfig,
   ImageComponentConfig,
@@ -70,6 +71,9 @@ export type {
   NumericComponentConfig,
   BadgeComponentConfig,
   IconComponentConfig,
+  UserComponentConfig,
+  UserDisplayMode,
+  ContainerComponentConfig,
   FormFieldComponentConfig,
   BooleanFieldDisplay,
   SwitchVariant,
@@ -83,12 +87,24 @@ export type {
 export {
   isMetricKpiComponent,
   isMetricWidgetComponent,
+  isDashboardSectionComponent,
   isFieldUiComponent,
   isIconComponent,
+  isUserComponent,
+  isContainerComponent,
   isEntityFieldSelectorComponent,
   isPageUiComponent,
 } from "./types/component.js";
 export { createDefaultMainPageLayout } from "./layout/default-main-page-layout.js";
+export {
+  ensureContainerRoot,
+  resolveRootContainer,
+  isRootContainerRow,
+  resolveRootContainerRows,
+  resolveRootContainerLocator,
+  beginContainerRootLayout,
+} from "./layout/ensure-container-root.js";
+export { resolveContainerChildRows } from "./layout/resolve-container-child-rows.js";
 export { createDefaultFormLayout } from "./layout/default-form-layout.js";
 export { createDefaultModalFooterLayout } from "./layout/default-modal-footer-layout.js";
 export {
@@ -277,6 +293,7 @@ export { createLayoutId } from "./builder/id.js";
 
 export {
   createDefaultComponent,
+  createDefaultStaticComponent,
   createEmptyColumn,
   createEmptyLayout,
   setRootColumnCount,
@@ -321,6 +338,7 @@ export {
   insertColumnAt,
   appendComponentRowAt,
   appendNestedLayoutRowAt,
+  updateContainerStylesAt,
   MAX_ROOT_COLUMNS,
   MAX_NESTED_COLUMNS,
   type RowLocator,
@@ -333,11 +351,11 @@ export {
 export { createDefaultTableCellLayout } from "./builder/table-cell-defaults.js";
 export {
   createDefaultRowExpandLayout,
-  ensureRowExpandNestedRootLayout,
-  isRowExpandNestedRootLayout,
+  ensureRowExpandContainerRootLayout,
+  isRowExpandContainerRootLayout,
 } from "./builder/row-expand-defaults.js";
 export {
   createDefaultListCardLayout,
-  ensureListCardNestedRootLayout,
-  isListCardNestedRootLayout,
+  ensureListCardContainerRootLayout,
+  isListCardContainerRootLayout,
 } from "./builder/list-card-defaults.js";

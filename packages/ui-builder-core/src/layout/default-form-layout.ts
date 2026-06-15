@@ -1,28 +1,28 @@
 import {
   addComponentRowAt,
   createDefaultComponent,
-  createEmptyLayout,
 } from "../builder/mutations.js";
 import type { UiLayoutDocument } from "../types/layout.js";
+import { beginContainerRootLayout } from "./ensure-container-root.js";
 
-/** Default form layout: one form-field per path in a single column. */
+/** Default form layout: one form-field per path inside the root container. */
 export function createDefaultFormLayout(
   fieldPaths: readonly string[],
 ): UiLayoutDocument {
-  let layout = createEmptyLayout(1);
-  const locator = { scope: "root" as const, columnIndex: 0 };
+  const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
+  let layout = beganLayout;
 
   for (const fieldPath of fieldPaths) {
     layout = addComponentRowAt(
       layout,
-      locator,
+      containerLocator,
       createDefaultComponent("form-field", fieldPath),
     );
   }
 
   layout = addComponentRowAt(
     layout,
-    locator,
+    containerLocator,
     createDefaultComponent("form-actions"),
   );
 

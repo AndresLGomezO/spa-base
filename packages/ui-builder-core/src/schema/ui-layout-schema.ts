@@ -171,186 +171,218 @@ const fieldComponentBaseSchema = z
   })
   .strict();
 
-const fieldComponentSchema = z.discriminatedUnion("kind", [
-  fieldComponentBaseSchema.extend({ kind: z.literal("text") }).strict(),
-  fieldComponentBaseSchema
-    .extend({
-      kind: z.literal("image"),
-      imageSize: z.number().int().min(8).max(96).optional(),
-    })
-    .strict(),
-  fieldComponentBaseSchema
-    .extend({
-      kind: z.literal("date"),
-      dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
-    })
-    .strict(),
-  fieldComponentBaseSchema
-    .extend({
-      kind: z.literal("numeric"),
-      displayFormat: z.enum(["currency", "plain", "percentage"]).optional(),
-      showCurrency: z.boolean().optional(),
-      showToneColors: z.boolean().optional(),
-    })
-    .strict(),
-  fieldComponentBaseSchema.extend({ kind: z.literal("badge") }).strict(),
-  z
-    .object({
-      kind: z.literal("metric-kpi"),
-      metricDefinitionId: z.string().trim().min(1),
-      groupBindings: z.record(z.string(), metricBindingSourceSchema),
-      dimensionBindings: z.record(z.string(), metricBindingSourceSchema),
-      label: z.string().optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("metric-widget"),
-      entityName: z.string(),
-      widgetId: z.string(),
-      label: z.string().optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("form-field"),
-      fieldPath: z.string().trim().min(1),
-      hideLabel: z.boolean().optional(),
-      booleanDisplay: z.enum(["checkbox", "switch"]).optional(),
-      switchVariant: z.enum(["ios", "squared"]).optional(),
-      switchWidth: z.number().int().min(28).max(120).optional(),
-      switchHeight: z.number().int().min(16).max(64).optional(),
-      multiline: z.boolean().optional(),
-      multilineRows: z.number().int().min(2).max(20).optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("entity-field-selector"),
-      fieldPath: z.string().trim().min(1),
-      layout: z.enum(["list", "list-with-logo", "mini-cards"]),
-      enableSearch: z.boolean().optional(),
-      cardsPerRow: z.number().int().min(1).max(4).optional(),
-      imageFieldPath: z.string().trim().min(1).optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("form-section"),
-      title: z.string().trim().min(1).optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("icon"),
-      iconName: z.string().trim().min(1),
-      iconSize: z.number().int().min(12).max(96).optional(),
-      label: labelConfigSchema.optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("form-actions"),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("wizard-progress"),
-      variant: z.enum(["steps", "bar", "stepper"]).optional(),
-      stepLabel: z
-        .object({
-          show: z.boolean().optional(),
-          position: z
-            .enum(["top", "bottom", "left", "right", "hidden"])
-            .optional(),
-          bold: z.boolean().optional(),
-          thin: z.boolean().optional(),
-          italic: z.boolean().optional(),
-          underline: z.boolean().optional(),
-          color: z.string().trim().min(1).optional(),
-          align: z.enum(["left", "center", "right"]).optional(),
-          fontSize: z.number().int().min(8).max(48).optional(),
-        })
-        .strict()
-        .optional(),
-      barTrackColor: z.string().trim().min(1).optional(),
-      barFillColor: z.string().trim().min(1).optional(),
-      stepSpacing: z.number().int().min(8).max(96).optional(),
-      circleSize: z.number().int().min(20).max(56).optional(),
-      labelMaxWidth: z.number().int().min(48).max(320).optional(),
-      conditionalStyles: z.array(conditionalStyleRuleSchema).optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("wizard-step-host"),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("wizard-actions"),
-      nextLabel: z.string().trim().min(1).optional(),
-      backLabel: z.string().trim().min(1).optional(),
-      cancelLabel: z.string().trim().min(1).optional(),
-      submitCreateLabel: z.string().trim().min(1).optional(),
-      submitEditLabel: z.string().trim().min(1).optional(),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("related-records"),
-      childEntity: z.string().trim().min(1),
-      foreignKeyField: z.string().trim().min(1),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("page-header"),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("page-toolbar"),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("page-metrics"),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-  z
-    .object({
-      kind: z.literal("page-list"),
-      styles: z.array(styleRuleSchema).optional(),
-    })
-    .strict(),
-]);
+const rowNodeSchema: z.ZodType<unknown> = z.lazy(() =>
+  z.union([componentRowSchema, nestedLayoutRowSchema]),
+);
 
-export const componentRowSchema = z
-  .object({
-    type: z.literal("component"),
-    id: z.string().trim().min(1),
-    component: fieldComponentSchema,
-    styles: z.array(styleRuleSchema).optional(),
-    motion: motionPresetSchema.optional(),
-    displayFrom: responsiveGridBreakpointSchema.optional(),
-    displayTo: responsiveGridBreakpointSchema.optional(),
-  })
-  .strict();
+const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
+  z.discriminatedUnion("kind", [
+    fieldComponentBaseSchema.extend({ kind: z.literal("text") }).strict(),
+    fieldComponentBaseSchema
+      .extend({
+        kind: z.literal("image"),
+        imageSize: z.number().int().min(8).max(1024).optional(),
+      })
+      .strict(),
+    fieldComponentBaseSchema
+      .extend({
+        kind: z.literal("date"),
+        dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
+      })
+      .strict(),
+    fieldComponentBaseSchema
+      .extend({
+        kind: z.literal("numeric"),
+        displayFormat: z.enum(["currency", "plain", "percentage"]).optional(),
+        showCurrency: z.boolean().optional(),
+        showToneColors: z.boolean().optional(),
+      })
+      .strict(),
+    fieldComponentBaseSchema.extend({ kind: z.literal("badge") }).strict(),
+    z
+      .object({
+        kind: z.literal("metric-kpi"),
+        metricDefinitionId: z.string().trim().min(1),
+        groupBindings: z.record(z.string(), metricBindingSourceSchema),
+        dimensionBindings: z.record(z.string(), metricBindingSourceSchema),
+        label: z.string().optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("metric-widget"),
+        entityName: z.string(),
+        widgetId: z.string(),
+        label: z.string().optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("dashboard-section"),
+        sectionId: z.string(),
+        label: z.string().optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("form-field"),
+        fieldPath: z.string().trim().min(1),
+        hideLabel: z.boolean().optional(),
+        booleanDisplay: z.enum(["checkbox", "switch"]).optional(),
+        switchVariant: z.enum(["ios", "squared"]).optional(),
+        switchWidth: z.number().int().min(28).max(120).optional(),
+        switchHeight: z.number().int().min(16).max(64).optional(),
+        multiline: z.boolean().optional(),
+        multilineRows: z.number().int().min(2).max(20).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("entity-field-selector"),
+        fieldPath: z.string().trim().min(1),
+        layout: z.enum(["list", "list-with-logo", "mini-cards"]),
+        enableSearch: z.boolean().optional(),
+        cardsPerRow: z.number().int().min(1).max(4).optional(),
+        imageFieldPath: z.string().trim().min(1).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("form-section"),
+        title: z.string().trim().min(1).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("icon"),
+        iconName: z.string().trim().min(1),
+        iconSize: z.number().int().min(12).max(96).optional(),
+        label: labelConfigSchema.optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("user"),
+        display: z.enum(["name", "email", "photo", "photo-and-name"]),
+        imageSize: z.number().int().min(8).max(1024).optional(),
+        label: labelConfigSchema.optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("form-actions"),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("wizard-progress"),
+        variant: z.enum(["steps", "bar", "stepper"]).optional(),
+        stepLabel: z
+          .object({
+            show: z.boolean().optional(),
+            position: z
+              .enum(["top", "bottom", "left", "right", "hidden"])
+              .optional(),
+            bold: z.boolean().optional(),
+            thin: z.boolean().optional(),
+            italic: z.boolean().optional(),
+            underline: z.boolean().optional(),
+            color: z.string().trim().min(1).optional(),
+            align: z.enum(["left", "center", "right"]).optional(),
+            fontSize: z.number().int().min(8).max(48).optional(),
+          })
+          .strict()
+          .optional(),
+        barTrackColor: z.string().trim().min(1).optional(),
+        barFillColor: z.string().trim().min(1).optional(),
+        stepSpacing: z.number().int().min(8).max(96).optional(),
+        circleSize: z.number().int().min(20).max(56).optional(),
+        labelMaxWidth: z.number().int().min(48).max(320).optional(),
+        conditionalStyles: z.array(conditionalStyleRuleSchema).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("wizard-step-host"),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("wizard-actions"),
+        nextLabel: z.string().trim().min(1).optional(),
+        backLabel: z.string().trim().min(1).optional(),
+        cancelLabel: z.string().trim().min(1).optional(),
+        submitCreateLabel: z.string().trim().min(1).optional(),
+        submitEditLabel: z.string().trim().min(1).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("related-records"),
+        childEntity: z.string().trim().min(1),
+        foreignKeyField: z.string().trim().min(1),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("page-header"),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("page-toolbar"),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("page-metrics"),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("page-list"),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("container"),
+        rows: z.array(rowNodeSchema),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+  ]),
+);
+
+export const componentRowSchema: z.ZodType<unknown> = z.lazy(() =>
+  z
+    .object({
+      type: z.literal("component"),
+      id: z.string().trim().min(1),
+      component: fieldComponentSchema,
+      styles: z.array(styleRuleSchema).optional(),
+      motion: motionPresetSchema.optional(),
+      displayFrom: responsiveGridBreakpointSchema.optional(),
+      displayTo: responsiveGridBreakpointSchema.optional(),
+    })
+    .strict(),
+);
 
 export const columnNodeSchema: z.ZodType<{
   id: string;
@@ -403,10 +435,6 @@ export const nestedLayoutRowSchema: z.ZodType<{
         });
       }
     }),
-);
-
-const rowNodeSchema: z.ZodType<unknown> = z.lazy(() =>
-  z.union([componentRowSchema, nestedLayoutRowSchema]),
 );
 
 const layoutRootNodeSchema = z

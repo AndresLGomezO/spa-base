@@ -1,15 +1,37 @@
 import {
   addComponentRowAt,
   createDefaultComponent,
-  createEmptyLayout,
+  insertNestedLayoutRowAt,
 } from "../builder/mutations.js";
 import { createLayoutId } from "../builder/id.js";
 import type { UiLayoutDocument } from "../types/layout.js";
+import { beginContainerRootLayout } from "./ensure-container-root.js";
 
 export function createDefaultWizardShellLayout(): UiLayoutDocument {
-  const layout = createEmptyLayout(2);
-  const leftLocator = { scope: "root" as const, columnIndex: 0 };
-  const rightLocator = { scope: "root" as const, columnIndex: 1 };
+  const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
+  let layout = beganLayout;
+  const { layout: withNested, rowId: nestedRowId } = insertNestedLayoutRowAt(
+    layout,
+    containerLocator,
+    { position: "after" },
+    2,
+  );
+  layout = withNested;
+
+  const leftLocator = {
+    scope: "nested" as const,
+    columnIndex: containerLocator.columnIndex,
+    containerRowId: containerLocator.containerRowId,
+    rowId: nestedRowId,
+    nestedColumnIndex: 0,
+  };
+  const rightLocator = {
+    scope: "nested" as const,
+    columnIndex: containerLocator.columnIndex,
+    containerRowId: containerLocator.containerRowId,
+    rowId: nestedRowId,
+    nestedColumnIndex: 1,
+  };
 
   let next = addComponentRowAt(
     layout,
@@ -33,14 +55,14 @@ export function createDefaultWizardShellLayout(): UiLayoutDocument {
 export function createDefaultWizardStepLayout(
   fieldPaths: readonly string[],
 ): UiLayoutDocument {
-  let layout = createEmptyLayout(1);
-  const locator = { scope: "root" as const, columnIndex: 0 };
+  const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
+  let layout = beganLayout;
 
   if (fieldPaths.length > 0) {
     for (const fieldPath of fieldPaths) {
       layout = addComponentRowAt(
         layout,
-        locator,
+        containerLocator,
         createDefaultComponent("form-field", fieldPath),
       );
     }
@@ -49,16 +71,15 @@ export function createDefaultWizardStepLayout(
 
   return addComponentRowAt(
     layout,
-    locator,
+    containerLocator,
     createDefaultComponent("form-field", "name"),
   );
 }
 
 export function createDefaultWizardSummaryStepLayout(): UiLayoutDocument {
-  const layout = createEmptyLayout(1);
-  const locator = { scope: "root" as const, columnIndex: 0 };
+  const { layout, containerLocator } = beginContainerRootLayout();
 
-  return addComponentRowAt(layout, locator, {
+  return addComponentRowAt(layout, containerLocator, {
     kind: "form-section",
     title: "Review your information",
   });

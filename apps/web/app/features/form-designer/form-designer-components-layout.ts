@@ -1,10 +1,13 @@
 import type { DesignSurface } from "@repo/ui-builder-core";
 import {
   createDefaultComponent,
+  createDefaultStaticComponent,
   insertComponentRowAt,
   insertNestedLayoutRowAt,
+  isContainerComponent,
   moveRowAt,
   removeRowAt,
+  resolveContainerChildRows,
   updateComponentRowAt,
   updateComponentRowMetaAt,
   updateLayoutMeta,
@@ -229,10 +232,38 @@ function findNestedLayoutRow(
           return nested;
         }
       }
+      continue;
+    }
+
+    if (row.type === "component" && isContainerComponent(row.component)) {
+      const nested = findNestedLayoutRow(row.component.rows, targetRowId);
+      if (nested) {
+        return nested;
+      }
     }
   }
 
   return undefined;
+}
+
+function getSearchRowsForLocator(
+  layout: UiLayoutDocument,
+  locator: ComponentRowRef["locator"],
+): readonly RowNode[] {
+  const column = layout.root.columns[locator.columnIndex];
+  if (!column) {
+    return [];
+  }
+
+  if (locator.scope === "container") {
+    return resolveContainerChildRows(column.rows, locator.containerRowId) ?? [];
+  }
+
+  if (locator.scope === "nested" && locator.containerRowId) {
+    return resolveContainerChildRows(column.rows, locator.containerRowId) ?? [];
+  }
+
+  return column.rows;
 }
 
 export function findColumnByRef(
@@ -283,8 +314,14 @@ export function findRowByRef(
     );
   }
 
+  if (locator.scope === "container") {
+    return getSearchRowsForLocator(layout, locator).find(
+      (row) => row.id === rowId,
+    );
+  }
+
   const parentRow = findNestedLayoutRow(
-    layout.root.columns[locator.columnIndex]?.rows ?? [],
+    getSearchRowsForLocator(layout, locator),
     locator.rowId,
   );
   if (!parentRow) {
@@ -506,6 +543,7 @@ export function insertCatalogEntryAtAnchor(
   defaultFieldPath: string,
   treeLabels: StructureTreeLabels,
   fieldDescriptors: readonly FieldDescriptor[],
+  options?: { readonly useStaticDefaults?: boolean },
 ): { readonly rowRef: ComponentRowRef; readonly label: string } {
   const insert = {
     position: anchor.position,
@@ -525,7 +563,9 @@ export function insertCatalogEntryAtAnchor(
     };
   }
 
-  const component = createDefaultComponent(kind, defaultFieldPath);
+  const component = options?.useStaticDefaults
+    ? createDefaultStaticComponent(kind)
+    : createDefaultComponent(kind, defaultFieldPath);
   const { layout, rowId } = insertComponentRowAt(
     binding.layout,
     anchor.locator,

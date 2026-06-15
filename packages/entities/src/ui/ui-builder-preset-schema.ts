@@ -38,6 +38,8 @@ export const designSurfaceSchema = z.enum([
   "formModalFooter",
   "metricStrip",
   "metricRow",
+  "dashboardSection",
+  "dashboardLayout",
 ]);
 
 export const uiBuilderPresetRecordSchema = z

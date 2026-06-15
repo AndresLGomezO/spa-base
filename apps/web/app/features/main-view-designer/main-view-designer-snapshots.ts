@@ -1,8 +1,9 @@
 import type { UiLayoutDocument } from "@repo/entities";
 
+import { ensureContainerRoot } from "@repo/ui-builder-core";
+
 import { areScopedLayoutSnapshotsEqual } from "../form-designer/form-designer-components-layout";
 import type { UseEntityMainPageLayoutEditorResult } from "../ui-builder/use-entity-main-page-layout-editor";
-import { ensureMainPageNestedLayoutRoot } from "../ui-builder/ensure-main-page-nested-layout-root";
 
 export interface MainViewDesignerLayoutSnapshot {
   readonly layout: UiLayoutDocument;
@@ -12,7 +13,7 @@ export function readLayoutSnapshot(
   editor: Pick<UseEntityMainPageLayoutEditorResult, "layout">,
 ): MainViewDesignerLayoutSnapshot {
   return {
-    layout: structuredClone(ensureMainPageNestedLayoutRoot(editor.layout)),
+    layout: structuredClone(ensureContainerRoot(editor.layout)),
   };
 }
 
@@ -22,9 +23,7 @@ export function readLayoutSnapshotFromDefinition(
 ): MainViewDesignerLayoutSnapshot {
   const existing = definition.ui.mainPageLayout;
   return {
-    layout: structuredClone(
-      ensureMainPageNestedLayoutRoot(existing ?? editor.layout),
-    ),
+    layout: structuredClone(ensureContainerRoot(existing ?? editor.layout)),
   };
 }
 

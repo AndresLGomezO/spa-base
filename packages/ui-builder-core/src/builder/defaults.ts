@@ -1,51 +1,57 @@
 import type { UiLayoutDocument } from "../types/layout.js";
 import { createLayoutId } from "./id.js";
-import { createEmptyLayout } from "./mutations.js";
+import { addComponentRowAt, insertNestedLayoutRowAt } from "./mutations.js";
+import {
+  beginContainerRootLayout,
+  ensureContainerRoot,
+} from "../layout/ensure-container-root.js";
 
 export function createDefaultUiLayout(
   fieldPaths: readonly string[],
 ): UiLayoutDocument {
   const primaryFields = fieldPaths.slice(0, 4);
-  const layout = createEmptyLayout(2);
-
-  const infoRows = primaryFields.map((fieldPath) => ({
-    type: "component" as const,
-    id: createLayoutId("row"),
-    component: {
-      kind: "text" as const,
-      primary: { type: "field" as const, path: fieldPath },
-      label: { show: true },
-    },
-  }));
-
   const primaryField = fieldPaths[0] ?? "name";
-  const highlightRow = {
-    type: "component" as const,
-    id: createLayoutId("row"),
-    component: {
-      kind: "text" as const,
-      primary: { type: "field" as const, path: primaryField },
-      styles: [{ property: "fontWeight" as const, value: "bold" }],
-    },
-  };
 
-  const columns = [...layout.root.columns];
-  const left = columns[0];
-  const right = columns[1];
-  if (left && right) {
-    columns[0] = { ...left, rows: infoRows };
-    columns[1] = { ...right, rows: [highlightRow] };
+  const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
+  let layout = beganLayout;
+  const { layout: withNested, rowId: nestedRowId } = insertNestedLayoutRowAt(
+    layout,
+    containerLocator,
+    { position: "after" },
+    2,
+  );
+  layout = withNested;
+
+  const nestedLocator = (nestedColumnIndex: number) => ({
+    scope: "nested" as const,
+    columnIndex: containerLocator.columnIndex,
+    containerRowId: containerLocator.containerRowId,
+    rowId: nestedRowId,
+    nestedColumnIndex,
+  });
+
+  for (const fieldPath of primaryFields) {
+    layout = addComponentRowAt(layout, nestedLocator(0), {
+      kind: "text",
+      primary: { type: "field", path: fieldPath },
+      label: { show: true },
+    });
   }
+
+  layout = addComponentRowAt(layout, nestedLocator(1), {
+    kind: "text",
+    primary: { type: "field", path: primaryField },
+    styles: [{ property: "fontWeight", value: "bold" }],
+  });
 
   return {
     ...layout,
     showActions: true,
-    root: { ...layout.root, columns },
   };
 }
 
 export function createAccountCardSeedLayout(): UiLayoutDocument {
-  return {
+  return ensureContainerRoot({
     showActions: true,
     root: {
       type: "root",
@@ -145,5 +151,5 @@ export function createAccountCardSeedLayout(): UiLayoutDocument {
         },
       ],
     },
-  };
+  });
 }

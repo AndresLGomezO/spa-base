@@ -30,6 +30,7 @@ import {
   type NavLinkConfig,
 } from "../components/sidebar/nav-config";
 import {
+  DESIGN_LAYOUT_DASHBOARD_NAV_ITEM,
   DESIGN_LAYOUT_MATCH_PATH,
   DESIGN_LAYOUT_PRESETS_NAV_ITEM,
   useDesignLayoutNavSubGroups,
@@ -188,7 +189,11 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     if (canAccessDesignLayout || designLayoutSubGroups.length > 0) {
       const designLayoutChildren = canAccessDesignLayout
-        ? [DESIGN_LAYOUT_PRESETS_NAV_ITEM, ...designLayoutSubGroups]
+        ? [
+            DESIGN_LAYOUT_PRESETS_NAV_ITEM,
+            DESIGN_LAYOUT_DASHBOARD_NAV_ITEM,
+            ...designLayoutSubGroups,
+          ]
         : designLayoutSubGroups;
 
       items.push({

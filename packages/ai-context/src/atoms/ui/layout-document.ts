@@ -14,10 +14,13 @@ UiLayoutDocument
     └── ColumnNode (id, rows[], widthPercent?, stackDirection?, styles?, displayFrom?, displayTo?)
         └── RowNode
             ├── type: "component" → component config + row.styles? + row.motion? + displayFrom/To?
+            │   └── kind: "container" → rows[] (user content lives here at root)
             └── type: "nested-layout" → columnCount, columns[] (recursive ColumnNode), styles?, displayFrom/To?
 \`\`\`
 
 **Rules:**
+- **Root container:** \`root\` has exactly **one column** with exactly **one** \`container\` component row. User content (components, nested-layout rows) goes in \`container.rows\`.
+- \`nested-layout\` may appear inside the root container (or deeper) for multi-column sections — not as the root row itself.
 - \`columnCount\` must equal \`columns.length\` (integer 1–6) on root and nested-layout rows.
 - Columns stack rows vertically by default (\`stackDirection: "column"\`); use \`"row"\` for horizontal stacking within a column.
 - \`widthPercent\` (1–100) sets column share; omitted = equal split.
@@ -29,6 +32,7 @@ UiLayoutDocument
 | Root | \`root\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\` |
 | Column | — | \`id\`, \`rows[]\`, \`widthPercent?\`, \`stackDirection?\`, \`styles?\`, \`displayFrom?\`, \`displayTo?\` |
 | Component row | \`component\` | \`id\`, \`component\`, \`styles?\`, \`motion?\`, \`displayFrom?\`, \`displayTo?\` |
+| Container component | \`container\` (in component row) | \`rows[]\`, \`styles?\` |
 | Nested layout | \`nested-layout\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\`, \`displayFrom?\`, \`displayTo?\` |
 
 Optional document fields: \`showActions\`, \`cardsPerRow\` (1–4), \`motion\`.
@@ -37,13 +41,14 @@ See \`ui.responsive-visibility\` for breakpoint visibility rules.
 
 ## List card pattern (recommended)
 
-Root has **one column** containing a **nested-layout** row with inner columns:
+Root has **one column** with a **container** row; multi-column content uses **nested-layout** inside \`container.rows\`:
 
 \`\`\`
 root (1 col)
-└── nested-layout (2 cols)
-    ├── col-left: text rows (name, subtitle, …)
-    └── col-right: badge, numeric, bold text
+└── container
+    └── nested-layout (2 cols)
+        ├── col-left: text rows (name, subtitle, …)
+        └── col-right: badge, numeric, bold text
 \`\`\`
 
 \`\`\`json
@@ -56,64 +61,72 @@ root (1 col)
     "columns": [{
       "id": "col-root",
       "rows": [{
-        "type": "nested-layout",
-        "id": "row-nested",
-        "columnCount": 2,
-        "styles": [
-          { "property": "gridColumns", "value": "1" },
-          { "property": "gridColumnsMd", "value": "2" },
-          { "property": "gap", "value": "12px" }
-        ],
-        "columns": [
-          {
-            "id": "col-left",
-            "rows": [
+        "type": "component",
+        "id": "row-container",
+        "component": {
+          "kind": "container",
+          "stackDirection": "column",
+          "rows": [{
+            "type": "nested-layout",
+            "id": "row-nested",
+            "columnCount": 2,
+            "styles": [
+              { "property": "gridColumns", "value": "1" },
+              { "property": "gridColumnsMd", "value": "2" },
+              { "property": "gap", "value": "12px" }
+            ],
+            "columns": [
               {
-                "type": "component",
-                "id": "row-name",
-                "component": {
-                  "kind": "text",
-                  "primary": { "type": "field", "path": "name" },
-                  "label": { "show": true }
-                }
+                "id": "col-left",
+                "rows": [
+                  {
+                    "type": "component",
+                    "id": "row-name",
+                    "component": {
+                      "kind": "text",
+                      "primary": { "type": "field", "path": "name" },
+                      "label": { "show": true }
+                    }
+                  },
+                  {
+                    "type": "component",
+                    "id": "row-subtitle",
+                    "component": {
+                      "kind": "text",
+                      "primary": { "type": "field", "path": "bank.name" },
+                      "label": { "show": false }
+                    }
+                  }
+                ]
               },
               {
-                "type": "component",
-                "id": "row-subtitle",
-                "component": {
-                  "kind": "text",
-                  "primary": { "type": "field", "path": "bank.name" },
-                  "label": { "show": false }
-                }
+                "id": "col-right",
+                "rows": [
+                  {
+                    "type": "component",
+                    "id": "row-status",
+                    "component": {
+                      "kind": "badge",
+                      "primary": { "type": "field", "path": "status" },
+                      "label": { "show": true, "text": "Status", "position": "above" }
+                    }
+                  },
+                  {
+                    "type": "component",
+                    "id": "row-amount",
+                    "styles": [{ "property": "padding", "value": "4px" }],
+                    "component": {
+                      "kind": "numeric",
+                      "primary": { "type": "field", "path": "amount" },
+                      "displayFormat": "currency",
+                      "styles": [{ "property": "fontWeight", "value": "bold" }]
+                    }
+                  }
+                ]
               }
             ]
-          },
-          {
-            "id": "col-right",
-            "rows": [
-              {
-                "type": "component",
-                "id": "row-status",
-                "component": {
-                  "kind": "badge",
-                  "primary": { "type": "field", "path": "status" },
-                  "label": { "show": true, "text": "Status", "position": "above" }
-                }
-              },
-              {
-                "type": "component",
-                "id": "row-amount",
-                "styles": [{ "property": "padding", "value": "4px" }],
-                "component": {
-                  "kind": "numeric",
-                  "primary": { "type": "field", "path": "amount" },
-                  "displayFormat": "currency",
-                  "styles": [{ "property": "fontWeight", "value": "bold" }]
-                }
-              }
-            ]
-          }
-        ]
+          }]
+        }
       }]
     }]
   }
@@ -132,8 +145,15 @@ root (1 col)
       "id": "col-1",
       "rows": [{
         "type": "component",
-        "id": "row-1",
-        "component": { "kind": "text", "primary": { "type": "field", "path": "name" } }
+        "id": "row-container",
+        "component": {
+          "kind": "container",
+          "rows": [{
+            "type": "component",
+            "id": "row-1",
+            "component": { "kind": "text", "primary": { "type": "field", "path": "name" } }
+          }]
+        }
       }]
     }]
   }

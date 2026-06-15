@@ -4,6 +4,7 @@ import {
   createDefaultWizardShellLayout,
   createDefaultWizardStepLayout,
   createLayoutId,
+  ensureContainerRoot,
   ensureWizardShellLayout,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -81,9 +82,12 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   const [modalFooterLayout, setModalFooterLayout] = useState<
     UiLayoutDocument | undefined
   >(() => resolveFormModalFooterLayout(definition));
-  const [plainLayout, setPlainLayout] = useState<UiLayoutDocument>(() =>
-    resolvePlainFormLayout(definition),
+  const [plainLayout, setPlainLayoutState] = useState<UiLayoutDocument>(() =>
+    ensureContainerRoot(resolvePlainFormLayout(definition)),
   );
+  const setPlainLayout = useCallback((layout: UiLayoutDocument) => {
+    setPlainLayoutState(ensureContainerRoot(layout));
+  }, []);
   const resolveWizardState = useCallback(
     (
       sourceDefinition: ReturnType<typeof useEntityDefinition>,
@@ -94,16 +98,24 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
       if (resolved) {
         return {
           ...resolved,
-          shellLayout: ensureWizardShellLayout(resolved.shellLayout, {
-            actionsInModalFooter: footerLayout != null,
-          }),
+          shellLayout: ensureContainerRoot(
+            ensureWizardShellLayout(resolved.shellLayout, {
+              actionsInModalFooter: footerLayout != null,
+            }),
+          ),
+          steps: resolved.steps.map((step) => ({
+            ...step,
+            layout: ensureContainerRoot(step.layout),
+          })),
         };
       }
 
       return {
-        shellLayout: ensureWizardShellLayout(createDefaultWizardShellLayout(), {
-          actionsInModalFooter: footerLayout != null,
-        }),
+        shellLayout: ensureContainerRoot(
+          ensureWizardShellLayout(createDefaultWizardShellLayout(), {
+            actionsInModalFooter: footerLayout != null,
+          }),
+        ),
         steps: [],
       };
     },
@@ -128,14 +140,22 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     setPlainLayout(resolvedPlain);
     setWizard(resolveWizardState(definition));
     setLayoutEditorKey((current) => current + 1);
-  }, [definition, resolveWizardState]);
+  }, [definition, resolveWizardState, setPlainLayout]);
 
   const updateStep = useCallback(
     (index: number, patch: Partial<WizardStepConfig>) => {
       setWizard((current) => ({
         ...current,
         steps: current.steps.map((step, stepIndex) =>
-          stepIndex === index ? { ...step, ...patch } : step,
+          stepIndex === index
+            ? {
+                ...step,
+                ...patch,
+                ...(patch.layout
+                  ? { layout: ensureContainerRoot(patch.layout) }
+                  : {}),
+              }
+            : step,
         ),
       }));
     },
@@ -434,7 +454,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
       }
       setLayoutEditorKey((current) => current + 1);
     },
-    [definition],
+    [definition, setPlainLayout],
   );
 
   return {
@@ -467,9 +487,11 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     setShellLayout: (shellLayout: UiLayoutDocument) =>
       setWizard((current) => ({
         ...current,
-        shellLayout: ensureWizardShellLayout(shellLayout, {
-          actionsInModalFooter: modalFooterLayout != null,
-        }),
+        shellLayout: ensureContainerRoot(
+          ensureWizardShellLayout(shellLayout, {
+            actionsInModalFooter: modalFooterLayout != null,
+          }),
+        ),
       })),
     updateStep,
     addStep,

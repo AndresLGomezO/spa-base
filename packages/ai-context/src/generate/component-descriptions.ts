@@ -9,6 +9,19 @@ export interface ComponentDescription {
 export const COMPONENT_DESCRIPTIONS: Readonly<
   Record<UiComponentKind, ComponentDescription>
 > = {
+  container: {
+    summary:
+      "Structural wrapper (plain div). Holds child rows; insertable from the layout section.",
+    properties: ["rows", "styles?"],
+    example: JSON.stringify(
+      {
+        kind: "container",
+        rows: [],
+      },
+      null,
+      2,
+    ),
+  },
   text: {
     summary: "Plain text from a field or static value.",
     properties: [
@@ -210,6 +223,37 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
         kind: "metric-widget",
         entityName: "account",
         widgetId: "widget_revenue",
+      },
+      null,
+      2,
+    ),
+  },
+  "dashboard-section": {
+    summary: "Reference to a reusable tenant dashboard section by id.",
+    properties: ["sectionId", "label?", "styles?"],
+    example: JSON.stringify(
+      {
+        kind: "dashboard-section",
+        sectionId: "section_overview",
+      },
+      null,
+      2,
+    ),
+  },
+  user: {
+    summary:
+      "Displays the signed-in user (name, email, photo, or photo with name).",
+    properties: [
+      "display: name | email | photo | photo-and-name",
+      "imageSize?",
+      "label?",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "user",
+        display: "photo-and-name",
+        imageSize: 40,
       },
       null,
       2,

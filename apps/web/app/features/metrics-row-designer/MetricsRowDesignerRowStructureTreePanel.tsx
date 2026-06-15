@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from "react";
 import { entityCardViewAdapter } from "@repo/ui-builder-react";
-import { moveRowAt } from "@repo/ui-builder-core";
+import { isRootContainerRow, moveRowAt } from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -20,7 +20,6 @@ import type {
   StructureRowNode,
 } from "../form-designer/form-designer-structure-tree";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
-import { isMetricsRowRootNestedLayoutRow } from "../ui-builder/ensure-metrics-row-nested-layout-root";
 import { resolveRowLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
 import { useMetricsRowDesignerStructureSession } from "./MetricsRowDesignerStructureSession";
@@ -86,7 +85,7 @@ export function MetricsRowDesignerRowStructureTreePanel({
 
   const handleRemoveRow = useCallback(
     (row: StructureRowNode) => {
-      if (isMetricsRowRootNestedLayoutRow(binding.layout, row.rowId)) {
+      if (isRootContainerRow(binding.layout, row.rowId)) {
         return;
       }
 
@@ -154,7 +153,7 @@ export function MetricsRowDesignerRowStructureTreePanel({
     layout: binding.layout,
     labels,
     fieldDescriptors,
-    promoteSingleNestedLayoutRoot: true,
+    promoteSingleContainerRoot: true,
     onInsert,
     insertDisabled: structurePanelOpen,
     onMoveRowUp: handleMoveRowUp,

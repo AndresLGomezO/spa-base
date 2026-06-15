@@ -2,7 +2,9 @@ import type {
   CreateUiBuilderPresetInput,
   EntityUIConfig,
   EntityUiOverrideRecord,
+  PutTenantDashboardLayoutInput,
   SerializableEntityDefinition,
+  TenantDashboardLayoutRecord,
   UiBuilderPresetRecord,
   UpdateUiBuilderPresetInput,
   ViewConfig,
@@ -973,6 +975,39 @@ export async function deleteUiBuilderPreset(presetId: string): Promise<void> {
   await apiRequest(`/api/ui-builder-presets/${encodeURIComponent(presetId)}`, {
     method: "DELETE",
   });
+}
+
+export async function getTenantDashboardLayout(): Promise<{
+  readonly config: TenantDashboardLayoutRecord;
+}> {
+  return apiRequest<{ readonly config: TenantDashboardLayoutRecord }>(
+    "/api/tenant-dashboard-layout",
+  );
+}
+
+export async function putTenantDashboardLayout(
+  input: PutTenantDashboardLayoutInput,
+): Promise<{ readonly config: TenantDashboardLayoutRecord }> {
+  return apiRequest<{ readonly config: TenantDashboardLayoutRecord }>(
+    "/api/tenant-dashboard-layout",
+    {
+      method: "PUT",
+      body: input,
+    },
+  );
+}
+
+export async function uploadTenantDashboardLayoutImage(input: {
+  readonly contentType: string;
+  readonly data: string;
+}): Promise<{ readonly imageUrl: string }> {
+  return apiRequest<{ readonly imageUrl: string }>(
+    "/api/tenant-dashboard-layout/upload-image",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
 }
 
 export type AiJobStatus = "pending" | "running" | "completed" | "failed";

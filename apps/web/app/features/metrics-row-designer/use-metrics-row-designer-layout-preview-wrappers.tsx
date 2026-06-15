@@ -4,7 +4,11 @@ import type {
   RootColumnWrapper,
   RowWrapper,
 } from "@repo/ui-builder-renderer";
-import type { ColumnNode, RowNode } from "@repo/ui-builder-core";
+import {
+  isRootContainerRow,
+  type ColumnNode,
+  type RowNode,
+} from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
 import { FormDesignerComponentColumnChrome } from "../form-designer/FormDesignerComponentColumnChrome";
@@ -20,8 +24,6 @@ import {
   findRowByRef,
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
-import { isMetricsRowRootNestedLayoutRow } from "../ui-builder/ensure-metrics-row-nested-layout-root";
-import { isMetricsWidgetRootNestedLayoutRow } from "../ui-builder/ensure-metrics-widget-nested-layout-root";
 import { resolveComponentRowLabel } from "../form-designer/form-designer-structure-tree";
 import { resolveActiveLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
@@ -123,12 +125,9 @@ export function useMetricsRowDesignerLayoutPreviewWrappers(
         return;
       }
 
-      const isRootNestedRow =
-        activeTabId === "row"
-          ? isMetricsRowRootNestedLayoutRow(binding.layout, rowRef.rowId)
-          : isMetricsWidgetRootNestedLayoutRow(binding.layout, rowRef.rowId);
+      const isRootContainer = isRootContainerRow(binding.layout, rowRef.rowId);
 
-      if (isRootNestedRow) {
+      if (isRootContainer) {
         return;
       }
 
@@ -141,7 +140,6 @@ export function useMetricsRowDesignerLayoutPreviewWrappers(
       }
     },
     [
-      activeTabId,
       binding,
       focusedRow,
       requestCloseStructurePanel,

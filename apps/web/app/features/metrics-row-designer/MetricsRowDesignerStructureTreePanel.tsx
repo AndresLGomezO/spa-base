@@ -9,7 +9,7 @@ import {
   Text,
   Select,
 } from "@repo/ui";
-import { moveRowAt } from "@repo/ui-builder-core";
+import { isRootContainerRow, moveRowAt } from "@repo/ui-builder-core";
 import { useTranslation } from "react-i18next";
 
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
@@ -25,7 +25,6 @@ import type {
   StructureRowNode,
 } from "../form-designer/form-designer-structure-tree";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
-import { isMetricsWidgetRootNestedLayoutRow } from "../ui-builder/ensure-metrics-widget-nested-layout-root";
 import { MetricsRowDesignerCollapsedWidgetMenu } from "./MetricsRowDesignerCollapsedWidgetMenu";
 import { resolveWidgetsLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
@@ -174,7 +173,7 @@ export function MetricsRowDesignerStructureTreePanel({
         return;
       }
 
-      if (isMetricsWidgetRootNestedLayoutRow(binding.layout, row.rowId)) {
+      if (isRootContainerRow(binding.layout, row.rowId)) {
         return;
       }
 
@@ -243,7 +242,7 @@ export function MetricsRowDesignerStructureTreePanel({
         layout: binding.layout,
         labels,
         fieldDescriptors: [] as const,
-        promoteSingleNestedLayoutRoot: true,
+        promoteSingleContainerRoot: true,
         onInsert,
         insertDisabled: structurePanelOpen,
         onMoveRowUp: handleMoveRowUp,

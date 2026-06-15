@@ -6,6 +6,8 @@ import type {
   UiLayoutDocument,
 } from "../types/layout.js";
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
+import type { ContainerComponentConfig } from "../types/component.js";
+import { isContainerComponent } from "../types/component.js";
 import type { StyleRule } from "../styles/style-types.js";
 import { isFullDisplayRange } from "../layout/component-display-range.js";
 import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
@@ -40,6 +42,13 @@ export function createDefaultComponent(
     };
   }
 
+  if (kind === "dashboard-section") {
+    return {
+      kind: "dashboard-section",
+      sectionId: "",
+    };
+  }
+
   if (kind === "form-field") {
     return { kind: "form-field", fieldPath };
   }
@@ -59,6 +68,10 @@ export function createDefaultComponent(
 
   if (kind === "icon") {
     return { kind: "icon", iconName: "CircleCheck" };
+  }
+
+  if (kind === "user") {
+    return { kind: "user", display: "name" };
   }
 
   if (kind === "form-actions") {
@@ -99,9 +112,113 @@ export function createDefaultComponent(
     return { kind: "wizard-actions" };
   }
 
+  if (kind === "container") {
+    return { kind: "container", rows: [] };
+  }
+
   return {
     kind,
     primary: { type: "field", path: fieldPath },
+  } as UiComponentConfig;
+}
+
+export function createDefaultStaticComponent(
+  kind: UiComponentKind,
+): UiComponentConfig {
+  if (kind === "metric-kpi") {
+    return {
+      kind: "metric-kpi",
+      metricDefinitionId: "",
+      groupBindings: {},
+      dimensionBindings: {},
+    };
+  }
+
+  if (kind === "metric-widget") {
+    return {
+      kind: "metric-widget",
+      entityName: "",
+      widgetId: "",
+    };
+  }
+
+  if (kind === "dashboard-section") {
+    return {
+      kind: "dashboard-section",
+      sectionId: "",
+    };
+  }
+
+  if (kind === "form-field") {
+    return { kind: "form-field", fieldPath: "" };
+  }
+
+  if (kind === "entity-field-selector") {
+    return {
+      kind: "entity-field-selector",
+      fieldPath: "",
+      layout: "list",
+      enableSearch: true,
+    };
+  }
+
+  if (kind === "form-section") {
+    return { kind: "form-section", title: "Section" };
+  }
+
+  if (kind === "icon") {
+    return { kind: "icon", iconName: "CircleCheck" };
+  }
+
+  if (kind === "user") {
+    return { kind: "user", display: "name" };
+  }
+
+  if (kind === "form-actions") {
+    return { kind: "form-actions" };
+  }
+
+  if (kind === "related-records") {
+    return {
+      kind: "related-records",
+      childEntity: "",
+      foreignKeyField: "",
+    };
+  }
+
+  if (
+    kind === "page-header" ||
+    kind === "page-toolbar" ||
+    kind === "page-metrics" ||
+    kind === "page-list"
+  ) {
+    return { kind };
+  }
+
+  if (kind === "wizard-progress") {
+    return {
+      kind: "wizard-progress",
+      variant: "bar",
+      stepLabel: { show: true, position: "top", bold: true },
+      conditionalStyles: [],
+    };
+  }
+
+  if (kind === "wizard-step-host") {
+    return { kind: "wizard-step-host" };
+  }
+
+  if (kind === "wizard-actions") {
+    return { kind: "wizard-actions" };
+  }
+
+  if (kind === "container") {
+    return { kind: "container", rows: [] };
+  }
+
+  return {
+    kind,
+    primary: { type: "static", value: "" },
   } as UiComponentConfig;
 }
 
@@ -304,6 +421,16 @@ function mapNestedRowById(
       return updater(row);
     }
 
+    if (row.type === "component" && isContainerComponent(row.component)) {
+      return {
+        ...row,
+        component: {
+          ...row.component,
+          rows: mapNestedRowById(row.component.rows, rowId, updater),
+        },
+      };
+    }
+
     if (row.type === "nested-layout") {
       return {
         ...row,
@@ -334,6 +461,21 @@ function mapNestedColumnRowsById(
             ? { ...column, rows: updater(column.rows) }
             : column,
         ),
+      };
+    }
+
+    if (row.type === "component" && isContainerComponent(row.component)) {
+      return {
+        ...row,
+        component: {
+          ...row.component,
+          rows: mapNestedColumnRowsById(
+            row.component.rows,
+            rowId,
+            nestedColumnIndex,
+            updater,
+          ),
+        },
       };
     }
 
@@ -747,11 +889,75 @@ export function normalizeLayout(layout: UiLayoutDocument): UiLayoutDocument {
 type RowLocator =
   | { readonly scope: "root"; readonly columnIndex: number }
   | {
+      readonly scope: "container";
+      readonly columnIndex: number;
+      readonly containerRowId: string;
+    }
+  | {
       readonly scope: "nested";
       readonly columnIndex: number;
       readonly rowId: string;
       readonly nestedColumnIndex: number;
+      readonly containerRowId?: string;
     };
+
+function mapContainerRowsById(
+  rows: readonly RowNode[],
+  containerRowId: string,
+  updater: (rows: readonly RowNode[]) => readonly RowNode[],
+): readonly RowNode[] {
+  return rows.map((row) => {
+    if (
+      row.type === "component" &&
+      row.id === containerRowId &&
+      isContainerComponent(row.component)
+    ) {
+      return {
+        ...row,
+        component: {
+          ...row.component,
+          rows: updater(row.component.rows),
+        },
+      };
+    }
+
+    if (row.type === "component" && isContainerComponent(row.component)) {
+      return {
+        ...row,
+        component: {
+          ...row.component,
+          rows: mapContainerRowsById(
+            row.component.rows,
+            containerRowId,
+            updater,
+          ),
+        },
+      };
+    }
+
+    if (row.type === "nested-layout") {
+      return {
+        ...row,
+        columns: row.columns.map((column) => ({
+          ...column,
+          rows: mapContainerRowsById(column.rows, containerRowId, updater),
+        })),
+      };
+    }
+
+    return row;
+  });
+}
+
+function updateContainerRowsAt(
+  layout: UiLayoutDocument,
+  locator: Extract<RowLocator, { readonly scope: "container" }>,
+  updater: (rows: readonly RowNode[]) => readonly RowNode[],
+): UiLayoutDocument {
+  return updateColumnRows(layout, locator.columnIndex, (rows) =>
+    mapContainerRowsById(rows, locator.containerRowId, updater),
+  );
+}
 
 function mapRootColumns(
   layout: UiLayoutDocument,
@@ -770,6 +976,28 @@ function updateRowsAtLocator(
 ): UiLayoutDocument {
   if (locator.scope === "root") {
     return updateColumnRows(layout, locator.columnIndex, updater);
+  }
+
+  if (locator.scope === "container") {
+    return updateContainerRowsAt(layout, locator, updater);
+  }
+
+  if (locator.containerRowId) {
+    return updateContainerRowsAt(
+      layout,
+      {
+        scope: "container",
+        columnIndex: locator.columnIndex,
+        containerRowId: locator.containerRowId,
+      },
+      (rows) =>
+        mapNestedColumnRowsById(
+          rows,
+          locator.rowId,
+          locator.nestedColumnIndex,
+          updater,
+        ),
+    );
   }
 
   return mapRootColumns(layout, (columns) =>
@@ -1037,6 +1265,44 @@ export function appendNestedLayoutRowAt(
 ): UiLayoutDocument {
   const nextRow = regenerateNestedLayoutRowSubtree(row);
   return updateRowsAtLocator(layout, locator, (rows) => [...rows, nextRow]);
+}
+
+function patchContainerComponent(
+  layout: UiLayoutDocument,
+  locator: Extract<RowLocator, { readonly scope: "container" }>,
+  patch: Partial<Pick<ContainerComponentConfig, "styles">>,
+): UiLayoutDocument {
+  return updateColumnRows(layout, locator.columnIndex, (rows) =>
+    rows.map((row) => {
+      if (
+        row.type !== "component" ||
+        row.id !== locator.containerRowId ||
+        !isContainerComponent(row.component)
+      ) {
+        return row;
+      }
+
+      return {
+        ...row,
+        component: {
+          ...row.component,
+          ...patch,
+          styles:
+            patch.styles !== undefined
+              ? [...patch.styles]
+              : row.component.styles,
+        },
+      };
+    }),
+  );
+}
+
+export function updateContainerStylesAt(
+  layout: UiLayoutDocument,
+  locator: Extract<RowLocator, { readonly scope: "container" }>,
+  styles: readonly StyleRule[],
+): UiLayoutDocument {
+  return patchContainerComponent(layout, locator, { styles: [...styles] });
 }
 
 export type { RowLocator };

@@ -12,8 +12,7 @@ import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
 import { createDefaultMetricRowLayout } from "./create-default-metric-row-layout";
 import { createDefaultMetricWidget } from "./create-default-metric-widget";
-import { ensureMetricsRowNestedLayoutRoot } from "./ensure-metrics-row-nested-layout-root";
-import { ensureMetricsWidgetNestedLayoutRoot } from "./ensure-metrics-widget-nested-layout-root";
+import { ensureContainerRoot } from "@repo/ui-builder-core";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 import type { MetricWidgetDefinition } from "@repo/entities";
 
@@ -22,12 +21,12 @@ function normalizeWidgetList(
 ): MetricWidgetDefinition[] {
   return widgets.map((widget) => ({
     ...widget,
-    layout: ensureMetricsWidgetNestedLayoutRoot(widget.layout),
+    layout: ensureContainerRoot(widget.layout),
   }));
 }
 
 function normalizeMetricRowLayout(layout: UiLayoutDocument): UiLayoutDocument {
-  return ensureMetricsRowNestedLayoutRoot(layout);
+  return ensureContainerRoot(layout);
 }
 
 function resolveInitialMetricRowLayout(
@@ -126,7 +125,7 @@ export function useEntityMetricsWidgetsEditor(entityName: EntityName) {
           widget.id === widgetId
             ? {
                 ...widget,
-                layout: ensureMetricsWidgetNestedLayoutRoot(layout),
+                layout: ensureContainerRoot(layout),
               }
             : widget,
         ),

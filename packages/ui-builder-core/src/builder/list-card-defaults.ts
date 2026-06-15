@@ -1,9 +1,10 @@
 import type { UiLayoutDocument } from "../types/layout.js";
+import { addComponentRowAt, insertNestedLayoutRowAt } from "./mutations.js";
 import {
-  addComponentRowAt,
-  createEmptyLayout,
-  insertNestedLayoutRowAt,
-} from "./mutations.js";
+  beginContainerRootLayout,
+  ensureContainerRoot,
+  resolveRootContainer,
+} from "../layout/ensure-container-root.js";
 
 export function createDefaultListCardLayout(
   fieldPaths: readonly string[],
@@ -11,11 +12,11 @@ export function createDefaultListCardLayout(
   const primaryFields = fieldPaths.slice(0, 4);
   const primaryField = fieldPaths[0] ?? "name";
 
-  let layout = createEmptyLayout(1);
-  const rootColumnIndex = 0;
+  const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
+  let layout = beganLayout;
   const { layout: withNested, rowId: nestedRowId } = insertNestedLayoutRowAt(
     layout,
-    { scope: "root", columnIndex: rootColumnIndex },
+    containerLocator,
     { position: "after" },
     2,
   );
@@ -23,7 +24,8 @@ export function createDefaultListCardLayout(
 
   const nestedLocator = (nestedColumnIndex: number) => ({
     scope: "nested" as const,
-    columnIndex: rootColumnIndex,
+    columnIndex: containerLocator.columnIndex,
+    containerRowId: containerLocator.containerRowId,
     rowId: nestedRowId,
     nestedColumnIndex,
   });
@@ -48,23 +50,24 @@ export function createDefaultListCardLayout(
   };
 }
 
-export function isListCardNestedRootLayout(layout: UiLayoutDocument): boolean {
-  const rootColumn = layout.root.columns[0];
-  if (!rootColumn || rootColumn.rows.length !== 1) {
-    return false;
-  }
-
-  const row = rootColumn.rows[0];
-  return row?.type === "nested-layout";
+export function isListCardContainerRootLayout(
+  layout: UiLayoutDocument,
+): boolean {
+  return resolveRootContainer(layout) != null;
 }
 
-export function ensureListCardNestedRootLayout(
+export function ensureListCardContainerRootLayout(
   layout: UiLayoutDocument,
   fieldPaths: readonly string[],
 ): UiLayoutDocument {
-  if (isListCardNestedRootLayout(layout)) {
-    return layout;
+  const normalized = ensureContainerRoot(layout);
+  if (isListCardContainerRootLayout(normalized)) {
+    return normalized;
   }
 
   return createDefaultListCardLayout(fieldPaths);
 }
+
+// Back-compat aliases during migration
+export const isListCardNestedRootLayout = isListCardContainerRootLayout;
+export const ensureListCardNestedRootLayout = ensureListCardContainerRootLayout;

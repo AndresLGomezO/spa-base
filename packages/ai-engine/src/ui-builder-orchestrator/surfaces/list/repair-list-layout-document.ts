@@ -1,6 +1,8 @@
 import {
   createDefaultComponent,
   createLayoutId,
+  ensureContainerRoot,
+  resolveRootContainer,
   type ColumnNode,
   type RowNode,
   type UiComponentConfig,
@@ -90,16 +92,37 @@ export function repairListLayoutDocument(
   layout: UiLayoutDocument,
   defaultFieldPath = "name",
 ): UiLayoutDocument {
-  const columns = layout.root.columns.map((column) =>
-    repairColumn(column, defaultFieldPath),
-  );
+  const withContainer = ensureContainerRoot(layout);
+  const rootContainer = resolveRootContainer(withContainer);
+  if (!rootContainer) {
+    return withContainer;
+  }
+
+  const repairedRows = repairRows(rootContainer.config.rows, defaultFieldPath);
+  const rootColumn = withContainer.root.columns[0] ?? {
+    id: createLayoutId("col"),
+    rows: [],
+  };
 
   return {
-    ...layout,
+    ...withContainer,
     root: {
-      ...layout.root,
-      columnCount: columns.length,
-      columns,
+      ...withContainer.root,
+      columnCount: 1,
+      columns: [
+        {
+          ...rootColumn,
+          rows: [
+            {
+              ...rootContainer.row,
+              component: {
+                ...rootContainer.config,
+                rows: repairedRows,
+              },
+            },
+          ],
+        },
+      ],
     },
   };
 }

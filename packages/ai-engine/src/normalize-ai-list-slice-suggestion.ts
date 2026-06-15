@@ -6,6 +6,7 @@ import {
 } from "@repo/entities";
 import {
   sanitizeTableColumnFieldPaths,
+  ensureContainerRoot,
   normalizeLayout,
   type FieldPathValidationDefinition,
   type UiLayoutDocument,
@@ -86,7 +87,7 @@ function parseFallbackListSlice(
 }
 
 function repairLayoutDocument(layout: UiLayoutDocument): UiLayoutDocument {
-  return normalizeLayout(layout);
+  return ensureContainerRoot(normalizeLayout(layout));
 }
 
 function repairListSliceLayouts(slice: ListSliceData): ListSliceData {

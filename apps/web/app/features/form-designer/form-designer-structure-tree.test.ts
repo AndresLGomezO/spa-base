@@ -3,6 +3,7 @@ import {
   addNestedLayoutRowAt,
   createDefaultComponent,
   createEmptyLayout,
+  ensureContainerRoot,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
@@ -10,6 +11,7 @@ import {
   buildStructureTree,
   collectDefaultExpandedNodeIds,
   createColumnTopInsertAnchor,
+  createContainerTopInsertAnchor,
   createRowBottomInsertAnchor,
   getRowMoveState,
   resolveComponentRowLabel,
@@ -19,6 +21,7 @@ import {
 const labels: StructureTreeLabels = {
   column: (column) => `Column ${column}`,
   nestedLayout: (count) => `Nested layout (${count} cols)`,
+  container: "Container",
   section: "Section",
   actions: "Actions",
   kindDefaults: {
@@ -143,6 +146,26 @@ describe("form-designer-structure-tree", () => {
       locator: { scope: "root", columnIndex: 0 },
       position: "after",
       referenceRowId: row.rowId,
+    });
+  });
+
+  it("creates insert anchors for container child rows", () => {
+    const layout = ensureContainerRoot(createEmptyLayout(1));
+    const tree = buildStructureTree(layout, labels, fieldDescriptors);
+    const containerRow = tree[0]?.rows[0];
+
+    if (!containerRow || containerRow.type !== "component") {
+      throw new Error("Expected container row");
+    }
+
+    expect(createContainerTopInsertAnchor(containerRow)).toEqual({
+      locator: {
+        scope: "container",
+        columnIndex: 0,
+        containerRowId: containerRow.rowId,
+      },
+      position: "before",
+      referenceRowId: undefined,
     });
   });
 

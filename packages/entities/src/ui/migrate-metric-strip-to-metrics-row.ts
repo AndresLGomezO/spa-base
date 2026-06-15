@@ -9,6 +9,7 @@ import {
   createEmptyColumn,
   createEmptyLayout,
   createLayoutId,
+  ensureContainerRoot,
   type ColumnNode,
   type ComponentRowNode,
   type NestedLayoutRowNode,
@@ -29,60 +30,8 @@ function readLegacyMetricStripLayout(
   return tableView?.metricStripLayout;
 }
 
-function ensureWidgetNestedLayoutRoot(
-  layout: UiLayoutDocument,
-): UiLayoutDocument {
-  const rootColumn = layout.root.columns[0];
-  if (
-    layout.root.columns.length === 1 &&
-    rootColumn?.rows.length === 1 &&
-    rootColumn.rows[0]?.type === "nested-layout"
-  ) {
-    return layout;
-  }
-
-  const rowsToWrap =
-    layout.root.columns.length === 1
-      ? (rootColumn?.rows ?? [])
-      : layout.root.columns.flatMap((column) => column.rows);
-  const baseColumn = rootColumn ?? createEmptyColumn();
-  const nestedRow: NestedLayoutRowNode = {
-    type: "nested-layout",
-    id: createLayoutId("nested"),
-    columnCount: 1,
-    columns: [
-      {
-        ...createEmptyColumn(),
-        rows: [...rowsToWrap],
-        stackDirection: baseColumn.stackDirection ?? "column",
-        styles: baseColumn.styles,
-        widthPercent: baseColumn.widthPercent,
-        displayFrom: baseColumn.displayFrom,
-        displayTo: baseColumn.displayTo,
-      },
-    ],
-    styles: layout.root.styles,
-  };
-
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columnCount: 1,
-      styles: undefined,
-      columns: [
-        {
-          ...baseColumn,
-          rows: [nestedRow],
-          stackDirection: undefined,
-          styles: undefined,
-          widthPercent: undefined,
-          displayFrom: undefined,
-          displayTo: undefined,
-        },
-      ],
-    },
-  };
+function ensureWidgetContainerRoot(layout: UiLayoutDocument): UiLayoutDocument {
+  return ensureContainerRoot(layout);
 }
 
 function buildMetricRowLayout(
@@ -107,7 +56,7 @@ function buildMetricRowLayout(
   }));
 
   if (widgets.length === 0) {
-    return ensureMetricsRowNestedLayoutRoot(layout);
+    return ensureContainerRoot(layout);
   }
 
   const nestedRow: NestedLayoutRowNode = {
@@ -118,7 +67,7 @@ function buildMetricRowLayout(
   };
 
   const rootColumn = layout.root.columns[0] ?? createEmptyColumn();
-  return ensureMetricsRowNestedLayoutRoot({
+  return ensureContainerRoot({
     ...layout,
     root: {
       ...layout.root,
@@ -131,62 +80,6 @@ function buildMetricRowLayout(
       ],
     },
   });
-}
-
-function ensureMetricsRowNestedLayoutRoot(
-  layout: UiLayoutDocument,
-): UiLayoutDocument {
-  const rootColumn = layout.root.columns[0];
-  if (
-    layout.root.columns.length === 1 &&
-    rootColumn?.rows.length === 1 &&
-    rootColumn.rows[0]?.type === "nested-layout"
-  ) {
-    return layout;
-  }
-
-  const rowsToWrap =
-    layout.root.columns.length === 1
-      ? (rootColumn?.rows ?? [])
-      : layout.root.columns.flatMap((column) => column.rows);
-  const baseColumn = rootColumn ?? createEmptyColumn();
-  const nestedRow: NestedLayoutRowNode = {
-    type: "nested-layout",
-    id: createLayoutId("nested"),
-    columnCount: 1,
-    columns: [
-      {
-        ...createEmptyColumn(),
-        rows: [...rowsToWrap],
-        stackDirection: baseColumn.stackDirection ?? "column",
-        styles: baseColumn.styles,
-        widthPercent: baseColumn.widthPercent,
-        displayFrom: baseColumn.displayFrom,
-        displayTo: baseColumn.displayTo,
-      },
-    ],
-    styles: layout.root.styles,
-  };
-
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columnCount: 1,
-      styles: undefined,
-      columns: [
-        {
-          ...baseColumn,
-          rows: [nestedRow],
-          stackDirection: undefined,
-          styles: undefined,
-          widthPercent: undefined,
-          displayFrom: undefined,
-          displayTo: undefined,
-        },
-      ],
-    },
-  };
 }
 
 function stripMetricStripLayoutFromViews(
@@ -218,7 +111,7 @@ function buildWidgetsFromStrip(
   const widgets: MetricWidgetDefinition[] = [];
 
   for (const [index, column] of columnsWithContent.entries()) {
-    const widgetLayout = ensureWidgetNestedLayoutRoot({
+    const widgetLayout = ensureWidgetContainerRoot({
       root: {
         ...stripLayout.root,
         columnCount: 1,

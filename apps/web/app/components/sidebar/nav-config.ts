@@ -38,6 +38,7 @@ export type NavLabelKey =
   | "designLayoutForms"
   | "designLayoutMetrics"
   | "designLayoutPresets"
+  | "designLayoutDashboard"
   | "aiChat"
   | "aiDebugger";
 

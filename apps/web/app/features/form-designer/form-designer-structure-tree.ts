@@ -1,6 +1,8 @@
 import type { FieldDescriptor } from "@repo/ui-builder-react";
 import {
   formatFieldPathLabel,
+  isContainerComponent,
+  resolveContainerChildRows,
   type ColumnNode,
   type ComponentRowNode,
   type NestedLayoutRowNode,
@@ -22,6 +24,7 @@ export interface StructureColumnNode {
   readonly id: string;
   readonly columnIndex: number;
   readonly nestedColumnIndex?: number;
+  readonly containerRowId?: string;
   readonly parentRowId?: string;
   readonly label: string;
   readonly rows: readonly StructureRowNode[];
@@ -39,6 +42,7 @@ export interface StructureComponentRowNode {
   readonly kind: UiComponentKind;
   readonly label: string;
   readonly locator: RowLocator;
+  readonly childRows?: readonly StructureRowNode[];
 }
 
 export interface StructureNestedLayoutRowNode {
@@ -54,6 +58,7 @@ export interface StructureNestedLayoutRowNode {
 export interface StructureTreeLabels {
   readonly column: (column: number) => string;
   readonly nestedLayout: (columnCount: number) => string;
+  readonly container: string;
   readonly section: string;
   readonly actions: string;
   readonly kindDefaults: Readonly<Partial<Record<UiComponentKind, string>>>;
@@ -93,6 +98,8 @@ export function resolveComponentRowLabel(
   labels: StructureTreeLabels,
 ): string {
   switch (component.kind) {
+    case "container":
+      return labels.container;
     case "form-field":
     case "entity-field-selector":
       return fieldLabelForPath(fieldDescriptors, component.fieldPath);
@@ -106,21 +113,33 @@ export function resolveComponentRowLabel(
   }
 }
 
-function buildLocator(
-  columnIndex: number,
-  parentRowId?: string,
-  nestedColumnIndex?: number,
-): RowLocator {
-  if (parentRowId != null && nestedColumnIndex != null) {
+type LocatorContext = {
+  readonly columnIndex: number;
+  readonly containerRowId?: string;
+  readonly parentRowId?: string;
+  readonly nestedColumnIndex?: number;
+};
+
+function buildLocator(context: LocatorContext): RowLocator {
+  if (context.parentRowId != null && context.nestedColumnIndex != null) {
     return {
       scope: "nested",
-      columnIndex,
-      rowId: parentRowId,
-      nestedColumnIndex,
+      columnIndex: context.columnIndex,
+      rowId: context.parentRowId,
+      nestedColumnIndex: context.nestedColumnIndex,
+      containerRowId: context.containerRowId,
     };
   }
 
-  return { scope: "root", columnIndex };
+  if (context.containerRowId != null) {
+    return {
+      scope: "container",
+      columnIndex: context.columnIndex,
+      containerRowId: context.containerRowId,
+    };
+  }
+
+  return { scope: "root", columnIndex: context.columnIndex };
 }
 
 function buildColumnNode(
@@ -128,26 +147,28 @@ function buildColumnNode(
   columnIndex: number,
   labels: StructureTreeLabels,
   fieldDescriptors: readonly FieldDescriptor[],
-  parentRowId?: string,
-  nestedColumnIndex?: number,
+  context: LocatorContext = { columnIndex },
 ): StructureColumnNode {
-  const locator = buildLocator(columnIndex, parentRowId, nestedColumnIndex);
+  const locator = buildLocator(context);
   const id =
-    parentRowId != null && nestedColumnIndex != null
-      ? `col-${parentRowId}-${nestedColumnIndex}`
+    context.parentRowId != null && context.nestedColumnIndex != null
+      ? `col-${context.parentRowId}-${context.nestedColumnIndex}`
       : `col-root-${columnIndex}`;
 
   return {
     type: "column",
     id,
     columnIndex,
-    nestedColumnIndex,
-    parentRowId,
+    nestedColumnIndex: context.nestedColumnIndex,
+    containerRowId: context.containerRowId,
+    parentRowId: context.parentRowId,
     label: labels.column(
-      nestedColumnIndex != null ? nestedColumnIndex + 1 : columnIndex + 1,
+      context.nestedColumnIndex != null
+        ? context.nestedColumnIndex + 1
+        : columnIndex + 1,
     ),
     rows: column.rows.map((row) =>
-      buildRowNode(row, columnIndex, labels, fieldDescriptors, locator),
+      buildRowNode(row, columnIndex, labels, fieldDescriptors, context),
     ),
     locator,
   };
@@ -158,10 +179,10 @@ function buildRowNode(
   columnIndex: number,
   labels: StructureTreeLabels,
   fieldDescriptors: readonly FieldDescriptor[],
-  locator: RowLocator,
+  context: LocatorContext,
 ): StructureRowNode {
   if (row.type === "component") {
-    return buildComponentRowNode(row, locator, labels, fieldDescriptors);
+    return buildComponentRowNode(row, context, labels, fieldDescriptors);
   }
 
   return buildNestedLayoutRowNode(
@@ -169,16 +190,43 @@ function buildRowNode(
     columnIndex,
     labels,
     fieldDescriptors,
-    locator,
+    context,
   );
 }
 
 function buildComponentRowNode(
   row: ComponentRowNode,
-  locator: RowLocator,
+  context: LocatorContext,
   labels: StructureTreeLabels,
   fieldDescriptors: readonly FieldDescriptor[],
 ): StructureComponentRowNode {
+  const locator = buildLocator(context);
+
+  if (isContainerComponent(row.component)) {
+    const childContext: LocatorContext = {
+      columnIndex: context.columnIndex,
+      containerRowId: row.id,
+    };
+
+    return {
+      type: "component",
+      id: `row-${row.id}`,
+      rowId: row.id,
+      kind: row.component.kind,
+      label: resolveComponentRowLabel(row.component, fieldDescriptors, labels),
+      locator,
+      childRows: row.component.rows.map((child) =>
+        buildRowNode(
+          child,
+          context.columnIndex,
+          labels,
+          fieldDescriptors,
+          childContext,
+        ),
+      ),
+    };
+  }
+
   return {
     type: "component",
     id: `row-${row.id}`,
@@ -194,8 +242,10 @@ function buildNestedLayoutRowNode(
   columnIndex: number,
   labels: StructureTreeLabels,
   fieldDescriptors: readonly FieldDescriptor[],
-  locator: RowLocator,
+  context: LocatorContext,
 ): StructureNestedLayoutRowNode {
+  const locator = buildLocator(context);
+
   return {
     type: "nested-layout",
     id: `row-${row.id}`,
@@ -203,14 +253,12 @@ function buildNestedLayoutRowNode(
     label: labels.nestedLayout(row.columnCount),
     columnCount: row.columnCount,
     columns: row.columns.map((column, nestedColumnIndex) =>
-      buildColumnNode(
-        column,
+      buildColumnNode(column, columnIndex, labels, fieldDescriptors, {
         columnIndex,
-        labels,
-        fieldDescriptors,
-        row.id,
+        containerRowId: context.containerRowId,
+        parentRowId: row.id,
         nestedColumnIndex,
-      ),
+      }),
     ),
     locator,
   };
@@ -226,9 +274,9 @@ export function buildStructureTree(
   );
 }
 
-export function resolvePromotedNestedLayoutRootRow(
+export function resolvePromotedContainerRootRow(
   columns: readonly StructureColumnNode[],
-): StructureNestedLayoutRowNode | null {
+): StructureComponentRowNode | null {
   if (columns.length !== 1) {
     return null;
   }
@@ -239,21 +287,18 @@ export function resolvePromotedNestedLayoutRootRow(
   }
 
   const row = rootColumn.rows[0];
-  return row?.type === "nested-layout" ? row : null;
+  return row?.type === "component" && row.kind === "container" ? row : null;
 }
 
 export function collectDefaultExpandedNodeIdsForLayout(
   columns: readonly StructureColumnNode[],
-  options?: { readonly promoteSingleNestedLayoutRoot?: boolean },
+  options?: { readonly promoteSingleContainerRoot?: boolean },
 ): string[] {
-  if (options?.promoteSingleNestedLayoutRoot) {
-    const promoted = resolvePromotedNestedLayoutRootRow(columns);
+  if (options?.promoteSingleContainerRoot) {
+    const promoted = resolvePromotedContainerRootRow(columns);
     if (promoted) {
       const ids: string[] = [promoted.id];
-      for (const column of promoted.columns) {
-        ids.push(column.id);
-        collectExpandedRowIds(column.rows, ids);
-      }
+      collectExpandedRowIds(promoted.childRows ?? [], ids);
       return ids;
     }
   }
@@ -282,6 +327,47 @@ export function createRowBottomInsertAnchor(
   return createInsertAnchor(row.locator, "after", row.rowId);
 }
 
+export function createContainerTopInsertAnchor(
+  row: StructureComponentRowNode,
+): InsertAnchor {
+  const locator: Extract<RowLocator, { readonly scope: "container" }> = {
+    scope: "container",
+    columnIndex: row.locator.columnIndex,
+    containerRowId: row.rowId,
+  };
+  const firstChild = row.childRows?.[0];
+  return createInsertAnchor(locator, "before", firstChild?.rowId);
+}
+
+function findNestedRow(
+  rows: readonly RowNode[],
+  rowId: string,
+): NestedLayoutRowNode | null {
+  for (const row of rows) {
+    if (row.type === "nested-layout" && row.id === rowId) {
+      return row;
+    }
+
+    if (row.type === "component" && isContainerComponent(row.component)) {
+      const nested = findNestedRow(row.component.rows, rowId);
+      if (nested) {
+        return nested;
+      }
+    }
+
+    if (row.type === "nested-layout") {
+      for (const column of row.columns) {
+        const nested = findNestedRow(column.rows, rowId);
+        if (nested) {
+          return nested;
+        }
+      }
+    }
+  }
+
+  return null;
+}
+
 function getRowsAtLocator(
   layout: UiLayoutDocument,
   locator: RowLocator,
@@ -290,15 +376,25 @@ function getRowsAtLocator(
     return layout.root.columns[locator.columnIndex]?.rows ?? [];
   }
 
+  if (locator.scope === "container") {
+    const column = layout.root.columns[locator.columnIndex];
+    return (
+      resolveContainerChildRows(column?.rows ?? [], locator.containerRowId) ??
+      []
+    );
+  }
+
   const column = layout.root.columns[locator.columnIndex];
   if (!column) {
     return [];
   }
 
-  const nestedRow = column.rows.find(
-    (row): row is NestedLayoutRowNode =>
-      row.type === "nested-layout" && row.id === locator.rowId,
-  );
+  const searchRows =
+    locator.containerRowId != null
+      ? (resolveContainerChildRows(column.rows, locator.containerRowId) ?? [])
+      : column.rows;
+
+  const nestedRow = findNestedRow(searchRows, locator.rowId);
   if (!nestedRow) {
     return [];
   }
@@ -337,6 +433,17 @@ function collectExpandedRowIds(
   ids: string[],
 ): void {
   for (const row of rows) {
+    if (row.type === "component" && row.kind === "container") {
+      ids.push(row.id);
+      collectExpandedRowIds(row.childRows ?? [], ids);
+      continue;
+    }
+
+    if (row.type === "component" && row.childRows) {
+      ids.push(row.id);
+      collectExpandedRowIds(row.childRows, ids);
+    }
+
     if (row.type === "nested-layout") {
       ids.push(row.id);
       for (const column of row.columns) {
