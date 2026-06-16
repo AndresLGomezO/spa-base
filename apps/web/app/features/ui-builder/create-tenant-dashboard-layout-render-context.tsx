@@ -9,20 +9,43 @@ import {
   type LayoutUserInfo,
 } from "../../components/entity/LayoutUserDisplay";
 import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
+import type {
+  EntityCatalogEntry,
+  EntityName,
+} from "../../entities/entity-catalog";
 import { createDashboardSectionRenderer } from "./create-dashboard-section-renderer";
+import { DashboardMetricKpiSlot } from "./DashboardMetricKpiSlot";
+import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context";
+import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
+import { listFiltersForEntity } from "./list-filters-for-entity";
+import { ViewFilterComponent } from "./ViewFilterComponent";
+import { ViewSearchComponent } from "./ViewSearchComponent";
 import { resolveStaticImageSrc } from "@repo/entities";
 
 interface CreateTenantDashboardLayoutRenderContextOptions {
   readonly sections: readonly DashboardSectionDefinition[];
+  readonly catalogItems: readonly EntityCatalogEntry[];
   readonly locale: string;
   readonly t: TFunction;
   readonly user?: LayoutUserInfo | null;
+  readonly pageFilters?: Readonly<Record<string, readonly string[]>>;
+  readonly getDefinition?: (
+    entityName: EntityName,
+  ) => EntityCatalogEntry | undefined;
 }
 
 export function createTenantDashboardLayoutRenderContext(
   options: CreateTenantDashboardLayoutRenderContextOptions,
 ): LayoutRenderContext {
-  const { sections, locale, t, user = null } = options;
+  const {
+    sections,
+    catalogItems,
+    locale,
+    t,
+    user = null,
+    pageFilters = {},
+    getDefinition,
+  } = options;
   const fallbackName = t("nav.fallbackName");
 
   const buildLayoutContext = (): LayoutRenderContext => ({
@@ -61,6 +84,34 @@ export function createTenantDashboardLayoutRenderContext(
         fallbackName={fallbackName}
       />
     ),
+    metricKpiRenderer: (config, presentation) => (
+      <DashboardMetricKpiSlot
+        config={config}
+        presentation={presentation}
+        pageFilters={pageFilters}
+      />
+    ),
+    metricWidgetRenderer: getDefinition
+      ? createMetricWidgetRenderer({
+          catalogItems,
+          t,
+          buildLayoutContext: (definition, item) =>
+            createEntityLayoutRenderContext({
+              item,
+              definition,
+              locale,
+              catalogItems,
+              getDefinition,
+              listFilters: listFiltersForEntity(definition.name, pageFilters),
+              routeParams: {},
+              usePreviewPlaceholder: true,
+              usePreviewSamples: true,
+              t,
+            }),
+        })
+      : undefined,
+    viewSearchRenderer: (config) => <ViewSearchComponent config={config} />,
+    viewFilterRenderer: (config) => <ViewFilterComponent config={config} />,
     dashboardSectionRenderer: createDashboardSectionRenderer({
       sections,
       t,

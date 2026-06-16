@@ -49,6 +49,19 @@ export function createDefaultComponent(
     };
   }
 
+  if (kind === "view-search") {
+    return {
+      kind: "view-search",
+    };
+  }
+
+  if (kind === "view-filter") {
+    return {
+      kind: "view-filter",
+      filters: [],
+    };
+  }
+
   if (kind === "form-field") {
     return { kind: "form-field", fieldPath };
   }
@@ -146,6 +159,19 @@ export function createDefaultStaticComponent(
     return {
       kind: "dashboard-section",
       sectionId: "",
+    };
+  }
+
+  if (kind === "view-search") {
+    return {
+      kind: "view-search",
+    };
+  }
+
+  if (kind === "view-filter") {
+    return {
+      kind: "view-filter",
+      filters: [],
     };
   }
 

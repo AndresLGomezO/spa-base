@@ -27,7 +27,7 @@ export function EntityViewMetricsStrip({
   previewMode = false,
 }: EntityViewMetricsStripProps) {
   const { t } = useTranslation("common");
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
 
   const renderContext = useMemo(
     () =>
@@ -35,6 +35,7 @@ export function EntityViewMetricsStrip({
         item: context.record ?? {},
         definition: entityDefinition,
         locale,
+        catalogItems: items,
         getDefinition: (entityName) => getDefinition(entityName as EntityName),
         listFilters: context.listFilters,
         routeParams: context.routeParams,
@@ -48,6 +49,7 @@ export function EntityViewMetricsStrip({
       context.routeParams,
       entityDefinition,
       getDefinition,
+      items,
       locale,
       previewMode,
       t,

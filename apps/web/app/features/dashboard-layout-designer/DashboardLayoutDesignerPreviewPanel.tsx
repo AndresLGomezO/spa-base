@@ -4,7 +4,10 @@ import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { createTenantDashboardLayoutRenderContext } from "../ui-builder/create-tenant-dashboard-layout-render-context";
+import { useDashboardViewFilterUrlState } from "../ui-builder/use-dashboard-view-filter-url-state";
+import { ViewFilterPageProvider } from "../ui-builder/view-filter-page-context";
 import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import { FormDesignerPreviewThemeScope } from "../form-designer/FormDesignerPreviewThemeScope";
 import { MobileDevicePreviewFrame } from "../form-designer/MobileDevicePreviewFrame";
@@ -23,6 +26,7 @@ export function DashboardLayoutDesignerPreviewPanel({
 }: DashboardLayoutDesignerPreviewPanelProps) {
   const { t, i18n } = useTranslation("common");
   const { user } = useAuth();
+  const { getDefinition, items } = useEntityCatalog();
   const {
     editor,
     activeTabId,
@@ -39,12 +43,21 @@ export function DashboardLayoutDesignerPreviewPanel({
       ? editor.dashboardLayout
       : editor.selectedSection?.layout;
 
+  const { urlState } = useDashboardViewFilterUrlState({
+    dashboardLayout: editor.dashboardLayout,
+    sections: editor.dashboardSections,
+    catalog: items,
+  });
+
   const previewContext = useMemo(
     () =>
       createTenantDashboardLayoutRenderContext({
         sections: editor.dashboardSections,
+        catalogItems: items,
         locale: i18n.language,
         t,
+        getDefinition,
+        pageFilters: urlState.filters,
         user: user
           ? {
               displayName: user.displayName,
@@ -53,7 +66,15 @@ export function DashboardLayoutDesignerPreviewPanel({
             }
           : null,
       }),
-    [editor.dashboardSections, i18n.language, t, user],
+    [
+      editor.dashboardSections,
+      getDefinition,
+      i18n.language,
+      items,
+      t,
+      urlState.filters,
+      user,
+    ],
   );
 
   const mobilePreviewDevice = useMemo(
@@ -66,13 +87,15 @@ export function DashboardLayoutDesignerPreviewPanel({
 
   const previewBody =
     previewLayout != null ? (
-      <RecursiveLayoutRenderer
-        layout={previewLayout}
-        context={previewContext}
-        rowWrapper={structureWrappers?.rowWrapper}
-        rootColumnWrapper={structureWrappers?.rootColumnWrapper}
-        nestedColumnWrapper={structureWrappers?.nestedColumnWrapper}
-      />
+      <ViewFilterPageProvider value={urlState}>
+        <RecursiveLayoutRenderer
+          layout={previewLayout}
+          context={previewContext}
+          rowWrapper={structureWrappers?.rowWrapper}
+          rootColumnWrapper={structureWrappers?.rootColumnWrapper}
+          nestedColumnWrapper={structureWrappers?.nestedColumnWrapper}
+        />
+      </ViewFilterPageProvider>
     ) : (
       <Text className="text-muted-foreground text-sm">
         {t("dashboardLayoutDesigner.sections.noSectionSelected")}

@@ -90,7 +90,7 @@ export function MetricsRowDesignerComponentColumnPanelHeaderMenu({
   const definition = useEntityDefinition(editor.entityName);
   const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
   const presetStore = useUiBuilderPresetStore(definition.name);
-  const designSurface = activeTabId === "row" ? "metricRow" : "metricStrip";
+  const designSurface = activeTabId === "row" ? "metricRow" : "metricWidget";
   const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 

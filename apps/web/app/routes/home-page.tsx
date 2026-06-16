@@ -5,9 +5,12 @@ import { useTranslation } from "react-i18next";
 import { useQuery } from "@tanstack/react-query";
 
 import { useAuth } from "../auth/AuthContext";
+import { useEntityCatalog } from "../entities/entity-catalog-context";
 import { getTenantDashboardLayout } from "../lib/api-client";
 import { createTenantDashboardLayoutRenderContext } from "../features/ui-builder/create-tenant-dashboard-layout-render-context";
 import { dashboardLayoutHasContent } from "../features/ui-builder/dashboard-layout-has-content";
+import { useDashboardViewFilterUrlState } from "../features/ui-builder/use-dashboard-view-filter-url-state";
+import { ViewFilterPageProvider } from "../features/ui-builder/view-filter-page-context";
 import { ensureContainerRoot } from "@repo/ui-builder-core";
 
 const TENANT_DASHBOARD_LAYOUT_QUERY_KEY = ["tenant-dashboard-layout"] as const;
@@ -15,6 +18,7 @@ const TENANT_DASHBOARD_LAYOUT_QUERY_KEY = ["tenant-dashboard-layout"] as const;
 export function HomePage() {
   const { t, i18n } = useTranslation("common");
   const { user } = useAuth();
+  const { getDefinition, items } = useEntityCatalog();
   const configQuery = useQuery({
     queryKey: TENANT_DASHBOARD_LAYOUT_QUERY_KEY,
     queryFn: async () => {
@@ -30,6 +34,12 @@ export function HomePage() {
     return ensureContainerRoot(configQuery.data.dashboardLayout);
   }, [configQuery.data?.dashboardLayout]);
 
+  const { urlState } = useDashboardViewFilterUrlState({
+    dashboardLayout,
+    sections: configQuery.data?.dashboardSections ?? [],
+    catalog: items,
+  });
+
   const renderContext = useMemo(() => {
     if (!configQuery.data) {
       return null;
@@ -37,8 +47,11 @@ export function HomePage() {
 
     return createTenantDashboardLayoutRenderContext({
       sections: configQuery.data.dashboardSections,
+      catalogItems: items,
       locale: i18n.language,
       t,
+      getDefinition,
+      pageFilters: urlState.filters,
       user: user
         ? {
             displayName: user.displayName,
@@ -47,7 +60,15 @@ export function HomePage() {
           }
         : null,
     });
-  }, [configQuery.data, i18n.language, t, user]);
+  }, [
+    configQuery.data,
+    getDefinition,
+    i18n.language,
+    items,
+    t,
+    urlState.filters,
+    user,
+  ]);
 
   if (configQuery.isLoading) {
     return (
@@ -84,13 +105,15 @@ export function HomePage() {
   }
 
   return (
-    <div className="flex min-h-0 w-full flex-1 flex-col">
-      <RecursiveLayoutRenderer
-        layout={dashboardLayout}
-        context={renderContext}
-        className="min-h-0 flex-1"
-        stretchRootColumns
-      />
-    </div>
+    <ViewFilterPageProvider value={urlState}>
+      <div className="flex min-h-0 w-full flex-1 flex-col">
+        <RecursiveLayoutRenderer
+          layout={dashboardLayout}
+          context={renderContext}
+          className="min-h-0 flex-1"
+          stretchRootColumns
+        />
+      </div>
+    </ViewFilterPageProvider>
   );
 }

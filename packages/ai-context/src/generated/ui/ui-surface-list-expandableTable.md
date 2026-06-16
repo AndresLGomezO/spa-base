@@ -9,6 +9,9 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
 - `image`
 - `icon`
 - `user`
+- `metric-widget`
+- `view-search`
+- `view-filter`
 
 ## Slice envelope example
 ```json

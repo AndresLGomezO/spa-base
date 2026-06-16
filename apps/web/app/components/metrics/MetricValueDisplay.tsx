@@ -1,4 +1,4 @@
-import type { CSSProperties, ReactNode } from "react";
+import { useMemo, type CSSProperties, type ReactNode } from "react";
 import { cn } from "@repo/theme/utils";
 import { LayoutCard, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
@@ -10,6 +10,8 @@ import {
   type MetricBindingContext,
 } from "../../lib/metric-binding-resolution.js";
 import type { MetricRowQuery } from "../../lib/api-client.js";
+import { resolveMetricDefinitionDocumentId } from "../../lib/resolve-metric-definition-reference.js";
+import { useActiveMetricDefinitions } from "../../hooks/metrics/useActiveMetricDefinitions.js";
 import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues.js";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow.js";
@@ -106,36 +108,80 @@ export function MetricValueDisplay({
   textSize,
 }: MetricValueDisplayProps) {
   const { t, i18n } = useTranslation("common");
-  const definitionQuery = useMetricDefinition(metricDefinitionId);
+  const configuredMetricDefinitionId = metricDefinitionId?.trim() ?? "";
+  const activeDefinitionsQuery = useActiveMetricDefinitions(
+    configuredMetricDefinitionId.length > 0,
+  );
+  const resolvedMetricDefinitionId = useMemo(() => {
+    if (configuredMetricDefinitionId.length === 0) {
+      return undefined;
+    }
+
+    return resolveMetricDefinitionDocumentId(
+      configuredMetricDefinitionId,
+      activeDefinitionsQuery.data ?? [],
+    );
+  }, [activeDefinitionsQuery.data, configuredMetricDefinitionId]);
+
+  const hasMetricDefinitionId = Boolean(resolvedMetricDefinitionId?.trim());
+  const definitionQuery = useMetricDefinition(resolvedMetricDefinitionId);
   const readAccess = useMetricReadAccess(definitionQuery.data?.sourceModel, {
-    sourceModelResolved: definitionQuery.isFetched,
+    sourceModelResolved: !hasMetricDefinitionId || definitionQuery.isFetched,
   });
   const canRead = readAccess === "allowed";
   const inline = presentation === "inline";
   const statusClassName = "text-sm";
   const valueTextClassName = metricValueTextClassName(valueClassName);
 
-  const resolvedQuery =
-    queryOverride ??
-    (definitionQuery.data
-      ? buildMetricRowQueryFromBindings(
-          definitionQuery.data,
-          { groupBindings, dimensionBindings },
-          context,
-        )
-      : null);
+  const resolvedQuery = useMemo(
+    () =>
+      queryOverride ??
+      (definitionQuery.data
+        ? buildMetricRowQueryFromBindings(
+            definitionQuery.data,
+            { groupBindings, dimensionBindings },
+            context,
+          )
+        : null),
+    [
+      context,
+      definitionQuery.data,
+      dimensionBindings,
+      groupBindings,
+      queryOverride,
+    ],
+  );
+
+  const rowQueryEnabled =
+    canRead && definitionQuery.isSuccess && resolvedQuery !== null;
 
   const rowQuery = useMetricRow({
-    metricDefinitionId,
+    metricDefinitionId: resolvedMetricDefinitionId,
     sourceModel: definitionQuery.data?.sourceModel,
     query: resolvedQuery,
-    enabled: canRead && definitionQuery.isSuccess,
+    enabled: rowQueryEnabled,
   });
+
+  if (configuredMetricDefinitionId.length === 0) {
+    return (
+      <MetricValueShell
+        presentation={presentation}
+        className={className}
+        style={style}
+      >
+        <Text variant="muted" className={statusClassName}>
+          {t("metrics.widget.unconfigured")}
+        </Text>
+      </MetricValueShell>
+    );
+  }
 
   if (
     readAccess === "pending" ||
     definitionQuery.isLoading ||
-    (canRead && rowQuery.isLoading)
+    (configuredMetricDefinitionId.length > 0 &&
+      activeDefinitionsQuery.isLoading) ||
+    (rowQueryEnabled && rowQuery.isLoading)
   ) {
     return (
       <MetricValueShell
@@ -164,7 +210,7 @@ export function MetricValueDisplay({
     );
   }
 
-  if (definitionQuery.isError) {
+  if (definitionQuery.isError || rowQuery.isError) {
     return (
       <MetricValueShell
         presentation={presentation}
@@ -172,7 +218,9 @@ export function MetricValueDisplay({
         style={style}
       >
         <Text variant="muted" className={statusClassName}>
-          {t("metrics.widget.error")}
+          {definitionQuery.isError
+            ? t("metrics.widget.unknown")
+            : t("metrics.widget.error")}
         </Text>
       </MetricValueShell>
     );

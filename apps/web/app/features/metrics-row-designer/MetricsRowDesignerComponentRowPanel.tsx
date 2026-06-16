@@ -54,7 +54,7 @@ export function MetricsRowDesignerComponentRowPanel({
     [activeTabId, editor],
   );
 
-  const designSurface = activeTabId === "row" ? "metricRow" : "metricStrip";
+  const designSurface = activeTabId === "row" ? "metricRow" : "metricWidget";
   const allowedKinds = componentKindsForSurface(designSurface);
 
   const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);

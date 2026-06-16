@@ -34,6 +34,8 @@ function assertNoUnsupportedComponents(component: UiComponentConfig): void {
     component.kind === "metric-kpi" ||
     component.kind === "metric-widget" ||
     component.kind === "dashboard-section" ||
+    component.kind === "view-search" ||
+    component.kind === "view-filter" ||
     component.kind === "related-records"
   ) {
     throw new GenericizeLayoutNodeError(

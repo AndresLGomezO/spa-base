@@ -9,6 +9,8 @@ import {
   isDashboardSectionComponent,
   isMetricKpiComponent,
   isMetricWidgetComponent,
+  isViewSearchComponent,
+  isViewFilterComponent,
   isPageUiComponent,
   matchConditionalStyles,
   resolveFieldChain,
@@ -175,6 +177,14 @@ export function renderUiComponent(
 
   if (isDashboardSectionComponent(config)) {
     return context.dashboardSectionRenderer?.(config) ?? null;
+  }
+
+  if (isViewSearchComponent(config)) {
+    return context.viewSearchRenderer?.(config) ?? null;
+  }
+
+  if (isViewFilterComponent(config)) {
+    return context.viewFilterRenderer?.(config) ?? null;
   }
 
   if (config.kind === "form-field") {

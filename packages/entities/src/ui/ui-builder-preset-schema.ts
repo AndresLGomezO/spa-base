@@ -38,6 +38,7 @@ export const designSurfaceSchema = z.enum([
   "formModalFooter",
   "metricStrip",
   "metricRow",
+  "metricWidget",
   "dashboardSection",
   "dashboardLayout",
 ]);

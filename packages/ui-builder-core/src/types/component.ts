@@ -30,7 +30,9 @@ export type UiComponentKind =
   | "page-header"
   | "page-toolbar"
   | "page-metrics"
-  | "page-list";
+  | "page-list"
+  | "view-search"
+  | "view-filter";
 
 export type WizardStepStatusKind =
   | "pending"
@@ -272,6 +274,23 @@ export interface PageListComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export interface ViewFilterEntry {
+  readonly entityName: string;
+  readonly fieldName: string;
+}
+
+export interface ViewSearchComponentConfig {
+  readonly kind: "view-search";
+  readonly placeholder?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface ViewFilterComponentConfig {
+  readonly kind: "view-filter";
+  readonly filters: readonly ViewFilterEntry[];
+  readonly styles?: readonly StyleRule[];
+}
+
 export interface ContainerComponentConfig {
   readonly kind: "container";
   readonly rows: readonly RowNode[];
@@ -285,6 +304,10 @@ export type PageUiComponentConfig =
   | PageToolbarComponentConfig
   | PageMetricsComponentConfig
   | PageListComponentConfig;
+
+export type ViewFilterUiComponentConfig =
+  | ViewSearchComponentConfig
+  | ViewFilterComponentConfig;
 
 export type UiComponentConfig =
   | ContainerComponentConfig
@@ -302,7 +325,8 @@ export type UiComponentConfig =
   | WizardStepHostComponentConfig
   | WizardActionsComponentConfig
   | RelatedRecordsComponentConfig
-  | PageUiComponentConfig;
+  | PageUiComponentConfig
+  | ViewFilterUiComponentConfig;
 
 export function isWizardUiComponent(
   config: UiComponentConfig,
@@ -344,6 +368,18 @@ export function isDashboardSectionComponent(
   config: UiComponentConfig,
 ): config is DashboardSectionComponentConfig {
   return config.kind === "dashboard-section";
+}
+
+export function isViewSearchComponent(
+  config: UiComponentConfig,
+): config is ViewSearchComponentConfig {
+  return config.kind === "view-search";
+}
+
+export function isViewFilterComponent(
+  config: UiComponentConfig,
+): config is ViewFilterComponentConfig {
+  return config.kind === "view-filter";
 }
 
 export function isIconComponent(

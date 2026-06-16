@@ -64,6 +64,8 @@ export function formDesignerComponentsLabels(
     "page-list": t("mainViewDesigner.components.pageList"),
     "metric-kpi": t("detailViewDesigner.components.metricKpi"),
     "metric-widget": t("metricsRowDesigner.components.metricWidget"),
+    "view-search": t("viewFilterComponents.search"),
+    "view-filter": t("viewFilterComponents.filter"),
     "dashboard-section": t(
       "dashboardLayoutDesigner.components.dashboardSection",
     ),
@@ -102,6 +104,8 @@ export function formDesignerComponentsLabels(
           return t("formDesigner.components.sections.content");
         case "form":
           return t("formDesigner.components.sections.form");
+        case "dataControls":
+          return t("formDesigner.components.sections.dataControls");
       }
     },
     optionLabel: (kind) => {

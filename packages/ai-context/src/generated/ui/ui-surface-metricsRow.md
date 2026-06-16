@@ -12,6 +12,8 @@ Requires `metricWidgets[]` definitions and `metricRowLayout` with metric-widget 
 - `numeric`
 - `badge`
 - `metric-kpi`
+- `view-search`
+- `view-filter`
 - `metric-widget`
 
 ## Slice envelope example

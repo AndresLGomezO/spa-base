@@ -123,7 +123,9 @@ function collectComponentPaths(
     component.kind === "page-header" ||
     component.kind === "page-toolbar" ||
     component.kind === "page-metrics" ||
-    component.kind === "page-list"
+    component.kind === "page-list" ||
+    component.kind === "view-search" ||
+    component.kind === "view-filter"
   ) {
     return [];
   }

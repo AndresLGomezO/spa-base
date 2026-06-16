@@ -116,7 +116,7 @@ export function MetricsRowDesignerWidgetsTreePanel() {
 
       <FormDesignerAddComponentModal
         open={modalOpen}
-        designSurface="metricStrip"
+        designSurface="metricWidget"
         definition={definition}
         defaultFieldPath="name"
         labels={labels}

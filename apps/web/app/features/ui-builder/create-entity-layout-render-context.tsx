@@ -35,6 +35,7 @@ export function createEntityLayoutRenderContext(options: {
   readonly getDefinition?: (
     entityName: string,
   ) => EntityCatalogEntry | undefined;
+  readonly catalogItems?: readonly EntityCatalogEntry[];
   readonly listFilters?: Readonly<Record<string, readonly string[]>>;
   readonly routeParams?: Readonly<Record<string, string | undefined>>;
   /** When true, show the static card placeholder if no field image or default exists. */
@@ -49,6 +50,7 @@ export function createEntityLayoutRenderContext(options: {
     locale,
     getOneToManyCellValue = () => null,
     getDefinition,
+    catalogItems = [],
     listFilters,
     routeParams,
     usePreviewPlaceholder = false,
@@ -153,14 +155,14 @@ export function createEntityLayoutRenderContext(options: {
     metricWidgetRenderer:
       getDefinition && t
         ? createMetricWidgetRenderer({
-            getDefinition: (entityName) =>
-              getDefinition(entityName) as EntityCatalogEntry | undefined,
+            catalogItems,
             t,
             buildLayoutContext: (nestedDefinition, nestedItem) =>
               createEntityLayoutRenderContext({
                 item: nestedItem,
                 definition: nestedDefinition,
                 locale,
+                catalogItems,
                 getDefinition,
                 listFilters,
                 routeParams,

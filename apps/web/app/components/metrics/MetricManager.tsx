@@ -88,7 +88,7 @@ export function MetricManager({
   }, [editingMetric?.name, isCreating, t]);
 
   return (
-    <>
+    <div className="flex min-h-0 flex-1 flex-col">
       <MetricDefinitionList
         items={items}
         isLoading={isLoading}
@@ -112,6 +112,6 @@ export function MetricManager({
           onCancel={closeModal}
         />
       </FormModal>
-    </>
+    </div>
   );
 }

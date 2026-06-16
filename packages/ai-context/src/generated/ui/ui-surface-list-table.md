@@ -9,6 +9,9 @@ Set `listViewType: "table"`. Columns are field path strings. Optional `showActio
 - `image`
 - `icon`
 - `user`
+- `metric-widget`
+- `view-search`
+- `view-filter`
 
 ## Slice envelope example
 ```json

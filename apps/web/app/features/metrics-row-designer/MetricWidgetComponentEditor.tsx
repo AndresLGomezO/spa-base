@@ -3,20 +3,39 @@ import type {
   UiComponentConfig,
 } from "@repo/ui-builder-core";
 import { FieldLabel, Text, Select } from "@repo/ui";
-import { useMemo } from "react";
+import { useMemo, useEffect } from "react";
 import { useTranslation } from "react-i18next";
 
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import type {
+  EntityName,
+  EntityCatalogEntry,
+} from "../../entities/entity-catalog";
 import {
-  useEntityCatalog,
-  useEntityDefinition,
-} from "../../entities/entity-catalog-context";
-import type { EntityName } from "../../entities/entity-catalog";
-import { getEntityLabel } from "../../entities/entity-catalog";
+  getEntityLabel,
+  tryGetEntityDefinition,
+} from "../../entities/entity-catalog";
+import {
+  findMetricWidgetEntityName,
+  normalizeMetricWidgetString,
+} from "../ui-builder/resolve-metric-widget-reference";
+
+function normalizeOptionalString(value: string | undefined): string {
+  return normalizeMetricWidgetString(value);
+}
 
 interface MetricWidgetComponentEditorProps {
   readonly config: MetricWidgetComponentConfig;
-  readonly currentEntityName: EntityName;
+  readonly currentEntityName?: EntityName;
   readonly onChange: (config: UiComponentConfig) => void;
+}
+
+function entityHasMetricWidgets(
+  catalog: readonly EntityCatalogEntry[],
+  entityName: string,
+): boolean {
+  const definition = tryGetEntityDefinition(entityName, catalog);
+  return (definition?.ui.metricWidgets?.length ?? 0) > 0;
 }
 
 function resolveMetricWidgetLabel(
@@ -36,28 +55,85 @@ export function MetricWidgetComponentEditor({
   const { t } = useTranslation("common");
   const { items, getDefinition } = useEntityCatalog();
 
-  const selectedEntityName =
-    config.entityName.trim().length > 0 ? config.entityName : currentEntityName;
-  const entityDefinition = useEntityDefinition(
-    selectedEntityName as EntityName,
-  );
+  const configuredEntityName = normalizeOptionalString(config.entityName);
 
-  const widgets = entityDefinition.ui.metricWidgets ?? [];
-
-  const entityOptions = useMemo(
-    () =>
-      items.map((item) => ({
-        value: item.name,
-        label: getEntityLabel(item),
-      })),
+  const entitiesWithWidgets = useMemo(
+    () => items.filter((item) => entityHasMetricWidgets(items, item.name)),
     [items],
   );
 
+  const entityOptions = useMemo(() => {
+    const options = entitiesWithWidgets.map((item) => ({
+      value: item.name,
+      label: getEntityLabel(item),
+    }));
+
+    if (
+      configuredEntityName.length > 0 &&
+      !options.some((option) => option.value === configuredEntityName)
+    ) {
+      const staleDefinition = tryGetEntityDefinition(
+        configuredEntityName,
+        items,
+      );
+      options.unshift({
+        value: configuredEntityName,
+        label: staleDefinition
+          ? getEntityLabel(staleDefinition)
+          : configuredEntityName,
+      });
+    }
+
+    return options;
+  }, [configuredEntityName, entitiesWithWidgets, items]);
+
+  const selectedEntityName =
+    configuredEntityName.length > 0
+      ? configuredEntityName
+      : currentEntityName && entityHasMetricWidgets(items, currentEntityName)
+        ? currentEntityName
+        : (entitiesWithWidgets[0]?.name ?? "");
+
+  const widgets = useMemo(() => {
+    if (selectedEntityName.trim().length === 0) {
+      return [];
+    }
+
+    const definition = tryGetEntityDefinition(selectedEntityName, items);
+    return definition?.ui.metricWidgets ?? [];
+  }, [items, selectedEntityName]);
+
+  useEffect(() => {
+    const widgetId = normalizeOptionalString(config.widgetId);
+    if (configuredEntityName.length > 0 || widgetId.length === 0) {
+      return;
+    }
+
+    const entityName = findMetricWidgetEntityName(items, widgetId);
+    if (!entityName) {
+      return;
+    }
+
+    const widget = tryGetEntityDefinition(
+      entityName,
+      items,
+    )?.ui.metricWidgets?.find((item) => item.id === widgetId);
+    if (!widget) {
+      return;
+    }
+
+    onChange({
+      ...config,
+      entityName,
+      label: resolveMetricWidgetLabel(entityName, widget.name, getDefinition),
+    });
+  }, [config, configuredEntityName.length, getDefinition, items, onChange]);
+
   const handleEntityChange = (entityName: string) => {
     const nextWidgets =
-      getDefinition(entityName as EntityName).ui.metricWidgets ?? [];
+      tryGetEntityDefinition(entityName, items)?.ui.metricWidgets ?? [];
     const widgetId = nextWidgets.some((widget) => widget.id === config.widgetId)
-      ? config.widgetId
+      ? (config.widgetId ?? "")
       : "";
 
     onChange({
@@ -78,6 +154,7 @@ export function MetricWidgetComponentEditor({
     const widget = widgets.find((item) => item.id === widgetId);
     onChange({
       ...config,
+      entityName: selectedEntityName,
       widgetId,
       label: widget
         ? resolveMetricWidgetLabel(
@@ -95,16 +172,22 @@ export function MetricWidgetComponentEditor({
         <FieldLabel>
           {t("metricsRowDesigner.metricWidgetEditor.entity")}
         </FieldLabel>
-        <Select
-          value={selectedEntityName}
-          onChange={(event) => handleEntityChange(event.target.value)}
-        >
-          {entityOptions.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </Select>
+        {entityOptions.length === 0 ? (
+          <Text className="text-muted-foreground text-sm">
+            {t("metricsRowDesigner.metricWidgetEditor.noEntitiesWithWidgets")}
+          </Text>
+        ) : (
+          <Select
+            value={selectedEntityName}
+            onChange={(event) => handleEntityChange(event.target.value)}
+          >
+            {entityOptions.map((option) => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </Select>
+        )}
       </label>
 
       <label className="flex flex-col gap-1">
@@ -117,7 +200,7 @@ export function MetricWidgetComponentEditor({
           </Text>
         ) : (
           <Select
-            value={config.widgetId}
+            value={config.widgetId ?? ""}
             onChange={(event) => handleWidgetChange(event.target.value)}
           >
             <option value="" disabled>

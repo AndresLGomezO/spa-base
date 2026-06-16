@@ -12,7 +12,10 @@ import {
   componentKindsForSurface,
   isContainerComponent,
   isDashboardSectionComponent,
+  isMetricWidgetComponent,
   isUserComponent,
+  isViewFilterComponent,
+  isViewSearchComponent,
   MAX_NESTED_COLUMNS,
   type MotionPreset,
   type NestedLayoutRowNode,
@@ -33,6 +36,10 @@ import { LucideIconField } from "../../components/shared/LucideIconField";
 import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-binding";
 import { DashboardSectionComponentEditor } from "./DashboardSectionComponentEditor";
 import { UserComponentEditor } from "./UserComponentEditor";
+import { MetricWidgetComponentEditor } from "../metrics-row-designer/MetricWidgetComponentEditor";
+import { ViewSearchComponentEditor } from "../ui-builder/ViewSearchComponentEditor";
+import { ViewFilterComponentEditor } from "../ui-builder/ViewFilterComponentEditor";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
 import { TenantDashboardStaticImageValueEditor } from "./TenantDashboardStaticImageValueEditor";
 
@@ -45,6 +52,7 @@ export function DashboardLayoutDesignerComponentRowPanel({
 }: DashboardLayoutDesignerComponentRowPanelProps) {
   const { t } = useTranslation("common");
   const { editor, activeTabId } = useDashboardLayoutDesigner();
+  const { items } = useEntityCatalog();
 
   const binding = useMemo(
     () => resolveActiveLayoutBinding(editor, activeTabId),
@@ -107,7 +115,17 @@ export function DashboardLayoutDesignerComponentRowPanel({
             config={row.component}
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />
-        ) : (
+        ) : isMetricWidgetComponent(row.component) ? (
+          <MetricWidgetComponentEditor
+            config={row.component}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
+        ) : isViewSearchComponent(row.component) ? (
+          <ViewSearchComponentEditor
+            config={row.component}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
+        ) : isViewFilterComponent(row.component) ? null : (
           <ComponentConfigEditor
             config={row.component}
             fieldDescriptors={[]}
@@ -141,6 +159,14 @@ export function DashboardLayoutDesignerComponentRowPanel({
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      {row.type === "component" && isViewFilterComponent(row.component) ? (
+        <ViewFilterComponentEditor
+          config={row.component}
+          catalog={items}
+          onChange={(component) => binding.updateComponent(rowRef, component)}
+        />
+      ) : null}
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

@@ -188,14 +188,24 @@ export function Popover({
 
       const triggerRect = rootRef.current.getBoundingClientRect();
       const panelRect = panelRef.current.getBoundingClientRect();
-      const panelWidth = panelRect.width || panelRef.current.offsetWidth;
-      const panelHeight = panelRect.height || panelRef.current.offsetHeight;
+      const measuredWidth = panelRect.width || panelRef.current.offsetWidth;
+      const measuredHeight = panelRect.height || panelRef.current.offsetHeight;
+      const panelWidth = fullWidth ? triggerRect.width : measuredWidth;
+      const panelHeight = measuredHeight;
 
       if (panelWidth === 0 && panelHeight === 0) {
         return;
       }
 
       const panelSize = { width: panelWidth, height: panelHeight };
+      const matchTriggerWidth = (style: CSSProperties): CSSProperties =>
+        fullWidth
+          ? {
+              ...style,
+              width: triggerRect.width,
+              boxSizing: "border-box",
+            }
+          : style;
 
       if (isSidePlacement(placement)) {
         const { style, resolvedPlacement } = computeSidePanelPosition({
@@ -203,7 +213,7 @@ export function Popover({
           triggerRect,
           panelSize,
         });
-        setSidePanelStyle(style);
+        setSidePanelStyle(matchTriggerWidth(style));
         setResolvedSidePlacement(resolvedPlacement);
         return;
       }
@@ -217,7 +227,7 @@ export function Popover({
         triggerRect,
         panelSize,
       });
-      setSidePanelStyle(style);
+      setSidePanelStyle(matchTriggerWidth(style));
       setResolvedSidePlacement(resolvedPlacement);
     };
 
@@ -241,7 +251,7 @@ export function Popover({
       window.removeEventListener("resize", updatePosition);
       window.removeEventListener("scroll", updatePosition, true);
     };
-  }, [layer, mounted, open, placement, usePortal]);
+  }, [fullWidth, layer, mounted, open, placement, usePortal]);
 
   useEffect(() => {
     if (!open) return;
@@ -315,6 +325,7 @@ export function Popover({
   const resolvedPanelClassName = cn(
     "border-border bg-popover/95 text-popover-foreground w-56 rounded-xl border p-4 shadow-lg ring-1 ring-focus/10 backdrop-blur-md transition-all duration-200 ease-out",
     usePortal ? cn("fixed", portalZIndexClass) : "absolute z-50",
+    usePortal && fullWidth && "box-border w-auto min-w-0 max-w-none",
     sidePanelScrollable && "overflow-y-auto",
     panelClassName,
     !usePortal && placementClasses[placement],

@@ -1,11 +1,19 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
+import { MemoryRouter } from "react-router";
 import { describe, expect, it, vi } from "vitest";
 
 import { HomePage } from "./home-page";
 
 vi.mock("../auth/AuthContext", () => ({
   useAuth: () => ({ user: null }),
+}));
+
+vi.mock("../entities/entity-catalog-context", () => ({
+  useEntityCatalog: () => ({
+    getDefinition: () => undefined,
+    items: [],
+  }),
 }));
 
 vi.mock("../lib/api-client", () => ({
@@ -48,7 +56,9 @@ function renderHomePage() {
 
   return render(
     <QueryClientProvider client={queryClient}>
-      <HomePage />
+      <MemoryRouter>
+        <HomePage />
+      </MemoryRouter>
     </QueryClientProvider>,
   );
 }

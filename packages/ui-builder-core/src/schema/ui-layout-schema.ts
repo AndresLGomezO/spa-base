@@ -202,7 +202,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
     z
       .object({
         kind: z.literal("metric-kpi"),
-        metricDefinitionId: z.string().trim().min(1),
+        metricDefinitionId: z.string(),
         groupBindings: z.record(z.string(), metricBindingSourceSchema),
         dimensionBindings: z.record(z.string(), metricBindingSourceSchema),
         label: z.string().optional(),
@@ -358,6 +358,29 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
     z
       .object({
         kind: z.literal("page-list"),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("view-search"),
+        placeholder: z.string().optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
+        kind: z.literal("view-filter"),
+        filters: z
+          .array(
+            z
+              .object({
+                entityName: z.string().trim().min(1),
+                fieldName: z.string().trim().min(1),
+              })
+              .strict(),
+          )
+          .default([]),
         styles: z.array(styleRuleSchema).optional(),
       })
       .strict(),

@@ -21,4 +21,24 @@ describe("componentRowSchema metric-widget", () => {
       widgetId: "widget-1",
     });
   });
+
+  it("parses unconfigured metric-kpi component rows", () => {
+    const parsed = componentRowSchema.parse({
+      type: "component",
+      id: "row-2",
+      component: {
+        kind: "metric-kpi",
+        metricDefinitionId: "",
+        groupBindings: {},
+        dimensionBindings: {},
+      },
+    }) as ComponentRowNode;
+
+    expect(parsed.component).toEqual({
+      kind: "metric-kpi",
+      metricDefinitionId: "",
+      groupBindings: {},
+      dimensionBindings: {},
+    });
+  });
 });

@@ -29,7 +29,7 @@ export function MetricsRowDesignerPreviewPanel({
     previewMobileDeviceId,
     previewColorScheme,
   } = useMetricsRowDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
 
   const structureWrappers =
     useMetricsRowDesignerLayoutPreviewWrappers(withStructureChrome);
@@ -49,10 +49,11 @@ export function MetricsRowDesignerPreviewPanel({
         usePreviewSamples: true,
         listFilters: {},
         routeParams: {},
+        catalogItems: items,
         getDefinition,
         t,
       }),
-    [editor.definition, getDefinition, i18n.language, t],
+    [editor.definition, getDefinition, i18n.language, items, t],
   );
 
   const mobilePreviewDevice = useMemo(

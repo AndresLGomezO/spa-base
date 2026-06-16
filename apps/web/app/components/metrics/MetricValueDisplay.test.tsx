@@ -1,7 +1,7 @@
 import type React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, beforeEach, expect, it, vi } from "vitest";
 import { I18nextProvider } from "react-i18next";
 
 import { i18n } from "../../i18n";
@@ -19,13 +19,19 @@ vi.mock("../../hooks/metrics/useMetricRow", () => ({
   useMetricRow: vi.fn(),
 }));
 
+vi.mock("../../hooks/metrics/useActiveMetricDefinitions", () => ({
+  useActiveMetricDefinitions: vi.fn(),
+}));
+
 import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow";
+import { useActiveMetricDefinitions } from "../../hooks/metrics/useActiveMetricDefinitions";
 
 const mockUseMetricReadAccess = vi.mocked(useMetricReadAccess);
 const mockUseMetricDefinition = vi.mocked(useMetricDefinition);
 const mockUseMetricRow = vi.mocked(useMetricRow);
+const mockUseActiveMetricDefinitions = vi.mocked(useActiveMetricDefinitions);
 
 const definition = {
   id: "metric-1",
@@ -65,6 +71,14 @@ function renderDisplay(
 }
 
 describe("MetricValueDisplay", () => {
+  beforeEach(() => {
+    mockUseActiveMetricDefinitions.mockReturnValue({
+      data: [definition],
+      isLoading: false,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
+  });
+
   it("shows forbidden state when metricValue.read is denied", () => {
     mockUseMetricReadAccess.mockReturnValue("denied");
     mockUseMetricDefinition.mockReturnValue({
@@ -101,6 +115,53 @@ describe("MetricValueDisplay", () => {
     renderDisplay();
 
     expect(screen.getByText("Loading metric…")).toBeInTheDocument();
+  });
+
+  it("shows unconfigured state when metricDefinitionId is missing", () => {
+    mockUseActiveMetricDefinitions.mockReturnValue({
+      data: [],
+      isLoading: false,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
+    mockUseMetricReadAccess.mockReturnValue("pending");
+    mockUseMetricDefinition.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+      isSuccess: false,
+      isFetched: false,
+    } as unknown as ReturnType<typeof useMetricDefinition>);
+    mockUseMetricRow.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    renderDisplay({ metricDefinitionId: "" });
+
+    expect(
+      screen.getByText("Select a metric for this KPI."),
+    ).toBeInTheDocument();
+    expect(screen.queryByText("Loading metric…")).not.toBeInTheDocument();
+  });
+
+  it("shows error state when the row query fails", () => {
+    mockUseMetricReadAccess.mockReturnValue("allowed");
+    mockUseMetricDefinition.mockReturnValue({
+      data: definition,
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+      isFetched: true,
+    } as unknown as ReturnType<typeof useMetricDefinition>);
+    mockUseMetricRow.mockReturnValue({
+      data: null,
+      isLoading: false,
+      isError: true,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    renderDisplay();
+
+    expect(screen.getByText("Unable to load metric")).toBeInTheDocument();
   });
 
   it("renders the primary aggregation value", () => {

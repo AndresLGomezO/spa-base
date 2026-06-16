@@ -1,7 +1,28 @@
-import { Button, Text } from "@repo/ui";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+import { Pencil } from "lucide-react";
+
+import { useDataViewWithPagination } from "@repo/data-view";
+import { Button, DataTable, IconButton, Text } from "@repo/ui";
 
 import type { MetricDefinitionRecord } from "../../lib/api-client";
+import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
+import {
+  WebDataViewToolbar,
+  type DataViewColumnDescriptor,
+} from "../data-view";
 import { formatAggregationLabel } from "./metric-field-utils";
+
+function formatMetricStatus(
+  status: MetricDefinitionRecord["status"],
+  t: (
+    key: "metrics.statusValues.ACTIVE" | "metrics.statusValues.PAUSED",
+  ) => string,
+): string {
+  return status === "ACTIVE"
+    ? t("metrics.statusValues.ACTIVE")
+    : t("metrics.statusValues.PAUSED");
+}
 
 interface MetricDefinitionListProps {
   readonly items: readonly MetricDefinitionRecord[];
@@ -20,52 +41,143 @@ export function MetricDefinitionList({
   onCreate,
   onEdit,
 }: MetricDefinitionListProps) {
+  const { t } = useTranslation("common");
+  const paginationLabels = useTablePaginationLabels();
+
+  const columns = useMemo<
+    readonly DataViewColumnDescriptor<MetricDefinitionRecord>[]
+  >(
+    () => [
+      {
+        id: "name",
+        label: t("metrics.name"),
+        getValue: (item) => item.name,
+      },
+      {
+        id: "description",
+        label: t("metrics.descriptionLabel"),
+        getValue: (item) => item.description ?? "",
+      },
+      {
+        id: "sourceModel",
+        label: t("metrics.sourceModel"),
+        getValue: (item) => item.sourceModel,
+      },
+      {
+        id: "operation",
+        label: t("metrics.operation"),
+        getValue: (item) => formatAggregationLabel(item.aggregations),
+      },
+      {
+        id: "version",
+        label: t("metrics.version"),
+        getValue: (item) => item.version,
+      },
+      {
+        id: "status",
+        label: t("metrics.status"),
+        getValue: (item) => item.status,
+        formatValue: (value) =>
+          formatMetricStatus(value as MetricDefinitionRecord["status"], t),
+      },
+    ],
+    [t],
+  );
+
+  const dataView = useDataViewWithPagination(items, columns);
+
   if (isLoading) {
-    return <Text>Loading metrics…</Text>;
+    return (
+      <Text className="text-muted-foreground text-sm">{t("loading")}</Text>
+    );
   }
 
   return (
-    <div className="space-y-3">
-      {canCreate ? (
-        <Button type="button" onClick={onCreate}>
-          New metric
-        </Button>
-      ) : null}
-      {items.length === 0 ? (
-        <Text>No metric definitions yet.</Text>
-      ) : (
-        <ul className="divide-y rounded-md border">
-          {items.map((item) => (
-            <li
-              key={item.id}
-              className="flex items-center justify-between gap-3 px-4 py-3"
-            >
-              <div>
-                <Text className="font-medium">{item.name}</Text>
-                {item.description ? (
-                  <Text className="text-muted-foreground text-sm">
-                    {item.description}
-                  </Text>
-                ) : null}
-                <Text className="text-sm text-muted-foreground">
-                  {item.sourceModel} ·{" "}
-                  {formatAggregationLabel(item.aggregations)} · v{item.version}{" "}
-                  · {item.status}
-                </Text>
-              </div>
-              {canUpdate ? (
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onEdit(item.id)}
-                >
-                  Edit
-                </Button>
-              ) : null}
-            </li>
-          ))}
-        </ul>
-      )}
+    <div className="flex min-h-full flex-col gap-4">
+      <div className="flex flex-wrap items-center gap-3">
+        {canCreate ? (
+          <Button type="button" onClick={onCreate}>
+            {t("metrics.create")}
+          </Button>
+        ) : null}
+      </div>
+
+      <WebDataViewToolbar
+        {...dataView}
+        columns={columns}
+        filtersOpen={dataView.filtersOpen}
+        onFiltersOpenChange={dataView.setFiltersOpen}
+      />
+
+      <DataTable
+        columns={[
+          {
+            id: "name",
+            header: t("metrics.name"),
+            cell: (item) => item.name,
+          },
+          {
+            id: "description",
+            header: t("metrics.descriptionLabel"),
+            cell: (item) => item.description ?? "—",
+          },
+          {
+            id: "sourceModel",
+            header: t("metrics.sourceModel"),
+            cell: (item) => (
+              <span className="font-mono">{item.sourceModel}</span>
+            ),
+          },
+          {
+            id: "operation",
+            header: t("metrics.operation"),
+            cell: (item) => (
+              <span className="font-mono">
+                {formatAggregationLabel(item.aggregations)}
+              </span>
+            ),
+          },
+          {
+            id: "version",
+            header: t("metrics.version"),
+            cell: (item) => (
+              <span className="tabular-nums">{item.version}</span>
+            ),
+          },
+          {
+            id: "status",
+            header: t("metrics.status"),
+            cell: (item) => formatMetricStatus(item.status, t),
+          },
+        ]}
+        rows={dataView.pageItems}
+        getRowId={(item) => item.id}
+        page={dataView.page}
+        totalCount={dataView.totalCount}
+        onPageChange={dataView.setPage}
+        emptyMessage={t("metrics.empty")}
+        loadingMessage={t("table.loading")}
+        paginationLabels={paginationLabels}
+        aria-label={t("metrics.title")}
+        actionsColumn={
+          canUpdate
+            ? {
+                id: "actions",
+                header: t("entity.actions"),
+                headerClassName: "text-center",
+                cell: (item) => (
+                  <IconButton
+                    type="button"
+                    label={t("entity.edit")}
+                    onClick={() => onEdit(item.id)}
+                  >
+                    <Pencil className="size-4" />
+                  </IconButton>
+                ),
+              }
+            : undefined
+        }
+      />
     </div>
   );
 }

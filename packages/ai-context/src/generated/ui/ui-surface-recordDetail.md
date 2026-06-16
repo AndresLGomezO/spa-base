@@ -12,6 +12,8 @@ Display components + related-records. Stored as `recordDetail`.
 - `numeric`
 - `badge`
 - `metric-kpi`
+- `view-search`
+- `view-filter`
 - `related-records`
 
 ## Slice envelope example

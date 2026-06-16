@@ -19,8 +19,14 @@ export type DesignSurface =
   | "formModalFooter"
   | "metricStrip"
   | "metricRow"
+  | "metricWidget"
   | "dashboardSection"
   | "dashboardLayout";
+
+const VIEW_FILTER_KINDS: readonly UiComponentKind[] = [
+  "view-search",
+  "view-filter",
+];
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
@@ -30,6 +36,7 @@ const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "numeric",
   "badge",
   "metric-kpi",
+  ...VIEW_FILTER_KINDS,
 ];
 
 const METRIC_ROW_KINDS: readonly UiComponentKind[] = [
@@ -42,6 +49,7 @@ const MAIN_PAGE_KINDS: readonly UiComponentKind[] = [
   "page-toolbar",
   "page-metrics",
   "page-list",
+  ...VIEW_FILTER_KINDS,
 ];
 
 const RECORD_DETAIL_KINDS: readonly UiComponentKind[] = [
@@ -106,6 +114,8 @@ const DASHBOARD_CONTENT_KINDS: readonly UiComponentKind[] = [
   "image",
   "icon",
   "user",
+  "metric-widget",
+  ...VIEW_FILTER_KINDS,
 ];
 
 const DASHBOARD_LAYOUT_KINDS: readonly UiComponentKind[] = [
@@ -131,6 +141,8 @@ export function componentKindsForSurface(
       return DASHBOARD_CONTENT_KINDS;
     case "metricRow":
       return METRIC_ROW_KINDS;
+    case "metricWidget":
+      return LIST_ITEM_KINDS;
     case "dashboardLayout":
       return DASHBOARD_LAYOUT_KINDS;
     case "mainPage":

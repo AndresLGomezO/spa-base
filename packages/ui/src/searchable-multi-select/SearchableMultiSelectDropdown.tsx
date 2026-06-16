@@ -85,9 +85,10 @@ export function SearchableMultiSelectDropdown({
         open={open}
         onOpenChange={setOpen}
         placement="bottom-start"
+        layer="elevated"
         fullWidth
         className="w-full"
-        panelClassName="w-full max-w-none"
+        panelClassName="min-w-0"
         trigger={
           <Button
             type="button"

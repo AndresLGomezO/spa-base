@@ -273,7 +273,8 @@
       "sections": {
         "layout": "Layout components",
         "content": "Content components",
-        "form": "Form components"
+        "form": "Form components",
+        "dataControls": "Search & filter"
       },
       "options": {
         "nestedLayout": "Nested column",
@@ -403,7 +404,8 @@
       "widget": "Widget",
       "selectWidget": "Select a widget…",
       "unconfigured": "No widget selected",
-      "noWidgetsForEntity": "No metric widgets are defined for this entity."
+      "noWidgetsForEntity": "No metric widgets are defined for this entity.",
+      "noEntitiesWithWidgets": "No entities have metric widgets yet."
     },
     "widgets": {
       "selectLabel": "Widget",
@@ -430,6 +432,21 @@
       "discard": "Discard changes",
       "keepEditing": "Keep editing"
     }
+  },
+  "viewFilterComponents": {
+    "search": "Search",
+    "filter": "Filter",
+    "searchGlobalHint": "Search applies globally to the whole view via the URL q parameter. Searchable fields are inferred from all entities in the data model.",
+    "searchPlaceholder": "Search placeholder",
+    "activeFilters": "Filters",
+    "selectEntity": "Select an entity…",
+    "selectField": "Select a field…",
+    "tableEntity": "Entity",
+    "tableField": "Field",
+    "tableActions": "Actions",
+    "addFilter": "Add filter",
+    "saveFilter": "Save filter",
+    "removeFilter": "Remove filter"
   },
   "dashboardLayoutDesigner": {
     "title": "Dashboard Layout Designer",
@@ -923,6 +940,8 @@
       "imageSize": "Image size",
       "metrics": {
         "definition": "Metric definition",
+        "selectMetric": "Select a metric…",
+        "definitionMissing": "This metric definition is missing or inactive. Choose another metric.",
         "bindingType": "Binding source",
         "staticValue": "Static value",
         "filterField": "List filter field",
@@ -1335,7 +1354,14 @@
     "title": "Metrics",
     "description": "Define aggregation metrics that update when entity records change.",
     "createTitle": "Create metric",
+    "create": "New metric",
+    "empty": "No metric definitions yet.",
     "editTitle": "Edit metric",
+    "version": "Version",
+    "statusValues": {
+      "ACTIVE": "Active",
+      "PAUSED": "Paused"
+    },
     "name": "Metric name",
     "descriptionLabel": "Description (optional)",
     "descriptionPlaceholder": "What this metric measures and when to use it",
@@ -1437,7 +1463,9 @@
       "loading": "Loading metric…",
       "empty": "No value",
       "error": "Unable to load metric",
-      "forbidden": "Metric values are not available for your role."
+      "forbidden": "Metric values are not available for your role.",
+      "unconfigured": "Select a metric for this KPI.",
+      "unknown": "Metric definition not found."
     }
   },
   "hooks": {

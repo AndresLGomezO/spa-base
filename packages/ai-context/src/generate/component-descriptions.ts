@@ -392,6 +392,29 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
     properties: ["styles?"],
     example: JSON.stringify({ kind: "page-list" }, null, 2),
   },
+  "view-search": {
+    summary:
+      "Page-global search control bound to URL `q`; search scope covers all entities in the data model.",
+    properties: ["placeholder?", "styles?"],
+    example: JSON.stringify(
+      { kind: "view-search", placeholder: "Search…" },
+      null,
+      2,
+    ),
+  },
+  "view-filter": {
+    summary:
+      "Page-global filter control; pick entity/field pairs from the full data model on demand. Bound to URL `f.{entity}.{field}`.",
+    properties: ["filters", "styles?"],
+    example: JSON.stringify(
+      {
+        kind: "view-filter",
+        filters: [{ entityName: "account", fieldName: "accountType" }],
+      },
+      null,
+      2,
+    ),
+  },
 };
 
 export function buildComponentAtomMarkdown(kind: UiComponentKind): string {

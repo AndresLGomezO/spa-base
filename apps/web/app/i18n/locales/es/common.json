@@ -273,7 +273,8 @@
       "sections": {
         "layout": "Componentes de diseño",
         "content": "Componentes de contenido",
-        "form": "Componentes de formulario"
+        "form": "Componentes de formulario",
+        "dataControls": "Búsqueda y filtros"
       },
       "options": {
         "nestedLayout": "Columna anidada",
@@ -403,7 +404,8 @@
       "widget": "Widget",
       "selectWidget": "Seleccionar un widget…",
       "unconfigured": "Sin widget seleccionado",
-      "noWidgetsForEntity": "No hay widgets de métrica definidos para esta entidad."
+      "noWidgetsForEntity": "No hay widgets de métrica definidos para esta entidad.",
+      "noEntitiesWithWidgets": "Ninguna entidad tiene widgets de métrica todavía."
     },
     "widgets": {
       "selectLabel": "Widget",
@@ -430,6 +432,21 @@
       "discard": "Descartar cambios",
       "keepEditing": "Seguir editando"
     }
+  },
+  "viewFilterComponents": {
+    "search": "Búsqueda",
+    "filter": "Filtro",
+    "searchGlobalHint": "La búsqueda se aplica globalmente a toda la vista mediante el parámetro q de la URL. Los campos buscables se infieren de todas las entidades del modelo de datos.",
+    "searchPlaceholder": "Marcador de búsqueda",
+    "activeFilters": "Filtros",
+    "selectEntity": "Seleccionar una entidad…",
+    "selectField": "Seleccionar un campo…",
+    "tableEntity": "Entidad",
+    "tableField": "Campo",
+    "tableActions": "Acciones",
+    "addFilter": "Agregar filtro",
+    "saveFilter": "Guardar filtro",
+    "removeFilter": "Quitar filtro"
   },
   "dashboardLayoutDesigner": {
     "title": "Diseñador de layout del dashboard",
@@ -923,6 +940,8 @@
       "imageSize": "Tamaño de imagen",
       "metrics": {
         "definition": "Definición de métrica",
+        "selectMetric": "Selecciona una métrica…",
+        "definitionMissing": "Esta definición de métrica no existe o está inactiva. Elige otra métrica.",
         "bindingType": "Fuente del enlace",
         "staticValue": "Valor estático",
         "filterField": "Campo de filtro de lista",
@@ -1335,7 +1354,14 @@
     "title": "Métricas",
     "description": "Define métricas de agregación que se actualizan cuando cambian los registros.",
     "createTitle": "Crear métrica",
+    "create": "Nueva métrica",
+    "empty": "Aún no hay definiciones de métricas.",
     "editTitle": "Editar métrica",
+    "version": "Versión",
+    "statusValues": {
+      "ACTIVE": "Activa",
+      "PAUSED": "Pausada"
+    },
     "name": "Nombre de la métrica",
     "descriptionLabel": "Descripción (opcional)",
     "descriptionPlaceholder": "Qué mide esta métrica y cuándo usarla",
@@ -1437,7 +1463,9 @@
       "loading": "Cargando métrica…",
       "empty": "Sin valor",
       "error": "No se pudo cargar la métrica",
-      "forbidden": "Los valores de métricas no están disponibles para tu rol."
+      "forbidden": "Los valores de métricas no están disponibles para tu rol.",
+      "unconfigured": "Selecciona una métrica para este KPI.",
+      "unknown": "No se encontró la definición de la métrica."
     }
   },
   "hooks": {

@@ -4,7 +4,9 @@ import {
   Badge,
   Box,
   Calendar,
+  ChartLine,
   Columns2,
+  Filter,
   Hash,
   Image,
   Layers,
@@ -13,6 +15,7 @@ import {
   MousePointerClick,
   PanelTop,
   Route,
+  Search,
   Sparkles,
   TextCursorInput,
   Type,
@@ -26,7 +29,7 @@ import {
 
 export type CatalogEntryKind = UiComponentKind | "nested-layout";
 
-export type CatalogSectionId = "layout" | "content" | "form";
+export type CatalogSectionId = "layout" | "content" | "form" | "dataControls";
 
 interface ComponentCatalogEntry {
   readonly kind: CatalogEntryKind;
@@ -71,10 +74,19 @@ const FORM_SECTION: ComponentCatalogSection = {
   ],
 };
 
+const DATA_CONTROLS_SECTION: ComponentCatalogSection = {
+  id: "dataControls",
+  entries: [
+    { kind: "view-search", icon: Search },
+    { kind: "view-filter", icon: Filter },
+  ],
+};
+
 const ALL_SECTIONS: readonly ComponentCatalogSection[] = [
   LAYOUT_SECTION,
   CONTENT_SECTION,
   FORM_SECTION,
+  DATA_CONTROLS_SECTION,
 ];
 
 function isAllowedOnSurface(
@@ -100,6 +112,7 @@ export function getFilteredComponentCatalog(
 
   if (
     designSurface !== "metricRow" &&
+    designSurface !== "metricWidget" &&
     designSurface !== "dashboardLayout" &&
     designSurface !== "dashboardSection"
   ) {
@@ -112,15 +125,19 @@ export function getFilteredComponentCatalog(
     }
 
     const dashboardExtras =
-      designSurface === "dashboardLayout" ||
-      designSurface === "dashboardSection"
+      designSurface === "dashboardLayout"
         ? [
             { kind: "user" as const, icon: UserRound },
-            ...(designSurface === "dashboardLayout"
-              ? [{ kind: "dashboard-section" as const, icon: LayoutGrid }]
-              : []),
+            { kind: "dashboard-section" as const, icon: LayoutGrid },
           ]
-        : [{ kind: "metric-widget" as const, icon: LayoutGrid }];
+        : designSurface === "dashboardSection"
+          ? [
+              { kind: "user" as const, icon: UserRound },
+              { kind: "metric-widget" as const, icon: LayoutGrid },
+            ]
+          : designSurface === "metricWidget"
+            ? [{ kind: "metric-kpi" as const, icon: ChartLine }]
+            : [{ kind: "metric-widget" as const, icon: LayoutGrid }];
 
     return {
       ...section,
