@@ -3,6 +3,7 @@ import type { DashboardSectionDefinition } from "@repo/entities";
 import { putTenantDashboardLayoutInputSchema } from "@repo/entities";
 import {
   ensureContainerRoot,
+  migrateViewSearchFilterLayout,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
@@ -21,12 +22,12 @@ function normalizeSectionList(
 ): DashboardSectionDefinition[] {
   return sections.map((section) => ({
     ...section,
-    layout: ensureContainerRoot(section.layout),
+    layout: migrateViewSearchFilterLayout(ensureContainerRoot(section.layout)),
   }));
 }
 
 function normalizeDashboardLayout(layout: UiLayoutDocument): UiLayoutDocument {
-  return ensureContainerRoot(layout);
+  return migrateViewSearchFilterLayout(ensureContainerRoot(layout));
 }
 
 function resolveInitialDashboardLayout(

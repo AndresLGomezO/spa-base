@@ -180,7 +180,16 @@ export function renderUiComponent(
   }
 
   if (isViewSearchComponent(config)) {
-    return context.viewSearchRenderer?.(config) ?? null;
+    return (
+      context.viewFilterRenderer?.({
+        kind: "view-filter",
+        enableSearch: true,
+        enableFilters: false,
+        filters: [],
+        searchPlaceholder: config.placeholder,
+        styles: config.styles,
+      }) ?? null
+    );
   }
 
   if (isViewFilterComponent(config)) {

@@ -346,6 +346,7 @@ export function Popover({
       role="dialog"
       aria-modal="false"
       aria-label={title}
+      data-popover-panel
       style={usePortal ? sidePanelStyle : undefined}
       className={resolvedPanelClassName}
       onMouseEnter={handleHoverEnter}

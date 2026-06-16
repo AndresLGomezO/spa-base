@@ -15,7 +15,6 @@ import {
   isMetricWidgetComponent,
   isUserComponent,
   isViewFilterComponent,
-  isViewSearchComponent,
   MAX_NESTED_COLUMNS,
   type MotionPreset,
   type NestedLayoutRowNode,
@@ -37,7 +36,6 @@ import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-b
 import { DashboardSectionComponentEditor } from "./DashboardSectionComponentEditor";
 import { UserComponentEditor } from "./UserComponentEditor";
 import { MetricWidgetComponentEditor } from "../metrics-row-designer/MetricWidgetComponentEditor";
-import { ViewSearchComponentEditor } from "../ui-builder/ViewSearchComponentEditor";
 import { ViewFilterComponentEditor } from "../ui-builder/ViewFilterComponentEditor";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
@@ -117,11 +115,6 @@ export function DashboardLayoutDesignerComponentRowPanel({
           />
         ) : isMetricWidgetComponent(row.component) ? (
           <MetricWidgetComponentEditor
-            config={row.component}
-            onChange={(component) => binding.updateComponent(rowRef, component)}
-          />
-        ) : isViewSearchComponent(row.component) ? (
-          <ViewSearchComponentEditor
             config={row.component}
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />

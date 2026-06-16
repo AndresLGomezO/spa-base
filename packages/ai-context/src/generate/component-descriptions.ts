@@ -394,7 +394,7 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
   },
   "view-search": {
     summary:
-      "Page-global search control bound to URL `q`; search scope covers all entities in the data model.",
+      "Legacy component kind; migrated to `view-filter` with `enableSearch: true`. Prefer `view-filter`.",
     properties: ["placeholder?", "styles?"],
     example: JSON.stringify(
       { kind: "view-search", placeholder: "Search…" },
@@ -404,11 +404,20 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
   },
   "view-filter": {
     summary:
-      "Page-global filter control; pick entity/field pairs from the full data model on demand. Bound to URL `f.{entity}.{field}`.",
-    properties: ["filters", "styles?"],
+      "Unified search and filter toolbar for a view. Toggle search and/or filters in the designer. Search binds to URL `q`; filters bind to URL `f.{entity}.{field}`.",
+    properties: [
+      "enableSearch?",
+      "enableFilters?",
+      "searchPlaceholder?",
+      "filters",
+      "styles?",
+    ],
     example: JSON.stringify(
       {
         kind: "view-filter",
+        enableSearch: true,
+        enableFilters: true,
+        searchPlaceholder: "Search…",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },
       null,

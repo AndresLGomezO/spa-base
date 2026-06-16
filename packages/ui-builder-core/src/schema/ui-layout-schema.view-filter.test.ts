@@ -3,7 +3,7 @@ import { describe, expect, it } from "vitest";
 import { componentRowSchema } from "@repo/ui-builder-core";
 
 describe("componentRowSchema view filter components", () => {
-  it("parses view-search rows without entity configuration", () => {
+  it("parses legacy view-search rows for backward compatibility", () => {
     const parsed = componentRowSchema.parse({
       type: "component",
       id: "row-search",
@@ -19,12 +19,15 @@ describe("componentRowSchema view filter components", () => {
     });
   });
 
-  it("parses configured view-filter rows with filter entries", () => {
+  it("parses unified view-filter rows with search and filter flags", () => {
     const parsed = componentRowSchema.parse({
       type: "component",
       id: "row-filter",
       component: {
         kind: "view-filter",
+        enableSearch: true,
+        enableFilters: true,
+        searchPlaceholder: "Search…",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },
     });
@@ -32,6 +35,9 @@ describe("componentRowSchema view filter components", () => {
     expect(parsed).toMatchObject({
       component: {
         kind: "view-filter",
+        enableSearch: true,
+        enableFilters: true,
+        searchPlaceholder: "Search…",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },
     });

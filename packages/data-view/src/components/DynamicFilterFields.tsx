@@ -38,7 +38,7 @@ export function DynamicFilterFields<T>({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+    <div className="grid min-w-0 w-full grid-cols-2 gap-4 lg:grid-cols-3">
       {filterableColumns.map((column) => {
         const options = filterOptions[column.id] ?? [];
         if (options.length === 0) {

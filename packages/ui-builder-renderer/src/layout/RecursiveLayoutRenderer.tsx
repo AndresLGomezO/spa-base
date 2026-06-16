@@ -330,6 +330,10 @@ function rowStackShellClassName(
     return undefined;
   }
 
+  if (component?.kind === "view-filter") {
+    return "min-w-0 w-full max-w-full";
+  }
+
   if (component && prefersInlineContentWidth(component)) {
     return parentIsFlexWrapRow
       ? "max-w-full shrink-0"
@@ -341,6 +345,20 @@ function rowStackShellClassName(
   }
 
   return "min-w-0 shrink-0";
+}
+
+function rowWrapperStyleClassName(
+  rowStyles: ReturnType<typeof mergeRowWrapperStyles>,
+  component?: UiComponentConfig,
+): string {
+  if (component?.kind === "view-filter") {
+    return rowStyles.className
+      .split(/\s+/)
+      .filter((part) => part.length > 0 && part !== "truncate")
+      .join(" ");
+  }
+
+  return rowStyles.className;
 }
 
 function layoutGridStretchClassName(
@@ -791,7 +809,7 @@ function renderRow(
           wizardProgressRowClass,
           inlineContentRowClass,
           formSlotClassName,
-          rowStyles.className,
+          rowWrapperStyleClassName(rowStyles, row.component),
           motionClass,
           displayRange.className,
         ]

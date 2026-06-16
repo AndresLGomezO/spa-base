@@ -434,8 +434,9 @@
     }
   },
   "viewFilterComponents": {
-    "search": "Search",
-    "filter": "Filter",
+    "searchAndFilters": "Search & filters",
+    "enableSearch": "Enable search",
+    "enableFilters": "Enable filters",
     "searchGlobalHint": "Search applies globally to the whole view via the URL q parameter. Searchable fields are inferred from all entities in the data model.",
     "searchPlaceholder": "Search placeholder",
     "activeFilters": "Filters",

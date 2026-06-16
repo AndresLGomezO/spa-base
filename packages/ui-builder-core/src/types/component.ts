@@ -287,6 +287,9 @@ export interface ViewSearchComponentConfig {
 
 export interface ViewFilterComponentConfig {
   readonly kind: "view-filter";
+  readonly enableSearch?: boolean;
+  readonly enableFilters?: boolean;
+  readonly searchPlaceholder?: string;
   readonly filters: readonly ViewFilterEntry[];
   readonly styles?: readonly StyleRule[];
 }

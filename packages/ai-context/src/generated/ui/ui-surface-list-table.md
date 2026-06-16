@@ -10,7 +10,6 @@ Set `listViewType: "table"`. Columns are field path strings. Optional `showActio
 - `icon`
 - `user`
 - `metric-widget`
-- `view-search`
 - `view-filter`
 
 ## Slice envelope example

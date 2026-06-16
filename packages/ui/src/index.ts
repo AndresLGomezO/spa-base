@@ -240,7 +240,9 @@ export { toast } from "sonner";
 export { SearchField, type SearchFieldProps } from "./search-field/SearchField";
 export {
   FilterPanel,
-  type FilterBadge,
+  FilterPanelBody,
+  useFilterPanelDismiss,
+  type FilterPanelBodyProps,
   type FilterPanelProps,
 } from "./filter-panel/FilterPanel";
 export {

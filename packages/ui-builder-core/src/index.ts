@@ -16,6 +16,7 @@ export {
   resolveColumnWidthPercentInput,
   buildGridTemplateColumnsFromPercents,
 } from "./layout/resolve-column-width-percents.js";
+export { migrateViewSearchFilterLayout } from "./layout/migrate-view-search-filter-layout.js";
 export {
   RESPONSIVE_GRID_STYLE_PROPERTIES,
   RESPONSIVE_GRID_TAILWIND_SAFELIST,

@@ -157,6 +157,18 @@ describe("applyStyleRules", () => {
         "column",
       ),
     ).toBe("w-fit max-w-full");
+    expect(
+      stackShellWidthClassName(
+        [{ property: "alignItems", value: "end" }],
+        "column",
+      ),
+    ).toBe("w-full");
+    expect(
+      stackShellWidthClassName(
+        [{ property: "justifyContent", value: "end" }],
+        "row",
+      ),
+    ).toBe("w-full");
   });
 
   it("builds stack shell classes with min-w-0 when width is capped", () => {

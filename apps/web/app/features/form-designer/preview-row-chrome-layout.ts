@@ -217,7 +217,6 @@ export function resolvePreviewRowChromeLayoutClasses(options: {
   if (
     options.parentUsesFlexWrap &&
     options.parentStackDirection === "row" &&
-    !options.preferFlexGrow &&
     options.row
   ) {
     const flexItemClass = flexWrapRowItemClassName(
@@ -261,6 +260,13 @@ export function resolvePreviewRowChromeLayoutClasses(options: {
     return {
       shell: "relative flex min-h-0 min-w-0 flex-1 flex-col",
       inner: "relative z-0 flex min-h-0 min-w-0 flex-1 flex-col",
+    };
+  }
+
+  if (useContentWidth) {
+    return {
+      shell: "relative flex min-h-0 min-w-0 w-fit max-w-full shrink-0 flex-col",
+      inner: "relative z-0 flex min-h-0 min-w-0 flex-col",
     };
   }
 

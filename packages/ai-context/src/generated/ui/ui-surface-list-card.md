@@ -10,7 +10,6 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
 - `icon`
 - `user`
 - `metric-widget`
-- `view-search`
 - `view-filter`
 
 ## Slice envelope example

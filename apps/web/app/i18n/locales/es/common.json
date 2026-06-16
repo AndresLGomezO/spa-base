@@ -434,8 +434,9 @@
     }
   },
   "viewFilterComponents": {
-    "search": "Búsqueda",
-    "filter": "Filtro",
+    "searchAndFilters": "Búsqueda y filtros",
+    "enableSearch": "Activar búsqueda",
+    "enableFilters": "Activar filtros",
     "searchGlobalHint": "La búsqueda se aplica globalmente a toda la vista mediante el parámetro q de la URL. Los campos buscables se infieren de todas las entidades del modelo de datos.",
     "searchPlaceholder": "Marcador de búsqueda",
     "activeFilters": "Filtros",

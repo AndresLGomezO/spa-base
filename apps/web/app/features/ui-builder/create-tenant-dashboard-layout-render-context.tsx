@@ -19,7 +19,6 @@ import { createEntityLayoutRenderContext } from "./create-entity-layout-render-c
 import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
 import { listFiltersForEntity } from "./list-filters-for-entity";
 import { ViewFilterComponent } from "./ViewFilterComponent";
-import { ViewSearchComponent } from "./ViewSearchComponent";
 import { resolveStaticImageSrc } from "@repo/entities";
 
 interface CreateTenantDashboardLayoutRenderContextOptions {
@@ -110,7 +109,6 @@ export function createTenantDashboardLayoutRenderContext(
             }),
         })
       : undefined,
-    viewSearchRenderer: (config) => <ViewSearchComponent config={config} />,
     viewFilterRenderer: (config) => <ViewFilterComponent config={config} />,
     dashboardSectionRenderer: createDashboardSectionRenderer({
       sections,

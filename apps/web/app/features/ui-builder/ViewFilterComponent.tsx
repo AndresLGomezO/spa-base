@@ -1,16 +1,24 @@
-import type {
-  ViewFilterComponentConfig,
-  ViewFilterEntry,
+import {
+  parseFlexLayoutFromStyles,
+  type ViewFilterComponentConfig,
+  type ViewFilterEntry,
 } from "@repo/ui-builder-core";
 import type { SerializableEntityDefinition } from "@repo/entities";
-import { FilterPanel } from "@repo/ui";
+import {
+  FilterPanel,
+  FilterPanelBody,
+  SearchField,
+  useFilterPanelDismiss,
+} from "@repo/ui";
 import {
   DynamicFilterFields,
   type UseDataViewUrlStateResult,
 } from "@repo/data-view";
 import type { DataViewColumnDescriptor } from "@repo/data-view";
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
+
+import { cn } from "@repo/theme/utils";
 
 import { buildEntityColumnDescriptors } from "../../components/entity/build-entity-column-descriptors";
 import { useEntityFilterOptions } from "../../hooks/useEntityFilterOptions";
@@ -21,6 +29,14 @@ import { useOptionalViewFilterPageState } from "./view-filter-page-context";
 
 interface ViewFilterComponentProps {
   readonly config: ViewFilterComponentConfig;
+}
+
+function resolveEnableSearch(config: ViewFilterComponentConfig): boolean {
+  return config.enableSearch === true;
+}
+
+function resolveEnableFilters(config: ViewFilterComponentConfig): boolean {
+  return config.enableFilters !== false;
 }
 
 function remapFilterOptionsToQualifiedIds(
@@ -183,7 +199,11 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
   const { items } = useEntityCatalog();
   const pageState = useOptionalViewFilterPageState();
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const rootRef = useRef<HTMLDivElement>(null);
   const { t } = useTranslation("common");
+
+  const enableSearch = resolveEnableSearch(config);
+  const enableFilters = resolveEnableFilters(config);
 
   const groups = useMemo(
     () => groupFiltersByEntity(config.filters, items),
@@ -206,7 +226,13 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
     [groups],
   );
 
-  if (!pageState || columns.length === 0) {
+  useFilterPanelDismiss(
+    enableFilters ? filtersOpen : false,
+    setFiltersOpen,
+    rootRef,
+  );
+
+  if (!pageState || (!enableSearch && !enableFilters)) {
     return null;
   }
 
@@ -216,44 +242,114 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
     filtersClearAll: t("dataView.filtersClearAll"),
   };
 
-  const activeBadges = columns.flatMap((column) => {
-    const values = pageState.filters[column.id] ?? [];
-    return values.map((value) => ({
-      id: `${column.id}:${value}`,
-      label: `${column.label}: ${value}`,
-      onRemove: () => {
-        pageState.setFilter(
-          column.id,
-          values.filter((item) => item !== value),
-        );
-      },
-    }));
-  });
+  const activeBadges = enableFilters
+    ? columns.flatMap((column) => {
+        const values = pageState.filters[column.id] ?? [];
+        return values.map((value) => ({
+          id: `${column.id}:${value}`,
+          label: `${column.label}: ${value}`,
+          onRemove: () => {
+            pageState.setFilter(
+              column.id,
+              values.filter((item) => item !== value),
+            );
+          },
+        }));
+      })
+    : [];
+
+  const filterBody = (
+    <div className="flex min-w-0 w-full flex-col gap-4">
+      {groups.map((group) => (
+        <ViewFilterEntityGroup
+          key={group.entityName}
+          group={group}
+          pageState={pageState}
+        />
+      ))}
+    </div>
+  );
+
+  const toolbarFlex = parseFlexLayoutFromStyles(config.styles);
+  const toolbarRowClassName = cn(
+    "flex w-full min-w-0 flex-nowrap items-end gap-2",
+    toolbarFlex.justify === "end" && "justify-end",
+    toolbarFlex.justify === "center" && "justify-center",
+    toolbarFlex.justify === "between" && "justify-between",
+  );
+
+  const searchFieldClassName = "max-w-none min-w-0 w-full";
+
+  const searchField = enableSearch ? (
+    <div className="min-w-0 flex-1">
+      <SearchField
+        value={pageState.search}
+        onChange={pageState.setSearch}
+        placeholder={
+          config.searchPlaceholder?.trim() || t("dataView.searchPlaceholder")
+        }
+        ariaLabel={
+          config.searchPlaceholder?.trim() || t("dataView.searchPlaceholder")
+        }
+        className={searchFieldClassName}
+      />
+    </div>
+  ) : null;
 
   return (
-    <FilterPanel
-      open={filtersOpen}
-      onOpenChange={setFiltersOpen}
-      activeBadges={activeBadges}
-      triggerLabel={labels.filtersTrigger}
-      clearAllLabel={labels.filtersClearAll}
-      removeAriaLabel={labels.removeBadge}
-      onClearAll={() => {
-        for (const column of columns) {
-          pageState.setFilter(column.id, []);
-        }
-      }}
-      badgesBelowToolbar
+    <div
+      ref={rootRef}
+      className={cn(
+        "w-full min-w-0 max-w-full overflow-x-hidden",
+        filtersOpen && "relative isolate z-30",
+      )}
+      data-testid="view-filter-toolbar"
     >
-      <div className="flex flex-col gap-4">
-        {groups.map((group) => (
-          <ViewFilterEntityGroup
-            key={group.entityName}
-            group={group}
-            pageState={pageState}
-          />
-        ))}
+      <div className={toolbarRowClassName}>
+        {enableFilters ? (
+          <div className="min-w-0 w-full flex-1">
+            <FilterPanel
+              open={filtersOpen}
+              onOpenChange={setFiltersOpen}
+              activeBadges={activeBadges}
+              triggerLabel={labels.filtersTrigger}
+              clearAllLabel={labels.filtersClearAll}
+              removeAriaLabel={labels.removeBadge}
+              onClearAll={() => {
+                for (const column of columns) {
+                  pageState.setFilter(column.id, []);
+                }
+              }}
+              badgesBelowToolbar
+              renderBody={false}
+              compact
+              toolbarFillWidth
+              manageDismiss={false}
+              toolbarPrefix={searchField ?? undefined}
+            >
+              {filterBody}
+            </FilterPanel>
+          </div>
+        ) : (
+          searchField
+        )}
       </div>
-    </FilterPanel>
+      {enableFilters ? (
+        <div className="mt-0 w-full min-w-0 max-w-full overflow-x-hidden">
+          <FilterPanelBody
+            open={filtersOpen}
+            onClearAll={() => {
+              for (const column of columns) {
+                pageState.setFilter(column.id, []);
+              }
+            }}
+            clearAllLabel={labels.filtersClearAll}
+            disabled={false}
+          >
+            {filterBody}
+          </FilterPanelBody>
+        </div>
+      ) : null}
+    </div>
   );
 }

@@ -45,16 +45,12 @@ describe("collectViewFilterDescriptors", () => {
                       id: "row-filter",
                       component: {
                         kind: "view-filter",
+                        enableSearch: true,
+                        enableFilters: true,
+                        searchPlaceholder: "Search…",
                         filters: [
                           { entityName: "account", fieldName: "accountType" },
                         ],
-                      },
-                    },
-                    {
-                      type: "component",
-                      id: "row-search",
-                      component: {
-                        kind: "view-search",
                       },
                     },
                     {

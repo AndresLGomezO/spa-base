@@ -371,6 +371,9 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
     z
       .object({
         kind: z.literal("view-filter"),
+        enableSearch: z.boolean().optional(),
+        enableFilters: z.boolean().optional(),
+        searchPlaceholder: z.string().optional(),
         filters: z
           .array(
             z

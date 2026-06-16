@@ -1,12 +1,15 @@
 # Component: view-filter
 
-Page-global filter control; pick entity/field pairs from the full data model on demand. Bound to URL `f.{entity}.{field}`.
+Unified search and filter toolbar for a view. Toggle search and/or filters in the designer. Search binds to URL `q`; filters bind to URL `f.{entity}.{field}`.
 
-**Properties:** filters, styles?
+**Properties:** enableSearch?, enableFilters?, searchPlaceholder?, filters, styles?
 
 ```json
 {
   "kind": "view-filter",
+  "enableSearch": true,
+  "enableFilters": true,
+  "searchPlaceholder": "Search…",
   "filters": [
     {
       "entityName": "account",

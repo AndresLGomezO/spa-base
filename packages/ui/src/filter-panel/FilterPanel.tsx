@@ -6,7 +6,7 @@ import { cn } from "@repo/theme/utils";
 import { Button } from "../button/Button";
 import { FilterValueBadge } from "../filter-value-badge/FilterValueBadge";
 
-export interface FilterBadge {
+interface FilterBadge {
   readonly id: string;
   readonly label: string;
   readonly onRemove: () => void;
@@ -25,6 +25,14 @@ export interface FilterPanelProps {
   readonly toolbarPrefix?: ReactNode;
   readonly sibling?: ReactNode;
   readonly badgesBelowToolbar?: boolean;
+  /** When false, only the toolbar is rendered (body rendered separately). */
+  readonly renderBody?: boolean;
+  /** Compact toolbar that hugs content width. */
+  readonly compact?: boolean;
+  /** When true with compact, toolbar spans full width (search can flex). */
+  readonly toolbarFillWidth?: boolean;
+  /** When false, click-outside dismiss is handled by a parent container. */
+  readonly manageDismiss?: boolean;
 }
 
 interface FilterPanelToolbarProps {
@@ -33,9 +41,11 @@ interface FilterPanelToolbarProps {
   readonly sibling?: ReactNode;
   readonly badgesContent: ReactNode;
   readonly inlineBadges: boolean;
+  readonly compact?: boolean;
+  readonly toolbarFillWidth?: boolean;
 }
 
-interface FilterPanelBodyProps {
+export interface FilterPanelBodyProps {
   readonly open: boolean;
   readonly children: ReactNode;
   readonly onClearAll?: () => void;
@@ -43,26 +53,31 @@ interface FilterPanelBodyProps {
   readonly disabled: boolean;
 }
 
-function FilterPanelBody({
+export function FilterPanelBody({
   open,
   children,
   onClearAll,
   clearAllLabel,
   disabled,
 }: FilterPanelBodyProps) {
+  const transitionClassName =
+    "duration-500 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none";
+
   return (
     <div
       data-expanded={open ? "true" : "false"}
       className={cn(
-        "grid transition-[grid-template-rows] duration-300 ease-out motion-reduce:transition-none",
+        "grid transition-[grid-template-rows]",
+        transitionClassName,
         open ? "grid-rows-[1fr]" : "grid-rows-[0fr]",
       )}
       aria-hidden={!open}
     >
-      <div className={cn("overflow-hidden", open && "overflow-visible")}>
+      <div className="min-h-0 overflow-hidden">
         <div
           className={cn(
-            "space-y-4 px-2 pt-4 transition-opacity duration-300 ease-out motion-reduce:transition-none",
+            "space-y-4 px-2 pt-4 transition-opacity",
+            transitionClassName,
             open ? "opacity-100" : "pointer-events-none opacity-0",
           )}
           inert={open ? undefined : true}
@@ -92,10 +107,25 @@ function FilterPanelToolbar({
   sibling,
   badgesContent,
   inlineBadges,
+  compact = false,
+  toolbarFillWidth = false,
 }: FilterPanelToolbarProps) {
+  const fillWidth = compact && toolbarFillWidth;
+
   return (
-    <div className="flex w-full min-w-0 flex-col gap-2">
-      <div className="flex w-full min-w-0 items-end gap-1.5 md:items-center md:gap-2">
+    <div
+      className={cn(
+        "flex min-w-0 flex-col gap-2",
+        fillWidth || !compact ? "w-full min-w-0" : "w-fit max-w-full shrink-0",
+      )}
+    >
+      <div
+        className={cn(
+          "flex min-w-0 flex-nowrap items-end gap-1.5 md:gap-2",
+          !compact && "md:items-center",
+          fillWidth || !compact ? "w-full min-w-0" : "w-fit max-w-full",
+        )}
+      >
         {triggerButton}
         {toolbarPrefix}
         {inlineBadges && badgesContent ? (
@@ -115,39 +145,47 @@ function FilterPanelToolbar({
       ) : null}
 
       {!inlineBadges && badgesContent ? (
-        <div className="flex flex-wrap items-center gap-2">{badgesContent}</div>
+        <div
+          className={cn(
+            "flex flex-wrap items-center gap-2",
+            fillWidth && "w-full min-w-0",
+          )}
+        >
+          {badgesContent}
+        </div>
       ) : null}
     </div>
   );
 }
 
-export function FilterPanel({
-  open,
-  onOpenChange,
-  activeBadges,
-  children,
-  triggerLabel,
-  clearAllLabel,
-  removeAriaLabel,
-  onClearAll,
-  disabled = false,
-  toolbarPrefix,
-  sibling,
-  badgesBelowToolbar = false,
-}: FilterPanelProps) {
-  const rootRef = useRef<HTMLDivElement>(null);
-
+export function useFilterPanelDismiss(
+  open: boolean,
+  onOpenChange: (open: boolean) => void,
+  rootRef: React.RefObject<HTMLElement | null>,
+  enabled = true,
+) {
   const close = useCallback(() => {
     onOpenChange(false);
   }, [onOpenChange]);
 
   useEffect(() => {
-    if (!open) {
+    if (!enabled || !open) {
       return;
     }
 
     function isInsidePanel(target: Node | null | undefined): boolean {
-      return target != null && rootRef.current?.contains(target) === true;
+      if (target == null) {
+        return false;
+      }
+
+      if (rootRef.current?.contains(target) === true) {
+        return true;
+      }
+
+      return (
+        target instanceof Element &&
+        target.closest("[data-popover-panel]") != null
+      );
     }
 
     function handlePointerDown(event: PointerEvent) {
@@ -174,7 +212,30 @@ export function FilterPanel({
       });
       document.removeEventListener("keydown", handleKeyDown);
     };
-  }, [close, open]);
+  }, [close, enabled, open, rootRef]);
+}
+
+export function FilterPanel({
+  open,
+  onOpenChange,
+  activeBadges,
+  children,
+  triggerLabel,
+  clearAllLabel,
+  removeAriaLabel,
+  onClearAll,
+  disabled = false,
+  toolbarPrefix,
+  sibling,
+  badgesBelowToolbar = false,
+  renderBody = true,
+  compact = false,
+  toolbarFillWidth = false,
+  manageDismiss = true,
+}: FilterPanelProps) {
+  const rootRef = useRef<HTMLDivElement>(null);
+
+  useFilterPanelDismiss(open, onOpenChange, rootRef, manageDismiss);
 
   const triggerButton = (
     <Button
@@ -191,7 +252,7 @@ export function FilterPanel({
       {triggerLabel}
       <ChevronDown
         className={cn(
-          "h-4 w-4 transition-transform duration-300 ease-out motion-reduce:transition-none",
+          "h-4 w-4 transition-transform duration-300 ease-[cubic-bezier(0.32,0.72,0,1)] motion-reduce:transition-none",
           open && "rotate-180",
         )}
       />
@@ -213,27 +274,50 @@ export function FilterPanel({
       ))
     : null;
 
+  const toolbar = (
+    <FilterPanelToolbar
+      triggerButton={triggerButton}
+      toolbarPrefix={toolbarPrefix}
+      sibling={sibling}
+      badgesContent={badgesContent}
+      inlineBadges={!badgesBelowToolbar}
+      compact={compact}
+      toolbarFillWidth={toolbarFillWidth}
+    />
+  );
+
+  const body = (
+    <FilterPanelBody
+      open={open}
+      onClearAll={onClearAll}
+      clearAllLabel={clearAllLabel}
+      disabled={disabled}
+    >
+      {children}
+    </FilterPanelBody>
+  );
+
+  if (!renderBody) {
+    return (
+      <div
+        ref={rootRef}
+        className={cn(
+          compact && toolbarFillWidth && "w-full min-w-0",
+          open && "relative z-30 isolate",
+        )}
+      >
+        {toolbar}
+      </div>
+    );
+  }
+
   return (
     <div
       ref={rootRef}
       className={cn("flex flex-col gap-2", open && "relative z-30 isolate")}
     >
-      <FilterPanelToolbar
-        triggerButton={triggerButton}
-        toolbarPrefix={toolbarPrefix}
-        sibling={sibling}
-        badgesContent={badgesContent}
-        inlineBadges={!badgesBelowToolbar}
-      />
-
-      <FilterPanelBody
-        open={open}
-        onClearAll={onClearAll}
-        clearAllLabel={clearAllLabel}
-        disabled={disabled}
-      >
-        {children}
-      </FilterPanelBody>
+      {toolbar}
+      {body}
     </div>
   );
 }

@@ -9,7 +9,6 @@ import type {
   MetricKpiComponentConfig,
   MetricKpiPresentation,
   MetricWidgetComponentConfig,
-  ViewSearchComponentConfig,
   ViewFilterComponentConfig,
   WizardActionsComponentConfig,
   WizardProgressComponentConfig,
@@ -116,9 +115,6 @@ export interface LayoutRenderContext {
   readonly pageToolbarRenderer?: () => ReactNode;
   readonly pageMetricsRenderer?: () => ReactNode;
   readonly pageListRenderer?: () => ReactNode;
-  readonly viewSearchRenderer?: (
-    config: ViewSearchComponentConfig,
-  ) => ReactNode;
   readonly viewFilterRenderer?: (
     config: ViewFilterComponentConfig,
   ) => ReactNode;

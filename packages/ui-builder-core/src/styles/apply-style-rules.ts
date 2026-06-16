@@ -483,11 +483,11 @@ export function stackShellWidthClassName(
     return "w-full max-w-full min-w-0";
   }
 
-  if (stackDirection === "column" && (align === "start" || align === "end")) {
+  if (stackDirection === "column" && align === "start") {
     return "w-fit max-w-full";
   }
 
-  if (stackDirection === "row" && (justify === "start" || justify === "end")) {
+  if (stackDirection === "row" && justify === "start") {
     return "w-fit max-w-full";
   }
 

@@ -17,6 +17,7 @@ import {
   regenerateComponentRowSubtree,
   regenerateNestedLayoutRowSubtree,
 } from "../validation/regenerate-layout-ids.js";
+import { migrateViewSearchFilterLayout } from "../layout/migrate-view-search-filter-layout.js";
 
 export const MAX_ROOT_COLUMNS = 6;
 export const MAX_NESTED_COLUMNS = 6;
@@ -49,15 +50,11 @@ export function createDefaultComponent(
     };
   }
 
-  if (kind === "view-search") {
-    return {
-      kind: "view-search",
-    };
-  }
-
-  if (kind === "view-filter") {
+  if (kind === "view-search" || kind === "view-filter") {
     return {
       kind: "view-filter",
+      enableSearch: true,
+      enableFilters: true,
       filters: [],
     };
   }
@@ -162,15 +159,11 @@ export function createDefaultStaticComponent(
     };
   }
 
-  if (kind === "view-search") {
-    return {
-      kind: "view-search",
-    };
-  }
-
-  if (kind === "view-filter") {
+  if (kind === "view-search" || kind === "view-filter") {
     return {
       kind: "view-filter",
+      enableSearch: true,
+      enableFilters: true,
       filters: [],
     };
   }
@@ -901,11 +894,12 @@ function normalizeNestedLayoutRow(
 }
 
 export function normalizeLayout(layout: UiLayoutDocument): UiLayoutDocument {
-  const columns = layout.root.columns.map(normalizeColumnNode);
+  const migrated = migrateViewSearchFilterLayout(layout);
+  const columns = migrated.root.columns.map(normalizeColumnNode);
   return {
-    ...layout,
+    ...migrated,
     root: {
-      ...layout.root,
+      ...migrated.root,
       columns,
       columnCount: columns.length,
     },

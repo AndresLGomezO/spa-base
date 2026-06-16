@@ -15,7 +15,6 @@ import {
   MousePointerClick,
   PanelTop,
   Route,
-  Search,
   Sparkles,
   TextCursorInput,
   Type,
@@ -76,10 +75,7 @@ const FORM_SECTION: ComponentCatalogSection = {
 
 const DATA_CONTROLS_SECTION: ComponentCatalogSection = {
   id: "dataControls",
-  entries: [
-    { kind: "view-search", icon: Search },
-    { kind: "view-filter", icon: Filter },
-  ],
+  entries: [{ kind: "view-filter", icon: Filter }],
 };
 
 const ALL_SECTIONS: readonly ComponentCatalogSection[] = [

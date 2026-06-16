@@ -23,10 +23,7 @@ export type DesignSurface =
   | "dashboardSection"
   | "dashboardLayout";
 
-const VIEW_FILTER_KINDS: readonly UiComponentKind[] = [
-  "view-search",
-  "view-filter",
-];
+const VIEW_FILTER_KINDS: readonly UiComponentKind[] = ["view-filter"];
 
 const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "text",
