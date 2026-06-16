@@ -34,6 +34,7 @@ export interface DataViewFilterOption {
 
 export interface DataViewToolbarLabels {
   readonly searchPlaceholder: string;
+  readonly searchClear: string;
   readonly filtersTrigger: string;
   readonly filtersClearAll: string;
   readonly removeBadge: (label: string) => string;

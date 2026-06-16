@@ -105,6 +105,7 @@ export function DataViewToolbar<T>({
             onChange={setSearch}
             placeholder={labels.searchPlaceholder}
             ariaLabel={labels.searchPlaceholder}
+            clearAriaLabel={labels.searchClear}
             className={searchFieldClassName}
           />
         </div>
@@ -127,6 +128,7 @@ export function DataViewToolbar<T>({
                 onChange={setSearch}
                 placeholder={labels.searchPlaceholder}
                 ariaLabel={labels.searchPlaceholder}
+                clearAriaLabel={labels.searchClear}
                 className={searchFieldClassName}
               />
             </div>

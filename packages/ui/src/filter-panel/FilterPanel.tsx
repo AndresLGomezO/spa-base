@@ -73,7 +73,7 @@ export function FilterPanelBody({
       )}
       aria-hidden={!open}
     >
-      <div className="min-h-0 overflow-hidden">
+      <div className="min-h-0 overflow-hidden p-0.5">
         <div
           className={cn(
             "space-y-4 px-2 pt-4 transition-opacity",
@@ -121,7 +121,7 @@ function FilterPanelToolbar({
     >
       <div
         className={cn(
-          "flex min-w-0 flex-nowrap items-end gap-1.5 md:gap-2",
+          "flex min-w-0 flex-nowrap items-end gap-1.5 overflow-visible py-0.5 md:gap-2",
           !compact && "md:items-center",
           fillWidth || !compact ? "w-full min-w-0" : "w-fit max-w-full",
         )}

@@ -8,10 +8,13 @@ import {
   fontSizePxFromStyles,
   gapPxFromStyles,
   inlineContentRowClassName,
+  inlineFlexGrowStretchClassName,
   parseFlexLayoutFromStyles,
   prefersInlineContentWidth,
   resolvePageSlotWrapper,
   resolveStyleRules,
+  resolveRowWrapperStyleRules,
+  textWrapClassForLayoutShell,
   spacingStyleFromStyleRules,
   splitStyleRuleClasses,
   stackShellWidthClassName,
@@ -147,7 +150,34 @@ describe("applyStyleRules", () => {
         { property: "flex", value: "0" },
         { property: "alignSelf", value: "start" },
       ]),
-    ).toBe("self-start w-fit max-w-full min-w-0 shrink-0");
+    ).toBe("self-start flex-[0] w-fit max-w-full min-w-0 shrink-0");
+  });
+
+  it("maps flex grow onto slot wrappers", () => {
+    expect(
+      componentSlotWrapperClassName([{ property: "flex", value: "1" }]),
+    ).toBe("flex-[1] min-w-0");
+  });
+
+  it("stretches inline flex-grow rows to full width in column stacks", () => {
+    expect(
+      inlineFlexGrowStretchClassName(
+        { kind: "text", styles: [{ property: "flex", value: "1" }] },
+        "column",
+      ),
+    ).toBe("w-full min-w-0");
+    expect(
+      inlineFlexGrowStretchClassName(
+        { kind: "text", styles: [{ property: "flex", value: "1" }] },
+        "row",
+      ),
+    ).toBe("");
+    expect(
+      inlineFlexGrowStretchClassName(
+        { kind: "container", styles: [{ property: "flex", value: "1" }] },
+        "column",
+      ),
+    ).toBe("");
   });
 
   it("uses fit width for column stacks aligned to start", () => {
@@ -171,13 +201,13 @@ describe("applyStyleRules", () => {
     ).toBe("w-full");
   });
 
-  it("builds stack shell classes with min-w-0 when width is capped", () => {
+  it("builds stack shell classes with min-w-max when width hugs content", () => {
     expect(
       stackShellLayoutClasses(
         [{ property: "alignItems", value: "start" }],
         "column",
       ),
-    ).toBe("flex min-w-0 w-fit max-w-full");
+    ).toBe("flex min-w-max w-fit max-w-full");
   });
 
   it("keeps full width for default column stacks", () => {
@@ -255,7 +285,7 @@ describe("applyStyleRules", () => {
         { property: "flex", value: "0" },
         { property: "alignSelf", value: "start" },
       ]),
-    ).toBe("self-start w-fit max-w-full min-w-0 shrink-0");
+    ).toBe("self-start w-fit max-w-full min-w-max shrink-0");
   });
 
   it("reads gap from styles for layout primitives only", () => {
@@ -367,5 +397,17 @@ describe("applyStyleRules", () => {
     expect(
       componentSlotWrapperClassName([{ property: "textWrap", value: "wrap" }]),
     ).toContain("shrink");
+  });
+
+  it("does not default layout shells to truncate so focus rings stay visible", () => {
+    expect(textWrapClassForLayoutShell(undefined)).toBe("");
+    expect(
+      resolveRowWrapperStyleRules([{ property: "paddingTop", value: "8" }])
+        .className,
+    ).not.toContain("truncate");
+    expect(
+      resolveRowWrapperStyleRules([{ property: "textWrap", value: "wrap" }])
+        .className,
+    ).toContain("break-words");
   });
 });

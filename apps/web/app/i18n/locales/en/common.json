@@ -1534,6 +1534,7 @@
   },
   "dataView": {
     "searchPlaceholder": "Search…",
+    "searchClear": "Clear search",
     "filtersTrigger": "Filters",
     "filtersClearAll": "Clear all filters",
     "filterPlaceholder": "Select values…",

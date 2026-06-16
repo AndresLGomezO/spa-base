@@ -183,6 +183,7 @@ export {
 export {
   applyStyleRules,
   resolveStyleRules,
+  resolveRowWrapperStyleRules,
   resolvePageSlotWrapper,
   spacingStyleFromStyleRules,
   layoutInlineStyleFromStyleRules,
@@ -198,6 +199,10 @@ export {
   usesTextWrap,
   flexWrapClassFromStyles,
   textWrapClassFromStyles,
+  textWrapClassForLayoutShell,
+  slotFlexGrowClassName,
+  stylesIncludeFlexGrow,
+  inlineFlexGrowStretchClassName,
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
   containerRowWrapperClassName,

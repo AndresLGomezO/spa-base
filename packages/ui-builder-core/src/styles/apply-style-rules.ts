@@ -382,6 +382,78 @@ export function textWrapClassFromStyles(
   return "truncate";
 }
 
+/**
+ * Layout row/column/container shells should not default to `truncate`
+ * (`overflow: hidden`), which clips child focus rings.
+ */
+export function textWrapClassForLayoutShell(
+  styles: readonly StyleRule[] | undefined,
+): string {
+  if (usesTextWrap(styles)) {
+    return textWrapClassFromStyles(styles);
+  }
+
+  return "";
+}
+
+/** Maps `flex` style rules onto layout row/slot wrappers (e.g. `flex: 1`). */
+export function slotFlexGrowClassName(
+  styles: readonly StyleRule[] | undefined,
+): string {
+  const flexRule = styles?.find((rule) => rule.property === "flex");
+  if (!flexRule) {
+    return "";
+  }
+
+  const flexClass = ruleToClass(flexRule);
+  if (!flexClass) {
+    return "";
+  }
+
+  if (String(flexRule.value) === "0") {
+    return flexClass;
+  }
+
+  return `${flexClass} min-w-0`;
+}
+
+export function stylesIncludeFlexGrow(
+  styles: readonly StyleRule[] | undefined,
+): boolean {
+  return (
+    styles?.some(
+      (rule) => rule.property === "flex" && String(rule.value) === "1",
+    ) ?? false
+  );
+}
+
+/** In column stacks, `flex: 1` on inline rows stretches width so `textAlign` can center. */
+export function inlineFlexGrowStretchClassName(
+  component: {
+    readonly kind: string;
+    readonly styles?: readonly StyleRule[];
+  },
+  parentStackDirection: "column" | "row",
+): string {
+  if (parentStackDirection !== "column") {
+    return "";
+  }
+
+  if (
+    component.kind !== "text" &&
+    component.kind !== "user" &&
+    component.kind !== "image"
+  ) {
+    return "";
+  }
+
+  if (!stylesIncludeFlexGrow(component.styles)) {
+    return "";
+  }
+
+  return "w-full min-w-0";
+}
+
 export function rowPrefersContentWidth(
   styles: readonly StyleRule[] | undefined,
 ): boolean {
@@ -500,10 +572,7 @@ export function stackShellLayoutClasses(
   stackDirection: "column" | "row",
 ): string {
   const widthClass = stackShellWidthClassName(styles, stackDirection);
-  const minWidthClass =
-    widthClass.includes("w-fit") && !widthClass.includes("max-w-full")
-      ? "min-w-max"
-      : "min-w-0";
+  const minWidthClass = widthClass.includes("w-fit") ? "min-w-max" : "min-w-0";
 
   return ["flex", minWidthClass, widthClass].join(" ");
 }
@@ -524,7 +593,7 @@ export function containerRowWrapperClassName(
     if (stackDirection === "row" && usesFlexWrapLayout(styles)) {
       parts.push("w-full", "max-w-full", "min-w-0");
     } else {
-      parts.push("w-fit", "max-w-full", "min-w-0", "shrink-0");
+      parts.push("w-fit", "max-w-full", "min-w-max", "shrink-0");
     }
   }
 
@@ -544,7 +613,13 @@ export function componentSlotWrapperClassName(
       ? "w-fit max-w-full min-w-0 shrink-0"
       : "";
 
-  return [flex.selfClassName, flex.slotFlexClassName, wrapLayout, contentWidth]
+  return [
+    flex.selfClassName,
+    flex.slotFlexClassName,
+    slotFlexGrowClassName(styles),
+    wrapLayout,
+    contentWidth,
+  ]
     .filter(Boolean)
     .join(" ");
 }
@@ -758,6 +833,25 @@ export function resolveStyleRules(
       split.containerClassName,
       textWrapClassFromStyles(styles),
       split.textClassName,
+    ]
+      .filter(Boolean)
+      .join(" "),
+    style: layoutInlineStyleFromStyleRules(styles),
+  };
+}
+
+/** Style rules for layout shells that wrap interactive components. */
+export function resolveRowWrapperStyleRules(
+  styles: readonly StyleRule[] | undefined,
+  baseClassName?: string,
+): ResolvedStyleRules {
+  const split = splitStyleRuleClasses(styles, baseClassName);
+  return {
+    className: [
+      split.containerClassName,
+      textWrapClassForLayoutShell(styles),
+      split.textClassName,
+      slotFlexGrowClassName(styles),
     ]
       .filter(Boolean)
       .join(" "),

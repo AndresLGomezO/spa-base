@@ -20,6 +20,7 @@ const columns: readonly DataViewColumnDescriptor<SampleRow>[] = [
 
 const labels: DataViewToolbarLabels = {
   searchPlaceholder: "Search",
+  searchClear: "Clear search",
   filtersTrigger: "Filters",
   filtersClearAll: "Clear all",
   removeBadge: (label) => `Remove ${label}`,

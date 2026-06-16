@@ -13,6 +13,7 @@ export function WebDataViewToolbar<T>(
 
   const labels: DataViewToolbarLabels = {
     searchPlaceholder: t("dataView.searchPlaceholder"),
+    searchClear: t("dataView.searchClear"),
     filtersTrigger: t("dataView.filtersTrigger"),
     filtersClearAll: t("dataView.filtersClearAll"),
     removeBadge: (label) => t("dataView.removeBadge", { label }),

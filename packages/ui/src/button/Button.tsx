@@ -2,6 +2,8 @@ import { type ButtonHTMLAttributes, type ReactNode } from "react";
 
 import { cn } from "@repo/theme/utils";
 
+import { focusRingInsetClassName } from "../focus-ring/focus-ring-classes";
+
 import {
   buttonSizes,
   buttonVariants,
@@ -36,7 +38,8 @@ export function Button({
       disabled={isDisabled}
       aria-busy={loading || undefined}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md border border-transparent font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-offset-background disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center gap-2 rounded-md border border-transparent font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+        focusRingInsetClassName,
         buttonVariants[variant],
         buttonSizes[size],
         fullWidth && "w-full",

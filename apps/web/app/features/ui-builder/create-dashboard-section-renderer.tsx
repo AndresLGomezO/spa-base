@@ -36,7 +36,7 @@ export function createDashboardSectionRenderer(
     }
 
     return (
-      <div className="min-w-0 w-full">
+      <div className="h-auto min-w-0 w-full">
         <RecursiveLayoutRenderer
           layout={section.layout}
           context={buildLayoutContext()}

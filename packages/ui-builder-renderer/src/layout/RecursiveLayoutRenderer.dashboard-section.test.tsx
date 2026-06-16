@@ -105,5 +105,222 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
     );
 
     expect(markup).toContain("Hello,");
+    expect(markup).toContain("shrink-0");
+    expect(markup).toContain("flex-[0]");
+  });
+
+  it("applies flex grow on dashboard-section rows in horizontal stacks", () => {
+    const layout = ensureContainerRoot({
+      showActions: true,
+      root: {
+        type: "root",
+        id: "root-dashboard",
+        columnCount: 1,
+        columns: [
+          {
+            id: "col-dashboard",
+            stackDirection: "row",
+            rows: [
+              {
+                type: "component",
+                id: "row-calendar",
+                component: {
+                  kind: "dashboard-section",
+                  sectionId: "section-calendar",
+                  styles: [{ property: "flex", value: "1" }],
+                },
+              },
+              {
+                type: "component",
+                id: "row-greeting",
+                component: {
+                  kind: "dashboard-section",
+                  sectionId: "section-greeting",
+                  styles: [{ property: "alignSelf", value: "end" }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const markup = renderToStaticMarkup(
+      <RecursiveLayoutRenderer
+        layout={layout}
+        context={{
+          mode: "listItem",
+          data: {},
+          locale: "en",
+          resolveField: () => undefined,
+          dashboardSectionRenderer: () => (
+            <div className="h-auto min-w-0 w-full">Section</div>
+          ),
+        }}
+      />,
+    );
+
+    expect(markup).toContain("flex-[1]");
+    expect(markup).toContain("self-end");
+    expect(markup).not.toMatch(/flex-\[1\][^"]*shrink-0/);
+  });
+
+  it("applies flex grow inside container nested horizontal stacks", () => {
+    const layout = ensureContainerRoot({
+      showActions: true,
+      root: {
+        type: "root",
+        id: "root-home",
+        columnCount: 1,
+        columns: [
+          {
+            id: "col-home",
+            rows: [
+              {
+                type: "component",
+                id: "row-container",
+                component: {
+                  kind: "container",
+                  styles: [{ property: "gap", value: "10" }],
+                  rows: [
+                    {
+                      type: "nested-layout",
+                      id: "nested-calendar-greeting",
+                      columnCount: 1,
+                      columns: [
+                        {
+                          id: "col-calendar-greeting",
+                          stackDirection: "row",
+                          styles: [
+                            { property: "gap", value: "20" },
+                            { property: "alignItems", value: "end" },
+                          ],
+                          rows: [
+                            {
+                              type: "component",
+                              id: "row-calendar",
+                              component: {
+                                kind: "dashboard-section",
+                                sectionId: "section-calendar",
+                                styles: [{ property: "flex", value: "1" }],
+                              },
+                            },
+                            {
+                              type: "component",
+                              id: "row-greeting",
+                              component: {
+                                kind: "dashboard-section",
+                                sectionId: "section-greeting",
+                                styles: [
+                                  { property: "alignSelf", value: "end" },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                      ],
+                      styles: [],
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const markup = renderToStaticMarkup(
+      <RecursiveLayoutRenderer
+        layout={layout}
+        context={{
+          mode: "listItem",
+          data: {},
+          locale: "en",
+          resolveField: () => undefined,
+          dashboardSectionRenderer: () => (
+            <div className="h-auto min-w-0 w-full">Section</div>
+          ),
+        }}
+      />,
+    );
+
+    expect(markup).toContain("flex-[1]");
+    expect(markup).toContain("self-end");
+    expect(markup).toContain("items-end");
+  });
+
+  it("stretches flex-grow text rows to full width in column stacks for textAlign", () => {
+    const layout = ensureContainerRoot({
+      showActions: true,
+      root: {
+        type: "root",
+        id: "root-calendar-text",
+        columnCount: 1,
+        columns: [
+          {
+            id: "col-calendar-text",
+            rows: [
+              {
+                type: "component",
+                id: "row-calendar-column",
+                component: {
+                  kind: "container",
+                  stackDirection: "column",
+                  styles: [
+                    { property: "alignItems", value: "start" },
+                    { property: "minWidth", value: "140" },
+                  ],
+                  rows: [
+                    {
+                      type: "component",
+                      id: "row-monday",
+                      component: {
+                        kind: "text",
+                        primary: { type: "static", value: "Monday" },
+                        styles: [
+                          { property: "flex", value: "1" },
+                          { property: "textAlign", value: "center" },
+                        ],
+                      },
+                    },
+                    {
+                      type: "component",
+                      id: "row-day-number",
+                      component: {
+                        kind: "text",
+                        primary: { type: "static", value: "12" },
+                        styles: [
+                          { property: "flex", value: "1" },
+                          { property: "textAlign", value: "center" },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const markup = renderToStaticMarkup(
+      <RecursiveLayoutRenderer
+        layout={layout}
+        context={{
+          mode: "listItem",
+          data: {},
+          locale: "en",
+          resolveField: () => undefined,
+        }}
+      />,
+    );
+
+    expect(markup).toContain("flex-[1]");
+    expect(markup).toMatch(
+      /w-full min-w-0[^"]*flex-\[1\]|flex-\[1\][^"]*w-full min-w-0/,
+    );
+    expect(markup).toContain("text-center");
   });
 });

@@ -106,12 +106,10 @@ export function HomePage() {
 
   return (
     <ViewFilterPageProvider value={urlState}>
-      <div className="flex min-h-0 w-full flex-1 flex-col">
+      <div className="flex w-full flex-col">
         <RecursiveLayoutRenderer
           layout={dashboardLayout}
           context={renderContext}
-          className="min-h-0 flex-1"
-          stretchRootColumns
         />
       </div>
     </ViewFilterPageProvider>

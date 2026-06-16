@@ -30,4 +30,12 @@ describe("row-slot-styles", () => {
 
     expect(resolved.style.marginTop).toBe("-20px");
   });
+
+  it("does not apply default truncate on row wrappers", () => {
+    const resolved = mergeRowWrapperStyles(undefined, [
+      { property: "paddingTop", value: "8" },
+    ]);
+
+    expect(resolved.className).not.toContain("truncate");
+  });
 });

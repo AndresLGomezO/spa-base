@@ -272,7 +272,7 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
 
   const toolbarFlex = parseFlexLayoutFromStyles(config.styles);
   const toolbarRowClassName = cn(
-    "flex w-full min-w-0 flex-nowrap items-end gap-2",
+    "flex w-full min-w-0 flex-nowrap items-end gap-2 overflow-visible py-0.5",
     toolbarFlex.justify === "end" && "justify-end",
     toolbarFlex.justify === "center" && "justify-center",
     toolbarFlex.justify === "between" && "justify-between",
@@ -281,7 +281,7 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
   const searchFieldClassName = "max-w-none min-w-0 w-full";
 
   const searchField = enableSearch ? (
-    <div className="min-w-0 flex-1">
+    <div className="min-w-0 flex-1 overflow-visible py-0.5">
       <SearchField
         value={pageState.search}
         onChange={pageState.setSearch}
@@ -291,6 +291,7 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
         ariaLabel={
           config.searchPlaceholder?.trim() || t("dataView.searchPlaceholder")
         }
+        clearAriaLabel={t("dataView.searchClear")}
         className={searchFieldClassName}
       />
     </div>
@@ -300,7 +301,7 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
     <div
       ref={rootRef}
       className={cn(
-        "w-full min-w-0 max-w-full overflow-x-hidden",
+        "w-full min-w-0 max-w-full",
         filtersOpen && "relative isolate z-30",
       )}
       data-testid="view-filter-toolbar"
@@ -335,7 +336,7 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
         )}
       </div>
       {enableFilters ? (
-        <div className="mt-0 w-full min-w-0 max-w-full overflow-x-hidden">
+        <div className="mt-0 w-full min-w-0 max-w-full">
           <FilterPanelBody
             open={filtersOpen}
             onClearAll={() => {

@@ -11,7 +11,8 @@ import {
   resolveColumnWidthPercents,
   resolveDisplayRangeVisibility,
   resolveResponsiveGridLayout,
-  resolveStyleRules,
+  resolveRowWrapperStyleRules,
+  stylesIncludeFlexGrow,
   usesFlexWrapLayout,
   usesResponsiveGridLayout,
   usesTextWrap,
@@ -20,6 +21,7 @@ import {
   containerRowWrapperClassName,
   flexWrapRowItemClassName,
   inlineContentRowClassName,
+  inlineFlexGrowStretchClassName,
   isFlexWrapRowStack,
   prefersInlineContentWidth,
   stackShellLayoutClasses,
@@ -330,6 +332,10 @@ function rowStackShellClassName(
     return undefined;
   }
 
+  if (component && stylesIncludeFlexGrow(component.styles)) {
+    return "min-w-0";
+  }
+
   if (component?.kind === "view-filter") {
     return "min-w-0 w-full max-w-full";
   }
@@ -349,16 +355,19 @@ function rowStackShellClassName(
 
 function rowWrapperStyleClassName(
   rowStyles: ReturnType<typeof mergeRowWrapperStyles>,
-  component?: UiComponentConfig,
 ): string {
-  if (component?.kind === "view-filter") {
-    return rowStyles.className
-      .split(/\s+/)
-      .filter((part) => part.length > 0 && part !== "truncate")
-      .join(" ");
+  const parts = rowStyles.className
+    .split(/\s+/)
+    .filter((part) => part.length > 0 && part !== "truncate");
+
+  const hasOverflowRule = parts.some((part) => part.startsWith("overflow-"));
+  if (!hasOverflowRule) {
+    parts.push("overflow-visible");
   }
 
-  return rowStyles.className;
+  parts.push("py-0.5");
+
+  return parts.join(" ");
 }
 
 function layoutGridStretchClassName(
@@ -665,7 +674,7 @@ function renderRow(
 
   if (row.type === "component") {
     if (isContainerComponent(row.component)) {
-      const containerStyles = resolveStyleRules(row.component.styles);
+      const containerStyles = resolveRowWrapperStyleRules(row.component.styles);
       const containerStackDirection = row.component.stackDirection ?? "column";
       const stretchedContainerClass = shouldStretchRootContainerRow(
         row,
@@ -741,6 +750,11 @@ function renderRow(
     const isWizardProgressRow = row.component.kind === "wizard-progress";
     const isEntityFieldSelectorRow =
       row.component.kind === "entity-field-selector";
+    const isDashboardSectionRow = row.component.kind === "dashboard-section";
+    const dashboardSectionRowClass =
+      isDashboardSectionRow && stackDirection === "column"
+        ? "h-auto w-full shrink-0 grow-0"
+        : undefined;
     const mainPageRowClass =
       isMainPage && stackDirection === "column"
         ? isPageListRow
@@ -802,14 +816,16 @@ function renderRow(
             row.component,
             usesPreviewRowWrapper ? false : parentIsFlexWrapRow,
           ),
+          dashboardSectionRowClass,
           mainPageRowClass,
           formRowClass,
           wizardActionsRowClass,
           wizardStepHostRowClass,
           wizardProgressRowClass,
           inlineContentRowClass,
+          inlineFlexGrowStretchClassName(row.component, stackDirection),
           formSlotClassName,
-          rowWrapperStyleClassName(rowStyles, row.component),
+          rowWrapperStyleClassName(rowStyles),
           motionClass,
           displayRange.className,
         ]
@@ -823,7 +839,7 @@ function renderRow(
     );
   }
 
-  const rowStyles = resolveStyleRules(row.styles);
+  const rowStyles = resolveRowWrapperStyleRules(row.styles);
   const isFormFill = context.mode === "form";
   const stretchedSurfaceNestedRowClass = shouldStretchContainerChildRow(
     context,
@@ -841,6 +857,8 @@ function renderRow(
     containerParentRowId: rowScope.containerParentRowId,
     nestedParentRowId: row.id,
   };
+  const columnStructuralRowClass =
+    stackDirection === "column" ? "w-full min-w-0" : undefined;
 
   if (
     !usesResponsiveGridLayout(row.styles, row.columnCount) &&
@@ -852,6 +870,7 @@ function renderRow(
       <div
         key={row.id}
         className={[
+          columnStructuralRowClass,
           stackShellClass,
           stretchedSurfaceNestedRowClass,
           formNestedRowClass,
@@ -882,6 +901,7 @@ function renderRow(
     <div
       key={row.id}
       className={[
+        columnStructuralRowClass,
         stackShellClass,
         stretchedSurfaceNestedRowClass,
         formNestedRowClass,
@@ -927,7 +947,7 @@ function renderColumn(
     return null;
   }
 
-  const columnStyles = resolveStyleRules(column.styles);
+  const columnStyles = resolveRowWrapperStyleRules(column.styles);
   const flexBasis =
     options?.flexBasisPercent !== undefined
       ? columnFlexBasisStyle(options.flexBasisPercent)
@@ -1020,7 +1040,7 @@ export function RecursiveLayoutRenderer({
   const fillRootClass = isMainPage
     ? "flex h-full min-h-0 min-w-0 flex-1 flex-col overflow-hidden"
     : isStretchedSurfaceFill
-      ? "flex h-full min-h-0 min-w-0 w-full max-w-full flex-1 flex-col overflow-x-clip"
+      ? "flex h-full min-h-0 min-w-0 w-full max-w-full flex-1 flex-col"
       : isWizardForm || isWizardStepContent
         ? stretchRootColumns
           ? "flex h-full min-h-0 w-full min-w-0 flex-1 flex-col overflow-hidden"
@@ -1028,9 +1048,12 @@ export function RecursiveLayoutRenderer({
         : isFormFill
           ? stretchRootColumns
             ? "flex h-full min-h-0 w-full min-w-0 flex-col"
-            : "flex w-full min-w-0 flex-col overflow-x-clip"
-          : "flex w-full min-w-0 max-w-full flex-col overflow-x-clip";
-  const rootStylesResolved = resolveStyleRules(layout.root.styles, className);
+            : "flex w-full min-w-0 flex-col"
+          : "flex w-full min-w-0 max-w-full flex-col";
+  const rootStylesResolved = resolveRowWrapperStyleRules(
+    layout.root.styles,
+    className,
+  );
   const columnGridOptions: ColumnGridRenderOptions = {
     rootColumnWrapper,
     nestedColumnWrapper,

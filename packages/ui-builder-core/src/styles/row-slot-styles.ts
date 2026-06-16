@@ -1,6 +1,6 @@
 import type { StylePropertyKey, StyleRule } from "./style-types.js";
 import {
-  resolveStyleRules,
+  resolveRowWrapperStyleRules,
   type ResolvedStyleRules,
 } from "./apply-style-rules.js";
 
@@ -53,5 +53,5 @@ export function mergeRowWrapperStyles(
     (rule) => !isRowSlotHoistedStyleProperty(rule.property),
   );
 
-  return resolveStyleRules([...nonHoistedRow, ...hoisted.values()]);
+  return resolveRowWrapperStyleRules([...nonHoistedRow, ...hoisted.values()]);
 }
