@@ -34,7 +34,7 @@ import {
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
 import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { isNestedComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { findColumnByRef } from "../form-designer/form-designer-components-layout";
@@ -93,7 +93,7 @@ export function DetailViewDesignerComponentColumnPanelHeaderMenu({
   const { editor } = useDetailViewDesigner();
   const { getDefinition } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(definition.name);
   const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);

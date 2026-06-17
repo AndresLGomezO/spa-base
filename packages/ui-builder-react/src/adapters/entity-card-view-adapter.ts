@@ -328,6 +328,7 @@ export function filterFieldsForComponentKind(
           field.valueType === "unknown",
       );
     case "metric-kpi":
+    case "metric-derived-kpi":
       return descriptors;
     default:
       return descriptors;

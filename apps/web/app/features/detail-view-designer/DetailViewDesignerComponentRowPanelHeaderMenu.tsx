@@ -35,7 +35,7 @@ import {
 } from "../../entities/entity-catalog-context";
 import { entityCardViewAdapter } from "@repo/ui-builder-react";
 import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { resolveLayoutBinding } from "./detail-view-designer-layout-binding";
@@ -77,7 +77,7 @@ export function DetailViewDesignerComponentRowPanelHeaderMenu({
   const { editor } = useDetailViewDesigner();
   const { getDefinition } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(definition.name);
   const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);

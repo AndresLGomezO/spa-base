@@ -9,6 +9,8 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
 - `image`
 - `icon`
 - `user`
+- `metric-kpi`
+- `metric-derived-kpi`
 - `metric-widget`
 - `view-filter`
 

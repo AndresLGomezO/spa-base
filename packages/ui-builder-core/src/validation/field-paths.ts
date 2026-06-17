@@ -3,6 +3,7 @@ import {
   isContainerComponent,
   isDashboardSectionComponent,
   isMetricKpiComponent,
+  isMetricDerivedKpiComponent,
   isMetricWidgetComponent,
   isUserComponent,
 } from "../types/component.js";
@@ -96,6 +97,7 @@ function collectComponentPaths(
 ): readonly string[] {
   if (
     isMetricKpiComponent(component) ||
+    isMetricDerivedKpiComponent(component) ||
     isMetricWidgetComponent(component) ||
     isDashboardSectionComponent(component) ||
     isUserComponent(component)

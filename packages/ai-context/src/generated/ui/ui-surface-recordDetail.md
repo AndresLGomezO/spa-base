@@ -12,6 +12,7 @@ Display components + related-records. Stored as `recordDetail`.
 - `numeric`
 - `badge`
 - `metric-kpi`
+- `metric-derived-kpi`
 - `view-filter`
 - `related-records`
 

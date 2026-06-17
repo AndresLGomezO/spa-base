@@ -31,7 +31,7 @@ import { cn } from "@repo/theme/utils";
 
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
-import { formDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
 import { getFormDesignerOuterLayout } from "./form-designer-layout";
 import { useFormDesigner } from "./form-designer-context";
 
@@ -96,7 +96,7 @@ export function FormDesignerLayoutColumnPanelHeaderMenu({
   const { editor } = useFormDesigner();
   const definition = useEntityDefinition(editor.definition.name);
   const { layout, setLayout } = getFormDesignerOuterLayout(editor);
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(definition.name);
   const fieldPath = defaultFieldPath(definition);
   const [menuOpen, setMenuOpen] = useState(false);

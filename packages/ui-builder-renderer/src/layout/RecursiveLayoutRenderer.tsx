@@ -5,7 +5,9 @@ import {
   componentSlotWrapperClassName,
   flexWrapClassFromStyles,
   gapPxFromStyles,
+  gapStyleFromStyleRules,
   hasExplicitColumnWidthPercents,
+  isCssLengthTokenValue,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
   resolveColumnWidthPercents,
@@ -47,6 +49,20 @@ const FORM_COLUMN_SHELL_CLASS = "flex w-full min-w-0 flex-col";
 const STRETCHED_COLUMN_SHELL_SUFFIX = "h-full min-h-0 self-stretch";
 const WIZARD_FORM_COLUMN_SHELL_CLASS =
   "flex min-h-0 min-w-0 flex-col overflow-hidden";
+
+function gapLayoutProps(
+  styles: readonly import("@repo/ui-builder-core").StyleRule[] | undefined,
+): {
+  readonly gap: number;
+  readonly style?: CSSProperties;
+} {
+  const gapCss = gapStyleFromStyleRules(styles);
+  if (gapCss && isCssLengthTokenValue(gapCss)) {
+    return { gap: 0, style: { gap: gapCss } };
+  }
+
+  return { gap: gapPxFromStyles(styles) };
+}
 
 function isWizardFormContext(context: LayoutRenderContext): boolean {
   return context.mode === "form" && context.wizard != null;
@@ -281,11 +297,13 @@ function renderRows(
     context,
     columnGridOptions?.stretchRootColumns ?? false,
   );
+  const columnGapProps = gapLayoutProps(column.styles);
 
   return (
     <LayoutStack
       direction={stackDirection}
-      gap={gapPxFromStyles(column.styles)}
+      gap={columnGapProps.gap}
+      style={columnGapProps.style}
       className={[
         stackShellLayoutClasses(column.styles, stackDirection),
         (isMainPage || isStretchedSurfaceFill) &&
@@ -496,17 +514,18 @@ function renderLayoutColumnGrid(
               responsiveLayout.proportionalColumnsTemplate,
           } as CSSProperties)
         : undefined;
+    const gridGapProps = gapLayoutProps(styles);
 
     return (
       <LayoutGrid
         direction="row"
         display="grid"
-        gap={gapPxFromStyles(styles)}
+        gap={gridGapProps.gap}
         align="stretch"
         className={[stretchClass, responsiveLayout.className]
           .filter(Boolean)
           .join(" ")}
-        style={proportionalStyle}
+        style={{ ...proportionalStyle, ...gridGapProps.style }}
       >
         {columns.map((column, index) => (
           <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
@@ -516,13 +535,15 @@ function renderLayoutColumnGrid(
   }
 
   if (responsiveLayout.mode === "autoFit") {
+    const gridGapProps = gapLayoutProps(styles);
     return (
       <LayoutGrid
         direction="row"
-        gap={gapPxFromStyles(styles)}
+        gap={gridGapProps.gap}
         columns={responsiveLayout.columnsTemplate}
         align="stretch"
         className={stretchClass}
+        style={gridGapProps.style}
       >
         {columns.map((column, index) => (
           <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
@@ -531,10 +552,11 @@ function renderLayoutColumnGrid(
     );
   }
 
+  const gridGapProps = gapLayoutProps(styles);
   return (
     <LayoutGrid
       direction="row"
-      gap={gapPxFromStyles(styles)}
+      gap={gridGapProps.gap}
       columns={
         responsiveLayout.columnsTemplate ??
         buildGridTemplateColumnsFromPercents(
@@ -543,6 +565,7 @@ function renderLayoutColumnGrid(
       }
       align="stretch"
       className={stretchClass}
+      style={gridGapProps.style}
     >
       {columns.map((column, index) => (
         <Fragment key={column.id}>{renderColumnNode(column, index)}</Fragment>
@@ -574,12 +597,13 @@ function renderWrappedColumns(
     stretchColumn: columnRenderFlags.stretchColumn && fillGridHeight,
   };
   const percents = resolveColumnWidthPercents(columns);
-  const gap = gapPxFromStyles(styles);
+  const wrappedGapProps = gapLayoutProps(styles);
 
   return (
     <LayoutStack
       direction="row"
-      gap={gap}
+      gap={wrappedGapProps.gap}
+      style={wrappedGapProps.style}
       className={[
         "flex w-full min-w-0",
         columnFlags.stretchColumn && "h-full min-h-0",

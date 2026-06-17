@@ -1,58 +1,81 @@
-import { isCssColorValue, isThemeTokenValue } from "@repo/ui-builder-core";
+import {
+  isCssBackgroundFillValue,
+  isCssGradientBackgroundValue,
+  isThemeTokenValue,
+  themeTokenSwatchClass,
+  type ThemeColorRole,
+} from "@repo/ui-builder-core";
 import { Input, SegmentedSwitch, Text, Select } from "@repo/ui";
 
 import type { StyleRulesEditorLabels } from "./StyleRulesEditor.js";
 import {
+  BADGE_COLOR_OPTIONS,
+  EFFECT_COLOR_OPTIONS,
+  isPaletteCssVarStyleValue,
   isSemanticCssVarStyleValue,
   isThemeModeColorValue,
+  PALETTE_COLOR_OPTIONS,
   SEMANTIC_COLOR_OPTIONS,
+  SIDEBAR_COLOR_OPTIONS,
   THEME_TOKEN_OPTIONS,
+  type SemanticColorOption,
 } from "./style-rules-state.js";
+
+export type { SemanticColorOption };
 
 export interface ColorValueEditorProps {
   readonly value: string;
   readonly onChange: (value: string) => void;
   readonly labels: StyleRulesEditorLabels;
+  /** Which style property this color applies to — drives swatch accuracy. */
+  readonly colorRole?: ThemeColorRole;
+  readonly customColorOptions?: readonly SemanticColorOption[];
 }
 
 export function ColorValueEditor({
   value,
   onChange,
   labels,
+  colorRole = "background",
+  customColorOptions: customColorOptionsProp,
 }: ColorValueEditorProps) {
   const rawValue = value;
-  const themeMode = isThemeModeColorValue(rawValue);
+  const customColorOptions =
+    customColorOptionsProp ?? labels.customColorOptions ?? [];
+  const themeMode = isThemeModeColorValue(rawValue, customColorOptions);
   const colorMode = themeMode ? ("theme" as const) : ("custom" as const);
   const themeLabel = labels.styleColorTheme ?? "Theme";
   const customLabel = labels.styleColorCustom ?? "Custom";
   const themeTokensLabel = labels.styleColorThemeTokens ?? "Theme tokens";
   const semanticTokensLabel =
     labels.styleColorSemanticTokens ?? "Semantic colors";
+  const paletteTokensLabel = labels.styleColorPaletteTokens ?? "Palette scale";
+  const effectsLabel = labels.styleColorEffects ?? "Effects";
+  const sidebarLabel = labels.styleColorSidebar ?? "Sidebar colors";
+  const badgeLabel = labels.styleColorBadge ?? "Badge colors";
+  const customTokensLabel = labels.styleColorCustomTokens ?? "Custom tokens";
   const customInputLabel = labels.styleColorCustomInput ?? "Custom color";
   const invalidLabel = labels.styleColorInvalid ?? "Enter a valid color value.";
   const showInvalid =
     colorMode === "custom" &&
     rawValue.trim().length > 0 &&
-    !isCssColorValue(rawValue);
+    !isCssBackgroundFillValue(rawValue);
+
+  const swatchFillStyle = (fillValue: string) =>
+    isCssGradientBackgroundValue(fillValue)
+      ? { background: fillValue }
+      : { backgroundColor: fillValue };
 
   const swatchStyle = themeMode
     ? isThemeTokenValue(rawValue)
       ? undefined
-      : { backgroundColor: rawValue }
-    : isCssColorValue(rawValue)
-      ? { backgroundColor: rawValue }
+      : swatchFillStyle(rawValue)
+    : isCssBackgroundFillValue(rawValue)
+      ? swatchFillStyle(rawValue)
       : undefined;
 
   const swatchClassName = isThemeTokenValue(rawValue)
-    ? rawValue === "transparent"
-      ? "bg-transparent"
-      : rawValue === "background"
-        ? "bg-background"
-        : rawValue === "foreground"
-          ? "bg-foreground"
-          : rawValue === "default"
-            ? "bg-card"
-            : `bg-${rawValue}`
+    ? themeTokenSwatchClass(colorRole, rawValue)
     : undefined;
 
   return (
@@ -117,6 +140,130 @@ export function ColorValueEditor({
               ))}
             </Select>
           </label>
+          {EFFECT_COLOR_OPTIONS.length > 0 ? (
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{effectsLabel}</span>
+              <Select
+                value={
+                  EFFECT_COLOR_OPTIONS.some(
+                    (option) => option.value === rawValue,
+                  )
+                    ? rawValue
+                    : ""
+                }
+                onChange={(event) => {
+                  if (event.target.value) {
+                    onChange(event.target.value);
+                  }
+                }}
+              >
+                <option value="" disabled>
+                  {effectsLabel}
+                </option>
+                {EFFECT_COLOR_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          ) : null}
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">{sidebarLabel}</span>
+            <Select
+              value={
+                SIDEBAR_COLOR_OPTIONS.some(
+                  (option) => option.value === rawValue,
+                )
+                  ? rawValue
+                  : ""
+              }
+              onChange={(event) => {
+                if (event.target.value) {
+                  onChange(event.target.value);
+                }
+              }}
+            >
+              <option value="" disabled>
+                {sidebarLabel}
+              </option>
+              {SIDEBAR_COLOR_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">{badgeLabel}</span>
+            <Select
+              value={
+                BADGE_COLOR_OPTIONS.some((option) => option.value === rawValue)
+                  ? rawValue
+                  : ""
+              }
+              onChange={(event) => {
+                if (event.target.value) {
+                  onChange(event.target.value);
+                }
+              }}
+            >
+              <option value="" disabled>
+                {badgeLabel}
+              </option>
+              {BADGE_COLOR_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          <label className="flex flex-col gap-1 text-sm">
+            <span className="text-muted-foreground">{paletteTokensLabel}</span>
+            <Select
+              value={isPaletteCssVarStyleValue(rawValue) ? rawValue : ""}
+              onChange={(event) => {
+                if (event.target.value) {
+                  onChange(event.target.value);
+                }
+              }}
+            >
+              <option value="" disabled>
+                {paletteTokensLabel}
+              </option>
+              {PALETTE_COLOR_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </Select>
+          </label>
+          {customColorOptions.length > 0 ? (
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">{customTokensLabel}</span>
+              <Select
+                value={
+                  customColorOptions.some((option) => option.value === rawValue)
+                    ? rawValue
+                    : ""
+                }
+                onChange={(event) => {
+                  if (event.target.value) {
+                    onChange(event.target.value);
+                  }
+                }}
+              >
+                <option value="" disabled>
+                  {customTokensLabel}
+                </option>
+                {customColorOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </label>
+          ) : null}
         </div>
       ) : (
         <label className="flex flex-col gap-1 text-sm">
@@ -130,7 +277,7 @@ export function ColorValueEditor({
             />
             <Input
               value={rawValue}
-              placeholder="#rrggbb, rgb(), hsl(), var(--color-primary)"
+              placeholder="#rrggbb, rgb(), hsl(), var(--color-primary), linear-gradient(...)"
               onChange={(event) => onChange(event.target.value)}
             />
           </div>

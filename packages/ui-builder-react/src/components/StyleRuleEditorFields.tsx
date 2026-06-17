@@ -2,6 +2,7 @@ import {
   STYLE_PROPERTY_OPTIONS,
   type StylePropertyKey,
   type StyleRule,
+  type ThemeColorRole,
 } from "@repo/ui-builder-core";
 import { Input, Select } from "@repo/ui";
 
@@ -11,11 +12,17 @@ import {
   defaultValueForProperty,
   enumOptionsForProperty,
   isColorStyleProperty,
+  isDimensionStyleProperty,
   isEnumStyleProperty,
   isNumericStyleProperty,
+  isShadowStyleProperty,
+  isTypographyStyleProperty,
   numericStyleInputMin,
 } from "./style-rules-state.js";
 import { ColorValueEditor } from "./ColorValueEditor.js";
+import { ShadowValueEditor } from "./ShadowValueEditor.js";
+import { ThemeOrPixelValueEditor } from "./ThemeOrPixelValueEditor.js";
+import { TypographyValueEditor } from "./TypographyValueEditor.js";
 
 function formatPropertyLabel(property: StylePropertyKey): string {
   return property
@@ -23,22 +30,14 @@ function formatPropertyLabel(property: StylePropertyKey): string {
     .replace(/^./, (char) => char.toUpperCase());
 }
 
-function ColorStyleValueInput({
-  rule,
-  labels,
-  onChange,
-}: {
-  readonly rule: StyleRule;
-  readonly labels: StyleRulesEditorLabels;
-  readonly onChange: (value: string) => void;
-}) {
-  return (
-    <ColorValueEditor
-      value={String(rule.value)}
-      onChange={onChange}
-      labels={labels}
-    />
-  );
+function colorRoleForProperty(property: StylePropertyKey): ThemeColorRole {
+  if (property === "color") {
+    return "text";
+  }
+  if (property === "borderColor") {
+    return "border";
+  }
+  return "background";
 }
 
 function StyleRuleValueInput({
@@ -52,10 +51,42 @@ function StyleRuleValueInput({
 }) {
   if (isColorStyleProperty(rule.property)) {
     return (
-      <ColorStyleValueInput
-        rule={rule}
-        labels={labels}
+      <ColorValueEditor
+        value={String(rule.value)}
         onChange={(value) => onChange({ value })}
+        labels={labels}
+        colorRole={colorRoleForProperty(rule.property)}
+      />
+    );
+  }
+
+  if (isShadowStyleProperty(rule.property)) {
+    return (
+      <ShadowValueEditor
+        value={String(rule.value)}
+        onChange={(value) => onChange({ value })}
+        labels={labels}
+      />
+    );
+  }
+
+  if (isTypographyStyleProperty(rule.property)) {
+    return (
+      <TypographyValueEditor
+        value={String(rule.value)}
+        onChange={(value) => onChange({ value })}
+        labels={labels}
+      />
+    );
+  }
+
+  if (isDimensionStyleProperty(rule.property)) {
+    return (
+      <ThemeOrPixelValueEditor
+        property={rule.property}
+        value={String(rule.value)}
+        onChange={(value) => onChange({ value })}
+        labels={labels}
       />
     );
   }

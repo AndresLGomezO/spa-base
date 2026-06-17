@@ -1,11 +1,20 @@
 import type { TFunction } from "i18next";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
+
+import type { SemanticColorOption } from "@repo/ui-builder-react";
 
 import { componentDisplayRangeEditorLabels } from "../ui-builder/component-display-range-editor-labels";
 import { motionPresetEditorLabels } from "../ui-builder/ui-builder-motion-labels";
 import { responsiveGridEditorLabels } from "../ui-builder/responsive-grid-editor-labels";
 import { layoutJsonImportLabels } from "../ui-builder/layout-json-import-labels";
+import { useCustomTokenColorOptions } from "../../theme/use-custom-token-color-options";
+import { styleRulesEditorLabels } from "../ui-builder/style-rules-editor-labels";
 
-export function formDesignerLayoutEditorLabels(t: TFunction<"common">) {
+export function formDesignerLayoutEditorLabels(
+  t: TFunction<"common">,
+  customColorOptions: readonly SemanticColorOption[] = [],
+) {
   return {
     structure: t("entity.viewSettings.structure"),
     layoutColumns: t("entity.viewSettings.layoutColumns"),
@@ -19,21 +28,7 @@ export function formDesignerLayoutEditorLabels(t: TFunction<"common">) {
     responsiveGrid: responsiveGridEditorLabels(t),
     displayRange: componentDisplayRangeEditorLabels(t),
     rowLayoutStyles: t("entity.viewSettings.responsiveGrid.rowLayoutStyles"),
-    styleRules: {
-      addStyleRule: t("entity.viewSettings.addStyleRule"),
-      saveStyleRule: t("entity.viewSettings.save"),
-      removeStyleRule: t("entity.viewSettings.removeStyleRule"),
-      styleProperty: t("entity.viewSettings.styleProperty"),
-      styleValue: t("entity.viewSettings.styleValue"),
-      styleColorTheme: t("entity.viewSettings.styleColorTheme"),
-      styleColorCustom: t("entity.viewSettings.styleColorCustom"),
-      styleColorThemeTokens: t("entity.viewSettings.styleColorThemeTokens"),
-      styleColorSemanticTokens: t(
-        "entity.viewSettings.styleColorSemanticTokens",
-      ),
-      styleColorCustomInput: t("entity.viewSettings.styleColorCustomInput"),
-      styleColorInvalid: t("entity.viewSettings.styleColorInvalid"),
-    },
+    styleRules: styleRulesEditorLabels(t, customColorOptions),
     motion: motionPresetEditorLabels(t),
     layoutEffects: t("entity.viewSettings.layoutEffects"),
     rowStyles: t("entity.viewSettings.rowStyles"),
@@ -53,4 +48,13 @@ export function formDesignerLayoutEditorLabels(t: TFunction<"common">) {
       viewTitleColumn: t("formDesigner.layout.columnPanel.jsonViewTitleColumn"),
     },
   };
+}
+
+export function useFormDesignerLayoutEditorLabels() {
+  const { t } = useTranslation("common");
+  const customColorOptions = useCustomTokenColorOptions();
+  return useMemo(
+    () => formDesignerLayoutEditorLabels(t, customColorOptions),
+    [customColorOptions, t],
+  );
 }

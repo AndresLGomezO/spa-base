@@ -22,8 +22,9 @@ import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
-import { formDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import type { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import {
   findRowByRef,
@@ -48,11 +49,8 @@ export function MainViewDesignerComponentRowPanel({
 
   const binding = useMemo(() => resolveLayoutBinding(editor), [editor]);
 
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
-  const componentEditorLabels = useMemo(
-    () => formDesignerComponentEditorLabels(t),
-    [t],
-  );
+  const labels = useFormDesignerLayoutEditorLabels();
+  const componentEditorLabels = useFormDesignerComponentEditorLabels();
 
   const allowedKinds = componentKindsForSurface("mainPage");
 

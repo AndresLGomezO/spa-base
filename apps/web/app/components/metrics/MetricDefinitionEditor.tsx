@@ -26,6 +26,7 @@ import {
 import { MetricFieldLabel } from "./MetricFieldHelp";
 import { MetricDefinitionSummary } from "./MetricDefinitionSummary";
 import { DateFieldGranularityPicker } from "./DateFieldGranularityPicker";
+import { MetricFiltersEditor } from "./MetricFiltersEditor";
 import {
   buildEntityFieldOptions,
   buildMetricSummaryContext,
@@ -34,10 +35,14 @@ import {
   getNumericFieldNames,
   inferDefaultValueDisplayFormat,
   listDateFieldsInKeys,
+  mergeFieldsDependencyWithFilters,
+  metricFiltersToEditorRows,
+  normalizeMetricFiltersForSave,
   METRIC_OPERATIONS,
   operationRequiresNumericField,
   pruneDateFieldGranularity,
   validateClientDateFieldGranularity,
+  type MetricFilterEditorRow,
   type MetricOperation,
 } from "./metric-field-utils";
 import type {
@@ -87,6 +92,9 @@ export function MetricDefinitionEditor({
   const [fieldsDependency, setFieldsDependency] = useState<readonly string[]>(
     metric?.fieldsDependency ?? [],
   );
+  const [filterRows, setFilterRows] = useState<
+    readonly MetricFilterEditorRow[]
+  >(() => metricFiltersToEditorRows(metric?.filters ?? []));
   const [groupBy, setGroupBy] = useState<readonly string[]>(
     metric?.groupBy ?? [],
   );
@@ -158,6 +166,14 @@ export function MetricDefinitionEditor({
   const requiresNumericField =
     operationRequiresNumericField(aggregationOperation);
 
+  const summaryFilters = useMemo(() => {
+    const normalized = normalizeMetricFiltersForSave(
+      filterRows,
+      selectedEntity,
+    );
+    return "filters" in normalized ? normalized.filters : [];
+  }, [filterRows, selectedEntity]);
+
   const summaryContext = useMemo(() => {
     if (
       !canShowMetricSummary({
@@ -178,6 +194,7 @@ export function MetricDefinitionEditor({
       operation: aggregationOperation,
       aggregationField,
       fieldsDependency,
+      filters: summaryFilters,
       groupBy,
       dimensions,
       dateFieldGranularity,
@@ -193,6 +210,7 @@ export function MetricDefinitionEditor({
     aggregationOperation,
     aggregationField,
     fieldsDependency,
+    summaryFilters,
     groupBy,
     dimensions,
     dateFieldGranularity,
@@ -277,6 +295,19 @@ export function MetricDefinitionEditor({
       return;
     }
 
+    const normalizedFilters = normalizeMetricFiltersForSave(
+      filterRows,
+      selectedEntity,
+    );
+    if ("error" in normalizedFilters) {
+      toast.error(
+        t("metrics.filters.validationRequired", {
+          field: normalizedFilters.error,
+        }),
+      );
+      return;
+    }
+
     setIsSaving(true);
     const resolvedDateFieldGranularity = pruneDateFieldGranularity(
       dateFieldGranularity,
@@ -284,20 +315,25 @@ export function MetricDefinitionEditor({
       dimensions,
       selectedEntity,
     );
+    const resolvedFilters = normalizedFilters.filters;
+    const mergedFieldsDependency = mergeFieldsDependencyWithFilters(
+      resolvedFieldsDependency,
+      resolvedFilters,
+    );
     try {
       const saved = isCreate
         ? await createMetricDefinition({
             name: name.trim(),
             ...(description.trim() ? { description: description.trim() } : {}),
             sourceModel,
-            filters: [],
+            filters: [...resolvedFilters],
             groupBy: [...groupBy],
             dimensions: [...dimensions],
             dateFieldGranularity: resolvedDateFieldGranularity,
             valueDisplayFormat,
             aggregations,
             schemaVersionDependency: 1,
-            fieldsDependency: [...resolvedFieldsDependency],
+            fieldsDependency: [...mergedFieldsDependency],
             status,
             version: 1,
           })
@@ -306,13 +342,13 @@ export function MetricDefinitionEditor({
             ...(description.trim()
               ? { description: description.trim() }
               : { description: "" }),
-            filters: [],
+            filters: [...resolvedFilters],
             groupBy: [...groupBy],
             dimensions: [...dimensions],
             dateFieldGranularity: resolvedDateFieldGranularity,
             valueDisplayFormat,
             aggregations,
-            fieldsDependency: [...resolvedFieldsDependency],
+            fieldsDependency: [...mergedFieldsDependency],
             status,
             version: metric.version + 1,
           });
@@ -402,6 +438,7 @@ export function MetricDefinitionEditor({
             setSourceModel(event.target.value);
             setAggregationField("");
             setFieldsDependency([]);
+            setFilterRows([]);
             setGroupBy([]);
             setDimensions([]);
             setDateFieldGranularity({});
@@ -498,6 +535,13 @@ export function MetricDefinitionEditor({
           {...multiselectLabels}
         />
       </div>
+
+      <MetricFiltersEditor
+        entity={selectedEntity}
+        rows={filterRows}
+        disabled={!sourceModel}
+        onChange={setFilterRows}
+      />
 
       <div>
         <MetricFieldLabel

@@ -42,6 +42,7 @@ export {
 } from "./components/responsive-grid-state.js";
 export {
   StyleRulesEditor,
+  type SemanticColorOption,
   type StyleRulesEditorLabels,
   type StyleRulesEditorProps,
 } from "./components/StyleRulesEditor.js";

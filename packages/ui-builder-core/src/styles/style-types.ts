@@ -10,6 +10,8 @@ export type ThemeToken =
   | "foreground"
   | "transparent";
 
+export type ShadowToken = "none" | "card";
+
 export type StylePropertyKey =
   | "marginTop"
   | "marginBottom"
@@ -24,6 +26,7 @@ export type StylePropertyKey =
   | "backgroundColor"
   | "color"
   | "fontSize"
+  | "fontFamily"
   | "fontWeight"
   | "fontStyle"
   | "textDecoration"
@@ -43,6 +46,7 @@ export type StylePropertyKey =
   | "borderWidth"
   | "borderColor"
   | "borderStyle"
+  | "boxShadow"
   | "flexWrap"
   | "overflowX"
   | "overflowY"
@@ -56,7 +60,7 @@ export type StylePropertyKey =
 
 export interface StyleRule {
   readonly property: StylePropertyKey;
-  readonly value: string | ThemeToken;
+  readonly value: string | ThemeToken | ShadowToken;
 }
 
 export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
@@ -73,6 +77,7 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "backgroundColor",
   "color",
   "fontSize",
+  "fontFamily",
   "fontWeight",
   "fontStyle",
   "textDecoration",
@@ -92,6 +97,7 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "borderWidth",
   "borderColor",
   "borderStyle",
+  "boxShadow",
   "flexWrap",
   "overflowX",
   "overflowY",

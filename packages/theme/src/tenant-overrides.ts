@@ -41,6 +41,7 @@ import {
   LAYOUT_SPACING_CSS_VARS,
   SEMANTIC_OVERRIDABLE_CSS_VARS,
 } from "./semantics/semantic-vars.js";
+import { applyCustomTokens } from "./custom-tokens.js";
 
 export const TENANT_THEME_EXPORT_VERSION = 1;
 
@@ -172,6 +173,13 @@ export interface TenantAppearanceLike {
     readonly base?: string;
     readonly lg?: string;
   };
+  readonly customTokens?: ReadonlyArray<{
+    readonly kind: "color" | "gradient";
+    readonly name: string;
+    readonly label?: string;
+    readonly light?: string;
+    readonly dark?: string;
+  }>;
 }
 
 export interface AppearanceToCssVariablesOptions {
@@ -337,6 +345,7 @@ export function appearanceToCssVariables(
 
   applyEffects(resolved, colorScheme, vars);
   applyChartColors(resolved, vars);
+  applyCustomTokens(resolved.customTokens, colorScheme, vars);
 
   if (resolved.fontFamily) {
     vars["--font-sans"] = resolved.fontFamily;
@@ -420,3 +429,34 @@ export {
   type ColorScaleStep,
   type PaletteKind,
 };
+export {
+  applyCustomTokens,
+  buildCustomTokenColorOptions,
+  isReservedCustomTokenSlug,
+  MAX_CUSTOM_TOKENS,
+  normalizeCustomTokenName,
+  resolveCustomTokenCssVar,
+  resolveCustomTokenCssVarValue,
+  sanitizeCustomTokens,
+  validateCustomTokenValue,
+  type CustomTokenColorOption,
+} from "./custom-tokens.js";
+export {
+  buildBadgeColorOptions,
+  buildEffectColorOptions,
+  buildEffectShadowVarOptions,
+  buildPaletteColorOptions,
+  buildRadiusTokenOptions,
+  buildSemanticColorOptions,
+  buildSidebarColorOptions,
+  buildSpacingTokenOptions,
+  buildTypographyFontFamilyOptions,
+  buildTypographySizeOptions,
+  buildUiBuilderColorCatalog,
+  buildWidthTokenOptions,
+  EFFECT_COLOR_OPTIONS,
+  PALETTE_COLOR_OPTIONS,
+  SEMANTIC_COLOR_OPTIONS,
+  SHADOW_TOKEN_OPTIONS,
+  type UiBuilderStyleTokenOption,
+} from "./ui-builder-style-token-catalog.js";

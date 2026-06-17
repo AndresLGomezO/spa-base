@@ -34,6 +34,12 @@ describe("resolveMetricBindingSource", () => {
     ).toBe("2026-06");
   });
 
+  it("treats empty static values as unresolved", () => {
+    expect(resolveMetricBindingSource({ type: "static", value: "" }, {})).toBe(
+      null,
+    );
+  });
+
   it("resolves entity field values from record", () => {
     expect(
       resolveMetricBindingSource(
@@ -101,5 +107,45 @@ describe("buildMetricRowQueryFromBindings", () => {
       group: { month: "2026-06" },
       dimensions: { categoryId: "food" },
     });
+  });
+
+  it("returns null while a date bucket binding is incomplete", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["date"],
+      dimensions: [],
+      dateFieldGranularity: { date: "month" },
+    };
+
+    expect(
+      buildMetricRowQueryFromBindings(
+        dateDefinition,
+        {
+          groupBindings: { date: { type: "static", value: "2026-0" } },
+          dimensionBindings: {},
+        },
+        {},
+      ),
+    ).toBeNull();
+  });
+
+  it("returns null for empty static bindings", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["date"],
+      dimensions: [],
+      dateFieldGranularity: { date: "month" },
+    };
+
+    expect(
+      buildMetricRowQueryFromBindings(
+        dateDefinition,
+        {
+          groupBindings: { date: { type: "static", value: "" } },
+          dimensionBindings: {},
+        },
+        {},
+      ),
+    ).toBeNull();
   });
 });

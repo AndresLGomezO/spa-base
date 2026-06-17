@@ -30,6 +30,21 @@ describe("theme import/export", () => {
     expect(reimported.radiusSm).toBe("0.5rem");
     expect(reimported.spacingScale?.base).toBe("1.5rem");
     expect(reimported.spacingScale?.md).toBe("1rem");
+    expect(reimported.customTokens).toEqual([
+      {
+        kind: "color",
+        name: "widget",
+        label: "Widget surface",
+        light: "#ffffff",
+        dark: "#1a1a2e",
+      },
+      {
+        kind: "gradient",
+        name: "hero",
+        light: "linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)",
+        dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
+      },
+    ]);
   });
 
   it("applies imported theme variables for both color schemes", () => {
@@ -51,11 +66,15 @@ describe("theme import/export", () => {
     expect(lightVars["--spacing-macro"]).toBe("1.5rem");
     expect(lightVars["--spacing"]).toBeUndefined();
     expect(lightVars["--color-sidebar-accent"]).toBe("#f3f0ff");
+    expect(lightVars["--color-widget"]).toBe("#ffffff");
+    expect(lightVars["--gradient-hero"]).toContain("8c6fe6");
 
     expect(darkVars["--color-background"]).toBe("#0b0d14");
     expect(darkVars["--shadow-card"]).toBe("none");
     expect(darkVars["--color-sidebar"]).toBe("#0b0d14");
     expect(darkVars["--color-accent-foreground"]).toBe("#c7b8f3");
+    expect(darkVars["--color-widget"]).toBe("#1a1a2e");
+    expect(darkVars["--gradient-hero"]).toContain("422db3");
   });
 
   it("exports legacy flat semantics into the light section", () => {

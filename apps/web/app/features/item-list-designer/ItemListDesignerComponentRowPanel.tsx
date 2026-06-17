@@ -28,8 +28,9 @@ import { useAnyPermission } from "../../auth/useAnyPermission";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { LucideIconField } from "../../components/shared/LucideIconField";
 import { LayoutStaticImageValueEditor } from "../ui-builder/LayoutStaticImageValueEditor";
-import { formDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import type { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import {
   findRowByRef,
@@ -59,11 +60,8 @@ export function ItemListDesignerComponentRowPanel({
     [editor, structureScope],
   );
 
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
-  const componentEditorLabels = useMemo(
-    () => formDesignerComponentEditorLabels(t),
-    [t],
-  );
+  const labels = useFormDesignerLayoutEditorLabels();
+  const componentEditorLabels = useFormDesignerComponentEditorLabels();
 
   const designSurface = resolveDesignSurfaceForScope(structureScope);
   const allowedKinds = componentKindsForSurface(designSurface);

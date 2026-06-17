@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@repo/entities": "workspace:*",
+    "@repo/theme": "workspace:*",
     "@repo/ui": "workspace:*",
     "@repo/ui-builder-core": "workspace:*",
     "@repo/ui-builder-renderer": "workspace:*",

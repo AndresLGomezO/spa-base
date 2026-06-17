@@ -27,6 +27,8 @@ import {
   type TenantAppearance,
   type TenantAppearanceEffects,
   type TenantChartColors,
+  type TenantCustomToken,
+  type TenantCustomTokenKind,
   type TenantSpacingScale,
 } from "@repo/shared-types";
 import { useColorScheme } from "@repo/theme/react";
@@ -34,9 +36,13 @@ import {
   applyAppearancePreset,
   appearanceToCssVariables,
   inferPaletteFromLegacyColors,
+  MAX_CUSTOM_TOKENS,
   normalizeAppearancePreset,
   normalizeHexColor,
+  resolveCustomTokenCssVar,
+  sanitizeCustomTokens,
   TENANT_OVERRIDE_GROUPS,
+  type TenantAppearanceLike,
 } from "@repo/theme/tenant-overrides";
 
 import { useAuth } from "../../auth/AuthContext";
@@ -79,6 +85,15 @@ interface ChartColorsState {
   readonly chart2: string;
   readonly chart3: string;
   readonly chart4: string;
+}
+
+interface CustomTokenRowState {
+  readonly id: string;
+  readonly kind: TenantCustomTokenKind;
+  readonly name: string;
+  readonly label: string;
+  readonly light: string;
+  readonly dark: string;
 }
 
 interface SpacingScaleState {
@@ -134,6 +149,17 @@ const EMPTY_CHART_COLORS: ChartColorsState = {
   chart3: "",
   chart4: "",
 };
+
+function createCustomTokenRow(token?: TenantCustomToken): CustomTokenRowState {
+  return {
+    id: crypto.randomUUID(),
+    kind: token?.kind ?? "color",
+    name: token?.name ?? "",
+    label: token?.label ?? "",
+    light: token?.light ?? "",
+    dark: token?.dark ?? "",
+  };
+}
 
 const EMPTY_SPACING_SCALE: SpacingScaleState = {
   xs: "",
@@ -209,6 +235,14 @@ function loadChartColors(
   };
 }
 
+function loadCustomTokens(
+  appearance: TenantAppearance | undefined,
+): CustomTokenRowState[] {
+  return (appearance?.customTokens ?? []).map((token) =>
+    createCustomTokenRow(token),
+  );
+}
+
 function loadSpacingScale(
   appearance: TenantAppearance | undefined,
 ): SpacingScaleState {
@@ -282,6 +316,23 @@ function buildChartColorsForSave(
     ...(chartColors.chart4.trim() ? { chart4: chartColors.chart4.trim() } : {}),
   };
   return Object.keys(next).length > 0 ? next : undefined;
+}
+
+function buildCustomTokensForSave(
+  customTokens: readonly CustomTokenRowState[],
+): TenantAppearance["customTokens"] {
+  const tokens = customTokens
+    .filter((row) => row.name.trim())
+    .map((row) => ({
+      kind: row.kind,
+      name: row.name.trim(),
+      ...(row.label.trim() ? { label: row.label.trim() } : {}),
+      ...(row.light.trim() ? { light: row.light.trim() } : {}),
+      ...(row.dark.trim() ? { dark: row.dark.trim() } : {}),
+    }));
+
+  const sanitized = sanitizeCustomTokens(tokens);
+  return sanitized.length > 0 ? sanitized : undefined;
 }
 
 function buildSpacingScaleForSave(
@@ -394,7 +445,7 @@ function SchemeToggle({
   );
 }
 
-function resolveLoadedPalettes(appearance: TenantAppearance | undefined): {
+function resolveLoadedPalettes(appearance: TenantAppearanceLike | undefined): {
   primary: ColorPaletteConfig | undefined;
   neutral: ColorPaletteConfig | undefined;
 } {
@@ -433,6 +484,7 @@ export function TenantAppearanceEditor({
   const [effects, setEffects] = useState<EffectsState>(EMPTY_EFFECTS);
   const [chartColors, setChartColors] =
     useState<ChartColorsState>(EMPTY_CHART_COLORS);
+  const [customTokens, setCustomTokens] = useState<CustomTokenRowState[]>([]);
   const [fontFamily, setFontFamily] = useState("");
   const [bodySize, setBodySize] = useState("");
   const [headingSize, setHeadingSize] = useState("");
@@ -472,6 +524,7 @@ export function TenantAppearanceEditor({
       colorsByScheme: pruneSchemeRecord(colorsByScheme),
       effects: buildEffectsForSave(effects),
       chartColors: buildChartColorsForSave(chartColors),
+      customTokens: buildCustomTokensForSave(customTokens),
       fontFamily: fontFamily.trim() || undefined,
       fontSizes: {
         body: bodySize.trim() || undefined,
@@ -485,6 +538,7 @@ export function TenantAppearanceEditor({
     bodySize,
     chartColors,
     colorsByScheme,
+    customTokens,
     effects,
     fontFamily,
     headingSize,
@@ -539,6 +593,7 @@ export function TenantAppearanceEditor({
       setColorsByScheme(loadColorsByScheme(appearance));
       setEffects(loadEffects(appearance));
       setChartColors(loadChartColors(appearance));
+      setCustomTokens(loadCustomTokens(appearance));
       setFontFamily(appearance?.fontFamily ?? "");
       setBodySize(appearance?.fontSizes?.body ?? "");
       setHeadingSize(appearance?.fontSizes?.heading ?? "");
@@ -1066,6 +1121,190 @@ export function TenantAppearanceEditor({
                   }
                 />
               ))}
+            </section>
+
+            <section className="border-border grid gap-3 rounded-lg border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <Text className="font-medium">
+                  {t("platform.appearance.customTokens")}
+                </Text>
+                <Button
+                  type="button"
+                  size="sm"
+                  variant="outline"
+                  disabled={customTokens.length >= MAX_CUSTOM_TOKENS}
+                  onClick={() =>
+                    setCustomTokens((current) => [
+                      ...current,
+                      createCustomTokenRow(),
+                    ])
+                  }
+                >
+                  {t("platform.appearance.customTokensAdd")}
+                </Button>
+              </div>
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.appearance.customTokensHint")}
+              </Text>
+              {customTokens.length === 0 ? (
+                <Text variant="muted" className="text-sm">
+                  {t("platform.appearance.customTokensEmpty")}
+                </Text>
+              ) : (
+                customTokens.map((row, index) => {
+                  const resolvedVar = row.name.trim()
+                    ? resolveCustomTokenCssVar({
+                        kind: row.kind,
+                        name: row.name.trim(),
+                      })
+                    : null;
+
+                  return (
+                    <div
+                      key={row.id}
+                      className="border-border grid gap-3 rounded-md border p-3"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <Text className="text-sm font-medium">
+                          {t("platform.appearance.customTokensRow", {
+                            index: index + 1,
+                          })}
+                        </Text>
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="ghost"
+                          onClick={() =>
+                            setCustomTokens((current) =>
+                              current.filter((entry) => entry.id !== row.id),
+                            )
+                          }
+                        >
+                          {t("platform.appearance.customTokensRemove")}
+                        </Button>
+                      </div>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="flex flex-col gap-1">
+                          <FieldLabel htmlFor={`custom-token-kind-${row.id}`}>
+                            {t("platform.appearance.customTokensKind")}
+                          </FieldLabel>
+                          <Select
+                            id={`custom-token-kind-${row.id}`}
+                            value={row.kind}
+                            onChange={(event) =>
+                              setCustomTokens((current) =>
+                                current.map((entry) =>
+                                  entry.id === row.id
+                                    ? {
+                                        ...entry,
+                                        kind: event.target
+                                          .value as TenantCustomTokenKind,
+                                      }
+                                    : entry,
+                                ),
+                              )
+                            }
+                          >
+                            <option value="color">
+                              {t("platform.appearance.customTokensKindColor")}
+                            </option>
+                            <option value="gradient">
+                              {t(
+                                "platform.appearance.customTokensKindGradient",
+                              )}
+                            </option>
+                          </Select>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <FieldLabel htmlFor={`custom-token-name-${row.id}`}>
+                            {t("platform.appearance.customTokensName")}
+                          </FieldLabel>
+                          <Input
+                            id={`custom-token-name-${row.id}`}
+                            value={row.name}
+                            placeholder={t(
+                              "platform.appearance.customTokensNamePlaceholder",
+                            )}
+                            onChange={(event) =>
+                              setCustomTokens((current) =>
+                                current.map((entry) =>
+                                  entry.id === row.id
+                                    ? { ...entry, name: event.target.value }
+                                    : entry,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1 sm:col-span-2">
+                          <FieldLabel htmlFor={`custom-token-label-${row.id}`}>
+                            {t("platform.appearance.customTokensLabel")}
+                          </FieldLabel>
+                          <Input
+                            id={`custom-token-label-${row.id}`}
+                            value={row.label}
+                            placeholder={t("platform.appearance.placeholder")}
+                            onChange={(event) =>
+                              setCustomTokens((current) =>
+                                current.map((entry) =>
+                                  entry.id === row.id
+                                    ? { ...entry, label: event.target.value }
+                                    : entry,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <FieldLabel htmlFor={`custom-token-light-${row.id}`}>
+                            {t("platform.appearance.schemeLight")}
+                          </FieldLabel>
+                          <Input
+                            id={`custom-token-light-${row.id}`}
+                            value={row.light}
+                            placeholder={t("platform.appearance.placeholder")}
+                            onChange={(event) =>
+                              setCustomTokens((current) =>
+                                current.map((entry) =>
+                                  entry.id === row.id
+                                    ? { ...entry, light: event.target.value }
+                                    : entry,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <FieldLabel htmlFor={`custom-token-dark-${row.id}`}>
+                            {t("platform.appearance.schemeDark")}
+                          </FieldLabel>
+                          <Input
+                            id={`custom-token-dark-${row.id}`}
+                            value={row.dark}
+                            placeholder={t("platform.appearance.placeholder")}
+                            onChange={(event) =>
+                              setCustomTokens((current) =>
+                                current.map((entry) =>
+                                  entry.id === row.id
+                                    ? { ...entry, dark: event.target.value }
+                                    : entry,
+                                ),
+                              )
+                            }
+                          />
+                        </div>
+                      </div>
+                      {resolvedVar ? (
+                        <Text variant="muted" className="text-xs">
+                          {t("platform.appearance.customTokensResolvedVar", {
+                            name: resolvedVar,
+                          })}
+                        </Text>
+                      ) : null}
+                    </div>
+                  );
+                })
+              )}
             </section>
 
             <section className="grid gap-3">

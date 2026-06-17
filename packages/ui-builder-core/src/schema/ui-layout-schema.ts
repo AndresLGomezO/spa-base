@@ -5,6 +5,12 @@
  */
 import { z } from "zod";
 
+import {
+  MAX_DERIVED_EXPRESSION_TOKENS,
+  MAX_DERIVED_METRIC_EXPRESSION_METRICS,
+  migrateLegacyDerivedTerms,
+  validateDerivedExpressionGrammar,
+} from "../metrics/derived-expression.js";
 import { motionPresetSchema } from "./motion-schema.js";
 
 const dataSourceSchema = z.discriminatedUnion("type", [
@@ -36,6 +42,7 @@ const stylePropertySchema = z.enum([
   "backgroundColor",
   "color",
   "fontSize",
+  "fontFamily",
   "fontWeight",
   "fontStyle",
   "textDecoration",
@@ -55,6 +62,7 @@ const stylePropertySchema = z.enum([
   "borderWidth",
   "borderColor",
   "borderStyle",
+  "boxShadow",
   "flexWrap",
   "overflowX",
   "overflowY",
@@ -82,10 +90,12 @@ const themeTokenSchema = z.enum([
 
 const responsiveGridBreakpointSchema = z.enum(["base", "sm", "md", "lg", "xl"]);
 
+const shadowTokenSchema = z.enum(["none", "card"]);
+
 export const styleRuleSchema = z
   .object({
     property: stylePropertySchema,
-    value: z.union([z.string(), themeTokenSchema]),
+    value: z.union([z.string(), themeTokenSchema, shadowTokenSchema]),
   })
   .strict();
 
@@ -161,6 +171,93 @@ const metricBindingSourceSchema = z.discriminatedUnion("type", [
     .strict(),
 ]);
 
+const metricDerivedLegacyTermSchema = z
+  .object({
+    metricDefinitionId: z.string(),
+    multiplier: z.number().finite(),
+  })
+  .strict();
+
+export const metricDerivedExpressionTokenSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("metric"),
+      metricDefinitionId: z.string(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("constant"),
+      value: z.number().finite(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("operator"),
+      op: z.enum(["+", "-", "*", "/"]),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("paren"),
+      side: z.enum(["open", "close"]),
+    })
+    .strict(),
+]);
+
+const metricDerivedKpiSchema = z
+  .object({
+    kind: z.literal("metric-derived-kpi"),
+    label: z.string().optional(),
+    expression: z
+      .array(metricDerivedExpressionTokenSchema)
+      .min(1)
+      .max(MAX_DERIVED_EXPRESSION_TOKENS)
+      .optional(),
+    terms: z
+      .array(metricDerivedLegacyTermSchema)
+      .min(2)
+      .max(MAX_DERIVED_METRIC_EXPRESSION_METRICS)
+      .optional(),
+    groupBindings: z.record(z.string(), metricBindingSourceSchema),
+    dimensionBindings: z.record(z.string(), metricBindingSourceSchema),
+    styles: z.array(styleRuleSchema).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (!value.expression?.length && !value.terms?.length) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "metric-derived-kpi requires expression or legacy terms",
+      });
+    }
+  })
+  .transform((value) => {
+    const expression = value.expression?.length
+      ? value.expression
+      : value.terms
+        ? migrateLegacyDerivedTerms(value.terms)
+        : [{ type: "metric" as const, metricDefinitionId: "" }];
+
+    return {
+      kind: value.kind,
+      label: value.label,
+      expression,
+      groupBindings: value.groupBindings,
+      dimensionBindings: value.dimensionBindings,
+      styles: value.styles,
+    };
+  })
+  .superRefine((value, context) => {
+    const grammarError = validateDerivedExpressionGrammar(value.expression);
+    if (grammarError) {
+      context.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: grammarError,
+      });
+    }
+  });
+
 const fieldComponentBaseSchema = z
   .object({
     primary: dataSourceSchema,
@@ -209,6 +306,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         styles: z.array(styleRuleSchema).optional(),
       })
       .strict(),
+    metricDerivedKpiSchema,
     z
       .object({
         kind: z.literal("metric-widget"),

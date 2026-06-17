@@ -696,14 +696,8 @@ export async function fetchMetricRowOrNull(
   metricDefinitionId: string,
   query: MetricRowQuery,
 ): Promise<MetricRowResponse | null> {
-  try {
-    return await fetchMetricRow(metricDefinitionId, query);
-  } catch (error) {
-    if (isMetricRowNotFoundError(error)) {
-      return null;
-    }
-    throw error;
-  }
+  const [row] = await fetchMetricBatch(metricDefinitionId, [query]);
+  return row ?? null;
 }
 
 export async function fetchMetricBatch(

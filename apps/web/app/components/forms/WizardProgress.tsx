@@ -1,8 +1,10 @@
 import {
-  isCssColorValue,
+  isCssBackgroundFillValue,
+  isCssGradientBackgroundValue,
   isThemeTokenValue,
   matchConditionalStyles,
   resolveBackgroundComponentColor,
+  resolvedBackgroundInlineStyle,
   resolveTextComponentColor,
   splitStyleRuleClasses,
   type TextColorToken,
@@ -117,6 +119,7 @@ function resolveStepperCirclePresentation(
   readonly className: string;
   readonly style?: {
     backgroundColor?: string;
+    background?: string;
     color?: string;
     width?: number;
     height?: number;
@@ -151,6 +154,7 @@ function resolveStepperLabelPresentation(
     color?: string;
     fontSize?: string;
     backgroundColor?: string;
+    background?: string;
   };
 } {
   const matched = matchConditionalStyles(status, conditionalStyles);
@@ -175,6 +179,9 @@ function resolveStepperLabelPresentation(
       ...configuredColor.style,
       ...fontSizePresentation.style,
       ...(matched.style?.color ? { color: matched.style.color } : {}),
+      ...(matched.style?.background
+        ? { background: matched.style.background }
+        : {}),
       ...(matched.style?.backgroundColor
         ? { backgroundColor: matched.style.backgroundColor }
         : {}),
@@ -187,15 +194,20 @@ function resolveStepperConnectorPresentation(
   conditionalStyles: WizardProgressComponentConfig["conditionalStyles"],
 ): {
   readonly className?: string;
-  readonly style?: { backgroundColor?: string };
+  readonly style?: { backgroundColor?: string; background?: string };
 } {
   if (leftStepStatus !== "completed") {
     return { className: "bg-muted" };
   }
 
   const matched = matchConditionalStyles("completed", conditionalStyles);
-  if (matched.style?.backgroundColor) {
-    return { style: { backgroundColor: matched.style.backgroundColor } };
+  const matchedBackground = matched.style?.background
+    ? { background: matched.style.background }
+    : matched.style?.backgroundColor
+      ? { backgroundColor: matched.style.backgroundColor }
+      : undefined;
+  if (matchedBackground) {
+    return { style: matchedBackground };
   }
 
   const completedRule = conditionalStyles?.find(
@@ -205,8 +217,9 @@ function resolveStepperConnectorPresentation(
     const background = resolveBackgroundComponentColor(
       completedRule.background,
     );
-    if (background.backgroundColor) {
-      return { style: { backgroundColor: background.backgroundColor } };
+    const inlineStyle = resolvedBackgroundInlineStyle(background);
+    if (inlineStyle) {
+      return { style: inlineStyle };
     }
     if (background.className) {
       return { className: background.className };
@@ -227,11 +240,12 @@ function resolveStepperConnectorPresentation(
 
 function resolveBarTrackPresentation(color?: string): {
   readonly className?: string;
-  readonly style?: { backgroundColor?: string };
+  readonly style?: { backgroundColor?: string; background?: string };
 } {
   const resolved = resolveBackgroundComponentColor(color ?? "muted");
-  if (resolved.backgroundColor) {
-    return { style: { backgroundColor: resolved.backgroundColor } };
+  const inlineStyle = resolvedBackgroundInlineStyle(resolved);
+  if (inlineStyle) {
+    return { style: inlineStyle };
   }
   if (resolved.className) {
     return { className: resolved.className };
@@ -241,13 +255,16 @@ function resolveBarTrackPresentation(color?: string): {
 
 function resolveBarFillPresentation(color?: string): {
   readonly className?: string;
-  readonly style?: { backgroundColor?: string };
+  readonly style?: { backgroundColor?: string; background?: string };
 } {
   if (!color) {
     return { className: barFillClassName() };
   }
 
-  if (isCssColorValue(color) && !isThemeTokenValue(color)) {
+  if (isCssBackgroundFillValue(color) && !isThemeTokenValue(color)) {
+    if (isCssGradientBackgroundValue(color)) {
+      return { style: { background: color.trim() } };
+    }
     return { style: { backgroundColor: color.trim() } };
   }
 

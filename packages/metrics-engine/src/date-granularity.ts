@@ -14,6 +14,40 @@ function parseUtcDate(raw: unknown): Date | null {
   return parsed;
 }
 
+const DATE_BUCKET_INPUT_PATTERNS: Readonly<
+  Record<MetricDateGranularity, RegExp>
+> = {
+  day: /^\d{4}-\d{2}-\d{2}$/,
+  month: /^\d{4}-\d{2}$/,
+  year: /^\d{4}$/,
+};
+
+export function isMetricDateBucketInputComplete(
+  raw: unknown,
+  granularity: MetricDateGranularity,
+): boolean {
+  if (typeof raw !== "string") {
+    return false;
+  }
+
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+
+  const normalized = normalizeMetricDateValue(trimmed, granularity);
+  if (normalized === null) {
+    return false;
+  }
+
+  if (DATE_BUCKET_INPUT_PATTERNS[granularity].test(trimmed)) {
+    return true;
+  }
+
+  // ISO timestamps and full dates from entity fields still normalize cleanly.
+  return trimmed.includes("-") && trimmed.length > 7;
+}
+
 export function normalizeMetricDateValue(
   raw: unknown,
   granularity: MetricDateGranularity,

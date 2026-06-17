@@ -4,6 +4,7 @@ import {
   addStyleRule,
   coerceNumericStyleValue,
   formatStyleRuleValuePreview,
+  isThemeModeColorValue,
   numericStyleInputMin,
   removeStyleRule,
   upsertStyleRule,
@@ -66,5 +67,17 @@ describe("style-rules-state", () => {
     expect(
       formatStyleRuleValuePreview({ property: "fontWeight", value: "0" }),
     ).toBe("0");
+  });
+
+  it("treats tenant custom token vars as theme mode colors", () => {
+    const customColorOptions = [
+      { label: "Widget surface", value: "var(--color-widget)" },
+    ] as const;
+
+    expect(
+      isThemeModeColorValue("var(--color-widget)", customColorOptions),
+    ).toBe(true);
+    expect(isThemeModeColorValue("#ffffff", customColorOptions)).toBe(false);
+    expect(isThemeModeColorValue("primary")).toBe(true);
   });
 });

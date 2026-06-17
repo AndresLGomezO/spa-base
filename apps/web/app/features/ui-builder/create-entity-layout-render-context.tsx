@@ -18,6 +18,7 @@ import {
 } from "../../components/entity/resolve-layout-slot-display";
 import { EntityLayoutImageField } from "../../components/entity/EntityLayoutImageField";
 import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
+import { MetricDerivedValueDisplay } from "../../components/metrics/MetricDerivedValueDisplay";
 import { MetricValueDisplay } from "../../components/metrics/MetricValueDisplay";
 import { readLayoutStaticImageUrl } from "@repo/entities";
 
@@ -149,6 +150,19 @@ export function createEntityLayoutRenderContext(options: {
         className={presentation?.className}
         style={presentation?.style}
         valueClassName={presentation?.valueClassName}
+        valueStyle={presentation?.valueStyle}
+        textSize={presentation?.textSize}
+      />
+    ),
+    metricDerivedKpiRenderer: (config, presentation) => (
+      <MetricDerivedValueDisplay
+        presentation="inline"
+        config={config}
+        context={{ record: item, listFilters, routeParams }}
+        className={presentation?.className}
+        style={presentation?.style}
+        valueClassName={presentation?.valueClassName}
+        valueStyle={presentation?.valueStyle}
         textSize={presentation?.textSize}
       />
     ),

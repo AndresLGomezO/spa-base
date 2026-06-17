@@ -51,6 +51,7 @@ export function DashboardMetricKpiSlot({
       className={presentation?.className}
       style={presentation?.style}
       valueClassName={presentation?.valueClassName}
+      valueStyle={presentation?.valueStyle}
       textSize={presentation?.textSize}
     />
   );

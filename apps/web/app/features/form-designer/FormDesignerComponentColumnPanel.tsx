@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import type { ComponentColumnRef } from "./form-designer-component-column-ref";
 import { isNestedComponentColumnRef } from "./form-designer-component-column-ref";
 import { toComponentRowRef } from "./form-designer-component-row-ref";
-import { formDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
 import {
   findColumnByRef,
   resolveComponentsLayoutBinding,
@@ -48,7 +48,7 @@ export function FormDesignerComponentColumnPanel({
     [editor, stepIndex, treeScope],
   );
 
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
   const resolved = findColumnByRef(binding.layout, columnRef);
 
   if (!resolved) {

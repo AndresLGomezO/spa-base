@@ -1,6 +1,9 @@
 import type { TextColorToken } from "../types/styling.js";
 import type { ThemeToken } from "./style-types.js";
 
+/** How a theme token is applied when picking a swatch in the style editor. */
+export type ThemeColorRole = "background" | "text" | "border";
+
 /** Text color utilities aligned with `@repo/ui` card field tokens and theme semantics. */
 export function themeTokenTextClass(
   token: ThemeToken | TextColorToken,
@@ -51,6 +54,36 @@ export function themeTokenBackgroundClass(token: ThemeToken): string {
     default:
       return "bg-muted";
   }
+}
+
+/**
+ * Tailwind class for the color swatch in UI Builder editors.
+ * Mirrors the classes used at render time for the given role.
+ */
+export function themeTokenSwatchClass(
+  role: ThemeColorRole,
+  token: ThemeToken | TextColorToken,
+): string {
+  const sourceClass =
+    role === "background"
+      ? themeTokenBackgroundClass(token as ThemeToken)
+      : role === "text"
+        ? themeTokenTextClass(token)
+        : themeTokenBorderClass(token as ThemeToken);
+
+  if (sourceClass.startsWith("bg-")) {
+    return sourceClass;
+  }
+
+  if (sourceClass.startsWith("text-")) {
+    return `bg-${sourceClass.slice(5)}`;
+  }
+
+  if (sourceClass.startsWith("border-")) {
+    return `bg-${sourceClass.slice(7)}`;
+  }
+
+  return sourceClass;
 }
 
 export function themeTokenBorderClass(token: ThemeToken): string {

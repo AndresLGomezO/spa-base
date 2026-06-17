@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   applyDateGranularityToQuerySlice,
   applyDateGranularityToSlice,
+  isMetricDateBucketInputComplete,
   normalizeMetricDateValue,
 } from "./date-granularity.js";
 
@@ -34,6 +35,24 @@ describe("normalizeMetricDateValue", () => {
   it("returns null for invalid values", () => {
     expect(normalizeMetricDateValue("not-a-date", "day")).toBeNull();
     expect(normalizeMetricDateValue("", "day")).toBeNull();
+  });
+});
+
+describe("isMetricDateBucketInputComplete", () => {
+  it("accepts complete month bucket strings", () => {
+    expect(isMetricDateBucketInputComplete("2026-06", "month")).toBe(true);
+  });
+
+  it("rejects partial manual month input while typing", () => {
+    expect(isMetricDateBucketInputComplete("2026", "month")).toBe(false);
+    expect(isMetricDateBucketInputComplete("2026-0", "month")).toBe(false);
+    expect(isMetricDateBucketInputComplete("", "month")).toBe(false);
+  });
+
+  it("accepts ISO timestamps from entity fields", () => {
+    expect(
+      isMetricDateBucketInputComplete("2026-06-02T14:30:00.000Z", "month"),
+    ).toBe(true);
   });
 });
 

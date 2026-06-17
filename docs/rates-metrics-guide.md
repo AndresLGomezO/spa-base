@@ -194,8 +194,9 @@ These are the fields shown in **Settings → Metrics → Create metric** (`Metri
 | **Field dependencies** | Source fields that trigger recalculation when changed. Select all fields used in group by / dimensions plus the numeric field. |
 | **Group by** | Multiselect: splits into separate metric rows per distinct value. |
 | **Dimensions** | Multiselect: extra key fields required on every read query. |
+| **Filters** | Optional rules: only source records matching **every** filter are aggregated. Use **Equals** for one value or **Is one of** for several (e.g. `type` = `INCOME`, or `type` in `EXPENSE`, `PAYMENT`). After changing filters, run **Backfill**. |
 
-**Not shown in the UI (set automatically on create):** `filters` = `[]` (no definition-level filters in UI yet), `schemaVersionDependency` = `1`, `version` = `1`.
+**Set automatically on create:** `schemaVersionDependency` = `1`, `version` = `1`.
 
 **Multiselect empty:** Leave the control with no badges selected (not the same as picking a field).
 
@@ -736,6 +737,45 @@ For **card** view type only, in the card layout builder:
 3. Use **Entity field** bindings where the row should drive the key—e.g. `categoryId` → **Entity field** `categoryId` so each card shows that row’s category total.
 
 **Reasoning:** Strip KPIs are list-level; card slots are **row-level**.
+
+### Derived metric KPI (`metric-derived-kpi`)
+
+Use a **derived KPI** when you need a calculated value from multiple metrics (for example monthly income minus outflows, margin percentage, or averages) without engine-level sign rules on a single aggregation row.
+
+**Prerequisites**
+
+1. Create separate metric definitions (e.g. **Monthly Income** with filter `type = INCOME`, **Monthly Outflows** with filter `type in …`).
+2. All metrics referenced in the formula must share the **same `groupBy` and `dimensions` keys** (typically `groupBy: [date]` with month granularity).
+
+**Steps**
+
+1. Metrics row widget designer → add component **Derived metric KPI**.
+2. Build the **formula** with metric tokens, operators (`+`, `−`, `×`, `÷`), numeric constants, and parentheses.
+3. **Shared bindings:** bind `date` once (static month, list filter, or route param).
+4. Optional **label** (e.g. “Total balance”).
+5. Save → one cell shows the evaluated result for the bound period.
+
+**Examples**
+
+| Goal | Formula tokens |
+|------|----------------|
+| Total balance | `Income − Outflows` |
+| Margin % | `(Income − Outflows) / Income` |
+| Tax estimate | `Income * 0.15` |
+| Average ticket | `Revenue / Count` |
+
+**Precedence**
+
+- Multiplication and division run before addition and subtraction.
+- Parentheses override the default order, e.g. `(Income − Outflows) / Income`.
+
+**Notes**
+
+- Missing metric rows count as **0** in the formula.
+- If all referenced metrics are empty, the widget shows **No value**.
+- Division by zero shows a dedicated error state.
+- Legacy layouts that used **+1 / −1 multipliers** auto-migrate to `MetricA − MetricB`.
+- Currency/formatting follows the **first metric** in the formula.
 
 ---
 

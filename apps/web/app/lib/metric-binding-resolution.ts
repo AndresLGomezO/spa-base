@@ -1,4 +1,5 @@
 import type { MetricBindingSource } from "@repo/entities";
+import { isMetricDateBucketInputComplete } from "@repo/metrics-engine/browser";
 
 import type { MetricRowQuery } from "./api-client.js";
 import {
@@ -18,8 +19,15 @@ export function resolveMetricBindingSource(
   context: MetricBindingContext,
 ): string | number | boolean | null {
   switch (source.type) {
-    case "static":
+    case "static": {
+      if (
+        typeof source.value === "string" &&
+        source.value.trim().length === 0
+      ) {
+        return null;
+      }
       return source.value;
+    }
     case "entityField": {
       if (!context.record) {
         return null;
@@ -93,6 +101,38 @@ function resolveMetricBindingMap(
   return resolved;
 }
 
+function areResolvedDateBindingsComplete(
+  definition: MetricDefinitionRecord,
+  groupBindings: MetricQueryBindings,
+  dimensionBindings: MetricQueryBindings,
+): boolean {
+  const granularityMap = definition.dateFieldGranularity ?? {};
+
+  for (const field of definition.groupBy) {
+    const granularity = granularityMap[field];
+    if (!granularity) {
+      continue;
+    }
+    if (!isMetricDateBucketInputComplete(groupBindings[field], granularity)) {
+      return false;
+    }
+  }
+
+  for (const field of definition.dimensions) {
+    const granularity = granularityMap[field];
+    if (!granularity) {
+      continue;
+    }
+    if (
+      !isMetricDateBucketInputComplete(dimensionBindings[field], granularity)
+    ) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 export function buildMetricRowQueryFromBindings(
   definition: MetricDefinitionRecord,
   input: {
@@ -127,6 +167,16 @@ export function buildMetricRowQueryFromBindings(
     context,
   );
   if (!dimensionResolved) {
+    return null;
+  }
+
+  if (
+    !areResolvedDateBindingsComplete(
+      definition,
+      groupResolved,
+      dimensionResolved,
+    )
+  ) {
     return null;
   }
 

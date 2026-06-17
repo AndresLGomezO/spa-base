@@ -29,7 +29,7 @@ import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { isNestedComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { findColumnByRef } from "../form-designer/form-designer-components-layout";
@@ -90,7 +90,7 @@ export function DashboardLayoutDesignerComponentColumnPanelHeaderMenu({
 }: DashboardLayoutDesignerComponentColumnPanelHeaderMenuProps) {
   const { t } = useTranslation("common");
   const { editor, activeTabId } = useDashboardLayoutDesigner();
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(
     TENANT_DASHBOARD_LAYOUT_PRESET_SOURCE,
   );

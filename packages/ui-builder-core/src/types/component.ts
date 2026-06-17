@@ -17,6 +17,7 @@ export type UiComponentKind =
   | "numeric"
   | "badge"
   | "metric-kpi"
+  | "metric-derived-kpi"
   | "metric-widget"
   | "dashboard-section"
   | "form-field"
@@ -71,6 +72,30 @@ export interface MetricKpiComponentConfig {
   readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly label?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface MetricDerivedTerm {
+  readonly metricDefinitionId: string;
+  readonly multiplier: number;
+}
+
+export type MetricDerivedOperator = "+" | "-" | "*" | "/";
+
+export type MetricDerivedExpressionToken =
+  | { readonly type: "metric"; readonly metricDefinitionId: string }
+  | { readonly type: "constant"; readonly value: number }
+  | { readonly type: "operator"; readonly op: MetricDerivedOperator }
+  | { readonly type: "paren"; readonly side: "open" | "close" };
+
+export interface MetricDerivedKpiComponentConfig {
+  readonly kind: "metric-derived-kpi";
+  readonly label?: string;
+  readonly expression: readonly MetricDerivedExpressionToken[];
+  /** @deprecated Legacy weighted-sum terms; migrated to `expression` on read. */
+  readonly terms?: readonly MetricDerivedTerm[];
+  readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly styles?: readonly StyleRule[];
 }
 
@@ -318,6 +343,7 @@ export type UiComponentConfig =
   | IconComponentConfig
   | UserComponentConfig
   | MetricKpiComponentConfig
+  | MetricDerivedKpiComponentConfig
   | MetricWidgetComponentConfig
   | DashboardSectionComponentConfig
   | FormFieldComponentConfig
@@ -359,6 +385,12 @@ export function isMetricKpiComponent(
   config: UiComponentConfig,
 ): config is MetricKpiComponentConfig {
   return config.kind === "metric-kpi";
+}
+
+export function isMetricDerivedKpiComponent(
+  config: UiComponentConfig,
+): config is MetricDerivedKpiComponentConfig {
+  return config.kind === "metric-derived-kpi";
 }
 
 export function isMetricWidgetComponent(

@@ -12,6 +12,7 @@ Requires `metricWidgets[]` definitions and `metricRowLayout` with metric-widget 
 - `numeric`
 - `badge`
 - `metric-kpi`
+- `metric-derived-kpi`
 - `view-filter`
 - `metric-widget`
 

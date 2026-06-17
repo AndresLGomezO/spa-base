@@ -132,7 +132,10 @@ export function getFilteredComponentCatalog(
               { kind: "metric-widget" as const, icon: LayoutGrid },
             ]
           : designSurface === "metricWidget"
-            ? [{ kind: "metric-kpi" as const, icon: ChartLine }]
+            ? [
+                { kind: "metric-kpi" as const, icon: ChartLine },
+                { kind: "metric-derived-kpi" as const, icon: ChartLine },
+              ]
             : [{ kind: "metric-widget" as const, icon: LayoutGrid }];
 
     return {

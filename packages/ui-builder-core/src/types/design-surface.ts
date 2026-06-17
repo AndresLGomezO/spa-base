@@ -33,6 +33,7 @@ const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "numeric",
   "badge",
   "metric-kpi",
+  "metric-derived-kpi",
   ...VIEW_FILTER_KINDS,
 ];
 
@@ -111,6 +112,8 @@ const DASHBOARD_CONTENT_KINDS: readonly UiComponentKind[] = [
   "image",
   "icon",
   "user",
+  "metric-kpi",
+  "metric-derived-kpi",
   "metric-widget",
   ...VIEW_FILTER_KINDS,
 ];

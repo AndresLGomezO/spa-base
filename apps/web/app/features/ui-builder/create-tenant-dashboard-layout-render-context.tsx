@@ -14,6 +14,7 @@ import type {
   EntityName,
 } from "../../entities/entity-catalog";
 import { createDashboardSectionRenderer } from "./create-dashboard-section-renderer";
+import { DashboardMetricDerivedKpiSlot } from "./DashboardMetricDerivedKpiSlot";
 import { DashboardMetricKpiSlot } from "./DashboardMetricKpiSlot";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context";
 import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
@@ -85,6 +86,13 @@ export function createTenantDashboardLayoutRenderContext(
     ),
     metricKpiRenderer: (config, presentation) => (
       <DashboardMetricKpiSlot
+        config={config}
+        presentation={presentation}
+        pageFilters={pageFilters}
+      />
+    ),
+    metricDerivedKpiRenderer: (config, presentation) => (
+      <DashboardMetricDerivedKpiSlot
         config={config}
         presentation={presentation}
         pageFilters={pageFilters}

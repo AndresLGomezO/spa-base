@@ -31,7 +31,7 @@ import { cn } from "@repo/theme/utils";
 
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { resolveActiveLayoutBinding } from "./metrics-row-designer-layout-binding";
@@ -72,7 +72,7 @@ export function MetricsRowDesignerComponentRowPanelHeaderMenu({
   const { t } = useTranslation("common");
   const { editor, activeTabId } = useMetricsRowDesigner();
   const definition = useEntityDefinition(editor.entityName);
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(definition.name);
   const designSurface = activeTabId === "row" ? "metricRow" : "metricWidget";
   const [menuOpen, setMenuOpen] = useState(false);

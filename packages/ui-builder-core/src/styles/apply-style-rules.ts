@@ -1,8 +1,20 @@
 import type { StyleRule, StylePropertyKey, ThemeToken } from "./style-types.js";
-import { isCssColorValue, isThemeTokenValue } from "./color-values.js";
+import {
+  isCssBackgroundFillValue,
+  isCssColorValue,
+  isCssGradientBackgroundValue,
+  isThemeTokenValue,
+} from "./color-values.js";
+import {
+  isCssBoxShadowValue,
+  isCssFontFamilyValue,
+  isCssLengthTokenValue,
+  resolveLengthStyleValue,
+  resolveMarginStyleValue,
+} from "./css-values.js";
+import { isShadowTokenValue, shadowTokenClass } from "./shadow-token-values.js";
 import {
   isMarginStyleProperty,
-  parseMarginPx,
   parseNonNegativeSpacingPx,
 } from "./spacing-style-values.js";
 import {
@@ -36,12 +48,18 @@ export interface LayoutInlineStyle extends SpacingInlineStyle {
   borderStyle?: string;
   borderColor?: string;
   backgroundColor?: string;
+  background?: string;
   color?: string;
+  boxShadow?: string;
+  fontFamily?: string;
+  fontSize?: string;
+  gap?: string;
 }
 
 export interface TextInlineStyle {
   fontSize?: string;
   color?: string;
+  fontFamily?: string;
 }
 
 const TEXT_STYLE_PROPERTIES = new Set<StylePropertyKey>([
@@ -110,6 +128,8 @@ const PIXEL_INLINE_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   "minWidth",
   "maxWidth",
   "borderWidth",
+  "fontSize",
+  "fontFamily",
 ]);
 
 export type FlexAlign = "start" | "center" | "end" | "stretch";
@@ -138,6 +158,14 @@ function ruleToClass(rule: StyleRule): string | undefined {
 
   if (property === "borderColor" && isThemeToken(raw)) {
     return themeTokenBorderClass(raw);
+  }
+
+  if (property === "boxShadow" && isShadowTokenValue(raw)) {
+    return shadowTokenClass(raw);
+  }
+
+  if (property === "boxShadow" && isCustomBoxShadowRule(rule)) {
+    return undefined;
   }
 
   if (property === "fontWeight" && raw === "bold") {
@@ -199,6 +227,9 @@ function ruleToClass(rule: StyleRule): string | undefined {
   }
 
   if (property === "gap") {
+    if (isCssLengthTokenValue(raw)) {
+      return undefined;
+    }
     const px = Number.parseInt(raw, 10);
     if (Number.isFinite(px)) {
       return `gap-[${px}px]`;
@@ -227,7 +258,23 @@ function ruleToClass(rule: StyleRule): string | undefined {
 }
 
 function isCustomColorRule(rule: StyleRule): boolean {
-  return isCssColorValue(String(rule.value));
+  if (!COLOR_STYLE_PROPERTIES.has(rule.property)) {
+    return false;
+  }
+
+  const value = String(rule.value);
+  if (rule.property === "backgroundColor") {
+    return isCssBackgroundFillValue(value);
+  }
+  return isCssColorValue(value);
+}
+
+function isCustomBoxShadowRule(rule: StyleRule): boolean {
+  return (
+    rule.property === "boxShadow" &&
+    !isShadowTokenValue(String(rule.value)) &&
+    isCssBoxShadowValue(String(rule.value))
+  );
 }
 
 function classesFromRules(
@@ -442,7 +489,9 @@ export function inlineFlexGrowStretchClassName(
   if (
     component.kind !== "text" &&
     component.kind !== "user" &&
-    component.kind !== "image"
+    component.kind !== "image" &&
+    component.kind !== "metric-kpi" &&
+    component.kind !== "metric-derived-kpi"
   ) {
     return "";
   }
@@ -661,8 +710,32 @@ export function fontSizePxFromStyles(
     return undefined;
   }
 
-  const px = Number.parseInt(String(fontSizeRule.value), 10);
+  const raw = String(fontSizeRule.value);
+  if (isCssLengthTokenValue(raw)) {
+    return undefined;
+  }
+
+  const px = Number.parseInt(raw, 10);
   return Number.isFinite(px) && px > 0 ? px : undefined;
+}
+
+function resolveFontSizeStyleValue(
+  styles: readonly StyleRule[] | undefined,
+): string | undefined {
+  const fontSizeRule = styles?.find(
+    (rule) => rule.property === FONT_SIZE_STYLE_PROPERTY,
+  );
+  if (!fontSizeRule) {
+    return undefined;
+  }
+
+  const raw = String(fontSizeRule.value);
+  if (isCssLengthTokenValue(raw)) {
+    return raw;
+  }
+
+  const px = Number.parseInt(raw, 10);
+  return Number.isFinite(px) && px > 0 ? `${px}px` : undefined;
 }
 
 /** Inline text styles for card field values (custom colors + font size). */
@@ -670,9 +743,9 @@ export function textInlineStyleFromStyleRules(
   styles: readonly StyleRule[] | undefined,
 ): TextInlineStyle {
   const style: TextInlineStyle = {};
-  const fontSizePx = fontSizePxFromStyles(styles);
-  if (fontSizePx !== undefined) {
-    style.fontSize = `${fontSizePx}px`;
+  const fontSize = resolveFontSizeStyleValue(styles);
+  if (fontSize !== undefined) {
+    style.fontSize = fontSize;
   }
 
   const colorRule = styles?.find((rule) => rule.property === "color");
@@ -680,7 +753,24 @@ export function textInlineStyleFromStyleRules(
     style.color = String(colorRule.value).trim();
   }
 
+  const fontFamilyRule = styles?.find((rule) => rule.property === "fontFamily");
+  if (fontFamilyRule && isCssFontFamilyValue(String(fontFamilyRule.value))) {
+    style.fontFamily = String(fontFamilyRule.value).trim();
+  }
+
   return style;
+}
+
+/** CSS gap value from style rules (theme token or px). */
+export function gapStyleFromStyleRules(
+  styles: readonly StyleRule[] | undefined,
+): string | undefined {
+  const gapRule = styles?.find((rule) => rule.property === "gap");
+  if (!gapRule) {
+    return undefined;
+  }
+
+  return resolveLengthStyleValue(String(gapRule.value));
 }
 
 /** Pixel gap for `LayoutGrid` / `LayoutStack`; defaults to 0 when no `gap` style rule. */
@@ -696,28 +786,43 @@ export function gapPxFromStyles(
   return Number.isFinite(px) && px >= 0 ? px : 0;
 }
 
-function applyCustomColorRules(
+function applyCustomVisualRules(
   styles: readonly StyleRule[] | undefined,
   style: LayoutInlineStyle,
 ): void {
   for (const rule of styles ?? []) {
-    if (!isCustomColorRule(rule)) {
+    if (isCustomColorRule(rule)) {
+      const value = String(rule.value).trim();
+      switch (rule.property) {
+        case "backgroundColor":
+          if (isCssGradientBackgroundValue(value)) {
+            style.background = value;
+          } else {
+            style.backgroundColor = value;
+          }
+          break;
+        case "color":
+          style.color = value;
+          break;
+        case "borderColor":
+          style.borderColor = value;
+          break;
+        default:
+          break;
+      }
       continue;
     }
 
-    const value = String(rule.value).trim();
-    switch (rule.property) {
-      case "backgroundColor":
-        style.backgroundColor = value;
-        break;
-      case "color":
-        style.color = value;
-        break;
-      case "borderColor":
-        style.borderColor = value;
-        break;
-      default:
-        break;
+    if (isCustomBoxShadowRule(rule)) {
+      style.boxShadow = String(rule.value).trim();
+      continue;
+    }
+
+    if (
+      rule.property === "fontFamily" &&
+      isCssFontFamilyValue(String(rule.value))
+    ) {
+      style.fontFamily = String(rule.value).trim();
     }
   }
 }
@@ -733,14 +838,20 @@ export function spacingStyleFromStyleRules(
       continue;
     }
 
-    const px = isMarginStyleProperty(rule.property)
-      ? parseMarginPx(String(rule.value))
-      : parseNonNegativeSpacingPx(String(rule.value));
-    if (px === undefined) {
+    const raw = String(rule.value);
+    const resolved = isMarginStyleProperty(rule.property)
+      ? resolveMarginStyleValue(raw)
+      : isCssLengthTokenValue(raw)
+        ? raw
+        : (() => {
+            const px = parseNonNegativeSpacingPx(raw);
+            return px !== undefined ? `${px}px` : undefined;
+          })();
+    if (resolved === undefined) {
       continue;
     }
 
-    const value = `${px}px`;
+    const value = resolved;
     switch (rule.property) {
       case "marginTop":
         style.marginTop = value;
@@ -778,8 +889,56 @@ export function spacingStyleFromStyleRules(
 }
 
 function parseNonNegativePx(value: string | ThemeToken): number | undefined {
-  const px = Number.parseInt(String(value), 10);
+  const raw = String(value);
+  if (isCssLengthTokenValue(raw)) {
+    return undefined;
+  }
+
+  const px = Number.parseInt(raw, 10);
   return Number.isFinite(px) && px >= 0 ? px : undefined;
+}
+
+function applyLengthStyleRule(
+  style: LayoutInlineStyle,
+  property: StylePropertyKey,
+  raw: string,
+): void {
+  const resolved = resolveLengthStyleValue(raw);
+  if (resolved === undefined) {
+    return;
+  }
+
+  switch (property) {
+    case "borderRadius":
+      style.borderRadius = resolved;
+      break;
+    case "borderTopLeftRadius":
+      style.borderTopLeftRadius = resolved;
+      break;
+    case "borderTopRightRadius":
+      style.borderTopRightRadius = resolved;
+      break;
+    case "borderBottomLeftRadius":
+      style.borderBottomLeftRadius = resolved;
+      break;
+    case "borderBottomRightRadius":
+      style.borderBottomRightRadius = resolved;
+      break;
+    case "minWidth":
+      style.minWidth = resolved;
+      break;
+    case "maxWidth":
+      style.maxWidth = resolved;
+      break;
+    case "gap":
+      style.gap = resolved;
+      break;
+    case "fontSize":
+      style.fontSize = resolved;
+      break;
+    default:
+      break;
+  }
 }
 
 /** Spacing plus pixel dimensions (border radius, min/max width, border width). */
@@ -791,38 +950,27 @@ export function layoutInlineStyleFromStyleRules(
   };
 
   for (const rule of styles ?? []) {
+    const raw = String(rule.value);
+    if (BORDER_RADIUS_STYLE_PROPERTIES.has(rule.property)) {
+      applyLengthStyleRule(style, rule.property, raw);
+      continue;
+    }
+
+    if (
+      rule.property === "minWidth" ||
+      rule.property === "maxWidth" ||
+      rule.property === "gap" ||
+      rule.property === "fontSize"
+    ) {
+      applyLengthStyleRule(style, rule.property, raw);
+      continue;
+    }
+
     const px = parseNonNegativePx(rule.value);
-    if (px !== undefined) {
-      switch (rule.property) {
-        case "borderRadius":
-          style.borderRadius = `${px}px`;
-          break;
-        case "borderTopLeftRadius":
-          style.borderTopLeftRadius = `${px}px`;
-          break;
-        case "borderTopRightRadius":
-          style.borderTopRightRadius = `${px}px`;
-          break;
-        case "borderBottomLeftRadius":
-          style.borderBottomLeftRadius = `${px}px`;
-          break;
-        case "borderBottomRightRadius":
-          style.borderBottomRightRadius = `${px}px`;
-          break;
-        case "minWidth":
-          style.minWidth = `${px}px`;
-          break;
-        case "maxWidth":
-          style.maxWidth = `${px}px`;
-          break;
-        case "borderWidth":
-          if (px > 0) {
-            style.borderWidth = `${px}px`;
-            style.borderStyle = style.borderStyle ?? "solid";
-          }
-          break;
-        default:
-          break;
+    if (px !== undefined && rule.property === "borderWidth") {
+      if (px > 0) {
+        style.borderWidth = `${px}px`;
+        style.borderStyle = style.borderStyle ?? "solid";
       }
     }
 
@@ -839,7 +987,7 @@ export function layoutInlineStyleFromStyleRules(
     }
   }
 
-  applyCustomColorRules(styles, style);
+  applyCustomVisualRules(styles, style);
 
   return style;
 }

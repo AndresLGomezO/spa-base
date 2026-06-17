@@ -31,6 +31,7 @@ interface MetricValueDisplayProps {
   readonly className?: string;
   readonly style?: CSSProperties;
   readonly valueClassName?: string;
+  readonly valueStyle?: CSSProperties;
   readonly textSize?: number;
 }
 
@@ -81,13 +82,18 @@ function MetricKpiValueText({
   children,
   valueClassName,
   textSize,
+  valueStyle,
 }: {
   readonly children: ReactNode;
   readonly valueClassName: string;
   readonly textSize: number | undefined;
+  readonly valueStyle?: CSSProperties;
 }) {
   return (
-    <span className={valueClassName} style={metricValueTextStyle(textSize)}>
+    <span
+      className={valueClassName}
+      style={{ ...valueStyle, ...metricValueTextStyle(textSize) }}
+    >
       {children}
     </span>
   );
@@ -105,6 +111,7 @@ export function MetricValueDisplay({
   className,
   style,
   valueClassName,
+  valueStyle,
   textSize,
 }: MetricValueDisplayProps) {
   const { t, i18n } = useTranslation("common");
@@ -245,6 +252,7 @@ export function MetricValueDisplay({
         >
           <MetricKpiValueText
             valueClassName={valueTextClassName}
+            valueStyle={valueStyle}
             textSize={textSize}
           >
             {emptyText}
@@ -261,6 +269,7 @@ export function MetricValueDisplay({
         <Text className="text-muted-foreground text-xs">{title}</Text>
         <MetricKpiValueText
           valueClassName={valueTextClassName}
+          valueStyle={valueStyle}
           textSize={textSize}
         >
           {emptyText}
@@ -285,6 +294,7 @@ export function MetricValueDisplay({
       >
         <MetricKpiValueText
           valueClassName={valueTextClassName}
+          valueStyle={valueStyle}
           textSize={textSize}
         >
           {displayValue}
@@ -302,6 +312,7 @@ export function MetricValueDisplay({
       <Text className="text-muted-foreground text-xs">{title}</Text>
       <MetricKpiValueText
         valueClassName={valueTextClassName}
+        valueStyle={valueStyle}
         textSize={textSize}
       >
         {displayValue}

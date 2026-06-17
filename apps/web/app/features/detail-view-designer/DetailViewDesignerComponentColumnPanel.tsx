@@ -20,7 +20,7 @@ import { useTranslation } from "react-i18next";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { isNestedComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { toComponentRowRef } from "../form-designer/form-designer-component-row-ref";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import { findColumnByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
 import { resolveLayoutBinding } from "./detail-view-designer-layout-binding";
@@ -38,7 +38,7 @@ export function DetailViewDesignerComponentColumnPanel({
 
   const binding = useMemo(() => resolveLayoutBinding(editor), [editor]);
 
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
   const resolved = findColumnByRef(binding.layout, columnRef);
 
   if (!resolved) {

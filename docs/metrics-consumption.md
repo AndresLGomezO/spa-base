@@ -180,7 +180,7 @@ No composite Firestore indexes are required for the read API.
 | --- | --- |
 | `getMetricDefinition(id)` | `GET /api/metric-definitions/:id` |
 | `fetchMetricRow(id, query)` | `POST /api/metrics/:id/row` |
-| `fetchMetricRowOrNull(id, query)` | Same; returns `null` on `METRIC_ROW_NOT_FOUND` |
+| `fetchMetricRowOrNull(id, query)` | Uses batch endpoint; returns `null` when the row is missing (HTTP 200) |
 | `fetchMetricBatch(id, queries)` | `POST /api/metrics/:id/batch` |
 | `isMetricRowNotFoundError(error)` | Type guard for empty KPI state |
 | `MetricRowQuery`, `MetricRowResponse` | Request/response types |

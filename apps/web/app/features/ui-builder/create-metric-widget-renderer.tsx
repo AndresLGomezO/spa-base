@@ -1,4 +1,9 @@
 import { Text } from "@repo/ui";
+import {
+  filterComponentInnerStyleRules,
+  layoutInlineStyleFromStyleRules,
+  splitStyleRuleClasses,
+} from "@repo/ui-builder-core";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import type { MetricWidgetComponentConfig } from "@repo/ui-builder-core";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
@@ -45,12 +50,17 @@ export function createMetricWidgetRenderer(
     }
 
     const { widget, entityDefinition } = resolved;
+    const innerStyles = filterComponentInnerStyleRules(config.styles);
+    const { containerClassName } = splitStyleRuleClasses(innerStyles);
+    const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
 
     return (
-      <RecursiveLayoutRenderer
-        layout={widget.layout}
-        context={buildLayoutContext(entityDefinition, {})}
-      />
+      <div className={containerClassName} style={containerStyle}>
+        <RecursiveLayoutRenderer
+          layout={widget.layout}
+          context={buildLayoutContext(entityDefinition, {})}
+        />
+      </div>
     );
   };
 }

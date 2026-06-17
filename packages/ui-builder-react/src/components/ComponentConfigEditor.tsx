@@ -198,6 +198,10 @@ export interface ComponentConfigEditorProps {
     config: Extract<UiComponentConfig, { kind: "metric-kpi" }>,
     onChange: (config: UiComponentConfig) => void,
   ) => ReactNode;
+  readonly metricDerivedKpiEditor?: (
+    config: Extract<UiComponentConfig, { kind: "metric-derived-kpi" }>,
+    onChange: (config: UiComponentConfig) => void,
+  ) => ReactNode;
   readonly staticImageEditor?: (options: {
     readonly value: string;
     readonly onChange: (value: string) => void;
@@ -619,6 +623,7 @@ export function ComponentConfigEditor({
   onChange,
   labels,
   metricKpiEditor,
+  metricDerivedKpiEditor,
   staticImageEditor,
   lucideIconEditor,
   allowedKinds = DEFAULT_COMPONENT_KINDS,
@@ -654,6 +659,20 @@ export function ComponentConfigEditor({
       onChange({
         kind: "metric-kpi",
         metricDefinitionId: "",
+        groupBindings: {},
+        dimensionBindings: {},
+      });
+      return;
+    }
+
+    if (nextKind === "metric-derived-kpi") {
+      onChange({
+        kind: "metric-derived-kpi",
+        expression: [
+          { type: "metric", metricDefinitionId: "" },
+          { type: "operator", op: "-" },
+          { type: "metric", metricDefinitionId: "" },
+        ],
         groupBindings: {},
         dimensionBindings: {},
       });
@@ -707,6 +726,39 @@ export function ComponentConfigEditor({
           </Select>
         </label>
         {metricKpiEditor?.(config, onChange)}
+        {hideComponentStyles ? null : (
+          <StyleRulesEditor
+            styles={config.styles}
+            onChange={(styles) => onChange({ ...config, styles })}
+            labels={{
+              ...labels.styleRules,
+              title: labels.componentStyles,
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
+  if (config.kind === "metric-derived-kpi") {
+    return (
+      <div className="flex flex-col gap-3">
+        <label className="flex flex-col gap-1 text-sm">
+          <span className="text-muted-foreground">{labels.component}</span>
+          <Select
+            value={config.kind}
+            onChange={(event) =>
+              handleKindChange(event.target.value as UiComponentKind)
+            }
+          >
+            {componentKinds.map((option) => (
+              <option key={option} value={option}>
+                {option}
+              </option>
+            ))}
+          </Select>
+        </label>
+        {metricDerivedKpiEditor?.(config, onChange)}
         {hideComponentStyles ? null : (
           <StyleRulesEditor
             styles={config.styles}
@@ -982,6 +1034,7 @@ export function ComponentConfigEditor({
                       onChange({ ...config, barTrackColor })
                     }
                     labels={labels.styleRules}
+                    colorRole="background"
                   />
                 </label>
                 <label className="flex flex-col gap-1 text-sm">
@@ -994,6 +1047,7 @@ export function ComponentConfigEditor({
                       onChange({ ...config, barFillColor })
                     }
                     labels={labels.styleRules}
+                    colorRole="text"
                   />
                 </label>
               </div>
@@ -1084,6 +1138,7 @@ export function ComponentConfigEditor({
                               );
                             }}
                             labels={labels.styleRules}
+                            colorRole="background"
                           />
                         </label>
                         <label className="flex flex-col gap-1 text-sm">
@@ -1107,6 +1162,7 @@ export function ComponentConfigEditor({
                               );
                             }}
                             labels={labels.styleRules}
+                            colorRole="text"
                           />
                         </label>
                       </div>

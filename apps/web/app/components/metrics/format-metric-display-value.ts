@@ -31,6 +31,16 @@ function formatPrimaryMetricValue(
   return typeof value === "number" && Number.isFinite(value) ? value : null;
 }
 
+export function readPrimaryMetricNumericValue(
+  definition: MetricDefinitionRecord,
+  values: Record<string, number> | undefined,
+): number | null {
+  if (!values) {
+    return null;
+  }
+  return formatPrimaryMetricValue(definition, values);
+}
+
 export function formatPrimaryMetricDisplayValue(
   definition: MetricDefinitionRecord,
   values: Record<string, number>,

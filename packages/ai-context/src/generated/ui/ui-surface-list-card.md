@@ -9,6 +9,8 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
 - `image`
 - `icon`
 - `user`
+- `metric-kpi`
+- `metric-derived-kpi`
 - `metric-widget`
 - `view-filter`
 

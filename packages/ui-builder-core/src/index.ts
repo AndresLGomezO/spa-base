@@ -63,6 +63,10 @@ export type {
   DataSource,
   FieldUiComponentConfig,
   MetricKpiComponentConfig,
+  MetricDerivedKpiComponentConfig,
+  MetricDerivedTerm,
+  MetricDerivedExpressionToken,
+  MetricDerivedOperator,
   MetricWidgetComponentConfig,
   DashboardSectionComponentConfig,
   ViewSearchComponentConfig,
@@ -92,6 +96,7 @@ export type {
 
 export {
   isMetricKpiComponent,
+  isMetricDerivedKpiComponent,
   isMetricWidgetComponent,
   isDashboardSectionComponent,
   isViewSearchComponent,
@@ -167,19 +172,40 @@ export type {
   StyleRule,
   StylePropertyKey,
   ThemeToken,
+  ShadowToken,
 } from "./styles/style-types.js";
 export { STYLE_PROPERTY_OPTIONS } from "./styles/style-types.js";
 export {
   isCssColorValue,
+  isCssBackgroundFillValue,
+  isCssGradientBackgroundValue,
   isCustomColorValue,
+  isCustomBackgroundFillValue,
   isThemeTokenValue,
 } from "./styles/color-values.js";
 export {
+  isCssBoxShadowValue,
+  isCssFontFamilyValue,
+  isCssLengthTokenValue,
+  resolveLengthStyleValue,
+  resolveMarginStyleValue,
+} from "./styles/css-values.js";
+export {
+  isShadowTokenValue,
+  shadowTokenClass,
+} from "./styles/shadow-token-values.js";
+export {
   resolveBackgroundComponentColor,
   resolveTextComponentColor,
+  resolvedBackgroundInlineStyle,
   type ResolvedBackgroundColor,
+  type ResolvedBackgroundInlineStyle,
   type ResolvedTextColor,
 } from "./styles/resolve-component-color.js";
+export {
+  themeTokenSwatchClass,
+  type ThemeColorRole,
+} from "./styles/theme-token-classes.js";
 export {
   applyStyleRules,
   resolveStyleRules,
@@ -215,6 +241,7 @@ export {
   stackShellWidthClassName,
   stackShellLayoutClasses,
   gapPxFromStyles,
+  gapStyleFromStyleRules,
   fontSizePxFromStyles,
   FONT_SIZE_STYLE_PROPERTY,
   FLEX_LAYOUT_PROPERTIES,
@@ -394,3 +421,17 @@ export {
   ensureListCardContainerRootLayout,
   isListCardContainerRootLayout,
 } from "./builder/list-card-defaults.js";
+export {
+  MAX_DERIVED_EXPRESSION_TOKENS,
+  MAX_DERIVED_METRIC_EXPRESSION_METRICS,
+  MIN_DERIVED_METRIC_EXPRESSION_METRICS,
+  evaluateDerivedExpression,
+  extractMetricDefinitionIds,
+  migrateLegacyDerivedTerms,
+  normalizeMetricDerivedKpiConfig,
+  resolveMetricDerivedExpression,
+  validateDerivedExpressionGrammar,
+  type DerivedExpressionError,
+  type DerivedExpressionGrammarError,
+} from "./metrics/derived-expression.js";
+export { metricDerivedExpressionTokenSchema } from "./schema/ui-layout-schema.js";

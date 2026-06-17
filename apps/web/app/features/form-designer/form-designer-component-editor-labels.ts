@@ -1,9 +1,18 @@
 import type { TFunction } from "i18next";
+import { useMemo } from "react";
+import { useTranslation } from "react-i18next";
 
-import type { ComponentConfigEditorLabels } from "@repo/ui-builder-react";
+import type {
+  ComponentConfigEditorLabels,
+  SemanticColorOption,
+} from "@repo/ui-builder-react";
+
+import { useCustomTokenColorOptions } from "../../theme/use-custom-token-color-options";
+import { styleRulesEditorLabels } from "../ui-builder/style-rules-editor-labels";
 
 export function formDesignerComponentEditorLabels(
   t: TFunction<"common">,
+  customColorOptions: readonly SemanticColorOption[] = [],
 ): ComponentConfigEditorLabels {
   return {
     component: t("entity.viewSettings.component"),
@@ -140,20 +149,7 @@ export function formDesignerComponentEditorLabels(
         "formDesigner.components.options.wizardStepperLabelMaxWidth",
       ),
     },
-    styleRules: {
-      addStyleRule: t("entity.viewSettings.addStyleRule"),
-      removeStyleRule: t("entity.viewSettings.removeStyleRule"),
-      styleProperty: t("entity.viewSettings.styleProperty"),
-      styleValue: t("entity.viewSettings.styleValue"),
-      styleColorTheme: t("entity.viewSettings.styleColorTheme"),
-      styleColorCustom: t("entity.viewSettings.styleColorCustom"),
-      styleColorThemeTokens: t("entity.viewSettings.styleColorThemeTokens"),
-      styleColorSemanticTokens: t(
-        "entity.viewSettings.styleColorSemanticTokens",
-      ),
-      styleColorCustomInput: t("entity.viewSettings.styleColorCustomInput"),
-      styleColorInvalid: t("entity.viewSettings.styleColorInvalid"),
-    },
+    styleRules: styleRulesEditorLabels(t, customColorOptions),
     label: {
       showLabel: t("entity.viewSettings.showLabel"),
       label: t("entity.viewSettings.label"),
@@ -166,4 +162,13 @@ export function formDesignerComponentEditorLabels(
       labelColor: t("entity.viewSettings.labelColor"),
     },
   };
+}
+
+export function useFormDesignerComponentEditorLabels(): ComponentConfigEditorLabels {
+  const { t } = useTranslation("common");
+  const customColorOptions = useCustomTokenColorOptions();
+  return useMemo(
+    () => formDesignerComponentEditorLabels(t, customColorOptions),
+    [customColorOptions, t],
+  );
 }

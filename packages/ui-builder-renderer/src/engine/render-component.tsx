@@ -8,6 +8,7 @@ import {
   isUserComponent,
   isDashboardSectionComponent,
   isMetricKpiComponent,
+  isMetricDerivedKpiComponent,
   isMetricWidgetComponent,
   isViewSearchComponent,
   isViewFilterComponent,
@@ -177,6 +178,15 @@ export function renderUiComponent(
   if (isMetricKpiComponent(config)) {
     return (
       context.metricKpiRenderer?.(
+        config,
+        resolveMetricKpiPresentation(config.styles),
+      ) ?? null
+    );
+  }
+
+  if (isMetricDerivedKpiComponent(config)) {
+    return (
+      context.metricDerivedKpiRenderer?.(
         config,
         resolveMetricKpiPresentation(config.styles),
       ) ?? null
@@ -433,7 +443,7 @@ export function renderUiComponent(
           badgeValue,
         )}
         className={badgeContainer.className}
-        style={badgeContainer.style}
+        style={{ ...badgeContainer.style, ...matched.style }}
       />
     );
   }

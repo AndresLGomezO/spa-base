@@ -215,14 +215,11 @@ describe("metric read api", () => {
 
   it("returns null from fetchMetricRowOrNull when row is missing", async () => {
     fetchMock.mockResolvedValue({
-      ok: false,
-      status: 404,
+      ok: true,
+      status: 200,
       json: async () => ({
-        data: null,
-        error: {
-          code: "METRIC_ROW_NOT_FOUND",
-          message: "Metric row not found.",
-        },
+        data: { items: [null] },
+        error: null,
       }),
     });
 
@@ -232,6 +229,10 @@ describe("metric read api", () => {
     });
 
     expect(result).toBeNull();
+    expect(fetchMock).toHaveBeenCalledWith(
+      new URL("/api/metrics/def_1/batch", "http://127.0.0.1:3000"),
+      expect.objectContaining({ method: "POST" }),
+    );
   });
 
   it("identifies metric row not found errors", async () => {

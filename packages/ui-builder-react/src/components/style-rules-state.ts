@@ -1,13 +1,34 @@
 import {
+  buildBadgeColorOptions,
+  buildEffectColorOptions,
+  buildEffectShadowVarOptions,
+  buildPaletteColorOptions,
+  buildRadiusTokenOptions,
+  buildSemanticColorOptions,
+  buildSidebarColorOptions,
+  buildSpacingTokenOptions,
+  buildTypographyFontFamilyOptions,
+  buildTypographySizeOptions,
+  buildWidthTokenOptions,
+  SHADOW_TOKEN_OPTIONS,
+  type UiBuilderStyleTokenOption,
+} from "@repo/theme/tenant-overrides";
+import {
   STYLE_PROPERTY_OPTIONS,
-  isThemeTokenValue,
+  isCssBoxShadowValue,
+  isCssFontFamilyValue,
+  isCssLengthTokenValue,
   isMarginStyleProperty,
+  isShadowTokenValue,
+  isThemeTokenValue,
   NEGATIVE_MARGIN_MIN_PX,
   parseMarginPx,
   type StylePropertyKey,
   type StyleRule,
   type ThemeToken,
 } from "@repo/ui-builder-core";
+
+export type SemanticColorOption = UiBuilderStyleTokenOption;
 
 export const THEME_TOKEN_OPTIONS: readonly ThemeToken[] = [
   "default",
@@ -22,42 +43,124 @@ export const THEME_TOKEN_OPTIONS: readonly ThemeToken[] = [
   "transparent",
 ] as const;
 
-export interface SemanticColorOption {
-  readonly label: string;
-  readonly value: string;
-}
-
-/** Tenant-overridable semantic CSS variables (see packages/theme semantics). */
-export const SEMANTIC_COLOR_OPTIONS: readonly SemanticColorOption[] = [
-  { label: "Background", value: "var(--color-background)" },
-  { label: "Foreground", value: "var(--color-foreground)" },
-  { label: "Primary", value: "var(--color-primary)" },
-  { label: "Primary foreground", value: "var(--color-primary-foreground)" },
-  { label: "Muted", value: "var(--color-muted)" },
-  { label: "Muted foreground", value: "var(--color-muted-foreground)" },
-  { label: "Border", value: "var(--color-border)" },
-  { label: "Card", value: "var(--color-card)" },
-  { label: "Card foreground", value: "var(--color-card-foreground)" },
-  { label: "Popover", value: "var(--color-popover)" },
-  { label: "Accent", value: "var(--color-accent)" },
-  { label: "Hover", value: "var(--color-hover)" },
-  { label: "Chart 1", value: "var(--color-chart-1)" },
-  { label: "Chart 2", value: "var(--color-chart-2)" },
-  { label: "Chart 3", value: "var(--color-chart-3)" },
-  { label: "Chart 4", value: "var(--color-chart-4)" },
-  { label: "Gradient primary", value: "var(--gradient-primary)" },
-] as const;
+export const SEMANTIC_COLOR_OPTIONS = buildSemanticColorOptions();
+export const SIDEBAR_COLOR_OPTIONS = buildSidebarColorOptions();
+export const BADGE_COLOR_OPTIONS = buildBadgeColorOptions();
+export const PALETTE_COLOR_OPTIONS = buildPaletteColorOptions();
+export const EFFECT_COLOR_OPTIONS = buildEffectColorOptions().filter((option) =>
+  option.value.includes("--gradient-"),
+);
+export const SHADOW_SHORTCUT_OPTIONS = SHADOW_TOKEN_OPTIONS;
+export const SHADOW_VAR_OPTIONS = buildEffectShadowVarOptions();
+export const RADIUS_TOKEN_OPTIONS = buildRadiusTokenOptions();
+export const SPACING_TOKEN_OPTIONS = buildSpacingTokenOptions();
+export const TYPOGRAPHY_SIZE_OPTIONS = buildTypographySizeOptions();
+export const TYPOGRAPHY_FONT_FAMILY_OPTIONS =
+  buildTypographyFontFamilyOptions();
+export const WIDTH_TOKEN_OPTIONS = buildWidthTokenOptions();
 
 const SEMANTIC_COLOR_VALUES = new Set(
-  SEMANTIC_COLOR_OPTIONS.map((option) => option.value),
+  [
+    ...SEMANTIC_COLOR_OPTIONS,
+    ...SIDEBAR_COLOR_OPTIONS,
+    ...BADGE_COLOR_OPTIONS,
+    ...EFFECT_COLOR_OPTIONS,
+  ].map((option) => option.value),
 );
+
+const PALETTE_COLOR_VALUES = new Set(
+  PALETTE_COLOR_OPTIONS.map((option) => option.value),
+);
+
+const SHADOW_THEME_VALUES = new Set([
+  ...SHADOW_SHORTCUT_OPTIONS.map((option) => option.value),
+  ...SHADOW_VAR_OPTIONS.map((option) => option.value),
+]);
+
+export function dimensionTokenOptionsForProperty(
+  property: StylePropertyKey,
+): readonly SemanticColorOption[] {
+  if (
+    property === "borderRadius" ||
+    property === "borderTopLeftRadius" ||
+    property === "borderTopRightRadius" ||
+    property === "borderBottomLeftRadius" ||
+    property === "borderBottomRightRadius"
+  ) {
+    return RADIUS_TOKEN_OPTIONS;
+  }
+
+  if (
+    property.startsWith("padding") ||
+    property === "padding" ||
+    property.startsWith("margin") ||
+    property === "gap"
+  ) {
+    return SPACING_TOKEN_OPTIONS;
+  }
+
+  if (property === "fontSize") {
+    return TYPOGRAPHY_SIZE_OPTIONS;
+  }
+
+  if (property === "minWidth" || property === "maxWidth") {
+    return WIDTH_TOKEN_OPTIONS;
+  }
+
+  return [];
+}
 
 export function isSemanticCssVarStyleValue(value: string): boolean {
   return SEMANTIC_COLOR_VALUES.has(value.trim());
 }
 
-export function isThemeModeColorValue(value: string): boolean {
-  return isThemeTokenValue(value) || isSemanticCssVarStyleValue(value);
+export function isPaletteCssVarStyleValue(value: string): boolean {
+  return PALETTE_COLOR_VALUES.has(value.trim());
+}
+
+export function isCustomTokenCssVarStyleValue(
+  value: string,
+  options: readonly SemanticColorOption[] = [],
+): boolean {
+  const normalized = value.trim();
+  return options.some((option) => option.value === normalized);
+}
+
+export function isThemeModeColorValue(
+  value: string,
+  customColorOptions: readonly SemanticColorOption[] = [],
+): boolean {
+  return (
+    isThemeTokenValue(value) ||
+    isSemanticCssVarStyleValue(value) ||
+    isPaletteCssVarStyleValue(value) ||
+    isCustomTokenCssVarStyleValue(value, customColorOptions)
+  );
+}
+
+export function isThemeModeShadowValue(value: string): boolean {
+  const trimmed = value.trim();
+  return isShadowTokenValue(trimmed) || SHADOW_THEME_VALUES.has(trimmed);
+}
+
+export function isThemeModeDimensionValue(
+  value: string,
+  property: StylePropertyKey,
+): boolean {
+  const trimmed = value.trim();
+  if (!isCssLengthTokenValue(trimmed)) {
+    return false;
+  }
+
+  return dimensionTokenOptionsForProperty(property).some(
+    (option) => option.value === trimmed,
+  );
+}
+
+export function isThemeModeFontFamilyValue(value: string): boolean {
+  return TYPOGRAPHY_FONT_FAMILY_OPTIONS.some(
+    (option) => option.value === value.trim(),
+  );
 }
 
 export const TEXT_COLOR_TOKEN_OPTIONS = [
@@ -128,6 +231,12 @@ export function defaultValueForProperty(
   ) {
     return "default";
   }
+  if (property === "boxShadow") {
+    return "none";
+  }
+  if (property === "fontFamily") {
+    return "var(--font-sans)";
+  }
   if (property === "fontWeight") {
     return "bold";
   }
@@ -158,21 +267,11 @@ export function defaultValueForProperty(
   if (property === "borderStyle") {
     return "solid";
   }
-  if (
-    property === "fontSize" ||
-    property === "borderWidth" ||
-    property.startsWith("margin") ||
-    property.startsWith("padding") ||
-    property === "gap" ||
-    property === "minWidth" ||
-    property === "maxWidth" ||
-    property === "borderRadius" ||
-    property === "borderTopLeftRadius" ||
-    property === "borderTopRightRadius" ||
-    property === "borderBottomLeftRadius" ||
-    property === "borderBottomRightRadius"
-  ) {
+  if (isDimensionStyleProperty(property)) {
     return numericStyleInputMin(property) === 1 ? "1" : "0";
+  }
+  if (property === "borderWidth") {
+    return "1";
   }
   if (property === "flex") {
     return "1";
@@ -192,11 +291,15 @@ export function isColorStyleProperty(property: StylePropertyKey): boolean {
   return isTokenStyleProperty(property);
 }
 
-export function isThemeTokenStyleValue(value: string): boolean {
-  return isThemeModeColorValue(value);
+export function isShadowStyleProperty(property: StylePropertyKey): boolean {
+  return property === "boxShadow";
 }
 
-export function isNumericStyleProperty(property: StylePropertyKey): boolean {
+export function isTypographyStyleProperty(property: StylePropertyKey): boolean {
+  return property === "fontFamily";
+}
+
+export function isDimensionStyleProperty(property: StylePropertyKey): boolean {
   return (
     property === "fontSize" ||
     property.startsWith("margin") ||
@@ -208,9 +311,16 @@ export function isNumericStyleProperty(property: StylePropertyKey): boolean {
     property === "borderTopLeftRadius" ||
     property === "borderTopRightRadius" ||
     property === "borderBottomLeftRadius" ||
-    property === "borderBottomRightRadius" ||
-    property === "borderWidth"
+    property === "borderBottomRightRadius"
   );
+}
+
+export function isThemeTokenStyleValue(value: string): boolean {
+  return isThemeModeColorValue(value);
+}
+
+export function isNumericStyleProperty(property: StylePropertyKey): boolean {
+  return property === "borderWidth";
 }
 
 /** Minimum allowed value for numeric style inputs (pixels). */
@@ -351,4 +461,37 @@ export function formatStyleRuleValuePreview(rule: StyleRule): string {
     return `${raw.slice(0, 45)}...`;
   }
   return raw;
+}
+
+export function isValidShadowCustomValue(value: string): boolean {
+  return isCssBoxShadowValue(value);
+}
+
+export function isValidFontFamilyCustomValue(value: string): boolean {
+  return isCssFontFamilyValue(value);
+}
+
+export function isValidDimensionCustomValue(
+  property: StylePropertyKey,
+  value: string,
+): boolean {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+
+  if (isThemeModeDimensionValue(trimmed, property)) {
+    return true;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed)) {
+    return false;
+  }
+
+  if (isMarginStyleProperty(property)) {
+    return parsed >= NEGATIVE_MARGIN_MIN_PX;
+  }
+
+  return parsed >= numericStyleInputMin(property);
 }

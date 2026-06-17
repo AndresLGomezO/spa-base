@@ -15,4 +15,22 @@ describe("resolveMetricKpiPresentation", () => {
     expect(presentation.textSize).toBe(28);
     expect(presentation.style.padding).toBe("8px");
   });
+
+  it("applies custom text colors via valueStyle", () => {
+    const presentation = resolveMetricKpiPresentation([
+      { property: "color", value: "#ff0000" },
+    ]);
+
+    expect(presentation.valueStyle?.color).toBe("#ff0000");
+  });
+
+  it("keeps hoisted margins on the row wrapper only", () => {
+    const presentation = resolveMetricKpiPresentation([
+      { property: "marginTop", value: "12" },
+      { property: "padding", value: "8" },
+    ]);
+
+    expect(presentation.style.marginTop).toBeUndefined();
+    expect(presentation.style.padding).toBe("8px");
+  });
 });

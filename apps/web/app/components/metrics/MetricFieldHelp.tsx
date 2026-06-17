@@ -4,7 +4,11 @@ import { Info } from "lucide-react";
 
 import { IconButton, Popover, Text } from "@repo/ui";
 
-type MetricFieldHelpKey = "fieldsDependency" | "groupBy" | "dimensions";
+type MetricFieldHelpKey =
+  | "fieldsDependency"
+  | "groupBy"
+  | "dimensions"
+  | "filters";
 
 interface MetricFieldHelpProps {
   readonly fieldKey: MetricFieldHelpKey;

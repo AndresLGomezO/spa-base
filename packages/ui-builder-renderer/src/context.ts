@@ -7,6 +7,7 @@ import type {
   UserComponentConfig,
   DashboardSectionComponentConfig,
   MetricKpiComponentConfig,
+  MetricDerivedKpiComponentConfig,
   MetricKpiPresentation,
   MetricWidgetComponentConfig,
   ViewFilterComponentConfig,
@@ -75,6 +76,10 @@ export interface LayoutRenderContext {
   readonly isImagePresent?: (fieldPath: string, rawValue: unknown) => boolean;
   readonly metricKpiRenderer?: (
     config: MetricKpiComponentConfig,
+    presentation?: MetricKpiPresentation,
+  ) => ReactNode;
+  readonly metricDerivedKpiRenderer?: (
+    config: MetricDerivedKpiComponentConfig,
     presentation?: MetricKpiPresentation,
   ) => ReactNode;
   readonly metricWidgetRenderer?: (

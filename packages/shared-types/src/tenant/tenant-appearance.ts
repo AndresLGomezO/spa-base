@@ -112,6 +112,29 @@ export const tenantSpacingScaleSchema = z
 
 export type TenantSpacingScale = z.infer<typeof tenantSpacingScaleSchema>;
 
+export const tenantCustomTokenKindSchema = z.enum(["color", "gradient"]);
+
+export type TenantCustomTokenKind = z.infer<typeof tenantCustomTokenKindSchema>;
+
+export const tenantCustomTokenSchema = z.object({
+  kind: tenantCustomTokenKindSchema,
+  name: z
+    .string()
+    .trim()
+    .regex(/^[a-z][a-z0-9-]*$/),
+  label: z.string().trim().min(1).optional(),
+  light: z.string().trim().min(1).optional(),
+  dark: z.string().trim().min(1).optional(),
+});
+
+export type TenantCustomToken = z.infer<typeof tenantCustomTokenSchema>;
+
+export const tenantCustomTokensSchema = z
+  .array(tenantCustomTokenSchema)
+  .max(32);
+
+export type TenantCustomTokens = z.infer<typeof tenantCustomTokensSchema>;
+
 export const APPEARANCE_PRESETS = [
   "default",
   "soft",
@@ -147,6 +170,7 @@ export const tenantAppearanceSchema = z
     /** @deprecated Use spacingScale.base for macro layout spacing. */
     spacing: z.string().trim().min(1).optional(),
     spacingScale: tenantSpacingScaleSchema.optional(),
+    customTokens: tenantCustomTokensSchema.optional(),
   })
   .partial();
 

@@ -472,6 +472,43 @@ function extractMetricsDateGranularityKeys(corpus) {
   return keys;
 }
 
+/** metrics.derivedKpi.operators|insertOperator.${operator} in source → keys under those objects */
+function extractMetricDerivedKpiOperatorKeys(corpus) {
+  const needsOperators = corpus.includes("metrics.derivedKpi.operators.${");
+  const needsInsertOperator = corpus.includes(
+    "metrics.derivedKpi.insertOperator.${",
+  );
+  if (!needsOperators && !needsInsertOperator) return [];
+
+  const refMetrics = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).metrics;
+
+  const derivedKpi = refMetrics?.derivedKpi;
+  if (!derivedKpi || typeof derivedKpi !== "object") return [];
+
+  const keys = [];
+  if (needsOperators) {
+    const operators = derivedKpi.operators;
+    if (operators && typeof operators === "object") {
+      for (const key of Object.keys(operators)) {
+        keys.push(`${DEFAULT_NAMESPACE}:metrics.derivedKpi.operators.${key}`);
+      }
+    }
+  }
+  if (needsInsertOperator) {
+    const insertOperator = derivedKpi.insertOperator;
+    if (insertOperator && typeof insertOperator === "object") {
+      for (const key of Object.keys(insertOperator)) {
+        keys.push(
+          `${DEFAULT_NAMESPACE}:metrics.derivedKpi.insertOperator.${key}`,
+        );
+      }
+    }
+  }
+  return keys;
+}
+
 /** translationPrefix / key("suffix") in ui-builder-ai → keys under formDesigner.ai / itemListDesigner.ai */
 function extractUiBuilderAiDesignerKeys(corpus) {
   const needsFormDesigner =
@@ -748,6 +785,15 @@ mergeUsedKeys(
   usedKeys,
   extractMetricsDateGranularityKeys(corpus),
   dateGranularityPickerFile,
+);
+const metricDerivedKpiEditorFile = path.join(
+  SRC_DIR,
+  "components/metrics/MetricDerivedKpiComponentEditor.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractMetricDerivedKpiOperatorKeys(corpus),
+  metricDerivedKpiEditorFile,
 );
 const uiBuilderPresetManagerFile = path.join(
   SRC_DIR,

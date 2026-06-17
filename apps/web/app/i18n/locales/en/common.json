@@ -397,7 +397,8 @@
       "structureTitle": "Row structure"
     },
     "components": {
-      "metricWidget": "Metric widget"
+      "metricWidget": "Metric widget",
+      "metricDerivedKpi": "Derived metric KPI"
     },
     "metricWidgetEditor": {
       "entity": "Entity",
@@ -879,8 +880,29 @@
       "styleColorCustom": "Custom",
       "styleColorThemeTokens": "Theme tokens",
       "styleColorSemanticTokens": "Semantic colors",
+      "styleColorPaletteTokens": "Palette scale",
+      "styleColorEffects": "Effects",
+      "styleColorSidebar": "Sidebar colors",
+      "styleColorBadge": "Badge colors",
+      "styleColorCustomTokens": "Custom tokens",
       "styleColorCustomInput": "Custom color",
       "styleColorInvalid": "Enter a valid color (#hex, rgb(), hsl(), or var(--color-*)).",
+      "styleShadowTheme": "Theme",
+      "styleShadowCustom": "Custom",
+      "styleShadowShortcuts": "Shadow presets",
+      "styleShadowVars": "Shadow variables",
+      "styleShadowCustomInput": "Custom shadow",
+      "styleShadowInvalid": "Enter a valid box-shadow value or var(--shadow-*).",
+      "styleDimensionTheme": "Theme",
+      "styleDimensionCustom": "Custom (px)",
+      "styleDimensionTokens": "Theme tokens",
+      "styleDimensionCustomInput": "Value (px)",
+      "styleDimensionInvalid": "Enter a valid pixel value or theme token.",
+      "styleTypographyTheme": "Theme",
+      "styleTypographyCustom": "Custom",
+      "styleTypographyTokens": "Font family tokens",
+      "styleTypographyCustomInput": "Font family",
+      "styleTypographyInvalid": "Enter a valid font family value.",
       "rowStyles": "Row wrapper styles",
       "layoutEffects": "Layout effects",
       "rowEffects": "Row effects",
@@ -1116,6 +1138,19 @@
       },
       "chartColors": "Chart colors",
       "chartColorsHint": "Categorical palette for charts and data visualization.",
+      "customTokens": "Custom tokens",
+      "customTokensHint": "Define tenant-scoped CSS variables such as --color-widget and --gradient-hero with separate light and dark values.",
+      "customTokensAdd": "Add token",
+      "customTokensRemove": "Remove",
+      "customTokensEmpty": "No custom tokens yet.",
+      "customTokensRow": "Token {{index}}",
+      "customTokensKind": "Kind",
+      "customTokensKindColor": "Color",
+      "customTokensKindGradient": "Gradient",
+      "customTokensName": "Slug",
+      "customTokensNamePlaceholder": "widget",
+      "customTokensLabel": "Label (optional)",
+      "customTokensResolvedVar": "CSS variable: {{name}}",
       "radiusLg": "Card border radius",
       "radiusSm": "Button border radius",
       "previewGradientLabel": "Total balance",
@@ -1428,6 +1463,25 @@
     "countDocumentsHint": "Counts each record that matches filters (no field selection).",
     "noNumericFields": "This entity has no numeric fields for Sum or Average.",
     "fieldsDependency": "Field dependencies",
+    "filters": {
+      "label": "Filters",
+      "empty": "No filters — all source records are included.",
+      "add": "Add filter",
+      "remove": "Remove filter",
+      "rowLabel": "Filter {{index}}",
+      "field": "Field",
+      "operator": "Operator",
+      "value": "Value",
+      "selectValue": "Select a value…",
+      "valuePlaceholder": "Enter a value",
+      "relationPlaceholder": "Enter related record id",
+      "listPlaceholder": "Comma-separated values",
+      "validationRequired": "Enter a valid filter value for {{field}}.",
+      "operators": {
+        "eq": "Equals",
+        "in": "Is one of"
+      }
+    },
     "groupBy": "Group by",
     "dimensions": "Dimensions",
     "status": "Status",
@@ -1492,6 +1546,11 @@
         "title": "Dimensions",
         "description": "Extra labels stored on each metric row for filtering or display. They do not create separate buckets unless also used in group by.",
         "example": "currency, productType — stored on the row for context"
+      },
+      "filters": {
+        "title": "Filters",
+        "description": "Only source records matching every filter are counted. Filters are fixed on the metric definition — not configured in KPI widgets.",
+        "example": "type = INCOME — only income transactions; type in EXPENSE, PAYMENT — outflows"
       }
     },
     "summary": {
@@ -1501,6 +1560,8 @@
       "description": "Description: {{text}}",
       "whenUpdates": "Recalculates when these fields change: {{fields}}",
       "anyFieldChange": "any tracked field change",
+      "filters": "Record filters: {{filters}}",
+      "noFilters": "no record filters (all rows included)",
       "groupBy": "Grouped by: {{fields}}",
       "noGrouping": "single total (no grouping)",
       "dimensions": "Dimensions stored on rows: {{fields}}",
@@ -1518,6 +1579,50 @@
       "forbidden": "Metric values are not available for your role.",
       "unconfigured": "Select a metric for this KPI.",
       "unknown": "Metric definition not found."
+    },
+    "derivedKpi": {
+      "defaultLabel": "Derived metric",
+      "unnamedMetric": "Metric",
+      "unconfigured": "Build a formula with at least one metric.",
+      "invalidExpression": "This formula is incomplete or invalid.",
+      "divideByZero": "Cannot divide by zero for the current metric values.",
+      "shapeMismatch": "All metrics in the formula must share the same group-by and dimension keys.",
+      "shapeMismatchNamed": "Metric \"{{name}}\" does not match the group-by and dimension keys of the first metric.",
+      "formulaPreview": "Formula preview",
+      "expressionTitle": "Formula tokens",
+      "tokenLabel": "Token {{index}}",
+      "tokenType": "Token type",
+      "tokenTypes": {
+        "metric": "Metric",
+        "constant": "Constant",
+        "operator": "Operator",
+        "paren": "Parenthesis"
+      },
+      "constantValue": "Constant value",
+      "constantPlaceholder": "Enter a number",
+      "operator": "Operator",
+      "operators": {
+        "+": "Add (+)",
+        "-": "Subtract (−)",
+        "*": "Multiply (×)",
+        "/": "Divide (÷)"
+      },
+      "insertOperator": {
+        "+": "Add +",
+        "-": "Subtract −",
+        "*": "Multiply ×",
+        "/": "Divide ÷"
+      },
+      "parenthesis": "Parenthesis",
+      "parenthesisOpen": "Open (",
+      "parenthesisClose": "Close )",
+      "insertMetric": "Add metric",
+      "insertConstant": "Add constant",
+      "insertOpenParen": "Add (",
+      "insertCloseParen": "Add )",
+      "removeToken": "Remove",
+      "moveTokenUp": "Move up",
+      "moveTokenDown": "Move down"
     }
   },
   "hooks": {

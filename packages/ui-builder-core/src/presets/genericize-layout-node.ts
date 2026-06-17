@@ -32,6 +32,7 @@ function nextSlotId(index: number): string {
 function assertNoUnsupportedComponents(component: UiComponentConfig): void {
   if (
     component.kind === "metric-kpi" ||
+    component.kind === "metric-derived-kpi" ||
     component.kind === "metric-widget" ||
     component.kind === "dashboard-section" ||
     component.kind === "view-search" ||

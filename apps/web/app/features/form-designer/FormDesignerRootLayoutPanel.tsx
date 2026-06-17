@@ -9,18 +9,15 @@ import {
   updateRootNodeStyles,
   type MotionPreset,
 } from "@repo/ui-builder-core";
-import { useMemo } from "react";
-import { useTranslation } from "react-i18next";
 
-import { formDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
 import { getFormDesignerOuterLayout } from "./form-designer-layout";
 import { useFormDesigner } from "./form-designer-context";
 
 export function FormDesignerRootLayoutPanel() {
-  const { t } = useTranslation("common");
   const { editor } = useFormDesigner();
   const { layout, setLayout } = getFormDesignerOuterLayout(editor);
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
+  const labels = useFormDesignerLayoutEditorLabels();
 
   return (
     <div className="flex flex-col gap-3">

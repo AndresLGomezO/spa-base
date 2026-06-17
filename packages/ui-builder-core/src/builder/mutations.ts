@@ -22,6 +22,12 @@ import { migrateViewSearchFilterLayout } from "../layout/migrate-view-search-fil
 export const MAX_ROOT_COLUMNS = 6;
 export const MAX_NESTED_COLUMNS = 6;
 
+const DEFAULT_METRIC_DERIVED_EXPRESSION = [
+  { type: "metric" as const, metricDefinitionId: "" },
+  { type: "operator" as const, op: "-" as const },
+  { type: "metric" as const, metricDefinitionId: "" },
+];
+
 export function createDefaultComponent(
   kind: UiComponentKind,
   fieldPath = "name",
@@ -30,6 +36,15 @@ export function createDefaultComponent(
     return {
       kind: "metric-kpi",
       metricDefinitionId: "",
+      groupBindings: {},
+      dimensionBindings: {},
+    };
+  }
+
+  if (kind === "metric-derived-kpi") {
+    return {
+      kind: "metric-derived-kpi",
+      expression: DEFAULT_METRIC_DERIVED_EXPRESSION,
       groupBindings: {},
       dimensionBindings: {},
     };
@@ -139,6 +154,15 @@ export function createDefaultStaticComponent(
     return {
       kind: "metric-kpi",
       metricDefinitionId: "",
+      groupBindings: {},
+      dimensionBindings: {},
+    };
+  }
+
+  if (kind === "metric-derived-kpi") {
+    return {
+      kind: "metric-derived-kpi",
+      expression: DEFAULT_METRIC_DERIVED_EXPRESSION,
       groupBindings: {},
       dimensionBindings: {},
     };

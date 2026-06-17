@@ -215,6 +215,36 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
       2,
     ),
   },
+  "metric-derived-kpi": {
+    summary:
+      "Derived metric KPI computed from an expression over multiple metric definitions.",
+    properties: [
+      "expression",
+      "groupBindings",
+      "dimensionBindings",
+      "label?",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "metric-derived-kpi",
+        label: "Net balance",
+        expression: [
+          { type: "metric", metricDefinitionId: "income" },
+          { type: "operator", op: "-" },
+          { type: "metric", metricDefinitionId: "outflows" },
+        ],
+        groupBindings: {
+          date: { type: "static", value: "2025-09" },
+        },
+        dimensionBindings: {
+          accountId: { type: "entityField", fieldPath: "id" },
+        },
+      },
+      null,
+      2,
+    ),
+  },
   "metric-widget": {
     summary: "Reference to a reusable metric widget by entity + id.",
     properties: ["entityName", "widgetId", "label?", "styles?"],

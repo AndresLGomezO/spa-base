@@ -6,6 +6,7 @@
  */
 export {
   normalizeMetricDateValue,
+  isMetricDateBucketInputComplete,
   applyDateGranularityToQuerySlice,
 } from "./date-granularity.js";
 export {

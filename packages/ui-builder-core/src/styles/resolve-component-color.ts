@@ -1,4 +1,9 @@
-import { isCssColorValue, isThemeTokenValue } from "./color-values.js";
+import {
+  isCssBackgroundFillValue,
+  isCssColorValue,
+  isCssGradientBackgroundValue,
+  isThemeTokenValue,
+} from "./color-values.js";
 import type { ThemeToken } from "./style-types.js";
 import {
   themeTokenBackgroundClass,
@@ -8,6 +13,24 @@ import {
 export interface ResolvedBackgroundColor {
   readonly className?: string;
   readonly backgroundColor?: string;
+  readonly background?: string;
+}
+
+export interface ResolvedBackgroundInlineStyle {
+  readonly backgroundColor?: string;
+  readonly background?: string;
+}
+
+export function resolvedBackgroundInlineStyle(
+  resolved: ResolvedBackgroundColor,
+): ResolvedBackgroundInlineStyle | undefined {
+  if (resolved.background) {
+    return { background: resolved.background };
+  }
+  if (resolved.backgroundColor) {
+    return { backgroundColor: resolved.backgroundColor };
+  }
+  return undefined;
 }
 
 export interface ResolvedTextColor {
@@ -26,8 +49,12 @@ export function resolveBackgroundComponentColor(
     return { className: themeTokenBackgroundClass(value as ThemeToken) };
   }
 
-  if (isCssColorValue(value)) {
-    return { backgroundColor: value.trim() };
+  if (isCssBackgroundFillValue(value)) {
+    const trimmed = value.trim();
+    if (isCssGradientBackgroundValue(trimmed)) {
+      return { background: trimmed };
+    }
+    return { backgroundColor: trimmed };
   }
 
   return {};
@@ -44,7 +71,7 @@ export function resolveTextComponentColor(
     return { className: themeTokenTextClass(value) };
   }
 
-  if (isCssColorValue(value)) {
+  if (isCssColorValue(value) && !isCssGradientBackgroundValue(value)) {
     return { color: value.trim() };
   }
 

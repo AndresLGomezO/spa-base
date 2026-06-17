@@ -36,6 +36,11 @@ export function MetricDefinitionSummary({
       ? formatFieldList(context.dimensions)
       : t("metrics.summary.noDimensions");
 
+  const filtersText =
+    context.filters.length > 0
+      ? context.filtersSummary
+      : t("metrics.summary.noFilters");
+
   const storagePath = context.isCreate
     ? t("metrics.summary.storagePathCreate")
     : t("metrics.summary.storagePathEdit", {
@@ -74,6 +79,7 @@ export function MetricDefinitionSummary({
             fields: resolvedFieldsDependency,
           })}
         </li>
+        <li>{t("metrics.summary.filters", { filters: filtersText })}</li>
         <li>{t("metrics.summary.groupBy", { fields: groupByText })}</li>
         <li>{t("metrics.summary.dimensions", { fields: dimensionsText })}</li>
         {context.selectedDateFields.length > 0 &&

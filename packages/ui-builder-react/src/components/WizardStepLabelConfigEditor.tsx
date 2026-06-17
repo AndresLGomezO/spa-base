@@ -258,6 +258,7 @@ export function WizardStepLabelConfigEditor({
                 value={stepLabel?.color ?? "default"}
                 onChange={(color) => updateStepLabel({ show: true, color })}
                 labels={colorLabels}
+                colorRole="text"
               />
             </label>
           ) : null}

@@ -10,6 +10,7 @@ export interface MatchedConditionalStyles {
   readonly className?: string;
   readonly style?: {
     readonly backgroundColor?: string;
+    readonly background?: string;
     readonly color?: string;
   };
 }
@@ -33,14 +34,20 @@ export function matchConditionalStyles(
     }
     if (matchValue === normalized) {
       const classes: string[] = [];
-      const style: { backgroundColor?: string; color?: string } = {};
+      const style: {
+        backgroundColor?: string;
+        background?: string;
+        color?: string;
+      } = {};
       const background = resolveBackgroundComponentColor(rule.background);
       const textColor = resolveTextComponentColor(rule.textColor);
 
       if (background.className) {
         classes.push(background.className);
       }
-      if (background.backgroundColor) {
+      if (background.background) {
+        style.background = background.background;
+      } else if (background.backgroundColor) {
         style.backgroundColor = background.backgroundColor;
       }
       if (textColor.className) {

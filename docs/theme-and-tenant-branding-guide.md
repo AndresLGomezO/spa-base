@@ -88,6 +88,7 @@ Stored on the tenant document as `appearance` ([`TenantAppearance`](../packages/
 | `colorsByScheme` | Explicit light/dark sidebar and layout color overrides |
 | `effects` | Card shadow and primary gradient per color scheme |
 | `chartColors` | Chart palette (`chart1`–`chart4`) |
+| `customTokens` | Tenant-defined color/gradient CSS vars (`--color-{slug}`, `--gradient-{slug}`) with light/dark values |
 | `fontFamily`, `fontSizes`, `radius`, `radiusSm`, `spacingScale` | Typography and layout tokens (`spacingScale.base` is macro layout only) |
 
 ### Presets
@@ -160,6 +161,7 @@ Use names like `p-macro`, `gap-macro`, or `var(--spacing-macro)`. Do **not** use
 | Sidebar | Light/dark sidebar CSS vars |
 | Effects | Card shadow and primary gradient per scheme |
 | Chart colors | `--color-chart-1` … `--color-chart-4` |
+| Custom tokens | Tenant color/gradient vars with light/dark values (e.g. `--color-widget`, `--gradient-hero`) |
 | Typography / layout | `--font-sans`, text sizes, card/button radius, semantic spacing scale (`--spacing-tight` … `--spacing-section`) |
 | Preview panel | Light/dark toggle with card, gradient, badge, and sidebar samples |
 
@@ -168,6 +170,28 @@ Save sends `appearance` on `PATCH /admin/tenants/:id`; then `selectTenant()` ref
 Import/export uses [theme-import-export.ts](../packages/theme/src/theme-import-export.ts) (`exportTenantTheme`, `importTenantTheme`, `validateTenantThemeImport`, `createTenantThemeSkeleton`).
 
 In the customize modal, **View JSON** opens a read-only modal with the current draft (copy to clipboard). **Import JSON** opens a paste/upload modal with the expected structure skeleton, live validation, and an optional example theme loader — matching the UI builder JSON workflow.
+
+### Custom tokens
+
+Tenants can define up to 32 custom tokens in `appearance.customTokens`:
+
+```json
+{
+  "kind": "color",
+  "name": "widget",
+  "label": "Widget surface",
+  "light": "#ffffff",
+  "dark": "#1a1a2e"
+}
+```
+
+- **Color** tokens resolve to `--color-{slug}` (hex validated on save).
+- **Gradient** tokens resolve to `--gradient-{slug}`.
+- Slugs must be lowercase kebab-case and cannot collide with platform semantics or palette steps (`primary-500`, `chart-1`, etc.).
+
+At runtime, `appearanceToCssVariables` sets the active scheme value on `:root`. In the UI builder, configured tokens appear in the color picker under **Custom tokens** (values like `var(--color-widget)`).
+
+Helpers: `sanitizeCustomTokens`, `buildCustomTokenColorOptions` in [custom-tokens.ts](../packages/theme/src/custom-tokens.ts).
 
 ---
 

@@ -7,6 +7,7 @@ import {
   BADGE_SEMANTIC_CSS_VARS,
   TENANT_OVERRIDE_GROUPS,
   TENANT_THEME_EXPORT_VERSION,
+  sanitizeCustomTokens,
   type TenantAppearanceLike,
 } from "./tenant-overrides.js";
 
@@ -39,6 +40,7 @@ export interface TenantThemeExportDocument {
   };
   readonly effects?: TenantAppearance["effects"];
   readonly chartColors?: TenantAppearance["chartColors"];
+  readonly customTokens?: TenantAppearance["customTokens"];
   readonly typography?: {
     readonly fontFamily?: string;
     readonly bodySize?: string;
@@ -211,6 +213,9 @@ export function exportTenantTheme(appearance: TenantAppearance): string {
     }),
     ...(appearance.effects ? { effects: appearance.effects } : {}),
     ...(appearance.chartColors ? { chartColors: appearance.chartColors } : {}),
+    ...(appearance.customTokens?.length
+      ? { customTokens: sanitizeCustomTokens(appearance.customTokens) }
+      : {}),
     typography: {
       ...(appearance.fontFamily ? { fontFamily: appearance.fontFamily } : {}),
       ...(appearance.fontSizes?.body
@@ -285,6 +290,9 @@ function buildAppearanceFromDocument(
     ...(Object.keys(colorsByScheme).length > 0 ? { colorsByScheme } : {}),
     ...(parsed.effects ? { effects: parsed.effects } : {}),
     ...(parsed.chartColors ? { chartColors: parsed.chartColors } : {}),
+    ...(parsed.customTokens?.length
+      ? { customTokens: sanitizeCustomTokens(parsed.customTokens) }
+      : {}),
     ...(parsed.typography?.fontFamily
       ? { fontFamily: parsed.typography.fontFamily }
       : {}),
@@ -393,6 +401,21 @@ export function createTenantThemeSkeleton(): string {
       chart3: "#f59e0b",
       chart4: "#ef4444",
     },
+    customTokens: [
+      {
+        kind: "color",
+        name: "widget",
+        label: "Widget surface",
+        light: "#ffffff",
+        dark: "#1a1a2e",
+      },
+      {
+        kind: "gradient",
+        name: "hero",
+        light: "linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)",
+        dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
+      },
+    ],
     typography: {
       fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
       bodySize: "0.875rem",
@@ -600,6 +623,21 @@ export const EXAMPLE_VIOLET_DASHBOARD_THEME_JSON = exportTenantTheme({
     chart3: "#f59e0b",
     chart4: "#ef4444",
   },
+  customTokens: [
+    {
+      kind: "color",
+      name: "widget",
+      label: "Widget surface",
+      light: "#ffffff",
+      dark: "#1a1a2e",
+    },
+    {
+      kind: "gradient",
+      name: "hero",
+      light: "linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)",
+      dark: "linear-gradient(135deg, #422db3 0%, #1e1466 100%)",
+    },
+  ],
   fontFamily: "'Plus Jakarta Sans', 'Inter', system-ui, sans-serif",
   fontSizes: {
     body: "0.875rem",

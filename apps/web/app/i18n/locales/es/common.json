@@ -397,7 +397,8 @@
       "structureTitle": "Estructura de la fila"
     },
     "components": {
-      "metricWidget": "Widget de métrica"
+      "metricWidget": "Widget de métrica",
+      "metricDerivedKpi": "KPI de métrica derivada"
     },
     "metricWidgetEditor": {
       "entity": "Entidad",
@@ -879,8 +880,29 @@
       "styleColorCustom": "Personalizado",
       "styleColorThemeTokens": "Tokens de tema",
       "styleColorSemanticTokens": "Colores semánticos",
+      "styleColorPaletteTokens": "Escala de paleta",
+      "styleColorEffects": "Efectos",
+      "styleColorSidebar": "Colores del sidebar",
+      "styleColorBadge": "Colores de badge",
+      "styleColorCustomTokens": "Tokens personalizados",
       "styleColorCustomInput": "Color personalizado",
       "styleColorInvalid": "Introduce un color válido (#hex, rgb(), hsl() o var(--color-*)).",
+      "styleShadowTheme": "Tema",
+      "styleShadowCustom": "Personalizado",
+      "styleShadowShortcuts": "Presets de sombra",
+      "styleShadowVars": "Variables de sombra",
+      "styleShadowCustomInput": "Sombra personalizada",
+      "styleShadowInvalid": "Introduce un box-shadow válido o var(--shadow-*).",
+      "styleDimensionTheme": "Tema",
+      "styleDimensionCustom": "Personalizado (px)",
+      "styleDimensionTokens": "Tokens de tema",
+      "styleDimensionCustomInput": "Valor (px)",
+      "styleDimensionInvalid": "Introduce un valor en px o un token de tema válido.",
+      "styleTypographyTheme": "Tema",
+      "styleTypographyCustom": "Personalizado",
+      "styleTypographyTokens": "Tokens de tipografía",
+      "styleTypographyCustomInput": "Familia tipográfica",
+      "styleTypographyInvalid": "Introduce una familia tipográfica válida.",
       "rowStyles": "Estilos del contenedor de fila",
       "layoutEffects": "Efectos del layout",
       "rowEffects": "Efectos de fila",
@@ -1116,6 +1138,19 @@
       },
       "chartColors": "Colores de gráficos",
       "chartColorsHint": "Paleta categórica para gráficos y visualización de datos.",
+      "customTokens": "Tokens personalizados",
+      "customTokensHint": "Define variables CSS del tenant como --color-widget y --gradient-hero con valores separados para modo claro y oscuro.",
+      "customTokensAdd": "Agregar token",
+      "customTokensRemove": "Eliminar",
+      "customTokensEmpty": "Aún no hay tokens personalizados.",
+      "customTokensRow": "Token {{index}}",
+      "customTokensKind": "Tipo",
+      "customTokensKindColor": "Color",
+      "customTokensKindGradient": "Gradiente",
+      "customTokensName": "Slug",
+      "customTokensNamePlaceholder": "widget",
+      "customTokensLabel": "Etiqueta (opcional)",
+      "customTokensResolvedVar": "Variable CSS: {{name}}",
       "radiusLg": "Radio de borde de tarjetas",
       "radiusSm": "Radio de borde de botones",
       "previewGradientLabel": "Balance total",
@@ -1428,6 +1463,25 @@
     "countDocumentsHint": "Cuenta cada registro que cumple los filtros (sin seleccionar campo).",
     "noNumericFields": "Esta entidad no tiene campos numéricos para Suma o Promedio.",
     "fieldsDependency": "Dependencias de campos",
+    "filters": {
+      "label": "Filtros",
+      "empty": "Sin filtros — se incluyen todos los registros origen.",
+      "add": "Agregar filtro",
+      "remove": "Quitar filtro",
+      "rowLabel": "Filtro {{index}}",
+      "field": "Campo",
+      "operator": "Operador",
+      "value": "Valor",
+      "selectValue": "Selecciona un valor…",
+      "valuePlaceholder": "Introduce un valor",
+      "relationPlaceholder": "Introduce el id del registro relacionado",
+      "listPlaceholder": "Valores separados por comas",
+      "validationRequired": "Introduce un valor de filtro válido para {{field}}.",
+      "operators": {
+        "eq": "Igual a",
+        "in": "Es uno de"
+      }
+    },
     "groupBy": "Agrupar por",
     "dimensions": "Dimensiones",
     "status": "Estado",
@@ -1492,6 +1546,11 @@
         "title": "Dimensiones",
         "description": "Etiquetas extra guardadas en cada fila para filtrar o mostrar. No crean buckets salvo que también estén en agrupar por.",
         "example": "currency, productType — contexto en la fila"
+      },
+      "filters": {
+        "title": "Filtros",
+        "description": "Solo se cuentan los registros que cumplen todos los filtros. Los filtros son fijos en la definición — no se configuran en widgets KPI.",
+        "example": "type = INCOME — solo ingresos; type in EXPENSE, PAYMENT — salidas"
       }
     },
     "summary": {
@@ -1501,6 +1560,8 @@
       "description": "Descripción: {{text}}",
       "whenUpdates": "Se recalcula cuando cambian: {{fields}}",
       "anyFieldChange": "cualquier campo rastreado",
+      "filters": "Filtros de registro: {{filters}}",
+      "noFilters": "sin filtros (todos los registros)",
       "groupBy": "Agrupado por: {{fields}}",
       "noGrouping": "total único (sin agrupación)",
       "dimensions": "Dimensiones en filas: {{fields}}",
@@ -1518,6 +1579,50 @@
       "forbidden": "Los valores de métricas no están disponibles para tu rol.",
       "unconfigured": "Selecciona una métrica para este KPI.",
       "unknown": "No se encontró la definición de la métrica."
+    },
+    "derivedKpi": {
+      "defaultLabel": "Métrica derivada",
+      "unnamedMetric": "Métrica",
+      "unconfigured": "Construye una fórmula con al menos una métrica.",
+      "invalidExpression": "Esta fórmula está incompleta o no es válida.",
+      "divideByZero": "No se puede dividir por cero con los valores actuales.",
+      "shapeMismatch": "Todas las métricas de la fórmula deben compartir las mismas claves de agrupación y dimensiones.",
+      "shapeMismatchNamed": "La métrica \"{{name}}\" no coincide con las claves de agrupación y dimensiones de la primera métrica.",
+      "formulaPreview": "Vista previa de la fórmula",
+      "expressionTitle": "Tokens de la fórmula",
+      "tokenLabel": "Token {{index}}",
+      "tokenType": "Tipo de token",
+      "tokenTypes": {
+        "metric": "Métrica",
+        "constant": "Constante",
+        "operator": "Operador",
+        "paren": "Paréntesis"
+      },
+      "constantValue": "Valor constante",
+      "constantPlaceholder": "Introduce un número",
+      "operator": "Operador",
+      "operators": {
+        "+": "Sumar (+)",
+        "-": "Restar (−)",
+        "*": "Multiplicar (×)",
+        "/": "Dividir (÷)"
+      },
+      "insertOperator": {
+        "+": "Sumar +",
+        "-": "Restar −",
+        "*": "Multiplicar ×",
+        "/": "Dividir ÷"
+      },
+      "parenthesis": "Paréntesis",
+      "parenthesisOpen": "Abrir (",
+      "parenthesisClose": "Cerrar )",
+      "insertMetric": "Añadir métrica",
+      "insertConstant": "Añadir constante",
+      "insertOpenParen": "Añadir (",
+      "insertCloseParen": "Añadir )",
+      "removeToken": "Eliminar",
+      "moveTokenUp": "Subir",
+      "moveTokenDown": "Bajar"
     }
   },
   "hooks": {

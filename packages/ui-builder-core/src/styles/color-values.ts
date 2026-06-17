@@ -1,4 +1,7 @@
 import type { ThemeToken } from "./style-types.js";
+import { isCssGradientBackgroundValue } from "./css-values.js";
+
+export { isCssGradientBackgroundValue } from "./css-values.js";
 
 const THEME_TOKENS = new Set<string>([
   "default",
@@ -35,6 +38,15 @@ export function isCssColorValue(value: string): boolean {
   return /^var\(--[a-zA-Z0-9-]+\)$/.test(trimmed);
 }
 
+/** Solid fills and gradients allowed for backgroundColor style rules. */
+export function isCssBackgroundFillValue(value: string): boolean {
+  return isCssColorValue(value) || isCssGradientBackgroundValue(value);
+}
+
 export function isCustomColorValue(value: string): boolean {
   return !isThemeTokenValue(value) && isCssColorValue(value);
+}
+
+export function isCustomBackgroundFillValue(value: string): boolean {
+  return !isThemeTokenValue(value) && isCssBackgroundFillValue(value);
 }

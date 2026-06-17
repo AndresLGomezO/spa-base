@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { matchConditionalStyles } from "../conditions/match-conditional-styles.js";
 import {
   componentSlotWrapperClassName,
   containerRowWrapperClassName,
@@ -26,6 +27,7 @@ import {
 } from "./apply-style-rules.js";
 import {
   themeTokenBackgroundClass,
+  themeTokenSwatchClass,
   themeTokenTextClass,
 } from "./theme-token-classes.js";
 
@@ -69,6 +71,15 @@ describe("applyStyleRules", () => {
     expect(themeTokenTextClass("success")).toBe("text-success");
     expect(themeTokenTextClass("danger")).toBe("text-destructive");
     expect(themeTokenBackgroundClass("danger")).toBe("bg-destructive/10");
+  });
+
+  it("maps theme token swatches to the same colors used at render time", () => {
+    expect(themeTokenSwatchClass("background", "primary")).toBe(
+      "bg-primary/10",
+    );
+    expect(themeTokenSwatchClass("text", "primary")).toBe("bg-primary");
+    expect(themeTokenSwatchClass("text", "muted")).toBe("bg-muted-foreground");
+    expect(themeTokenSwatchClass("border", "primary")).toBe("bg-primary");
   });
 
   it("puts text color rules on the value class list", () => {
@@ -378,6 +389,59 @@ describe("applyStyleRules", () => {
     expect(resolved.style.backgroundColor).toBe("var(--color-primary)");
     expect(resolved.style.color).toBe("var(--color-muted-foreground)");
     expect(resolved.className).not.toContain("bg-");
+  });
+
+  it("applies gradient backgrounds via the background property", () => {
+    expect(
+      resolveStyleRules([
+        { property: "backgroundColor", value: "var(--gradient-primary)" },
+      ]).style,
+    ).toEqual({ background: "var(--gradient-primary)" });
+
+    expect(
+      resolveStyleRules([
+        {
+          property: "backgroundColor",
+          value: "linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)",
+        },
+      ]).style.background,
+    ).toBe("linear-gradient(135deg, #8c6fe6 0%, #553cd9 100%)");
+  });
+
+  it("maps conditional gradient backgrounds to inline background styles", () => {
+    expect(
+      matchConditionalStyles("ACTIVE", [
+        {
+          matchValue: "ACTIVE",
+          background: "var(--gradient-primary)",
+        },
+      ]).style,
+    ).toEqual({ background: "var(--gradient-primary)" });
+  });
+
+  it("maps boxShadow theme tokens to tailwind shadow utilities", () => {
+    expect(
+      resolveStyleRules([{ property: "boxShadow", value: "card" }]).className,
+    ).toContain("shadow-card");
+    expect(
+      resolveStyleRules([{ property: "boxShadow", value: "none" }]).className,
+    ).toContain("shadow-none");
+  });
+
+  it("applies custom boxShadow and theme dimension tokens inline", () => {
+    expect(
+      resolveStyleRules([
+        { property: "boxShadow", value: "var(--shadow-card)" },
+        { property: "borderRadius", value: "var(--radius-lg)" },
+        { property: "fontSize", value: "var(--text-body)" },
+        { property: "fontFamily", value: "var(--font-sans)" },
+      ]).style,
+    ).toEqual({
+      boxShadow: "var(--shadow-card)",
+      borderRadius: "var(--radius-lg)",
+      fontSize: "var(--text-body)",
+      fontFamily: "var(--font-sans)",
+    });
   });
 
   it("maps flexWrap to tailwind utilities", () => {

@@ -22,8 +22,9 @@ import {
 import { FieldLabel, Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
-import { formDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import type { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import {
   findRowByRef,
@@ -61,11 +62,8 @@ export function DashboardLayoutDesignerComponentRowPanel({
     activeTabId === "layout" ? "dashboardLayout" : "dashboardSection";
   const allowedKinds = componentKindsForSurface(designSurface);
 
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
-  const componentEditorLabels = useMemo(
-    () => formDesignerComponentEditorLabels(t),
-    [t],
-  );
+  const labels = useFormDesignerLayoutEditorLabels();
+  const componentEditorLabels = useFormDesignerComponentEditorLabels();
 
   const row = findRowByRef(binding.layout, rowRef);
 

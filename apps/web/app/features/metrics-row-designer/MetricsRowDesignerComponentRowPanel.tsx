@@ -23,8 +23,9 @@ import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
-import { formDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
-import { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { useFormDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
+import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import type { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import {
   findRowByRef,
@@ -34,6 +35,7 @@ import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerP
 import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentRowPanel";
 import { resolveActiveLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { MetricWidgetComponentEditor } from "./MetricWidgetComponentEditor";
+import { MetricDerivedKpiComponentEditor } from "../../components/metrics/MetricDerivedKpiComponentEditor";
 import { MetricKpiComponentEditor } from "../../components/metrics/MetricKpiComponentEditor";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
 
@@ -57,11 +59,8 @@ export function MetricsRowDesignerComponentRowPanel({
   const designSurface = activeTabId === "row" ? "metricRow" : "metricWidget";
   const allowedKinds = componentKindsForSurface(designSurface);
 
-  const labels = useMemo(() => formDesignerLayoutEditorLabels(t), [t]);
-  const componentEditorLabels = useMemo(
-    () => formDesignerComponentEditorLabels(t),
-    [t],
-  );
+  const labels = useFormDesignerLayoutEditorLabels();
+  const componentEditorLabels = useFormDesignerComponentEditorLabels();
 
   const filterFieldOptions = useMemo(
     () =>
@@ -124,6 +123,14 @@ export function MetricsRowDesignerComponentRowPanel({
             hideComponentStyles
             metricKpiEditor={(config, onChange) => (
               <MetricKpiComponentEditor
+                config={config}
+                entityDefinition={definition}
+                filterFieldOptions={filterFieldOptions}
+                onChange={onChange}
+              />
+            )}
+            metricDerivedKpiEditor={(config, onChange) => (
+              <MetricDerivedKpiComponentEditor
                 config={config}
                 entityDefinition={definition}
                 filterFieldOptions={filterFieldOptions}
