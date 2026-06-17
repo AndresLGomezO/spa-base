@@ -1,6 +1,9 @@
 import { Text } from "@repo/ui";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
-import type { DashboardSectionComponentConfig } from "@repo/ui-builder-core";
+import {
+  resolveDashboardSectionShellClassName,
+  type DashboardSectionComponentConfig,
+} from "@repo/ui-builder-core";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { DashboardSectionDefinition } from "@repo/entities";
 import type { TFunction } from "i18next";
@@ -36,7 +39,7 @@ export function createDashboardSectionRenderer(
     }
 
     return (
-      <div className="h-auto min-w-0 w-full">
+      <div className={resolveDashboardSectionShellClassName(config.styles)}>
         <RecursiveLayoutRenderer
           layout={section.layout}
           context={buildLayoutContext()}

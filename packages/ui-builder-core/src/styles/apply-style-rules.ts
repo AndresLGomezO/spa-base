@@ -451,7 +451,22 @@ export function inlineFlexGrowStretchClassName(
     return "";
   }
 
-  return "w-full min-w-0";
+  return "w-full min-w-0 self-stretch";
+}
+
+/** Width class for the shell that wraps an embedded dashboard section layout. */
+export function resolveDashboardSectionShellClassName(
+  styles: readonly StyleRule[] | undefined,
+): string {
+  if (stylesIncludeFlexGrow(styles)) {
+    return "h-auto min-w-0 w-full";
+  }
+
+  if (rowPrefersContentWidth(styles)) {
+    return "h-auto min-w-0 w-fit max-w-full";
+  }
+
+  return "h-auto min-w-0 max-w-full";
 }
 
 export function rowPrefersContentWidth(
@@ -512,7 +527,10 @@ export function flexWrapRowItemClassName(
   parentStyles: readonly StyleRule[] | undefined,
   row: {
     readonly type: string;
-    readonly component?: { readonly kind: string };
+    readonly component?: {
+      readonly kind: string;
+      readonly styles?: readonly StyleRule[];
+    };
   },
 ): string {
   if (parentStackDirection !== "row" || !usesFlexWrapLayout(parentStyles)) {
@@ -529,6 +547,14 @@ export function flexWrapRowItemClassName(
 
   if (row.component?.kind === "container") {
     return "min-w-0 max-w-full flex-[1_1_0] basis-0";
+  }
+
+  if (row.component?.kind === "dashboard-section") {
+    if (stylesIncludeFlexGrow(row.component.styles)) {
+      return "min-w-0 max-w-full flex-[1_1_0] basis-0";
+    }
+
+    return "w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto";
   }
 
   return "";

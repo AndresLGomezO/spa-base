@@ -21,6 +21,7 @@ import {
   layoutInlineStyleFromStyleRules,
   textInlineStyleFromStyleRules,
   splitStyleRuleClasses,
+  stylesIncludeFlexGrow,
   textWrapClassFromStyles,
   type FieldUiComponentConfig,
   type UiComponentConfig,
@@ -156,6 +157,17 @@ function valueClassNameFromStyles(
   return [textWrapClassFromStyles(styles), textClassName, extra]
     .filter(Boolean)
     .join(" ");
+}
+
+function inlineFieldContainerClassName(
+  containerClassName: string,
+  styles: FieldUiComponentConfig["styles"],
+): string {
+  if (!stylesIncludeFlexGrow(styles)) {
+    return containerClassName;
+  }
+
+  return [containerClassName, "w-full"].filter(Boolean).join(" ");
 }
 
 export function renderUiComponent(
@@ -343,7 +355,10 @@ export function renderUiComponent(
       <CardFieldValue
         value={chain.staticValue}
         allowEmpty
-        className={containerClassName}
+        className={inlineFieldContainerClassName(
+          containerClassName,
+          innerStyles,
+        )}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
@@ -387,7 +402,10 @@ export function renderUiComponent(
         src={src}
         alt={label ?? fieldPath}
         sizePx={config.imageSize}
-        className={containerClassName}
+        className={inlineFieldContainerClassName(
+          containerClassName,
+          innerStyles,
+        )}
         style={containerStyle}
       />
     );
@@ -446,7 +464,10 @@ export function renderUiComponent(
           label={label}
           value={displayValue}
           allowEmpty={isSample}
-          className={containerClassName}
+          className={inlineFieldContainerClassName(
+            containerClassName,
+            innerStyles,
+          )}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
             innerStyles,
@@ -465,7 +486,10 @@ export function renderUiComponent(
         currency={showCurrency ? context.resolveCurrencyCode?.() : undefined}
         tone={showToneColors ? resolveCurrencyTone(rawValue) : "neutral"}
         label={label}
-        className={containerClassName}
+        className={inlineFieldContainerClassName(
+          containerClassName,
+          innerStyles,
+        )}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
@@ -498,7 +522,10 @@ export function renderUiComponent(
           label={label}
           value={displayValue}
           allowEmpty={isSample}
-          className={containerClassName}
+          className={inlineFieldContainerClassName(
+            containerClassName,
+            innerStyles,
+          )}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
             innerStyles,
@@ -519,7 +546,10 @@ export function renderUiComponent(
         }
         locale={context.locale}
         label={label}
-        className={containerClassName}
+        className={inlineFieldContainerClassName(
+          containerClassName,
+          innerStyles,
+        )}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
@@ -536,7 +566,10 @@ export function renderUiComponent(
           label={label}
           value={context.recordFieldLinkRenderer(recordLink)}
           allowEmpty
-          className={containerClassName}
+          className={inlineFieldContainerClassName(
+            containerClassName,
+            innerStyles,
+          )}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
           textSize={textSize}
@@ -554,7 +587,10 @@ export function renderUiComponent(
           </a>
         }
         allowEmpty
-        className={containerClassName}
+        className={inlineFieldContainerClassName(
+          containerClassName,
+          innerStyles,
+        )}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}

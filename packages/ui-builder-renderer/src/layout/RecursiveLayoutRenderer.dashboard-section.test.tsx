@@ -321,6 +321,53 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
     expect(markup).toMatch(
       /w-full min-w-0[^"]*flex-\[1\]|flex-\[1\][^"]*w-full min-w-0/,
     );
+    expect(markup).toContain("self-stretch");
     expect(markup).toContain("text-center");
+  });
+
+  it("uses content-width shell for flex-zero dashboard sections", () => {
+    const layout = ensureContainerRoot({
+      showActions: true,
+      root: {
+        type: "root",
+        id: "root-dashboard-shell",
+        columnCount: 1,
+        columns: [
+          {
+            id: "col-dashboard-shell",
+            stackDirection: "row",
+            styles: [{ property: "flexWrap", value: "wrap" }],
+            rows: [
+              {
+                type: "component",
+                id: "row-calendar-section",
+                component: {
+                  kind: "dashboard-section",
+                  sectionId: "section-calendar",
+                  styles: [{ property: "flex", value: "0" }],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const markup = renderToStaticMarkup(
+      <RecursiveLayoutRenderer
+        layout={layout}
+        context={{
+          mode: "listItem",
+          data: {},
+          locale: "en",
+          resolveField: () => undefined,
+          dashboardSectionRenderer: () => (
+            <div className="h-auto min-w-0 w-fit max-w-full">Section</div>
+          ),
+        }}
+      />,
+    );
+
+    expect(markup).toContain("w-fit max-w-full");
   });
 });

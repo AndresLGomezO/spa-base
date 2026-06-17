@@ -11,6 +11,7 @@ import {
   inlineFlexGrowStretchClassName,
   parseFlexLayoutFromStyles,
   prefersInlineContentWidth,
+  resolveDashboardSectionShellClassName,
   resolvePageSlotWrapper,
   resolveStyleRules,
   resolveRowWrapperStyleRules,
@@ -165,7 +166,7 @@ describe("applyStyleRules", () => {
         { kind: "text", styles: [{ property: "flex", value: "1" }] },
         "column",
       ),
-    ).toBe("w-full min-w-0");
+    ).toBe("w-full min-w-0 self-stretch");
     expect(
       inlineFlexGrowStretchClassName(
         { kind: "text", styles: [{ property: "flex", value: "1" }] },
@@ -214,6 +215,18 @@ describe("applyStyleRules", () => {
     expect(stackShellWidthClassName(undefined, "column")).toBe("w-full");
   });
 
+  it("resolves dashboard section shell width from component styles", () => {
+    expect(resolveDashboardSectionShellClassName(undefined)).toBe(
+      "h-auto min-w-0 max-w-full",
+    );
+    expect(
+      resolveDashboardSectionShellClassName([{ property: "flex", value: "1" }]),
+    ).toBe("h-auto min-w-0 w-full");
+    expect(
+      resolveDashboardSectionShellClassName([{ property: "flex", value: "0" }]),
+    ).toBe("h-auto min-w-0 w-fit max-w-full");
+  });
+
   it("sizes flex-wrap row items for responsive stacking", () => {
     expect(
       flexWrapRowItemClassName(
@@ -229,6 +242,19 @@ describe("applyStyleRules", () => {
         { type: "component", component: { kind: "image" } },
       ),
     ).toBe("min-w-0 max-w-full shrink-0 grow-0 basis-auto");
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        {
+          type: "component",
+          component: {
+            kind: "dashboard-section",
+            styles: [{ property: "flex", value: "0" }],
+          },
+        },
+      ),
+    ).toBe("w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto");
     expect(
       inlineContentRowClassName(
         { kind: "text", styles: [{ property: "fontWeight", value: "bold" }] },

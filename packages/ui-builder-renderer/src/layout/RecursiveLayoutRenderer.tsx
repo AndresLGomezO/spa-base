@@ -751,10 +751,13 @@ function renderRow(
     const isEntityFieldSelectorRow =
       row.component.kind === "entity-field-selector";
     const isDashboardSectionRow = row.component.kind === "dashboard-section";
-    const dashboardSectionRowClass =
-      isDashboardSectionRow && stackDirection === "column"
+    const dashboardSectionRowClass = isDashboardSectionRow
+      ? stackDirection === "column"
         ? "h-auto w-full shrink-0 grow-0"
-        : undefined;
+        : stylesIncludeFlexGrow(row.component.styles)
+          ? "h-auto min-w-0 max-w-full shrink-0"
+          : "h-auto w-fit max-w-full min-w-0 shrink-0 grow-0"
+      : undefined;
     const mainPageRowClass =
       isMainPage && stackDirection === "column"
         ? isPageListRow

@@ -203,6 +203,7 @@ export {
   slotFlexGrowClassName,
   stylesIncludeFlexGrow,
   inlineFlexGrowStretchClassName,
+  resolveDashboardSectionShellClassName,
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
   containerRowWrapperClassName,
