@@ -21,6 +21,8 @@ import {
   splitStyleRuleClasses,
   stackShellWidthClassName,
   stackShellLayoutClasses,
+  stretchColumnStackShellClassName,
+  rowSiblingContainerShellClassName,
   textWrapClassFromStyles,
   usesFlexWrapLayout,
   usesTextWrap,
@@ -238,6 +240,15 @@ describe("applyStyleRules", () => {
         "column",
       ),
     ).toBe("flex min-w-max w-fit max-w-full");
+  });
+
+  it("uses stretch column shell classes for row sibling containers", () => {
+    expect(stretchColumnStackShellClassName()).toBe(
+      "flex min-h-0 min-w-0 h-full w-full flex-1 flex-col",
+    );
+    expect(rowSiblingContainerShellClassName()).toBe(
+      "flex min-h-0 self-stretch flex-col",
+    );
   });
 
   it("keeps full width for default column stacks", () => {

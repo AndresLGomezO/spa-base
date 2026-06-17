@@ -240,6 +240,8 @@ export {
   isFlexWrapRowStack,
   stackShellWidthClassName,
   stackShellLayoutClasses,
+  stretchColumnStackShellClassName,
+  rowSiblingContainerShellClassName,
   gapPxFromStyles,
   gapStyleFromStyleRules,
   fontSizePxFromStyles,

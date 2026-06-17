@@ -26,7 +26,9 @@ import {
   inlineFlexGrowStretchClassName,
   isFlexWrapRowStack,
   prefersInlineContentWidth,
+  rowSiblingContainerShellClassName,
   stackShellLayoutClasses,
+  stretchColumnStackShellClassName,
   stackShellWidthClassName,
   type ColumnNode,
   type ColumnStackDirection,
@@ -298,6 +300,11 @@ function renderRows(
     columnGridOptions?.stretchRootColumns ?? false,
   );
   const columnGapProps = gapLayoutProps(column.styles);
+  const useStretchColumnShell =
+    stretchColumn && stackDirection === "column";
+  const columnStackShellClass = useStretchColumnShell
+    ? stretchColumnStackShellClassName()
+    : stackShellLayoutClasses(column.styles, stackDirection);
 
   return (
     <LayoutStack
@@ -305,7 +312,7 @@ function renderRows(
       gap={columnGapProps.gap}
       style={columnGapProps.style}
       className={[
-        stackShellLayoutClasses(column.styles, stackDirection),
+        columnStackShellClass,
         (isMainPage || isStretchedSurfaceFill) &&
           stackDirection === "column" &&
           "min-h-0 flex-1",
@@ -314,8 +321,14 @@ function renderRows(
           "h-full overflow-hidden",
         isWizardForm && stackDirection === "column" && "min-h-0 w-full",
         isWizardStepContent && stackDirection === "column" && "min-h-0 w-full",
-        stretchColumn && stackDirection === "column" && "min-h-0 flex-1 h-full",
+        !useStretchColumnShell &&
+          stretchColumn &&
+          stackDirection === "column" &&
+          "min-h-0 flex-1 h-full",
         stackDirection === "column" ? "flex-col" : "flex-row",
+        stackDirection === "row" &&
+          columnFlex.align === undefined &&
+          "items-stretch",
         flexWrapClassFromStyles(column.styles),
       ]
         .filter(Boolean)
@@ -709,7 +722,7 @@ function renderRow(
       )
         ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
         : containerParentIsRow
-          ? "flex h-full min-h-0 flex-col self-stretch"
+          ? rowSiblingContainerShellClassName()
           : undefined;
       const syntheticColumn: ColumnNode = {
         id: `${row.id}-container`,

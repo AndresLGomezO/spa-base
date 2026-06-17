@@ -707,6 +707,16 @@ export function stackShellLayoutClasses(
   return ["flex", minWidthClass, widthClass].join(" ");
 }
 
+/** Column stack inside a stretched row sibling container (supports justify-content). */
+export function stretchColumnStackShellClassName(): string {
+  return "flex min-h-0 min-w-0 h-full w-full flex-1 flex-col";
+}
+
+/** Container shell when it sits beside siblings in a horizontal stack. */
+export function rowSiblingContainerShellClassName(): string {
+  return "flex min-h-0 self-stretch flex-col";
+}
+
 /** Flex self-alignment and content width for container row wrappers. */
 export function containerRowWrapperClassName(
   styles: readonly StyleRule[] | undefined,

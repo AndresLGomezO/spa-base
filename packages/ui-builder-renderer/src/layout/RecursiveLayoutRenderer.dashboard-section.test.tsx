@@ -465,6 +465,7 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
     );
 
     expect(markup).toContain("self-stretch");
+    expect(markup).toContain("justify-center");
     expect(markup).toContain("mt-auto");
     expect(markup).not.toContain("self-end");
   });
