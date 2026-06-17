@@ -700,6 +700,7 @@ function renderRow(
     if (isContainerComponent(row.component)) {
       const containerStyles = resolveRowWrapperStyleRules(row.component.styles);
       const containerStackDirection = row.component.stackDirection ?? "column";
+      const containerParentIsRow = stackDirection === "row";
       const stretchedContainerClass = shouldStretchRootContainerRow(
         row,
         context,
@@ -707,7 +708,9 @@ function renderRow(
         columnGridOptions,
       )
         ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
-        : undefined;
+        : containerParentIsRow
+          ? "flex h-full min-h-0 flex-col self-stretch"
+          : undefined;
       const syntheticColumn: ColumnNode = {
         id: `${row.id}-container`,
         rows: row.component.rows,
@@ -753,7 +756,7 @@ function renderRow(
               context,
               rowScope,
               columnGridOptions,
-            ),
+            ) || containerParentIsRow,
             columnGridOptions,
           )}
         </div>,
@@ -820,7 +823,7 @@ function renderRow(
         : inlineContentRowClassName(row.component, parentIsFlexWrapRow);
     const formSlotClassName =
       isFormFill && stackDirection === "column"
-        ? componentSlotWrapperClassName(row.component.styles)
+        ? componentSlotWrapperClassName(row.component.styles, stackDirection)
             .split(/\s+/)
             .filter(
               (part) =>
@@ -830,7 +833,7 @@ function renderRow(
                 part !== "grow",
             )
             .join(" ")
-        : componentSlotWrapperClassName(row.component.styles);
+        : componentSlotWrapperClassName(row.component.styles, stackDirection);
     return wrapRowContent(
       row,
       rowLocator,

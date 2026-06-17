@@ -161,7 +161,7 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
     );
 
     expect(markup).toContain("flex-[1]");
-    expect(markup).toContain("self-end");
+    expect(markup).toContain("mt-auto");
     expect(markup).not.toMatch(/flex-\[1\][^"]*shrink-0/);
   });
 
@@ -369,5 +369,103 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
     );
 
     expect(markup).toContain("w-fit max-w-full");
+  });
+
+  it("bottom-aligns image rows inside row-stacked containers", () => {
+    const layout = ensureContainerRoot({
+      showActions: true,
+      root: {
+        type: "root",
+        id: "root-widget",
+        columnCount: 1,
+        columns: [
+          {
+            id: "col-widget",
+            rows: [
+              {
+                type: "component",
+                id: "row-card",
+                component: {
+                  kind: "container",
+                  stackDirection: "row",
+                  rows: [
+                    {
+                      type: "component",
+                      id: "row-copy",
+                      component: {
+                        kind: "container",
+                        rows: [
+                          {
+                            type: "component",
+                            id: "row-label",
+                            component: {
+                              kind: "text",
+                              primary: {
+                                type: "static",
+                                value: "Total balance",
+                              },
+                            },
+                          },
+                          {
+                            type: "component",
+                            id: "row-value",
+                            component: {
+                              kind: "text",
+                              primary: { type: "static", value: "$1,234" },
+                            },
+                          },
+                        ],
+                      },
+                    },
+                    {
+                      type: "component",
+                      id: "row-image-shell",
+                      component: {
+                        kind: "container",
+                        styles: [
+                          { property: "alignItems", value: "start" },
+                          { property: "justifyContent", value: "center" },
+                        ],
+                        rows: [
+                          {
+                            type: "component",
+                            id: "row-image",
+                            component: {
+                              kind: "image",
+                              primary: {
+                                type: "static",
+                                value: "https://example.com/logo.png",
+                              },
+                              styles: [{ property: "alignSelf", value: "end" }],
+                              imageSize: 120,
+                            },
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              },
+            ],
+          },
+        ],
+      },
+    });
+
+    const markup = renderToStaticMarkup(
+      <RecursiveLayoutRenderer
+        layout={layout}
+        context={{
+          mode: "listItem",
+          data: {},
+          locale: "en",
+          resolveField: () => undefined,
+        }}
+      />,
+    );
+
+    expect(markup).toContain("self-stretch");
+    expect(markup).toContain("mt-auto");
+    expect(markup).not.toContain("self-end");
   });
 });

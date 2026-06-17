@@ -331,6 +331,63 @@ export interface FlexLayoutFromStyles {
   readonly slotFlexClassName: string;
 }
 
+export type FlexStackDirection = "column" | "row";
+
+function readAlignSelfValue(
+  styles: readonly StyleRule[] | undefined,
+): FlexAlign | undefined {
+  const rule = styles?.find((entry) => entry.property === "alignSelf");
+  if (!rule) {
+    return undefined;
+  }
+
+  return parseFlexAlign(String(rule.value));
+}
+
+/**
+ * Maps `alignSelf` onto a slot wrapper relative to the parent stack direction.
+ * In column stacks, `end`/`center` use main-axis auto margins so inline rows
+ * (image, text, KPI) can pin to the bottom; in row stacks, `self-*` aligns on
+ * the cross axis (vertical).
+ */
+export function slotSelfAlignClassName(
+  styles: readonly StyleRule[] | undefined,
+  parentStackDirection: FlexStackDirection,
+): string {
+  const alignSelf = readAlignSelfValue(styles);
+  if (!alignSelf) {
+    return "";
+  }
+
+  if (parentStackDirection === "column") {
+    if (alignSelf === "end") {
+      return "mt-auto";
+    }
+    if (alignSelf === "center") {
+      return "my-auto";
+    }
+    if (alignSelf === "stretch") {
+      return "self-stretch";
+    }
+    return "";
+  }
+
+  if (alignSelf === "start") {
+    return "self-start";
+  }
+  if (alignSelf === "center") {
+    return "self-center";
+  }
+  if (alignSelf === "end") {
+    return "self-end";
+  }
+  if (alignSelf === "stretch") {
+    return "self-stretch";
+  }
+
+  return "";
+}
+
 export function parseFlexLayoutFromStyles(
   styles: readonly StyleRule[] | undefined,
 ): FlexLayoutFromStyles {
@@ -521,14 +578,12 @@ export function resolveDashboardSectionShellClassName(
 export function rowPrefersContentWidth(
   styles: readonly StyleRule[] | undefined,
 ): boolean {
-  const flex = parseFlexLayoutFromStyles(styles);
   const hasFlexZero =
     styles?.some(
       (rule) => rule.property === "flex" && String(rule.value) === "0",
     ) ?? false;
-  const hasAlignSelfStartEnd =
-    flex.selfClassName.includes("self-start") ||
-    flex.selfClassName.includes("self-end");
+  const alignSelf = readAlignSelfValue(styles);
+  const hasAlignSelfStartEnd = alignSelf === "start" || alignSelf === "end";
 
   return hasFlexZero || hasAlignSelfStartEnd;
 }
@@ -655,7 +710,7 @@ export function stackShellLayoutClasses(
 /** Flex self-alignment and content width for container row wrappers. */
 export function containerRowWrapperClassName(
   styles: readonly StyleRule[] | undefined,
-  stackDirection: "column" | "row" = "column",
+  stackDirection: FlexStackDirection = "column",
 ): string {
   const flex = parseFlexLayoutFromStyles(styles);
   const parts: string[] = [];
@@ -677,6 +732,7 @@ export function containerRowWrapperClassName(
 
 export function componentSlotWrapperClassName(
   styles: readonly StyleRule[] | undefined,
+  parentStackDirection: FlexStackDirection = "row",
 ): string {
   const flex = parseFlexLayoutFromStyles(styles);
   const wrapLayout = usesTextWrap(styles)
@@ -689,7 +745,7 @@ export function componentSlotWrapperClassName(
       : "";
 
   return [
-    flex.selfClassName,
+    slotSelfAlignClassName(styles, parentStackDirection),
     flex.slotFlexClassName,
     slotFlexGrowClassName(styles),
     wrapLayout,

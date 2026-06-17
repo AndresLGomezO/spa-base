@@ -156,6 +156,24 @@ describe("applyStyleRules", () => {
     ).toBe("self-center");
   });
 
+  it("maps alignSelf end to main-axis bottom margin in column stacks", () => {
+    expect(
+      componentSlotWrapperClassName(
+        [{ property: "alignSelf", value: "end" }],
+        "column",
+      ),
+    ).toContain("mt-auto");
+  });
+
+  it("maps alignSelf center to main-axis centering in column stacks", () => {
+    expect(
+      componentSlotWrapperClassName(
+        [{ property: "alignSelf", value: "center" }],
+        "column",
+      ),
+    ).toBe("my-auto");
+  });
+
   it("uses content width classes when flex is zero", () => {
     expect(
       componentSlotWrapperClassName([

@@ -18,11 +18,15 @@ import {
 } from "@repo/ui-builder-core";
 import { FieldLabel, Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
+import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 
+import type { EntityName } from "../../entities/entity-catalog";
 import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
+import { useAnyPermission } from "../../auth/useAnyPermission";
+import { LayoutStaticImageValueEditor } from "../ui-builder/LayoutStaticImageValueEditor";
 import { useFormDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
@@ -50,6 +54,8 @@ export function MetricsRowDesignerComponentRowPanel({
   const { editor, activeTabId } = useMetricsRowDesigner();
   const { getDefinition } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
+  const canEdit = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
+  const isWidgetTab = activeTabId !== "row";
 
   const binding = useMemo(
     () => resolveActiveLayoutBinding(editor, activeTabId),
@@ -121,6 +127,16 @@ export function MetricsRowDesignerComponentRowPanel({
             definition={definition}
             getDefinition={getDefinition}
             hideComponentStyles
+            staticContentOnly={isWidgetTab}
+            staticImageEditor={({ value, onChange }) => (
+              <LayoutStaticImageValueEditor
+                entityName={definition.name as EntityName}
+                definition={definition}
+                value={value}
+                onChange={onChange}
+                canEdit={canEdit}
+              />
+            )}
             metricKpiEditor={(config, onChange) => (
               <MetricKpiComponentEditor
                 config={config}
