@@ -300,8 +300,7 @@ function renderRows(
     columnGridOptions?.stretchRootColumns ?? false,
   );
   const columnGapProps = gapLayoutProps(column.styles);
-  const useStretchColumnShell =
-    stretchColumn && stackDirection === "column";
+  const useStretchColumnShell = stretchColumn && stackDirection === "column";
   const columnStackShellClass = useStretchColumnShell
     ? stretchColumnStackShellClassName()
     : stackShellLayoutClasses(column.styles, stackDirection);
