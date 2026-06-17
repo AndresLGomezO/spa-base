@@ -16,6 +16,7 @@ export interface EntityCatalogEntitySummary {
   readonly name: string;
   readonly label: string;
   readonly displayField?: string;
+  readonly description?: string;
   readonly navCategoryName?: string;
   readonly relationEdges: readonly {
     readonly field: string;
@@ -88,7 +89,7 @@ export function buildEntityCatalogFragment(
             .map((edge) => `${edge.field} → ${edge.target} (${edge.type})`)
             .join("; ")
         : "none";
-    return `- **${entity.label}** (\`${entity.name}\`) — display: \`${entity.displayField ?? "id"}\`${entity.navCategoryName ? `, category: ${entity.navCategoryName}` : ""}; relations: ${relations}`;
+    return `- **${entity.label}** (\`${entity.name}\`) — display: \`${entity.displayField ?? "id"}\`${entity.navCategoryName ? `, category: ${entity.navCategoryName}` : ""}${entity.description ? `; description: ${entity.description}` : ""}; relations: ${relations}`;
   });
 
   return `# Entity catalog
@@ -139,7 +140,7 @@ export function buildEntityCurrentFragment(
 
 Collection: \`${entity.collection}\`
 Display field: \`${entity.displayField ?? "id"}\`
-
+${entity.description ? `Description: ${entity.description}\n` : ""}
 ## Fields
 ${fieldLines.join("\n")}
 
@@ -164,6 +165,7 @@ export function extractCatalogSummaries(
     name: entity.name,
     label: entity.ui.nav?.label ?? entity.name,
     ...(entity.displayField ? { displayField: entity.displayField } : {}),
+    ...(entity.description ? { description: entity.description } : {}),
     ...(entity.navCategoryId && categoryNames[entity.navCategoryId]
       ? { navCategoryName: categoryNames[entity.navCategoryId] }
       : {}),

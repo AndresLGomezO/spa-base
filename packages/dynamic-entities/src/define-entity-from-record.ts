@@ -245,6 +245,9 @@ export function defineEntityFromRecord(
     ...(record.navCategoryId ? { navCategoryId: record.navCategoryId } : {}),
     ...(record.navOrder !== undefined ? { navOrder: record.navOrder } : {}),
     ...(record.displayField ? { displayField: record.displayField } : {}),
+    ...(record.description?.trim()
+      ? { description: record.description.trim() }
+      : {}),
   } as Parameters<typeof defineEntity>[0]) as DefinedEntity<
     string,
     FieldDefinitions

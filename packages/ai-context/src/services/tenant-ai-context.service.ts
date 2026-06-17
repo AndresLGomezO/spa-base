@@ -284,6 +284,7 @@ export function computeEntityCatalogSourceHash(
     fields: entity.fields,
     ui: entity.ui,
     displayField: entity.displayField,
+    description: entity.description,
     navCategoryId: entity.navCategoryId,
   }));
   return hashSourceValue(payload);

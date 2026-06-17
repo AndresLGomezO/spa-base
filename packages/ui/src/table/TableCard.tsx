@@ -10,7 +10,7 @@ export function TableCard({ children, className, ...props }: TableCardProps) {
   return (
     <div
       className={cn(
-        "border-border bg-card flex min-h-0 flex-col overflow-hidden rounded-2xl border shadow-sm",
+        "border-border bg-card flex min-h-0 flex-col overflow-hidden rounded-lg border shadow-card",
         className,
       )}
       {...props}

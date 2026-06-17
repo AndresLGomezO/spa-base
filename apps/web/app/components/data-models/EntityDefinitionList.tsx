@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button, DataTable, Heading } from "@repo/ui";
+import { Button, DataTable, Heading, Text } from "@repo/ui";
 
 import type { EntityDefinitionRecord } from "../../lib/api-client";
 import { useDataViewWithPagination } from "@repo/data-view";
@@ -90,6 +90,12 @@ export function EntityDefinitionList({
           </Button>
         ) : null}
       </div>
+
+      {items.length > 0 ? (
+        <Text className="text-muted-foreground text-sm">
+          {t("dataModels.catalogHint")}
+        </Text>
+      ) : null}
 
       <WebDataViewToolbar
         {...dataView}

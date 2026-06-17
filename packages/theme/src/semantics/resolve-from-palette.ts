@@ -20,6 +20,87 @@ function scaleVarOr(
   return scaleVar(vars, kind, step) ?? fallback;
 }
 
+function resolveLightBadgeSemantics(
+  n: (step: string, fallback: string) => string,
+  p: (step: string, fallback: string) => string,
+  foreground: string,
+): Record<string, string> {
+  return {
+    "--color-badge-default": n("100", foreground),
+    "--color-badge-default-foreground": n("600", foreground),
+    "--color-badge-success": "#dcfce7",
+    "--color-badge-success-foreground": "#15803d",
+    "--color-badge-warning": "#fef9c3",
+    "--color-badge-warning-foreground": "#a16207",
+    "--color-badge-danger": "#fee2e2",
+    "--color-badge-danger-foreground": "#b91c1c",
+    "--color-badge-info": "#e0f2fe",
+    "--color-badge-info-foreground": "#0369a1",
+    "--color-badge-background": n("100", foreground),
+    "--color-badge-foreground": n("600", foreground),
+  };
+}
+
+function resolveDarkBadgeSemantics(
+  n: (step: string, fallback: string) => string,
+  p: (step: string, fallback: string) => string,
+): Record<string, string> {
+  return {
+    "--color-badge-default": n("800", COLOR_BLACK),
+    "--color-badge-default-foreground": n("300", COLOR_WHITE),
+    "--color-badge-success": "#064e3b",
+    "--color-badge-success-foreground": "#34d399",
+    "--color-badge-warning": "#713f12",
+    "--color-badge-warning-foreground": "#facc15",
+    "--color-badge-danger": "#7f1d1d",
+    "--color-badge-danger-foreground": "#f87171",
+    "--color-badge-info": "#0c4a6e",
+    "--color-badge-info-foreground": "#38bdf8",
+    "--color-badge-background": n("800", COLOR_BLACK),
+    "--color-badge-foreground": n("300", COLOR_WHITE),
+  };
+}
+
+function resolveLightSidebarSemantics(
+  n: (step: string, fallback: string) => string,
+  p: (step: string, fallback: string) => string,
+  background: string,
+): Record<string, string> {
+  const sidebar = COLOR_WHITE;
+  const sidebarAccent = p("50", background);
+  const sidebarAccentForeground = p("500", background);
+
+  return {
+    "--color-sidebar": sidebar,
+    "--color-sidebar-foreground": n("500", COLOR_BLACK),
+    "--color-sidebar-border": sidebar,
+    "--color-sidebar-highlight": COLOR_BLACK,
+    "--color-sidebar-hover": n("50", background),
+    "--color-sidebar-accent": sidebarAccent,
+    "--color-sidebar-accent-foreground": sidebarAccentForeground,
+  };
+}
+
+function resolveDarkSidebarSemantics(
+  n: (step: string, fallback: string) => string,
+  p: (step: string, fallback: string) => string,
+  background: string,
+): Record<string, string> {
+  const sidebar = background;
+  const sidebarAccent = p("900", background);
+  const sidebarAccentForeground = p("400", background);
+
+  return {
+    "--color-sidebar": sidebar,
+    "--color-sidebar-foreground": n("400", COLOR_WHITE),
+    "--color-sidebar-border": sidebar,
+    "--color-sidebar-highlight": COLOR_WHITE,
+    "--color-sidebar-hover": n("900", background),
+    "--color-sidebar-accent": sidebarAccent,
+    "--color-sidebar-accent-foreground": sidebarAccentForeground,
+  };
+}
+
 /** Mirrors semantics.css — resolved to concrete hex from generated palette scales. */
 export function resolveLightSemanticsFromPalette(
   paletteVars: Record<string, string>,
@@ -31,20 +112,20 @@ export function resolveLightSemanticsFromPalette(
 
   const background = n("50", "#f7f7f8");
   const foreground = n("950", COLOR_BLACK);
-  const primary = p("600", "#008bd4");
+  const primary = p("500", "#008bd4");
   const primaryForeground = COLOR_WHITE;
 
   return {
     "--color-primary": primary,
     "--color-primary-foreground": primaryForeground,
-    "--color-primary-hover": p("700", primary),
-    "--color-primary-active": p("800", primary),
+    "--color-primary-hover": p("600", primary),
+    "--color-primary-active": p("700", primary),
 
     "--color-secondary": n("100", background),
     "--color-secondary-foreground": n("900", foreground),
 
     "--color-accent": p("50", background),
-    "--color-accent-foreground": p("900", foreground),
+    "--color-accent-foreground": p("500", foreground),
     "--color-accent-hover": p("100", background),
     "--color-accent-active": p("200", background),
 
@@ -63,6 +144,8 @@ export function resolveLightSemanticsFromPalette(
     "--color-popover": COLOR_WHITE,
     "--color-popover-foreground": foreground,
 
+    "--color-backdrop": "#0f172a80",
+
     "--color-border": n("200", background),
     "--color-border-muted": n("100", background),
     "--color-border-strong": n("300", background),
@@ -74,8 +157,8 @@ export function resolveLightSemanticsFromPalette(
     "--color-text-inverse": COLOR_WHITE,
     "--color-text-disabled": n("400", foreground),
 
-    "--color-hover": n("100", background),
-    "--color-active": n("200", background),
+    "--color-hover": n("50", background),
+    "--color-active": n("100", background),
     "--color-focus": p("500", primary),
 
     "--color-input-background": background,
@@ -83,6 +166,9 @@ export function resolveLightSemanticsFromPalette(
     "--color-input-focus": p("500", primary),
 
     "--color-skeleton": n("100", background),
+
+    ...resolveLightBadgeSemantics(n, p, foreground),
+    ...resolveLightSidebarSemantics(n, p, background),
   };
 }
 
@@ -97,24 +183,24 @@ export function resolveDarkSemanticsFromPalette(
 
   const background = n("950", COLOR_BLACK);
   const foreground = n("50", COLOR_WHITE);
-  const primary = p("600", "#008bd4");
+  const primary = p("500", "#008bd4");
   const primaryForeground = COLOR_WHITE;
 
   return {
     "--color-primary": primary,
     "--color-primary-foreground": primaryForeground,
-    "--color-primary-hover": p("500", primary),
-    "--color-primary-active": p("400", primary),
+    "--color-primary-hover": p("400", primary),
+    "--color-primary-active": p("300", primary),
 
     "--color-secondary": n("800", background),
     "--color-secondary-foreground": foreground,
 
-    "--color-accent": n("800", background),
-    "--color-accent-foreground": foreground,
-    "--color-accent-hover": n("700", background),
-    "--color-accent-active": n("600", background),
+    "--color-accent": p("900", background),
+    "--color-accent-foreground": p("300", foreground),
+    "--color-accent-hover": p("800", background),
+    "--color-accent-active": p("700", background),
 
-    "--color-muted": n("900", background),
+    "--color-muted": n("800", background),
     "--color-muted-foreground": n("400", foreground),
 
     "--color-background": background,
@@ -128,6 +214,8 @@ export function resolveDarkSemanticsFromPalette(
 
     "--color-popover": n("900", background),
     "--color-popover-foreground": foreground,
+
+    "--color-backdrop": "#00000099",
 
     "--color-border": n("800", background),
     "--color-border-muted": n("900", background),
@@ -149,6 +237,9 @@ export function resolveDarkSemanticsFromPalette(
     "--color-input-focus": p("500", primary),
 
     "--color-skeleton": n("900", background),
+
+    ...resolveDarkBadgeSemantics(n, p),
+    ...resolveDarkSidebarSemantics(n, p, background),
   };
 }
 

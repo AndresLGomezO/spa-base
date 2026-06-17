@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import { assembleDataModelContext } from "./assemble-data-model-context.js";
 import {
   buildAllModelFragments,
+  MODEL_ENTITY_SCHEMA_ATOM_ID,
   MODEL_EXAMPLE_FULL_ATOM_ID,
   MODEL_FIELD_TYPES_ATOM_ID,
   MODEL_RELATIONS_ATOM_ID,
@@ -13,6 +14,7 @@ describe("buildAllModelFragments", () => {
     const fragments = buildAllModelFragments();
     expect(fragments[MODEL_FIELD_TYPES_ATOM_ID]).toContain("string");
     expect(fragments[MODEL_FIELD_TYPES_ATOM_ID]).toContain("relation");
+    expect(fragments[MODEL_ENTITY_SCHEMA_ATOM_ID]).toContain("description");
     expect(fragments[MODEL_RELATIONS_ATOM_ID]).toContain("many-to-many");
     expect(fragments[MODEL_EXAMPLE_FULL_ATOM_ID]).toContain("demoItem");
     expect(fragments[MODEL_EXAMPLE_FULL_ATOM_ID]).toContain("sensitive");

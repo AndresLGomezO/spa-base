@@ -82,9 +82,13 @@ Stored on the tenant document as `appearance` ([`TenantAppearance`](../packages/
 | `preset` | `"default"` (omit) or a named preset — merges bundled palette/semantic defaults before user fields |
 | `palettes.primary` | `{ anchorStep, anchorColor, shadeOverrides? }` — generates `--color-primary-*` |
 | `palettes.neutral` | Same shape — generates `--color-neutral-*` |
-| `semantics` | Map of CSS var → hex (or any CSS color), e.g. `"--color-card": "#ffffff"` |
-| `colors` | Legacy/extra overrides; sidebar keys only in the editor; non-palette semantic keys also apply |
-| `fontFamily`, `fontSizes`, `radius`, `spacing` | Typography and layout tokens |
+| `semantics` | Legacy flat semantic overrides (light-mode fallback) |
+| `semanticsByScheme` | Explicit light/dark semantic overrides (hybrid with palette derivation) |
+| `colors` | Legacy sidebar overrides (light-mode fallback) |
+| `colorsByScheme` | Explicit light/dark sidebar and layout color overrides |
+| `effects` | Card shadow and primary gradient per color scheme |
+| `chartColors` | Chart palette (`chart1`–`chart4`) |
+| `fontFamily`, `fontSizes`, `radius`, `radiusSm`, `spacingScale` | Typography and layout tokens (`spacingScale.base` is macro layout only) |
 
 ### Presets
 
@@ -122,6 +126,22 @@ That function (in [tenant-overrides.ts](../packages/theme/src/tenant-overrides.t
 
 Variables are set on `document.documentElement` and cleared on tenant change/unmount.
 
+### Spacing scale
+
+Tailwind numeric utilities (`p-4`, `gap-2`, `px-3`) multiply `--spacing` (default `0.25rem`). Tenant appearance must **not** override `--spacing` — doing so inflates every padded control.
+
+Instead, tenants customize the semantic spacing scale:
+
+| Token | Default | Typical use |
+|-------|---------|-------------|
+| `--spacing-tight` | `0.25rem` | Icon-to-text gaps |
+| `--spacing-compact` | `0.5rem` | List rows, badges |
+| `--spacing-comfortable` | `1rem` | Buttons, inputs, compact cards |
+| `--spacing-macro` | `1.5rem` | **Macro layout:** page padding, dashboard grid gaps, large widgets |
+| `--spacing-section` | `2rem` | Major section separation |
+
+Use names like `p-macro`, `gap-macro`, or `var(--spacing-macro)`. Do **not** use `--spacing-md` / `--spacing-sm` etc. — those collide with Tailwind width utilities such as `max-w-md`. Legacy `appearance.spacing` is migrated to `spacingScale.base` on read.
+
 ---
 
 ## Platform UI: Appearance editor
@@ -131,15 +151,23 @@ Variables are set on `document.documentElement` and cleared on tenant change/unm
 
 | Section | What it does |
 |---------|----------------|
+| Import / export | JSON download, file import, paste import, bundled violet example theme |
 | Logo | `PhotoUpload` → `POST /admin/tenants/:id/logo` |
-| Theme preset | Dropdown: Default + seven named presets — fills palette + sample semantics |
+| Theme preset | Dropdown: Default + seven named presets — fills palette scales |
 | Primary / neutral palette | Anchor step + color; optional per-shade overrides; live scale preview |
-| Semantic colors | Overrides for `TENANT_OVERRIDE_GROUPS.semantics` |
-| Sidebar | Direct CSS vars for sidebar chrome |
-| Typography / layout | `--font-sans`, text sizes, `--radius-md`, `--spacing` |
-| Preview panel | Inline `style={previewVars}` so draft theme is visible before save |
+| Semantic colors | Light/dark overrides for `TENANT_OVERRIDE_GROUPS.semantics` with palette hints |
+| Badge colors | Light/dark badge semantic overrides |
+| Sidebar | Light/dark sidebar CSS vars |
+| Effects | Card shadow and primary gradient per scheme |
+| Chart colors | `--color-chart-1` … `--color-chart-4` |
+| Typography / layout | `--font-sans`, text sizes, card/button radius, semantic spacing scale (`--spacing-tight` … `--spacing-section`) |
+| Preview panel | Light/dark toggle with card, gradient, badge, and sidebar samples |
 
 Save sends `appearance` on `PATCH /admin/tenants/:id`; then `selectTenant()` refreshes JWT branding.
+
+Import/export uses [theme-import-export.ts](../packages/theme/src/theme-import-export.ts) (`exportTenantTheme`, `importTenantTheme`, `validateTenantThemeImport`, `createTenantThemeSkeleton`).
+
+In the customize modal, **View JSON** opens a read-only modal with the current draft (copy to clipboard). **Import JSON** opens a paste/upload modal with the expected structure skeleton, live validation, and an optional example theme loader — matching the UI builder JSON workflow.
 
 ---
 
@@ -254,7 +282,7 @@ When changing default semantics or component variants, run visual tests and upda
 ## Deferred (not in v1)
 
 - Tenant-overridable success/warning/danger scales
-- Gradients (`--gradient-primary`) and niche component tokens (e.g. story ring)
+- Niche component tokens (e.g. story ring)
 - `[data-theme="dark"]` — platform uses `.dark` only
 
 See [StylesFeedback.md](../StylesFeedback.md) for the original token wishlist; implemented items are covered above.

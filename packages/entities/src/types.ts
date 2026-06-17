@@ -209,6 +209,7 @@ export interface EntityMetadata<
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;
+  readonly description?: string;
 }
 
 export type EntityPermissionAction =
@@ -246,6 +247,7 @@ export type EntityConfig<
   readonly navCategoryId?: string;
   readonly navOrder?: number;
   readonly displayField?: string;
+  readonly description?: string;
 };
 
 export interface DefinedEntity<

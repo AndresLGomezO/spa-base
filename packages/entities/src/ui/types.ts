@@ -232,4 +232,5 @@ export interface SerializableEntityDefinition {
   readonly hiddenFromNav?: boolean;
   readonly navCategoryId?: string;
   readonly navOrder?: number;
+  readonly description?: string;
 }

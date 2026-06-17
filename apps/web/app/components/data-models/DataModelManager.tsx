@@ -7,7 +7,7 @@ import {
 } from "react";
 import { useTranslation } from "react-i18next";
 
-import { FieldLabel, Text, toast, Select } from "@repo/ui";
+import { FieldLabel, toast, Select } from "@repo/ui";
 
 import {
   listEntityDefinitions,
@@ -130,12 +130,6 @@ export function DataModelManager({
           onEdit={(id) => setEditingId(id)}
         />
       </div>
-
-      {!modalOpen && !isLoading && items.length > 0 ? (
-        <Text className="text-muted-foreground text-sm">
-          {t("dataModels.catalogHint")}
-        </Text>
-      ) : null}
 
       <FormModal
         open={modalOpen}

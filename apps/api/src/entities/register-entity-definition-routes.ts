@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   applyDisplayFieldToRecord,
+  applyDescription,
   assertDynamicNameAvailable,
   assertNavCategoryExists,
   createEntityDefinitionInputSchema,
@@ -268,22 +269,27 @@ export async function registerEntityDefinitionRoutes(
       }
 
       try {
-        const next = applyDisplayFieldToRecord(
-          {
-            ...current,
-            ...(parsedBody.data.label ? { label: parsedBody.data.label } : {}),
-            ...(parsedBody.data.fields
-              ? { fields: parsedBody.data.fields }
-              : {}),
-            ...(parsedBody.data.ui ? { ui: parsedBody.data.ui } : {}),
-            ...(parsedBody.data.tenantWideRead !== undefined
-              ? { tenantWideRead: parsedBody.data.tenantWideRead }
-              : {}),
-            ...(parsedBody.data.inMemoryListQueries !== undefined
-              ? { inMemoryListQueries: parsedBody.data.inMemoryListQueries }
-              : {}),
-          },
-          parsedBody.data,
+        const next = applyDescription(
+          applyDisplayFieldToRecord(
+            {
+              ...current,
+              ...(parsedBody.data.label
+                ? { label: parsedBody.data.label }
+                : {}),
+              ...(parsedBody.data.fields
+                ? { fields: parsedBody.data.fields }
+                : {}),
+              ...(parsedBody.data.ui ? { ui: parsedBody.data.ui } : {}),
+              ...(parsedBody.data.tenantWideRead !== undefined
+                ? { tenantWideRead: parsedBody.data.tenantWideRead }
+                : {}),
+              ...(parsedBody.data.inMemoryListQueries !== undefined
+                ? { inMemoryListQueries: parsedBody.data.inMemoryListQueries }
+                : {}),
+            },
+            parsedBody.data,
+          ),
+          parsedBody.data.description,
         );
         validateDefinitionEvolution(current, next);
         await options.entityRuntime.loadTenantDefinitions(tenantId);

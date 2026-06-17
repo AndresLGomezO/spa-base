@@ -1,5 +1,6 @@
 import {
   applyDisplayFieldToRecord,
+  applyDescription,
   applyHiddenFromNav,
   applyInMemoryListQueries,
   applyNavCategoryId,
@@ -53,6 +54,9 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
         tenantId,
         name: input.name,
         label: input.label,
+        ...(input.description?.trim()
+          ? { description: input.description.trim() }
+          : {}),
         fields: input.fields,
         ...(input.ui ? { ui: input.ui } : {}),
         ...(input.tenantWideRead === true ? { tenantWideRead: true } : {}),
@@ -82,15 +86,18 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
           applyHiddenFromNav(
             applyInMemoryListQueries(
               applyTenantWideRead(
-                applyDisplayFieldToRecord(
-                  {
-                    ...current,
-                    ...(input.label ? { label: input.label } : {}),
-                    ...(input.fields ? { fields: input.fields } : {}),
-                    version: current.version + 1,
-                    updatedAt: now,
-                  },
-                  input,
+                applyDescription(
+                  applyDisplayFieldToRecord(
+                    {
+                      ...current,
+                      ...(input.label ? { label: input.label } : {}),
+                      ...(input.fields ? { fields: input.fields } : {}),
+                      version: current.version + 1,
+                      updatedAt: now,
+                    },
+                    input,
+                  ),
+                  input.description,
                 ),
                 input.tenantWideRead,
               ),

@@ -49,6 +49,69 @@ export const tenantFontSizesSchema = z
 
 export type TenantFontSizes = z.infer<typeof tenantFontSizesSchema>;
 
+export const colorSchemeValuesSchema = z
+  .object({
+    light: z.string().trim().min(1).optional(),
+    dark: z.string().trim().min(1).optional(),
+  })
+  .partial();
+
+export type ColorSchemeValues = z.infer<typeof colorSchemeValuesSchema>;
+
+export const tenantSemanticsBySchemeSchema = z
+  .object({
+    light: z.record(z.string(), z.string()).optional(),
+    dark: z.record(z.string(), z.string()).optional(),
+  })
+  .partial();
+
+export type TenantSemanticsByScheme = z.infer<
+  typeof tenantSemanticsBySchemeSchema
+>;
+
+export const tenantColorsBySchemeSchema = z
+  .object({
+    light: z.record(z.string(), z.string()).optional(),
+    dark: z.record(z.string(), z.string()).optional(),
+  })
+  .partial();
+
+export type TenantColorsByScheme = z.infer<typeof tenantColorsBySchemeSchema>;
+
+export const tenantAppearanceEffectsSchema = z
+  .object({
+    shadowCard: colorSchemeValuesSchema.optional(),
+    gradientPrimary: colorSchemeValuesSchema.optional(),
+  })
+  .partial();
+
+export type TenantAppearanceEffects = z.infer<
+  typeof tenantAppearanceEffectsSchema
+>;
+
+export const tenantChartColorsSchema = z
+  .object({
+    chart1: z.string().trim().min(1).optional(),
+    chart2: z.string().trim().min(1).optional(),
+    chart3: z.string().trim().min(1).optional(),
+    chart4: z.string().trim().min(1).optional(),
+  })
+  .partial();
+
+export type TenantChartColors = z.infer<typeof tenantChartColorsSchema>;
+
+export const tenantSpacingScaleSchema = z
+  .object({
+    xs: z.string().trim().min(1).optional(),
+    sm: z.string().trim().min(1).optional(),
+    md: z.string().trim().min(1).optional(),
+    base: z.string().trim().min(1).optional(),
+    lg: z.string().trim().min(1).optional(),
+  })
+  .partial();
+
+export type TenantSpacingScale = z.infer<typeof tenantSpacingScaleSchema>;
+
 export const APPEARANCE_PRESETS = [
   "default",
   "soft",
@@ -72,11 +135,18 @@ export const tenantAppearanceSchema = z
     preset: appearancePresetSchema.optional(),
     palettes: tenantColorPalettesSchema.optional(),
     semantics: z.record(z.string(), z.string()).optional(),
+    semanticsByScheme: tenantSemanticsBySchemeSchema.optional(),
     colors: z.record(z.string(), z.string()).optional(),
+    colorsByScheme: tenantColorsBySchemeSchema.optional(),
+    effects: tenantAppearanceEffectsSchema.optional(),
+    chartColors: tenantChartColorsSchema.optional(),
     fontFamily: z.string().trim().min(1).optional(),
     fontSizes: tenantFontSizesSchema.optional(),
     radius: z.string().trim().min(1).optional(),
+    radiusSm: z.string().trim().min(1).optional(),
+    /** @deprecated Use spacingScale.base for macro layout spacing. */
     spacing: z.string().trim().min(1).optional(),
+    spacingScale: tenantSpacingScaleSchema.optional(),
   })
   .partial();
 

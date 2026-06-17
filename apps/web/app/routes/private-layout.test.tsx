@@ -67,9 +67,10 @@ describe("PrivateLayoutRoute", () => {
       "min-h-0",
       "min-w-0",
       "flex-1",
-      "overflow-hidden",
+      "overflow-y-auto",
+      "overflow-x-hidden",
     );
-    expect(pageScroll).not.toHaveClass("overflow-y-auto");
+    expect(pageScroll).not.toHaveClass("overflow-hidden");
   });
 
   it("allows vertical scrolling in the home dashboard outlet", () => {
@@ -86,6 +87,7 @@ describe("PrivateLayoutRoute", () => {
       "flex-1",
       "w-full",
       "overflow-y-auto",
+      "overflow-x-hidden",
     );
     expect(pageScroll).not.toHaveClass("overflow-hidden");
   });

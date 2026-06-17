@@ -6,6 +6,7 @@ Reference entity `demoItem` showing every field type with example values.
 {
   "name": "demoItem",
   "label": "Demo Item",
+  "description": "Reference entity demonstrating every supported field type",
   "displayField": "title",
   "tenantWideRead": false,
   "fields": [

@@ -38,7 +38,7 @@ export function Button({
       disabled={isDisabled}
       aria-busy={loading || undefined}
       className={cn(
-        "inline-flex items-center justify-center gap-2 rounded-md border border-transparent font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60",
+        "inline-flex items-center justify-center gap-2 rounded-sm border border-transparent font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60",
         focusRingInsetClassName,
         buttonVariants[variant],
         buttonSizes[size],

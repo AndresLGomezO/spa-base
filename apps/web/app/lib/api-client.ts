@@ -387,6 +387,7 @@ export interface EntityDefinitionRecord {
   readonly tenantId: string;
   readonly name: string;
   readonly label: string;
+  readonly description?: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
@@ -404,6 +405,7 @@ interface CreateEntityDefinitionInput {
   readonly tenantId?: string;
   readonly name: string;
   readonly label: string;
+  readonly description?: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
@@ -445,6 +447,7 @@ export async function getEntityDefinition(
 
 interface PatchEntityDefinitionInput {
   readonly label?: string;
+  readonly description?: string | null;
   readonly fields?: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;

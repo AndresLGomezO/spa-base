@@ -11,6 +11,7 @@ import type { PlanEntityIndexesInput } from "./plan-entity-indexes";
 interface ModelReviewProps {
   readonly name: string;
   readonly label: string;
+  readonly description?: string;
   readonly fields: readonly FieldDefinitionInput[];
   readonly tenantWideRead?: boolean;
   readonly inMemoryListQueries?: boolean;
@@ -20,6 +21,7 @@ interface ModelReviewProps {
 export function ModelReview({
   name,
   label,
+  description,
   fields,
   tenantWideRead,
   inMemoryListQueries,
@@ -54,6 +56,14 @@ export function ModelReview({
           </dt>
           <dd>{label}</dd>
         </div>
+        {description ? (
+          <div>
+            <dt className="text-muted-foreground">
+              {t("dataModels.modelDescription")}
+            </dt>
+            <dd>{description}</dd>
+          </div>
+        ) : null}
       </dl>
 
       <EntityIndexPlanSummaryCard planInput={planInput} />

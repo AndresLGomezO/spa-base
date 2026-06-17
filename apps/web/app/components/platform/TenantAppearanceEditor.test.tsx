@@ -152,4 +152,46 @@ describe("TenantAppearanceEditor", () => {
     },
     MODAL_TEST_TIMEOUT_MS,
   );
+
+  it(
+    "opens the theme JSON view dialog from the customize modal",
+    async () => {
+      renderEditor();
+      const dialog = await openCustomizeModal();
+
+      fireEvent.click(
+        within(dialog).getByRole("button", {
+          name: "platform.appearance.themeJson.viewTrigger",
+        }),
+      );
+
+      expect(
+        await screen.findByText(
+          "platform.appearance.themeJson.viewDescription",
+        ),
+      ).toBeInTheDocument();
+    },
+    MODAL_TEST_TIMEOUT_MS,
+  );
+
+  it(
+    "opens the theme JSON import dialog from the customize modal",
+    async () => {
+      renderEditor();
+      const dialog = await openCustomizeModal();
+
+      fireEvent.click(
+        within(dialog).getByRole("button", {
+          name: "platform.appearance.themeJson.importTrigger",
+        }),
+      );
+
+      expect(
+        await screen.findByText(
+          "platform.appearance.themeJson.importDescription",
+        ),
+      ).toBeInTheDocument();
+    },
+    MODAL_TEST_TIMEOUT_MS,
+  );
 });

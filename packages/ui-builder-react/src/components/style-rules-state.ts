@@ -41,6 +41,11 @@ export const SEMANTIC_COLOR_OPTIONS: readonly SemanticColorOption[] = [
   { label: "Popover", value: "var(--color-popover)" },
   { label: "Accent", value: "var(--color-accent)" },
   { label: "Hover", value: "var(--color-hover)" },
+  { label: "Chart 1", value: "var(--color-chart-1)" },
+  { label: "Chart 2", value: "var(--color-chart-2)" },
+  { label: "Chart 3", value: "var(--color-chart-3)" },
+  { label: "Chart 4", value: "var(--color-chart-4)" },
+  { label: "Gradient primary", value: "var(--gradient-primary)" },
 ] as const;
 
 const SEMANTIC_COLOR_VALUES = new Set(

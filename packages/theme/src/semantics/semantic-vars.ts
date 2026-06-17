@@ -1,3 +1,30 @@
+export const EFFECT_SEMANTIC_CSS_VARS = [
+  "--shadow-card",
+  "--gradient-primary",
+] as const;
+
+export const CHART_COLOR_CSS_VARS = [
+  "--color-chart-1",
+  "--color-chart-2",
+  "--color-chart-3",
+  "--color-chart-4",
+] as const;
+
+export const LAYOUT_RADIUS_CSS_VARS = ["--radius-sm", "--radius-lg"] as const;
+
+export const LAYOUT_SPACING_CSS_VARS = [
+  "--spacing-tight",
+  "--spacing-compact",
+  "--spacing-comfortable",
+  "--spacing-macro",
+  "--spacing-section",
+] as const;
+
+export type EffectSemanticCssVar = (typeof EFFECT_SEMANTIC_CSS_VARS)[number];
+export type ChartColorCssVar = (typeof CHART_COLOR_CSS_VARS)[number];
+export type LayoutRadiusCssVar = (typeof LAYOUT_RADIUS_CSS_VARS)[number];
+export type LayoutSpacingCssVar = (typeof LAYOUT_SPACING_CSS_VARS)[number];
+
 /** Status badge colors for card layout and similar UI. */
 export const BADGE_SEMANTIC_CSS_VARS = [
   "--color-badge-default",

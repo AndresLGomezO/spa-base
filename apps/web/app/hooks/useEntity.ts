@@ -70,7 +70,7 @@ function getErrorMessage(error: unknown): string {
     if (error.code === "COMPOSITE_INDEX_REQUIRED") {
       return (
         error.message ||
-        "This list query needs a composite index that is not deployed for this filter/sort combination. Save the entity model again to provision indexes, or use the Firebase Console link in the API response."
+        "This list query needs a composite index that is not deployed for this filter/sort combination. Save the entity again to provision indexes, or use the Firebase Console link in the API response."
       );
     }
   }

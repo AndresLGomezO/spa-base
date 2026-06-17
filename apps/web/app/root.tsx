@@ -15,6 +15,7 @@ import { AuthProvider } from "./auth/AuthProvider";
 import { I18nSync } from "./components/I18nSync";
 import { PwaRegistration } from "./components/PwaRegistration";
 import { SiteTitleSync } from "./components/SiteTitleSync";
+import { TenantBrandingProvider } from "./theme/TenantBrandingProvider";
 import { DEV_CONTENT_SECURITY_POLICY } from "./dev-content-security-policy";
 import { bootstrapWebPlatform } from "./platform/bootstrap";
 import "./i18n";
@@ -78,8 +79,10 @@ export default function App() {
   return (
     <ThemeProvider>
       <AuthProvider>
-        <AppShell />
-        <Toaster />
+        <TenantBrandingProvider>
+          <AppShell />
+          <Toaster />
+        </TenantBrandingProvider>
       </AuthProvider>
     </ThemeProvider>
   );

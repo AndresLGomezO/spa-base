@@ -8,6 +8,7 @@ Persisted per tenant in `entity_definitions`. Use **camelCase** for `name` and f
 |----------|------|----------|-------------|
 | name | string | yes | Entity identifier. Pattern: `^[a-z][a-zA-Z0-9]*$` (e.g. `invoice`, `bankAccount`). |
 | label | string | yes | Human-readable entity name (e.g. `Invoice`). |
+| description | string | no | Optional summary of what this entity represents and how it is used. |
 | fields | FieldDefinition[] | yes | At least one user-defined field. |
 | displayField | string | no | Field used as record title in lists/relations. Cannot be an array field. |
 | tenantWideRead | boolean | no | When true, all tenant users with read permission can list records without ownership filter. |
@@ -27,6 +28,7 @@ Every entity record automatically includes: `id`, `tenantId`, `createdAt`, `upda
 {
   "name": "product",
   "label": "Product",
+  "description": "Sellable items in the catalog",
   "fields": [
     {
       "name": "name",

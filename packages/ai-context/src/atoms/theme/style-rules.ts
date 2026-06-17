@@ -104,10 +104,12 @@ export function buildThemeLayoutTokensAtom(): string {
   return `# Platform layout tokens (reference)
 
 Tenant branding may override these CSS variables at runtime:
-- \`--radius-md\` — default border radius
-- \`--spacing\` — Tailwind spacing multiplier (default 0.25rem)
+- \`--radius-sm\`, \`--radius-lg\` — card and button border radius
+- \`--spacing-tight\` … \`--spacing-section\` — semantic spacing scale (macro layout uses \`--spacing-macro\`)
 - \`--text-body\`, \`--text-heading\` — typography sizes
 - \`--font-sans\` — font family
+
+Do not override \`--spacing\` (Tailwind's numeric scale multiplier; default 0.25rem).
 
 UI Builder style rules use **pixel values** for radius/spacing, not these tokens directly.
 `;

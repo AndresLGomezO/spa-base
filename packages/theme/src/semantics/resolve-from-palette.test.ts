@@ -30,6 +30,12 @@ describe("resolveLightSemanticsFromPalette", () => {
     expect(vars["--color-foreground"]).toBe("#0e0e11");
     expect(vars["--color-background"]).toBe("#f7f7f8");
   });
+
+  it("uses primary-500 for the primary semantic token", () => {
+    const vars = resolveLightSemanticsFromPalette(samplePalette);
+    expect(vars["--color-primary"]).toBe("#008bd4");
+    expect(vars["--color-sidebar-accent-foreground"]).toBe("#008bd4");
+  });
 });
 
 describe("resolveDarkSemanticsFromPalette", () => {

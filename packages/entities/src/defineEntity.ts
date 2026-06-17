@@ -69,6 +69,7 @@ export function defineEntity<
     ...(config.navCategoryId ? { navCategoryId: config.navCategoryId } : {}),
     ...(config.navOrder !== undefined ? { navOrder: config.navOrder } : {}),
     ...(config.displayField ? { displayField: config.displayField } : {}),
+    ...(config.description ? { description: config.description } : {}),
   };
 
   const entity = {

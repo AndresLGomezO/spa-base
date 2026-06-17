@@ -58,5 +58,8 @@ export function serializeEntityDefinition(
     ...(entity.metadata.navOrder !== undefined
       ? { navOrder: entity.metadata.navOrder }
       : {}),
+    ...(entity.metadata.description
+      ? { description: entity.metadata.description }
+      : {}),
   };
 }

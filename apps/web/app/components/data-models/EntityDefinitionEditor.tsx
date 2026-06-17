@@ -21,6 +21,7 @@ import {
   Heading,
   Input,
   Text,
+  Textarea,
   toast,
   Select,
 } from "@repo/ui";
@@ -82,6 +83,7 @@ export function EntityDefinitionEditor({
   const { refresh } = useEntityCatalog();
   const [record, setRecord] = useState<EntityDefinitionRecord | null>(null);
   const [label, setLabel] = useState("");
+  const [description, setDescription] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
   const [inMemoryListQueries, setInMemoryListQueries] = useState(false);
@@ -174,6 +176,7 @@ export function EntityDefinitionEditor({
         }
         setRecord(loaded);
         setLabel(loaded.label);
+        setDescription(loaded.description ?? "");
         setFields([...loaded.fields]);
         setTenantWideRead(loaded.tenantWideRead ?? false);
         setInMemoryListQueries(loaded.inMemoryListQueries ?? false);
@@ -273,6 +276,7 @@ export function EntityDefinitionEditor({
 
       const updated = await patchEntityDefinition(definitionId, {
         label: label.trim(),
+        description: description.trim() ? description.trim() : null,
         tenantWideRead,
         inMemoryListQueries,
         hiddenFromNav,
@@ -379,6 +383,22 @@ export function EntityDefinitionEditor({
             onChange={(event) => setLabel(event.target.value)}
             disabled={!canUpdate}
           />
+        </div>
+
+        <div>
+          <FieldLabel htmlFor="edit-model-description">
+            {t("dataModels.modelDescription")}
+          </FieldLabel>
+          <Textarea
+            id="edit-model-description"
+            value={description}
+            onChange={(event) => setDescription(event.target.value)}
+            placeholder={t("dataModels.modelDescriptionPlaceholder")}
+            disabled={!canUpdate}
+          />
+          <Text className="text-muted-foreground mt-1 text-sm">
+            {t("dataModels.modelDescriptionHint")}
+          </Text>
         </div>
 
         <div className="space-y-2">

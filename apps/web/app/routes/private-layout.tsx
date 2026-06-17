@@ -8,7 +8,6 @@ import { EntityCatalogProvider } from "../entities/entity-catalog-context";
 import { queryClient } from "../query/query-client";
 import { useLockDocumentScroll } from "../routing/use-lock-document-scroll";
 import { RequireAuth } from "../routing/RouteGuards";
-import { TenantBrandingProvider } from "../theme/TenantBrandingProvider";
 import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
 import { CreateTenantModal } from "../components/platform/CreateTenantModal";
@@ -21,15 +20,10 @@ function MainOutlet() {
     <main
       className={cn(
         "mx-0 flex min-h-0 min-w-0 w-full max-w-none flex-1 flex-col overflow-hidden",
-        !isHomeDashboard && "p-4",
+        !isHomeDashboard && "p-macro",
       )}
     >
-      <div
-        className={cn(
-          "flex min-h-0 min-w-0 flex-1 flex-col",
-          isHomeDashboard ? "w-full overflow-y-auto" : "overflow-hidden",
-        )}
-      >
+      <div className="flex min-h-0 min-w-0 w-full flex-1 flex-col overflow-y-auto overflow-x-hidden">
         <Outlet />
       </div>
     </main>
@@ -45,19 +39,17 @@ export default function PrivateLayoutRoute() {
         <EntityCatalogProvider>
           <CreateTenantModalProvider>
             <ThirdRailProvider>
-              <TenantBrandingProvider>
-                <SidebarProvider>
-                  <div className="relative flex h-dvh overflow-hidden">
-                    <AppSidebar />
-                    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                      <AppHeader />
-                      <MainOutlet />
-                    </div>
-                    <ThirdRailHost />
+              <SidebarProvider>
+                <div className="relative flex h-dvh overflow-hidden">
+                  <AppSidebar />
+                  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                    <AppHeader />
+                    <MainOutlet />
                   </div>
-                </SidebarProvider>
-                <CreateTenantModal />
-              </TenantBrandingProvider>
+                  <ThirdRailHost />
+                </div>
+              </SidebarProvider>
+              <CreateTenantModal />
             </ThirdRailProvider>
           </CreateTenantModalProvider>
         </EntityCatalogProvider>

@@ -18,7 +18,7 @@ export function Card({
   return (
     <div
       className={cn(
-        "relative overflow-hidden rounded-2xl border p-8",
+        "relative overflow-hidden rounded-lg border p-8",
         variant === "glass" &&
           "before:pointer-events-none before:absolute before:inset-0 before:bg-gradient-to-br before:from-primary/5 before:to-transparent",
         cardVariants[variant],

@@ -12,11 +12,18 @@ import {
 
 const APPLIED_VARS = new Set<string>();
 
+/** Legacy tenant themes wrote the macro spacing value to Tailwind's multiplier. */
+const LEGACY_TENANT_CSS_VARS = ["--spacing"] as const;
+
 function clearAppliedVars(root: HTMLElement) {
   for (const cssVar of APPLIED_VARS) {
     root.style.removeProperty(cssVar);
   }
   APPLIED_VARS.clear();
+
+  for (const cssVar of LEGACY_TENANT_CSS_VARS) {
+    root.style.removeProperty(cssVar);
+  }
 }
 
 function applyAppearance(
@@ -51,20 +58,19 @@ export function TenantBrandingProvider({
     if (!isAuthenticated) {
       clearAppliedVars(root);
       clearCachedTenantAppearance();
-      return;
+    } else if (!isSessionResolved) {
+      applyAppearance(root, readBootstrapTenantAppearance(), colorScheme);
+    } else {
+      if (tenantId) {
+        writeCachedTenantAppearance(tenantId, tenantAppearance);
+      }
+
+      applyAppearance(root, tenantAppearance, colorScheme);
     }
 
-    if (!isSessionResolved) {
-      const bootstrapAppearance = readBootstrapTenantAppearance();
-      applyAppearance(root, bootstrapAppearance, colorScheme);
-      return;
-    }
-
-    if (tenantId) {
-      writeCachedTenantAppearance(tenantId, tenantAppearance);
-    }
-
-    applyAppearance(root, tenantAppearance, colorScheme);
+    return () => {
+      clearAppliedVars(root);
+    };
   }, [
     colorScheme,
     isAuthenticated,

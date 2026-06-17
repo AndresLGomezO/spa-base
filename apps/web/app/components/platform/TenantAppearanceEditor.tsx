@@ -25,6 +25,9 @@ import {
   type AppearancePreset,
   type ColorPaletteConfig,
   type TenantAppearance,
+  type TenantAppearanceEffects,
+  type TenantChartColors,
+  type TenantSpacingScale,
 } from "@repo/shared-types";
 import { useColorScheme } from "@repo/theme/react";
 import {
@@ -46,9 +49,44 @@ import {
   type AdminTenant,
 } from "../../lib/admin-client";
 import { ColorPaletteEditor } from "./ColorPaletteEditor";
+import { TenantThemeJsonImportDialog } from "./TenantThemeJsonImportDialog";
+import { tenantThemeJsonLabels } from "./tenant-theme-json-labels";
+import { TenantThemeJsonViewDialog } from "./TenantThemeJsonViewDialog";
 
 interface TenantAppearanceEditorProps {
   readonly tenantId: string;
+}
+
+type EditorColorScheme = "light" | "dark";
+
+interface SemanticsBySchemeState {
+  readonly light: Record<string, string>;
+  readonly dark: Record<string, string>;
+}
+
+interface ColorsBySchemeState {
+  readonly light: Record<string, string>;
+  readonly dark: Record<string, string>;
+}
+
+interface EffectsState {
+  readonly shadowCard: { readonly light: string; readonly dark: string };
+  readonly gradientPrimary: { readonly light: string; readonly dark: string };
+}
+
+interface ChartColorsState {
+  readonly chart1: string;
+  readonly chart2: string;
+  readonly chart3: string;
+  readonly chart4: string;
+}
+
+interface SpacingScaleState {
+  readonly xs: string;
+  readonly sm: string;
+  readonly md: string;
+  readonly base: string;
+  readonly lg: string;
 }
 
 function readFileAsBase64(file: File): Promise<string> {
@@ -74,9 +112,36 @@ function readFileAsBase64(file: File): Promise<string> {
 
 const SIDEBAR_CSS_VARS = new Set<string>(TENANT_OVERRIDE_GROUPS.sidebar);
 
+const CHART_COLOR_KEYS = [
+  { key: "chart1" as const, cssVar: "--color-chart-1" },
+  { key: "chart2" as const, cssVar: "--color-chart-2" },
+  { key: "chart3" as const, cssVar: "--color-chart-3" },
+  { key: "chart4" as const, cssVar: "--color-chart-4" },
+];
+
 const SELECTABLE_THEME_PRESETS = APPEARANCE_PRESETS.filter(
   (id): id is Exclude<AppearancePreset, "default"> => id !== "default",
 );
+
+const EMPTY_EFFECTS: EffectsState = {
+  shadowCard: { light: "", dark: "" },
+  gradientPrimary: { light: "", dark: "" },
+};
+
+const EMPTY_CHART_COLORS: ChartColorsState = {
+  chart1: "",
+  chart2: "",
+  chart3: "",
+  chart4: "",
+};
+
+const EMPTY_SPACING_SCALE: SpacingScaleState = {
+  xs: "",
+  sm: "",
+  md: "",
+  base: "",
+  lg: "",
+};
 
 function normalizeCssVarKey(key: string): string {
   return key.startsWith("--") ? key : `--${key}`;
@@ -96,6 +161,142 @@ function extractSidebarColors(
   );
 }
 
+function loadSemanticsByScheme(
+  appearance: TenantAppearance | undefined,
+): SemanticsBySchemeState {
+  return {
+    light: {
+      ...(appearance?.semantics ?? {}),
+      ...(appearance?.semanticsByScheme?.light ?? {}),
+    },
+    dark: { ...(appearance?.semanticsByScheme?.dark ?? {}) },
+  };
+}
+
+function loadColorsByScheme(
+  appearance: TenantAppearance | undefined,
+): ColorsBySchemeState {
+  return {
+    light: {
+      ...extractSidebarColors(appearance?.colors),
+      ...(appearance?.colorsByScheme?.light ?? {}),
+    },
+    dark: { ...(appearance?.colorsByScheme?.dark ?? {}) },
+  };
+}
+
+function loadEffects(appearance: TenantAppearance | undefined): EffectsState {
+  return {
+    shadowCard: {
+      light: appearance?.effects?.shadowCard?.light ?? "",
+      dark: appearance?.effects?.shadowCard?.dark ?? "",
+    },
+    gradientPrimary: {
+      light: appearance?.effects?.gradientPrimary?.light ?? "",
+      dark: appearance?.effects?.gradientPrimary?.dark ?? "",
+    },
+  };
+}
+
+function loadChartColors(
+  appearance: TenantAppearance | undefined,
+): ChartColorsState {
+  return {
+    chart1: appearance?.chartColors?.chart1 ?? "",
+    chart2: appearance?.chartColors?.chart2 ?? "",
+    chart3: appearance?.chartColors?.chart3 ?? "",
+    chart4: appearance?.chartColors?.chart4 ?? "",
+  };
+}
+
+function loadSpacingScale(
+  appearance: TenantAppearance | undefined,
+): SpacingScaleState {
+  return {
+    xs: appearance?.spacingScale?.xs ?? "",
+    sm: appearance?.spacingScale?.sm ?? "",
+    md: appearance?.spacingScale?.md ?? "",
+    base: appearance?.spacingScale?.base ?? appearance?.spacing ?? "",
+    lg: appearance?.spacingScale?.lg ?? "",
+  };
+}
+
+function pruneRecord(
+  record: Record<string, string>,
+): Record<string, string> | undefined {
+  const next = Object.fromEntries(
+    Object.entries(record).filter(([, value]) => value.trim()),
+  );
+  return Object.keys(next).length > 0 ? next : undefined;
+}
+
+function pruneSchemeRecord(
+  scheme: SemanticsBySchemeState | ColorsBySchemeState,
+): TenantAppearance["semanticsByScheme"] {
+  const light = pruneRecord(scheme.light);
+  const dark = pruneRecord(scheme.dark);
+  if (!light && !dark) {
+    return undefined;
+  }
+  return {
+    ...(light ? { light } : {}),
+    ...(dark ? { dark } : {}),
+  };
+}
+
+function buildEffectsForSave(
+  effects: EffectsState,
+): TenantAppearanceEffects | undefined {
+  const shadowCard = {
+    ...(effects.shadowCard.light.trim()
+      ? { light: effects.shadowCard.light.trim() }
+      : {}),
+    ...(effects.shadowCard.dark.trim()
+      ? { dark: effects.shadowCard.dark.trim() }
+      : {}),
+  };
+  const gradientPrimary = {
+    ...(effects.gradientPrimary.light.trim()
+      ? { light: effects.gradientPrimary.light.trim() }
+      : {}),
+    ...(effects.gradientPrimary.dark.trim()
+      ? { dark: effects.gradientPrimary.dark.trim() }
+      : {}),
+  };
+
+  const next = {
+    ...(Object.keys(shadowCard).length > 0 ? { shadowCard } : {}),
+    ...(Object.keys(gradientPrimary).length > 0 ? { gradientPrimary } : {}),
+  };
+
+  return Object.keys(next).length > 0 ? next : undefined;
+}
+
+function buildChartColorsForSave(
+  chartColors: ChartColorsState,
+): TenantChartColors | undefined {
+  const next = {
+    ...(chartColors.chart1.trim() ? { chart1: chartColors.chart1.trim() } : {}),
+    ...(chartColors.chart2.trim() ? { chart2: chartColors.chart2.trim() } : {}),
+    ...(chartColors.chart3.trim() ? { chart3: chartColors.chart3.trim() } : {}),
+    ...(chartColors.chart4.trim() ? { chart4: chartColors.chart4.trim() } : {}),
+  };
+  return Object.keys(next).length > 0 ? next : undefined;
+}
+
+function buildSpacingScaleForSave(
+  spacingScale: SpacingScaleState,
+): TenantSpacingScale | undefined {
+  const next = {
+    ...(spacingScale.xs.trim() ? { xs: spacingScale.xs.trim() } : {}),
+    ...(spacingScale.sm.trim() ? { sm: spacingScale.sm.trim() } : {}),
+    ...(spacingScale.md.trim() ? { md: spacingScale.md.trim() } : {}),
+    ...(spacingScale.base.trim() ? { base: spacingScale.base.trim() } : {}),
+    ...(spacingScale.lg.trim() ? { lg: spacingScale.lg.trim() } : {}),
+  };
+  return Object.keys(next).length > 0 ? next : undefined;
+}
+
 function toSemanticColorInputValue(hex: string): string {
   try {
     return normalizeHexColor(hex);
@@ -108,6 +309,7 @@ interface SemanticColorFieldProps {
   readonly cssVar: string;
   readonly value: string;
   readonly placeholder: string;
+  readonly resolvedHint?: string;
   readonly onChange: (value: string) => void;
 }
 
@@ -115,6 +317,7 @@ function SemanticColorField({
   cssVar,
   value,
   placeholder,
+  resolvedHint,
   onChange,
 }: SemanticColorFieldProps) {
   const colorPickerValue = value.trim()
@@ -127,6 +330,9 @@ function SemanticColorField({
   return (
     <div className="flex flex-col gap-1">
       <FieldLabel htmlFor={textInputId}>{cssVar}</FieldLabel>
+      {resolvedHint && !value.trim() ? (
+        <Text className="text-muted-foreground text-xs">{resolvedHint}</Text>
+      ) : null}
       <div className="flex items-center gap-2">
         <Input
           id={colorInputId}
@@ -158,6 +364,36 @@ function SemanticColorField({
   );
 }
 
+interface SchemeToggleProps {
+  readonly value: EditorColorScheme;
+  readonly onChange: (value: EditorColorScheme) => void;
+  readonly lightLabel: string;
+  readonly darkLabel: string;
+}
+
+function SchemeToggle({
+  value,
+  onChange,
+  lightLabel,
+  darkLabel,
+}: SchemeToggleProps) {
+  return (
+    <div className="flex gap-2">
+      {(["light", "dark"] as const).map((scheme) => (
+        <Button
+          key={scheme}
+          type="button"
+          size="sm"
+          variant={value === scheme ? "primary" : "outline"}
+          onClick={() => onChange(scheme)}
+        >
+          {scheme === "light" ? lightLabel : darkLabel}
+        </Button>
+      ))}
+    </div>
+  );
+}
+
 function resolveLoadedPalettes(appearance: TenantAppearance | undefined): {
   primary: ColorPaletteConfig | undefined;
   neutral: ColorPaletteConfig | undefined;
@@ -178,6 +414,7 @@ export function TenantAppearanceEditor({
   const { t } = useTranslation("common");
   const { colorScheme } = useColorScheme();
   const { selectTenant } = useAuth();
+  const themeJsonLabels = useMemo(() => tenantThemeJsonLabels(t), [t]);
   const [tenant, setTenant] = useState<AdminTenant | null>(null);
   const [primaryPalette, setPrimaryPalette] = useState<
     ColorPaletteConfig | undefined
@@ -187,57 +424,97 @@ export function TenantAppearanceEditor({
   >();
   const [primaryTouched, setPrimaryTouched] = useState(false);
   const [neutralTouched, setNeutralTouched] = useState(false);
-  const [sidebarColors, setSidebarColors] = useState<Record<string, string>>(
-    {},
-  );
+  const [semanticsByScheme, setSemanticsByScheme] =
+    useState<SemanticsBySchemeState>({ light: {}, dark: {} });
+  const [colorsByScheme, setColorsByScheme] = useState<ColorsBySchemeState>({
+    light: {},
+    dark: {},
+  });
+  const [effects, setEffects] = useState<EffectsState>(EMPTY_EFFECTS);
+  const [chartColors, setChartColors] =
+    useState<ChartColorsState>(EMPTY_CHART_COLORS);
   const [fontFamily, setFontFamily] = useState("");
   const [bodySize, setBodySize] = useState("");
   const [headingSize, setHeadingSize] = useState("");
   const [radius, setRadius] = useState("");
-  const [spacing, setSpacing] = useState("");
+  const [radiusSm, setRadiusSm] = useState("");
+  const [spacingScale, setSpacingScale] =
+    useState<SpacingScaleState>(EMPTY_SPACING_SCALE);
   const [preset, setPreset] = useState<AppearancePreset>("default");
-  const [semantics, setSemantics] = useState<Record<string, string>>({});
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [editorScheme, setEditorScheme] = useState<EditorColorScheme>("light");
+  const [previewScheme, setPreviewScheme] =
+    useState<EditorColorScheme>("light");
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [formOpen, setFormOpen] = useState(false);
 
-  const draftAppearance = useMemo(
-    (): TenantAppearance => ({
+  const buildDraftAppearance = useCallback((): TenantAppearance => {
+    const palettes =
+      primaryTouched || neutralTouched
+        ? {
+            ...(primaryTouched && primaryPalette
+              ? { primary: primaryPalette }
+              : {}),
+            ...(neutralTouched && neutralPalette
+              ? { neutral: neutralPalette }
+              : {}),
+          }
+        : undefined;
+
+    return {
       logoUrl: logoPreview ?? undefined,
       preset: preset === "default" ? undefined : preset,
-      palettes: {
-        ...(primaryPalette ? { primary: primaryPalette } : {}),
-        ...(neutralPalette ? { neutral: neutralPalette } : {}),
-      },
-      semantics: (() => {
-        const next = Object.fromEntries(
-          Object.entries(semantics).filter(([, value]) => value.trim()),
-        );
-        return Object.keys(next).length > 0 ? next : undefined;
-      })(),
-      colors: sidebarColors,
+      palettes,
+      semanticsByScheme: pruneSchemeRecord(semanticsByScheme),
+      colorsByScheme: pruneSchemeRecord(colorsByScheme),
+      effects: buildEffectsForSave(effects),
+      chartColors: buildChartColorsForSave(chartColors),
       fontFamily: fontFamily.trim() || undefined,
       fontSizes: {
         body: bodySize.trim() || undefined,
         heading: headingSize.trim() || undefined,
       },
       radius: radius.trim() || undefined,
-      spacing: spacing.trim() || undefined,
-    }),
-    [
-      bodySize,
-      fontFamily,
-      headingSize,
-      logoPreview,
-      neutralPalette,
-      preset,
-      primaryPalette,
-      radius,
-      semantics,
-      sidebarColors,
-      spacing,
-    ],
+      radiusSm: radiusSm.trim() || undefined,
+      spacingScale: buildSpacingScaleForSave(spacingScale),
+    };
+  }, [
+    bodySize,
+    chartColors,
+    colorsByScheme,
+    effects,
+    fontFamily,
+    headingSize,
+    logoPreview,
+    neutralPalette,
+    neutralTouched,
+    preset,
+    primaryPalette,
+    primaryTouched,
+    radius,
+    radiusSm,
+    semanticsByScheme,
+    spacingScale,
+  ]);
+
+  const draftAppearance = useMemo(
+    () => buildDraftAppearance(),
+    [buildDraftAppearance],
+  );
+
+  const paletteResolvedVars = useMemo(
+    () =>
+      appearanceToCssVariables(
+        {
+          preset: preset === "default" ? undefined : preset,
+          palettes: draftAppearance.palettes,
+        },
+        { colorScheme: editorScheme },
+      ),
+    [draftAppearance.palettes, editorScheme, preset],
   );
 
   const savedPreviewVars = useMemo(
@@ -246,8 +523,9 @@ export function TenantAppearanceEditor({
   );
 
   const draftPreviewVars = useMemo(
-    () => appearanceToCssVariables(draftAppearance, { colorScheme }),
-    [colorScheme, draftAppearance],
+    () =>
+      appearanceToCssVariables(draftAppearance, { colorScheme: previewScheme }),
+    [draftAppearance, previewScheme],
   );
 
   const applyAppearance = useCallback(
@@ -257,17 +535,28 @@ export function TenantAppearanceEditor({
       setNeutralPalette(palettes.neutral);
       setPrimaryTouched(Boolean(appearance?.palettes?.primary));
       setNeutralTouched(Boolean(appearance?.palettes?.neutral));
-      setSidebarColors(extractSidebarColors(appearance?.colors));
+      setSemanticsByScheme(loadSemanticsByScheme(appearance));
+      setColorsByScheme(loadColorsByScheme(appearance));
+      setEffects(loadEffects(appearance));
+      setChartColors(loadChartColors(appearance));
       setFontFamily(appearance?.fontFamily ?? "");
       setBodySize(appearance?.fontSizes?.body ?? "");
       setHeadingSize(appearance?.fontSizes?.heading ?? "");
       setRadius(appearance?.radius ?? "");
-      setSpacing(appearance?.spacing ?? "");
+      setRadiusSm(appearance?.radiusSm ?? "");
+      setSpacingScale(loadSpacingScale(appearance));
       setPreset(normalizeAppearancePreset(appearance?.preset));
-      setSemantics(appearance?.semantics ?? {});
       setLogoPreview(appearance?.logoUrl ?? null);
     },
     [],
+  );
+
+  const applyImportedAppearance = useCallback(
+    (appearance: TenantAppearance) => {
+      applyAppearance(appearance);
+      toast.success(t("platform.appearance.themeJson.importApplied"));
+    },
+    [applyAppearance, t],
   );
 
   function handlePresetChange(nextPreset: AppearancePreset) {
@@ -285,9 +574,6 @@ export function TenantAppearanceEditor({
     if (palettes.neutral) {
       setNeutralPalette(palettes.neutral);
       setNeutralTouched(true);
-    }
-    if (merged.semantics) {
-      setSemantics(merged.semantics);
     }
   }
 
@@ -339,47 +625,39 @@ export function TenantAppearanceEditor({
     }
   }
 
-  function buildAppearanceForSave(): TenantAppearance {
-    const palettes =
-      primaryTouched || neutralTouched
-        ? {
-            ...(primaryTouched && primaryPalette
-              ? { primary: primaryPalette }
-              : {}),
-            ...(neutralTouched && neutralPalette
-              ? { neutral: neutralPalette }
-              : {}),
-          }
-        : undefined;
-
-    const semanticsToSave = Object.fromEntries(
-      Object.entries(semantics).filter(([, value]) => value.trim()),
-    );
-
-    return {
-      logoUrl: logoPreview ?? undefined,
-      preset: preset === "default" ? undefined : preset,
-      palettes,
-      semantics:
-        Object.keys(semanticsToSave).length > 0 ? semanticsToSave : undefined,
-      colors: Object.fromEntries(
-        Object.entries(sidebarColors).filter(([, value]) => value.trim()),
-      ),
-      fontFamily: fontFamily.trim() || undefined,
-      fontSizes: {
-        body: bodySize.trim() || undefined,
-        heading: headingSize.trim() || undefined,
+  function updateSchemeSemantics(
+    scheme: EditorColorScheme,
+    cssVar: string,
+    value: string,
+  ) {
+    setSemanticsByScheme((current) => ({
+      ...current,
+      [scheme]: {
+        ...current[scheme],
+        [cssVar]: value,
       },
-      radius: radius.trim() || undefined,
-      spacing: spacing.trim() || undefined,
-    };
+    }));
+  }
+
+  function updateSchemeSidebarColor(
+    scheme: EditorColorScheme,
+    cssVar: string,
+    value: string,
+  ) {
+    setColorsByScheme((current) => ({
+      ...current,
+      [scheme]: {
+        ...current[scheme],
+        [cssVar]: value,
+      },
+    }));
   }
 
   async function handleSave(event: FormEvent) {
     event.preventDefault();
     setIsSaving(true);
     try {
-      const appearance = buildAppearanceForSave();
+      const appearance = buildDraftAppearance();
       const updated = await updateAdminTenant(tenantId, { appearance });
       setTenant(updated);
       applyAppearance(updated.appearance);
@@ -416,6 +694,11 @@ export function TenantAppearanceEditor({
     }
   }
 
+  const effectFieldLabels = {
+    shadowCard: t("platform.appearance.effectsFields.shadowCard"),
+    gradientPrimary: t("platform.appearance.effectsFields.gradientPrimary"),
+  } as const;
+
   if (isLoading) {
     return <SettingsPanelSkeleton variant="appearance" />;
   }
@@ -429,6 +712,9 @@ export function TenantAppearanceEditor({
     savedPreset === "default"
       ? t("platform.appearance.presetDefault")
       : t(`platform.appearance.presets.${savedPreset}` as never);
+
+  const activeSemantics = semanticsByScheme[editorScheme];
+  const activeSidebarColors = colorsByScheme[editorScheme];
 
   return (
     <div className="flex w-full flex-col gap-6">
@@ -471,7 +757,7 @@ export function TenantAppearanceEditor({
           <Text className="font-medium">
             {t("platform.appearance.preview")}
           </Text>
-          <div className="bg-card text-card-foreground mt-4 space-y-2 rounded-md border p-4">
+          <div className="bg-card text-card-foreground mt-4 space-y-2 rounded-lg border p-4 shadow-card">
             <Text className="text-heading font-semibold">{tenant.name}</Text>
             <Text className="text-body">
               {t("platform.appearance.previewBody")}
@@ -494,6 +780,25 @@ export function TenantAppearanceEditor({
             className="grid min-w-0 flex-1 gap-6"
             onSubmit={(event) => void handleSave(event)}
           >
+            <div className="flex flex-wrap gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setViewDialogOpen(true)}
+              >
+                {themeJsonLabels.viewTrigger}
+              </Button>
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setImportDialogOpen(true)}
+              >
+                {themeJsonLabels.importTrigger}
+              </Button>
+            </div>
+
             <section className="grid gap-3">
               <Text className="font-medium">
                 {t("platform.appearance.logo")}
@@ -590,77 +895,178 @@ export function TenantAppearanceEditor({
             />
 
             <section className="border-border grid gap-3 rounded-lg border p-4">
-              <Text className="font-medium">
-                {t("platform.appearance.semantics")}
-              </Text>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Text className="font-medium">
+                  {t("platform.appearance.semantics")}
+                </Text>
+                <SchemeToggle
+                  value={editorScheme}
+                  onChange={setEditorScheme}
+                  lightLabel={t("platform.appearance.schemeLight")}
+                  darkLabel={t("platform.appearance.schemeDark")}
+                />
+              </div>
               <Text className="text-muted-foreground text-sm">
                 {t("platform.appearance.semanticsHint")}
               </Text>
               {TENANT_OVERRIDE_GROUPS.semantics.map((cssVar) => (
                 <SemanticColorField
-                  key={cssVar}
+                  key={`${editorScheme}-${cssVar}`}
                   cssVar={cssVar}
-                  value={semantics[cssVar] ?? ""}
+                  value={activeSemantics[cssVar] ?? ""}
                   placeholder={t("platform.appearance.placeholder")}
+                  resolvedHint={
+                    paletteResolvedVars[cssVar]
+                      ? t("platform.appearance.resolvedDefault", {
+                          value: paletteResolvedVars[cssVar],
+                        })
+                      : undefined
+                  }
                   onChange={(nextValue) =>
-                    setSemantics((current) => ({
-                      ...current,
-                      [cssVar]: nextValue,
-                    }))
+                    updateSchemeSemantics(editorScheme, cssVar, nextValue)
                   }
                 />
               ))}
             </section>
 
             <section className="border-border grid gap-3 rounded-lg border p-4">
-              <Text className="font-medium">
-                {t("platform.appearance.badgeSemantics")}
-              </Text>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Text className="font-medium">
+                  {t("platform.appearance.badgeSemantics")}
+                </Text>
+                <SchemeToggle
+                  value={editorScheme}
+                  onChange={setEditorScheme}
+                  lightLabel={t("platform.appearance.schemeLight")}
+                  darkLabel={t("platform.appearance.schemeDark")}
+                />
+              </div>
               <Text className="text-muted-foreground text-sm">
                 {t("platform.appearance.badgeSemanticsHint")}
               </Text>
               {TENANT_OVERRIDE_GROUPS.badge.map((cssVar) => (
                 <SemanticColorField
-                  key={cssVar}
+                  key={`${editorScheme}-${cssVar}`}
                   cssVar={cssVar}
-                  value={semantics[cssVar] ?? ""}
+                  value={activeSemantics[cssVar] ?? ""}
                   placeholder={t("platform.appearance.placeholder")}
+                  resolvedHint={
+                    paletteResolvedVars[cssVar]
+                      ? t("platform.appearance.resolvedDefault", {
+                          value: paletteResolvedVars[cssVar],
+                        })
+                      : undefined
+                  }
                   onChange={(nextValue) =>
-                    setSemantics((current) => ({
-                      ...current,
-                      [cssVar]: nextValue,
-                    }))
+                    updateSchemeSemantics(editorScheme, cssVar, nextValue)
                   }
                 />
               ))}
             </section>
 
-            {(["sidebar"] as const).map((groupKey) => {
-              const vars = TENANT_OVERRIDE_GROUPS[groupKey];
-              return (
-                <section key={groupKey} className="grid gap-3">
-                  <Text className="font-medium">
-                    {t(`platform.appearance.groups.${groupKey}` as never)}
+            <section className="border-border grid gap-3 rounded-lg border p-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <Text className="font-medium">
+                  {t("platform.appearance.groups.sidebar")}
+                </Text>
+                <SchemeToggle
+                  value={editorScheme}
+                  onChange={setEditorScheme}
+                  lightLabel={t("platform.appearance.schemeLight")}
+                  darkLabel={t("platform.appearance.schemeDark")}
+                />
+              </div>
+              {TENANT_OVERRIDE_GROUPS.sidebar.map((cssVar) => (
+                <div
+                  key={`${editorScheme}-${cssVar}`}
+                  className="flex flex-col gap-1"
+                >
+                  <FieldLabel htmlFor={`${editorScheme}-${cssVar}`}>
+                    {cssVar}
+                  </FieldLabel>
+                  <Input
+                    id={`${editorScheme}-${cssVar}`}
+                    value={activeSidebarColors[cssVar] ?? ""}
+                    placeholder={
+                      paletteResolvedVars[cssVar] ??
+                      t("platform.appearance.placeholder")
+                    }
+                    onChange={(event) =>
+                      updateSchemeSidebarColor(
+                        editorScheme,
+                        cssVar,
+                        event.target.value,
+                      )
+                    }
+                  />
+                </div>
+              ))}
+            </section>
+
+            <section className="border-border grid gap-3 rounded-lg border p-4">
+              <Text className="font-medium">
+                {t("platform.appearance.effects")}
+              </Text>
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.appearance.effectsHint")}
+              </Text>
+              {(["shadowCard", "gradientPrimary"] as const).map((effectKey) => (
+                <div key={effectKey} className="grid gap-2">
+                  <Text className="text-sm font-medium">
+                    {effectFieldLabels[effectKey]}
                   </Text>
-                  {vars.map((cssVar) => (
-                    <div key={cssVar} className="flex flex-col gap-1">
-                      <FieldLabel htmlFor={cssVar}>{cssVar}</FieldLabel>
+                  {(["light", "dark"] as const).map((scheme) => (
+                    <div
+                      key={`${effectKey}-${scheme}`}
+                      className="flex flex-col gap-1"
+                    >
+                      <FieldLabel htmlFor={`${effectKey}-${scheme}`}>
+                        {scheme === "light"
+                          ? t("platform.appearance.schemeLight")
+                          : t("platform.appearance.schemeDark")}
+                      </FieldLabel>
                       <Input
-                        id={cssVar}
-                        value={sidebarColors[cssVar] ?? ""}
+                        id={`${effectKey}-${scheme}`}
+                        value={effects[effectKey][scheme]}
                         placeholder={t("platform.appearance.placeholder")}
                         onChange={(event) =>
-                          setSidebarColors((current) => ({
+                          setEffects((current) => ({
                             ...current,
-                            [cssVar]: event.target.value,
+                            [effectKey]: {
+                              ...current[effectKey],
+                              [scheme]: event.target.value,
+                            },
                           }))
                         }
                       />
                     </div>
                   ))}
-                </section>
-              );
-            })}
+                </div>
+              ))}
+            </section>
+
+            <section className="border-border grid gap-3 rounded-lg border p-4">
+              <Text className="font-medium">
+                {t("platform.appearance.chartColors")}
+              </Text>
+              <Text className="text-muted-foreground text-sm">
+                {t("platform.appearance.chartColorsHint")}
+              </Text>
+              {CHART_COLOR_KEYS.map(({ key, cssVar }) => (
+                <SemanticColorField
+                  key={key}
+                  cssVar={cssVar}
+                  value={chartColors[key]}
+                  placeholder={t("platform.appearance.placeholder")}
+                  onChange={(nextValue) =>
+                    setChartColors((current) => ({
+                      ...current,
+                      [key]: nextValue,
+                    }))
+                  }
+                />
+              ))}
+            </section>
 
             <section className="grid gap-3">
               <Text className="font-medium">
@@ -703,24 +1109,124 @@ export function TenantAppearanceEditor({
                 {t("platform.appearance.layout")}
               </Text>
               <div className="flex flex-col gap-1">
-                <FieldLabel htmlFor="radius">
-                  {t("platform.appearance.radius")}
+                <FieldLabel htmlFor="radius-lg">
+                  {t("platform.appearance.radiusLg")}
                 </FieldLabel>
                 <Input
-                  id="radius"
+                  id="radius-lg"
                   value={radius}
                   onChange={(event) => setRadius(event.target.value)}
                 />
               </div>
               <div className="flex flex-col gap-1">
-                <FieldLabel htmlFor="spacing">
-                  {t("platform.appearance.spacing")}
+                <FieldLabel htmlFor="radius-sm">
+                  {t("platform.appearance.radiusSm")}
                 </FieldLabel>
                 <Input
-                  id="spacing"
-                  value={spacing}
-                  onChange={(event) => setSpacing(event.target.value)}
+                  id="radius-sm"
+                  value={radiusSm}
+                  onChange={(event) => setRadiusSm(event.target.value)}
                 />
+              </div>
+              <Text variant="muted" className="text-sm">
+                {t("platform.appearance.spacingHint")}
+              </Text>
+              <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-1">
+                  <FieldLabel htmlFor="spacing-xs">
+                    {t("platform.appearance.spacingXs")}
+                  </FieldLabel>
+                  <Input
+                    id="spacing-xs"
+                    value={spacingScale.xs}
+                    placeholder={t("platform.appearance.placeholder")}
+                    onChange={(event) =>
+                      setSpacingScale((current) => ({
+                        ...current,
+                        xs: event.target.value,
+                      }))
+                    }
+                  />
+                  <Text variant="muted" className="text-xs">
+                    {t("platform.appearance.spacingXsHint")}
+                  </Text>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <FieldLabel htmlFor="spacing-sm">
+                    {t("platform.appearance.spacingSm")}
+                  </FieldLabel>
+                  <Input
+                    id="spacing-sm"
+                    value={spacingScale.sm}
+                    placeholder={t("platform.appearance.placeholder")}
+                    onChange={(event) =>
+                      setSpacingScale((current) => ({
+                        ...current,
+                        sm: event.target.value,
+                      }))
+                    }
+                  />
+                  <Text variant="muted" className="text-xs">
+                    {t("platform.appearance.spacingSmHint")}
+                  </Text>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <FieldLabel htmlFor="spacing-md">
+                    {t("platform.appearance.spacingMd")}
+                  </FieldLabel>
+                  <Input
+                    id="spacing-md"
+                    value={spacingScale.md}
+                    placeholder={t("platform.appearance.placeholder")}
+                    onChange={(event) =>
+                      setSpacingScale((current) => ({
+                        ...current,
+                        md: event.target.value,
+                      }))
+                    }
+                  />
+                  <Text variant="muted" className="text-xs">
+                    {t("platform.appearance.spacingMdHint")}
+                  </Text>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <FieldLabel htmlFor="spacing-base">
+                    {t("platform.appearance.spacingBase")}
+                  </FieldLabel>
+                  <Input
+                    id="spacing-base"
+                    value={spacingScale.base}
+                    placeholder={t("platform.appearance.placeholder")}
+                    onChange={(event) =>
+                      setSpacingScale((current) => ({
+                        ...current,
+                        base: event.target.value,
+                      }))
+                    }
+                  />
+                  <Text variant="muted" className="text-xs">
+                    {t("platform.appearance.spacingBaseHint")}
+                  </Text>
+                </div>
+                <div className="flex flex-col gap-1 sm:col-span-2">
+                  <FieldLabel htmlFor="spacing-lg">
+                    {t("platform.appearance.spacingLg")}
+                  </FieldLabel>
+                  <Input
+                    id="spacing-lg"
+                    value={spacingScale.lg}
+                    placeholder={t("platform.appearance.placeholder")}
+                    onChange={(event) =>
+                      setSpacingScale((current) => ({
+                        ...current,
+                        lg: event.target.value,
+                      }))
+                    }
+                  />
+                  <Text variant="muted" className="text-xs">
+                    {t("platform.appearance.spacingLgHint")}
+                  </Text>
+                </div>
               </div>
             </section>
 
@@ -743,21 +1249,75 @@ export function TenantAppearanceEditor({
             className="border-border min-w-0 flex-1 rounded-lg border p-6"
             style={draftPreviewVars as CSSProperties}
           >
-            <Text className="font-medium">
-              {t("platform.appearance.preview")}
-            </Text>
-            <div className="bg-card text-card-foreground mt-4 space-y-2 rounded-md border p-4">
-              <Text className="text-heading font-semibold">{tenant.name}</Text>
-              <Text className="text-body">
-                {t("platform.appearance.previewBody")}
+            <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+              <Text className="font-medium">
+                {t("platform.appearance.preview")}
               </Text>
-              <Button type="button">
-                {t("platform.appearance.previewButton")}
-              </Button>
+              <SchemeToggle
+                value={previewScheme}
+                onChange={setPreviewScheme}
+                lightLabel={t("platform.appearance.schemeLight")}
+                darkLabel={t("platform.appearance.schemeDark")}
+              />
+            </div>
+
+            <div className="grid gap-4">
+              <div className="bg-card text-card-foreground space-y-2 rounded-lg border p-4 shadow-card">
+                <Text className="text-heading font-semibold">
+                  {tenant.name}
+                </Text>
+                <Text className="text-body">
+                  {t("platform.appearance.previewBody")}
+                </Text>
+                <Button type="button">
+                  {t("platform.appearance.previewButton")}
+                </Button>
+              </div>
+
+              <div
+                className="space-y-2 rounded-lg p-4 text-primary-foreground shadow-card"
+                style={{ background: "var(--gradient-primary)" }}
+              >
+                <Text className="text-sm font-medium opacity-90">
+                  {t("platform.appearance.previewGradientLabel")}
+                </Text>
+                <Text className="text-heading font-semibold">$24,500.00</Text>
+              </div>
+
+              <div className="flex flex-wrap gap-2">
+                <span className="bg-badge-success text-badge-success-foreground rounded-sm px-2 py-1 text-xs font-medium">
+                  {t("platform.appearance.previewBadgeSuccess")}
+                </span>
+                <span className="bg-badge-warning text-badge-warning-foreground rounded-sm px-2 py-1 text-xs font-medium">
+                  {t("platform.appearance.previewBadgeWarning")}
+                </span>
+                <span className="bg-badge-info text-badge-info-foreground rounded-sm px-2 py-1 text-xs font-medium">
+                  {t("platform.appearance.previewBadgeInfo")}
+                </span>
+              </div>
+
+              <div className="bg-sidebar text-sidebar-foreground rounded-lg border border-sidebar-border p-3">
+                <div className="bg-sidebar-accent text-sidebar-accent-foreground rounded-sm px-3 py-2 text-sm font-medium">
+                  {t("platform.appearance.previewSidebarActive")}
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </FormModal>
+
+      <TenantThemeJsonViewDialog
+        appearance={draftAppearance}
+        labels={themeJsonLabels}
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+      />
+      <TenantThemeJsonImportDialog
+        labels={themeJsonLabels}
+        onApply={applyImportedAppearance}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+      />
     </div>
   );
 }

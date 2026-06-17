@@ -230,7 +230,7 @@ export function EntityLayoutCardView({
       {items.length === 0 ? (
         <Text>{t("entity.empty")}</Text>
       ) : (
-        <div className={cn("grid gap-4", listGridClass)}>
+        <div className={cn("grid gap-macro", listGridClass)}>
           {(items as readonly Record<string, unknown>[]).map((item) => {
             const shareCount = Object.keys(
               (item.sharedWith as Record<string, string> | undefined) ?? {},

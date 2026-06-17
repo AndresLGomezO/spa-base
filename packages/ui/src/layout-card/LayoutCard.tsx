@@ -19,6 +19,7 @@ export interface LayoutCardProps extends HTMLAttributes<HTMLDivElement> {
   readonly children: ReactNode;
   readonly actions?: ReactNode;
   readonly interactive?: boolean;
+  readonly variant?: "default" | "gradient";
   /**
    * When set, a tap that triggers the sweep waits this long before calling `onClick`.
    * Pair with navigation handlers so route changes do not unmount the card mid-flash.
@@ -54,6 +55,7 @@ export function LayoutCard({
   children,
   actions,
   interactive = false,
+  variant = "default",
   clickActivationDelayMs,
   className,
   onClick,
@@ -200,7 +202,9 @@ export function LayoutCard({
   return (
     <article
       className={cn(
-        "border-border bg-card relative flex flex-col gap-3 overflow-hidden rounded-2xl border p-4 shadow-sm transition-all duration-200",
+        "border-border bg-card relative flex flex-col gap-3 overflow-hidden rounded-lg border p-macro shadow-card transition-all duration-200",
+        variant === "gradient" &&
+          "border-0 text-primary-foreground [background:var(--gradient-primary)]",
         interactive &&
           "hover:border-border/80 cursor-pointer hover:-translate-y-0.5 hover:shadow-lg active:scale-[0.995]",
         className,
@@ -212,7 +216,7 @@ export function LayoutCard({
       {interactive && flashTick > 0 ? (
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-2xl"
+          className="pointer-events-none absolute inset-0 z-20 overflow-hidden rounded-lg"
         >
           <div
             key={flashTick}

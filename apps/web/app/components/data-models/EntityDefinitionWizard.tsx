@@ -16,6 +16,7 @@ import {
   Heading,
   Input,
   Text,
+  Textarea,
   toast,
   Select,
 } from "@repo/ui";
@@ -57,6 +58,7 @@ export function EntityDefinitionWizard({
   const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [label, setLabel] = useState("");
+  const [description, setDescription] = useState("");
   const [fields, setFields] = useState<FieldDefinitionInput[]>([]);
   const [tenantWideRead, setTenantWideRead] = useState(false);
   const [inMemoryListQueries, setInMemoryListQueries] = useState(false);
@@ -243,6 +245,7 @@ export function EntityDefinitionWizard({
       const payload = {
         name: name.trim(),
         label: label.trim(),
+        ...(description.trim() ? { description: description.trim() } : {}),
         ...(tenantWideRead ? { tenantWideRead: true } : {}),
         ...(inMemoryListQueries ? { inMemoryListQueries: true } : {}),
         ...(hiddenFromNav ? { hiddenFromNav: true } : {}),
@@ -314,6 +317,20 @@ export function EntityDefinitionWizard({
               onChange={(event) => setLabel(event.target.value)}
               placeholder="Loans"
             />
+          </div>
+          <div>
+            <FieldLabel htmlFor="model-description">
+              {t("dataModels.modelDescription")}
+            </FieldLabel>
+            <Textarea
+              id="model-description"
+              value={description}
+              onChange={(event) => setDescription(event.target.value)}
+              placeholder={t("dataModels.modelDescriptionPlaceholder")}
+            />
+            <Text className="text-muted-foreground mt-1 text-sm">
+              {t("dataModels.modelDescriptionHint")}
+            </Text>
           </div>
           <div className="space-y-2">
             <Checkbox
@@ -491,6 +508,7 @@ export function EntityDefinitionWizard({
           <ModelReview
             name={name.trim()}
             label={label.trim()}
+            description={description.trim()}
             fields={fields}
             tenantWideRead={tenantWideRead}
             inMemoryListQueries={inMemoryListQueries}

@@ -58,7 +58,7 @@ export function LoginPage() {
   }
 
   return (
-    <div className="from-primary-100/40 via-background to-background dark:from-primary-950/30 relative flex min-h-[calc(100dvh-4rem)] items-center justify-center bg-gradient-to-br px-4 py-12">
+    <div className="from-primary-100/40 via-background to-background dark:from-primary-950/30 relative flex min-h-dvh items-center justify-center bg-gradient-to-br px-4 py-12">
       <div className="flex w-full max-w-md flex-col items-center gap-4">
         <Card variant="glass" className="w-full">
           <Logo size="md" />

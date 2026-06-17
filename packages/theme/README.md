@@ -23,18 +23,19 @@ Palette scales          Semantic tokens              Components
 
 ## Package exports
 
-| Export               | Description                                                             |
-| -------------------- | ----------------------------------------------------------------------- |
-| `./index.css`        | Bundled fonts + tokens + semantics + dark + base                        |
-| `./tokens.css`       | Color scales, sidebar, typography, radius                               |
-| `./semantics.css`    | Semantic / surface / interactive tokens                                 |
-| `./dark.css`         | Dark variant overrides                                                  |
-| `./base.css`         | Body and form defaults                                                  |
-| `./fonts.css`        | Inter font import                                                       |
-| `./tenant-overrides` | `appearanceToCssVariables`, palette expansion, presets, override groups |
-| `./palette`          | `generateColorScale`, `expandPaletteConfig`                             |
-| `./react`            | `ThemeProvider`, `useColorScheme`, `useDarkMode`                        |
-| `./utils`            | `cn()` (clsx + tailwind-merge)                                          |
+| Export                  | Description                                                             |
+| ----------------------- | ----------------------------------------------------------------------- |
+| `./index.css`           | Bundled fonts + tokens + semantics + dark + base                        |
+| `./tokens.css`          | Color scales, sidebar, typography, radius                               |
+| `./semantics.css`       | Semantic / surface / interactive tokens                                 |
+| `./dark.css`            | Dark variant overrides                                                  |
+| `./base.css`            | Body and form defaults                                                  |
+| `./fonts.css`           | Inter font import                                                       |
+| `./tenant-overrides`    | `appearanceToCssVariables`, palette expansion, presets, override groups |
+| `./theme-import-export` | `exportTenantTheme`, `importTenantTheme`, example theme JSON            |
+| `./palette`             | `generateColorScale`, `expandPaletteConfig`                             |
+| `./react`               | `ThemeProvider`, `useColorScheme`, `useDarkMode`                        |
+| `./utils`               | `cn()` (clsx + tailwind-merge)                                          |
 
 ---
 

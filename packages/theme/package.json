@@ -20,6 +20,7 @@
     "./index.css": "./src/index.css",
     "./react": "./src/react/index.ts",
     "./tenant-overrides": "./src/tenant-overrides.ts",
+    "./theme-import-export": "./src/theme-import-export.ts",
     "./palette": "./src/palette/generate-scale.ts",
     "./utils": "./src/utils/cn.ts"
   },
@@ -30,6 +31,7 @@
     "react": "catalog:"
   },
   "dependencies": {
+    "@repo/shared-types": "workspace:*",
     "clsx": "catalog:",
     "culori": "catalog:",
     "tailwind-merge": "catalog:"
