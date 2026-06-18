@@ -9,6 +9,30 @@ import {
 } from "./preview-row-chrome-layout";
 
 describe("preview-row-chrome-layout", () => {
+  it("uses absolute inset overlay sizing for overlay image rows", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "column",
+      isStructuralRow: false,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+      row: {
+        type: "component",
+        id: "row-chart-overlay",
+        component: {
+          kind: "image",
+          displayMode: "overlay",
+          primary: { type: "static", value: "https://example.com/chart.png" },
+        },
+      },
+    });
+
+    expect(classes.shell).toContain("absolute");
+    expect(classes.shell).toContain("inset-0");
+    expect(classes.shell).not.toContain("relative");
+    expect(classes.inner).not.toContain("relative");
+    expect(classes.inner).not.toContain("z-0");
+  });
+
   it("uses column slot sizing by default in vertical stacks", () => {
     const classes = resolvePreviewRowChromeLayoutClasses({
       parentStackDirection: "column",

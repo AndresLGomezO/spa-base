@@ -22,13 +22,22 @@ const DIMENSION_PROPERTIES: readonly StylePropertyKey[] = [
   "padding",
   "gap",
   "fontSize",
+  "letterSpacing",
   "borderRadius",
   "borderTopLeftRadius",
   "borderTopRightRadius",
   "borderBottomLeftRadius",
   "borderBottomRightRadius",
+  "width",
   "minWidth",
   "maxWidth",
+  "height",
+  "minHeight",
+  "maxHeight",
+  "top",
+  "right",
+  "bottom",
+  "left",
 ];
 
 const THEME_TOKENS: readonly ThemeToken[] = [
@@ -70,11 +79,17 @@ export function buildThemeStyleRulesAtom(): string {
 - Custom font stacks allowed.
 
 ## Dimension properties (${dimensionProps}, …)
-- **Theme mode:** \`var(--radius-*)\`, \`var(--spacing-*)\`, \`var(--text-body)\`, \`var(--text-heading)\`, \`var(--sidebar-width)\` for width props.
-- **Custom mode:** pixel strings (e.g. \`"8"\`, \`"-40"\`) — renderer adds \`px\`.
+- **Theme mode:** \`var(--radius-*)\`, \`var(--spacing-*)\`, \`var(--text-body)\`, \`var(--text-heading)\`, \`var(--sidebar-width)\` for width/height props.
+- **Custom mode:** pixel strings (e.g. \`"8"\`, \`"-40"\`), \`"100%"\`, or \`"auto"\` — integers render as \`px\`.
 - **Margin** (\`marginTop\`, …): integers from \`-999\` through any positive value on the **row wrapper**.
 - **Overflow** (\`overflowX\`, \`overflowY\`): row wrapper.
-- **Padding**, **gap**, **border radius**, **fontSize**, **min/max width**: component/container inline styles.
+- **Positioning** (\`position\`, \`top\`, \`right\`, \`bottom\`, \`left\`, \`width\`, \`height\`, \`zIndex\`, \`pointerEvents\`, \`opacity\`, \`backdropFilter\`): row wrapper inline styles.
+- **Padding**, **gap**, **border radius**, **fontSize**, **min/max width/height**: component/container inline styles.
+
+## Image overlay (\`displayMode: "overlay"\`)
+- Use on decorative chart/background images inside \`container\` rows.
+- Renderer auto-layers overlay images behind sibling content (\`zIndex\` 0 vs 1) and sets the container to \`position: relative\` unless overridden.
+- Prefer \`objectFit: "cover"\` for full-bleed overlays; \`imageSize\` is ignored in overlay mode.
 
 ## All style properties
 ${STYLE_PROPERTY_OPTIONS.join(", ")}

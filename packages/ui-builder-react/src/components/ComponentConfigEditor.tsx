@@ -150,6 +150,13 @@ export interface ComponentConfigEditorLabels {
   readonly matchValue: string;
   readonly addRule: string;
   readonly imageSize: string;
+  readonly imageDisplayMode?: string;
+  readonly imageDisplayModeInline?: string;
+  readonly imageDisplayModeOverlay?: string;
+  readonly imageObjectFit?: string;
+  readonly imageObjectFitContain?: string;
+  readonly imageObjectFitCover?: string;
+  readonly imageObjectFitFill?: string;
   readonly dateDisplayFormat: string;
   readonly displayFormat: string;
   readonly showCurrency: string;
@@ -1393,31 +1400,85 @@ export function ComponentConfigEditor({
         />
 
         {fieldConfig.kind === "image" ? (
-          <label className="flex flex-col gap-1 text-sm">
-            <span className="text-muted-foreground">{labels.imageSize}</span>
-            <Input
-              type="number"
-              min={MIN_CARD_IMAGE_SIZE_PX}
-              max={MAX_CARD_IMAGE_SIZE_PX}
-              step={1}
-              value={fieldConfig.imageSize ?? ""}
-              onChange={(event) => {
-                const raw = event.target.value.trim();
-                if (raw.length === 0) {
-                  onChange({ ...fieldConfig, imageSize: undefined });
-                  return;
+          <>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {labels.imageDisplayMode ?? "Display mode"}
+              </span>
+              <Select
+                value={fieldConfig.displayMode ?? "inline"}
+                onChange={(event) =>
+                  onChange({
+                    ...fieldConfig,
+                    displayMode: event.target.value as "inline" | "overlay",
+                  })
                 }
-                const parsed = Number.parseInt(raw, 10);
-                if (!Number.isFinite(parsed)) {
-                  return;
+              >
+                <option value="inline">
+                  {labels.imageDisplayModeInline ?? "Inline"}
+                </option>
+                <option value="overlay">
+                  {labels.imageDisplayModeOverlay ?? "Overlay"}
+                </option>
+              </Select>
+            </label>
+            <label className="flex flex-col gap-1 text-sm">
+              <span className="text-muted-foreground">
+                {labels.imageObjectFit ?? "Object fit"}
+              </span>
+              <Select
+                value={fieldConfig.objectFit ?? "contain"}
+                onChange={(event) =>
+                  onChange({
+                    ...fieldConfig,
+                    objectFit: event.target.value as
+                      | "contain"
+                      | "cover"
+                      | "fill",
+                  })
                 }
-                onChange({
-                  ...fieldConfig,
-                  imageSize: clampCardImageSizePx(parsed),
-                });
-              }}
-            />
-          </label>
+              >
+                <option value="contain">
+                  {labels.imageObjectFitContain ?? "Contain"}
+                </option>
+                <option value="cover">
+                  {labels.imageObjectFitCover ?? "Cover"}
+                </option>
+                <option value="fill">
+                  {labels.imageObjectFitFill ?? "Fill"}
+                </option>
+              </Select>
+            </label>
+            {fieldConfig.displayMode !== "overlay" ? (
+              <label className="flex flex-col gap-1 text-sm">
+                <span className="text-muted-foreground">
+                  {labels.imageSize}
+                </span>
+                <Input
+                  type="number"
+                  min={MIN_CARD_IMAGE_SIZE_PX}
+                  max={MAX_CARD_IMAGE_SIZE_PX}
+                  step={1}
+                  value={fieldConfig.imageSize ?? ""}
+                  onChange={(event) => {
+                    const raw = event.target.value.trim();
+                    if (raw.length === 0) {
+                      onChange({ ...fieldConfig, imageSize: undefined });
+                      return;
+                    }
+                    const parsed = Number.parseInt(raw, 10);
+                    if (!Number.isFinite(parsed)) {
+                      return;
+                    }
+                    onChange({
+                      ...fieldConfig,
+                      imageSize: clampCardImageSizePx(parsed),
+                    });
+                  }}
+                />
+              </label>
+            ) : null}
+          </>
         ) : null}
 
         {fieldConfig.kind === "date" ? (

@@ -71,6 +71,8 @@ export function createTenantDashboardLayoutRenderContext(
           src={src}
           alt=""
           sizePx={imageOptions.imageSize}
+          fillContainer={imageOptions.fillContainer}
+          objectFit={imageOptions.objectFit}
           className={imageOptions.className}
           style={imageOptions.style}
         />

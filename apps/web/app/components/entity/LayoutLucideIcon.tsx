@@ -1,10 +1,5 @@
 import type { IconComponentConfig } from "@repo/ui-builder-core";
-import {
-  filterComponentInnerStyleRules,
-  fontSizePxFromStyles,
-  layoutInlineStyleFromStyleRules,
-  splitStyleRuleClasses,
-} from "@repo/ui-builder-core";
+import { resolveMetricKpiPresentation } from "@repo/ui-builder-core";
 import { CardFieldValue } from "@repo/ui";
 
 import { resolveLucideIcon } from "../../lib/resolve-lucide-icon";
@@ -27,10 +22,8 @@ export function LayoutLucideIcon({
   readonly config: IconComponentConfig;
 }) {
   const Icon = resolveLucideIcon(config.iconName);
-  const innerStyles = filterComponentInnerStyleRules(config.styles);
-  const { containerClassName } = splitStyleRuleClasses(innerStyles);
-  const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
-  const iconSize = config.iconSize ?? fontSizePxFromStyles(innerStyles) ?? 20;
+  const presentation = resolveMetricKpiPresentation(config.styles);
+  const iconSize = config.iconSize ?? presentation.textSize ?? 20;
   const labelText = config.label?.text?.trim();
   const showLabel = config.label?.show === true && Boolean(labelText);
 
@@ -47,10 +40,13 @@ export function LayoutLucideIcon({
         />
       }
       allowEmpty
-      className={containerClassName}
-      style={containerStyle}
+      className={presentation.className}
+      style={presentation.style}
       labelClassName={labelAlignClassName(config.label?.align)}
-      valueClassName="inline-flex items-center"
+      valueClassName={["inline-flex items-center", presentation.valueClassName]
+        .filter(Boolean)
+        .join(" ")}
+      valueStyle={presentation.valueStyle}
       textBold={config.label?.bold}
       textThin={config.label?.thin}
       textItalic={config.label?.italic}

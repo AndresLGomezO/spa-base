@@ -961,6 +961,13 @@
       "deleteColumn": "Eliminar columna {{column}}",
       "deleteSlot": "Eliminar celda",
       "imageSize": "Tamaño de imagen",
+      "imageDisplayMode": "Modo de visualización",
+      "imageDisplayModeInline": "En línea",
+      "imageDisplayModeOverlay": "Superpuesto",
+      "imageObjectFit": "Ajuste de imagen",
+      "imageObjectFitContain": "Contener",
+      "imageObjectFitCover": "Cubrir",
+      "imageObjectFitFill": "Rellenar",
       "metrics": {
         "definition": "Definición de métrica",
         "selectMetric": "Selecciona una métrica…",

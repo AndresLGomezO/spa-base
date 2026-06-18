@@ -961,6 +961,13 @@
       "deleteColumn": "Delete column {{column}}",
       "deleteSlot": "Delete slot",
       "imageSize": "Image size",
+      "imageDisplayMode": "Display mode",
+      "imageDisplayModeInline": "Inline",
+      "imageDisplayModeOverlay": "Overlay",
+      "imageObjectFit": "Object fit",
+      "imageObjectFitContain": "Contain",
+      "imageObjectFitCover": "Cover",
+      "imageObjectFitFill": "Fill",
       "metrics": {
         "definition": "Metric definition",
         "selectMetric": "Select a metric…",

@@ -25,6 +25,7 @@ import {
   stylesIncludeFlexGrow,
   textWrapClassFromStyles,
   type FieldUiComponentConfig,
+  type ImageComponentConfig,
   type UiComponentConfig,
 } from "@repo/ui-builder-core";
 import {
@@ -169,6 +170,19 @@ function inlineFieldContainerClassName(
   }
 
   return [containerClassName, "w-full"].filter(Boolean).join(" ");
+}
+
+function resolveImageRenderOptions(config: ImageComponentConfig): {
+  readonly fillContainer: boolean;
+  readonly objectFit: "contain" | "cover" | "fill";
+  readonly sizePx: number | undefined;
+} {
+  const isOverlay = config.displayMode === "overlay";
+  return {
+    fillContainer: isOverlay,
+    objectFit: config.objectFit ?? (isOverlay ? "cover" : "contain"),
+    sizePx: isOverlay ? undefined : config.imageSize,
+  };
 }
 
 export function renderUiComponent(
@@ -394,12 +408,15 @@ export function renderUiComponent(
     context.resolveFieldLabel?.(fieldPath);
 
   if (config.kind === "image") {
+    const imageRenderOptions = resolveImageRenderOptions(config);
     if (context.resolveImage) {
       const primaryFieldPath =
         config.primary.type === "field" ? config.primary.path.trim() : "";
       return context.resolveImage(fieldPath, rawValue, {
         primaryFieldPath,
-        imageSize: config.imageSize,
+        imageSize: imageRenderOptions.sizePx,
+        fillContainer: imageRenderOptions.fillContainer,
+        objectFit: imageRenderOptions.objectFit,
         className: containerClassName,
         style: containerStyle,
       });
@@ -411,7 +428,9 @@ export function renderUiComponent(
       <CardFieldImage
         src={src}
         alt={label ?? fieldPath}
-        sizePx={config.imageSize}
+        sizePx={imageRenderOptions.sizePx}
+        fillContainer={imageRenderOptions.fillContainer}
+        objectFit={imageRenderOptions.objectFit}
         className={inlineFieldContainerClassName(
           containerClassName,
           innerStyles,

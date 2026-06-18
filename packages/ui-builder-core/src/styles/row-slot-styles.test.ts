@@ -38,4 +38,24 @@ describe("row-slot-styles", () => {
 
     expect(resolved.className).not.toContain("truncate");
   });
+
+  it("hoists positioning styles onto the row wrapper", () => {
+    const resolved = mergeRowWrapperStyles(undefined, [
+      { property: "position", value: "absolute" },
+      { property: "top", value: "0" },
+      { property: "width", value: "100%" },
+      { property: "zIndex", value: "2" },
+      { property: "pointerEvents", value: "none" },
+      { property: "backdropFilter", value: "blur(8px)" },
+    ]);
+
+    expect(resolved.style).toMatchObject({
+      position: "absolute",
+      top: "0px",
+      width: "100%",
+      zIndex: "2",
+      pointerEvents: "none",
+      backdropFilter: "blur(8px)",
+    });
+  });
 });

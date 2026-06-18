@@ -2,7 +2,7 @@
 
 Image field (EntityFileReference) or static URL.
 
-**Properties:** primary, fallbacks?, imageSize?, label?, styles?, conditionalStyles?
+**Properties:** primary, fallbacks?, imageSize?, displayMode?, objectFit?, label?, styles?, conditionalStyles?
 
 ```json
 {
@@ -18,6 +18,8 @@ Image field (EntityFileReference) or static URL.
     }
   ],
   "imageSize": 48,
+  "displayMode": "inline",
+  "objectFit": "contain",
   "label": {
     "show": true,
     "text": "Logo",

@@ -129,6 +129,8 @@ export interface TextComponentConfig extends FieldComponentConfigBase {
 export interface ImageComponentConfig extends FieldComponentConfigBase {
   readonly kind: "image";
   readonly imageSize?: number;
+  readonly displayMode?: "inline" | "overlay";
+  readonly objectFit?: "contain" | "cover" | "fill";
 }
 
 export interface DateComponentConfig extends FieldComponentConfigBase {

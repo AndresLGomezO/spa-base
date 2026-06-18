@@ -15,6 +15,7 @@ import {
 } from "@repo/theme/tenant-overrides";
 import {
   STYLE_PROPERTY_OPTIONS,
+  isCssBackdropFilterValue,
   isCssBoxShadowValue,
   isCssFontFamilyValue,
   isCssLengthTokenValue,
@@ -105,6 +106,20 @@ export function dimensionTokenOptionsForProperty(
 
   if (property === "minWidth" || property === "maxWidth") {
     return WIDTH_TOKEN_OPTIONS;
+  }
+
+  if (
+    property === "width" ||
+    property === "height" ||
+    property === "minHeight" ||
+    property === "maxHeight" ||
+    property === "top" ||
+    property === "right" ||
+    property === "bottom" ||
+    property === "left" ||
+    property === "letterSpacing"
+  ) {
+    return [...WIDTH_TOKEN_OPTIONS, ...SPACING_TOKEN_OPTIONS];
   }
 
   return [];
@@ -261,6 +276,21 @@ export function defaultValueForProperty(
   if (property === "overflowX" || property === "overflowY") {
     return "visible";
   }
+  if (property === "position") {
+    return "relative";
+  }
+  if (property === "pointerEvents") {
+    return "auto";
+  }
+  if (property === "zIndex") {
+    return "0";
+  }
+  if (property === "opacity") {
+    return "100";
+  }
+  if (property === "backdropFilter") {
+    return "blur(8px)";
+  }
   if (property === "flexWrap") {
     return "wrap";
   }
@@ -295,6 +325,12 @@ export function isShadowStyleProperty(property: StylePropertyKey): boolean {
   return property === "boxShadow";
 }
 
+export function isBackdropFilterStyleProperty(
+  property: StylePropertyKey,
+): boolean {
+  return property === "backdropFilter";
+}
+
 export function isTypographyStyleProperty(property: StylePropertyKey): boolean {
   return property === "fontFamily";
 }
@@ -305,8 +341,17 @@ export function isDimensionStyleProperty(property: StylePropertyKey): boolean {
     property.startsWith("margin") ||
     property.startsWith("padding") ||
     property === "gap" ||
+    property === "width" ||
     property === "minWidth" ||
     property === "maxWidth" ||
+    property === "height" ||
+    property === "minHeight" ||
+    property === "maxHeight" ||
+    property === "top" ||
+    property === "right" ||
+    property === "bottom" ||
+    property === "left" ||
+    property === "letterSpacing" ||
     property === "borderRadius" ||
     property === "borderTopLeftRadius" ||
     property === "borderTopRightRadius" ||
@@ -320,7 +365,11 @@ export function isThemeTokenStyleValue(value: string): boolean {
 }
 
 export function isNumericStyleProperty(property: StylePropertyKey): boolean {
-  return property === "borderWidth";
+  return (
+    property === "borderWidth" ||
+    property === "zIndex" ||
+    property === "opacity"
+  );
 }
 
 /** Minimum allowed value for numeric style inputs (pixels). */
@@ -330,6 +379,12 @@ export function numericStyleInputMin(property: StylePropertyKey): number {
   }
   if (property === "borderWidth" || property === "fontSize") {
     return 1;
+  }
+  if (property === "opacity") {
+    return 0;
+  }
+  if (property === "zIndex") {
+    return -999;
   }
   return 0;
 }
@@ -353,6 +408,14 @@ export function coerceNumericStyleValue(
     return String(min);
   }
 
+  if (property === "zIndex") {
+    return String(parsed);
+  }
+
+  if (property === "opacity") {
+    return String(Math.min(100, Math.max(0, parsed)));
+  }
+
   return String(Math.max(min, parsed));
 }
 
@@ -370,7 +433,9 @@ export function isEnumStyleProperty(property: StylePropertyKey): boolean {
     property === "flexWrap" ||
     property === "borderStyle" ||
     property === "overflowX" ||
-    property === "overflowY"
+    property === "overflowY" ||
+    property === "position" ||
+    property === "pointerEvents"
   );
 }
 
@@ -441,6 +506,17 @@ export function enumOptionsForProperty(
         { value: "scroll", label: "Scroll" },
         { value: "auto", label: "Auto" },
       ];
+    case "position":
+      return [
+        { value: "static", label: "Static" },
+        { value: "relative", label: "Relative" },
+        { value: "absolute", label: "Absolute" },
+      ];
+    case "pointerEvents":
+      return [
+        { value: "auto", label: "Auto" },
+        { value: "none", label: "None" },
+      ];
     default:
       return [];
   }
@@ -465,6 +541,10 @@ export function formatStyleRuleValuePreview(rule: StyleRule): string {
 
 export function isValidShadowCustomValue(value: string): boolean {
   return isCssBoxShadowValue(value);
+}
+
+export function isValidBackdropFilterCustomValue(value: string): boolean {
+  return isCssBackdropFilterValue(value);
 }
 
 export function isValidFontFamilyCustomValue(value: string): boolean {

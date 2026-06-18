@@ -12,6 +12,17 @@ export const ROW_SLOT_HOISTED_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   "marginRight",
   "overflowX",
   "overflowY",
+  "position",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "width",
+  "height",
+  "zIndex",
+  "pointerEvents",
+  "opacity",
+  "backdropFilter",
 ]);
 
 export function isRowSlotHoistedStyleProperty(

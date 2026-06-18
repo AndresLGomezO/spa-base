@@ -7,8 +7,10 @@ import {
 } from "./color-values.js";
 import {
   isCssBoxShadowValue,
+  isCssBackdropFilterValue,
   isCssFontFamilyValue,
   isCssLengthTokenValue,
+  resolveBoxLengthStyleValue,
   resolveLengthStyleValue,
   resolveMarginStyleValue,
 } from "./css-values.js";
@@ -44,6 +46,19 @@ export interface LayoutInlineStyle extends SpacingInlineStyle {
   borderBottomRightRadius?: string;
   minWidth?: string;
   maxWidth?: string;
+  width?: string;
+  height?: string;
+  minHeight?: string;
+  maxHeight?: string;
+  top?: string;
+  right?: string;
+  bottom?: string;
+  left?: string;
+  position?: "static" | "relative" | "absolute";
+  zIndex?: string;
+  pointerEvents?: "auto" | "none";
+  opacity?: string;
+  backdropFilter?: string;
   borderWidth?: string;
   borderStyle?: string;
   borderColor?: string;
@@ -60,6 +75,8 @@ export interface TextInlineStyle {
   fontSize?: string;
   color?: string;
   fontFamily?: string;
+  letterSpacing?: string;
+  opacity?: string;
 }
 
 const TEXT_STYLE_PROPERTIES = new Set<StylePropertyKey>([
@@ -68,6 +85,8 @@ const TEXT_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   "fontStyle",
   "textDecoration",
   "textAlign",
+  "letterSpacing",
+  "opacity",
 ]);
 
 const COLOR_STYLE_PROPERTIES = new Set<StylePropertyKey>([
@@ -127,9 +146,22 @@ const PIXEL_INLINE_STYLE_PROPERTIES = new Set<StylePropertyKey>([
   ...BORDER_RADIUS_STYLE_PROPERTIES,
   "minWidth",
   "maxWidth",
+  "width",
+  "height",
+  "minHeight",
+  "maxHeight",
+  "top",
+  "right",
+  "bottom",
+  "left",
   "borderWidth",
   "fontSize",
   "fontFamily",
+  "zIndex",
+  "opacity",
+  "backdropFilter",
+  "position",
+  "pointerEvents",
 ]);
 
 export type FlexAlign = "start" | "center" | "end" | "stretch";
@@ -824,6 +856,26 @@ export function textInlineStyleFromStyleRules(
     style.fontFamily = String(fontFamilyRule.value).trim();
   }
 
+  const letterSpacingRule = styles?.find(
+    (rule) => rule.property === "letterSpacing",
+  );
+  if (letterSpacingRule) {
+    const resolved = resolveBoxLengthStyleValue(
+      String(letterSpacingRule.value),
+    );
+    if (resolved !== undefined) {
+      style.letterSpacing = resolved;
+    }
+  }
+
+  const opacityRule = styles?.find((rule) => rule.property === "opacity");
+  if (opacityRule) {
+    const resolved = parseOpacityStyleValue(String(opacityRule.value));
+    if (resolved !== undefined) {
+      style.opacity = resolved;
+    }
+  }
+
   return style;
 }
 
@@ -969,7 +1021,7 @@ function applyLengthStyleRule(
   property: StylePropertyKey,
   raw: string,
 ): void {
-  const resolved = resolveLengthStyleValue(raw);
+  const resolved = resolveBoxLengthStyleValue(raw);
   if (resolved === undefined) {
     return;
   }
@@ -990,11 +1042,35 @@ function applyLengthStyleRule(
     case "borderBottomRightRadius":
       style.borderBottomRightRadius = resolved;
       break;
+    case "width":
+      style.width = resolved;
+      break;
     case "minWidth":
       style.minWidth = resolved;
       break;
     case "maxWidth":
       style.maxWidth = resolved;
+      break;
+    case "height":
+      style.height = resolved;
+      break;
+    case "minHeight":
+      style.minHeight = resolved;
+      break;
+    case "maxHeight":
+      style.maxHeight = resolved;
+      break;
+    case "top":
+      style.top = resolved;
+      break;
+    case "right":
+      style.right = resolved;
+      break;
+    case "bottom":
+      style.bottom = resolved;
+      break;
+    case "left":
+      style.left = resolved;
       break;
     case "gap":
       style.gap = resolved;
@@ -1004,6 +1080,94 @@ function applyLengthStyleRule(
       break;
     default:
       break;
+  }
+}
+
+function parseOpacityStyleValue(raw: string): string | undefined {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+
+  const clamped = Math.min(100, Math.max(0, parsed));
+  return String(clamped / 100);
+}
+
+function parseZIndexStyleValue(raw: string): string | undefined {
+  const trimmed = raw.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (!Number.isFinite(parsed)) {
+    return undefined;
+  }
+
+  return String(parsed);
+}
+
+function applyBoxLayoutStyleRules(
+  styles: readonly StyleRule[] | undefined,
+  style: LayoutInlineStyle,
+): void {
+  for (const rule of styles ?? []) {
+    const raw = String(rule.value);
+
+    if (
+      rule.property === "width" ||
+      rule.property === "minWidth" ||
+      rule.property === "maxWidth" ||
+      rule.property === "height" ||
+      rule.property === "minHeight" ||
+      rule.property === "maxHeight" ||
+      rule.property === "top" ||
+      rule.property === "right" ||
+      rule.property === "bottom" ||
+      rule.property === "left"
+    ) {
+      applyLengthStyleRule(style, rule.property, raw);
+      continue;
+    }
+
+    if (rule.property === "position") {
+      if (raw === "static" || raw === "relative" || raw === "absolute") {
+        style.position = raw;
+      }
+      continue;
+    }
+
+    if (rule.property === "pointerEvents") {
+      if (raw === "auto" || raw === "none") {
+        style.pointerEvents = raw;
+      }
+      continue;
+    }
+
+    if (rule.property === "zIndex") {
+      const resolved = parseZIndexStyleValue(raw);
+      if (resolved !== undefined) {
+        style.zIndex = resolved;
+      }
+      continue;
+    }
+
+    if (rule.property === "opacity") {
+      const resolved = parseOpacityStyleValue(raw);
+      if (resolved !== undefined) {
+        style.opacity = resolved;
+      }
+      continue;
+    }
+
+    if (rule.property === "backdropFilter" && isCssBackdropFilterValue(raw)) {
+      style.backdropFilter = raw.trim();
+    }
   }
 }
 
@@ -1031,6 +1195,8 @@ export function layoutInlineStyleFromStyleRules(
       applyLengthStyleRule(style, rule.property, raw);
       continue;
     }
+
+    applyBoxLayoutStyleRules([rule], style);
 
     const px = parseNonNegativePx(rule.value);
     if (px !== undefined && rule.property === "borderWidth") {

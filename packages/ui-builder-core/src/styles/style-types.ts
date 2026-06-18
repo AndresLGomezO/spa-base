@@ -32,12 +32,26 @@ export type StylePropertyKey =
   | "textDecoration"
   | "textAlign"
   | "textWrap"
+  | "letterSpacing"
   | "alignItems"
   | "justifyContent"
   | "alignSelf"
   | "flex"
+  | "width"
   | "minWidth"
   | "maxWidth"
+  | "height"
+  | "minHeight"
+  | "maxHeight"
+  | "top"
+  | "right"
+  | "bottom"
+  | "left"
+  | "position"
+  | "zIndex"
+  | "pointerEvents"
+  | "opacity"
+  | "backdropFilter"
   | "borderRadius"
   | "borderTopLeftRadius"
   | "borderTopRightRadius"
@@ -83,12 +97,26 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "textDecoration",
   "textAlign",
   "textWrap",
+  "letterSpacing",
   "alignItems",
   "justifyContent",
   "alignSelf",
   "flex",
+  "width",
   "minWidth",
   "maxWidth",
+  "height",
+  "minHeight",
+  "maxHeight",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "position",
+  "zIndex",
+  "pointerEvents",
+  "opacity",
+  "backdropFilter",
   "borderRadius",
   "borderTopLeftRadius",
   "borderTopRightRadius",

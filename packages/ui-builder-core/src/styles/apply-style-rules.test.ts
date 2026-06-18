@@ -16,6 +16,8 @@ import {
   resolvePageSlotWrapper,
   resolveStyleRules,
   resolveRowWrapperStyleRules,
+  layoutInlineStyleFromStyleRules,
+  textInlineStyleFromStyleRules,
   textWrapClassForLayoutShell,
   spacingStyleFromStyleRules,
   splitStyleRuleClasses,
@@ -528,5 +530,37 @@ describe("applyStyleRules", () => {
       resolveRowWrapperStyleRules([{ property: "textWrap", value: "wrap" }])
         .className,
     ).toContain("break-words");
+  });
+
+  it("applies box layout and effect styles inline", () => {
+    expect(
+      layoutInlineStyleFromStyleRules([
+        { property: "width", value: "100%" },
+        { property: "height", value: "200" },
+        { property: "position", value: "absolute" },
+        { property: "zIndex", value: "3" },
+        { property: "opacity", value: "80" },
+        { property: "backdropFilter", value: "blur(8px)" },
+      ]),
+    ).toEqual({
+      width: "100%",
+      height: "200px",
+      position: "absolute",
+      zIndex: "3",
+      opacity: "0.8",
+      backdropFilter: "blur(8px)",
+    });
+  });
+
+  it("applies letter spacing on text inline styles", () => {
+    expect(
+      textInlineStyleFromStyleRules([
+        { property: "letterSpacing", value: "2" },
+        { property: "opacity", value: "50" },
+      ]),
+    ).toEqual({
+      letterSpacing: "2px",
+      opacity: "0.5",
+    });
   });
 });

@@ -9,6 +9,7 @@ import {
   flexWrapRowItemClassName,
   isContainerComponent,
   isFlexWrapRowStack,
+  isOverlayImageRow,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
   rowPrefersContentWidth,
@@ -192,6 +193,11 @@ interface PreviewRowChromeLayoutClasses {
   readonly inner: string;
 }
 
+const overlayImagePreviewRowChromeClasses: PreviewRowChromeLayoutClasses = {
+  shell: "absolute inset-0 z-0 flex flex-col",
+  inner: "flex h-full min-h-0 w-full min-w-0 flex-col",
+};
+
 export function resolvePreviewRowChromeLayoutClasses(options: {
   readonly parentStackDirection: ColumnStackDirection;
   readonly parentStackAlign?: FlexAlign;
@@ -202,6 +208,10 @@ export function resolvePreviewRowChromeLayoutClasses(options: {
   readonly preferFlexGrow: boolean;
   readonly preferContentWidth: boolean;
 }): PreviewRowChromeLayoutClasses {
+  if (options.row && isOverlayImageRow(options.row)) {
+    return overlayImagePreviewRowChromeClasses;
+  }
+
   const parentUsesContentWidth =
     options.parentStackDirection === "column" &&
     (options.parentStackAlign === "start" ||

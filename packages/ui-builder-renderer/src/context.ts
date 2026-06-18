@@ -33,8 +33,10 @@ export interface FieldDisplayMeta {
 export interface ImageResolveOptions {
   /** Primary image field from layout config; used for field `defaultImage` fallback. */
   readonly primaryFieldPath: string;
-  /** Square image box size in px (8–1024). */
+  /** Square image box size in px (8–1024). Ignored when fillContainer is true. */
   readonly imageSize?: number;
+  readonly fillContainer?: boolean;
+  readonly objectFit?: "contain" | "cover" | "fill";
   readonly className?: string;
   readonly style?: CSSProperties;
 }

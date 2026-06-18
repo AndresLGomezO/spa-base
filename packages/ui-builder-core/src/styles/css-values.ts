@@ -37,6 +37,21 @@ export function isCssBoxShadowValue(value: string): boolean {
   );
 }
 
+export function isCssBackdropFilterValue(value: string): boolean {
+  const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return false;
+  }
+
+  if (/^var\(--[a-zA-Z0-9-]+\)$/.test(trimmed)) {
+    return true;
+  }
+
+  return /(?:blur|brightness|contrast|grayscale|hue-rotate|invert|opacity|saturate|sepia)\(/i.test(
+    trimmed,
+  );
+}
+
 export function isCssLengthTokenValue(value: string): boolean {
   const trimmed = value.trim();
   return (
@@ -58,9 +73,22 @@ export function isCssFontFamilyValue(value: string): boolean {
   return /[a-zA-Z]/.test(trimmed);
 }
 
-export function resolveLengthStyleValue(value: string): string | undefined {
+/** Resolves box/inset lengths: theme tokens, px integers, %, auto, and bare 0. */
+export function resolveBoxLengthStyleValue(value: string): string | undefined {
   const trimmed = value.trim();
+  if (trimmed.length === 0) {
+    return undefined;
+  }
+
   if (isCssLengthTokenValue(trimmed)) {
+    return trimmed;
+  }
+
+  if (trimmed === "auto") {
+    return trimmed;
+  }
+
+  if (/^-?\d+(\.\d+)?%$/.test(trimmed)) {
     return trimmed;
   }
 
@@ -70,6 +98,10 @@ export function resolveLengthStyleValue(value: string): string | undefined {
   }
 
   return `${px}px`;
+}
+
+export function resolveLengthStyleValue(value: string): string | undefined {
+  return resolveBoxLengthStyleValue(value);
 }
 
 export function resolveMarginStyleValue(value: string): string | undefined {

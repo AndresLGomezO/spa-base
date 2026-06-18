@@ -1,9 +1,11 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  isCssBackdropFilterValue,
   isCssBoxShadowValue,
   isCssFontFamilyValue,
   isCssLengthTokenValue,
+  resolveBoxLengthStyleValue,
   resolveLengthStyleValue,
 } from "./css-values.js";
 
@@ -21,6 +23,19 @@ describe("css-values", () => {
     expect(resolveLengthStyleValue("var(--radius-lg)")).toBe(
       "var(--radius-lg)",
     );
+  });
+
+  it("resolves box length values with percent and auto", () => {
+    expect(resolveBoxLengthStyleValue("100%")).toBe("100%");
+    expect(resolveBoxLengthStyleValue("auto")).toBe("auto");
+    expect(resolveBoxLengthStyleValue("0")).toBe("0px");
+    expect(resolveBoxLengthStyleValue("420")).toBe("420px");
+  });
+
+  it("accepts backdrop filter values", () => {
+    expect(isCssBackdropFilterValue("blur(8px)")).toBe(true);
+    expect(isCssBackdropFilterValue("var(--backdrop-blur)")).toBe(true);
+    expect(isCssBackdropFilterValue("invalid")).toBe(false);
   });
 
   it("accepts shadow values", () => {

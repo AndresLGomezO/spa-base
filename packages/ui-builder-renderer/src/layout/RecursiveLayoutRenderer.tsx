@@ -3,23 +3,27 @@ import {
   buildGridTemplateColumnsFromPercents,
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
+  createContainerOverlayContext,
   flexWrapClassFromStyles,
   gapPxFromStyles,
   gapStyleFromStyleRules,
   hasExplicitColumnWidthPercents,
+  isContainerComponent,
   isCssLengthTokenValue,
+  mergeRowWrapperStyles,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
   resolveColumnWidthPercents,
+  resolveContainerContentLayerRowStyles,
+  resolveContainerShellOverlayStyle,
   resolveDisplayRangeVisibility,
+  resolveImageComponentRowStyles,
   resolveResponsiveGridLayout,
   resolveRowWrapperStyleRules,
   stylesIncludeFlexGrow,
   usesFlexWrapLayout,
   usesResponsiveGridLayout,
   usesTextWrap,
-  isContainerComponent,
-  mergeRowWrapperStyles,
   containerRowWrapperClassName,
   flexWrapRowItemClassName,
   inlineContentRowClassName,
@@ -32,6 +36,7 @@ import {
   stackShellWidthClassName,
   type ColumnNode,
   type ColumnStackDirection,
+  type ContainerOverlayContext,
   type ResponsiveGridBreakpoint,
   type RowLocator,
   type RowNode,
@@ -149,6 +154,7 @@ interface RowRenderScope {
   readonly containerParentRowId?: string;
   readonly nestedParentRowId?: string;
   readonly nestedColumnIndex?: number;
+  readonly containerOverlayContext?: ContainerOverlayContext;
 }
 
 function buildRowLocator(scope: RowRenderScope): RowLocator {
@@ -710,7 +716,14 @@ function renderRow(
 
   if (row.type === "component") {
     if (isContainerComponent(row.component)) {
+      const containerOverlayContext = createContainerOverlayContext(
+        row.component.rows,
+      );
       const containerStyles = resolveRowWrapperStyleRules(row.component.styles);
+      const containerShellStyle = resolveContainerShellOverlayStyle(
+        row.component.styles,
+        row.component.rows,
+      );
       const containerStackDirection = row.component.stackDirection ?? "column";
       const containerParentIsRow = stackDirection === "row";
       const stretchedContainerClass = shouldStretchRootContainerRow(
@@ -732,6 +745,7 @@ function renderRow(
       const containerScope: RowRenderScope = {
         rootColumnIndex: rowScope.rootColumnIndex,
         containerParentRowId: row.id,
+        containerOverlayContext,
       };
       const containerWidthClass =
         flexWrapRowItemClass ||
@@ -754,7 +768,7 @@ function renderRow(
           ]
             .filter(Boolean)
             .join(" ")}
-          style={containerStyles.style}
+          style={containerShellStyle}
         >
           {renderRows(
             row.component.rows,
@@ -776,7 +790,23 @@ function renderRow(
       );
     }
 
-    const rowStyles = mergeRowWrapperStyles(row.styles, row.component.styles);
+    const overlayContext = rowScope.containerOverlayContext;
+    const componentStylesForRow =
+      row.component.kind === "image"
+        ? resolveImageComponentRowStyles(row.component)
+        : row.component.styles;
+    const rowStylesForMerge = overlayContext
+      ? resolveContainerContentLayerRowStyles(
+          row.styles,
+          componentStylesForRow,
+          overlayContext,
+          row,
+        )
+      : row.styles;
+    const rowStyles = mergeRowWrapperStyles(
+      rowStylesForMerge,
+      componentStylesForRow,
+    );
     const motionClass = resolveMotionPreset(row.motion, rowIndex);
     const isMainPage = context.mode === "mainPage";
     const isFormFill = context.mode === "form";

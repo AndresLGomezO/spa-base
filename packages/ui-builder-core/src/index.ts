@@ -118,6 +118,19 @@ export {
   beginContainerRootLayout,
 } from "./layout/ensure-container-root.js";
 export { resolveContainerChildRows } from "./layout/resolve-container-child-rows.js";
+export {
+  collectOverlayImageRowIds,
+  containerHasOverlayImage,
+  createContainerOverlayContext,
+  hasStyleProperty,
+  isOverlayImageComponent,
+  isOverlayImageRow,
+  readStylePropertyValue,
+  resolveContainerContentLayerRowStyles,
+  resolveContainerShellOverlayStyle,
+  resolveImageComponentRowStyles,
+  type ContainerOverlayContext,
+} from "./layout/container-overlay.js";
 export { createDefaultFormLayout } from "./layout/default-form-layout.js";
 export { createDefaultModalFooterLayout } from "./layout/default-modal-footer-layout.js";
 export {
@@ -185,8 +198,10 @@ export {
 } from "./styles/color-values.js";
 export {
   isCssBoxShadowValue,
+  isCssBackdropFilterValue,
   isCssFontFamilyValue,
   isCssLengthTokenValue,
+  resolveBoxLengthStyleValue,
   resolveLengthStyleValue,
   resolveMarginStyleValue,
 } from "./styles/css-values.js";

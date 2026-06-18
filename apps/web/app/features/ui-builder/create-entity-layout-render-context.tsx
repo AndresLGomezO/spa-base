@@ -135,6 +135,8 @@ export function createEntityLayoutRenderContext(options: {
         getDefinition={getDefinition}
         primaryFieldPath={imageOptions.primaryFieldPath}
         imageSize={imageOptions.imageSize}
+        fillContainer={imageOptions.fillContainer}
+        objectFit={imageOptions.objectFit}
         className={imageOptions.className}
         style={imageOptions.style}
         usePreviewPlaceholder={usePreviewPlaceholder}

@@ -29,6 +29,8 @@ interface EntityLayoutImageFieldProps {
   readonly className?: string | undefined;
   readonly style?: CSSProperties;
   readonly imageSize?: number;
+  readonly fillContainer?: boolean;
+  readonly objectFit?: "contain" | "cover" | "fill";
   readonly getDefinition?: (
     entityName: string,
   ) => EntityCatalogEntry | undefined;
@@ -45,6 +47,8 @@ export function EntityLayoutImageField({
   className,
   style,
   imageSize,
+  fillContainer,
+  objectFit,
   getDefinition,
   primaryFieldPath,
   usePreviewPlaceholder = false,
@@ -134,6 +138,8 @@ export function EntityLayoutImageField({
       className={className}
       style={style}
       sizePx={imageSize}
+      fillContainer={fillContainer}
+      objectFit={objectFit}
     />
   );
 }

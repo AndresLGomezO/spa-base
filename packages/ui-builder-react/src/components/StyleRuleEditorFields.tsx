@@ -11,6 +11,7 @@ import {
   coerceNumericStyleValue,
   defaultValueForProperty,
   enumOptionsForProperty,
+  isBackdropFilterStyleProperty,
   isColorStyleProperty,
   isDimensionStyleProperty,
   isEnumStyleProperty,
@@ -70,6 +71,16 @@ function StyleRuleValueInput({
     );
   }
 
+  if (isBackdropFilterStyleProperty(rule.property)) {
+    return (
+      <Input
+        value={String(rule.value)}
+        onChange={(event) => onChange({ value: event.target.value })}
+        placeholder="blur(8px)"
+      />
+    );
+  }
+
   if (isTypographyStyleProperty(rule.property)) {
     return (
       <TypographyValueEditor
@@ -111,6 +122,7 @@ function StyleRuleValueInput({
       <Input
         type="number"
         min={numericStyleInputMin(rule.property)}
+        max={rule.property === "opacity" ? 100 : undefined}
         step={1}
         value={String(rule.value)}
         onChange={(event) =>
