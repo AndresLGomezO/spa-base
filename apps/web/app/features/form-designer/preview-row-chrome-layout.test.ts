@@ -132,6 +132,31 @@ describe("preview-row-chrome-layout", () => {
     expect(textClasses.shell).not.toContain("w-fit");
   });
 
+  it("uses content width for metric-widget rows inside flex-wrap stacks", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "row",
+      parentUsesFlexWrap: true,
+      parentStackStyles: [{ property: "flexWrap", value: "wrap" }],
+      row: {
+        type: "component",
+        id: "metric-widget-1",
+        component: {
+          kind: "metric-widget",
+          entityName: "transaction",
+          widgetId: "widget-1",
+          styles: [{ property: "flex", value: "0" }],
+        },
+      },
+      isStructuralRow: false,
+      preferFlexGrow: false,
+      preferContentWidth: true,
+    });
+
+    expect(classes.shell).toContain("w-fit");
+    expect(classes.shell).toContain("basis-auto");
+    expect(classes.shell).not.toContain("flex-[1_1_0]");
+  });
+
   it("resolves parent stack direction and alignment for containers", () => {
     const layout = {
       showActions: true,

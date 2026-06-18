@@ -547,7 +547,7 @@ export function slotFlexGrowClassName(
   }
 
   if (String(flexRule.value) === "0") {
-    return flexClass;
+    return "shrink-0 grow-0 basis-auto";
   }
 
   return `${flexClass} min-w-0`;
@@ -685,7 +685,10 @@ export function flexWrapRowItemClassName(
     return "min-w-0 max-w-full flex-[1_1_0] basis-0";
   }
 
-  if (row.component?.kind === "dashboard-section") {
+  if (
+    row.component?.kind === "dashboard-section" ||
+    row.component?.kind === "metric-widget"
+  ) {
     if (stylesIncludeFlexGrow(row.component.styles)) {
       return "min-w-0 max-w-full flex-[1_1_0] basis-0";
     }

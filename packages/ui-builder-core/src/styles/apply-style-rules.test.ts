@@ -184,7 +184,9 @@ describe("applyStyleRules", () => {
         { property: "flex", value: "0" },
         { property: "alignSelf", value: "start" },
       ]),
-    ).toBe("self-start flex-[0] w-fit max-w-full min-w-0 shrink-0");
+    ).toBe(
+      "self-start shrink-0 grow-0 basis-auto w-fit max-w-full min-w-0 shrink-0",
+    );
   });
 
   it("maps flex grow onto slot wrappers", () => {
@@ -292,6 +294,19 @@ describe("applyStyleRules", () => {
           type: "component",
           component: {
             kind: "dashboard-section",
+            styles: [{ property: "flex", value: "0" }],
+          },
+        },
+      ),
+    ).toBe("w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto");
+    expect(
+      flexWrapRowItemClassName(
+        "row",
+        [{ property: "flexWrap", value: "wrap" }],
+        {
+          type: "component",
+          component: {
+            kind: "metric-widget",
             styles: [{ property: "flex", value: "0" }],
           },
         },

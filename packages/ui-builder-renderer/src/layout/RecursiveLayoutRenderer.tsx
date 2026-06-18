@@ -382,6 +382,15 @@ function rowStackShellClassName(
       : "w-fit max-w-full shrink-0";
   }
 
+  if (
+    component?.kind === "metric-widget" ||
+    component?.kind === "dashboard-section"
+  ) {
+    return parentIsFlexWrapRow
+      ? "w-fit max-w-full min-w-0 shrink-0 grow-0 basis-auto"
+      : "w-fit max-w-full shrink-0";
+  }
+
   if (usesTextWrap(component?.styles)) {
     return "min-w-0 w-full shrink";
   }

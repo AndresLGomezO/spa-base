@@ -106,7 +106,7 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
 
     expect(markup).toContain("Hello,");
     expect(markup).toContain("shrink-0");
-    expect(markup).toContain("flex-[0]");
+    expect(markup).toContain("basis-auto");
   });
 
   it("applies flex grow on dashboard-section rows in horizontal stacks", () => {
