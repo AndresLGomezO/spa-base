@@ -35,6 +35,7 @@ export function styleRulesEditorLabels(
     styleDimensionCustomInput: t(
       "entity.viewSettings.styleDimensionCustomInput",
     ),
+    styleDimensionUnit: t("entity.viewSettings.styleDimensionUnit"),
     styleDimensionInvalid: t("entity.viewSettings.styleDimensionInvalid"),
     styleTypographyTheme: t("entity.viewSettings.styleTypographyTheme"),
     styleTypographyCustom: t("entity.viewSettings.styleTypographyCustom"),

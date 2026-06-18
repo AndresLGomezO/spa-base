@@ -551,6 +551,105 @@ export function isValidFontFamilyCustomValue(value: string): boolean {
   return isCssFontFamilyValue(value);
 }
 
+export type BoxLengthCustomUnit = "px" | "%" | "auto";
+
+const PERCENT_DIMENSION_PROPERTIES = new Set<StylePropertyKey>([
+  "width",
+  "minWidth",
+  "maxWidth",
+  "height",
+  "minHeight",
+  "maxHeight",
+  "top",
+  "right",
+  "bottom",
+  "left",
+  "letterSpacing",
+]);
+
+const AUTO_DIMENSION_PROPERTIES = new Set<StylePropertyKey>([
+  "width",
+  "minWidth",
+  "maxWidth",
+  "height",
+  "minHeight",
+  "maxHeight",
+  "top",
+  "right",
+  "bottom",
+  "left",
+]);
+
+export function supportsPercentDimensionUnit(
+  property: StylePropertyKey,
+): boolean {
+  return PERCENT_DIMENSION_PROPERTIES.has(property);
+}
+
+export function supportsAutoDimensionUnit(property: StylePropertyKey): boolean {
+  return AUTO_DIMENSION_PROPERTIES.has(property);
+}
+
+export function dimensionCustomUnitsForProperty(
+  property: StylePropertyKey,
+): readonly BoxLengthCustomUnit[] {
+  const units: BoxLengthCustomUnit[] = ["px"];
+  if (supportsPercentDimensionUnit(property)) {
+    units.push("%");
+  }
+  if (supportsAutoDimensionUnit(property)) {
+    units.push("auto");
+  }
+  return units;
+}
+
+export function parseBoxLengthCustomValue(
+  property: StylePropertyKey,
+  value: string,
+): { readonly amount: string; readonly unit: BoxLengthCustomUnit } {
+  const trimmed = value.trim();
+  if (trimmed === "auto" && supportsAutoDimensionUnit(property)) {
+    return { amount: "", unit: "auto" };
+  }
+
+  const percentMatch = /^(-?\d+(?:\.\d+)?)%$/.exec(trimmed);
+  if (percentMatch && supportsPercentDimensionUnit(property)) {
+    return { amount: percentMatch[1] ?? "", unit: "%" };
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (Number.isFinite(parsed)) {
+    return { amount: String(parsed), unit: "px" };
+  }
+
+  return {
+    amount: String(numericStyleInputMin(property)),
+    unit: "px",
+  };
+}
+
+export function formatBoxLengthCustomValue(
+  property: StylePropertyKey,
+  amount: string,
+  unit: BoxLengthCustomUnit,
+): string {
+  if (unit === "auto") {
+    return supportsAutoDimensionUnit(property)
+      ? "auto"
+      : String(numericStyleInputMin(property));
+  }
+
+  if (unit === "%") {
+    const parsed = Number.parseFloat(amount);
+    if (!Number.isFinite(parsed)) {
+      return "100%";
+    }
+    return `${parsed}%`;
+  }
+
+  return coerceNumericStyleValue(property, amount);
+}
+
 export function isValidDimensionCustomValue(
   property: StylePropertyKey,
   value: string,
@@ -562,6 +661,14 @@ export function isValidDimensionCustomValue(
 
   if (isThemeModeDimensionValue(trimmed, property)) {
     return true;
+  }
+
+  if (trimmed === "auto") {
+    return supportsAutoDimensionUnit(property);
+  }
+
+  if (/^-?\d+(\.\d+)?%$/.test(trimmed)) {
+    return supportsPercentDimensionUnit(property);
   }
 
   const parsed = Number.parseInt(trimmed, 10);

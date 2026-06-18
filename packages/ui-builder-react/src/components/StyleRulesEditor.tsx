@@ -55,6 +55,7 @@ export interface StyleRulesEditorLabels {
   readonly styleDimensionCustom?: string;
   readonly styleDimensionTokens?: string;
   readonly styleDimensionCustomInput?: string;
+  readonly styleDimensionUnit?: string;
   readonly styleDimensionInvalid?: string;
   readonly styleTypographyTheme?: string;
   readonly styleTypographyCustom?: string;

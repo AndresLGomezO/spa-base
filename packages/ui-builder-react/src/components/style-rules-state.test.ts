@@ -3,9 +3,12 @@ import { describe, expect, it } from "vitest";
 import {
   addStyleRule,
   coerceNumericStyleValue,
+  formatBoxLengthCustomValue,
   formatStyleRuleValuePreview,
   isThemeModeColorValue,
+  isValidDimensionCustomValue,
   numericStyleInputMin,
+  parseBoxLengthCustomValue,
   removeStyleRule,
   upsertStyleRule,
 } from "./style-rules-state.js";
@@ -79,5 +82,24 @@ describe("style-rules-state", () => {
     ).toBe(true);
     expect(isThemeModeColorValue("#ffffff", customColorOptions)).toBe(false);
     expect(isThemeModeColorValue("primary")).toBe(true);
+  });
+
+  it("accepts percent and auto box length custom values", () => {
+    expect(isValidDimensionCustomValue("width", "100%")).toBe(true);
+    expect(isValidDimensionCustomValue("width", "auto")).toBe(true);
+    expect(isValidDimensionCustomValue("top", "auto")).toBe(true);
+    expect(isValidDimensionCustomValue("gap", "100%")).toBe(false);
+    expect(isValidDimensionCustomValue("borderRadius", "auto")).toBe(false);
+
+    expect(parseBoxLengthCustomValue("width", "100%")).toEqual({
+      amount: "100",
+      unit: "%",
+    });
+    expect(parseBoxLengthCustomValue("top", "auto")).toEqual({
+      amount: "",
+      unit: "auto",
+    });
+    expect(formatBoxLengthCustomValue("width", "100", "%")).toBe("100%");
+    expect(formatBoxLengthCustomValue("top", "", "auto")).toBe("auto");
   });
 });
