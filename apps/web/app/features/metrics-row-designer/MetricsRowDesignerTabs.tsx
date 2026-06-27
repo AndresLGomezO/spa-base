@@ -17,16 +17,19 @@ export function MetricsRowDesignerTabs() {
       readonly id: MetricsRowDesignerTabId;
       readonly label: string;
       readonly panel: ReactNode;
+      readonly panelScrollable?: boolean;
     }> = [
       {
         id: "widgets",
         label: t("metricsRowDesigner.tabs.widgets"),
         panel: <MetricsRowDesignerWidgetsTab />,
+        panelScrollable: false,
       },
       {
         id: "row",
         label: t("metricsRowDesigner.tabs.row"),
         panel: <MetricsRowDesignerRowTab />,
+        panelScrollable: false,
       },
     ];
 

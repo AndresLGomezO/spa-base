@@ -8,6 +8,8 @@ import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { createTenantDashboardLayoutRenderContext } from "../ui-builder/create-tenant-dashboard-layout-render-context";
 import { useDashboardViewFilterUrlState } from "../ui-builder/use-dashboard-view-filter-url-state";
 import { ViewFilterPageProvider } from "../ui-builder/view-filter-page-context";
+import { designerPreviewLayoutFillClassName } from "../ui-builder/designer-tree-workbench-classes";
+import { DesignerPreviewPanelShell } from "../ui-builder/DesignerPreviewPanelShell";
 import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import { FormDesignerPreviewThemeScope } from "../form-designer/FormDesignerPreviewThemeScope";
 import { MobileDevicePreviewFrame } from "../form-designer/MobileDevicePreviewFrame";
@@ -91,6 +93,9 @@ export function DashboardLayoutDesignerPreviewPanel({
         <RecursiveLayoutRenderer
           layout={previewLayout}
           context={previewContext}
+          className={
+            withStructureChrome ? designerPreviewLayoutFillClassName : undefined
+          }
           rowWrapper={structureWrappers?.rowWrapper}
           rootColumnWrapper={structureWrappers?.rootColumnWrapper}
           nestedColumnWrapper={structureWrappers?.nestedColumnWrapper}
@@ -107,11 +112,16 @@ export function DashboardLayoutDesignerPreviewPanel({
       device={mobilePreviewDevice}
       breakpoint={previewBreakpoint}
       className="h-full"
+      fillHeight={withStructureChrome}
     >
       {previewBody}
     </MobileDevicePreviewFrame>
   ) : (
-    <LayoutPreviewViewport breakpoint={previewBreakpoint} className="h-full">
+    <LayoutPreviewViewport
+      breakpoint={previewBreakpoint}
+      className="h-full"
+      fillHeight={withStructureChrome}
+    >
       {previewBody}
     </LayoutPreviewViewport>
   );
@@ -123,19 +133,18 @@ export function DashboardLayoutDesignerPreviewPanel({
   );
 
   return (
-    <div className="bg-card border-border flex flex-col gap-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <Text className="text-muted-foreground text-sm">
-          {t("entity.viewSettings.preview")}
-        </Text>
-        <div className="flex flex-wrap items-end gap-3">
+    <DesignerPreviewPanelShell
+      fillHeight={withStructureChrome}
+      controls={
+        <>
           <DashboardLayoutDesignerPreviewThemeSelect />
           {previewBreakpoint === "base" ? (
             <DashboardLayoutDesignerMobileDeviceSelect />
           ) : null}
-        </div>
-      </div>
-      <div className="min-h-96 overflow-auto py-2">{themedViewport}</div>
-    </div>
+        </>
+      }
+    >
+      {themedViewport}
+    </DesignerPreviewPanelShell>
   );
 }

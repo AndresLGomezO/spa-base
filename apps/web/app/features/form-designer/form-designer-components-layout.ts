@@ -13,6 +13,7 @@ import {
   updateComponentRowMetaAt,
   updateLayoutMeta,
   updateNestedColumnDisplayRange,
+  updateNestedColumnMetaAt,
   updateNestedColumnStackDirection,
   updateNestedColumnStyles,
   updateNestedLayoutRowMetaAt,
@@ -20,6 +21,7 @@ import {
   setNestedColumnWidthPercent,
   setRootColumnWidthPercent,
   updateRootColumnDisplayRange,
+  updateRootColumnMetaAt,
   updateRootColumnStackDirection,
   updateRootColumnStyles,
   updateRootNodeStyles,
@@ -44,7 +46,11 @@ import type {
   InsertAnchor,
   StructureTreeLabels,
 } from "./form-designer-structure-tree";
-import { resolveComponentRowLabel } from "./form-designer-structure-tree";
+import {
+  resolveColumnNodeDisplayLabel,
+  resolveComponentRowLabel,
+  resolveDefaultColumnNodeLabel,
+} from "./form-designer-structure-tree";
 
 export {
   resolvePreviewColumnChromeProps,
@@ -87,13 +93,16 @@ export interface ComponentsLayoutBinding {
   readonly updateRowMeta: (
     rowRef: ComponentRowRef,
     patch: Partial<
-      Pick<ComponentRowNode, "styles" | "motion" | "displayFrom" | "displayTo">
+      Pick<
+        ComponentRowNode,
+        "styles" | "motion" | "displayFrom" | "displayTo" | "name"
+      >
     >,
   ) => void;
   readonly updateNestedRowMeta: (
     rowRef: ComponentRowRef,
     patch: Partial<
-      Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo">
+      Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo" | "name">
     >,
   ) => void;
   readonly setNestedRowColumnCount: (
@@ -110,6 +119,7 @@ export interface ComponentsLayoutBinding {
       readonly styles?: readonly StyleRule[];
       readonly displayFrom?: ColumnNode["displayFrom"];
       readonly displayTo?: ColumnNode["displayTo"];
+      readonly name?: ColumnNode["name"];
     },
   ) => void;
   readonly updateRootColumn: (
@@ -120,6 +130,7 @@ export interface ComponentsLayoutBinding {
       readonly styles?: readonly StyleRule[];
       readonly displayFrom?: ColumnNode["displayFrom"];
       readonly displayTo?: ColumnNode["displayTo"];
+      readonly name?: ColumnNode["name"];
     },
   ) => void;
   readonly updateRootLayoutStyles: (styles: readonly StyleRule[]) => void;
@@ -315,6 +326,32 @@ export function findColumnByRef(
   };
 }
 
+export function resolveColumnRefDisplayLabel(
+  layout: UiLayoutDocument,
+  columnRef: ComponentColumnRef,
+  labels: StructureTreeLabels,
+): string {
+  const resolved = findColumnByRef(layout, columnRef);
+  const nestedColumnIndex = isNestedComponentColumnRef(columnRef)
+    ? columnRef.nestedColumnIndex
+    : undefined;
+
+  if (resolved) {
+    return resolveColumnNodeDisplayLabel(
+      resolved.column,
+      columnRef.rootColumnIndex,
+      labels,
+      nestedColumnIndex,
+    );
+  }
+
+  return resolveDefaultColumnNodeLabel(
+    columnRef.rootColumnIndex,
+    labels,
+    nestedColumnIndex,
+  );
+}
+
 export function findRowByRef(
   layout: UiLayoutDocument,
   rowRef: ComponentRowRef,
@@ -465,6 +502,15 @@ export function createComponentsLayoutBinding(
           },
         );
       }
+      if ("name" in patch) {
+        next = updateNestedColumnMetaAt(
+          next,
+          rowRef.locator.columnIndex,
+          rowRef.rowId,
+          nestedColumnIndex,
+          { name: patch.name },
+        );
+      }
       applyLayout(next);
     },
     updateRootColumn: (columnIndex, patch) => {
@@ -484,6 +530,9 @@ export function createComponentsLayoutBinding(
       }
       if ("displayFrom" in patch || "displayTo" in patch) {
         next = updateRootColumnDisplayRange(next, columnIndex, patch);
+      }
+      if ("name" in patch) {
+        next = updateRootColumnMetaAt(next, columnIndex, { name: patch.name });
       }
       applyLayout(next);
     },

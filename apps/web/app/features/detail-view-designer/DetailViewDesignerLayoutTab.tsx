@@ -2,6 +2,11 @@ import { Button, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useDetailViewDesigner } from "./detail-view-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 import { DetailViewDesignerLayoutTreePanel } from "./DetailViewDesignerLayoutTreePanel";
 import { DetailViewDesignerPreviewPanel } from "./DetailViewDesignerPreviewPanel";
 import { DetailViewDesignerStructureSessionProvider } from "./DetailViewDesignerStructureSession";
@@ -25,8 +30,8 @@ export function DetailViewDesignerLayoutTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 justify-end">
         <Button
           type="button"
           className="shrink-0"
@@ -39,10 +44,10 @@ export function DetailViewDesignerLayoutTab() {
       </div>
 
       <DetailViewDesignerStructureSessionProvider>
-        <div className="flex min-h-[28rem] gap-4">
+        <div className={designerTreeWorkbenchClassName}>
           <DetailViewDesignerLayoutTreePanel />
 
-          <div className="min-h-0 min-w-0 flex-1">
+          <div className={designerPreviewColumnClassName}>
             <DetailViewDesignerPreviewPanel withStructureChrome />
           </div>
         </div>

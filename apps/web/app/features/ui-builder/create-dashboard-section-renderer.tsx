@@ -1,6 +1,7 @@
 import { Text } from "@repo/ui";
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import { EmbeddedLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
+  layoutEstablishesDefiniteHeight,
   resolveDashboardSectionShellClassName,
   type DashboardSectionComponentConfig,
 } from "@repo/ui-builder-core";
@@ -39,12 +40,14 @@ export function createDashboardSectionRenderer(
     }
 
     return (
-      <div className={resolveDashboardSectionShellClassName(config.styles)}>
-        <RecursiveLayoutRenderer
-          layout={section.layout}
-          context={buildLayoutContext()}
-        />
-      </div>
+      <EmbeddedLayoutRenderer
+        layout={section.layout}
+        context={buildLayoutContext()}
+        shellClassName={resolveDashboardSectionShellClassName(
+          config.styles,
+          layoutEstablishesDefiniteHeight(section.layout),
+        )}
+      />
     );
   };
 }

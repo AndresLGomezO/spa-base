@@ -520,6 +520,7 @@ export const componentRowSchema: z.ZodType<unknown> = z.lazy(() =>
       component: fieldComponentSchema,
       styles: z.array(styleRuleSchema).optional(),
       motion: motionPresetSchema.optional(),
+      name: z.string().trim().min(1).optional(),
       displayFrom: responsiveGridBreakpointSchema.optional(),
       displayTo: responsiveGridBreakpointSchema.optional(),
     })
@@ -529,6 +530,7 @@ export const componentRowSchema: z.ZodType<unknown> = z.lazy(() =>
 export const columnNodeSchema: z.ZodType<{
   id: string;
   rows: unknown[];
+  name?: string;
   stackDirection?: "column" | "row";
   widthPercent?: number;
   styles?: unknown[];
@@ -539,6 +541,7 @@ export const columnNodeSchema: z.ZodType<{
     .object({
       id: z.string().trim().min(1),
       rows: z.array(rowNodeSchema),
+      name: z.string().trim().min(1).optional(),
       stackDirection: z.enum(["column", "row"]).optional(),
       widthPercent: z.number().int().min(1).max(100).optional(),
       styles: z.array(styleRuleSchema).optional(),
@@ -553,6 +556,7 @@ export const nestedLayoutRowSchema: z.ZodType<{
   id: string;
   columnCount: number;
   columns: unknown[];
+  name?: string;
   styles?: unknown[];
   displayFrom?: "base" | "sm" | "md" | "lg" | "xl";
   displayTo?: "base" | "sm" | "md" | "lg" | "xl";
@@ -563,6 +567,7 @@ export const nestedLayoutRowSchema: z.ZodType<{
       id: z.string().trim().min(1),
       columnCount: z.number().int().min(1).max(6),
       columns: z.array(columnNodeSchema).min(1),
+      name: z.string().trim().min(1).optional(),
       styles: z.array(styleRuleSchema).optional(),
       displayFrom: responsiveGridBreakpointSchema.optional(),
       displayTo: responsiveGridBreakpointSchema.optional(),

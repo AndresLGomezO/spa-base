@@ -127,6 +127,8 @@ interface LayoutPreviewViewportProps {
   readonly className?: string;
   readonly showFrame?: boolean;
   readonly frameSize?: LayoutPreviewFrameSize;
+  /** Stretch the framed preview to the parent height; defers Y scroll to ancestors. */
+  readonly fillHeight?: boolean;
 }
 
 export function LayoutPreviewViewport({
@@ -135,6 +137,7 @@ export function LayoutPreviewViewport({
   className,
   showFrame = true,
   frameSize,
+  fillHeight = false,
 }: LayoutPreviewViewportProps) {
   const isFullWidth = breakpoint === "full";
   const renderBreakpoint = resolveLayoutPreviewRenderBreakpoint(breakpoint);
@@ -142,7 +145,7 @@ export function LayoutPreviewViewport({
   if (!showFrame) {
     return (
       <PreviewBreakpointProvider breakpoint={renderBreakpoint}>
-        <div className={cn("w-full", className)}>{children}</div>
+        <div className={cn("h-full min-h-0 w-full", className)}>{children}</div>
       </PreviewBreakpointProvider>
     );
   }
@@ -159,15 +162,23 @@ export function LayoutPreviewViewport({
   return (
     <PreviewBreakpointProvider breakpoint={renderBreakpoint}>
       <div
-        className={cn("max-w-full overflow-x-auto", className, "min-h-full")}
+        className={cn(
+          "max-w-full overflow-x-auto",
+          fillHeight ? "flex min-h-full flex-1 flex-col" : "h-full min-h-0",
+          className,
+        )}
       >
         <div
           className={cn(
             "border-border bg-background box-border flex flex-col border border-dashed",
-            isFullWidth ? "w-full min-h-full" : "mx-auto",
-            frameSize
-              ? "overflow-hidden rounded-[2rem] shadow-sm"
-              : "min-h-full",
+            isFullWidth
+              ? fillHeight
+                ? "min-h-full w-full flex-1"
+                : "h-full min-h-0 w-full"
+              : fillHeight
+                ? "mx-auto min-h-full"
+                : "mx-auto min-h-full",
+            frameSize ? "overflow-hidden rounded-[2rem] shadow-sm" : undefined,
           )}
           style={
             isFullWidth

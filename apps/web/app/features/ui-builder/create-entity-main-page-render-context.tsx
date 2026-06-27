@@ -10,7 +10,6 @@ import { EntityViewMetricsStrip } from "../../components/metrics/EntityViewMetri
 import { EntityPageCompactMetrics } from "../../components/entity/EntityPageCompactMetrics";
 import { EntityPageCompactToolbar } from "../../components/entity/EntityPageCompactToolbar";
 import { EntityPageListScrollContainer } from "../../components/entity/entity-page-scroll-compact";
-import { entityListPageSlotClassName } from "../../components/entity/entity-list-table-layout";
 import { Heading, Button } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { Link, useNavigate } from "react-router";
@@ -116,7 +115,9 @@ export function createEntityMainPageRenderContext(
     registerPageListScrollElement,
     wrapPageListScroll: (listContent) =>
       previewMode ? (
-        <div className={entityListPageSlotClassName}>{listContent}</div>
+        <div className="relative z-0 flex min-h-0 min-w-0 flex-1 flex-col">
+          {listContent}
+        </div>
       ) : (
         <EntityPageListScrollContainer>
           {listContent}

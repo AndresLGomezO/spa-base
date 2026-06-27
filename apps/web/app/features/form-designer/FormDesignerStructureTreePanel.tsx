@@ -9,6 +9,8 @@ import {
 import { entityFormFieldAdapter } from "@repo/ui-builder-react";
 import { moveRowAt } from "@repo/ui-builder-core";
 import { cn } from "@repo/theme/utils";
+
+import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { useTranslation } from "react-i18next";
 
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
@@ -329,7 +331,8 @@ export function FormDesignerStructureTreePanel({
     return (
       <aside
         className={cn(
-          "bg-card border-border flex min-h-[28rem] w-12 shrink-0 flex-col items-center rounded-xl border shadow-sm",
+          "bg-card border-border flex w-12 shrink-0 flex-col items-center rounded-xl border shadow-sm",
+          designerTreePanelShellClassName,
           "transition-[width,opacity] duration-300 ease-out",
         )}
       >
@@ -379,7 +382,8 @@ export function FormDesignerStructureTreePanel({
   return (
     <aside
       className={cn(
-        "bg-card border-border flex min-h-[28rem] w-fit max-w-full shrink-0 flex-col rounded-xl border shadow-sm",
+        "bg-card border-border flex w-fit max-w-full shrink-0 flex-col rounded-xl border shadow-sm",
+        designerTreePanelShellClassName,
         "transition-[width,opacity] duration-300 ease-out",
       )}
     >

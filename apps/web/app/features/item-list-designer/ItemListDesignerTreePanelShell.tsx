@@ -3,6 +3,8 @@ import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
 import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
+import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
+
 interface ItemListDesignerTreePanelShellProps {
   readonly title: string;
   readonly expandLabel: string;
@@ -38,7 +40,8 @@ export function ItemListDesignerTreePanelShell({
     return (
       <aside
         className={cn(
-          "bg-card border-border flex min-h-[28rem] w-12 shrink-0 flex-col items-center rounded-xl border shadow-sm",
+          "bg-card border-border flex w-12 shrink-0 flex-col items-center rounded-xl border shadow-sm",
+          designerTreePanelShellClassName,
           "transition-[width,opacity] duration-300 ease-out",
           collapsedClassName,
         )}
@@ -69,7 +72,8 @@ export function ItemListDesignerTreePanelShell({
   return (
     <aside
       className={cn(
-        "bg-card border-border flex min-h-[28rem] w-fit max-w-full shrink-0 flex-col rounded-xl border shadow-sm",
+        "bg-card border-border flex w-fit max-w-full shrink-0 flex-col rounded-xl border shadow-sm",
+        designerTreePanelShellClassName,
         "transition-[width,opacity] duration-300 ease-out",
         expandedClassName,
       )}

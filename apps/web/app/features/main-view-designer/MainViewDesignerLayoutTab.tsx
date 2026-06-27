@@ -2,6 +2,11 @@ import { Button, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useMainViewDesigner } from "./main-view-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 import { MainViewDesignerLayoutTreePanel } from "./MainViewDesignerLayoutTreePanel";
 import { MainViewDesignerPreviewPanel } from "./MainViewDesignerPreviewPanel";
 import { MainViewDesignerStructureSessionProvider } from "./MainViewDesignerStructureSession";
@@ -24,8 +29,8 @@ export function MainViewDesignerLayoutTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 justify-end">
         <Button
           type="button"
           className="shrink-0"
@@ -38,10 +43,10 @@ export function MainViewDesignerLayoutTab() {
       </div>
 
       <MainViewDesignerStructureSessionProvider>
-        <div className="flex min-h-[28rem] gap-4">
+        <div className={designerTreeWorkbenchClassName}>
           <MainViewDesignerLayoutTreePanel />
 
-          <div className="min-h-0 min-w-0 flex-1">
+          <div className={designerPreviewColumnClassName}>
             <MainViewDesignerPreviewPanel withStructureChrome />
           </div>
         </div>

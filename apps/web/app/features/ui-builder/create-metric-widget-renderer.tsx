@@ -1,10 +1,12 @@
 import { Text } from "@repo/ui";
 import {
   filterComponentInnerStyleRules,
+  layoutEstablishesDefiniteHeight,
   layoutInlineStyleFromStyleRules,
+  resolveMetricWidgetShellClassName,
   splitStyleRuleClasses,
 } from "@repo/ui-builder-core";
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import { EmbeddedLayoutRenderer } from "@repo/ui-builder-renderer";
 import type { MetricWidgetComponentConfig } from "@repo/ui-builder-core";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { SerializableEntityDefinition } from "@repo/entities";
@@ -53,14 +55,20 @@ export function createMetricWidgetRenderer(
     const innerStyles = filterComponentInnerStyleRules(config.styles);
     const { containerClassName } = splitStyleRuleClasses(innerStyles);
     const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
+    const shellClassName = resolveMetricWidgetShellClassName(
+      config.styles,
+      layoutEstablishesDefiniteHeight(widget.layout),
+    );
 
     return (
-      <div className={containerClassName} style={containerStyle}>
-        <RecursiveLayoutRenderer
-          layout={widget.layout}
-          context={buildLayoutContext(entityDefinition, {})}
-        />
-      </div>
+      <EmbeddedLayoutRenderer
+        layout={widget.layout}
+        context={buildLayoutContext(entityDefinition, {})}
+        shellClassName={[shellClassName, containerClassName]
+          .filter(Boolean)
+          .join(" ")}
+        shellStyle={containerStyle}
+      />
     );
   };
 }

@@ -34,6 +34,14 @@ const rowChromeButtonClassName =
 
 const rowChromeToolbarClassName = "pointer-events-none absolute z-40";
 
+const rowChromeFocusRingClassName =
+  "pointer-events-none absolute inset-0 z-0 bg-primary/10 ring-primary ring-2 ring-inset";
+
+const rowChromeDimOverlayClassName =
+  "pointer-events-none absolute inset-0 z-20 bg-background/60";
+
+const rowChromeHitLayerClassName = "absolute inset-0 z-30";
+
 export function FormDesignerComponentRowChrome({
   rowRef,
   row,
@@ -49,10 +57,6 @@ export function FormDesignerComponentRowChrome({
   const isFocused = focusState === "focused";
   const isDimmed = focusState === "dimmed";
   const useHitLayer = !isStructuralRow && onHover != null;
-  const focusOverlayClassName = cn(
-    "absolute inset-0 z-20",
-    isFocused && "bg-primary/10 ring-primary ring-2 ring-inset",
-  );
   const parentStackDirection = layout
     ? resolveParentStackDirection(layout, rowRef.locator)
     : "column";
@@ -79,6 +83,7 @@ export function FormDesignerComponentRowChrome({
   return (
     <div
       className={layoutClasses.shell}
+      style={layoutClasses.shellStyle}
       data-row-id={rowRef.rowId}
       onMouseEnter={
         isStructuralRow && onHover ? () => onHover(rowRef) : undefined
@@ -87,11 +92,19 @@ export function FormDesignerComponentRowChrome({
         isStructuralRow && onHover ? () => onHover(null) : undefined
       }
     >
-      <div className={layoutClasses.inner}>{children}</div>
+      {isFocused ? (
+        <div aria-hidden className={rowChromeFocusRingClassName} />
+      ) : null}
+
+      <div className={cn(layoutClasses.inner, "z-10")}>{children}</div>
+
+      {isDimmed && !isStructuralRow ? (
+        <div aria-hidden className={rowChromeDimOverlayClassName} />
+      ) : null}
 
       {useHitLayer ? (
         <div
-          className={focusOverlayClassName}
+          className={rowChromeHitLayerClassName}
           onMouseEnter={() => onHover(rowRef)}
           onMouseLeave={() => onHover(null)}
           onClick={isFocused ? () => onSelect(rowRef) : undefined}
@@ -107,18 +120,6 @@ export function FormDesignerComponentRowChrome({
           }
           role={isFocused ? "button" : undefined}
           tabIndex={isFocused ? 0 : undefined}
-        />
-      ) : isFocused ? (
-        <div
-          aria-hidden
-          className={cn(focusOverlayClassName, "pointer-events-none")}
-        />
-      ) : null}
-
-      {isDimmed && !isStructuralRow ? (
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 z-30 bg-background/60"
         />
       ) : null}
 

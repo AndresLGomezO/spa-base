@@ -17,6 +17,7 @@ export function DetailViewDesignerTabs() {
       readonly id: DetailViewDesignerTabId;
       readonly label: string;
       readonly panel: ReactNode;
+      readonly panelScrollable?: boolean;
     }> = [
       {
         id: "settings",
@@ -27,6 +28,7 @@ export function DetailViewDesignerTabs() {
         id: "layout",
         label: t("detailViewDesigner.tabs.layout"),
         panel: <DetailViewDesignerLayoutTab />,
+        panelScrollable: false,
       },
     ];
 

@@ -2,6 +2,11 @@ import { Button, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 import { DashboardLayoutDesignerPreviewPanel } from "./DashboardLayoutDesignerPreviewPanel";
 import { DashboardLayoutDesignerStructureSessionProvider } from "./DashboardLayoutDesignerStructureSession";
 import { DashboardLayoutDesignerSectionsTreePanel } from "./DashboardLayoutDesignerSectionsTreePanel";
@@ -25,8 +30,8 @@ export function DashboardLayoutDesignerSectionsTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 justify-end">
         <Button
           type="button"
           className="shrink-0"
@@ -39,10 +44,10 @@ export function DashboardLayoutDesignerSectionsTab() {
       </div>
 
       <DashboardLayoutDesignerStructureSessionProvider>
-        <div className="flex min-h-[28rem] gap-4">
+        <div className={designerTreeWorkbenchClassName}>
           <DashboardLayoutDesignerSectionsTreePanel />
 
-          <div className="min-h-0 min-w-0 flex-1">
+          <div className={designerPreviewColumnClassName}>
             <DashboardLayoutDesignerPreviewPanel withStructureChrome />
           </div>
         </div>

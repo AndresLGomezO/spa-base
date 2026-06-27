@@ -4,9 +4,6 @@ import {
   CollapsibleStyleRulesEditor,
   ComponentConfigEditor,
   ComponentDisplayRangeEditor,
-  ResponsiveGridEditor,
-  filterStyleRulesForGenericEditor,
-  isResponsiveGridStyleProperty,
 } from "@repo/ui-builder-react";
 import {
   componentKindsForSurface,
@@ -15,23 +12,20 @@ import {
   isMetricWidgetComponent,
   isUserComponent,
   isViewFilterComponent,
-  MAX_NESTED_COLUMNS,
   type MotionPreset,
-  type NestedLayoutRowNode,
 } from "@repo/ui-builder-core";
-import { FieldLabel, Input, Text } from "@repo/ui";
+import { Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useFormDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
-import type { formDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
-import {
-  findRowByRef,
-  type ComponentsLayoutBinding,
-} from "../form-designer/form-designer-components-layout";
+import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
 import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentRowPanel";
+import { NestedLayoutRowPanel } from "../form-designer/NestedLayoutRowPanel";
+import { StructureRowNameField } from "../form-designer/StructureItemNameField";
+import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { LucideIconField } from "../../components/shared/LucideIconField";
 import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-binding";
 import { DashboardSectionComponentEditor } from "./DashboardSectionComponentEditor";
@@ -64,6 +58,8 @@ export function DashboardLayoutDesignerComponentRowPanel({
 
   const labels = useFormDesignerLayoutEditorLabels();
   const componentEditorLabels = useFormDesignerComponentEditorLabels();
+  const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
+  const fieldDescriptors = useMemo(() => [] as const, []);
 
   const row = findRowByRef(binding.layout, rowRef);
 
@@ -82,6 +78,8 @@ export function DashboardLayoutDesignerComponentRowPanel({
         rowRef={rowRef}
         binding={binding}
         labels={labels}
+        treeLabels={treeLabels}
+        fieldDescriptors={fieldDescriptors}
       />
     );
   }
@@ -94,6 +92,8 @@ export function DashboardLayoutDesignerComponentRowPanel({
         binding={binding}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
+        treeLabels={treeLabels}
+        fieldDescriptors={fieldDescriptors}
       />
     );
   }
@@ -101,6 +101,13 @@ export function DashboardLayoutDesignerComponentRowPanel({
   return (
     <div className="flex flex-col gap-3">
       <FormDesignerPanelPrimaryControls className="flex-col gap-3">
+        <StructureRowNameField
+          id={`component-row-name-${row.id}`}
+          row={row}
+          fieldDescriptors={fieldDescriptors}
+          treeLabels={treeLabels}
+          onChange={(name) => binding.updateRowMeta(rowRef, { name })}
+        />
         {isDashboardSectionComponent(row.component) ? (
           <DashboardSectionComponentEditor
             config={row.component}
@@ -180,87 +187,6 @@ export function DashboardLayoutDesignerComponentRowPanel({
         motion={row.motion}
         onChange={(motion: MotionPreset | undefined) =>
           binding.updateRowMeta(rowRef, { motion })
-        }
-        labels={labels.motion}
-        clearLabel={labels.motion.clearEffects}
-      />
-    </div>
-  );
-}
-
-function NestedLayoutRowPanel({
-  row,
-  rowRef,
-  binding,
-  labels,
-}: {
-  readonly row: NestedLayoutRowNode;
-  readonly rowRef: ComponentRowRef;
-  readonly binding: ComponentsLayoutBinding;
-  readonly labels: ReturnType<typeof formDesignerLayoutEditorLabels>;
-}) {
-  return (
-    <div className="flex flex-col gap-3">
-      <FormDesignerPanelPrimaryControls className="flex-col gap-3">
-        <div className="flex flex-wrap items-end gap-3">
-          <div className="flex w-24 flex-col gap-1 text-sm">
-            <FieldLabel htmlFor={`nested-layout-columns-${row.id}`}>
-              {labels.layoutColumns}
-            </FieldLabel>
-            <Input
-              id={`nested-layout-columns-${row.id}`}
-              type="number"
-              min={1}
-              max={MAX_NESTED_COLUMNS}
-              value={row.columnCount}
-              onChange={(event) => {
-                const count = Number.parseInt(event.target.value, 10);
-                if (!Number.isFinite(count)) {
-                  return;
-                }
-                binding.setNestedRowColumnCount(rowRef, count);
-              }}
-            />
-          </div>
-
-          <ResponsiveGridEditor
-            styles={row.styles}
-            columnCount={row.columnCount}
-            labels={labels.responsiveGrid}
-            onChange={(styles) =>
-              binding.updateNestedRowMeta(rowRef, { styles })
-            }
-          />
-        </div>
-
-        <ComponentDisplayRangeEditor
-          displayFrom={row.displayFrom}
-          displayTo={row.displayTo}
-          labels={labels.displayRange}
-          variant="inline"
-          onChange={(patch) => binding.updateNestedRowMeta(rowRef, patch)}
-        />
-      </FormDesignerPanelPrimaryControls>
-
-      <CollapsibleStyleRulesEditor
-        title={labels.rowLayoutStyles}
-        styles={filterStyleRulesForGenericEditor(row.styles)}
-        onChange={(genericStyles) => {
-          const gridStyles = (row.styles ?? []).filter((rule) =>
-            isResponsiveGridStyleProperty(rule.property),
-          );
-          binding.updateNestedRowMeta(rowRef, {
-            styles: [...genericStyles, ...gridStyles],
-          });
-        }}
-        labels={labels.styleRules}
-      />
-
-      <CollapsibleMotionPresetSection
-        title={labels.layoutEffects}
-        motion={binding.layout.motion}
-        onChange={(motion: MotionPreset | undefined) =>
-          binding.updateLayoutMotion(motion)
         }
         labels={labels.motion}
         clearLabel={labels.motion.clearEffects}

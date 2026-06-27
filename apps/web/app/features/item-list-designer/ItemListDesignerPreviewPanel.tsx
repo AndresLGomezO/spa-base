@@ -1,8 +1,8 @@
-import { Text } from "@repo/ui";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import { DesignerPreviewPanelShell } from "../ui-builder/DesignerPreviewPanelShell";
 import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import { DockedCardLayoutPreview } from "../ui-builder/DockedCardLayoutPreview";
 import { DockedExpandableTableLayoutPreview } from "../ui-builder/DockedExpandableTableLayoutPreview";
@@ -67,8 +67,12 @@ function ItemListDesignerExpandableTablePreviewBody() {
   );
 }
 
-export function ItemListDesignerPreviewPanel() {
-  const { t, i18n } = useTranslation("common");
+export function ItemListDesignerPreviewPanel({
+  fillHeight = false,
+}: {
+  readonly fillHeight?: boolean;
+}) {
+  const { i18n } = useTranslation("common");
   const { getDefinition } = useEntityCatalog();
   const {
     editor,
@@ -142,11 +146,16 @@ export function ItemListDesignerPreviewPanel() {
       device={mobilePreviewDevice}
       breakpoint={previewBreakpoint}
       className="h-full"
+      fillHeight={fillHeight}
     >
       {previewBody}
     </MobileDevicePreviewFrame>
   ) : (
-    <LayoutPreviewViewport breakpoint={previewBreakpoint} className="h-full">
+    <LayoutPreviewViewport
+      breakpoint={previewBreakpoint}
+      className="h-full"
+      fillHeight={fillHeight}
+    >
       {previewBody}
     </LayoutPreviewViewport>
   );
@@ -158,19 +167,18 @@ export function ItemListDesignerPreviewPanel() {
   );
 
   return (
-    <div className="bg-card border-border flex flex-col gap-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <Text className="text-muted-foreground text-sm">
-          {t("entity.viewSettings.preview")}
-        </Text>
-        <div className="flex flex-wrap items-end gap-3">
+    <DesignerPreviewPanelShell
+      fillHeight={fillHeight}
+      controls={
+        <>
           <ItemListDesignerPreviewThemeSelect />
           {previewBreakpoint === "base" ? (
             <ItemListDesignerMobileDeviceSelect />
           ) : null}
-        </div>
-      </div>
-      <div className="min-h-96 overflow-auto py-2">{themedViewport}</div>
-    </div>
+        </>
+      }
+    >
+      {themedViewport}
+    </DesignerPreviewPanelShell>
   );
 }

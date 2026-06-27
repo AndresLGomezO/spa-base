@@ -17,6 +17,7 @@ export function MainViewDesignerTabs() {
       readonly id: MainViewDesignerTabId;
       readonly label: string;
       readonly panel: ReactNode;
+      readonly panelScrollable?: boolean;
     }> = [
       {
         id: "settings",
@@ -27,6 +28,7 @@ export function MainViewDesignerTabs() {
         id: "layout",
         label: t("mainViewDesigner.tabs.layout"),
         panel: <MainViewDesignerLayoutTab />,
+        panelScrollable: false,
       },
     ];
 

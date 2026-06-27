@@ -22,11 +22,12 @@ import { formDesignerComponentsLabels } from "../form-designer/form-designer-com
 import {
   findRowByRef,
   isStructuralPreviewRow,
+  resolveColumnRefDisplayLabel,
   resolvePreviewColumnChromeProps,
   resolvePreviewRowFocusState,
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
-import { resolveComponentRowLabel } from "../form-designer/form-designer-structure-tree";
+import { resolveRowNodeDisplayLabel } from "../form-designer/form-designer-structure-tree";
 import { resolveActiveLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
 import { useOptionalMetricsRowDesignerStructureSession } from "./MetricsRowDesignerStructureSession";
@@ -77,24 +78,23 @@ export function useMetricsRowDesignerLayoutPreviewWrappers(
   const hoverColumn = structureSession?.hoverColumn;
 
   const resolveRowLabel = useCallback(
-    (row: RowNode) => {
-      if (row.type === "component") {
-        return resolveComponentRowLabel(row.component, [], labels.tree);
-      }
-
-      return labels.tree.nestedLayout(row.columnCount);
-    },
+    (row: RowNode) => resolveRowNodeDisplayLabel(row, [], labels.tree),
     [labels.tree],
   );
 
   const resolveColumnLabel = useCallback(
-    (columnRef: ComponentColumnRef) =>
-      labels.tree.column(
-        columnRef.nestedColumnIndex != null
-          ? columnRef.nestedColumnIndex + 1
-          : columnRef.rootColumnIndex + 1,
-      ),
-    [labels.tree],
+    (columnRef: ComponentColumnRef) => {
+      if (!binding) {
+        return String(columnRef.rootColumnIndex + 1);
+      }
+
+      return resolveColumnRefDisplayLabel(
+        binding.layout,
+        columnRef,
+        labels.tree,
+      );
+    },
+    [binding, labels.tree],
   );
 
   const handleSelectColumn = useCallback(

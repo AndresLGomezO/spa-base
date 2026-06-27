@@ -2,6 +2,11 @@ import { Button, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 import { MetricsRowDesignerPreviewPanel } from "./MetricsRowDesignerPreviewPanel";
 import { MetricsRowDesignerStructureSessionProvider } from "./MetricsRowDesignerStructureSession";
 import { MetricsRowDesignerRowTreePanel } from "./MetricsRowDesignerRowTreePanel";
@@ -25,8 +30,8 @@ export function MetricsRowDesignerRowTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex justify-end">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 justify-end">
         <Button
           type="button"
           className="shrink-0"
@@ -39,10 +44,10 @@ export function MetricsRowDesignerRowTab() {
       </div>
 
       <MetricsRowDesignerStructureSessionProvider>
-        <div className="flex min-h-[28rem] gap-4">
+        <div className={designerTreeWorkbenchClassName}>
           <MetricsRowDesignerRowTreePanel />
 
-          <div className="min-h-0 min-w-0 flex-1">
+          <div className={designerPreviewColumnClassName}>
             <MetricsRowDesignerPreviewPanel withStructureChrome />
           </div>
         </div>

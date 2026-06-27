@@ -18,6 +18,7 @@ import {
   updateComponentRowMetaAt,
   updateNestedLayoutRowMetaAt,
   updateRootColumnDisplayRange,
+  updateRootColumnMetaAt,
 } from "./mutations.js";
 
 describe("addComponentRowAt", () => {
@@ -586,6 +587,61 @@ describe("updateComponentRowMetaAt display range", () => {
     expect(row).toMatchObject({ type: "component", id: rowId });
     expect(row).not.toHaveProperty("displayFrom");
     expect(row).not.toHaveProperty("displayTo");
+  });
+});
+
+describe("structure item name mutations", () => {
+  it("persists and clears component row names", () => {
+    const layout = createEmptyLayout(1);
+    const rowId = createLayoutId("row");
+    const withRow = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...layout.root.columns[0]!,
+            rows: [
+              {
+                type: "component" as const,
+                id: rowId,
+                component: createDefaultComponent("text", "name"),
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const named = updateComponentRowMetaAt(
+      withRow,
+      { scope: "root", columnIndex: 0 },
+      rowId,
+      { name: "  Header  " },
+    );
+    expect(named.root.columns[0]?.rows[0]).toMatchObject({
+      name: "Header",
+    });
+
+    const cleared = updateComponentRowMetaAt(
+      named,
+      { scope: "root", columnIndex: 0 },
+      rowId,
+      { name: undefined },
+    );
+    const row = cleared.root.columns[0]?.rows[0];
+    expect(row).toMatchObject({ type: "component", id: rowId });
+    expect(row).not.toHaveProperty("name");
+  });
+
+  it("persists and clears root column names", () => {
+    const layout = createEmptyLayout(1);
+
+    const named = updateRootColumnMetaAt(layout, 0, { name: "Main" });
+    expect(named.root.columns[0]).toMatchObject({ name: "Main" });
+
+    const cleared = updateRootColumnMetaAt(named, 0, { name: undefined });
+    expect(cleared.root.columns[0]).not.toHaveProperty("name");
   });
 });
 

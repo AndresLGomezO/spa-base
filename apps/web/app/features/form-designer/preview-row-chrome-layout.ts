@@ -1,3 +1,4 @@
+import type { CSSProperties } from "react";
 import type {
   ColumnStackDirection,
   RowLocator,
@@ -6,12 +7,15 @@ import type {
   UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import {
+  containerEstablishesDefiniteHeight,
+  containerUsesPercentSplitHeight,
   flexWrapRowItemClassName,
   isContainerComponent,
   isFlexWrapRowStack,
   isOverlayImageRow,
   parseFlexLayoutFromStyles,
   resolveColumnStackDirection,
+  resolveContainerPercentSplitFlexStyle,
   rowPrefersContentWidth,
   type FlexAlign,
 } from "@repo/ui-builder-core";
@@ -188,15 +192,52 @@ export function rowUsesContentWidth(row: RowNode): boolean {
   return rowPrefersContentWidth(row.component.styles);
 }
 
+function rowHasFixedExplicitHeight(row: RowNode): boolean {
+  if (row.type !== "component") {
+    return false;
+  }
+
+  return containerEstablishesDefiniteHeight(row.component.styles);
+}
+
+function rowHasPercentSplitHeight(row: RowNode): boolean {
+  if (row.type !== "component") {
+    return false;
+  }
+
+  return containerUsesPercentSplitHeight(row.component.styles);
+}
+
 interface PreviewRowChromeLayoutClasses {
   readonly shell: string;
   readonly inner: string;
+  readonly shellStyle?: CSSProperties;
 }
 
 const overlayImagePreviewRowChromeClasses: PreviewRowChromeLayoutClasses = {
   shell: "absolute inset-0 z-0 flex flex-col",
   inner: "flex h-full min-h-0 w-full min-w-0 flex-col",
 };
+
+function resolvePreviewRowChromeShellStyle(
+  row: RowNode,
+  parentStackDirection: ColumnStackDirection,
+): CSSProperties | undefined {
+  if (row.type !== "component" || !isContainerComponent(row.component)) {
+    return undefined;
+  }
+
+  if (parentStackDirection !== "column") {
+    return undefined;
+  }
+
+  const splitFlex = resolveContainerPercentSplitFlexStyle(row.component.styles);
+  if (!splitFlex) {
+    return undefined;
+  }
+
+  return splitFlex;
+}
 
 export function resolvePreviewRowChromeLayoutClasses(options: {
   readonly parentStackDirection: ColumnStackDirection;
@@ -210,6 +251,33 @@ export function resolvePreviewRowChromeLayoutClasses(options: {
 }): PreviewRowChromeLayoutClasses {
   if (options.row && isOverlayImageRow(options.row)) {
     return overlayImagePreviewRowChromeClasses;
+  }
+
+  if (options.row && rowHasFixedExplicitHeight(options.row)) {
+    return {
+      shell: "relative flex min-h-0 w-full min-w-0 shrink-0 flex-col",
+      inner: "relative z-0 flex min-h-0 w-full min-w-0 flex-col",
+    };
+  }
+
+  if (options.row && rowHasPercentSplitHeight(options.row)) {
+    const shellStyle = resolvePreviewRowChromeShellStyle(
+      options.row,
+      options.parentStackDirection,
+    );
+
+    if (shellStyle) {
+      return {
+        shell: "relative flex min-h-0 h-full w-full min-w-0 shrink-0 flex-col",
+        inner: "relative z-0 flex h-full min-h-0 w-full min-w-0 flex-col",
+        shellStyle,
+      };
+    }
+
+    return {
+      shell: "relative flex min-h-0 w-full min-w-0 shrink-0 flex-col",
+      inner: "relative z-0 flex min-h-0 w-full min-w-0 flex-col",
+    };
   }
 
   const parentUsesContentWidth =

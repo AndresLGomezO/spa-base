@@ -68,7 +68,7 @@ export function LayoutGrid({
       style={{
         ...gridStyle,
         ...style,
-        gap: `${gap}px`,
+        gap: style?.gap ?? `${gap}px`,
         ...(useCssGrid
           ? {
               gridTemplateColumns:

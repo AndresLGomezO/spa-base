@@ -2,6 +2,11 @@ import { Button, Switch, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useItemListDesigner } from "./item-list-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 import { ItemListDesignerExpandableColumnsTreePanel } from "./ItemListDesignerExpandableColumnsTreePanel";
 import { ItemListDesignerPreviewPanel } from "./ItemListDesignerPreviewPanel";
 import { ItemListDesignerStructureSessionProvider } from "./ItemListDesignerStructureSession";
@@ -25,8 +30,8 @@ export function ItemListDesignerExpandableColumnsTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
         <Switch
           variant="ios"
           checked={editor.expandableShowActions}
@@ -45,11 +50,11 @@ export function ItemListDesignerExpandableColumnsTab() {
       </div>
 
       <ItemListDesignerStructureSessionProvider>
-        <div className="flex min-h-[28rem] gap-4">
+        <div className={designerTreeWorkbenchClassName}>
           <ItemListDesignerExpandableColumnsTreePanel />
 
-          <div className="min-h-0 min-w-0 flex-1">
-            <ItemListDesignerPreviewPanel />
+          <div className={designerPreviewColumnClassName}>
+            <ItemListDesignerPreviewPanel fillHeight />
           </div>
         </div>
       </ItemListDesignerStructureSessionProvider>

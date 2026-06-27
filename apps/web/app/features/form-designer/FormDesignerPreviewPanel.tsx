@@ -1,4 +1,3 @@
-import { Text } from "@repo/ui";
 import {
   moveRootColumn,
   removeRootColumn,
@@ -9,6 +8,7 @@ import { useTranslation } from "react-i18next";
 
 import { getEntityLabel } from "../../entities/entity-catalog";
 import { DesignedEntityFormModal } from "../../components/forms/DesignedEntityFormModal";
+import { DesignerPreviewPanelShell } from "../ui-builder/DesignerPreviewPanelShell";
 import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import type { FormDesignerTabId } from "./form-designer-tabs";
 import { FormDesignerColumnChrome } from "./FormDesignerColumnChrome";
@@ -171,17 +171,24 @@ function FormDesignerPreviewPanelContent({
       />
     );
 
+  const useDesignerFillLayout = showCard;
+
   const inlineFormPreview = (
     <DesignedEntityFormModal
       variant="inline"
       open
       scrollable={
-        previewTabId === "components"
-          ? editor.presentation !== "wizard" &&
-            preview.previewContentPadding !== "none"
-          : preview.previewFormScrollable
+        useDesignerFillLayout
+          ? false
+          : previewTabId === "components"
+            ? editor.presentation !== "wizard" &&
+              preview.previewContentPadding !== "none"
+            : preview.previewFormScrollable
       }
-      embeddedLayout={simulateMobileViewport ? "fill" : undefined}
+      embeddedLayout={
+        useDesignerFillLayout || simulateMobileViewport ? "fill" : undefined
+      }
+      panelMaxHeight={useDesignerFillLayout ? "none" : undefined}
       onClose={() => undefined}
       title={t("entity.createTitle", { entity: entityLabel })}
       forms={{
@@ -209,11 +216,16 @@ function FormDesignerPreviewPanelContent({
       device={mobilePreviewDevice}
       breakpoint={previewBreakpoint}
       className="h-full"
+      fillHeight={useDesignerFillLayout}
     >
       {inlineFormPreview}
     </MobileDevicePreviewFrame>
   ) : (
-    <LayoutPreviewViewport breakpoint={previewBreakpoint} className="h-full">
+    <LayoutPreviewViewport
+      breakpoint={previewBreakpoint}
+      className="h-full"
+      fillHeight={useDesignerFillLayout}
+    >
       {inlineFormPreview}
     </LayoutPreviewViewport>
   );
@@ -229,20 +241,19 @@ function FormDesignerPreviewPanelContent({
   }
 
   return (
-    <div className="bg-card border-border flex flex-col gap-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <Text className="text-muted-foreground text-sm">
-          {t("entity.viewSettings.preview")}
-        </Text>
-        <div className="flex flex-wrap items-end gap-3">
+    <DesignerPreviewPanelShell
+      fillHeight
+      controls={
+        <>
           <FormDesignerPreviewThemeSelect />
           {previewBreakpoint === "base" ? (
             <FormDesignerMobileDeviceSelect />
           ) : null}
-        </div>
-      </div>
-      <div className="min-h-96 overflow-auto py-2">{themedViewport}</div>
-    </div>
+        </>
+      }
+    >
+      {themedViewport}
+    </DesignerPreviewPanelShell>
   );
 }
 

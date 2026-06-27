@@ -51,6 +51,7 @@ interface MobileDevicePreviewFrameProps {
   readonly breakpoint: LayoutPreviewBreakpoint;
   readonly children: ReactNode;
   readonly className?: string;
+  readonly fillHeight?: boolean;
 }
 
 export function MobileDevicePreviewFrame({
@@ -58,6 +59,7 @@ export function MobileDevicePreviewFrame({
   breakpoint,
   children,
   className,
+  fillHeight = false,
 }: MobileDevicePreviewFrameProps) {
   const renderBreakpoint = resolveLayoutPreviewRenderBreakpoint(breakpoint);
   const {
@@ -74,9 +76,10 @@ export function MobileDevicePreviewFrame({
   return (
     <div
       className={cn(
-        "max-w-full overflow-auto px-2 py-6",
+        "max-w-full px-2 py-6",
+        fillHeight ? "overflow-x-auto" : "overflow-auto",
         className,
-        "min-h-full",
+        fillHeight ? "min-h-full" : "min-h-full",
       )}
     >
       <div

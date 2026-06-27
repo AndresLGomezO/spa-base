@@ -27,3 +27,13 @@ export {
   usePreviewBreakpoint,
   type PreviewBreakpointProviderProps,
 } from "./preview-breakpoint-context.js";
+export {
+  LayoutRenderOptionsProvider,
+  useLayoutRenderOptions,
+  type LayoutRenderOptions,
+  type LayoutRenderOptionsProviderProps,
+} from "./layout-render-options-context.js";
+export {
+  EmbeddedLayoutRenderer,
+  type EmbeddedLayoutRendererProps,
+} from "./layout/EmbeddedLayoutRenderer.js";

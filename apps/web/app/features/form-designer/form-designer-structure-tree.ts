@@ -113,6 +113,72 @@ export function resolveComponentRowLabel(
   }
 }
 
+function resolveCustomName(name?: string): string | undefined {
+  const trimmed = name?.trim();
+  return trimmed && trimmed.length > 0 ? trimmed : undefined;
+}
+
+function resolveDefaultColumnLabel(
+  columnIndex: number,
+  nestedColumnIndex: number | undefined,
+  labels: StructureTreeLabels,
+): string {
+  return labels.column(
+    nestedColumnIndex != null ? nestedColumnIndex + 1 : columnIndex + 1,
+  );
+}
+
+function resolveDefaultRowNodeLabel(
+  row: RowNode,
+  fieldDescriptors: readonly FieldDescriptor[],
+  labels: StructureTreeLabels,
+): string {
+  if (row.type === "component") {
+    return resolveComponentRowLabel(row.component, fieldDescriptors, labels);
+  }
+
+  return labels.nestedLayout(row.columnCount);
+}
+
+export function resolveColumnNodeDisplayLabel(
+  column: ColumnNode,
+  columnIndex: number,
+  labels: StructureTreeLabels,
+  nestedColumnIndex?: number,
+): string {
+  return (
+    resolveCustomName(column.name) ??
+    resolveDefaultColumnLabel(columnIndex, nestedColumnIndex, labels)
+  );
+}
+
+export function resolveRowNodeDisplayLabel(
+  row: RowNode,
+  fieldDescriptors: readonly FieldDescriptor[],
+  labels: StructureTreeLabels,
+): string {
+  return (
+    resolveCustomName(row.name) ??
+    resolveDefaultRowNodeLabel(row, fieldDescriptors, labels)
+  );
+}
+
+export function resolveDefaultColumnNodeLabel(
+  columnIndex: number,
+  labels: StructureTreeLabels,
+  nestedColumnIndex?: number,
+): string {
+  return resolveDefaultColumnLabel(columnIndex, nestedColumnIndex, labels);
+}
+
+export function resolveDefaultRowNodeLabelForEditor(
+  row: RowNode,
+  fieldDescriptors: readonly FieldDescriptor[],
+  labels: StructureTreeLabels,
+): string {
+  return resolveDefaultRowNodeLabel(row, fieldDescriptors, labels);
+}
+
 type LocatorContext = {
   readonly columnIndex: number;
   readonly containerRowId?: string;
@@ -162,10 +228,11 @@ function buildColumnNode(
     nestedColumnIndex: context.nestedColumnIndex,
     containerRowId: context.containerRowId,
     parentRowId: context.parentRowId,
-    label: labels.column(
-      context.nestedColumnIndex != null
-        ? context.nestedColumnIndex + 1
-        : columnIndex + 1,
+    label: resolveColumnNodeDisplayLabel(
+      column,
+      columnIndex,
+      labels,
+      context.nestedColumnIndex,
     ),
     rows: column.rows.map((row) =>
       buildRowNode(row, columnIndex, labels, fieldDescriptors, context),
@@ -213,7 +280,7 @@ function buildComponentRowNode(
       id: `row-${row.id}`,
       rowId: row.id,
       kind: row.component.kind,
-      label: resolveComponentRowLabel(row.component, fieldDescriptors, labels),
+      label: resolveRowNodeDisplayLabel(row, fieldDescriptors, labels),
       locator,
       childRows: row.component.rows.map((child) =>
         buildRowNode(
@@ -232,7 +299,7 @@ function buildComponentRowNode(
     id: `row-${row.id}`,
     rowId: row.id,
     kind: row.component.kind,
-    label: resolveComponentRowLabel(row.component, fieldDescriptors, labels),
+    label: resolveRowNodeDisplayLabel(row, fieldDescriptors, labels),
     locator,
   };
 }
@@ -250,7 +317,7 @@ function buildNestedLayoutRowNode(
     type: "nested-layout",
     id: `row-${row.id}`,
     rowId: row.id,
-    label: labels.nestedLayout(row.columnCount),
+    label: resolveRowNodeDisplayLabel(row, fieldDescriptors, labels),
     columnCount: row.columnCount,
     columns: row.columns.map((column, nestedColumnIndex) =>
       buildColumnNode(column, columnIndex, labels, fieldDescriptors, {

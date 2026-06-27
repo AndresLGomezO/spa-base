@@ -261,11 +261,11 @@ describe("applyStyleRules", () => {
 
   it("resolves dashboard section shell width from component styles", () => {
     expect(resolveDashboardSectionShellClassName(undefined)).toBe(
-      "h-auto min-w-0 max-w-full",
+      "h-auto min-w-0 max-w-full w-full",
     );
     expect(
       resolveDashboardSectionShellClassName([{ property: "flex", value: "1" }]),
-    ).toBe("h-auto min-w-0 w-full");
+    ).toBe("h-full min-h-0 min-w-0 w-full");
     expect(
       resolveDashboardSectionShellClassName([{ property: "flex", value: "0" }]),
     ).toBe("h-auto min-w-0 w-fit max-w-full");

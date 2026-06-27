@@ -238,18 +238,18 @@ function rowContainsFocus(
   layout: UiLayoutDocument,
   focusedRow: ComponentRowRef | null,
   focusedColumn: ComponentColumnRef | null,
-  containerRowRef: ComponentRowRef,
+  rowRef: ComponentRowRef,
 ): boolean {
-  if (
-    focusedRow != null &&
-    isRowAncestorOf(layout, containerRowRef, focusedRow)
-  ) {
-    return true;
+  if (focusedRow != null) {
+    if (
+      isRowAncestorOf(layout, rowRef, focusedRow) ||
+      isRowAncestorOf(layout, focusedRow, rowRef)
+    ) {
+      return true;
+    }
   }
 
-  return (
-    focusedColumn != null && columnBelongsToRow(focusedColumn, containerRowRef)
-  );
+  return focusedColumn != null && columnBelongsToRow(focusedColumn, rowRef);
 }
 
 function columnClaimsRowInterior(

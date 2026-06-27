@@ -4,6 +4,11 @@ import {
   columnFlexBasisStyle,
   componentSlotWrapperClassName,
   createContainerOverlayContext,
+  containerEstablishesDefiniteHeight,
+  containerUsesPercentFillHeight,
+  containerUsesPercentSplitHeight,
+  columnStackHasPercentSplitContainer,
+  resolvePercentSplitSiblingContainerClass,
   flexWrapClassFromStyles,
   gapPxFromStyles,
   gapStyleFromStyleRules,
@@ -15,7 +20,7 @@ import {
   resolveColumnStackDirection,
   resolveColumnWidthPercents,
   resolveContainerContentLayerRowStyles,
-  resolveContainerShellOverlayStyle,
+  resolveContainerShellLayoutStyle,
   resolveDisplayRangeVisibility,
   resolveImageComponentRowStyles,
   resolveResponsiveGridLayout,
@@ -27,6 +32,7 @@ import {
   containerRowWrapperClassName,
   flexWrapRowItemClassName,
   inlineContentRowClassName,
+  resolveEmbeddableComponentRowClassName,
   inlineFlexGrowStretchClassName,
   isFlexWrapRowStack,
   prefersInlineContentWidth,
@@ -46,9 +52,24 @@ import {
 import { LayoutGrid, LayoutStack } from "@repo/ui";
 
 import type { LayoutRenderContext } from "../context.js";
+import { LayoutRenderOptionsProvider } from "../layout-render-options-context.js";
 import { renderUiComponent } from "../engine/render-component.js";
 import { resolveMotionPreset } from "../motion/resolve-motion.js";
 import { usePreviewBreakpoint } from "../preview-breakpoint-context.js";
+import type {
+  LayoutWrapperRenderOptions,
+  NestedColumnWrapper,
+  NestedColumnWrapperContext,
+  RootColumnWrapper,
+  RowWrapper,
+} from "./layout-wrapper-types.js";
+
+export type {
+  NestedColumnWrapper,
+  NestedColumnWrapperContext,
+  RootColumnWrapper,
+  RowWrapper,
+} from "./layout-wrapper-types.js";
 
 /** Fills the grid/flex column cell so backgrounds and padding cover the full slot. */
 const COLUMN_SHELL_CLASS = "flex h-full min-h-0 w-full min-w-0 flex-col";
@@ -179,18 +200,7 @@ function buildRowLocator(scope: RowRenderScope): RowLocator {
   return { scope: "root", columnIndex: scope.rootColumnIndex };
 }
 
-export interface NestedColumnWrapperContext {
-  readonly rootColumnIndex: number;
-  readonly nestedParentRowId: string;
-}
-
-interface ColumnGridRenderOptions {
-  readonly rootColumnWrapper?: RootColumnWrapper;
-  readonly nestedColumnWrapper?: NestedColumnWrapper;
-  readonly rowWrapper?: RowWrapper;
-  readonly renderEmptyRootColumns?: boolean;
-  readonly stretchRootColumns?: boolean;
-}
+type ColumnGridRenderOptions = LayoutWrapperRenderOptions;
 
 function nestedColumnGridOptions(
   context: LayoutRenderContext,
@@ -243,6 +253,29 @@ function shouldStretchContainerChildRow(
       context,
       columnGridOptions?.stretchRootColumns ?? false,
     )
+  );
+}
+
+function shouldStretchContainerInnerRows(
+  row: RowNode,
+  context: LayoutRenderContext,
+  rowScope: RowRenderScope,
+  columnGridOptions: ColumnGridRenderOptions | undefined,
+  containerParentIsRow: boolean,
+): boolean {
+  if (row.type !== "component" || !isContainerComponent(row.component)) {
+    return false;
+  }
+
+  const styles = row.component.styles;
+
+  return (
+    shouldStretchRootContainerRow(row, context, rowScope, columnGridOptions) ||
+    containerParentIsRow ||
+    containerEstablishesDefiniteHeight(styles) ||
+    containerUsesPercentFillHeight(styles) ||
+    containerUsesPercentSplitHeight(styles) ||
+    columnStackHasPercentSplitContainer(row.component.rows)
   );
 }
 
@@ -318,11 +351,13 @@ function renderRows(
       style={columnGapProps.style}
       className={[
         columnStackShellClass,
-        (isMainPage || isStretchedSurfaceFill) &&
+        stretchColumn &&
           stackDirection === "column" &&
+          (isMainPage || isStretchedSurfaceFill) &&
           "min-h-0 flex-1",
-        (isMainPage || isStretchedSurfaceFill) &&
+        stretchColumn &&
           stackDirection === "column" &&
+          (isMainPage || isStretchedSurfaceFill) &&
           "h-full overflow-hidden",
         isWizardForm && stackDirection === "column" && "min-h-0 w-full",
         isWizardStepContent && stackDirection === "column" && "min-h-0 w-full",
@@ -330,6 +365,7 @@ function renderRows(
           stretchColumn &&
           stackDirection === "column" &&
           "min-h-0 flex-1 h-full",
+        stretchColumn && stackDirection === "row" && "min-h-0 h-full w-full",
         stackDirection === "column" ? "flex-col" : "flex-row",
         stackDirection === "row" &&
           columnFlex.align === undefined &&
@@ -729,22 +765,61 @@ function renderRow(
         row.component.rows,
       );
       const containerStyles = resolveRowWrapperStyleRules(row.component.styles);
-      const containerShellStyle = resolveContainerShellOverlayStyle(
+      const containerShellStyle = resolveContainerShellLayoutStyle(
         row.component.styles,
         row.component.rows,
+        {
+          parentStackDirection: stackDirection,
+          applyPercentSplitFlex: !usesPreviewRowWrapper,
+        },
       );
       const containerStackDirection = row.component.stackDirection ?? "column";
       const containerParentIsRow = stackDirection === "row";
-      const stretchedContainerClass = shouldStretchRootContainerRow(
+      const stretchRootContainer = shouldStretchRootContainerRow(
         row,
         context,
         rowScope,
         columnGridOptions,
-      )
-        ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
-        : containerParentIsRow
-          ? rowSiblingContainerShellClassName()
+      );
+      const rootContainerDefiniteHeight = containerEstablishesDefiniteHeight(
+        row.component.styles,
+      );
+      const percentSplitHeight = containerUsesPercentSplitHeight(
+        row.component.styles,
+      );
+      const stretchPercentFillContainer =
+        !stretchRootContainer &&
+        !percentSplitHeight &&
+        rowScope.containerParentRowId != null &&
+        rowScope.nestedParentRowId == null &&
+        containerUsesPercentFillHeight(row.component.styles) &&
+        (isStretchedSurfaceFillContext(
+          context,
+          columnGridOptions?.stretchRootColumns ?? false,
+        ) ||
+          stackDirection === "column");
+      const splitSiblingContainerClass =
+        !usesPreviewRowWrapper && parentColumn
+          ? resolvePercentSplitSiblingContainerClass(
+              row,
+              stackDirection,
+              parentColumn.rows,
+            )
           : undefined;
+      const stretchedContainerClass = stretchRootContainer
+        ? rootContainerDefiniteHeight
+          ? "flex min-h-0 w-full min-w-0 shrink-0 flex-col"
+          : "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
+        : percentSplitHeight
+          ? stackDirection === "column"
+            ? "flex min-h-0 h-full w-full min-w-0 shrink-0 flex-col"
+            : "flex min-h-0 w-full min-w-0 shrink-0 flex-col"
+          : stretchPercentFillContainer
+            ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
+            : (splitSiblingContainerClass ??
+              (containerParentIsRow
+                ? rowSiblingContainerShellClassName()
+                : undefined));
       const syntheticColumn: ColumnNode = {
         id: `${row.id}-container`,
         rows: row.component.rows,
@@ -786,12 +861,13 @@ function renderRow(
             atBreakpoint,
             containerScope,
             rowIndex,
-            shouldStretchRootContainerRow(
+            shouldStretchContainerInnerRows(
               row,
               context,
               rowScope,
               columnGridOptions,
-            ) || containerParentIsRow,
+              containerParentIsRow,
+            ),
             columnGridOptions,
           )}
         </div>,
@@ -828,13 +904,11 @@ function renderRow(
     const isWizardProgressRow = row.component.kind === "wizard-progress";
     const isEntityFieldSelectorRow =
       row.component.kind === "entity-field-selector";
-    const isDashboardSectionRow = row.component.kind === "dashboard-section";
-    const dashboardSectionRowClass = isDashboardSectionRow
-      ? stackDirection === "column"
-        ? "h-auto w-full shrink-0 grow-0"
-        : stylesIncludeFlexGrow(row.component.styles)
-          ? "h-auto min-w-0 max-w-full shrink-0"
-          : "h-auto w-fit max-w-full min-w-0 shrink-0 grow-0"
+    const isEmbeddableLayoutRow =
+      row.component.kind === "dashboard-section" ||
+      row.component.kind === "metric-widget";
+    const embeddableLayoutRowClass = isEmbeddableLayoutRow
+      ? resolveEmbeddableComponentRowClassName(row.component, stackDirection)
       : undefined;
     const mainPageRowClass =
       isMainPage && stackDirection === "column"
@@ -897,7 +971,7 @@ function renderRow(
             row.component,
             usesPreviewRowWrapper ? false : parentIsFlexWrapRow,
           ),
-          dashboardSectionRowClass,
+          embeddableLayoutRowClass,
           mainPageRowClass,
           formRowClass,
           wizardActionsRowClass,
@@ -1068,25 +1142,6 @@ function renderColumn(
   );
 }
 
-export type RootColumnWrapper = (
-  index: number,
-  column: ColumnNode,
-  children: ReactNode,
-) => ReactNode;
-
-export type NestedColumnWrapper = (
-  nestedColumnIndex: number,
-  column: ColumnNode,
-  context: NestedColumnWrapperContext,
-  children: ReactNode,
-) => ReactNode;
-
-export type RowWrapper = (
-  row: RowNode,
-  locator: RowLocator,
-  children: ReactNode,
-) => ReactNode;
-
 export interface RecursiveLayoutRendererProps {
   readonly layout: UiLayoutDocument;
   readonly context: LayoutRenderContext;
@@ -1148,6 +1203,32 @@ export function RecursiveLayoutRenderer({
     usesFlexWrapLayout(layout.root.styles)
   ) {
     return (
+      <LayoutRenderOptionsProvider value={columnGridOptions}>
+        <div
+          className={[
+            fillRootClass,
+            rootStylesResolved.className,
+            rootMotionClass,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={rootStylesResolved.style}
+        >
+          {renderWrappedColumns(
+            layout.root.columns,
+            context,
+            layout.root.styles,
+            atBreakpoint,
+            layout.root.columnCount,
+            columnGridOptions,
+          )}
+        </div>
+      </LayoutRenderOptionsProvider>
+    );
+  }
+
+  return (
+    <LayoutRenderOptionsProvider value={columnGridOptions}>
       <div
         className={[
           fillRootClass,
@@ -1158,33 +1239,15 @@ export function RecursiveLayoutRenderer({
           .join(" ")}
         style={rootStylesResolved.style}
       >
-        {renderWrappedColumns(
+        {renderLayoutColumnGrid(
           layout.root.columns,
           context,
           layout.root.styles,
-          atBreakpoint,
           layout.root.columnCount,
+          atBreakpoint,
           columnGridOptions,
         )}
       </div>
-    );
-  }
-
-  return (
-    <div
-      className={[fillRootClass, rootStylesResolved.className, rootMotionClass]
-        .filter(Boolean)
-        .join(" ")}
-      style={rootStylesResolved.style}
-    >
-      {renderLayoutColumnGrid(
-        layout.root.columns,
-        context,
-        layout.root.styles,
-        layout.root.columnCount,
-        atBreakpoint,
-        columnGridOptions,
-      )}
-    </div>
+    </LayoutRenderOptionsProvider>
   );
 }

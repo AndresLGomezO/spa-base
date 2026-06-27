@@ -69,6 +69,7 @@ export interface LayoutInlineStyle extends SpacingInlineStyle {
   fontFamily?: string;
   fontSize?: string;
   gap?: string;
+  flex?: string;
 }
 
 export interface TextInlineStyle {
@@ -595,16 +596,64 @@ export function inlineFlexGrowStretchClassName(
 /** Width class for the shell that wraps an embedded dashboard section layout. */
 export function resolveDashboardSectionShellClassName(
   styles: readonly StyleRule[] | undefined,
+  layoutEstablishesDefiniteHeight = false,
 ): string {
-  if (stylesIncludeFlexGrow(styles)) {
-    return "h-auto min-w-0 w-full";
+  if (stylesIncludeFlexGrow(styles) || layoutEstablishesDefiniteHeight) {
+    return "h-full min-h-0 min-w-0 w-full";
   }
 
   if (rowPrefersContentWidth(styles)) {
     return "h-auto min-w-0 w-fit max-w-full";
   }
 
-  return "h-auto min-w-0 max-w-full";
+  return "h-auto min-w-0 max-w-full w-full";
+}
+
+/** Width/height class for the shell that wraps an embedded metric widget layout. */
+export function resolveMetricWidgetShellClassName(
+  styles: readonly StyleRule[] | undefined,
+  layoutEstablishesDefiniteHeight = false,
+): string {
+  if (stylesIncludeFlexGrow(styles) || layoutEstablishesDefiniteHeight) {
+    return "h-full min-h-0 min-w-0 w-full";
+  }
+
+  if (rowPrefersContentWidth(styles)) {
+    return "h-auto min-w-0 w-fit max-w-full";
+  }
+
+  return "h-auto min-h-0 min-w-0 max-w-full w-full";
+}
+
+/** Row shell classes for metric-widget and dashboard-section rows. */
+export function resolveEmbeddableComponentRowClassName(
+  component: {
+    readonly kind: string;
+    readonly styles?: readonly StyleRule[];
+  },
+  stackDirection: "column" | "row",
+): string {
+  if (stackDirection === "column") {
+    if (stylesIncludeFlexGrow(component.styles)) {
+      return "h-full min-h-0 w-full shrink-0 grow-0";
+    }
+
+    if (rowPrefersContentWidth(component.styles)) {
+      return "h-auto w-fit max-w-full min-w-0 shrink-0 grow-0";
+    }
+
+    return "h-auto min-h-0 w-full max-w-full shrink-0 grow-0";
+  }
+
+  if (stylesIncludeFlexGrow(component.styles)) {
+    return "h-auto min-w-0 max-w-full shrink-0";
+  }
+
+  if (rowPrefersContentWidth(component.styles)) {
+    return "h-auto w-fit max-w-full min-w-0 shrink-0 grow-0";
+  }
+
+  return "h-auto w-fit max-w-full min-w-0 shrink-0 grow-0";
 }
 
 export function rowPrefersContentWidth(

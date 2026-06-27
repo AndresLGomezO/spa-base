@@ -18,6 +18,7 @@ export function ItemListDesignerTabs() {
       readonly id: ItemListDesignerTabId;
       readonly label: string;
       readonly panel: ReactNode;
+      readonly panelScrollable?: boolean;
     }> = [
       {
         id: "settings",
@@ -31,6 +32,7 @@ export function ItemListDesignerTabs() {
         id: "columns",
         label: t("itemListDesigner.tabs.columns"),
         panel: <ItemListDesignerColumnsTab />,
+        panelScrollable: false,
       });
     }
 
@@ -39,6 +41,7 @@ export function ItemListDesignerTabs() {
         id: "layout",
         label: t("itemListDesigner.tabs.layout"),
         panel: <ItemListDesignerLayoutTab />,
+        panelScrollable: false,
       });
     }
 

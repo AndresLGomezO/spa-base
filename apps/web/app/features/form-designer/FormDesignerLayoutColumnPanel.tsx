@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   CollapsibleMotionPresetSection,
   CollapsibleStyleRulesEditor,
@@ -13,6 +14,7 @@ import {
   setRootColumnWidthPercent,
   updateLayoutMeta,
   updateRootColumnDisplayRange,
+  updateRootColumnMetaAt,
   updateRootColumnStackDirection,
   updateRootColumnStyles,
   updateRootNodeStyles,
@@ -21,9 +23,11 @@ import {
 import { FieldLabel, Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
+import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
 import { getFormDesignerOuterLayout } from "./form-designer-layout";
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
+import { StructureColumnNameField } from "./StructureItemNameField";
 import { useFormDesigner } from "./form-designer-context";
 
 interface FormDesignerLayoutColumnPanelProps {
@@ -37,6 +41,7 @@ export function FormDesignerLayoutColumnPanel({
   const { editor } = useFormDesigner();
   const { layout, setLayout } = getFormDesignerOuterLayout(editor);
   const labels = useFormDesignerLayoutEditorLabels();
+  const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
 
   const column = layout.root.columns[columnIndex];
 
@@ -81,10 +86,23 @@ export function FormDesignerLayoutColumnPanel({
     />
   );
 
+  const columnNameField = (
+    <StructureColumnNameField
+      id={`layout-column-name-${column.id}`}
+      column={column}
+      columnIndex={columnIndex}
+      treeLabels={treeLabels}
+      onChange={(name) =>
+        setLayout(updateRootColumnMetaAt(layout, columnIndex, { name }))
+      }
+    />
+  );
+
   return (
     <div className="flex flex-col gap-3">
       {layout.root.columnCount > 1 ? (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           <div className="flex w-24 flex-col gap-1 text-sm">
             <FieldLabel>{labels.columnWidthPercent}</FieldLabel>
             <Input
@@ -131,6 +149,7 @@ export function FormDesignerLayoutColumnPanel({
         </FormDesignerPanelPrimaryControls>
       ) : (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           {stackEditor}
           {visibilityEditor}
         </FormDesignerPanelPrimaryControls>

@@ -21,8 +21,10 @@ import type { ComponentColumnRef } from "../form-designer/form-designer-componen
 import { isNestedComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { toComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { findColumnByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
+import { StructureColumnNameField } from "../form-designer/StructureItemNameField";
 import { resolveActiveLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
 
@@ -42,6 +44,7 @@ export function MetricsRowDesignerComponentColumnPanel({
   );
 
   const labels = useFormDesignerLayoutEditorLabels();
+  const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
   const resolved = findColumnByRef(binding.layout, columnRef);
 
   if (!resolved) {
@@ -149,10 +152,26 @@ export function MetricsRowDesignerComponentColumnPanel({
     );
   };
 
+  const columnNameField = (
+    <StructureColumnNameField
+      id={`component-column-name-${column.id}`}
+      column={column}
+      columnIndex={columnRef.rootColumnIndex}
+      nestedColumnIndex={
+        isNestedComponentColumnRef(columnRef)
+          ? columnRef.nestedColumnIndex
+          : undefined
+      }
+      treeLabels={treeLabels}
+      onChange={(name) => applyColumnPatch({ name })}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-3">
       {columnCount > 1 ? (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           <div className="flex w-24 flex-col gap-1 text-sm">
             <FieldLabel>{labels.columnWidthPercent}</FieldLabel>
             <Input
@@ -193,6 +212,7 @@ export function MetricsRowDesignerComponentColumnPanel({
         </FormDesignerPanelPrimaryControls>
       ) : (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           {stackEditor}
           {visibilityEditor}
         </FormDesignerPanelPrimaryControls>

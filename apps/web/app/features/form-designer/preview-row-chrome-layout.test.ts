@@ -33,6 +33,102 @@ describe("preview-row-chrome-layout", () => {
     expect(classes.inner).not.toContain("z-0");
   });
 
+  it("avoids stretch classes for containers with explicit pixel height", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "column",
+      isStructuralRow: true,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+      row: {
+        type: "component",
+        id: "container-root",
+        component: {
+          kind: "container",
+          rows: [],
+          styles: [{ property: "height", value: "200" }],
+        },
+      },
+    });
+
+    expect(classes.shell).toContain("shrink-0");
+    expect(classes.shell).not.toContain("flex-1");
+    expect(classes.shell).not.toContain("h-full");
+    expect(classes.inner).not.toContain("flex-1");
+    expect(classes.inner).not.toContain("h-full");
+  });
+
+  it("avoids stretch classes for containers with pixel minHeight", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "column",
+      isStructuralRow: true,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+      row: {
+        type: "component",
+        id: "container-root",
+        component: {
+          kind: "container",
+          rows: [],
+          styles: [{ property: "minHeight", value: "200" }],
+        },
+      },
+    });
+
+    expect(classes.shell).toContain("shrink-0");
+    expect(classes.shell).not.toContain("flex-1");
+  });
+
+  it("uses stretch sizing for percentage fill-height containers", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "column",
+      isStructuralRow: true,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+      row: {
+        type: "component",
+        id: "container-inner",
+        component: {
+          kind: "container",
+          rows: [],
+          styles: [{ property: "height", value: "100%" }],
+        },
+      },
+    });
+
+    expect(classes.shell).toContain("flex-1");
+    expect(classes.shell).toContain("h-full");
+    expect(classes.inner).toContain("flex-1");
+    expect(classes.inner).toContain("h-full");
+  });
+
+  it("applies flex-basis split styles on chrome shell for percentage split rows", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "column",
+      isStructuralRow: true,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+      row: {
+        type: "component",
+        id: "container-row",
+        component: {
+          kind: "container",
+          rows: [],
+          styles: [{ property: "height", value: "60%" }],
+        },
+      },
+    });
+
+    expect(classes.shell).toContain("shrink-0");
+    expect(classes.shell).toContain("h-full");
+    expect(classes.shell).not.toContain("flex-1");
+    expect(classes.inner).toContain("h-full");
+    expect(classes.inner).not.toContain("flex-1");
+    expect(classes.shellStyle).toEqual({
+      flex: "0 0 60%",
+      minHeight: "0",
+    });
+  });
+
   it("uses column slot sizing by default in vertical stacks", () => {
     const classes = resolvePreviewRowChromeLayoutClasses({
       parentStackDirection: "column",

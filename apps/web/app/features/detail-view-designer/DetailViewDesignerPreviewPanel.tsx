@@ -6,6 +6,8 @@ import { useTranslation } from "react-i18next";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useEntity } from "../../hooks/useEntity";
 import { createEntityRecordRenderContext } from "../ui-builder/create-entity-record-render-context";
+import { designerPreviewLayoutFillClassName } from "../ui-builder/designer-tree-workbench-classes";
+import { DesignerPreviewPanelShell } from "../ui-builder/DesignerPreviewPanelShell";
 import { LayoutPreviewViewport } from "../ui-builder/LayoutPreviewPanel";
 import { FormDesignerPreviewThemeScope } from "../form-designer/FormDesignerPreviewThemeScope";
 import { MobileDevicePreviewFrame } from "../form-designer/MobileDevicePreviewFrame";
@@ -64,6 +66,9 @@ export function DetailViewDesignerPreviewPanel({
       <RecursiveLayoutRenderer
         layout={editor.layout}
         context={previewContext}
+        className={
+          withStructureChrome ? designerPreviewLayoutFillClassName : undefined
+        }
         rowWrapper={structureWrappers?.rowWrapper}
         rootColumnWrapper={structureWrappers?.rootColumnWrapper}
         nestedColumnWrapper={structureWrappers?.nestedColumnWrapper}
@@ -79,11 +84,16 @@ export function DetailViewDesignerPreviewPanel({
       device={mobilePreviewDevice}
       breakpoint={previewBreakpoint}
       className="h-full"
+      fillHeight={withStructureChrome}
     >
       {previewBody}
     </MobileDevicePreviewFrame>
   ) : (
-    <LayoutPreviewViewport breakpoint={previewBreakpoint} className="h-full">
+    <LayoutPreviewViewport
+      breakpoint={previewBreakpoint}
+      className="h-full"
+      fillHeight={withStructureChrome}
+    >
       {previewBody}
     </LayoutPreviewViewport>
   );
@@ -95,20 +105,18 @@ export function DetailViewDesignerPreviewPanel({
   );
 
   return (
-    <div className="bg-card border-border flex flex-col gap-3 rounded-lg border p-4">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <Text className="text-muted-foreground text-sm">
-          {t("entity.viewSettings.preview")}
-        </Text>
-        <div className="flex flex-wrap items-end gap-3">
+    <DesignerPreviewPanelShell
+      fillHeight={withStructureChrome}
+      controls={
+        <>
           <DetailViewDesignerPreviewThemeSelect />
           {previewBreakpoint === "base" ? (
             <DetailViewDesignerMobileDeviceSelect />
           ) : null}
-        </div>
-      </div>
-
-      <div className="min-h-96 overflow-auto py-2">{themedViewport}</div>
-    </div>
+        </>
+      }
+    >
+      {themedViewport}
+    </DesignerPreviewPanelShell>
   );
 }

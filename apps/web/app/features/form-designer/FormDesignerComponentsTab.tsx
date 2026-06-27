@@ -27,6 +27,11 @@ import {
 } from "./form-designer-components-layout";
 import type { InsertAnchor } from "./form-designer-structure-tree";
 import { useFormDesigner } from "./form-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 
 function resolveDesignSurface(
   presentation: "plain" | "wizard",
@@ -173,8 +178,8 @@ function FormDesignerComponentsTabContent() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex items-start justify-end">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 items-start justify-end">
         <Button
           type="button"
           className="shrink-0"
@@ -186,10 +191,10 @@ function FormDesignerComponentsTabContent() {
         </Button>
       </div>
 
-      <div className="flex min-h-[28rem] gap-4">
+      <div className={designerTreeWorkbenchClassName}>
         <FormDesignerStructureTreePanel onInsert={handleInsert} />
 
-        <div className="min-h-0 min-w-0 flex-1">
+        <div className={designerPreviewColumnClassName}>
           <FormDesignerPreviewPanel previewTabId="components" showCard />
         </div>
 

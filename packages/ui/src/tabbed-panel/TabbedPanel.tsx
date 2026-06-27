@@ -9,6 +9,8 @@ export interface TabbedPanelTab {
   readonly id: TabbedPanelTabId;
   readonly label: string;
   readonly panel: ReactNode;
+  /** When false, the panel fills available height and defers scrolling to its content. */
+  readonly panelScrollable?: boolean;
 }
 
 export interface TabbedPanelProps {
@@ -76,7 +78,12 @@ export function TabbedPanel({
         id={`${baseId}-panel-${activeTab.id}`}
         role="tabpanel"
         aria-labelledby={`${baseId}-tab-${activeTab.id}`}
-        className="min-h-0 flex-1 overflow-y-auto overflow-x-hidden"
+        className={cn(
+          "min-h-0 flex-1",
+          activeTab.panelScrollable === false
+            ? "flex flex-col overflow-hidden"
+            : "overflow-y-auto overflow-x-hidden",
+        )}
       >
         {activeTab.panel}
       </div>

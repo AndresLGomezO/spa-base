@@ -4,6 +4,7 @@ import {
   ColumnStackDirectionEditor,
   ComponentDisplayRangeEditor,
 } from "@repo/ui-builder-react";
+import type { FieldDescriptor } from "@repo/ui-builder-react";
 import {
   isContainerComponent,
   type ComponentRowNode,
@@ -15,6 +16,8 @@ import type { ComponentRowRef } from "./form-designer-component-row-ref";
 import type { ComponentsLayoutBinding } from "./form-designer-components-layout";
 import type { formDesignerComponentEditorLabels } from "./form-designer-component-editor-labels";
 import type { formDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
+import { StructureRowNameField } from "./StructureItemNameField";
+import type { StructureTreeLabels } from "./form-designer-structure-tree";
 
 interface ContainerComponentRowPanelProps {
   readonly row: ComponentRowNode;
@@ -24,6 +27,8 @@ interface ContainerComponentRowPanelProps {
   readonly componentEditorLabels: ReturnType<
     typeof formDesignerComponentEditorLabels
   >;
+  readonly treeLabels: StructureTreeLabels;
+  readonly fieldDescriptors: readonly FieldDescriptor[];
 }
 
 export function ContainerComponentRowPanel({
@@ -32,6 +37,8 @@ export function ContainerComponentRowPanel({
   binding,
   labels,
   componentEditorLabels,
+  treeLabels,
+  fieldDescriptors,
 }: ContainerComponentRowPanelProps) {
   if (!isContainerComponent(row.component)) {
     return null;
@@ -42,6 +49,13 @@ export function ContainerComponentRowPanel({
   return (
     <div className="flex flex-col gap-3">
       <FormDesignerPanelPrimaryControls className="flex-col gap-3">
+        <StructureRowNameField
+          id={`container-name-${row.id}`}
+          row={row}
+          fieldDescriptors={fieldDescriptors}
+          treeLabels={treeLabels}
+          onChange={(name) => binding.updateRowMeta(rowRef, { name })}
+        />
         <ColumnStackDirectionEditor
           stackDirection={container.stackDirection}
           onChange={(stackDirection) =>

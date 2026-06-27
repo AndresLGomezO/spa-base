@@ -53,6 +53,31 @@ describe("TabbedPanel", () => {
     expect(screen.getByText("Settings panel content")).toBeInTheDocument();
   });
 
+  it("uses overflow-hidden flex layout when panelScrollable is false", () => {
+    const { container } = render(
+      <TabbedPanel
+        ariaLabel="Designer sections"
+        activeTabId="components"
+        onTabChange={() => undefined}
+        tabs={[
+          {
+            id: "components",
+            label: "Components",
+            panel: <p>Components panel content</p>,
+            panelScrollable: false,
+          },
+        ]}
+      />,
+    );
+
+    const panel = container.querySelector('[role="tabpanel"]');
+
+    expect(panel).not.toBeNull();
+    expect(panel).toHaveClass("overflow-hidden");
+    expect(panel).toHaveClass("flex");
+    expect(panel).not.toHaveClass("overflow-y-auto");
+  });
+
   it("switches visible panel when a tab is clicked", () => {
     render(<TabbedPanelHarness />);
 

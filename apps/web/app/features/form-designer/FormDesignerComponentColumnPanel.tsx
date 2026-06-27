@@ -21,12 +21,14 @@ import type { ComponentColumnRef } from "./form-designer-component-column-ref";
 import { isNestedComponentColumnRef } from "./form-designer-component-column-ref";
 import { toComponentRowRef } from "./form-designer-component-row-ref";
 import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
+import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import {
   findColumnByRef,
   resolveComponentsLayoutBinding,
   type ComponentsTreeScope,
 } from "./form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
+import { StructureColumnNameField } from "./StructureItemNameField";
 import { useFormDesigner } from "./form-designer-context";
 
 interface FormDesignerComponentColumnPanelProps {
@@ -49,6 +51,7 @@ export function FormDesignerComponentColumnPanel({
   );
 
   const labels = useFormDesignerLayoutEditorLabels();
+  const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
   const resolved = findColumnByRef(binding.layout, columnRef);
 
   if (!resolved) {
@@ -156,10 +159,26 @@ export function FormDesignerComponentColumnPanel({
     );
   };
 
+  const columnNameField = (
+    <StructureColumnNameField
+      id={`component-column-name-${column.id}`}
+      column={column}
+      columnIndex={columnRef.rootColumnIndex}
+      nestedColumnIndex={
+        isNestedComponentColumnRef(columnRef)
+          ? columnRef.nestedColumnIndex
+          : undefined
+      }
+      treeLabels={treeLabels}
+      onChange={(name) => applyColumnPatch({ name })}
+    />
+  );
+
   return (
     <div className="flex flex-col gap-3">
       {columnCount > 1 ? (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           <div className="flex w-24 flex-col gap-1 text-sm">
             <FieldLabel>{labels.columnWidthPercent}</FieldLabel>
             <Input
@@ -200,6 +219,7 @@ export function FormDesignerComponentColumnPanel({
         </FormDesignerPanelPrimaryControls>
       ) : (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           {stackEditor}
           {visibilityEditor}
         </FormDesignerPanelPrimaryControls>

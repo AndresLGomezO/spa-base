@@ -68,6 +68,10 @@ export function modalPanelViewportStyle(options: {
   readonly height?: string;
   readonly minHeight?: string;
 } {
+  if (options.panelMaxHeight === "none") {
+    return { minHeight: "100%" };
+  }
+
   if (options.fullscreen) {
     if (options.embedded) {
       return {
@@ -248,6 +252,7 @@ function ModalPanel({
   const durationMs = useOverlayTransitionDurationMs();
   const animate = !embedded && durationMs > 0;
   const hasFooter = Boolean(footer);
+  const embeddedFillHeightLocked = embeddedFill && panelMaxHeight !== "none";
   const useStickyLayout = scrollable || hasFooter;
   const contentScrollable = modalContentIsScrollable({ scrollable });
   const flushContent = contentPadding === "none";
@@ -270,7 +275,8 @@ function ModalPanel({
         flushContent ? "rounded-xl" : "border-border rounded-xl border",
         panelSizeClassName,
         embedded && !embeddedFill && "mx-auto",
-        embeddedFill && "min-h-full h-full max-h-full flex-1",
+        embeddedFillHeightLocked && "min-h-full h-full max-h-full flex-1",
+        embeddedFill && !embeddedFillHeightLocked && "min-h-full w-full flex-1",
         useStickyLayout && !contentScrollable && "overflow-hidden",
         !useStickyLayout && !flushContent && "p-5",
         animate &&
@@ -363,6 +369,8 @@ export function Modal({
     embedded && (embeddedLayout === "fill" || fullscreenAtBase);
   const resolvedPanelMaxHeight =
     embeddedFill && panelMaxHeight === undefined ? "100%" : panelMaxHeight;
+  const embeddedFillHeightLocked =
+    embeddedFill && resolvedPanelMaxHeight !== "none";
 
   const focusPanel = useCallback(() => {
     const focusable = panelRef.current?.querySelector<HTMLElement>(
@@ -413,7 +421,9 @@ export function Modal({
         className={cn(
           "flex min-h-0 w-full",
           embeddedFill || fullscreenAtBase
-            ? "h-full flex-col"
+            ? embeddedFillHeightLocked
+              ? "h-full flex-col"
+              : "min-h-full flex-col"
             : "flex-1 items-center justify-center p-4",
         )}
       >

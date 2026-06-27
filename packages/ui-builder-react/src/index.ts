@@ -100,3 +100,8 @@ export {
   type ColumnStackDirectionEditorLabels,
   type ColumnStackDirectionEditorProps,
 } from "./components/ColumnStackDirectionEditor.js";
+export {
+  StructureItemNameEditor,
+  type StructureItemNameEditorLabels,
+  type StructureItemNameEditorProps,
+} from "./components/StructureItemNameEditor.js";

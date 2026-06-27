@@ -29,6 +29,7 @@ export function FormDesignerTabs() {
         id: "components" as const,
         label: t("formDesigner.tabs.components"),
         panel: <FormDesignerComponentsTab />,
+        panelScrollable: false,
       },
     ],
     [t],

@@ -159,6 +159,18 @@ describe("modalPanelViewportStyle", () => {
     });
   });
 
+  it("stretches embedded fill panels without locking height when max height is none", () => {
+    expect(
+      modalPanelViewportStyle({
+        useStickyLayout: true,
+        embedded: true,
+        panelMaxHeight: "none",
+      }),
+    ).toEqual({
+      minHeight: "100%",
+    });
+  });
+
   it("uses a custom max height when provided", () => {
     expect(
       modalPanelViewportStyle({

@@ -17,16 +17,19 @@ export function DashboardLayoutDesignerTabs() {
       readonly id: DashboardLayoutDesignerTabId;
       readonly label: string;
       readonly panel: ReactNode;
+      readonly panelScrollable?: boolean;
     }> = [
       {
         id: "sections",
         label: t("dashboardLayoutDesigner.tabs.sections"),
         panel: <DashboardLayoutDesignerSectionsTab />,
+        panelScrollable: false,
       },
       {
         id: "layout",
         label: t("dashboardLayoutDesigner.tabs.layout"),
         panel: <DashboardLayoutDesignerLayoutTab />,
+        panelScrollable: false,
       },
     ];
 

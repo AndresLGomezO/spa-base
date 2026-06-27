@@ -2,6 +2,11 @@ import { Button, Switch, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import { useItemListDesigner } from "./item-list-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 import { ItemListDesignerColumnsTreePanel } from "./ItemListDesignerColumnsTreePanel";
 import { ItemListDesignerExpandableColumnsTab } from "./ItemListDesignerExpandableColumnsTab";
 import { ItemListDesignerPreviewPanel } from "./ItemListDesignerPreviewPanel";
@@ -35,8 +40,8 @@ function ItemListDesignerTableColumnsTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
         <Switch
           variant="ios"
           checked={editor.tableShowActions}
@@ -54,11 +59,11 @@ function ItemListDesignerTableColumnsTab() {
         </Button>
       </div>
 
-      <div className="flex min-h-[28rem] gap-4">
+      <div className={designerTreeWorkbenchClassName}>
         <ItemListDesignerColumnsTreePanel />
 
-        <div className="min-h-0 min-w-0 flex-1">
-          <ItemListDesignerPreviewPanel />
+        <div className={designerPreviewColumnClassName}>
+          <ItemListDesignerPreviewPanel fillHeight />
         </div>
       </div>
     </div>

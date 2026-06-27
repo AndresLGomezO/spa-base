@@ -31,6 +31,8 @@ export interface LayoutRootNode {
 export interface ColumnNode {
   readonly id: string;
   readonly rows: readonly RowNode[];
+  /** Builder-only label override for the structure tree and third rail. */
+  readonly name?: string;
   /** Vertical (default) or horizontal stacking of rows in this column. */
   readonly stackDirection?: ColumnStackDirection;
   /** User-set share of the row (1–100). Omitted = auto (split remainder equally). */
@@ -46,6 +48,8 @@ export interface ComponentRowNode {
   readonly type: "component";
   readonly id: string;
   readonly component: UiComponentConfig;
+  /** Builder-only label override for the structure tree and third rail. */
+  readonly name?: string;
   readonly styles?: readonly StyleRule[];
   readonly motion?: MotionPreset;
   readonly displayFrom?: ResponsiveGridBreakpoint;
@@ -57,6 +61,8 @@ export interface NestedLayoutRowNode {
   readonly id: string;
   readonly columnCount: number;
   readonly columns: readonly ColumnNode[];
+  /** Builder-only label override for the structure tree and third rail. */
+  readonly name?: string;
   readonly styles?: readonly StyleRule[];
   readonly displayFrom?: ResponsiveGridBreakpoint;
   readonly displayTo?: ResponsiveGridBreakpoint;

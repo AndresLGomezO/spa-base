@@ -23,11 +23,12 @@ import { formDesignerComponentsLabels } from "../form-designer/form-designer-com
 import {
   findRowByRef,
   isStructuralPreviewRow,
+  resolveColumnRefDisplayLabel,
   resolvePreviewColumnChromeProps,
   resolvePreviewRowFocusState,
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
-import { resolveComponentRowLabel } from "../form-designer/form-designer-structure-tree";
+import { resolveRowNodeDisplayLabel } from "../form-designer/form-designer-structure-tree";
 import { resolveScopeLayoutBinding } from "./item-list-designer-layout-binding";
 import type { ItemListStructureScope } from "./item-list-designer-structure-scope";
 import { useItemListDesigner } from "./item-list-designer-context";
@@ -85,28 +86,24 @@ function useLayoutPreviewWrappers(
   );
 
   const resolveRowLabel = useCallback(
-    (row: RowNode) => {
-      if (row.type === "component") {
-        return resolveComponentRowLabel(
-          row.component,
-          fieldDescriptors,
-          labels.tree,
-        );
-      }
-
-      return labels.tree.nestedLayout(row.columnCount);
-    },
+    (row: RowNode) =>
+      resolveRowNodeDisplayLabel(row, fieldDescriptors, labels.tree),
     [fieldDescriptors, labels.tree],
   );
 
   const resolveColumnLabel = useCallback(
-    (columnRef: ComponentColumnRef) =>
-      labels.tree.column(
-        columnRef.nestedColumnIndex != null
-          ? columnRef.nestedColumnIndex + 1
-          : columnRef.rootColumnIndex + 1,
-      ),
-    [labels.tree],
+    (columnRef: ComponentColumnRef) => {
+      if (!binding) {
+        return String(columnRef.rootColumnIndex + 1);
+      }
+
+      return resolveColumnRefDisplayLabel(
+        binding.layout,
+        columnRef,
+        labels.tree,
+      );
+    },
+    [binding, labels.tree],
   );
 
   const handleSelectColumn = useCallback(

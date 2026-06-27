@@ -1,77 +1,203 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  containerHasOverlayImage,
-  createContainerOverlayContext,
-  resolveContainerContentLayerRowStyles,
-  resolveContainerShellOverlayStyle,
-  resolveImageComponentRowStyles,
-} from "./container-overlay.js";
-import type { ImageComponentConfig } from "../types/component.js";
+  containerEstablishesDefiniteHeight,
+  containerHasFixedExplicitHeight,
+  containerUsesPercentFillHeight,
+  containerUsesPercentHeight,
+  containerUsesPercentSplitHeight,
+  layoutEstablishesDefiniteHeight,
+  resolveContainerPercentSplitFlexStyle,
+  resolveContainerShellLayoutStyle,
+  resolvePercentSplitSiblingContainerClass,
+} from "@repo/ui-builder-core";
 
-describe("container-overlay", () => {
-  const overlayImageRow = {
-    type: "component" as const,
-    id: "row-chart",
-    component: {
-      kind: "image" as const,
-      primary: {
-        type: "static" as const,
-        value: "https://example.com/chart.png",
-      },
-      displayMode: "overlay" as const,
-    },
-  };
-
-  const labelRow = {
-    type: "component" as const,
-    id: "row-label",
-    component: {
-      kind: "text" as const,
-      primary: { type: "static" as const, value: "Total Balance" },
-    },
-  };
-
-  it("detects overlay images in container rows", () => {
-    expect(containerHasOverlayImage([overlayImageRow])).toBe(true);
-    expect(containerHasOverlayImage([labelRow])).toBe(false);
+describe("container height style helpers", () => {
+  it("detects percentage heights", () => {
+    expect(
+      containerUsesPercentHeight([{ property: "height", value: "100%" }]),
+    ).toBe(true);
+    expect(
+      containerUsesPercentHeight([{ property: "height", value: "200" }]),
+    ).toBe(false);
   });
 
-  it("adds overlay defaults to image row styles", () => {
-    const styles = resolveImageComponentRowStyles(
-      overlayImageRow.component as ImageComponentConfig,
-    );
-
-    expect(styles).toEqual(
-      expect.arrayContaining([
-        { property: "position", value: "absolute" },
-        { property: "pointerEvents", value: "none" },
-        { property: "zIndex", value: "0" },
+  it("treats fixed and percentage heights differently", () => {
+    expect(
+      containerHasFixedExplicitHeight([{ property: "height", value: "200" }]),
+    ).toBe(true);
+    expect(
+      containerHasFixedExplicitHeight([{ property: "height", value: "100%" }]),
+    ).toBe(false);
+    expect(
+      containerHasFixedExplicitHeight([
+        { property: "minHeight", value: "100%" },
       ]),
-    );
+    ).toBe(false);
   });
 
-  it("injects relative positioning on container shell when overlay exists", () => {
+  it("detects fill and split percentage heights", () => {
     expect(
-      resolveContainerShellOverlayStyle(undefined, [overlayImageRow]).position,
-    ).toBe("relative");
+      containerUsesPercentFillHeight([
+        { property: "minHeight", value: "100%" },
+      ]),
+    ).toBe(true);
+    expect(
+      containerUsesPercentSplitHeight([
+        { property: "minHeight", value: "60%" },
+      ]),
+    ).toBe(true);
+    expect(
+      containerUsesPercentSplitHeight([{ property: "height", value: "100%" }]),
+    ).toBe(false);
   });
 
-  it("injects content layer defaults for sibling rows", () => {
-    const context = createContainerOverlayContext([overlayImageRow, labelRow]);
-
+  it("treats pixel minHeight as a definite height for percentage children", () => {
     expect(
-      resolveContainerContentLayerRowStyles(
-        undefined,
-        undefined,
-        context,
-        labelRow,
+      containerEstablishesDefiniteHeight([
+        { property: "minHeight", value: "200" },
+      ]),
+    ).toBe(true);
+    expect(
+      resolveContainerShellLayoutStyle(
+        [{ property: "minHeight", value: "200" }],
+        [],
       ),
-    ).toEqual(
-      expect.arrayContaining([
-        { property: "position", value: "relative" },
-        { property: "zIndex", value: "1" },
+    ).toEqual({
+      minHeight: "200px",
+      height: "200px",
+    });
+  });
+
+  it("returns flex-basis split style for percentage split heights", () => {
+    expect(
+      resolveContainerPercentSplitFlexStyle([
+        { property: "height", value: "60%" },
       ]),
-    );
+    ).toEqual({
+      flex: "0 0 60%",
+      minHeight: "0",
+    });
+  });
+
+  it("omits conflicting percentage height when applying flex split", () => {
+    expect(
+      resolveContainerShellLayoutStyle(
+        [
+          { property: "height", value: "60%" },
+          { property: "backgroundColor", value: "#000000" },
+        ],
+        [],
+        { parentStackDirection: "column" },
+      ),
+    ).toEqual({
+      flex: "0 0 60%",
+      minHeight: "0",
+      backgroundColor: "#000000",
+    });
+  });
+
+  it("uses fill height on container shell when flex split is deferred to row chrome", () => {
+    expect(
+      resolveContainerShellLayoutStyle(
+        [{ property: "height", value: "60%" }],
+        [],
+        {
+          parentStackDirection: "column",
+          applyPercentSplitFlex: false,
+        },
+      ),
+    ).toEqual({
+      height: "100%",
+    });
+  });
+
+  it("detects definite height on layout root containers", () => {
+    expect(
+      layoutEstablishesDefiniteHeight({
+        showActions: true,
+        root: {
+          type: "root",
+          id: "root",
+          columnCount: 1,
+          columns: [
+            {
+              id: "col",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-container",
+                  component: {
+                    kind: "container",
+                    styles: [{ property: "minHeight", value: "200" }],
+                    rows: [],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      }),
+    ).toBe(true);
+  });
+
+  it("resolves flex-1 class for non-split siblings in percent-split stacks", () => {
+    expect(
+      resolvePercentSplitSiblingContainerClass(
+        {
+          type: "component",
+          id: "row-first",
+          component: { kind: "container", rows: [] },
+        },
+        "column",
+        [
+          {
+            type: "component",
+            id: "row-first",
+            component: { kind: "container", rows: [] },
+          },
+          {
+            type: "component",
+            id: "row-third",
+            component: {
+              kind: "container",
+              styles: [{ property: "height", value: "30%" }],
+              rows: [],
+            },
+          },
+        ],
+      ),
+    ).toBe("flex min-h-0 flex-1 w-full min-w-0 flex-col");
+
+    expect(
+      resolvePercentSplitSiblingContainerClass(
+        {
+          type: "component",
+          id: "row-third",
+          component: {
+            kind: "container",
+            styles: [{ property: "height", value: "30%" }],
+            rows: [],
+          },
+        },
+        "column",
+        [
+          {
+            type: "component",
+            id: "row-first",
+            component: { kind: "container", rows: [] },
+          },
+          {
+            type: "component",
+            id: "row-third",
+            component: {
+              kind: "container",
+              styles: [{ property: "height", value: "30%" }],
+              rows: [],
+            },
+          },
+        ],
+      ),
+    ).toBeUndefined();
   });
 });

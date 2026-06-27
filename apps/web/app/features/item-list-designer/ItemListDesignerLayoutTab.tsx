@@ -8,6 +8,11 @@ import {
   MIN_CARDS_PER_ROW,
 } from "../../components/entity/entity-card-list-grid";
 import { useItemListDesigner } from "./item-list-designer-context";
+import {
+  designerPreviewColumnClassName,
+  designerTreeTabRootClassName,
+  designerTreeWorkbenchClassName,
+} from "../ui-builder/designer-tree-workbench-classes";
 import { ItemListDesignerCardLayoutTreePanel } from "./ItemListDesignerCardLayoutTreePanel";
 import { ItemListDesignerPreviewPanel } from "./ItemListDesignerPreviewPanel";
 import { ItemListDesignerStructureSessionProvider } from "./ItemListDesignerStructureSession";
@@ -32,8 +37,8 @@ export function ItemListDesignerLayoutTab() {
   };
 
   return (
-    <div className="flex flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-4">
+    <div className={designerTreeTabRootClassName}>
+      <div className="flex shrink-0 flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-4">
           <label className="flex flex-col gap-1 text-sm">
             <span className="text-muted-foreground">
@@ -87,11 +92,11 @@ export function ItemListDesignerLayoutTab() {
       </div>
 
       <ItemListDesignerStructureSessionProvider>
-        <div className="flex min-h-[28rem] gap-4">
+        <div className={designerTreeWorkbenchClassName}>
           <ItemListDesignerCardLayoutTreePanel />
 
-          <div className="min-h-0 min-w-0 flex-1">
-            <ItemListDesignerPreviewPanel />
+          <div className={designerPreviewColumnClassName}>
+            <ItemListDesignerPreviewPanel fillHeight />
           </div>
         </div>
       </ItemListDesignerStructureSessionProvider>

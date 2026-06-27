@@ -27,11 +27,12 @@ import {
   clampComponentsStepIndex,
   findRowByRef,
   isStructuralPreviewRow,
+  resolveColumnRefDisplayLabel,
   resolveComponentsLayoutBinding,
   resolvePreviewColumnChromeProps,
   resolvePreviewRowFocusState,
 } from "./form-designer-components-layout";
-import { resolveComponentRowLabel } from "./form-designer-structure-tree";
+import { resolveRowNodeDisplayLabel } from "./form-designer-structure-tree";
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import { useFormDesigner } from "./form-designer-context";
 import { useTranslation } from "react-i18next";
@@ -81,28 +82,15 @@ export function FormDesignerComponentsPreviewBody() {
   );
 
   const resolveRowLabel = useCallback(
-    (row: RowNode) => {
-      if (row.type === "component") {
-        return resolveComponentRowLabel(
-          row.component,
-          fieldDescriptors,
-          labels.tree,
-        );
-      }
-
-      return labels.tree.nestedLayout(row.columnCount);
-    },
+    (row: RowNode) =>
+      resolveRowNodeDisplayLabel(row, fieldDescriptors, labels.tree),
     [fieldDescriptors, labels.tree],
   );
 
   const resolveColumnLabel = useCallback(
     (columnRef: ComponentColumnRef) =>
-      labels.tree.column(
-        columnRef.nestedColumnIndex != null
-          ? columnRef.nestedColumnIndex + 1
-          : columnRef.rootColumnIndex + 1,
-      ),
-    [labels.tree],
+      resolveColumnRefDisplayLabel(binding.layout, columnRef, labels.tree),
+    [binding.layout, labels.tree],
   );
 
   const handleSelectColumn = useCallback(

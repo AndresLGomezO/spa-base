@@ -190,6 +190,45 @@ describe("preview-focus-state", () => {
       ).toBe("none");
     });
 
+    it("keeps descendant rows clear when a container is focused", () => {
+      const { layout: beganLayout, containerLocator } =
+        beginContainerRootLayout();
+      const layout = addComponentRowAt(
+        beganLayout,
+        containerLocator,
+        createDefaultComponent("user"),
+      );
+
+      const tree = buildStructureTree(layout, labels, []);
+      const containerNode = tree[0]?.rows[0];
+      const userNode =
+        containerNode?.type === "component"
+          ? containerNode.childRows?.[0]
+          : undefined;
+
+      if (
+        !containerNode ||
+        containerNode.type !== "component" ||
+        !userNode ||
+        userNode.type !== "component"
+      ) {
+        throw new Error("Expected container layout with user row");
+      }
+
+      const containerRef = toComponentRowRef(
+        containerNode.rowId,
+        containerNode.locator,
+      );
+      const userRef = toComponentRowRef(userNode.rowId, userNode.locator);
+
+      expect(
+        resolvePreviewRowFocusState(layout, containerRef, containerRef, null),
+      ).toBe("focused");
+      expect(
+        resolvePreviewRowFocusState(layout, userRef, containerRef, null),
+      ).toBe("none");
+    });
+
     it("focuses user row inside nested container without dimming ancestor containers", () => {
       const { layout: beganLayout, containerLocator } =
         beginContainerRootLayout();

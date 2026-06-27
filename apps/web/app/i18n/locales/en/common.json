@@ -635,6 +635,11 @@
     "formPresentationWizard": "Wizard",
     "iconName": "Icon (Lucide name)",
     "iconNameHint": "Use a Lucide icon name, for example CircleCheck or Database.",
+    "structureName": {
+      "label": "Name",
+      "placeholder": "Default: {{defaultName}}",
+      "hint": "Leave empty to use the default name."
+    },
     "staticImage": "Static image",
     "staticImageUrl": "Image URL",
     "staticImageUpload": "Upload image",

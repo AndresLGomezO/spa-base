@@ -3,6 +3,7 @@ import {
   addNestedLayoutRowAt,
   createDefaultComponent,
   createEmptyLayout,
+  createLayoutId,
   ensureContainerRoot,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
@@ -14,7 +15,9 @@ import {
   createContainerTopInsertAnchor,
   createRowBottomInsertAnchor,
   getRowMoveState,
+  resolveColumnNodeDisplayLabel,
   resolveComponentRowLabel,
+  resolveRowNodeDisplayLabel,
   type StructureTreeLabels,
 } from "./form-designer-structure-tree";
 
@@ -115,6 +118,50 @@ describe("form-designer-structure-tree", () => {
         labels,
       ),
     ).toBe("Email");
+  });
+
+  it("prefers custom structure names over default labels", () => {
+    let layout = createEmptyLayout(1);
+    const textRowId = createLayoutId("row");
+    layout = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...layout.root.columns[0]!,
+            name: "Sidebar",
+            rows: [
+              {
+                type: "component",
+                id: textRowId,
+                name: "Hero image",
+                component: createDefaultComponent("image", "name"),
+              },
+            ],
+          },
+        ],
+      },
+    };
+
+    const tree = buildStructureTree(layout, labels, fieldDescriptors);
+
+    expect(tree[0]?.label).toBe("Sidebar");
+    expect(tree[0]?.rows[0]).toMatchObject({
+      label: "Hero image",
+    });
+
+    const row = layout.root.columns[0]?.rows[0];
+    if (!row) {
+      throw new Error("Expected row");
+    }
+
+    expect(resolveRowNodeDisplayLabel(row, fieldDescriptors, labels)).toBe(
+      "Hero image",
+    );
+    expect(
+      resolveColumnNodeDisplayLabel(layout.root.columns[0]!, 0, labels),
+    ).toBe("Sidebar");
   });
 
   it("creates insert anchors for column and row positions", () => {

@@ -712,13 +712,15 @@ export function updateNestedLayoutRowMetaAt(
   locator: RowLocator,
   rowId: string,
   patch: Partial<
-    Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo">
+    Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo" | "name">
   >,
 ): UiLayoutDocument {
   return updateRowsAtLocator(layout, locator, (rows) =>
     rows.map((row) =>
       row.type === "nested-layout" && row.id === rowId
-        ? stripDisplayRangeIfFull({ ...row, ...patch })
+        ? stripDisplayRangeIfFull(
+            applyStructureNamePatch({ ...row, ...patch }, patch),
+          )
         : row,
     ),
   );
@@ -754,6 +756,38 @@ export function updateRootColumnDisplayRange(
     ...layout,
     root: { ...layout.root, columns },
   };
+}
+
+export function updateRootColumnMetaAt(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  patch: Partial<Pick<ColumnNode, "name">>,
+): UiLayoutDocument {
+  const columns = layout.root.columns.map((column, index) =>
+    index === columnIndex ? applyColumnMetaPatch(column, patch) : column,
+  );
+
+  return {
+    ...layout,
+    root: { ...layout.root, columns },
+  };
+}
+
+export function updateNestedColumnMetaAt(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  rowId: string,
+  nestedColumnIndex: number,
+  patch: Partial<Pick<ColumnNode, "name">>,
+): UiLayoutDocument {
+  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
+    ...row,
+    columns: row.columns.map((column, index) =>
+      index === nestedColumnIndex
+        ? applyColumnMetaPatch(column, patch)
+        : column,
+    ),
+  }));
 }
 
 export function updateNestedColumnDisplayRange(
@@ -1225,18 +1259,48 @@ function stripDisplayRangeIfFull<
   ) as T;
 }
 
+function applyStructureNamePatch<T extends { readonly name?: string }>(
+  node: T,
+  patch: Partial<Pick<T, "name">>,
+): T {
+  if (!("name" in patch)) {
+    return node;
+  }
+
+  const trimmed = patch.name?.trim();
+  if (trimmed) {
+    return { ...node, name: trimmed };
+  }
+
+  return Object.fromEntries(
+    Object.entries(node).filter(([key]) => key !== "name"),
+  ) as T;
+}
+
+function applyColumnMetaPatch<T extends ColumnNode>(
+  column: T,
+  patch: Partial<Pick<ColumnNode, "name">>,
+): T {
+  return applyStructureNamePatch<T>(column, patch);
+}
+
 export function updateComponentRowMetaAt(
   layout: UiLayoutDocument,
   locator: RowLocator,
   rowId: string,
   patch: Partial<
-    Pick<ComponentRowNode, "styles" | "motion" | "displayFrom" | "displayTo">
+    Pick<
+      ComponentRowNode,
+      "styles" | "motion" | "displayFrom" | "displayTo" | "name"
+    >
   >,
 ): UiLayoutDocument {
   return updateRowsAtLocator(layout, locator, (rows) =>
     rows.map((row) =>
       row.type === "component" && row.id === rowId
-        ? stripDisplayRangeIfFull({ ...row, ...patch })
+        ? stripDisplayRangeIfFull(
+            applyStructureNamePatch({ ...row, ...patch }, patch),
+          )
         : row,
     ),
   );

@@ -21,8 +21,10 @@ import type { ComponentColumnRef } from "../form-designer/form-designer-componen
 import { isNestedComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import { toComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
+import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { findColumnByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
+import { StructureColumnNameField } from "../form-designer/StructureItemNameField";
 import { resolveScopeLayoutBinding } from "./item-list-designer-layout-binding";
 import { ItemListDesignerGroupedColumnHeaderField } from "./ItemListDesignerGroupedColumnHeaderField";
 import { useItemListDesigner } from "./item-list-designer-context";
@@ -43,6 +45,7 @@ export function ItemListDesignerComponentColumnPanel({
   );
 
   const labels = useFormDesignerLayoutEditorLabels();
+  const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
   const resolved = findColumnByRef(binding.layout, columnRef);
 
   if (!resolved) {
@@ -150,6 +153,21 @@ export function ItemListDesignerComponentColumnPanel({
     );
   };
 
+  const columnNameField = (
+    <StructureColumnNameField
+      id={`component-column-name-${column.id}`}
+      column={column}
+      columnIndex={columnRef.rootColumnIndex}
+      nestedColumnIndex={
+        isNestedComponentColumnRef(columnRef)
+          ? columnRef.nestedColumnIndex
+          : undefined
+      }
+      treeLabels={treeLabels}
+      onChange={(name) => applyColumnPatch({ name })}
+    />
+  );
+
   const showGroupedColumnHeaderField =
     structureScope.kind === "groupedColumnCell" &&
     !isNestedComponentColumnRef(columnRef);
@@ -167,6 +185,7 @@ export function ItemListDesignerComponentColumnPanel({
       ) : null}
       {columnCount > 1 ? (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           <div className="flex w-24 flex-col gap-1 text-sm">
             <FieldLabel>{labels.columnWidthPercent}</FieldLabel>
             <Input
@@ -207,6 +226,7 @@ export function ItemListDesignerComponentColumnPanel({
         </FormDesignerPanelPrimaryControls>
       ) : (
         <FormDesignerPanelPrimaryControls>
+          {columnNameField}
           {stackEditor}
           {visibilityEditor}
         </FormDesignerPanelPrimaryControls>
