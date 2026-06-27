@@ -222,7 +222,8 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          # Pin patch: Node 22.23.0 breaks firebase-tools ADC/WIF auth (node-fetch keep-alive).
+          node-version: "22.23.1"
           cache: "pnpm"
 
       - name: Install dependencies
