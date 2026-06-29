@@ -1,4 +1,5 @@
 import type { MetricBindingSource } from "@repo/entities";
+import { defaultDateFilterParam } from "@repo/ui-builder-core";
 import { Input, Text, Select } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
@@ -22,6 +23,23 @@ const BINDING_TYPES = [
   "routeParam",
 ] as const;
 
+type BindingType = (typeof BINDING_TYPES)[number] | "dashboardDate";
+
+function resolveBindingEditorType(
+  source: MetricBindingSource | undefined,
+  dateGranularity?: MetricDateGranularity,
+): BindingType {
+  if (
+    source?.type === "routeParam" &&
+    dateGranularity &&
+    source.param === defaultDateFilterParam(dateGranularity)
+  ) {
+    return "dashboardDate";
+  }
+
+  return source?.type ?? "static";
+}
+
 export function MetricBindingSourceEditor({
   fieldName,
   source,
@@ -31,10 +49,14 @@ export function MetricBindingSourceEditor({
   onChange,
 }: MetricBindingSourceEditorProps) {
   const { t } = useTranslation("common");
-  const type = source?.type ?? "static";
+  const type = resolveBindingEditorType(source, dateGranularity);
   const entityFieldOptions = definition
     ? listLayoutFieldOptions(definition)
     : [];
+  const showDashboardDateOption = Boolean(dateGranularity);
+  const dashboardDateParam = dateGranularity
+    ? defaultDateFilterParam(dateGranularity)
+    : "month";
 
   return (
     <div className="border-border flex flex-col gap-2 rounded-md border p-2">
@@ -46,6 +68,11 @@ export function MetricBindingSourceEditor({
           })}
         </Text>
       ) : null}
+      {showDashboardDateOption ? (
+        <Text className="text-muted-foreground text-xs">
+          {t("entity.viewSettings.metrics.dashboardDateHint")}
+        </Text>
+      ) : null}
       <label className="flex flex-col gap-1">
         <span className="text-muted-foreground text-xs">
           {t("entity.viewSettings.metrics.bindingType")}
@@ -53,8 +80,7 @@ export function MetricBindingSourceEditor({
         <Select
           value={type}
           onChange={(event) => {
-            const nextType = event.target
-              .value as (typeof BINDING_TYPES)[number];
+            const nextType = event.target.value as BindingType;
             switch (nextType) {
               case "static":
                 onChange({ type: "static", value: "" });
@@ -71,6 +97,12 @@ export function MetricBindingSourceEditor({
                   field: filterFieldOptions[0] ?? fieldName,
                 });
                 break;
+              case "dashboardDate":
+                onChange({
+                  type: "routeParam",
+                  param: dashboardDateParam,
+                });
+                break;
               case "routeParam":
                 onChange({ type: "routeParam", param: fieldName });
                 break;
@@ -84,6 +116,11 @@ export function MetricBindingSourceEditor({
               {t(`entity.viewSettings.metrics.binding.${bindingType}`)}
             </option>
           ))}
+          {showDashboardDateOption ? (
+            <option value="dashboardDate">
+              {t("entity.viewSettings.metrics.binding.dashboardDate")}
+            </option>
+          ) : null}
         </Select>
       </label>
 
@@ -155,6 +192,14 @@ export function MetricBindingSourceEditor({
             }
           />
         </label>
+      ) : null}
+
+      {type === "dashboardDate" ? (
+        <Text className="text-muted-foreground text-xs">
+          {t("entity.viewSettings.metrics.dashboardDateBindingDetail", {
+            param: dashboardDateParam,
+          })}
+        </Text>
       ) : null}
     </div>
   );

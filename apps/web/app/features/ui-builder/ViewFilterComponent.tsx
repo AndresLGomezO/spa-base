@@ -10,10 +10,7 @@ import {
   SearchField,
   useFilterPanelDismiss,
 } from "@repo/ui";
-import {
-  DynamicFilterFields,
-  type UseDataViewUrlStateResult,
-} from "@repo/data-view";
+import { DynamicFilterFields } from "@repo/data-view";
 import type { DataViewColumnDescriptor } from "@repo/data-view";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -25,7 +22,11 @@ import { useEntityFilterOptions } from "../../hooks/useEntityFilterOptions";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { tryGetEntityDefinition } from "../../entities/entity-catalog";
 import { toQualifiedViewFilterColumnId } from "./view-filter-qualified-id";
-import { useOptionalViewFilterPageState } from "./view-filter-page-context";
+import {
+  useOptionalViewFilterPageState,
+  type ViewFilterPageState,
+} from "./view-filter-page-context";
+import { ViewFilterDateField } from "./ViewFilterDateField";
 
 interface ViewFilterComponentProps {
   readonly config: ViewFilterComponentConfig;
@@ -37,6 +38,10 @@ function resolveEnableSearch(config: ViewFilterComponentConfig): boolean {
 
 function resolveEnableFilters(config: ViewFilterComponentConfig): boolean {
   return config.enableFilters !== false;
+}
+
+function resolveEnableDateFilter(config: ViewFilterComponentConfig): boolean {
+  return config.enableDateFilter === true;
 }
 
 function remapFilterOptionsToQualifiedIds(
@@ -97,7 +102,7 @@ function groupFiltersByEntity(
 
 interface ViewFilterEntityGroupProps {
   readonly group: EntityFilterGroup;
-  readonly pageState: UseDataViewUrlStateResult;
+  readonly pageState: ViewFilterPageState;
 }
 
 function ViewFilterEntityGroup({
@@ -200,10 +205,11 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
   const pageState = useOptionalViewFilterPageState();
   const [filtersOpen, setFiltersOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
-  const { t } = useTranslation("common");
+  const { t, i18n } = useTranslation("common");
 
   const enableSearch = resolveEnableSearch(config);
   const enableFilters = resolveEnableFilters(config);
+  const enableDateFilter = resolveEnableDateFilter(config);
 
   const groups = useMemo(
     () => groupFiltersByEntity(config.filters, items),
@@ -232,9 +238,31 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
     rootRef,
   );
 
-  if (!pageState || (!enableSearch && !enableFilters)) {
+  if (!pageState || (!enableSearch && !enableFilters && !enableDateFilter)) {
     return null;
   }
+
+  const dateFilterConfig = pageState.dateFilter.config;
+  const dateField =
+    enableDateFilter && dateFilterConfig ? (
+      <div
+        className="w-auto shrink-0 overflow-visible py-0.5"
+        data-testid="view-filter-date-field"
+      >
+        <label className="inline-flex w-auto flex-col gap-1">
+          <span className="text-muted-foreground text-xs font-medium">
+            {t("viewFilterComponents.dateFilterLabel")}
+          </span>
+          <ViewFilterDateField
+            granularity={dateFilterConfig.granularity}
+            value={pageState.dateFilter.value}
+            onChange={pageState.dateFilter.setValue}
+            isExplicit={pageState.dateFilter.isExplicit}
+            locale={i18n.language}
+          />
+        </label>
+      </div>
+    ) : null;
 
   const labels = {
     removeBadge: (label: string) => t("dataView.removeBadge", { label }),
@@ -307,6 +335,7 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
       data-testid="view-filter-toolbar"
     >
       <div className={toolbarRowClassName}>
+        {dateField}
         {enableFilters ? (
           <div className="min-w-0 w-full flex-1">
             <FilterPanel

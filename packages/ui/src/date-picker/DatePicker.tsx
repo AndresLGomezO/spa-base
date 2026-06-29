@@ -22,6 +22,10 @@ import {
   nativeInputValueToIso,
   resolvePickerParts,
 } from "./date-picker.utils.js";
+import {
+  DatePickerFieldClearButton,
+  datePickerCompactInputPadding,
+} from "./DatePickerFieldClearButton.js";
 
 export interface DatePickerProps {
   readonly mode: DatePickerMode;
@@ -35,6 +39,10 @@ export interface DatePickerProps {
   readonly timeZone?: string;
   readonly labels: DatePickerLabels;
   readonly className?: string;
+  readonly compact?: boolean;
+  readonly showClearButton?: boolean;
+  readonly onClear?: () => void;
+  readonly clearAriaLabel?: string;
 }
 
 function DatePickerNative({
@@ -91,7 +99,13 @@ function DatePickerPopover({
   timeZone = "UTC",
   labels,
   className,
+  compact = false,
+  showClearButton = false,
+  onClear,
+  clearAriaLabel,
 }: DatePickerProps) {
+  const canClear = showClearButton && onClear !== undefined;
+
   const [open, setOpen] = useState(false);
   const [view, setView] = useState<CalendarView>("day");
   const initialParts = useMemo(
@@ -221,13 +235,15 @@ function DatePickerPopover({
     <Popover
       open={open}
       onOpenChange={handleOpenChange}
-      fullWidth
+      fullWidth={!compact}
       layer="elevated"
       placement="bottom-start"
-      className={className}
+      className={cn(compact && "w-fit", className)}
       panelClassName="w-auto p-2 [&>div]:gap-1.5"
       trigger={
-        <div className="relative w-full">
+        <div
+          className={cn("relative", compact ? "inline-block w-fit" : "w-full")}
+        >
           <Input
             id={id}
             readOnly
@@ -236,9 +252,16 @@ function DatePickerPopover({
             value={displayValue}
             placeholder={placeholder ?? labels.placeholder ?? "Select date"}
             className={cn(
-              "cursor-pointer pr-10",
+              "cursor-pointer",
+              datePickerCompactInputPadding(compact, canClear) ?? "pr-10",
+              compact && "w-auto [field-sizing:content] min-w-[5rem]",
               disabled && "cursor-not-allowed",
             )}
+          />
+          <DatePickerFieldClearButton
+            visible={canClear}
+            ariaLabel={clearAriaLabel ?? labels.clear ?? "Clear"}
+            onClear={onClear ?? (() => undefined)}
           />
           <Calendar
             aria-hidden

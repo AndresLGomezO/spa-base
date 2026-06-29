@@ -9,6 +9,8 @@ import {
   isDashboardSectionComponent,
   isViewFilterComponent,
   isViewSearchComponent,
+  resolveDashboardDateFilterConfig,
+  type DashboardDateFilterConfig,
 } from "@repo/ui-builder-core";
 import type { RowNode } from "@repo/ui-builder-core";
 import type { DashboardSectionDefinition } from "@repo/entities";
@@ -30,6 +32,7 @@ interface CollectedViewFilterDescriptors {
   >[];
   readonly catalogEntities: readonly string[];
   readonly filterConfigs: readonly ViewFilterComponentConfig[];
+  readonly dateFilterConfig: DashboardDateFilterConfig | null;
 }
 
 function walkRows(
@@ -207,11 +210,16 @@ export function collectViewFilterDescriptors(options: {
 
   const catalogEntities = listCatalogEntityNames(options.catalog);
   const filterEntries = collectFilterEntries(filterConfigs);
+  const dateFilterConfig =
+    filterConfigs
+      .map((config) => resolveDashboardDateFilterConfig(config))
+      .find((config) => config !== null) ?? null;
 
   return {
     filterColumns: buildQualifiedFilterColumns(options.catalog, filterEntries),
     searchColumns: buildGlobalSearchColumns(options.catalog, catalogEntities),
     catalogEntities,
     filterConfigs,
+    dateFilterConfig,
   };
 }

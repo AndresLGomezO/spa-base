@@ -438,6 +438,21 @@
     "searchAndFilters": "Search & filters",
     "enableSearch": "Enable search",
     "enableFilters": "Enable filters",
+    "enableDateFilter": "Enable date filter",
+    "dateFilterGranularity": "Date filter format",
+    "dateFilterGranularityYear": "Year only",
+    "dateFilterGranularityMonth": "Month and year",
+    "dateFilterGranularityDay": "Full date",
+    "dateFilterParam": "URL parameter name",
+    "dateFilterLabel": "Date",
+    "dateFilterPlaceholder": "Select date",
+    "dateFilterPrevious": "Previous",
+    "dateFilterNext": "Next",
+    "dateFilterSelectYear": "Select year",
+    "dateFilterSelectMonth": "Select month",
+    "dateFilterOpenCalendar": "Open date picker",
+    "dateFilterClear": "Clear",
+    "dateFilterResetDefault": "Reset to current date",
     "searchGlobalHint": "Search applies globally to the whole view via the URL q parameter. Searchable fields are inferred from all entities in the tenant.",
     "searchPlaceholder": "Search placeholder",
     "activeFilters": "Filters",
@@ -986,9 +1001,12 @@
           "static": "Static value",
           "entityField": "Entity field",
           "listFilter": "List filter",
-          "routeParam": "Route parameter"
+          "routeParam": "Route parameter",
+          "dashboardDate": "Dashboard date filter"
         },
-        "dateBucketHint": "Expected bucket format: {{format}}"
+        "dateBucketHint": "Expected bucket format: {{format}}",
+        "dashboardDateHint": "On the dashboard, this field can be filled from the Search & Filters date picker URL parameter.",
+        "dashboardDateBindingDetail": "Uses the dashboard date filter URL parameter ({{param}})."
       }
     },
     "fileUploadSuccess": "File uploaded successfully.",
@@ -1587,7 +1605,6 @@
     },
     "widget": {
       "loading": "Loading metric…",
-      "empty": "No value",
       "error": "Unable to load metric",
       "forbidden": "Metric values are not available for your role.",
       "unconfigured": "Select a metric for this KPI.",

@@ -1,0 +1,47 @@
+import { describe, expect, it } from "vitest";
+
+import {
+  defaultDateFilterParam,
+  resolveDashboardDateFilterConfig,
+  resolveDateFilterParam,
+} from "./date-filter-config.js";
+
+describe("date-filter-config", () => {
+  it("returns default URL params by granularity", () => {
+    expect(defaultDateFilterParam("year")).toBe("year");
+    expect(defaultDateFilterParam("month")).toBe("month");
+    expect(defaultDateFilterParam("day")).toBe("date");
+  });
+
+  it("resolves custom date filter params", () => {
+    expect(
+      resolveDateFilterParam({
+        dateFilterGranularity: "day",
+        dateFilterParam: "period",
+      }),
+    ).toBe("period");
+  });
+
+  it("returns null when date filter is disabled", () => {
+    expect(
+      resolveDashboardDateFilterConfig({
+        kind: "view-filter",
+        filters: [],
+      }),
+    ).toBeNull();
+  });
+
+  it("returns config when date filter is enabled", () => {
+    expect(
+      resolveDashboardDateFilterConfig({
+        kind: "view-filter",
+        enableDateFilter: true,
+        dateFilterGranularity: "year",
+        filters: [],
+      }),
+    ).toEqual({
+      param: "year",
+      granularity: "year",
+    });
+  });
+});

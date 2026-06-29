@@ -171,4 +171,21 @@ describe("MetricDerivedValueDisplay", () => {
       ),
     ).toBeInTheDocument();
   });
+
+  it("shows formatted zero when the derived total is empty", () => {
+    mockUseMetricDerivedValue.mockReturnValue({
+      status: "empty",
+      total: null,
+      displayDefinition,
+      shapeMismatch: null,
+      grammarError: null,
+      isLoading: false,
+      expression: baseConfig.expression,
+    } as unknown as ReturnType<typeof useMetricDerivedValue>);
+
+    renderDisplay();
+
+    expect(screen.getByText("$ 0")).toBeInTheDocument();
+    expect(screen.queryByText("No value")).not.toBeInTheDocument();
+  });
 });

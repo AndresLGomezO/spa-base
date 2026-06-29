@@ -24,6 +24,7 @@ import { readLayoutStaticImageUrl } from "@repo/entities";
 
 import { isEntityFileReferenceWithDownload } from "../../lib/entity-file-client";
 import { parseLayoutStaticImageRef } from "../../lib/layout-static-image";
+import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
 
 export function createEntityLayoutRenderContext(options: {
   readonly item: Record<string, unknown>;
@@ -39,6 +40,7 @@ export function createEntityLayoutRenderContext(options: {
   readonly catalogItems?: readonly EntityCatalogEntry[];
   readonly listFilters?: Readonly<Record<string, readonly string[]>>;
   readonly routeParams?: Readonly<Record<string, string | undefined>>;
+  readonly dashboardDateFilter?: DashboardDateFilterContextValue;
   /** When true, show the static card placeholder if no field image or default exists. */
   readonly usePreviewPlaceholder?: boolean;
   /** When true, empty field values show the field label as sample text. */
@@ -54,6 +56,7 @@ export function createEntityLayoutRenderContext(options: {
     catalogItems = [],
     listFilters,
     routeParams,
+    dashboardDateFilter,
     usePreviewPlaceholder = false,
     usePreviewSamples = false,
     t,
@@ -148,7 +151,12 @@ export function createEntityLayoutRenderContext(options: {
         metricDefinitionId={config.metricDefinitionId}
         groupBindings={config.groupBindings}
         dimensionBindings={config.dimensionBindings}
-        context={{ record: item, listFilters, routeParams }}
+        context={{
+          record: item,
+          listFilters,
+          routeParams,
+          dashboardDateFilter,
+        }}
         className={presentation?.className}
         style={presentation?.style}
         valueClassName={presentation?.valueClassName}
@@ -160,7 +168,12 @@ export function createEntityLayoutRenderContext(options: {
       <MetricDerivedValueDisplay
         presentation="inline"
         config={config}
-        context={{ record: item, listFilters, routeParams }}
+        context={{
+          record: item,
+          listFilters,
+          routeParams,
+          dashboardDateFilter,
+        }}
         className={presentation?.className}
         style={presentation?.style}
         valueClassName={presentation?.valueClassName}
@@ -182,6 +195,7 @@ export function createEntityLayoutRenderContext(options: {
                 getDefinition,
                 listFilters,
                 routeParams,
+                dashboardDateFilter,
                 usePreviewPlaceholder,
                 usePreviewSamples,
                 t,

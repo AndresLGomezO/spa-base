@@ -1,4 +1,5 @@
 import type { MetricBindingSource } from "@repo/entities";
+import type { MetricDateGranularity } from "@repo/metrics-engine/browser";
 import { isMetricDateBucketInputComplete } from "@repo/metrics-engine/browser";
 
 import type { MetricRowQuery } from "./api-client.js";
@@ -8,10 +9,17 @@ import {
 } from "./metric-query-utils.js";
 import type { MetricDefinitionRecord } from "./api-client.js";
 
+export interface DashboardDateFilterContextValue {
+  readonly value: string;
+  readonly granularity: MetricDateGranularity;
+  readonly param: string;
+}
+
 export interface MetricBindingContext {
   readonly record?: Record<string, unknown>;
   readonly listFilters?: Readonly<Record<string, readonly string[]>>;
   readonly routeParams?: Readonly<Record<string, string | undefined>>;
+  readonly dashboardDateFilter?: DashboardDateFilterContextValue;
 }
 
 export function resolveMetricBindingSource(
@@ -79,22 +87,55 @@ export function resolveMetricBindingSource(
   }
 }
 
+function fieldMatchesDashboardDateFilter(
+  definition: MetricDefinitionRecord,
+  field: string,
+  filter: DashboardDateFilterContextValue,
+): boolean {
+  return definition.dateFieldGranularity?.[field] === filter.granularity;
+}
+
+function resolveDashboardDateFallback(
+  definition: MetricDefinitionRecord,
+  field: string,
+  context: MetricBindingContext,
+): string | null {
+  const filter = context.dashboardDateFilter;
+  if (!filter || !fieldMatchesDashboardDateFilter(definition, field, filter)) {
+    return null;
+  }
+
+  return filter.value;
+}
+
 function resolveMetricBindingMap(
   bindings: Readonly<Record<string, MetricBindingSource>>,
   requiredFields: readonly string[],
   context: MetricBindingContext,
+  definition: MetricDefinitionRecord,
 ): MetricQueryBindings | null {
   const resolved: MetricQueryBindings = {};
 
   for (const field of requiredFields) {
     const source = bindings[field];
     if (!source) {
-      return null;
+      const fallback = resolveDashboardDateFallback(definition, field, context);
+      if (fallback === null) {
+        return null;
+      }
+      resolved[field] = fallback;
+      continue;
     }
-    const value = resolveMetricBindingSource(source, context);
+
+    let value = resolveMetricBindingSource(source, context);
     if (value === null) {
-      return null;
+      const fallback = resolveDashboardDateFallback(definition, field, context);
+      if (fallback === null) {
+        return null;
+      }
+      value = fallback;
     }
+
     resolved[field] = value;
   }
 
@@ -133,6 +174,33 @@ function areResolvedDateBindingsComplete(
   return true;
 }
 
+function applyDashboardDateOverride(
+  definition: MetricDefinitionRecord,
+  groupBindings: MetricQueryBindings,
+  dimensionBindings: MetricQueryBindings,
+  dashboardDateFilter: DashboardDateFilterContextValue | undefined,
+): void {
+  if (!dashboardDateFilter) {
+    return;
+  }
+
+  for (const field of definition.groupBy) {
+    if (
+      fieldMatchesDashboardDateFilter(definition, field, dashboardDateFilter)
+    ) {
+      groupBindings[field] = dashboardDateFilter.value;
+    }
+  }
+
+  for (const field of definition.dimensions) {
+    if (
+      fieldMatchesDashboardDateFilter(definition, field, dashboardDateFilter)
+    ) {
+      dimensionBindings[field] = dashboardDateFilter.value;
+    }
+  }
+}
+
 export function buildMetricRowQueryFromBindings(
   definition: MetricDefinitionRecord,
   input: {
@@ -156,6 +224,7 @@ export function buildMetricRowQueryFromBindings(
     input.groupBindings,
     definition.groupBy,
     context,
+    definition,
   );
   if (!groupResolved) {
     return null;
@@ -165,10 +234,18 @@ export function buildMetricRowQueryFromBindings(
     input.dimensionBindings,
     definition.dimensions,
     context,
+    definition,
   );
   if (!dimensionResolved) {
     return null;
   }
+
+  applyDashboardDateOverride(
+    definition,
+    groupResolved,
+    dimensionResolved,
+    context.dashboardDateFilter,
+  );
 
   if (
     !areResolvedDateBindingsComplete(

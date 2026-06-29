@@ -316,10 +316,15 @@ export interface ViewFilterComponentConfig {
   readonly kind: "view-filter";
   readonly enableSearch?: boolean;
   readonly enableFilters?: boolean;
+  readonly enableDateFilter?: boolean;
+  readonly dateFilterGranularity?: ViewFilterDateGranularity;
+  readonly dateFilterParam?: string;
   readonly searchPlaceholder?: string;
   readonly filters: readonly ViewFilterEntry[];
   readonly styles?: readonly StyleRule[];
 }
+
+export type ViewFilterDateGranularity = "year" | "month" | "day";
 
 export interface ContainerComponentConfig {
   readonly kind: "container";

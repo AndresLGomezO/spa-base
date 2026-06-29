@@ -15,7 +15,10 @@ import { useActiveMetricDefinitions } from "../../hooks/metrics/useActiveMetricD
 import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues.js";
 import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow.js";
-import { formatPrimaryMetricDisplayValue } from "./format-metric-display-value.js";
+import {
+  formatPrimaryMetricDisplayValue,
+  formatDefaultMetricDisplayValue,
+} from "./format-metric-display-value.js";
 
 type MetricValuePresentation = "card" | "inline";
 
@@ -240,7 +243,11 @@ export function MetricValueDisplay({
 
   const title = label ?? definition.name;
   const row = rowQuery.data;
-  const emptyText = emptyLabel ?? t("metrics.widget.empty");
+  const defaultDisplayValue = formatDefaultMetricDisplayValue(
+    definition,
+    i18n.language,
+  );
+  const emptyText = emptyLabel ?? defaultDisplayValue;
 
   if (!row) {
     if (inline) {

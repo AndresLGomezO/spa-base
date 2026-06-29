@@ -209,6 +209,109 @@ export function formatMonthYearLabel(
   }).format(new Date(Date.UTC(year, month, 1)));
 }
 
+export function parseMonthYearBucket(
+  value: string,
+): Pick<CalendarDateParts, "year" | "month"> | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+
+  const month = Number(match[2]) - 1;
+  if (month < 0 || month > 11) {
+    return null;
+  }
+
+  return {
+    year: Number(match[1]),
+    month,
+  };
+}
+
+export function formatMonthYearBucket(year: number, month: number): string {
+  return `${year}-${padTwo(month + 1)}`;
+}
+
+export function formatMonthYearBucketDisplay(
+  value: string,
+  locale: string,
+): string {
+  const parts = parseMonthYearBucket(value);
+  if (!parts) {
+    return value;
+  }
+
+  return formatMonthYearLabel(parts.year, parts.month, locale);
+}
+
+export function parseYearBucket(
+  value: string,
+): Pick<CalendarDateParts, "year"> | null {
+  const match = /^(\d{4})$/.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+
+  return { year: Number(match[1]) };
+}
+
+export function formatYearBucket(year: number): string {
+  return String(year);
+}
+
+export function formatYearBucketDisplay(value: string, locale: string): string {
+  const parts = parseYearBucket(value);
+  if (!parts) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(parts.year, 0, 1)));
+}
+
+export function parseDayBucket(
+  value: string,
+): Pick<CalendarDateParts, "year" | "month" | "day"> | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+
+  const month = Number(match[2]) - 1;
+  const day = Number(match[3]);
+  if (month < 0 || month > 11 || day < 1 || day > 31) {
+    return null;
+  }
+
+  return {
+    year: Number(match[1]),
+    month,
+    day,
+  };
+}
+
+export function formatDayBucket(
+  year: number,
+  month: number,
+  day: number,
+): string {
+  return `${year}-${padTwo(month + 1)}-${padTwo(day)}`;
+}
+
+export function formatDayBucketDisplay(value: string, locale: string): string {
+  const parts = parseDayBucket(value);
+  if (!parts) {
+    return value;
+  }
+
+  return new Intl.DateTimeFormat(locale, {
+    dateStyle: "medium",
+    timeZone: "UTC",
+  }).format(new Date(Date.UTC(parts.year, parts.month, parts.day)));
+}
+
 export function formatTimePreview(
   hour: number,
   minute: number,

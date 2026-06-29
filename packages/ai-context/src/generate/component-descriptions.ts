@@ -438,10 +438,13 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
   },
   "view-filter": {
     summary:
-      "Unified search and filter toolbar for a view. Toggle search and/or filters in the designer. Search binds to URL `q`; filters bind to URL `f.{entity}.{field}`.",
+      "Unified search and filter toolbar for a view. Toggle search, entity filters, and/or a date filter in the designer. Search binds to URL `q`; filters bind to URL `f.{entity}.{field}`; date filter binds to a configurable URL param (default `year`, `month`, or `date`).",
     properties: [
       "enableSearch?",
       "enableFilters?",
+      "enableDateFilter?",
+      "dateFilterGranularity?",
+      "dateFilterParam?",
       "searchPlaceholder?",
       "filters",
       "styles?",
@@ -451,6 +454,9 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
         kind: "view-filter",
         enableSearch: true,
         enableFilters: true,
+        enableDateFilter: true,
+        dateFilterGranularity: "month",
+        dateFilterParam: "month",
         searchPlaceholder: "Search…",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },

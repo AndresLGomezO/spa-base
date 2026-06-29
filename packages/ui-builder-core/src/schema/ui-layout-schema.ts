@@ -487,6 +487,9 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         kind: z.literal("view-filter"),
         enableSearch: z.boolean().optional(),
         enableFilters: z.boolean().optional(),
+        enableDateFilter: z.boolean().optional(),
+        dateFilterGranularity: z.enum(["year", "month", "day"]).optional(),
+        dateFilterParam: z.string().trim().min(1).optional(),
         searchPlaceholder: z.string().optional(),
         filters: z
           .array(

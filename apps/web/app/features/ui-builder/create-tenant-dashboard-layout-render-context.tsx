@@ -21,6 +21,7 @@ import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
 import { listFiltersForEntity } from "./list-filters-for-entity";
 import { ViewFilterComponent } from "./ViewFilterComponent";
 import { resolveStaticImageSrc } from "@repo/entities";
+import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
 
 interface CreateTenantDashboardLayoutRenderContextOptions {
   readonly sections: readonly DashboardSectionDefinition[];
@@ -29,6 +30,7 @@ interface CreateTenantDashboardLayoutRenderContextOptions {
   readonly t: TFunction;
   readonly user?: LayoutUserInfo | null;
   readonly pageFilters?: Readonly<Record<string, readonly string[]>>;
+  readonly dashboardDateFilter?: DashboardDateFilterContextValue;
   readonly getDefinition?: (
     entityName: EntityName,
   ) => EntityCatalogEntry | undefined;
@@ -44,9 +46,13 @@ export function createTenantDashboardLayoutRenderContext(
     t,
     user = null,
     pageFilters = {},
+    dashboardDateFilter,
     getDefinition,
   } = options;
   const fallbackName = t("nav.fallbackName");
+  const dateRouteParams = dashboardDateFilter
+    ? { [dashboardDateFilter.param]: dashboardDateFilter.value }
+    : {};
 
   const buildLayoutContext = (): LayoutRenderContext => ({
     mode: "listItem",
@@ -91,6 +97,7 @@ export function createTenantDashboardLayoutRenderContext(
         config={config}
         presentation={presentation}
         pageFilters={pageFilters}
+        dashboardDateFilter={dashboardDateFilter}
       />
     ),
     metricDerivedKpiRenderer: (config, presentation) => (
@@ -98,6 +105,7 @@ export function createTenantDashboardLayoutRenderContext(
         config={config}
         presentation={presentation}
         pageFilters={pageFilters}
+        dashboardDateFilter={dashboardDateFilter}
       />
     ),
     metricWidgetRenderer: getDefinition
@@ -112,7 +120,8 @@ export function createTenantDashboardLayoutRenderContext(
               catalogItems,
               getDefinition,
               listFilters: listFiltersForEntity(definition.name, pageFilters),
-              routeParams: {},
+              routeParams: dateRouteParams,
+              dashboardDateFilter,
               usePreviewPlaceholder: true,
               usePreviewSamples: true,
               t,

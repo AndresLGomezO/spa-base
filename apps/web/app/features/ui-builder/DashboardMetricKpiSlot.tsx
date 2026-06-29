@@ -9,17 +9,20 @@ import { MetricValueDisplay } from "../../components/metrics/MetricValueDisplay"
 import { useActiveMetricDefinitions } from "../../hooks/metrics/useActiveMetricDefinitions";
 import { resolveMetricDefinitionDocumentId } from "../../lib/resolve-metric-definition-reference";
 import { listFiltersForEntity } from "./list-filters-for-entity";
+import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
 
 interface DashboardMetricKpiSlotProps {
   readonly config: MetricKpiComponentConfig;
   readonly presentation?: MetricKpiPresentation;
   readonly pageFilters?: Readonly<Record<string, readonly string[]>>;
+  readonly dashboardDateFilter?: DashboardDateFilterContextValue;
 }
 
 export function DashboardMetricKpiSlot({
   config,
   presentation,
   pageFilters = {},
+  dashboardDateFilter,
 }: DashboardMetricKpiSlotProps) {
   const activeDefinitionsQuery = useActiveMetricDefinitions(
     config.metricDefinitionId.trim().length > 0,
@@ -47,7 +50,14 @@ export function DashboardMetricKpiSlot({
       metricDefinitionId={config.metricDefinitionId}
       groupBindings={config.groupBindings}
       dimensionBindings={config.dimensionBindings}
-      context={{ record: {}, listFilters }}
+      context={{
+        record: {},
+        listFilters,
+        routeParams: dashboardDateFilter
+          ? { [dashboardDateFilter.param]: dashboardDateFilter.value }
+          : {},
+        dashboardDateFilter,
+      }}
       className={presentation?.className}
       style={presentation?.style}
       valueClassName={presentation?.valueClassName}

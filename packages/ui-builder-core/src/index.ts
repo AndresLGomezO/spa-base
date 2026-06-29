@@ -18,6 +18,13 @@ export {
 } from "./layout/resolve-column-width-percents.js";
 export { migrateViewSearchFilterLayout } from "./layout/migrate-view-search-filter-layout.js";
 export {
+  defaultDateFilterParam,
+  resolveDashboardDateFilterConfig,
+  resolveDateFilterGranularity,
+  resolveDateFilterParam,
+  type DashboardDateFilterConfig,
+} from "./view-filter/date-filter-config.js";
+export {
   RESPONSIVE_GRID_STYLE_PROPERTIES,
   RESPONSIVE_GRID_TAILWIND_SAFELIST,
   RESPONSIVE_BREAKPOINT_ORDER,
@@ -71,6 +78,7 @@ export type {
   DashboardSectionComponentConfig,
   ViewSearchComponentConfig,
   ViewFilterComponentConfig,
+  ViewFilterDateGranularity,
   ViewFilterEntry,
   ViewFilterUiComponentConfig,
   MetricBindingSource,

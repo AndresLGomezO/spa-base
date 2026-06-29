@@ -5,12 +5,17 @@ import type { DashboardSectionDefinition } from "@repo/entities";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { collectViewFilterDescriptors } from "./collect-view-filter-descriptors";
+import { useDashboardDateFilterUrlState } from "./use-dashboard-date-filter-url-state";
+import type { ViewFilterPageState } from "./view-filter-page-context";
 
 export function useDashboardViewFilterUrlState(options: {
   readonly dashboardLayout: UiLayoutDocument | null | undefined;
   readonly sections: readonly DashboardSectionDefinition[];
   readonly catalog: readonly EntityCatalogEntry[];
-}) {
+}): {
+  readonly collected: ReturnType<typeof collectViewFilterDescriptors>;
+  readonly pageState: ViewFilterPageState;
+} {
   const collected = useMemo(() => {
     if (!options.dashboardLayout) {
       return {
@@ -18,6 +23,7 @@ export function useDashboardViewFilterUrlState(options: {
         searchColumns: [],
         catalogEntities: [],
         filterConfigs: [],
+        dateFilterConfig: null,
       };
     }
 
@@ -29,9 +35,18 @@ export function useDashboardViewFilterUrlState(options: {
   }, [options.catalog, options.dashboardLayout, options.sections]);
 
   const urlState = useDataViewUrlState(collected.filterColumns);
+  const dateFilter = useDashboardDateFilterUrlState(collected.dateFilterConfig);
+
+  const pageState = useMemo(
+    (): ViewFilterPageState => ({
+      ...urlState,
+      dateFilter,
+    }),
+    [dateFilter, urlState],
+  );
 
   return {
     collected,
-    urlState,
+    pageState,
   };
 }

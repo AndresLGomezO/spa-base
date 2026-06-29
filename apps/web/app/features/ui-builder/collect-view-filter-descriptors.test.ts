@@ -103,4 +103,41 @@ describe("collectViewFilterDescriptors", () => {
       "account.name",
     ]);
   });
+
+  it("collects the first enabled date filter config", () => {
+    const collected = collectViewFilterDescriptors({
+      catalog: [createCatalogEntry("account")],
+      sections: [],
+      dashboardLayout: {
+        showActions: true,
+        root: {
+          type: "root",
+          id: "root-dashboard",
+          columnCount: 1,
+          columns: [
+            {
+              id: "col-dashboard",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-filter",
+                  component: {
+                    kind: "view-filter",
+                    enableDateFilter: true,
+                    dateFilterGranularity: "month",
+                    filters: [],
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      },
+    });
+
+    expect(collected.dateFilterConfig).toEqual({
+      param: "month",
+      granularity: "month",
+    });
+  });
 });

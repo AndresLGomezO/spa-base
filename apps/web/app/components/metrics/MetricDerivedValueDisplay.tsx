@@ -9,6 +9,7 @@ import type { MetricDerivedKpiComponentConfig } from "@repo/ui-builder-core";
 import type { MetricBindingContext } from "../../lib/metric-binding-resolution.js";
 import { useMetricDerivedValue } from "../../hooks/metrics/useMetricDerivedValue.js";
 import { formatMetricDerivedExpressionPreview } from "./metric-derived-expression-preview.js";
+import { formatDefaultMetricDisplayValue } from "./format-metric-display-value.js";
 
 type MetricValuePresentation = "card" | "inline";
 
@@ -112,7 +113,10 @@ export function MetricDerivedValueDisplay({
   const inline = presentation === "inline";
   const statusClassName = "text-sm";
   const valueTextClassName = metricValueTextClassName(valueClassName);
-  const emptyText = t("metrics.widget.empty");
+  const defaultDisplayValue = formatDefaultMetricDisplayValue(
+    derived.displayDefinition ?? { valueDisplayFormat: "number" },
+    i18n.language,
+  );
 
   const displayValue = useMemo(() => {
     if (derived.total === null || !derived.displayDefinition) {
@@ -244,7 +248,7 @@ export function MetricDerivedValueDisplay({
     );
   }
 
-  const renderedValue = displayValue ?? emptyText;
+  const renderedValue = displayValue ?? defaultDisplayValue;
 
   if (inline) {
     return (

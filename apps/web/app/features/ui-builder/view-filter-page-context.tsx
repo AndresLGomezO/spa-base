@@ -1,15 +1,19 @@
 import { createContext, useContext, type ReactNode } from "react";
 import type { UseDataViewUrlStateResult } from "@repo/data-view";
 
-const ViewFilterPageContext = createContext<UseDataViewUrlStateResult | null>(
-  null,
-);
+import type { DashboardDateFilterState } from "./use-dashboard-date-filter-url-state";
+
+export interface ViewFilterPageState extends UseDataViewUrlStateResult {
+  readonly dateFilter: DashboardDateFilterState;
+}
+
+const ViewFilterPageContext = createContext<ViewFilterPageState | null>(null);
 
 export function ViewFilterPageProvider({
   value,
   children,
 }: {
-  readonly value: UseDataViewUrlStateResult;
+  readonly value: ViewFilterPageState;
   readonly children: ReactNode;
 }) {
   return (
@@ -19,6 +23,6 @@ export function ViewFilterPageProvider({
   );
 }
 
-export function useOptionalViewFilterPageState(): UseDataViewUrlStateResult | null {
+export function useOptionalViewFilterPageState(): ViewFilterPageState | null {
   return useContext(ViewFilterPageContext);
 }

@@ -13,17 +13,20 @@ import { MetricDerivedValueDisplay } from "../../components/metrics/MetricDerive
 import { useActiveMetricDefinitions } from "../../hooks/metrics/useActiveMetricDefinitions";
 import { resolveMetricDefinitionDocumentId } from "../../lib/resolve-metric-definition-reference";
 import { listFiltersForEntity } from "./list-filters-for-entity";
+import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
 
 interface DashboardMetricDerivedKpiSlotProps {
   readonly config: MetricDerivedKpiComponentConfig;
   readonly presentation?: MetricKpiPresentation;
   readonly pageFilters?: Readonly<Record<string, readonly string[]>>;
+  readonly dashboardDateFilter?: DashboardDateFilterContextValue;
 }
 
 export function DashboardMetricDerivedKpiSlot({
   config,
   presentation,
   pageFilters = {},
+  dashboardDateFilter,
 }: DashboardMetricDerivedKpiSlotProps) {
   const primaryMetricId = extractMetricDefinitionIds(
     resolveMetricDerivedExpression(config),
@@ -54,7 +57,14 @@ export function DashboardMetricDerivedKpiSlot({
     <MetricDerivedValueDisplay
       presentation="inline"
       config={config}
-      context={{ record: {}, listFilters }}
+      context={{
+        record: {},
+        listFilters,
+        routeParams: dashboardDateFilter
+          ? { [dashboardDateFilter.param]: dashboardDateFilter.value }
+          : {},
+        dashboardDateFilter,
+      }}
       className={presentation?.className}
       style={presentation?.style}
       valueClassName={presentation?.valueClassName}

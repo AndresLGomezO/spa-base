@@ -12,6 +12,7 @@ import { dashboardLayoutHasContent } from "../features/ui-builder/dashboard-layo
 import { useDashboardViewFilterUrlState } from "../features/ui-builder/use-dashboard-view-filter-url-state";
 import { ViewFilterPageProvider } from "../features/ui-builder/view-filter-page-context";
 import { ensureContainerRoot } from "@repo/ui-builder-core";
+import type { DashboardDateFilterContextValue } from "../lib/metric-binding-resolution";
 
 const TENANT_DASHBOARD_LAYOUT_QUERY_KEY = ["tenant-dashboard-layout"] as const;
 
@@ -34,11 +35,26 @@ export function HomePage() {
     return ensureContainerRoot(configQuery.data.dashboardLayout);
   }, [configQuery.data?.dashboardLayout]);
 
-  const { urlState } = useDashboardViewFilterUrlState({
+  const { collected, pageState } = useDashboardViewFilterUrlState({
     dashboardLayout,
     sections: configQuery.data?.dashboardSections ?? [],
     catalog: items,
   });
+
+  const dashboardDateFilter = useMemo(():
+    | DashboardDateFilterContextValue
+    | undefined => {
+    const config = collected.dateFilterConfig;
+    if (!config || !pageState.dateFilter.value) {
+      return undefined;
+    }
+
+    return {
+      value: pageState.dateFilter.value,
+      granularity: config.granularity,
+      param: config.param,
+    };
+  }, [collected.dateFilterConfig, pageState.dateFilter.value]);
 
   const renderContext = useMemo(() => {
     if (!configQuery.data) {
@@ -51,7 +67,8 @@ export function HomePage() {
       locale: i18n.language,
       t,
       getDefinition,
-      pageFilters: urlState.filters,
+      pageFilters: pageState.filters,
+      dashboardDateFilter,
       user: user
         ? {
             displayName: user.displayName,
@@ -62,11 +79,12 @@ export function HomePage() {
     });
   }, [
     configQuery.data,
+    dashboardDateFilter,
     getDefinition,
     i18n.language,
     items,
+    pageState.filters,
     t,
-    urlState.filters,
     user,
   ]);
 
@@ -105,7 +123,7 @@ export function HomePage() {
   }
 
   return (
-    <ViewFilterPageProvider value={urlState}>
+    <ViewFilterPageProvider value={pageState}>
       <RecursiveLayoutRenderer
         layout={dashboardLayout}
         context={renderContext}

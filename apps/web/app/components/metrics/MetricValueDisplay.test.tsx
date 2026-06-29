@@ -241,4 +241,42 @@ describe("MetricValueDisplay", () => {
     expect(screen.queryByText("Total revenue")).not.toBeInTheDocument();
     expect(container.querySelector("article")).toBeNull();
   });
+
+  it("shows formatted zero when no metric row is returned", () => {
+    mockUseMetricReadAccess.mockReturnValue("allowed");
+    mockUseMetricDefinition.mockReturnValue({
+      data: definition,
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useMetricDefinition>);
+    mockUseMetricRow.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    renderDisplay();
+
+    expect(screen.getByText("0")).toBeInTheDocument();
+    expect(screen.queryByText("No value")).not.toBeInTheDocument();
+  });
+
+  it("shows formatted currency zero when no metric row is returned", () => {
+    mockUseMetricReadAccess.mockReturnValue("allowed");
+    mockUseMetricDefinition.mockReturnValue({
+      data: { ...definition, valueDisplayFormat: "currency" as const },
+      isLoading: false,
+      isError: false,
+      isSuccess: true,
+    } as unknown as ReturnType<typeof useMetricDefinition>);
+    mockUseMetricRow.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    renderDisplay();
+
+    expect(screen.getByText("$ 0")).toBeInTheDocument();
+    expect(screen.queryByText("No value")).not.toBeInTheDocument();
+  });
 });

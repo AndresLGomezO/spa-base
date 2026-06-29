@@ -148,4 +148,200 @@ describe("buildMetricRowQueryFromBindings", () => {
       ),
     ).toBeNull();
   });
+
+  it("overrides month-granularity fields with dashboardDateFilter", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["periodStart"],
+      dimensions: ["categoryId"],
+      dateFieldGranularity: { periodStart: "month" },
+    };
+
+    const query = buildMetricRowQueryFromBindings(
+      dateDefinition,
+      {
+        groupBindings: { periodStart: { type: "static", value: "2025-01" } },
+        dimensionBindings: {
+          categoryId: { type: "static", value: "food" },
+        },
+      },
+      {
+        dashboardDateFilter: {
+          value: "2026-06",
+          granularity: "month",
+          param: "month",
+        },
+      },
+    );
+
+    expect(query).toEqual({
+      group: { periodStart: "2026-06" },
+      dimensions: { categoryId: "food" },
+    });
+  });
+
+  it("overrides year-granularity fields with dashboardDateFilter", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["periodStart"],
+      dimensions: [],
+      dateFieldGranularity: { periodStart: "year" },
+    };
+
+    const query = buildMetricRowQueryFromBindings(
+      dateDefinition,
+      {
+        groupBindings: { periodStart: { type: "static", value: "2025" } },
+        dimensionBindings: {},
+      },
+      {
+        dashboardDateFilter: {
+          value: "2026",
+          granularity: "year",
+          param: "year",
+        },
+      },
+    );
+
+    expect(query).toEqual({
+      group: { periodStart: "2026" },
+      dimensions: {},
+    });
+  });
+
+  it("leaves non-matching granularity fields untouched when dashboardDateFilter is set", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["periodStart"],
+      dimensions: ["categoryId"],
+      dateFieldGranularity: { periodStart: "month" },
+    };
+
+    const query = buildMetricRowQueryFromBindings(
+      dateDefinition,
+      {
+        groupBindings: { periodStart: { type: "static", value: "2025-01" } },
+        dimensionBindings: {
+          categoryId: { type: "static", value: "food" },
+        },
+      },
+      {},
+    );
+
+    expect(query).toEqual({
+      group: { periodStart: "2025-01" },
+      dimensions: { categoryId: "food" },
+    });
+  });
+
+  it("falls back to dashboardDateFilter when month binding is missing", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["categoryId"],
+      dimensions: ["date"],
+      dateFieldGranularity: { date: "month" },
+    };
+
+    const query = buildMetricRowQueryFromBindings(
+      dateDefinition,
+      {
+        groupBindings: {
+          categoryId: { type: "static", value: "food" },
+        },
+        dimensionBindings: {},
+      },
+      {
+        dashboardDateFilter: {
+          value: "2026-06",
+          granularity: "month",
+          param: "month",
+        },
+      },
+    );
+
+    expect(query).toEqual({
+      group: { categoryId: "food" },
+      dimensions: { date: "2026-06" },
+    });
+  });
+
+  it("falls back to dashboardDateFilter when month static binding is empty", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["date"],
+      dimensions: [],
+      dateFieldGranularity: { date: "month" },
+    };
+
+    const query = buildMetricRowQueryFromBindings(
+      dateDefinition,
+      {
+        groupBindings: { date: { type: "static", value: "" } },
+        dimensionBindings: {},
+      },
+      {
+        dashboardDateFilter: {
+          value: "2026-06",
+          granularity: "month",
+          param: "month",
+        },
+      },
+    );
+
+    expect(query).toEqual({
+      group: { date: "2026-06" },
+      dimensions: {},
+    });
+  });
+
+  it("returns null when a non-month field is empty even with dashboardDateFilter", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["categoryId"],
+      dimensions: ["date"],
+      dateFieldGranularity: { date: "month" },
+    };
+
+    expect(
+      buildMetricRowQueryFromBindings(
+        dateDefinition,
+        {
+          groupBindings: { categoryId: { type: "static", value: "" } },
+          dimensionBindings: {
+            date: { type: "routeParam", param: "month" },
+          },
+        },
+        {
+          dashboardDateFilter: {
+            value: "2026-06",
+            granularity: "month",
+            param: "month",
+          },
+        },
+      ),
+    ).toBeNull();
+  });
+
+  it("keeps routeParam month behavior when dashboardDateFilter is absent", () => {
+    const dateDefinition: MetricDefinitionRecord = {
+      ...definition,
+      groupBy: ["date"],
+      dimensions: [],
+      dateFieldGranularity: { date: "month" },
+    };
+
+    const query = buildMetricRowQueryFromBindings(
+      dateDefinition,
+      {
+        groupBindings: { date: { type: "routeParam", param: "month" } },
+        dimensionBindings: {},
+      },
+      { routeParams: { month: "2025-03" } },
+    );
+
+    expect(query).toEqual({
+      group: { date: "2025-03" },
+      dimensions: {},
+    });
+  });
 });

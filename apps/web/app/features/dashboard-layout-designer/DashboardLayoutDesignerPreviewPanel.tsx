@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 
 import { useAuth } from "../../auth/AuthContext";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
 import { createTenantDashboardLayoutRenderContext } from "../ui-builder/create-tenant-dashboard-layout-render-context";
 import { useDashboardViewFilterUrlState } from "../ui-builder/use-dashboard-view-filter-url-state";
 import { ViewFilterPageProvider } from "../ui-builder/view-filter-page-context";
@@ -45,11 +46,26 @@ export function DashboardLayoutDesignerPreviewPanel({
       ? editor.dashboardLayout
       : editor.selectedSection?.layout;
 
-  const { urlState } = useDashboardViewFilterUrlState({
+  const { collected, pageState } = useDashboardViewFilterUrlState({
     dashboardLayout: editor.dashboardLayout,
     sections: editor.dashboardSections,
     catalog: items,
   });
+
+  const dashboardDateFilter = useMemo(():
+    | DashboardDateFilterContextValue
+    | undefined => {
+    const config = collected.dateFilterConfig;
+    if (!config || !pageState.dateFilter.value) {
+      return undefined;
+    }
+
+    return {
+      value: pageState.dateFilter.value,
+      granularity: config.granularity,
+      param: config.param,
+    };
+  }, [collected.dateFilterConfig, pageState.dateFilter.value]);
 
   const previewContext = useMemo(
     () =>
@@ -59,7 +75,8 @@ export function DashboardLayoutDesignerPreviewPanel({
         locale: i18n.language,
         t,
         getDefinition,
-        pageFilters: urlState.filters,
+        pageFilters: pageState.filters,
+        dashboardDateFilter,
         user: user
           ? {
               displayName: user.displayName,
@@ -69,12 +86,13 @@ export function DashboardLayoutDesignerPreviewPanel({
           : null,
       }),
     [
+      dashboardDateFilter,
       editor.dashboardSections,
       getDefinition,
       i18n.language,
       items,
+      pageState.filters,
       t,
-      urlState.filters,
       user,
     ],
   );
@@ -89,7 +107,7 @@ export function DashboardLayoutDesignerPreviewPanel({
 
   const previewBody =
     previewLayout != null ? (
-      <ViewFilterPageProvider value={urlState}>
+      <ViewFilterPageProvider value={pageState}>
         <RecursiveLayoutRenderer
           layout={previewLayout}
           context={previewContext}

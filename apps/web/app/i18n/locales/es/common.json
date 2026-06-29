@@ -438,6 +438,21 @@
     "searchAndFilters": "Búsqueda y filtros",
     "enableSearch": "Activar búsqueda",
     "enableFilters": "Activar filtros",
+    "enableDateFilter": "Activar filtro de fecha",
+    "dateFilterGranularity": "Formato del filtro de fecha",
+    "dateFilterGranularityYear": "Solo año",
+    "dateFilterGranularityMonth": "Mes y año",
+    "dateFilterGranularityDay": "Fecha completa",
+    "dateFilterParam": "Nombre del parámetro URL",
+    "dateFilterLabel": "Fecha",
+    "dateFilterPlaceholder": "Seleccionar fecha",
+    "dateFilterPrevious": "Anterior",
+    "dateFilterNext": "Siguiente",
+    "dateFilterSelectYear": "Seleccionar año",
+    "dateFilterSelectMonth": "Seleccionar mes",
+    "dateFilterOpenCalendar": "Abrir selector de fecha",
+    "dateFilterClear": "Limpiar",
+    "dateFilterResetDefault": "Restablecer fecha actual",
     "searchGlobalHint": "La búsqueda se aplica globalmente a toda la vista mediante el parámetro q de la URL. Los campos buscables se infieren de todas las entidades del tenant.",
     "searchPlaceholder": "Marcador de búsqueda",
     "activeFilters": "Filtros",
@@ -986,9 +1001,12 @@
           "static": "Valor estático",
           "entityField": "Campo de entidad",
           "listFilter": "Filtro de lista",
-          "routeParam": "Parámetro de ruta"
+          "routeParam": "Parámetro de ruta",
+          "dashboardDate": "Filtro de fecha del panel"
         },
-        "dateBucketHint": "Formato de bucket esperado: {{format}}"
+        "dateBucketHint": "Formato de bucket esperado: {{format}}",
+        "dashboardDateHint": "En el panel, este campo puede rellenarse con el parámetro URL del filtro de fecha de Buscar y filtros.",
+        "dashboardDateBindingDetail": "Usa el parámetro URL del filtro de fecha del panel ({{param}})."
       }
     },
     "fileUploadSuccess": "Archivo subido correctamente.",
@@ -1587,7 +1605,6 @@
     },
     "widget": {
       "loading": "Cargando métrica…",
-      "empty": "Sin valor",
       "error": "No se pudo cargar la métrica",
       "forbidden": "Los valores de métricas no están disponibles para tu rol.",
       "unconfigured": "Selecciona una métrica para este KPI.",

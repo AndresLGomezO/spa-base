@@ -41,6 +41,18 @@ export function readPrimaryMetricNumericValue(
   return formatPrimaryMetricValue(definition, values);
 }
 
+export function formatDefaultMetricDisplayValue(
+  definition: Pick<MetricDefinitionRecord, "valueDisplayFormat">,
+  locale?: string,
+): string {
+  return formatDisplayValue(0, {
+    fieldType: "number",
+    displayFormat:
+      definition.valueDisplayFormat === "currency" ? "currency" : "plain",
+    locale,
+  });
+}
+
 export function formatPrimaryMetricDisplayValue(
   definition: MetricDefinitionRecord,
   values: Record<string, number>,

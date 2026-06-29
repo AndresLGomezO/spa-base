@@ -24,9 +24,14 @@ interface DatePickerCalendarProps {
   readonly selected: CalendarDateParts | null;
   readonly locale: string;
   readonly labels: DatePickerLabels;
+  readonly selectionMode?: "day" | "month" | "year";
   readonly onViewChange: (view: CalendarView) => void;
   readonly onFocusChange: (focus: CalendarDateParts) => void;
   readonly onSelectDay: (parts: CalendarDateParts) => void;
+  readonly onSelectMonth?: (
+    parts: Pick<CalendarDateParts, "year" | "month">,
+  ) => void;
+  readonly onSelectYear?: (parts: Pick<CalendarDateParts, "year">) => void;
 }
 
 export function DatePickerCalendar({
@@ -35,9 +40,12 @@ export function DatePickerCalendar({
   selected,
   locale,
   labels,
+  selectionMode = "day",
   onViewChange,
   onFocusChange,
   onSelectDay,
+  onSelectMonth,
+  onSelectYear,
 }: DatePickerCalendarProps) {
   const yearPageStart = getYearPageStart(focus.year);
   const yearPageYears = getYearPageYears(yearPageStart);
@@ -142,6 +150,10 @@ export function DatePickerCalendar({
               )}
               onClick={() => {
                 onFocusChange({ ...focus, year });
+                if (selectionMode === "year") {
+                  onSelectYear?.({ year });
+                  return;
+                }
                 onViewChange("month");
               }}
             >
@@ -163,7 +175,12 @@ export function DatePickerCalendar({
                   "bg-primary text-primary-foreground hover:bg-primary",
               )}
               onClick={() => {
-                onFocusChange({ ...focus, month });
+                const nextFocus = { ...focus, month };
+                onFocusChange(nextFocus);
+                if (selectionMode === "month") {
+                  onSelectMonth?.({ year: nextFocus.year, month });
+                  return;
+                }
                 onViewChange("day");
               }}
             >

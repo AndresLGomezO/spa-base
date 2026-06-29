@@ -1,8 +1,10 @@
 import type {
   UiComponentConfig,
   ViewFilterComponentConfig,
+  ViewFilterDateGranularity,
   ViewFilterEntry,
 } from "@repo/ui-builder-core";
+import { defaultDateFilterParam } from "@repo/ui-builder-core";
 import { CollapsibleEditorCard } from "@repo/ui-builder-react";
 import {
   Button,
@@ -218,6 +220,8 @@ export function ViewFilterComponentEditor({
   const activeFilters = config.filters;
   const enableSearch = config.enableSearch === true;
   const enableFilters = config.enableFilters !== false;
+  const enableDateFilter = config.enableDateFilter === true;
+  const dateFilterGranularity = config.dateFilterGranularity ?? "month";
 
   const updateConfig = (patch: Partial<ViewFilterComponentConfig>) => {
     onChange({
@@ -382,6 +386,59 @@ export function ViewFilterComponentEditor({
           />
           <span>{t("viewFilterComponents.enableFilters")}</span>
         </label>
+        <label className="flex items-center gap-2 text-sm">
+          <Checkbox
+            checked={enableDateFilter}
+            onChange={(event) =>
+              updateConfig({ enableDateFilter: event.target.checked })
+            }
+          />
+          <span>{t("viewFilterComponents.enableDateFilter")}</span>
+        </label>
+        {enableDateFilter ? (
+          <>
+            <label className="flex flex-col gap-1">
+              <FieldLabel>
+                {t("viewFilterComponents.dateFilterGranularity")}
+              </FieldLabel>
+              <Select
+                value={dateFilterGranularity}
+                onChange={(event) => {
+                  const nextGranularity = event.target
+                    .value as ViewFilterDateGranularity;
+                  updateConfig({
+                    dateFilterGranularity: nextGranularity,
+                    dateFilterParam: defaultDateFilterParam(nextGranularity),
+                  });
+                }}
+              >
+                <option value="year">
+                  {t("viewFilterComponents.dateFilterGranularityYear")}
+                </option>
+                <option value="month">
+                  {t("viewFilterComponents.dateFilterGranularityMonth")}
+                </option>
+                <option value="day">
+                  {t("viewFilterComponents.dateFilterGranularityDay")}
+                </option>
+              </Select>
+            </label>
+            <label className="flex flex-col gap-1">
+              <FieldLabel>
+                {t("viewFilterComponents.dateFilterParam")}
+              </FieldLabel>
+              <Input
+                value={
+                  config.dateFilterParam ??
+                  defaultDateFilterParam(dateFilterGranularity)
+                }
+                onChange={(event) =>
+                  updateConfig({ dateFilterParam: event.target.value })
+                }
+              />
+            </label>
+          </>
+        ) : null}
       </div>
 
       {enableFilters ? (
