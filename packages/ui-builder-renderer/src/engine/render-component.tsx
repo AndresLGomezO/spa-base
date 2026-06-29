@@ -22,7 +22,6 @@ import {
   layoutInlineStyleFromStyleRules,
   textInlineStyleFromStyleRules,
   splitStyleRuleClasses,
-  stylesIncludeFlexGrow,
   textWrapClassFromStyles,
   type FieldUiComponentConfig,
   type ImageComponentConfig,
@@ -159,17 +158,6 @@ function valueClassNameFromStyles(
   return [textWrapClassFromStyles(styles), textClassName, extra]
     .filter(Boolean)
     .join(" ");
-}
-
-function inlineFieldContainerClassName(
-  containerClassName: string,
-  styles: FieldUiComponentConfig["styles"],
-): string {
-  if (!stylesIncludeFlexGrow(styles)) {
-    return containerClassName;
-  }
-
-  return [containerClassName, "w-full"].filter(Boolean).join(" ");
 }
 
 function resolveImageRenderOptions(config: ImageComponentConfig): {
@@ -379,10 +367,7 @@ export function renderUiComponent(
       <CardFieldValue
         value={chain.staticValue}
         allowEmpty
-        className={inlineFieldContainerClassName(
-          containerClassName,
-          innerStyles,
-        )}
+        className={containerClassName}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
@@ -431,10 +416,7 @@ export function renderUiComponent(
         sizePx={imageRenderOptions.sizePx}
         fillContainer={imageRenderOptions.fillContainer}
         objectFit={imageRenderOptions.objectFit}
-        className={inlineFieldContainerClassName(
-          containerClassName,
-          innerStyles,
-        )}
+        className={containerClassName}
         style={containerStyle}
       />
     );
@@ -493,10 +475,7 @@ export function renderUiComponent(
           label={label}
           value={displayValue}
           allowEmpty={isSample}
-          className={inlineFieldContainerClassName(
-            containerClassName,
-            innerStyles,
-          )}
+          className={containerClassName}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
             innerStyles,
@@ -515,10 +494,7 @@ export function renderUiComponent(
         currency={showCurrency ? context.resolveCurrencyCode?.() : undefined}
         tone={showToneColors ? resolveCurrencyTone(rawValue) : "neutral"}
         label={label}
-        className={inlineFieldContainerClassName(
-          containerClassName,
-          innerStyles,
-        )}
+        className={containerClassName}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
@@ -551,10 +527,7 @@ export function renderUiComponent(
           label={label}
           value={displayValue}
           allowEmpty={isSample}
-          className={inlineFieldContainerClassName(
-            containerClassName,
-            innerStyles,
-          )}
+          className={containerClassName}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(
             innerStyles,
@@ -575,10 +548,7 @@ export function renderUiComponent(
         }
         locale={context.locale}
         label={label}
-        className={inlineFieldContainerClassName(
-          containerClassName,
-          innerStyles,
-        )}
+        className={containerClassName}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}
@@ -595,10 +565,7 @@ export function renderUiComponent(
           label={label}
           value={context.recordFieldLinkRenderer(recordLink)}
           allowEmpty
-          className={inlineFieldContainerClassName(
-            containerClassName,
-            innerStyles,
-          )}
+          className={containerClassName}
           style={containerStyle}
           valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
           textSize={textSize}
@@ -616,10 +583,7 @@ export function renderUiComponent(
           </a>
         }
         allowEmpty
-        className={inlineFieldContainerClassName(
-          containerClassName,
-          innerStyles,
-        )}
+        className={containerClassName}
         style={containerStyle}
         valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
         textSize={textSize}

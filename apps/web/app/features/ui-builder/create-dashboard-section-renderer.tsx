@@ -1,7 +1,6 @@
 import { Text } from "@repo/ui";
 import { EmbeddedLayoutRenderer } from "@repo/ui-builder-renderer";
 import {
-  layoutEstablishesDefiniteHeight,
   resolveDashboardSectionShellClassName,
   type DashboardSectionComponentConfig,
 } from "@repo/ui-builder-core";
@@ -43,10 +42,7 @@ export function createDashboardSectionRenderer(
       <EmbeddedLayoutRenderer
         layout={section.layout}
         context={buildLayoutContext()}
-        shellClassName={resolveDashboardSectionShellClassName(
-          config.styles,
-          layoutEstablishesDefiniteHeight(section.layout),
-        )}
+        shellClassName={resolveDashboardSectionShellClassName(config.styles)}
       />
     );
   };

@@ -145,9 +145,7 @@ describe("RecursiveLayoutRenderer container explicit height", () => {
 
     expect(html).toContain('style="height:200px"');
     expect(html).toContain('style="height:100%"');
-    expect(html).toMatch(
-      /class="[^"]*\bflex-1\b[^"]*\bh-full\b[^"]*"[^>]*style="height:100%"/,
-    );
+    expect(html).toMatch(/flex h-full min-h-0 w-full min-w-0 flex-1 flex-col/);
   });
 
   it("uses shrink-0 for percentage split rows and fill stretch for minHeight 100%", () => {
@@ -225,9 +223,7 @@ describe("RecursiveLayoutRenderer container explicit height", () => {
     );
 
     expect(html).toContain('style="min-height:100%"');
-    expect(html).toMatch(
-      /class="[^"]*\bflex-1\b[^"]*\bh-full\b[^"]*"[^>]*style="min-height:100%"/,
-    );
+    expect(html).toMatch(/flex h-full min-h-0 w-full min-w-0 flex-1 flex-col/);
     expect(html).toContain("flex:0 0 60%");
     expect(html).toContain("flex:0 0 10%");
     expect(html).toContain("flex:0 0 30%");

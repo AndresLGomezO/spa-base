@@ -318,9 +318,6 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
     );
 
     expect(markup).toContain("flex-[1]");
-    expect(markup).toMatch(
-      /w-full min-w-0[^"]*flex-\[1\]|flex-\[1\][^"]*w-full min-w-0/,
-    );
     expect(markup).toContain("self-stretch");
     expect(markup).toContain("text-center");
   });

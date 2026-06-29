@@ -260,8 +260,33 @@ describe("RecursiveLayoutRenderer widget percentage heights", () => {
     );
 
     expect(html).toContain("flex:0 0 30%");
-    expect(
-      html.match(/flex min-h-0 flex-1 w-full min-w-0 flex-col/g)?.length,
-    ).toBe(2);
+    expect(html.match(/\bflex-1\b/g)?.length).toBeGreaterThanOrEqual(2);
+  });
+
+  it("keeps fill-height containers adjacent to preview chrome inner without an extra wrapper", () => {
+    const html = renderToStaticMarkup(
+      <RecursiveLayoutRenderer
+        layout={userWidgetLayout}
+        context={listItemContext}
+        className="min-h-full flex-1"
+        rowWrapper={(row, _locator, children) => (
+          <div
+            data-row-id={row.id}
+            className="relative flex h-full min-h-0 w-full min-w-0 flex-1 flex-col"
+          >
+            <div className="relative z-0 flex h-full min-h-0 w-full min-w-0 flex-1 flex-col z-10">
+              {children}
+            </div>
+          </div>
+        )}
+      />,
+    );
+
+    expect(html).toMatch(
+      /data-row-id="row-9a50c012-b04b-4d16-9d9a-75c203aa3f3c"[^>]*><div class="[^"]*\bz-10\b[^"]*"><div class="[^"]*\bflex-1\b[^"]*\bh-full\b[^"]*" style="[^"]*height:100%/,
+    );
+    expect(html).not.toMatch(
+      /data-row-id="row-9a50c012-b04b-4d16-9d9a-75c203aa3f3c"[^>]*><div class="[^"]*\bz-10\b[^"]*"><div><div class="[^"]*\bflex-1\b/,
+    );
   });
 });

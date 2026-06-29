@@ -143,6 +143,22 @@ export {
   resolveImageComponentRowStyles,
   type ContainerOverlayContext,
 } from "./layout/container-overlay.js";
+export {
+  isStructuralLayoutRow,
+  resolveParentStackAlign,
+  resolveParentStackDirection,
+  resolveParentStackStyles,
+  resolveParentStackUsesFlexWrap,
+  resolvePreviewRowChromeLayoutClasses,
+  resolveProductionRowShellClassName,
+  resolveRowShellLayoutClasses,
+  resolveRowShellLayoutForRender,
+  normalizeRuntimeRowShellClassName,
+  normalizeRuntimeRowInnerClassName,
+  rowPrefersFlexGrow,
+  rowUsesContentWidth,
+  type RowShellLayoutClasses,
+} from "./layout/row-shell-layout.js";
 export { createDefaultFormLayout } from "./layout/default-form-layout.js";
 export { createDefaultModalFooterLayout } from "./layout/default-modal-footer-layout.js";
 export {

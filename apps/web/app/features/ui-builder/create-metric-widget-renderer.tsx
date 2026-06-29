@@ -1,7 +1,6 @@
 import { Text } from "@repo/ui";
 import {
   filterComponentInnerStyleRules,
-  layoutEstablishesDefiniteHeight,
   layoutInlineStyleFromStyleRules,
   resolveMetricWidgetShellClassName,
   splitStyleRuleClasses,
@@ -55,10 +54,7 @@ export function createMetricWidgetRenderer(
     const innerStyles = filterComponentInnerStyleRules(config.styles);
     const { containerClassName } = splitStyleRuleClasses(innerStyles);
     const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
-    const shellClassName = resolveMetricWidgetShellClassName(
-      config.styles,
-      layoutEstablishesDefiniteHeight(widget.layout),
-    );
+    const shellClassName = resolveMetricWidgetShellClassName(config.styles);
 
     return (
       <EmbeddedLayoutRenderer

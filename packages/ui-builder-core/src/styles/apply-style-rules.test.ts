@@ -261,14 +261,14 @@ describe("applyStyleRules", () => {
 
   it("resolves dashboard section shell width from component styles", () => {
     expect(resolveDashboardSectionShellClassName(undefined)).toBe(
-      "h-auto min-w-0 max-w-full w-full",
+      "min-w-0 max-w-full shrink-0",
     );
     expect(
       resolveDashboardSectionShellClassName([{ property: "flex", value: "1" }]),
-    ).toBe("h-full min-h-0 min-w-0 w-full");
+    ).toBe("min-w-0 max-w-full shrink-0 flex-1");
     expect(
       resolveDashboardSectionShellClassName([{ property: "flex", value: "0" }]),
-    ).toBe("h-auto min-w-0 w-fit max-w-full");
+    ).toBe("min-w-0 w-fit max-w-full shrink-0");
   });
 
   it("sizes flex-wrap row items for responsive stacking", () => {

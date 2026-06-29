@@ -155,7 +155,7 @@ describe("RecursiveLayoutRenderer embedded layout parity", () => {
             <EmbeddedLayoutRenderer
               layout={userWidgetLayout}
               context={listItemContext}
-              shellClassName="h-auto min-h-0 min-w-0 max-w-full w-full"
+              shellClassName="min-w-0 max-w-full shrink-0"
             />
           ),
         }}
@@ -178,7 +178,7 @@ describe("RecursiveLayoutRenderer embedded layout parity", () => {
               <EmbeddedLayoutRenderer
                 layout={userWidgetLayout}
                 context={listItemContext}
-                shellClassName="h-full min-h-0 min-w-0 w-full"
+                shellClassName="min-w-0 max-w-full shrink-0 flex-1"
               />
             ),
           }}
@@ -265,7 +265,7 @@ describe("RecursiveLayoutRenderer embedded layout parity", () => {
             <EmbeddedLayoutRenderer
               layout={partialSplitLayout}
               context={listItemContext}
-              shellClassName="h-auto min-h-0 min-w-0 max-w-full w-full"
+              shellClassName="min-w-0 max-w-full shrink-0"
             />
           ),
         }}
