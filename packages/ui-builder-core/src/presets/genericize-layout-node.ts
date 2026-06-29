@@ -34,6 +34,7 @@ function assertNoUnsupportedComponents(component: UiComponentConfig): void {
     component.kind === "metric-kpi" ||
     component.kind === "metric-derived-kpi" ||
     component.kind === "metric-widget" ||
+    component.kind === "query-viewer" ||
     component.kind === "dashboard-section" ||
     component.kind === "view-search" ||
     component.kind === "view-filter" ||

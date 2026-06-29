@@ -734,7 +734,8 @@ export function flexWrapRowItemClassName(
 
   if (
     row.component?.kind === "dashboard-section" ||
-    row.component?.kind === "metric-widget"
+    row.component?.kind === "metric-widget" ||
+    row.component?.kind === "query-viewer"
   ) {
     if (stylesIncludeFlexGrow(row.component.styles)) {
       return "min-w-0 max-w-full flex-[1_1_0] basis-0";

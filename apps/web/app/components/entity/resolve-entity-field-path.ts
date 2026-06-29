@@ -1,6 +1,9 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
 
-import { parseRelationFieldPath } from "./resolve-relation-field-path";
+import {
+  parseRelationFieldPath,
+  type RelationDefinitionLookup,
+} from "./resolve-relation-field-path";
 
 function getPopulatedRecord(
   item: Record<string, unknown>,
@@ -15,6 +18,14 @@ function getPopulatedRecord(
   return populated[relationField] ?? null;
 }
 
+interface ResolveEntityFieldPathOptions {
+  readonly getDefinition?: RelationDefinitionLookup;
+  readonly getOneToManyRelationSubfieldValue?: (
+    recordId: string,
+    fieldPath: string,
+  ) => unknown;
+}
+
 export function resolveEntityFieldPath(
   item: Record<string, unknown>,
   fieldPath: string,
@@ -23,6 +34,7 @@ export function resolveEntityFieldPath(
     recordId: string,
     columnName: string,
   ) => string | null,
+  options?: ResolveEntityFieldPathOptions,
 ): unknown {
   const trimmedPath = fieldPath.trim();
   if (!trimmedPath.includes(".")) {
@@ -38,8 +50,23 @@ export function resolveEntityFieldPath(
     return item[trimmedPath];
   }
 
-  const parsed = parseRelationFieldPath(definition, trimmedPath);
+  const parsed = parseRelationFieldPath(
+    definition,
+    trimmedPath,
+    options?.getDefinition,
+  );
   if (!parsed) {
+    return null;
+  }
+
+  if (parsed.relationKind === "one-to-many") {
+    const subfieldValue = options?.getOneToManyRelationSubfieldValue?.(
+      String(item.id),
+      trimmedPath,
+    );
+    if (subfieldValue !== undefined) {
+      return subfieldValue;
+    }
     return null;
   }
 

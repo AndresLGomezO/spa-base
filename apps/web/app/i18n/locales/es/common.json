@@ -46,6 +46,7 @@
     "automation": "Automatización",
     "analytics": "Analítica",
     "metricsNav": "Métricas",
+    "queryBuilderNav": "Constructor de consultas",
     "entityCategories": "Categorías de entidades",
     "roles": "Roles y permisos",
     "platform": "Plataforma",
@@ -398,7 +399,8 @@
     },
     "components": {
       "metricWidget": "Widget de métrica",
-      "metricDerivedKpi": "KPI de métrica derivada"
+      "metricDerivedKpi": "KPI de métrica derivada",
+      "queryViewer": "Resultados de consulta"
     },
     "metricWidgetEditor": {
       "entity": "Entidad",
@@ -407,6 +409,18 @@
       "unconfigured": "Sin widget seleccionado",
       "noWidgetsForEntity": "No hay widgets de métrica definidos para esta entidad.",
       "noEntitiesWithWidgets": "Ninguna entidad tiene widgets de métrica todavía."
+    },
+    "queryViewerEditor": {
+      "query": "Consulta",
+      "selectQuery": "Seleccionar una consulta…",
+      "unconfigured": "Sin consulta seleccionada",
+      "noQueries": "Aún no hay consultas guardadas.",
+      "loading": "Cargando resultados de la consulta…",
+      "loadFailed": "No se pudieron cargar los resultados de la consulta.",
+      "sourceEntity": "Entidad de origen: {{entity}}",
+      "missingSourceEntity": "La entidad de origen de la consulta no está disponible.",
+      "emptyResults": "No hay resultados para esta consulta.",
+      "selectQueryForFields": "Selecciona una consulta en la fila de resultados de consulta para vincular campos de la entidad."
     },
     "widgets": {
       "selectLabel": "Widget",
@@ -1653,6 +1667,128 @@
       "removeToken": "Eliminar",
       "moveTokenUp": "Subir",
       "moveTokenDown": "Bajar"
+    }
+  },
+  "queryBuilder": {
+    "title": "Constructor de consultas",
+    "description": "Define consultas reutilizables de entidades con filtros, orden y límites para dashboards y widgets.",
+    "loading": "Cargando consultas…",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saved": "Consulta guardada.",
+    "deleted": "Consulta eliminada.",
+    "forbidden": "No tienes permiso para gestionar consultas de entidades.",
+    "selectEntity": "Selecciona una entidad",
+    "selectField": "Selecciona un campo",
+    "status": "Estado",
+    "statusValues": {
+      "ACTIVE": "Activa",
+      "PAUSED": "Pausada"
+    },
+    "list": {
+      "title": "Consultas",
+      "add": "Añadir consulta",
+      "empty": "Aún no hay consultas.",
+      "edit": "Editar consulta",
+      "delete": "Eliminar consulta",
+      "expandPanel": "Expandir panel",
+      "collapsePanel": "Contraer panel"
+    },
+    "metadata": {
+      "createTitle": "Crear consulta",
+      "editTitle": "Editar consulta",
+      "createAction": "Crear",
+      "name": "Nombre",
+      "namePlaceholder": "Próximos pagos de suscripción",
+      "description": "Descripción (opcional)",
+      "descriptionPlaceholder": "Qué devuelve esta consulta y cuándo usarla",
+      "sourceEntity": "Entidad origen",
+      "created": "Consulta creada.",
+      "updated": "Consulta actualizada."
+    },
+    "settings": {
+      "emptySelection": "Selecciona una consulta de la lista para configurar filtros y previsualizar resultados."
+    },
+    "filters": {
+      "label": "Filtros",
+      "empty": "Sin filtros — se incluyen todos los registros.",
+      "add": "Añadir filtro",
+      "remove": "Eliminar filtro",
+      "directGroup": "Campos de la entidad",
+      "relationGroup": "Campos de entidades relacionadas",
+      "conditionLabel": "Condición",
+      "groupLabel": "Grupo",
+      "groupSummary": "{{combinator}} · {{count}} reglas",
+      "emptyConditionSummary": "Sin campo seleccionado",
+      "combinator": {
+        "and": "Coincidir con todos (AND)",
+        "or": "Coincidir con cualquiera (OR)"
+      },
+      "addGroup": "Añadir grupo",
+      "removeGroup": "Eliminar grupo",
+      "field": "Campo",
+      "operator": "Operador",
+      "value": "Valor",
+      "selectValue": "Selecciona un valor…",
+      "valuePlaceholder": "Introduce un valor",
+      "listPlaceholder": "Valores separados por comas",
+      "valueKinds": {
+        "static": "Valor fijo",
+        "temporal": "Preset de fecha actual"
+      },
+      "temporalPresets": {
+        "today": "Hoy (inicio del día)",
+        "startOfDay": "Inicio del día",
+        "endOfDay": "Fin del día",
+        "startOfMonth": "Inicio del mes",
+        "endOfMonth": "Fin del mes",
+        "startOfYear": "Inicio del año",
+        "endOfYear": "Fin del año"
+      },
+      "operators": {
+        "==": "Igual",
+        "!=": "Distinto",
+        ">": "Mayor que",
+        "<": "Menor que",
+        ">=": "Mayor o igual",
+        "<=": "Menor o igual",
+        "in": "Es uno de"
+      }
+    },
+    "sort": {
+      "label": "Orden",
+      "empty": "Sin orden.",
+      "add": "Añadir campo de orden",
+      "remove": "Eliminar",
+      "rowLabel": "Orden {{index}}",
+      "asc": "Ascendente",
+      "desc": "Descendente"
+    },
+    "selectFields": {
+      "label": "Campos a seleccionar (opcional)",
+      "placeholder": "Todos los campos",
+      "selectedCount": "{{count}} seleccionados",
+      "searchPlaceholder": "Buscar campos…",
+      "noResults": "No hay campos coincidentes",
+      "removeBadge": "Eliminar {{label}}"
+    },
+    "limit": {
+      "label": "Límite de resultados",
+      "topN": "Top N",
+      "all": "Todos (hasta 500)",
+      "allHint": "Obtiene hasta 500 registros coincidentes usando paginación."
+    },
+    "preview": {
+      "title": "Previsualizar resultados",
+      "hint": "Contraído por defecto",
+      "run": "Ejecutar consulta",
+      "failed": "No se pudo ejecutar la consulta.",
+      "resultCount": "{{count}} resultados"
+    },
+    "delete": {
+      "title": "Eliminar consulta",
+      "message": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
+      "confirm": "Eliminar"
     }
   },
   "hooks": {

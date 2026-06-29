@@ -37,6 +37,9 @@ describe("expandGrant", () => {
       "hook.read",
       "metricDefinition.read",
       "metricValue.read",
+      "entityQueryDefinition.read",
+      "ai.chat.read",
+      "ai.uiBuilder.read",
       "role.read",
       "tenantUser.read",
     ]);
@@ -59,12 +62,13 @@ describe("resolvePermissions", () => {
   });
 
   it("resolves admin role to all permissions", () => {
-    expect(
-      resolvePermissions({
-        tenantId: "tenant_a",
-        tenants: { tenant_a: ["admin"] },
-      }),
-    ).toEqual([...ALL_KNOWN_PERMISSIONS]);
+    const permissions = resolvePermissions({
+      tenantId: "tenant_a",
+      tenants: { tenant_a: ["admin"] },
+    });
+
+    expect(permissions).toEqual([...ALL_KNOWN_PERMISSIONS]);
+    expect(permissions).toContain("entityQueryDefinition.delete");
   });
 
   it("resolves viewer role to read-only permissions", () => {
@@ -81,6 +85,9 @@ describe("resolvePermissions", () => {
       "hook.read",
       "metricDefinition.read",
       "metricValue.read",
+      "entityQueryDefinition.read",
+      "ai.chat.read",
+      "ai.uiBuilder.read",
       "role.read",
       "tenantUser.read",
     ]);
@@ -92,7 +99,7 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(22);
+    expect(permissions).toHaveLength(27);
     expect(permissions).toEqual(
       expect.arrayContaining([
         "entityDefinition.read",
@@ -112,6 +119,10 @@ describe("resolvePermissions", () => {
         "tenantUser.update",
         "entityUiOverride.read",
         "entityUiOverride.update",
+        "entityQueryDefinition.read",
+        "entityQueryDefinition.create",
+        "entityQueryDefinition.update",
+        "ai.uiBuilder.read",
       ]),
     );
     expect(permissions).not.toContain("entityDefinition.delete");
@@ -135,6 +146,9 @@ describe("resolvePermissions", () => {
       "hook.read",
       "metricDefinition.read",
       "metricValue.read",
+      "entityQueryDefinition.read",
+      "ai.chat.read",
+      "ai.uiBuilder.read",
       "role.read",
       "tenantUser.read",
     ]);
@@ -191,6 +205,10 @@ describe("hasPermission", () => {
       hasPermission("entityDefinition.update", [], { isSuperAdmin: true }),
     ).toBe(true);
   });
+
+  it("allows any required permission when resolved grants include *", () => {
+    expect(hasPermission("entityQueryDefinition.read", ["*"])).toBe(true);
+  });
 });
 
 describe("isPlatformSuperAdmin", () => {
@@ -214,6 +232,9 @@ describe("expandGrants", () => {
       "hook.read",
       "metricDefinition.read",
       "metricValue.read",
+      "entityQueryDefinition.read",
+      "ai.chat.read",
+      "ai.uiBuilder.read",
       "role.read",
       "tenantUser.read",
     ]);

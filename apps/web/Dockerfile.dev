@@ -20,6 +20,7 @@ COPY apps/platform/package.json ./apps/platform/
 COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/entity-categories/package.json ./packages/entity-categories/
+COPY packages/entity-queries/package.json ./packages/entity-queries/
 COPY packages/modules/package.json ./packages/modules/
 COPY packages/query-engine/package.json ./packages/query-engine/
 COPY packages/ui-builder/package.json ./packages/ui-builder/

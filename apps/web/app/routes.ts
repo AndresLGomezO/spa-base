@@ -20,6 +20,7 @@ export default [
     route("settings/data-models", "./routes/settings/data-models.tsx"),
     route("settings/hooks", "./routes/settings/hooks.tsx"),
     route("settings/metrics", "./routes/settings/metrics.tsx"),
+    route("settings/query-builder", "./routes/settings/query-builder.tsx"),
     route(
       "settings/entity-categories",
       "./routes/settings/entity-categories.tsx",

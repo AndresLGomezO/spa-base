@@ -23,6 +23,7 @@ import {
   SETTINGS_AI_CHAT_NAV_ITEM,
   SETTINGS_AI_DEBUGGER_NAV_ITEM,
   SETTINGS_METRICS_NAV_ITEM,
+  SETTINGS_QUERY_BUILDER_NAV_ITEM,
   SETTINGS_GROUP_ICON,
   SETTINGS_ROLES_NAV_ITEM,
   SETTINGS_USER_MANAGEMENT_NAV_ITEM,
@@ -169,6 +170,12 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     if (hasPermission("metricDefinition.read", permissions, { isSuperAdmin })) {
       analyticsChildren.push(SETTINGS_METRICS_NAV_ITEM);
+    }
+
+    if (
+      hasPermission("entityQueryDefinition.read", permissions, { isSuperAdmin })
+    ) {
+      analyticsChildren.push(SETTINGS_QUERY_BUILDER_NAV_ITEM);
     }
 
     if (analyticsChildren.length > 0) {

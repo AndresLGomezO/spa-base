@@ -8,6 +8,7 @@
     "@repo/encryption",
     "@repo/entities",
     "@repo/entity-categories",
+    "@repo/entity-queries",
     "@repo/entity-relations",
     "@repo/eslint-config",
     "@repo/firestore-converters",

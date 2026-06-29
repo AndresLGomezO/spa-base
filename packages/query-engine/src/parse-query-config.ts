@@ -8,15 +8,26 @@ import {
   type Phase1FieldType,
 } from "@repo/entities";
 import {
+  flattenAndConditions,
+  isFilterCondition,
+  normalizeLegacyQueryFilter,
+  type FilterNode,
+  type NormalizedFilterNode,
+} from "@repo/firestore-converters/filter-tree";
+import {
   isPostFilterOperator,
-  type FilterOperator,
   type NormalizedEntityQuery,
   type NormalizedFilter,
   type NormalizedSort,
-} from "@repo/firestore-converters";
+  type FilterOperator,
+} from "@repo/firestore-converters/entity-query-contract";
 import { z } from "zod";
 
 import { QueryError, QueryErrorCode } from "./errors.js";
+import {
+  enforceFirestoreConstraintsOnTree,
+  partitionFilterTree,
+} from "./filter-tree.js";
 import { SEARCH_SOURCE_FIELDS_FILTER_FIELD } from "./post-filters.js";
 import type { Filter, ListQueryInput, QueryConfig, Sort } from "./types.js";
 
@@ -45,6 +56,30 @@ const filterSchema = z
   })
   .strict();
 
+const filterConditionSchema = z
+  .object({
+    type: z.literal("condition"),
+    field: z.string().trim().min(1),
+    operator: filterOperatorSchema,
+    value: z.unknown(),
+  })
+  .strict();
+
+const filterNodeSchema: z.ZodType<FilterNode> = z.lazy(() =>
+  z.discriminatedUnion("type", [
+    filterConditionSchema,
+    z
+      .object({
+        type: z.literal("group"),
+        combinator: z.enum(["and", "or"]),
+        children: z.array(filterNodeSchema),
+      })
+      .strict(),
+  ]),
+);
+
+const queryFilterSchema = z.union([z.array(filterSchema), filterNodeSchema]);
+
 const sortSchema = z
   .object({
     field: z.string().trim().min(1),
@@ -54,7 +89,7 @@ const sortSchema = z
 
 const queryConfigSchema = z
   .object({
-    filter: z.array(filterSchema).optional(),
+    filter: queryFilterSchema.optional(),
     sort: z.array(sortSchema).max(1).optional(),
     search: z.string().trim().optional(),
     pagination: z
@@ -78,14 +113,6 @@ const NON_QUERYABLE_SYSTEM_FIELDS = new Set([
 const QUERYABLE_SYSTEM_FIELDS = new Set<string>(
   SYSTEM_FIELD_KEYS.filter((key) => !NON_QUERYABLE_SYSTEM_FIELDS.has(key)),
 );
-
-const INEQUALITY_OPERATORS = new Set<FilterOperator>([
-  "!=",
-  ">",
-  "<",
-  ">=",
-  "<=",
-]);
 
 const OPERATORS_BY_FIELD_TYPE: Record<
   Phase1FieldType,
@@ -247,7 +274,7 @@ const SYSTEM_ARRAY_FIELDS = new Set(["accessUserIds"]);
 function validateFilter(
   entity: AnyDefinedEntity,
   filter: Filter,
-): NormalizedFilter {
+): NormalizedFilterNode {
   if (filter.field === "tenantId") {
     throw new QueryError(
       QueryErrorCode.QUERY_VALIDATION_ERROR,
@@ -272,6 +299,7 @@ function validateFilter(
     }
     validateFilterValue(filter.operator, filter.value);
     return {
+      type: "condition",
       field: filter.field,
       operator: filter.operator,
       value: filter.value,
@@ -297,9 +325,29 @@ function validateFilter(
   validateFilterValue(filter.operator, filter.value);
 
   return {
+    type: "condition",
     field: filter.field,
     operator: filter.operator,
     value: filter.value,
+  };
+}
+
+function validateFilterNode(
+  entity: AnyDefinedEntity,
+  node: FilterNode,
+): NormalizedFilterNode {
+  if (isFilterCondition(node)) {
+    return validateFilter(entity, {
+      field: node.field,
+      operator: node.operator,
+      value: node.value,
+    });
+  }
+
+  return {
+    type: "group",
+    combinator: node.combinator,
+    children: node.children.map((child) => validateFilterNode(entity, child)),
   };
 }
 
@@ -320,10 +368,12 @@ function validateSort(entity: AnyDefinedEntity, sort: Sort): NormalizedSort {
   }
 
   if (resolveFieldType(entity, sort.field) === null) {
-    throw new QueryError(
-      QueryErrorCode.QUERY_VALIDATION_ERROR,
-      `Unknown or non-queryable sort field "${sort.field}".`,
-    );
+    if (!sort.field.includes(".")) {
+      throw new QueryError(
+        QueryErrorCode.QUERY_VALIDATION_ERROR,
+        `Unknown or non-queryable sort field "${sort.field}".`,
+      );
+    }
   }
 
   if (isEntityArrayField(entity, sort.field)) {
@@ -360,42 +410,6 @@ function validateSelect(
   }
 
   return select;
-}
-
-function enforceFirestoreConstraints(
-  filters: readonly NormalizedFilter[],
-  sort: NormalizedSort | null,
-): NormalizedSort {
-  const inequalityFilters = filters.filter((filter) =>
-    INEQUALITY_OPERATORS.has(filter.operator),
-  );
-
-  const inequalityFields = new Set(inequalityFilters.map((f) => f.field));
-  if (inequalityFields.size > 1) {
-    throw new QueryError(
-      QueryErrorCode.QUERY_UNSUPPORTED,
-      "Inequality filters on multiple fields are not supported. All range filters must target the same field.",
-    );
-  }
-
-  const inequalityFilter = inequalityFilters[0];
-  if (!inequalityFilter) {
-    return sort ?? { field: "id", direction: "asc" };
-  }
-
-  const primarySort = sort ?? {
-    field: inequalityFilter.field,
-    direction: "asc" as const,
-  };
-
-  if (primarySort.field !== inequalityFilter.field) {
-    throw new QueryError(
-      QueryErrorCode.QUERY_UNSUPPORTED,
-      "When using an inequality filter, the primary sort field must match the filtered field.",
-    );
-  }
-
-  return primarySort;
 }
 
 export { resolveSearchField } from "@repo/entities";
@@ -463,16 +477,14 @@ export function normalizeEntityQuery(
   entity: AnyDefinedEntity,
   config: QueryConfig,
 ): NormalizedEntityQuery {
-  const allFilters = (config.filter ?? []).map((filter) =>
-    validateFilter(entity, filter),
-  );
+  const rawFilterTree = normalizeLegacyQueryFilter(config.filter);
+  const validatedTree = rawFilterTree
+    ? validateFilterNode(entity, rawFilterTree)
+    : null;
 
-  const firestoreFilters = allFilters.filter(
-    (f) => !isPostFilterOperator(f.operator),
-  );
-  const userPostFilters = allFilters.filter((f) =>
-    isPostFilterOperator(f.operator),
-  );
+  const { nativeTree, postFilterTree } = validatedTree
+    ? partitionFilterTree(validatedTree)
+    : { nativeTree: null, postFilterTree: null };
 
   let searchField: string | undefined;
   let search: string | undefined;
@@ -509,13 +521,13 @@ export function normalizeEntityQuery(
     }
   }
 
-  const nativeFilters = firestoreFilters;
-  const postFilters = [...userPostFilters, ...searchPostFilters];
+  const nativeFilters = flattenAndConditions(nativeTree);
+  const postFilters = searchPostFilters;
 
   const sortEntry = config.sort?.[0] ?? null;
   const sort = sortEntry ? validateSort(entity, sortEntry) : null;
 
-  const primarySort = enforceFirestoreConstraints(nativeFilters, sort);
+  const primarySort = enforceFirestoreConstraintsOnTree(nativeTree, sort);
   const select = config.select
     ? validateSelect(entity, config.select)
     : undefined;
@@ -524,8 +536,10 @@ export function normalizeEntityQuery(
   const useOffset = offset !== undefined;
 
   return {
+    filterTree: nativeTree,
     filters: nativeFilters,
     postFilters,
+    postFilterTree,
     sort: primarySort,
     limit: normalizeLimit(config.pagination?.limit),
     ...(useOffset

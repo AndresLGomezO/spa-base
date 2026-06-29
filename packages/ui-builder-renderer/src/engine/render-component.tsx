@@ -10,6 +10,7 @@ import {
   isMetricKpiComponent,
   isMetricDerivedKpiComponent,
   isMetricWidgetComponent,
+  isQueryViewerComponent,
   isViewSearchComponent,
   isViewFilterComponent,
   isPageUiComponent,
@@ -197,6 +198,10 @@ export function renderUiComponent(
 
   if (isMetricWidgetComponent(config)) {
     return context.metricWidgetRenderer?.(config) ?? null;
+  }
+
+  if (isQueryViewerComponent(config)) {
+    return context.queryViewerRenderer?.(config) ?? null;
   }
 
   if (isDashboardSectionComponent(config)) {

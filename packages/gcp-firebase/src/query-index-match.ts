@@ -6,6 +6,8 @@ import {
 } from "@repo/firestore-indexes";
 import type { NormalizedEntityQuery } from "@repo/firestore-converters";
 
+import { filterTreeHasOrCombinator } from "./build-firestore-filter-tree.js";
+
 const OWNERSHIP_FIELD = "accessUserIds";
 
 const INEQUALITY_OPERATORS = new Set(["!=", ">", "<", ">=", "<="]);
@@ -97,6 +99,12 @@ export function shouldExecuteInMemoryListQuery(
   if (query.postFilters.length > 0) {
     return false;
   }
+  if (query.postFilterTree) {
+    return false;
+  }
+  if (filterTreeHasOrCombinator(query.filterTree)) {
+    return false;
+  }
   return true;
 }
 
@@ -112,6 +120,18 @@ export function queryNeedsClientFallback(
 
   if (query.postFilters.length > 0) {
     return false;
+  }
+
+  if (query.postFilterTree) {
+    return false;
+  }
+
+  if (filterTreeHasOrCombinator(query.filterTree)) {
+    return true;
+  }
+
+  if (query.sort?.field.includes(".")) {
+    return true;
   }
 
   const hasInequality = query.filters.some((filter) =>

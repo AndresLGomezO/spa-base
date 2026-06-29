@@ -19,17 +19,19 @@ HTTP clients pass an optional `query` JSON string on `GET /api/{entity}`; legacy
 
 **Implemented in v1:**
 
-- Filter, sort, pagination, and `select` projection
+- Filter tree with AND/OR groups (nested), legacy flat `filter[]` arrays, sort, pagination, and `select` projection
+- Post-filter operators (`contains`, `startsWith`, `endsWith`) on string fields
 - Entity-level RBAC (`{entity}.read`)
 - Tenant path isolation (client cannot filter on `tenantId`)
-- Firestore-backed execution via `@repo/gcp-firebase`
+- Firestore-backed execution via `@repo/gcp-firebase` (`Filter.and` / `Filter.or` when expressible)
+- In-memory / client fallback when OR shapes lack indexes or post-filters are present
 - In-memory executor for tests
 
 **Deferred:**
 
 - `include` / relation expansion
 - Row-level RBAC query injection (`ownerId` filters)
-- OR conditions, aggregations, full-text search
+- Aggregations, full-text search
 
 **Web client (10.2):** `EntityTable` / `EntityCardView` build `QueryConfig` via `@repo/ui-builder` and pass it through `useEntity` → `api-client.listEntity(..., { query })`. See [Advanced UI Builder Guide](./advanced-ui-builder-guide.md).
 
@@ -74,12 +76,40 @@ flowchart TB
 ## QueryConfig reference
 
 ```ts
+type FilterNode =
+  | { type: "condition"; field: string; operator: FilterOperator; value: unknown }
+  | { type: "group"; combinator: "and" | "or"; children: FilterNode[] };
+
 type QueryConfig = {
-  filter?: Filter[];
+  filter?: FilterNode | Filter[];  // legacy flat arrays normalized to AND group
   sort?: Sort[];           // max 1 sort field in v1
   pagination?: { limit: number; cursor?: string };
   select?: string[];
 };
+```
+
+### Filter tree
+
+HTTP `query` JSON accepts either a **filter tree** root group or a legacy flat `filter` array (implicit AND). Example:
+
+```json
+{
+  "filter": {
+    "type": "group",
+    "combinator": "and",
+    "children": [
+      { "type": "condition", "field": "status", "operator": "==", "value": "ACTIVE" },
+      {
+        "type": "group",
+        "combinator": "or",
+        "children": [
+          { "type": "condition", "field": "amount", "operator": ">", "value": 100 },
+          { "type": "condition", "field": "amount", "operator": "==", "value": 0 }
+        ]
+      }
+    ]
+  }
+}
 ```
 
 ### Filter operators by field type
@@ -96,10 +126,12 @@ Queryable system fields: `id`, `createdAt`. `tenantId` and `updatedAt` are rejec
 
 ### Firestore constraints (enforced at parse time)
 
-- At most **one inequality** filter (`!=`, `<`, `<=`, `>`, `>=`) per query
+- At most **one inequality** filter (`!=`, `<`, `<=`, `>`, `>=`) per AND branch (each OR disjunction evaluated separately at execution)
 - At most **one sort** field
 - When an inequality is present, the primary sort field must match that field; `id` is appended as tiebreaker at execution time
-- No OR conditions
+- OR groups use Firestore `Filter.or` when the query is index-compatible; otherwise the executor falls back to client-side filtering with `evaluateFilterTree`
+- Max **30** OR disjunctions (Firestore limit)
+- Max filter tree depth **10**
 
 Invalid queries return `400` with `QUERY_VALIDATION_ERROR` or `QUERY_UNSUPPORTED`.
 
@@ -166,6 +198,7 @@ Composite indexes are required for filter + sort combinations. See [`firestore.i
 | FK filter (e.g. workItem by batch) | `batchId ASC`, `id ASC` |
 | Sort by numeric field | `amount ASC/DESC`, `id ASC/DESC` |
 | Filter FK + sort another field | Match Firestore inequality rules — see parse-time validation |
+| OR filter groups | No automatic index generation in v1 — queries may use client fallback; equality fields in OR branches are logged as index hints |
 
 Deploy indexes before relying on filtered/sorted queries in production.
 

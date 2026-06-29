@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import {
   CollapsibleMotionPresetSection,
   CollapsibleStyleRulesEditor,
@@ -6,7 +7,7 @@ import {
 } from "@repo/ui-builder-react";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
 import {
-  isContainerComponent,
+  isRowHolderComponent,
   type ComponentRowNode,
   type MotionPreset,
 } from "@repo/ui-builder-core";
@@ -29,6 +30,7 @@ interface ContainerComponentRowPanelProps {
   >;
   readonly treeLabels: StructureTreeLabels;
   readonly fieldDescriptors: readonly FieldDescriptor[];
+  readonly extraControls?: ReactNode;
 }
 
 export function ContainerComponentRowPanel({
@@ -39,8 +41,9 @@ export function ContainerComponentRowPanel({
   componentEditorLabels,
   treeLabels,
   fieldDescriptors,
+  extraControls,
 }: ContainerComponentRowPanelProps) {
-  if (!isContainerComponent(row.component)) {
+  if (!isRowHolderComponent(row.component)) {
     return null;
   }
 
@@ -56,6 +59,7 @@ export function ContainerComponentRowPanel({
           treeLabels={treeLabels}
           onChange={(name) => binding.updateRowMeta(rowRef, { name })}
         />
+        {extraControls}
         <ColumnStackDirectionEditor
           stackDirection={container.stackDirection}
           onChange={(stackDirection) =>

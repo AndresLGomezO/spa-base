@@ -39,6 +39,65 @@ describe("parseRelationFieldPath", () => {
     expect(parseRelationFieldPath(accountDefinition, "bank.name")).toEqual({
       relationField: "bankId",
       subField: "name",
+      relationKind: "many-to-one",
+    });
+  });
+});
+
+describe("parseRelationFieldPath one-to-many", () => {
+  const contractDefinition = {
+    name: "contract",
+    collection: "contracts",
+    permissions: [],
+    fields: {
+      contractTerms: {
+        type: "relation",
+        required: false,
+        optional: true,
+        relation: { type: "one-to-many", target: "contractTerms" },
+      },
+    },
+    ui: {
+      views: [],
+      forms: { create: { sections: [] }, edit: { sections: [] } },
+      fields: {},
+    },
+  } as SerializableEntityDefinition;
+
+  const contractTermsDefinition = {
+    name: "contractTerms",
+    collection: "contract_terms",
+    permissions: [],
+    fields: {
+      contractId: {
+        type: "relation",
+        required: true,
+        optional: false,
+        relation: { type: "many-to-one", target: "contract" },
+      },
+      effectiveDate: { type: "date", required: true, optional: false },
+    },
+    ui: {
+      views: [],
+      forms: { create: { sections: [] }, edit: { sections: [] } },
+      fields: {},
+    },
+  } as SerializableEntityDefinition;
+
+  const lookup = (name: string) =>
+    name === "contractTerms" ? contractTermsDefinition : undefined;
+
+  it("parses explicit one-to-many child paths", () => {
+    expect(
+      parseRelationFieldPath(
+        contractDefinition,
+        "contractTerms.effectiveDate",
+        lookup,
+      ),
+    ).toEqual({
+      relationField: "contractTerms",
+      subField: "effectiveDate",
+      relationKind: "one-to-many",
     });
   });
 });

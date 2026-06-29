@@ -1,4 +1,5 @@
 import { listEntity } from "./api-client";
+import type { QueryConfig } from "@repo/query-engine";
 
 /** Matches API / query-engine list `limit` cap. */
 export const ENTITY_LIST_MAX_LIMIT = 100;
@@ -9,6 +10,7 @@ export const RELATION_FILTER_OPTIONS_MAX_ITEMS = 500;
 interface FetchAllEntityItemsOptions {
   readonly pageSize?: number;
   readonly maxItems?: number;
+  readonly query?: QueryConfig;
 }
 
 export async function fetchAllEntityItems<T>(
@@ -27,6 +29,7 @@ export async function fetchAllEntityItems<T>(
     const page = await listEntity<T>(entityName, {
       limit: pageSize,
       cursor,
+      ...(options.query ? { query: options.query } : {}),
     });
     items.push(...page.items);
 

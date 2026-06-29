@@ -4,6 +4,10 @@ import {
   type DefinedEntity,
   type FieldDefinitions,
 } from "@repo/entities";
+import {
+  flattenAndConditions,
+  normalizeLegacyQueryFilter,
+} from "@repo/firestore-converters/filter-tree";
 import { describe, expect, it } from "vitest";
 
 import { decodeCursor, encodeCursor } from "./cursor.js";
@@ -13,9 +17,18 @@ import {
   parseListQueryInput,
   resolveSearchField,
 } from "./parse-query-config.js";
+import type { QueryConfig } from "./types.js";
 import { applyPostFilters, computeOverfetchLimit } from "./post-filters.js";
 
 type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
+
+function firstNormalizedFilter(config: QueryConfig) {
+  const tree = normalizeLegacyQueryFilter(config.filter);
+  if (!tree) {
+    return undefined;
+  }
+  return flattenAndConditions(tree)[0];
+}
 
 const TestEntity = defineEntity({
   name: "testAdvanced",
@@ -101,7 +114,7 @@ describe("parseListQueryInput - new filter operators", () => {
         pagination: { limit: 20 },
       }),
     });
-    expect(config.filter?.[0]?.operator).toBe("contains");
+    expect(firstNormalizedFilter(config)?.operator).toBe("contains");
   });
 
   it("accepts startsWith operator", () => {
@@ -111,7 +124,7 @@ describe("parseListQueryInput - new filter operators", () => {
         pagination: { limit: 20 },
       }),
     });
-    expect(config.filter?.[0]?.operator).toBe("startsWith");
+    expect(firstNormalizedFilter(config)?.operator).toBe("startsWith");
   });
 
   it("accepts endsWith operator", () => {
@@ -121,7 +134,7 @@ describe("parseListQueryInput - new filter operators", () => {
         pagination: { limit: 20 },
       }),
     });
-    expect(config.filter?.[0]?.operator).toBe("endsWith");
+    expect(firstNormalizedFilter(config)?.operator).toBe("endsWith");
   });
 });
 
@@ -138,8 +151,16 @@ describe("normalizeEntityQuery - post-filters", () => {
     );
     expect(normalized.filters).toHaveLength(1);
     expect(normalized.filters[0]?.operator).toBe("==");
-    expect(normalized.postFilters).toHaveLength(1);
-    expect(normalized.postFilters[0]?.operator).toBe("contains");
+    expect(normalized.postFilterTree).not.toBeNull();
+    expect(normalized.postFilterTree?.type).toBe("group");
+    if (normalized.postFilterTree?.type === "group") {
+      const postCondition = normalized.postFilterTree.children.find(
+        (child) => child.type === "condition",
+      );
+      expect(
+        postCondition?.type === "condition" && postCondition.operator,
+      ).toBe("contains");
+    }
   });
 
   it("rejects contains on non-string fields", () => {

@@ -8,6 +8,7 @@ import {
   Layers,
   LayoutTemplate,
   Palette,
+  Search,
   Settings,
   Shield,
   Users,
@@ -29,6 +30,7 @@ export type NavLabelKey =
   | "automation"
   | "analytics"
   | "metricsNav"
+  | "queryBuilderNav"
   | "roles"
   | "entityCategories"
   | "designLayout"
@@ -155,6 +157,14 @@ export const SETTINGS_METRICS_NAV_ITEM: NavLinkConfig = {
   to: "/settings/metrics",
   matchPath: "/settings/metrics",
   icon: BarChart3,
+};
+
+export const SETTINGS_QUERY_BUILDER_NAV_ITEM: NavLinkConfig = {
+  id: "query-builder",
+  labelKey: "queryBuilderNav",
+  to: "/settings/query-builder",
+  matchPath: "/settings/query-builder",
+  icon: Search,
 };
 
 export const ANALYTICS_GROUP_ICON = BarChart3;

@@ -5,7 +5,7 @@ import {
   insertComponentRowAt,
   insertNestedLayoutRowAt,
   insertRowAt,
-  isContainerComponent,
+  isRowHolderComponent,
   moveRowAt,
   removeRowAt,
   resolveContainerChildRows,
@@ -62,7 +62,7 @@ export type ComponentsTreeScope = "shell" | "step" | "footer" | "main";
 export function isStructuralPreviewRow(row: RowNode): boolean {
   return (
     row.type === "nested-layout" ||
-    (row.type === "component" && isContainerComponent(row.component))
+    (row.type === "component" && isRowHolderComponent(row.component))
   );
 }
 
@@ -259,7 +259,7 @@ function findNestedLayoutRow(
       continue;
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
       const nested = findNestedLayoutRow(row.component.rows, targetRowId);
       if (nested) {
         return nested;

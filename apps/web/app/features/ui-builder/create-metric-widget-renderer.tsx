@@ -23,6 +23,12 @@ interface CreateMetricWidgetRendererOptions {
   readonly buildLayoutContext: (
     definition: SerializableEntityDefinition,
     item: Record<string, unknown>,
+    extras?: {
+      readonly getOneToManyRelationSubfieldValue?: (
+        recordId: string,
+        fieldPath: string,
+      ) => unknown;
+    },
   ) => LayoutRenderContext;
 }
 

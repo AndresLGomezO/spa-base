@@ -14,6 +14,7 @@ const serviceProviderDefinition: SerializableEntityDefinition = {
   fields: {
     name: { type: "string", required: true, optional: false },
     logo: { type: "image", required: false, optional: true },
+    contractStartDate: { type: "date", required: false, optional: true },
   },
   ui: {
     views: [],
@@ -63,9 +64,50 @@ const subscriptionDefinition: SerializableEntityDefinition = {
   },
 };
 
+const contractTermsDefinition: SerializableEntityDefinition = {
+  name: "contractTerms",
+  collection: "contract_terms",
+  permissions: [],
+  fields: {
+    contractId: {
+      type: "string",
+      required: true,
+      optional: false,
+      relation: { type: "many-to-one", target: "contract" },
+    },
+    effectiveDate: { type: "date", required: true, optional: false },
+  },
+  ui: {
+    views: [],
+    forms: { create: { sections: [] }, edit: { sections: [] } },
+    fields: {},
+  },
+};
+
+const contractDefinition: SerializableEntityDefinition = {
+  name: "contract",
+  collection: "contracts",
+  permissions: [],
+  fields: {
+    name: { type: "string", required: true, optional: false },
+    contractTerms: {
+      type: "relation",
+      required: false,
+      optional: true,
+      relation: { type: "one-to-many", target: "contractTerms" },
+    },
+  },
+  ui: {
+    views: [],
+    forms: { create: { sections: [] }, edit: { sections: [] } },
+    fields: {},
+  },
+};
+
 const lookupDefinitions: Record<string, SerializableEntityDefinition> = {
   serviceProvider: serviceProviderDefinition,
   currency: currencyDefinition,
+  contractTerms: contractTermsDefinition,
 };
 
 describe("entityCardViewAdapter", () => {
@@ -94,6 +136,18 @@ describe("entityCardViewAdapter", () => {
     ).toBe("Service Provider Logo");
   });
 
+  it("includes relation date paths for the date component picker", () => {
+    const { fieldDescriptors } = entityCardViewAdapter(
+      subscriptionDefinition,
+      (entityName) => lookupDefinitions[entityName],
+    );
+    const dateFields = filterFieldsForComponentKind(fieldDescriptors, "date");
+
+    expect(dateFields.map((field) => field.path)).toContain(
+      "serviceProvider.contractStartDate",
+    );
+  });
+
   it("does not list logo paths for relations whose target has no image field", () => {
     const { fieldDescriptors } = entityCardViewAdapter(
       subscriptionDefinition,
@@ -103,6 +157,18 @@ describe("entityCardViewAdapter", () => {
 
     expect(imageFields.map((field) => field.path)).not.toContain(
       "currency.logo",
+    );
+  });
+
+  it("includes one-to-many relation date paths for the date component picker", () => {
+    const { fieldDescriptors } = entityCardViewAdapter(
+      contractDefinition,
+      (entityName) => lookupDefinitions[entityName],
+    );
+    const dateFields = filterFieldsForComponentKind(fieldDescriptors, "date");
+
+    expect(dateFields.map((field) => field.path)).toContain(
+      "contractTerms.effectiveDate",
     );
   });
 

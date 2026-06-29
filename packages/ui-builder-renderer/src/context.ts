@@ -10,6 +10,7 @@ import type {
   MetricDerivedKpiComponentConfig,
   MetricKpiPresentation,
   MetricWidgetComponentConfig,
+  QueryViewerComponentConfig,
   ViewFilterComponentConfig,
   WizardActionsComponentConfig,
   WizardProgressComponentConfig,
@@ -86,6 +87,9 @@ export interface LayoutRenderContext {
   ) => ReactNode;
   readonly metricWidgetRenderer?: (
     config: MetricWidgetComponentConfig,
+  ) => ReactNode;
+  readonly queryViewerRenderer?: (
+    config: QueryViewerComponentConfig,
   ) => ReactNode;
   readonly dashboardSectionRenderer?: (
     config: DashboardSectionComponentConfig,

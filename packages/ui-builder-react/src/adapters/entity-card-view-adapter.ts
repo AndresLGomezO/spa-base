@@ -1,4 +1,7 @@
-import type { SerializableEntityDefinition } from "@repo/entities";
+import {
+  isOneToManyRelationField,
+  type SerializableEntityDefinition,
+} from "@repo/entities";
 import {
   formatFieldPathLabel,
   listLayoutFieldOptions,
@@ -60,10 +63,42 @@ function resolveRelationFieldName(
   return null;
 }
 
+function resolveOneToManyRelationFieldName(
+  definition: SerializableEntityDefinition,
+  pathSegment: string,
+): string | null {
+  const segment = pathSegment.trim();
+  if (!segment) {
+    return null;
+  }
+
+  for (const [fieldName, meta] of Object.entries(definition.fields)) {
+    if (!isOneToManyRelationField(meta)) {
+      continue;
+    }
+
+    const targetEntity = meta.relation?.target;
+    if (!targetEntity) {
+      continue;
+    }
+
+    if (fieldName === segment || targetEntity === segment) {
+      return fieldName;
+    }
+  }
+
+  return null;
+}
+
 function parseRelationFieldPath(
   definition: SerializableEntityDefinition,
   fieldPath: string,
-): { readonly relationField: string; readonly subField: string } | null {
+  getDefinition?: EntityDefinitionLookup,
+): {
+  readonly relationField: string;
+  readonly subField: string;
+  readonly relationKind: "many-to-one" | "one-to-one" | "one-to-many";
+} | null {
   const trimmedPath = fieldPath.trim();
   if (!trimmedPath.includes(".")) {
     return null;
@@ -75,11 +110,55 @@ function parseRelationFieldPath(
   }
 
   const relationField = resolveRelationFieldName(definition, firstSegment);
-  if (!relationField) {
+  if (relationField) {
+    const relationKind = definition.fields[relationField]?.relation?.type;
+    if (relationKind !== "many-to-one" && relationKind !== "one-to-one") {
+      return null;
+    }
+
+    return { relationField, subField, relationKind };
+  }
+
+  const oneToManyField = resolveOneToManyRelationFieldName(
+    definition,
+    firstSegment,
+  );
+  if (!oneToManyField) {
+    if (getDefinition) {
+      const reverseChild = getDefinition(firstSegment);
+      if (reverseChild && subField in reverseChild.fields) {
+        for (const meta of Object.values(reverseChild.fields)) {
+          if (
+            meta.relation?.target === definition.name &&
+            (meta.relation.type === "many-to-one" ||
+              meta.relation.type === "one-to-one")
+          ) {
+            return {
+              relationField: firstSegment,
+              subField,
+              relationKind: "one-to-many",
+            };
+          }
+        }
+      }
+    }
+
     return null;
   }
 
-  return { relationField, subField };
+  const childEntity = definition.fields[oneToManyField]?.relation?.target;
+  if (childEntity && getDefinition) {
+    const childDefinition = getDefinition(childEntity);
+    if (childDefinition && !(subField in childDefinition.fields)) {
+      return null;
+    }
+  }
+
+  return {
+    relationField: oneToManyField,
+    subField,
+    relationKind: "one-to-many",
+  };
 }
 
 function isImageField(
@@ -122,11 +201,22 @@ function isValidLayoutFieldPathForAdapter(
   path: string,
   getDefinition?: EntityDefinitionLookup,
 ): boolean {
-  const parsed = parseRelationFieldPath(definition, path);
+  const parsed = parseRelationFieldPath(definition, path, getDefinition);
   if (!parsed) {
     return (
       path in definition.fields || path === "createdAt" || path === "updatedAt"
     );
+  }
+
+  if (parsed.relationKind === "one-to-many") {
+    const childEntity =
+      definition.fields[parsed.relationField]?.relation?.target ??
+      parsed.relationField;
+    const childDefinition = getDefinition?.(childEntity);
+    if (!childDefinition) {
+      return true;
+    }
+    return parsed.subField in childDefinition.fields;
   }
 
   const target = definition.fields[parsed.relationField]?.relation?.target;
@@ -179,11 +269,40 @@ function collectLayoutFieldPaths(
       continue;
     }
 
-    for (const [subFieldName] of Object.entries(targetDefinition.fields)) {
-      if (!isImageField(targetDefinition, subFieldName)) {
+    for (const [subFieldName, subMeta] of Object.entries(
+      targetDefinition.fields,
+    )) {
+      if (subMeta.type === "document") {
         continue;
       }
 
+      options.add(`${target}.${subFieldName}`);
+    }
+  }
+
+  for (const [fieldName, meta] of Object.entries(definition.fields)) {
+    if (!isOneToManyRelationField(meta)) {
+      continue;
+    }
+
+    const target = meta.relation?.target;
+    if (!target) {
+      continue;
+    }
+
+    const childDefinition = getDefinition?.(target);
+    if (!childDefinition) {
+      continue;
+    }
+
+    for (const [subFieldName, subMeta] of Object.entries(
+      childDefinition.fields,
+    )) {
+      if (subMeta.type === "document") {
+        continue;
+      }
+
+      options.add(`${fieldName}.${subFieldName}`);
       options.add(`${target}.${subFieldName}`);
     }
   }
@@ -196,8 +315,36 @@ function resolveValueType(
   path: string,
   getDefinition?: EntityDefinitionLookup,
 ): FieldDescriptor["valueType"] {
-  const parsed = parseRelationFieldPath(definition, path);
+  const parsed = parseRelationFieldPath(definition, path, getDefinition);
   if (parsed) {
+    if (parsed.relationKind === "one-to-many") {
+      const childEntity =
+        definition.fields[parsed.relationField]?.relation?.target ??
+        parsed.relationField;
+      const childDefinition = getDefinition?.(childEntity);
+
+      if (childDefinition) {
+        if (isImageField(childDefinition, parsed.subField)) {
+          return "image";
+        }
+        const subMeta = childDefinition.fields[parsed.subField];
+        if (subMeta?.type === "date") {
+          return "date";
+        }
+        if (subMeta?.type === "number") {
+          return "number";
+        }
+        if (subMeta?.type === "boolean") {
+          return "boolean";
+        }
+        if (subMeta?.type === "string") {
+          return "string";
+        }
+      }
+
+      return "unknown";
+    }
+
     const relationMeta = definition.fields[parsed.relationField]?.relation;
     const targetDefinition =
       relationMeta?.target && getDefinition
@@ -255,8 +402,20 @@ function resolveDescriptorLabel(
   path: string,
   getDefinition?: EntityDefinitionLookup,
 ): string {
-  const parsed = parseRelationFieldPath(definition, path);
+  const parsed = parseRelationFieldPath(definition, path, getDefinition);
   if (parsed) {
+    if (parsed.relationKind === "one-to-many") {
+      const childEntity =
+        definition.fields[parsed.relationField]?.relation?.target ??
+        parsed.relationField;
+      const childDefinition = getDefinition?.(childEntity);
+      const subLabel = childDefinition
+        ? resolveFieldLabel(childDefinition, parsed.subField)
+        : formatFieldPathLabel(parsed.subField);
+
+      return `${resolveRelationTargetLabel(childEntity, childDefinition)} ${subLabel}`;
+    }
+
     const target = definition.fields[parsed.relationField]?.relation?.target;
     const targetDefinition =
       target && getDefinition ? getDefinition(target) : undefined;
@@ -283,12 +442,17 @@ export function entityCardViewAdapter(
   const fieldDescriptors: FieldDescriptor[] = fieldOptions.map((path) => {
     const root = path.includes(".") ? path.split(".")[0]! : path;
     const fieldUi = definition.ui.fields?.[root];
-    const parsed = parseRelationFieldPath(definition, path);
+    const parsed = parseRelationFieldPath(definition, path, getDefinition);
     const targetDefinition =
       parsed && getDefinition
-        ? getDefinition(
-            definition.fields[parsed.relationField]?.relation?.target ?? "",
-          )
+        ? parsed.relationKind === "one-to-many"
+          ? getDefinition(
+              definition.fields[parsed.relationField]?.relation?.target ??
+                parsed.relationField,
+            )
+          : getDefinition(
+              definition.fields[parsed.relationField]?.relation?.target ?? "",
+            )
         : undefined;
     const targetFieldUi = parsed
       ? targetDefinition?.ui.fields?.[parsed.subField]

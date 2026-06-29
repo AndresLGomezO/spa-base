@@ -1,5 +1,7 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
+import { normalizeLegacyQueryFilter } from "@repo/firestore-converters/filter-tree";
 import type { Filter, QueryConfig, Sort } from "@repo/query-engine";
+import { mergeFilterTrees } from "@repo/query-engine/filter-tree";
 
 export interface FilterState {
   readonly field: string;
@@ -28,15 +30,17 @@ export function buildFilterConfig(
 export function mergeQueryConfig(
   ...configs: readonly QueryConfig[]
 ): QueryConfig {
-  return configs.reduce<QueryConfig>(
-    (merged, config) => ({
-      filter: [...(merged.filter ?? []), ...(config.filter ?? [])],
+  return configs.reduce<QueryConfig>((merged, config) => {
+    const left = normalizeLegacyQueryFilter(merged.filter);
+    const right = normalizeLegacyQueryFilter(config.filter);
+    const combined = mergeFilterTrees(left ?? null, right ?? null);
+    return {
+      ...(combined ? { filter: combined } : {}),
       sort: config.sort ?? merged.sort,
       pagination: config.pagination ?? merged.pagination,
       select: config.select ?? merged.select,
-    }),
-    {},
-  );
+    };
+  }, {});
 }
 
 const DEFAULT_OPERATORS: Record<string, Filter["operator"]> = {

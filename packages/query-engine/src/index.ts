@@ -8,6 +8,18 @@ export type { QueryEngine, QueryEngineDeps } from "./create-query-engine.js";
 export { QueryError, QueryErrorCode } from "./errors.js";
 export { applySelectProjection } from "./format-results.js";
 export { applyPostFilters, computeOverfetchLimit } from "./post-filters.js";
+export {
+  applyPostFilterTree,
+  evaluateFilterTree,
+  enforceFirestoreConstraintsOnTree,
+  mergeFilterTrees,
+  partitionFilterTree,
+  treeRequiresInMemoryExecution,
+} from "./filter-tree.js";
+export {
+  migrateFlatFiltersToTree,
+  normalizeLegacyQueryFilter,
+} from "@repo/firestore-converters/filter-tree";
 export { decodeCursor, encodeCursor } from "./cursor.js";
 export {
   normalizeEntityQuery,

@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@repo/entities": "workspace:*",
+    "@repo/firestore-converters": "workspace:*",
     "@repo/query-engine": "workspace:*"
   }
 }

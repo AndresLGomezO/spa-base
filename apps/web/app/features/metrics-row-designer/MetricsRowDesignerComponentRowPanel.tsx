@@ -1,13 +1,15 @@
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   CollapsibleMotionPresetSection,
   CollapsibleStyleRulesEditor,
   ComponentConfigEditor,
   ComponentDisplayRangeEditor,
+  entityCardViewAdapter,
 } from "@repo/ui-builder-react";
 import {
   componentKindsForSurface,
   isContainerComponent,
+  isQueryViewerComponent,
   isMetricWidgetComponent,
   type MotionPreset,
 } from "@repo/ui-builder-core";
@@ -33,9 +35,18 @@ import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { resolveActiveLayoutBinding } from "./metrics-row-designer-layout-binding";
 import { MetricWidgetComponentEditor } from "./MetricWidgetComponentEditor";
+import { QueryViewerComponentEditor } from "./QueryViewerComponentEditor";
 import { MetricDerivedKpiComponentEditor } from "../../components/metrics/MetricDerivedKpiComponentEditor";
 import { MetricKpiComponentEditor } from "../../components/metrics/MetricKpiComponentEditor";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
+import {
+  listEntityQueryDefinitions,
+  type EntityQueryDefinitionRecord,
+} from "../../lib/api-client";
+import {
+  resolveQueryViewerSourceDefinition,
+  isInsideQueryViewerTemplate,
+} from "../ui-builder/resolve-query-viewer-field-context";
 
 interface MetricsRowDesignerComponentRowPanelProps {
   readonly rowRef: ComponentRowRef;
@@ -46,10 +57,38 @@ export function MetricsRowDesignerComponentRowPanel({
 }: MetricsRowDesignerComponentRowPanelProps) {
   const { t } = useTranslation("common");
   const { editor, activeTabId } = useMetricsRowDesigner();
-  const { getDefinition } = useEntityCatalog();
-  const definition = useEntityDefinition(editor.entityName);
   const canEdit = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
   const isWidgetTab = activeTabId !== "row";
+  const { getDefinition, items } = useEntityCatalog();
+  const definition = useEntityDefinition(editor.entityName);
+  const [queryDefinitions, setQueryDefinitions] = useState<
+    readonly EntityQueryDefinitionRecord[]
+  >([]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    async function loadQueryDefinitions() {
+      try {
+        const result = await listEntityQueryDefinitions();
+        if (!cancelled) {
+          setQueryDefinitions(result.items);
+        }
+      } catch {
+        if (!cancelled) {
+          setQueryDefinitions([]);
+        }
+      }
+    }
+
+    if (isWidgetTab) {
+      void loadQueryDefinitions();
+    }
+
+    return () => {
+      cancelled = true;
+    };
+  }, [isWidgetTab]);
 
   const binding = useMemo(
     () => resolveActiveLayoutBinding(editor, activeTabId),
@@ -62,17 +101,51 @@ export function MetricsRowDesignerComponentRowPanel({
   const labels = useFormDesignerLayoutEditorLabels();
   const componentEditorLabels = useFormDesignerComponentEditorLabels();
   const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
-  const fieldDescriptors = useMemo(() => [] as const, []);
+
+  const row = findRowByRef(binding.layout, rowRef);
+
+  const queryViewerSourceDefinition = useMemo(() => {
+    if (!row) {
+      return null;
+    }
+
+    return resolveQueryViewerSourceDefinition(
+      binding.layout,
+      row.id,
+      queryDefinitions,
+      items,
+    );
+  }, [binding.layout, items, queryDefinitions, row]);
+
+  const fieldDefinition = queryViewerSourceDefinition ?? definition;
+
+  const fieldDescriptors = useMemo(
+    () =>
+      entityCardViewAdapter(fieldDefinition, getDefinition).fieldDescriptors,
+    [fieldDefinition, getDefinition],
+  );
+
+  const allowEntityFieldBinding = queryViewerSourceDefinition !== null;
+  const staticContentOnly = isWidgetTab && !allowEntityFieldBinding;
+
+  const needsQuerySelectionForFields = useMemo(() => {
+    if (!row) {
+      return false;
+    }
+
+    return (
+      isInsideQueryViewerTemplate(binding.layout, row.id) &&
+      queryViewerSourceDefinition === null
+    );
+  }, [binding.layout, queryViewerSourceDefinition, row]);
 
   const filterFieldOptions = useMemo(
     () =>
-      Object.keys(definition.fields).filter(
-        (field) => definition.fields[field]?.type !== "document",
+      Object.keys(fieldDefinition.fields).filter(
+        (field) => fieldDefinition.fields[field]?.type !== "document",
       ),
-    [definition.fields],
+    [fieldDefinition.fields],
   );
-
-  const row = findRowByRef(binding.layout, rowRef);
 
   if (!row) {
     return (
@@ -91,6 +164,26 @@ export function MetricsRowDesignerComponentRowPanel({
         labels={labels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+      />
+    );
+  }
+
+  if (row.type === "component" && isQueryViewerComponent(row.component)) {
+    return (
+      <ContainerComponentRowPanel
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        labels={labels}
+        componentEditorLabels={componentEditorLabels}
+        treeLabels={treeLabels}
+        fieldDescriptors={fieldDescriptors}
+        extraControls={
+          <QueryViewerComponentEditor
+            config={row.component}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
+        }
       />
     );
   }
@@ -128,17 +221,17 @@ export function MetricsRowDesignerComponentRowPanel({
         ) : (
           <ComponentConfigEditor
             config={row.component}
-            fieldDescriptors={[]}
+            fieldDescriptors={fieldDescriptors}
             labels={componentEditorLabels}
             allowedKinds={allowedKinds}
-            definition={definition}
+            definition={fieldDefinition}
             getDefinition={getDefinition}
             hideComponentStyles
-            staticContentOnly={isWidgetTab}
+            staticContentOnly={staticContentOnly}
             staticImageEditor={({ value, onChange }) => (
               <LayoutStaticImageValueEditor
-                entityName={definition.name as EntityName}
-                definition={definition}
+                entityName={fieldDefinition.name as EntityName}
+                definition={fieldDefinition}
                 value={value}
                 onChange={onChange}
                 canEdit={canEdit}
@@ -147,7 +240,7 @@ export function MetricsRowDesignerComponentRowPanel({
             metricKpiEditor={(config, onChange) => (
               <MetricKpiComponentEditor
                 config={config}
-                entityDefinition={definition}
+                entityDefinition={fieldDefinition}
                 filterFieldOptions={filterFieldOptions}
                 onChange={onChange}
               />
@@ -155,7 +248,7 @@ export function MetricsRowDesignerComponentRowPanel({
             metricDerivedKpiEditor={(config, onChange) => (
               <MetricDerivedKpiComponentEditor
                 config={config}
-                entityDefinition={definition}
+                entityDefinition={fieldDefinition}
                 filterFieldOptions={filterFieldOptions}
                 onChange={onChange}
               />
@@ -163,6 +256,11 @@ export function MetricsRowDesignerComponentRowPanel({
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />
         )}
+        {needsQuerySelectionForFields ? (
+          <Text className="text-muted-foreground text-sm">
+            {t("metricsRowDesigner.queryViewerEditor.selectQueryForFields")}
+          </Text>
+        ) : null}
         <ComponentDisplayRangeEditor
           displayFrom={row.displayFrom}
           displayTo={row.displayTo}

@@ -5,6 +5,7 @@ import {
   buildInMemoryListSnapshotInvalidationPrefix,
   createInMemoryListSnapshotCache,
 } from "./in-memory-list-snapshot-cache.js";
+import { makeNormalizedEntityQuery } from "./test-normalized-query.js";
 
 describe("buildInMemoryListSnapshotCacheKey", () => {
   it("includes tenant collection and ownership scope", () => {
@@ -12,7 +13,7 @@ describe("buildInMemoryListSnapshotCacheKey", () => {
       tenantId: "tenant_a",
       collection: "tags",
       tenantWideRead: false,
-      query: {
+      query: makeNormalizedEntityQuery({
         filters: [
           {
             field: "accessUserIds",
@@ -23,7 +24,7 @@ describe("buildInMemoryListSnapshotCacheKey", () => {
         postFilters: [],
         sort: null,
         limit: 25,
-      },
+      }),
     });
 
     expect(key).toBe("tenant_a:tags:owner:user_1");
@@ -34,7 +35,14 @@ describe("buildInMemoryListSnapshotCacheKey", () => {
       tenantId: "tenant_a",
       collection: "boards",
       tenantWideRead: true,
-      query: { filters: [], postFilters: [], sort: null, limit: 25 },
+      query: {
+        filterTree: null,
+        filters: [],
+        postFilters: [],
+        postFilterTree: null,
+        sort: null,
+        limit: 25,
+      },
     });
 
     expect(key).toBe("tenant_a:boards:tenantWide");

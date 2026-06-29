@@ -13,6 +13,7 @@ import {
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
 import { HOOK_PERMISSIONS } from "@repo/hooks";
+import { ENTITY_QUERY_PERMISSIONS } from "@repo/entity-queries/permissions";
 import { METRIC_PERMISSIONS } from "@repo/metrics-engine";
 import { ROLE_PERMISSIONS, TENANT_USER_PERMISSIONS } from "@repo/rbac";
 import type {
@@ -130,6 +131,7 @@ export class EntityRuntimeContext {
         "entityCategory.update",
         ...HOOK_PERMISSIONS,
         ...METRIC_PERMISSIONS,
+        ...ENTITY_QUERY_PERMISSIONS,
         ...AI_PERMISSIONS,
         ...ROLE_PERMISSIONS,
         ...TENANT_USER_PERMISSIONS,

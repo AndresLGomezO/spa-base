@@ -53,6 +53,7 @@ describe("listLayoutFieldOptions", () => {
               name: {},
               code: {},
               logo: {},
+              openedAt: { type: "date" },
             },
           };
         }
@@ -70,7 +71,37 @@ describe("listLayoutFieldOptions", () => {
     });
 
     expect(options).toContain("bank.logo");
+    expect(options).toContain("bank.openedAt");
     expect(options).not.toContain("currency.logo");
+  });
+
+  it("includes one-to-many child field paths", () => {
+    const options = listLayoutFieldOptions(
+      {
+        name: "contract",
+        fields: {
+          name: {},
+          contractTerms: {
+            relation: { type: "one-to-many", target: "contractTerms" },
+          },
+        },
+      },
+      {
+        resolveTarget: (target): FieldPathValidationDefinition | undefined => {
+          if (target === "contractTerms") {
+            return {
+              name: "contractTerms",
+              fields: {
+                effectiveDate: { type: "date" },
+              },
+            };
+          }
+          return undefined;
+        },
+      },
+    );
+
+    expect(options).toContain("contractTerms.effectiveDate");
   });
 });
 
@@ -101,6 +132,31 @@ describe("isValidLayoutFieldPath", () => {
   it("accepts relation subfields", () => {
     expect(isValidLayoutFieldPath(accountDefinition, "bankId.logo")).toBe(true);
     expect(isValidLayoutFieldPath(accountDefinition, "bank.logo")).toBe(true);
+  });
+
+  it("accepts one-to-many child field paths", () => {
+    expect(
+      isValidLayoutFieldPath(
+        {
+          name: "contract",
+          fields: {
+            contractTerms: {
+              relation: { type: "one-to-many", target: "contractTerms" },
+            },
+          },
+        },
+        "contractTerms.effectiveDate",
+        {
+          resolveTarget: (target) =>
+            target === "contractTerms"
+              ? {
+                  name: "contractTerms",
+                  fields: { effectiveDate: { type: "date" } },
+                }
+              : undefined,
+        },
+      ),
+    ).toBe(true);
   });
 });
 

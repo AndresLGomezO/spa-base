@@ -7,7 +7,10 @@ import type {
 } from "../types/layout.js";
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
 import type { ContainerComponentConfig } from "../types/component.js";
-import { isContainerComponent } from "../types/component.js";
+import {
+  isContainerComponent,
+  isRowHolderComponent,
+} from "../types/component.js";
 import type { StyleRule } from "../styles/style-types.js";
 import { isFullDisplayRange } from "../layout/component-display-range.js";
 import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
@@ -55,6 +58,14 @@ export function createDefaultComponent(
       kind: "metric-widget",
       entityName: "",
       widgetId: "",
+    };
+  }
+
+  if (kind === "query-viewer") {
+    return {
+      kind: "query-viewer",
+      entityQueryDefinitionId: "",
+      rows: [],
     };
   }
 
@@ -173,6 +184,14 @@ export function createDefaultStaticComponent(
       kind: "metric-widget",
       entityName: "",
       widgetId: "",
+    };
+  }
+
+  if (kind === "query-viewer") {
+    return {
+      kind: "query-viewer",
+      entityQueryDefinitionId: "",
+      rows: [],
     };
   }
 
@@ -464,7 +483,7 @@ function mapNestedRowById(
       return updater(row);
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
       return {
         ...row,
         component: {
@@ -507,7 +526,7 @@ function mapNestedColumnRowsById(
       };
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
       return {
         ...row,
         component: {
@@ -988,7 +1007,7 @@ function mapContainerRowsById(
     if (
       row.type === "component" &&
       row.id === containerRowId &&
-      isContainerComponent(row.component)
+      isRowHolderComponent(row.component)
     ) {
       return {
         ...row,
@@ -999,7 +1018,7 @@ function mapContainerRowsById(
       };
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
       return {
         ...row,
         component: {

@@ -8,6 +8,7 @@ import {
   shouldExecuteInMemoryListQuery,
   usesInMemoryListPipeline,
 } from "./query-index-match.js";
+import { makeNormalizedEntityQuery } from "./test-normalized-query.js";
 
 const Task = defineEntity({
   name: "task",
@@ -55,18 +56,18 @@ describe("usesInMemoryListPipeline", () => {
 });
 
 describe("shouldExecuteInMemoryListQuery", () => {
-  const listQuery = {
+  const listQuery = makeNormalizedEntityQuery({
     filters: [
       {
         field: "accessUserIds",
-        operator: "array-contains" as const,
+        operator: "array-contains",
         value: "u1",
       },
     ],
     postFilters: [],
-    sort: { field: "id", direction: "asc" as const },
+    sort: { field: "id", direction: "asc" },
     limit: 25,
-  };
+  });
 
   it("defers to unified pipeline when inMemoryListQueries is enabled", () => {
     expect(
@@ -93,7 +94,7 @@ describe("queryNeedsClientFallback", () => {
   it("requires fallback for filter+sort combos without a dedicated index", () => {
     expect(
       queryNeedsClientFallback(
-        {
+        makeNormalizedEntityQuery({
           filters: [
             { field: "accessUserIds", operator: "array-contains", value: "u1" },
             { field: "status", operator: "==", value: "open" },
@@ -101,7 +102,7 @@ describe("queryNeedsClientFallback", () => {
           postFilters: [],
           sort: { field: "priority", direction: "asc" },
           limit: 25,
-        },
+        }),
         "tasks",
         planned,
         false,
@@ -112,14 +113,14 @@ describe("queryNeedsClientFallback", () => {
   it("uses firestore path for sort-only planned queries", () => {
     expect(
       queryNeedsClientFallback(
-        {
+        makeNormalizedEntityQuery({
           filters: [
             { field: "accessUserIds", operator: "array-contains", value: "u1" },
           ],
           postFilters: [],
           sort: { field: "createdAt", direction: "desc" },
           limit: 25,
-        },
+        }),
         "tasks",
         planned,
         false,

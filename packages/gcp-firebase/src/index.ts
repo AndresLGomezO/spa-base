@@ -60,6 +60,7 @@ export { createFirestoreAdminUiBuilderPresetRepository } from "./firestore-admin
 export { createFirestoreAdminTenantDashboardLayoutRepository } from "./firestore-admin-tenant-dashboard-layout-repository.js";
 export { createFirestoreAdminHookRepository } from "./firestore-admin-hook-repository.js";
 export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admin-metric-definition-repository.js";
+export { createFirestoreAdminEntityQueryDefinitionRepository } from "./firestore-admin-entity-query-definition-repository.js";
 export { createFirestoreAdminAggregationEventRepository } from "./firestore-admin-aggregation-event-repository.js";
 export { createFirestoreAdminMetricValueRepository } from "./firestore-admin-metric-value-repository.js";
 export { createFirestoreAdminMetricContributionRepository } from "./firestore-admin-metric-contribution-repository.js";

@@ -15,6 +15,28 @@ export {
   type NormalizedFilter,
   type NormalizedSort,
 } from "./entity/entity-query-contract.js";
+export { makeNormalizedEntityQuery } from "./entity/make-normalized-entity-query.js";
+export {
+  MAX_FILTER_TREE_DEPTH,
+  MAX_OR_DISJUNCTIONS,
+  type FilterCombinator,
+  type FilterCondition,
+  type FilterGroup,
+  type FilterNode,
+  type NormalizedFilterCondition,
+  type NormalizedFilterGroup,
+  type NormalizedFilterNode,
+  createEmptyAndGroup,
+  countOrDisjunctions,
+  flattenAndConditions,
+  isEmptyFilterTree,
+  isFilterCondition,
+  isFilterGroup,
+  maxTreeDepth,
+  migrateFlatFiltersToTree,
+  normalizeLegacyQueryFilter,
+  walkConditions,
+} from "./filter-tree.js";
 export {
   type FindJoinBySourceParams,
   type FindJoinByTargetParams,
@@ -77,6 +99,8 @@ export { type HookRepository } from "./hook/repository-contract.js";
 export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
 export { type MetricDefinitionRepository } from "./metric-definition/repository-contract.js";
 export { createInMemoryMetricDefinitionRepository } from "./metric-definition/in-memory-repository.js";
+export { type EntityQueryDefinitionRepository } from "./entity-query-definition/repository-contract.js";
+export { createInMemoryEntityQueryDefinitionRepository } from "./entity-query-definition/in-memory-repository.js";
 export { type AggregationEventRepository } from "./aggregation-event/repository-contract.js";
 export { createInMemoryAggregationEventRepository } from "./aggregation-event/in-memory-repository.js";
 export { type MetricValueRepository } from "./metric-value/repository-contract.js";

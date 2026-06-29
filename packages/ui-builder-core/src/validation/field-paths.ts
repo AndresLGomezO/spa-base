@@ -1,6 +1,8 @@
 import type { UiLayoutDocument } from "../types/layout.js";
 import {
   isContainerComponent,
+  isQueryViewerComponent,
+  isRowHolderComponent,
   isDashboardSectionComponent,
   isMetricKpiComponent,
   isMetricDerivedKpiComponent,
@@ -32,6 +34,7 @@ export interface FieldPathValidationDefinition {
 export function isValidLayoutFieldPath(
   definition: FieldPathValidationDefinition,
   fieldPath: string,
+  params?: ListLayoutFieldOptionsParams,
 ): boolean {
   const trimmed = fieldPath.trim();
   if (trimmed.length === 0) {
@@ -51,17 +54,52 @@ export function isValidLayoutFieldPath(
   }
 
   const relationField = resolveRelationFieldName(definition, firstSegment);
-  if (!relationField) {
-    return false;
+  if (relationField) {
+    const relationMeta = definition.fields[relationField];
+    if (!relationMeta?.relation) {
+      return false;
+    }
+
+    const relationType = relationMeta.relation.type;
+    return relationType === "many-to-one" || relationType === "one-to-one";
   }
 
-  const relationMeta = definition.fields[relationField];
-  if (!relationMeta?.relation) {
-    return false;
+  for (const [fieldName, meta] of Object.entries(definition.fields)) {
+    if (meta.relation?.type !== "one-to-many") {
+      continue;
+    }
+
+    const target = meta.relation.target;
+    if (!target) {
+      continue;
+    }
+
+    if (fieldName !== firstSegment && target !== firstSegment) {
+      continue;
+    }
+
+    const childDefinition = params?.resolveTarget?.(target);
+    if (!childDefinition) {
+      return true;
+    }
+
+    return subField in childDefinition.fields;
   }
 
-  const relationType = relationMeta.relation.type;
-  return relationType === "many-to-one" || relationType === "one-to-one";
+  const reverseChild = params?.resolveTarget?.(firstSegment);
+  if (reverseChild) {
+    for (const meta of Object.values(reverseChild.fields)) {
+      if (
+        meta.relation?.target === definition.name &&
+        (meta.relation.type === "many-to-one" ||
+          meta.relation.type === "one-to-one")
+      ) {
+        return subField in reverseChild.fields;
+      }
+    }
+  }
+
+  return false;
 }
 
 function resolveRelationFieldName(
@@ -114,7 +152,7 @@ function collectComponentPaths(
   }
 
   if (
-    isContainerComponent(component) ||
+    isRowHolderComponent(component) ||
     component.kind === "form-section" ||
     component.kind === "icon" ||
     component.kind === "form-actions" ||
@@ -152,6 +190,10 @@ function collectInputComponentPaths(
 function walkRows(rows: readonly RowNode[], paths: Set<string>): void {
   for (const row of rows) {
     if (row.type === "component") {
+      if (isQueryViewerComponent(row.component)) {
+        continue;
+      }
+
       if (isContainerComponent(row.component)) {
         walkRows(row.component.rows, paths);
         continue;
@@ -191,6 +233,10 @@ function walkRowsWithCollector(
 ): void {
   for (const row of rows) {
     if (row.type === "component") {
+      if (isQueryViewerComponent(row.component)) {
+        continue;
+      }
+
       if (isContainerComponent(row.component)) {
         walkRowsWithCollector(row.component.rows, paths, collectPaths);
         continue;
@@ -463,18 +509,41 @@ export function listLayoutFieldOptions(
       const target = meta.relation.target;
       if (target) {
         const targetDefinition = params?.resolveTarget?.(target);
-        const relationSubfields = ["name", "code", "logo"] as const;
+        if (!targetDefinition) {
+          for (const subfield of ["name", "code"] as const) {
+            options.add(`${target}.${subfield}`);
+          }
+          continue;
+        }
 
-        for (const subfield of relationSubfields) {
-          if (!targetDefinition) {
-            if (subfield !== "logo") {
-              options.add(`${target}.${subfield}`);
-            }
+        for (const [subFieldName, subMeta] of Object.entries(
+          targetDefinition.fields,
+        )) {
+          if (subMeta.type === "document") {
             continue;
           }
 
-          if (subfield in targetDefinition.fields) {
-            options.add(`${target}.${subfield}`);
+          options.add(`${target}.${subFieldName}`);
+        }
+      }
+      continue;
+    }
+
+    if (meta.relation?.type === "one-to-many") {
+      relationFkFields.add(fieldName);
+      const target = meta.relation.target;
+      if (target) {
+        const childDefinition = params?.resolveTarget?.(target);
+        if (childDefinition) {
+          for (const [subFieldName, subMeta] of Object.entries(
+            childDefinition.fields,
+          )) {
+            if (subMeta.type === "document") {
+              continue;
+            }
+
+            options.add(`${fieldName}.${subFieldName}`);
+            options.add(`${target}.${subFieldName}`);
           }
         }
       }

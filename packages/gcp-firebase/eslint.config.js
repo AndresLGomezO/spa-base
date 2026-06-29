@@ -28,6 +28,7 @@ export default [
   {
     files: [
       "src/firebase-admin.ts",
+      "src/build-firestore-filter-tree.ts",
       "src/firestore-admin-user-repository.ts",
       "src/firestore-admin-entity-repository.ts",
       "src/firestore-admin-join-collection-repository.ts",

@@ -512,6 +512,15 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         styles: z.array(styleRuleSchema).optional(),
       })
       .strict(),
+    z
+      .object({
+        kind: z.literal("query-viewer"),
+        entityQueryDefinitionId: z.string(),
+        rows: z.array(rowNodeSchema),
+        stackDirection: z.enum(["column", "row"]).optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
   ]),
 );
 

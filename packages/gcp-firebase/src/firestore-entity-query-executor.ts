@@ -7,9 +7,11 @@ import type {
 } from "@repo/firestore-converters";
 import {
   applyPostFilters,
+  applyPostFilterTree,
   computeOverfetchLimit,
   decodeCursor,
   encodeCursor,
+  evaluateFilterTree,
   QueryError,
   QueryErrorCode,
 } from "@repo/query-engine";
@@ -32,6 +34,7 @@ import {
   usesInMemoryListPipeline,
 } from "./query-index-match.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
+import { buildFirestoreCompositeFilter } from "./build-firestore-filter-tree.js";
 
 interface EntityConverter<TRecord> {
   read(raw: unknown): TRecord;
@@ -143,12 +146,21 @@ function buildFirestoreQuery(
 
   let query: Query = collectionRef;
 
-  for (const filter of equalityFilters) {
-    query = applyFilter(query, filter);
-  }
+  if (normalizedQuery.filterTree) {
+    const compositeFilter = buildFirestoreCompositeFilter(
+      normalizedQuery.filterTree,
+    );
+    if (compositeFilter) {
+      query = query.where(compositeFilter);
+    }
+  } else {
+    for (const filter of equalityFilters) {
+      query = applyFilter(query, filter);
+    }
 
-  for (const filter of inequalityFilters) {
-    query = applyFilter(query, filter);
+    for (const filter of inequalityFilters) {
+      query = applyFilter(query, filter);
+    }
   }
 
   const primarySort = normalizedQuery.sort ?? { field: "id", direction: "asc" };
@@ -169,35 +181,15 @@ function applyPagination(query: Query, limit: number, offset?: number): Query {
   return paginated.limit(limit);
 }
 
-function applyUserFiltersInMemory(
+function applyUserFilterTreeInMemory(
   items: Record<string, unknown>[],
-  filters: readonly NormalizedFilter[],
+  filterTree: NormalizedEntityQuery["filterTree"],
 ): Record<string, unknown>[] {
-  return items.filter((item) =>
-    filters.every((filter) => {
-      const value = item[filter.field];
-      switch (filter.operator) {
-        case "==":
-          return value === filter.value;
-        case "!=":
-          return value !== filter.value;
-        case "in":
-          return (
-            Array.isArray(filter.value) && filter.value.includes(value as never)
-          );
-        case ">":
-          return compareValues(value, filter.value) > 0;
-        case ">=":
-          return compareValues(value, filter.value) >= 0;
-        case "<":
-          return compareValues(value, filter.value) < 0;
-        case "<=":
-          return compareValues(value, filter.value) <= 0;
-        default:
-          return true;
-      }
-    }),
-  );
+  if (!filterTree) {
+    return items;
+  }
+
+  return items.filter((item) => evaluateFilterTree(item, filterTree));
 }
 
 function buildSuggestedIndexFields(
@@ -317,7 +309,8 @@ class FirestoreEntityQueryExecutor<
     }
 
     const filteredQuery = buildFirestoreQuery(collectionRef, query);
-    const hasPostFilters = query.postFilters.length > 0;
+    const hasPostFilters =
+      query.postFilters.length > 0 || query.postFilterTree !== null;
     const fetchLimit = computeOverfetchLimit(query.limit, hasPostFilters);
 
     try {
@@ -356,7 +349,12 @@ class FirestoreEntityQueryExecutor<
       );
 
       if (hasPostFilters) {
-        items = applyPostFilters(items, query.postFilters);
+        if (query.postFilterTree) {
+          items = applyPostFilterTree(items, query.postFilterTree);
+        }
+        if (query.postFilters.length > 0) {
+          items = applyPostFilters(items, query.postFilters);
+        }
         items = items.slice(0, query.limit);
       }
 
@@ -438,8 +436,10 @@ class FirestoreEntityQueryExecutor<
         );
 
     const baselineQuery: NormalizedEntityQuery = {
+      filterTree: null,
       filters: ownershipFilters,
       postFilters: [],
+      postFilterTree: null,
       sort: { field: "id", direction: "asc" },
       limit: maxDocs,
     };
@@ -528,12 +528,11 @@ class FirestoreEntityQueryExecutor<
       maxDocs,
     );
 
-    const userFilters = query.filters.filter(
-      (filter) =>
-        filter.field !== "accessUserIds" &&
-        filter.operator !== "array-contains",
-    );
-    items = applyUserFiltersInMemory(items, userFilters);
+    items = applyUserFilterTreeInMemory(items, query.filterTree);
+
+    if (query.postFilterTree) {
+      items = applyPostFilterTree(items, query.postFilterTree);
+    }
 
     if (query.postFilters.length > 0) {
       items = applyPostFilters(items, query.postFilters);
@@ -559,12 +558,7 @@ class FirestoreEntityQueryExecutor<
       maxDocs,
     );
 
-    const userFilters = query.filters.filter(
-      (filter) =>
-        filter.field !== "accessUserIds" &&
-        filter.operator !== "array-contains",
-    );
-    items = applyUserFiltersInMemory(items, userFilters);
+    items = applyUserFilterTreeInMemory(items, query.filterTree);
     items = sortItemsInMemory(items, query.sort);
 
     return this.paginateInMemoryResults(items, query);

@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vitest";
 
+import { makeNormalizedEntityQuery } from "@repo/firestore-converters";
+
 import {
   createInMemoryEntityQueryExecutor,
   createInMemoryEntityQueryStore,
@@ -18,31 +20,40 @@ describe("createInMemoryEntityQueryExecutor", () => {
 
     const executor = createInMemoryEntityQueryExecutor(() => store);
 
-    const filtered = await executor.executeQuery("tenant_a", {
-      filters: [{ field: "organizationId", operator: "==", value: "c1" }],
-      postFilters: [],
-      sort: { field: "budget", direction: "desc" },
-      limit: 10,
-    });
+    const filtered = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [{ field: "organizationId", operator: "==", value: "c1" }],
+        postFilters: [],
+        sort: { field: "budget", direction: "desc" },
+        limit: 10,
+      }),
+    );
 
     expect(filtered.items.map((item) => item.id)).toEqual(["o1", "o2"]);
 
-    const pageOne = await executor.executeQuery("tenant_a", {
-      filters: [],
-      postFilters: [],
-      sort: { field: "id", direction: "asc" },
-      limit: 2,
-    });
+    const pageOne = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [],
+        postFilters: [],
+        sort: { field: "id", direction: "asc" },
+        limit: 2,
+      }),
+    );
     expect(pageOne.items.map((item) => item.id)).toEqual(["o1", "o2"]);
     expect(pageOne.nextCursor).toBe("o2");
 
-    const pageTwo = await executor.executeQuery("tenant_a", {
-      filters: [],
-      postFilters: [],
-      sort: { field: "id", direction: "asc" },
-      limit: 2,
-      cursor: pageOne.nextCursor ?? undefined,
-    });
+    const pageTwo = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [],
+        postFilters: [],
+        sort: { field: "id", direction: "asc" },
+        limit: 2,
+        cursor: pageOne.nextCursor ?? undefined,
+      }),
+    );
     expect(pageTwo.items.map((item) => item.id)).toEqual(["o3"]);
     expect(pageTwo.nextCursor).toBeNull();
     expect(pageOne.totalCount).toBe(3);
@@ -58,13 +69,16 @@ describe("createInMemoryEntityQueryExecutor", () => {
 
     const executor = createInMemoryEntityQueryExecutor(() => store);
 
-    const page = await executor.executeQuery("tenant_a", {
-      filters: [],
-      postFilters: [],
-      sort: { field: "id", direction: "asc" },
-      limit: 2,
-      offset: 2,
-    });
+    const page = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [],
+        postFilters: [],
+        sort: { field: "id", direction: "asc" },
+        limit: 2,
+        offset: 2,
+      }),
+    );
 
     expect(page.items.map((item) => item.id)).toEqual(["o3"]);
     expect(page.totalCount).toBe(3);
@@ -105,34 +119,40 @@ describe("createInMemoryEntityQueryExecutor", () => {
 
     const executor = createInMemoryEntityQueryExecutor(() => store);
 
-    const bancol = await executor.executeQuery("tenant_a", {
-      filters: [],
-      postFilters: [
-        {
-          field: "nameSearchTokens",
-          operator: "tokenStartsWith",
-          value: "bancol",
-        },
-      ],
-      sort: { field: "id", direction: "asc" },
-      limit: 10,
-      search: "bancol",
-    });
+    const bancol = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [],
+        postFilters: [
+          {
+            field: "nameSearchTokens",
+            operator: "tokenStartsWith",
+            value: "bancol",
+          },
+        ],
+        sort: { field: "id", direction: "asc" },
+        limit: 10,
+        search: "bancol",
+      }),
+    );
     expect(bancol.items.map((item) => item.id)).toEqual(["a1"]);
 
-    const ahorr = await executor.executeQuery("tenant_a", {
-      filters: [],
-      postFilters: [
-        {
-          field: "nameSearchTokens",
-          operator: "tokenStartsWith",
-          value: "ahorr",
-        },
-      ],
-      sort: { field: "id", direction: "asc" },
-      limit: 10,
-      search: "ahorr",
-    });
+    const ahorr = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [],
+        postFilters: [
+          {
+            field: "nameSearchTokens",
+            operator: "tokenStartsWith",
+            value: "ahorr",
+          },
+        ],
+        sort: { field: "id", direction: "asc" },
+        limit: 10,
+        search: "ahorr",
+      }),
+    );
     expect(ahorr.items.map((item) => item.id)).toEqual(["a1"]);
   });
 });

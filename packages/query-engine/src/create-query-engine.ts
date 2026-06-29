@@ -1,8 +1,13 @@
 import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
-import type { EntityQueryExecutor } from "@repo/firestore-converters";
+import type { EntityQueryExecutor } from "@repo/firestore-converters/entity-query-contract";
+import {
+  migrateFlatFiltersToTree,
+  normalizeLegacyQueryFilter,
+} from "@repo/firestore-converters/filter-tree";
 
 import { applyRbacFilters } from "./apply-query-security.js";
 import { QueryError, QueryErrorCode } from "./errors.js";
+import { mergeFilterTrees } from "./filter-tree.js";
 import { applySelectProjection } from "./format-results.js";
 import { normalizeEntityQuery } from "./parse-query-config.js";
 import type {
@@ -83,11 +88,15 @@ export function createQueryEngine(deps: QueryEngineDeps): QueryEngine {
         context,
         rbacQueryInjector,
       );
+      const injectedTree =
+        injectedFilters.length > 0
+          ? migrateFlatFiltersToTree(injectedFilters)
+          : null;
+      const userTree = normalizeLegacyQueryFilter(queryConfig.filter);
+      const mergedFilter = mergeFilterTrees(injectedTree, userTree);
       const mergedConfig: QueryConfig = {
         ...queryConfig,
-        // Ownership (array-contains) must precede user equality filters so queries
-        // match composite indexes (accessUserIds first, then filter/sort fields).
-        filter: [...injectedFilters, ...(queryConfig.filter ?? [])],
+        ...(mergedFilter ? { filter: mergedFilter } : {}),
       };
 
       const normalizedQuery = normalizeEntityQuery(entity, mergedConfig);

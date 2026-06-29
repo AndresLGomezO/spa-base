@@ -6,11 +6,11 @@ import type {
   RowNode,
   UiLayoutDocument,
 } from "../types/layout.js";
-import { isContainerComponent } from "../types/component.js";
+import { isRowHolderComponent } from "../types/component.js";
 
 function regenerateRowIds(row: RowNode): RowNode {
   if (row.type === "component") {
-    if (isContainerComponent(row.component)) {
+    if (isRowHolderComponent(row.component)) {
       return {
         ...row,
         id: createLayoutId("row"),
@@ -44,7 +44,7 @@ function regenerateColumnIds(column: ColumnNode): ColumnNode {
 export function regenerateComponentRowSubtree(
   row: ComponentRowNode,
 ): ComponentRowNode {
-  if (isContainerComponent(row.component)) {
+  if (isRowHolderComponent(row.component)) {
     return {
       ...row,
       id: createLayoutId("row"),

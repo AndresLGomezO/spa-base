@@ -262,6 +262,26 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
       2,
     ),
   },
+  "query-viewer": {
+    summary:
+      "Repeats an inner row template for each record returned by an entity query definition. Child rows bind to the query source entity fields.",
+    properties: [
+      "entityQueryDefinitionId",
+      "rows",
+      "stackDirection?",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "query-viewer",
+        entityQueryDefinitionId: "query_active_contracts",
+        rows: [],
+        stackDirection: "column",
+      },
+      null,
+      2,
+    ),
+  },
   "dashboard-section": {
     summary: "Reference to a reusable tenant dashboard section by id.",
     properties: ["sectionId", "label?", "styles?"],

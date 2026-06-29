@@ -1,7 +1,7 @@
 import type { FieldDescriptor } from "@repo/ui-builder-react";
 import {
   formatFieldPathLabel,
-  isContainerComponent,
+  isRowHolderComponent,
   resolveContainerChildRows,
   type ColumnNode,
   type ComponentRowNode,
@@ -269,7 +269,7 @@ function buildComponentRowNode(
 ): StructureComponentRowNode {
   const locator = buildLocator(context);
 
-  if (isContainerComponent(row.component)) {
+  if (isRowHolderComponent(row.component)) {
     const childContext: LocatorContext = {
       columnIndex: context.columnIndex,
       containerRowId: row.id,
@@ -415,7 +415,7 @@ function findNestedRow(
       return row;
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
       const nested = findNestedRow(row.component.rows, rowId);
       if (nested) {
         return nested;

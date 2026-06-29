@@ -1,7 +1,7 @@
+import { evaluateFilterTree, applyPostFilterTree } from "@repo/query-engine";
 import type {
   EntityQueryExecutor,
   NormalizedEntityQuery,
-  NormalizedFilter,
 } from "@repo/firestore-converters";
 import { applyPostFilters } from "@repo/query-engine";
 
@@ -27,34 +27,6 @@ function compareValues(left: unknown, right: unknown): number {
     return left - right;
   }
   return String(left).localeCompare(String(right));
-}
-
-function matchesFilter(
-  record: Record<string, unknown>,
-  filter: NormalizedFilter,
-): boolean {
-  const value = record[filter.field];
-
-  switch (filter.operator) {
-    case "==":
-      return value === filter.value;
-    case "!=":
-      return value !== filter.value;
-    case ">":
-      return compareValues(value, filter.value) > 0;
-    case "<":
-      return compareValues(value, filter.value) < 0;
-    case ">=":
-      return compareValues(value, filter.value) >= 0;
-    case "<=":
-      return compareValues(value, filter.value) <= 0;
-    case "in":
-      return Array.isArray(filter.value) && filter.value.includes(value);
-    case "array-contains":
-      return Array.isArray(value) && value.includes(filter.value);
-    default:
-      return false;
-  }
 }
 
 function sortRecords(
@@ -92,9 +64,23 @@ export function createInMemoryEntityQueryExecutor(
         (record) => record.tenantId === tenantId,
       );
 
-      const filtered = tenantRecords.filter((record) =>
-        query.filters.every((filter) => matchesFilter(record, filter)),
-      );
+      let filtered = tenantRecords.filter((record) => {
+        if (query.filterTree) {
+          return evaluateFilterTree(record, query.filterTree);
+        }
+        return query.filters.every((filter) =>
+          evaluateFilterTree(record, {
+            type: "condition",
+            field: filter.field,
+            operator: filter.operator,
+            value: filter.value,
+          }),
+        );
+      });
+
+      if (query.postFilterTree) {
+        filtered = applyPostFilterTree(filtered, query.postFilterTree);
+      }
 
       const results = applyPostFilters(filtered, query.postFilters);
 

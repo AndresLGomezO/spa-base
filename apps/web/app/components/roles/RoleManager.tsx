@@ -101,6 +101,11 @@ export function RoleManager({
       "metricDefinition.delete",
       "metricDefinition.backfill",
       "metricValue.read",
+      "entityQueryDefinition.read",
+      "entityQueryDefinition.create",
+      "entityQueryDefinition.update",
+      "entityQueryDefinition.delete",
+      "entityQueryDefinition.*",
     ]);
 
     for (const entity of entities) {

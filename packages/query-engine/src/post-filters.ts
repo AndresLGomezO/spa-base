@@ -1,4 +1,4 @@
-import type { NormalizedFilter } from "@repo/firestore-converters";
+import type { NormalizedFilter } from "@repo/firestore-converters/entity-query-contract";
 
 /** Sentinel field for document-wide in-memory search post-filters. */
 export const SEARCH_SOURCE_FIELDS_FILTER_FIELD = "__searchSourceFields__";

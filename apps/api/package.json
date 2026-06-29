@@ -34,6 +34,7 @@
     "@repo/aggregation-engine": "workspace:*",
     "@repo/event-engine": "workspace:*",
     "@repo/hooks": "workspace:*",
+    "@repo/entity-queries": "workspace:*",
     "@repo/metrics-engine": "workspace:*",
     "@repo/modules": "workspace:*",
     "@repo/query-engine": "workspace:*",

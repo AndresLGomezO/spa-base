@@ -509,6 +509,43 @@ function extractMetricDerivedKpiOperatorKeys(corpus) {
   return keys;
 }
 
+/** queryBuilder.filters.operators|temporalPresets.${...} in source → keys under those objects */
+function extractQueryBuilderFilterDynamicKeys(corpus) {
+  const needsOperators = corpus.includes("queryBuilder.filters.operators.${");
+  const needsTemporalPresets = corpus.includes(
+    "queryBuilder.filters.temporalPresets.${",
+  );
+  if (!needsOperators && !needsTemporalPresets) return [];
+
+  const refQueryBuilder = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).queryBuilder;
+
+  const filters = refQueryBuilder?.filters;
+  if (!filters || typeof filters !== "object") return [];
+
+  const keys = [];
+  if (needsOperators) {
+    const operators = filters.operators;
+    if (operators && typeof operators === "object") {
+      for (const key of Object.keys(operators)) {
+        keys.push(`${DEFAULT_NAMESPACE}:queryBuilder.filters.operators.${key}`);
+      }
+    }
+  }
+  if (needsTemporalPresets) {
+    const temporalPresets = filters.temporalPresets;
+    if (temporalPresets && typeof temporalPresets === "object") {
+      for (const key of Object.keys(temporalPresets)) {
+        keys.push(
+          `${DEFAULT_NAMESPACE}:queryBuilder.filters.temporalPresets.${key}`,
+        );
+      }
+    }
+  }
+  return keys;
+}
+
 /** translationPrefix / key("suffix") in ui-builder-ai → keys under formDesigner.ai / itemListDesigner.ai */
 function extractUiBuilderAiDesignerKeys(corpus) {
   const needsFormDesigner =
@@ -794,6 +831,15 @@ mergeUsedKeys(
   usedKeys,
   extractMetricDerivedKpiOperatorKeys(corpus),
   metricDerivedKpiEditorFile,
+);
+const entityQueryFilterGroupEditorFile = path.join(
+  SRC_DIR,
+  "components/entity/EntityQueryFilterGroupEditor.tsx",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractQueryBuilderFilterDynamicKeys(corpus),
+  entityQueryFilterGroupEditorFile,
 );
 const uiBuilderPresetManagerFile = path.join(
   SRC_DIR,

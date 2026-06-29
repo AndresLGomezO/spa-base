@@ -4,6 +4,7 @@ import type { TFunction } from "i18next";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
+import { createQueryViewerRenderer } from "./create-query-viewer-renderer";
 import { resolveEntityCellValue } from "../../components/entity/resolve-entity-cell-value";
 import { resolveEntityFieldPath } from "../../components/entity/resolve-entity-field-path";
 import {
@@ -34,6 +35,10 @@ export function createEntityLayoutRenderContext(options: {
     recordId: string,
     columnName: string,
   ) => string | null;
+  readonly getOneToManyRelationSubfieldValue?: (
+    recordId: string,
+    fieldPath: string,
+  ) => unknown;
   readonly getDefinition?: (
     entityName: string,
   ) => EntityCatalogEntry | undefined;
@@ -52,6 +57,7 @@ export function createEntityLayoutRenderContext(options: {
     definition,
     locale,
     getOneToManyCellValue = () => null,
+    getOneToManyRelationSubfieldValue,
     getDefinition,
     catalogItems = [],
     listFilters,
@@ -72,7 +78,10 @@ export function createEntityLayoutRenderContext(options: {
     data: item,
     locale,
     resolveField: (path) =>
-      resolveEntityFieldPath(item, path, definition, getOneToManyCellValue),
+      resolveEntityFieldPath(item, path, definition, getOneToManyCellValue, {
+        getDefinition,
+        getOneToManyRelationSubfieldValue,
+      }),
     resolveFieldMeta: (path) =>
       resolveLayoutSlotDisplayMeta(path, definition, getDefinition),
     resolveFieldLabel: (path) =>
@@ -186,7 +195,7 @@ export function createEntityLayoutRenderContext(options: {
         ? createMetricWidgetRenderer({
             catalogItems,
             t,
-            buildLayoutContext: (nestedDefinition, nestedItem) =>
+            buildLayoutContext: (nestedDefinition, nestedItem, extras) =>
               createEntityLayoutRenderContext({
                 item: nestedItem,
                 definition: nestedDefinition,
@@ -199,6 +208,31 @@ export function createEntityLayoutRenderContext(options: {
                 usePreviewPlaceholder,
                 usePreviewSamples,
                 t,
+                getOneToManyRelationSubfieldValue:
+                  extras?.getOneToManyRelationSubfieldValue,
+              }),
+          })
+        : undefined,
+    queryViewerRenderer:
+      getDefinition && t
+        ? createQueryViewerRenderer({
+            catalogItems,
+            t,
+            buildLayoutContext: (nestedDefinition, nestedItem, extras) =>
+              createEntityLayoutRenderContext({
+                item: nestedItem,
+                definition: nestedDefinition,
+                locale,
+                catalogItems,
+                getDefinition,
+                listFilters,
+                routeParams,
+                dashboardDateFilter,
+                usePreviewPlaceholder,
+                usePreviewSamples,
+                t,
+                getOneToManyRelationSubfieldValue:
+                  extras?.getOneToManyRelationSubfieldValue,
               }),
           })
         : undefined,

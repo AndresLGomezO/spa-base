@@ -1,4 +1,5 @@
 import {
+  act,
   cleanup,
   fireEvent,
   render,
@@ -8,7 +9,7 @@ import {
 import { I18nextProvider } from "react-i18next";
 import { afterEach, beforeEach, describe, expect, it } from "vitest";
 
-import { i18n } from "../i18n";
+import { i18n, loadLocale } from "../i18n";
 import { LOCALE_STORAGE_KEY } from "../i18n/constants";
 import { LanguageSwitcher } from "./LanguageSwitcher";
 
@@ -20,14 +21,20 @@ function renderSwitcher() {
   );
 }
 
+async function resetLocaleState() {
+  localStorage.clear();
+  await loadLocale("es");
+  await i18n.changeLanguage("en");
+}
+
 describe("LanguageSwitcher", () => {
   beforeEach(async () => {
-    localStorage.clear();
-    await i18n.changeLanguage("en");
+    await resetLocaleState();
   });
 
-  afterEach(() => {
+  afterEach(async () => {
     cleanup();
+    await resetLocaleState();
   });
 
   it("shows English as active by default", () => {
@@ -47,18 +54,20 @@ describe("LanguageSwitcher", () => {
   it("switches to Spanish and persists to localStorage", async () => {
     renderSwitcher();
 
-    fireEvent.click(screen.getByRole("radio", { name: "Español" }));
-
-    await waitFor(() => {
-      expect(i18n.language).toMatch(/^es/);
+    await act(async () => {
+      fireEvent.click(screen.getByRole("radio", { name: "Español" }));
     });
 
+    await waitFor(() => {
+      expect(screen.getByRole("radio", { name: "Español" })).toHaveAttribute(
+        "aria-checked",
+        "true",
+      );
+    });
+
+    expect(i18n.language).toMatch(/^es/);
     expect(localStorage.getItem(LOCALE_STORAGE_KEY)).toBe("es");
     expect(screen.getByRole("group", { name: "Idioma" })).toBeInTheDocument();
-    expect(screen.getByRole("radio", { name: "Español" })).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
   });
 
   it("restores Spanish from localStorage on init", async () => {

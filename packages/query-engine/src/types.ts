@@ -1,4 +1,7 @@
-import type { FilterOperator } from "@repo/firestore-converters";
+import type {
+  FilterNode,
+  FilterOperator,
+} from "@repo/firestore-converters/filter-tree";
 
 export type { FilterOperator };
 
@@ -14,7 +17,8 @@ export interface Sort {
 }
 
 export interface QueryConfig {
-  readonly filter?: readonly Filter[];
+  /** Filter tree root or legacy flat AND list. */
+  readonly filter?: readonly Filter[] | FilterNode;
   readonly sort?: readonly Sort[];
   readonly search?: string;
   readonly pagination?: {

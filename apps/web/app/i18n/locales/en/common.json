@@ -44,8 +44,9 @@
     "dataStructure": "Data structure",
     "dataModelBuilder": "Data Entity Builder",
     "automation": "Automation",
-    "analytics": "Analytics",
+    "analytics": "Data & Analytics",
     "metricsNav": "Metrics",
+    "queryBuilderNav": "Query Builder",
     "entityCategories": "Entity categories",
     "roles": "Roles & Permissions",
     "platform": "Platform",
@@ -398,7 +399,8 @@
     },
     "components": {
       "metricWidget": "Metric widget",
-      "metricDerivedKpi": "Derived metric KPI"
+      "metricDerivedKpi": "Derived metric KPI",
+      "queryViewer": "Query results"
     },
     "metricWidgetEditor": {
       "entity": "Entity",
@@ -407,6 +409,18 @@
       "unconfigured": "No widget selected",
       "noWidgetsForEntity": "No metric widgets are defined for this entity.",
       "noEntitiesWithWidgets": "No entities have metric widgets yet."
+    },
+    "queryViewerEditor": {
+      "query": "Query",
+      "selectQuery": "Select a query…",
+      "unconfigured": "No query selected",
+      "noQueries": "No saved queries yet.",
+      "loading": "Loading query results…",
+      "loadFailed": "Failed to load query results.",
+      "sourceEntity": "Source entity: {{entity}}",
+      "missingSourceEntity": "The query source entity is not available.",
+      "emptyResults": "No results for this query.",
+      "selectQueryForFields": "Select a query on the Query results row to bind entity fields."
     },
     "widgets": {
       "selectLabel": "Widget",
@@ -1653,6 +1667,128 @@
       "removeToken": "Remove",
       "moveTokenUp": "Move up",
       "moveTokenDown": "Move down"
+    }
+  },
+  "queryBuilder": {
+    "title": "Query Builder",
+    "description": "Define reusable entity queries with filters, sorting, and limits for dashboards and widgets.",
+    "loading": "Loading queries…",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saved": "Query saved.",
+    "deleted": "Query deleted.",
+    "forbidden": "You do not have permission to manage entity queries.",
+    "selectEntity": "Select an entity",
+    "selectField": "Select a field",
+    "status": "Status",
+    "statusValues": {
+      "ACTIVE": "Active",
+      "PAUSED": "Paused"
+    },
+    "list": {
+      "title": "Queries",
+      "add": "Add query",
+      "empty": "No queries yet.",
+      "edit": "Edit query",
+      "delete": "Delete query",
+      "expandPanel": "Expand panel",
+      "collapsePanel": "Collapse panel"
+    },
+    "metadata": {
+      "createTitle": "Create query",
+      "editTitle": "Edit query",
+      "createAction": "Create",
+      "name": "Name",
+      "namePlaceholder": "Upcoming subscription payments",
+      "description": "Description (optional)",
+      "descriptionPlaceholder": "What this query returns and when to use it",
+      "sourceEntity": "Source entity",
+      "created": "Query created.",
+      "updated": "Query updated."
+    },
+    "settings": {
+      "emptySelection": "Select a query from the list to configure filters and preview results."
+    },
+    "filters": {
+      "label": "Filters",
+      "empty": "No filters — all records are included.",
+      "add": "Add filter",
+      "remove": "Remove filter",
+      "directGroup": "Entity fields",
+      "relationGroup": "Related entity fields",
+      "conditionLabel": "Condition",
+      "groupLabel": "Group",
+      "groupSummary": "{{combinator}} · {{count}} rules",
+      "emptyConditionSummary": "No field selected",
+      "combinator": {
+        "and": "Match all (AND)",
+        "or": "Match any (OR)"
+      },
+      "addGroup": "Add group",
+      "removeGroup": "Remove group",
+      "field": "Field",
+      "operator": "Operator",
+      "value": "Value",
+      "selectValue": "Select a value…",
+      "valuePlaceholder": "Enter a value",
+      "listPlaceholder": "Comma-separated values",
+      "valueKinds": {
+        "static": "Fixed value",
+        "temporal": "Current date preset"
+      },
+      "temporalPresets": {
+        "today": "Today (start of day)",
+        "startOfDay": "Start of day",
+        "endOfDay": "End of day",
+        "startOfMonth": "Start of month",
+        "endOfMonth": "End of month",
+        "startOfYear": "Start of year",
+        "endOfYear": "End of year"
+      },
+      "operators": {
+        "==": "Equals",
+        "!=": "Not equal",
+        ">": "Greater than",
+        "<": "Less than",
+        ">=": "Greater or equal",
+        "<=": "Less or equal",
+        "in": "Is one of"
+      }
+    },
+    "sort": {
+      "label": "Sort",
+      "empty": "No sort order.",
+      "add": "Add sort field",
+      "remove": "Remove",
+      "rowLabel": "Sort {{index}}",
+      "asc": "Ascending",
+      "desc": "Descending"
+    },
+    "selectFields": {
+      "label": "Select fields (optional)",
+      "placeholder": "All fields",
+      "selectedCount": "{{count}} selected",
+      "searchPlaceholder": "Search fields…",
+      "noResults": "No matching fields",
+      "removeBadge": "Remove {{label}}"
+    },
+    "limit": {
+      "label": "Result limit",
+      "topN": "Top N",
+      "all": "All (up to 500)",
+      "allHint": "Fetches up to 500 matching records using pagination."
+    },
+    "preview": {
+      "title": "Preview results",
+      "hint": "Collapsed by default",
+      "run": "Run query",
+      "failed": "Unable to run query.",
+      "resultCount": "{{count}} results"
+    },
+    "delete": {
+      "title": "Delete query",
+      "message": "Delete \"{{name}}\"? This cannot be undone.",
+      "confirm": "Delete"
     }
   },
   "hooks": {

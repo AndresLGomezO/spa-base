@@ -19,6 +19,7 @@ export type UiComponentKind =
   | "metric-kpi"
   | "metric-derived-kpi"
   | "metric-widget"
+  | "query-viewer"
   | "dashboard-section"
   | "form-field"
   | "entity-field-selector"
@@ -334,6 +335,19 @@ export interface ContainerComponentConfig {
   readonly styles?: readonly StyleRule[];
 }
 
+export interface QueryViewerComponentConfig {
+  readonly kind: "query-viewer";
+  readonly entityQueryDefinitionId: string;
+  readonly rows: readonly RowNode[];
+  /** Vertical (default) or horizontal stacking of result items. */
+  readonly stackDirection?: ColumnStackDirection;
+  readonly styles?: readonly StyleRule[];
+}
+
+export type RowHolderComponentConfig =
+  | ContainerComponentConfig
+  | QueryViewerComponentConfig;
+
 export type PageUiComponentConfig =
   | PageHeaderComponentConfig
   | PageToolbarComponentConfig
@@ -346,6 +360,7 @@ export type ViewFilterUiComponentConfig =
 
 export type UiComponentConfig =
   | ContainerComponentConfig
+  | QueryViewerComponentConfig
   | FieldUiComponentConfig
   | IconComponentConfig
   | UserComponentConfig
@@ -458,4 +473,16 @@ export function isContainerComponent(
   config: UiComponentConfig,
 ): config is ContainerComponentConfig {
   return config.kind === "container";
+}
+
+export function isQueryViewerComponent(
+  config: UiComponentConfig,
+): config is QueryViewerComponentConfig {
+  return config.kind === "query-viewer";
+}
+
+export function isRowHolderComponent(
+  config: UiComponentConfig,
+): config is RowHolderComponentConfig {
+  return config.kind === "container" || config.kind === "query-viewer";
 }

@@ -366,10 +366,12 @@ function StructureRowBranch({
   const showRowBottomInsert =
     !lockRootScopeInserts || !isRootScopeLocator(row.locator);
   const isNested = row.type === "nested-layout";
-  const isContainer = row.type === "component" && row.kind === "container";
+  const isRowHolder =
+    row.type === "component" &&
+    (row.kind === "container" || row.kind === "query-viewer");
   const expanded = expandedIds.has(row.id);
   const kind = isNested ? "nested-layout" : row.kind;
-  const expandable = isNested || isContainer;
+  const expandable = isNested || isRowHolder;
   const moveState = getRowMoveState(layout, row);
   const rowRef = toComponentRowRef(row.rowId, row.locator);
   const rowFocusState = resolveRowFocusState(rowRef, treeFocus);
@@ -403,7 +405,7 @@ function StructureRowBranch({
         onRowSelect={() => onRowSelect?.(row)}
       />
 
-      {isContainer ? (
+      {isRowHolder ? (
         <CollapsibleChildren expanded={expanded}>
           <StructureContainerBody
             row={row}

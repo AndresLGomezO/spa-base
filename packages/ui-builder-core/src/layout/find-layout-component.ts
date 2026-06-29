@@ -1,5 +1,5 @@
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
-import { isContainerComponent } from "../types/component.js";
+import { isRowHolderComponent } from "../types/component.js";
 import type { ColumnNode, RowNode, UiLayoutDocument } from "../types/layout.js";
 
 function walkRows(
@@ -12,7 +12,7 @@ function walkRows(
         return row.component;
       }
 
-      if (isContainerComponent(row.component)) {
+      if (isRowHolderComponent(row.component)) {
         const found = walkRows(row.component.rows, kind);
         if (found) {
           return found;

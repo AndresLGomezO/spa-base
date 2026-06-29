@@ -7,6 +7,7 @@ import {
 } from "@repo/dynamic-entities";
 import { ENTITY_UI_OVERRIDE_PERMISSIONS } from "@repo/entities";
 import { HOOK_PERMISSIONS } from "@repo/hooks";
+import { ENTITY_QUERY_PERMISSIONS } from "@repo/entity-queries/permissions";
 import { METRIC_PERMISSIONS } from "@repo/metrics-engine/permissions";
 import { getAllEntities } from "@repo/entities";
 
@@ -27,6 +28,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
     ...INTERNAL_ENTITY_PERMISSIONS,
     ...HOOK_PERMISSIONS,
     ...METRIC_PERMISSIONS,
+    ...ENTITY_QUERY_PERMISSIONS,
     ...AI_PERMISSIONS,
     ...ROLE_PERMISSIONS,
     ...TENANT_USER_PERMISSIONS,

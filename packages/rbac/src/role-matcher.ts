@@ -57,6 +57,10 @@ export function hasPermission(
     return true;
   }
 
+  if (resolved.includes("*")) {
+    return true;
+  }
+
   if (required === "*") {
     return resolved.length > 0;
   }

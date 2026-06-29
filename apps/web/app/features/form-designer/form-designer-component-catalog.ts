@@ -135,6 +135,7 @@ export function getFilteredComponentCatalog(
             ? [
                 { kind: "metric-kpi" as const, icon: ChartLine },
                 { kind: "metric-derived-kpi" as const, icon: ChartLine },
+                { kind: "query-viewer" as const, icon: ListChecks },
               ]
             : [{ kind: "metric-widget" as const, icon: LayoutGrid }];
 

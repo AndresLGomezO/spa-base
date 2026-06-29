@@ -106,7 +106,18 @@ describe("@repo/ui-builder", () => {
       sort: { field: "name", direction: "asc" },
       limit: 10,
     });
-    expect(config.filter).toHaveLength(1);
+    expect(config.filter).toMatchObject({
+      type: "group",
+      combinator: "and",
+      children: [
+        {
+          type: "condition",
+          field: "name",
+          operator: "==",
+          value: "Acme",
+        },
+      ],
+    });
     expect(config.sort).toEqual([{ field: "name", direction: "asc" }]);
     expect(config.pagination?.limit).toBe(10);
   });

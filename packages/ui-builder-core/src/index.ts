@@ -92,6 +92,8 @@ export type {
   UserDisplayMode,
   UserNameFormat,
   ContainerComponentConfig,
+  QueryViewerComponentConfig,
+  RowHolderComponentConfig,
   FormFieldComponentConfig,
   BooleanFieldDisplay,
   SwitchVariant,
@@ -113,6 +115,8 @@ export {
   isIconComponent,
   isUserComponent,
   isContainerComponent,
+  isQueryViewerComponent,
+  isRowHolderComponent,
   isEntityFieldSelectorComponent,
   isPageUiComponent,
 } from "./types/component.js";
@@ -125,7 +129,10 @@ export {
   resolveRootContainerLocator,
   beginContainerRootLayout,
 } from "./layout/ensure-container-root.js";
-export { resolveContainerChildRows } from "./layout/resolve-container-child-rows.js";
+export {
+  resolveContainerChildRows,
+  resolveRowHolderChildRows,
+} from "./layout/resolve-container-child-rows.js";
 export {
   collectOverlayImageRowIds,
   containerEstablishesDefiniteHeight,

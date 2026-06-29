@@ -763,6 +763,88 @@ export async function backfillMetricDefinition(
   });
 }
 
+import type { EntityQueryFilterNode } from "@repo/entity-queries/browser";
+
+export interface EntityQueryDefinitionRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly queryId: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly sourceEntity: string;
+  readonly filter: EntityQueryFilterNode;
+  readonly sort: readonly {
+    readonly field: string;
+    readonly direction: "asc" | "desc";
+  }[];
+  readonly select?: readonly string[];
+  readonly limitMode: "topN" | "all";
+  readonly limit?: number;
+  readonly status: "ACTIVE" | "PAUSED";
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listEntityQueryDefinitions(): Promise<{
+  readonly items: readonly EntityQueryDefinitionRecord[];
+}> {
+  return apiRequest<{ readonly items: readonly EntityQueryDefinitionRecord[] }>(
+    "/api/entity-query-definitions",
+  );
+}
+
+export async function getEntityQueryDefinition(
+  id: string,
+): Promise<EntityQueryDefinitionRecord> {
+  return apiRequest<EntityQueryDefinitionRecord>(
+    `/api/entity-query-definitions/${id}`,
+  );
+}
+
+type CreateEntityQueryDefinitionInput = Omit<
+  EntityQueryDefinitionRecord,
+  "id" | "tenantId" | "queryId" | "createdAt" | "updatedAt"
+>;
+
+export async function createEntityQueryDefinition(
+  input: CreateEntityQueryDefinitionInput,
+): Promise<EntityQueryDefinitionRecord> {
+  return apiRequest<EntityQueryDefinitionRecord>(
+    "/api/entity-query-definitions",
+    {
+      method: "POST",
+      body: input,
+    },
+  );
+}
+
+export async function patchEntityQueryDefinition(
+  id: string,
+  input: Partial<
+    Omit<
+      EntityQueryDefinitionRecord,
+      "id" | "tenantId" | "queryId" | "createdAt" | "updatedAt" | "sourceEntity"
+    >
+  >,
+): Promise<EntityQueryDefinitionRecord> {
+  return apiRequest<EntityQueryDefinitionRecord>(
+    `/api/entity-query-definitions/${id}`,
+    {
+      method: "PATCH",
+      body: input,
+    },
+  );
+}
+
+export async function deleteEntityQueryDefinition(id: string): Promise<void> {
+  await apiRequest<{ readonly ok: boolean }>(
+    `/api/entity-query-definitions/${id}`,
+    {
+      method: "DELETE",
+    },
+  );
+}
+
 export interface TenantRoleRecord {
   readonly id: string;
   readonly tenantId: string;

@@ -5,6 +5,7 @@
     "@repo/data-view",
     "@repo/dynamic-entities",
     "@repo/entities",
+    "@repo/entity-queries",
     "@repo/firestore-indexes",
     "@repo/eslint-config",
     "@repo/modules",

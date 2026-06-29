@@ -42,9 +42,15 @@ export interface NormalizedSort {
   readonly direction: "asc" | "desc";
 }
 
+import type { NormalizedFilterNode } from "../filter-tree.js";
+
 export interface NormalizedEntityQuery {
+  /** Primary filter representation (AND/OR tree). */
+  readonly filterTree: NormalizedFilterNode | null;
+  /** Flat AND list derived from filterTree for ownership/index helpers. */
   readonly filters: readonly NormalizedFilter[];
   readonly postFilters: readonly NormalizedFilter[];
+  readonly postFilterTree: NormalizedFilterNode | null;
   readonly sort: NormalizedSort | null;
   readonly limit: number;
   readonly cursor?: string;

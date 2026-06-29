@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import { createInMemoryListSnapshotCache } from "./in-memory-list-snapshot-cache.js";
 import { createFirestoreEntityQueryExecutor } from "./firestore-entity-query-executor.js";
+import { makeNormalizedEntityQuery } from "./test-normalized-query.js";
 
 const mockGet = vi.fn();
 const mockLimit = vi.fn();
@@ -77,25 +78,28 @@ describe("createFirestoreEntityQueryExecutor in-memory list pipeline", () => {
       tenantWideRead: false,
     });
 
-    const result = await executor.executeQuery("tenant_a", {
-      filters: [
-        {
-          field: "accessUserIds",
-          operator: "array-contains",
-          value: "user_1",
-        },
-      ],
-      postFilters: [
-        {
-          field: "__searchSourceFields__",
-          operator: "sourceFieldsContain",
-          value: { term: "needle", fields: ["name"] },
-        },
-      ],
-      search: "needle",
-      sort: { field: "name", direction: "desc" },
-      limit: 25,
-    });
+    const result = await executor.executeQuery(
+      "tenant_a",
+      makeNormalizedEntityQuery({
+        filters: [
+          {
+            field: "accessUserIds",
+            operator: "array-contains",
+            value: "user_1",
+          },
+        ],
+        postFilters: [
+          {
+            field: "__searchSourceFields__",
+            operator: "sourceFieldsContain",
+            value: { term: "needle", fields: ["name"] },
+          },
+        ],
+        search: "needle",
+        sort: { field: "name", direction: "desc" },
+        limit: 25,
+      }),
+    );
 
     expect(result.items).toHaveLength(1);
     expect(result.items[0]?.id).toBe("a1");
@@ -116,17 +120,18 @@ describe("createFirestoreEntityQueryExecutor in-memory list pipeline", () => {
       tenantWideRead: false,
     });
 
-    const baseQuery = {
+    const baseQuery = makeNormalizedEntityQuery({
       filters: [
         {
           field: "accessUserIds",
-          operator: "array-contains" as const,
+          operator: "array-contains",
           value: "user_1",
         },
       ],
-      postFilters: [] as const,
+      postFilters: [],
+      sort: null,
       limit: 25,
-    };
+    });
 
     await executor.executeQuery("tenant_a", {
       ...baseQuery,

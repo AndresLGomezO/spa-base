@@ -10,6 +10,7 @@ export {
 } from "./known-permissions.js";
 export { isPlatformSuperAdmin } from "./platform-role.js";
 export { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
+export { canReadEntityQueryDefinition } from "./entity-query-access.js";
 export {
   canReadMetricDefinition,
   canReadMetricValues,
