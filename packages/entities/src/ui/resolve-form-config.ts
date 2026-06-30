@@ -9,12 +9,15 @@ import {
 
 import type {
   EntityUiOverrideForms,
+  FormDesignDefinition,
+  FormDesignOption,
   FormModalChrome,
   FormModalContentPadding,
   FormPresentation,
   WizardFormConfig,
 } from "./form-config.js";
 import type {
+  FormConfig,
   FormModalSize,
   FormModalSizeByBreakpoint,
   SerializableEntityDefinition,
@@ -28,6 +31,117 @@ const FORM_MODAL_SIZES = new Set<FormModalSize>([
   "xl",
   "2xl",
 ]);
+
+function findFormDesignDefinition(
+  definition: SerializableEntityDefinition,
+  formDesignId?: string,
+): FormDesignDefinition | undefined {
+  if (!formDesignId) {
+    return undefined;
+  }
+
+  return definition.ui.formDesigns?.find(
+    (design) => design.id === formDesignId,
+  );
+}
+
+function formDesignToFormConfig(
+  design: FormDesignDefinition,
+  base: FormConfig,
+): FormConfig {
+  const presentation =
+    design.presentation ??
+    (design.wizard ? ("wizard" as const) : undefined) ??
+    base.presentation;
+  const wizard = design.wizard ?? base.wizard;
+  const layoutForPlain = presentation === "wizard" ? undefined : design.layout;
+
+  return {
+    presentation: presentation ?? (wizard ? "wizard" : "plain"),
+    ...(wizard ? { wizard } : {}),
+    ...(design.modalSize !== undefined || base.modalSize !== undefined
+      ? { modalSize: design.modalSize ?? base.modalSize }
+      : {}),
+    ...(design.modalSizeByBreakpoint !== undefined ||
+    base.modalSizeByBreakpoint !== undefined
+      ? {
+          modalSizeByBreakpoint:
+            design.modalSizeByBreakpoint ?? base.modalSizeByBreakpoint,
+        }
+      : {}),
+    ...(design.modalChrome !== undefined || base.modalChrome !== undefined
+      ? { modalChrome: design.modalChrome ?? base.modalChrome }
+      : {}),
+    ...(design.modalFooterLayout !== undefined ||
+    base.modalFooterLayout !== undefined
+      ? {
+          modalFooterLayout: design.modalFooterLayout ?? base.modalFooterLayout,
+        }
+      : {}),
+    create: layoutForPlain ? { layout: layoutForPlain } : base.create,
+    edit: layoutForPlain ? { layout: layoutForPlain } : base.edit,
+  };
+}
+
+export function resolveFormConfigForDesign(
+  definition: SerializableEntityDefinition,
+  formDesignId?: string,
+): FormConfig {
+  const design = findFormDesignDefinition(definition, formDesignId);
+  if (!design) {
+    if (
+      formDesignId &&
+      typeof process !== "undefined" &&
+      process.env.NODE_ENV !== "production"
+    ) {
+      console.warn(
+        `[entities] Form design "${formDesignId}" not found on entity "${definition.name}"; using default form.`,
+      );
+    }
+    return definition.ui.forms;
+  }
+
+  return formDesignToFormConfig(design, definition.ui.forms);
+}
+
+export function resolveFormDesign(
+  definition: SerializableEntityDefinition,
+  formDesignId?: string,
+): { readonly formDesignId?: string; readonly forms: FormConfig } {
+  const design = findFormDesignDefinition(definition, formDesignId);
+  if (!design) {
+    return { forms: definition.ui.forms };
+  }
+
+  return {
+    formDesignId: design.id,
+    forms: formDesignToFormConfig(design, definition.ui.forms),
+  };
+}
+
+export function listFormDesignOptions(
+  definition: SerializableEntityDefinition,
+): readonly FormDesignOption[] {
+  return [
+    { id: undefined, label: "Default" },
+    ...(definition.ui.formDesigns ?? []).map((design) => ({
+      id: design.id,
+      label: design.label,
+    })),
+  ];
+}
+
+export function resolveEntityPageCreateFormDesignId(
+  definition: SerializableEntityDefinition,
+): string | undefined {
+  return definition.ui.entityPageCreateFormDesignId;
+}
+
+export function resolveEntityPageEditFormDesignId(
+  definition: SerializableEntityDefinition,
+): string | undefined {
+  return definition.ui.entityPageEditFormDesignId;
+}
 
 export interface ResolvedFormModalChrome {
   readonly showHeader: boolean;
@@ -113,14 +227,21 @@ export function resolveEntityFormModalSizing(
 
 export function resolveFormModalSize(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): FormModalSize {
-  return resolveFormModalSizes(definition.ui.forms).xl;
+  return resolveFormModalSizes(
+    resolveFormConfigForDesign(definition, formDesignId),
+  ).xl;
 }
 
 export function resolveFormModalSizeByBreakpointFromDefinition(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): FormModalSizeByBreakpoint {
-  return definition.ui.forms.modalSizeByBreakpoint ?? {};
+  return (
+    resolveFormConfigForDesign(definition, formDesignId)
+      .modalSizeByBreakpoint ?? {}
+  );
 }
 
 export function isFormModalSizeExplicitAtBreakpoint(
@@ -216,8 +337,12 @@ export function serializeFormModalSizeByBreakpoint(
 
 export function resolveFormModalChrome(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): ResolvedFormModalChrome {
-  const chrome = definition.ui.forms.modalChrome;
+  const chrome = resolveFormConfigForDesign(
+    definition,
+    formDesignId,
+  ).modalChrome;
   return {
     showHeader: chrome?.showHeader ?? true,
     contentPadding: chrome?.contentPadding ?? "default",
@@ -236,31 +361,31 @@ export function resolveEffectiveFormModalContentPadding(
 
 export function resolveFormModalFooterLayout(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): import("@repo/ui-builder-core").UiLayoutDocument | undefined {
-  return definition.ui.forms.modalFooterLayout;
+  return resolveFormConfigForDesign(definition, formDesignId).modalFooterLayout;
 }
 
 export function resolveFormUsesModalBuilderFooter(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): boolean {
-  return (
-    definition.ui.forms.modalFooterLayout != null ||
-    definition.ui.forms.modalChrome != null
-  );
+  const forms = resolveFormConfigForDesign(definition, formDesignId);
+  return forms.modalFooterLayout != null || forms.modalChrome != null;
 }
 
 export function resolveFormModalActionComponentKind(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): Extract<UiComponentKind, "form-actions" | "wizard-actions"> {
-  return resolveFormPresentation(definition) === "wizard"
+  return resolveFormPresentation(definition, formDesignId) === "wizard"
     ? "wizard-actions"
     : "form-actions";
 }
 
-function sharedPlainLayout(
-  definition: SerializableEntityDefinition,
+function sharedPlainLayoutFromForms(
+  forms: FormConfig,
 ): UiLayoutDocument | undefined {
-  const forms = definition.ui.forms;
   return forms.create.layout ?? forms.edit.layout ?? undefined;
 }
 
@@ -277,8 +402,9 @@ function getEditableFieldNames(
 
 function upgradeLegacyFormLayout(
   definition: SerializableEntityDefinition,
+  forms: FormConfig,
 ): UiLayoutDocument {
-  const createForm = definition.ui.forms.create;
+  const createForm = forms.create;
   if (createForm.layout) {
     return createForm.layout;
   }
@@ -296,40 +422,45 @@ function upgradeLegacyFormLayout(
 
 export function resolveFormModalActionLayout(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): import("@repo/ui-builder-core").UiLayoutDocument | undefined {
-  const footerLayout = resolveFormModalFooterLayout(definition);
+  const forms = resolveFormConfigForDesign(definition, formDesignId);
+  const footerLayout = forms.modalFooterLayout;
   if (footerLayout) {
     return footerLayout;
   }
 
-  const presentation = resolveFormPresentation(definition);
+  const presentation = resolveFormPresentation(definition, formDesignId);
   if (presentation === "wizard") {
-    return definition.ui.forms.wizard?.shellLayout;
+    return forms.wizard?.shellLayout;
   }
 
-  return sharedPlainLayout(definition);
+  return sharedPlainLayoutFromForms(forms);
 }
 
 export function resolveFormModalHasLayoutActions(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): boolean {
-  const actionLayout = resolveFormModalActionLayout(definition);
+  const actionLayout = resolveFormModalActionLayout(definition, formDesignId);
   if (!actionLayout) {
     return false;
   }
 
-  const kind = resolveFormModalActionComponentKind(definition);
+  const kind = resolveFormModalActionComponentKind(definition, formDesignId);
   return findLayoutComponent(actionLayout, kind) != null;
 }
 
 export function resolveFormPresentation(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): FormPresentation {
-  const explicit = definition.ui.forms.presentation;
+  const forms = resolveFormConfigForDesign(definition, formDesignId);
+  const explicit = forms.presentation;
   if (explicit === "plain" || explicit === "wizard") {
     return explicit;
   }
-  if (definition.ui.forms.wizard) {
+  if (forms.wizard) {
     return "wizard";
   }
   return "plain";
@@ -337,33 +468,38 @@ export function resolveFormPresentation(
 
 export function resolvePlainFormLayout(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): UiLayoutDocument {
-  const layout = sharedPlainLayout(definition);
+  const forms = resolveFormConfigForDesign(definition, formDesignId);
+  const layout = sharedPlainLayoutFromForms(forms);
   if (layout) {
     return layout;
   }
 
-  return upgradeLegacyFormLayout(definition);
+  return upgradeLegacyFormLayout(definition, forms);
 }
 
 export function resolveWizardForm(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): WizardFormConfig | undefined {
-  return definition.ui.forms.wizard;
+  return resolveFormConfigForDesign(definition, formDesignId).wizard;
 }
 
 /** @deprecated Use resolvePlainFormLayout */
 export function resolveCreateFormFromLayout(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): UiLayoutDocument {
-  return resolvePlainFormLayout(definition);
+  return resolvePlainFormLayout(definition, formDesignId);
 }
 
 /** @deprecated Use resolvePlainFormLayout */
 export function resolveEditFormFromUi(
   definition: SerializableEntityDefinition,
+  formDesignId?: string,
 ): UiLayoutDocument {
-  return resolvePlainFormLayout(definition);
+  return resolvePlainFormLayout(definition, formDesignId);
 }
 
 export type { FormModalChrome, FormModalContentPadding };

@@ -61,6 +61,10 @@ export default [
       "./routes/settings/design-layout/forms.tsx",
     ),
     route(
+      "settings/design-layout/forms/:entityName/:formDesignId",
+      "./routes/settings/design-layout/form-design.tsx",
+    ),
+    route(
       "settings/design-layout/new-forms/:entityName",
       "./routes/settings/design-layout/new-forms.tsx",
     ),

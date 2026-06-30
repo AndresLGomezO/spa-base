@@ -126,6 +126,10 @@ describe("componentRowSchema clickAction", () => {
             targetField: "postedAt",
             source: { type: "currentDate" },
           },
+          {
+            targetField: "status",
+            source: { type: "enumValue", value: "draft" },
+          },
         ],
       },
       component: {
@@ -146,7 +150,55 @@ describe("componentRowSchema clickAction", () => {
           targetField: "postedAt",
           source: { type: "currentDate" },
         },
+        {
+          targetField: "status",
+          source: { type: "enumValue", value: "draft" },
+        },
       ],
+    });
+  });
+
+  it("accepts optional formDesignId on form modal click actions", () => {
+    const createForm = componentRowSchema.parse({
+      type: "component",
+      id: "row-7",
+      clickAction: {
+        type: "entityCreateForm",
+        target: { scope: "entity", entityName: "transaction" },
+        formDesignId: "register-payment",
+      },
+      component: {
+        kind: "text",
+        primary: { type: "static", value: "Register payment" },
+      },
+    }) as ComponentRowNode;
+
+    expect(createForm.clickAction).toEqual({
+      type: "entityCreateForm",
+      target: { scope: "entity", entityName: "transaction" },
+      formDesignId: "register-payment",
+    });
+
+    const editForm = componentRowSchema.parse({
+      type: "component",
+      id: "row-8",
+      clickAction: {
+        type: "entityView",
+        view: "recordEditForm",
+        target: { scope: "current" },
+        formDesignId: "quick-edit",
+      },
+      component: {
+        kind: "text",
+        primary: { type: "static", value: "Quick edit" },
+      },
+    }) as ComponentRowNode;
+
+    expect(editForm.clickAction).toEqual({
+      type: "entityView",
+      view: "recordEditForm",
+      target: { scope: "current" },
+      formDesignId: "quick-edit",
     });
   });
 });

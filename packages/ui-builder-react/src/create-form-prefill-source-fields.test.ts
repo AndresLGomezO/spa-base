@@ -12,6 +12,10 @@ describe("listCreateFormPrefillSourceFieldDescriptors", () => {
         type: "string",
         relation: { type: "many-to-one", target: "bank" },
       },
+      status: {
+        type: "enum",
+        enumValues: ["active", "inactive"],
+      },
       orders: {
         type: "array",
         relation: { type: "one-to-many", target: "order" },
@@ -39,6 +43,7 @@ describe("listCreateFormPrefillSourceFieldDescriptors", () => {
 
     expect(paths).toContain("id");
     expect(paths).toContain("bankId");
+    expect(paths).toContain("status");
     expect(paths).toContain("bank.name");
     expect(paths).not.toContain("orders");
   });

@@ -9,6 +9,7 @@ import {
   serializeEntityDefinition,
   type EntityUIConfig,
   type EntityUiOverrideRecord,
+  type FormDesignDefinition,
   type MetricWidgetDefinition,
   type PutEntityUiOverrideInput,
   type UiLayoutDocument,
@@ -109,6 +110,28 @@ function mergeUiOverridePutInput(
         }
       : {}),
     ...(forms ? { forms } : {}),
+    ...((incoming.formDesigns ?? existing?.formDesigns)
+      ? {
+          formDesigns:
+            incoming.formDesigns ?? existing?.formDesigns ?? undefined,
+        }
+      : {}),
+    ...((incoming.entityPageCreateFormDesignId ??
+    existing?.entityPageCreateFormDesignId)
+      ? {
+          entityPageCreateFormDesignId:
+            incoming.entityPageCreateFormDesignId ??
+            existing?.entityPageCreateFormDesignId,
+        }
+      : {}),
+    ...((incoming.entityPageEditFormDesignId ??
+    existing?.entityPageEditFormDesignId)
+      ? {
+          entityPageEditFormDesignId:
+            incoming.entityPageEditFormDesignId ??
+            existing?.entityPageEditFormDesignId,
+        }
+      : {}),
   } as PutEntityUiOverrideInput;
 }
 
@@ -231,6 +254,11 @@ export async function registerEntityUiOverrideRoutes(
         parsedBody.data.views as EntityUIConfig["views"],
       );
 
+      const existingOverride = await options.entityUiOverrideRepository.get(
+        tenantId,
+        params.data.entityName,
+      );
+
       const overrideForms = parsedBody.data.forms;
       const sharedPlainLayout =
         overrideForms?.layout ?? overrideForms?.create ?? overrideForms?.edit;
@@ -311,6 +339,28 @@ export async function registerEntityUiOverrideRoutes(
                 .metricRowLayout as UiLayoutDocument,
             }
           : {}),
+        ...((parsedBody.data.formDesigns ?? existingOverride?.formDesigns)
+          ? {
+              formDesigns: (parsedBody.data.formDesigns ??
+                existingOverride?.formDesigns) as readonly FormDesignDefinition[],
+            }
+          : {}),
+        ...((parsedBody.data.entityPageCreateFormDesignId ??
+        existingOverride?.entityPageCreateFormDesignId)
+          ? {
+              entityPageCreateFormDesignId:
+                parsedBody.data.entityPageCreateFormDesignId ??
+                existingOverride?.entityPageCreateFormDesignId,
+            }
+          : {}),
+        ...((parsedBody.data.entityPageEditFormDesignId ??
+        existingOverride?.entityPageEditFormDesignId)
+          ? {
+              entityPageEditFormDesignId:
+                parsedBody.data.entityPageEditFormDesignId ??
+                existingOverride?.entityPageEditFormDesignId,
+            }
+          : {}),
       });
 
       try {
@@ -327,16 +377,13 @@ export async function registerEntityUiOverrideRoutes(
         );
       }
 
-      const existingOverride = await options.entityUiOverrideRepository.get(
-        tenantId,
-        params.data.entityName,
-      );
+      const existingOverrideForPut = existingOverride;
 
       try {
         const override = await options.entityUiOverrideRepository.put(
           tenantId,
           params.data.entityName,
-          mergeUiOverridePutInput(existingOverride, {
+          mergeUiOverridePutInput(existingOverrideForPut, {
             views: [...normalizedViews],
             ...(parsedBody.data.listViewType
               ? { listViewType: parsedBody.data.listViewType }
@@ -357,6 +404,21 @@ export async function registerEntityUiOverrideRoutes(
               ? { metricRowLayout: parsedBody.data.metricRowLayout }
               : {}),
             ...(parsedBody.data.forms ? { forms: parsedBody.data.forms } : {}),
+            ...(parsedBody.data.formDesigns
+              ? { formDesigns: parsedBody.data.formDesigns }
+              : {}),
+            ...(parsedBody.data.entityPageCreateFormDesignId
+              ? {
+                  entityPageCreateFormDesignId:
+                    parsedBody.data.entityPageCreateFormDesignId,
+                }
+              : {}),
+            ...(parsedBody.data.entityPageEditFormDesignId
+              ? {
+                  entityPageEditFormDesignId:
+                    parsedBody.data.entityPageEditFormDesignId,
+                }
+              : {}),
           } as PutEntityUiOverrideInput),
         );
 

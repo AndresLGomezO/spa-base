@@ -16,6 +16,10 @@ const targetDefinition = {
     },
     amount: { type: "number" },
     postedAt: { type: "date" },
+    status: {
+      type: "enum",
+      enumValues: ["draft", "posted"],
+    },
     notes: { type: "string" },
     attachment: { type: "document" },
     lineItems: {
@@ -67,6 +71,36 @@ describe("resolveEntityFormPrefillMappings", () => {
     vi.useRealTimers();
   });
 
+  it("uses enum value for enum targets when value is allowed", () => {
+    const prefill = resolveEntityFormPrefillMappings(
+      [
+        {
+          targetField: "status",
+          source: { type: "enumValue", value: "draft" },
+        },
+      ],
+      targetDefinition as never,
+      () => null,
+    );
+
+    expect(prefill).toEqual({ status: "draft" });
+  });
+
+  it("skips invalid enum values", () => {
+    const prefill = resolveEntityFormPrefillMappings(
+      [
+        {
+          targetField: "status",
+          source: { type: "enumValue", value: "invalid" },
+        },
+      ],
+      targetDefinition as never,
+      () => null,
+    );
+
+    expect(prefill).toEqual({});
+  });
+
   it("skips ineligible targets and empty source values", () => {
     const prefill = resolveEntityFormPrefillMappings(
       [
@@ -115,6 +149,6 @@ describe("listCreateFormPrefillTargetFields", () => {
   it("returns sorted eligible root fields", () => {
     expect(
       listCreateFormPrefillTargetFields(targetDefinition as never),
-    ).toEqual(["accountId", "amount", "id", "notes", "postedAt"]);
+    ).toEqual(["accountId", "amount", "id", "notes", "postedAt", "status"]);
   });
 });

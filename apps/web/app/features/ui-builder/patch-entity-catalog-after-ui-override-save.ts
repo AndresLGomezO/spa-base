@@ -12,9 +12,9 @@ export function patchEntityCatalogAfterUiOverrideSave(
   entityName: string,
   override: EntityUiOverrideRecord,
 ): void {
-  queryClient.setQueryData<{
+  queryClient.setQueriesData<{
     readonly items: readonly SerializableEntityDefinition[];
-  }>(entityCatalogQueryKey, (current) => {
+  }>({ queryKey: entityCatalogQueryKey }, (current) => {
     if (!current) {
       return current;
     }

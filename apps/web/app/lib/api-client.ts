@@ -3,11 +3,11 @@ import type {
   EntityUIConfig,
   EntityUiOverrideRecord,
   PutTenantDashboardLayoutInput,
+  PutEntityUiOverrideInput,
   SerializableEntityDefinition,
   TenantDashboardLayoutRecord,
   UiBuilderPresetRecord,
   UpdateUiBuilderPresetInput,
-  ViewConfig,
 } from "@repo/entities";
 import type { QueryConfig } from "@repo/query-engine";
 
@@ -969,44 +969,7 @@ export async function removeTenantUser(
 
 export async function putEntityUiOverride(
   entityName: string,
-  input: {
-    readonly views: readonly ViewConfig[];
-    readonly listViewType?: "table" | "card" | "expandableTable" | "compact";
-    readonly listItem?: import("@repo/ui-builder-core").UiLayoutDocument;
-    readonly mainPage?: import("@repo/ui-builder-core").UiLayoutDocument;
-    readonly recordDetail?: import("@repo/ui-builder-core").UiLayoutDocument;
-    readonly metricWidgets?: readonly import("@repo/entities").MetricWidgetDefinition[];
-    readonly metricRowLayout?: import("@repo/ui-builder-core").UiLayoutDocument;
-    readonly forms?: {
-      readonly presentation?: "plain" | "wizard";
-      readonly modalSize?: "sm" | "md" | "lg" | "xl" | "2xl";
-      readonly modalSizeByBreakpoint?: {
-        readonly base?: "sm" | "md" | "lg" | "xl" | "2xl";
-        readonly sm?: "sm" | "md" | "lg" | "xl" | "2xl";
-        readonly md?: "sm" | "md" | "lg" | "xl" | "2xl";
-        readonly lg?: "sm" | "md" | "lg" | "xl" | "2xl";
-        readonly xl?: "sm" | "md" | "lg" | "xl" | "2xl";
-      };
-      readonly modalChrome?: {
-        readonly showHeader?: boolean;
-        readonly contentPadding?: "default" | "none";
-      };
-      readonly modalFooterLayout?: import("@repo/ui-builder-core").UiLayoutDocument;
-      readonly layout?: import("@repo/ui-builder-core").UiLayoutDocument;
-      readonly wizard?: {
-        readonly shellLayout: import("@repo/ui-builder-core").UiLayoutDocument;
-        readonly steps: readonly {
-          readonly id: string;
-          readonly label: string;
-          readonly subtitle?: string;
-          readonly icon?: string;
-          readonly layout: import("@repo/ui-builder-core").UiLayoutDocument;
-        }[];
-      };
-      readonly create?: import("@repo/ui-builder-core").UiLayoutDocument;
-      readonly edit?: import("@repo/ui-builder-core").UiLayoutDocument;
-    };
-  },
+  input: PutEntityUiOverrideInput,
 ): Promise<{ readonly override: EntityUiOverrideRecord }> {
   return apiRequest<{ readonly override: EntityUiOverrideRecord }>(
     `/api/entities/${encodeURIComponent(entityName)}/ui-override`,

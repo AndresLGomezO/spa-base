@@ -32,6 +32,19 @@ export function designLayoutEntityPath(
   return `/settings/design-layout/${DESIGN_LAYOUT_KIND_PATH_SEGMENT[kind]}/${entityName}`;
 }
 
+export const DEFAULT_FORM_DESIGN_ROUTE_ID = "default";
+
+export function designLayoutFormDesignPath(
+  entityName: string,
+  formDesignId: string = DEFAULT_FORM_DESIGN_ROUTE_ID,
+): string {
+  return `/settings/design-layout/forms/${entityName}/${formDesignId}`;
+}
+
+export function designLayoutFormsHubPath(entityName: string): string {
+  return designLayoutEntityPath("forms", entityName);
+}
+
 export const DESIGN_LAYOUT_MATCH_PATH = "/settings/design-layout";
 
 export const DESIGN_LAYOUT_PRESETS_NAV_ITEM: NavLinkConfig = {

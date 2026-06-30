@@ -17,6 +17,9 @@ export const persistedEntityUiOverrideSchema = z
     metricWidgetsJson: z.string().min(2).optional(),
     metricRowLayoutJson: z.string().min(2).optional(),
     formsJson: z.string().min(2).optional(),
+    formDesignsJson: z.string().min(2).optional(),
+    entityPageCreateFormDesignId: z.string().trim().min(1).optional(),
+    entityPageEditFormDesignId: z.string().trim().min(1).optional(),
   })
   .strict();
 
@@ -60,6 +63,15 @@ export function toPersistedUiOverride(
       ? { metricRowLayoutJson: JSON.stringify(record.metricRowLayout) }
       : {}),
     ...(record.forms ? { formsJson: JSON.stringify(record.forms) } : {}),
+    ...(record.formDesigns
+      ? { formDesignsJson: JSON.stringify(record.formDesigns) }
+      : {}),
+    ...(record.entityPageCreateFormDesignId
+      ? { entityPageCreateFormDesignId: record.entityPageCreateFormDesignId }
+      : {}),
+    ...(record.entityPageEditFormDesignId
+      ? { entityPageEditFormDesignId: record.entityPageEditFormDesignId }
+      : {}),
   });
 }
 
@@ -113,6 +125,17 @@ function toDomainRecord(
       : {}),
     ...(data.formsJson
       ? { forms: parseJsonField(data.formsJson, "formsJson") }
+      : {}),
+    ...(data.formDesignsJson
+      ? {
+          formDesigns: parseJsonField(data.formDesignsJson, "formDesignsJson"),
+        }
+      : {}),
+    ...(data.entityPageCreateFormDesignId
+      ? { entityPageCreateFormDesignId: data.entityPageCreateFormDesignId }
+      : {}),
+    ...(data.entityPageEditFormDesignId
+      ? { entityPageEditFormDesignId: data.entityPageEditFormDesignId }
       : {}),
   }) as EntityUiOverrideRecord;
 }

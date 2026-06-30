@@ -102,7 +102,38 @@
   },
   "formDesigner": {
     "title": "Diseñador de formularios",
-    "entitySubtitle": "Entidad: {{entity}}",
+    "designSubtitle": "{{entity}} / {{design}}",
+    "backToDesigns": "Volver a diseños de formulario",
+    "hub": {
+      "title": "Diseños de formulario",
+      "subtitle": "Administrar diseños de formulario para {{entity}}",
+      "designsTitle": "Diseños de formulario",
+      "defaultDesign": "Predeterminado",
+      "edit": "Editar",
+      "delete": "Eliminar",
+      "addDesign": "Agregar diseño",
+      "newDesignLabel": "Nombre del diseño",
+      "newDesignPlaceholder": "p. ej. Registrar pago",
+      "createFailed": "No se pudo crear el diseño de formulario.",
+      "deleteFailed": "No se pudo eliminar el diseño de formulario.",
+      "deleteReferenced": "Este diseño se usa como predeterminado en la página de entidad y no se puede eliminar.",
+      "deleted": "Diseño de formulario eliminado.",
+      "columns": {
+        "label": "Nombre",
+        "id": "ID",
+        "presentation": "Presentación",
+        "actions": "Acciones"
+      }
+    },
+    "defaults": {
+      "title": "Formularios predeterminados de la entidad",
+      "description": "Elige qué diseño de formulario abre Crear y Editar en la página principal de la entidad.",
+      "createFormDesign": "Formulario de creación",
+      "editFormDesign": "Formulario de edición",
+      "save": "Guardar predeterminados",
+      "saved": "Predeterminados de formulario guardados.",
+      "saveFailed": "No se pudieron guardar los predeterminados de formulario."
+    },
     "openPreview": "Abrir vista previa",
     "ai": {
       "openLabel": "Asistente de diseño con IA",
@@ -902,12 +933,16 @@
         "staticUrlPlaceholder": "https://ejemplo.com",
         "openInNewTab": "Abrir en nueva pestaña",
         "noRelationFields": "No hay campos de relación disponibles para esta entidad.",
+        "formDesign": "Diseño de formulario",
+        "formDesignDefault": "Predeterminado",
         "createFormPrefill": "Rellenar campos del formulario de creación desde el registro actual.",
         "createFormPrefillTargetField": "Campo destino",
         "createFormPrefillSource": "Origen",
         "createFormPrefillSourceField": "Campo origen",
         "createFormPrefillSourceFieldValue": "Valor de campo",
         "createFormPrefillSourceCurrentDate": "Fecha actual",
+        "createFormPrefillSourceEnumValue": "Valor de enumeración",
+        "createFormPrefillEnumValue": "Valor de enumeración",
         "addCreateFormPrefill": "Agregar mapeo",
         "removeCreateFormPrefill": "Eliminar",
         "noCreateFormPrefillTargetFields": "No hay campos destino elegibles en la entidad del formulario de creación."

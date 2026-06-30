@@ -52,6 +52,12 @@ const entityFormPrefillSourceSchema = z.discriminatedUnion("type", [
     })
     .strict(),
   z.object({ type: z.literal("currentDate") }).strict(),
+  z
+    .object({
+      type: z.literal("enumValue"),
+      value: z.string().trim().min(1),
+    })
+    .strict(),
 ]);
 
 const entityFormPrefillMappingSchema = z
@@ -80,6 +86,7 @@ const componentClickActionSchema = z.discriminatedUnion("type", [
       type: z.literal("entityView"),
       view: z.enum(["recordDetail", "recordEditForm", "entityList"]),
       target: entityNavigationTargetSchema,
+      formDesignId: z.string().trim().min(1).optional(),
     })
     .strict(),
   z
@@ -87,6 +94,7 @@ const componentClickActionSchema = z.discriminatedUnion("type", [
       type: z.literal("entityCreateForm"),
       target: entityNavigationTargetSchema,
       prefill: z.array(entityFormPrefillMappingSchema).optional(),
+      formDesignId: z.string().trim().min(1).optional(),
     })
     .strict(),
   z

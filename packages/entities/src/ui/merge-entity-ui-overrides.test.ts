@@ -199,6 +199,31 @@ describe("mergeEntityUiOverrides", () => {
     expect(merged.ui.recordDetailLayout).toEqual(legacyDetail);
     expect(merged.ui.detailLayout).toEqual(legacyDetail);
   });
+
+  it("clears formDesigns when override sets an empty array", () => {
+    const withDesigns: SerializableEntityDefinition = {
+      ...baseDefinition,
+      ui: {
+        ...baseDefinition.ui,
+        formDesigns: [
+          {
+            id: "compact",
+            label: "Compact",
+            layout: createDefaultFormLayout(["name"]),
+          },
+        ],
+      },
+    };
+
+    const merged = mergeEntityUiOverrides(withDesigns, {
+      entityName: "account",
+      updatedAt: new Date().toISOString(),
+      views: [{ type: "table", name: "default", fields: ["name"] }],
+      formDesigns: [],
+    });
+
+    expect(merged.ui.formDesigns).toEqual([]);
+  });
 });
 
 describe("normalizeListItemLayout", () => {

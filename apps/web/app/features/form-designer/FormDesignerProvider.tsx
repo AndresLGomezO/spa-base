@@ -199,11 +199,13 @@ function applyTabToSearchParams(
 
 interface FormDesignerProviderProps {
   readonly entityName: EntityName;
+  readonly formDesignId?: string;
   readonly children: ReactNode;
 }
 
 export function FormDesignerProvider({
   entityName,
+  formDesignId,
   children,
 }: FormDesignerProviderProps) {
   const { t } = useTranslation("common");
@@ -213,7 +215,7 @@ export function FormDesignerProvider({
     update: updateThirdRail,
     isOpen: isThirdRailOpen,
   } = useThirdRail();
-  const editor = useEntityFormLayoutEditor(entityName);
+  const editor = useEntityFormLayoutEditor(entityName, { formDesignId });
   const definition = useEntityDefinition(entityName);
   const canSave = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
   const [searchParams, setSearchParams] = useSearchParams();

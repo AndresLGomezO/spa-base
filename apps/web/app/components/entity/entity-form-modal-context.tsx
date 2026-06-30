@@ -14,6 +14,7 @@ export interface EntityFormModalRequest {
   readonly mode: "create" | "edit";
   readonly recordId?: string;
   readonly createPrefill?: Readonly<Record<string, string>>;
+  readonly formDesignId?: string;
   readonly onClose?: () => void;
 }
 

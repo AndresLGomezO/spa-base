@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 
 import {
   resolveEffectiveFormModalContentPadding,
+  resolveFormConfigForDesign,
   resolveFormModalChrome,
   resolveFormModalFooterLayout,
   resolveFormModalHasLayoutActions,
@@ -27,7 +28,7 @@ export function EntityFormModalHost() {
 
   return (
     <EntityFormModalHostInner
-      key={`${request.entityName}-${request.mode}-${request.recordId ?? "create"}-${session}`}
+      key={`${request.entityName}-${request.mode}-${request.recordId ?? "create"}-${request.formDesignId ?? "default"}-${session}`}
       request={request}
       onClose={closeEntityFormModal}
     />
@@ -45,12 +46,13 @@ function EntityFormModalHostInner({
 }) {
   const { t } = useTranslation("common");
   const definition = useEntityDefinition(request.entityName);
+  const formDesignId = request.formDesignId;
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
   const [formModalFooter, setFormModalFooter] = useState<ReactNode>(null);
 
   const formModalChrome = useMemo(
-    () => resolveFormModalChrome(definition),
-    [definition],
+    () => resolveFormModalChrome(definition, formDesignId),
+    [definition, formDesignId],
   );
   const formModalContentPadding = useMemo(
     () => resolveEffectiveFormModalContentPadding(formModalChrome),
@@ -58,24 +60,28 @@ function EntityFormModalHostInner({
   );
   const formModalScrollable = useMemo(
     () =>
-      resolveFormPresentation(definition) !== "wizard" &&
+      resolveFormPresentation(definition, formDesignId) !== "wizard" &&
       formModalContentPadding !== "none",
-    [definition, formModalContentPadding],
+    [definition, formDesignId, formModalContentPadding],
   );
   const formModalFooterLayout = useMemo(
-    () => resolveFormModalFooterLayout(definition),
-    [definition],
+    () => resolveFormModalFooterLayout(definition, formDesignId),
+    [definition, formDesignId],
   );
   const useDesignedFormModalFooter = useMemo(
     () =>
-      resolveFormUsesModalBuilderFooter(definition) &&
+      resolveFormUsesModalBuilderFooter(definition, formDesignId) &&
       (formModalFooterLayout != null ||
-        resolveFormModalHasLayoutActions(definition)),
-    [definition, formModalFooterLayout],
+        resolveFormModalHasLayoutActions(definition, formDesignId)),
+    [definition, formDesignId, formModalFooterLayout],
   );
   const isWizardFormModal = useMemo(
-    () => resolveFormPresentation(definition) === "wizard",
-    [definition],
+    () => resolveFormPresentation(definition, formDesignId) === "wizard",
+    [definition, formDesignId],
+  );
+  const resolvedFormDesign = useMemo(
+    () => resolveFormConfigForDesign(definition, formDesignId),
+    [definition, formDesignId],
   );
 
   const handleClose = useCallback(() => {
@@ -124,7 +130,7 @@ function EntityFormModalHostInner({
       open
       onClose={handleClose}
       title={formModalTitle}
-      forms={definition.ui.forms}
+      forms={resolvedFormDesign}
       scrollable={formModalScrollable}
       showHeader={formModalChrome.showHeader}
       showCloseButton={formModalChrome.showHeader}
@@ -147,6 +153,7 @@ function EntityFormModalHostInner({
               entityName={request.entityName}
               mode="create"
               createPrefill={request.createPrefill}
+              formDesignId={formDesignId}
               {...formModalSharedProps}
             />
           </RequireEntityPermission>
@@ -159,6 +166,7 @@ function EntityFormModalHostInner({
               entityName={request.entityName}
               mode="edit"
               recordId={request.recordId ?? ""}
+              formDesignId={formDesignId}
               {...formModalSharedProps}
             />
           </RequireEntityPermission>

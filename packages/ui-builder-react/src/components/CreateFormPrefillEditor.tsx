@@ -15,6 +15,8 @@ export interface CreateFormPrefillEditorLabels {
   readonly createFormPrefillSourceField: string;
   readonly createFormPrefillSourceFieldValue: string;
   readonly createFormPrefillSourceCurrentDate: string;
+  readonly createFormPrefillSourceEnumValue: string;
+  readonly createFormPrefillEnumValue: string;
   readonly addCreateFormPrefill: string;
   readonly removeCreateFormPrefill: string;
   readonly noCreateFormPrefillTargetFields: string;
@@ -78,8 +80,70 @@ function listTargetFieldOptions(
 
 function readSourceType(
   source: EntityFormPrefillSource,
-): "field" | "currentDate" {
-  return source.type === "currentDate" ? "currentDate" : "field";
+): "field" | "currentDate" | "enumValue" {
+  if (source.type === "currentDate") {
+    return "currentDate";
+  }
+
+  if (source.type === "enumValue") {
+    return "enumValue";
+  }
+
+  return "field";
+}
+
+function readTargetEnumValues(
+  targetDefinition: SerializableEntityDefinition,
+  targetField: string,
+): readonly string[] {
+  const meta = targetDefinition.fields[targetField];
+  if (meta?.type !== "enum") {
+    return [];
+  }
+
+  return meta.enumValues ?? [];
+}
+
+function resolveSourceForTargetField(
+  targetField: string,
+  currentSource: EntityFormPrefillSource,
+  sourceFields: readonly FieldDescriptor[],
+  targetDefinition: SerializableEntityDefinition,
+): EntityFormPrefillSource {
+  const meta = targetDefinition.fields[targetField];
+
+  if (currentSource.type === "currentDate" && meta?.type === "date") {
+    return currentSource;
+  }
+
+  if (currentSource.type === "enumValue" && meta?.type === "enum") {
+    const enumValues = readTargetEnumValues(targetDefinition, targetField);
+    if (enumValues.includes(currentSource.value)) {
+      return currentSource;
+    }
+
+    const firstValue = enumValues[0];
+    if (firstValue) {
+      return { type: "enumValue", value: firstValue };
+    }
+  }
+
+  if (currentSource.type === "field") {
+    return currentSource;
+  }
+
+  if (meta?.type === "date") {
+    return { type: "currentDate" };
+  }
+
+  const firstEnumValue = readTargetEnumValues(targetDefinition, targetField)[0];
+  if (meta?.type === "enum" && firstEnumValue) {
+    return { type: "enumValue", value: firstEnumValue };
+  }
+
+  return sourceFields[0]
+    ? { type: "field", path: sourceFields[0].path }
+    : { type: "currentDate" };
 }
 
 export function CreateFormPrefillEditor({
@@ -131,6 +195,11 @@ export function CreateFormPrefillEditor({
       {mappings.map((mapping, index) => {
         const targetMeta = targetDefinition.fields[mapping.targetField];
         const allowsCurrentDate = targetMeta?.type === "date";
+        const allowsEnumValue = targetMeta?.type === "enum";
+        const enumValues = readTargetEnumValues(
+          targetDefinition,
+          mapping.targetField,
+        );
         const sourceType = readSourceType(mapping.source);
         const availableTargetFields = targetFields.filter(
           (field) =>
@@ -151,23 +220,14 @@ export function CreateFormPrefillEditor({
                 value={mapping.targetField}
                 onChange={(event) => {
                   const nextTargetField = event.target.value;
-                  const nextMeta = targetDefinition.fields[nextTargetField];
-                  const nextSource =
-                    nextMeta?.type === "date" &&
-                    mapping.source.type === "currentDate"
-                      ? mapping.source
-                      : mapping.source.type === "field"
-                        ? mapping.source
-                        : sourceFields[0]
-                          ? {
-                              type: "field" as const,
-                              path: sourceFields[0].path,
-                            }
-                          : { type: "currentDate" as const };
-
                   updateMapping(index, {
                     targetField: nextTargetField,
-                    source: nextSource,
+                    source: resolveSourceForTargetField(
+                      nextTargetField,
+                      mapping.source,
+                      sourceFields,
+                      targetDefinition,
+                    ),
                   });
                 }}
               >
@@ -188,9 +248,18 @@ export function CreateFormPrefillEditor({
                 onChange={(event) => {
                   const nextType = event.target.value as
                     | "field"
-                    | "currentDate";
+                    | "currentDate"
+                    | "enumValue";
                   if (nextType === "currentDate") {
                     updateSource(index, { type: "currentDate" });
+                    return;
+                  }
+
+                  if (nextType === "enumValue") {
+                    updateSource(index, {
+                      type: "enumValue",
+                      value: enumValues[0] ?? "",
+                    });
                     return;
                   }
 
@@ -206,6 +275,11 @@ export function CreateFormPrefillEditor({
                 {allowsCurrentDate ? (
                   <option value="currentDate">
                     {labels.createFormPrefillSourceCurrentDate}
+                  </option>
+                ) : null}
+                {allowsEnumValue && enumValues.length > 0 ? (
+                  <option value="enumValue">
+                    {labels.createFormPrefillSourceEnumValue}
                   </option>
                 ) : null}
               </Select>
@@ -230,6 +304,33 @@ export function CreateFormPrefillEditor({
                   {sourceFields.map((field) => (
                     <option key={field.path} value={field.path}>
                       {field.label} ({field.path})
+                    </option>
+                  ))}
+                </Select>
+              </label>
+            ) : null}
+
+            {sourceType === "enumValue" ? (
+              <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-sm">
+                <FieldLabel className="text-muted-foreground">
+                  {labels.createFormPrefillEnumValue}
+                </FieldLabel>
+                <Select
+                  value={
+                    mapping.source.type === "enumValue"
+                      ? mapping.source.value
+                      : ""
+                  }
+                  onChange={(event) => {
+                    updateSource(index, {
+                      type: "enumValue",
+                      value: event.target.value,
+                    });
+                  }}
+                >
+                  {enumValues.map((option) => (
+                    <option key={option} value={option}>
+                      {option}
                     </option>
                   ))}
                 </Select>
@@ -270,9 +371,12 @@ export function CreateFormPrefillEditor({
             ...mappings,
             {
               targetField: nextTarget.value,
-              source: sourceFields[0]
-                ? { type: "field", path: sourceFields[0].path }
-                : { type: "currentDate" },
+              source: resolveSourceForTargetField(
+                nextTarget.value,
+                { type: "field", path: sourceFields[0]?.path ?? "" },
+                sourceFields,
+                targetDefinition,
+              ),
             },
           ]);
         }}

@@ -1,4 +1,5 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
+import { listFormDesignOptions } from "@repo/entities";
 import {
   type ComponentClickAction,
   type DataSource,
@@ -43,6 +44,8 @@ export type ComponentClickActionEditorLabels = {
   readonly staticUrlPlaceholder: string;
   readonly openInNewTab: string;
   readonly noRelationFields: string;
+  readonly formDesign: string;
+  readonly formDesignDefault: string;
 } & CreateFormPrefillEditorLabels;
 
 export interface ComponentClickActionEditorProps {
@@ -258,15 +261,41 @@ function targetsMatchForPrefill(
   return false;
 }
 
+function readFormDesignId(clickAction?: ComponentClickAction): string {
+  if (clickAction?.type === "entityCreateForm") {
+    return clickAction.formDesignId ?? "";
+  }
+
+  if (
+    clickAction?.type === "entityView" &&
+    clickAction.view === "recordEditForm"
+  ) {
+    return clickAction.formDesignId ?? "";
+  }
+
+  return "";
+}
+
 function buildEntityNavigationAction(
   destination: NavigationDestination,
   target: EntityNavigationTarget,
-  prefill?: readonly EntityFormPrefillMapping[],
+  options?: {
+    readonly prefill?: readonly EntityFormPrefillMapping[];
+    readonly formDesignId?: string;
+  },
 ): ComponentClickAction {
+  const formDesignId = options?.formDesignId?.trim();
+  const formDesignField = formDesignId ? { formDesignId } : {};
+
   if (destination === "createForm") {
-    return prefill && prefill.length > 0
-      ? { type: "entityCreateForm", target, prefill }
-      : { type: "entityCreateForm", target };
+    return {
+      type: "entityCreateForm",
+      target,
+      ...formDesignField,
+      ...(options?.prefill && options.prefill.length > 0
+        ? { prefill: options.prefill }
+        : {}),
+    };
   }
 
   const view: EntityViewKind =
@@ -276,7 +305,12 @@ function buildEntityNavigationAction(
         ? "entityList"
         : "recordDetail";
 
-  return { type: "entityView", view, target };
+  return {
+    type: "entityView",
+    view,
+    target,
+    ...(destination === "recordEditForm" ? formDesignField : {}),
+  };
 }
 
 export function ComponentClickActionEditor({
@@ -325,6 +359,12 @@ export function ComponentClickActionEditor({
         : showRecordTargets
       : false);
 
+  const formDesignId = readFormDesignId(clickAction);
+  const formDesignTargetDefinition = targetDefinition ?? definition;
+  const formDesignOptions = listFormDesignOptions(formDesignTargetDefinition);
+  const showFormDesignPicker =
+    destination === "createForm" || destination === "recordEditForm";
+
   const emitNavigation = (
     nextDestination: NavigationDestination,
     nextScopeMode: TargetScopeMode,
@@ -333,6 +373,7 @@ export function ComponentClickActionEditor({
     options?: {
       readonly clearPrefill?: boolean;
       readonly prefill?: readonly EntityFormPrefillMapping[];
+      readonly formDesignId?: string;
     },
   ) => {
     const target = buildNavigationTarget(
@@ -340,9 +381,18 @@ export function ComponentClickActionEditor({
       nextRelationFieldPath,
       nextEntityName,
     );
+    const nextFormDesignId =
+      options?.formDesignId ??
+      (nextDestination === "createForm" || nextDestination === "recordEditForm"
+        ? formDesignId
+        : undefined);
 
     if (nextDestination !== "createForm") {
-      onChange(buildEntityNavigationAction(nextDestination, target));
+      onChange(
+        buildEntityNavigationAction(nextDestination, target, {
+          formDesignId: nextFormDesignId,
+        }),
+      );
       return;
     }
 
@@ -354,7 +404,12 @@ export function ComponentClickActionEditor({
     const prefill =
       options?.prefill ?? (keepPrefill ? clickAction.prefill : undefined);
 
-    onChange(buildEntityNavigationAction(nextDestination, target, prefill));
+    onChange(
+      buildEntityNavigationAction(nextDestination, target, {
+        prefill,
+        formDesignId: nextFormDesignId,
+      }),
+    );
   };
 
   const showCreateFormPrefill =
@@ -550,6 +605,34 @@ export function ComponentClickActionEditor({
                 {catalogEntities.map((entry) => (
                   <option key={entry.entityName} value={entry.entityName}>
                     {entry.label} ({entry.entityName})
+                  </option>
+                ))}
+              </Select>
+            </label>
+          ) : null}
+
+          {showFormDesignPicker && formDesignOptions.length > 1 ? (
+            <label className="flex flex-col gap-1 text-sm">
+              <FieldLabel className="text-muted-foreground">
+                {labels.formDesign}
+              </FieldLabel>
+              <Select
+                value={formDesignId}
+                onChange={(event) => {
+                  emitNavigation(
+                    destination,
+                    targetScopeMode,
+                    relationFieldPath,
+                    specificEntityName,
+                    {
+                      formDesignId: event.target.value || undefined,
+                    },
+                  );
+                }}
+              >
+                {formDesignOptions.map((option) => (
+                  <option key={option.id ?? "default"} value={option.id ?? ""}>
+                    {option.id ? option.label : labels.formDesignDefault}
                   </option>
                 ))}
               </Select>

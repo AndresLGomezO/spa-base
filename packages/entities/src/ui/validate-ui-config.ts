@@ -213,6 +213,40 @@ const entityUISchema = z
     fields: z.record(z.string(), fieldUISchema).optional(),
     metricWidgets: metricWidgetsSchema.optional(),
     metricRowLayout: uiLayoutDocumentSchema.optional(),
+    formDesigns: z
+      .array(
+        z
+          .object({
+            id: z.string().trim().min(1),
+            label: z.string().trim().min(1),
+            presentation: z.enum(["plain", "wizard"]).optional(),
+            layout: uiLayoutDocumentSchema.optional(),
+            wizard: wizardFormConfigSchema.optional(),
+            modalSize: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+            modalSizeByBreakpoint: z
+              .object({
+                base: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+                sm: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+                md: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+                lg: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+                xl: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+              })
+              .strict()
+              .optional(),
+            modalChrome: z
+              .object({
+                showHeader: z.boolean().optional(),
+                contentPadding: z.enum(["default", "none"]).optional(),
+              })
+              .strict()
+              .optional(),
+            modalFooterLayout: uiLayoutDocumentSchema.optional(),
+          })
+          .strict(),
+      )
+      .optional(),
+    entityPageCreateFormDesignId: z.string().trim().min(1).optional(),
+    entityPageEditFormDesignId: z.string().trim().min(1).optional(),
   })
   .strict();
 
@@ -366,6 +400,61 @@ export function validateEntityUIConfig(
         layoutEntityShape,
         step.layout as UiLayoutDocument,
         `wizard step ${index + 1} (${step.id})`,
+      );
+    }
+  }
+
+  if (parsed.formDesigns) {
+    const designIds = new Set<string>();
+    for (const design of parsed.formDesigns) {
+      if (designIds.has(design.id)) {
+        throw new Error(
+          `Duplicate form design id "${design.id}" on entity "${entity.name}".`,
+        );
+      }
+      designIds.add(design.id);
+
+      if (design.layout) {
+        assertFormLayoutFieldPaths(
+          layoutEntityShape,
+          design.layout as UiLayoutDocument,
+          `form design "${design.id}" layout`,
+        );
+      }
+
+      if (design.wizard) {
+        assertWizardShellLayout(
+          design.wizard.shellLayout as UiLayoutDocument,
+          `form design "${design.id}" wizard shell`,
+          {
+            actionsInModalFooter: design.modalFooterLayout != null,
+          },
+        );
+        for (const [index, step] of design.wizard.steps.entries()) {
+          assertFormLayoutFieldPaths(
+            layoutEntityShape,
+            step.layout as UiLayoutDocument,
+            `form design "${design.id}" wizard step ${index + 1} (${step.id})`,
+          );
+        }
+      }
+    }
+
+    const knownDesignIds = designIds;
+    if (
+      parsed.entityPageCreateFormDesignId &&
+      !knownDesignIds.has(parsed.entityPageCreateFormDesignId)
+    ) {
+      throw new Error(
+        `Unknown entityPageCreateFormDesignId "${parsed.entityPageCreateFormDesignId}" on entity "${entity.name}".`,
+      );
+    }
+    if (
+      parsed.entityPageEditFormDesignId &&
+      !knownDesignIds.has(parsed.entityPageEditFormDesignId)
+    ) {
+      throw new Error(
+        `Unknown entityPageEditFormDesignId "${parsed.entityPageEditFormDesignId}" on entity "${entity.name}".`,
       );
     }
   }

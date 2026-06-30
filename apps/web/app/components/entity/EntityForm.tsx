@@ -52,6 +52,7 @@ interface EntityFormProps {
   readonly mode: "create" | "edit";
   readonly recordId?: string;
   readonly createPrefill?: Readonly<Record<string, string>>;
+  readonly formDesignId?: string;
   readonly onCancel: () => void;
   readonly onSuccess?: () => void;
   readonly hideActions?: boolean;
@@ -66,6 +67,7 @@ export function EntityForm({
   mode,
   recordId,
   createPrefill,
+  formDesignId,
   onCancel,
   onSuccess,
   hideActions = false,
@@ -88,15 +90,20 @@ export function EntityForm({
   const entityState = useEntity(entityName);
   const { getById, fieldErrors, error, isSubmitting, create, update } =
     entityState;
-  const presentation = resolveFormPresentation(definition);
-  const plainLayout = resolvePlainFormLayout(definition);
-  const wizardConfig = resolveWizardForm(definition);
+  const presentation = resolveFormPresentation(definition, formDesignId);
+  const plainLayout = resolvePlainFormLayout(definition, formDesignId);
+  const wizardConfig = resolveWizardForm(definition, formDesignId);
   const joinRelationFieldNames = useMemo(
     () => getJoinRelationFieldNames(definition),
     [definition],
   );
   const [values, setValues] = useState<Record<string, unknown>>(() => {
-    const initial = buildInitialValuesFromLayout(definition, mode);
+    const initial = buildInitialValuesFromLayout(
+      definition,
+      mode,
+      undefined,
+      formDesignId,
+    );
     for (const fieldName of getJoinRelationFieldNames(definition)) {
       initial[fieldName] = [];
     }
@@ -142,8 +149,13 @@ export function EntityForm({
       if (cancelled) return;
 
       const nextValues = record
-        ? buildInitialValuesFromLayout(definition, "edit", record)
-        : buildInitialValuesFromLayout(definition, "edit");
+        ? buildInitialValuesFromLayout(definition, "edit", record, formDesignId)
+        : buildInitialValuesFromLayout(
+            definition,
+            "edit",
+            undefined,
+            formDesignId,
+          );
 
       if (record) {
         const relationEntries = await Promise.all(
@@ -169,7 +181,15 @@ export function EntityForm({
     return () => {
       cancelled = true;
     };
-  }, [definition, entityName, getById, joinRelationFieldNames, mode, recordId]);
+  }, [
+    definition,
+    entityName,
+    formDesignId,
+    getById,
+    joinRelationFieldNames,
+    mode,
+    recordId,
+  ]);
 
   useEffect(() => {
     if (!error || error === lastToastedError.current) {

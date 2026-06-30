@@ -179,9 +179,11 @@ export {
   ENTITY_UI_OVERRIDES_COLLECTION,
   entityUiOverrideRecordSchema,
   parseEntityUiOverrideRecord,
+  buildEntityUiOverrideRecordFromPutInput,
   putEntityUiOverrideInputSchema,
   safeParseEntityUiOverrideRecord,
   uiOverrideFormsSchema,
+  formDesignDefinitionSchema,
   type PutEntityUiOverrideInput,
 } from "./ui/entity-ui-override-schema.js";
 export {
@@ -268,6 +270,11 @@ export {
   resolveFormPresentation,
   resolvePlainFormLayout,
   resolveWizardForm,
+  resolveFormConfigForDesign,
+  resolveFormDesign,
+  listFormDesignOptions,
+  resolveEntityPageCreateFormDesignId,
+  resolveEntityPageEditFormDesignId,
   type ResolvedFormModalChrome,
 } from "./ui/resolve-form-config.js";
 export { buildInitialValuesFromLayout } from "./ui/build-form-initial-values.js";
@@ -283,6 +290,8 @@ export type {
   WizardStepConfig,
   WizardStepStatus,
   EntityUiOverrideForms,
+  FormDesignDefinition,
+  FormDesignOption,
 } from "./ui/form-config.js";
 export { normalizeEntityViews } from "./ui/normalize-entity-views.js";
 export {

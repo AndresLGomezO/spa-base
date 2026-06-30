@@ -39,9 +39,10 @@ export function buildInitialValuesFromLayout(
   definition: SerializableEntityDefinition,
   mode: "create" | "edit",
   existing?: Record<string, unknown>,
+  formDesignId?: string,
 ): Record<string, unknown> {
   void mode;
-  const layout = resolvePlainFormLayout(definition);
+  const layout = resolvePlainFormLayout(definition, formDesignId);
   const values: Record<string, unknown> = { ...(existing ?? {}) };
   const seenRoots = new Set<string>();
 

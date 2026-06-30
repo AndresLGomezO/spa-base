@@ -4,7 +4,10 @@ import {
 } from "@repo/ui-builder-core";
 import { z } from "zod";
 
-import type { EntityUiOverrideForms } from "./form-config.js";
+import type {
+  EntityUiOverrideForms,
+  FormDesignDefinition,
+} from "./form-config.js";
 import { metricWidgetsSchema } from "./metric-widget-types.js";
 import type {
   EntityUiOverrideRecord,
@@ -35,6 +38,29 @@ const formModalChromeSchema = z
   .object({
     showHeader: z.boolean().optional(),
     contentPadding: z.enum(["default", "none"]).optional(),
+  })
+  .strict();
+
+export const formDesignDefinitionSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    label: z.string().trim().min(1),
+    presentation: z.enum(["plain", "wizard"]).optional(),
+    layout: uiLayoutDocumentSchema.optional(),
+    wizard: wizardFormConfigSchema.optional(),
+    modalSize: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+    modalSizeByBreakpoint: z
+      .object({
+        base: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        sm: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        md: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        lg: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+        xl: z.enum(["sm", "md", "lg", "xl", "2xl"]).optional(),
+      })
+      .strict()
+      .optional(),
+    modalChrome: formModalChromeSchema.optional(),
+    modalFooterLayout: uiLayoutDocumentSchema.optional(),
   })
   .strict();
 
@@ -76,6 +102,9 @@ export const entityUiOverrideRecordSchema = z
     metricWidgets: metricWidgetsSchema.optional(),
     metricRowLayout: uiLayoutDocumentSchema.optional(),
     forms: uiOverrideFormsSchema.optional(),
+    formDesigns: z.array(formDesignDefinitionSchema).optional(),
+    entityPageCreateFormDesignId: z.string().trim().min(1).optional(),
+    entityPageEditFormDesignId: z.string().trim().min(1).optional(),
     updatedAt: z.string().datetime(),
   })
   .strict();
@@ -92,6 +121,9 @@ export const putEntityUiOverrideInputSchema = z
     metricWidgets: metricWidgetsSchema.optional(),
     metricRowLayout: uiLayoutDocumentSchema.optional(),
     forms: uiOverrideFormsSchema.optional(),
+    formDesigns: z.array(formDesignDefinitionSchema).optional(),
+    entityPageCreateFormDesignId: z.string().trim().min(1).optional(),
+    entityPageEditFormDesignId: z.string().trim().min(1).optional(),
   })
   .strict();
 
@@ -104,6 +136,9 @@ export interface PutEntityUiOverrideInput {
   readonly metricWidgets?: readonly MetricWidgetDefinition[];
   readonly metricRowLayout?: UiLayoutDocument;
   readonly forms?: EntityUiOverrideForms;
+  readonly formDesigns?: readonly FormDesignDefinition[];
+  readonly entityPageCreateFormDesignId?: string;
+  readonly entityPageEditFormDesignId?: string;
 }
 
 function toRecordInput(
@@ -123,6 +158,37 @@ export function parseEntityUiOverrideRecord(
   return entityUiOverrideRecordSchema.parse(
     toRecordInput(entityName, data),
   ) as EntityUiOverrideRecord;
+}
+
+export function buildEntityUiOverrideRecordFromPutInput(
+  entityName: string,
+  input: PutEntityUiOverrideInput,
+  updatedAt: string = new Date().toISOString(),
+): EntityUiOverrideRecord {
+  return parseEntityUiOverrideRecord(entityName, {
+    views: input.views,
+    ...(input.listViewType ? { listViewType: input.listViewType } : {}),
+    ...(input.listItem ? { listItem: input.listItem } : {}),
+    ...(input.mainPage ? { mainPage: input.mainPage } : {}),
+    ...(input.recordDetail ? { recordDetail: input.recordDetail } : {}),
+    ...(input.metricWidgets !== undefined
+      ? { metricWidgets: input.metricWidgets }
+      : {}),
+    ...(input.metricRowLayout !== undefined
+      ? { metricRowLayout: input.metricRowLayout }
+      : {}),
+    ...(input.forms ? { forms: input.forms } : {}),
+    ...(input.formDesigns !== undefined
+      ? { formDesigns: input.formDesigns }
+      : {}),
+    ...(input.entityPageCreateFormDesignId
+      ? { entityPageCreateFormDesignId: input.entityPageCreateFormDesignId }
+      : {}),
+    ...(input.entityPageEditFormDesignId
+      ? { entityPageEditFormDesignId: input.entityPageEditFormDesignId }
+      : {}),
+    updatedAt,
+  });
 }
 
 /** Returns null when Firestore data no longer matches the current schema. */

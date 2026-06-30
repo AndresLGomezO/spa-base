@@ -95,6 +95,21 @@ function resolvePrefillSourceValue(
     return formatCurrentDateValue(targetDefinition, targetField);
   }
 
+  if (source.type === "enumValue") {
+    const meta = targetDefinition.fields[targetField];
+    if (meta?.type !== "enum") {
+      return undefined;
+    }
+
+    const value = source.value.trim();
+    if (!value) {
+      return undefined;
+    }
+
+    const enumValues = meta.enumValues ?? [];
+    return enumValues.includes(value) ? value : undefined;
+  }
+
   return coercePrefillValue(resolveField(source.path));
 }
 

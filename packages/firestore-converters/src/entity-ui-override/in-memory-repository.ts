@@ -1,5 +1,5 @@
 import {
-  parseEntityUiOverrideRecord,
+  buildEntityUiOverrideRecordFromPutInput,
   type EntityUiOverrideRecord,
   type PutEntityUiOverrideInput,
 } from "@repo/entities";
@@ -20,21 +20,7 @@ export function createInMemoryEntityUiOverrideRepository(): EntityUiOverrideRepo
       return store.get(key(tenantId, entityName)) ?? null;
     },
     async put(tenantId, entityName, input: PutEntityUiOverrideInput) {
-      const record = parseEntityUiOverrideRecord(entityName, {
-        views: input.views,
-        ...(input.listViewType ? { listViewType: input.listViewType } : {}),
-        ...(input.listItem ? { listItem: input.listItem } : {}),
-        ...(input.mainPage ? { mainPage: input.mainPage } : {}),
-        ...(input.recordDetail ? { recordDetail: input.recordDetail } : {}),
-        ...(input.metricWidgets !== undefined
-          ? { metricWidgets: input.metricWidgets }
-          : {}),
-        ...(input.metricRowLayout !== undefined
-          ? { metricRowLayout: input.metricRowLayout }
-          : {}),
-        ...(input.forms ? { forms: input.forms } : {}),
-        updatedAt: new Date().toISOString(),
-      });
+      const record = buildEntityUiOverrideRecordFromPutInput(entityName, input);
       store.set(key(tenantId, entityName), record);
       return record;
     },

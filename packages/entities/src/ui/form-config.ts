@@ -35,3 +35,21 @@ export interface EntityUiOverrideForms {
   readonly modalChrome?: FormModalChrome;
   readonly modalFooterLayout?: UiLayoutDocument;
 }
+
+/** Named form variant for entity-specific scenarios (e.g. register payment). */
+export interface FormDesignDefinition {
+  readonly id: string;
+  readonly label: string;
+  readonly presentation?: FormPresentation;
+  readonly layout?: UiLayoutDocument;
+  readonly wizard?: WizardFormConfig;
+  readonly modalSize?: FormModalSize;
+  readonly modalSizeByBreakpoint?: FormModalSizeByBreakpoint;
+  readonly modalChrome?: FormModalChrome;
+  readonly modalFooterLayout?: UiLayoutDocument;
+}
+
+export interface FormDesignOption {
+  readonly id: string | undefined;
+  readonly label: string;
+}

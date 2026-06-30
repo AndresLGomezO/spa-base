@@ -257,6 +257,7 @@ function resolveRecordDetailHref(
 
 function resolveRecordEditModal(
   scope: ResolvedEntityNavigationScope,
+  formDesignId?: string,
 ): ResolvedComponentClickTarget | null {
   if (!scope.recordId) {
     return null;
@@ -267,6 +268,7 @@ function resolveRecordEditModal(
     entityName: scope.entityName,
     mode: "edit",
     recordId: scope.recordId,
+    ...(formDesignId ? { formDesignId } : {}),
   };
 }
 
@@ -284,12 +286,14 @@ function resolveEntityListHref(
 
 function resolveEntityCreateModal(
   scope: ResolvedEntityNavigationScope,
+  formDesignId?: string,
 ): ResolvedComponentClickTarget {
   return {
     kind: "entityFormModal",
     entityName: scope.entityName,
     mode: "create",
     createPrefill: scope.prefill,
+    ...(formDesignId ? { formDesignId } : {}),
   };
 }
 
@@ -305,6 +309,7 @@ function resolveEntityViewTarget(
   view: EntityViewKind,
   scope: ResolvedEntityNavigationScope | null,
   linkState: EntityReturnToState | undefined,
+  formDesignId?: string,
 ): ResolvedComponentClickTarget | null {
   if (!scope) {
     return null;
@@ -314,7 +319,7 @@ function resolveEntityViewTarget(
     case "recordDetail":
       return resolveRecordDetailHref(scope, linkState);
     case "recordEditForm":
-      return resolveRecordEditModal(scope);
+      return resolveRecordEditModal(scope, formDesignId);
     case "entityList":
       return resolveEntityListHref(scope, linkState);
   }
@@ -369,6 +374,9 @@ export function resolveComponentClickTarget(options: {
         hints: options.hints,
       }),
       linkState,
+      options.action.view === "recordEditForm"
+        ? options.action.formDesignId
+        : undefined,
     );
   }
 
@@ -400,10 +408,13 @@ export function resolveComponentClickTarget(options: {
           )
         : {};
 
-    return resolveEntityCreateModal({
-      ...scope,
-      prefill: mergeCreateFormPrefill(scope.prefill, configuredPrefill),
-    });
+    return resolveEntityCreateModal(
+      {
+        ...scope,
+        prefill: mergeCreateFormPrefill(scope.prefill, configuredPrefill),
+      },
+      options.action.formDesignId,
+    );
   }
 
   if (options.action.type !== "externalUrl") {

@@ -6,13 +6,14 @@ import { EntityPageSkeleton } from "../../../components/loading/EntityPageSkelet
 import type { EntityName } from "../../../entities/entity-catalog";
 import { useEntityCatalog } from "../../../entities/entity-catalog-context";
 import { useRefreshEntityCatalogOnMount } from "../../../entities/use-refresh-entity-catalog-on-mount";
-import { FormDesignsHubView } from "../../../features/form-designer/FormDesignsHubView";
+import { FormDesignerView } from "../../../features/form-designer/FormDesignerView";
 import EntityNotFoundRoute from "../../app/entity-not-found";
 
-export default function DesignLayoutFormsRoute() {
+export default function DesignLayoutFormDesignRoute() {
   const { t } = useTranslation("common");
   const params = useParams();
   const entityName = (params.entityName ?? "") as EntityName;
+  const formDesignId = params.formDesignId ?? "default";
   const { isKnownEntity, isLoading } = useEntityCatalog();
   useRefreshEntityCatalogOnMount();
 
@@ -25,9 +26,9 @@ export default function DesignLayoutFormsRoute() {
   }
 
   return (
-    <DesignLayoutRouteGuard title={t("formDesigner.hub.title")}>
+    <DesignLayoutRouteGuard title={t("formDesigner.title")}>
       <div className="flex min-h-0 flex-1 flex-col">
-        <FormDesignsHubView entityName={entityName} />
+        <FormDesignerView entityName={entityName} formDesignId={formDesignId} />
       </div>
     </DesignLayoutRouteGuard>
   );

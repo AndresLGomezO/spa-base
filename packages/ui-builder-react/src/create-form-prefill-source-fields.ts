@@ -44,6 +44,11 @@ export function listCreateFormPrefillSourceFieldDescriptors(
         meta.relation.type === "one-to-one")
     ) {
       ensureField(fieldName);
+      continue;
+    }
+
+    if (meta.type === "enum") {
+      ensureField(fieldName);
     }
   }
 

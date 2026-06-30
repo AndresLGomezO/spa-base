@@ -9,7 +9,8 @@ export type EntityViewKind = "recordDetail" | "recordEditForm" | "entityList";
 
 export type EntityFormPrefillSource =
   | { readonly type: "field"; readonly path: string }
-  | { readonly type: "currentDate" };
+  | { readonly type: "currentDate" }
+  | { readonly type: "enumValue"; readonly value: string };
 
 export type EntityFormPrefillMapping = {
   readonly targetField: string;
@@ -26,11 +27,13 @@ export type ComponentClickAction =
       readonly type: "entityView";
       readonly view: EntityViewKind;
       readonly target: EntityNavigationTarget;
+      readonly formDesignId?: string;
     }
   | {
       readonly type: "entityCreateForm";
       readonly target: EntityNavigationTarget;
       readonly prefill?: readonly EntityFormPrefillMapping[];
+      readonly formDesignId?: string;
     }
   | {
       readonly type: "externalUrl";
@@ -78,6 +81,7 @@ export type ResolvedComponentClickTarget =
       readonly mode: "create" | "edit";
       readonly recordId?: string;
       readonly createPrefill?: Readonly<Record<string, string>>;
+      readonly formDesignId?: string;
     };
 
 /** Converts legacy entityRecord actions to entityView recordDetail. */

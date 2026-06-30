@@ -138,6 +138,7 @@ const designLayoutSliceEnvelopeSchema = z
       "metricsRowDesigner",
     ]),
     version: z.literal(1),
+    formDesignId: z.string().trim().min(1).optional(),
     data: z.unknown(),
   })
   .strict();
@@ -169,16 +170,19 @@ function dataSchemaForSurface(surface: DesignLayoutSurface): z.ZodType {
 export function createDesignLayoutSliceEnvelope(
   surface: DesignLayoutSurface,
   data: DesignLayoutSliceData,
+  options?: { readonly formDesignId?: string },
 ): {
   readonly kind: "design-layout-slice";
   readonly surface: DesignLayoutSurface;
   readonly version: 1;
+  readonly formDesignId?: string;
   readonly data: DesignLayoutSliceData;
 } {
   return {
     kind: "design-layout-slice",
     surface,
     version: 1,
+    ...(options?.formDesignId ? { formDesignId: options.formDesignId } : {}),
     data,
   };
 }
@@ -228,7 +232,11 @@ export function createDesignLayoutSliceSkeleton(
 }
 
 export type DesignLayoutSliceParseResult =
-  | { readonly ok: true; readonly data: DesignLayoutSliceData }
+  | {
+      readonly ok: true;
+      readonly data: DesignLayoutSliceData;
+      readonly formDesignId?: string;
+    }
   | { readonly ok: false; readonly errors: readonly DesignLayoutSliceError[] };
 
 export function parseDesignLayoutSliceJson(
@@ -276,7 +284,11 @@ export function parseDesignLayoutSliceJson(
     };
   }
 
-  return { ok: true, data: dataResult.data as DesignLayoutSliceData };
+  return {
+    ok: true,
+    data: dataResult.data as DesignLayoutSliceData,
+    ...(envelope.formDesignId ? { formDesignId: envelope.formDesignId } : {}),
+  };
 }
 
 function listSliceToUiConfig(
@@ -353,39 +365,85 @@ function listSliceToUiConfig(
 function formsSliceToUiConfig(
   data: FormsSliceData,
   baseUi: EntityUIConfig,
+  formDesignId?: string,
 ): EntityUIConfig {
   const presentation =
     data.presentation ?? baseUi.forms.presentation ?? "plain";
   const plainLayout =
     presentation === "plain" ? data.layout : baseUi.forms.create.layout;
 
+  const mergedForms = {
+    ...baseUi.forms,
+    presentation,
+    ...(data.modalSize ? { modalSize: data.modalSize } : {}),
+    ...(data.modalSizeByBreakpoint
+      ? { modalSizeByBreakpoint: data.modalSizeByBreakpoint }
+      : {}),
+    ...(data.modalChrome ? { modalChrome: data.modalChrome } : {}),
+    ...(data.modalFooterLayout
+      ? { modalFooterLayout: data.modalFooterLayout }
+      : {}),
+    ...(data.wizard
+      ? {
+          wizard: data.wizard as unknown as EntityUIConfig["forms"]["wizard"],
+        }
+      : {}),
+    create: {
+      ...baseUi.forms.create,
+      ...(plainLayout ? { layout: plainLayout } : {}),
+    },
+    edit: {
+      ...baseUi.forms.edit,
+      ...(plainLayout ? { layout: plainLayout } : {}),
+    },
+  };
+
+  if (!formDesignId) {
+    return {
+      ...baseUi,
+      forms: mergedForms,
+    };
+  }
+
+  const existingDesigns = baseUi.formDesigns ?? [];
+  const existingIndex = existingDesigns.findIndex(
+    (design) => design.id === formDesignId,
+  );
+  const existingDesign =
+    existingIndex >= 0 ? existingDesigns[existingIndex] : undefined;
+
+  const updatedDesign = {
+    id: formDesignId,
+    label: existingDesign?.label ?? formDesignId,
+    presentation,
+    ...(presentation !== "wizard" && plainLayout
+      ? { layout: plainLayout }
+      : {}),
+    ...(data.modalSize ? { modalSize: data.modalSize } : {}),
+    ...(data.modalSizeByBreakpoint
+      ? { modalSizeByBreakpoint: data.modalSizeByBreakpoint }
+      : {}),
+    ...(data.modalChrome ? { modalChrome: data.modalChrome } : {}),
+    ...(data.modalFooterLayout
+      ? { modalFooterLayout: data.modalFooterLayout }
+      : {}),
+    ...(data.wizard
+      ? {
+          wizard: data.wizard as unknown as EntityUIConfig["forms"]["wizard"],
+        }
+      : {}),
+  };
+
+  const nextDesigns =
+    existingIndex >= 0
+      ? existingDesigns.map((design, index) =>
+          index === existingIndex ? updatedDesign : design,
+        )
+      : [...existingDesigns, updatedDesign];
+
   return {
     ...baseUi,
-    forms: {
-      ...baseUi.forms,
-      presentation,
-      ...(data.modalSize ? { modalSize: data.modalSize } : {}),
-      ...(data.modalSizeByBreakpoint
-        ? { modalSizeByBreakpoint: data.modalSizeByBreakpoint }
-        : {}),
-      ...(data.modalChrome ? { modalChrome: data.modalChrome } : {}),
-      ...(data.modalFooterLayout
-        ? { modalFooterLayout: data.modalFooterLayout }
-        : {}),
-      ...(data.wizard
-        ? {
-            wizard: data.wizard as unknown as EntityUIConfig["forms"]["wizard"],
-          }
-        : {}),
-      create: {
-        ...baseUi.forms.create,
-        ...(plainLayout ? { layout: plainLayout } : {}),
-      },
-      edit: {
-        ...baseUi.forms.edit,
-        ...(plainLayout ? { layout: plainLayout } : {}),
-      },
-    },
+    formDesigns: nextDesigns,
   };
 }
 
@@ -393,12 +451,13 @@ function sliceDataToUiConfig(
   surface: DesignLayoutSurface,
   data: DesignLayoutSliceData,
   baseUi: EntityUIConfig,
+  formDesignId?: string,
 ): EntityUIConfig {
   switch (surface) {
     case "list":
       return listSliceToUiConfig(data as ListSliceData, baseUi);
     case "forms":
-      return formsSliceToUiConfig(data as FormsSliceData, baseUi);
+      return formsSliceToUiConfig(data as FormsSliceData, baseUi, formDesignId);
     case "mainPage":
       return {
         ...baseUi,
@@ -429,6 +488,7 @@ export function validateDesignLayoutSlice(
   surface: DesignLayoutSurface,
   data: DesignLayoutSliceData,
   baseUi?: EntityUIConfig,
+  options?: { readonly formDesignId?: string },
 ): DesignLayoutSliceValidationResult {
   const dataResult = dataSchemaForSurface(surface).safeParse(data);
   if (!dataResult.success) {
@@ -440,7 +500,12 @@ export function validateDesignLayoutSlice(
 
   const resolvedBase = baseUi ?? getDefaultEntityUI(entity);
   const parsedData = dataResult.data as DesignLayoutSliceData;
-  const mergedUi = sliceDataToUiConfig(surface, parsedData, resolvedBase);
+  const mergedUi = sliceDataToUiConfig(
+    surface,
+    parsedData,
+    resolvedBase,
+    options?.formDesignId,
+  );
 
   try {
     validateEntityUIConfig(entity, mergedUi);
@@ -507,6 +572,13 @@ export function entityUiConfigToPutOverrideInput(
     ...(ui.metricWidgets ? { metricWidgets: ui.metricWidgets } : {}),
     ...(ui.metricRowLayout ? { metricRowLayout: ui.metricRowLayout } : {}),
     ...(hasFormsPayload ? { forms: formsPayload } : {}),
+    ...(ui.formDesigns ? { formDesigns: ui.formDesigns } : {}),
+    ...(ui.entityPageCreateFormDesignId
+      ? { entityPageCreateFormDesignId: ui.entityPageCreateFormDesignId }
+      : {}),
+    ...(ui.entityPageEditFormDesignId
+      ? { entityPageEditFormDesignId: ui.entityPageEditFormDesignId }
+      : {}),
   };
 }
 

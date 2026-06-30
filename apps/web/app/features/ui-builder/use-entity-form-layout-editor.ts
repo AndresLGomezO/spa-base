@@ -36,6 +36,7 @@ import { useQueryClient } from "@tanstack/react-query";
 
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import { DEFAULT_FORM_DESIGN_ROUTE_ID } from "../../routing/design-layout-nav";
 import { putEntityUiOverride } from "../../lib/api-client";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
@@ -57,8 +58,25 @@ function defaultModalFooterActionKind(
   return presentation === "wizard" ? "wizard-actions" : "form-actions";
 }
 
-export function useEntityFormLayoutEditor(entityName: EntityName) {
+interface UseEntityFormLayoutEditorOptions {
+  readonly formDesignId?: string;
+}
+
+function resolveEditorFormDesignId(formDesignId?: string): string | undefined {
+  if (!formDesignId || formDesignId === DEFAULT_FORM_DESIGN_ROUTE_ID) {
+    return undefined;
+  }
+
+  return formDesignId;
+}
+
+export function useEntityFormLayoutEditor(
+  entityName: EntityName,
+  options?: UseEntityFormLayoutEditorOptions,
+) {
   const definition = useEntityDefinition(entityName);
+  const resolvedFormDesignId = resolveEditorFormDesignId(options?.formDesignId);
+  const isDefaultDesign = resolvedFormDesignId == null;
   const queryClient = useQueryClient();
   const fieldPaths = useMemo(
     () => getDefaultFieldPaths(definition),
@@ -67,23 +85,28 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   const defaultFieldPath = fieldPaths[0] ?? "name";
 
   const [presentation, setPresentation] = useState<FormPresentation>(() =>
-    resolveFormPresentation(definition),
+    resolveFormPresentation(definition, resolvedFormDesignId),
   );
   const [modalSize, setModalSize] = useState<FormModalSize>(() =>
-    resolveFormModalSize(definition),
+    resolveFormModalSize(definition, resolvedFormDesignId),
   );
   const [modalSizeByBreakpoint, setModalSizeByBreakpoint] =
     useState<FormModalSizeByBreakpoint>(() =>
-      resolveFormModalSizeByBreakpointFromDefinition(definition),
+      resolveFormModalSizeByBreakpointFromDefinition(
+        definition,
+        resolvedFormDesignId,
+      ),
     );
   const [modalChrome, setModalChrome] = useState<FormModalChrome>(() =>
-    resolveFormModalChrome(definition),
+    resolveFormModalChrome(definition, resolvedFormDesignId),
   );
   const [modalFooterLayout, setModalFooterLayout] = useState<
     UiLayoutDocument | undefined
-  >(() => resolveFormModalFooterLayout(definition));
+  >(() => resolveFormModalFooterLayout(definition, resolvedFormDesignId));
   const [plainLayout, setPlainLayoutState] = useState<UiLayoutDocument>(() =>
-    ensureContainerRoot(resolvePlainFormLayout(definition)),
+    ensureContainerRoot(
+      resolvePlainFormLayout(definition, resolvedFormDesignId),
+    ),
   );
   const setPlainLayout = useCallback((layout: UiLayoutDocument) => {
     setPlainLayoutState(ensureContainerRoot(layout));
@@ -92,8 +115,14 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     (
       sourceDefinition: ReturnType<typeof useEntityDefinition>,
     ): WizardFormConfig => {
-      const footerLayout = resolveFormModalFooterLayout(sourceDefinition);
-      const resolved = resolveWizardForm(sourceDefinition);
+      const footerLayout = resolveFormModalFooterLayout(
+        sourceDefinition,
+        resolvedFormDesignId,
+      );
+      const resolved = resolveWizardForm(
+        sourceDefinition,
+        resolvedFormDesignId,
+      );
 
       if (resolved) {
         return {
@@ -119,7 +148,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
         steps: [],
       };
     },
-    [],
+    [resolvedFormDesignId],
   );
 
   const [wizard, setWizard] = useState<WizardFormConfig>(() =>
@@ -129,18 +158,26 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
   useEffect(() => {
-    setPresentation(resolveFormPresentation(definition));
-    setModalSize(resolveFormModalSize(definition));
+    setPresentation(resolveFormPresentation(definition, resolvedFormDesignId));
+    setModalSize(resolveFormModalSize(definition, resolvedFormDesignId));
     setModalSizeByBreakpoint(
-      resolveFormModalSizeByBreakpointFromDefinition(definition),
+      resolveFormModalSizeByBreakpointFromDefinition(
+        definition,
+        resolvedFormDesignId,
+      ),
     );
-    setModalChrome(resolveFormModalChrome(definition));
-    setModalFooterLayout(resolveFormModalFooterLayout(definition));
-    const resolvedPlain = resolvePlainFormLayout(definition);
+    setModalChrome(resolveFormModalChrome(definition, resolvedFormDesignId));
+    setModalFooterLayout(
+      resolveFormModalFooterLayout(definition, resolvedFormDesignId),
+    );
+    const resolvedPlain = resolvePlainFormLayout(
+      definition,
+      resolvedFormDesignId,
+    );
     setPlainLayout(resolvedPlain);
     setWizard(resolveWizardState(definition));
     setLayoutEditorKey((current) => current + 1);
-  }, [definition, resolveWizardState, setPlainLayout]);
+  }, [definition, resolveWizardState, resolvedFormDesignId, setPlainLayout]);
 
   const updateStep = useCallback(
     (index: number, patch: Partial<WizardStepConfig>) => {
@@ -355,9 +392,40 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
           : { layout: plainLayout }),
       };
 
+      if (isDefaultDesign) {
+        const { override } = await putEntityUiOverride(entityName, {
+          ...basePayload,
+          forms: formsPayload,
+        });
+        patchEntityCatalogAfterUiOverrideSave(
+          queryClient,
+          entityName,
+          override,
+        );
+        return null;
+      }
+
+      const existingDesigns = [...(definition.ui.formDesigns ?? [])];
+      const designIndex = existingDesigns.findIndex(
+        (design) => design.id === resolvedFormDesignId,
+      );
+      const existingDesign =
+        designIndex >= 0 ? existingDesigns[designIndex] : undefined;
+      const updatedDesign = {
+        id: resolvedFormDesignId!,
+        label: existingDesign?.label ?? resolvedFormDesignId!,
+        ...formsPayload,
+      };
+      const nextDesigns =
+        designIndex >= 0
+          ? existingDesigns.map((design, index) =>
+              index === designIndex ? updatedDesign : design,
+            )
+          : [...existingDesigns, updatedDesign];
+
       const { override } = await putEntityUiOverride(entityName, {
         ...basePayload,
-        forms: formsPayload,
+        formDesigns: nextDesigns,
       });
 
       patchEntityCatalogAfterUiOverrideSave(queryClient, entityName, override);
@@ -372,6 +440,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
   }, [
     definition,
     entityName,
+    isDefaultDesign,
     modalChrome,
     modalFooterLayout,
     modalSize,
@@ -379,6 +448,7 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
     plainLayout,
     presentation,
     queryClient,
+    resolvedFormDesignId,
     wizard,
   ]);
 
@@ -459,6 +529,8 @@ export function useEntityFormLayoutEditor(entityName: EntityName) {
 
   return {
     entityName,
+    formDesignId: resolvedFormDesignId,
+    isDefaultDesign,
     definition,
     fieldPaths,
     defaultFieldPath,

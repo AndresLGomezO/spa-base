@@ -20,6 +20,7 @@ function toEntityFormModalRequest(
     mode: target.mode,
     recordId: target.recordId,
     createPrefill: target.createPrefill,
+    formDesignId: target.formDesignId,
   };
 }
 

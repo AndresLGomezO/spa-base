@@ -5,6 +5,7 @@ import type {
 } from "@repo/ui-builder-core";
 import type {
   EntityUiOverrideForms,
+  FormDesignDefinition,
   FormModalChrome,
   FormPresentation,
   WizardFormConfig,
@@ -105,6 +106,7 @@ export function isExpandableTableViewConfig(
 
 export type {
   EntityUiOverrideForms,
+  FormDesignDefinition,
   FormPresentation,
   WizardFormConfig,
   WizardStepConfig,
@@ -125,6 +127,9 @@ export interface EntityUiOverride {
   readonly metricWidgets?: readonly MetricWidgetDefinition[];
   readonly metricRowLayout?: UiLayoutDocument;
   readonly forms?: EntityUiOverrideForms;
+  readonly formDesigns?: readonly FormDesignDefinition[];
+  readonly entityPageCreateFormDesignId?: string;
+  readonly entityPageEditFormDesignId?: string;
   readonly updatedAt: string;
 }
 
@@ -189,6 +194,9 @@ export interface EntityUIConfig {
    */
   readonly detailLayout?: UiLayoutDocument;
   readonly forms: FormConfig;
+  readonly formDesigns?: readonly FormDesignDefinition[];
+  readonly entityPageCreateFormDesignId?: string;
+  readonly entityPageEditFormDesignId?: string;
   readonly detail?: DetailConfig;
   readonly nav?: EntityNavConfig;
   readonly fields?: Readonly<Record<string, FieldUIConfig>>;

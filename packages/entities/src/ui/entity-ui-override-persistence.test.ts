@@ -82,6 +82,31 @@ describe("entity UI override persistence", () => {
     expect(restored).toEqual(record);
   });
 
+  it("round-trips formDesigns via formDesignsJson", () => {
+    const layout = createDefaultUiLayout(["amount"]);
+    const record = parseEntityUiOverrideRecord("payment", {
+      views: [{ type: "table", name: "default", fields: ["amount"] }],
+      formDesigns: [
+        {
+          id: "register-payment",
+          label: "Register payment",
+          presentation: "plain",
+          layout,
+        },
+      ],
+      entityPageCreateFormDesignId: "register-payment",
+      updatedAt: "2026-06-05T12:00:00.000Z",
+    });
+
+    const persisted = toPersistedUiOverride(record);
+    const restored = fromPersistedUiOverride(persisted);
+
+    expect(persisted.formDesignsJson).toBeTruthy();
+    expect(restored.formDesigns).toEqual(record.formDesigns);
+    expect(restored.entityPageCreateFormDesignId).toBe("register-payment");
+    expect(restored).toEqual(record);
+  });
+
   it("round-trips the contract wizard payload with shallow persisted depth", () => {
     const wizardPath = path.resolve(
       import.meta.dirname,

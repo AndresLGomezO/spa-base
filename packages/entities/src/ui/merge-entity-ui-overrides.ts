@@ -137,6 +137,17 @@ export function mergeEntityUiOverrides(
       ? { metricRowLayout: override.metricRowLayout }
       : {}),
     forms: mergeFormConfig(definition.ui.forms, override.forms),
+    ...(override.formDesigns !== undefined
+      ? { formDesigns: override.formDesigns }
+      : {}),
+    ...(override.entityPageCreateFormDesignId !== undefined
+      ? {
+          entityPageCreateFormDesignId: override.entityPageCreateFormDesignId,
+        }
+      : {}),
+    ...(override.entityPageEditFormDesignId !== undefined
+      ? { entityPageEditFormDesignId: override.entityPageEditFormDesignId }
+      : {}),
   });
 
   return {

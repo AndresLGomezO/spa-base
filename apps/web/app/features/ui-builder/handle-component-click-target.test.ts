@@ -20,6 +20,29 @@ describe("handleComponentClickTarget", () => {
       entityName: "transaction",
       mode: "create",
       createPrefill: { accountId: "account-1" },
+      formDesignId: undefined,
+    });
+  });
+
+  it("passes formDesignId into entity form modal requests", () => {
+    const openEntityFormModal = vi.fn();
+
+    handleComponentClickTarget(
+      {
+        kind: "entityFormModal",
+        entityName: "transaction",
+        mode: "edit",
+        recordId: "tx-1",
+        formDesignId: "register-payment",
+      },
+      { openEntityFormModal },
+    );
+
+    expect(openEntityFormModal).toHaveBeenCalledWith({
+      entityName: "transaction",
+      mode: "edit",
+      recordId: "tx-1",
+      formDesignId: "register-payment",
     });
   });
 

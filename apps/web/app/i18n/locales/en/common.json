@@ -102,7 +102,38 @@
   },
   "formDesigner": {
     "title": "Form Designer",
-    "entitySubtitle": "Entity: {{entity}}",
+    "designSubtitle": "{{entity}} / {{design}}",
+    "backToDesigns": "Back to form designs",
+    "hub": {
+      "title": "Form designs",
+      "subtitle": "Manage form layouts for {{entity}}",
+      "designsTitle": "Form designs",
+      "defaultDesign": "Default",
+      "edit": "Edit",
+      "delete": "Delete",
+      "addDesign": "Add form design",
+      "newDesignLabel": "Design name",
+      "newDesignPlaceholder": "e.g. Register payment",
+      "createFailed": "Could not create form design.",
+      "deleteFailed": "Could not delete form design.",
+      "deleteReferenced": "This design is used as an entity page default and cannot be deleted.",
+      "deleted": "Form design deleted.",
+      "columns": {
+        "label": "Name",
+        "id": "ID",
+        "presentation": "Presentation",
+        "actions": "Actions"
+      }
+    },
+    "defaults": {
+      "title": "Entity page form defaults",
+      "description": "Choose which form design opens from the main entity page Create and Edit actions.",
+      "createFormDesign": "Create form",
+      "editFormDesign": "Edit form",
+      "save": "Save defaults",
+      "saved": "Entity form defaults saved.",
+      "saveFailed": "Could not save entity form defaults."
+    },
     "openPreview": "Open preview",
     "ai": {
       "openLabel": "AI layout assistant",
@@ -902,12 +933,16 @@
         "staticUrlPlaceholder": "https://example.com",
         "openInNewTab": "Open in new tab",
         "noRelationFields": "No relation fields available for this entity.",
+        "formDesign": "Form design",
+        "formDesignDefault": "Default",
         "createFormPrefill": "Prefill create form fields from the current record.",
         "createFormPrefillTargetField": "Target field",
         "createFormPrefillSource": "Source",
         "createFormPrefillSourceField": "Source field",
         "createFormPrefillSourceFieldValue": "Field value",
         "createFormPrefillSourceCurrentDate": "Current date",
+        "createFormPrefillSourceEnumValue": "Enum value",
+        "createFormPrefillEnumValue": "Enum value",
         "addCreateFormPrefill": "Add mapping",
         "removeCreateFormPrefill": "Remove",
         "noCreateFormPrefillTargetFields": "No eligible target fields on the create form entity."

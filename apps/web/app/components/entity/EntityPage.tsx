@@ -13,8 +13,12 @@ import { Button, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import { useNavigate, useSearchParams } from "react-router";
 
-import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
-import { metricStripHasContent } from "@repo/entities";
+import {
+  ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
+  metricStripHasContent,
+  resolveEntityPageCreateFormDesignId,
+  resolveEntityPageEditFormDesignId,
+} from "@repo/entities";
 
 import { cn } from "@repo/theme/utils";
 
@@ -237,8 +241,9 @@ function EntityPageInner({ entityName }: EntityPageProps) {
     openEntityFormModal({
       entityName,
       mode: "create",
+      formDesignId: resolveEntityPageCreateFormDesignId(definition),
     });
-  }, [entityName, openEntityFormModal]);
+  }, [definition, entityName, openEntityFormModal]);
 
   const openEditFormModal = useCallback(
     (recordId: string) => {
@@ -246,9 +251,10 @@ function EntityPageInner({ entityName }: EntityPageProps) {
         entityName,
         mode: "edit",
         recordId,
+        formDesignId: resolveEntityPageEditFormDesignId(definition),
       });
     },
-    [entityName, openEntityFormModal],
+    [definition, entityName, openEntityFormModal],
   );
 
   const syncedUrlRef = useRef<string | null>(null);
@@ -265,6 +271,7 @@ function EntityPageInner({ entityName }: EntityPageProps) {
         entityName,
         mode: "create",
         createPrefill: parseEntityCreateFormPrefill(searchParams, definition),
+        formDesignId: resolveEntityPageCreateFormDesignId(definition),
         onClose: stripUrlFormModalParams,
       });
       return;
@@ -277,6 +284,7 @@ function EntityPageInner({ entityName }: EntityPageProps) {
         entityName,
         mode: "edit",
         recordId: editId,
+        formDesignId: resolveEntityPageEditFormDesignId(definition),
         onClose: stripUrlFormModalParams,
       });
       return;
