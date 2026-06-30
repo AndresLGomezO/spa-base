@@ -386,6 +386,14 @@ export {
 } from "./validation/field-paths.js";
 
 export {
+  MAX_LAYOUT_RELATION_HOPS,
+  resolveLayoutFieldLeaf,
+  collectNestedRelationLayoutFieldPaths,
+  type ResolvedLayoutFieldLeaf,
+  type LayoutFieldLeafLookup,
+} from "./validation/layout-field-leaf.js";
+
+export {
   validateLayoutJsonImport,
   createLayoutJsonSkeleton,
   type LayoutJsonImportScope,

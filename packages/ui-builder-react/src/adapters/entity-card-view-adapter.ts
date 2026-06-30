@@ -5,6 +5,7 @@ import {
 import {
   formatFieldPathLabel,
   listLayoutFieldOptions,
+  resolveLayoutFieldLeaf,
   type UiComponentKind,
 } from "@repo/ui-builder-core";
 
@@ -30,136 +31,6 @@ export interface EntityCardViewAdapterResult {
 export type EntityDefinitionLookup = (
   entityName: string,
 ) => SerializableEntityDefinition | undefined;
-
-function resolveRelationFieldName(
-  definition: SerializableEntityDefinition,
-  pathSegment: string,
-): string | null {
-  const segment = pathSegment.trim();
-  if (!segment) {
-    return null;
-  }
-
-  const directMeta = definition.fields[segment];
-  if (
-    directMeta?.relation &&
-    (directMeta.relation.type === "many-to-one" ||
-      directMeta.relation.type === "one-to-one")
-  ) {
-    return segment;
-  }
-
-  for (const [fieldName, meta] of Object.entries(definition.fields)) {
-    if (
-      meta.relation &&
-      (meta.relation.type === "many-to-one" ||
-        meta.relation.type === "one-to-one") &&
-      meta.relation.target === segment
-    ) {
-      return fieldName;
-    }
-  }
-
-  return null;
-}
-
-function resolveOneToManyRelationFieldName(
-  definition: SerializableEntityDefinition,
-  pathSegment: string,
-): string | null {
-  const segment = pathSegment.trim();
-  if (!segment) {
-    return null;
-  }
-
-  for (const [fieldName, meta] of Object.entries(definition.fields)) {
-    if (!isOneToManyRelationField(meta)) {
-      continue;
-    }
-
-    const targetEntity = meta.relation?.target;
-    if (!targetEntity) {
-      continue;
-    }
-
-    if (fieldName === segment || targetEntity === segment) {
-      return fieldName;
-    }
-  }
-
-  return null;
-}
-
-function parseRelationFieldPath(
-  definition: SerializableEntityDefinition,
-  fieldPath: string,
-  getDefinition?: EntityDefinitionLookup,
-): {
-  readonly relationField: string;
-  readonly subField: string;
-  readonly relationKind: "many-to-one" | "one-to-one" | "one-to-many";
-} | null {
-  const trimmedPath = fieldPath.trim();
-  if (!trimmedPath.includes(".")) {
-    return null;
-  }
-
-  const [firstSegment, subField] = trimmedPath.split(".", 2);
-  if (!firstSegment || !subField) {
-    return null;
-  }
-
-  const relationField = resolveRelationFieldName(definition, firstSegment);
-  if (relationField) {
-    const relationKind = definition.fields[relationField]?.relation?.type;
-    if (relationKind !== "many-to-one" && relationKind !== "one-to-one") {
-      return null;
-    }
-
-    return { relationField, subField, relationKind };
-  }
-
-  const oneToManyField = resolveOneToManyRelationFieldName(
-    definition,
-    firstSegment,
-  );
-  if (!oneToManyField) {
-    if (getDefinition) {
-      const reverseChild = getDefinition(firstSegment);
-      if (reverseChild && subField in reverseChild.fields) {
-        for (const meta of Object.values(reverseChild.fields)) {
-          if (
-            meta.relation?.target === definition.name &&
-            (meta.relation.type === "many-to-one" ||
-              meta.relation.type === "one-to-one")
-          ) {
-            return {
-              relationField: firstSegment,
-              subField,
-              relationKind: "one-to-many",
-            };
-          }
-        }
-      }
-    }
-
-    return null;
-  }
-
-  const childEntity = definition.fields[oneToManyField]?.relation?.target;
-  if (childEntity && getDefinition) {
-    const childDefinition = getDefinition(childEntity);
-    if (childDefinition && !(subField in childDefinition.fields)) {
-      return null;
-    }
-  }
-
-  return {
-    relationField: oneToManyField,
-    subField,
-    relationKind: "one-to-many",
-  };
-}
 
 function isImageField(
   definition: SerializableEntityDefinition,
@@ -201,35 +72,12 @@ function isValidLayoutFieldPathForAdapter(
   path: string,
   getDefinition?: EntityDefinitionLookup,
 ): boolean {
-  const parsed = parseRelationFieldPath(definition, path, getDefinition);
-  if (!parsed) {
-    return (
-      path in definition.fields || path === "createdAt" || path === "updatedAt"
-    );
-  }
-
-  if (parsed.relationKind === "one-to-many") {
-    const childEntity =
-      definition.fields[parsed.relationField]?.relation?.target ??
-      parsed.relationField;
-    const childDefinition = getDefinition?.(childEntity);
-    if (!childDefinition) {
-      return true;
-    }
-    return parsed.subField in childDefinition.fields;
-  }
-
-  const target = definition.fields[parsed.relationField]?.relation?.target;
-  if (!target) {
-    return false;
-  }
-
-  const targetDefinition = getDefinition?.(target);
-  if (!targetDefinition) {
-    return false;
-  }
-
-  return parsed.subField in targetDefinition.fields;
+  return (
+    resolveLayoutFieldLeaf(definition, path, getDefinition) != null ||
+    path in definition.fields ||
+    path === "createdAt" ||
+    path === "updatedAt"
+  );
 }
 
 function collectLayoutFieldPaths(
@@ -257,91 +105,51 @@ function collectLayoutFieldPaths(
   return [...options].sort((a, b) => a.localeCompare(b));
 }
 
+function resolveValueTypeFromLeaf(
+  leafDefinition: SerializableEntityDefinition,
+  leafFieldName: string,
+): FieldDescriptor["valueType"] {
+  if (isImageField(leafDefinition, leafFieldName)) {
+    return "image";
+  }
+
+  const meta = leafDefinition.fields[leafFieldName];
+  if (meta?.type === "date") {
+    return "date";
+  }
+  if (meta?.type === "number") {
+    return "number";
+  }
+  if (meta?.type === "boolean") {
+    return "boolean";
+  }
+  if (meta?.type === "string") {
+    return "string";
+  }
+
+  return "unknown";
+}
+
 function resolveValueType(
   definition: SerializableEntityDefinition,
   path: string,
   getDefinition?: EntityDefinitionLookup,
 ): FieldDescriptor["valueType"] {
-  const parsed = parseRelationFieldPath(definition, path, getDefinition);
-  if (parsed) {
-    if (parsed.relationKind === "one-to-many") {
-      const childEntity =
-        definition.fields[parsed.relationField]?.relation?.target ??
-        parsed.relationField;
-      const childDefinition = getDefinition?.(childEntity);
-
-      if (childDefinition) {
-        if (isImageField(childDefinition, parsed.subField)) {
-          return "image";
-        }
-        const subMeta = childDefinition.fields[parsed.subField];
-        if (subMeta?.type === "date") {
-          return "date";
-        }
-        if (subMeta?.type === "number") {
-          return "number";
-        }
-        if (subMeta?.type === "boolean") {
-          return "boolean";
-        }
-        if (subMeta?.type === "string") {
-          return "string";
-        }
-      }
-
-      return "unknown";
-    }
-
-    const relationMeta = definition.fields[parsed.relationField]?.relation;
-    const targetDefinition =
-      relationMeta?.target && getDefinition
-        ? getDefinition(relationMeta.target)
-        : undefined;
-
-    if (targetDefinition) {
-      if (isImageField(targetDefinition, parsed.subField)) {
-        return "image";
-      }
-      const subMeta = targetDefinition.fields[parsed.subField];
-      if (subMeta?.type === "date") {
-        return "date";
-      }
-      if (subMeta?.type === "number") {
-        return "number";
-      }
-      if (subMeta?.type === "boolean") {
-        return "boolean";
-      }
-      if (subMeta?.type === "string") {
-        return "string";
-      }
-    }
-
-    return "unknown";
-  }
-
-  const root = path.includes(".") ? path.split(".")[0]! : path;
-  const meta = definition.fields[root];
-  if (!meta) {
-    if (path === "createdAt" || path === "updatedAt") {
+  const leaf = resolveLayoutFieldLeaf(definition, path, getDefinition);
+  if (leaf) {
+    if (
+      leaf.leafFieldName === "createdAt" ||
+      leaf.leafFieldName === "updatedAt"
+    ) {
       return "date";
     }
-    return "unknown";
+    return resolveValueTypeFromLeaf(
+      leaf.leafDefinition as SerializableEntityDefinition,
+      leaf.leafFieldName,
+    );
   }
 
-  if (isImageField(definition, root)) {
-    return "image";
-  }
-  if (meta.type === "date") {
-    return "date";
-  }
-  if (meta.type === "number") {
-    return "number";
-  }
-  if (meta.type === "boolean") {
-    return "boolean";
-  }
-  return "string";
+  return "unknown";
 }
 
 function resolveDescriptorLabel(
@@ -349,35 +157,53 @@ function resolveDescriptorLabel(
   path: string,
   getDefinition?: EntityDefinitionLookup,
 ): string {
-  const parsed = parseRelationFieldPath(definition, path, getDefinition);
-  if (parsed) {
-    if (parsed.relationKind === "one-to-many") {
-      const childEntity =
-        definition.fields[parsed.relationField]?.relation?.target ??
-        parsed.relationField;
-      const childDefinition = getDefinition?.(childEntity);
-      const subLabel = childDefinition
-        ? resolveFieldLabel(childDefinition, parsed.subField)
-        : formatFieldPathLabel(parsed.subField);
-
-      return `${resolveRelationTargetLabel(childEntity, childDefinition)} ${subLabel}`;
-    }
-
-    const target = definition.fields[parsed.relationField]?.relation?.target;
-    const targetDefinition =
-      target && getDefinition ? getDefinition(target) : undefined;
-    const subLabel = targetDefinition
-      ? resolveFieldLabel(targetDefinition, parsed.subField)
-      : formatFieldPathLabel(parsed.subField);
-
-    if (target) {
-      return `${resolveRelationTargetLabel(target, targetDefinition)} ${subLabel}`;
-    }
-
-    return subLabel;
+  const leaf = resolveLayoutFieldLeaf(definition, path, getDefinition);
+  if (!leaf || !leaf.pathPrefix) {
+    return resolveFieldLabel(definition, path.trim());
   }
 
-  return resolveFieldLabel(definition, path.trim());
+  const segments = leaf.pathPrefix.split(".");
+  let currentDefinition = definition;
+  const labels: string[] = [];
+
+  for (const segment of segments) {
+    for (const [fieldName, meta] of Object.entries(currentDefinition.fields)) {
+      if (
+        meta.relation &&
+        (meta.relation.type === "many-to-one" ||
+          meta.relation.type === "one-to-one") &&
+        (fieldName === segment || meta.relation.target === segment)
+      ) {
+        const target = meta.relation.target;
+        const targetDefinition =
+          target && getDefinition ? getDefinition(target) : undefined;
+        labels.push(
+          resolveRelationTargetLabel(target ?? segment, targetDefinition),
+        );
+        if (targetDefinition) {
+          currentDefinition = targetDefinition;
+        }
+        break;
+      }
+
+      if (
+        isOneToManyRelationField(meta) &&
+        (fieldName === segment || meta.relation?.target === segment)
+      ) {
+        const childEntity = meta.relation?.target ?? fieldName;
+        const childDefinition = getDefinition?.(childEntity);
+        labels.push(resolveRelationTargetLabel(childEntity, childDefinition));
+        if (childDefinition) {
+          currentDefinition = childDefinition;
+        }
+        break;
+      }
+    }
+  }
+
+  const leafDefinition = leaf.leafDefinition as SerializableEntityDefinition;
+  labels.push(resolveFieldLabel(leafDefinition, leaf.leafFieldName));
+  return labels.join(" ");
 }
 
 export function entityCardViewAdapter(
@@ -392,23 +218,14 @@ export function entityCardViewAdapter(
   );
 
   const fieldDescriptors: FieldDescriptor[] = fieldOptions.map((path) => {
+    const leaf = resolveLayoutFieldLeaf(definition, path, getDefinition);
+    const leafDefinition = leaf?.leafDefinition as
+      | SerializableEntityDefinition
+      | undefined;
+    const targetFieldUi =
+      leafDefinition?.ui.fields?.[leaf?.leafFieldName ?? ""];
     const root = path.includes(".") ? path.split(".")[0]! : path;
     const fieldUi = definition.ui.fields?.[root];
-    const parsed = parseRelationFieldPath(definition, path, getDefinition);
-    const targetDefinition =
-      parsed && getDefinition
-        ? parsed.relationKind === "one-to-many"
-          ? getDefinition(
-              definition.fields[parsed.relationField]?.relation?.target ??
-                parsed.relationField,
-            )
-          : getDefinition(
-              definition.fields[parsed.relationField]?.relation?.target ?? "",
-            )
-        : undefined;
-    const targetFieldUi = parsed
-      ? targetDefinition?.ui.fields?.[parsed.subField]
-      : undefined;
 
     return {
       path,

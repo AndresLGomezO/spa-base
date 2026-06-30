@@ -171,6 +171,7 @@ export function EntityForm({
       !hasPendingPrefillRelationFetch({
         definition,
         values: valuesRef.current,
+        getDefinition,
         prefilledPopulated: createPrefillPopulated,
       })
     ) {

@@ -216,6 +216,22 @@ function createPaymentCreateLayout() {
   return layout;
 }
 
+function createTransactionCreateLayout() {
+  const locator = { scope: "root" as const, columnIndex: 0 };
+  let layout = createEmptyLayout(1);
+  layout = addComponentRowAt(
+    layout,
+    locator,
+    createDefaultComponent("text", "contract.provider.name"),
+  );
+  layout = addComponentRowAt(
+    layout,
+    locator,
+    createDefaultComponent("form-field", "amount"),
+  );
+  return layout;
+}
+
 const paymentWithContractDisplay: EntityCatalogEntry = {
   name: "payment",
   collection: "payments",
@@ -233,6 +249,32 @@ const paymentWithContractDisplay: EntityCatalogEntry = {
     views: [{ type: "table", name: "default", fields: ["amount"] }],
     forms: {
       create: { layout: createPaymentCreateLayout() },
+      edit: { sections: [{ title: "Details", fields: ["amount"] }] },
+    },
+    fields: {
+      amount: { label: "Amount", component: "number" },
+      contractId: { label: "Contract", component: "relation" },
+    },
+  },
+};
+
+const transactionWithNestedDisplay: EntityCatalogEntry = {
+  name: "transaction",
+  collection: "transactions",
+  permissions: ["transaction.read", "transaction.create"],
+  fields: {
+    amount: { type: "number", required: true, optional: false },
+    contractId: {
+      type: "reference",
+      required: true,
+      optional: false,
+      relation: { type: "many-to-one", target: "contract" },
+    },
+  },
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["amount"] }],
+    forms: {
+      create: { layout: createTransactionCreateLayout() },
       edit: { sections: [{ title: "Details", fields: ["amount"] }] },
     },
     fields: {
@@ -279,6 +321,39 @@ describe("EntityForm", () => {
 
     await waitFor(() => {
       expect(screen.getByText("Annual contract")).toBeInTheDocument();
+    });
+    expect(getEntity).not.toHaveBeenCalled();
+  });
+
+  it("renders three-hop prefilled relation display components on create", async () => {
+    render(
+      <TestEntityFormProviders
+        items={[
+          transactionWithNestedDisplay,
+          contractCatalogEntry,
+          providerCatalogEntry,
+        ]}
+      >
+        <EntityForm
+          entityName="transaction"
+          mode="create"
+          createPrefill={{ contractId: "contract-1" }}
+          createPrefillPopulated={{
+            contractId: {
+              id: "contract-1",
+              providerId: "provider-1",
+              _populated: {
+                providerId: { id: "provider-1", name: "Acme Provider" },
+              },
+            },
+          }}
+          onCancel={vi.fn()}
+        />
+      </TestEntityFormProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Acme Provider")).toBeInTheDocument();
     });
     expect(getEntity).not.toHaveBeenCalled();
   });

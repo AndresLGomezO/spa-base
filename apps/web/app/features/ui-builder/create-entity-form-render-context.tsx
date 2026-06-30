@@ -26,6 +26,7 @@ import {
   resolveLayoutSlotDisplayMeta,
   resolveLayoutSlotLabel,
 } from "../../components/entity/resolve-layout-slot-display";
+import { resolveLayoutFieldLeafForEntity } from "../../components/entity/resolve-layout-field-leaf";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
 import { createComponentClickContextHelpers } from "./create-component-click-context-helpers.js";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
@@ -105,8 +106,17 @@ export function createEntityFormRenderContext(options: {
         options.definition,
         getDefinition,
       );
-      const root = path.includes(".") ? (path.split(".")[0] ?? path) : path;
-      const fieldMeta = options.definition.fields[root];
+      const leaf = resolveLayoutFieldLeafForEntity(
+        options.definition,
+        path,
+        getDefinition,
+      );
+      const leafDefinition = leaf
+        ? (getDefinition?.(leaf.leafEntityName) ?? options.definition)
+        : options.definition;
+      const fieldMeta = leaf
+        ? leafDefinition.fields[leaf.leafFieldName]
+        : options.definition.fields[path];
       return fieldMeta?.isArray ? { ...meta, isArray: true as const } : meta;
     },
     resolveFieldLabel: (path) =>

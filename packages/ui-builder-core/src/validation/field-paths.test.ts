@@ -127,6 +127,62 @@ describe("listLayoutFieldOptions", () => {
     ).toBe(true);
   });
 
+  it("includes three-hop relation display paths", () => {
+    const bankDefinition: FieldPathValidationDefinition = {
+      name: "bank",
+      fields: { code: {} },
+    };
+
+    const providerDefinition: FieldPathValidationDefinition = {
+      name: "provider",
+      fields: {
+        name: {},
+        bankId: {
+          relation: { type: "many-to-one", target: "bank" },
+        },
+      },
+    };
+
+    const contractDefinition: FieldPathValidationDefinition = {
+      name: "contract",
+      fields: {
+        providerId: {
+          relation: { type: "many-to-one", target: "provider" },
+        },
+      },
+    };
+
+    const transactionDefinition: FieldPathValidationDefinition = {
+      name: "transaction",
+      fields: {
+        contractId: {
+          relation: { type: "many-to-one", target: "contract" },
+        },
+      },
+    };
+
+    const resolveTarget = (
+      target: string,
+    ): FieldPathValidationDefinition | undefined => {
+      if (target === "contract") {
+        return contractDefinition;
+      }
+      if (target === "provider") {
+        return providerDefinition;
+      }
+      if (target === "bank") {
+        return bankDefinition;
+      }
+      return undefined;
+    };
+
+    const options = listLayoutFieldOptions(transactionDefinition, {
+      resolveTarget,
+    });
+
+    expect(options).toContain("contract.provider.bank.code");
+  });
+
   it("includes one-to-many child field paths", () => {
     const options = listLayoutFieldOptions(
       {

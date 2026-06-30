@@ -1,4 +1,5 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
+import { resolveLayoutFieldLeaf } from "@repo/ui-builder-core";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import {
@@ -10,10 +11,8 @@ import {
   readLayoutStaticImageUrl,
 } from "../../lib/layout-static-image";
 import { getEntityCellDisplayMeta } from "./resolve-entity-cell-value";
-import {
-  parseRelationFieldPath,
-  type RelationDefinitionLookup,
-} from "./resolve-relation-field-path";
+import { resolveLayoutFieldRecord } from "./resolve-layout-field-leaf";
+import type { RelationDefinitionLookup } from "./resolve-relation-field-path";
 
 export function readEntityFileDownloadUrl(value: unknown): string | null {
   if (!isEntityFileReferenceWithDownload(value)) {
@@ -82,23 +81,20 @@ export function resolveEntityLayoutFieldDefaultImageSrc(options: {
     return null;
   }
 
-  const parsed = parseRelationFieldPath(options.definition, trimmedPath);
-  if (parsed) {
-    const relationMeta =
-      options.definition.fields[parsed.relationField]?.relation;
-
-    if (relationMeta && options.getDefinition) {
-      const targetDefinition = options.getDefinition(relationMeta.target);
-      const targetFieldMeta = targetDefinition?.fields[parsed.subField];
-      return readFieldDefaultImageUrl(targetFieldMeta);
-    }
+  const leaf = resolveLayoutFieldLeaf(
+    options.definition,
+    trimmedPath,
+    options.getDefinition,
+  );
+  if (leaf) {
+    const leafDefinition =
+      options.getDefinition?.(leaf.leafEntityName) ??
+      (leaf.leafDefinition as SerializableEntityDefinition);
+    const targetFieldMeta = leafDefinition.fields[leaf.leafFieldName];
+    return readFieldDefaultImageUrl(targetFieldMeta);
   }
 
-  const rootField = trimmedPath.includes(".")
-    ? (trimmedPath.split(".", 1)[0] ?? trimmedPath)
-    : trimmedPath;
-
-  return readFieldDefaultImageUrl(options.definition.fields[rootField]);
+  return readFieldDefaultImageUrl(options.definition.fields[trimmedPath]);
 }
 
 /** Default / field-level fallback when the record has no file to resolve. */
@@ -110,26 +106,27 @@ export function resolveEntityLayoutImagePlaceholderSrc(options: {
   ) => EntityCatalogEntry | undefined;
 }): string | null {
   const trimmedPath = options.fieldPath.trim();
-  const parsed = parseRelationFieldPath(options.definition, trimmedPath);
-  if (parsed) {
-    const relationMeta =
-      options.definition.fields[parsed.relationField]?.relation;
+  const leaf = resolveLayoutFieldLeaf(
+    options.definition,
+    trimmedPath,
+    options.getDefinition,
+  );
+  if (leaf) {
+    const leafDefinition =
+      options.getDefinition?.(leaf.leafEntityName) ??
+      (leaf.leafDefinition as SerializableEntityDefinition);
+    const targetFieldMeta = leafDefinition.fields[leaf.leafFieldName];
+    const defaultImageUrl = readFieldDefaultImageUrl(targetFieldMeta);
+    if (defaultImageUrl) {
+      return defaultImageUrl;
+    }
 
-    if (relationMeta && options.getDefinition) {
-      const targetDefinition = options.getDefinition(relationMeta.target);
-      const subField = parsed.subField;
-      const targetFieldMeta = targetDefinition?.fields[subField];
-      const defaultImageUrl = readFieldDefaultImageUrl(targetFieldMeta);
-      if (defaultImageUrl) {
-        return defaultImageUrl;
-      }
-
-      const subDisplayMeta = targetDefinition
-        ? getEntityCellDisplayMeta(subField, targetDefinition)
-        : {};
-      if (subDisplayMeta.fallbackImageUrl) {
-        return subDisplayMeta.fallbackImageUrl;
-      }
+    const subDisplayMeta = getEntityCellDisplayMeta(
+      leaf.leafFieldName,
+      leaf.leafDefinition as SerializableEntityDefinition,
+    );
+    if (subDisplayMeta.fallbackImageUrl) {
+      return subDisplayMeta.fallbackImageUrl;
     }
   }
 
@@ -189,24 +186,26 @@ export function shouldFetchEntityLayoutImageDownload(options: {
     return false;
   }
 
-  const parsed = parseRelationFieldPath(
+  const resolved = resolveLayoutFieldRecord(
+    options.item,
     options.definition,
     trimmedPath,
     options.getDefinition,
   );
-  if (!parsed || parsed.relationKind === "one-to-many") {
+  if (resolved) {
     return false;
   }
 
-  const populated = options.item._populated as
-    | Record<string, Record<string, unknown> | null>
-    | undefined;
-
-  if (populated && parsed.relationField in populated) {
+  const leaf = resolveLayoutFieldLeaf(
+    options.definition,
+    trimmedPath,
+    options.getDefinition,
+  );
+  if (!leaf?.rootRelationField) {
     return false;
   }
 
-  const foreignKey = options.item[parsed.relationField];
+  const foreignKey = options.item[leaf.rootRelationField];
   return typeof foreignKey === "string" && foreignKey.length > 0;
 }
 
@@ -230,23 +229,16 @@ export function resolveEntityLayoutImageStorageDownloadTarget(options: {
   }
 
   const trimmedPath = options.fieldPath.trim();
-  const parsed = parseRelationFieldPath(
+  const leaf = resolveLayoutFieldLeaf(
     options.definition,
     trimmedPath,
     options.getDefinition,
   );
-  if (parsed) {
-    const relationMeta =
-      options.definition.fields[parsed.relationField]?.relation;
-    const entityName =
-      parsed.relationKind === "one-to-many"
-        ? (relationMeta?.target ?? parsed.relationField)
-        : relationMeta?.target;
-    if (!entityName) {
-      return null;
-    }
-
-    return { entityName, storagePath };
+  if (leaf) {
+    return {
+      entityName: leaf.leafEntityName,
+      storagePath,
+    };
   }
 
   const rootField = trimmedPath.includes(".")
@@ -274,31 +266,46 @@ export function resolveEntityLayoutImageDownloadTarget(options: {
     return null;
   }
 
-  const parsed = parseRelationFieldPath(
+  const resolved = resolveLayoutFieldRecord(
+    options.item,
     options.definition,
     trimmedPath,
     options.getDefinition,
   );
-  if (parsed) {
-    if (parsed.relationKind === "one-to-many") {
+  if (resolved) {
+    const recordId = resolved.record.id;
+    if (typeof recordId !== "string" || recordId.length === 0) {
       return null;
     }
 
-    const { relationField, subField } = parsed;
-    const relationMeta = options.definition.fields[relationField]?.relation;
-    const foreignKey = options.item[relationField];
-    if (
-      !relationMeta ||
-      typeof foreignKey !== "string" ||
-      foreignKey.length === 0
-    ) {
+    return {
+      entityName: resolved.leaf.leafEntityName,
+      recordId,
+      fieldName: resolved.leaf.leafFieldName,
+    };
+  }
+
+  const leaf = resolveLayoutFieldLeaf(
+    options.definition,
+    trimmedPath,
+    options.getDefinition,
+  );
+  if (leaf?.rootRelationField) {
+    const foreignKey = options.item[leaf.rootRelationField];
+    if (typeof foreignKey !== "string" || foreignKey.length === 0) {
+      return null;
+    }
+
+    const relationMeta =
+      options.definition.fields[leaf.rootRelationField]?.relation;
+    if (!relationMeta) {
       return null;
     }
 
     return {
       entityName: relationMeta.target,
       recordId: foreignKey,
-      fieldName: subField,
+      fieldName: leaf.leafFieldName,
     };
   }
 

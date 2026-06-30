@@ -59,7 +59,6 @@ describe("hydratePrefilledRelationDisplay", () => {
     vi.mocked(getEntity).mockResolvedValueOnce({
       id: "contract-1",
       name: "Annual contract",
-      providerId: "provider-1",
     });
 
     const hydrated = await hydratePrefilledRelationDisplay({
@@ -76,7 +75,51 @@ describe("hydratePrefilledRelationDisplay", () => {
       contractId: {
         id: "contract-1",
         name: "Annual contract",
-        providerId: "provider-1",
+      },
+    });
+  });
+
+  it("hydrates nested relation populated slices", async () => {
+    vi.mocked(getEntity).mockResolvedValueOnce({
+      id: "contract-1",
+      providerId: "provider-1",
+    });
+    vi.mocked(getEntity).mockResolvedValueOnce({
+      id: "provider-1",
+      name: "Acme Provider",
+      logo: null,
+    });
+
+    const hydrated = await hydratePrefilledRelationDisplay({
+      definition: paymentDefinition,
+      values: { contractId: "contract-1" },
+      getDefinition: (entityName) => {
+        if (entityName === "contract") {
+          return contractDefinition;
+        }
+        if (entityName === "provider") {
+          return {
+            ...contractDefinition,
+            name: "provider",
+            fields: {
+              name: { type: "string", required: true, optional: false },
+              logo: { type: "image", required: false, optional: true },
+            },
+          } as typeof contractDefinition;
+        }
+        return undefined;
+      },
+    });
+
+    expect(getEntity).toHaveBeenCalledTimes(2);
+    expect(
+      (hydrated._populated as Record<string, Record<string, unknown>>)
+        .contractId?._populated,
+    ).toEqual({
+      providerId: {
+        id: "provider-1",
+        name: "Acme Provider",
+        logo: null,
       },
     });
   });

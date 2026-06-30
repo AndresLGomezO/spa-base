@@ -134,4 +134,118 @@ describe("resolveEntityFieldPath", () => {
       "bankId",
     );
   });
+
+  it("reads three-hop relation paths via nested populated records", () => {
+    const transactionDefinition = {
+      name: "transaction",
+      collection: "transactions",
+      permissions: [],
+      fields: {
+        contractId: {
+          type: "reference",
+          required: false,
+          optional: true,
+          relation: { type: "many-to-one", target: "contract" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const contractWithProviderBank = {
+      name: "contract",
+      collection: "contracts",
+      permissions: [],
+      fields: {
+        providerId: {
+          type: "reference",
+          required: false,
+          optional: true,
+          relation: { type: "many-to-one", target: "provider" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const providerDefinition = {
+      name: "provider",
+      collection: "providers",
+      permissions: [],
+      fields: {
+        bankId: {
+          type: "reference",
+          required: false,
+          optional: true,
+          relation: { type: "many-to-one", target: "bank" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const bankDefinition = {
+      name: "bank",
+      collection: "banks",
+      permissions: [],
+      fields: {
+        code: { type: "string", required: true, optional: false },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const getDefinition = (entityName: string) => {
+      if (entityName === "contract") {
+        return contractWithProviderBank;
+      }
+      if (entityName === "provider") {
+        return providerDefinition;
+      }
+      if (entityName === "bank") {
+        return bankDefinition;
+      }
+      return undefined;
+    };
+
+    expect(
+      resolveEntityFieldPath(
+        {
+          id: "tx_1",
+          contractId: "contract_1",
+          _populated: {
+            contractId: {
+              id: "contract_1",
+              providerId: "provider_1",
+              _populated: {
+                providerId: {
+                  id: "provider_1",
+                  bankId: "bank_1",
+                  _populated: {
+                    bankId: { id: "bank_1", code: "BOG" },
+                  },
+                },
+              },
+            },
+          },
+        },
+        "contract.provider.bank.code",
+        transactionDefinition,
+        () => null,
+        { getDefinition },
+      ),
+    ).toBe("BOG");
+  });
 });

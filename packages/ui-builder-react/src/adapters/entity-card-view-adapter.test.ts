@@ -248,4 +248,79 @@ describe("entityCardViewAdapter", () => {
 
     expect(imageFields.map((field) => field.path)).toContain("logo");
   });
+
+  it("includes nested relation image paths for multi-hop display bindings", () => {
+    const providerDefinition: SerializableEntityDefinition = {
+      name: "provider",
+      collection: "providers",
+      permissions: [],
+      fields: {
+        name: { type: "string", required: true, optional: false },
+        logo: { type: "image", required: false, optional: true },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    };
+
+    const contractDefinitionWithProvider: SerializableEntityDefinition = {
+      name: "contract",
+      collection: "contracts",
+      permissions: [],
+      fields: {
+        providerId: {
+          type: "relation",
+          required: false,
+          optional: true,
+          relation: { type: "many-to-one", target: "provider" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    };
+
+    const transactionDefinition: SerializableEntityDefinition = {
+      name: "transaction",
+      collection: "transactions",
+      permissions: [],
+      fields: {
+        contractId: {
+          type: "relation",
+          required: true,
+          optional: false,
+          relation: { type: "many-to-one", target: "contract" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    };
+
+    const getDefinition = (entityName: string) => {
+      if (entityName === "contract") {
+        return contractDefinitionWithProvider;
+      }
+      if (entityName === "provider") {
+        return providerDefinition;
+      }
+      return lookupDefinitions[entityName];
+    };
+
+    const { fieldDescriptors } = entityCardViewAdapter(
+      transactionDefinition,
+      getDefinition,
+    );
+    const imageFields = filterFieldsForComponentKind(fieldDescriptors, "image");
+
+    expect(imageFields.map((field) => field.path)).toContain(
+      "contract.provider.logo",
+    );
+  });
 });

@@ -231,6 +231,93 @@ describe("shouldFetchEntityLayoutImageDownload", () => {
       }),
     ).toBe(true);
   });
+
+  it("resolves nested relation image download targets from populated records", () => {
+    const transactionDefinition = {
+      name: "transaction",
+      collection: "transactions",
+      permissions: [],
+      fields: {
+        contractId: {
+          type: "reference",
+          required: true,
+          optional: false,
+          relation: { type: "many-to-one", target: "contract" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const contractDefinition = {
+      name: "contract",
+      collection: "contracts",
+      permissions: [],
+      fields: {
+        providerId: {
+          type: "reference",
+          required: false,
+          optional: true,
+          relation: { type: "many-to-one", target: "provider" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const providerDefinition = {
+      name: "provider",
+      collection: "providers",
+      permissions: [],
+      fields: {
+        logo: { type: "image", required: false, optional: true },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    expect(
+      resolveEntityLayoutImageDownloadTarget({
+        item: {
+          id: "tx_1",
+          contractId: "contract_1",
+          _populated: {
+            contractId: {
+              id: "contract_1",
+              providerId: "provider_1",
+              _populated: {
+                providerId: { id: "provider_1", logo: null },
+              },
+            },
+          },
+        },
+        fieldPath: "contract.provider.logo",
+        definition: transactionDefinition,
+        getDefinition: (entityName) => {
+          if (entityName === "contract") {
+            return contractDefinition;
+          }
+          if (entityName === "provider") {
+            return providerDefinition;
+          }
+          return undefined;
+        },
+      }),
+    ).toEqual({
+      entityName: "provider",
+      recordId: "provider_1",
+      fieldName: "logo",
+    });
+  });
 });
 
 describe("resolveEntityLayoutImageStorageDownloadTarget", () => {

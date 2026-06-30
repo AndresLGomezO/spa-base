@@ -12,6 +12,7 @@ import {
 import type { UiComponentConfig } from "../types/component.js";
 import { listDataSourcePaths } from "../resolver/data-source.js";
 import type { ColumnNode, RowNode } from "../types/layout.js";
+import { collectNestedRelationLayoutFieldPaths } from "./layout-field-leaf.js";
 
 const ALLOWED_SYSTEM_FIELDS = new Set(["id", "createdAt", "updatedAt"]);
 
@@ -596,48 +597,13 @@ export function listLayoutFieldOptions(
           continue;
         }
 
-        for (const [subFieldName, subMeta] of Object.entries(
-          targetDefinition.fields,
-        )) {
-          if (subMeta.type === "document") {
-            continue;
-          }
-
-          options.add(`${target}.${subFieldName}`);
-        }
-
-        for (const [, innerMeta] of Object.entries(targetDefinition.fields)) {
-          if (
-            !innerMeta.relation ||
-            (innerMeta.relation.type !== "many-to-one" &&
-              innerMeta.relation.type !== "one-to-one")
-          ) {
-            continue;
-          }
-
-          const innerTarget = innerMeta.relation.target;
-          if (!innerTarget) {
-            continue;
-          }
-
-          const innerTargetDefinition = params?.resolveTarget?.(innerTarget);
-          if (!innerTargetDefinition) {
-            for (const subfield of ["name", "code"] as const) {
-              options.add(`${target}.${innerTarget}.${subfield}`);
-            }
-            continue;
-          }
-
-          for (const [leafFieldName, leafMeta] of Object.entries(
-            innerTargetDefinition.fields,
-          )) {
-            if (leafMeta.type === "document") {
-              continue;
-            }
-
-            options.add(`${target}.${innerTarget}.${leafFieldName}`);
-          }
-        }
+        collectNestedRelationLayoutFieldPaths(
+          targetDefinition,
+          { resolveTarget: params?.resolveTarget },
+          options,
+          target,
+          1,
+        );
       }
       continue;
     }
