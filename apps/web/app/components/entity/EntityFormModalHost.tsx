@@ -93,7 +93,8 @@ function EntityFormModalHostInner({
   }, [onClose]);
 
   const handleSuccess = useCallback(() => {
-    void invalidateLivePageData(queryClient).then(handleClose);
+    handleClose();
+    void invalidateLivePageData(queryClient);
   }, [handleClose, queryClient]);
 
   const formModalTitle = useMemo(() => {
