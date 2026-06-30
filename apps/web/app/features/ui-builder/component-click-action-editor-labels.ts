@@ -58,6 +58,15 @@ export function componentClickActionEditorLabels(
     createFormPrefillSource: t(
       "entity.viewSettings.clickAction.createFormPrefillSource",
     ),
+    createFormPrefillPrimarySource: t(
+      "entity.viewSettings.clickAction.createFormPrefillPrimarySource",
+    ),
+    createFormPrefillFallbackSource: t(
+      "entity.viewSettings.clickAction.createFormPrefillFallbackSource",
+    ),
+    createFormPrefillUseFallback: t(
+      "entity.viewSettings.clickAction.createFormPrefillUseFallback",
+    ),
     createFormPrefillSourceField: t(
       "entity.viewSettings.clickAction.createFormPrefillSourceField",
     ),

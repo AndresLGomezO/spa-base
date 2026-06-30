@@ -158,6 +158,40 @@ describe("componentRowSchema clickAction", () => {
     });
   });
 
+  it("accepts entityCreateForm prefill mappings with fallback sources", () => {
+    const createForm = componentRowSchema.parse({
+      type: "component",
+      id: "row-8",
+      clickAction: {
+        type: "entityCreateForm",
+        target: { scope: "entity", entityName: "transaction" },
+        prefill: [
+          {
+            targetField: "accountId",
+            source: { type: "field", path: "contactId" },
+            fallback: { type: "field", path: "id" },
+          },
+        ],
+      },
+      component: {
+        kind: "text",
+        primary: { type: "static", value: "Add transaction" },
+      },
+    }) as ComponentRowNode;
+
+    expect(createForm.clickAction).toEqual({
+      type: "entityCreateForm",
+      target: { scope: "entity", entityName: "transaction" },
+      prefill: [
+        {
+          targetField: "accountId",
+          source: { type: "field", path: "contactId" },
+          fallback: { type: "field", path: "id" },
+        },
+      ],
+    });
+  });
+
   it("accepts optional formDesignId on form modal click actions", () => {
     const createForm = componentRowSchema.parse({
       type: "component",

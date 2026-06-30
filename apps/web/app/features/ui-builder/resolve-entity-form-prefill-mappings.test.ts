@@ -71,6 +71,46 @@ describe("resolveEntityFormPrefillMappings", () => {
     vi.useRealTimers();
   });
 
+  it("uses fallback source when primary value is empty", () => {
+    const prefill = resolveEntityFormPrefillMappings(
+      [
+        {
+          targetField: "accountId",
+          source: { type: "field", path: "missingId" },
+          fallback: { type: "field", path: "id" },
+        },
+        {
+          targetField: "status",
+          source: { type: "field", path: "missingStatus" },
+          fallback: { type: "enumValue", value: "draft" },
+        },
+      ],
+      targetDefinition as never,
+      (path) => (path === "id" ? "account-1" : null),
+    );
+
+    expect(prefill).toEqual({
+      accountId: "account-1",
+      status: "draft",
+    });
+  });
+
+  it("prefers primary source over fallback when both resolve", () => {
+    const prefill = resolveEntityFormPrefillMappings(
+      [
+        {
+          targetField: "accountId",
+          source: { type: "field", path: "id" },
+          fallback: { type: "enumValue", value: "draft" },
+        },
+      ],
+      targetDefinition as never,
+      (path) => (path === "id" ? "account-1" : null),
+    );
+
+    expect(prefill).toEqual({ accountId: "account-1" });
+  });
+
   it("uses enum value for enum targets when value is allowed", () => {
     const prefill = resolveEntityFormPrefillMappings(
       [

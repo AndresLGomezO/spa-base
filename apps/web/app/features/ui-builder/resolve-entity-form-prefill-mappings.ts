@@ -129,12 +129,22 @@ export function resolveEntityFormPrefillMappings(
       continue;
     }
 
-    const value = resolvePrefillSourceValue(
+    const primaryValue = resolvePrefillSourceValue(
       mapping.source,
       targetField,
       targetDefinition,
       resolveField,
     );
+    const value =
+      primaryValue ??
+      (mapping.fallback
+        ? resolvePrefillSourceValue(
+            mapping.fallback,
+            targetField,
+            targetDefinition,
+            resolveField,
+          )
+        : undefined);
     if (value) {
       prefill[targetField] = value;
     }

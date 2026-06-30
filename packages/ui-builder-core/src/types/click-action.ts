@@ -15,6 +15,7 @@ export type EntityFormPrefillSource =
 export type EntityFormPrefillMapping = {
   readonly targetField: string;
   readonly source: EntityFormPrefillSource;
+  readonly fallback?: EntityFormPrefillSource;
 };
 
 export type ComponentClickAction =

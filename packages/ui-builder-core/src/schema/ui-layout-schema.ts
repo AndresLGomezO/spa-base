@@ -64,6 +64,7 @@ const entityFormPrefillMappingSchema = z
   .object({
     targetField: z.string().trim().min(1),
     source: entityFormPrefillSourceSchema,
+    fallback: entityFormPrefillSourceSchema.optional(),
   })
   .strict();
 
