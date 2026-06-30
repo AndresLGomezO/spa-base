@@ -1,3 +1,4 @@
+import type { NavigateFunction } from "react-router";
 import { Button, Heading } from "@repo/ui";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type {
@@ -22,7 +23,8 @@ import {
   resolveLayoutSlotLabel,
 } from "../../components/entity/resolve-layout-slot-display";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
-import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context";
+import { createComponentClickContextHelpers } from "./create-component-click-context-helpers.js";
+import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
 import { formComponentContainerClassName } from "./form-component-container-class-name";
 
 export function createEntityFormRenderContext(options: {
@@ -51,6 +53,7 @@ export function createEntityFormRenderContext(options: {
     entityName: string,
   ) => EntityCatalogEntry | undefined;
   readonly usePreviewSamples?: boolean;
+  readonly navigate?: NavigateFunction;
 }): LayoutRenderContext {
   const canWrite = options.canWrite;
   const getDefinition = options.getDefinition;
@@ -69,18 +72,25 @@ export function createEntityFormRenderContext(options: {
         resolveLayoutSlotLabel(fieldPath, options.definition, getDefinition)
     : layoutImageContext.resolvePreviewSampleValue;
 
+  const clickItem =
+    options.recordId != null
+      ? { ...options.values, id: options.recordId }
+      : options.values;
+
+  const resolveField = (path: string) =>
+    resolveEntityFieldPath(
+      options.values,
+      path,
+      options.definition,
+      () => null,
+    );
+
   return {
     mode: "form",
     wizardStepContent: options.wizardStepContent,
     data: options.values,
     locale: options.locale,
-    resolveField: (path) =>
-      resolveEntityFieldPath(
-        options.values,
-        path,
-        options.definition,
-        () => null,
-      ),
+    resolveField,
     resolveFieldMeta: (path) => {
       const meta = resolveLayoutSlotDisplayMeta(
         path,
@@ -205,5 +215,13 @@ export function createEntityFormRenderContext(options: {
     resolveImage: layoutImageContext.resolveImage,
     isImagePresent: layoutImageContext.isImagePresent,
     lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
+    ...createComponentClickContextHelpers({
+      item: clickItem,
+      entityName: options.entityName,
+      definition: options.definition,
+      resolveField,
+      getDefinition,
+      navigate: options.navigate,
+    }),
   };
 }

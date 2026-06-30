@@ -35,6 +35,8 @@ import { ViewFilterComponentEditor } from "../ui-builder/ViewFilterComponentEdit
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
 import { TenantDashboardStaticImageValueEditor } from "./TenantDashboardStaticImageValueEditor";
+import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
+import type { SerializableEntityDefinition } from "@repo/entities";
 
 interface DashboardLayoutDesignerComponentRowPanelProps {
   readonly rowRef: ComponentRowRef;
@@ -60,6 +62,15 @@ export function DashboardLayoutDesignerComponentRowPanel({
   const componentEditorLabels = useFormDesignerComponentEditorLabels();
   const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
   const fieldDescriptors = useMemo(() => [] as const, []);
+  const clickActionDefinition = useMemo((): SerializableEntityDefinition => {
+    return (
+      items[0] ?? {
+        name: "dashboard",
+        fields: {},
+        ui: { fields: {} },
+      }
+    );
+  }, [items]);
 
   const row = findRowByRef(binding.layout, rowRef);
 
@@ -90,10 +101,12 @@ export function DashboardLayoutDesignerComponentRowPanel({
         row={row}
         rowRef={rowRef}
         binding={binding}
+        definition={clickActionDefinition}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
       />
     );
   }
@@ -165,6 +178,15 @@ export function DashboardLayoutDesignerComponentRowPanel({
           onChange={(component) => binding.updateComponent(rowRef, component)}
         />
       ) : null}
+
+      <ComponentRowClickActionPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        definition={clickActionDefinition}
+        fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

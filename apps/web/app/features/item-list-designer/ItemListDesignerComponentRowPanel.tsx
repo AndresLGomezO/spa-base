@@ -23,6 +23,7 @@ import { useAnyPermission } from "../../auth/useAnyPermission";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { LucideIconField } from "../../components/shared/LucideIconField";
 import { LayoutStaticImageValueEditor } from "../ui-builder/LayoutStaticImageValueEditor";
+import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 import { useFormDesignerComponentEditorLabels } from "../form-designer/form-designer-component-editor-labels";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
@@ -45,7 +46,7 @@ export function ItemListDesignerComponentRowPanel({
 }: ItemListDesignerComponentRowPanelProps) {
   const { t } = useTranslation("common");
   const { editor, structureScope } = useItemListDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const canEdit = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
 
@@ -62,8 +63,9 @@ export function ItemListDesignerComponentRowPanel({
   const allowedKinds = componentKindsForSurface(designSurface);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const row = findRowByRef(binding.layout, rowRef);
@@ -95,10 +97,12 @@ export function ItemListDesignerComponentRowPanel({
         row={row}
         rowRef={rowRef}
         binding={binding}
+        definition={definition}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
       />
     );
   }
@@ -149,6 +153,15 @@ export function ItemListDesignerComponentRowPanel({
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      <ComponentRowClickActionPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        definition={definition}
+        fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

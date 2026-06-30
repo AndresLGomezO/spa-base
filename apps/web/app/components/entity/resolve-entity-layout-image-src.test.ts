@@ -6,6 +6,7 @@ import {
   resolveEntityLayoutImageDownloadTarget,
   resolveEntityLayoutImagePlaceholderSrc,
   resolveEntityLayoutImageSrc,
+  resolveEntityLayoutImageStorageDownloadTarget,
   shouldFetchEntityLayoutImageDownload,
 } from "./resolve-entity-layout-image-src";
 
@@ -120,7 +121,21 @@ describe("resolveEntityLayoutFieldDefaultImageSrc", () => {
 });
 
 describe("resolveEntityLayoutImageDownloadTarget", () => {
-  it("resolves nested relation image fields to the target entity record", () => {
+  it("resolves nested relation image fields using the target entity alias", () => {
+    expect(
+      resolveEntityLayoutImageDownloadTarget({
+        item: { id: "acc_1", bankId: "bank_banco_bogota" },
+        fieldPath: "bank.logo",
+        definition: accountDefinition,
+      }),
+    ).toEqual({
+      entityName: "bank",
+      recordId: "bank_banco_bogota",
+      fieldName: "logo",
+    });
+  });
+
+  it("resolves nested relation image fields via foreign key field name", () => {
     expect(
       resolveEntityLayoutImageDownloadTarget({
         item: { id: "acc_1", bankId: "bank_banco_bogota" },
@@ -159,6 +174,7 @@ describe("shouldFetchEntityLayoutImageDownload", () => {
         item: { id: "rd_prov_06" },
         fieldPath: "logo",
         rawValue: null,
+        definition: accountDefinition,
       }),
     ).toBe(false);
   });
@@ -172,6 +188,7 @@ describe("shouldFetchEntityLayoutImageDownload", () => {
           storagePath: "tenants/t1/entity-files/provider/abc.png",
           fileName: "logo.png",
         },
+        definition: accountDefinition,
       }),
     ).toBe(true);
   });
@@ -188,6 +205,7 @@ describe("shouldFetchEntityLayoutImageDownload", () => {
         },
         fieldPath: "bankId.logo",
         rawValue: null,
+        definition: accountDefinition,
       }),
     ).toBe(false);
   });
@@ -198,7 +216,50 @@ describe("shouldFetchEntityLayoutImageDownload", () => {
         item: { id: "acc_1", bankId: "bank_banco_bogota" },
         fieldPath: "bankId.logo",
         rawValue: null,
+        definition: accountDefinition,
       }),
     ).toBe(true);
+  });
+
+  it("fetches relation image fields when the path uses the target entity alias", () => {
+    expect(
+      shouldFetchEntityLayoutImageDownload({
+        item: { id: "acc_1", bankId: "bank_banco_bogota" },
+        fieldPath: "bank.logo",
+        rawValue: null,
+        definition: accountDefinition,
+      }),
+    ).toBe(true);
+  });
+});
+
+describe("resolveEntityLayoutImageStorageDownloadTarget", () => {
+  it("resolves one-to-many child image file references by storage path", () => {
+    const contractDefinition = {
+      ...accountDefinition,
+      name: "contract",
+      fields: {
+        contractTerms: {
+          type: "relation",
+          required: false,
+          optional: true,
+          relation: { type: "one-to-many", target: "contractTerms" },
+        },
+      },
+    } as SerializableEntityDefinition;
+
+    expect(
+      resolveEntityLayoutImageStorageDownloadTarget({
+        fieldPath: "contractTerms.logo",
+        definition: contractDefinition,
+        rawValue: {
+          storagePath: "tenants/t1/entity-files/contractTerms/logo.png",
+          fileName: "logo.png",
+        },
+      }),
+    ).toEqual({
+      entityName: "contractTerms",
+      storagePath: "tenants/t1/entity-files/contractTerms/logo.png",
+    });
   });
 });

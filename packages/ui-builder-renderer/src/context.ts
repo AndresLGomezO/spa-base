@@ -1,6 +1,7 @@
 import type { CSSProperties, ReactNode } from "react";
 
 import type {
+  ComponentClickAction,
   EntityFieldSelectorComponentConfig,
   FormFieldComponentConfig,
   IconComponentConfig,
@@ -112,16 +113,30 @@ export interface LayoutRenderContext {
     readonly foreignKeyField: string;
   }) => ReactNode;
   readonly fieldAccessFilter?: (fieldPath: string) => boolean;
-  readonly resolveRecordFieldLink?: (fieldPath: string) => {
+  readonly resolveComponentClickTarget?: (
+    action: ComponentClickAction,
+    hints?: { readonly boundFieldPath?: string },
+  ) => {
     readonly href: string;
-    readonly label: string;
+    readonly external: boolean;
+    readonly openInNewTab?: boolean;
     readonly state?: unknown;
   } | null;
-  readonly recordFieldLinkRenderer?: (link: {
+  readonly componentClickWrapper?: (
+    target: {
+      readonly href: string;
+      readonly external: boolean;
+      readonly openInNewTab?: boolean;
+      readonly state?: unknown;
+    },
+    children: ReactNode,
+  ) => ReactNode;
+  readonly navigateComponentClick?: (target: {
     readonly href: string;
-    readonly label: string;
+    readonly external: boolean;
+    readonly openInNewTab?: boolean;
     readonly state?: unknown;
-  }) => ReactNode;
+  }) => void;
   readonly pageHeaderRenderer?: () => ReactNode;
   readonly pageToolbarRenderer?: () => ReactNode;
   readonly pageMetricsRenderer?: () => ReactNode;

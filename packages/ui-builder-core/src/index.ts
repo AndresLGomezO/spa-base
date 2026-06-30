@@ -9,6 +9,8 @@ export type {
   ColumnStackDirection,
 } from "./types/layout.js";
 
+export type { ComponentClickAction } from "./types/click-action.js";
+
 export { resolveColumnStackDirection } from "./types/layout.js";
 export {
   resolveColumnWidthPercents,
@@ -17,6 +19,7 @@ export {
   buildGridTemplateColumnsFromPercents,
 } from "./layout/resolve-column-width-percents.js";
 export { migrateViewSearchFilterLayout } from "./layout/migrate-view-search-filter-layout.js";
+export { resolveComponentBoundFieldPath } from "./layout/resolve-component-bound-field-path.js";
 export {
   defaultDateFilterParam,
   resolveDashboardDateFilterConfig,

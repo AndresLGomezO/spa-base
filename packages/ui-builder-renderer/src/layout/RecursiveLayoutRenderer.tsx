@@ -56,6 +56,7 @@ import {
 import { LayoutGrid, LayoutStack } from "@repo/ui";
 
 import type { LayoutRenderContext } from "../context.js";
+import { wrapRowWithClickAction } from "../click-action/wrap-row-click-action.js";
 import { LayoutRenderOptionsProvider } from "../layout-render-options-context.js";
 import { renderUiComponent } from "../engine/render-component.js";
 import { resolveMotionPreset } from "../motion/resolve-motion.js";
@@ -958,7 +959,7 @@ function renderRow(
         !stretchPercentFillContainer
           ? "self-stretch"
           : undefined;
-      const containerBody = (
+      const containerInner = (
         <div
           key={row.id}
           className={[
@@ -992,6 +993,11 @@ function renderRow(
             columnGridOptions,
           )}
         </div>
+      );
+      const containerBody = wrapRowWithClickAction(
+        row,
+        containerInner,
+        context,
       );
 
       return wrapRowContent(
@@ -1123,7 +1129,11 @@ function renderRow(
           .join(" ")}
         style={rowStyles.style}
       >
-        {renderUiComponent(row.component, context)}
+        {wrapRowWithClickAction(
+          row,
+          renderUiComponent(row.component, context),
+          context,
+        )}
       </div>
     );
 

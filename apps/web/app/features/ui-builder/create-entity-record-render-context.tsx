@@ -1,12 +1,10 @@
 import type { FieldAccessLevel } from "@repo/entities";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 import type { SerializableEntityDefinition } from "@repo/entities";
-import { Link } from "react-router";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
-import { formatRecordDisplayLabel } from "../../components/entity/format-record-display-label";
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
-import type { EntityReturnToState } from "../../routing/entity-navigation";
+import { createComponentClickContextHelpers } from "./create-component-click-context-helpers.js";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context.js";
 
 export function createEntityRecordRenderContext(options: {
@@ -25,14 +23,7 @@ export function createEntityRecordRenderContext(options: {
     usePreviewSamples: options.usePreviewSamples,
   });
 
-  const populated = (options.item._populated ?? {}) as Record<
-    string,
-    Record<string, unknown> | null
-  >;
-
-  const linkState: EntityReturnToState | undefined = options.returnTo
-    ? { returnTo: options.returnTo }
-    : undefined;
+  const resolveField = base.resolveField;
 
   return {
     ...base,
@@ -46,38 +37,13 @@ export function createEntityRecordRenderContext(options: {
       }
       return getFieldAccessLevel(options.fieldAccess, root) !== "none";
     },
-    recordFieldLinkRenderer: (link) => (
-      <Link
-        to={link.href}
-        state={link.state}
-        className="text-primary underline"
-      >
-        {link.label}
-      </Link>
-    ),
-    resolveRecordFieldLink: (fieldPath) => {
-      const root = fieldPath.includes(".")
-        ? (fieldPath.split(".")[0] ?? fieldPath)
-        : fieldPath;
-      const meta = options.definition.fields[root];
-      if (
-        !meta?.relation ||
-        (meta.relation.type !== "many-to-one" &&
-          meta.relation.type !== "one-to-one")
-      ) {
-        return null;
-      }
-      const rawId = options.item[root];
-      if (typeof rawId !== "string" || !rawId) {
-        return null;
-      }
-      const target = populated[root];
-      const label = target ? formatRecordDisplayLabel(target) : rawId;
-      return {
-        href: `/app/${meta.relation.target}/${rawId}`,
-        label,
-        state: linkState,
-      };
-    },
+    ...createComponentClickContextHelpers({
+      item: options.item,
+      entityName: options.definition.name,
+      definition: options.definition,
+      resolveField,
+      getDefinition: options.getDefinition,
+      returnTo: options.returnTo,
+    }),
   };
 }

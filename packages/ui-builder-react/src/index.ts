@@ -8,6 +8,15 @@ export {
 export { entityFormFieldAdapter } from "./adapters/entity-form-field-adapter.js";
 
 export {
+  ComponentRowClickActionEditor,
+  type ComponentRowClickActionEditorProps,
+} from "./components/ComponentRowClickActionEditor.js";
+export {
+  ComponentClickActionEditor,
+  type ComponentClickActionEditorLabels,
+  type ComponentClickActionEditorProps,
+} from "./components/ComponentClickActionEditor.js";
+export {
   UiLayoutStructurePanel,
   type UiLayoutStructurePanelProps,
   type UiLayoutStructurePanelLabels,

@@ -42,7 +42,7 @@ export function DetailViewDesignerStructureTreePanel({
     selectedStructureRowRef,
     structurePanelOpen,
   } = useDetailViewDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const {
     focusedRow,
@@ -63,8 +63,9 @@ export function DetailViewDesignerStructureTreePanel({
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const binding = useMemo(() => resolveLayoutBinding(editor), [editor]);

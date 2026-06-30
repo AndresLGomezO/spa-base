@@ -23,7 +23,7 @@ import { MetricsRowDesignerRowStructureTreePanel } from "./MetricsRowDesignerRow
 export function MetricsRowDesignerRowTreePanel() {
   const { t } = useTranslation("common");
   const { editor, requestComponentRowPanel } = useMetricsRowDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const { setFocusedRow, setSelectedRow, clearColumnHover } =
     useMetricsRowDesignerStructureSession();
@@ -32,8 +32,9 @@ export function MetricsRowDesignerRowTreePanel() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const binding = useMemo(() => resolveRowLayoutBinding(editor), [editor]);

@@ -10,7 +10,10 @@ import {
   readLayoutStaticImageUrl,
 } from "../../lib/layout-static-image";
 import { getEntityCellDisplayMeta } from "./resolve-entity-cell-value";
-import { parseRelationFieldPath } from "./resolve-relation-field-path";
+import {
+  parseRelationFieldPath,
+  type RelationDefinitionLookup,
+} from "./resolve-relation-field-path";
 
 export function readEntityFileDownloadUrl(value: unknown): string | null {
   if (!isEntityFileReferenceWithDownload(value)) {
@@ -170,6 +173,8 @@ export function shouldFetchEntityLayoutImageDownload(options: {
   readonly item: Record<string, unknown>;
   readonly fieldPath: string;
   readonly rawValue: unknown;
+  readonly definition: SerializableEntityDefinition;
+  readonly getDefinition?: RelationDefinitionLookup;
 }): boolean {
   if (readEntityFileDownloadUrl(options.rawValue)) {
     return false;
@@ -184,31 +189,101 @@ export function shouldFetchEntityLayoutImageDownload(options: {
     return false;
   }
 
-  const relationField = trimmedPath.split(".", 1)[0] ?? "";
+  const parsed = parseRelationFieldPath(
+    options.definition,
+    trimmedPath,
+    options.getDefinition,
+  );
+  if (!parsed || parsed.relationKind === "one-to-many") {
+    return false;
+  }
+
   const populated = options.item._populated as
     | Record<string, Record<string, unknown> | null>
     | undefined;
 
-  if (populated && relationField in populated) {
+  if (populated && parsed.relationField in populated) {
     return false;
   }
 
-  const foreignKey = options.item[relationField];
+  const foreignKey = options.item[parsed.relationField];
   return typeof foreignKey === "string" && foreignKey.length > 0;
+}
+
+export function resolveEntityLayoutImageStorageDownloadTarget(options: {
+  readonly fieldPath: string;
+  readonly definition: SerializableEntityDefinition;
+  readonly rawValue: unknown;
+  readonly getDefinition?: RelationDefinitionLookup;
+}): { readonly entityName: string; readonly storagePath: string } | null {
+  if (!isEntityFileReferenceWithDownload(options.rawValue)) {
+    return null;
+  }
+
+  if (readEntityFileDownloadUrl(options.rawValue)) {
+    return null;
+  }
+
+  const storagePath = options.rawValue.storagePath.trim();
+  if (storagePath.length === 0) {
+    return null;
+  }
+
+  const trimmedPath = options.fieldPath.trim();
+  const parsed = parseRelationFieldPath(
+    options.definition,
+    trimmedPath,
+    options.getDefinition,
+  );
+  if (parsed) {
+    const relationMeta =
+      options.definition.fields[parsed.relationField]?.relation;
+    const entityName =
+      parsed.relationKind === "one-to-many"
+        ? (relationMeta?.target ?? parsed.relationField)
+        : relationMeta?.target;
+    if (!entityName) {
+      return null;
+    }
+
+    return { entityName, storagePath };
+  }
+
+  const rootField = trimmedPath.includes(".")
+    ? (trimmedPath.split(".", 1)[0] ?? trimmedPath)
+    : trimmedPath;
+  const fieldMeta = options.definition.fields[rootField];
+  if (fieldMeta?.type !== "image" && fieldMeta?.type !== "document") {
+    return null;
+  }
+
+  return {
+    entityName: options.definition.name,
+    storagePath,
+  };
 }
 
 export function resolveEntityLayoutImageDownloadTarget(options: {
   readonly item: Record<string, unknown>;
   readonly fieldPath: string;
   readonly definition: SerializableEntityDefinition;
+  readonly getDefinition?: RelationDefinitionLookup;
 }): EntityFileDownloadTarget | null {
   const trimmedPath = options.fieldPath.trim();
   if (!trimmedPath) {
     return null;
   }
 
-  const parsed = parseRelationFieldPath(options.definition, trimmedPath);
+  const parsed = parseRelationFieldPath(
+    options.definition,
+    trimmedPath,
+    options.getDefinition,
+  );
   if (parsed) {
+    if (parsed.relationKind === "one-to-many") {
+      return null;
+    }
+
     const { relationField, subField } = parsed;
     const relationMeta = options.definition.fields[relationField]?.relation;
     const foreignKey = options.item[relationField];

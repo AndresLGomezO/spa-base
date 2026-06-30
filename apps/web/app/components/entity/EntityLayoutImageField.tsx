@@ -18,6 +18,7 @@ import {
   resolveEntityLayoutFieldDefaultImageSrc,
   resolveEntityLayoutImageDownloadTarget,
   resolveEntityLayoutImagePlaceholderSrc,
+  resolveEntityLayoutImageStorageDownloadTarget,
   shouldFetchEntityLayoutImageDownload,
 } from "./resolve-entity-layout-image-src";
 
@@ -63,13 +64,33 @@ export function EntityLayoutImageField({
           item,
           fieldPath,
           definition,
+          getDefinition,
+        })
+      : null;
+  const storageDownloadTarget =
+    directUrl === null && staticFileRef === null
+      ? resolveEntityLayoutImageStorageDownloadTarget({
+          fieldPath,
+          definition,
+          rawValue,
+          getDefinition,
         })
       : null;
   const shouldFetchRecord =
     directUrl === null &&
     downloadTarget !== null &&
-    shouldFetchEntityLayoutImageDownload({ item, fieldPath, rawValue });
+    shouldFetchEntityLayoutImageDownload({
+      item,
+      fieldPath,
+      rawValue,
+      definition,
+      getDefinition,
+    });
   const shouldFetchStorage = directUrl === null && staticFileRef !== null;
+  const shouldFetchEntityFileByStorage =
+    directUrl === null &&
+    storageDownloadTarget !== null &&
+    downloadTarget === null;
 
   const defaultFieldPath = (primaryFieldPath ?? fieldPath).trim();
   const fieldDefaultSrc = resolveEntityLayoutFieldDefaultImageSrc({
@@ -114,6 +135,21 @@ export function EntityLayoutImageField({
     staleTime: 5 * 60 * 1000,
   });
 
+  const entityFileStorageDownloadQuery = useQuery({
+    queryKey: [
+      "entity-file-storage-download",
+      storageDownloadTarget?.entityName,
+      storageDownloadTarget?.storagePath,
+    ],
+    queryFn: () =>
+      fetchEntityFileDownloadUrlByStoragePath(
+        storageDownloadTarget!.entityName,
+        storageDownloadTarget!.storagePath,
+      ),
+    enabled: shouldFetchEntityFileByStorage,
+    staleTime: 5 * 60 * 1000,
+  });
+
   const fileName =
     isEntityFileReferenceWithDownload(rawValue) && rawValue.fileName
       ? rawValue.fileName
@@ -122,6 +158,9 @@ export function EntityLayoutImageField({
   const fetchedUrl =
     (shouldFetchRecord ? downloadQuery.data : null) ??
     (shouldFetchStorage ? storageDownloadQuery.data : null) ??
+    (shouldFetchEntityFileByStorage
+      ? entityFileStorageDownloadQuery.data
+      : null) ??
     null;
 
   const src = usePreviewPlaceholder

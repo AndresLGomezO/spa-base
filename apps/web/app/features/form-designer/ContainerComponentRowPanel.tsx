@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { SerializableEntityDefinition } from "@repo/entities";
 import {
   CollapsibleMotionPresetSection,
   CollapsibleStyleRulesEditor,
@@ -9,8 +10,11 @@ import type { FieldDescriptor } from "@repo/ui-builder-react";
 import {
   isRowHolderComponent,
   type ComponentRowNode,
+  type DesignSurface,
   type MotionPreset,
 } from "@repo/ui-builder-core";
+
+import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
@@ -24,12 +28,14 @@ interface ContainerComponentRowPanelProps {
   readonly row: ComponentRowNode;
   readonly rowRef: ComponentRowRef;
   readonly binding: ComponentsLayoutBinding;
+  readonly definition: SerializableEntityDefinition;
   readonly labels: ReturnType<typeof formDesignerLayoutEditorLabels>;
   readonly componentEditorLabels: ReturnType<
     typeof formDesignerComponentEditorLabels
   >;
   readonly treeLabels: StructureTreeLabels;
   readonly fieldDescriptors: readonly FieldDescriptor[];
+  readonly designSurface: DesignSurface;
   readonly extraControls?: ReactNode;
 }
 
@@ -37,10 +43,12 @@ export function ContainerComponentRowPanel({
   row,
   rowRef,
   binding,
+  definition,
   labels,
   componentEditorLabels,
   treeLabels,
   fieldDescriptors,
+  designSurface,
   extraControls,
 }: ContainerComponentRowPanelProps) {
   if (!isRowHolderComponent(row.component)) {
@@ -75,6 +83,15 @@ export function ContainerComponentRowPanel({
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      <ComponentRowClickActionPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        definition={definition}
+        fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

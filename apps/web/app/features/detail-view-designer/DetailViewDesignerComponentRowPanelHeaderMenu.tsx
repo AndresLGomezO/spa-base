@@ -75,7 +75,7 @@ export function DetailViewDesignerComponentRowPanelHeaderMenu({
 }: DetailViewDesignerComponentRowPanelHeaderMenuProps) {
   const { t } = useTranslation("common");
   const { editor } = useDetailViewDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(definition.name);
@@ -83,8 +83,9 @@ export function DetailViewDesignerComponentRowPanelHeaderMenu({
   const rootRef = useRef<HTMLDivElement>(null);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const binding = useMemo(() => resolveLayoutBinding(editor), [editor]);

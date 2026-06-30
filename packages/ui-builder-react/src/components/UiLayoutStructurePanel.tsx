@@ -119,6 +119,7 @@ export interface UiLayoutStructurePanelProps {
   readonly showStructureHeading?: boolean;
   readonly showShowActionsControl?: boolean;
   readonly getDefinition?: EntityDefinitionLookup;
+  readonly catalog?: readonly SerializableEntityDefinition[];
   readonly designSurface?: DesignSurface;
   readonly canApplyImport?: boolean;
   /** When true, formWizardShell imports may omit wizard-actions (actions in modal footer). */
@@ -148,6 +149,7 @@ export function UiLayoutStructurePanel({
   showStructureHeading = true,
   showShowActionsControl = true,
   getDefinition,
+  catalog,
   designSurface = "listItem",
   canApplyImport = false,
   actionsInModalFooter = false,
@@ -158,15 +160,16 @@ export function UiLayoutStructurePanel({
     if (designSurface === "formPlain" || designSurface === "formWizardStep") {
       return entityFormFieldAdapter(definition);
     }
-    return entityCardViewAdapter(definition, getDefinition);
-  }, [definition, designSurface, getDefinition]);
+    return entityCardViewAdapter(definition, getDefinition, catalog);
+  }, [definition, designSurface, getDefinition, catalog]);
 
   const displayFieldDescriptors = useMemo((): readonly FieldDescriptor[] => {
     if (designSurface === "formWizardStep") {
-      return entityCardViewAdapter(definition, getDefinition).fieldDescriptors;
+      return entityCardViewAdapter(definition, getDefinition, catalog)
+        .fieldDescriptors;
     }
     return formFieldDescriptors;
-  }, [definition, designSurface, formFieldDescriptors, getDefinition]);
+  }, [definition, designSurface, formFieldDescriptors, getDefinition, catalog]);
 
   const fieldDescriptors = formFieldDescriptors;
 

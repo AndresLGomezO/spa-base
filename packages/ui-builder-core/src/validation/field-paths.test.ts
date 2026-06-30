@@ -103,6 +103,102 @@ describe("listLayoutFieldOptions", () => {
 
     expect(options).toContain("contractTerms.effectiveDate");
   });
+
+  it("includes implicit reverse one-to-many paths from catalog", () => {
+    const contractTermsDefinition: FieldPathValidationDefinition = {
+      name: "contractTerms",
+      fields: {
+        contractId: {
+          relation: { type: "many-to-one", target: "contract" },
+        },
+        effectiveDate: { type: "date" },
+      },
+    };
+
+    const options = listLayoutFieldOptions(
+      {
+        name: "contract",
+        fields: {
+          name: {},
+        },
+      },
+      {
+        resolveTarget: (target) =>
+          target === "contractTerms" ? contractTermsDefinition : undefined,
+        catalog: [contractTermsDefinition],
+      },
+    );
+
+    expect(options).toContain("contractTerms.effectiveDate");
+    expect(options).not.toContain("contractId.effectiveDate");
+  });
+
+  it("dedupes misnamed explicit one-to-many field paths to child entity name", () => {
+    const contractTermsDefinition: FieldPathValidationDefinition = {
+      name: "contractTerms",
+      fields: {
+        contractId: {
+          relation: { type: "many-to-one", target: "contract" },
+        },
+        effectiveDate: { type: "date" },
+      },
+    };
+
+    const options = listLayoutFieldOptions(
+      {
+        name: "contract",
+        fields: {
+          name: {},
+          contractTermses: {
+            relation: { type: "one-to-many", target: "contractTerms" },
+          },
+        },
+      },
+      {
+        resolveTarget: (target) =>
+          target === "contractTerms" ? contractTermsDefinition : undefined,
+        catalog: [contractTermsDefinition],
+      },
+    );
+
+    expect(options).toContain("contractTerms.effectiveDate");
+    expect(options).not.toContain("contractTermses.effectiveDate");
+  });
+
+  it("skips reverse paths when explicit one-to-many to the same child exists", () => {
+    const contractTermsDefinition: FieldPathValidationDefinition = {
+      name: "contractTerms",
+      fields: {
+        contractId: {
+          relation: { type: "many-to-one", target: "contract" },
+        },
+        effectiveDate: { type: "date" },
+        endDate: { type: "date" },
+      },
+    };
+
+    const options = listLayoutFieldOptions(
+      {
+        name: "contract",
+        fields: {
+          contractTerms: {
+            relation: { type: "one-to-many", target: "contractTerms" },
+          },
+        },
+      },
+      {
+        resolveTarget: (target) =>
+          target === "contractTerms" ? contractTermsDefinition : undefined,
+        catalog: [contractTermsDefinition],
+      },
+    );
+
+    expect(options).toContain("contractTerms.effectiveDate");
+    expect(options).toContain("contractTerms.endDate");
+    expect(
+      options.filter((path) => path === "contractTerms.effectiveDate"),
+    ).toHaveLength(1);
+  });
 });
 
 describe("listFormFieldOptions", () => {

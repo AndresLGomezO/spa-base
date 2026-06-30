@@ -25,6 +25,7 @@ import type {
 } from "@repo/entities";
 import { Form } from "@repo/ui";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 
 import {
   formatFieldLabel,
@@ -96,6 +97,7 @@ export function EntityWizardForm({
   onSubmit,
 }: EntityWizardFormProps) {
   const { t } = useTranslation("common");
+  const navigate = useNavigate();
   const { getDefinition } = useEntityCatalog();
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
   const [invalidStepIds, setInvalidStepIds] = useState<ReadonlySet<string>>(
@@ -203,6 +205,7 @@ export function EntityWizardForm({
       cancelLabel,
       saveLabel,
       getDefinition,
+      navigate,
     }),
     [
       entityName,
@@ -221,6 +224,7 @@ export function EntityWizardForm({
       cancelLabel,
       saveLabel,
       getDefinition,
+      navigate,
     ],
   );
 

@@ -28,6 +28,29 @@ const dataSourceSchema = z.discriminatedUnion("type", [
     .strict(),
 ]);
 
+const componentClickActionSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("entityRecord"),
+      target: z.union([
+        z.literal("current"),
+        z
+          .object({
+            relationFieldPath: z.string().trim().min(1),
+          })
+          .strict(),
+      ]),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("externalUrl"),
+      url: dataSourceSchema,
+      openInNewTab: z.boolean().optional(),
+    })
+    .strict(),
+]);
+
 const stylePropertySchema = z.enum([
   "marginTop",
   "marginBottom",
@@ -530,6 +553,7 @@ export const componentRowSchema: z.ZodType<unknown> = z.lazy(() =>
       type: z.literal("component"),
       id: z.string().trim().min(1),
       component: fieldComponentSchema,
+      clickAction: componentClickActionSchema.optional(),
       styles: z.array(styleRuleSchema).optional(),
       motion: motionPresetSchema.optional(),
       name: z.string().trim().min(1).optional(),

@@ -104,6 +104,40 @@ const contractDefinition: SerializableEntityDefinition = {
   },
 };
 
+const contractDefinitionWithoutExplicitO2m: SerializableEntityDefinition = {
+  name: "contract",
+  collection: "contracts",
+  permissions: [],
+  fields: {
+    name: { type: "string", required: true, optional: false },
+  },
+  ui: {
+    views: [],
+    forms: { create: { sections: [] }, edit: { sections: [] } },
+    fields: {},
+  },
+};
+
+const contractDefinitionWithMisnamedO2m: SerializableEntityDefinition = {
+  name: "contract",
+  collection: "contracts",
+  permissions: [],
+  fields: {
+    name: { type: "string", required: true, optional: false },
+    contractTermses: {
+      type: "relation",
+      required: false,
+      optional: true,
+      relation: { type: "one-to-many", target: "contractTerms" },
+    },
+  },
+  ui: {
+    views: [],
+    forms: { create: { sections: [] }, edit: { sections: [] } },
+    fields: {},
+  },
+};
+
 const lookupDefinitions: Record<string, SerializableEntityDefinition> = {
   serviceProvider: serviceProviderDefinition,
   currency: currencyDefinition,
@@ -164,12 +198,41 @@ describe("entityCardViewAdapter", () => {
     const { fieldDescriptors } = entityCardViewAdapter(
       contractDefinition,
       (entityName) => lookupDefinitions[entityName],
+      Object.values(lookupDefinitions),
     );
     const dateFields = filterFieldsForComponentKind(fieldDescriptors, "date");
 
     expect(dateFields.map((field) => field.path)).toContain(
       "contractTerms.effectiveDate",
     );
+  });
+
+  it("includes implicit reverse one-to-many paths when catalog is provided", () => {
+    const { fieldDescriptors } = entityCardViewAdapter(
+      contractDefinitionWithoutExplicitO2m,
+      (entityName) => lookupDefinitions[entityName],
+      Object.values(lookupDefinitions),
+    );
+    const dateFields = filterFieldsForComponentKind(fieldDescriptors, "date");
+
+    expect(dateFields.map((field) => field.path)).toContain(
+      "contractTerms.effectiveDate",
+    );
+    expect(dateFields.map((field) => field.path)).not.toContain(
+      "contractTermses.effectiveDate",
+    );
+  });
+
+  it("dedupes misnamed explicit one-to-many field paths to child entity name", () => {
+    const { fieldDescriptors } = entityCardViewAdapter(
+      contractDefinitionWithMisnamedO2m,
+      (entityName) => lookupDefinitions[entityName],
+      Object.values(lookupDefinitions),
+    );
+    const paths = fieldDescriptors.map((field) => field.path);
+
+    expect(paths).toContain("contractTerms.effectiveDate");
+    expect(paths).not.toContain("contractTermses.effectiveDate");
   });
 
   it("treats ui.component image as image when field type is missing on catalog payload", () => {

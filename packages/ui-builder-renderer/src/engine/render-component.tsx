@@ -562,42 +562,6 @@ export function renderUiComponent(
     );
   }
 
-  const recordLink = context.resolveRecordFieldLink?.(fieldPath);
-  if (recordLink) {
-    if (context.recordFieldLinkRenderer) {
-      return (
-        <CardFieldValue
-          label={label}
-          value={context.recordFieldLinkRenderer(recordLink)}
-          allowEmpty
-          className={containerClassName}
-          style={containerStyle}
-          valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
-          textSize={textSize}
-          {...textPropsFromLabel(config)}
-        />
-      );
-    }
-
-    return (
-      <CardFieldValue
-        label={label}
-        value={
-          <a href={recordLink.href} className="text-primary underline">
-            {recordLink.label}
-          </a>
-        }
-        allowEmpty
-        className={containerClassName}
-        style={containerStyle}
-        valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
-        textSize={textSize}
-        valueStyle={valueStyle}
-        {...textPropsFromLabel(config)}
-      />
-    );
-  }
-
   const formattedValue = formatRawDisplayValue(
     rawValue,
     fieldPath,

@@ -23,6 +23,7 @@ import { useAnyPermission } from "../../auth/useAnyPermission";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { LucideIconField } from "../../components/shared/LucideIconField";
 import { LayoutStaticImageValueEditor } from "../ui-builder/LayoutStaticImageValueEditor";
+import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 import { useFormDesignerComponentEditorLabels } from "./form-designer-component-editor-labels";
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor-labels";
@@ -105,10 +106,12 @@ export function FormDesignerComponentRowPanel({
         row={row}
         rowRef={rowRef}
         binding={binding}
+        definition={definition}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
       />
     );
   }
@@ -159,6 +162,15 @@ export function FormDesignerComponentRowPanel({
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      <ComponentRowClickActionPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        definition={definition}
+        fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

@@ -22,7 +22,7 @@ import { DetailViewDesignerStructureTreePanel } from "./DetailViewDesignerStruct
 export function DetailViewDesignerLayoutTreePanel() {
   const { t } = useTranslation("common");
   const { editor, requestComponentRowPanel } = useDetailViewDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const { setFocusedRow, setSelectedRow, clearColumnHover } =
     useDetailViewDesignerStructureSession();
@@ -31,8 +31,9 @@ export function DetailViewDesignerLayoutTreePanel() {
   const [modalOpen, setModalOpen] = useState(false);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const binding = useMemo(() => resolveLayoutBinding(editor), [editor]);

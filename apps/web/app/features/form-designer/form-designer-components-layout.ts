@@ -95,7 +95,12 @@ export interface ComponentsLayoutBinding {
     patch: Partial<
       Pick<
         ComponentRowNode,
-        "styles" | "motion" | "displayFrom" | "displayTo" | "name"
+        | "styles"
+        | "motion"
+        | "displayFrom"
+        | "displayTo"
+        | "name"
+        | "clickAction"
       >
     >,
   ) => void;

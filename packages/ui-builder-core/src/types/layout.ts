@@ -4,6 +4,7 @@
  * packages/ai-context/src/atoms/ui/responsive-visibility.ts
  */
 import type { StyleRule } from "../styles/style-types.js";
+import type { ComponentClickAction } from "./click-action.js";
 import type { UiComponentConfig } from "./component.js";
 import type { MotionPreset } from "./motion.js";
 import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
@@ -50,6 +51,7 @@ export interface ComponentRowNode {
   readonly component: UiComponentConfig;
   /** Builder-only label override for the structure tree and third rail. */
   readonly name?: string;
+  readonly clickAction?: ComponentClickAction;
   readonly styles?: readonly StyleRule[];
   readonly motion?: MotionPreset;
   readonly displayFrom?: ResponsiveGridBreakpoint;

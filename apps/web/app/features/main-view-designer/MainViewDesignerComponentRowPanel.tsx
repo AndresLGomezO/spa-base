@@ -27,6 +27,7 @@ import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentR
 import { NestedLayoutRowPanel } from "../form-designer/NestedLayoutRowPanel";
 import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { resolveLayoutBinding } from "./main-view-designer-layout-binding";
+import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 import { useMainViewDesigner } from "./main-view-designer-context";
 
 interface MainViewDesignerComponentRowPanelProps {
@@ -49,6 +50,7 @@ export function MainViewDesignerComponentRowPanel({
   const fieldDescriptors = useMemo(() => [] as const, []);
 
   const allowedKinds = componentKindsForSurface("mainPage");
+  const designSurface = "mainPage" as const;
 
   const row = findRowByRef(binding.layout, rowRef);
 
@@ -79,10 +81,12 @@ export function MainViewDesignerComponentRowPanel({
         row={row}
         rowRef={rowRef}
         binding={binding}
+        definition={definition}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
       />
     );
   }
@@ -115,6 +119,15 @@ export function MainViewDesignerComponentRowPanel({
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      <ComponentRowClickActionPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        definition={definition}
+        fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

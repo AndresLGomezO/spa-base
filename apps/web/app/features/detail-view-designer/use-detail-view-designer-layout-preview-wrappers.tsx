@@ -60,14 +60,15 @@ export function useDetailViewDesignerLayoutPreviewWrappers(
     selectedStructureRowRef,
   } = useDetailViewDesigner();
   const structureSession = useOptionalDetailViewDesignerStructureSession();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
   const binding = useLayoutPreviewBinding();
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const previewRowFocus = structureSession?.previewRowFocus ?? null;

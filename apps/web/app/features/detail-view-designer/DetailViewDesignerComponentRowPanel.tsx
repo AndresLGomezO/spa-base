@@ -28,6 +28,7 @@ import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentR
 import { NestedLayoutRowPanel } from "../form-designer/NestedLayoutRowPanel";
 import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { resolveLayoutBinding } from "./detail-view-designer-layout-binding";
+import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 import { useDetailViewDesigner } from "./detail-view-designer-context";
 
 interface DetailViewDesignerComponentRowPanelProps {
@@ -39,7 +40,7 @@ export function DetailViewDesignerComponentRowPanel({
 }: DetailViewDesignerComponentRowPanelProps) {
   const { t } = useTranslation("common");
   const { editor } = useDetailViewDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
 
   const binding = useMemo(() => resolveLayoutBinding(editor), [editor]);
@@ -49,10 +50,12 @@ export function DetailViewDesignerComponentRowPanel({
   const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
 
   const allowedKinds = componentKindsForSurface("recordDetail");
+  const designSurface = "recordDetail" as const;
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const row = findRowByRef(binding.layout, rowRef);
@@ -84,10 +87,12 @@ export function DetailViewDesignerComponentRowPanel({
         row={row}
         rowRef={rowRef}
         binding={binding}
+        definition={definition}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
       />
     );
   }
@@ -120,6 +125,15 @@ export function DetailViewDesignerComponentRowPanel({
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      <ComponentRowClickActionPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        definition={definition}
+        fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

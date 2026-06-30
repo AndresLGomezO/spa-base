@@ -75,14 +75,15 @@ function useLayoutPreviewWrappers(
     clearRowHover,
     focusedRow,
   } = useItemListDesignerStructureSession();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
   const binding = useLayoutPreviewBinding(scope);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const resolveRowLabel = useCallback(

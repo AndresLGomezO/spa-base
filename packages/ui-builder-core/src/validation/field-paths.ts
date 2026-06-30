@@ -289,6 +289,56 @@ export interface ListLayoutFieldOptionsParams {
   readonly resolveTarget?: (
     target: string,
   ) => FieldPathValidationDefinition | undefined;
+  readonly catalog?: readonly FieldPathValidationDefinition[];
+}
+
+function hasExplicitOneToManyToChild(
+  definition: FieldPathValidationDefinition,
+  childEntityName: string,
+): boolean {
+  return Object.values(definition.fields).some(
+    (meta) =>
+      meta.relation?.type === "one-to-many" &&
+      meta.relation.target === childEntityName,
+  );
+}
+
+function addReverseOneToManyLayoutFieldPaths(
+  definition: FieldPathValidationDefinition,
+  options: Set<string>,
+  catalog: readonly FieldPathValidationDefinition[],
+): void {
+  for (const childDefinition of catalog) {
+    if (childDefinition.name === definition.name) {
+      continue;
+    }
+
+    if (hasExplicitOneToManyToChild(definition, childDefinition.name)) {
+      continue;
+    }
+
+    for (const [foreignKeyField, meta] of Object.entries(
+      childDefinition.fields,
+    )) {
+      if (
+        meta.relation?.target !== definition.name ||
+        (meta.relation.type !== "many-to-one" &&
+          meta.relation.type !== "one-to-one")
+      ) {
+        continue;
+      }
+
+      for (const [subFieldName, subMeta] of Object.entries(
+        childDefinition.fields,
+      )) {
+        if (subFieldName === foreignKeyField || subMeta.type === "document") {
+          continue;
+        }
+
+        options.add(`${childDefinition.name}.${subFieldName}`);
+      }
+    }
+  }
 }
 
 /** Field paths assignable to `form-field` slots (direct entity fields, including relations). */
@@ -542,7 +592,6 @@ export function listLayoutFieldOptions(
               continue;
             }
 
-            options.add(`${fieldName}.${subFieldName}`);
             options.add(`${target}.${subFieldName}`);
           }
         }
@@ -551,6 +600,10 @@ export function listLayoutFieldOptions(
     }
 
     options.add(fieldName);
+  }
+
+  if (params?.catalog) {
+    addReverseOneToManyLayoutFieldPaths(definition, options, params.catalog);
   }
 
   for (const fkField of relationFkFields) {

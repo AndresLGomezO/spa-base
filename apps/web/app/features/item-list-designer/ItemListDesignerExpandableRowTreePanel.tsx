@@ -32,15 +32,16 @@ export function ItemListDesignerExpandableRowTreePanel({
   const { editor, requestComponentRowPanel } = useItemListDesigner();
   const { setFocusedRow, setSelectedRow, clearColumnHover } =
     useItemListDesignerStructureSession();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
   const [insertAnchor, setInsertAnchor] = useState<InsertAnchor | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const binding = useMemo(

@@ -26,6 +26,7 @@ import { readLayoutStaticImageUrl } from "@repo/entities";
 import { isEntityFileReferenceWithDownload } from "../../lib/entity-file-client";
 import { parseLayoutStaticImageRef } from "../../lib/layout-static-image";
 import type { DashboardDateFilterContextValue } from "../../lib/metric-binding-resolution";
+import { createComponentClickContextHelpers } from "./create-component-click-context-helpers.js";
 
 export function createEntityLayoutRenderContext(options: {
   readonly item: Record<string, unknown>;
@@ -73,15 +74,17 @@ export function createEntityLayoutRenderContext(options: {
         resolveLayoutSlotLabel(fieldPath, definition, getDefinition)
     : undefined;
 
+  const resolveField = (path: string) =>
+    resolveEntityFieldPath(item, path, definition, getOneToManyCellValue, {
+      getDefinition,
+      getOneToManyRelationSubfieldValue,
+    });
+
   return {
     mode: "listItem",
     data: item,
     locale,
-    resolveField: (path) =>
-      resolveEntityFieldPath(item, path, definition, getOneToManyCellValue, {
-        getDefinition,
-        getOneToManyRelationSubfieldValue,
-      }),
+    resolveField,
     resolveFieldMeta: (path) =>
       resolveLayoutSlotDisplayMeta(path, definition, getDefinition),
     resolveFieldLabel: (path) =>
@@ -111,7 +114,15 @@ export function createEntityLayoutRenderContext(options: {
           return true;
         }
       }
-      if (shouldFetchEntityLayoutImageDownload({ item, fieldPath, rawValue })) {
+      if (
+        shouldFetchEntityLayoutImageDownload({
+          item,
+          fieldPath,
+          rawValue,
+          definition,
+          getDefinition,
+        })
+      ) {
         return true;
       }
 
@@ -237,5 +248,12 @@ export function createEntityLayoutRenderContext(options: {
           })
         : undefined,
     lucideIconRenderer: (config) => <LayoutLucideIcon config={config} />,
+    ...createComponentClickContextHelpers({
+      item,
+      entityName: definition.name,
+      definition,
+      resolveField,
+      getDefinition,
+    }),
   };
 }

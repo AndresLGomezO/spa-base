@@ -1310,18 +1310,25 @@ export function updateComponentRowMetaAt(
   patch: Partial<
     Pick<
       ComponentRowNode,
-      "styles" | "motion" | "displayFrom" | "displayTo" | "name"
+      "styles" | "motion" | "displayFrom" | "displayTo" | "name" | "clickAction"
     >
   >,
 ): UiLayoutDocument {
   return updateRowsAtLocator(layout, locator, (rows) =>
-    rows.map((row) =>
-      row.type === "component" && row.id === rowId
-        ? stripDisplayRangeIfFull(
-            applyStructureNamePatch({ ...row, ...patch }, patch),
-          )
-        : row,
-    ),
+    rows.map((row) => {
+      if (row.type !== "component" || row.id !== rowId) {
+        return row;
+      }
+
+      let nextRow = { ...row, ...patch } as ComponentRowNode;
+      if ("clickAction" in patch && patch.clickAction === undefined) {
+        nextRow = Object.fromEntries(
+          Object.entries(nextRow).filter(([key]) => key !== "clickAction"),
+        ) as ComponentRowNode;
+      }
+
+      return stripDisplayRangeIfFull(applyStructureNamePatch(nextRow, patch));
+    }),
   );
 }
 

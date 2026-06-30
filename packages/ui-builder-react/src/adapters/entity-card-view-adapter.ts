@@ -235,75 +235,22 @@ function isValidLayoutFieldPathForAdapter(
 function collectLayoutFieldPaths(
   definition: SerializableEntityDefinition,
   getDefinition?: EntityDefinitionLookup,
+  catalog?: readonly SerializableEntityDefinition[],
 ): readonly string[] {
   const options = new Set<string>();
 
   for (const path of listLayoutFieldOptions(definition, {
     resolveTarget: (target) => getDefinition?.(target),
+    catalog,
   })) {
     if (isValidLayoutFieldPathForAdapter(definition, path, getDefinition)) {
       options.add(path);
     }
   }
 
-  for (const [fieldName, meta] of Object.entries(definition.fields)) {
+  for (const [fieldName] of Object.entries(definition.fields)) {
     if (isImageField(definition, fieldName)) {
       options.add(fieldName);
-    }
-
-    if (
-      !meta.relation ||
-      (meta.relation.type !== "many-to-one" &&
-        meta.relation.type !== "one-to-one")
-    ) {
-      continue;
-    }
-
-    const target = meta.relation.target;
-    if (!target) {
-      continue;
-    }
-
-    const targetDefinition = getDefinition?.(target);
-    if (!targetDefinition) {
-      continue;
-    }
-
-    for (const [subFieldName, subMeta] of Object.entries(
-      targetDefinition.fields,
-    )) {
-      if (subMeta.type === "document") {
-        continue;
-      }
-
-      options.add(`${target}.${subFieldName}`);
-    }
-  }
-
-  for (const [fieldName, meta] of Object.entries(definition.fields)) {
-    if (!isOneToManyRelationField(meta)) {
-      continue;
-    }
-
-    const target = meta.relation?.target;
-    if (!target) {
-      continue;
-    }
-
-    const childDefinition = getDefinition?.(target);
-    if (!childDefinition) {
-      continue;
-    }
-
-    for (const [subFieldName, subMeta] of Object.entries(
-      childDefinition.fields,
-    )) {
-      if (subMeta.type === "document") {
-        continue;
-      }
-
-      options.add(`${fieldName}.${subFieldName}`);
-      options.add(`${target}.${subFieldName}`);
     }
   }
 
@@ -436,8 +383,13 @@ function resolveDescriptorLabel(
 export function entityCardViewAdapter(
   definition: SerializableEntityDefinition,
   getDefinition?: EntityDefinitionLookup,
+  catalog?: readonly SerializableEntityDefinition[],
 ): EntityCardViewAdapterResult {
-  const fieldOptions = collectLayoutFieldPaths(definition, getDefinition);
+  const fieldOptions = collectLayoutFieldPaths(
+    definition,
+    getDefinition,
+    catalog,
+  );
 
   const fieldDescriptors: FieldDescriptor[] = fieldOptions.map((path) => {
     const root = path.includes(".") ? path.split(".")[0]! : path;

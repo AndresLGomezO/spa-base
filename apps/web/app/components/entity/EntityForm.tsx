@@ -18,6 +18,7 @@ import {
   type ReactNode,
 } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import {
@@ -71,6 +72,7 @@ export function EntityForm({
   onSubmittingChange,
 }: EntityFormProps) {
   const { t, i18n } = useTranslation("common");
+  const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const { getDefinition } = useEntityCatalog();
   const entityPermissions = useEntityPermissions(entityName);
@@ -273,6 +275,7 @@ export function EntityForm({
         cancelLabel: t("entity.cancel"),
         saveLabel,
         getDefinition,
+        navigate,
       }),
     [
       definition,
@@ -283,6 +286,7 @@ export function EntityForm({
       applyFieldChange,
       canWrite,
       getDefinition,
+      navigate,
       i18n.language,
       isSubmitting,
       mode,
@@ -315,6 +319,7 @@ export function EntityForm({
         cancelLabel: t("entity.cancel"),
         saveLabel,
         getDefinition,
+        navigate,
       }),
     [
       applyFieldChange,
@@ -325,6 +330,7 @@ export function EntityForm({
       fieldErrors,
       canWrite,
       getDefinition,
+      navigate,
       i18n.language,
       isSubmitting,
       mode,

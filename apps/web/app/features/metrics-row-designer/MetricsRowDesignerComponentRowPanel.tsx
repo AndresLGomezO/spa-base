@@ -47,6 +47,7 @@ import {
   resolveQueryViewerSourceDefinition,
   isInsideQueryViewerTemplate,
 } from "../ui-builder/resolve-query-viewer-field-context";
+import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 
 interface MetricsRowDesignerComponentRowPanelProps {
   readonly rowRef: ComponentRowRef;
@@ -121,8 +122,9 @@ export function MetricsRowDesignerComponentRowPanel({
 
   const fieldDescriptors = useMemo(
     () =>
-      entityCardViewAdapter(fieldDefinition, getDefinition).fieldDescriptors,
-    [fieldDefinition, getDefinition],
+      entityCardViewAdapter(fieldDefinition, getDefinition, items)
+        .fieldDescriptors,
+    [fieldDefinition, getDefinition, items],
   );
 
   const allowEntityFieldBinding = queryViewerSourceDefinition !== null;
@@ -174,10 +176,12 @@ export function MetricsRowDesignerComponentRowPanel({
         row={row}
         rowRef={rowRef}
         binding={binding}
+        definition={fieldDefinition}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
         extraControls={
           <QueryViewerComponentEditor
             config={row.component}
@@ -194,10 +198,12 @@ export function MetricsRowDesignerComponentRowPanel({
         row={row}
         rowRef={rowRef}
         binding={binding}
+        definition={fieldDefinition}
         labels={labels}
         componentEditorLabels={componentEditorLabels}
         treeLabels={treeLabels}
         fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
       />
     );
   }
@@ -269,6 +275,15 @@ export function MetricsRowDesignerComponentRowPanel({
           onChange={(patch) => binding.updateRowMeta(rowRef, patch)}
         />
       </FormDesignerPanelPrimaryControls>
+
+      <ComponentRowClickActionPanelSection
+        row={row}
+        rowRef={rowRef}
+        binding={binding}
+        definition={fieldDefinition}
+        fieldDescriptors={fieldDescriptors}
+        designSurface={designSurface}
+      />
 
       <CollapsibleStyleRulesEditor
         title={componentEditorLabels.componentStyles}

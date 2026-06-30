@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { useNavigate } from "react-router";
 import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
 import type {
   WizardActionsComponentConfig,
@@ -32,6 +33,7 @@ export function useFormDesignerPreview(
   previewBreakpoint: FormModalPreviewBreakpoint,
 ) {
   const { t, i18n } = useTranslation("common");
+  const navigate = useNavigate();
   const { getDefinition } = useEntityCatalog();
   const entityName = editor.entityName;
 
@@ -103,6 +105,7 @@ export function useFormDesignerPreview(
         cancelLabel: t("entity.cancel"),
         saveLabel: t("entity.create"),
         getDefinition,
+        navigate,
       }),
     [
       editor.definition,
@@ -110,6 +113,7 @@ export function useFormDesignerPreview(
       getDefinition,
       handlePreviewFieldChange,
       i18n.language,
+      navigate,
       t,
       usesDesignedModalFooter,
       values,
@@ -137,6 +141,7 @@ export function useFormDesignerPreview(
         saveLabel: t("entity.create"),
         wizardStepContent: true,
         getDefinition,
+        navigate,
         usePreviewSamples: true,
       }),
     [
@@ -145,6 +150,7 @@ export function useFormDesignerPreview(
       getDefinition,
       handlePreviewFieldChange,
       i18n.language,
+      navigate,
       t,
       usesDesignedModalFooter,
       values,
@@ -169,8 +175,9 @@ export function useFormDesignerPreview(
         hideActions: false,
         cancelLabel: t("entity.cancel"),
         saveLabel: t("entity.create"),
+        navigate,
       }),
-    [editor.definition, entityName, i18n.language, t, values],
+    [editor.definition, entityName, i18n.language, navigate, t, values],
   );
 
   const wizardPreviewState = useMemo(() => {

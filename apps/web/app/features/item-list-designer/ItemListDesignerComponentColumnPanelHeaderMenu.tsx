@@ -101,7 +101,7 @@ export function ItemListDesignerComponentColumnPanelHeaderMenu({
 }: ItemListDesignerComponentColumnPanelHeaderMenuProps) {
   const { t } = useTranslation("common");
   const { editor, structureScope } = useItemListDesigner();
-  const { getDefinition } = useEntityCatalog();
+  const { getDefinition, items } = useEntityCatalog();
   const definition = useEntityDefinition(editor.entityName);
   const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(definition.name);
@@ -119,8 +119,9 @@ export function ItemListDesignerComponentColumnPanelHeaderMenu({
   const designSurface = resolveDesignSurfaceForScope(structureScope);
 
   const fieldDescriptors = useMemo(
-    () => entityCardViewAdapter(definition, getDefinition).fieldDescriptors,
-    [definition, getDefinition],
+    () =>
+      entityCardViewAdapter(definition, getDefinition, items).fieldDescriptors,
+    [definition, getDefinition, items],
   );
 
   const closeMenu = useCallback(() => {
