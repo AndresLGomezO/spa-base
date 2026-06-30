@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState, type ReactNode } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 
 import {
@@ -14,6 +15,7 @@ import { Button } from "@repo/ui";
 
 import { getEntityLabel } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import { invalidateLivePageData } from "../../query/invalidate-live-page-data";
 import { DesignedEntityFormModal } from "../forms/DesignedEntityFormModal";
 import { EntityForm, ENTITY_FORM_ID } from "./EntityForm";
 import { RequireEntityPermission } from "./RequireEntityPermission";
@@ -45,6 +47,7 @@ function EntityFormModalHostInner({
   readonly onClose: () => void;
 }) {
   const { t } = useTranslation("common");
+  const queryClient = useQueryClient();
   const definition = useEntityDefinition(request.entityName);
   const formDesignId = request.formDesignId;
   const [isFormSubmitting, setIsFormSubmitting] = useState(false);
@@ -89,6 +92,10 @@ function EntityFormModalHostInner({
     onClose();
   }, [onClose]);
 
+  const handleSuccess = useCallback(() => {
+    void invalidateLivePageData(queryClient).then(handleClose);
+  }, [handleClose, queryClient]);
+
   const formModalTitle = useMemo(() => {
     const entity = getEntityLabel(definition);
     return request.mode === "create"
@@ -122,7 +129,7 @@ function EntityFormModalHostInner({
     hideActions: !useDesignedFormModalFooter,
     onSubmittingChange: setIsFormSubmitting,
     onCancel: handleClose,
-    onSuccess: handleClose,
+    onSuccess: handleSuccess,
   };
 
   return (

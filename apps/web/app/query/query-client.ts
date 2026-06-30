@@ -53,3 +53,9 @@ export function metricRowQueryKey(
 ): readonly ["metric-row", string, unknown] {
   return ["metric-row", metricDefinitionId, query];
 }
+
+export function entityQueryResultsQueryKey(
+  queryId: string,
+): readonly ["entity-query-results", string] {
+  return ["entity-query-results", queryId];
+}

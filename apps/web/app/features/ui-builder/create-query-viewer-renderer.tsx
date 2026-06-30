@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { LayoutStack, Text } from "@repo/ui";
 import {
   filterComponentInnerStyleRules,
@@ -23,12 +24,9 @@ import type { TFunction } from "i18next";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { tryGetEntityDefinition } from "../../entities/entity-catalog";
-import {
-  getEntityQueryDefinition,
-  type EntityQueryDefinitionRecord,
-} from "../../lib/api-client";
-import { executeEntityQueryDefinition } from "./execute-entity-query-definition";
 import { useOneToManyRelationSubfieldValues } from "../../hooks/useOneToManyRelationSubfieldValues";
+import { entityQueryResultsQueryKey } from "../../query/query-client";
+import { loadQueryViewerResults } from "./load-query-viewer-results";
 
 interface CreateQueryViewerRendererOptions {
   readonly catalogItems: readonly EntityCatalogEntry[];
@@ -97,11 +95,6 @@ function QueryViewerRuntime({
   readonly buildLayoutContext: CreateQueryViewerRendererOptions["buildLayoutContext"];
 }) {
   const queryId = config.entityQueryDefinitionId.trim();
-  const [definition, setDefinition] =
-    useState<EntityQueryDefinitionRecord | null>(null);
-  const [items, setItems] = useState<readonly Record<string, unknown>[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
   const itemLayout = useMemo(
     () => rowsToItemLayout(config.rows),
@@ -116,6 +109,18 @@ function QueryViewerRuntime({
   const stackClassName = stackShellLayoutClasses(innerStyles, stackDirection);
   const stackFlex = parseFlexLayoutFromStyles(innerStyles);
   const stackGapProps = gapLayoutProps(innerStyles);
+
+  const queryResults = useQuery({
+    queryKey: entityQueryResultsQueryKey(queryId),
+    queryFn: () => loadQueryViewerResults(queryId, catalogItems),
+    enabled: queryId.length > 0,
+  });
+
+  const definition = queryResults.data?.definition ?? null;
+  const items = useMemo(
+    () => queryResults.data?.items ?? [],
+    [queryResults.data?.items],
+  );
 
   const resolvedSourceDefinition = definition
     ? tryGetEntityDefinition(definition.sourceEntity, catalogItems)
@@ -138,60 +143,6 @@ function QueryViewerRuntime({
     getDefinitionForRelations,
   );
 
-  useEffect(() => {
-    if (queryId.length === 0) {
-      setDefinition(null);
-      setItems([]);
-      setError(null);
-      setIsLoading(false);
-      return;
-    }
-
-    let cancelled = false;
-
-    async function loadQueryResults() {
-      setIsLoading(true);
-      setError(null);
-
-      try {
-        const loadedDefinition = await getEntityQueryDefinition(queryId);
-        if (cancelled) {
-          return;
-        }
-
-        setDefinition(loadedDefinition);
-
-        const results = await executeEntityQueryDefinition(
-          loadedDefinition,
-          catalogItems,
-        );
-        if (!cancelled) {
-          setItems(results);
-        }
-      } catch (loadError) {
-        if (!cancelled) {
-          setDefinition(null);
-          setItems([]);
-          setError(
-            loadError instanceof Error
-              ? loadError.message
-              : t("metricsRowDesigner.queryViewerEditor.loadFailed"),
-          );
-        }
-      } finally {
-        if (!cancelled) {
-          setIsLoading(false);
-        }
-      }
-    }
-
-    void loadQueryResults();
-
-    return () => {
-      cancelled = true;
-    };
-  }, [catalogItems, queryId, t]);
-
   if (queryId.length === 0) {
     return (
       <Text className="text-muted-foreground text-sm">
@@ -200,7 +151,7 @@ function QueryViewerRuntime({
     );
   }
 
-  if (isLoading) {
+  if (queryResults.isLoading) {
     return (
       <Text className="text-muted-foreground text-sm">
         {t("metricsRowDesigner.queryViewerEditor.loading")}
@@ -208,8 +159,12 @@ function QueryViewerRuntime({
     );
   }
 
-  if (error) {
-    return <Text className="text-destructive text-sm">{error}</Text>;
+  if (queryResults.isError) {
+    const message =
+      queryResults.error instanceof Error
+        ? queryResults.error.message
+        : t("metricsRowDesigner.queryViewerEditor.loadFailed");
+    return <Text className="text-destructive text-sm">{message}</Text>;
   }
 
   const sourceDefinition = definition
