@@ -559,6 +559,7 @@ export function ComponentClickActionEditor({
           {showCreateFormPrefill ? (
             <CreateFormPrefillEditor
               mappings={createFormPrefill}
+              sourceDefinition={definition}
               targetDefinition={targetDefinition}
               sourceFieldDescriptors={fieldDescriptors}
               labels={labels}

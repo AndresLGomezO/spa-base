@@ -7,6 +7,7 @@ export {
 } from "./adapters/entity-card-view-adapter.js";
 export { entityFormFieldAdapter } from "./adapters/entity-form-field-adapter.js";
 
+export { listCreateFormPrefillSourceFieldDescriptors } from "./create-form-prefill-source-fields.js";
 export {
   CreateFormPrefillEditor,
   type CreateFormPrefillEditorLabels,

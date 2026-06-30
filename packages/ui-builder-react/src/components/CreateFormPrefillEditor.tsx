@@ -6,6 +6,7 @@ import type {
 import { Button, FieldLabel, Select, Text } from "@repo/ui";
 
 import type { FieldDescriptor } from "../adapters/entity-card-view-adapter.js";
+import { listCreateFormPrefillSourceFieldDescriptors } from "../create-form-prefill-source-fields.js";
 
 export interface CreateFormPrefillEditorLabels {
   readonly createFormPrefill: string;
@@ -21,6 +22,7 @@ export interface CreateFormPrefillEditorLabels {
 
 export interface CreateFormPrefillEditorProps {
   readonly mappings: readonly EntityFormPrefillMapping[];
+  readonly sourceDefinition: SerializableEntityDefinition;
   readonly targetDefinition: SerializableEntityDefinition;
   readonly sourceFieldDescriptors: readonly FieldDescriptor[];
   readonly onChange: (mappings: readonly EntityFormPrefillMapping[]) => void;
@@ -82,11 +84,16 @@ function readSourceType(
 
 export function CreateFormPrefillEditor({
   mappings,
+  sourceDefinition,
   targetDefinition,
   sourceFieldDescriptors,
   onChange,
   labels,
 }: CreateFormPrefillEditorProps) {
+  const sourceFields = listCreateFormPrefillSourceFieldDescriptors(
+    sourceDefinition,
+    sourceFieldDescriptors,
+  );
   const targetFields = listTargetFieldOptions(targetDefinition);
   const usedTargetFields = new Set(
     mappings.map((mapping) => mapping.targetField),
@@ -151,10 +158,10 @@ export function CreateFormPrefillEditor({
                       ? mapping.source
                       : mapping.source.type === "field"
                         ? mapping.source
-                        : sourceFieldDescriptors[0]
+                        : sourceFields[0]
                           ? {
                               type: "field" as const,
-                              path: sourceFieldDescriptors[0].path,
+                              path: sourceFields[0].path,
                             }
                           : { type: "currentDate" as const };
 
@@ -189,7 +196,7 @@ export function CreateFormPrefillEditor({
 
                   updateSource(index, {
                     type: "field",
-                    path: sourceFieldDescriptors[0]?.path ?? "",
+                    path: sourceFields[0]?.path ?? "",
                   });
                 }}
               >
@@ -220,7 +227,7 @@ export function CreateFormPrefillEditor({
                     });
                   }}
                 >
-                  {sourceFieldDescriptors.map((field) => (
+                  {sourceFields.map((field) => (
                     <option key={field.path} value={field.path}>
                       {field.label} ({field.path})
                     </option>
@@ -263,8 +270,8 @@ export function CreateFormPrefillEditor({
             ...mappings,
             {
               targetField: nextTarget.value,
-              source: sourceFieldDescriptors[0]
-                ? { type: "field", path: sourceFieldDescriptors[0].path }
+              source: sourceFields[0]
+                ? { type: "field", path: sourceFields[0].path }
                 : { type: "currentDate" },
             },
           ]);
