@@ -48,4 +48,28 @@ describe("CardFieldDate", () => {
 
     expect(html).toContain("—");
   });
+
+  it("applies theme token color classes on the value", () => {
+    const html = renderToStaticMarkup(
+      createElement(CardFieldDate, {
+        value: "2024-06-01T15:45:00.000Z",
+        valueClassName: "text-success",
+      }),
+    );
+
+    expect(html).toContain('class="');
+    expect(html).toContain("text-success");
+    expect(html).not.toMatch(/text-foreground[^"]*text-success/);
+  });
+
+  it("applies custom color inline styles on the value", () => {
+    const html = renderToStaticMarkup(
+      createElement(CardFieldDate, {
+        value: "2024-06-01T15:45:00.000Z",
+        valueStyle: { color: "var(--color-primary)" },
+      }),
+    );
+
+    expect(html).toContain('style="color:var(--color-primary)"');
+  });
 });

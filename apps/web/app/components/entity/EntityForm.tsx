@@ -50,6 +50,7 @@ interface EntityFormProps {
   readonly entityName: EntityName;
   readonly mode: "create" | "edit";
   readonly recordId?: string;
+  readonly createPrefill?: Readonly<Record<string, string>>;
   readonly onCancel: () => void;
   readonly onSuccess?: () => void;
   readonly hideActions?: boolean;
@@ -63,6 +64,7 @@ export function EntityForm({
   entityName,
   mode,
   recordId,
+  createPrefill,
   onCancel,
   onSuccess,
   hideActions = false,
@@ -95,6 +97,13 @@ export function EntityForm({
     const initial = buildInitialValuesFromLayout(definition, mode);
     for (const fieldName of getJoinRelationFieldNames(definition)) {
       initial[fieldName] = [];
+    }
+    if (mode === "create" && createPrefill) {
+      for (const [fieldName, value] of Object.entries(createPrefill)) {
+        if (fieldName in definition.fields) {
+          initial[fieldName] = value;
+        }
+      }
     }
     return initial;
   });

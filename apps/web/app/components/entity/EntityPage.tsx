@@ -45,6 +45,10 @@ import { entityHasSearchableColumns } from "./entity-list-search";
 import { useEntityColumnDescriptors } from "./useEntityColumnDescriptors";
 import { metricStripHasContent } from "@repo/entities";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
+import {
+  parseEntityCreateFormPrefill,
+  stripEntityFormModalSearchParams,
+} from "../../routing/parse-entity-create-form-prefill";
 import { createEntityMainPageRenderContext } from "../../features/ui-builder/create-entity-main-page-render-context";
 import { createDefaultMetricRowLayout } from "../../features/ui-builder/create-default-metric-row-layout";
 import { EntityViewMetricsStrip } from "../metrics/EntityViewMetricsStrip";
@@ -285,12 +289,19 @@ function EntityPageInner({ entityName }: EntityPageProps) {
     setFormModal(null);
     setIsFormSubmitting(false);
     if (searchParams.has("create") || searchParams.has("edit")) {
-      const next = new URLSearchParams(searchParams);
-      next.delete("create");
-      next.delete("edit");
-      setSearchParams(next, { replace: true });
+      setSearchParams(
+        stripEntityFormModalSearchParams(searchParams, definition),
+        {
+          replace: true,
+        },
+      );
     }
-  }, [searchParams, setSearchParams]);
+  }, [definition, searchParams, setSearchParams]);
+
+  const createFormPrefill = useMemo(
+    () => parseEntityCreateFormPrefill(searchParams, definition),
+    [definition, searchParams],
+  );
 
   useEffect(() => {
     if (searchParams.has("create") && permissions.canCreate) {
@@ -575,6 +586,7 @@ function EntityPageInner({ entityName }: EntityPageProps) {
                 key={`create-${formModalSession}`}
                 entityName={entityName}
                 mode="create"
+                createPrefill={createFormPrefill}
                 {...formModalSharedProps}
               />
             </RequireEntityPermission>

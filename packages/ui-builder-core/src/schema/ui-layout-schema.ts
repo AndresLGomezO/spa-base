@@ -28,6 +28,22 @@ const dataSourceSchema = z.discriminatedUnion("type", [
     .strict(),
 ]);
 
+const entityNavigationTargetSchema = z.discriminatedUnion("scope", [
+  z.object({ scope: z.literal("current") }).strict(),
+  z
+    .object({
+      scope: z.literal("relation"),
+      relationFieldPath: z.string().trim().min(1),
+    })
+    .strict(),
+  z
+    .object({
+      scope: z.literal("entity"),
+      entityName: z.string().trim().min(1),
+    })
+    .strict(),
+]);
+
 const componentClickActionSchema = z.discriminatedUnion("type", [
   z
     .object({
@@ -40,6 +56,19 @@ const componentClickActionSchema = z.discriminatedUnion("type", [
           })
           .strict(),
       ]),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("entityView"),
+      view: z.enum(["recordDetail", "recordEditForm", "entityList"]),
+      target: entityNavigationTargetSchema,
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("entityCreateForm"),
+      target: entityNavigationTargetSchema,
     })
     .strict(),
   z

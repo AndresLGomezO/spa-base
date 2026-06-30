@@ -63,4 +63,50 @@ describe("componentRowSchema clickAction", () => {
       openInNewTab: true,
     });
   });
+
+  it("accepts entityView and entityCreateForm click actions", () => {
+    const entityList = componentRowSchema.parse({
+      type: "component",
+      id: "row-4",
+      clickAction: {
+        type: "entityView",
+        view: "entityList",
+        target: { scope: "entity", entityName: "contact" },
+      },
+      component: {
+        kind: "text",
+        primary: { type: "static", value: "See all" },
+      },
+    }) as ComponentRowNode;
+
+    expect(entityList.clickAction).toEqual({
+      type: "entityView",
+      view: "entityList",
+      target: { scope: "entity", entityName: "contact" },
+    });
+
+    const createForm = componentRowSchema.parse({
+      type: "component",
+      id: "row-5",
+      clickAction: {
+        type: "entityCreateForm",
+        target: {
+          scope: "relation",
+          relationFieldPath: "orders",
+        },
+      },
+      component: {
+        kind: "text",
+        primary: { type: "static", value: "Add order" },
+      },
+    }) as ComponentRowNode;
+
+    expect(createForm.clickAction).toEqual({
+      type: "entityCreateForm",
+      target: {
+        scope: "relation",
+        relationFieldPath: "orders",
+      },
+    });
+  });
 });

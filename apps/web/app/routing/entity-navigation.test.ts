@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   buildCurrentReturnTo,
+  buildEntityListCreatePath,
   buildEntityListEditPath,
   buildEntityListPath,
   isSafeAppReturnTo,
@@ -69,5 +70,23 @@ describe("entity-navigation", () => {
     expect(buildEntityListEditPath("contact", "rec-1", "/app/contact")).toBe(
       "/app/contact?edit=rec-1",
     );
+  });
+
+  it("builds create path with prefill params", () => {
+    expect(
+      buildEntityListCreatePath("order", "/app/account", {
+        accountId: "account-1",
+      }),
+    ).toBe("/app/order?create=&accountId=account-1");
+  });
+
+  it("merges create param without dropping list filters on same entity", () => {
+    expect(
+      buildEntityListCreatePath(
+        "order",
+        "/app/order?q=foo&f.status=Open&page=2",
+        { accountId: "account-1" },
+      ),
+    ).toBe("/app/order?q=foo&f.status=Open&page=2&create=&accountId=account-1");
   });
 });

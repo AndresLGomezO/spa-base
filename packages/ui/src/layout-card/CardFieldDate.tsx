@@ -9,6 +9,7 @@ import {
 import { Text } from "../typography/Text.js";
 
 import type { CardLabelPosition } from "./types.js";
+import { cardTextColorClassName, type CardTextColor } from "./text-colors.js";
 
 export interface CardFieldDateProps {
   readonly value: unknown;
@@ -22,7 +23,9 @@ export interface CardFieldDateProps {
   readonly style?: CSSProperties;
   readonly valueClassName?: string;
   readonly labelClassName?: string;
+  readonly valueStyle?: CSSProperties;
   readonly textSize?: number;
+  readonly textColor?: CardTextColor;
   readonly textThin?: boolean;
   readonly textBold?: boolean;
   readonly textItalic?: boolean;
@@ -64,7 +67,9 @@ export function CardFieldDate({
   style,
   valueClassName,
   labelClassName,
+  valueStyle,
   textSize,
+  textColor,
   textThin,
   textBold,
   textItalic,
@@ -92,18 +97,20 @@ export function CardFieldDate({
   const valueElement = (
     <span
       className={cn(
-        "text-foreground tabular-nums",
+        "tabular-nums",
+        cardTextColorClassName(textColor),
         resolvedTextSize === undefined && "text-sm",
         textBold ? "font-bold" : textThin ? "font-light" : "font-medium",
         textItalic && "italic",
         textUnderline && "underline",
         valueClassName,
       )}
-      style={
-        resolvedTextSize !== undefined
+      style={{
+        ...(resolvedTextSize !== undefined
           ? { fontSize: resolvedTextSize }
-          : undefined
-      }
+          : {}),
+        ...valueStyle,
+      }}
     >
       {formattedValue}
     </span>

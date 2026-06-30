@@ -10,6 +10,16 @@ export type {
 } from "./types/layout.js";
 
 export type { ComponentClickAction } from "./types/click-action.js";
+export type {
+  EntityNavigationTarget,
+  EntityViewKind,
+} from "./types/click-action.js";
+export {
+  isEntityNavigationTargetCurrent,
+  readEntityNavigationEntityName,
+  readEntityNavigationRelationFieldPath,
+  normalizeEntityClickAction,
+} from "./types/click-action.js";
 
 export { resolveColumnStackDirection } from "./types/layout.js";
 export {

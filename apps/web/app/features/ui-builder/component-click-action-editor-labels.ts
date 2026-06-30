@@ -9,8 +9,23 @@ export function componentClickActionEditorLabels(
     title: t("entity.viewSettings.clickAction.title"),
     actionType: t("entity.viewSettings.clickAction.actionType"),
     none: t("entity.viewSettings.clickAction.none"),
-    entityRecord: t("entity.viewSettings.clickAction.entityRecord"),
+    entityNavigation: t("entity.viewSettings.clickAction.entityNavigation"),
     externalUrl: t("entity.viewSettings.clickAction.externalUrl"),
+    navigationDestination: t(
+      "entity.viewSettings.clickAction.navigationDestination",
+    ),
+    destinationRecordDetail: t(
+      "entity.viewSettings.clickAction.destinationRecordDetail",
+    ),
+    destinationRecordEditForm: t(
+      "entity.viewSettings.clickAction.destinationRecordEditForm",
+    ),
+    destinationEntityList: t(
+      "entity.viewSettings.clickAction.destinationEntityList",
+    ),
+    destinationCreateForm: t(
+      "entity.viewSettings.clickAction.destinationCreateForm",
+    ),
     entityTarget: t("entity.viewSettings.clickAction.entityTarget"),
     entityTargetCurrent: t(
       "entity.viewSettings.clickAction.entityTargetCurrent",
@@ -18,7 +33,11 @@ export function componentClickActionEditorLabels(
     entityTargetRelation: t(
       "entity.viewSettings.clickAction.entityTargetRelation",
     ),
+    entityTargetSpecific: t(
+      "entity.viewSettings.clickAction.entityTargetSpecific",
+    ),
     relationFieldPath: t("entity.viewSettings.clickAction.relationFieldPath"),
+    specificEntity: t("entity.viewSettings.clickAction.specificEntity"),
     externalUrlSource: t("entity.viewSettings.clickAction.externalUrlSource"),
     useFieldValue: t("entity.viewSettings.clickAction.useFieldValue"),
     staticUrl: t("entity.viewSettings.clickAction.staticUrl"),
@@ -29,5 +48,6 @@ export function componentClickActionEditorLabels(
       "entity.viewSettings.clickAction.staticUrlPlaceholder",
     ),
     openInNewTab: t("entity.viewSettings.clickAction.openInNewTab"),
+    noRelationFields: t("entity.viewSettings.clickAction.noRelationFields"),
   };
 }

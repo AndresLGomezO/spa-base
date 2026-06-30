@@ -68,19 +68,37 @@ function navigateToEntityDetail(
   });
 }
 
+function resolveEntityListModalBasePath(
+  entityName: EntityName,
+  returnTo: string,
+): { readonly pathname: string; readonly params: URLSearchParams } {
+  const pathname = buildEntityListPath(entityName);
+
+  if (!isSafeAppReturnTo(returnTo)) {
+    return { pathname, params: new URLSearchParams() };
+  }
+
+  const questionIndex = returnTo.indexOf("?");
+  const returnPathname =
+    questionIndex === -1 ? returnTo : returnTo.slice(0, questionIndex);
+  const search = questionIndex === -1 ? "" : returnTo.slice(questionIndex + 1);
+
+  if (returnPathname === pathname) {
+    return { pathname, params: new URLSearchParams(search) };
+  }
+
+  return { pathname, params: new URLSearchParams() };
+}
+
 export function buildEntityListEditPath(
   entityName: EntityName,
   recordId: string,
   returnTo: string,
 ): string {
-  const basePath = isSafeAppReturnTo(returnTo)
-    ? returnTo
-    : buildEntityListPath(entityName);
-  const questionIndex = basePath.indexOf("?");
-  const pathname =
-    questionIndex === -1 ? basePath : basePath.slice(0, questionIndex);
-  const search = questionIndex === -1 ? "" : basePath.slice(questionIndex + 1);
-  const params = new URLSearchParams(search);
+  const { pathname, params } = resolveEntityListModalBasePath(
+    entityName,
+    returnTo,
+  );
 
   params.delete("create");
   params.set("edit", recordId);
@@ -89,6 +107,32 @@ export function buildEntityListEditPath(
   return query.length > 0
     ? `${pathname}?${query}`
     : `${pathname}?edit=${recordId}`;
+}
+
+export function buildEntityListCreatePath(
+  entityName: EntityName,
+  returnTo: string,
+  prefill?: Readonly<Record<string, string>>,
+): string {
+  const { pathname, params } = resolveEntityListModalBasePath(
+    entityName,
+    returnTo,
+  );
+
+  params.delete("edit");
+  params.append("create", "");
+
+  if (prefill) {
+    for (const [fieldName, value] of Object.entries(prefill)) {
+      const trimmed = value.trim();
+      if (trimmed.length > 0) {
+        params.set(fieldName, trimmed);
+      }
+    }
+  }
+
+  const query = params.toString();
+  return query.length > 0 ? `${pathname}?${query}` : `${pathname}?create`;
 }
 
 export function useEntityReturnNavigation(entityName: EntityName) {

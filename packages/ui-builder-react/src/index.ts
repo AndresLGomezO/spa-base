@@ -13,6 +13,7 @@ export {
 } from "./components/ComponentRowClickActionEditor.js";
 export {
   ComponentClickActionEditor,
+  type CatalogEntityOption,
   type ComponentClickActionEditorLabels,
   type ComponentClickActionEditorProps,
 } from "./components/ComponentClickActionEditor.js";
