@@ -55,35 +55,35 @@ const RECORD_DETAIL_KINDS: readonly UiComponentKind[] = [
   "related-records",
 ];
 
+const FORM_DISPLAY_KINDS: readonly UiComponentKind[] = [
+  "text",
+  "image",
+  "icon",
+  "date",
+  "numeric",
+  "badge",
+];
+
 const FORM_PLAIN_KINDS: readonly UiComponentKind[] = [
   "form-field",
   "entity-field-selector",
   "form-section",
   "form-actions",
+  ...FORM_DISPLAY_KINDS,
 ];
 
 const FORM_WIZARD_SHELL_KINDS: readonly UiComponentKind[] = [
   "wizard-progress",
   "wizard-step-host",
   "wizard-actions",
-  "text",
-  "image",
-  "icon",
-  "date",
-  "numeric",
-  "badge",
+  ...FORM_DISPLAY_KINDS,
 ];
 
 const FORM_WIZARD_STEP_KINDS: readonly UiComponentKind[] = [
   "form-field",
   "entity-field-selector",
   "form-section",
-  "text",
-  "image",
-  "icon",
-  "date",
-  "numeric",
-  "badge",
+  ...FORM_DISPLAY_KINDS,
 ];
 
 const FORM_MODAL_FOOTER_EXCLUDED_KINDS = new Set<UiComponentKind>([

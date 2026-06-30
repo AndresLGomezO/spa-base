@@ -375,6 +375,11 @@ export function validateEntityUIConfig(
         formLayout.layout as UiLayoutDocument,
         `${mode} form layout`,
       );
+      assertLayoutFieldPaths(
+        layoutEntityShape,
+        formLayout.layout as UiLayoutDocument,
+        `${mode} form layout`,
+      );
     } else if (formLayout.sections) {
       for (const section of formLayout.sections) {
         assertFieldRefs(entity, section.fields, `${mode} form`);
@@ -420,6 +425,11 @@ export function validateEntityUIConfig(
           design.layout as UiLayoutDocument,
           `form design "${design.id}" layout`,
         );
+        assertLayoutFieldPaths(
+          layoutEntityShape,
+          design.layout as UiLayoutDocument,
+          `form design "${design.id}" layout`,
+        );
       }
 
       if (design.wizard) {
@@ -432,6 +442,11 @@ export function validateEntityUIConfig(
         );
         for (const [index, step] of design.wizard.steps.entries()) {
           assertFormLayoutFieldPaths(
+            layoutEntityShape,
+            step.layout as UiLayoutDocument,
+            `form design "${design.id}" wizard step ${index + 1} (${step.id})`,
+          );
+          assertLayoutFieldPaths(
             layoutEntityShape,
             step.layout as UiLayoutDocument,
             `form design "${design.id}" wizard step ${index + 1} (${step.id})`,

@@ -8,6 +8,7 @@ import type {
 import type { SerializableEntityDefinition } from "@repo/entities";
 import { resolveOneToManyForeignKeyField } from "@repo/entities";
 
+import { buildCreatePrefillPopulated } from "../../components/entity/build-create-prefill-populated";
 import {
   parseRelationFieldPath,
   resolveRelationFieldName,
@@ -287,12 +288,16 @@ function resolveEntityListHref(
 function resolveEntityCreateModal(
   scope: ResolvedEntityNavigationScope,
   formDesignId?: string,
+  createPrefillPopulated?: Readonly<
+    Record<string, Record<string, unknown> | null>
+  >,
 ): ResolvedComponentClickTarget {
   return {
     kind: "entityFormModal",
     entityName: scope.entityName,
     mode: "create",
     createPrefill: scope.prefill,
+    ...(createPrefillPopulated ? { createPrefillPopulated } : {}),
     ...(formDesignId ? { formDesignId } : {}),
   };
 }
@@ -408,12 +413,18 @@ export function resolveComponentClickTarget(options: {
           )
         : {};
 
+    const mergedPrefill = mergeCreateFormPrefill(
+      scope.prefill,
+      configuredPrefill,
+    );
+
     return resolveEntityCreateModal(
       {
         ...scope,
-        prefill: mergeCreateFormPrefill(scope.prefill, configuredPrefill),
+        prefill: mergedPrefill,
       },
       options.action.formDesignId,
+      buildCreatePrefillPopulated(mergedPrefill, options.item),
     );
   }
 

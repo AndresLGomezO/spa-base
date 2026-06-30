@@ -4,6 +4,8 @@ import { I18nextProvider } from "react-i18next";
 import { MemoryRouter } from "react-router";
 import { createDefaultFormLayout } from "@repo/entities";
 import {
+  addComponentRowAt,
+  createDefaultComponent,
   createDefaultWizardShellLayout,
   createDefaultWizardFormConfig,
   createEmptyLayout,
@@ -17,6 +19,7 @@ import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { EntityForm } from "./EntityForm";
 import { EntityFormModalProvider } from "./entity-form-modal-context";
 import { useEntity, type EntityRecord } from "../../hooks/useEntity";
+import { getEntity } from "../../lib/api-client";
 
 const createMock = vi.fn(async (): Promise<EntityRecord | null> => null);
 
@@ -66,6 +69,16 @@ vi.mock("../../hooks/useFieldAccess", () => ({
   useFieldAccess: vi.fn(() => ({})),
   getFieldAccessLevel: vi.fn(() => undefined),
 }));
+
+vi.mock("../../lib/api-client", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("../../lib/api-client")>();
+  return {
+    ...actual,
+    getEntity: vi.fn(),
+    getEntityRelationTargets: vi.fn(async () => []),
+    syncEntityRelationTargets: vi.fn(async () => undefined),
+  };
+});
 
 function TestEntityFormProviders({
   children,
@@ -147,6 +160,88 @@ const widgetWithDesignedCreateForm: EntityCatalogEntry = {
   },
 };
 
+const contractCatalogEntry: EntityCatalogEntry = {
+  name: "contract",
+  collection: "contracts",
+  permissions: ["contract.read"],
+  fields: {
+    name: { type: "string", required: true, optional: false },
+    providerId: {
+      type: "reference",
+      required: false,
+      optional: true,
+      relation: { type: "many-to-one", target: "provider" },
+    },
+  },
+  ui: {
+    views: [],
+    forms: {
+      create: { sections: [{ title: "Details", fields: ["name"] }] },
+      edit: { sections: [{ title: "Details", fields: ["name"] }] },
+    },
+    fields: {},
+  },
+};
+
+const providerCatalogEntry: EntityCatalogEntry = {
+  name: "provider",
+  collection: "providers",
+  permissions: ["provider.read"],
+  fields: {
+    name: { type: "string", required: true, optional: false },
+  },
+  ui: {
+    views: [],
+    forms: {
+      create: { sections: [{ title: "Details", fields: ["name"] }] },
+      edit: { sections: [{ title: "Details", fields: ["name"] }] },
+    },
+    fields: {},
+  },
+};
+
+function createPaymentCreateLayout() {
+  const locator = { scope: "root" as const, columnIndex: 0 };
+  let layout = createEmptyLayout(1);
+  layout = addComponentRowAt(
+    layout,
+    locator,
+    createDefaultComponent("text", "contract.name"),
+  );
+  layout = addComponentRowAt(
+    layout,
+    locator,
+    createDefaultComponent("form-field", "amount"),
+  );
+  return layout;
+}
+
+const paymentWithContractDisplay: EntityCatalogEntry = {
+  name: "payment",
+  collection: "payments",
+  permissions: ["payment.read", "payment.create"],
+  fields: {
+    amount: { type: "number", required: true, optional: false },
+    contractId: {
+      type: "reference",
+      required: true,
+      optional: false,
+      relation: { type: "many-to-one", target: "contract" },
+    },
+  },
+  ui: {
+    views: [{ type: "table", name: "default", fields: ["amount"] }],
+    forms: {
+      create: { layout: createPaymentCreateLayout() },
+      edit: { sections: [{ title: "Details", fields: ["amount"] }] },
+    },
+    fields: {
+      amount: { label: "Amount", component: "number" },
+      contractId: { label: "Contract", component: "relation" },
+    },
+  },
+};
+
 describe("EntityForm", () => {
   it("renders designed create layout with form-field widgets", () => {
     render(
@@ -159,6 +254,33 @@ describe("EntityForm", () => {
     expect(document.getElementById("widget-email")).toBeInTheDocument();
     expect(document.getElementById("widget-isActive")).toBeInTheDocument();
     expect(screen.queryByRole("heading", { level: 2 })).not.toBeInTheDocument();
+  });
+
+  it("renders prefilled relation display components on create", async () => {
+    render(
+      <TestEntityFormProviders
+        items={[
+          paymentWithContractDisplay,
+          contractCatalogEntry,
+          providerCatalogEntry,
+        ]}
+      >
+        <EntityForm
+          entityName="payment"
+          mode="create"
+          createPrefill={{ contractId: "contract-1" }}
+          createPrefillPopulated={{
+            contractId: { id: "contract-1", name: "Annual contract" },
+          }}
+          onCancel={vi.fn()}
+        />
+      </TestEntityFormProviders>,
+    );
+
+    await waitFor(() => {
+      expect(screen.getByText("Annual contract")).toBeInTheDocument();
+    });
+    expect(getEntity).not.toHaveBeenCalled();
   });
 
   it("shows validation errors from the entity hook", () => {

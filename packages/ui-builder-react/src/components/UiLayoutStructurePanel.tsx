@@ -164,7 +164,7 @@ export function UiLayoutStructurePanel({
   }, [definition, designSurface, getDefinition, catalog]);
 
   const displayFieldDescriptors = useMemo((): readonly FieldDescriptor[] => {
-    if (designSurface === "formWizardStep") {
+    if (designSurface === "formWizardStep" || designSurface === "formPlain") {
       return entityCardViewAdapter(definition, getDefinition, catalog)
         .fieldDescriptors;
     }

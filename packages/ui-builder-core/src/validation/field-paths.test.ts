@@ -75,6 +75,58 @@ describe("listLayoutFieldOptions", () => {
     expect(options).not.toContain("currency.logo");
   });
 
+  it("includes two-hop relation display paths", () => {
+    const contractDefinition: FieldPathValidationDefinition = {
+      name: "contract",
+      fields: {
+        name: {},
+        providerId: {
+          relation: { type: "many-to-one", target: "provider" },
+        },
+      },
+    };
+
+    const paymentDefinition: FieldPathValidationDefinition = {
+      name: "payment",
+      fields: {
+        contractId: {
+          relation: { type: "many-to-one", target: "contract" },
+        },
+      },
+    };
+
+    const resolveTarget = (
+      target: string,
+    ): FieldPathValidationDefinition | undefined => {
+      if (target === "contract") {
+        return contractDefinition;
+      }
+      if (target === "provider") {
+        return {
+          name: "provider",
+          fields: {
+            name: {},
+            logo: {},
+          },
+        };
+      }
+      return undefined;
+    };
+
+    const options = listLayoutFieldOptions(paymentDefinition, {
+      resolveTarget,
+    });
+
+    expect(options).toContain("contract.name");
+    expect(options).toContain("contract.provider.name");
+    expect(options).toContain("contract.provider.logo");
+    expect(
+      isValidLayoutFieldPath(paymentDefinition, "contract.provider.name", {
+        resolveTarget,
+      }),
+    ).toBe(true);
+  });
+
   it("includes one-to-many child field paths", () => {
     const options = listLayoutFieldOptions(
       {

@@ -2,6 +2,7 @@ import type { SerializableEntityDefinition } from "@repo/entities";
 
 import {
   parseRelationFieldPath,
+  resolveRelationFieldName,
   type RelationDefinitionLookup,
 } from "./resolve-relation-field-path";
 
@@ -50,6 +51,42 @@ export function resolveEntityFieldPath(
     return item[trimmedPath];
   }
 
+  const pathSegments = trimmedPath.split(".");
+  if (pathSegments.length >= 3) {
+    const firstSegment = pathSegments[0];
+    if (!firstSegment) {
+      return null;
+    }
+
+    const relationField = resolveRelationFieldName(definition, firstSegment);
+    if (!relationField) {
+      return null;
+    }
+
+    const relationMeta = definition.fields[relationField];
+    const targetEntity = relationMeta?.relation?.target;
+    const targetDefinition =
+      targetEntity && options?.getDefinition
+        ? options.getDefinition(targetEntity)
+        : undefined;
+    if (!targetDefinition) {
+      return null;
+    }
+
+    const populatedRecord = getPopulatedRecord(item, relationField);
+    if (!populatedRecord) {
+      return null;
+    }
+
+    return resolveEntityFieldPath(
+      populatedRecord,
+      pathSegments.slice(1).join("."),
+      targetDefinition,
+      getOneToManyCellValue,
+      options,
+    );
+  }
+
   const parsed = parseRelationFieldPath(
     definition,
     trimmedPath,
@@ -83,4 +120,21 @@ export function resolveEntityFieldRootName(fieldPath: string): string {
   return fieldPath.includes(".")
     ? (fieldPath.split(".", 1)[0] ?? fieldPath)
     : fieldPath;
+}
+
+export function resolveEntityFieldAccessRoot(
+  definition: SerializableEntityDefinition,
+  fieldPath: string,
+): string {
+  const trimmedPath = fieldPath.trim();
+  if (!trimmedPath.includes(".")) {
+    return trimmedPath;
+  }
+
+  const firstSegment = trimmedPath.split(".", 1)[0];
+  if (!firstSegment) {
+    return trimmedPath;
+  }
+
+  return resolveRelationFieldName(definition, firstSegment) ?? firstSegment;
 }

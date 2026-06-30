@@ -18,7 +18,10 @@ import { EntityFieldSelector } from "../../components/entity/EntityFieldSelector
 import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
 import { ENTITY_FORM_ID } from "../../components/entity/entity-form-constants";
 import { resolveEntityCellValue } from "../../components/entity/resolve-entity-cell-value";
-import { resolveEntityFieldPath } from "../../components/entity/resolve-entity-field-path";
+import {
+  resolveEntityFieldPath,
+  resolveEntityFieldAccessRoot,
+} from "../../components/entity/resolve-entity-field-path";
 import {
   resolveLayoutSlotDisplayMeta,
   resolveLayoutSlotLabel,
@@ -87,6 +90,7 @@ export function createEntityFormRenderContext(options: {
       path,
       options.definition,
       () => null,
+      { getDefinition: options.getDefinition },
     );
 
   return {
@@ -118,9 +122,7 @@ export function createEntityFormRenderContext(options: {
           )
         : undefined,
     fieldAccessFilter: (fieldPath) => {
-      const root = fieldPath.includes(".")
-        ? (fieldPath.split(".")[0] ?? fieldPath)
-        : fieldPath;
+      const root = resolveEntityFieldAccessRoot(options.definition, fieldPath);
       const fieldUI = options.definition.ui.fields?.[root];
       const access = getFieldAccessLevel(options.fieldAccess, root);
       return isFieldVisible(fieldUI, options.canRead, access);

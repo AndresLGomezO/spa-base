@@ -9,6 +9,12 @@ Set `presentation: "plain"`. Use form-field, form-section, form-actions.
 - `entity-field-selector`
 - `form-section`
 - `form-actions`
+- `text`
+- `image`
+- `icon`
+- `date`
+- `numeric`
+- `badge`
 
 ## Slice envelope example
 ```json

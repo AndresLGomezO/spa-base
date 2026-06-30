@@ -213,6 +213,7 @@ describe("resolveComponentClickTarget", () => {
       entityName: "order",
       mode: "create",
       createPrefill: { accountId: "account-1" },
+      createPrefillPopulated: { accountId: { id: "account-1" } },
     });
   });
 

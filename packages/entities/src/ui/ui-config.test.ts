@@ -1,8 +1,11 @@
 import {
+  addComponentRowAt,
   collectLayoutFieldPaths,
+  createDefaultComponent,
   createDefaultFormLayout,
   createDefaultModalFooterLayout,
   createDefaultWizardShellLayout,
+  createEmptyLayout,
   ensureWizardShellLayout,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
@@ -257,6 +260,41 @@ describe("validateEntityUIConfig", () => {
           },
         },
       }),
+    ).not.toThrow();
+  });
+
+  it("validates display component paths on plain create layouts", () => {
+    let layout = createEmptyLayout(1);
+    layout = addComponentRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      createDefaultComponent("text", "contract.name"),
+    );
+
+    const Payment = defineEntity({
+      name: "payment",
+      fields: {
+        amount: { type: "number", required: true },
+        contractId: {
+          type: "relation",
+          relation: { type: "many-to-one", target: "contract" },
+        },
+      },
+      ui: {
+        nav: { label: "Payments", icon: "box" },
+        views: [{ type: "table", name: "default", fields: ["amount"] }],
+        forms: {
+          create: { layout },
+          edit: { sections: [{ title: "Details", fields: ["amount"] }] },
+        },
+      },
+    });
+
+    expect(() =>
+      validateEntityUIConfig(
+        Payment as unknown as AnyDefinedEntity,
+        Payment.metadata.ui!,
+      ),
     ).not.toThrow();
   });
 

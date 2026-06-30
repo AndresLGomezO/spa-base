@@ -20,6 +20,9 @@ function toEntityFormModalRequest(
     mode: target.mode,
     recordId: target.recordId,
     createPrefill: target.createPrefill,
+    ...(target.createPrefillPopulated
+      ? { createPrefillPopulated: target.createPrefillPopulated }
+      : {}),
     formDesignId: target.formDesignId,
   };
 }

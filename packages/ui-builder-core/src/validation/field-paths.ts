@@ -48,6 +48,36 @@ export function isValidLayoutFieldPath(
     return trimmed in definition.fields;
   }
 
+  const segments = trimmed.split(".");
+  if (segments.length >= 3) {
+    const firstSegment = segments[0];
+    if (!firstSegment) {
+      return false;
+    }
+
+    const relationField = resolveRelationFieldName(definition, firstSegment);
+    if (!relationField) {
+      return false;
+    }
+
+    const relationMeta = definition.fields[relationField];
+    const targetEntity = relationMeta?.relation?.target;
+    if (!targetEntity) {
+      return false;
+    }
+
+    const targetDefinition = params?.resolveTarget?.(targetEntity);
+    if (!targetDefinition) {
+      return true;
+    }
+
+    return isValidLayoutFieldPath(
+      targetDefinition,
+      segments.slice(1).join("."),
+      params,
+    );
+  }
+
   const [firstSegment, subField] = trimmed.split(".", 2);
   if (!firstSegment || !subField) {
     return false;
@@ -574,6 +604,39 @@ export function listLayoutFieldOptions(
           }
 
           options.add(`${target}.${subFieldName}`);
+        }
+
+        for (const [, innerMeta] of Object.entries(targetDefinition.fields)) {
+          if (
+            !innerMeta.relation ||
+            (innerMeta.relation.type !== "many-to-one" &&
+              innerMeta.relation.type !== "one-to-one")
+          ) {
+            continue;
+          }
+
+          const innerTarget = innerMeta.relation.target;
+          if (!innerTarget) {
+            continue;
+          }
+
+          const innerTargetDefinition = params?.resolveTarget?.(innerTarget);
+          if (!innerTargetDefinition) {
+            for (const subfield of ["name", "code"] as const) {
+              options.add(`${target}.${innerTarget}.${subfield}`);
+            }
+            continue;
+          }
+
+          for (const [leafFieldName, leafMeta] of Object.entries(
+            innerTargetDefinition.fields,
+          )) {
+            if (leafMeta.type === "document") {
+              continue;
+            }
+
+            options.add(`${target}.${innerTarget}.${leafFieldName}`);
+          }
         }
       }
       continue;

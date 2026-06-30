@@ -106,6 +106,7 @@ export function useFormDesignerPreview(
         saveLabel: t("entity.create"),
         getDefinition,
         navigate,
+        usePreviewSamples: true,
       }),
     [
       editor.definition,

@@ -4,7 +4,6 @@ import {
   CollapsibleStyleRulesEditor,
   ComponentConfigEditor,
   ComponentDisplayRangeEditor,
-  entityFormFieldAdapter,
 } from "@repo/ui-builder-react";
 import {
   componentKindsForSurface,
@@ -38,6 +37,7 @@ import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryCont
 import { ContainerComponentRowPanel } from "./ContainerComponentRowPanel";
 import { NestedLayoutRowPanel } from "./NestedLayoutRowPanel";
 import { StructureRowNameField } from "./StructureItemNameField";
+import { useFormDesignerFieldDescriptors } from "./use-form-designer-field-descriptors";
 import { useFormDesigner } from "./form-designer-context";
 
 interface FormDesignerComponentRowPanelProps {
@@ -72,10 +72,8 @@ export function FormDesignerComponentRowPanel({
   );
   const allowedKinds = componentKindsForSurface(designSurface);
 
-  const fieldDescriptors = useMemo(
-    () => entityFormFieldAdapter(definition).fieldDescriptors,
-    [definition],
-  );
+  const { fieldDescriptors, displayFieldDescriptors } =
+    useFormDesignerFieldDescriptors(editor.definition.name);
 
   const row = findRowByRef(binding.layout, rowRef);
 
@@ -129,6 +127,7 @@ export function FormDesignerComponentRowPanel({
         <ComponentConfigEditor
           config={row.component}
           fieldDescriptors={fieldDescriptors}
+          displayFieldDescriptors={displayFieldDescriptors}
           labels={componentEditorLabels}
           allowedKinds={allowedKinds}
           definition={definition}

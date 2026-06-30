@@ -160,6 +160,7 @@ function EntityFormModalHostInner({
               entityName={request.entityName}
               mode="create"
               createPrefill={request.createPrefill}
+              createPrefillPopulated={request.createPrefillPopulated}
               formDesignId={formDesignId}
               {...formModalSharedProps}
             />

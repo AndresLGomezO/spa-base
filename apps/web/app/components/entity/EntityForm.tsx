@@ -46,7 +46,14 @@ import {
   collectOrphanFieldErrors,
 } from "./collect-form-rendered-field-roots";
 import { ENTITY_FORM_ID } from "./entity-form-constants";
-import { applyFormFieldChange } from "./form-relation-display-cache";
+import {
+  applyFormFieldChange,
+  applyRelationDisplayCache,
+} from "./form-relation-display-cache";
+import {
+  hasPendingPrefillRelationFetch,
+  hydratePrefilledRelationDisplay,
+} from "./hydrate-prefilled-relation-display";
 import { EntityFormValidationSummary } from "./EntityFormValidationSummary";
 import { EntityWizardForm } from "./EntityWizardForm";
 import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
@@ -58,6 +65,9 @@ interface EntityFormProps {
   readonly mode: "create" | "edit";
   readonly recordId?: string;
   readonly createPrefill?: Readonly<Record<string, string>>;
+  readonly createPrefillPopulated?: Readonly<
+    Record<string, Record<string, unknown> | null>
+  >;
   readonly formDesignId?: string;
   readonly onCancel: () => void;
   readonly onSuccess?: () => void;
@@ -73,6 +83,7 @@ export function EntityForm({
   mode,
   recordId,
   createPrefill,
+  createPrefillPopulated,
   formDesignId,
   onCancel,
   onSuccess,
@@ -104,7 +115,7 @@ export function EntityForm({
     [definition],
   );
   const [values, setValues] = useState<Record<string, unknown>>(() => {
-    const initial = buildInitialValuesFromLayout(
+    let initial = buildInitialValuesFromLayout(
       definition,
       mode,
       undefined,
@@ -115,6 +126,15 @@ export function EntityForm({
     }
     if (mode === "create" && createPrefill) {
       applyCreateFormPrefill(definition, initial, createPrefill);
+    }
+    if (mode === "create" && createPrefillPopulated) {
+      for (const [fieldName, record] of Object.entries(
+        createPrefillPopulated,
+      )) {
+        if (record) {
+          initial = applyRelationDisplayCache(initial, fieldName, record);
+        }
+      }
     }
     return initial;
   });
@@ -139,7 +159,44 @@ export function EntityForm({
     [definition],
   );
   const [isLoadingRecord, setIsLoadingRecord] = useState(mode === "edit");
+  const [isHydratingPrefill, setIsHydratingPrefill] = useState(false);
   const lastToastedError = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (mode !== "create") {
+      return;
+    }
+
+    if (
+      !hasPendingPrefillRelationFetch({
+        definition,
+        values: valuesRef.current,
+        prefilledPopulated: createPrefillPopulated,
+      })
+    ) {
+      return;
+    }
+
+    let cancelled = false;
+    setIsHydratingPrefill(true);
+    void (async () => {
+      const hydrated = await hydratePrefilledRelationDisplay({
+        definition,
+        values: valuesRef.current,
+        getDefinition,
+        prefilledPopulated: createPrefillPopulated,
+      });
+      if (cancelled) {
+        return;
+      }
+      setValues(hydrated);
+      setIsHydratingPrefill(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [createPrefill, createPrefillPopulated, definition, getDefinition, mode]);
 
   useEffect(() => {
     if (mode !== "edit" || !recordId) return;
@@ -403,7 +460,7 @@ export function EntityForm({
     [fieldErrors, renderedFieldRoots],
   );
 
-  if (isLoadingRecord) {
+  if (isLoadingRecord || isHydratingPrefill) {
     return <EntityFormSkeleton />;
   }
 
