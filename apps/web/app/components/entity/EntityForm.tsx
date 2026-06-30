@@ -35,6 +35,7 @@ import {
   syncEntityRelationTargets,
 } from "../../lib/api-client";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
+import { applyCreateFormPrefill } from "./coerce-create-form-prefill-value";
 import {
   buildFormSubmitValues,
   getJoinRelationFieldNames,
@@ -113,11 +114,7 @@ export function EntityForm({
       initial[fieldName] = [];
     }
     if (mode === "create" && createPrefill) {
-      for (const [fieldName, value] of Object.entries(createPrefill)) {
-        if (fieldName in definition.fields) {
-          initial[fieldName] = value;
-        }
-      }
+      applyCreateFormPrefill(definition, initial, createPrefill);
     }
     return initial;
   });
