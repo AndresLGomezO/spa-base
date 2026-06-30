@@ -901,7 +901,16 @@
         "urlFieldPlaceholder": "Select a field…",
         "staticUrlPlaceholder": "https://example.com",
         "openInNewTab": "Open in new tab",
-        "noRelationFields": "No relation fields available for this entity."
+        "noRelationFields": "No relation fields available for this entity.",
+        "createFormPrefill": "Prefill create form fields from the current record.",
+        "createFormPrefillTargetField": "Target field",
+        "createFormPrefillSource": "Source",
+        "createFormPrefillSourceField": "Source field",
+        "createFormPrefillSourceFieldValue": "Field value",
+        "createFormPrefillSourceCurrentDate": "Current date",
+        "addCreateFormPrefill": "Add mapping",
+        "removeCreateFormPrefill": "Remove",
+        "noCreateFormPrefillTargetFields": "No eligible target fields on the create form entity."
       },
       "columnStyles": "Column styles",
       "stackDirection": "Component layout",

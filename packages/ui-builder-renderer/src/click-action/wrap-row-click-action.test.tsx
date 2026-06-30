@@ -31,6 +31,7 @@ describe("wrapRowWithClickAction", () => {
     );
     const context = {
       resolveComponentClickTarget: () => ({
+        kind: "link",
         href: "/app/order/order-1",
         external: false,
       }),
@@ -40,7 +41,7 @@ describe("wrapRowWithClickAction", () => {
     wrapRowWithClickAction(row, content, context);
 
     expect(wrapper).toHaveBeenCalledWith(
-      { href: "/app/order/order-1", external: false },
+      { kind: "link", href: "/app/order/order-1", external: false },
       content,
     );
   });
@@ -57,6 +58,7 @@ describe("wrapRowWithClickAction", () => {
     const content = createElement("input", { "aria-label": "name" });
     const context = {
       resolveComponentClickTarget: () => ({
+        kind: "link",
         href: "/app/order/order-1",
         external: false,
       }),

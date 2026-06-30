@@ -11,8 +11,11 @@ export type {
 
 export type { ComponentClickAction } from "./types/click-action.js";
 export type {
+  EntityFormPrefillMapping,
+  EntityFormPrefillSource,
   EntityNavigationTarget,
   EntityViewKind,
+  ResolvedComponentClickTarget,
 } from "./types/click-action.js";
 export {
   isEntityNavigationTargetCurrent,

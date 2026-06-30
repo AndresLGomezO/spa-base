@@ -3,6 +3,7 @@ import type {
   DataSource,
   EntityNavigationTarget,
   EntityViewKind,
+  ResolvedComponentClickTarget,
 } from "@repo/ui-builder-core";
 import type { SerializableEntityDefinition } from "@repo/entities";
 import { resolveOneToManyForeignKeyField } from "@repo/entities";
@@ -13,18 +14,10 @@ import {
   type RelationDefinitionLookup,
 } from "../../components/entity/resolve-relation-field-path";
 import {
-  buildEntityListCreatePath,
-  buildEntityListEditPath,
   buildEntityListPath,
   type EntityReturnToState,
 } from "../../routing/entity-navigation";
-
-export interface ResolvedComponentClickTarget {
-  readonly href: string;
-  readonly external: boolean;
-  readonly openInNewTab?: boolean;
-  readonly state?: unknown;
-}
+import { resolveEntityFormPrefillMappings } from "./resolve-entity-form-prefill-mappings.js";
 
 interface ResolvedEntityNavigationScope {
   readonly entityName: string;
@@ -255,27 +248,25 @@ function resolveRecordDetailHref(
   }
 
   return {
+    kind: "link",
     href: `/app/${scope.entityName}/${scope.recordId}`,
     external: false,
     state: linkState,
   };
 }
 
-function resolveRecordEditHref(
+function resolveRecordEditModal(
   scope: ResolvedEntityNavigationScope,
-  returnTo: string | undefined,
 ): ResolvedComponentClickTarget | null {
   if (!scope.recordId) {
     return null;
   }
 
   return {
-    href: buildEntityListEditPath(
-      scope.entityName,
-      scope.recordId,
-      returnTo ?? buildEntityListPath(scope.entityName),
-    ),
-    external: false,
+    kind: "entityFormModal",
+    entityName: scope.entityName,
+    mode: "edit",
+    recordId: scope.recordId,
   };
 }
 
@@ -284,31 +275,36 @@ function resolveEntityListHref(
   linkState: EntityReturnToState | undefined,
 ): ResolvedComponentClickTarget {
   return {
+    kind: "link",
     href: buildEntityListPath(scope.entityName),
     external: false,
     state: linkState,
   };
 }
 
-function resolveEntityCreateHref(
+function resolveEntityCreateModal(
   scope: ResolvedEntityNavigationScope,
-  returnTo: string | undefined,
 ): ResolvedComponentClickTarget {
   return {
-    href: buildEntityListCreatePath(
-      scope.entityName,
-      returnTo ?? buildEntityListPath(scope.entityName),
-      scope.prefill,
-    ),
-    external: false,
+    kind: "entityFormModal",
+    entityName: scope.entityName,
+    mode: "create",
+    createPrefill: scope.prefill,
   };
+}
+
+function mergeCreateFormPrefill(
+  autoPrefill: Readonly<Record<string, string>> | undefined,
+  configuredPrefill: Record<string, string>,
+): Readonly<Record<string, string>> | undefined {
+  const merged = { ...autoPrefill, ...configuredPrefill };
+  return Object.keys(merged).length > 0 ? merged : undefined;
 }
 
 function resolveEntityViewTarget(
   view: EntityViewKind,
   scope: ResolvedEntityNavigationScope | null,
   linkState: EntityReturnToState | undefined,
-  returnTo: string | undefined,
 ): ResolvedComponentClickTarget | null {
   if (!scope) {
     return null;
@@ -318,7 +314,7 @@ function resolveEntityViewTarget(
     case "recordDetail":
       return resolveRecordDetailHref(scope, linkState);
     case "recordEditForm":
-      return resolveRecordEditHref(scope, returnTo);
+      return resolveRecordEditModal(scope);
     case "entityList":
       return resolveEntityListHref(scope, linkState);
   }
@@ -358,7 +354,6 @@ export function resolveComponentClickTarget(options: {
         hints: options.hints,
       }),
       linkState,
-      options.returnTo,
     );
   }
 
@@ -374,7 +369,6 @@ export function resolveComponentClickTarget(options: {
         hints: options.hints,
       }),
       linkState,
-      options.returnTo,
     );
   }
 
@@ -396,7 +390,20 @@ export function resolveComponentClickTarget(options: {
       return null;
     }
 
-    return resolveEntityCreateHref(scope, options.returnTo);
+    const targetDefinition = options.getDefinition?.(scope.entityName);
+    const configuredPrefill =
+      targetDefinition && options.action.prefill?.length
+        ? resolveEntityFormPrefillMappings(
+            options.action.prefill,
+            targetDefinition,
+            options.resolveField,
+          )
+        : {};
+
+    return resolveEntityCreateModal({
+      ...scope,
+      prefill: mergeCreateFormPrefill(scope.prefill, configuredPrefill),
+    });
   }
 
   if (options.action.type !== "externalUrl") {
@@ -410,6 +417,7 @@ export function resolveComponentClickTarget(options: {
 
   const external = isExternalUrl(href);
   return {
+    kind: "link",
     href,
     external,
     openInNewTab: options.action.openInNewTab ?? external,

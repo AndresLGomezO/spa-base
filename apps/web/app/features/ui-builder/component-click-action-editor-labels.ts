@@ -49,5 +49,30 @@ export function componentClickActionEditorLabels(
     ),
     openInNewTab: t("entity.viewSettings.clickAction.openInNewTab"),
     noRelationFields: t("entity.viewSettings.clickAction.noRelationFields"),
+    createFormPrefill: t("entity.viewSettings.clickAction.createFormPrefill"),
+    createFormPrefillTargetField: t(
+      "entity.viewSettings.clickAction.createFormPrefillTargetField",
+    ),
+    createFormPrefillSource: t(
+      "entity.viewSettings.clickAction.createFormPrefillSource",
+    ),
+    createFormPrefillSourceField: t(
+      "entity.viewSettings.clickAction.createFormPrefillSourceField",
+    ),
+    createFormPrefillSourceFieldValue: t(
+      "entity.viewSettings.clickAction.createFormPrefillSourceFieldValue",
+    ),
+    createFormPrefillSourceCurrentDate: t(
+      "entity.viewSettings.clickAction.createFormPrefillSourceCurrentDate",
+    ),
+    addCreateFormPrefill: t(
+      "entity.viewSettings.clickAction.addCreateFormPrefill",
+    ),
+    removeCreateFormPrefill: t(
+      "entity.viewSettings.clickAction.removeCreateFormPrefill",
+    ),
+    noCreateFormPrefillTargetFields: t(
+      "entity.viewSettings.clickAction.noCreateFormPrefillTargetFields",
+    ),
   };
 }

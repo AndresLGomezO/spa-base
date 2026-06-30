@@ -109,4 +109,44 @@ describe("componentRowSchema clickAction", () => {
       },
     });
   });
+
+  it("accepts entityCreateForm with prefill mappings", () => {
+    const createForm = componentRowSchema.parse({
+      type: "component",
+      id: "row-6",
+      clickAction: {
+        type: "entityCreateForm",
+        target: { scope: "entity", entityName: "transaction" },
+        prefill: [
+          {
+            targetField: "accountId",
+            source: { type: "field", path: "id" },
+          },
+          {
+            targetField: "postedAt",
+            source: { type: "currentDate" },
+          },
+        ],
+      },
+      component: {
+        kind: "text",
+        primary: { type: "static", value: "Add transaction" },
+      },
+    }) as ComponentRowNode;
+
+    expect(createForm.clickAction).toEqual({
+      type: "entityCreateForm",
+      target: { scope: "entity", entityName: "transaction" },
+      prefill: [
+        {
+          targetField: "accountId",
+          source: { type: "field", path: "id" },
+        },
+        {
+          targetField: "postedAt",
+          source: { type: "currentDate" },
+        },
+      ],
+    });
+  });
 });

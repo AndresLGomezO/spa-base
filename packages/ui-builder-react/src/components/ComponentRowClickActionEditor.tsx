@@ -19,6 +19,7 @@ export interface ComponentRowClickActionEditorProps {
   readonly definition: SerializableEntityDefinition;
   readonly catalogEntities?: readonly CatalogEntityOption[];
   readonly suggestedListEntityName?: string;
+  readonly targetDefinition?: SerializableEntityDefinition;
   readonly onChange: (clickAction: ComponentClickAction | undefined) => void;
   readonly labels: ComponentClickActionEditorLabels;
 }
@@ -33,6 +34,7 @@ export function ComponentRowClickActionEditor({
   definition,
   catalogEntities,
   suggestedListEntityName,
+  targetDefinition,
   onChange,
   labels,
 }: ComponentRowClickActionEditorProps) {
@@ -48,6 +50,7 @@ export function ComponentRowClickActionEditor({
         definition={definition}
         catalogEntities={catalogEntities}
         suggestedListEntityName={suggestedListEntityName}
+        targetDefinition={targetDefinition}
         onChange={onChange}
         labels={labels}
       />

@@ -26,6 +26,7 @@ describe("resolveComponentClickTarget", () => {
     });
 
     expect(target).toEqual({
+      kind: "link",
       href: "/app/order/order-1",
       external: false,
       state: { returnTo: "/app/order" },
@@ -45,6 +46,7 @@ describe("resolveComponentClickTarget", () => {
     });
 
     expect(target).toEqual({
+      kind: "link",
       href: "/app/contact/contact-9",
       external: false,
     });
@@ -62,7 +64,10 @@ describe("resolveComponentClickTarget", () => {
       resolveField: () => null,
     });
 
-    expect(target?.href).toBe("/app/contact/contact-9");
+    expect(target?.kind).toBe("link");
+    if (target?.kind === "link") {
+      expect(target.href).toBe("/app/contact/contact-9");
+    }
   });
 
   it("resolves static and field external URLs", () => {
@@ -78,6 +83,7 @@ describe("resolveComponentClickTarget", () => {
         resolveField: () => null,
       }),
     ).toEqual({
+      kind: "link",
       href: "https://example.com",
       external: true,
       openInNewTab: true,
@@ -97,6 +103,7 @@ describe("resolveComponentClickTarget", () => {
           path === "website" ? "https://acme.test" : null,
       }),
     ).toEqual({
+      kind: "link",
       href: "https://acme.test",
       external: true,
       openInNewTab: false,
@@ -133,13 +140,14 @@ describe("resolveComponentClickTarget", () => {
     });
 
     expect(target).toEqual({
+      kind: "link",
       href: "/app/contact",
       external: false,
       state: { returnTo: "/app/order" },
     });
   });
 
-  it("resolves record edit form navigation", () => {
+  it("resolves record edit form as modal target", () => {
     const target = resolveComponentClickTarget({
       action: {
         type: "entityView",
@@ -154,12 +162,14 @@ describe("resolveComponentClickTarget", () => {
     });
 
     expect(target).toEqual({
-      href: "/app/order?q=foo&edit=order-1",
-      external: false,
+      kind: "entityFormModal",
+      entityName: "order",
+      mode: "edit",
+      recordId: "order-1",
     });
   });
 
-  it("resolves create form with relation prefill for one-to-many", () => {
+  it("resolves create form modal with relation prefill for one-to-many", () => {
     const accountDefinition = {
       name: "account",
       fields: {
@@ -199,8 +209,73 @@ describe("resolveComponentClickTarget", () => {
     });
 
     expect(target).toEqual({
-      href: "/app/order?create=&accountId=account-1",
-      external: false,
+      kind: "entityFormModal",
+      entityName: "order",
+      mode: "create",
+      createPrefill: { accountId: "account-1" },
+    });
+  });
+
+  it("merges configured prefill with O2M auto-prefill and overrides same keys", () => {
+    const accountDefinition = {
+      name: "account",
+      fields: {
+        id: { type: "string" },
+        name: { type: "string" },
+        orders: {
+          type: "array",
+          relation: { type: "one-to-many", target: "order" },
+        },
+      },
+      ui: { fields: {} },
+    } as const;
+
+    const orderDefinition = {
+      name: "order",
+      fields: {
+        id: { type: "string" },
+        accountId: {
+          type: "string",
+          relation: { type: "many-to-one", target: "account" },
+        },
+        label: { type: "string" },
+      },
+      ui: { fields: {} },
+    } as const;
+
+    const target = resolveComponentClickTarget({
+      action: {
+        type: "entityCreateForm",
+        target: { scope: "relation", relationFieldPath: "orders" },
+        prefill: [
+          {
+            targetField: "accountId",
+            source: { type: "field", path: "name" },
+          },
+          {
+            targetField: "label",
+            source: { type: "field", path: "name" },
+          },
+        ],
+      },
+      item: { id: "account-1", name: "Acme Corp" },
+      entityName: "account",
+      definition: accountDefinition as never,
+      getDefinition: (name) =>
+        name === "order" ? (orderDefinition as never) : undefined,
+      resolveField: (path) =>
+        path === "name" ? "Acme Corp" : path === "id" ? "account-1" : null,
+      returnTo: "/app/account",
+    });
+
+    expect(target).toEqual({
+      kind: "entityFormModal",
+      entityName: "order",
+      mode: "create",
+      createPrefill: {
+        accountId: "Acme Corp",
+        label: "Acme Corp",
+      },
     });
   });
 });

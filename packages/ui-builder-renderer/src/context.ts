@@ -2,16 +2,17 @@ import type { CSSProperties, ReactNode } from "react";
 
 import type {
   ComponentClickAction,
+  DashboardSectionComponentConfig,
   EntityFieldSelectorComponentConfig,
   FormFieldComponentConfig,
   IconComponentConfig,
-  UserComponentConfig,
-  DashboardSectionComponentConfig,
-  MetricKpiComponentConfig,
   MetricDerivedKpiComponentConfig,
+  MetricKpiComponentConfig,
   MetricKpiPresentation,
   MetricWidgetComponentConfig,
   QueryViewerComponentConfig,
+  ResolvedComponentClickTarget,
+  UserComponentConfig,
   ViewFilterComponentConfig,
   WizardActionsComponentConfig,
   WizardProgressComponentConfig,
@@ -116,27 +117,14 @@ export interface LayoutRenderContext {
   readonly resolveComponentClickTarget?: (
     action: ComponentClickAction,
     hints?: { readonly boundFieldPath?: string },
-  ) => {
-    readonly href: string;
-    readonly external: boolean;
-    readonly openInNewTab?: boolean;
-    readonly state?: unknown;
-  } | null;
+  ) => ResolvedComponentClickTarget | null;
   readonly componentClickWrapper?: (
-    target: {
-      readonly href: string;
-      readonly external: boolean;
-      readonly openInNewTab?: boolean;
-      readonly state?: unknown;
-    },
+    target: ResolvedComponentClickTarget,
     children: ReactNode,
   ) => ReactNode;
-  readonly navigateComponentClick?: (target: {
-    readonly href: string;
-    readonly external: boolean;
-    readonly openInNewTab?: boolean;
-    readonly state?: unknown;
-  }) => void;
+  readonly navigateComponentClick?: (
+    target: ResolvedComponentClickTarget,
+  ) => void;
   readonly pageHeaderRenderer?: () => ReactNode;
   readonly pageToolbarRenderer?: () => ReactNode;
   readonly pageMetricsRenderer?: () => ReactNode;

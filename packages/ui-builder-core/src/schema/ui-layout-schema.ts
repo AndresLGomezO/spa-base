@@ -44,6 +44,23 @@ const entityNavigationTargetSchema = z.discriminatedUnion("scope", [
     .strict(),
 ]);
 
+const entityFormPrefillSourceSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("field"),
+      path: z.string().trim().min(1),
+    })
+    .strict(),
+  z.object({ type: z.literal("currentDate") }).strict(),
+]);
+
+const entityFormPrefillMappingSchema = z
+  .object({
+    targetField: z.string().trim().min(1),
+    source: entityFormPrefillSourceSchema,
+  })
+  .strict();
+
 const componentClickActionSchema = z.discriminatedUnion("type", [
   z
     .object({
@@ -69,6 +86,7 @@ const componentClickActionSchema = z.discriminatedUnion("type", [
     .object({
       type: z.literal("entityCreateForm"),
       target: entityNavigationTargetSchema,
+      prefill: z.array(entityFormPrefillMappingSchema).optional(),
     })
     .strict(),
   z

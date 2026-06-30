@@ -26,6 +26,7 @@ import {
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
 import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
+import { useNavigateComponentClick } from "../../features/ui-builder/ComponentClickTargetWrapper";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useFieldAccess } from "../../hooks/useFieldAccess";
 import { useEntity } from "../../hooks/useEntity";
@@ -75,6 +76,7 @@ export function EntityForm({
 }: EntityFormProps) {
   const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
+  const navigateComponentClick = useNavigateComponentClick();
   const definition = useEntityDefinition(entityName);
   const { getDefinition } = useEntityCatalog();
   const entityPermissions = useEntityPermissions(entityName);
@@ -285,6 +287,7 @@ export function EntityForm({
         saveLabel,
         getDefinition,
         navigate,
+        navigateComponentClick,
       }),
     [
       definition,
@@ -296,6 +299,7 @@ export function EntityForm({
       canWrite,
       getDefinition,
       navigate,
+      navigateComponentClick,
       i18n.language,
       isSubmitting,
       mode,
@@ -329,6 +333,7 @@ export function EntityForm({
         saveLabel,
         getDefinition,
         navigate,
+        navigateComponentClick,
       }),
     [
       applyFieldChange,
@@ -340,6 +345,7 @@ export function EntityForm({
       canWrite,
       getDefinition,
       navigate,
+      navigateComponentClick,
       i18n.language,
       isSubmitting,
       mode,

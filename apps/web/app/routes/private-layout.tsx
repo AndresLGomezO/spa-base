@@ -5,6 +5,8 @@ import { cn } from "@repo/theme/utils";
 import { SidebarProvider, ThirdRailHost, ThirdRailProvider } from "@repo/ui";
 
 import { EntityCatalogProvider } from "../entities/entity-catalog-context";
+import { EntityFormModalProvider } from "../components/entity/entity-form-modal-context";
+import { EntityFormModalHost } from "../components/entity/EntityFormModalHost";
 import { queryClient } from "../query/query-client";
 import { useLockDocumentScroll } from "../routing/use-lock-document-scroll";
 import { RequireAuth } from "../routing/RouteGuards";
@@ -37,21 +39,24 @@ export default function PrivateLayoutRoute() {
     <RequireAuth>
       <QueryClientProvider client={queryClient}>
         <EntityCatalogProvider>
-          <CreateTenantModalProvider>
-            <ThirdRailProvider>
-              <SidebarProvider>
-                <div className="relative flex h-dvh overflow-hidden">
-                  <AppSidebar />
-                  <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                    <AppHeader />
-                    <MainOutlet />
+          <EntityFormModalProvider>
+            <CreateTenantModalProvider>
+              <ThirdRailProvider>
+                <SidebarProvider>
+                  <div className="relative flex h-dvh overflow-hidden">
+                    <AppSidebar />
+                    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                      <AppHeader />
+                      <MainOutlet />
+                    </div>
+                    <ThirdRailHost />
                   </div>
-                  <ThirdRailHost />
-                </div>
-              </SidebarProvider>
-              <CreateTenantModal />
-            </ThirdRailProvider>
-          </CreateTenantModalProvider>
+                </SidebarProvider>
+                <CreateTenantModal />
+              </ThirdRailProvider>
+            </CreateTenantModalProvider>
+            <EntityFormModalHost />
+          </EntityFormModalProvider>
         </EntityCatalogProvider>
       </QueryClientProvider>
     </RequireAuth>

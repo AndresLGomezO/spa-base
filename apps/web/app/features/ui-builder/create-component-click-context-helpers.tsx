@@ -1,16 +1,18 @@
-import type { ReactNode } from "react";
+import { createElement, type ReactNode } from "react";
 import type { NavigateFunction } from "react-router";
 import type { SerializableEntityDefinition } from "@repo/entities";
-import type { ComponentClickAction } from "@repo/ui-builder-core";
+import type {
+  ComponentClickAction,
+  ResolvedComponentClickTarget,
+} from "@repo/ui-builder-core";
 import type { LayoutRenderContext } from "@repo/ui-builder-renderer";
 
+import type { EntityFormModalRequest } from "../../components/entity/entity-form-modal-context";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import type { RelationDefinitionLookup } from "../../components/entity/resolve-relation-field-path";
-import {
-  resolveComponentClickTarget,
-  type ResolvedComponentClickTarget,
-} from "./resolve-component-click-target.js";
-import { wrapComponentClickTarget } from "./wrap-component-click-target.js";
+import { ComponentClickTargetWrapper } from "./ComponentClickTargetWrapper.js";
+import { handleComponentClickTarget } from "./handle-component-click-target.js";
+import { resolveComponentClickTarget } from "./resolve-component-click-target.js";
 
 export function createComponentClickContextHelpers(options: {
   readonly item: Record<string, unknown>;
@@ -22,6 +24,10 @@ export function createComponentClickContextHelpers(options: {
   ) => EntityCatalogEntry | undefined;
   readonly returnTo?: string;
   readonly navigate?: NavigateFunction;
+  readonly openEntityFormModal?: (request: EntityFormModalRequest) => void;
+  readonly navigateComponentClick?: (
+    target: ResolvedComponentClickTarget,
+  ) => void;
 }): Pick<
   LayoutRenderContext,
   | "resolveComponentClickTarget"
@@ -42,6 +48,17 @@ export function createComponentClickContextHelpers(options: {
     returnTo: options.returnTo,
   };
 
+  const navigateComponentClick =
+    options.navigateComponentClick ??
+    (options.navigate || options.openEntityFormModal
+      ? (target: ResolvedComponentClickTarget) => {
+          handleComponentClickTarget(target, {
+            navigate: options.navigate,
+            openEntityFormModal: options.openEntityFormModal,
+          });
+        }
+      : undefined);
+
   return {
     resolveComponentClickTarget: (
       action: ComponentClickAction,
@@ -55,20 +72,11 @@ export function createComponentClickContextHelpers(options: {
     componentClickWrapper: (
       target: ResolvedComponentClickTarget,
       children: ReactNode,
-    ) => wrapComponentClickTarget(target, children),
-    navigateComponentClick: options.navigate
-      ? (target) => {
-          if (target.external || target.openInNewTab) {
-            window.open(
-              target.href,
-              target.openInNewTab ? "_blank" : "_self",
-              "noopener,noreferrer",
-            );
-            return;
-          }
-
-          options.navigate!(target.href, { state: target.state });
-        }
-      : undefined,
+    ) =>
+      createElement(ComponentClickTargetWrapper, {
+        target,
+        children,
+      }),
+    navigateComponentClick,
   };
 }

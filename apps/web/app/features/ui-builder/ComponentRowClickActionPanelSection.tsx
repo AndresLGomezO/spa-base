@@ -23,6 +23,7 @@ import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import type { EntityQueryDefinitionRecord } from "../../lib/api-client";
 import { listEntityQueryDefinitions } from "../../lib/api-client";
 import { componentClickActionEditorLabels } from "./component-click-action-editor-labels.js";
+import { resolveCreateFormTargetEntityName } from "./resolve-create-form-target-entity.js";
 import { resolveQueryViewerSourceDefinition } from "./resolve-query-viewer-field-context.js";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref.js";
 import type { ComponentsLayoutBinding } from "../form-designer/form-designer-components-layout.js";
@@ -115,7 +116,7 @@ export function ComponentRowClickActionPanelSection({
 }: ComponentRowClickActionPanelSectionProps) {
   const { t } = useTranslation("common");
   const labels = useMemo(() => componentClickActionEditorLabels(t), [t]);
-  const { items: catalogItems } = useEntityCatalog();
+  const { items: catalogItems, getDefinition } = useEntityCatalog();
   const [queryDefinitions, setQueryDefinitions] = useState<
     readonly EntityQueryDefinitionRecord[]
   >([]);
@@ -176,6 +177,28 @@ export function ComponentRowClickActionPanelSection({
     );
   }, [binding.layout, catalogItems, queryDefinitions, row.id]);
 
+  const targetDefinition = useMemo(() => {
+    if (
+      row.clickAction?.type !== "entityCreateForm" ||
+      row.clickAction.target.scope === "current"
+    ) {
+      return undefined;
+    }
+
+    const targetEntityName = resolveCreateFormTargetEntityName(
+      row.clickAction.target,
+      definition,
+      (name) =>
+        catalogItems.some((entry) => entry.name === name)
+          ? getDefinition(name as never)
+          : undefined,
+    );
+
+    return targetEntityName
+      ? getDefinition(targetEntityName as never)
+      : undefined;
+  }, [catalogItems, definition, getDefinition, row.clickAction]);
+
   return (
     <ComponentRowClickActionEditor
       clickAction={row.clickAction}
@@ -187,6 +210,7 @@ export function ComponentRowClickActionPanelSection({
       definition={definition}
       catalogEntities={catalogEntities}
       suggestedListEntityName={suggestedListEntityName}
+      targetDefinition={targetDefinition}
       onChange={(clickAction) => binding.updateRowMeta(rowRef, { clickAction })}
       labels={labels}
     />

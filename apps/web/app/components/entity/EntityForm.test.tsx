@@ -15,6 +15,7 @@ import { TestEntityCatalogProvider } from "../../test/test-entity-catalog-provid
 import { MOCK_ENTITY_CATALOG } from "../../test/entity-catalog-fixtures";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { EntityForm } from "./EntityForm";
+import { EntityFormModalProvider } from "./entity-form-modal-context";
 import { useEntity, type EntityRecord } from "../../hooks/useEntity";
 
 const createMock = vi.fn(async (): Promise<EntityRecord | null> => null);
@@ -66,15 +67,29 @@ vi.mock("../../hooks/useFieldAccess", () => ({
   getFieldAccessLevel: vi.fn(() => undefined),
 }));
 
+function TestEntityFormProviders({
+  children,
+  items = MOCK_ENTITY_CATALOG,
+}: {
+  readonly children: React.ReactNode;
+  readonly items?: readonly EntityCatalogEntry[];
+}) {
+  return (
+    <TestEntityCatalogProvider items={items}>
+      <EntityFormModalProvider>
+        <MemoryRouter>
+          <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+        </MemoryRouter>
+      </EntityFormModalProvider>
+    </TestEntityCatalogProvider>
+  );
+}
+
 function renderForm() {
   return render(
-    <TestEntityCatalogProvider>
-      <MemoryRouter>
-        <I18nextProvider i18n={i18n}>
-          <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
-        </I18nextProvider>
-      </MemoryRouter>
-    </TestEntityCatalogProvider>,
+    <TestEntityFormProviders>
+      <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
+    </TestEntityFormProviders>,
   );
 }
 
@@ -135,13 +150,9 @@ const widgetWithDesignedCreateForm: EntityCatalogEntry = {
 describe("EntityForm", () => {
   it("renders designed create layout with form-field widgets", () => {
     render(
-      <TestEntityCatalogProvider items={[widgetWithDesignedCreateForm]}>
-        <MemoryRouter>
-          <I18nextProvider i18n={i18n}>
-            <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
-          </I18nextProvider>
-        </MemoryRouter>
-      </TestEntityCatalogProvider>,
+      <TestEntityFormProviders items={[widgetWithDesignedCreateForm]}>
+        <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
+      </TestEntityFormProviders>,
     );
 
     expect(document.getElementById("widget-name")).toBeInTheDocument();
@@ -173,13 +184,9 @@ describe("EntityForm", () => {
     createMock.mockClear();
 
     render(
-      <TestEntityCatalogProvider items={[createTwoStepWizardEntity()]}>
-        <MemoryRouter>
-          <I18nextProvider i18n={i18n}>
-            <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
-          </I18nextProvider>
-        </MemoryRouter>
-      </TestEntityCatalogProvider>,
+      <TestEntityFormProviders items={[createTwoStepWizardEntity()]}>
+        <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
+      </TestEntityFormProviders>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
@@ -197,13 +204,9 @@ describe("EntityForm", () => {
     createMock.mockClear();
 
     render(
-      <TestEntityCatalogProvider items={[createTwoStepWizardEntity()]}>
-        <MemoryRouter>
-          <I18nextProvider i18n={i18n}>
-            <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
-          </I18nextProvider>
-        </MemoryRouter>
-      </TestEntityCatalogProvider>,
+      <TestEntityFormProviders items={[createTwoStepWizardEntity()]}>
+        <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
+      </TestEntityFormProviders>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
@@ -276,13 +279,9 @@ describe("EntityForm", () => {
     };
 
     render(
-      <TestEntityCatalogProvider items={[wizardEntity]}>
-        <MemoryRouter>
-          <I18nextProvider i18n={i18n}>
-            <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
-          </I18nextProvider>
-        </MemoryRouter>
-      </TestEntityCatalogProvider>,
+      <TestEntityFormProviders items={[wizardEntity]}>
+        <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
+      </TestEntityFormProviders>,
     );
 
     fireEvent.change(screen.getByRole("textbox", { name: /name/i }), {
@@ -317,13 +316,9 @@ describe("EntityForm", () => {
     vi.mocked(toast.success).mockClear();
 
     render(
-      <TestEntityCatalogProvider items={[createTwoStepWizardEntity()]}>
-        <MemoryRouter>
-          <I18nextProvider i18n={i18n}>
-            <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
-          </I18nextProvider>
-        </MemoryRouter>
-      </TestEntityCatalogProvider>,
+      <TestEntityFormProviders items={[createTwoStepWizardEntity()]}>
+        <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
+      </TestEntityFormProviders>,
     );
 
     fireEvent.click(screen.getByRole("button", { name: "Next" }));
@@ -366,20 +361,16 @@ describe("EntityForm", () => {
     };
 
     render(
-      <TestEntityCatalogProvider items={[wizardEntity]}>
-        <MemoryRouter>
-          <I18nextProvider i18n={i18n}>
-            <EntityForm
-              entityName="widget"
-              mode="create"
-              onCancel={vi.fn()}
-              modalActionPlacement="footer"
-              hideActions
-              onFooterChange={onFooterChange}
-            />
-          </I18nextProvider>
-        </MemoryRouter>
-      </TestEntityCatalogProvider>,
+      <TestEntityFormProviders items={[wizardEntity]}>
+        <EntityForm
+          entityName="widget"
+          mode="create"
+          onCancel={vi.fn()}
+          modalActionPlacement="footer"
+          hideActions
+          onFooterChange={onFooterChange}
+        />
+      </TestEntityFormProviders>,
     );
 
     await waitFor(() => {

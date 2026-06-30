@@ -7,6 +7,15 @@ export type EntityNavigationTarget =
 
 export type EntityViewKind = "recordDetail" | "recordEditForm" | "entityList";
 
+export type EntityFormPrefillSource =
+  | { readonly type: "field"; readonly path: string }
+  | { readonly type: "currentDate" };
+
+export type EntityFormPrefillMapping = {
+  readonly targetField: string;
+  readonly source: EntityFormPrefillSource;
+};
+
 export type ComponentClickAction =
   | {
       readonly type: "entityRecord";
@@ -21,6 +30,7 @@ export type ComponentClickAction =
   | {
       readonly type: "entityCreateForm";
       readonly target: EntityNavigationTarget;
+      readonly prefill?: readonly EntityFormPrefillMapping[];
     }
   | {
       readonly type: "externalUrl";
@@ -53,6 +63,22 @@ export function readEntityNavigationEntityName(
 
   return target.entityName;
 }
+
+export type ResolvedComponentClickTarget =
+  | {
+      readonly kind: "link";
+      readonly href: string;
+      readonly external: boolean;
+      readonly openInNewTab?: boolean;
+      readonly state?: unknown;
+    }
+  | {
+      readonly kind: "entityFormModal";
+      readonly entityName: string;
+      readonly mode: "create" | "edit";
+      readonly recordId?: string;
+      readonly createPrefill?: Readonly<Record<string, string>>;
+    };
 
 /** Converts legacy entityRecord actions to entityView recordDetail. */
 export function normalizeEntityClickAction(

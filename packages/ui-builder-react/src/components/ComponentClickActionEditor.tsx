@@ -2,19 +2,24 @@ import type { SerializableEntityDefinition } from "@repo/entities";
 import {
   type ComponentClickAction,
   type DataSource,
+  type EntityFormPrefillMapping,
   type EntityNavigationTarget,
   type EntityViewKind,
 } from "@repo/ui-builder-core";
 import { Checkbox, FieldLabel, Input, Select, Text } from "@repo/ui";
 
 import type { FieldDescriptor } from "../adapters/entity-card-view-adapter.js";
+import {
+  CreateFormPrefillEditor,
+  type CreateFormPrefillEditorLabels,
+} from "./CreateFormPrefillEditor.js";
 
 export interface CatalogEntityOption {
   readonly entityName: string;
   readonly label: string;
 }
 
-export interface ComponentClickActionEditorLabels {
+export type ComponentClickActionEditorLabels = {
   readonly title: string;
   readonly actionType: string;
   readonly none: string;
@@ -38,7 +43,7 @@ export interface ComponentClickActionEditorLabels {
   readonly staticUrlPlaceholder: string;
   readonly openInNewTab: string;
   readonly noRelationFields: string;
-}
+} & CreateFormPrefillEditorLabels;
 
 export interface ComponentClickActionEditorProps {
   readonly clickAction?: ComponentClickAction;
@@ -50,6 +55,7 @@ export interface ComponentClickActionEditorProps {
   readonly definition: SerializableEntityDefinition;
   readonly catalogEntities?: readonly CatalogEntityOption[];
   readonly suggestedListEntityName?: string;
+  readonly targetDefinition?: SerializableEntityDefinition;
   readonly onChange: (clickAction: ComponentClickAction | undefined) => void;
   readonly labels: ComponentClickActionEditorLabels;
 }
@@ -233,12 +239,34 @@ function buildNavigationTarget(
   return { scope: "relation", relationFieldPath };
 }
 
+function targetsMatchForPrefill(
+  previous: EntityNavigationTarget,
+  next: EntityNavigationTarget,
+): boolean {
+  if (previous.scope !== next.scope) {
+    return false;
+  }
+
+  if (previous.scope === "entity" && next.scope === "entity") {
+    return previous.entityName === next.entityName;
+  }
+
+  if (previous.scope === "relation" && next.scope === "relation") {
+    return previous.relationFieldPath === next.relationFieldPath;
+  }
+
+  return false;
+}
+
 function buildEntityNavigationAction(
   destination: NavigationDestination,
   target: EntityNavigationTarget,
+  prefill?: readonly EntityFormPrefillMapping[],
 ): ComponentClickAction {
   if (destination === "createForm") {
-    return { type: "entityCreateForm", target };
+    return prefill && prefill.length > 0
+      ? { type: "entityCreateForm", target, prefill }
+      : { type: "entityCreateForm", target };
   }
 
   const view: EntityViewKind =
@@ -261,6 +289,7 @@ export function ComponentClickActionEditor({
   definition,
   catalogEntities = [],
   suggestedListEntityName,
+  targetDefinition,
   onChange,
   labels,
 }: ComponentClickActionEditorProps) {
@@ -301,18 +330,40 @@ export function ComponentClickActionEditor({
     nextScopeMode: TargetScopeMode,
     nextRelationFieldPath: string = relationFieldPath,
     nextEntityName: string = specificEntityName,
+    options?: {
+      readonly clearPrefill?: boolean;
+      readonly prefill?: readonly EntityFormPrefillMapping[];
+    },
   ) => {
-    onChange(
-      buildEntityNavigationAction(
-        nextDestination,
-        buildNavigationTarget(
-          nextScopeMode,
-          nextRelationFieldPath,
-          nextEntityName,
-        ),
-      ),
+    const target = buildNavigationTarget(
+      nextScopeMode,
+      nextRelationFieldPath,
+      nextEntityName,
     );
+
+    if (nextDestination !== "createForm") {
+      onChange(buildEntityNavigationAction(nextDestination, target));
+      return;
+    }
+
+    const keepPrefill =
+      !options?.clearPrefill &&
+      clickAction?.type === "entityCreateForm" &&
+      targetsMatchForPrefill(clickAction.target, target);
+
+    const prefill =
+      options?.prefill ?? (keepPrefill ? clickAction.prefill : undefined);
+
+    onChange(buildEntityNavigationAction(nextDestination, target, prefill));
   };
+
+  const showCreateFormPrefill =
+    destination === "createForm" &&
+    targetScopeMode !== "current" &&
+    targetDefinition != null;
+
+  const createFormPrefill =
+    clickAction?.type === "entityCreateForm" ? (clickAction.prefill ?? []) : [];
 
   return (
     <div className="flex flex-col gap-3">
@@ -394,7 +445,15 @@ export function ComponentClickActionEditor({
                   nextScope = suggestedListEntityName ? "entity" : "relation";
                 }
 
-                emitNavigation(nextDestination, nextScope);
+                emitNavigation(
+                  nextDestination,
+                  nextScope,
+                  undefined,
+                  undefined,
+                  {
+                    clearPrefill: true,
+                  },
+                );
               }}
             >
               {showRecordTargets ? (
@@ -424,7 +483,9 @@ export function ComponentClickActionEditor({
               value={targetScopeMode}
               onChange={(event) => {
                 const nextScope = event.target.value as TargetScopeMode;
-                emitNavigation(destination, nextScope);
+                emitNavigation(destination, nextScope, undefined, undefined, {
+                  clearPrefill: true,
+                });
               }}
             >
               {showCurrentTarget ? (
@@ -444,7 +505,15 @@ export function ComponentClickActionEditor({
                 <Select
                   value={relationFieldPath}
                   onChange={(event) => {
-                    emitNavigation(destination, "relation", event.target.value);
+                    emitNavigation(
+                      destination,
+                      "relation",
+                      event.target.value,
+                      undefined,
+                      {
+                        clearPrefill: true,
+                      },
+                    );
                   }}
                 >
                   {relationFields.map((field) => (
@@ -474,6 +543,7 @@ export function ComponentClickActionEditor({
                     "entity",
                     relationFieldPath,
                     event.target.value,
+                    { clearPrefill: true },
                   );
                 }}
               >
@@ -484,6 +554,24 @@ export function ComponentClickActionEditor({
                 ))}
               </Select>
             </label>
+          ) : null}
+
+          {showCreateFormPrefill ? (
+            <CreateFormPrefillEditor
+              mappings={createFormPrefill}
+              targetDefinition={targetDefinition}
+              sourceFieldDescriptors={fieldDescriptors}
+              labels={labels}
+              onChange={(prefill) => {
+                emitNavigation(
+                  destination,
+                  targetScopeMode,
+                  relationFieldPath,
+                  specificEntityName,
+                  { prefill },
+                );
+              }}
+            />
           ) : null}
         </>
       ) : null}

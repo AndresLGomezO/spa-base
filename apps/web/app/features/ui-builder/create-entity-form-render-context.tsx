@@ -5,6 +5,7 @@ import type {
   FieldAccessLevel,
   SerializableEntityDefinition,
 } from "@repo/entities";
+import type { ResolvedComponentClickTarget } from "@repo/ui-builder-core";
 import { isFieldEditable, isFieldVisible } from "@repo/ui-builder";
 
 import type {
@@ -54,6 +55,9 @@ export function createEntityFormRenderContext(options: {
   ) => EntityCatalogEntry | undefined;
   readonly usePreviewSamples?: boolean;
   readonly navigate?: NavigateFunction;
+  readonly navigateComponentClick?: (
+    target: ResolvedComponentClickTarget,
+  ) => void;
 }): LayoutRenderContext {
   const canWrite = options.canWrite;
   const getDefinition = options.getDefinition;
@@ -222,6 +226,7 @@ export function createEntityFormRenderContext(options: {
       resolveField,
       getDefinition,
       navigate: options.navigate,
+      navigateComponentClick: options.navigateComponentClick,
     }),
   };
 }

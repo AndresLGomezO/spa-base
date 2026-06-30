@@ -901,7 +901,16 @@
         "urlFieldPlaceholder": "Seleccionar un campo…",
         "staticUrlPlaceholder": "https://ejemplo.com",
         "openInNewTab": "Abrir en nueva pestaña",
-        "noRelationFields": "No hay campos de relación disponibles para esta entidad."
+        "noRelationFields": "No hay campos de relación disponibles para esta entidad.",
+        "createFormPrefill": "Rellenar campos del formulario de creación desde el registro actual.",
+        "createFormPrefillTargetField": "Campo destino",
+        "createFormPrefillSource": "Origen",
+        "createFormPrefillSourceField": "Campo origen",
+        "createFormPrefillSourceFieldValue": "Valor de campo",
+        "createFormPrefillSourceCurrentDate": "Fecha actual",
+        "addCreateFormPrefill": "Agregar mapeo",
+        "removeCreateFormPrefill": "Eliminar",
+        "noCreateFormPrefillTargetFields": "No hay campos destino elegibles en la entidad del formulario de creación."
       },
       "columnStyles": "Estilos de columna",
       "stackDirection": "Disposición de componentes",

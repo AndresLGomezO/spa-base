@@ -8,6 +8,11 @@ export {
 export { entityFormFieldAdapter } from "./adapters/entity-form-field-adapter.js";
 
 export {
+  CreateFormPrefillEditor,
+  type CreateFormPrefillEditorLabels,
+  type CreateFormPrefillEditorProps,
+} from "./components/CreateFormPrefillEditor.js";
+export {
   ComponentRowClickActionEditor,
   type ComponentRowClickActionEditorProps,
 } from "./components/ComponentRowClickActionEditor.js";
