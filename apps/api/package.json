@@ -40,6 +40,7 @@
     "@repo/query-engine": "workspace:*",
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
+    "@repo/tenant-bundle": "workspace:*",
     "fastify": "catalog:",
     "firebase-admin": "catalog:",
     "nanoid": "catalog:",

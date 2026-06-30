@@ -1158,7 +1158,32 @@
       "saveSuccess": "Tenant actualizado.",
       "saveFailed": "No se pudo guardar el tenant.",
       "loadFailed": "No se pudo cargar el tenant.",
-      "notFound": "Tenant no encontrado."
+      "notFound": "Tenant no encontrado.",
+      "bundle": {
+        "sectionTitle": "Configuración",
+        "sectionDescription": "Exporta o importa el paquete de configuración del tenant, incluyendo modelos de datos, layouts de UI, métricas, consultas, roles, hooks y apariencia.",
+        "viewTrigger": "Ver JSON",
+        "importTrigger": "Importar JSON",
+        "viewTitle": "JSON de configuración del tenant",
+        "importTitle": "Importar configuración del tenant",
+        "pasteLabel": "Pegar JSON",
+        "uploadLabel": "Subir archivo JSON",
+        "valid": "El JSON es válido para importar la configuración del tenant.",
+        "invalid": "El JSON tiene errores de validación.",
+        "apply": "Continuar",
+        "cancel": "Cancelar",
+        "viewDescription": "Instantánea de solo lectura de la configuración actual del tenant. Cópiala y usa Importar JSON en otro entorno para sincronizar esquemas y UI.",
+        "importDescription": "Importa un paquete de configuración del tenant. Esto reemplaza toda la configuración del tenant activo. Las URLs de logo e imágenes del dashboard pueden seguir apuntando al entorno de origen.",
+        "viewCopy": "Copiar al portapapeles",
+        "viewCopied": "Copiado",
+        "viewLoading": "Cargando configuración…",
+        "viewLoadFailed": "No se pudo cargar la configuración del tenant.",
+        "confirmTitle": "¿Reemplazar la configuración del tenant?",
+        "confirmDescription": "Esto reemplaza toda la configuración del tenant, incluyendo definiciones de entidades, categorías, overrides de UI, presets, layout del dashboard, roles, hooks, métricas, consultas y apariencia. Los registros de negocio no se modifican.",
+        "confirmAction": "Reemplazar configuración",
+        "importSuccess": "Configuración del tenant importada.",
+        "importFailed": "No se pudo importar la configuración del tenant."
+      }
     },
     "appearance": {
       "title": "Apariencia",

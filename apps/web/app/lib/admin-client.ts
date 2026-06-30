@@ -1,4 +1,8 @@
 import type { TenantAppearance } from "@repo/shared-types";
+import type {
+  TenantBundleExportDocument,
+  TenantBundleImportCounts,
+} from "@repo/tenant-bundle";
 
 import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
@@ -107,6 +111,34 @@ export async function uploadTenantLogo(
     method: "POST",
     body: JSON.stringify(input),
   });
+}
+
+export interface AdminTenantBundleImportSummary {
+  readonly sourceTenantId: string;
+  readonly counts: TenantBundleImportCounts;
+}
+
+export async function exportAdminTenantBundle(
+  tenantId: string,
+): Promise<TenantBundleExportDocument> {
+  const payload = await adminFetch<{ bundle: TenantBundleExportDocument }>(
+    `/admin/tenants/${encodeURIComponent(tenantId)}/bundle`,
+  );
+  return payload.bundle;
+}
+
+export async function importAdminTenantBundle(
+  tenantId: string,
+  bundle: TenantBundleExportDocument,
+): Promise<AdminTenantBundleImportSummary> {
+  const payload = await adminFetch<{ summary: AdminTenantBundleImportSummary }>(
+    `/admin/tenants/${encodeURIComponent(tenantId)}/bundle`,
+    {
+      method: "POST",
+      body: JSON.stringify({ bundle }),
+    },
+  );
+  return payload.summary;
 }
 
 export type { AdminTenant };

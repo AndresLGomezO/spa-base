@@ -14,10 +14,16 @@ import type {
   TenantRepository,
 } from "@repo/firestore-converters";
 import { tenantStatusSchema, tenantAppearanceSchema } from "@repo/shared-types";
+import {
+  tenantBundleExportDocumentSchema,
+  validateTenantBundleImport,
+} from "@repo/tenant-bundle";
 import { uploadTenantLogo } from "@repo/gcp-firebase";
 
 import { syncThemeAiContextForTenant } from "../ai/sync-tenant-ai-contexts.js";
 import type { SyncTenantAiContextsDeps } from "../ai/sync-tenant-ai-contexts.js";
+import { exportTenantBundle } from "../admin/tenant-bundle/export-tenant-bundle.js";
+import { importTenantBundle } from "../admin/tenant-bundle/import-tenant-bundle.js";
 import { validateActiveTenantIds } from "../admin/list-available-tenants.js";
 import { seedTenantRolesFromTemplates } from "../admin/seed-tenant-roles-from-templates.js";
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
@@ -45,6 +51,10 @@ const updateTenantBodySchema = z.object({
 const uploadLogoBodySchema = z.object({
   contentType: z.string().trim().min(1),
   data: z.string().trim().min(1),
+});
+
+const importTenantBundleBodySchema = z.object({
+  bundle: tenantBundleExportDocumentSchema,
 });
 
 function isKnownRoleName(name: string, roleCatalog: RoleCatalog): boolean {
@@ -283,6 +293,90 @@ export const adminRoutes: FastifyPluginAsync<{
         const message =
           error instanceof Error ? error.message : "Unable to upload logo.";
         return reply.status(400).send({ ok: false, message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/admin/tenants/:id/bundle",
+    { preHandler: [authenticate, requireSuperAdmin] },
+    async (request, reply) => {
+      const paramsSchema = z.object({
+        id: z.string().trim().min(1),
+      });
+      const parsedParams = paramsSchema.safeParse(request.params);
+      if (!parsedParams.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Invalid tenant id.",
+        });
+      }
+
+      try {
+        const bundle = await exportTenantBundle(
+          { firebaseAdminConfig: opts.firebaseAdminConfig },
+          parsedParams.data.id,
+        );
+        return reply.send({ ok: true, bundle });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to export tenant bundle.";
+        const status = message === "Tenant not found." ? 404 : 400;
+        return reply.status(status).send({ ok: false, message });
+      }
+    },
+  );
+
+  fastify.post(
+    "/admin/tenants/:id/bundle",
+    { preHandler: [authenticate, requireSuperAdmin] },
+    async (request, reply) => {
+      const paramsSchema = z.object({
+        id: z.string().trim().min(1),
+      });
+      const parsedParams = paramsSchema.safeParse(request.params);
+      if (!parsedParams.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Invalid tenant id.",
+        });
+      }
+
+      const parsedBody = importTenantBundleBodySchema.safeParse(request.body);
+      if (!parsedBody.success) {
+        const validation = validateTenantBundleImport(
+          JSON.stringify(
+            typeof request.body === "object" && request.body !== null
+              ? (request.body as { bundle?: unknown }).bundle
+              : request.body,
+          ),
+        );
+        const message =
+          !validation.ok && validation.errors[0]?.message
+            ? validation.errors[0].message
+            : "Request body must include a valid tenant bundle.";
+        return reply.status(400).send({ ok: false, message });
+      }
+
+      try {
+        const summary = await importTenantBundle(
+          {
+            firebaseAdminConfig: opts.firebaseAdminConfig,
+            tenantAiContextSync: opts.tenantAiContextSync,
+          },
+          parsedParams.data.id,
+          parsedBody.data.bundle,
+        );
+        return reply.send({ ok: true, summary });
+      } catch (error) {
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to import tenant bundle.";
+        const status = message === "Tenant not found." ? 404 : 400;
+        return reply.status(status).send({ ok: false, message });
       }
     },
   );

@@ -1,0 +1,34 @@
+{
+  "name": "@repo/tenant-bundle",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "format": "prettier --write --log-level silent .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run typecheck && pnpm run test && pnpm run format:check"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./tenant-bundle-import-export": "./src/tenant-bundle-import-export.ts"
+  },
+  "dependencies": {
+    "@repo/dynamic-entities": "workspace:*",
+    "@repo/entity-categories": "workspace:*",
+    "@repo/entity-queries": "workspace:*",
+    "@repo/entities": "workspace:*",
+    "@repo/hooks": "workspace:*",
+    "@repo/metrics-engine": "workspace:*",
+    "@repo/rbac": "workspace:*",
+    "@repo/shared-types": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1158,7 +1158,32 @@
       "saveSuccess": "Tenant updated.",
       "saveFailed": "Unable to save tenant.",
       "loadFailed": "Unable to load tenant.",
-      "notFound": "Tenant not found."
+      "notFound": "Tenant not found.",
+      "bundle": {
+        "sectionTitle": "Configuration",
+        "sectionDescription": "Export or import the tenant configuration bundle, including data models, UI layouts, metrics, queries, roles, hooks, and appearance.",
+        "viewTrigger": "View JSON",
+        "importTrigger": "Import JSON",
+        "viewTitle": "Tenant configuration JSON",
+        "importTitle": "Import tenant configuration",
+        "pasteLabel": "Paste JSON",
+        "uploadLabel": "Upload JSON file",
+        "valid": "JSON is valid for tenant configuration import.",
+        "invalid": "JSON has validation errors.",
+        "apply": "Continue",
+        "cancel": "Cancel",
+        "viewDescription": "Read-only snapshot of the current tenant configuration. Copy and use Import JSON on another environment to sync schemas and UI.",
+        "importDescription": "Import a tenant configuration bundle. This replaces all configuration for the active tenant. Logo and dashboard image URLs may still point at the source environment.",
+        "viewCopy": "Copy to clipboard",
+        "viewCopied": "Copied",
+        "viewLoading": "Loading configuration…",
+        "viewLoadFailed": "Unable to load tenant configuration.",
+        "confirmTitle": "Replace tenant configuration?",
+        "confirmDescription": "This replaces all tenant configuration, including entity definitions, categories, UI overrides, presets, dashboard layout, roles, hooks, metrics, queries, and appearance. Business records are not changed.",
+        "confirmAction": "Replace configuration",
+        "importSuccess": "Tenant configuration imported.",
+        "importFailed": "Unable to import tenant configuration."
+      }
     },
     "appearance": {
       "title": "Appearance",

@@ -34,6 +34,7 @@ export default [
       "src/firestore-admin-join-collection-repository.ts",
       "src/firestore-entity-query-executor.ts",
       "src/tenant-entity-path.ts",
+      "src/replace-tenant-collection-documents.ts",
     ],
     rules: {
       "no-restricted-imports": "off",

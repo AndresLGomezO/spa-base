@@ -332,6 +332,9 @@ importers:
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@repo/tenant-bundle':
+        specifier: workspace:*
+        version: link:../../packages/tenant-bundle
       '@repo/ui-builder-core':
         specifier: workspace:*
         version: link:../../packages/ui-builder-core
@@ -430,6 +433,9 @@ importers:
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../../packages/shared-types
+      '@repo/tenant-bundle':
+        specifier: workspace:*
+        version: link:../../packages/tenant-bundle
       '@repo/theme':
         specifier: workspace:*
         version: link:../../packages/theme
@@ -1460,6 +1466,52 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../entities
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.22.3)(yaml@2.9.0)
+
+  packages/tenant-bundle:
+    dependencies:
+      '@repo/dynamic-entities':
+        specifier: workspace:*
+        version: link:../dynamic-entities
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../entities
+      '@repo/entity-categories':
+        specifier: workspace:*
+        version: link:../entity-categories
+      '@repo/entity-queries':
+        specifier: workspace:*
+        version: link:../entity-queries
+      '@repo/hooks':
+        specifier: workspace:*
+        version: link:../hooks
+      '@repo/metrics-engine':
+        specifier: workspace:*
+        version: link:../metrics-engine
+      '@repo/rbac':
+        specifier: workspace:*
+        version: link:../rbac
+      '@repo/shared-types':
+        specifier: workspace:*
+        version: link:../shared-types
       zod:
         specifier: 'catalog:'
         version: 4.4.3

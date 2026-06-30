@@ -1,15 +1,20 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import type { TenantBundleExportDocument } from "@repo/tenant-bundle";
 
-import { Alert, Button, toast } from "@repo/ui";
+import { Alert, Button, Modal, Text, toast } from "@repo/ui";
 
 import {
   getAdminTenant,
+  importAdminTenantBundle,
   updateAdminTenant,
   type AdminTenant,
 } from "../../lib/admin-client";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { EditTenantNameModal } from "./EditTenantNameModal";
+import { TenantBundleJsonImportDialog } from "./TenantBundleJsonImportDialog";
+import { TenantBundleJsonViewDialog } from "./TenantBundleJsonViewDialog";
+import { tenantBundleJsonLabels } from "./tenant-bundle-json-labels";
 
 interface CurrentTenantPanelProps {
   readonly tenantId: string;
@@ -19,8 +24,16 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   const { t } = useTranslation("common");
   const [tenant, setTenant] = useState<AdminTenant | null>(null);
   const [editOpen, setEditOpen] = useState(false);
+  const [viewDialogOpen, setViewDialogOpen] = useState(false);
+  const [importDialogOpen, setImportDialogOpen] = useState(false);
+  const [confirmImportOpen, setConfirmImportOpen] = useState(false);
+  const [pendingBundle, setPendingBundle] =
+    useState<TenantBundleExportDocument | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
+  const [isImporting, setIsImporting] = useState(false);
+
+  const bundleLabels = useMemo(() => tenantBundleJsonLabels(t), [t]);
 
   const loadTenant = useCallback(async () => {
     setIsLoading(true);
@@ -64,6 +77,34 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
       );
     } finally {
       setIsSaving(false);
+    }
+  }
+
+  function handleImportApply(bundle: TenantBundleExportDocument) {
+    setPendingBundle(bundle);
+    setConfirmImportOpen(true);
+  }
+
+  async function handleConfirmImport() {
+    if (!pendingBundle) {
+      return;
+    }
+
+    setIsImporting(true);
+    try {
+      await importAdminTenantBundle(tenantId, pendingBundle);
+      await loadTenant();
+      toast.success(bundleLabels.importSuccess);
+      setConfirmImportOpen(false);
+      setPendingBundle(null);
+    } catch (importError) {
+      toast.error(
+        importError instanceof Error
+          ? importError.message
+          : bundleLabels.importFailed,
+      );
+    } finally {
+      setIsImporting(false);
     }
   }
 
@@ -114,6 +155,33 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
         </div>
       </dl>
 
+      <section className="flex flex-col gap-3">
+        <div className="space-y-1">
+          <Text className="text-sm font-medium">{bundleLabels.sectionTitle}</Text>
+          <Text className="text-muted-foreground text-sm">
+            {bundleLabels.sectionDescription}
+          </Text>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setViewDialogOpen(true)}
+          >
+            {bundleLabels.viewTrigger}
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => setImportDialogOpen(true)}
+          >
+            {bundleLabels.importTrigger}
+          </Button>
+        </div>
+      </section>
+
       <Button
         type="button"
         variant="outline"
@@ -131,6 +199,58 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
         onClose={() => setEditOpen(false)}
         onSaved={setTenant}
       />
+
+      <TenantBundleJsonViewDialog
+        tenantId={tenantId}
+        labels={bundleLabels}
+        open={viewDialogOpen}
+        onOpenChange={setViewDialogOpen}
+      />
+
+      <TenantBundleJsonImportDialog
+        labels={bundleLabels}
+        open={importDialogOpen}
+        onOpenChange={setImportDialogOpen}
+        onApply={handleImportApply}
+      />
+
+      <Modal
+        open={confirmImportOpen}
+        onClose={() => {
+          if (isImporting) {
+            return;
+          }
+          setConfirmImportOpen(false);
+          setPendingBundle(null);
+        }}
+        title={bundleLabels.confirmTitle}
+        footer={
+          <>
+            <Button
+              type="button"
+              variant="outline"
+              disabled={isImporting}
+              onClick={() => {
+                setConfirmImportOpen(false);
+                setPendingBundle(null);
+              }}
+            >
+              {bundleLabels.cancel}
+            </Button>
+            <Button
+              type="button"
+              disabled={isImporting}
+              onClick={() => void handleConfirmImport()}
+            >
+              {bundleLabels.confirmAction}
+            </Button>
+          </>
+        }
+      >
+        <Text className="text-muted-foreground text-sm">
+          {bundleLabels.confirmDescription}
+        </Text>
+      </Modal>
     </div>
   );
 }

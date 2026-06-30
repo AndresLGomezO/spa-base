@@ -35,6 +35,7 @@
     "@repo/query-engine": "workspace:*",
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
+    "@repo/tenant-bundle": "workspace:*",
     "@repo/ui-builder": "workspace:*",
     "@repo/ui-builder-core": "workspace:*",
     "@repo/ui-builder-react": "workspace:*",
