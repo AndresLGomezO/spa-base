@@ -261,6 +261,7 @@
       "container": "Container",
       "section": "Section",
       "actions": "Actions",
+      "hiddenField": "{{label}} (Hidden)",
       "insertAbove": "Add component above {{label}}",
       "insertBelow": "Add component below {{label}}",
       "insertInColumn": "Add component to {{label}}",
@@ -880,6 +881,10 @@
     "validation": {
       "fieldRequired": "{{field}} is required."
     },
+    "validationSummary": {
+      "title": "Please fix the following errors:",
+      "fieldError": "{{field}}: {{message}}"
+    },
     "relationSyncFailed": "The record was saved, but related links could not be updated. Try saving again.",
     "noRelatedRecords": "No related records found.",
     "view": "View",
@@ -1051,6 +1056,7 @@
       "textFieldMultiline": "Multiline text input",
       "textFieldMultilineRows": "Initial rows",
       "formFieldHideLabel": "Hide field label",
+      "formFieldHidden": "Hidden field",
       "labelColor": "Label color",
       "labelAlignLeft": "Left",
       "labelAlignCenter": "Center",

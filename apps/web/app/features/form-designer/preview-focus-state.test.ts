@@ -25,6 +25,7 @@ const labels: StructureTreeLabels = {
   container: "Container",
   section: "Section",
   actions: "Actions",
+  hiddenField: (label) => `${label} (Hidden)`,
   kindDefaults: {
     user: "Signed-in user",
   },

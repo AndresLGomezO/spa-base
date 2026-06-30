@@ -170,6 +170,75 @@ describe("EntityForm", () => {
     expect(screen.getByText("Name is required.")).toBeInTheDocument();
   });
 
+  it("shows validation summary for hidden field errors", () => {
+    let layout = createDefaultFormLayout(["name"]);
+    layout = {
+      ...layout,
+      root: {
+        ...layout.root,
+        columns: [
+          {
+            ...layout.root.columns[0]!,
+            rows: [
+              {
+                type: "component",
+                id: "hidden-category",
+                component: {
+                  kind: "form-field",
+                  fieldPath: "categoryId",
+                  hidden: true,
+                },
+              },
+              ...layout.root.columns[0]!.rows,
+            ],
+          },
+        ],
+      },
+    };
+
+    const entityWithHiddenField: EntityCatalogEntry = {
+      ...widgetWithDesignedCreateForm,
+      fields: {
+        ...widgetWithDesignedCreateForm.fields,
+        categoryId: { type: "string", required: true, optional: false },
+      },
+      ui: {
+        ...widgetWithDesignedCreateForm.ui,
+        forms: {
+          ...widgetWithDesignedCreateForm.ui.forms,
+          create: {
+            ...widgetWithDesignedCreateForm.ui.forms.create,
+            layout,
+          },
+          edit: {
+            ...widgetWithDesignedCreateForm.ui.forms.edit,
+            layout,
+          },
+        },
+      },
+    };
+
+    vi.mocked(useEntity).mockReturnValueOnce({
+      ...defaultEntityState,
+      fieldErrors: {
+        categoryId: "Invalid input: expected string, received undefined",
+      },
+    });
+
+    render(
+      <TestEntityFormProviders items={[entityWithHiddenField]}>
+        <EntityForm entityName="widget" mode="create" onCancel={vi.fn()} />
+      </TestEntityFormProviders>,
+    );
+
+    expect(
+      screen.getByText(
+        "Category Id: Invalid input: expected string, received undefined",
+      ),
+    ).toBeInTheDocument();
+    expect(screen.queryByLabelText(/category id/i)).not.toBeInTheDocument();
+  });
+
   it("submits create payloads", async () => {
     renderForm();
 

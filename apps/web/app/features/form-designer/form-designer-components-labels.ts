@@ -82,6 +82,8 @@ export function formDesignerComponentsLabels(
       container: t("formDesigner.components.container"),
       section: t("formDesigner.components.section"),
       actions: t("formDesigner.components.actions"),
+      hiddenField: (label) =>
+        t("formDesigner.components.hiddenField", { label }),
       kindDefaults,
     },
     panelTitle: t("formDesigner.components.panelTitle"),

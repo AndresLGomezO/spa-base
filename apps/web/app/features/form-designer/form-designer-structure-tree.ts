@@ -61,6 +61,7 @@ export interface StructureTreeLabels {
   readonly container: string;
   readonly section: string;
   readonly actions: string;
+  readonly hiddenField: (label: string) => string;
   readonly kindDefaults: Readonly<Partial<Record<UiComponentKind, string>>>;
 }
 
@@ -101,8 +102,10 @@ export function resolveComponentRowLabel(
     case "container":
       return labels.container;
     case "form-field":
-    case "entity-field-selector":
-      return fieldLabelForPath(fieldDescriptors, component.fieldPath);
+    case "entity-field-selector": {
+      const label = fieldLabelForPath(fieldDescriptors, component.fieldPath);
+      return component.hidden === true ? labels.hiddenField(label) : label;
+    }
     case "form-section":
       return component.title?.trim() || labels.section;
     case "form-actions":

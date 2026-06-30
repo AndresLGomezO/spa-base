@@ -27,6 +27,7 @@ const labels: StructureTreeLabels = {
   container: "Container",
   section: "Section",
   actions: "Actions",
+  hiddenField: (label) => `${label} (Hidden)`,
   kindDefaults: {
     text: "Text",
     image: "Image",
@@ -118,6 +119,16 @@ describe("form-designer-structure-tree", () => {
         labels,
       ),
     ).toBe("Email");
+  });
+
+  it("marks hidden form fields in structure tree labels", () => {
+    expect(
+      resolveComponentRowLabel(
+        { kind: "form-field", fieldPath: "email", hidden: true },
+        fieldDescriptors,
+        labels,
+      ),
+    ).toBe("Email (Hidden)");
   });
 
   it("prefers custom structure names over default labels", () => {

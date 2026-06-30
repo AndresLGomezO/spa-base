@@ -188,6 +188,7 @@ export interface FormFieldComponentConfig {
   readonly kind: "form-field";
   readonly fieldPath: string;
   readonly hideLabel?: boolean;
+  readonly hidden?: boolean;
   readonly booleanDisplay?: BooleanFieldDisplay;
   readonly switchVariant?: SwitchVariant;
   readonly switchWidth?: number;
@@ -206,6 +207,7 @@ export interface EntityFieldSelectorComponentConfig {
   readonly kind: "entity-field-selector";
   readonly fieldPath: string;
   readonly layout: EntityFieldSelectorLayout;
+  readonly hidden?: boolean;
   readonly enableSearch?: boolean;
   readonly cardsPerRow?: number;
   readonly imageFieldPath?: string;

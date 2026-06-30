@@ -86,6 +86,7 @@ export function formDesignerComponentEditorLabels(
     textFieldMultiline: t("entity.viewSettings.textFieldMultiline"),
     textFieldMultilineRows: t("entity.viewSettings.textFieldMultilineRows"),
     formFieldHideLabel: t("entity.viewSettings.formFieldHideLabel"),
+    formFieldHidden: t("entity.viewSettings.formFieldHidden"),
     iconName: t("designLayout.iconName"),
     iconSize: t("entity.viewSettings.imageSize"),
     iconNameHint: t("designLayout.iconNameHint"),

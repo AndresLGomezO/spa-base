@@ -261,6 +261,7 @@
       "container": "Contenedor",
       "section": "Sección",
       "actions": "Acciones",
+      "hiddenField": "{{label}} (Oculto)",
       "insertAbove": "Añadir componente encima de {{label}}",
       "insertBelow": "Añadir componente debajo de {{label}}",
       "insertInColumn": "Añadir componente a {{label}}",
@@ -880,6 +881,10 @@
     "validation": {
       "fieldRequired": "{{field}} es obligatorio."
     },
+    "validationSummary": {
+      "title": "Corrige los siguientes errores:",
+      "fieldError": "{{field}}: {{message}}"
+    },
     "relationSyncFailed": "El registro se guardó, pero no se pudieron actualizar los vínculos relacionados. Intenta guardar de nuevo.",
     "noRelatedRecords": "No se encontraron registros relacionados.",
     "view": "Ver",
@@ -1051,6 +1056,7 @@
       "textFieldMultiline": "Entrada de texto multilínea",
       "textFieldMultilineRows": "Filas iniciales",
       "formFieldHideLabel": "Ocultar etiqueta del campo",
+      "formFieldHidden": "Campo oculto",
       "labelColor": "Color de etiqueta",
       "labelAlignLeft": "Izquierda",
       "labelAlignCenter": "Centro",

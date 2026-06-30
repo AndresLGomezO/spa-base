@@ -181,6 +181,7 @@ export interface ComponentConfigEditorLabels {
   readonly textFieldMultiline?: string;
   readonly textFieldMultilineRows?: string;
   readonly formFieldHideLabel?: string;
+  readonly formFieldHidden?: string;
   readonly iconName?: string;
   readonly iconSize?: string;
   readonly iconNameHint?: string;
@@ -620,6 +621,18 @@ function EntityFieldSelectorConfigFields({
           </Select>
         </label>
       ) : null}
+      <label className="flex items-center gap-2 text-sm">
+        <Checkbox
+          checked={config.hidden === true}
+          onChange={(event) =>
+            onChange({
+              ...config,
+              hidden: event.target.checked || undefined,
+            })
+          }
+        />
+        <span>{labels.formFieldHidden ?? "Hidden field"}</span>
+      </label>
     </>
   );
 }
@@ -838,6 +851,18 @@ export function ComponentConfigEditor({
                 }
               />
               <span>{labels.formFieldHideLabel ?? "Hide field label"}</span>
+            </label>
+            <label className="flex items-center gap-2 text-sm">
+              <Checkbox
+                checked={config.hidden === true}
+                onChange={(event) =>
+                  onChange({
+                    ...config,
+                    hidden: event.target.checked || undefined,
+                  })
+                }
+              />
+              <span>{labels.formFieldHidden ?? "Hidden field"}</span>
             </label>
           </>
         ) : null}

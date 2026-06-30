@@ -40,8 +40,13 @@ import {
   getJoinRelationFieldNames,
   splitEntityFormPayload,
 } from "./entity-form-payload";
+import {
+  collectFormRenderedFieldRoots,
+  collectOrphanFieldErrors,
+} from "./collect-form-rendered-field-roots";
 import { ENTITY_FORM_ID } from "./entity-form-constants";
 import { applyFormFieldChange } from "./form-relation-display-cache";
+import { EntityFormValidationSummary } from "./EntityFormValidationSummary";
 import { EntityWizardForm } from "./EntityWizardForm";
 import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
 
@@ -385,6 +390,22 @@ export function EntityForm({
     footerContext: footerFormContext,
   });
 
+  const renderedFieldRoots = useMemo(
+    () =>
+      collectFormRenderedFieldRoots({
+        layouts: [plainLayout],
+        definition,
+        fieldAccess,
+        canRead: entityPermissions.canRead,
+      }),
+    [plainLayout, definition, fieldAccess, entityPermissions.canRead],
+  );
+
+  const orphanFieldErrors = useMemo(
+    () => collectOrphanFieldErrors(fieldErrors, renderedFieldRoots),
+    [fieldErrors, renderedFieldRoots],
+  );
+
   if (isLoadingRecord) {
     return <EntityFormSkeleton />;
   }
@@ -419,6 +440,10 @@ export function EntityForm({
 
   return (
     <Form id={ENTITY_FORM_ID} onSubmit={(event) => void handleSubmit(event)}>
+      <EntityFormValidationSummary
+        errors={orphanFieldErrors}
+        definition={definition}
+      />
       <RecursiveLayoutRenderer
         layout={plainLayout}
         context={designedFormContext}

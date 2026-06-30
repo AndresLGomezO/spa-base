@@ -126,6 +126,9 @@ export function createEntityFormRenderContext(options: {
       return isFieldVisible(fieldUI, options.canRead, access);
     },
     formFieldRenderer: (config, containerClassName) => {
+      if (config.hidden === true) {
+        return null;
+      }
       const fieldPath = config.fieldPath;
       const root = fieldPath.includes(".")
         ? (fieldPath.split(".")[0] ?? fieldPath)
@@ -171,6 +174,9 @@ export function createEntityFormRenderContext(options: {
       );
     },
     entityFieldSelectorRenderer: (config, containerClassName) => {
+      if (config.hidden === true) {
+        return null;
+      }
       const root = config.fieldPath;
       const fieldUI = options.definition.ui.fields?.[root];
       const access = getFieldAccessLevel(options.fieldAccess, root);

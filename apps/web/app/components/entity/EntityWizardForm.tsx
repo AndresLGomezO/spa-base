@@ -1,6 +1,8 @@
 import {
   useCallback,
+  useEffect,
   useMemo,
+  useRef,
   useState,
   type FormEvent,
   type ReactNode,
@@ -37,6 +39,12 @@ import { WizardActions } from "../forms/WizardActions";
 import { WizardProgress } from "../forms/WizardProgress";
 import { WizardStepHost } from "../forms/WizardStepHost";
 import { ENTITY_FORM_ID } from "./entity-form-constants";
+import {
+  collectFormRenderedFieldRoots,
+  collectOrphanFieldErrors,
+  findWizardStepIndexForFieldRoot,
+} from "./collect-form-rendered-field-roots";
+import { EntityFormValidationSummary } from "./EntityFormValidationSummary";
 import { useEntityFormModalFooter } from "./use-entity-form-modal-footer";
 import {
   collectStepFieldErrors,
@@ -113,6 +121,65 @@ export function EntityWizardForm({
     () => mergeFieldErrors(stepFieldErrors, fieldErrors),
     [fieldErrors, stepFieldErrors],
   );
+
+  const renderedFieldRoots = useMemo(
+    () =>
+      collectFormRenderedFieldRoots({
+        layouts: wizard.steps.map((step) => step.layout),
+        definition,
+        fieldAccess,
+        canRead,
+      }),
+    [wizard.steps, definition, fieldAccess, canRead],
+  );
+
+  const orphanFieldErrors = useMemo(
+    () => collectOrphanFieldErrors(resolvedFieldErrors, renderedFieldRoots),
+    [resolvedFieldErrors, renderedFieldRoots],
+  );
+
+  const lastServerErrorKeysRef = useRef("");
+
+  useEffect(() => {
+    const errorEntries = Object.entries(fieldErrors).filter(
+      ([, message]) => message,
+    );
+    const errorKeys = errorEntries
+      .map(([fieldName]) => fieldName)
+      .sort()
+      .join(",");
+
+    if (errorKeys.length === 0) {
+      lastServerErrorKeysRef.current = "";
+      return;
+    }
+
+    if (errorKeys === lastServerErrorKeysRef.current) {
+      return;
+    }
+
+    lastServerErrorKeysRef.current = errorKeys;
+
+    const firstField = errorEntries[0]?.[0];
+    if (!firstField) {
+      return;
+    }
+
+    const stepIndex = findWizardStepIndexForFieldRoot(wizard.steps, firstField);
+    if (stepIndex == null) {
+      return;
+    }
+
+    setCurrentStepIndex(stepIndex);
+    const step = wizard.steps[stepIndex];
+    if (step) {
+      setInvalidStepIds((current) => {
+        const next = new Set(current);
+        next.add(step.id);
+        return next;
+      });
+    }
+  }, [fieldErrors, wizard.steps]);
 
   const formatRequiredMessage = useCallback(
     (fieldName: string) =>
@@ -349,6 +416,10 @@ export function EntityWizardForm({
       wizardStepHostRenderer: (config: WizardStepHostComponentConfig) =>
         activeStep ? (
           <WizardStepHost config={config}>
+            <EntityFormValidationSummary
+              errors={orphanFieldErrors}
+              definition={definition}
+            />
             <RecursiveLayoutRenderer
               layout={activeStep.layout}
               context={stepFormContext}
@@ -375,12 +446,14 @@ export function EntityWizardForm({
     activeStep,
     baseContext,
     currentStepIndex,
+    definition,
     handleBack,
     handleNext,
     isCurrentStepValid,
     isSubmitting,
     mode,
     onCancel,
+    orphanFieldErrors,
     stepFormContext,
     submitCurrentStep,
     suppressInlineActions,
