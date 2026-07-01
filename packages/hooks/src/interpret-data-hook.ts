@@ -4,6 +4,7 @@ import type {
   DataHookConditionNode,
   DataHookDefinition,
 } from "./data-hook-definition.js";
+import { buildDataHookJobPayload } from "./data-hook-job.js";
 import { isBeforePhase, parseHookEvent } from "./event.js";
 import {
   evaluateExpression,
@@ -13,7 +14,11 @@ import {
   type ExpressionScope,
   type ExpressionValue,
 } from "./expression.js";
-import type { HookContext, HookPhase } from "./types.js";
+import type {
+  HookContext,
+  HookEntityWriteOptions,
+  HookPhase,
+} from "./types.js";
 import { HookExecutionError } from "./types.js";
 
 const MAX_LOOP_ITERATIONS = 1_000;
@@ -217,6 +222,7 @@ async function runAction(
   action: DataHookAction,
   context: HookContext,
   phase: HookPhase,
+  writeOptions?: HookEntityWriteOptions,
 ): Promise<void> {
   const scope = buildScope(context);
 
@@ -233,9 +239,12 @@ async function runAction(
           "Current record id is required for setField in after hooks.",
         );
       }
-      await entities.update(context.entityName, context.current.id, {
-        [action.field]: value,
-      });
+      await entities.update(
+        context.entityName,
+        context.current.id,
+        { [action.field]: value },
+        writeOptions,
+      );
       context.current[action.field] = value;
       return;
     }
@@ -245,6 +254,7 @@ async function runAction(
       await entities.create(
         action.entity,
         evaluateExpressionRecord(action.data, scope),
+        writeOptions,
       );
       return;
     }
@@ -268,6 +278,7 @@ async function runAction(
         await entities.create(
           action.entity,
           evaluateExpressionRecord(action.data, loopScope),
+          writeOptions,
         );
       }
       return;
@@ -305,6 +316,7 @@ async function runAction(
           action.entity,
           match.id,
           evaluateExpressionRecord(action.set, setScope),
+          writeOptions,
         );
       }
       return;
@@ -364,6 +376,21 @@ export async function runDataHook(
     return;
   }
 
+  const visited = new Set(context.visitedHookIds ?? []);
+  if (visited.has(definition.id)) {
+    return;
+  }
+  visited.add(definition.id);
+
+  const writeOptions: HookEntityWriteOptions | undefined =
+    definition.chainHooks === true
+      ? {
+          chainHooks: true,
+          depth: context.depth ?? 0,
+          visitedHookIds: visited,
+        }
+      : undefined;
+
   const parsed = parseHookEvent(context.event);
 
   if (
@@ -381,12 +408,56 @@ export async function runDataHook(
   }
 
   for (const action of definition.actions) {
-    await runAction(action, context, parsed.phase);
+    await runAction(action, context, parsed.phase, writeOptions);
   }
 }
 
 export function compileDataHook(
   definition: DataHookDefinition,
 ): (context: HookContext) => Promise<void> {
+  if (definition.execution === "queued" && definition.phase === "after") {
+    return async (context) => {
+      const enqueue = context.services.enqueueDataHookJob;
+      if (enqueue) {
+        await enqueue(buildDataHookJobPayload(definition, context));
+        return;
+      }
+
+      context.services.logger?.error(
+        "Queued data hook missing enqueue service; falling back to deferred execution",
+        {
+          hookId: definition.id,
+          entityName: context.entityName,
+          event: context.event,
+        },
+      );
+      void runDataHook(definition, context).catch((error) => {
+        const message =
+          error instanceof Error ? error.message : "Deferred data hook failed.";
+        context.services.logger?.error("Deferred data hook failed", {
+          hookId: definition.id,
+          entityName: context.entityName,
+          event: context.event,
+          error: message,
+        });
+      });
+    };
+  }
+
+  if (definition.execution === "deferred" && definition.phase === "after") {
+    return async (context) => {
+      void runDataHook(definition, context).catch((error) => {
+        const message =
+          error instanceof Error ? error.message : "Deferred data hook failed.";
+        context.services.logger?.error("Deferred data hook failed", {
+          hookId: definition.id,
+          entityName: context.entityName,
+          event: context.event,
+          error: message,
+        });
+      });
+    };
+  }
+
   return (context) => runDataHook(definition, context);
 }

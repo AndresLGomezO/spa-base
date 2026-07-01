@@ -71,7 +71,7 @@ Phase 2 is **functionally complete for v1** of each capability. Several areas re
 | 10.1 | Relational Data | Partial | `@repo/entity-relations`, CRUD relation hooks | [relational-data-system-guide.md](./relational-data-system-guide.md) |
 | 10.2 | Advanced UI Builder | Partial | `@repo/ui-builder`, `apps/web/app/components/entity/` | [advanced-ui-builder-guide.md](./advanced-ui-builder-guide.md) |
 | 10.3 | Module Extension | Partial | `@repo/modules`, `apps/platform`, `modules/*` | [module-extension-guide.md](./module-extension-guide.md) |
-| 10.4 | Custom Business Logic (Hooks) | Partial | `@repo/hooks`, `apps/api/src/hooks/` | [hooks-system-guide.md](./hooks-system-guide.md) |
+| 10.4 | Custom Business Logic (Hooks) | Partial | `@repo/hooks`, `apps/api/src/hooks/` | [data-hook-definition-json.md](./data-hook-definition-json.md) |
 | 10.5 | Advanced RBAC | Partial | `@repo/rbac`, tenant roles, field rules | [advanced-rbac-guide.md](./advanced-rbac-guide.md) |
 | 10.6 | Admin Dashboard | Partial | Control Plane UI, `admin-client.ts` | [admin-dashboard-guide.md](./admin-dashboard-guide.md) |
 | 10.7 | Performance & Scaling | Partial (Phase A) | TTL caches, rate limit, TanStack Query, virtualization | [performance-scaling-guide.md](./performance-scaling-guide.md) |

@@ -8,6 +8,7 @@ export {
   getAllKnownPermissions,
   type KnownPermission,
 } from "./known-permissions.js";
+export { createHookEntityAccessControl } from "./hook-access-control.js";
 export { isPlatformSuperAdmin } from "./platform-role.js";
 export { expandGrant, expandGrants, hasPermission } from "./role-matcher.js";
 export { canReadEntityQueryDefinition } from "./entity-query-access.js";

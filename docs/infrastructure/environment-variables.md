@@ -34,6 +34,8 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `WORKER_SERVICE_URL` | `http://127.0.0.1:3001` (host); `http://worker-service:3001` (Docker) | Cloud Run worker-service URL | Base URL for AI task workers |
 | `AI_TASKS_LOCAL_DISPATCH` | `true` (default non-prod) | `false` | POST AI jobs directly to worker instead of Cloud Tasks |
 | `CLOUD_TASKS_QUEUE_NAME` | `ai-jobs` | `ai-jobs` | Cloud Tasks queue for AI jobs (production) |
+| `HOOK_TASKS_QUEUE_NAME` | `hook-jobs` | `hook-jobs` | Cloud Tasks queue for data hook jobs (production) |
+| `HOOK_TASKS_LOCAL_DISPATCH` | `true` (default non-prod) | `false` | POST data hook jobs directly to worker instead of Cloud Tasks |
 
 Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps/api/.env.example`](../../apps/api/.env.example).
 

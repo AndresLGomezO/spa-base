@@ -646,6 +646,9 @@ importers:
 
   apps/worker-service:
     dependencies:
+      '@app/platform':
+        specifier: workspace:*
+        version: link:../platform
       '@google-cloud/vertexai':
         specifier: 'catalog:'
         version: 1.12.0
@@ -661,9 +664,21 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../../packages/entities
+      '@repo/firestore-converters':
+        specifier: workspace:*
+        version: link:../../packages/firestore-converters
       '@repo/gcp-firebase':
         specifier: workspace:*
         version: link:../../packages/gcp-firebase
+      '@repo/hooks':
+        specifier: workspace:*
+        version: link:../../packages/hooks
+      '@repo/rbac':
+        specifier: workspace:*
+        version: link:../../packages/rbac
+      '@repo/shared-types':
+        specifier: workspace:*
+        version: link:../../packages/shared-types
       '@repo/worker-firestore':
         specifier: workspace:*
         version: link:../../packages/worker-firestore
@@ -673,6 +688,9 @@ importers:
       firebase-admin:
         specifier: 'catalog:'
         version: 13.10.0
+      nanoid:
+        specifier: 'catalog:'
+        version: 5.1.11
       zod:
         specifier: 'catalog:'
         version: 4.4.3
@@ -680,9 +698,6 @@ importers:
       '@repo/eslint-config':
         specifier: workspace:*
         version: link:../../packages/eslint-config
-      '@repo/firestore-converters':
-        specifier: workspace:*
-        version: link:../../packages/firestore-converters
       '@repo/typescript-config':
         specifier: workspace:*
         version: link:../../packages/typescript-config
@@ -1333,6 +1348,18 @@ importers:
 
   packages/hooks:
     dependencies:
+      '@repo/entities':
+        specifier: workspace:*
+        version: link:../entities
+      '@repo/firestore-converters':
+        specifier: workspace:*
+        version: link:../firestore-converters
+      '@repo/rbac':
+        specifier: workspace:*
+        version: link:../rbac
+      nanoid:
+        specifier: 'catalog:'
+        version: 5.1.11
       zod:
         specifier: 'catalog:'
         version: 4.4.3

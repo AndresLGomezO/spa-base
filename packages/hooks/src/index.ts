@@ -6,6 +6,18 @@ export {
   evaluateConditionNode,
 } from "./interpret-data-hook.js";
 export {
+  createHookEntityServices,
+  type DispatchChainedHooksParams,
+  type HookEntityAccessControl,
+  type HookFieldAccessLevel,
+} from "./create-hook-entity-services.js";
+export { runQueuedDataHookJob } from "./run-queued-data-hook-job.js";
+export {
+  dataHookJobPayloadSchema,
+  buildDataHookJobPayload,
+  dataHookJobPayloadToUser,
+} from "./data-hook-job.js";
+export {
   registerSystemHook,
   registerDynamicHook,
   unregisterDynamicHook,
@@ -28,6 +40,7 @@ export {
   DATA_HOOKS_COLLECTION,
   DATA_HOOK_OPERATIONS,
   DATA_HOOK_PHASES,
+  DATA_HOOK_EXECUTION_MODES,
   DATA_HOOK_CONDITION_OPERATORS,
   DATA_HOOK_CONDITION_COMBINATORS,
   VALUELESS_CONDITION_OPERATORS,
@@ -61,6 +74,7 @@ export {
 export type {
   DataHookOperation,
   DataHookPhase,
+  DataHookExecutionMode,
   DataHookConditionOperator,
   DataHookConditionCombinator,
   DataHookTrigger,
@@ -73,6 +87,7 @@ export type {
   CreateDataHookInput,
   PatchDataHookInput,
 } from "./data-hook-definition.js";
+export type { DataHookJobPayload } from "./data-hook-job.js";
 export type {
   DataHookDefinitionJsonError,
   PortableDataHookDefinition,
@@ -102,12 +117,8 @@ export type {
   ExpressionNode,
   ExpressionScope,
 } from "./expression.js";
-export {
-  HOOK_PERMISSIONS,
-  HOOK_OPERATIONS,
-  HOOK_PHASES,
-  HookExecutionError,
-} from "./types.js";
+export { HOOK_PERMISSIONS } from "./permissions.js";
+export { HOOK_OPERATIONS, HOOK_PHASES, HookExecutionError } from "./types.js";
 export type {
   HookOperation,
   HookPhase,
@@ -115,6 +126,8 @@ export type {
   HookUser,
   HookEntityRecord,
   HookEntityListQuery,
+  HookEntityRuntime,
+  HookEntityWriteOptions,
   HookEntityServices,
   HookLogger,
   HookServices,

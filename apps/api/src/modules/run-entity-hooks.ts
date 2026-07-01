@@ -1,22 +1,24 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
-import {
-  executeHooks,
-  formatHookEvent,
-  type HookContext,
-  type HookEntityServices,
-  type HookOperation,
-  type HookPhase,
+import type {
+  DataHookJobPayload,
+  HookEntityServices,
+  HookOperation,
+  HookPhase,
 } from "@repo/hooks";
 
+import { dispatchChainedEntityHooks } from "../hooks/dispatch-chained-entity-hooks.js";
 import { measureHooksTiming } from "../observability/request-timing.js";
 
-interface RunEntityHooksParams {
+export interface RunEntityHooksParams {
   readonly entityName: string;
   readonly phase: HookPhase;
   readonly operation: HookOperation;
   readonly current: Record<string, unknown>;
   readonly previous?: Record<string, unknown>;
   readonly entityServices?: HookEntityServices;
+  readonly depth?: number;
+  readonly visitedHookIds?: ReadonlySet<string>;
+  readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
 }
 
 export async function runEntityHooks(
@@ -29,32 +31,27 @@ export async function runEntityHooks(
     return params.current;
   }
 
-  const event = formatHookEvent({
-    entity: params.entityName,
-    phase: params.phase,
-    operation: params.operation,
-  });
-
-  const hookContext: HookContext = {
-    tenantId: ctx.tenantId,
-    entityName: params.entityName,
-    event,
-    current: { ...params.current },
-    ...(params.previous ? { previous: { ...params.previous } } : {}),
-    user: {
-      uid: ctx.uid,
-    },
-    services: {
+  return measureHooksTiming(request, () =>
+    dispatchChainedEntityHooks({
+      tenantId: ctx.tenantId,
+      entityName: params.entityName,
+      phase: params.phase,
+      operation: params.operation,
+      current: params.current,
+      ...(params.previous ? { previous: params.previous } : {}),
+      depth: params.depth ?? 0,
+      visitedHookIds: params.visitedHookIds ?? new Set<string>(),
+      user: { uid: ctx.uid },
       logger: {
         info: (message, meta) => app.log.info(meta ?? {}, message),
         error: (message, meta) => app.log.error(meta ?? {}, message),
       },
-      ...(params.entityServices ? { entities: params.entityServices } : {}),
-    },
-  };
-
-  await measureHooksTiming(request, async () =>
-    executeHooks(event, hookContext),
+      ...(params.entityServices
+        ? { entityServices: params.entityServices }
+        : {}),
+      ...(params.enqueueDataHookJob
+        ? { enqueueDataHookJob: params.enqueueDataHookJob }
+        : {}),
+    }),
   );
-  return hookContext.current;
 }

@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
 
+import { DATA_HOOK_COOKBOOK_FIXTURES } from "./data-hook-cookbook-fixtures.js";
 import type { DataHookDefinition } from "./data-hook-definition.js";
 import {
   catalogHookKey,
@@ -122,5 +123,43 @@ describe("data-hook-definition-json", () => {
     expect(plan.toDelete.map((hook) => catalogHookKey(hook)).sort()).toEqual(
       ["loan\0Notify", "payment\0Set status"].sort(),
     );
+  });
+
+  it("parses every cookbook fixture as a valid portable definition", () => {
+    for (const fixture of DATA_HOOK_COOKBOOK_FIXTURES) {
+      const parsed = parseDataHookDefinitionJson(
+        JSON.stringify(createDataHookDefinitionEnvelope(fixture)),
+      );
+      expect(parsed.ok, fixture.name).toBe(true);
+    }
+  });
+
+  it("parses cookbook fixtures as a valid catalog envelope", () => {
+    const parsed = parseDataHooksCatalogJson(
+      JSON.stringify({
+        kind: "data-hooks-catalog",
+        version: 1,
+        exportedAt: "2026-07-01T13:00:00.000Z",
+        dataHooks: DATA_HOOK_COOKBOOK_FIXTURES,
+      }),
+    );
+    expect(parsed.ok).toBe(true);
+    if (parsed.ok) {
+      expect(parsed.data.dataHooks).toHaveLength(
+        DATA_HOOK_COOKBOOK_FIXTURES.length,
+      );
+    }
+  });
+
+  it("round-trips each cookbook fixture through single-definition envelope", () => {
+    for (const fixture of DATA_HOOK_COOKBOOK_FIXTURES) {
+      const envelope = createDataHookDefinitionEnvelope(fixture);
+      const parsed = parseDataHookDefinitionJson(JSON.stringify(envelope));
+      expect(parsed.ok, fixture.name).toBe(true);
+      if (parsed.ok) {
+        expect(parsed.data.name).toBe(fixture.name);
+        expect(parsed.data.entity).toBe(fixture.entity);
+      }
+    }
   });
 });

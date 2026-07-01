@@ -12,7 +12,9 @@
   },
   "exports": {
     ".": "./src/index.ts",
-    "./browser": "./src/browser.ts"
+    "./browser": "./src/browser.ts",
+    "./permissions": "./src/permissions.ts",
+    "./types": "./src/types.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
@@ -24,6 +26,8 @@
     "vitest": "catalog:"
   },
   "dependencies": {
+    "@repo/entities": "workspace:*",
+    "nanoid": "catalog:",
     "zod": "catalog:"
   }
 }

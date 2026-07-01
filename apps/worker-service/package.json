@@ -12,20 +12,25 @@
     "lint": "eslint ."
   },
   "dependencies": {
+    "@app/platform": "workspace:*",
     "@google-cloud/vertexai": "catalog:",
     "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
+    "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",
+    "@repo/hooks": "workspace:*",
+    "@repo/rbac": "workspace:*",
+    "@repo/shared-types": "workspace:*",
     "@repo/worker-firestore": "workspace:*",
     "fastify": "catalog:",
     "firebase-admin": "catalog:",
+    "nanoid": "catalog:",
     "zod": "catalog:"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",
-    "@repo/firestore-converters": "workspace:*",
     "@repo/typescript-config": "workspace:*",
     "@types/node": "catalog:",
     "esbuild": "catalog:",

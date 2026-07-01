@@ -53,6 +53,15 @@ export const EXPRESSION_FUNCTIONS = [
   "toText",
   "dateParse",
   "isEmpty",
+  "if",
+  "length",
+  "substring",
+  "trim",
+  "upper",
+  "lower",
+  "startsWith",
+  "endsWith",
+  "includes",
 ] as const;
 
 export type ExpressionFunction = (typeof EXPRESSION_FUNCTIONS)[number];
@@ -363,6 +372,34 @@ function evaluateCall(
       return coerceDate(args[0] ?? null).toISOString();
     case "isEmpty":
       return isEmptyValue(args[0] ?? null);
+    case "if": {
+      const [condition, thenValue, elseValue] = args;
+      return truthy(condition ?? null)
+        ? (thenValue ?? null)
+        : (elseValue ?? null);
+    }
+    case "length":
+      return args[0] == null ? 0 : String(args[0]).length;
+    case "substring": {
+      const text = args[0] == null ? "" : String(args[0]);
+      const start = Math.trunc(coerceNumber(args[1] ?? null));
+      if (args[2] == null) {
+        return text.substring(start);
+      }
+      return text.substring(start, Math.trunc(coerceNumber(args[2])));
+    }
+    case "trim":
+      return args[0] == null ? "" : String(args[0]).trim();
+    case "upper":
+      return args[0] == null ? "" : String(args[0]).toUpperCase();
+    case "lower":
+      return args[0] == null ? "" : String(args[0]).toLowerCase();
+    case "startsWith":
+      return String(args[0] ?? "").startsWith(String(args[1] ?? ""));
+    case "endsWith":
+      return String(args[0] ?? "").endsWith(String(args[1] ?? ""));
+    case "includes":
+      return String(args[0] ?? "").includes(String(args[1] ?? ""));
     default: {
       const exhaustive: never = fn;
       throw new ExpressionEvaluationError(

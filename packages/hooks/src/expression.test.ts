@@ -166,4 +166,46 @@ describe("evaluateExpression", () => {
     };
     expect(expressionNodeSchema.parse(node)).toEqual(node);
   });
+
+  it("evaluates text and conditional functions", () => {
+    const ifNode: ExpressionNode = {
+      kind: "call",
+      fn: "if",
+      args: [
+        { kind: "literal", value: true },
+        { kind: "literal", value: "yes" },
+        { kind: "literal", value: "no" },
+      ],
+    };
+    expect(evaluateExpression(ifNode, scope())).toBe("yes");
+
+    expect(
+      evaluateExpression(
+        {
+          kind: "call",
+          fn: "substring",
+          args: [
+            { kind: "literal", value: "hello" },
+            { kind: "literal", value: 1 },
+            { kind: "literal", value: 4 },
+          ],
+        },
+        scope(),
+      ),
+    ).toBe("ell");
+
+    expect(
+      evaluateExpression(
+        {
+          kind: "call",
+          fn: "startsWith",
+          args: [
+            { kind: "literal", value: "prefix-value" },
+            { kind: "literal", value: "prefix" },
+          ],
+        },
+        scope(),
+      ),
+    ).toBe(true);
+  });
 });

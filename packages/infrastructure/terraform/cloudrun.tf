@@ -165,6 +165,22 @@ resource "google_cloud_run_v2_service" "backend" {
           value = "false"
         }
       }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "HOOK_TASKS_QUEUE_NAME"
+          value = google_cloud_tasks_queue.hook_jobs[0].name
+        }
+      }
+
+      dynamic "env" {
+        for_each = local.enable_ai_worker ? [1] : []
+        content {
+          name  = "HOOK_TASKS_LOCAL_DISPATCH"
+          value = "false"
+        }
+      }
     }
 
     scaling {

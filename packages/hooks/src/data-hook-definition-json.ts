@@ -135,6 +135,8 @@ export function toPortableDataHookDefinition(
     actions,
     enabled,
     order,
+    chainHooks,
+    execution,
   } = record;
   void _id;
   void _tenantId;
@@ -151,6 +153,8 @@ export function toPortableDataHookDefinition(
     actions,
     enabled,
     order,
+    ...(chainHooks !== undefined ? { chainHooks } : {}),
+    ...(execution !== undefined ? { execution } : {}),
   });
 }
 

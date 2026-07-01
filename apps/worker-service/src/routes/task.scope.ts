@@ -2,12 +2,15 @@ import type { FastifyInstance } from "fastify";
 
 import type { AiChatProcessorDeps } from "../services/ai-chat-processor.js";
 import type { AiUiBuilderProcessorDeps } from "../services/ai-ui-builder-processor.js";
+import type { DataHookProcessorDeps } from "../services/data-hook-processor.js";
 import { oidcAuthHook } from "../middleware/oidc-auth.middleware.js";
 import { aiChatTaskRoute } from "./ai-chat-task.route.js";
 import { aiUiBuilderTaskRoute } from "./ai-ui-builder-task.route.js";
+import { dataHookTaskRoute } from "./data-hook-task.route.js";
 
 export type WorkerTaskScopeDeps = AiChatProcessorDeps &
-  AiUiBuilderProcessorDeps;
+  AiUiBuilderProcessorDeps &
+  DataHookProcessorDeps;
 
 export async function taskScope(
   app: FastifyInstance,
@@ -16,4 +19,5 @@ export async function taskScope(
   app.addHook("preHandler", oidcAuthHook);
   await app.register(aiChatTaskRoute, deps);
   await app.register(aiUiBuilderTaskRoute, deps);
+  await app.register(dataHookTaskRoute, deps);
 }

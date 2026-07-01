@@ -4,6 +4,7 @@ import { buildRoleCatalog } from "@repo/rbac";
 import { clearDynamicEntityRegistry } from "@repo/dynamic-entities";
 import { clearEntityRegistry } from "@repo/entities";
 import { clearHookRegistry } from "@repo/hooks";
+
 import { clearModuleRegistries } from "@repo/modules";
 
 import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
@@ -243,5 +244,240 @@ describe("data hooks integration", () => {
       headers: authHeaders,
     });
     expect(listedAfter.json().data.items).toHaveLength(0);
+  });
+
+  it("runs payment before hooks on direct create", async () => {
+    const server = await buildTestServer();
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers: authHeaders,
+      payload: {
+        name: "payment",
+        label: "Payments",
+        fields: [
+          { name: "loanId", type: "string", required: false },
+          { name: "note", type: "string", required: false },
+        ],
+      },
+    });
+    expect(response.statusCode).toBe(201);
+
+    await server.inject({
+      method: "POST",
+      url: "/api/data-hooks",
+      headers: authHeaders,
+      payload: {
+        name: "Tag payment",
+        entity: "payment",
+        phase: "before",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "setField",
+            field: "note",
+            value: { kind: "literal", value: "from payment hook" },
+          },
+        ],
+      },
+    });
+
+    const created = await server.inject({
+      method: "POST",
+      url: "/api/payment",
+      headers: authHeaders,
+      payload: { loanId: "loan_1" },
+    });
+    expect(created.statusCode).toBe(201);
+    expect(created.json().data.note).toBe("from payment hook");
+  });
+
+  it("chains hooks when chainHooks is enabled on the source hook", async () => {
+    const server = await buildTestServer();
+
+    const defineEntity = async (
+      name: string,
+      fields: Array<{ name: string; type: string; required?: boolean }>,
+    ) => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/entity-definitions",
+        headers: authHeaders,
+        payload: { name, label: name, fields },
+      });
+      expect(response.statusCode).toBe(201);
+    };
+
+    await defineEntity("loan", [
+      { name: "amount", type: "number", required: true },
+    ]);
+    await defineEntity("payment", [
+      { name: "loanId", type: "string", required: false },
+      { name: "note", type: "string", required: false },
+    ]);
+
+    await server.inject({
+      method: "POST",
+      url: "/api/data-hooks",
+      headers: authHeaders,
+      payload: {
+        name: "Tag payment",
+        entity: "payment",
+        phase: "before",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "setField",
+            field: "note",
+            value: { kind: "literal", value: "from payment hook" },
+          },
+        ],
+      },
+    });
+
+    await server.inject({
+      method: "POST",
+      url: "/api/data-hooks",
+      headers: authHeaders,
+      payload: {
+        name: "Create payment",
+        entity: "loan",
+        phase: "after",
+        trigger: { operation: "create" },
+        chainHooks: true,
+        actions: [
+          {
+            type: "createRecord",
+            entity: "payment",
+            data: {
+              loanId: { kind: "field", source: "current", path: "id" },
+            },
+          },
+        ],
+      },
+    });
+
+    const listedLoanHooks = await server.inject({
+      method: "GET",
+      url: "/api/data-hooks?entity=loan",
+      headers: authHeaders,
+    });
+    const loanHook = listedLoanHooks
+      .json()
+      .data.items.find(
+        (item: { name?: string }) => item.name === "Create payment",
+      );
+    expect(loanHook?.chainHooks).toBe(true);
+    expect(loanHook?.execution).toBeUndefined();
+
+    const createLoan = await server.inject({
+      method: "POST",
+      url: "/api/loan",
+      headers: authHeaders,
+      payload: { amount: 100 },
+    });
+    expect(createLoan.statusCode).toBe(201);
+    const loanId = createLoan.json().data.id as string;
+
+    const payments = await server.inject({
+      method: "GET",
+      url: "/api/payment?limit=10",
+      headers: authHeaders,
+    });
+    expect(payments.statusCode).toBe(200);
+    expect(payments.json().data.items.length).toBeGreaterThan(0);
+    const payment = payments
+      .json()
+      .data.items.find((item: { loanId?: string }) => item.loanId === loanId);
+    expect(payment?.loanId).toBe(loanId);
+    expect(payment?.note).toBe("from payment hook");
+  });
+
+  it("does not chain hooks when chainHooks is disabled", async () => {
+    const server = await buildTestServer();
+
+    const defineEntity = async (
+      name: string,
+      fields: Array<{ name: string; type: string; required?: boolean }>,
+    ) => {
+      const response = await server.inject({
+        method: "POST",
+        url: "/api/entity-definitions",
+        headers: authHeaders,
+        payload: { name, label: name, fields },
+      });
+      expect(response.statusCode).toBe(201);
+    };
+
+    await defineEntity("loan", [
+      { name: "amount", type: "number", required: true },
+    ]);
+    await defineEntity("payment", [
+      { name: "loanId", type: "string", required: false },
+      { name: "note", type: "string", required: false },
+    ]);
+
+    await server.inject({
+      method: "POST",
+      url: "/api/data-hooks",
+      headers: authHeaders,
+      payload: {
+        name: "Tag payment",
+        entity: "payment",
+        phase: "before",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "setField",
+            field: "note",
+            value: { kind: "literal", value: "from payment hook" },
+          },
+        ],
+      },
+    });
+
+    await server.inject({
+      method: "POST",
+      url: "/api/data-hooks",
+      headers: authHeaders,
+      payload: {
+        name: "Create payment",
+        entity: "loan",
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "createRecord",
+            entity: "payment",
+            data: {
+              loanId: { kind: "field", source: "current", path: "id" },
+            },
+          },
+        ],
+      },
+    });
+
+    const createLoan = await server.inject({
+      method: "POST",
+      url: "/api/loan",
+      headers: authHeaders,
+      payload: { amount: 100 },
+    });
+    expect(createLoan.statusCode).toBe(201);
+    const loanId = createLoan.json().data.id as string;
+
+    const payments = await server.inject({
+      method: "GET",
+      url: "/api/payment?limit=10",
+      headers: authHeaders,
+    });
+    expect(payments.statusCode).toBe(200);
+    expect(payments.json().data.items.length).toBeGreaterThan(0);
+    const payment = payments
+      .json()
+      .data.items.find((item: { loanId?: string }) => item.loanId === loanId);
+    expect(payment?.loanId).toBe(loanId);
+    expect(payment?.note).toBeUndefined();
   });
 });

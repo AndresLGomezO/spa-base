@@ -2117,7 +2117,18 @@
       "disabled": "Disabled",
       "updateFields": "Only when these fields change",
       "updateFieldsHint": "Leave empty to run on any field change.",
-      "condition": "Only run when a condition is met"
+      "condition": "Only run when a condition is met",
+      "advanced": "Advanced",
+      "chainHooks": "Chain hooks on writes",
+      "chainHooksHint": "When enabled, creates and updates from this hook can trigger automation on other entities.",
+      "execution": "Execution",
+      "executionDeferredHint": "Deferred hooks run outside the request. Errors are logged only.",
+      "executionQueuedHint": "Queued hooks run asynchronously via Cloud Tasks. The API returns before the hook completes."
+    },
+    "execution": {
+      "sync": "Synchronous",
+      "deferred": "Deferred (after request)",
+      "queued": "Queued (Cloud Tasks)"
     },
     "condition": {
       "and": "All match (AND)",

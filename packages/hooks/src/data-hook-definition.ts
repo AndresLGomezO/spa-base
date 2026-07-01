@@ -10,6 +10,13 @@ export type DataHookOperation = (typeof DATA_HOOK_OPERATIONS)[number];
 export const DATA_HOOK_PHASES = ["before", "after"] as const;
 export type DataHookPhase = (typeof DATA_HOOK_PHASES)[number];
 
+export const DATA_HOOK_EXECUTION_MODES = [
+  "sync",
+  "deferred",
+  "queued",
+] as const;
+export type DataHookExecutionMode = (typeof DATA_HOOK_EXECUTION_MODES)[number];
+
 export const DATA_HOOK_CONDITION_OPERATORS = [
   "==",
   "!=",
@@ -150,6 +157,16 @@ export const dataHookDefinitionSchema = z.object({
   actions: z.array(dataHookActionSchema).min(1),
   enabled: z.boolean(),
   order: z.number().int(),
+  /**
+   * When true, entity writes from this hook's actions may trigger hooks on
+   * target entities (opt-in chained execution).
+   */
+  chainHooks: z.boolean().optional(),
+  /**
+   * After-phase only. `deferred` runs the hook outside the request path
+   * (in-process fire-and-forget).
+   */
+  execution: z.enum(DATA_HOOK_EXECUTION_MODES).optional(),
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),
 });
@@ -168,6 +185,8 @@ export const createDataHookInputSchema = dataHookDefinitionSchema
     condition: dataHookDefinitionConditionSchema,
     enabled: z.boolean().optional(),
     order: z.number().int().optional(),
+    chainHooks: z.boolean().optional(),
+    execution: z.enum(DATA_HOOK_EXECUTION_MODES).optional(),
   });
 export type CreateDataHookInput = z.infer<typeof createDataHookInputSchema>;
 
@@ -180,6 +199,8 @@ export const patchDataHookInputSchema = z.object({
   actions: z.array(dataHookActionSchema).min(1).optional(),
   enabled: z.boolean().optional(),
   order: z.number().int().optional(),
+  chainHooks: z.boolean().optional(),
+  execution: z.enum(DATA_HOOK_EXECUTION_MODES).optional(),
 });
 export type PatchDataHookInput = z.infer<typeof patchDataHookInputSchema>;
 

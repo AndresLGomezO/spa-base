@@ -6,7 +6,7 @@ import {
   getDynamicPermissionsForTenant,
 } from "@repo/dynamic-entities";
 import { ENTITY_UI_OVERRIDE_PERMISSIONS } from "@repo/entities";
-import { HOOK_PERMISSIONS } from "@repo/hooks";
+import { HOOK_PERMISSIONS } from "@repo/hooks/permissions";
 import { ENTITY_QUERY_PERMISSIONS } from "@repo/entity-queries/permissions";
 import { CUSTOM_VIEW_PERMISSIONS } from "@repo/custom-views/permissions";
 import { METRIC_PERMISSIONS } from "@repo/metrics-engine/permissions";

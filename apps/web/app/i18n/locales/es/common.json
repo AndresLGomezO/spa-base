@@ -2117,7 +2117,18 @@
       "disabled": "Inactivo",
       "updateFields": "Solo cuando cambien estos campos",
       "updateFieldsHint": "Déjalo vacío para ejecutar con cualquier cambio.",
-      "condition": "Ejecutar solo si se cumple una condición"
+      "condition": "Ejecutar solo si se cumple una condición",
+      "advanced": "Avanzado",
+      "chainHooks": "Encadenar hooks en escrituras",
+      "chainHooksHint": "Si está activo, las creaciones y actualizaciones de este hook pueden disparar automatización en otras entidades.",
+      "execution": "Ejecución",
+      "executionDeferredHint": "Los hooks diferidos se ejecutan fuera de la solicitud. Los errores solo se registran.",
+      "executionQueuedHint": "Los hooks en cola se ejecutan de forma asíncrona mediante Cloud Tasks. La API responde antes de que termine el hook."
+    },
+    "execution": {
+      "sync": "Síncrona",
+      "deferred": "Diferida (después de la solicitud)",
+      "queued": "En cola (Cloud Tasks)"
     },
     "condition": {
       "and": "Todas coinciden (Y)",

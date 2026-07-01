@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   DataHookAction,
   DataHookConditionNode,
+  DataHookExecutionMode,
   DataHookOperation,
   DataHookPhase,
   DataHookTrigger,
@@ -22,6 +23,8 @@ interface DataHookDraftState {
   readonly actions: readonly DataHookAction[];
   readonly enabled: boolean;
   readonly order: number;
+  readonly chainHooks: boolean;
+  readonly execution: DataHookExecutionMode;
 }
 
 function buildDraftFromDefinition(
@@ -34,6 +37,8 @@ function buildDraftFromDefinition(
     actions: definition.actions,
     enabled: definition.enabled,
     order: definition.order,
+    chainHooks: definition.chainHooks ?? false,
+    execution: definition.execution ?? "sync",
   };
 }
 
@@ -132,6 +137,8 @@ export function useDataHooksEditor(entityName: string) {
         actions: [...draft.actions],
         enabled: draft.enabled,
         order: draft.order,
+        chainHooks: draft.chainHooks,
+        execution: draft.execution,
       });
       setDefinitions((current) =>
         current.map((entry) => (entry.id === updated.id ? updated : entry)),

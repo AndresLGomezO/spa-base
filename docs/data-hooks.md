@@ -1,167 +1,49 @@
 # Data Hooks (Automation)
 
-Data Hooks are the tenant-configurable automation engine. They let admins define
-logic that runs automatically whenever an entity record is **created**,
-**updated**, or **deleted** — without writing code. The feature is surfaced in
-the sidebar under **Automation**, which expands to list every entity; selecting
-an entity opens a Query-Builder-style page with a list of hooks on the left and a
-definition editor on the right.
+Data Hooks are the tenant-configurable automation engine. Admins define logic that
+runs automatically when entity records are **created**, **updated**, or **deleted**
+— without writing code.
 
-Data Hooks replace the previous static hooks system. They reuse the generic hook
-dispatch layer (`runEntityHooks`, the registry, and the per-tenant runtime
-context) and add an expression engine, a richer definition model, and a full
-CRUD API + UI.
+The feature lives under **Automation** in the sidebar (one entry per entity). Each
+entity page has a hook list on the left and a definition editor on the right.
 
-## Concepts
+## Authoritative specification
 
-### Trigger
+**[data-hook-definition-json.md](./data-hook-definition-json.md)** is the
+self-contained reference for authoring hooks. It covers triggers, conditions,
+actions, the full expression language, portable JSON envelopes, API, execution
+semantics (including chaining and deferred mode), and copy-paste cookbook examples.
 
-Each hook targets one entity and one operation:
+Read that document to implement any supported automation hook.
 
-- `operation`: `create` | `update` | `delete`
-- `updateFields` (update only): the hook only runs when at least one of these
-  fields changed. Empty means "any field change".
+## At a glance
 
-### Phase
-
-- `before`: runs before the write. `setField` mutates the record in place, so
-  the persisted record already includes the change.
-- `after`: runs after the write. `setField` persists through the entity service.
-
-### Condition (optional)
-
-An activation guard evaluated against the trigger record. Conditions are stored
-as a recursive boolean tree:
-
-```
-{ type: "group", combinator: "and" | "or", children: [...] }
-```
-
-Each child is either another group or a leaf condition:
-
-```
-{ type: "condition", field, operator, value? }
-```
-
-Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`, `in`, `notIn`, `isEmpty`,
-`isNotEmpty`, `changed`. `value` is an expression (see below) and is omitted for
-`isEmpty` / `isNotEmpty` / `changed`.
-
-Groups combine children with AND (all must match) or OR (any may match). An empty
-group is treated as always true. Legacy bare leaf objects `{ field, operator,
-value? }` without a `type` field are still accepted and normalized to
-`type: "condition"`.
-
-The `updateMatching` action uses a separate single-field lookup shape (no
-`type` discriminator) for its `where` clause.
-
-### Actions
-
-An ordered list. Every computed value is an **expression** (a JSON AST), not a
-static literal:
-
-- `setField` — set a field on the trigger record.
-- `createRecord` — create one related record (`data` maps field → expression).
-- `createRecords` — loop `count` times creating a record per iteration;
-  `loopIndex` is available inside expressions.
-- `updateMatching` — find related records (`where` field equals a computed
-  value) and apply `set` to each. Matched records are exposed as `current` and
-  the trigger record as `previous` in `set` expressions.
-- `sendNotification` — log a computed message.
-
-## Expression engine
-
-Expressions are stored as a JSON AST and evaluated deterministically (no I/O).
-Node kinds:
-
-- `literal` — `string | number | boolean | null`
-- `field` — `{ source: "current" | "previous", path }` (supports dotted paths)
-- `var` — `now`, `loopIndex`, `userId`
-- `unary` — `-`, `!`
-- `binary` — arithmetic `+ - * / %`, comparison `== != > < >= <=`, logical
-  `&& ||`
-- `call` — functions
-
-Functions: `now()`, `dateAdd(date, amount, unit)`, `dateDiff(a, b, unit)`,
-`year/month/day(date)`, `abs/round/floor/ceil`, `min/max`, `coalesce`, `concat`,
-`toNumber`, `toText`, `dateParse`, `isEmpty`.
-
-Date units: `MILLISECOND`, `SECOND`, `MINUTE`, `HOUR`, `DAY`, `WEEK`, `MONTH`,
-`YEAR`. Dates are ISO-8601 strings; date math uses native `Date` (no extra
-dependency).
-
-### Example: complete a transaction when funded
-
-Trigger `create` on `transaction`, condition `amount >= commitmentAmount`,
-action `setField status = "COMPLETE"`.
-
-### Example: generate a payment plan
-
-Trigger `create` on `loanDetails`, action `createRecords` with
-`count = current.periods` and per-iteration
-`dueDate = dateAdd(current.startDate, loopIndex * 30, "DAY")`.
+| Concept | Summary |
+|---------|---------|
+| **Trigger** | One entity + one operation (`create` / `update` / `delete`); optional `updateFields` on update |
+| **Phase** | `before` (mutate in place, blocks on error) or `after` (side effects, CRUD succeeds) |
+| **Condition** | Optional AND/OR boolean tree on trigger record fields |
+| **Actions** | `setField`, `createRecord`, `createRecords`, `updateMatching`, `sendNotification` |
+| **Expressions** | JSON AST with 27 functions — no I/O, deterministic evaluation |
+| **Chaining** | Opt-in via `chainHooks: true`; depth and cycle guards |
+| **Import** | Single-definition or catalog JSON envelopes |
 
 ## API
 
-Base path `/api/data-hooks` (permissions `hook.read` / `hook.create` /
-`hook.update` / `hook.delete`):
+Base path `/api/data-hooks` — see the [spec §9](./data-hook-definition-json.md#9-api-and-permissions)
+for routes and permissions.
 
-- `GET /api/data-hooks?entity=<name>` — list (optionally filtered by entity)
-- `GET /api/data-hooks/:id`
-- `POST /api/data-hooks`
-- `PATCH /api/data-hooks/:id`
-- `DELETE /api/data-hooks/:id`
-- `PUT /api/data-hooks/catalog?entity=<name>` — replace hooks matched by
-  `entity` + `name`. When `entity` is provided, only hooks for that entity are
-  created/updated/deleted; hooks on other entities are untouched. Omit `entity`
-  for a full tenant replace (used by seed scripts).
-
-Definitions are stored per-tenant in the `__data_hooks` collection and loaded
-lazily into the runtime registry.
-
-## Portable JSON
-
-Single-definition envelopes use `kind: "data-hook-definition"` with a portable
-`data` object (no `id`, `tenantId`, or timestamps). Catalog envelopes use
-`kind: "data-hooks-catalog"` with a `dataHooks` array:
-
-```json
-{
-  "kind": "data-hooks-catalog",
-  "version": 1,
-  "exportedAt": "2026-07-01T13:00:00.000Z",
-  "dataHooks": [
-    {
-      "name": "Set status",
-      "entity": "loan",
-      "phase": "before",
-      "trigger": { "operation": "create" },
-      "actions": [{ "type": "setField", "field": "status", "value": { "kind": "literal", "value": "Pending" } }],
-      "enabled": true,
-      "order": 0
-    }
-  ]
-}
-```
-
-The Automation UI exports/imports an entity-scoped catalog for the current
-entity. Seed data lives at
-`apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json` and is applied
-via `seedRatesCatalogs` (full tenant replace).
-
-## Migration
-
-`apps/api/src/admin/migrate-data-hooks.ts` converts legacy `hooks` documents to
-the new model: `updateField → setField`, `createRecord → createRecord`,
-`sendNotification → sendNotification`, static values become `literal`
-expressions, and the legacy event string is mapped to `phase` + `trigger`.
+Storage: per-tenant `__data_hooks` collection, loaded lazily into the runtime registry.
 
 ## Phasing
 
-- **Phase 1** — triggers, single-field condition, and `setField` (expression
-  arithmetic + date functions).
-- **Phase 2** — cross-entity search and multi-record generation (`createRecord`,
-  `createRecords`, `updateMatching`), boolean condition trees (AND/OR groups),
-  and JSON import-export.
-- **Phase 3** — opt-in nested/chained hooks with a depth guard and additional
-  functions.
+- **Phase 1** — triggers, conditions, `setField`, expression arithmetic + date functions.
+- **Phase 2** — cross-entity actions, boolean condition trees, catalog import/export + seed.
+- **Phase 3** — opt-in chained hooks, additional text/conditional functions, in-process deferred after-hooks.
+- **Phase 4** — authoritative specification document ([data-hook-definition-json.md](./data-hook-definition-json.md)).
+- **Phase 5** — durable async after-hooks via Cloud Tasks (`execution: "queued"`) → worker-service; in-process `deferred` retained for local/simple cases.
+
+## Related
+
+- [hooks-system-guide.md](./hooks-system-guide.md) — dispatch architecture (system + dynamic hooks)
+- [entity-definition-json.md](./entity-definition-json.md) — entity schemas hooks reference

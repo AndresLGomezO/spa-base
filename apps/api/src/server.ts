@@ -103,6 +103,7 @@ import { registerEntityDefinitionRoutes } from "./entities/register-entity-defin
 import { registerIndexRoutes } from "./indexes/register-index-routes.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
+import { createHookTasksClient } from "./hooks/hook-tasks.client.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
 import { registerUiBuilderAiSuggestionRoutes } from "./ai/register-ui-builder-ai-suggestion-routes.js";
@@ -314,6 +315,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
       : createFirestoreAdminTenantUserInviteRepository(firebaseAdminConfig));
 
   const hookRuntime = createHookRuntimeContext(hookRepository);
+  const hookTasksClient = createHookTasksClient({
+    projectId: apiEnv.GCP_PROJECT_ID,
+    region: apiEnv.GCP_REGION,
+    queueName: apiEnv.HOOK_TASKS_QUEUE_NAME,
+    workerBaseUrl: apiEnv.WORKER_SERVICE_URL,
+    serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
+    localDispatch: apiEnv.HOOK_TASKS_LOCAL_DISPATCH,
+  });
 
   const metricDefinitionRepository =
     options.metricDefinitionRepository ??
@@ -491,6 +500,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     hookRuntime,
     entityRuntime,
     permissionDeps,
+    enqueueDataHookJob:
+      hookTasksClient.enqueueDataHookJob.bind(hookTasksClient),
   };
   const recordReadEnricher = createEntityFileReadEnricher(
     firebaseAdminConfig,

@@ -42,6 +42,12 @@ export function createInMemoryDataHookRepository(): DataHookRepository & {
         actions: parsed.actions,
         enabled: parsed.enabled ?? true,
         order: parsed.order ?? 0,
+        ...(parsed.chainHooks !== undefined
+          ? { chainHooks: parsed.chainHooks }
+          : {}),
+        ...(parsed.execution !== undefined
+          ? { execution: parsed.execution }
+          : {}),
         createdAt: now,
         updatedAt: now,
       });
@@ -70,6 +76,12 @@ export function createInMemoryDataHookRepository(): DataHookRepository & {
         ...(input.actions ? { actions: input.actions } : {}),
         ...(input.enabled !== undefined ? { enabled: input.enabled } : {}),
         ...(input.order !== undefined ? { order: input.order } : {}),
+        ...(input.chainHooks !== undefined
+          ? { chainHooks: input.chainHooks }
+          : {}),
+        ...(input.execution !== undefined
+          ? { execution: input.execution }
+          : {}),
         updatedAt: now,
       });
       store.set(key(tenantId, id), next);

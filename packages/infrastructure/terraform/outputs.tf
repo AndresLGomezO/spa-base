@@ -62,3 +62,8 @@ output "ai_jobs_queue_name" {
   description = "Cloud Tasks queue for AI jobs (empty when disabled)"
   value       = local.enable_ai_worker ? google_cloud_tasks_queue.ai_jobs[0].name : ""
 }
+
+output "hook_jobs_queue_name" {
+  description = "Cloud Tasks queue for data hook jobs (empty when disabled)"
+  value       = local.enable_ai_worker ? google_cloud_tasks_queue.hook_jobs[0].name : ""
+}

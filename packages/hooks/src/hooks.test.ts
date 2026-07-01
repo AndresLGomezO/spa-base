@@ -2,7 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DataHookDefinition } from "./data-hook-definition.js";
 import { formatHookEvent, parseHookEvent } from "./event.js";
-import { runDataHook, evaluateConditionNode } from "./interpret-data-hook.js";
+import {
+  runDataHook,
+  evaluateConditionNode,
+  compileDataHook,
+} from "./interpret-data-hook.js";
 import {
   clearHookRegistry,
   executeHooks,
@@ -251,7 +255,11 @@ describe("runDataHook", () => {
       }),
     );
 
-    expect(create).toHaveBeenCalledWith("task", { name: "Follow up" });
+    expect(create).toHaveBeenCalledWith(
+      "task",
+      { name: "Follow up" },
+      undefined,
+    );
   });
 
   it("generates multiple records with loop index", async () => {
@@ -473,6 +481,159 @@ describe("runDataHook", () => {
     );
 
     expect(context.current.ran).toBe(true);
+  });
+
+  it("passes chainHooks write options when chaining is enabled", async () => {
+    const create = vi.fn(async () => ({ id: "payment_1" }));
+    const context = createContext({
+      event: "loan.afterCreate",
+      services: {
+        logger: { info: vi.fn(), error: vi.fn() },
+        entities: {
+          create,
+          update: vi.fn(),
+          list: vi.fn(),
+        },
+      },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        chainHooks: true,
+        actions: [
+          {
+            type: "createRecord",
+            entity: "payment",
+            data: {
+              note: { kind: "literal", value: "linked" },
+            },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(create).toHaveBeenCalledWith(
+      "payment",
+      { note: "linked" },
+      expect.objectContaining({ chainHooks: true }),
+    );
+  });
+
+  it("skips when the hook id is already visited in the chain", async () => {
+    const context = createContext({
+      visitedHookIds: new Set(["hook_1"]),
+    });
+
+    await runDataHook(sampleDefinition, context);
+
+    expect(context.current.status).toBeUndefined();
+  });
+
+  it("skips when depth exceeds the configured limit", async () => {
+    const context = createContext({ depth: 6 });
+
+    await runDataHook(sampleDefinition, context);
+
+    expect(context.current.status).toBeUndefined();
+  });
+});
+
+describe("compileDataHook", () => {
+  it("runs deferred after hooks without blocking the caller", async () => {
+    const info = vi.fn();
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      phase: "after",
+      trigger: { operation: "create" },
+      execution: "deferred",
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "deferred" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loan.afterCreate",
+        services: {
+          logger: { info, error: vi.fn() },
+        },
+      }),
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(info).toHaveBeenCalled();
+  });
+
+  it("enqueues queued after hooks when enqueue service is present", async () => {
+    const enqueue = vi.fn(async () => undefined);
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      id: "hook_queued",
+      phase: "after",
+      trigger: { operation: "create" },
+      execution: "queued",
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "queued" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loan.afterCreate",
+        services: {
+          enqueueDataHookJob: enqueue,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookId: "hook_queued",
+        tenantId: "tenant_a",
+        entityName: "loan",
+        phase: "after",
+        operation: "create",
+      }),
+    );
+  });
+
+  it("falls back to deferred execution when queued hook has no enqueue service", async () => {
+    const info = vi.fn();
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      phase: "after",
+      trigger: { operation: "create" },
+      execution: "queued",
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "queued-fallback" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loan.afterCreate",
+        services: {
+          logger: { info, error: vi.fn() },
+        },
+      }),
+    );
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+    expect(info).toHaveBeenCalled();
   });
 });
 

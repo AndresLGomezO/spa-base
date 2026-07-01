@@ -5,10 +5,11 @@
   "dataHooks": [
     {
       "name": "Log transaction create",
-      "description": "Seed automation hook that logs when a transaction is created.",
+      "description": "Seed automation hook that logs when a transaction is created (queued after-hook).",
       "entity": "transaction",
       "phase": "after",
       "trigger": { "operation": "create" },
+      "execution": "queued",
       "condition": null,
       "actions": [
         {
@@ -21,6 +22,55 @@
       ],
       "enabled": true,
       "order": 0
+    },
+    {
+      "name": "Set pending status",
+      "description": "Seed hook: default loan status on create.",
+      "entity": "loan",
+      "phase": "before",
+      "trigger": { "operation": "create" },
+      "condition": null,
+      "actions": [
+        {
+          "type": "setField",
+          "field": "status",
+          "value": { "kind": "literal", "value": "Pending" }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Complete when funded",
+      "description": "Seed hook: set COMPLETE when amount meets commitment.",
+      "entity": "loan",
+      "phase": "before",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "amount",
+            "operator": ">=",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "commitmentAmount"
+            }
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "setField",
+          "field": "status",
+          "value": { "kind": "literal", "value": "COMPLETE" }
+        }
+      ],
+      "enabled": true,
+      "order": 1
     }
   ]
 }

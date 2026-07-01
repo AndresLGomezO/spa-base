@@ -1,11 +1,12 @@
-import type { FastifyRequest } from "fastify";
+import type { FastifyInstance, FastifyRequest } from "fastify";
 import type { HookEntityServices } from "@repo/hooks";
 
-import { createHookEntityServices } from "../hooks/create-hook-services.js";
 import { loadRequestPermissions } from "../rbac/load-request-permissions.js";
+import { buildHookEntityServices } from "./hook-entity-services-factory.js";
 import type { CrudHookDeps } from "./crud-hook-deps.types.js";
 
 export async function resolveCrudHookEntityServices(
+  app: FastifyInstance,
   request: FastifyRequest,
   tenantId: string,
   deps: CrudHookDeps,
@@ -13,13 +14,21 @@ export async function resolveCrudHookEntityServices(
   await deps.hookRuntime.ensureTenantHooksLoaded(tenantId);
   const ctx = await loadRequestPermissions(request, deps.permissionDeps);
 
-  return createHookEntityServices({
-    entityRuntime: deps.entityRuntime,
-    permissions: ctx.permissions ?? [],
-    isSuperAdmin: ctx.isSuperAdmin ?? false,
-    tenantId,
-    roleCatalog: ctx.roleCatalog,
-    platformRole: ctx.platformRole,
-    tenantRoleNames: ctx.tenantRoleNames,
+  return buildHookEntityServices({
+    user: {
+      tenantId,
+      uid: ctx.uid,
+      permissions: ctx.permissions ?? [],
+      isSuperAdmin: ctx.isSuperAdmin ?? false,
+      roleCatalog: ctx.roleCatalog ?? {},
+      knownPermissions: ctx.knownPermissions ?? [],
+      platformRole: ctx.platformRole ?? null,
+      tenantRoleNames: ctx.tenantRoleNames ?? [],
+    },
+    deps,
+    logger: {
+      info: (message, meta) => app.log.info(meta ?? {}, message),
+      error: (message, meta) => app.log.error(meta ?? {}, message),
+    },
   });
 }

@@ -1,0 +1,63 @@
+import type { HookEntityServices, HookLogger } from "@repo/hooks";
+
+import {
+  createHookEntityAccessControl,
+  createHookEntityServices,
+} from "./create-hook-services.js";
+import type { CrudHookDeps } from "./crud-hook-deps.types.js";
+import { dispatchChainedEntityHooks } from "./dispatch-chained-entity-hooks.js";
+
+interface ResolvedHookUserContext {
+  readonly tenantId: string;
+  readonly uid: string;
+  readonly permissions: readonly string[];
+  readonly isSuperAdmin: boolean;
+  readonly roleCatalog: Awaited<
+    ReturnType<CrudHookDeps["permissionDeps"]["getRoleCatalog"]>
+  >;
+  readonly knownPermissions: readonly string[];
+  readonly platformRole: string | null;
+  readonly tenantRoleNames: readonly string[];
+}
+
+export function buildHookEntityServices(options: {
+  readonly user: ResolvedHookUserContext;
+  readonly deps: CrudHookDeps;
+  readonly logger: HookLogger;
+}): HookEntityServices {
+  const { user, deps, logger } = options;
+
+  const services = createHookEntityServices({
+    entityRuntime: deps.entityRuntime,
+    accessControl: createHookEntityAccessControl({
+      permissions: user.permissions,
+      isSuperAdmin: user.isSuperAdmin,
+      tenantId: user.tenantId,
+      roleCatalog: user.roleCatalog,
+      knownPermissions: user.knownPermissions,
+      platformRole: user.platformRole,
+      tenantRoleNames: user.tenantRoleNames,
+    }),
+    tenantId: user.tenantId,
+    ownerUserId: user.uid,
+    dispatchChainedHooks: (params) =>
+      dispatchChainedEntityHooks({
+        tenantId: user.tenantId,
+        entityName: params.entityName,
+        phase: params.phase,
+        operation: params.operation,
+        current: params.current,
+        ...(params.previous ? { previous: params.previous } : {}),
+        depth: params.depth,
+        visitedHookIds: params.visitedHookIds,
+        user: { uid: user.uid },
+        logger,
+        entityServices: services,
+        ...(deps.enqueueDataHookJob
+          ? { enqueueDataHookJob: deps.enqueueDataHookJob }
+          : {}),
+      }),
+  });
+
+  return services;
+}

@@ -35,9 +35,9 @@ Consolidated deferred work from Phase 2 capability guides. Implements [General D
 | | |
 |---|---|
 | **Problem** | Hooks run synchronously in request path; slow hooks increase latency |
-| **Current state** | `runEntityHooks` in request pipeline; action types: updateField, createRecord, sendNotification |
-| **Suggested approach** | BullMQ (or similar) for after-hooks; keep before-hooks sync for validation |
-| **Depends on** | Redis/queue infra |
+| **Current state** | `execution: "sync"` (default), `deferred` (in-process after-hooks), `queued` (Cloud Tasks → worker-service) |
+| **Suggested approach** | ~~BullMQ (or similar) for after-hooks~~ **Done (Phase 5):** Cloud Tasks + worker-service for `execution: "queued"`; keep before-hooks sync |
+| **Depends on** | worker-service (same as AI tasks) |
 | **Risk if deferred** | Cannot add webhook/email hooks at scale without timeout risk |
 
 ### P0.3 Rate limit auth-aware keys

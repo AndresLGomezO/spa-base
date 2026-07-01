@@ -7,6 +7,7 @@ import {
 } from "@repo/worker-firestore";
 
 import { vertexAiConfig, workerEnv } from "./config/env.js";
+import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
 import { buildWorkerServer } from "./server.js";
 
 const firebaseAdminConfig = {
@@ -28,6 +29,7 @@ const uiBuilderAiSuggestionRepository =
   createFirestoreAdminUiBuilderAiSuggestionRepository(firebaseAdminConfig);
 const entityDefinitionRepository =
   createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
+const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig);
 
 const server = await buildWorkerServer({
   aiJobRepository,
@@ -35,6 +37,7 @@ const server = await buildWorkerServer({
   uiBuilderAiSuggestionRepository,
   entityDefinitionRepository,
   vertexAiConfig,
+  ...dataHookProcessorDeps,
 });
 
 await server.listen({

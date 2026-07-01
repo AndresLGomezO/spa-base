@@ -67,6 +67,11 @@ const ApiEnvSchema = z.object({
     .enum(["true", "false"])
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
+  HOOK_TASKS_QUEUE_NAME: z.string().trim().default("hook-jobs"),
+  HOOK_TASKS_LOCAL_DISPATCH: z
+    .enum(["true", "false"])
+    .default(process.env.NODE_ENV === "production" ? "false" : "true")
+    .transform((value) => value === "true"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

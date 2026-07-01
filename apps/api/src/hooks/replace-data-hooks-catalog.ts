@@ -54,6 +54,12 @@ function createPatchFromCreateInput(
     actions: imported.actions,
     enabled: imported.enabled,
     order: imported.order,
+    ...(imported.chainHooks !== undefined
+      ? { chainHooks: imported.chainHooks }
+      : {}),
+    ...(imported.execution !== undefined
+      ? { execution: imported.execution }
+      : {}),
   };
 }
 

@@ -41,7 +41,10 @@ import {
   emitAggregationEventIfNeeded,
   type AggregationEmitterDeps,
 } from "../aggregation/emit-aggregation-event.js";
-import { runEntityHooks } from "../modules/run-entity-hooks.js";
+import {
+  runEntityHooks,
+  type RunEntityHooksParams,
+} from "../modules/run-entity-hooks.js";
 import { ApiErrorCode } from "./errors.js";
 import { noopPreHandler } from "./noop-pre-handler.js";
 import { replyWithError, successEnvelope } from "./response.js";
@@ -315,6 +318,7 @@ function handleHookError(reply: FastifyReply, error: unknown): boolean {
 }
 
 async function resolveHookServices(
+  app: FastifyInstance,
   request: FastifyRequest,
   tenantId: string,
   crudHooks: CrudHookDeps | undefined,
@@ -323,7 +327,21 @@ async function resolveHookServices(
     return undefined;
   }
 
-  return resolveCrudHookEntityServices(request, tenantId, crudHooks);
+  return resolveCrudHookEntityServices(app, request, tenantId, crudHooks);
+}
+
+function runCrudEntityHooks(
+  app: FastifyInstance,
+  request: FastifyRequest,
+  crudHooks: CrudHookDeps | undefined,
+  params: RunEntityHooksParams,
+) {
+  return runEntityHooks(app, request, {
+    ...params,
+    ...(crudHooks?.enqueueDataHookJob
+      ? { enqueueDataHookJob: crudHooks.enqueueDataHookJob }
+      : {}),
+  });
 }
 
 function handleQueryError(reply: FastifyReply, error: unknown): boolean {
@@ -867,6 +885,7 @@ export async function registerCrudRoutes<
 
       try {
         const entityServices = await resolveHookServices(
+          app,
           request,
           tenantId,
           options.crudHooks,
@@ -874,22 +893,27 @@ export async function registerCrudRoutes<
 
         const ownerId = request.ctx?.uid ?? "";
 
-        let currentData = await runEntityHooks(app, request, {
-          entityName: activeEntity.name,
-          phase: "before",
-          operation: "create",
-          current: {
-            ...(parsedBody.data as Record<string, unknown>),
-            id: recordId,
-            tenantId,
-            createdAt: now,
-            updatedAt: now,
-            ownerId,
-            accessUserIds: [ownerId],
-            sharedWith: {},
+        let currentData = await runCrudEntityHooks(
+          app,
+          request,
+          options.crudHooks,
+          {
+            entityName: activeEntity.name,
+            phase: "before",
+            operation: "create",
+            current: {
+              ...(parsedBody.data as Record<string, unknown>),
+              id: recordId,
+              tenantId,
+              createdAt: now,
+              updatedAt: now,
+              ownerId,
+              accessUserIds: [ownerId],
+              sharedWith: {},
+            },
+            ...(entityServices ? { entityServices } : {}),
           },
-          ...(entityServices ? { entityServices } : {}),
-        });
+        );
 
         if (activeEntity.prepareRecordForWrite) {
           currentData = activeEntity.prepareRecordForWrite(currentData);
@@ -925,7 +949,7 @@ export async function registerCrudRoutes<
           currentData as unknown as TRecord,
         );
 
-        await runEntityHooks(app, request, {
+        await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,
           phase: "after",
           operation: "create",
@@ -1118,12 +1142,13 @@ export async function registerCrudRoutes<
 
       try {
         const entityServices = await resolveHookServices(
+          app,
           request,
           tenantId,
           options.crudHooks,
         );
 
-        merged = await runEntityHooks(app, request, {
+        merged = await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,
           phase: "before",
           operation: "update",
@@ -1189,7 +1214,7 @@ export async function registerCrudRoutes<
           );
         }
 
-        await runEntityHooks(app, request, {
+        await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,
           phase: "after",
           operation: "update",
@@ -1341,6 +1366,7 @@ export async function registerCrudRoutes<
         }
 
         const entityServices = await resolveHookServices(
+          app,
           request,
           tenantId,
           options.crudHooks,
@@ -1355,7 +1381,7 @@ export async function registerCrudRoutes<
           );
         }
 
-        await runEntityHooks(app, request, {
+        await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,
           phase: "before",
           operation: "delete",
@@ -1374,7 +1400,7 @@ export async function registerCrudRoutes<
           );
         }
 
-        await runEntityHooks(app, request, {
+        await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,
           phase: "after",
           operation: "delete",
