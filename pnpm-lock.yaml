@@ -827,9 +827,6 @@ importers:
       '@repo/entity-queries':
         specifier: workspace:*
         version: link:../entity-queries
-      '@repo/query-engine':
-        specifier: workspace:*
-        version: link:../query-engine
       '@repo/ui-builder-core':
         specifier: workspace:*
         version: link:../ui-builder-core
