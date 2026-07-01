@@ -1,8 +1,4 @@
 import {
-  createFirestoreAdminEntityCategoryRepository,
-  createFirestoreAdminEntityDefinitionRepository,
-  createFirestoreAdminEntityUiOverrideRepository,
-  createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminTenantRepository,
   createFirestoreAdminTenantRoleRepository,
   type FirebaseAdminConfig,
@@ -11,27 +7,12 @@ import {
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
 import { seedTenantRolesFromTemplates } from "../seed-tenant-roles-from-templates.js";
 import { activateAndBackfillRatesMetrics } from "./backfill-rates-metrics.js";
-import { RATES_ENTITY_CATEGORIES } from "./categories.js";
-import {
-  RATES_CATEGORY_NAMES,
-  RATES_TENANT_ID,
-  RATES_TENANT_NAME,
-} from "./constants.js";
-import {
-  buildRatesEntityDefinitions,
-  type RatesNavCategoryIds,
-} from "./definitions/index.js";
-import { buildRatesMetricDefinitions } from "./metrics/index.js";
+import { RATES_TENANT_ID, RATES_TENANT_NAME } from "./constants.js";
 import { seedRatesBusinessRecords } from "./records/index.js";
 import { buildRatesCustomRoles } from "./roles.js";
-import { seedRatesContractUiOverride } from "./seed-contract-ui-override.js";
+import { seedRatesCatalogs } from "./seed-rates-catalogs.js";
 import { seedRatesGcpDemoUserAccess } from "./seed-gcp-demo-user-access.js";
-import {
-  ensureRatesRole,
-  seedRatesCategories,
-  seedRatesDefinitions,
-} from "./seed-helpers.js";
-import { seedRatesMetrics } from "./seed-metric-helpers.js";
+import { ensureRatesRole } from "./seed-helpers.js";
 import { seedRatesTestUser } from "./seed-rates-test-user.js";
 
 type RatesDemoOwnerStrategy = "localTestUser" | "gcpUid";
@@ -41,7 +22,6 @@ interface SeedRatesTenantOptions {
   readonly tenantName?: string;
   readonly ensureTenant?: boolean;
   readonly demoOwnerStrategy?: RatesDemoOwnerStrategy;
-  readonly seedContractUiOverride?: boolean;
   readonly backfillMetrics?: boolean;
 }
 
@@ -50,12 +30,14 @@ interface SeedRatesTenantResult {
   readonly tenantCreated: boolean;
   readonly definitionsCreated: number;
   readonly definitionsUpdated: number;
-  readonly definitionsSkipped: number;
+  readonly definitionsDeleted: number;
   readonly metricsCreated: number;
   readonly metricsUpdated: number;
-  readonly metricsSkipped: number;
+  readonly metricsDeleted: number;
+  readonly queriesCreated: number;
+  readonly queriesUpdated: number;
+  readonly queriesDeleted: number;
   readonly demoOwnerId: string | null;
-  readonly contractUiOverrideSeeded: boolean;
   readonly metricsBackfillFailures: number;
 }
 
@@ -68,21 +50,12 @@ async function seedRatesTenant(
   const tenantName = options.tenantName ?? RATES_TENANT_NAME;
   const ensureTenant = options.ensureTenant ?? false;
   const demoOwnerStrategy = options.demoOwnerStrategy ?? "localTestUser";
-  const seedContractUiOverride = options.seedContractUiOverride ?? true;
   const backfillMetrics = options.backfillMetrics ?? true;
 
   const tenantRepository =
     createFirestoreAdminTenantRepository(firebaseAdminConfig);
-  const categoryRepository =
-    createFirestoreAdminEntityCategoryRepository(firebaseAdminConfig);
-  const definitionRepository =
-    createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
-  const metricDefinitionRepository =
-    createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig);
   const roleRepository =
     createFirestoreAdminTenantRoleRepository(firebaseAdminConfig);
-  const uiOverrideRepository =
-    createFirestoreAdminEntityUiOverrideRepository(firebaseAdminConfig);
 
   let tenantCreated = false;
   if (ensureTenant) {
@@ -98,28 +71,10 @@ async function seedRatesTenant(
 
   await seedTenantRolesFromTemplates(firebaseAdminConfig, tenantId);
 
-  const categoryIdsByName = await seedRatesCategories(
-    categoryRepository,
+  const catalogResult = await seedRatesCatalogs(
     tenantId,
-    RATES_ENTITY_CATEGORIES,
-  );
-
-  const navCategoryIds: RatesNavCategoryIds = {
-    contracts: categoryIdsByName[RATES_CATEGORY_NAMES.contracts]!,
-  };
-
-  const definitions = buildRatesEntityDefinitions(navCategoryIds);
-  const definitionResult = await seedRatesDefinitions(
-    tenantId,
-    definitionRepository,
+    firebaseAdminConfig,
     entityRuntime,
-    definitions,
-  );
-
-  const metricResult = await seedRatesMetrics(
-    tenantId,
-    metricDefinitionRepository,
-    buildRatesMetricDefinitions(),
   );
 
   if (demoOwnerStrategy === "localTestUser") {
@@ -142,17 +97,8 @@ async function seedRatesTenant(
     await seedRatesBusinessRecords(
       tenantId,
       firebaseAdminConfig,
-      definitionResult.records,
+      catalogResult.definitionRecords,
       demoOwnerId,
-    );
-  }
-
-  let contractUiOverrideSeeded = false;
-  if (seedContractUiOverride) {
-    contractUiOverrideSeeded = await seedRatesContractUiOverride(
-      tenantId,
-      entityRuntime,
-      uiOverrideRepository,
     );
   }
 
@@ -169,14 +115,16 @@ async function seedRatesTenant(
   return {
     tenantId,
     tenantCreated,
-    definitionsCreated: definitionResult.created,
-    definitionsUpdated: definitionResult.updated,
-    definitionsSkipped: definitionResult.skipped,
-    metricsCreated: metricResult.created,
-    metricsUpdated: metricResult.updated,
-    metricsSkipped: metricResult.skipped,
+    definitionsCreated: catalogResult.entityCounts.created,
+    definitionsUpdated: catalogResult.entityCounts.updated,
+    definitionsDeleted: catalogResult.entityCounts.deleted,
+    metricsCreated: catalogResult.metricCounts.created,
+    metricsUpdated: catalogResult.metricCounts.updated,
+    metricsDeleted: catalogResult.metricCounts.deleted,
+    queriesCreated: catalogResult.queryCounts.created,
+    queriesUpdated: catalogResult.queryCounts.updated,
+    queriesDeleted: catalogResult.queryCounts.deleted,
     demoOwnerId,
-    contractUiOverrideSeeded,
     metricsBackfillFailures,
   };
 }
@@ -189,7 +137,6 @@ export async function seedRatesTenantMock(
     tenantId: RATES_TENANT_ID,
     tenantName: RATES_TENANT_NAME,
     demoOwnerStrategy: "localTestUser",
-    seedContractUiOverride: true,
     backfillMetrics: true,
   });
 }

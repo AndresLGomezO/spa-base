@@ -209,10 +209,22 @@ See [docs/performance-scaling-guide.md](../../docs/performance-scaling-guide.md)
 ```
 PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com
 
-Cloud Run sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so the process listens on `/health` before Firestore role/tenant seeds run. Seed once locally against the target GCP project if needed.
+Cloud Run does not seed Firestore on startup. Seed once locally against the target GCP project with `pnpm seed:database` if needed.
 ```
 
-Promotes email to superadmin on **first** user document creation. Dev tenant **`rates`** is seeded on startup with the **Rates Dev contract model** (12 entities: `category`, `provider`, `account`, `contract`, …), demo records, metric definitions with backfill, and a **contract wizard** UI override (see [`rates-tenant/fixtures/`](src/admin/rates-tenant/fixtures/)).
+Promotes email to superadmin on **first** user document creation. The **`rates`** tenant is **not** seeded on API startup — run **`pnpm seed:database`** after the API and emulators are up (see below).
+
+### Database seed (manual)
+
+Platform roles, the `rates` tenant (11 entities, 20 metrics, 35 queries), demo records, and metric backfill are applied only when you run:
+
+```bash
+pnpm seed:database
+```
+
+Requires Firestore (and Auth emulator for the demo user). With Docker dev, start the stack first (`pnpm dev:docker`), then seed from the repo root. The root script loads [`apps/api/.env.dev`](.env.dev) (emulator hosts and project id).
+
+Re-run after `pnpm dev:docker:reset` or when refreshing catalog/demo data.
 
 ### Rates demo user (emulator / Docker)
 
@@ -220,7 +232,7 @@ Promotes email to superadmin on **first** user document creation. Dev tenant **`
 | -------- | --------------------------------------------------------------------------------------------------------------------------------------- |
 | Email    | `testuser1@rates.com`                                                                                                                   |
 | Password | `RatesTest1!` (see `RATES_TEST_USER_PASSWORD` in [`apps/api/src/admin/rates-tenant/constants.ts`](src/admin/rates-tenant/constants.ts)) |
-| Tenant   | `rates` (set on JWT via startup seed)                                                                                                   |
+| Tenant   | `rates` (set on JWT after `pnpm seed:database`)                                                                                         |
 | Role     | `normalRatesUser` (pre-assigned on `users/{uid}`)                                                                                       |
 
 Sign in through the web app with the Auth emulator enabled. No manual Firestore edits are required for this account.
@@ -231,7 +243,7 @@ To test a different user with the same role, assign manually:
 { "tenants": { "rates": ["normalRatesUser"] } }
 ```
 
-The **rates** tenant is emulator/Docker mock data only. Runtime Firestore composite index provisioning is skipped for that tenant (`indexProvisioningExcludedTenants`); the emulator runs list/search queries without deployed indexes. After changing the entity model, reset emulator data with `pnpm dev:docker:reset` so stale collections from the old portfolio model do not linger.
+The **rates** tenant is emulator/Docker mock data only. Runtime Firestore composite index provisioning is skipped for that tenant (`indexProvisioningExcludedTenants`). After changing the entity model, reset emulator data with `pnpm dev:docker:reset`, then run `pnpm seed:database`.
 
 ---
 

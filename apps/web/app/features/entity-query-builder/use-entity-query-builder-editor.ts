@@ -18,6 +18,7 @@ import {
 } from "../../components/entity/entity-query-filter-utils";
 
 interface EntityQueryDraftState {
+  readonly description?: string;
   readonly filter: EntityQueryFilterEditorGroup;
   readonly sort: readonly EntityQuerySortEditorRow[];
   readonly select: readonly string[];
@@ -30,6 +31,7 @@ function buildDraftFromDefinition(
   definition: EntityQueryDefinitionRecord,
 ): EntityQueryDraftState {
   return {
+    description: definition.description,
     filter: entityQueryFilterRootToEditor(definition.filter),
     sort: entityQuerySortToEditorRows(definition.sort),
     select: definition.select ? [...definition.select] : [],
@@ -40,6 +42,7 @@ function buildDraftFromDefinition(
 }
 
 interface ComparableQuerySettings {
+  readonly description?: string;
   readonly filter: EntityQueryDefinitionRecord["filter"];
   readonly sort: EntityQueryDefinitionRecord["sort"];
   readonly select: readonly string[] | undefined;
@@ -52,6 +55,7 @@ function normalizeDraftForComparison(
   draft: EntityQueryDraftState,
 ): ComparableQuerySettings {
   return {
+    description: draft.description,
     filter: normalizeEditorFilterForComparison(draft.filter),
     sort: editorRowsToEntityQuerySort(draft.sort),
     select: draft.select.length > 0 ? [...draft.select] : undefined,
@@ -65,6 +69,7 @@ function normalizeDefinitionForComparison(
   definition: EntityQueryDefinitionRecord,
 ): ComparableQuerySettings {
   return {
+    description: definition.description,
     filter: definition.filter,
     sort: definition.sort,
     select:
@@ -159,6 +164,9 @@ export function useEntityQueryBuilderEditor() {
     setIsSaving(true);
     try {
       const updated = await patchEntityQueryDefinition(selectedDefinition.id, {
+        ...(draft.description !== undefined
+          ? { description: draft.description }
+          : {}),
         filter: editorRootToEntityQueryFilter(draft.filter),
         sort: editorRowsToEntityQuerySort(draft.sort),
         select: draft.select.length > 0 ? draft.select : undefined,
@@ -273,6 +281,6 @@ export function useEntityQueryBuilderEditor() {
     createQuery,
     updateMetadata,
     deleteQuery,
-    reload: loadDefinitions,
+    reloadDefinitions: loadDefinitions,
   };
 }

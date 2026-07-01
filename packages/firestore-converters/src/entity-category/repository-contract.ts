@@ -11,6 +11,11 @@ export interface EntityCategoryRepository {
     tenantId: string,
     input: CreateEntityCategoryInput,
   ): Promise<EntityCategoryRecord>;
+  createWithId(
+    tenantId: string,
+    id: string,
+    input: CreateEntityCategoryInput,
+  ): Promise<EntityCategoryRecord>;
   update(
     tenantId: string,
     id: string,

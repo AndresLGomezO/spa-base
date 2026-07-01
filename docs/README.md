@@ -16,6 +16,17 @@ Index of all platform documentation. Start with the [Phase 2 handoff](./phase-2-
 
 ---
 
+## Product specs
+
+| Document | Description |
+|----------|-------------|
+| [entity-definition-json.md](./entity-definition-json.md) | **Data Entity JSON** — field/entity/catalog envelopes for Model Builder import (data team handoff) |
+| [metric-definition-json.md](./metric-definition-json.md) | **Metrics JSON** — single-metric and catalog envelopes for Settings → Metrics import |
+| [entity-query-definition-json.md](./entity-query-definition-json.md) | **Query JSON** — saved entity query catalog envelopes for Settings → Query Builder import |
+| [rates-data-model.md](./rates-data-model.md) | Rates tenant domain spec; catalogs in [`rates-tenant/catalogs/`](../apps/api/src/admin/rates-tenant/catalogs/) |
+
+---
+
 ## Handoff and planning
 
 | Document | Description |
@@ -70,6 +81,7 @@ After validation ([e2e-validation-runbook.md](./e2e-validation-runbook.md)), pla
 | 10.6 | [admin-dashboard-guide.md](./admin-dashboard-guide.md) | Control Plane UI, tenant vs superadmin admin |
 | 10.7 | [performance-scaling-guide.md](./performance-scaling-guide.md) | Phase A caches, rate limits, TanStack Query, virtualization |
 | 10.8 | [dynamic-entity-builder-guide.md](./dynamic-entity-builder-guide.md) | Runtime model CRUD, Model Builder, evolution rules |
+| — | [entity-definition-json.md](./entity-definition-json.md) | JSON envelopes for bulk schema import (data team spec) |
 
 ---
 

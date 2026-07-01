@@ -30,6 +30,9 @@ import {
 } from "../ui-builder/designer-tree-workbench-classes";
 import { EntityQueryPreviewPanel } from "./EntityQueryPreviewPanel";
 import { useEntityQueryBuilder } from "./entity-query-builder-context";
+import { EntityQueryDefinitionJsonToolbar } from "./json/EntityQueryDefinitionJsonToolbar";
+import { entityQueryDefinitionFormJsonLabels } from "./json/entity-query-definition-json-labels";
+import type { EntityQueryFormStateImportResult } from "./json/export-entity-query-form-state";
 
 const selectClassName =
   "border-input bg-background flex h-10 w-full rounded-md border px-3 py-2 text-sm";
@@ -46,6 +49,7 @@ export function EntityQuerySettingsPanel() {
   const { t } = useTranslation("common");
   const { items: entities } = useEntityCatalog();
   const { editor, canUpdate } = useEntityQueryBuilder();
+  const jsonLabels = useMemo(() => entityQueryDefinitionFormJsonLabels(t), [t]);
 
   const entity = useMemo(
     () =>
@@ -95,6 +99,20 @@ export function EntityQuerySettingsPanel() {
     }
   };
 
+  const handleJsonImport = (imported: EntityQueryFormStateImportResult) => {
+    editor.updateDraft({
+      ...(imported.description !== undefined
+        ? { description: imported.description }
+        : {}),
+      filter: imported.filter,
+      sort: [...imported.sort],
+      select: [...imported.select],
+      limitMode: imported.limitMode,
+      limit: imported.limit,
+      status: imported.status,
+    });
+  };
+
   return (
     <div
       className={`${designerPreviewPanelShellClassName} ${designerPreviewPanelShellFillClassName} gap-4`}
@@ -110,14 +128,34 @@ export function EntityQuerySettingsPanel() {
             </Text>
           ) : null}
         </div>
-        <Button
-          type="button"
-          loading={editor.isSaving}
-          disabled={!canUpdate || !editor.isDirty}
-          onClick={() => void handleSave()}
-        >
-          {t("queryBuilder.save")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <EntityQueryDefinitionJsonToolbar
+            existingName={editor.selectedDefinition.name}
+            existingSourceEntity={editor.selectedDefinition.sourceEntity}
+            canApply={canUpdate}
+            labels={jsonLabels}
+            formState={{
+              name: editor.selectedDefinition.name,
+              description: editor.draft.description,
+              sourceEntity: editor.selectedDefinition.sourceEntity,
+              filter: editor.draft.filter,
+              sort: editor.draft.sort,
+              select: editor.draft.select,
+              limitMode: editor.draft.limitMode,
+              limit: editor.draft.limit,
+              status: editor.draft.status,
+            }}
+            onImport={handleJsonImport}
+          />
+          <Button
+            type="button"
+            loading={editor.isSaving}
+            disabled={!canUpdate || !editor.isDirty}
+            onClick={() => void handleSave()}
+          >
+            {t("queryBuilder.save")}
+          </Button>
+        </div>
       </div>
 
       <div className={`${designerPreviewPanelBodyFillClassName} space-y-6`}>

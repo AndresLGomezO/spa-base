@@ -1,6 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { FieldDefinitionRecord } from "@repo/dynamic-entities";
 import { Button, Text } from "@repo/ui";
 
 import type { FieldDefinitionInput } from "../../lib/api-client";
@@ -9,6 +10,9 @@ import { FormModal } from "../forms/FormModal";
 import { createEmptyField, resolveFieldDefinitionName } from "./field-types";
 import { FieldEditorForm } from "./FieldEditorForm";
 import { FieldTypePicker } from "./FieldTypePicker";
+import { fieldDefinitionJsonLabels } from "./json/entity-definition-json-labels";
+import { FieldDefinitionJsonImportDialog } from "./json/FieldDefinitionJsonImportDialog";
+import { FieldDefinitionJsonViewDialog } from "./json/FieldDefinitionJsonViewDialog";
 
 interface FieldEditorModalProps {
   readonly open: boolean;
@@ -21,6 +25,7 @@ interface FieldEditorModalProps {
     readonly label: string;
   }[];
   readonly canRemove: boolean;
+  readonly canEdit?: boolean;
   readonly onSave: (field: FieldDefinitionInput) => void;
   readonly onRemove?: () => void;
   readonly onClose: () => void;
@@ -34,11 +39,13 @@ export function FieldEditorModal({
   orderDefault,
   relationTargets,
   canRemove,
+  canEdit = true,
   onSave,
   onRemove,
   onClose,
 }: FieldEditorModalProps) {
   const { t } = useTranslation("common");
+  const jsonLabels = useMemo(() => fieldDefinitionJsonLabels(t), [t]);
   const [step, setStep] = useState<"type" | "details">(
     mode === "add" ? "type" : "details",
   );
@@ -97,7 +104,16 @@ export function FieldEditorModal({
     </Button>
   ) : (
     <div className="flex w-full items-center justify-between gap-2">
-      <div>
+      <div className="flex flex-wrap items-center gap-2">
+        <FieldDefinitionJsonViewDialog
+          data={draft as FieldDefinitionRecord}
+          labels={jsonLabels}
+        />
+        <FieldDefinitionJsonImportDialog
+          canApply={canEdit}
+          labels={jsonLabels}
+          onApply={(imported) => setDraft(imported)}
+        />
         {mode === "edit" && canRemove && onRemove ? (
           <Button type="button" variant="ghost" onClick={onRemove}>
             {t("dataModels.removeField")}

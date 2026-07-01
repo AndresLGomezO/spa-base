@@ -1530,6 +1530,47 @@
         "sortOnly": "Sort only",
         "filterOnly": "Filter only"
       }
+    },
+    "json": {
+      "viewTrigger": "View JSON",
+      "importTrigger": "Import JSON",
+      "pasteLabel": "Paste JSON",
+      "uploadLabel": "Upload JSON file",
+      "skeletonTitle": "Expected structure",
+      "skeletonShow": "Show example",
+      "skeletonHide": "Hide example",
+      "valid": "JSON is valid.",
+      "invalid": "JSON has validation errors.",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "readOnlyHint": "You can validate JSON here, but you need permission to apply changes.",
+      "viewDescription": "Read-only snapshot. Copy and edit it elsewhere, then use Import JSON to apply changes.",
+      "viewCopy": "Copy to clipboard",
+      "viewCopied": "Copied",
+      "field": {
+        "viewTitle": "Current field JSON",
+        "importTitle": "Import field JSON",
+        "importDescription": "Import a single field definition into this editor. Changes apply to the draft immediately; save the field to keep them."
+      },
+      "entity": {
+        "viewTitle": "Current entity JSON",
+        "importTitle": "Import entity JSON",
+        "importDescriptionCreate": "Import a full entity definition into this wizard. Changes apply to the form immediately; finish the wizard to create the entity.",
+        "importDescriptionEdit": "Import entity metadata and fields into this editor. Changes apply to the form immediately; click Save to persist.",
+        "nameChangeError": "Entity name cannot be changed after creation."
+      },
+      "catalog": {
+        "viewTitle": "Current entity catalog JSON",
+        "importTitle": "Import entity catalog JSON",
+        "importDescription": "Replace the tenant entity catalog with the imported definitions and categories. Items not in the JSON will be removed. Business records are not deleted automatically.",
+        "confirmTitle": "Replace entity catalog?",
+        "confirmDescription": "This will create, update, and delete entity definitions and navigation categories to match the imported JSON. Items not included will be removed. Existing business records are not deleted.",
+        "confirmAction": "Replace catalog",
+        "replaceSummary": "Entities: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
+        "categoryReplaceSummary": "Categories: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
+        "importSuccess": "Entity catalog replaced.",
+        "importFailed": "Unable to replace entity catalog."
+      }
     }
   },
   "roles": {
@@ -1645,6 +1686,42 @@
     "saving": "Saving…",
     "saved": "Metric saved.",
     "saveFailed": "Unable to save metric.",
+    "json": {
+      "viewTrigger": "View JSON",
+      "importTrigger": "Import JSON",
+      "pasteLabel": "Paste JSON",
+      "uploadLabel": "Upload JSON file",
+      "skeletonTitle": "Example format",
+      "skeletonShow": "Show example",
+      "skeletonHide": "Hide example",
+      "valid": "JSON is valid.",
+      "invalid": "JSON validation errors",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "readOnlyHint": "You do not have permission to apply imported JSON.",
+      "viewDescription": "Portable metric definition JSON for handoff or version control.",
+      "viewCopy": "Copy JSON",
+      "viewCopied": "Copied",
+      "metric": {
+        "viewTitle": "Current metric JSON",
+        "importTitle": "Import metric JSON",
+        "importDescriptionCreate": "Replace the form with the imported metric definition. Save to persist.",
+        "importDescriptionEdit": "Replace the form with the imported metric definition. The metric name must not change. Save to persist.",
+        "nameChangeError": "Metric name cannot be changed via JSON import in edit mode."
+      },
+      "catalog": {
+        "viewTitle": "Current metrics catalog JSON",
+        "importTitle": "Import metrics catalog JSON",
+        "importDescription": "Replace the tenant metrics catalog with the imported definitions. Metrics not in the JSON will be removed. Created and updated metrics are backfilled automatically.",
+        "confirmTitle": "Replace metrics catalog?",
+        "confirmDescription": "This will create, update, and delete metric definitions to match the imported JSON. Backfill runs for created and materially updated metrics.",
+        "confirmAction": "Replace catalog",
+        "replaceSummary": "Metrics: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
+        "backfillSummary": "Backfill will run automatically for new and updated metrics after import.",
+        "importSuccess": "Metrics catalog replaced.",
+        "importFailed": "Unable to replace metrics catalog."
+      }
+    },
     "validationRequired": "Name, aggregation field, and field dependencies are required.",
     "dateGranularity": {
       "title": "Date field split",
@@ -1892,6 +1969,41 @@
       "title": "Delete query",
       "message": "Delete \"{{name}}\"? This cannot be undone.",
       "confirm": "Delete"
+    },
+    "json": {
+      "viewTrigger": "View JSON",
+      "importTrigger": "Import JSON",
+      "pasteLabel": "Paste JSON",
+      "uploadLabel": "Upload JSON file",
+      "skeletonTitle": "Example format",
+      "skeletonShow": "Show example",
+      "skeletonHide": "Hide example",
+      "valid": "JSON is valid.",
+      "invalid": "JSON validation errors",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "readOnlyHint": "You do not have permission to apply imported JSON.",
+      "viewDescription": "Portable entity query definition JSON for handoff or version control.",
+      "viewCopy": "Copy JSON",
+      "viewCopied": "Copied",
+      "query": {
+        "viewTitle": "Current query JSON",
+        "importTitle": "Import query JSON",
+        "importDescriptionEdit": "Replace the query settings with the imported definition. Query name and source entity must not change. Save to persist.",
+        "nameChangeError": "Query name cannot be changed via JSON import.",
+        "sourceEntityChangeError": "Source entity cannot be changed via JSON import."
+      },
+      "catalog": {
+        "viewTitle": "Current queries catalog JSON",
+        "importTitle": "Import queries catalog JSON",
+        "importDescription": "Replace the tenant query catalog with the imported definitions. Queries not in the JSON will be removed.",
+        "confirmTitle": "Replace queries catalog?",
+        "confirmDescription": "This will create, update, and delete saved query definitions to match the imported JSON. UI layout bindings to removed queries are not cleaned up automatically.",
+        "confirmAction": "Replace catalog",
+        "replaceSummary": "Queries: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
+        "importSuccess": "Queries catalog replaced.",
+        "importFailed": "Unable to replace queries catalog."
+      }
     }
   },
   "hooks": {

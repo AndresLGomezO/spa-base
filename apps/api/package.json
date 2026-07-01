@@ -4,6 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/index.ts",
+    "seed:database": "tsx --env-file=.env.dev src/scripts/seed-database.ts",
     "build": "node esbuild.mjs",
     "start": "node dist/index.js",
     "lint": "eslint .",

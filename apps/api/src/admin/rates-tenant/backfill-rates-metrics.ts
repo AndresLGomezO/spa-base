@@ -1,4 +1,9 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { runSnapshotBackfillForMetric } from "@repo/aggregation-engine";
+import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
 import {
   createFirestoreAdminAggregationEventRepository,
   createFirestoreAdminBackfillJobRepository,
@@ -12,7 +17,6 @@ import { listSourceDocumentsForMetric } from "../../aggregation/list-source-docu
 import { runMetricBackfill } from "../../aggregation/run-backfill.js";
 import { createMetricRuntimeContext } from "../../aggregation/metric-runtime-context.js";
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
-import { buildRatesMetricDefinitions } from "./metrics/index.js";
 
 interface BackfillRatesMetricsResult {
   readonly activated: number;
@@ -22,6 +26,22 @@ interface BackfillRatesMetricsResult {
     readonly metricName: string;
     readonly error: string;
   }[];
+}
+
+function loadRatesMetricNames(): readonly string[] {
+  const catalogPath = join(
+    dirname(fileURLToPath(import.meta.url)),
+    "catalogs/rates-metric-definitions.json",
+  );
+  const parsed = parseMetricDefinitionsCatalogJson(
+    readFileSync(catalogPath, "utf8"),
+  );
+  if (!parsed.ok) {
+    throw new Error(
+      `Invalid rates metric catalog: ${parsed.errors.map((error) => error.message).join("; ")}`,
+    );
+  }
+  return parsed.data.metricDefinitions.map((metric) => metric.name);
 }
 
 export async function activateAndBackfillRatesMetrics(
@@ -56,9 +76,7 @@ export async function activateAndBackfillRatesMetrics(
       ),
   });
 
-  const desiredNames = new Set(
-    buildRatesMetricDefinitions().map((definition) => definition.name),
-  );
+  const desiredNames = new Set(loadRatesMetricNames());
   const metrics = (await metricDefinitionRepository.list(tenantId))
     .filter((metric) => desiredNames.has(metric.name))
     .sort((left, right) => left.name.localeCompare(right.name));

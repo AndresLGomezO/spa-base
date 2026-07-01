@@ -109,4 +109,30 @@ describe("EntityDefinitionWizard", () => {
       );
     });
   });
+
+  it("imports entity JSON into the wizard form", () => {
+    mockListEntityCategories.mockResolvedValue({ items: [] });
+
+    render(<EntityDefinitionWizard onCreated={vi.fn()} onCancel={vi.fn()} />);
+
+    fireEvent.click(screen.getByText("dataModels.json.importTrigger"));
+    const importDialog = screen.getAllByRole("dialog").at(-1)!;
+    fireEvent.change(importDialog.querySelector("textarea")!, {
+      target: {
+        value: JSON.stringify({
+          kind: "entity-definition",
+          version: 1,
+          data: {
+            name: "loan",
+            label: "Loans",
+            fields: [{ name: "amount", type: "number", required: true }],
+          },
+        }),
+      },
+    });
+    fireEvent.click(screen.getByText("dataModels.json.apply"));
+
+    expect(screen.getByLabelText("dataModels.modelName")).toHaveValue("loan");
+    expect(screen.getByLabelText("dataModels.modelLabel")).toHaveValue("Loans");
+  });
 });

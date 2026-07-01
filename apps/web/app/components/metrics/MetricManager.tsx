@@ -94,8 +94,12 @@ export function MetricManager({
         isLoading={isLoading}
         canCreate={canCreate}
         canUpdate={canUpdate}
+        canBackfill={canBackfill}
         onCreate={() => setIsCreating(true)}
         onEdit={setEditingId}
+        onCatalogReplaced={() => {
+          void loadMetrics();
+        }}
       />
       <FormModal
         open={modalOpen}

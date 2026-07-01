@@ -33,7 +33,7 @@ pnpm --filter api dev     # API :3000
 pnpm --filter web dev     # Web :5173
 ```
 
-Or run everything in Docker: `pnpm dev:docker`
+Or run everything in Docker: `pnpm dev:docker`, then seed the database: `pnpm seed:database`
 
 Set `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS=you@example.com` in `apps/api/.env.dev` to bootstrap superadmin on first login.
 
@@ -56,15 +56,16 @@ docs/         Guides and handoff documentation
 
 ## Commands
 
-| Command              | Description                          |
-| -------------------- | ------------------------------------ |
-| `pnpm dev`           | Start all apps (turbo)               |
-| `pnpm test`          | Run all test suites                  |
-| `pnpm typecheck`     | TypeScript check all packages        |
-| `pnpm lint`          | Lint all packages                    |
-| `pnpm emulators`     | Firebase emulators (auth, firestore) |
-| `pnpm storybook`     | UI component docs (`@repo/ui`)       |
-| `pnpm i18n:validate` | Validate translation keys            |
+| Command              | Description                                                       |
+| -------------------- | ----------------------------------------------------------------- |
+| `pnpm dev`           | Start all apps (turbo)                                            |
+| `pnpm test`          | Run all test suites                                               |
+| `pnpm typecheck`     | TypeScript check all packages                                     |
+| `pnpm lint`          | Lint all packages                                                 |
+| `pnpm emulators`     | Firebase emulators (auth, firestore)                              |
+| `pnpm seed:database` | Seed platform roles + `rates` tenant (manual; not on API startup) |
+| `pnpm storybook`     | UI component docs (`@repo/ui`)                                    |
+| `pnpm i18n:validate` | Validate translation keys                                         |
 
 ---
 

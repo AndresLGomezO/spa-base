@@ -1,0 +1,1311 @@
+{
+  "kind": "entity-query-definitions-catalog",
+  "version": 1,
+  "exportedAt": "2026-07-01T13:49:33.644Z",
+  "entityQueryDefinitions": [
+    {
+      "name": "Upcoming payments",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Overdue payments",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "or",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "OVERDUE"
+            }
+          },
+          {
+            "type": "group",
+            "combinator": "and",
+            "children": [
+              {
+                "type": "condition",
+                "field": "status",
+                "operator": "==",
+                "value": {
+                  "type": "static",
+                  "value": "UPCOMING"
+                }
+              },
+              {
+                "type": "condition",
+                "field": "dueDate",
+                "operator": "<",
+                "value": {
+                  "type": "temporal",
+                  "preset": "startOfDay"
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Due today",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfDay"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfDay"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Due this month",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Paid this month",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "PAID"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Active commitments",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "nextDueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Commitments due this month",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "nextDueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "nextDueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "nextDueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Past due commitments",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "nextDueDate",
+            "operator": "<",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfDay"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "nextDueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Recurring commitments",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "isRecurring",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": true
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "One-time items",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "frequency",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ONE_TIME"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "nextDueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Paused items",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "PAUSED"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Completed or closed",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "in",
+            "value": {
+              "type": "static",
+              "value": ["COMPLETED", "CLOSED"]
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "endDate",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Income flow",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "flowKind",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Expense flow",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "flowKind",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "EXPENSE"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Transfers",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "flowKind",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "TRANSFER"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Asset growth",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "flowKind",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ASSET_GROWTH"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Assets",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "balanceSheetRole",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ASSET"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Liabilities",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "balanceSheetRole",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "LIABILITY"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Debts",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "itemType",
+            "operator": "in",
+            "value": {
+              "type": "static",
+              "value": [
+                "MORTGAGE",
+                "LOAN",
+                "CREDIT_CARD",
+                "REVOLVING_CREDIT",
+                "PERSONAL_DEBT"
+              ]
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Income by category",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "category.kind",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "nextDueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Expenses by category",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "category.kind",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "EXPENSE"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "nextDueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Investments by category",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "category.kind",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "INVESTMENT"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "nextDueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "By bank",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "actor.type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "BANK"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "By property",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "actor.type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "PROPERTY"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "By person",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "actor.type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "PERSON"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "By employer",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "actor.type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "EMPLOYER"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "By fiduciary",
+      "sourceEntity": "financialItem",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "ACTIVE"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "actor.type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "FIDUCIARY"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "name",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Transactions this month",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Income this month",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "INCOME"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Expenses this month",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "EXPENSE"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Transfers this month",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "TRANSFER"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Interest this month",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfMonth"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "INTEREST"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Accounts by balance",
+      "sourceEntity": "account",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": []
+      },
+      "sort": [
+        {
+          "field": "currentBalance",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Latest balance snapshots",
+      "sourceEntity": "balanceSnapshot",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": []
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Liability balance snapshots",
+      "sourceEntity": "balanceSnapshot",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "financialItem.balanceSheetRole",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "LIABILITY"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 50,
+      "status": "ACTIVE"
+    }
+  ]
+}

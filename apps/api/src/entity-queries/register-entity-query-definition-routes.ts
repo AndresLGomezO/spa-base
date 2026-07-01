@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   createEntityQueryDefinitionInputSchema,
   patchEntityQueryDefinitionInputSchema,
+  validateEntityQueryDefinitionsCatalogEnvelope,
 } from "@repo/entity-queries";
 import type { EntityQueryDefinitionRepository } from "@repo/firestore-converters";
 
@@ -14,6 +15,10 @@ import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import { assertCanReadEntityQueryDefinition } from "./assert-entity-query-access.js";
+import {
+  EntityQueryCatalogReplaceError,
+  replaceEntityQueryDefinitionsCatalog,
+} from "./replace-entity-query-definitions-catalog.js";
 
 interface RegisterEntityQueryDefinitionRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
@@ -275,6 +280,65 @@ export async function registerEntityQueryDefinitionRoutes(
         parsedParams.data.id,
       );
       return reply.send(successEnvelope({ ok: true }));
+    },
+  );
+
+  app.put(
+    "/api/entity-query-definitions/catalog",
+    {
+      preHandler: [
+        options.authenticate,
+        requireCreate,
+        requireUpdate,
+        requireDelete,
+      ],
+    },
+    async (request, reply) => {
+      const parsedBody = validateEntityQueryDefinitionsCatalogEnvelope(
+        request.body,
+      );
+      if (!parsedBody.ok) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Validation failed.",
+          parsedBody.errors,
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      try {
+        const result = await replaceEntityQueryDefinitionsCatalog(
+          {
+            entityRuntime: options.entityRuntime,
+            entityQueryDefinitionRepository:
+              options.entityQueryDefinitionRepository,
+          },
+          tenantId,
+          parsedBody.data,
+        );
+        return reply.send(
+          successEnvelope({
+            counts: result.counts,
+            items: result.items,
+          }),
+        );
+      } catch (error) {
+        const message =
+          error instanceof EntityQueryCatalogReplaceError ||
+          error instanceof Error
+            ? error.message
+            : "Failed to replace entity query catalog.";
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          message,
+        );
+      }
     },
   );
 }

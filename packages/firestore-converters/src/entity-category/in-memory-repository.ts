@@ -42,6 +42,24 @@ export function createInMemoryEntityCategoryRepository(): EntityCategoryReposito
       store.set(key(tenantId, record.id), record);
       return record;
     },
+    async createWithId(tenantId, id, input) {
+      const parsed = createEntityCategoryInputSchema.parse(input);
+      if (store.has(key(tenantId, id))) {
+        throw new Error(`Entity category already exists: ${id}`);
+      }
+      const now = new Date().toISOString();
+      const record = entityCategoryRecordSchema.parse({
+        id,
+        tenantId,
+        name: parsed.name,
+        icon: parsed.icon,
+        order: parsed.order,
+        createdAt: now,
+        updatedAt: now,
+      });
+      store.set(key(tenantId, id), record);
+      return record;
+    },
     async update(tenantId, id, input) {
       const current = store.get(key(tenantId, id));
       if (!current) {

@@ -138,5 +138,12 @@ export function createFirestoreAdminEntityDefinitionRepository(
       await collection(tenantId).doc(id).set(next);
       return next;
     },
+    async delete(tenantId, id) {
+      const current = await this.getById(tenantId, id);
+      if (!current) {
+        throw new Error(`Entity definition not found: ${id}`);
+      }
+      await collection(tenantId).doc(id).delete();
+    },
   };
 }

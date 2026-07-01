@@ -1,14 +1,22 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2, Search } from "lucide-react";
-import { IconButton, Text } from "@repo/ui";
+import { IconButton, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
+import type { EntityQueryDefinitionsCatalogEnvelope } from "@repo/entity-queries/browser";
 
+import {
+  isApiClientError,
+  putEntityQueryDefinitionsCatalog,
+} from "../../lib/api-client";
 import { getEntityLabel } from "../../entities/entity-catalog";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { EntityQueryMetadataModal } from "./EntityQueryMetadataModal";
 import { useEntityQueryBuilder } from "./entity-query-builder-context";
+import { entityQueryDefinitionsCatalogJsonLabels } from "./json/entity-query-definition-json-labels";
+import { EntityQueryDefinitionsCatalogJsonImportDialog } from "./json/EntityQueryDefinitionsCatalogJsonImportDialog";
+import { EntityQueryDefinitionsCatalogJsonViewDialog } from "./json/EntityQueryDefinitionsCatalogJsonViewDialog";
 
 export function EntityQueryListTreePanel() {
   const { t } = useTranslation("common");
@@ -22,6 +30,28 @@ export function EntityQueryListTreePanel() {
     requestDelete,
   } = useEntityQueryBuilder();
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const catalogLabels = useMemo(
+    () => entityQueryDefinitionsCatalogJsonLabels(t),
+    [t],
+  );
+  const canReplaceCatalog = canCreate && canUpdate && canDelete;
+
+  const handleCatalogImport = useCallback(
+    async (catalog: EntityQueryDefinitionsCatalogEnvelope) => {
+      try {
+        await putEntityQueryDefinitionsCatalog(catalog);
+        toast.success(catalogLabels.importSuccess);
+        await editor.reloadDefinitions();
+      } catch (importError) {
+        toast.error(
+          isApiClientError(importError)
+            ? importError.message
+            : catalogLabels.importFailed,
+        );
+      }
+    },
+    [catalogLabels.importFailed, catalogLabels.importSuccess, editor],
+  );
 
   const handleOpenCreate = useCallback(() => {
     setCreateModalOpen(true);
@@ -39,6 +69,21 @@ export function EntityQueryListTreePanel() {
     </button>
   );
 
+  const catalogActions = (
+    <div className="flex flex-wrap items-center gap-2 px-2 pb-2">
+      <EntityQueryDefinitionsCatalogJsonViewDialog
+        items={editor.definitions}
+        labels={catalogLabels}
+      />
+      <EntityQueryDefinitionsCatalogJsonImportDialog
+        existingItems={editor.definitions}
+        canApply={canReplaceCatalog}
+        labels={catalogLabels}
+        onApply={(catalog) => void handleCatalogImport(catalog)}
+      />
+    </div>
+  );
+
   return (
     <>
       <ItemListDesignerTreePanelShell
@@ -48,6 +93,7 @@ export function EntityQueryListTreePanel() {
         expandedClassName={designerTreePanelShellClassName}
         collapsedClassName={designerTreePanelShellClassName}
         collapsedContent={addRow}
+        scopeSection={catalogActions}
       >
         <div className="flex w-full min-w-max flex-col gap-1 py-1">
           {addRow}

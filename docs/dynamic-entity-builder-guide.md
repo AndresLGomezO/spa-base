@@ -116,6 +116,18 @@ The entity **edit** form exposes the same navigation fields for existing models.
 
 After save, `useEntityCatalog().refresh()` runs so the new entity appears in the sidebar without a page reload.
 
+### JSON View / Import
+
+Hand-authored schemas can be imported without using the wizard field-by-field. See **[Entity definition JSON specification](./entity-definition-json.md)** for the full data-team handoff format.
+
+| UI location | Envelope `kind` | Use case |
+|-------------|-----------------|----------|
+| Field modal (details step) | `field-definition` | Single field draft |
+| Create / Edit entity | `entity-definition` | One entity form |
+| Data Entities list | `entity-definitions-catalog` | **Replace** full tenant catalog |
+
+List **View JSON** exports the current catalog; **Import JSON** validates live and shows planned create/update/delete counts before confirm.
+
 ---
 
 ## Field types (v1)
@@ -154,8 +166,11 @@ The API rejects:
 | `POST` | `/api/entity-definitions` | Create definition + register runtime entity |
 | `GET` | `/api/entity-definitions/:id` | Get one definition |
 | `PATCH` | `/api/entity-definitions/:id` | Evolve definition (add fields only) |
+| `PUT` | `/api/entity-definitions/catalog` | Replace tenant catalog from `entity-definitions-catalog` envelope |
 
 Superadmin cross-tenant: pass `tenantId` as query or body parameter.
+
+Payload shapes: [entity-definition-json.md](./entity-definition-json.md).
 
 ---
 
@@ -192,6 +207,7 @@ const entities = getEntitiesForTenant(tenantId);
 
 ## Related guides
 
+- [Entity definition JSON specification](./entity-definition-json.md) — import/export JSON for data teams
 - [Entity System Guide](./entity-system-guide.md) — static vs dynamic entities
 - [Hooks System Guide](./hooks-system-guide.md)
 - [Module Extension Guide](./module-extension-guide.md) — compile-time modules complement runtime models

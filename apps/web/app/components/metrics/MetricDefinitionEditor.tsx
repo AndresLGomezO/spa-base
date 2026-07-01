@@ -27,6 +27,9 @@ import { MetricFieldLabel } from "./MetricFieldHelp";
 import { MetricDefinitionSummary } from "./MetricDefinitionSummary";
 import { DateFieldGranularityPicker } from "./DateFieldGranularityPicker";
 import { MetricFiltersEditor } from "./MetricFiltersEditor";
+import { metricDefinitionFormJsonLabels } from "./json/metric-definition-json-labels";
+import { MetricDefinitionJsonToolbar } from "./json/MetricDefinitionJsonToolbar";
+import type { MetricFormStateImportResult } from "./json/export-metric-form-state";
 import {
   buildEntityFieldOptions,
   buildMetricSummaryContext,
@@ -398,11 +401,53 @@ export function MetricDefinitionEditor({
       t("metrics.multiselect.removeBadge", { label }),
   };
 
+  const jsonLabels = useMemo(() => metricDefinitionFormJsonLabels(t), [t]);
+
+  function handleJsonImport(imported: MetricFormStateImportResult) {
+    setName(imported.name);
+    setDescription(imported.description);
+    setSourceModel(imported.sourceModel);
+    setStatus(imported.status);
+    setAggregationOperation(imported.aggregationOperation);
+    setAggregationField(imported.aggregationField);
+    setFieldsDependency(imported.fieldsDependency);
+    setFilterRows([...imported.filterRows]);
+    setGroupBy([...imported.groupBy]);
+    setDimensions([...imported.dimensions]);
+    setDateFieldGranularity({ ...imported.dateFieldGranularity });
+    setValueDisplayFormat(imported.valueDisplayFormat);
+  }
+
   return (
     <Form onSubmit={(event) => void handleSubmit(event)} className="space-y-4">
-      <Heading level={2}>
-        {isCreate ? t("metrics.createTitle") : t("metrics.editTitle")}
-      </Heading>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <Heading level={2}>
+          {isCreate ? t("metrics.createTitle") : t("metrics.editTitle")}
+        </Heading>
+        <MetricDefinitionJsonToolbar
+          mode={isCreate ? "create" : "edit"}
+          existingName={metric?.name}
+          canApply={isCreate ? canCreate : canUpdate}
+          labels={jsonLabels}
+          formState={{
+            name,
+            description,
+            sourceModel,
+            status,
+            aggregationOperation,
+            aggregationField,
+            fieldsDependency,
+            filterRows,
+            groupBy,
+            dimensions,
+            dateFieldGranularity,
+            valueDisplayFormat,
+            version: metric?.version ?? 1,
+            schemaVersionDependency: metric?.schemaVersionDependency ?? 1,
+          }}
+          onImport={handleJsonImport}
+        />
+      </div>
 
       <div>
         <FieldLabel htmlFor="metric-name">{t("metrics.name")}</FieldLabel>

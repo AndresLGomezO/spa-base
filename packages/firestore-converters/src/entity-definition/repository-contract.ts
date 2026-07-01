@@ -20,4 +20,5 @@ export interface EntityDefinitionRepository {
     id: string,
     input: PatchEntityDefinitionInput,
   ): Promise<EntityDefinitionRecord>;
+  delete(tenantId: string, id: string): Promise<void>;
 }

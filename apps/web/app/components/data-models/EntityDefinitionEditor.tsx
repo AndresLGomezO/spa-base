@@ -42,6 +42,8 @@ import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { buildEntityDefinitionUiForSave } from "./build-entity-definition-ui-patch";
 import { EntityFieldsManager } from "./EntityFieldsManager";
 import { EntityIndexPlanSummaryCard } from "./EntityIndexPlanSummaryCard";
+import { entityDefinitionFormJsonLabels } from "./json/entity-definition-json-labels";
+import { EntityDefinitionJsonToolbar } from "./json/EntityDefinitionJsonToolbar";
 import type { PlanEntityIndexesInput } from "./plan-entity-indexes";
 import { useSyncCategoryNavIcon } from "./use-sync-category-nav-icon";
 
@@ -81,6 +83,7 @@ export function EntityDefinitionEditor({
 }: EntityDefinitionEditorProps) {
   const { t } = useTranslation("common");
   const { refresh } = useEntityCatalog();
+  const jsonLabels = useMemo(() => entityDefinitionFormJsonLabels(t), [t]);
   const [record, setRecord] = useState<EntityDefinitionRecord | null>(null);
   const [label, setLabel] = useState("");
   const [description, setDescription] = useState("");
@@ -342,6 +345,35 @@ export function EntityDefinitionEditor({
     navIcon,
   ]);
 
+  const entityFormState = useMemo(
+    () => ({
+      name: record?.name ?? "",
+      label,
+      description,
+      fields,
+      tenantWideRead,
+      inMemoryListQueries,
+      hiddenFromNav,
+      navCategoryId,
+      navOrder,
+      navIcon,
+      displayField,
+    }),
+    [
+      record?.name,
+      label,
+      description,
+      fields,
+      tenantWideRead,
+      inMemoryListQueries,
+      hiddenFromNav,
+      navCategoryId,
+      navOrder,
+      navIcon,
+      displayField,
+    ],
+  );
+
   if (isLoading) {
     return <EntityFormSkeleton />;
   }
@@ -352,9 +384,31 @@ export function EntityDefinitionEditor({
 
   return (
     <div className="space-y-4">
-      <Heading level={2}>
-        {t("dataModels.editTitle", { name: record.name })}
-      </Heading>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <Heading level={2}>
+          {t("dataModels.editTitle", { name: record.name })}
+        </Heading>
+        <EntityDefinitionJsonToolbar
+          mode="edit"
+          existingName={record.name}
+          canApply={canUpdate}
+          formState={entityFormState}
+          labels={jsonLabels}
+          onImport={(imported) => {
+            setLabel(imported.label);
+            setDescription(imported.description);
+            setFields(imported.fields);
+            setTenantWideRead(imported.tenantWideRead);
+            setInMemoryListQueries(imported.inMemoryListQueries);
+            setHiddenFromNav(imported.hiddenFromNav);
+            setNavCategoryId(imported.navCategoryId);
+            setNavOrder(imported.navOrder);
+            setNavIcon(imported.navIcon);
+            setDisplayField(imported.displayField);
+            setValidationError(null);
+          }}
+        />
+      </div>
 
       {validationError ? <Alert>{validationError}</Alert> : null}
 

@@ -46,6 +46,7 @@
     "emulators:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up firebase-emulator --force-recreate",
     "dev:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up --build pubsub-init firebase-emulator api worker-aggregation web",
     "dev:docker:reset": "tsx scripts/docker-dev-reset.ts",
+    "seed:database": "tsx --env-file=apps/api/.env.dev apps/api/src/scripts/seed-database.ts",
     "docker:prune": "bash scripts/docker-prune-all.sh"
   },
   "devDependencies": {

@@ -10,6 +10,8 @@ import type {
   UpdateUiBuilderPresetInput,
 } from "@repo/entities";
 import type { QueryConfig } from "@repo/query-engine";
+import type { MetricDefinitionsCatalogEnvelope } from "@repo/metrics-engine/browser";
+import type { EntityQueryDefinitionsCatalogEnvelope } from "@repo/entity-queries/browser";
 
 import { appConfig } from "../config/app-config";
 import { getAppCheckHeaderValue } from "./app-check";
@@ -470,6 +472,41 @@ export async function patchEntityDefinition(
   });
 }
 
+interface EntityDefinitionsCatalogReplaceInput {
+  readonly kind: "entity-definitions-catalog";
+  readonly version: 1;
+  readonly exportedAt: string;
+  readonly entityDefinitions: readonly CreateEntityDefinitionInput[];
+}
+
+interface EntityDefinitionsCatalogReplaceResult {
+  readonly counts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly categoryCounts?: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly items: readonly EntityDefinitionRecord[];
+}
+
+export async function putEntityDefinitionsCatalog(
+  input: EntityDefinitionsCatalogReplaceInput,
+  options?: { readonly tenantId?: string },
+): Promise<EntityDefinitionsCatalogReplaceResult> {
+  return apiRequest<EntityDefinitionsCatalogReplaceResult>(
+    "/api/entity-definitions/catalog",
+    {
+      method: "PUT",
+      body: input,
+      query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+    },
+  );
+}
+
 export interface EntityCategoryRecord {
   readonly id: string;
   readonly tenantId: string;
@@ -763,6 +800,41 @@ export async function backfillMetricDefinition(
   });
 }
 
+export async function putMetricDefinitionsCatalog(
+  input: MetricDefinitionsCatalogEnvelope,
+): Promise<{
+  readonly counts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly backfillSummary: {
+    readonly created: number;
+    readonly updated: number;
+    readonly skipped: number;
+    readonly failed: number;
+  };
+  readonly items: readonly MetricDefinitionRecord[];
+}> {
+  return apiRequest<{
+    readonly counts: {
+      readonly created: number;
+      readonly updated: number;
+      readonly deleted: number;
+    };
+    readonly backfillSummary: {
+      readonly created: number;
+      readonly updated: number;
+      readonly skipped: number;
+      readonly failed: number;
+    };
+    readonly items: readonly MetricDefinitionRecord[];
+  }>("/api/metric-definitions/catalog", {
+    method: "PUT",
+    body: input,
+  });
+}
+
 import type { EntityQueryFilterNode } from "@repo/entity-queries/browser";
 
 export interface EntityQueryDefinitionRecord {
@@ -843,6 +915,29 @@ export async function deleteEntityQueryDefinition(id: string): Promise<void> {
       method: "DELETE",
     },
   );
+}
+
+export async function putEntityQueryDefinitionsCatalog(
+  input: EntityQueryDefinitionsCatalogEnvelope,
+): Promise<{
+  readonly counts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly items: readonly EntityQueryDefinitionRecord[];
+}> {
+  return apiRequest<{
+    readonly counts: {
+      readonly created: number;
+      readonly updated: number;
+      readonly deleted: number;
+    };
+    readonly items: readonly EntityQueryDefinitionRecord[];
+  }>("/api/entity-query-definitions/catalog", {
+    method: "PUT",
+    body: input,
+  });
 }
 
 export interface TenantRoleRecord {

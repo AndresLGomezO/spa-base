@@ -13,10 +13,9 @@ function resolveListenPort(): number {
 }
 
 async function main() {
-  const skipSeeds = process.env.SKIP_PLATFORM_STARTUP_SEEDS === "true";
   const server = await buildServer({
-    skipPlatformRoleSeed: skipSeeds,
-    skipPlatformTenantSeed: skipSeeds,
+    skipPlatformRoleSeed: true,
+    skipPlatformTenantSeed: true,
   });
   await server.listen({
     host: apiEnv.API_HOST,

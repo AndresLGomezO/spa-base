@@ -1,763 +1,635 @@
 import {
-  RATES_SNAPSHOTS_PER_CONTRACT,
-  RATES_STATEMENTS_PER_LOAN_CONTRACT,
-} from "../constants.js";
-import { uploadRatesEmptyPdf } from "../seed-rates-documents.js";
-import {
   ensureRatesRecord,
   type RatesRecordSeedContext,
 } from "../seed-record-helpers.js";
 
-const CATEGORY_TYPES = [
-  "EXPENSE",
-  "EXPENSE",
-  "EXPENSE",
-  "EXPENSE",
-  "EXPENSE",
-  "EXPENSE",
-  "EXPENSE",
-  "INCOME",
-  "INCOME",
-  "SAVINGS",
-] as const;
+const CURRENCY = "USD" as const;
 
-const CATEGORY_NAMES = [
-  "Living",
-  "Food",
-  "Transport",
-  "Health",
-  "Entertainment",
-  "Utilities",
-  "Shopping",
-  "Salary",
-  "Freelance",
-  "Emergency Fund",
-] as const;
-
-const PROVIDER_TYPES = [
-  "BANK",
-  "BANK",
-  "SERVICE",
-  "SERVICE",
-  "EMPLOYER",
-  "BROKER",
-  "UTILITY",
-  "INSURANCE",
-  "TAX_AUTHORITY",
-  "OTHER",
-] as const;
-
-const PROVIDER_NAMES = [
-  "Bancolombia",
-  "Davivienda",
-  "Netflix",
-  "Spotify",
-  "Acme Corp",
-  "Fidelity",
-  "EPM Utilities",
-  "Sura Insurance",
-  "DIAN",
-  "Misc Provider",
-] as const;
-
-const ACCOUNT_TYPES = [
-  "BANK",
-  "BANK",
-  "DIGITAL_WALLET",
-  "DIGITAL_WALLET",
-  "BANK",
-  "BROKER",
-  "BANK",
-  "CASH",
-  "CRYPTO_WALLET",
-  "BANK",
-] as const;
-
-const TRANSACTION_TYPES = [
-  "EXPENSE",
-  "EXPENSE",
-  "EXPENSE",
-  "INCOME",
-  "TRANSFER",
-  "PAYMENT",
-  "INVESTMENT_BUY",
-  "FEE",
-  "TAX",
-  "INTEREST",
-] as const;
-
-const SUBSCRIPTION_PLANS = [
-  "Standard",
-  "Premium",
-  "Family",
-  "Basic",
-  "Pro",
-  "Annual",
-  "Monthly",
-  "Student",
-  "Business",
-  "Enterprise",
-] as const;
-
-const LOAN_CONTRACT_IDS = ["rd_con_14", "rd_con_15"] as const;
-
-type ContractStatus =
-  | "ACTIVE"
-  | "INACTIVE"
-  | "CLOSED"
-  | "DEFAULTED"
-  | "PAUSED"
-  | "COMPLETED";
-
-type ContractFrequency =
-  | "DAILY"
-  | "WEEKLY"
-  | "BIWEEKLY"
-  | "MONTHLY"
-  | "BIMONTHLY"
-  | "QUARTERLY"
-  | "SEMIANNUAL"
-  | "ANNUAL"
-  | "IRREGULAR";
-
-interface ContractDemoSeed {
-  readonly name: string;
-  readonly contractType:
-    | "SUBSCRIPTION"
-    | "INCOME_SOURCE"
-    | "MORTGAGE"
-    | "CREDIT_CARD";
-  readonly categoryIndex: number;
-  readonly providerIndex: number;
-  readonly currency: "COP" | "USD";
-  readonly initialAmount: number;
-  readonly currentBalance: number;
-  readonly startDate: string;
-  readonly endDate?: string;
-  readonly status: ContractStatus;
-  readonly description: string;
-  readonly isRecurring: boolean;
-  readonly frequency?: ContractFrequency;
-  readonly frequencyInDays?: number;
-  readonly variability?: "FIXED" | "VARIABLE";
-  readonly tags?: readonly string[];
+function monthDate(day: number): string {
+  return `2026-07-${String(day).padStart(2, "0")}`;
 }
 
-function padId(prefix: string, index: number): string {
-  return `${prefix}_${String(index).padStart(2, "0")}`;
+function priorMonthDate(day: number): string {
+  return `2026-06-${String(day).padStart(2, "0")}`;
 }
-
-function dateOnly(year: number, month: number, day: number): string {
-  return `${year}-${String(month).padStart(2, "0")}-${String(day).padStart(2, "0")}`;
-}
-
-function monthStart(year: number, month: number): string {
-  return dateOnly(year, month, 1);
-}
-
-const CONTRACT_DEMO_SEEDS: readonly ContractDemoSeed[] = [
-  {
-    name: "Netflix Standard",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 5,
-    providerIndex: 3,
-    currency: "COP",
-    initialAmount: 32_900,
-    currentBalance: 32_900,
-    startDate: dateOnly(2023, 3, 15),
-    status: "ACTIVE",
-    description: "Standard streaming plan, 2 screens, HD.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["streaming", "entertainment", "household"],
-  },
-  {
-    name: "Spotify Premium",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 5,
-    providerIndex: 4,
-    currency: "COP",
-    initialAmount: 21_900,
-    currentBalance: 21_900,
-    startDate: dateOnly(2022, 11, 1),
-    status: "ACTIVE",
-    description: "Individual premium plan, ad-free music.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["streaming", "music", "mobile"],
-  },
-  {
-    name: "Bancolombia Cuenta de Ahorros",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 10,
-    providerIndex: 1,
-    currency: "COP",
-    initialAmount: 18_500,
-    currentBalance: 18_500,
-    startDate: dateOnly(2021, 6, 1),
-    status: "ACTIVE",
-    description: "Monthly account maintenance fee.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["banking", "fees", "savings"],
-  },
-  {
-    name: "Davivienda Plan Empresarial",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 6,
-    providerIndex: 2,
-    currency: "COP",
-    initialAmount: 45_000,
-    currentBalance: 45_000,
-    startDate: dateOnly(2024, 1, 10),
-    status: "ACTIVE",
-    description: "Business banking package with payroll module.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["banking", "business", "payroll"],
-  },
-  {
-    name: "Acme Corp Enterprise SaaS",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 6,
-    providerIndex: 5,
-    currency: "USD",
-    initialAmount: 1_200,
-    currentBalance: 1_200,
-    startDate: dateOnly(2024, 4, 1),
-    endDate: dateOnly(2027, 3, 31),
-    status: "ACTIVE",
-    description: "Annual enterprise license for project management suite.",
-    isRecurring: true,
-    frequency: "ANNUAL",
-    frequencyInDays: 365,
-    variability: "FIXED",
-    tags: ["saas", "productivity", "business", "annual-billing"],
-  },
-  {
-    name: "Fidelity Active Trader Pro",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 10,
-    providerIndex: 6,
-    currency: "USD",
-    initialAmount: 49.95,
-    currentBalance: 49.95,
-    startDate: dateOnly(2023, 8, 20),
-    status: "ACTIVE",
-    description: "Brokerage platform subscription with real-time quotes.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["investing", "brokerage", "trading"],
-  },
-  {
-    name: "EPM Utilities — Residencial",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 6,
-    providerIndex: 7,
-    currency: "COP",
-    initialAmount: 185_000,
-    currentBalance: 212_400,
-    startDate: dateOnly(2020, 1, 1),
-    status: "ACTIVE",
-    description:
-      "Electricity and water utility service, variable monthly bill.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "VARIABLE",
-    tags: ["utilities", "essential", "household", "variable-cost"],
-  },
-  {
-    name: "Sura Seguro de Salud",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 4,
-    providerIndex: 8,
-    currency: "COP",
-    initialAmount: 890_000,
-    currentBalance: 890_000,
-    startDate: dateOnly(2023, 1, 1),
-    endDate: dateOnly(2026, 12, 31),
-    status: "ACTIVE",
-    description: "Family health insurance policy, copay plan.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["insurance", "health", "family", "protection"],
-  },
-  {
-    name: "DIAN Declaración Renta",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 6,
-    providerIndex: 9,
-    currency: "COP",
-    initialAmount: 0,
-    currentBalance: 0,
-    startDate: dateOnly(2025, 1, 1),
-    endDate: dateOnly(2025, 4, 30),
-    status: "PAUSED",
-    description: "Annual income tax filing obligation — filing window closed.",
-    isRecurring: true,
-    frequency: "ANNUAL",
-    frequencyInDays: 365,
-    variability: "VARIABLE",
-    tags: ["tax", "government", "compliance", "annual"],
-  },
-  {
-    name: "Misc Cloud Backup",
-    contractType: "SUBSCRIPTION",
-    categoryIndex: 7,
-    providerIndex: 10,
-    currency: "USD",
-    initialAmount: 9.99,
-    currentBalance: 9.99,
-    startDate: dateOnly(2025, 6, 1),
-    status: "ACTIVE",
-    description: "1 TB cloud backup for personal files and photos.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["cloud", "backup", "personal"],
-  },
-  {
-    name: "Acme Corp — Salario",
-    contractType: "INCOME_SOURCE",
-    categoryIndex: 8,
-    providerIndex: 5,
-    currency: "COP",
-    initialAmount: 12_500_000,
-    currentBalance: 12_500_000,
-    startDate: dateOnly(2022, 2, 1),
-    status: "ACTIVE",
-    description: "Full-time software engineer salary, paid biweekly.",
-    isRecurring: true,
-    frequency: "BIWEEKLY",
-    frequencyInDays: 14,
-    variability: "FIXED",
-    tags: ["salary", "employment", "primary-income", "w2"],
-  },
-  {
-    name: "Freelance — Design Projects",
-    contractType: "INCOME_SOURCE",
-    categoryIndex: 9,
-    providerIndex: 10,
-    currency: "COP",
-    initialAmount: 4_800_000,
-    currentBalance: 3_200_000,
-    startDate: dateOnly(2024, 6, 1),
-    status: "ACTIVE",
-    description:
-      "Irregular freelance design income from 2–3 clients per month.",
-    isRecurring: true,
-    frequency: "IRREGULAR",
-    variability: "VARIABLE",
-    tags: ["freelance", "side-income", "1099", "creative"],
-  },
-  {
-    name: "Rental — Apt. Chapinero",
-    contractType: "INCOME_SOURCE",
-    categoryIndex: 8,
-    providerIndex: 10,
-    currency: "COP",
-    initialAmount: 2_800_000,
-    currentBalance: 2_800_000,
-    startDate: dateOnly(2023, 5, 1),
-    endDate: dateOnly(2026, 4, 30),
-    status: "INACTIVE",
-    description: "Short-term rental ended — tenant moved out April 2026.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: ["rental", "passive-income", "real-estate", "ended"],
-  },
-  {
-    name: "Home Mortgage — Bancolombia",
-    contractType: "MORTGAGE",
-    categoryIndex: 1,
-    providerIndex: 1,
-    currency: "COP",
-    initialAmount: 380_000_000,
-    currentBalance: 342_500_000,
-    startDate: dateOnly(2020, 8, 15),
-    endDate: dateOnly(2045, 8, 15),
-    status: "ACTIVE",
-    description: "30-year fixed mortgage on primary residence in Bogotá.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "FIXED",
-    tags: [
-      "housing",
-      "mortgage",
-      "long-term",
-      "primary-residence",
-      "fixed-rate",
-    ],
-  },
-  {
-    name: "Visa Platinum — Davivienda",
-    contractType: "CREDIT_CARD",
-    categoryIndex: 7,
-    providerIndex: 2,
-    currency: "COP",
-    initialAmount: 8_000_000,
-    currentBalance: 1_247_500,
-    startDate: dateOnly(2021, 3, 1),
-    status: "ACTIVE",
-    description: "Rewards credit card with travel benefits, ~16% utilization.",
-    isRecurring: true,
-    frequency: "MONTHLY",
-    frequencyInDays: 30,
-    variability: "VARIABLE",
-    tags: ["credit-card", "revolving", "rewards", "travel", "debt"],
-  },
-];
 
 export async function seedRatesDemoRecords(
   context: RatesRecordSeedContext,
 ): Promise<void> {
-  const ensure = (
-    entityName: string,
-    id: string,
-    data: Record<string, unknown>,
-  ) => ensureRatesRecord(context, entityName, id, data);
-
-  for (let index = 1; index <= 10; index += 1) {
-    await ensure("category", padId("rd_cat", index), {
-      name: CATEGORY_NAMES[index - 1]!,
-      type: CATEGORY_TYPES[index - 1]!,
-      ...(index > 1 && index <= 3
-        ? { parentId: padId("rd_cat", 1) }
-        : index === 9
-          ? { parentId: padId("rd_cat", 8) }
-          : {}),
-    });
-  }
-
-  for (let index = 1; index <= 10; index += 1) {
-    await ensure("provider", padId("rd_prov", index), {
-      name: PROVIDER_NAMES[index - 1]!,
-      type: PROVIDER_TYPES[index - 1]!,
-      website:
-        index <= 4
-          ? `https://example.com/${PROVIDER_NAMES[index - 1]!.toLowerCase().replace(/\s+/g, "")}`
-          : undefined,
-    });
-  }
-
-  for (let index = 1; index <= 10; index += 1) {
-    await ensure("account", padId("rd_acc", index), {
-      name: `${PROVIDER_NAMES[index - 1]!} Account`,
-      accountType: ACCOUNT_TYPES[index - 1]!,
-      providerId: padId("rd_prov", index),
-      currency: index % 3 === 0 ? "USD" : "COP",
-      balance: 500_000 + index * 125_000,
-    });
-  }
-
-  for (let index = 0; index < CONTRACT_DEMO_SEEDS.length; index += 1) {
-    const seed = CONTRACT_DEMO_SEEDS[index]!;
-    await ensure("contract", padId("rd_con", index + 1), {
-      name: seed.name,
-      contractType: seed.contractType,
-      categoryId: padId("rd_cat", seed.categoryIndex),
-      providerId: padId("rd_prov", seed.providerIndex),
-      currency: seed.currency,
-      initialAmount: seed.initialAmount,
-      currentBalance: seed.currentBalance,
-      startDate: seed.startDate,
-      ...(seed.endDate ? { endDate: seed.endDate } : {}),
-      status: seed.status,
-      description: seed.description,
-      isRecurring: seed.isRecurring,
-      ...(seed.frequency ? { frequency: seed.frequency } : {}),
-      ...(seed.frequencyInDays !== undefined
-        ? { frequencyInDays: seed.frequencyInDays }
-        : {}),
-      ...(seed.variability ? { variability: seed.variability } : {}),
-      ...(seed.tags ? { tags: [...seed.tags] } : {}),
-    });
-  }
-
-  for (let index = 1; index <= 10; index += 1) {
-    await ensure("subscriptionDetails", padId("rd_subd", index), {
-      contractId: padId("rd_con", index),
-      planName: SUBSCRIPTION_PLANS[index - 1]!,
-      startDate: dateOnly(2024, 2, 1),
-      nextBillingDate: dateOnly(2026, 7, 1),
-      autoRenew: index % 4 !== 0,
-    });
-  }
-
-  const incomeContractIds = [
-    "rd_con_11",
-    "rd_con_12",
-    "rd_con_13",
-    "rd_con_08",
-    "rd_con_09",
+  const actors = [
+    { id: "rd_actor_metro_bank", name: "Metro Bank", type: "BANK" },
+    { id: "rd_actor_north_cu", name: "North Credit Union", type: "BANK" },
+    {
+      id: "rd_actor_rental_a",
+      name: "Rental Property A",
+      type: "PROPERTY",
+    },
+    {
+      id: "rd_actor_rental_b",
+      name: "Rental Property B",
+      type: "PROPERTY",
+    },
+    {
+      id: "rd_actor_employer",
+      name: "Example Employer",
+      type: "EMPLOYER",
+    },
+    { id: "rd_actor_utility", name: "City Power", type: "UTILITY" },
+    { id: "rd_actor_person", name: "Example Person", type: "PERSON" },
+    {
+      id: "rd_actor_fiduciary",
+      name: "Demo Fiduciary",
+      type: "FIDUCIARY",
+    },
   ] as const;
 
-  for (let index = 1; index <= 5; index += 1) {
-    await ensure("incomeDetails", padId("rd_incd", index), {
-      name: `${CATEGORY_NAMES[7 + (index % 2)]!} — ${index}`,
-      contractId: incomeContractIds[index - 1]!,
-      incomeType:
-        index === 1
-          ? "SALARY"
-          : index === 2
-            ? "FREELANCE"
-            : index === 3
-              ? "RENT"
-              : index === 4
-                ? "DIVIDEND"
-                : "BUSINESS",
-      expectedAmount: 3_500_000 + index * 500_000,
+  for (const actor of actors) {
+    await ensureRatesRecord(context, "actor", actor.id, {
+      name: actor.name,
+      type: actor.type,
     });
   }
 
-  const investmentContractIds = [
-    "rd_con_06",
-    "rd_con_07",
-    "rd_con_10",
-    "rd_con_11",
-    "rd_con_12",
+  const categories = [
+    { id: "rd_cat_housing", name: "Housing", kind: "EXPENSE" },
+    { id: "rd_cat_utilities", name: "Utilities", kind: "EXPENSE" },
+    { id: "rd_cat_income", name: "Income", kind: "INCOME" },
+    { id: "rd_cat_investments", name: "Investments", kind: "INVESTMENT" },
+    { id: "rd_cat_debt", name: "Debt", kind: "EXPENSE" },
+    { id: "rd_cat_transfers", name: "Transfers", kind: "TRANSFER" },
+    { id: "rd_cat_insurance", name: "Insurance", kind: "EXPENSE" },
+    { id: "rd_cat_other", name: "Other", kind: "EXPENSE" },
   ] as const;
 
-  for (let index = 1; index <= 5; index += 1) {
-    await ensure("investmentDetails", padId("rd_invd", index), {
-      contractId: investmentContractIds[index - 1]!,
-      expectedReturnRate: 0.05 + index * 0.01,
-      riskLevel: index % 3 === 0 ? "HIGH" : index % 2 === 0 ? "MEDIUM" : "LOW",
-      liquidity: index % 2 === 0 ? "HIGH" : "MEDIUM",
+  for (const category of categories) {
+    await ensureRatesRecord(context, "category", category.id, {
+      name: category.name,
+      kind: category.kind,
     });
   }
 
-  for (let index = 1; index <= 5; index += 1) {
-    await ensure("contractTerms", padId("rd_ctrm", index), {
-      contractId: index % 2 === 0 ? "rd_con_14" : "rd_con_15",
-      interestRate: 0.08 + index * 0.005,
-      rateType: index % 2 === 0 ? "FIXED" : "VARIABLE",
-      compoundingFrequency: "MONTHLY",
-      paymentAmount: 1_200_000 + index * 100_000,
-      paymentFrequency: "MONTHLY",
-      totalPeriods: 240 - index * 12,
-      amortizationType: index % 2 === 0 ? "FRENCH" : "GERMAN",
-      gracePeriods: index === 5 ? 2 : undefined,
-      effectiveDate: dateOnly(2023, 6, 1),
+  const accounts = [
+    {
+      id: "rd_acct_checking",
+      name: "Primary Checking",
+      accountType: "BANK",
+      actorId: "rd_actor_metro_bank",
+      currentBalance: 12500,
+    },
+    {
+      id: "rd_acct_savings",
+      name: "Emergency Savings",
+      accountType: "SAVINGS",
+      actorId: "rd_actor_metro_bank",
+      currentBalance: 45000,
+    },
+    {
+      id: "rd_acct_credit",
+      name: "Rewards Credit Card",
+      accountType: "CREDIT",
+      actorId: "rd_actor_north_cu",
+      currentBalance: 3200,
+    },
+  ] as const;
+
+  for (const account of accounts) {
+    await ensureRatesRecord(context, "account", account.id, {
+      name: account.name,
+      accountType: account.accountType,
+      actorId: account.actorId,
+      currency: CURRENCY,
+      currentBalance: account.currentBalance,
     });
   }
 
-  for (
-    let contractIndex = 1;
-    contractIndex <= CONTRACT_DEMO_SEEDS.length;
-    contractIndex += 1
-  ) {
-    const seed = CONTRACT_DEMO_SEEDS[contractIndex - 1]!;
-    const contractId = padId("rd_con", contractIndex);
-
-    for (let snap = 1; snap <= RATES_SNAPSHOTS_PER_CONTRACT; snap += 1) {
-      const month = ((snap - 1) % 12) + 1;
-      const balance =
-        seed.contractType === "MORTGAGE"
-          ? seed.currentBalance - snap * 1_800_000
-          : seed.contractType === "CREDIT_CARD"
-            ? seed.currentBalance + (snap % 2 === 0 ? 85_000 : -120_000)
-            : seed.variability === "VARIABLE"
-              ? seed.currentBalance +
-                (snap % 3 === 0 ? 28_000 : snap % 2 === 0 ? -12_000 : 5_000)
-              : seed.currentBalance;
-
-      await ensure(
-        "contractSnapshot",
-        `${contractId}_snap_${String(snap).padStart(2, "0")}`,
-        {
-          contractId,
-          date: monthStart(2025, month),
-          balance,
-          accruedInterest:
-            seed.contractType === "MORTGAGE" ||
-            seed.contractType === "CREDIT_CARD"
-              ? snap * 2_500
-              : undefined,
-        },
-      );
-    }
-  }
-
-  for (const contractId of LOAN_CONTRACT_IDS) {
-    for (let stmt = 1; stmt <= RATES_STATEMENTS_PER_LOAN_CONTRACT; stmt += 1) {
-      const month = 4 + stmt;
-      const periodStart = monthStart(2026, month);
-      const periodEnd = dateOnly(2026, month, 28);
-      await ensure(
-        "statement",
-        `${contractId}_stmt_${String(stmt).padStart(2, "0")}`,
-        {
-          contractId,
-          periodStart,
-          periodEnd,
-          openingBalance: 12_000_000,
-          closingBalance: 11_500_000 - stmt * 100_000,
-          minimumPayment: 450_000,
-          dueDate: dateOnly(2026, month + 1, 5),
-          paidAmount: stmt === 1 ? 450_000 : undefined,
-          status: stmt === 1 ? "PAID" : "PENDING",
-        },
-      );
-    }
-  }
-
-  const transactionDescriptions = [
-    "Groceries",
-    "Salary deposit",
-    "Uber ride",
-    "Restaurant",
-    "Transfer to savings",
-    "Mortgage payment",
-    "ETF purchase",
-    "Bank fee",
-    "Property tax",
-    "Savings interest",
-  ];
-
-  for (let index = 1; index <= 50; index += 1) {
-    const type =
-      index % 5 === 0
-        ? "INCOME"
-        : TRANSACTION_TYPES[index % TRANSACTION_TYPES.length]!;
-    const month = ((index - 1) % 12) + 1;
-    const day = ((index - 1) % 27) + 1;
-
-    await ensure("transaction", padId("rd_txn", index), {
-      type,
-      amount: 25_000 + index * 18_500,
-      date: dateOnly(2025, month, day),
-      accountId: padId("rd_acc", ((index - 1) % 10) + 1),
-      categoryId: padId(
-        "rd_cat",
-        type === "INCOME" ? 8 : ((index - 1) % 7) + 1,
-      ),
-      contractId:
-        index % 3 === 0 ? padId("rd_con", ((index - 1) % 15) + 1) : undefined,
-      description: `${transactionDescriptions[index % transactionDescriptions.length]!} #${index}`,
-    });
-  }
-
-  const fileTargets: ReadonlyArray<{
+  type FinancialItemSeed = {
     readonly id: string;
-    readonly parentType: "CONTRACT" | "TRANSACTION" | "STATEMENT";
-    readonly contractId?: string;
-    readonly transactionId?: string;
-    readonly statementId?: string;
-    readonly documentType: string;
     readonly name: string;
-  }> = [
+    readonly flowKind: string;
+    readonly itemType: string;
+    readonly amount: number;
+    readonly isRecurring: boolean;
+    readonly frequency: string;
+    readonly nextDueDate: string;
+    readonly currentBalance: number;
+    readonly balanceSheetRole: string;
+    readonly status: string;
+    readonly categoryId: string;
+    readonly actorId: string;
+    readonly accountId: string;
+  };
+
+  const financialItems: readonly FinancialItemSeed[] = [
     {
-      id: "rd_file_01",
-      parentType: "CONTRACT",
-      contractId: "rd_con_01",
-      documentType: "CONTRACT_PDF",
-      name: "Netflix agreement",
+      id: "rd_fi_mortgage",
+      name: "Primary Mortgage",
+      flowKind: "EXPENSE",
+      itemType: "MORTGAGE",
+      amount: 1850,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(5),
+      currentBalance: 250000,
+      balanceSheetRole: "LIABILITY",
+      status: "ACTIVE",
+      categoryId: "rd_cat_debt",
+      actorId: "rd_actor_metro_bank",
+      accountId: "rd_acct_checking",
     },
     {
-      id: "rd_file_02",
-      parentType: "CONTRACT",
-      contractId: "rd_con_05",
-      documentType: "OTHER",
-      name: "Service terms",
+      id: "rd_fi_credit_card",
+      name: "Rewards Credit Card",
+      flowKind: "EXPENSE",
+      itemType: "CREDIT_CARD",
+      amount: 450,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(12),
+      currentBalance: 3200,
+      balanceSheetRole: "LIABILITY",
+      status: "ACTIVE",
+      categoryId: "rd_cat_debt",
+      actorId: "rd_actor_north_cu",
+      accountId: "rd_acct_credit",
     },
     {
-      id: "rd_file_03",
-      parentType: "TRANSACTION",
-      transactionId: "rd_txn_03",
-      documentType: "RECEIPT",
-      name: "Ride receipt",
+      id: "rd_fi_salary",
+      name: "Monthly Salary",
+      flowKind: "INCOME",
+      itemType: "SALARY",
+      amount: 6500,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(1),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_income",
+      actorId: "rd_actor_employer",
+      accountId: "rd_acct_checking",
     },
     {
-      id: "rd_file_04",
-      parentType: "TRANSACTION",
-      transactionId: "rd_txn_12",
-      documentType: "RECEIPT",
-      name: "Restaurant receipt",
+      id: "rd_fi_rental_a",
+      name: "Rental Income A",
+      flowKind: "INCOME",
+      itemType: "RENTAL_INCOME",
+      amount: 2200,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(3),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_income",
+      actorId: "rd_actor_rental_a",
+      accountId: "rd_acct_checking",
     },
     {
-      id: "rd_file_05",
-      parentType: "STATEMENT",
-      statementId: "rd_con_14_stmt_01",
-      documentType: "STATEMENT_PDF",
-      name: "Mortgage statement Jan",
+      id: "rd_fi_rental_b",
+      name: "Rental Income B",
+      flowKind: "INCOME",
+      itemType: "RENTAL_INCOME",
+      amount: 1800,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(8),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_income",
+      actorId: "rd_actor_rental_b",
+      accountId: "rd_acct_checking",
     },
     {
-      id: "rd_file_06",
-      parentType: "STATEMENT",
-      statementId: "rd_con_15_stmt_01",
-      documentType: "STATEMENT_PDF",
-      name: "Card statement",
+      id: "rd_fi_electric",
+      name: "Electric Utility",
+      flowKind: "EXPENSE",
+      itemType: "UTILITY",
+      amount: 140,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(18),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_utilities",
+      actorId: "rd_actor_utility",
+      accountId: "rd_acct_checking",
     },
     {
-      id: "rd_file_07",
-      parentType: "CONTRACT",
-      contractId: "rd_con_14",
-      documentType: "CONTRACT_PDF",
-      name: "Mortgage deed",
+      id: "rd_fi_hoa_a",
+      name: "Property A HOA Fee",
+      flowKind: "EXPENSE",
+      itemType: "HOUSING_FEE",
+      amount: 350,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(15),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_housing",
+      actorId: "rd_actor_rental_a",
+      accountId: "rd_acct_checking",
     },
     {
-      id: "rd_file_08",
-      parentType: "TRANSACTION",
-      transactionId: "rd_txn_25",
-      documentType: "RECEIPT",
-      name: "Online purchase",
+      id: "rd_fi_savings_plan",
+      name: "Monthly Savings Transfer",
+      flowKind: "TRANSFER",
+      itemType: "TO_SAVINGS",
+      amount: 500,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(2),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_transfers",
+      actorId: "rd_actor_metro_bank",
+      accountId: "rd_acct_savings",
     },
     {
-      id: "rd_file_09",
-      parentType: "CONTRACT",
-      contractId: "rd_con_10",
-      documentType: "OTHER",
-      name: "Subscription invoice",
+      id: "rd_fi_yield_savings",
+      name: "High-Yield Savings",
+      flowKind: "ASSET_GROWTH",
+      itemType: "YIELD_SAVINGS",
+      amount: 500,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(10),
+      currentBalance: 45000,
+      balanceSheetRole: "ASSET",
+      status: "ACTIVE",
+      categoryId: "rd_cat_investments",
+      actorId: "rd_actor_metro_bank",
+      accountId: "rd_acct_savings",
     },
     {
-      id: "rd_file_10",
-      parentType: "TRANSACTION",
-      transactionId: "rd_txn_40",
-      documentType: "RECEIPT",
-      name: "Utility payment proof",
+      id: "rd_fi_fiduciary",
+      name: "Managed Investment Account",
+      flowKind: "ASSET_GROWTH",
+      itemType: "FIDUCIARY",
+      amount: 1000,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(20),
+      currentBalance: 75000,
+      balanceSheetRole: "ASSET",
+      status: "ACTIVE",
+      categoryId: "rd_cat_investments",
+      actorId: "rd_actor_fiduciary",
+      accountId: "rd_acct_checking",
+    },
+    {
+      id: "rd_fi_yield_income",
+      name: "Savings Yield Income",
+      flowKind: "INCOME",
+      itemType: "YIELD_INCOME",
+      amount: 375,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(11),
+      currentBalance: 45000,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_income",
+      actorId: "rd_actor_metro_bank",
+      accountId: "rd_acct_savings",
+    },
+    {
+      id: "rd_fi_personal_loan",
+      name: "Personal Loan Payoff",
+      flowKind: "EXPENSE",
+      itemType: "PERSONAL_DEBT",
+      amount: 2500,
+      isRecurring: false,
+      frequency: "ONE_TIME",
+      nextDueDate: monthDate(25),
+      currentBalance: 2500,
+      balanceSheetRole: "LIABILITY",
+      status: "ACTIVE",
+      categoryId: "rd_cat_debt",
+      actorId: "rd_actor_person",
+      accountId: "rd_acct_checking",
+    },
+    {
+      id: "rd_fi_insurance",
+      name: "Home Insurance",
+      flowKind: "EXPENSE",
+      itemType: "INSURANCE",
+      amount: 120,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(22),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "ACTIVE",
+      categoryId: "rd_cat_insurance",
+      actorId: "rd_actor_metro_bank",
+      accountId: "rd_acct_checking",
+    },
+    {
+      id: "rd_fi_paused_sub",
+      name: "Paused Subscription",
+      flowKind: "EXPENSE",
+      itemType: "SUBSCRIPTION",
+      amount: 15,
+      isRecurring: true,
+      frequency: "MONTHLY",
+      nextDueDate: monthDate(28),
+      currentBalance: 0,
+      balanceSheetRole: "NONE",
+      status: "PAUSED",
+      categoryId: "rd_cat_other",
+      actorId: "rd_actor_utility",
+      accountId: "rd_acct_checking",
     },
   ];
 
-  for (const file of fileTargets) {
-    const document = await uploadRatesEmptyPdf(context, {
-      entityName: "file",
-      fieldName: "document",
-      recordId: file.id,
-      fileName: `${file.id}.pdf`,
+  for (const item of financialItems) {
+    await ensureRatesRecord(context, "financialItem", item.id, {
+      name: item.name,
+      flowKind: item.flowKind,
+      itemType: item.itemType,
+      amount: item.amount,
+      currency: CURRENCY,
+      isRecurring: item.isRecurring,
+      frequency: item.frequency,
+      nextDueDate: item.nextDueDate,
+      currentBalance: item.currentBalance,
+      balanceSheetRole: item.balanceSheetRole,
+      status: item.status,
+      categoryId: item.categoryId,
+      actorId: item.actorId,
+      accountId: item.accountId,
     });
+  }
 
-    if (!document) {
-      continue;
-    }
+  await ensureRatesRecord(context, "loanDetails", "rd_loan_mortgage", {
+    financialItemId: "rd_fi_mortgage",
+    interestRate: 4.5,
+    paymentAmount: 1850,
+    principalPortion: 1200,
+    interestPortion: 650,
+    rateType: "FIXED",
+    amortizationType: "FRENCH",
+  });
 
-    await ensure("file", file.id, {
-      parentType: file.parentType,
-      ...(file.contractId ? { contractId: file.contractId } : {}),
-      ...(file.transactionId ? { transactionId: file.transactionId } : {}),
-      ...(file.statementId ? { statementId: file.statementId } : {}),
-      documentType: file.documentType,
-      name: file.name,
-      document,
-      uploadedAt: dateOnly(2026, 6, 1),
-      tags: "demo,seed",
+  await ensureRatesRecord(context, "loanDetails", "rd_loan_credit", {
+    financialItemId: "rd_fi_credit_card",
+    interestRate: 18.99,
+    paymentAmount: 450,
+    principalPortion: 200,
+    interestPortion: 250,
+    rateType: "VARIABLE",
+    amortizationType: "NONE",
+  });
+
+  await ensureRatesRecord(context, "loanDetails", "rd_loan_personal", {
+    financialItemId: "rd_fi_personal_loan",
+    interestRate: 0,
+    paymentAmount: 2500,
+    principalPortion: 2500,
+    interestPortion: 0,
+    rateType: "FIXED",
+    amortizationType: "BULLET",
+  });
+
+  await ensureRatesRecord(context, "incomeDetails", "rd_income_salary", {
+    financialItemId: "rd_fi_salary",
+    incomeType: "SALARY",
+    expectedAmount: 6500,
+    payDay: 1,
+  });
+
+  await ensureRatesRecord(context, "incomeDetails", "rd_income_rental_a", {
+    financialItemId: "rd_fi_rental_a",
+    incomeType: "RENTAL_INCOME",
+    expectedAmount: 2200,
+    payDay: 3,
+  });
+
+  await ensureRatesRecord(context, "incomeDetails", "rd_income_rental_b", {
+    financialItemId: "rd_fi_rental_b",
+    incomeType: "RENTAL_INCOME",
+    expectedAmount: 1800,
+    payDay: 8,
+  });
+
+  await ensureRatesRecord(context, "investmentDetails", "rd_inv_savings", {
+    financialItemId: "rd_fi_yield_savings",
+    expectedReturnRate: 4.0,
+    riskLevel: "LOW",
+    liquidity: "HIGH",
+    contributionAmount: 500,
+  });
+
+  await ensureRatesRecord(context, "investmentDetails", "rd_inv_fiduciary", {
+    financialItemId: "rd_fi_fiduciary",
+    expectedReturnRate: 7.0,
+    riskLevel: "MEDIUM",
+    liquidity: "MEDIUM",
+    contributionAmount: 1000,
+  });
+
+  await ensureRatesRecord(context, "investmentDetails", "rd_inv_yield_income", {
+    financialItemId: "rd_fi_yield_income",
+    expectedReturnRate: 1.0,
+    riskLevel: "LOW",
+    liquidity: "HIGH",
+    contributionAmount: 0,
+  });
+
+  await ensureRatesRecord(context, "serviceDetails", "rd_svc_electric", {
+    financialItemId: "rd_fi_electric",
+    billingDay: 18,
+    autoPay: true,
+    meterOrPolicyRef: "ACCT-1001",
+  });
+
+  await ensureRatesRecord(context, "serviceDetails", "rd_svc_hoa", {
+    financialItemId: "rd_fi_hoa_a",
+    billingDay: 15,
+    autoPay: false,
+    meterOrPolicyRef: "HOA-A",
+  });
+
+  const balanceSnapshots = [
+    {
+      id: "rd_snap_mortgage",
+      financialItemId: "rd_fi_mortgage",
+      date: priorMonthDate(1),
+      balance: 252000,
+      accruedInterest: 650,
+    },
+    {
+      id: "rd_snap_credit",
+      financialItemId: "rd_fi_credit_card",
+      date: priorMonthDate(1),
+      balance: 3400,
+      accruedInterest: 45,
+    },
+    {
+      id: "rd_snap_savings",
+      financialItemId: "rd_fi_yield_savings",
+      date: priorMonthDate(1),
+      balance: 44500,
+      accruedInterest: 150,
+    },
+    {
+      id: "rd_snap_fiduciary",
+      financialItemId: "rd_fi_fiduciary",
+      date: priorMonthDate(1),
+      balance: 74000,
+      accruedInterest: 430,
+    },
+  ] as const;
+
+  for (const snapshot of balanceSnapshots) {
+    await ensureRatesRecord(context, "balanceSnapshot", snapshot.id, {
+      financialItemId: snapshot.financialItemId,
+      date: snapshot.date,
+      balance: snapshot.balance,
+      accruedInterest: snapshot.accruedInterest,
     });
+  }
+
+  const paymentSchedules = financialItems
+    .filter((item) => item.status === "ACTIVE" && item.amount > 0)
+    .map((item, index) => ({
+      id: `rd_sched_${index + 1}`,
+      financialItemId: item.id,
+      dueDate: item.nextDueDate,
+      expectedAmount: item.amount,
+      principalPortion:
+        item.itemType === "MORTGAGE"
+          ? 1200
+          : item.itemType === "CREDIT_CARD"
+            ? 200
+            : item.itemType === "PERSONAL_DEBT"
+              ? item.amount
+              : 0,
+      interestPortion:
+        item.itemType === "MORTGAGE"
+          ? 650
+          : item.itemType === "CREDIT_CARD"
+            ? 250
+            : 0,
+      status: "UPCOMING" as const,
+    }));
+
+  for (const schedule of paymentSchedules) {
+    await ensureRatesRecord(context, "paymentSchedule", schedule.id, schedule);
+  }
+
+  const transactions = [
+    {
+      id: "rd_txn_salary_jul",
+      type: "INCOME",
+      amount: 6500,
+      date: monthDate(1),
+      description: "July salary deposit",
+      accountId: "rd_acct_checking",
+      financialItemId: "rd_fi_salary",
+      categoryId: "rd_cat_income",
+    },
+    {
+      id: "rd_txn_rental_a_jul",
+      type: "INCOME",
+      amount: 2200,
+      date: monthDate(3),
+      description: "Rental income A",
+      accountId: "rd_acct_checking",
+      financialItemId: "rd_fi_rental_a",
+      categoryId: "rd_cat_income",
+    },
+    {
+      id: "rd_txn_mortgage_jul",
+      type: "PAYMENT",
+      amount: 1850,
+      date: monthDate(5),
+      description: "Mortgage payment",
+      accountId: "rd_acct_checking",
+      financialItemId: "rd_fi_mortgage",
+      categoryId: "rd_cat_debt",
+    },
+    {
+      id: "rd_txn_electric_jul",
+      type: "EXPENSE",
+      amount: 140,
+      date: monthDate(18),
+      description: "Electric bill",
+      accountId: "rd_acct_checking",
+      financialItemId: "rd_fi_electric",
+      categoryId: "rd_cat_utilities",
+    },
+    {
+      id: "rd_txn_transfer_jul",
+      type: "TRANSFER",
+      amount: 500,
+      date: monthDate(2),
+      description: "Savings transfer",
+      accountId: "rd_acct_savings",
+      financialItemId: "rd_fi_savings_plan",
+      categoryId: "rd_cat_transfers",
+    },
+    {
+      id: "rd_txn_interest_jul",
+      type: "INTEREST",
+      amount: 375,
+      date: monthDate(11),
+      description: "Savings interest",
+      accountId: "rd_acct_savings",
+      financialItemId: "rd_fi_yield_income",
+      categoryId: "rd_cat_income",
+    },
+    {
+      id: "rd_txn_grocery_jul",
+      type: "EXPENSE",
+      amount: 285,
+      date: monthDate(7),
+      description: "Groceries",
+      accountId: "rd_acct_checking",
+      categoryId: "rd_cat_other",
+    },
+    {
+      id: "rd_txn_salary_jun",
+      type: "INCOME",
+      amount: 6500,
+      date: priorMonthDate(1),
+      description: "June salary deposit",
+      accountId: "rd_acct_checking",
+      financialItemId: "rd_fi_salary",
+      categoryId: "rd_cat_income",
+    },
+    {
+      id: "rd_txn_rental_b_jun",
+      type: "INCOME",
+      amount: 1800,
+      date: priorMonthDate(8),
+      description: "Rental income B",
+      accountId: "rd_acct_checking",
+      financialItemId: "rd_fi_rental_b",
+      categoryId: "rd_cat_income",
+    },
+    {
+      id: "rd_txn_credit_jun",
+      type: "PAYMENT",
+      amount: 450,
+      date: priorMonthDate(12),
+      description: "Credit card payment",
+      accountId: "rd_acct_credit",
+      financialItemId: "rd_fi_credit_card",
+      categoryId: "rd_cat_debt",
+    },
+  ] as const;
+
+  for (const transaction of transactions) {
+    await ensureRatesRecord(
+      context,
+      "transaction",
+      transaction.id,
+      transaction,
+    );
   }
 }

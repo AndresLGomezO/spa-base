@@ -1,11 +1,8 @@
 import type { CreateTenantRoleInput } from "@repo/rbac";
 
-import {
-  RATES_BUSINESS_ENTITY_NAMES,
-  RATES_ENTITY_NAMES,
-} from "./definitions/index.js";
+import { RATES_ENTITY_NAMES } from "./entity-names.js";
 
-const BUSINESS_MUTATIONS = RATES_BUSINESS_ENTITY_NAMES.flatMap((name) => [
+const BUSINESS_MUTATIONS = RATES_ENTITY_NAMES.flatMap((name) => [
   `${name}.create`,
   `${name}.update`,
   `${name}.delete`,
@@ -17,7 +14,7 @@ const ENTITY_READS = RATES_ENTITY_NAMES.map((name) => `${name}.read`);
 const NORMAL_RATES_USER_ROLE: CreateTenantRoleInput = {
   name: "normalRatesUser",
   description:
-    "Edit contracts, accounts, transactions, and related records across the Rates contract model.",
+    "Edit financial items, accounts, transactions, and related records across the Rates tenant model.",
   grants: [...ENTITY_READS, ...BUSINESS_MUTATIONS, "*"],
 };
 

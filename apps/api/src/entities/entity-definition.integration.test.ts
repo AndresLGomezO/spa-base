@@ -232,6 +232,210 @@ describe("entity definitions integration", () => {
     expect(getWorkItem.json().data.batchId).toBe(batchId);
   });
 
+  it("replaces the entity definitions catalog", async () => {
+    const server = await buildTestServer();
+    const headers = {
+      authorization: "Bearer fake-token",
+      "x-firebase-appcheck": "fake-appcheck",
+    };
+
+    const createLoan = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "loan",
+        label: "Loans",
+        fields: [{ name: "amount", type: "number", required: true }],
+      },
+    });
+    expect(createLoan.statusCode).toBe(201);
+
+    const createCustomer = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "customer",
+        label: "Customers",
+        fields: [{ name: "name", type: "string", required: true }],
+      },
+    });
+    expect(createCustomer.statusCode).toBe(201);
+
+    const replaceCatalog = await server.inject({
+      method: "PUT",
+      url: "/api/entity-definitions/catalog",
+      headers,
+      payload: {
+        kind: "entity-definitions-catalog",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        entityCategories: [],
+        entityDefinitions: [
+          {
+            name: "loan",
+            label: "Loans v2",
+            fields: [{ name: "amount", type: "number", required: true }],
+          },
+          {
+            name: "payment",
+            label: "Payments",
+            fields: [{ name: "total", type: "number", required: true }],
+          },
+        ],
+      },
+    });
+    expect(replaceCatalog.statusCode).toBe(200);
+    expect(replaceCatalog.json().data.counts).toEqual({
+      created: 1,
+      updated: 1,
+      deleted: 1,
+    });
+
+    const list = await server.inject({
+      method: "GET",
+      url: "/api/entity-definitions",
+      headers,
+    });
+    const names = list
+      .json()
+      .data.items.map((item: { name: string }) => item.name);
+    expect(names).toEqual(expect.arrayContaining(["loan", "payment"]));
+    expect(names).not.toContain("customer");
+  });
+
+  it("blocks catalog replace when a survivor references a deleted entity", async () => {
+    const server = await buildTestServer();
+    const headers = {
+      authorization: "Bearer fake-token",
+      "x-firebase-appcheck": "fake-appcheck",
+    };
+
+    await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "customer",
+        label: "Customers",
+        fields: [{ name: "name", type: "string", required: true }],
+      },
+    });
+
+    await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "order",
+        label: "Orders",
+        fields: [
+          {
+            name: "customerId",
+            type: "relation",
+            relation: { target: "customer", type: "many-to-one" },
+          },
+        ],
+      },
+    });
+
+    const replaceCatalog = await server.inject({
+      method: "PUT",
+      url: "/api/entity-definitions/catalog",
+      headers,
+      payload: {
+        kind: "entity-definitions-catalog",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        entityCategories: [],
+        entityDefinitions: [
+          {
+            name: "order",
+            label: "Orders",
+            fields: [
+              {
+                name: "customerId",
+                type: "relation",
+                relation: { target: "customer", type: "many-to-one" },
+              },
+            ],
+          },
+        ],
+      },
+    });
+    expect(replaceCatalog.statusCode).toBe(400);
+    const errorBody = replaceCatalog.json().error;
+    expect(
+      errorBody.message.includes("customer") ||
+        JSON.stringify(errorBody.details ?? "").includes("customer"),
+    ).toBe(true);
+  });
+
+  it("replaces entity categories when entityCategories is included", async () => {
+    const server = await buildTestServer();
+    const headers = {
+      authorization: "Bearer fake-token",
+      "x-firebase-appcheck": "fake-appcheck",
+    };
+
+    await server.inject({
+      method: "POST",
+      url: "/api/entity-categories",
+      headers,
+      payload: {
+        name: "Legacy",
+        icon: "Folder",
+        order: 0,
+      },
+    });
+
+    const replaceCatalog = await server.inject({
+      method: "PUT",
+      url: "/api/entity-definitions/catalog",
+      headers,
+      payload: {
+        kind: "entity-definitions-catalog",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        entityCategories: [
+          {
+            id: "cat_finance",
+            name: "Finance",
+            icon: "Wallet",
+            order: 0,
+          },
+        ],
+        entityDefinitions: [
+          {
+            name: "loan",
+            label: "Loans",
+            navCategoryId: "cat_finance",
+            fields: [{ name: "amount", type: "number", required: true }],
+          },
+        ],
+      },
+    });
+    expect(replaceCatalog.statusCode).toBe(200);
+    expect(replaceCatalog.json().data.categoryCounts).toEqual({
+      created: 1,
+      updated: 0,
+      deleted: 1,
+    });
+
+    const categories = await server.inject({
+      method: "GET",
+      url: "/api/entity-categories",
+      headers,
+    });
+    expect(categories.json().data.items).toEqual([
+      expect.objectContaining({
+        id: "cat_finance",
+        name: "Finance",
+      }),
+    ]);
+  });
+
   it("searches in-memory list entities using source fields without token mirrors", async () => {
     const server = await buildTestServer();
     const headers = {

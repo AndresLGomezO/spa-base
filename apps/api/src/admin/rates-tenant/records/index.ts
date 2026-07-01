@@ -3,7 +3,6 @@ import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import { createRatesRecordSeedContext } from "../seed-record-helpers.js";
 import { seedRatesDemoRecords } from "./seed-demo-data.js";
-import { seedRatesJoinRelations } from "./seed-join-relations.js";
 
 export async function seedRatesBusinessRecords(
   tenantId: string,
@@ -18,5 +17,4 @@ export async function seedRatesBusinessRecords(
     ownerId,
   );
   await seedRatesDemoRecords(context);
-  await seedRatesJoinRelations(context);
 }

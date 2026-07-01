@@ -124,7 +124,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Firebase deploy permission | WIF + `roles/firebase.admin` + compute default `actAs` in `ci_deployer.tf` |
 | Cloud Run `reserved env PORT` | Remove `PORT` from Terraform env; `container_port` sets it automatically |
 | Stale App Engine in Terraform state | `terraform state rm google_app_engine_application.default` if a prior apply added it |
-| Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. Deploy sets `SKIP_PLATFORM_STARTUP_SEEDS=true` so `/health` is available before Firestore seeds |
+| Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. The API does not seed Firestore on startup — use `pnpm seed:database` when seeding is needed |
 | Cloud Run worker-aggregation startup probe failed | Check revision logs for `Dynamic require of "child_process" is not supported` — rebuild worker-aggregation after the Vertex bundle fix; redeploy |
 | Cloud Run worker-service startup probe failed | Check logs for `Dynamic require of "stream"` or `"child_process"` — GCP SDK was bundled into ESM. Rebuild worker-service (esbuild externals + narrow imports). If logs show a multi-MB `dist/index.js`, clear stale GHA BuildKit cache (`SOURCE_REVISION` / `--force` in worker Dockerfiles) and redeploy |
 | `cloudtasks.queues.create` 403 on Terraform apply | Re-run `bash scripts/setup-github-wif.sh entitysystem` to grant `roles/cloudtasks.admin` on `github-deployer`, then re-run deploy |
@@ -135,7 +135,7 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | `COLLECTION_GROUP_ASC index for user_invites` | Ensure `user_invites` / `email` is in `fieldOverrides` in [`firestore.indexes.json`](../../firestore.indexes.json); run Terraform apply (`google_firestore_field`); wait for index **Enabled** in Console |
 | Terraform 400 `single field index controls` | Single-field indexes must use `fieldOverrides`, not the `indexes` array — see [terraform-state.md](./terraform-state.md) |
 | Logo upload `uniform bucket-level access` | API uses Firebase download tokens, not `makePublic()` — redeploy API after pulling latest `@repo/gcp-firebase` |
-| Platform roles/tenants missing | Run API once locally against the project (without `SKIP_PLATFORM_STARTUP_SEEDS`) or seed via admin tooling |
+| Platform roles/tenants missing | Run `pnpm seed:database` locally against the project (with emulators or GCP credentials as in `apps/api/.env.dev`) |
 
 ## PR preview environments (phase 1b)
 

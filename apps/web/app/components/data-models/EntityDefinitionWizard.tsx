@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useMemo,
   useRef,
   useState,
   type FormEvent,
@@ -35,6 +36,8 @@ import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { LucideIconField } from "../shared/LucideIconField";
 import { EntityFieldsManager } from "./EntityFieldsManager";
 import { ModelReview } from "./ModelReview";
+import { entityDefinitionFormJsonLabels } from "./json/entity-definition-json-labels";
+import { EntityDefinitionJsonToolbar } from "./json/EntityDefinitionJsonToolbar";
 import { useSyncCategoryNavIcon } from "./use-sync-category-nav-icon";
 
 const ENTITY_DEFINITION_WIZARD_FORM_ID = "entity-definition-wizard-form";
@@ -52,6 +55,7 @@ export function EntityDefinitionWizard({
 }: EntityDefinitionWizardProps) {
   const { t } = useTranslation("common");
   const { refresh } = useEntityCatalog();
+  const jsonLabels = useMemo(() => entityDefinitionFormJsonLabels(t), [t]);
   const [relationTargetDefinitions, setRelationTargetDefinitions] = useState<
     readonly { readonly name: string; readonly label: string }[]
   >([]);
@@ -73,6 +77,35 @@ export function EntityDefinitionWizard({
   const [displayField, setDisplayField] = useState<string>("");
   const [validationError, setValidationError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const entityFormState = useMemo(
+    () => ({
+      name,
+      label,
+      description,
+      fields,
+      tenantWideRead,
+      inMemoryListQueries,
+      hiddenFromNav,
+      navCategoryId,
+      navOrder,
+      navIcon,
+      displayField,
+    }),
+    [
+      name,
+      label,
+      description,
+      fields,
+      tenantWideRead,
+      inMemoryListQueries,
+      hiddenFromNav,
+      navCategoryId,
+      navOrder,
+      navIcon,
+      displayField,
+    ],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -280,9 +313,31 @@ export function EntityDefinitionWizard({
 
   return (
     <div className="space-y-4">
-      <div>
-        <Heading level={2}>{t("dataModels.wizardTitle")}</Heading>
-        <Text>{t("dataModels.stepIndicator", { step, total: 3 })}</Text>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <Heading level={2}>{t("dataModels.wizardTitle")}</Heading>
+          <Text>{t("dataModels.stepIndicator", { step, total: 3 })}</Text>
+        </div>
+        <EntityDefinitionJsonToolbar
+          mode="create"
+          canApply
+          formState={entityFormState}
+          labels={jsonLabels}
+          onImport={(imported) => {
+            setName(imported.name);
+            setLabel(imported.label);
+            setDescription(imported.description);
+            setFields(imported.fields);
+            setTenantWideRead(imported.tenantWideRead);
+            setInMemoryListQueries(imported.inMemoryListQueries);
+            setHiddenFromNav(imported.hiddenFromNav);
+            setNavCategoryId(imported.navCategoryId);
+            setNavOrder(imported.navOrder);
+            setNavIcon(imported.navIcon);
+            setDisplayField(imported.displayField);
+            setValidationError(null);
+          }}
+        />
       </div>
 
       {validationError ? <Alert>{validationError}</Alert> : null}

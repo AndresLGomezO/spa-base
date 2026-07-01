@@ -120,6 +120,7 @@ export function EntityFieldsManager({
           orderDefault={orderDefault}
           relationTargets={relationTargets}
           canRemove={fields.length > 1}
+          canEdit={canEdit}
           onSave={handleSaveField}
           onRemove={modalState.kind === "edit" ? handleRemoveField : undefined}
           onClose={() => setModalState({ kind: "closed" })}

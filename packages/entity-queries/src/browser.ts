@@ -73,3 +73,24 @@ export type {
 } from "./relation-field-path.js";
 export { isEntityQueryDefinitionReference } from "./entity-query-reference.js";
 export type { EntityQueryDefinitionReference } from "./entity-query-reference.js";
+export {
+  ENTITY_QUERY_DEFINITION_JSON_VERSION,
+  ENTITY_QUERY_DEFINITION_JSON_KIND,
+  ENTITY_QUERY_DEFINITIONS_CATALOG_JSON_KIND,
+  toPortableEntityQueryDefinition,
+  createEntityQueryDefinitionEnvelope,
+  createEntityQueryDefinitionsCatalogEnvelope,
+  parseEntityQueryDefinitionJson,
+  validateEntityQueryDefinitionImport,
+  parseEntityQueryDefinitionsCatalogJson,
+  validateEntityQueryDefinitionsCatalogImport,
+  validateEntityQueryDefinitionsCatalogEnvelope,
+  computeCatalogReplacePlan,
+} from "./entity-query-definition-json.js";
+export type {
+  EntityQueryDefinitionJsonError,
+  PortableEntityQueryDefinition,
+  EntityQueryDefinitionFormData,
+  EntityQueryDefinitionsCatalogEnvelope,
+  CatalogReplacePlan,
+} from "./entity-query-definition-json.js";

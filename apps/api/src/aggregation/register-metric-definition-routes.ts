@@ -4,6 +4,7 @@ import { z } from "zod";
 import {
   createMetricDefinitionInputSchema,
   patchMetricDefinitionInputSchema,
+  validateMetricDefinitionsCatalogEnvelope,
 } from "@repo/metrics-engine";
 
 import { ApiErrorCode } from "../crud/errors.js";
@@ -13,6 +14,10 @@ import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import { assertCanReadMetricDefinition } from "./assert-metric-access.js";
+import {
+  MetricCatalogReplaceError,
+  replaceMetricDefinitionsCatalog,
+} from "./replace-metric-definitions-catalog.js";
 import { runMetricBackfill } from "./run-backfill.js";
 import type { MetricRuntimeContext } from "./metric-runtime-context.js";
 import {
@@ -345,6 +350,62 @@ export async function registerMetricDefinitionRoutes(
       );
       options.metricRuntime.invalidateTenantMetrics(tenantId);
       return reply.send(successEnvelope({ deleted: true }));
+    },
+  );
+
+  app.put(
+    "/api/metric-definitions/catalog",
+    {
+      preHandler: [
+        options.authenticate,
+        requireCreate,
+        requireUpdate,
+        requireBackfill,
+      ],
+    },
+    async (request, reply) => {
+      const parsedBody = validateMetricDefinitionsCatalogEnvelope(request.body);
+      if (!parsedBody.ok) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Validation failed.",
+          parsedBody.errors,
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      try {
+        const result = await replaceMetricDefinitionsCatalog(
+          {
+            entityRuntime: options.entityRuntime,
+            metricRuntime: options.metricRuntime,
+          },
+          tenantId,
+          parsedBody.data,
+        );
+        return reply.send(
+          successEnvelope({
+            counts: result.counts,
+            backfillSummary: result.backfillSummary,
+            items: result.items,
+          }),
+        );
+      } catch (error) {
+        const message =
+          error instanceof MetricCatalogReplaceError || error instanceof Error
+            ? error.message
+            : "Failed to replace metric definitions catalog.";
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          message,
+        );
+      }
     },
   );
 

@@ -1,17 +1,25 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Pencil } from "lucide-react";
 
+import type { MetricDefinitionsCatalogEnvelope } from "@repo/metrics-engine/browser";
 import { useDataViewWithPagination } from "@repo/data-view";
-import { Button, DataTable, IconButton, Text } from "@repo/ui";
+import { Button, DataTable, IconButton, Text, toast } from "@repo/ui";
 
-import type { MetricDefinitionRecord } from "../../lib/api-client";
+import {
+  isApiClientError,
+  putMetricDefinitionsCatalog,
+  type MetricDefinitionRecord,
+} from "../../lib/api-client";
 import { useTablePaginationLabels } from "../data-table/use-table-pagination-labels";
 import {
   WebDataViewToolbar,
   type DataViewColumnDescriptor,
 } from "../data-view";
 import { formatAggregationLabel } from "./metric-field-utils";
+import { metricDefinitionsCatalogJsonLabels } from "./json/metric-definition-json-labels";
+import { MetricDefinitionsCatalogJsonImportDialog } from "./json/MetricDefinitionsCatalogJsonImportDialog";
+import { MetricDefinitionsCatalogJsonViewDialog } from "./json/MetricDefinitionsCatalogJsonViewDialog";
 
 function formatMetricStatus(
   status: MetricDefinitionRecord["status"],
@@ -29,8 +37,10 @@ interface MetricDefinitionListProps {
   readonly isLoading: boolean;
   readonly canCreate: boolean;
   readonly canUpdate: boolean;
+  readonly canBackfill?: boolean;
   readonly onCreate: () => void;
   readonly onEdit: (id: string) => void;
+  readonly onCatalogReplaced?: () => void;
 }
 
 export function MetricDefinitionList({
@@ -38,11 +48,39 @@ export function MetricDefinitionList({
   isLoading,
   canCreate,
   canUpdate,
+  canBackfill = false,
   onCreate,
   onEdit,
+  onCatalogReplaced,
 }: MetricDefinitionListProps) {
   const { t } = useTranslation("common");
   const paginationLabels = useTablePaginationLabels();
+  const catalogLabels = useMemo(
+    () => metricDefinitionsCatalogJsonLabels(t),
+    [t],
+  );
+  const canReplaceCatalog = canCreate && canUpdate && canBackfill;
+
+  const handleCatalogImport = useCallback(
+    async (catalog: MetricDefinitionsCatalogEnvelope) => {
+      try {
+        await putMetricDefinitionsCatalog(catalog);
+        toast.success(catalogLabels.importSuccess);
+        onCatalogReplaced?.();
+      } catch (importError) {
+        toast.error(
+          isApiClientError(importError)
+            ? importError.message
+            : catalogLabels.importFailed,
+        );
+      }
+    },
+    [
+      catalogLabels.importFailed,
+      catalogLabels.importSuccess,
+      onCatalogReplaced,
+    ],
+  );
 
   const columns = useMemo<
     readonly DataViewColumnDescriptor<MetricDefinitionRecord>[]
@@ -95,6 +133,16 @@ export function MetricDefinitionList({
   return (
     <div className="flex min-h-full flex-col gap-4">
       <div className="flex flex-wrap items-center gap-3">
+        <MetricDefinitionsCatalogJsonViewDialog
+          items={items}
+          labels={catalogLabels}
+        />
+        <MetricDefinitionsCatalogJsonImportDialog
+          existingItems={items}
+          canApply={canReplaceCatalog}
+          labels={catalogLabels}
+          onApply={(catalog) => void handleCatalogImport(catalog)}
+        />
         {canCreate ? (
           <Button type="button" onClick={onCreate}>
             {t("metrics.create")}

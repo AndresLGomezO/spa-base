@@ -11,6 +11,8 @@ import { FieldLabel, toast, Select } from "@repo/ui";
 
 import {
   listEntityDefinitions,
+  listEntityCategories,
+  type EntityCategoryRecord,
   type EntityDefinitionRecord,
 } from "../../lib/api-client";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -43,6 +45,9 @@ export function DataModelManager({
   const { t } = useTranslation("common");
   const { refresh: refreshEntityCatalog } = useEntityCatalog();
   const [items, setItems] = useState<readonly EntityDefinitionRecord[]>([]);
+  const [categories, setCategories] = useState<readonly EntityCategoryRecord[]>(
+    [],
+  );
   const [isLoading, setIsLoading] = useState(true);
   const [showWizard, setShowWizard] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -56,6 +61,7 @@ export function DataModelManager({
   const loadDefinitions = useCallback(async () => {
     if (!tenantId) {
       setItems([]);
+      setCategories([]);
       setIsLoading(false);
       return;
     }
@@ -63,8 +69,12 @@ export function DataModelManager({
     setIsLoading(true);
 
     try {
-      const result = await listEntityDefinitions();
-      setItems(result.items);
+      const [definitionsResult, categoriesResult] = await Promise.all([
+        listEntityDefinitions(),
+        listEntityCategories(),
+      ]);
+      setItems(definitionsResult.items);
+      setCategories(categoriesResult.items);
     } catch (loadError) {
       toast.error(
         loadError instanceof Error
@@ -123,11 +133,16 @@ export function DataModelManager({
       <div className="flex min-h-0 flex-1 flex-col">
         <EntityDefinitionList
           items={items}
+          categories={categories}
           isLoading={isLoading}
           canCreate={canCreate}
           canUpdate={canUpdate}
           onCreate={() => setShowWizard(true)}
           onEdit={(id) => setEditingId(id)}
+          onCatalogReplaced={() => {
+            void loadDefinitions();
+            void refreshEntityCatalog();
+          }}
         />
       </div>
 

@@ -1530,6 +1530,47 @@
         "sortOnly": "Solo orden",
         "filterOnly": "Solo filtro"
       }
+    },
+    "json": {
+      "viewTrigger": "Ver JSON",
+      "importTrigger": "Importar JSON",
+      "pasteLabel": "Pegar JSON",
+      "uploadLabel": "Subir archivo JSON",
+      "skeletonTitle": "Estructura esperada",
+      "skeletonShow": "Mostrar ejemplo",
+      "skeletonHide": "Ocultar ejemplo",
+      "valid": "El JSON es válido.",
+      "invalid": "El JSON tiene errores de validación.",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "readOnlyHint": "Puedes validar el JSON aquí, pero necesitas permiso para aplicar cambios.",
+      "viewDescription": "Instantánea de solo lectura. Cópiala y edítala en otro lugar, luego usa Importar JSON para aplicar los cambios.",
+      "viewCopy": "Copiar al portapapeles",
+      "viewCopied": "Copiado",
+      "field": {
+        "viewTitle": "JSON del campo actual",
+        "importTitle": "Importar JSON del campo",
+        "importDescription": "Importa la definición de un solo campo en este editor. Los cambios se aplican al borrador de inmediato; guarda el campo para conservarlos."
+      },
+      "entity": {
+        "viewTitle": "JSON de la entidad actual",
+        "importTitle": "Importar JSON de la entidad",
+        "importDescriptionCreate": "Importa una definición completa de entidad en este asistente. Los cambios se aplican al formulario de inmediato; termina el asistente para crear la entidad.",
+        "importDescriptionEdit": "Importa metadatos y campos de la entidad en este editor. Los cambios se aplican al formulario de inmediato; haz clic en Guardar para persistirlos.",
+        "nameChangeError": "El nombre de la entidad no se puede cambiar después de la creación."
+      },
+      "catalog": {
+        "viewTitle": "JSON del catálogo de entidades actual",
+        "importTitle": "Importar JSON del catálogo de entidades",
+        "importDescription": "Reemplaza el catálogo de entidades del tenant con las definiciones y categorías importadas. Los elementos que no estén en el JSON se eliminarán. Los registros de negocio no se eliminan automáticamente.",
+        "confirmTitle": "¿Reemplazar catálogo de entidades?",
+        "confirmDescription": "Esto creará, actualizará y eliminará definiciones de entidad y categorías de navegación para que coincidan con el JSON importado. Los elementos no incluidos se eliminarán. Los registros de negocio existentes no se eliminan.",
+        "confirmAction": "Reemplazar catálogo",
+        "replaceSummary": "Entidades: {{created}} creadas, {{updated}} actualizadas, {{deleted}} eliminadas.",
+        "categoryReplaceSummary": "Categorías: {{created}} creadas, {{updated}} actualizadas, {{deleted}} eliminadas.",
+        "importSuccess": "Catálogo de entidades reemplazado.",
+        "importFailed": "No se pudo reemplazar el catálogo de entidades."
+      }
     }
   },
   "roles": {
@@ -1645,6 +1686,42 @@
     "saving": "Guardando…",
     "saved": "Métrica guardada.",
     "saveFailed": "No se pudo guardar la métrica.",
+    "json": {
+      "viewTrigger": "Ver JSON",
+      "importTrigger": "Importar JSON",
+      "pasteLabel": "Pegar JSON",
+      "uploadLabel": "Subir archivo JSON",
+      "skeletonTitle": "Formato de ejemplo",
+      "skeletonShow": "Mostrar ejemplo",
+      "skeletonHide": "Ocultar ejemplo",
+      "valid": "El JSON es válido.",
+      "invalid": "Errores de validación del JSON",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "readOnlyHint": "No tienes permiso para aplicar JSON importado.",
+      "viewDescription": "JSON portable de definición de métrica para entrega o control de versiones.",
+      "viewCopy": "Copiar JSON",
+      "viewCopied": "Copiado",
+      "metric": {
+        "viewTitle": "JSON de la métrica actual",
+        "importTitle": "Importar JSON de métrica",
+        "importDescriptionCreate": "Reemplaza el formulario con la definición importada. Guarda para persistir.",
+        "importDescriptionEdit": "Reemplaza el formulario con la definición importada. El nombre de la métrica no puede cambiar. Guarda para persistir.",
+        "nameChangeError": "El nombre de la métrica no puede cambiarse mediante importación JSON en modo edición."
+      },
+      "catalog": {
+        "viewTitle": "JSON del catálogo de métricas actual",
+        "importTitle": "Importar JSON del catálogo de métricas",
+        "importDescription": "Reemplaza el catálogo de métricas del tenant con las definiciones importadas. Las métricas que no estén en el JSON se eliminarán. Las métricas creadas y actualizadas se rellenan automáticamente.",
+        "confirmTitle": "¿Reemplazar catálogo de métricas?",
+        "confirmDescription": "Esto creará, actualizará y eliminará definiciones de métrica para que coincidan con el JSON importado. El backfill se ejecuta para métricas nuevas y actualizadas materialmente.",
+        "confirmAction": "Reemplazar catálogo",
+        "replaceSummary": "Métricas: {{created}} creadas, {{updated}} actualizadas, {{deleted}} eliminadas.",
+        "backfillSummary": "El backfill se ejecutará automáticamente para métricas nuevas y actualizadas después de la importación.",
+        "importSuccess": "Catálogo de métricas reemplazado.",
+        "importFailed": "No se pudo reemplazar el catálogo de métricas."
+      }
+    },
     "validationRequired": "Nombre, campo de agregación y dependencias son obligatorios.",
     "dateGranularity": {
       "title": "División de campos de fecha",
@@ -1892,6 +1969,41 @@
       "title": "Eliminar consulta",
       "message": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer.",
       "confirm": "Eliminar"
+    },
+    "json": {
+      "viewTrigger": "Ver JSON",
+      "importTrigger": "Importar JSON",
+      "pasteLabel": "Pegar JSON",
+      "uploadLabel": "Subir archivo JSON",
+      "skeletonTitle": "Formato de ejemplo",
+      "skeletonShow": "Mostrar ejemplo",
+      "skeletonHide": "Ocultar ejemplo",
+      "valid": "El JSON es válido.",
+      "invalid": "Errores de validación del JSON",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "readOnlyHint": "No tienes permiso para aplicar el JSON importado.",
+      "viewDescription": "JSON portable de definición de consulta para transferencia o control de versiones.",
+      "viewCopy": "Copiar JSON",
+      "viewCopied": "Copiado",
+      "query": {
+        "viewTitle": "JSON de la consulta actual",
+        "importTitle": "Importar JSON de consulta",
+        "importDescriptionEdit": "Reemplaza la configuración de la consulta con la definición importada. El nombre y la entidad origen no pueden cambiar. Guarda para persistir.",
+        "nameChangeError": "El nombre de la consulta no puede cambiarse mediante importación JSON.",
+        "sourceEntityChangeError": "La entidad origen no puede cambiarse mediante importación JSON."
+      },
+      "catalog": {
+        "viewTitle": "JSON del catálogo de consultas",
+        "importTitle": "Importar catálogo de consultas JSON",
+        "importDescription": "Reemplaza el catálogo de consultas del tenant con las definiciones importadas. Las consultas que no estén en el JSON se eliminarán.",
+        "confirmTitle": "¿Reemplazar catálogo de consultas?",
+        "confirmDescription": "Esto creará, actualizará y eliminará definiciones de consulta guardadas para que coincidan con el JSON importado. Los enlaces de diseño de UI a consultas eliminadas no se limpian automáticamente.",
+        "confirmAction": "Reemplazar catálogo",
+        "replaceSummary": "Consultas: {{created}} creadas, {{updated}} actualizadas, {{deleted}} eliminadas.",
+        "importSuccess": "Catálogo de consultas reemplazado.",
+        "importFailed": "No se pudo reemplazar el catálogo de consultas."
+      }
     }
   },
   "hooks": {

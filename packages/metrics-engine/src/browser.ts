@@ -35,4 +35,28 @@ export type {
   MetricValueDisplayFormat,
   MetricDefinitionRecord,
   MetricAggregationOperation,
+  CreateMetricDefinitionInput,
 } from "./types.js";
+export {
+  METRIC_DEFINITION_JSON_KIND,
+  METRIC_DEFINITION_JSON_VERSION,
+  METRIC_DEFINITIONS_CATALOG_JSON_KIND,
+  computeCatalogReplacePlan,
+  createMetricDefinitionEnvelope,
+  createMetricDefinitionsCatalogEnvelope,
+  listBackfillRelevantChangedFields,
+  metricDefinitionNeedsBackfill,
+  parseMetricDefinitionJson,
+  parseMetricDefinitionsCatalogJson,
+  toPortableMetricDefinition,
+  validateMetricDefinitionImport,
+  validateMetricDefinitionsCatalogImport,
+  validateMetricDefinitionsCatalogEnvelope,
+} from "./metric-definition-json.js";
+export type {
+  CatalogReplacePlan,
+  MetricDefinitionFormData,
+  MetricDefinitionJsonError,
+  MetricDefinitionsCatalogEnvelope,
+  PortableMetricDefinition,
+} from "./metric-definition-json.js";

@@ -68,6 +68,40 @@ describe("FieldEditorModal", () => {
     expect(screen.getByDisplayValue("amount")).toBeInTheDocument();
   });
 
+  it("imports field JSON into the draft", () => {
+    render(
+      <FieldEditorModal
+        open
+        mode="edit"
+        field={{ name: "amount", type: "number", required: true }}
+        orderDefault={0}
+        relationTargets={[]}
+        canRemove={false}
+        onSave={vi.fn()}
+        onClose={vi.fn()}
+      />,
+    );
+
+    fireEvent.click(screen.getByText("dataModels.json.importTrigger"));
+    const importDialog = screen.getAllByRole("dialog").at(-1)!;
+    fireEvent.change(importDialog.querySelector("textarea")!, {
+      target: {
+        value: JSON.stringify({
+          kind: "field-definition",
+          version: 1,
+          data: {
+            name: "principal",
+            type: "number",
+            required: true,
+          },
+        }),
+      },
+    });
+    fireEvent.click(screen.getByText("dataModels.json.apply"));
+
+    expect(screen.getByDisplayValue("principal")).toBeInTheDocument();
+  });
+
   it("keeps typed edits when parent passes a new field object reference", () => {
     const field = { name: "amount", type: "number" as const, required: true };
     const { rerender } = render(

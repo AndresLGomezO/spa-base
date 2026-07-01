@@ -1,9 +1,15 @@
-import { useMemo } from "react";
+import { useCallback, useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import { Button, DataTable, Heading, Text } from "@repo/ui";
+import { Button, DataTable, Heading, Text, toast } from "@repo/ui";
+import type { EntityDefinitionsCatalogEnvelope } from "@repo/dynamic-entities";
 
-import type { EntityDefinitionRecord } from "../../lib/api-client";
+import {
+  isApiClientError,
+  putEntityDefinitionsCatalog,
+  type EntityCategoryRecord,
+  type EntityDefinitionRecord,
+} from "../../lib/api-client";
 import { useDataViewWithPagination } from "@repo/data-view";
 
 import { planIndexesFromDefinitionRecords } from "./plan-entity-indexes";
@@ -13,26 +19,59 @@ import {
   type DataViewColumnDescriptor,
 } from "../data-view";
 import { DataModelsListSkeleton } from "../loading/DataModelsListSkeleton";
+import { entityDefinitionsCatalogJsonLabels } from "./json/entity-definition-json-labels";
+import { EntityDefinitionsCatalogJsonImportDialog } from "./json/EntityDefinitionsCatalogJsonImportDialog";
+import { EntityDefinitionsCatalogJsonViewDialog } from "./json/EntityDefinitionsCatalogJsonViewDialog";
 
 interface EntityDefinitionListProps {
   readonly items: readonly EntityDefinitionRecord[];
+  readonly categories?: readonly EntityCategoryRecord[];
   readonly isLoading: boolean;
   readonly canCreate: boolean;
   readonly canUpdate?: boolean;
   readonly onCreate: () => void;
   readonly onEdit?: (id: string) => void;
+  readonly onCatalogReplaced?: () => void;
 }
 
 export function EntityDefinitionList({
   items,
+  categories = [],
   isLoading,
   canCreate,
   canUpdate = false,
   onCreate,
   onEdit,
+  onCatalogReplaced,
 }: EntityDefinitionListProps) {
   const { t } = useTranslation("common");
   const paginationLabels = useTablePaginationLabels();
+  const catalogLabels = useMemo(
+    () => entityDefinitionsCatalogJsonLabels(t),
+    [t],
+  );
+  const canReplaceCatalog = canCreate && canUpdate;
+
+  const handleCatalogImport = useCallback(
+    async (catalog: EntityDefinitionsCatalogEnvelope) => {
+      try {
+        await putEntityDefinitionsCatalog(catalog);
+        toast.success(catalogLabels.importSuccess);
+        onCatalogReplaced?.();
+      } catch (importError) {
+        toast.error(
+          isApiClientError(importError)
+            ? importError.message
+            : catalogLabels.importFailed,
+        );
+      }
+    },
+    [
+      catalogLabels.importFailed,
+      catalogLabels.importSuccess,
+      onCatalogReplaced,
+    ],
+  );
 
   const indexCountByEntityName = useMemo(() => {
     const tenantPlan = planIndexesFromDefinitionRecords(items);
@@ -82,13 +121,27 @@ export function EntityDefinitionList({
 
   return (
     <div className="flex min-h-full flex-col gap-4">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
         <Heading level={2}>{t("dataModels.listTitle")}</Heading>
-        {canCreate ? (
-          <Button type="button" onClick={onCreate}>
-            {t("dataModels.createModel")}
-          </Button>
-        ) : null}
+        <div className="flex flex-wrap items-center gap-2">
+          <EntityDefinitionsCatalogJsonViewDialog
+            items={items}
+            categories={categories}
+            labels={catalogLabels}
+          />
+          <EntityDefinitionsCatalogJsonImportDialog
+            existingItems={items}
+            existingCategories={categories}
+            canApply={canReplaceCatalog}
+            labels={catalogLabels}
+            onApply={(catalog) => void handleCatalogImport(catalog)}
+          />
+          {canCreate ? (
+            <Button type="button" onClick={onCreate}>
+              {t("dataModels.createModel")}
+            </Button>
+          ) : null}
+        </div>
       </div>
 
       {items.length > 0 ? (

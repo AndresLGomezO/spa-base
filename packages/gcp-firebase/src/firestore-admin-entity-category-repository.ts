@@ -61,6 +61,26 @@ export function createFirestoreAdminEntityCategoryRepository(
       await collection(tenantId).doc(id).set(record);
       return record;
     },
+    async createWithId(tenantId, id, input: CreateEntityCategoryInput) {
+      const parsed = createEntityCategoryInputSchema.parse(input);
+      const existing = await this.getById(tenantId, id);
+      if (existing) {
+        throw new Error(`Entity category already exists: ${id}`);
+      }
+      const now = new Date().toISOString();
+      const record = entityCategoryRecordSchema.parse({
+        id,
+        tenantId,
+        name: parsed.name,
+        icon: parsed.icon,
+        order: parsed.order,
+        createdAt: now,
+        updatedAt: now,
+      });
+
+      await collection(tenantId).doc(id).set(record);
+      return record;
+    },
     async update(tenantId, id, input: PatchEntityCategoryInput) {
       const current = await this.getById(tenantId, id);
       if (!current) {

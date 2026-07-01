@@ -118,5 +118,12 @@ export function createInMemoryEntityDefinitionRepository(): EntityDefinitionRepo
       store.set(key(tenantId, id), next);
       return next;
     },
+    async delete(tenantId, id) {
+      const current = store.get(key(tenantId, id));
+      if (!current) {
+        throw new Error(`Entity definition not found: ${id}`);
+      }
+      store.delete(key(tenantId, id));
+    },
   };
 }

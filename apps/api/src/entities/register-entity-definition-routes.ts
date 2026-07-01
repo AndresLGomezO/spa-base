@@ -11,6 +11,7 @@ import {
   getAvailableEntityNamesForTenant,
   patchEntityDefinitionInputSchema,
   validateDefinitionEvolution,
+  validateEntityDefinitionsCatalogEnvelope,
   validateRelationTargets,
 } from "@repo/dynamic-entities";
 import type { EntityCategoryRepository } from "@repo/firestore-converters";
@@ -23,6 +24,7 @@ import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
+import { replaceEntityDefinitionsCatalog } from "./replace-entity-definitions-catalog.js";
 import {
   syncEntityAiContextsForTenant,
   type SyncTenantAiContextsDeps,
@@ -56,6 +58,14 @@ export async function registerEntityDefinitionRoutes(
   const requireEntityDefinitionUpdate = createRequirePermission(
     options.permissionDeps,
     "entityDefinition.update",
+  );
+  const requireEntityCategoryCreate = createRequirePermission(
+    options.permissionDeps,
+    "entityCategory.create",
+  );
+  const requireEntityCategoryUpdate = createRequirePermission(
+    options.permissionDeps,
+    "entityCategory.update",
   );
 
   app.get(
@@ -325,6 +335,74 @@ export async function registerEntityDefinitionRoutes(
           error instanceof DynamicEntityError || error instanceof Error
             ? error.message
             : "Failed to update entity definition.";
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          message,
+        );
+      }
+    },
+  );
+
+  app.put(
+    "/api/entity-definitions/catalog",
+    {
+      preHandler: [
+        options.authenticate,
+        requireEntityDefinitionCreate,
+        requireEntityDefinitionUpdate,
+        requireEntityCategoryCreate,
+        requireEntityCategoryUpdate,
+      ],
+    },
+    async (request, reply) => {
+      const parsedBody = validateEntityDefinitionsCatalogEnvelope(request.body);
+      if (!parsedBody.ok) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Validation failed.",
+          parsedBody.errors,
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      try {
+        const result = await replaceEntityDefinitionsCatalog(
+          {
+            entityRuntime: options.entityRuntime,
+            entityCategoryRepository: options.entityCategoryRepository,
+            tenantAiContextSync: options.tenantAiContextSync,
+          },
+          tenantId,
+          parsedBody.data,
+        );
+        const enrichedItems = await Promise.all(
+          result.items.map((item) =>
+            enrichEntityDefinitionRecordFileFields(
+              options.firebaseAdminConfig,
+              item,
+            ),
+          ),
+        );
+        return reply.send(
+          successEnvelope({
+            counts: result.counts,
+            ...(result.categoryCounts
+              ? { categoryCounts: result.categoryCounts }
+              : {}),
+            items: enrichedItems,
+          }),
+        );
+      } catch (error) {
+        const message =
+          error instanceof DynamicEntityError || error instanceof Error
+            ? error.message
+            : "Failed to replace entity definitions catalog.";
         return replyWithError(
           reply,
           400,
