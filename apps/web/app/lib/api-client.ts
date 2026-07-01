@@ -907,6 +907,33 @@ export async function deleteDataHook(id: string): Promise<void> {
   });
 }
 
+type DataHooksCatalogEnvelope = import("@repo/hooks").DataHooksCatalogEnvelope;
+
+export async function putDataHooksCatalog(
+  input: DataHooksCatalogEnvelope,
+  options?: { readonly entity?: string },
+): Promise<{
+  readonly counts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly items: readonly DataHookDefinitionRecord[];
+}> {
+  return apiRequest<{
+    readonly counts: {
+      readonly created: number;
+      readonly updated: number;
+      readonly deleted: number;
+    };
+    readonly items: readonly DataHookDefinitionRecord[];
+  }>("/api/data-hooks/catalog", {
+    method: "PUT",
+    body: input,
+    ...(options?.entity ? { query: { entity: options.entity } } : {}),
+  });
+}
+
 export type CustomViewRecord = import("@repo/custom-views").CustomViewRecord;
 type CreateCustomViewInput = import("@repo/custom-views").CreateCustomViewInput;
 type PatchCustomViewInput = import("@repo/custom-views").PatchCustomViewInput;

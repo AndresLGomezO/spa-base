@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import type {
   DataHookAction,
-  DataHookCondition,
+  DataHookConditionNode,
   DataHookOperation,
   DataHookPhase,
   DataHookTrigger,
@@ -18,7 +18,7 @@ import {
 interface DataHookDraftState {
   readonly phase: DataHookPhase;
   readonly trigger: DataHookTrigger;
-  readonly condition: DataHookCondition | null;
+  readonly condition: DataHookConditionNode | null;
   readonly actions: readonly DataHookAction[];
   readonly enabled: boolean;
   readonly order: number;

@@ -2119,6 +2119,17 @@
       "updateFieldsHint": "Déjalo vacío para ejecutar con cualquier cambio.",
       "condition": "Ejecutar solo si se cumple una condición"
     },
+    "condition": {
+      "and": "Todas coinciden (Y)",
+      "or": "Cualquiera coincide (O)",
+      "addCondition": "Agregar condición",
+      "addGroup": "Agregar grupo",
+      "remove": "Eliminar",
+      "group": "Grupo de condiciones",
+      "leaf": "Condición",
+      "empty": "Aún no hay condiciones. Agrega una condición o un grupo anidado.",
+      "groupSummary": "{{combinator}} · {{count}} condiciones"
+    },
     "metadata": {
       "created": "Hook de automatización creado.",
       "updated": "Hook de automatización actualizado.",
@@ -2191,6 +2202,31 @@
       "copied": "Copiado al portapapeles.",
       "imported": "Hook de automatización importado.",
       "invalid": "JSON inválido."
+    },
+    "catalog": {
+      "viewTrigger": "Ver catálogo JSON",
+      "importTrigger": "Importar catálogo JSON",
+      "pasteLabel": "Pegar JSON",
+      "uploadLabel": "Subir archivo JSON",
+      "skeletonTitle": "Formato de ejemplo",
+      "skeletonShow": "Mostrar ejemplo",
+      "skeletonHide": "Ocultar ejemplo",
+      "valid": "El JSON es válido.",
+      "invalid": "Errores de validación del JSON",
+      "apply": "Aplicar",
+      "readOnlyHint": "No tienes permiso para reemplazar el catálogo.",
+      "viewDescription": "Hooks de automatización portables para esta entidad. Se emparejan por entidad y nombre.",
+      "viewCopy": "Copiar JSON",
+      "viewCopied": "Copiado",
+      "viewTitle": "Catálogo JSON de hooks actual",
+      "importTitle": "Importar catálogo JSON de hooks",
+      "importDescription": "Reemplaza los hooks de automatización de esta entidad con las definiciones importadas. Los hooks de esta entidad que no estén en el JSON se eliminarán. Los hooks de otras entidades no se ven afectados.",
+      "confirmTitle": "¿Reemplazar catálogo de hooks?",
+      "confirmDescription": "Esto creará, actualizará y eliminará hooks de automatización de esta entidad para que coincidan con el JSON importado.",
+      "confirmAction": "Reemplazar catálogo",
+      "replaceSummary": "Hooks: {{created}} creados, {{updated}} actualizados, {{deleted}} eliminados.",
+      "importSuccess": "Catálogo de hooks de automatización reemplazado.",
+      "importFailed": "No se pudo reemplazar el catálogo de hooks de automatización."
     }
   },
   "share": {

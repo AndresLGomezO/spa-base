@@ -8,6 +8,7 @@ import {
   validateCreateDataHookInput,
   validateDataHookActions,
   validateDataHookEntity,
+  validateDataHooksCatalogEnvelope,
 } from "@repo/hooks";
 
 import { ApiErrorCode } from "../crud/errors.js";
@@ -17,6 +18,10 @@ import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { HookRuntimeContext } from "./hook-runtime-context.js";
+import {
+  DataHookCatalogReplaceError,
+  replaceDataHooksCatalog,
+} from "./replace-data-hooks-catalog.js";
 
 interface RegisterHookRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
@@ -27,6 +32,10 @@ interface RegisterHookRoutesOptions {
 
 const listQuerySchema = z.object({
   tenantId: z.string().trim().min(1).optional(),
+  entity: z.string().trim().min(1).optional(),
+});
+
+const catalogQuerySchema = z.object({
   entity: z.string().trim().min(1).optional(),
 });
 
@@ -289,6 +298,75 @@ export async function registerHookRoutes(
       );
       options.hookRuntime.unregister(tenantId, parsedParams.data.id);
       return reply.send(successEnvelope({ id: parsedParams.data.id }));
+    },
+  );
+
+  app.put(
+    "/api/data-hooks/catalog",
+    {
+      preHandler: [
+        options.authenticate,
+        requireHookCreate,
+        requireHookUpdate,
+        requireHookDelete,
+      ],
+    },
+    async (request, reply) => {
+      const parsedQuery = catalogQuerySchema.safeParse(request.query);
+      if (!parsedQuery.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid query parameters.",
+        );
+      }
+
+      const parsedBody = validateDataHooksCatalogEnvelope(request.body);
+      if (!parsedBody.ok) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Validation failed.",
+          parsedBody.errors,
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      try {
+        const result = await replaceDataHooksCatalog(
+          {
+            entityRuntime: options.entityRuntime,
+            hookRepository: options.hookRuntime.repository,
+            hookRuntime: options.hookRuntime,
+          },
+          tenantId,
+          parsedBody.data,
+          parsedQuery.data.entity ? { entity: parsedQuery.data.entity } : {},
+        );
+        return reply.send(
+          successEnvelope({
+            counts: result.counts,
+            items: result.items,
+          }),
+        );
+      } catch (error) {
+        const message =
+          error instanceof DataHookCatalogReplaceError ||
+          error instanceof HookExecutionError ||
+          error instanceof Error
+            ? error.message
+            : "Failed to replace data hooks catalog.";
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          message,
+        );
+      }
     },
   );
 }

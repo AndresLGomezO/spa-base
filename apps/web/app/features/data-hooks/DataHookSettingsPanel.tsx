@@ -1,16 +1,8 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
-import type {
-  DataHookConditionOperator,
-  DataHookOperation,
-  DataHookPhase,
-} from "@repo/hooks";
-import {
-  DATA_HOOK_CONDITION_OPERATORS,
-  DATA_HOOK_OPERATIONS,
-  DATA_HOOK_PHASES,
-} from "@repo/hooks";
+import type { DataHookOperation, DataHookPhase } from "@repo/hooks";
+import { DATA_HOOK_OPERATIONS, DATA_HOOK_PHASES } from "@repo/hooks";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import {
@@ -20,17 +12,12 @@ import {
   designerPreviewPanelShellFillClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
 import { DataHookActionsEditor } from "./DataHookActionsEditor";
-import { ExpressionEditor } from "./ExpressionEditor";
+import { DataHookConditionEditor } from "./DataHookConditionEditor";
+import { createDefaultConditionRoot } from "./data-hook-condition-utils";
 import { useDataHooks } from "./data-hooks-context";
 
 const controlClassName =
   "border-input bg-background flex h-9 w-full rounded-md border px-3 py-1.5 text-sm";
-
-const VALUELESS_OPERATORS: readonly DataHookConditionOperator[] = [
-  "isEmpty",
-  "isNotEmpty",
-  "changed",
-];
 
 export function DataHookSettingsPanel() {
   const { t } = useTranslation("common");
@@ -210,11 +197,7 @@ export function DataHookSettingsPanel() {
                 onChange={(event) =>
                   editor.updateDraft({
                     condition: event.target.checked
-                      ? {
-                          field: triggerFieldNames[0] ?? "",
-                          operator: "==",
-                          value: { kind: "literal", value: "" },
-                        }
+                      ? createDefaultConditionRoot(triggerFieldNames[0] ?? "")
                       : null,
                   })
                 }
@@ -223,77 +206,12 @@ export function DataHookSettingsPanel() {
             </label>
 
             {conditionEnabled && draft.condition ? (
-              <div className="border-border space-y-2 rounded-md border p-3">
-                <div className="flex gap-2">
-                  <Select
-                    className={`${controlClassName} w-40`}
-                    value={draft.condition.field}
-                    disabled={!canUpdate}
-                    onChange={(event) =>
-                      editor.updateDraft({
-                        condition: draft.condition
-                          ? { ...draft.condition, field: event.target.value }
-                          : null,
-                      })
-                    }
-                  >
-                    <option value="">
-                      {t("dataHooks.actions.selectField")}
-                    </option>
-                    {!triggerFieldNames.includes(draft.condition.field) &&
-                    draft.condition.field ? (
-                      <option value={draft.condition.field}>
-                        {draft.condition.field}
-                      </option>
-                    ) : null}
-                    {triggerFieldNames.map((name) => (
-                      <option key={name} value={name}>
-                        {name}
-                      </option>
-                    ))}
-                  </Select>
-                  <Select
-                    className={`${controlClassName} w-36`}
-                    value={draft.condition.operator}
-                    disabled={!canUpdate}
-                    onChange={(event) =>
-                      editor.updateDraft({
-                        condition: draft.condition
-                          ? {
-                              ...draft.condition,
-                              operator: event.target
-                                .value as DataHookConditionOperator,
-                            }
-                          : null,
-                      })
-                    }
-                  >
-                    {DATA_HOOK_CONDITION_OPERATORS.map((op) => (
-                      <option key={op} value={op}>
-                        {op}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                {VALUELESS_OPERATORS.includes(
-                  draft.condition.operator,
-                ) ? null : (
-                  <ExpressionEditor
-                    label={t("dataHooks.actions.matchValue")}
-                    value={
-                      draft.condition.value ?? { kind: "literal", value: "" }
-                    }
-                    fieldNames={triggerFieldNames}
-                    onChange={(value) =>
-                      editor.updateDraft({
-                        condition: draft.condition
-                          ? { ...draft.condition, value }
-                          : null,
-                      })
-                    }
-                  />
-                )}
-              </div>
+              <DataHookConditionEditor
+                value={draft.condition}
+                fieldNames={triggerFieldNames}
+                disabled={!canUpdate}
+                onChange={(condition) => editor.updateDraft({ condition })}
+              />
             ) : null}
           </div>
 

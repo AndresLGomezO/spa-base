@@ -40,12 +40,71 @@ export const dataHookTriggerSchema = z.object({
 });
 export type DataHookTrigger = z.infer<typeof dataHookTriggerSchema>;
 
+/** Single-field lookup / compare leaf (used by `updateMatching.where`). */
 export const dataHookConditionSchema = z.object({
   field: z.string().trim().min(1),
   operator: z.enum(DATA_HOOK_CONDITION_OPERATORS),
   value: expressionNodeSchema.optional(),
 });
 export type DataHookCondition = z.infer<typeof dataHookConditionSchema>;
+
+export const DATA_HOOK_CONDITION_COMBINATORS = ["and", "or"] as const;
+export type DataHookConditionCombinator =
+  (typeof DATA_HOOK_CONDITION_COMBINATORS)[number];
+
+export const dataHookConditionLeafSchema = z.object({
+  type: z.literal("condition"),
+  field: z.string().trim().min(1),
+  operator: z.enum(DATA_HOOK_CONDITION_OPERATORS),
+  value: expressionNodeSchema.optional(),
+});
+export type DataHookConditionLeaf = z.infer<typeof dataHookConditionLeafSchema>;
+
+export type DataHookConditionGroup = {
+  readonly type: "group";
+  readonly combinator: DataHookConditionCombinator;
+  readonly children: readonly DataHookConditionNode[];
+};
+
+export type DataHookConditionNode =
+  | DataHookConditionLeaf
+  | DataHookConditionGroup;
+
+export const dataHookConditionGroupSchema = z.object({
+  type: z.literal("group"),
+  combinator: z.enum(DATA_HOOK_CONDITION_COMBINATORS),
+  children: z.array(z.lazy(() => dataHookConditionNodeSchema)),
+});
+
+export const dataHookConditionNodeSchema: z.ZodType<DataHookConditionNode> =
+  z.lazy(() =>
+    z.discriminatedUnion("type", [
+      dataHookConditionLeafSchema,
+      dataHookConditionGroupSchema,
+    ]),
+  );
+
+function coerceLegacyConditionNode(value: unknown): unknown {
+  if (value == null) {
+    return value;
+  }
+  if (typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.type === "condition" || record.type === "group") {
+    return value;
+  }
+  if (typeof record.field === "string" && typeof record.operator === "string") {
+    return { type: "condition", ...record };
+  }
+  return value;
+}
+
+export const dataHookDefinitionConditionSchema = z.preprocess(
+  coerceLegacyConditionNode,
+  dataHookConditionNodeSchema.nullable().optional(),
+);
 
 const expressionRecordSchema = z.record(z.string(), expressionNodeSchema);
 
@@ -87,7 +146,7 @@ export const dataHookDefinitionSchema = z.object({
   entity: z.string().trim().min(1),
   phase: z.enum(DATA_HOOK_PHASES),
   trigger: dataHookTriggerSchema,
-  condition: dataHookConditionSchema.nullable().optional(),
+  condition: dataHookDefinitionConditionSchema,
   actions: z.array(dataHookActionSchema).min(1),
   enabled: z.boolean(),
   order: z.number().int(),
@@ -106,7 +165,7 @@ export const createDataHookInputSchema = dataHookDefinitionSchema
   .extend({
     tenantId: z.string().trim().min(1).optional(),
     phase: z.enum(DATA_HOOK_PHASES).optional(),
-    condition: dataHookConditionSchema.nullable().optional(),
+    condition: dataHookDefinitionConditionSchema,
     enabled: z.boolean().optional(),
     order: z.number().int().optional(),
   });
@@ -117,7 +176,7 @@ export const patchDataHookInputSchema = z.object({
   description: z.string().trim().nullable().optional(),
   phase: z.enum(DATA_HOOK_PHASES).optional(),
   trigger: dataHookTriggerSchema.optional(),
-  condition: dataHookConditionSchema.nullable().optional(),
+  condition: dataHookDefinitionConditionSchema,
   actions: z.array(dataHookActionSchema).min(1).optional(),
   enabled: z.boolean().optional(),
   order: z.number().int().optional(),

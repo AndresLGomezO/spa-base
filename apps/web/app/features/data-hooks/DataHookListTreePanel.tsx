@@ -1,13 +1,18 @@
-import { useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { Pencil, Plus, Trash2, Workflow } from "lucide-react";
-import { IconButton, Text } from "@repo/ui";
+import { IconButton, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
+import type { DataHooksCatalogEnvelope } from "@repo/hooks/browser";
 
+import { isApiClientError, putDataHooksCatalog } from "../../lib/api-client";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { DataHookJsonToolbar } from "./DataHookJsonToolbar";
 import { DataHookMetadataModal } from "./DataHookMetadataModal";
 import { useDataHooks } from "./data-hooks-context";
+import { dataHooksCatalogJsonLabels } from "./json/data-hook-definition-json-labels";
+import { DataHooksCatalogJsonImportDialog } from "./json/DataHooksCatalogJsonImportDialog";
+import { DataHooksCatalogJsonViewDialog } from "./json/DataHooksCatalogJsonViewDialog";
 
 export function DataHookListTreePanel() {
   const { t } = useTranslation("common");
@@ -20,6 +25,47 @@ export function DataHookListTreePanel() {
     requestDelete,
   } = useDataHooks();
   const [createModalOpen, setCreateModalOpen] = useState(false);
+  const catalogLabels = useMemo(() => dataHooksCatalogJsonLabels(t), [t]);
+  const canReplaceCatalog = canCreate && canUpdate && canDelete;
+
+  const handleCatalogImport = useCallback(
+    async (catalog: DataHooksCatalogEnvelope) => {
+      try {
+        await putDataHooksCatalog(catalog, { entity: editor.entityName });
+        toast.success(catalogLabels.importSuccess);
+        await editor.reloadDefinitions();
+      } catch (importError) {
+        toast.error(
+          isApiClientError(importError)
+            ? importError.message
+            : catalogLabels.importFailed,
+        );
+      }
+    },
+    [catalogLabels.importFailed, catalogLabels.importSuccess, editor],
+  );
+
+  const catalogActions = (
+    <div className="flex flex-wrap items-center gap-2 px-2 pb-2">
+      <DataHooksCatalogJsonViewDialog
+        items={editor.definitions}
+        labels={catalogLabels}
+      />
+      <DataHooksCatalogJsonImportDialog
+        existingItems={editor.definitions}
+        canApply={canReplaceCatalog}
+        labels={catalogLabels}
+        onApply={(catalog) => void handleCatalogImport(catalog)}
+      />
+    </div>
+  );
+
+  const scopeSection = (
+    <div className="space-y-2">
+      <DataHookJsonToolbar />
+      {catalogActions}
+    </div>
+  );
 
   const addRow = (
     <button
@@ -42,7 +88,7 @@ export function DataHookListTreePanel() {
         expandedClassName={designerTreePanelShellClassName}
         collapsedClassName={designerTreePanelShellClassName}
         collapsedContent={addRow}
-        scopeSection={<DataHookJsonToolbar />}
+        scopeSection={scopeSection}
       >
         <div className="flex w-full min-w-max flex-col gap-1 py-1">
           {addRow}

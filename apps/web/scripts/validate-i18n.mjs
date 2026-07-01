@@ -244,7 +244,7 @@ function extractDataModelFieldTypeKeys(corpus) {
 
 /** dataHooks.<group>.${...} in source → all keys under dataHooks.<group> */
 function extractDataHookDynamicKeys(corpus) {
-  const groups = ["operation", "phase", "actionType"];
+  const groups = ["operation", "phase", "actionType", "condition"];
   const refDataHooks = readJSON(
     path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
   ).dataHooks;
@@ -773,7 +773,7 @@ mergeUsedKeys(
 mergeUsedKeys(
   usedKeys,
   extractDataHookDynamicKeys(corpus),
-  path.join(SRC_DIR, "features/data-hooks/DataHookSettingsPanel.tsx"),
+  path.join(SRC_DIR, "features/data-hooks/DataHookConditionEditor.tsx"),
 );
 mergeUsedKeys(
   usedKeys,

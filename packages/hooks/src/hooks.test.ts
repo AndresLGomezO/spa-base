@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DataHookDefinition } from "./data-hook-definition.js";
 import { formatHookEvent, parseHookEvent } from "./event.js";
-import { runDataHook } from "./interpret-data-hook.js";
+import { runDataHook, evaluateConditionNode } from "./interpret-data-hook.js";
 import {
   clearHookRegistry,
   executeHooks,
@@ -154,6 +154,7 @@ describe("runDataHook", () => {
       {
         ...sampleDefinition,
         condition: {
+          type: "condition",
           field: "amount",
           operator: ">=",
           value: { kind: "field", source: "current", path: "commitmentAmount" },
@@ -181,6 +182,7 @@ describe("runDataHook", () => {
       {
         ...sampleDefinition,
         condition: {
+          type: "condition",
           field: "amount",
           operator: ">=",
           value: { kind: "field", source: "current", path: "commitmentAmount" },
@@ -362,5 +364,138 @@ describe("runDataHook", () => {
     });
     expect(update).toHaveBeenCalledTimes(2);
     expect(update.mock.calls[0]?.[2]).toEqual({ isActive: false });
+  });
+
+  it("evaluates nested AND condition trees", async () => {
+    const context = createContext({
+      current: { amount: 100, status: "ACTIVE", commitmentAmount: 100 },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        condition: {
+          type: "group",
+          combinator: "and",
+          children: [
+            {
+              type: "condition",
+              field: "amount",
+              operator: ">=",
+              value: {
+                kind: "field",
+                source: "current",
+                path: "commitmentAmount",
+              },
+            },
+            {
+              type: "condition",
+              field: "status",
+              operator: "==",
+              value: { kind: "literal", value: "ACTIVE" },
+            },
+          ],
+        },
+        actions: [
+          {
+            type: "setField",
+            field: "approved",
+            value: { kind: "literal", value: true },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(context.current.approved).toBe(true);
+  });
+
+  it("short-circuits OR groups when a child matches", async () => {
+    const context = createContext({
+      current: { amount: 50, status: "ACTIVE" },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        condition: {
+          type: "group",
+          combinator: "or",
+          children: [
+            {
+              type: "condition",
+              field: "amount",
+              operator: ">=",
+              value: { kind: "literal", value: 100 },
+            },
+            {
+              type: "condition",
+              field: "status",
+              operator: "==",
+              value: { kind: "literal", value: "ACTIVE" },
+            },
+          ],
+        },
+        actions: [
+          {
+            type: "setField",
+            field: "matched",
+            value: { kind: "literal", value: true },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(context.current.matched).toBe(true);
+  });
+
+  it("runs when an empty condition group is configured", async () => {
+    const context = createContext();
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        condition: {
+          type: "group",
+          combinator: "and",
+          children: [],
+        },
+        actions: [
+          {
+            type: "setField",
+            field: "ran",
+            value: { kind: "literal", value: true },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(context.current.ran).toBe(true);
+  });
+});
+
+describe("evaluateConditionNode", () => {
+  it("normalizes legacy bare leaf conditions", () => {
+    const context = createContext({
+      current: { amount: 100, commitmentAmount: 100 },
+    });
+    const scope = {
+      current: context.current,
+      now: new Date(),
+    };
+
+    expect(
+      evaluateConditionNode(
+        {
+          field: "amount",
+          operator: ">=",
+          value: { kind: "field", source: "current", path: "commitmentAmount" },
+        },
+        context,
+        scope,
+      ),
+    ).toBe(true);
   });
 });

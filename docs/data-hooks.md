@@ -30,15 +30,30 @@ Each hook targets one entity and one operation:
 
 ### Condition (optional)
 
-A single-field guard evaluated against the trigger record:
+An activation guard evaluated against the trigger record. Conditions are stored
+as a recursive boolean tree:
 
 ```
-{ field, operator, value }
+{ type: "group", combinator: "and" | "or", children: [...] }
+```
+
+Each child is either another group or a leaf condition:
+
+```
+{ type: "condition", field, operator, value? }
 ```
 
 Operators: `==`, `!=`, `>`, `<`, `>=`, `<=`, `in`, `notIn`, `isEmpty`,
 `isNotEmpty`, `changed`. `value` is an expression (see below) and is omitted for
 `isEmpty` / `isNotEmpty` / `changed`.
+
+Groups combine children with AND (all must match) or OR (any may match). An empty
+group is treated as always true. Legacy bare leaf objects `{ field, operator,
+value? }` without a `type` field are still accepted and normalized to
+`type: "condition"`.
+
+The `updateMatching` action uses a separate single-field lookup shape (no
+`type` discriminator) for its `where` clause.
 
 ### Actions
 
@@ -96,9 +111,43 @@ Base path `/api/data-hooks` (permissions `hook.read` / `hook.create` /
 - `POST /api/data-hooks`
 - `PATCH /api/data-hooks/:id`
 - `DELETE /api/data-hooks/:id`
+- `PUT /api/data-hooks/catalog?entity=<name>` — replace hooks matched by
+  `entity` + `name`. When `entity` is provided, only hooks for that entity are
+  created/updated/deleted; hooks on other entities are untouched. Omit `entity`
+  for a full tenant replace (used by seed scripts).
 
 Definitions are stored per-tenant in the `__data_hooks` collection and loaded
 lazily into the runtime registry.
+
+## Portable JSON
+
+Single-definition envelopes use `kind: "data-hook-definition"` with a portable
+`data` object (no `id`, `tenantId`, or timestamps). Catalog envelopes use
+`kind: "data-hooks-catalog"` with a `dataHooks` array:
+
+```json
+{
+  "kind": "data-hooks-catalog",
+  "version": 1,
+  "exportedAt": "2026-07-01T13:00:00.000Z",
+  "dataHooks": [
+    {
+      "name": "Set status",
+      "entity": "loan",
+      "phase": "before",
+      "trigger": { "operation": "create" },
+      "actions": [{ "type": "setField", "field": "status", "value": { "kind": "literal", "value": "Pending" } }],
+      "enabled": true,
+      "order": 0
+    }
+  ]
+}
+```
+
+The Automation UI exports/imports an entity-scoped catalog for the current
+entity. Seed data lives at
+`apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json` and is applied
+via `seedRatesCatalogs` (full tenant replace).
 
 ## Migration
 
@@ -112,7 +161,7 @@ expressions, and the legacy event string is mapped to `phase` + `trigger`.
 - **Phase 1** — triggers, single-field condition, and `setField` (expression
   arithmetic + date functions).
 - **Phase 2** — cross-entity search and multi-record generation (`createRecord`,
-  `createRecords`, `updateMatching`), plus richer conditions and JSON/catalog
-  import-export.
+  `createRecords`, `updateMatching`), boolean condition trees (AND/OR groups),
+  and JSON import-export.
 - **Phase 3** — opt-in nested/chained hooks with a depth guard and additional
   functions.

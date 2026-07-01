@@ -2119,6 +2119,17 @@
       "updateFieldsHint": "Leave empty to run on any field change.",
       "condition": "Only run when a condition is met"
     },
+    "condition": {
+      "and": "All match (AND)",
+      "or": "Any match (OR)",
+      "addCondition": "Add condition",
+      "addGroup": "Add group",
+      "remove": "Remove",
+      "group": "Condition group",
+      "leaf": "Condition",
+      "empty": "No conditions yet. Add a condition or nested group.",
+      "groupSummary": "{{combinator}} · {{count}} conditions"
+    },
     "metadata": {
       "created": "Automation hook created.",
       "updated": "Automation hook updated.",
@@ -2191,6 +2202,31 @@
       "copied": "Copied to clipboard.",
       "imported": "Automation hook imported.",
       "invalid": "Invalid JSON."
+    },
+    "catalog": {
+      "viewTrigger": "View catalog JSON",
+      "importTrigger": "Import catalog JSON",
+      "pasteLabel": "Paste JSON",
+      "uploadLabel": "Upload JSON file",
+      "skeletonTitle": "Example format",
+      "skeletonShow": "Show example",
+      "skeletonHide": "Hide example",
+      "valid": "JSON is valid.",
+      "invalid": "JSON validation errors",
+      "apply": "Apply",
+      "readOnlyHint": "You do not have permission to replace the catalog.",
+      "viewDescription": "Portable automation hooks for this entity. Hooks are matched by entity and name.",
+      "viewCopy": "Copy JSON",
+      "viewCopied": "Copied",
+      "viewTitle": "Current hooks catalog JSON",
+      "importTitle": "Import hooks catalog JSON",
+      "importDescription": "Replace automation hooks for this entity with the imported definitions. Hooks for this entity not in the JSON will be removed. Hooks on other entities are not affected.",
+      "confirmTitle": "Replace hooks catalog?",
+      "confirmDescription": "This will create, update, and delete automation hooks for this entity to match the imported JSON.",
+      "confirmAction": "Replace catalog",
+      "replaceSummary": "Hooks: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
+      "importSuccess": "Automation hooks catalog replaced.",
+      "importFailed": "Unable to replace automation hooks catalog."
     }
   },
   "share": {

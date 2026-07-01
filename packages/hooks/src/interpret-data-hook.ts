@@ -1,6 +1,7 @@
 import type {
   DataHookAction,
   DataHookCondition,
+  DataHookConditionNode,
   DataHookDefinition,
 } from "./data-hook-definition.js";
 import { isBeforePhase, parseHookEvent } from "./event.js";
@@ -70,7 +71,7 @@ function evaluateConditionValue(
   return evaluateExpression(condition.value, scope);
 }
 
-export function evaluateCondition(
+function evaluateConditionLeaf(
   condition: DataHookCondition,
   context: HookContext,
   scope: ExpressionScope,
@@ -100,6 +101,60 @@ export function evaluateCondition(
       return evaluateComparison(condition.operator, fieldValue, target);
     }
   }
+}
+
+/** Evaluates a single-field condition leaf (also used by `updateMatching.where`). */
+export function evaluateCondition(
+  condition: DataHookCondition,
+  context: HookContext,
+  scope: ExpressionScope,
+): boolean {
+  return evaluateConditionLeaf(condition, context, scope);
+}
+
+function normalizeConditionNode(
+  node: DataHookConditionNode | DataHookCondition,
+): DataHookConditionNode {
+  if (
+    typeof node === "object" &&
+    node !== null &&
+    "type" in node &&
+    (node.type === "condition" || node.type === "group")
+  ) {
+    return node;
+  }
+  return { type: "condition", ...node };
+}
+
+export function evaluateConditionNode(
+  node: DataHookConditionNode | DataHookCondition,
+  context: HookContext,
+  scope: ExpressionScope,
+): boolean {
+  const normalized = normalizeConditionNode(node);
+  if (normalized.type === "condition") {
+    return evaluateConditionLeaf(normalized, context, scope);
+  }
+
+  if (normalized.children.length === 0) {
+    return true;
+  }
+
+  if (normalized.combinator === "and") {
+    for (const child of normalized.children) {
+      if (!evaluateConditionNode(child, context, scope)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  for (const child of normalized.children) {
+    if (evaluateConditionNode(child, context, scope)) {
+      return true;
+    }
+  }
+  return false;
 }
 
 function evaluateComparison(
@@ -320,7 +375,7 @@ export async function runDataHook(
 
   if (definition.condition) {
     const scope = buildScope(context);
-    if (!evaluateCondition(definition.condition, context, scope)) {
+    if (!evaluateConditionNode(definition.condition, context, scope)) {
       return;
     }
   }

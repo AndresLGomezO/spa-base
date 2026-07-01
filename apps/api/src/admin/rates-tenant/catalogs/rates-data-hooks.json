@@ -1,0 +1,26 @@
+{
+  "kind": "data-hooks-catalog",
+  "version": 1,
+  "exportedAt": "2026-07-01T13:00:00.000Z",
+  "dataHooks": [
+    {
+      "name": "Log transaction create",
+      "description": "Seed automation hook that logs when a transaction is created.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": null,
+      "actions": [
+        {
+          "type": "sendNotification",
+          "message": {
+            "kind": "literal",
+            "value": "Transaction created"
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    }
+  ]
+}
