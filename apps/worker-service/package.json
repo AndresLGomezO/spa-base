@@ -26,6 +26,7 @@
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "@repo/worker-firestore": "workspace:*",
+    "cron-parser": "catalog:",
     "fastify": "catalog:",
     "firebase-admin": "catalog:",
     "nanoid": "catalog:",
