@@ -36,6 +36,8 @@ flowchart LR
 | Push tag `v*` | `prod` | `entitysystem-production` |
 | `workflow_dispatch` | user choice | matching project |
 
+**Note:** A plain `git push` to `develop` or `main` does **not** rebuild or redeploy Cloud Run images. After dependency fixes on a branch, merge a PR or run **Deploy to GCP** manually (`workflow_dispatch`, environment `dev` / `staging` / `prod`) so the build job produces a fresh image tagged with the commit SHA.
+
 ### Jobs
 
 1. **resolve-target** — workspace, project, image tag.
@@ -60,7 +62,7 @@ Auth: **Workload Identity Federation** only (`GCP_WORKLOAD_IDENTITY_PROVIDER`, `
 pnpm precommit
 ```
 
-Runs `i18n:validate --strict`, `terraform fmt -check`, and `validate:ci`.
+Runs `i18n:validate --strict`, `terraform fmt -check`, and `validate:ci` (includes `check:prod-runtime` for bundled Cloud Run apps).
 
 ## Manual deploy (local)
 
@@ -127,9 +129,9 @@ Fill `VITE_FIREBASE_*` from Firebase Console.
 | Cloud Run startup probe failed | Ensure bootstrap secret has a version; check logs. The API does not seed Firestore on startup — use `pnpm seed:database` when seeding is needed |
 | Cloud Run worker-aggregation startup probe failed | Check revision logs for `Dynamic require of "child_process" is not supported` — rebuild worker-aggregation after the Vertex bundle fix; redeploy |
 | Cloud Run worker-service startup probe failed | Check logs for `Dynamic require of "stream"` or `"child_process"` — GCP SDK was bundled into ESM. Rebuild worker-service (esbuild externals + narrow imports). If logs show a multi-MB `dist/index.js`, clear stale GHA BuildKit cache (`SOURCE_REVISION` / `--force` in worker Dockerfiles) and redeploy |
+| `Cannot find package '…'` from `/app/dist/index.js` (worker-service) | The bundled entry keeps npm imports external; `pnpm deploy --prod` only ships **direct** [`worker-service/package.json`](../apps/worker-service/package.json) dependencies. Add the missing package there (and to [`esbuild.mjs`](../apps/worker-service/esbuild.mjs) `npmExternals` when CJS/GCP). Reproduce locally: `pnpm run check:prod-runtime` (deploys outside the repo tree so hoisted monorepo `node_modules` cannot mask missing deps; also runs in `validate:local` / `precommit`). After fixing deps, trigger a fresh image build (merged PR or `workflow_dispatch`) — Cloud Run will keep serving the previous image until then |
 | `cloudtasks.queues.create` 403 on Terraform apply | Re-run `bash scripts/setup-github-wif.sh entitysystem` to grant `roles/cloudtasks.admin` on `github-deployer`, then re-run deploy |
-| `Cannot find package 'firebase-admin'` | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
-| `Cannot find package '@google-cloud/firestore'` (worker-service) | Add `@google-cloud/firestore` and `@google-cloud/pubsub` to [`worker-service/package.json`](../apps/worker-service/package.json) and [`esbuild.mjs`](../apps/worker-service/esbuild.mjs) externals (same pattern as `api` / `worker-aggregation`) |
+| `Cannot find package 'firebase-admin'` (api) | Add every [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` as a direct `api` dependency; image uses `pnpm deploy --legacy` |
 | `Dynamic require of "stream" is not supported` | Add `@google-cloud/firestore` to [`esbuild.mjs`](../apps/api/esbuild.mjs) `external` and `api` dependencies (do not bundle; CJS-only) |
 | Hosting target `live` not detected | [`firebase.json`](../../firebase.json) must use `"hosting": [{ "target": "live", ... }]`; run `firebase target:apply hosting live SITE_ID` before deploy |
 | Dev still on `esd-*.web.app` | Run Terraform apply (removes dedicated `google_firebase_hosting_site.dev`); redeploy web so `firebase target:apply hosting live entitysystem-development` deploys to the default site |

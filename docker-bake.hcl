@@ -22,22 +22,22 @@ target "api" {
   dockerfile = "apps/api/Dockerfile"
   context    = "."
   tags       = ["${REGISTRY}/api:${TAG}", "${REGISTRY}/api:latest"]
-  cache-from = ["type=gha,scope=api-v2"]
-  cache-to   = ["type=gha,scope=api-v2,mode=max"]
+  cache-from = ["type=gha,scope=api-v3"]
+  cache-to   = ["type=gha,scope=api-v3,mode=max"]
 }
 
 target "worker-aggregation" {
   dockerfile = "apps/worker-aggregation/Dockerfile"
   context    = "."
   tags       = ["${REGISTRY}/worker-aggregation:${TAG}", "${REGISTRY}/worker-aggregation:latest"]
-  cache-from = ["type=gha,scope=worker-aggregation"]
-  cache-to   = ["type=gha,scope=worker-aggregation,mode=max"]
+  cache-from = ["type=gha,scope=worker-aggregation-v2"]
+  cache-to   = ["type=gha,scope=worker-aggregation-v2,mode=max"]
 }
 
 target "worker-service" {
   dockerfile = "apps/worker-service/Dockerfile"
   context    = "."
   tags       = ["${REGISTRY}/worker-service:${TAG}", "${REGISTRY}/worker-service:latest"]
-  cache-from = ["type=gha,scope=worker-service-v2"]
-  cache-to   = ["type=gha,scope=worker-service-v2,mode=max"]
+  cache-from = ["type=gha,scope=worker-service-v3"]
+  cache-to   = ["type=gha,scope=worker-service-v3,mode=max"]
 }

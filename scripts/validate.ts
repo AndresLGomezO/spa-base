@@ -82,6 +82,10 @@ const VALIDATE_CI_STEPS: ValidateStep[] = [
     command: "pnpm run check:docker-workspace",
   },
   {
+    label: "Prod runtime deps (esbuild + deploy layout)",
+    command: "pnpm run check:prod-runtime",
+  },
+  {
     label: "AI context fragments",
     command: "pnpm run check:ai-context",
   },

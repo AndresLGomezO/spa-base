@@ -1,5 +1,9 @@
 import * as esbuild from "esbuild";
-import { stat } from "node:fs/promises";
+import { readFile, stat } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { assertDirectRuntimeDependencies } from "../../scripts/assert-esbuild-runtime-deps.mjs";
 
 const npmExternals = [
   "@google-cloud/firestore",
@@ -21,6 +25,8 @@ const forceExternalPlugin = {
   },
 };
 
+const rootDir = dirname(fileURLToPath(import.meta.url));
+
 await esbuild.build({
   entryPoints: ["src/index.ts"],
   bundle: true,
@@ -35,6 +41,12 @@ await esbuild.build({
   logLevel: "info",
 });
 
+assertDirectRuntimeDependencies({
+  appName: "worker-aggregation",
+  bundlePath: join(rootDir, "dist/index.js"),
+  packageJsonPath: join(rootDir, "package.json"),
+});
+
 const { size } = await stat("dist/index.js");
 const maxBundleBytes = 500_000;
 if (size > maxBundleBytes) {
@@ -44,9 +56,7 @@ if (size > maxBundleBytes) {
   );
 }
 
-const bundle = await import("node:fs/promises").then((fs) =>
-  fs.readFile("dist/index.js", "utf8"),
-);
+const bundle = await readFile("dist/index.js", "utf8");
 if (bundle.includes("__require2") || bundle.includes("google-auth-library")) {
   throw new Error(
     "worker-aggregation bundle contains inlined google-auth-library — check esbuild externals.",

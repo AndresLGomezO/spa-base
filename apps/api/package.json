@@ -43,6 +43,7 @@
     "@repo/rbac": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "@repo/tenant-bundle": "workspace:*",
+    "cron-parser": "catalog:",
     "fastify": "catalog:",
     "firebase-admin": "catalog:",
     "nanoid": "catalog:",

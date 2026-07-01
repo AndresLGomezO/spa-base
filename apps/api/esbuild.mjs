@@ -1,5 +1,9 @@
 import * as esbuild from "esbuild";
 import { readFile, stat } from "node:fs/promises";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
+import { assertDirectRuntimeDependencies } from "../../scripts/assert-esbuild-runtime-deps.mjs";
 
 // Bundle workspace TypeScript packages into dist; keep npm packages with native/dynamic loads external.
 const npmExternals = [
@@ -29,6 +33,8 @@ const forceExternalPlugin = {
   },
 };
 
+const rootDir = dirname(fileURLToPath(import.meta.url));
+
 await esbuild.build({
   entryPoints: ["src/index.ts"],
   bundle: true,
@@ -41,6 +47,12 @@ await esbuild.build({
   external: npmExternals,
   plugins: [forceExternalPlugin],
   logLevel: "info",
+});
+
+assertDirectRuntimeDependencies({
+  appName: "api",
+  bundlePath: join(rootDir, "dist/index.js"),
+  packageJsonPath: join(rootDir, "package.json"),
 });
 
 const { size } = await stat("dist/index.js");

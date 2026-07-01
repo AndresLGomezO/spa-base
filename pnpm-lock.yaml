@@ -344,6 +344,9 @@ importers:
       '@repo/ui-builder-core':
         specifier: workspace:*
         version: link:../../packages/ui-builder-core
+      cron-parser:
+        specifier: 'catalog:'
+        version: 4.9.0
       fastify:
         specifier: 'catalog:'
         version: 5.8.5
