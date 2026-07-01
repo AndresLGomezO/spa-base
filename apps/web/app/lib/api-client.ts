@@ -1,5 +1,6 @@
 import type {
   CreateUiBuilderPresetInput,
+  EntityRecordsExportEnvelope,
   EntityUIConfig,
   EntityUiOverrideRecord,
   PutTenantDashboardLayoutInput,
@@ -268,6 +269,42 @@ export async function deleteEntity(
   return apiRequest<{ readonly deleted: boolean }>(`/api/${entityName}/${id}`, {
     method: "DELETE",
   });
+}
+
+interface EntityRecordsImportResult {
+  readonly created: number;
+  readonly updated: number;
+  readonly items: readonly {
+    readonly id: string;
+    readonly operation: "created" | "updated";
+  }[];
+}
+
+export async function fetchEntityRecordsJsonExport(
+  entityName: string,
+  options?: { readonly tenantId?: string },
+): Promise<EntityRecordsExportEnvelope> {
+  return apiRequest<EntityRecordsExportEnvelope>(
+    `/api/${encodeURIComponent(entityName)}/export-json`,
+    {
+      query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+    },
+  );
+}
+
+export async function submitEntityRecordsJsonImport(
+  entityName: string,
+  body: unknown,
+  options?: { readonly tenantId?: string },
+): Promise<EntityRecordsImportResult> {
+  return apiRequest<EntityRecordsImportResult>(
+    `/api/${encodeURIComponent(entityName)}/import-json`,
+    {
+      method: "POST",
+      body,
+      query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
+    },
+  );
 }
 
 export async function getEntityRelationTargets(

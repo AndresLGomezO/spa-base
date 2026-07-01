@@ -71,7 +71,18 @@ const IGNORE_BASE_NAMES = new Set<string>([
   "home-page",
   "routes",
   "roles",
+  "common",
 ]);
+
+const IGNORE_SIMILAR_FILE_PATH_PATTERNS = [
+  /[/\\]i18n[/\\]locales[/\\]/,
+];
+
+function shouldIgnoreSimilarFile(filePath: string): boolean {
+  return IGNORE_SIMILAR_FILE_PATH_PATTERNS.some((pattern) =>
+    pattern.test(filePath),
+  );
+}
 
 const MIN_BODY_LENGTH = 40;
 const JSON_OUTPUT = process.argv.includes("--json");
@@ -371,6 +382,10 @@ duplicateSymbols.sort((a, b) => b.locations.length - a.locations.length);
 const baseNameMap = new Map<string, { path: string; workspace: string }[]>();
 
 for (const entry of allFileNames) {
+  if (shouldIgnoreSimilarFile(entry.path)) {
+    continue;
+  }
+
   const base = path
     .basename(entry.path, path.extname(entry.path))
     .replace(/-/g, "")

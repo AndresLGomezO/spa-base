@@ -8,7 +8,6 @@ import { isScheduleTrigger } from "@repo/hooks";
 import { isApiClientError, putDataHooksCatalog } from "../../lib/api-client";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
-import { DataHookJsonToolbar } from "./DataHookJsonToolbar";
 import { DataHookMetadataModal } from "./DataHookMetadataModal";
 import { useDataHooks } from "./data-hooks-context";
 import { dataHooksCatalogJsonLabels } from "./json/data-hook-definition-json-labels";
@@ -61,12 +60,7 @@ export function DataHookListTreePanel() {
     </div>
   );
 
-  const scopeSection = (
-    <div className="space-y-2">
-      <DataHookJsonToolbar />
-      {catalogActions}
-    </div>
-  );
+  const scopeSection = catalogActions;
 
   const addRow = (
     <button

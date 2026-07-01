@@ -1,4 +1,5 @@
 import { CirclePlus } from "lucide-react";
+import type { ReactNode } from "react";
 
 import { Button, Heading, IconButton } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
@@ -16,6 +17,7 @@ interface EntityPageCompactHeaderProps {
   readonly createLabel: string;
   readonly onOpenDesignLayout: () => void;
   readonly onCreate: () => void;
+  readonly extraActions?: ReactNode;
 }
 
 export function EntityPageCompactHeader({
@@ -26,6 +28,7 @@ export function EntityPageCompactHeader({
   createLabel,
   onOpenDesignLayout,
   onCreate,
+  extraActions,
 }: EntityPageCompactHeaderProps) {
   const { compactProgress, isCompact } = useEntityPageScrollCompact();
 
@@ -56,6 +59,7 @@ export function EntityPageCompactHeader({
       </Heading>
 
       <div className="flex shrink-0 items-center gap-2">
+        {extraActions}
         {canConfigureView ? (
           <Button
             type="button"

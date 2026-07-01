@@ -1,6 +1,6 @@
 import { useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
-import { NavLink, useLocation } from "react-router";
+import { Link, useLocation } from "react-router";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "@repo/theme/utils";
@@ -44,23 +44,26 @@ function NavLinkItem({
   readonly onNavigate?: () => void;
 }) {
   const { t } = useTranslation("common");
+  const { pathname } = useLocation();
   const Icon = item.icon;
+  const active = isPathActive(pathname, item.matchPath);
 
   return (
     <SidebarMenuItem>
-      <NavLink
+      <Link
         to={item.to}
-        end={item.matchPath === "/"}
         onClick={onNavigate}
-        className={({ isActive }) =>
-          cn(sidebarMenuButtonClassName({ isActive }), "w-full")
-        }
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          sidebarMenuButtonClassName({ isActive: active }),
+          "w-full",
+        )}
       >
         <SidebarMenuIcon>
           <Icon />
         </SidebarMenuIcon>
         <SidebarLabel>{resolveNavLinkLabel(item, t)}</SidebarLabel>
-      </NavLink>
+      </Link>
     </SidebarMenuItem>
   );
 }
@@ -73,22 +76,26 @@ function NavSubGroupLink({
   readonly onNavigate?: () => void;
 }) {
   const { t } = useTranslation("common");
+  const { pathname } = useLocation();
   const ChildIcon = link.icon;
+  const active = isPathActive(pathname, link.matchPath);
 
   return (
     <li className="list-none min-w-0 w-full">
-      <NavLink
+      <Link
         to={link.to}
         onClick={onNavigate}
-        className={({ isActive }) =>
-          cn(sidebarMenuButtonClassName({ isActive }), "min-w-0")
-        }
+        aria-current={active ? "page" : undefined}
+        className={cn(
+          sidebarMenuButtonClassName({ isActive: active }),
+          "min-w-0",
+        )}
       >
         <SidebarMenuIcon>
           <ChildIcon />
         </SidebarMenuIcon>
         <SidebarLabel>{resolveNavLinkLabel(link, t)}</SidebarLabel>
-      </NavLink>
+      </Link>
     </li>
   );
 }
@@ -109,19 +116,20 @@ function NavLinkPopoverItem({
   const active = isPathActive(pathname, link.matchPath);
 
   return (
-    <NavLink
+    <Link
       to={link.to}
       onClick={() => {
         onNavigate?.();
         onClosePopover();
       }}
+      aria-current={active ? "page" : undefined}
       className={sidebarMenuButtonClassName({ isActive: active })}
     >
       <SidebarMenuIcon>
         <ChildIcon />
       </SidebarMenuIcon>
       <SidebarLabel>{resolveNavLinkLabel(link, t)}</SidebarLabel>
-    </NavLink>
+    </Link>
   );
 }
 

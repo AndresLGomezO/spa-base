@@ -1,11 +1,12 @@
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS } from "@repo/entities";
 import { Alert, Button, Heading, Text } from "@repo/ui";
 import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Pencil } from "lucide-react";
 
+import { useAuth } from "../../auth/AuthContext";
 import type { EntityName } from "../../entities/entity-catalog";
 import {
   getEntityLabel,
@@ -19,13 +20,18 @@ import { useAnyPermission } from "../../auth/useAnyPermission";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { designLayoutEntityPath } from "../../routing/design-layout-nav";
 import { EntityLayoutDetailView } from "./EntityLayoutDetailView";
-import { getEntity } from "../../lib/api-client";
+import { getEntity, getEntityRelationTargets } from "../../lib/api-client";
 import { entityRecordQueryKey } from "../../query/query-client";
 import { formatRecordDisplayLabel } from "./format-record-display-label";
 import { RelatedRecords } from "./RelatedRecords";
 import { EntityPageSkeleton } from "../loading/EntityPageSkeleton";
 import { EntityBackButton } from "../navigation/EntityBackButton";
 import { useEntityReturnNavigation } from "../../routing/entity-navigation";
+import { EntityRecordsJsonToolbar } from "./json/EntityRecordsJsonToolbar";
+import {
+  listManyToManyFieldNames,
+  useEntityRecordExportEnvelope,
+} from "./json/build-entity-record-export-envelope";
 
 interface EntityRecordDetailProps {
   readonly entityName: EntityName;
@@ -42,6 +48,8 @@ export function EntityRecordDetail({
   const definition = useEntityDefinition(entityName);
   const { returnTo, buildEditPath } = useEntityReturnNavigation(entityName);
   const permissions = useEntityPermissions(entityName);
+  const { isSuperAdmin } = useAuth();
+  const queryClient = useQueryClient();
   const canConfigureLayout = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
   );
@@ -72,6 +80,43 @@ export function EntityRecordDetail({
         populate: populateParam,
       }),
   });
+
+  const manyToManyFieldNames = useMemo(
+    () => listManyToManyFieldNames(definition),
+    [definition],
+  );
+
+  const { data: manyToManyRelations = {} } = useQuery({
+    queryKey: [
+      ...entityRecordQueryKey(entityName, recordId),
+      "export-relations",
+      manyToManyFieldNames,
+    ],
+    queryFn: async () => {
+      const relations: Record<string, readonly string[]> = {};
+      await Promise.all(
+        manyToManyFieldNames.map(async (fieldName) => {
+          const targetIds = await getEntityRelationTargets(
+            entityName,
+            recordId,
+            fieldName,
+          );
+          if (targetIds.length > 0) {
+            relations[fieldName] = targetIds;
+          }
+        }),
+      );
+      return relations;
+    },
+    enabled: isSuperAdmin && manyToManyFieldNames.length > 0,
+  });
+
+  const exportEnvelope = useEntityRecordExportEnvelope(
+    entityName,
+    definition,
+    record,
+    manyToManyRelations,
+  );
 
   const reverseRelations = useMemo(() => {
     const result: {
@@ -127,6 +172,18 @@ export function EntityRecordDetail({
           {formatRecordDisplayLabel(record, definition.displayField)}
         </Heading>
         <div className="flex items-center gap-2">
+          {isSuperAdmin && exportEnvelope ? (
+            <EntityRecordsJsonToolbar
+              entityName={entityName}
+              definition={definition}
+              exportEnvelope={exportEnvelope}
+              onImportSuccess={async () => {
+                await queryClient.invalidateQueries({
+                  queryKey: entityRecordQueryKey(entityName, recordId),
+                });
+              }}
+            />
+          ) : null}
           {canConfigureLayout ? (
             <Link to={designLayoutEntityPath("detail", entityName)}>
               <Button type="button" variant="outline" size="sm">

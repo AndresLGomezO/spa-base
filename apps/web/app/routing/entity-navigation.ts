@@ -7,6 +7,10 @@ import {
 } from "react-router";
 
 import type { EntityName } from "../entities/entity-catalog";
+import {
+  buildAdminEntityNavPath,
+  isAdminEntityNavPath,
+} from "../components/sidebar/nav-config";
 
 export interface EntityReturnToState {
   readonly returnTo?: string;
@@ -14,6 +18,17 @@ export interface EntityReturnToState {
 
 export function buildEntityListPath(entityName: EntityName): string {
   return `/app/${entityName}`;
+}
+
+export function resolveEntityListPath(
+  entityName: EntityName,
+  pathname: string,
+): string {
+  if (isAdminEntityNavPath(pathname)) {
+    return buildAdminEntityNavPath(entityName);
+  }
+
+  return buildEntityListPath(entityName);
 }
 
 export function buildCurrentReturnTo(
@@ -50,7 +65,10 @@ export function resolveEntityReturnTo(
   location: Pick<Location, "pathname" | "search" | "state">,
   entityName: EntityName,
 ): string {
-  return readReturnToFromLocation(location) ?? buildEntityListPath(entityName);
+  return (
+    readReturnToFromLocation(location) ??
+    resolveEntityListPath(entityName, location.pathname)
+  );
 }
 
 function navigateToEntityDetail(
@@ -71,8 +89,9 @@ function navigateToEntityDetail(
 function resolveEntityListModalBasePath(
   entityName: EntityName,
   returnTo: string,
+  listPath: string,
 ): { readonly pathname: string; readonly params: URLSearchParams } {
-  const pathname = buildEntityListPath(entityName);
+  const pathname = listPath;
 
   if (!isSafeAppReturnTo(returnTo)) {
     return { pathname, params: new URLSearchParams() };
@@ -94,10 +113,12 @@ export function buildEntityListEditPath(
   entityName: EntityName,
   recordId: string,
   returnTo: string,
+  listPath = buildEntityListPath(entityName),
 ): string {
   const { pathname, params } = resolveEntityListModalBasePath(
     entityName,
     returnTo,
+    listPath,
   );
 
   params.delete("create");
@@ -113,10 +134,12 @@ export function buildEntityListCreatePath(
   entityName: EntityName,
   returnTo: string,
   prefill?: Readonly<Record<string, string>>,
+  listPath = buildEntityListPath(entityName),
 ): string {
   const { pathname, params } = resolveEntityListModalBasePath(
     entityName,
     returnTo,
+    listPath,
   );
 
   params.delete("edit");
@@ -144,6 +167,11 @@ export function useEntityReturnNavigation(entityName: EntityName) {
     [location],
   );
 
+  const listPath = useMemo(
+    () => resolveEntityListPath(entityName, location.pathname),
+    [entityName, location.pathname],
+  );
+
   const returnTo = useMemo(
     () => resolveEntityReturnTo(location, entityName),
     [entityName, location],
@@ -162,8 +190,8 @@ export function useEntityReturnNavigation(entityName: EntityName) {
 
   const buildEditPath = useCallback(
     (recordId: string) =>
-      buildEntityListEditPath(entityName, recordId, returnTo),
-    [entityName, returnTo],
+      buildEntityListEditPath(entityName, recordId, returnTo, listPath),
+    [entityName, listPath, returnTo],
   );
 
   return {

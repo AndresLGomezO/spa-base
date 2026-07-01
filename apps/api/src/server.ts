@@ -97,6 +97,7 @@ import {
 } from "./entities/entity-runtime-context.js";
 import { registerDynamicEntityCrudRoutes } from "./entities/register-dynamic-entity-crud-routes.js";
 import { registerEntityRelationRoutes } from "./entities/register-entity-relation-routes.js";
+import { registerEntityRecordsImportExportRoutes } from "./entities/register-entity-records-import-export-routes.js";
 import { registerListEntitiesRoute } from "./entities/list-entities.route.js";
 import { registerEntityUiOverrideRoutes } from "./entities/register-entity-ui-override-routes.js";
 import { registerUiBuilderPresetRoutes } from "./ui-builder-presets/register-ui-builder-preset-routes.js";
@@ -739,6 +740,15 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     relationContext,
+  });
+
+  await registerEntityRecordsImportExportRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    relationContext,
+    crudHooks,
+    aggregation: aggregationEmitter,
   });
 
   if (!options.repositories) {

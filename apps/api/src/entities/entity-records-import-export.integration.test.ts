@@ -1,0 +1,282 @@
+import { beforeEach, describe, expect, it, vi } from "vitest";
+
+import { buildRoleCatalog } from "@repo/rbac";
+import { clearDynamicEntityRegistry } from "@repo/dynamic-entities";
+import { clearEntityRegistry } from "@repo/entities";
+import { clearModuleRegistries } from "@repo/modules";
+
+import { createInMemoryJoinCollectionRepository } from "../repositories/in-memory-join-collection-repository.js";
+import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
+import { mockCreateFirestoreEntityQueryExecutor } from "../test/mock-firestore-query-executor.js";
+import {
+  buildInMemoryListSnapshotInvalidationPrefix,
+  mockCreateInMemoryListSnapshotCache,
+} from "../test/mock-in-memory-list-snapshot-cache.js";
+import { buildServer } from "../server.js";
+
+const authState = {
+  uid: "superadmin_user",
+  tenantId: "tenant_a",
+};
+
+vi.mock("@repo/gcp-firebase", () => ({
+  verifyFirebaseIdToken: vi.fn(async () => ({
+    uid: authState.uid,
+    tenantId: authState.tenantId,
+    email: "super@example.com",
+  })),
+  verifyFirebaseAppCheckToken: vi.fn(async () => ({ appId: "demo-app-id" })),
+  getFirebaseUserRecord: vi.fn(async () => ({
+    uid: authState.uid,
+    email: "super@example.com",
+    emailVerified: true,
+    displayName: "Super Admin",
+    photoURL: null,
+    phoneNumber: null,
+    disabled: false,
+    providerData: [],
+    metadata: {
+      creationTime: new Date().toISOString(),
+      lastSignInTime: new Date().toISOString(),
+    },
+  })),
+  mapFirebaseUserRecordToAuthUserProjection: vi.fn((user) => ({
+    uid: user.uid,
+    email: user.email,
+    emailVerified: user.emailVerified,
+    displayName: user.displayName,
+    photoURL: user.photoURL,
+    phoneNumber: user.phoneNumber,
+    disabled: user.disabled,
+    providerData: user.providerData,
+    metadata: user.metadata,
+  })),
+  createFirestoreAdminRegisteredUserRepository: vi.fn(),
+  createFirestoreAdminPlatformRoleRepository: vi.fn(),
+  createFirestoreAdminTenantRepository: vi.fn(),
+  createFirestoreAdminJoinCollectionRepository: vi.fn(),
+  createFirestoreAdminEntityRepository: vi.fn(),
+  createFirestoreEntityQueryExecutor: mockCreateFirestoreEntityQueryExecutor,
+  buildInMemoryListSnapshotInvalidationPrefix,
+  createInMemoryListSnapshotCache: mockCreateInMemoryListSnapshotCache,
+  createFirestoreAdminEntityDefinitionRepository: vi.fn(),
+}));
+
+async function buildTestServer() {
+  const runtime = createInMemoryCrudRuntime();
+  return buildServer({
+    logger: false,
+    repositories: runtime.repositories,
+    queryExecutors: runtime.queryExecutors,
+    joinRepository: createInMemoryJoinCollectionRepository(),
+    getRoleCatalog: async () => buildRoleCatalog([]),
+    getUserAccessProfile: async () => ({
+      platformRole: "superadmin",
+      tenants: { tenant_a: ["admin"] },
+    }),
+    skipPlatformRoleSeed: true,
+    skipPlatformTenantSeed: true,
+  });
+}
+
+const authHeaders = {
+  authorization: "Bearer fake-token",
+  "x-firebase-appcheck": "fake-appcheck",
+};
+
+async function seedCatalog(
+  server: Awaited<ReturnType<typeof buildTestServer>>,
+) {
+  for (const payload of [
+    {
+      name: "category",
+      label: "Categories",
+      fields: [{ name: "name", type: "string", required: true }],
+    },
+    {
+      name: "product",
+      label: "Products",
+      fields: [
+        { name: "name", type: "string", required: true },
+        {
+          name: "status",
+          type: "enum",
+          enumValues: ["draft", "published"],
+          required: true,
+        },
+        {
+          name: "categoryId",
+          type: "relation",
+          required: true,
+          relation: { target: "category", type: "many-to-one" },
+        },
+      ],
+    },
+  ]) {
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers: authHeaders,
+      payload,
+    });
+    expect(response.statusCode).toBe(201);
+  }
+}
+
+describe("entity records import/export routes integration", () => {
+  beforeEach(() => {
+    clearModuleRegistries();
+    clearEntityRegistry();
+    clearDynamicEntityRegistry();
+    authState.tenantId = "tenant_a";
+  });
+
+  it("returns 403 for non-superadmin users", async () => {
+    const runtime = createInMemoryCrudRuntime();
+    const server = await buildServer({
+      logger: false,
+      repositories: runtime.repositories,
+      queryExecutors: runtime.queryExecutors,
+      joinRepository: createInMemoryJoinCollectionRepository(),
+      getRoleCatalog: async () => buildRoleCatalog([]),
+      getUserAccessProfile: async () => ({
+        platformRole: null,
+        tenants: { tenant_a: ["admin"] },
+      }),
+      skipPlatformRoleSeed: true,
+      skipPlatformTenantSeed: true,
+    });
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/product/export-json",
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(403);
+  });
+
+  it("imports creates and updates records with schema and relation validation", async () => {
+    const server = await buildTestServer();
+    await seedCatalog(server);
+
+    const categoryCreate = await server.inject({
+      method: "POST",
+      url: "/api/category",
+      headers: authHeaders,
+      payload: { name: "Electronics" },
+    });
+    expect(categoryCreate.statusCode).toBe(201);
+    const categoryId = categoryCreate.json().data.id as string;
+
+    const importCreate = await server.inject({
+      method: "POST",
+      url: "/api/product/import-json",
+      headers: authHeaders,
+      payload: {
+        name: "Phone",
+        status: "draft",
+        categoryId,
+      },
+    });
+    expect(importCreate.statusCode).toBe(200);
+    expect(importCreate.json().data.created).toBe(1);
+    const productId = importCreate.json().data.items[0].id as string;
+
+    const invalidEnum = await server.inject({
+      method: "POST",
+      url: "/api/product/import-json",
+      headers: authHeaders,
+      payload: [
+        {
+          name: "Bad Product",
+          status: "invalid",
+          categoryId,
+        },
+      ],
+    });
+    expect(invalidEnum.statusCode).toBe(400);
+
+    const invalidRelation = await server.inject({
+      method: "POST",
+      url: "/api/product/import-json",
+      headers: authHeaders,
+      payload: {
+        name: "Missing Category",
+        status: "draft",
+        categoryId: "missing-category-id",
+      },
+    });
+    expect(invalidRelation.statusCode).toBe(400);
+
+    const importUpdate = await server.inject({
+      method: "POST",
+      url: "/api/product/import-json",
+      headers: authHeaders,
+      payload: {
+        id: productId,
+        name: "Phone Pro",
+        status: "published",
+        categoryId,
+      },
+    });
+    expect(importUpdate.statusCode).toBe(200);
+    expect(importUpdate.json().data.updated).toBe(1);
+
+    const exportResponse = await server.inject({
+      method: "GET",
+      url: "/api/product/export-json",
+      headers: authHeaders,
+    });
+    expect(exportResponse.statusCode).toBe(200);
+    const exported = exportResponse.json().data;
+    expect(exported.entityName).toBe("product");
+    expect(exported.records).toHaveLength(1);
+    expect(exported.records[0]).toMatchObject({
+      id: productId,
+      name: "Phone Pro",
+      status: "published",
+      categoryId,
+    });
+  });
+
+  it("rejects batch imports when any record is invalid", async () => {
+    const server = await buildTestServer();
+    await seedCatalog(server);
+
+    const categoryCreate = await server.inject({
+      method: "POST",
+      url: "/api/category",
+      headers: authHeaders,
+      payload: { name: "Books" },
+    });
+    const categoryId = categoryCreate.json().data.id as string;
+
+    const response = await server.inject({
+      method: "POST",
+      url: "/api/product/import-json",
+      headers: authHeaders,
+      payload: [
+        {
+          name: "Valid Product",
+          status: "draft",
+          categoryId,
+        },
+        {
+          name: "Invalid Product",
+          status: "invalid",
+          categoryId,
+        },
+      ],
+    });
+
+    expect(response.statusCode).toBe(400);
+
+    const exportResponse = await server.inject({
+      method: "GET",
+      url: "/api/product/export-json",
+      headers: authHeaders,
+    });
+    expect(exportResponse.json().data.records).toHaveLength(0);
+  });
+});

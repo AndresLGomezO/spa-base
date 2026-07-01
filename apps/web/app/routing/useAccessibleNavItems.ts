@@ -31,6 +31,7 @@ import {
   SETTINGS_GROUP_ICON,
   SETTINGS_ROLES_NAV_ITEM,
   SETTINGS_USER_MANAGEMENT_NAV_ITEM,
+  type NavGroupChild,
   type NavItemConfig,
   type NavLinkConfig,
 } from "../components/sidebar/nav-config";
@@ -44,6 +45,7 @@ import {
   AUTOMATION_MATCH_PATH,
   useAutomationEntityLinks,
 } from "./automation-nav";
+import { useAdminEntityNavLinks } from "./useAdminEntityNavLinks";
 
 function compareNavItems(
   left: EntityNavItem | CustomViewNavItem,
@@ -75,6 +77,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
   const categoriesQuery = useEntityNavCategories();
   const designLayoutSubGroups = useDesignLayoutNavSubGroups();
   const automationEntityLinks = useAutomationEntityLinks();
+  const adminEntityNavLinks = useAdminEntityNavLinks();
 
   return useMemo(() => {
     if (availableTenants.length === 0) {
@@ -163,13 +166,20 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       });
     }
 
-    const dataStructureChildren: NavLinkConfig[] = [];
+    const dataStructureChildren: NavGroupChild[] = [];
 
     if (hasPermission("entityDefinition.read", permissions, { isSuperAdmin })) {
       dataStructureChildren.push(DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM);
     }
     if (hasPermission("entityCategory.read", permissions, { isSuperAdmin })) {
       dataStructureChildren.push(DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM);
+    }
+    if (adminEntityNavLinks.length > 0) {
+      dataStructureChildren.push({
+        id: "all-entities",
+        labelKey: "allEntities",
+        children: adminEntityNavLinks,
+      });
     }
 
     if (dataStructureChildren.length > 0) {
@@ -285,6 +295,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     return items;
   }, [
+    adminEntityNavLinks,
     availableTenants.length,
     automationEntityLinks,
     catalogItems,

@@ -425,4 +425,94 @@ describe("useAccessibleNavItems", () => {
       );
     }
   });
+
+  it("includes all entities subgroup in data structure for superadmin with hidden entities", () => {
+    mockDesignLayoutSubGroups = [];
+    mockCatalogItems = [
+      ...MOCK_ENTITY_CATALOG,
+      {
+        ...MOCK_ENTITY_CATALOG[0]!,
+        name: "internalEntity",
+        hiddenFromNav: true,
+        permissions: [
+          "internalEntity.read",
+          "internalEntity.create",
+          "internalEntity.update",
+          "internalEntity.delete",
+        ],
+        ui: {
+          ...MOCK_ENTITY_CATALOG[0]!.ui,
+          nav: { label: "Internal Entity", icon: "box" },
+        },
+      },
+    ];
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: true,
+      permissions: [],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const dataStructure = result.current.find(
+      (item) => item.id === "data-structure",
+    );
+
+    expect(dataStructure && isNavGroup(dataStructure)).toBe(true);
+    if (dataStructure && isNavGroup(dataStructure)) {
+      const allEntities = dataStructure.children.find(
+        (child) => isNavSubGroup(child) && child.id === "all-entities",
+      );
+      expect(allEntities && isNavSubGroup(allEntities)).toBe(true);
+      if (allEntities && isNavSubGroup(allEntities)) {
+        expect(allEntities.children.map((child) => child.id)).toEqual(
+          expect.arrayContaining([
+            "admin-entity-internalEntity",
+            "admin-entity-testItem",
+            "admin-entity-widget",
+          ]),
+        );
+        const hiddenLink = allEntities.children.find(
+          (child) => child.id === "admin-entity-internalEntity",
+        );
+        expect(hiddenLink?.label).toContain("Internal Entity");
+        expect(hiddenLink?.to).toBe("/app/all-entities/internalEntity");
+        expect(hiddenLink?.matchPath).toBe("/app/all-entities/internalEntity");
+
+        const visibleLink = allEntities.children.find(
+          (child) => child.id === "admin-entity-widget",
+        );
+        expect(visibleLink?.to).toBe("/app/all-entities/widget");
+        expect(visibleLink?.matchPath).toBe("/app/all-entities/widget");
+      }
+    }
+  });
+
+  it("includes all entities subgroup in data structure for internal entity readers", () => {
+    mockDesignLayoutSubGroups = [];
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: false,
+      permissions: ["internalEntity.read", "widget.read", "testItem.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const dataStructure = result.current.find(
+      (item) => item.id === "data-structure",
+    );
+
+    expect(dataStructure && isNavGroup(dataStructure)).toBe(true);
+    if (dataStructure && isNavGroup(dataStructure)) {
+      const allEntities = dataStructure.children.find(
+        (child) => isNavSubGroup(child) && child.id === "all-entities",
+      );
+      expect(allEntities && isNavSubGroup(allEntities)).toBe(true);
+      if (allEntities && isNavSubGroup(allEntities)) {
+        expect(allEntities.children.map((child) => child.id)).toEqual([
+          "admin-entity-testItem",
+          "admin-entity-widget",
+        ]);
+      }
+    }
+  });
 });

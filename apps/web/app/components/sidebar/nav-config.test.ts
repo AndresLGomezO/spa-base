@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { Database } from "lucide-react";
 
 import {
+  buildAdminEntityNavMatchPath,
   findFirstSystemConfigNavIndex,
   isNavGroupActive,
   isNavSubGroupActive,
@@ -40,6 +41,49 @@ describe("isNavGroupActive", () => {
     expect(isNavGroupActive("/app/widget", group)).toBe(false);
     expect(isPathActive("/app/deal", "/app")).toBe(true);
     expect(isNavGroupActive("/app/deal", group)).toBe(true);
+  });
+});
+
+describe("buildAdminEntityNavMatchPath", () => {
+  it("uses a dedicated admin entity route prefix", () => {
+    expect(buildAdminEntityNavMatchPath("widget")).toBe(
+      "/app/all-entities/widget",
+    );
+    expect(buildAdminEntityNavMatchPath("internalEntity")).toBe(
+      "/app/all-entities/internalEntity",
+    );
+  });
+
+  it("activates only the matching admin entity route", () => {
+    const subgroup = {
+      id: "all-entities",
+      labelKey: "allEntities" as const,
+      children: [
+        {
+          id: "admin-entity-widget",
+          label: "Widget",
+          to: "/app/all-entities/widget",
+          matchPath: buildAdminEntityNavMatchPath("widget"),
+          icon: Database,
+        },
+        {
+          id: "admin-entity-internalEntity",
+          label: "Internal Entity",
+          to: "/app/all-entities/internalEntity",
+          matchPath: buildAdminEntityNavMatchPath("internalEntity"),
+          icon: Database,
+        },
+      ],
+    };
+
+    expect(isNavSubGroupActive("/app/all-entities/widget", subgroup)).toBe(
+      true,
+    );
+    expect(isNavSubGroupActive("/app/widget", subgroup)).toBe(false);
+    expect(
+      isNavSubGroupActive("/app/all-entities/internalEntity", subgroup),
+    ).toBe(true);
+    expect(isNavSubGroupActive("/app/internalEntity", subgroup)).toBe(false);
   });
 });
 

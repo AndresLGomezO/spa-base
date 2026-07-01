@@ -22,6 +22,7 @@ export type NavLabelKey =
   | "settings"
   | "userManagement"
   | "platform"
+  | "allEntities"
   | "currentTenant"
   | "appearance"
   | "dataModels"
@@ -238,6 +239,23 @@ export function shouldShowSystemConfigurationNavSection(
 
 export function isNavGroup(item: NavItemConfig): item is NavGroupConfig {
   return "children" in item;
+}
+
+const ADMIN_ENTITY_NAV_MATCH_PATH_PREFIX = "/app/all-entities";
+
+export function buildAdminEntityNavPath(entityName: string): string {
+  return `${ADMIN_ENTITY_NAV_MATCH_PATH_PREFIX}/${entityName}`;
+}
+
+export function buildAdminEntityNavMatchPath(entityName: string): string {
+  return buildAdminEntityNavPath(entityName);
+}
+
+export function isAdminEntityNavPath(pathname: string): boolean {
+  return (
+    pathname === ADMIN_ENTITY_NAV_MATCH_PATH_PREFIX ||
+    pathname.startsWith(`${ADMIN_ENTITY_NAV_MATCH_PATH_PREFIX}/`)
+  );
 }
 
 export function isPathActive(pathname: string, matchPath: string): boolean {

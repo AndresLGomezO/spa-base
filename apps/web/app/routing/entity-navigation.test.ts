@@ -7,12 +7,20 @@ import {
   buildEntityListPath,
   isSafeAppReturnTo,
   readReturnToFromLocation,
+  resolveEntityListPath,
   resolveEntityReturnTo,
 } from "./entity-navigation.js";
 
 describe("entity-navigation", () => {
   it("builds entity list path", () => {
     expect(buildEntityListPath("contact")).toBe("/app/contact");
+  });
+
+  it("builds admin entity list path when browsing all entities", () => {
+    expect(resolveEntityListPath("actor", "/app/all-entities/actor")).toBe(
+      "/app/all-entities/actor",
+    );
+    expect(resolveEntityListPath("actor", "/app/actor")).toBe("/app/actor");
   });
 
   it("builds current returnTo from location", () => {
@@ -54,6 +62,16 @@ describe("entity-navigation", () => {
         "contact",
       ),
     ).toBe("/app/contact");
+    expect(
+      resolveEntityReturnTo(
+        {
+          pathname: "/app/all-entities/contact/abc",
+          search: "",
+          state: null,
+        },
+        "contact",
+      ),
+    ).toBe("/app/all-entities/contact");
   });
 
   it("merges edit param without dropping list filters", () => {
@@ -64,6 +82,14 @@ describe("entity-navigation", () => {
         "/app/contact?q=foo&f.status=Open&page=2",
       ),
     ).toBe("/app/contact?q=foo&f.status=Open&page=2&edit=rec-1");
+    expect(
+      buildEntityListEditPath(
+        "contact",
+        "rec-1",
+        "/app/all-entities/contact?q=foo&f.status=Open&page=2",
+        "/app/all-entities/contact",
+      ),
+    ).toBe("/app/all-entities/contact?q=foo&f.status=Open&page=2&edit=rec-1");
   });
 
   it("builds edit path from bare list returnTo", () => {

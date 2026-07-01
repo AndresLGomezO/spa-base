@@ -1,11 +1,13 @@
-import { Navigate, useParams } from "react-router";
+import { Navigate, useLocation, useParams } from "react-router";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import { resolveEntityListPath } from "../../routing/entity-navigation";
 import EntityNotFoundRoute from "./entity-not-found";
 
 export default function EntityNewRedirectRoute() {
   const params = useParams();
   const entity = params.entity ?? "";
+  const { pathname } = useLocation();
   const { isKnownEntity, isLoading } = useEntityCatalog();
 
   if (isLoading) {
@@ -16,5 +18,10 @@ export default function EntityNewRedirectRoute() {
     return <EntityNotFoundRoute />;
   }
 
-  return <Navigate to={`/app/${entity}?create`} replace />;
+  return (
+    <Navigate
+      to={`${resolveEntityListPath(entity, pathname)}?create`}
+      replace
+    />
+  );
 }

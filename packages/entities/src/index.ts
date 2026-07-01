@@ -9,6 +9,22 @@ export {
 } from "./array-field-eligibility.js";
 export type { ArrayEligibleFieldType } from "./array-field-eligibility.js";
 export { defineEntity } from "./defineEntity.js";
+export {
+  createEntityRecordsExportEnvelope,
+  ENTITY_RECORDS_JSON_VERSION,
+  normalizeEntityRecordsImportInput,
+  parseEntityRecordsImportText,
+  splitEntityRecordPayload,
+  stripEntityRecordSystemFields,
+  toPortableEntityRecord,
+  validateEntityRecordSchema,
+  validateEntityRecordsImport,
+  type EntityRecordJsonError,
+  type EntityRecordJsonImportResult,
+  type EntityRecordPayloadSplit,
+  type EntityRecordsExportEnvelope,
+  type PortableEntityRecord,
+} from "./entity-records-json.js";
 export type { FieldTypeRegistry, FieldSchemaBuilder } from "./fieldTypes.js";
 export { defaultFieldTypeRegistry } from "./schema/buildFieldSchema.js";
 export {

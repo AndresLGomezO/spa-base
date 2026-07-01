@@ -22,6 +22,7 @@ import {
 
 import { cn } from "@repo/theme/utils";
 
+import { useAuth } from "../../auth/AuthContext";
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
@@ -54,6 +55,7 @@ import {
   useEntityPageScrollCompact,
 } from "./entity-page-scroll-compact";
 import { useEntityFormModal } from "./entity-form-modal-context";
+import { EntityRecordsJsonToolbar } from "./json/EntityRecordsJsonToolbar";
 
 const SERVER_PAGE_SIZE = 10;
 
@@ -85,6 +87,7 @@ function EntityPageInner({ entityName }: EntityPageProps) {
   const navigate = useNavigate();
   const definition = useEntityDefinition(entityName);
   const permissions = useEntityPermissions(entityName);
+  const { isSuperAdmin } = useAuth();
   const { openEntityFormModal } = useEntityFormModal();
   const canConfigureView = useAnyPermission(
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,
@@ -475,6 +478,14 @@ function EntityPageInner({ entityName }: EntityPageProps) {
             navigate(designLayoutEntityPath("main", entityName))
           }
           onCreate={openCreateFormModal}
+          extraActions={
+            isSuperAdmin ? (
+              <EntityRecordsJsonToolbar
+                entityName={entityName}
+                definition={definition}
+              />
+            ) : null
+          }
         />
       </div>
 
