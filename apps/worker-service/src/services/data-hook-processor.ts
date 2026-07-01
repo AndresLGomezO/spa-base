@@ -8,6 +8,7 @@ import { buildRoleCatalog } from "@repo/rbac";
 import {
   createFirestoreAdminDataHookRepository,
   createFirestoreAdminDataHookExecutionRepository,
+  createFirestoreAdminHookLogMessageRepository,
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRoleRepository,
 } from "@repo/gcp-firebase";
@@ -48,6 +49,8 @@ export function createDataHookProcessorDeps(
     createFirestoreAdminDataHookRepository(firebaseAdminConfig);
   const hookExecutionRepository =
     createFirestoreAdminDataHookExecutionRepository(firebaseAdminConfig);
+  const hookLogMessageRepository =
+    createFirestoreAdminHookLogMessageRepository(firebaseAdminConfig);
   const registeredUserRepository =
     createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
   const tenantRoleRepository =
@@ -71,6 +74,7 @@ export function createDataHookProcessorDeps(
     ),
     permissionDeps,
     hookExecutionRepository,
+    hookLogMessageRepository,
     callWebhook: callDataHookWebhook,
   };
 }

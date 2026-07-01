@@ -135,6 +135,14 @@ resource "google_cloud_run_v2_service" "backend" {
       }
 
       dynamic "env" {
+        for_each = local.enable_observability_traces ? [1] : []
+        content {
+          name  = "ENABLE_PERF_LOGS"
+          value = "true"
+        }
+      }
+
+      dynamic "env" {
         for_each = local.enable_ai_worker ? [1] : []
         content {
           name  = "CLOUD_TASKS_QUEUE_NAME"

@@ -16,6 +16,7 @@ export default [
       route("platform/create-tenant", "./routes/platform/create-tenant.tsx"),
       route("settings/tenant", "./routes/settings/tenant.tsx"),
       route("settings/appearance", "./routes/settings/appearance.tsx"),
+      route("settings/observability", "./routes/settings/observability.tsx"),
     ]),
     route("settings/users", "./routes/settings/users.tsx"),
     route("settings/data-models", "./routes/settings/data-models.tsx"),
@@ -31,7 +32,9 @@ export default [
       "./routes/settings/entity-categories.tsx",
     ),
     route("settings/roles", "./routes/settings/roles.tsx"),
-    route("settings/ai-debugger", "./routes/settings/ai-debugger.tsx"),
+    route("settings/ai-debugger", "./routes/settings/ai-debugger-redirect.tsx"),
+    route("debugger", "./routes/debugger-index-redirect.tsx"),
+    route("debugger/:sourceSlug", "./routes/debugger.tsx"),
     route("ai/chat", "./routes/ai/chat.tsx"),
     route(
       "settings/design-layout/main/custom-view/:viewId",

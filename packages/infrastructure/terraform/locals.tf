@@ -13,6 +13,11 @@ locals {
     var.enable_ai_worker,
   )
 
+  enable_observability_traces = try(
+    local.environment_config.enable_observability_traces,
+    var.enable_observability_traces,
+  )
+
   worker_service_url_full = local.enable_ai_worker ? "https://${google_cloud_run_v2_service.worker_service[0].name}-${data.google_project.project.number}.${var.region}.run.app" : ""
 
   environment_tier = contains(["dev", "staging", "default"], local.workspace) ? "development" : (

@@ -46,6 +46,7 @@
     "@repo/event-engine": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/custom-views": "workspace:*",
+    "@repo/debug-logs": "workspace:*",
     "@repo/entity-queries": "workspace:*",
     "@repo/metrics-engine": "workspace:*",
     "@repo/query-engine": "workspace:*",

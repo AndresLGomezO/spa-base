@@ -1,6 +1,7 @@
 import type { DefinedEntity, FieldDefinitions } from "@repo/entities";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
 import type { DataHookExecutionRepository } from "@repo/firestore-converters";
+import type { HookLogMessageRepository } from "@repo/firestore-converters";
 
 import type { DataHookJobPayload } from "@repo/hooks";
 import type { DataHookWebhookRequest } from "@repo/hooks";
@@ -24,6 +25,7 @@ export interface CrudHookDeps {
   readonly entityRuntime: EntityRuntimeForCrudHooks;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly hookExecutionRepository?: DataHookExecutionRepository;
+  readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }

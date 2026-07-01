@@ -515,4 +515,48 @@ describe("useAccessibleNavItems", () => {
       }
     }
   });
+
+  it("includes debugger group with separate source links when hook.read is granted", () => {
+    mockDesignLayoutSubGroups = [];
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: false,
+      permissions: ["hook.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    const debuggerGroup = result.current.find((item) => item.id === "debugger");
+
+    expect(debuggerGroup && isNavGroup(debuggerGroup)).toBe(true);
+    if (debuggerGroup && isNavGroup(debuggerGroup)) {
+      expect(
+        debuggerGroup.children.some(
+          (child) => child.id === "debugger-hook-executions",
+        ),
+      ).toBe(true);
+      expect(
+        debuggerGroup.children.some(
+          (child) => child.id === "debugger-hook-logs",
+        ),
+      ).toBe(true);
+      expect(
+        debuggerGroup.children.some((child) => child.id === "debugger-ai-jobs"),
+      ).toBe(false);
+
+      const hookExecutions = debuggerGroup.children.find(
+        (child) => child.id === "debugger-hook-executions",
+      );
+      expect(
+        hookExecutions && "to" in hookExecutions && hookExecutions.to,
+      ).toBe("/debugger/hook-executions");
+    }
+
+    const settings = result.current.find((item) => item.id === "settings");
+    if (settings && isNavGroup(settings)) {
+      expect(
+        settings.children.some((child) => child.id === "ai-debugger"),
+      ).toBe(false);
+    }
+  });
 });

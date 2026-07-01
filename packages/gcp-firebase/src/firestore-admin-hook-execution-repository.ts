@@ -60,5 +60,15 @@ export function createFirestoreAdminDataHookExecutionRepository(
         snapshot.docs.map((doc) => toRecord({ id: doc.id, ...doc.data() })),
       ).slice(0, limit);
     },
+    async listRecent(tenantId, options) {
+      const limit = options?.limit ?? 50;
+      const snapshot = await collection(tenantId)
+        .orderBy("startedAt", "desc")
+        .limit(limit)
+        .get();
+      return snapshot.docs.map((doc) =>
+        toRecord({ id: doc.id, ...doc.data() }),
+      );
+    },
   };
 }

@@ -13,4 +13,8 @@ export interface DataHookExecutionRepository {
     hookId: string,
     options?: { readonly limit?: number },
   ): Promise<readonly DataHookExecutionRecord[]>;
+  listRecent(
+    tenantId: string,
+    options?: { readonly limit?: number },
+  ): Promise<readonly DataHookExecutionRecord[]>;
 }

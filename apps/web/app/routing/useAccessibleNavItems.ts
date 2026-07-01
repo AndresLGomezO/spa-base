@@ -18,13 +18,14 @@ import {
   HOME_NAV_ITEM,
   PLATFORM_APPEARANCE_NAV_ITEM,
   PLATFORM_CURRENT_TENANT_NAV_ITEM,
+  PLATFORM_OBSERVABILITY_NAV_ITEM,
   ANALYTICS_GROUP_ICON,
   DESIGN_LAYOUT_GROUP_ICON,
   DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM,
   DATA_STRUCTURE_GROUP_ICON,
   DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM,
   SETTINGS_AI_CHAT_NAV_ITEM,
-  SETTINGS_AI_DEBUGGER_NAV_ITEM,
+  DEBUGGER_GROUP_ICON,
   SETTINGS_METRICS_NAV_ITEM,
   SETTINGS_QUERY_BUILDER_NAV_ITEM,
   SETTINGS_CUSTOM_VIEWS_NAV_ITEM,
@@ -46,6 +47,10 @@ import {
   useAutomationEntityLinks,
 } from "./automation-nav";
 import { useAdminEntityNavLinks } from "./useAdminEntityNavLinks";
+import {
+  buildAccessibleDebuggerNavLinks,
+  DEBUGGER_MATCH_PATH,
+} from "./debugger-nav";
 
 function compareNavItems(
   left: EntityNavItem | CustomViewNavItem,
@@ -203,9 +208,6 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     if (hasPermission("ai.chat.run", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_AI_CHAT_NAV_ITEM);
     }
-    if (hasPermission("ai.uiBuilder.read", permissions, { isSuperAdmin })) {
-      settingsChildren.push(SETTINGS_AI_DEBUGGER_NAV_ITEM);
-    }
 
     if (settingsChildren.length > 0) {
       items.push({
@@ -224,6 +226,21 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
         matchPath: AUTOMATION_MATCH_PATH,
         icon: Workflow,
         children: [...automationEntityLinks],
+      });
+    }
+
+    const debuggerChildren = buildAccessibleDebuggerNavLinks(
+      permissions,
+      isSuperAdmin,
+    );
+
+    if (debuggerChildren.length > 0) {
+      items.push({
+        id: "debugger",
+        labelKey: "debugger",
+        matchPath: DEBUGGER_MATCH_PATH,
+        icon: DEBUGGER_GROUP_ICON,
+        children: debuggerChildren,
       });
     }
 
@@ -289,6 +306,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
         children: [
           PLATFORM_CURRENT_TENANT_NAV_ITEM,
           PLATFORM_APPEARANCE_NAV_ITEM,
+          PLATFORM_OBSERVABILITY_NAV_ITEM,
         ],
       });
     }

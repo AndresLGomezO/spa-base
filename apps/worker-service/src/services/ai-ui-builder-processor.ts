@@ -52,12 +52,14 @@ function extractHtmlFromLegacyRenderBrief(
   }
 }
 
-function buildOrchestratorCallbacks(
+async function buildOrchestratorCallbacks(
   deps: AiUiBuilderProcessorDeps,
   tenantId: string,
   jobId: string,
-): OrchestratorCallbacks {
-  const traceEnabled = isAiStepTraceEnabled();
+): Promise<OrchestratorCallbacks> {
+  const traceEnabled = deps.isAiStepTraceEnabled
+    ? await deps.isAiStepTraceEnabled()
+    : isAiStepTraceEnabled();
   const { callbacks: traceCallbacks } = createOrchestratorTraceCallbacks(
     traceEnabled,
     async (trace) => {
@@ -88,6 +90,7 @@ export interface AiUiBuilderProcessorDeps {
   readonly uiBuilderAiSuggestionRepository: UiBuilderAiSuggestionRepository;
   readonly entityDefinitionRepository: WorkerEntityDefinitionRepository;
   readonly vertexAiConfig: VertexAiConfig;
+  readonly isAiStepTraceEnabled?: () => Promise<boolean>;
 }
 
 export async function processAiUiBuilderJob(
@@ -276,7 +279,7 @@ async function processListSurfaceJob(
     entityCatalogFragment: catalogFragment,
     entityCurrentFragment: currentFragment,
     entityFieldPaths,
-    callbacks: buildOrchestratorCallbacks(deps, tenantId, jobId),
+    callbacks: await buildOrchestratorCallbacks(deps, tenantId, jobId),
   });
 
   await deps.aiJobRepository.update(tenantId, jobId, {
@@ -382,7 +385,7 @@ async function processFormsSurfaceJob(
     entityCatalogFragment: catalogFragment,
     entityCurrentFragment: currentFragment,
     entityFieldPaths,
-    callbacks: buildOrchestratorCallbacks(deps, tenantId, jobId),
+    callbacks: await buildOrchestratorCallbacks(deps, tenantId, jobId),
   });
 
   await deps.aiJobRepository.update(tenantId, jobId, {
@@ -500,7 +503,7 @@ async function processFormsRenderSurfaceJob(
     ...(previousHtmlDocument ? { previousHtmlDocument } : {}),
     iterationNumber: input.parentSuggestionId ? parentIterationNumber + 1 : 0,
     entityCurrentFragment: currentFragment,
-    callbacks: buildOrchestratorCallbacks(deps, tenantId, jobId),
+    callbacks: await buildOrchestratorCallbacks(deps, tenantId, jobId),
   });
 
   await deps.aiJobRepository.update(tenantId, jobId, {

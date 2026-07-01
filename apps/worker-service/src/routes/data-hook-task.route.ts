@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { HOOK_TASK_ROUTES } from "../hooks/hook-task-routes.js";
 import { dispatchHookTaskAsync } from "./dispatch-hook-task-async.js";
+import { createWorkerHookLogger } from "../hooks/create-worker-hook-logger.js";
 import {
   processDataHookJob,
   dataHookJobPayloadSchema,
@@ -27,12 +28,11 @@ export async function dataHookTaskRoute(
       }
 
       const payload = parsed.data;
-      const logger = {
-        info: (message: string, meta?: Record<string, unknown>) =>
-          request.log.info(meta ?? {}, message),
-        error: (message: string, meta?: Record<string, unknown>) =>
-          request.log.error(meta ?? {}, message),
-      };
+      const logger = createWorkerHookLogger(
+        request.log,
+        payload.tenantId,
+        deps.hookLogMessageRepository,
+      );
 
       return dispatchHookTaskAsync({
         request,

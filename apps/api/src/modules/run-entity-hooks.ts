@@ -9,6 +9,8 @@ import type {
 } from "@repo/hooks";
 
 import { dispatchChainedEntityHooks } from "../hooks/dispatch-chained-entity-hooks.js";
+import { createTenantHookLogger } from "../hooks/create-tenant-hook-logger.js";
+import type { HookLogMessageRepository } from "@repo/firestore-converters";
 import { measureHooksTiming } from "../observability/request-timing.js";
 
 export interface RunEntityHooksParams {
@@ -25,6 +27,7 @@ export interface RunEntityHooksParams {
     entry: CreateDataHookExecutionInput,
   ) => Promise<void>;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
+  readonly hookLogMessageRepository?: HookLogMessageRepository;
 }
 
 export async function runEntityHooks(
@@ -48,10 +51,11 @@ export async function runEntityHooks(
       depth: params.depth ?? 0,
       visitedHookIds: params.visitedHookIds ?? new Set<string>(),
       user: { uid: ctx.uid },
-      logger: {
-        info: (message, meta) => app.log.info(meta ?? {}, message),
-        error: (message, meta) => app.log.error(meta ?? {}, message),
-      },
+      logger: createTenantHookLogger(
+        app,
+        ctx.tenantId,
+        params.hookLogMessageRepository,
+      ),
       ...(params.entityServices
         ? { entityServices: params.entityServices }
         : {}),

@@ -55,6 +55,7 @@
     "hiddenEntityBadge": "hidden",
     "currentTenant": "Current Tenant",
     "appearance": "Appearance",
+    "observability": "Observability",
     "designLayout": "Design layout",
     "designLayoutMain": "Main View",
     "designLayoutList": "Item list",
@@ -64,18 +65,74 @@
     "designLayoutPresets": "Component presets",
     "designLayoutDashboard": "Dashboard layout",
     "aiChat": "AI Chat",
-    "aiDebugger": "AI Debugger",
+    "debugger": "Debugger",
+    "debuggerAiJobs": "AI Jobs",
+    "debuggerHookExecutions": "Hook Executions",
+    "debuggerHookLogs": "Hook Logs",
+    "debuggerAudit": "Audit",
+    "debuggerRequestPerf": "Request Performance",
     "systemConfiguration": "System configuration"
   },
+  "debugger": {
+    "description": "Inspect AI jobs, hook executions, hook logs, audit entries, and request performance in one place.",
+    "forbidden": "You do not have permission to view debugger logs.",
+    "loadError": "Failed to load debugger events.",
+    "viewInDebugger": "View in Debugger",
+    "sources": {
+      "ai": "AI Jobs",
+      "hookExecution": "Hook Executions",
+      "hookLog": "Hook Logs",
+      "audit": "Audit",
+      "requestPerf": "Request Performance"
+    },
+    "list": {
+      "emptySource": "No records in this source.",
+      "expandPanel": "Expand panel",
+      "collapsePanel": "Collapse panel"
+    },
+    "detail": {
+      "title": "Details",
+      "selectRecord": "Select a log record to inspect its details.",
+      "rawRecord": "Raw record",
+      "metadata": "Metadata",
+      "output": "Output",
+      "entity": "Entity",
+      "hook": "Hook",
+      "event": "Event",
+      "phase": "Phase",
+      "operation": "Operation",
+      "duration": "Duration",
+      "recordId": "Record ID",
+      "actor": "Actor",
+      "targetUser": "Target user",
+      "rbacMs": "RBAC",
+      "queryMs": "Query",
+      "hooksMs": "Hooks",
+      "totalMs": "Total"
+    },
+    "actions": {
+      "refresh": "Refresh",
+      "viewJson": "View JSON",
+      "copyJson": "Copy JSON",
+      "copy": "Copy",
+      "copied": "Copied to clipboard",
+      "dismiss": "Dismiss",
+      "close": "Close"
+    }
+  },
   "aiDebugger": {
-    "title": "AI Debugger",
-    "description": "Inspect UI builder AI jobs with full step-level prompt and model trace.",
-    "forbidden": "You do not have permission to view AI debugger traces.",
-    "recentJobs": "Recent jobs",
-    "noJobs": "No UI builder jobs yet.",
-    "selectJob": "Select a job to inspect its trace.",
     "selectStep": "Select a trace step.",
     "noTrace": "No step trace recorded for this job. Traces are enabled in non-production when AI_STEP_TRACE_ENABLED is not false.",
+    "noTraceEarlyFailure": "This job failed before any orchestrator steps ran, so there is no step trace. Inspect input and the raw record below.",
+    "fields": {
+      "feature": "Feature",
+      "createdAt": "Created",
+      "updatedAt": "Updated",
+      "surface": "Surface",
+      "outputMode": "Output mode",
+      "input": "Input",
+      "progress": "Progress"
+    },
     "copyTrace": "Copy full trace JSON",
     "liveDraft": "Live draft snapshot",
     "systemInstruction": "System instruction",
@@ -1233,6 +1290,26 @@
         "importFailed": "Unable to import tenant configuration."
       }
     },
+    "observability": {
+      "title": "Observability",
+      "description": "Toggle deployment-wide debug tracing without redeploying. Changes take effect within a few seconds.",
+      "enabled": "on",
+      "disabled": "off",
+      "effective": "Effective",
+      "envDefaultLabel": "Env default",
+      "saveSuccess": "Observability settings updated.",
+      "saveFailed": "Unable to update observability settings.",
+      "loadFailed": "Unable to load observability settings.",
+      "viewLogsPrefix": "View captured logs in",
+      "aiStepTrace": {
+        "title": "AI step trace",
+        "description": "Record orchestrator step prompts, model answers, and validation details on UI Builder AI jobs."
+      },
+      "requestPerfTrace": {
+        "title": "Request performance trace",
+        "description": "Persist per-request RBAC, query, hook, and total timing for the Debugger request performance view."
+      }
+    },
     "appearance": {
       "title": "Appearance",
       "description": "Customize logo, theme preset, color palettes, semantic tokens, sidebar, and typography for the active tenant.",
@@ -2278,14 +2355,7 @@
       "setFields": "Set fields"
     },
     "executionLog": {
-      "title": "Recent executions",
-      "loading": "Loading execution log…",
-      "empty": "No executions recorded yet.",
-      "error": "Unable to load execution log.",
-      "status": "Status",
-      "startedAt": "Started",
-      "duration": "Duration",
-      "errorColumn": "Error"
+      "title": "Recent executions"
     },
     "expression": {
       "literal": "Fixed value",

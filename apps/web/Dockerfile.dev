@@ -42,6 +42,7 @@ COPY packages/theme/package.json ./packages/theme/
 COPY packages/tenant-bundle/package.json ./packages/tenant-bundle/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/data-view/package.json ./packages/data-view/
+COPY packages/debug-logs/package.json ./packages/debug-logs/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/typescript-config/ ./packages/typescript-config/
 

@@ -1,4 +1,5 @@
 import { useMemo } from "react";
+import { Link } from "react-router";
 import { useTranslation } from "react-i18next";
 import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
 import type {
@@ -25,7 +26,6 @@ import {
 } from "../ui-builder/designer-tree-workbench-classes";
 import { DataHookActionsEditor } from "./DataHookActionsEditor";
 import { DataHookConditionEditor } from "./DataHookConditionEditor";
-import { DataHookExecutionLogPanel } from "./DataHookExecutionLogPanel";
 import { createDefaultConditionRoot } from "./data-hook-condition-utils";
 import { useDataHooks } from "./data-hooks-context";
 
@@ -482,7 +482,12 @@ export function DataHookSettingsPanel() {
           <Text className="text-sm font-semibold">
             {t("dataHooks.executionLog.title")}
           </Text>
-          <DataHookExecutionLogPanel hookId={definition.id} />
+          <Link
+            to="/debugger/hook-executions"
+            className="text-primary inline-flex text-sm font-medium hover:underline"
+          >
+            {t("debugger.viewInDebugger")}
+          </Link>
         </div>
       </div>
     </div>

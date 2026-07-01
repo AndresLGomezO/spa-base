@@ -55,6 +55,7 @@
     "hiddenEntityBadge": "oculta",
     "currentTenant": "Tenant actual",
     "appearance": "Apariencia",
+    "observability": "Observabilidad",
     "designLayout": "Diseño de layout",
     "designLayoutMain": "Vista principal",
     "designLayoutList": "Lista de ítems",
@@ -64,18 +65,74 @@
     "designLayoutPresets": "Presets de componentes",
     "designLayoutDashboard": "Layout del dashboard",
     "aiChat": "Chat IA",
-    "aiDebugger": "Depurador IA",
+    "debugger": "Depurador",
+    "debuggerAiJobs": "Trabajos IA",
+    "debuggerHookExecutions": "Ejecuciones de hooks",
+    "debuggerHookLogs": "Logs de hooks",
+    "debuggerAudit": "Auditoría",
+    "debuggerRequestPerf": "Rendimiento de peticiones",
     "systemConfiguration": "Configuración del sistema"
   },
+  "debugger": {
+    "description": "Inspecciona trabajos de IA, ejecuciones de hooks, logs de hooks, auditoría y rendimiento de peticiones en un solo lugar.",
+    "forbidden": "No tienes permiso para ver los logs del depurador.",
+    "loadError": "No se pudieron cargar los eventos del depurador.",
+    "viewInDebugger": "Ver en el Depurador",
+    "sources": {
+      "ai": "Trabajos IA",
+      "hookExecution": "Ejecuciones de hooks",
+      "hookLog": "Logs de hooks",
+      "audit": "Auditoría",
+      "requestPerf": "Rendimiento de peticiones"
+    },
+    "list": {
+      "emptySource": "No hay registros en esta fuente.",
+      "expandPanel": "Expandir panel",
+      "collapsePanel": "Contraer panel"
+    },
+    "detail": {
+      "title": "Detalles",
+      "selectRecord": "Selecciona un registro para ver sus detalles.",
+      "rawRecord": "Registro completo",
+      "metadata": "Metadatos",
+      "output": "Salida",
+      "entity": "Entidad",
+      "hook": "Hook",
+      "event": "Evento",
+      "phase": "Fase",
+      "operation": "Operación",
+      "duration": "Duración",
+      "recordId": "ID de registro",
+      "actor": "Actor",
+      "targetUser": "Usuario destino",
+      "rbacMs": "RBAC",
+      "queryMs": "Consulta",
+      "hooksMs": "Hooks",
+      "totalMs": "Total"
+    },
+    "actions": {
+      "refresh": "Actualizar",
+      "viewJson": "Ver JSON",
+      "copyJson": "Copiar JSON",
+      "copy": "Copiar",
+      "copied": "Copiado al portapapeles",
+      "dismiss": "Descartar",
+      "close": "Cerrar"
+    }
+  },
   "aiDebugger": {
-    "title": "Depurador IA",
-    "description": "Inspecciona trabajos del constructor UI con trazas completas de prompt y modelo por paso.",
-    "forbidden": "No tienes permiso para ver trazas del depurador IA.",
-    "recentJobs": "Trabajos recientes",
-    "noJobs": "Aún no hay trabajos del constructor UI.",
-    "selectJob": "Selecciona un trabajo para inspeccionar su traza.",
     "selectStep": "Selecciona un paso de la traza.",
     "noTrace": "No hay traza de pasos para este trabajo. Las trazas están activas fuera de producción si AI_STEP_TRACE_ENABLED no es false.",
+    "noTraceEarlyFailure": "Este trabajo falló antes de ejecutar pasos del orquestador, por lo que no hay traza. Revisa la entrada y el registro completo abajo.",
+    "fields": {
+      "feature": "Función",
+      "createdAt": "Creado",
+      "updatedAt": "Actualizado",
+      "surface": "Superficie",
+      "outputMode": "Modo de salida",
+      "input": "Entrada",
+      "progress": "Progreso"
+    },
     "copyTrace": "Copiar JSON completo de la traza",
     "liveDraft": "Borrador en vivo",
     "systemInstruction": "Instrucción del sistema",
@@ -1233,6 +1290,26 @@
         "importFailed": "No se pudo importar la configuración del tenant."
       }
     },
+    "observability": {
+      "title": "Observabilidad",
+      "description": "Activa o desactiva trazas de depuración para todo el despliegue sin volver a desplegar. Los cambios surten efecto en unos segundos.",
+      "enabled": "activado",
+      "disabled": "desactivado",
+      "effective": "Efectivo",
+      "envDefaultLabel": "Predeterminado del entorno",
+      "saveSuccess": "Configuración de observabilidad actualizada.",
+      "saveFailed": "No se pudo actualizar la configuración de observabilidad.",
+      "loadFailed": "No se pudo cargar la configuración de observabilidad.",
+      "viewLogsPrefix": "Ver registros capturados en",
+      "aiStepTrace": {
+        "title": "Traza de pasos IA",
+        "description": "Registra prompts del orquestador, respuestas del modelo y validación en trabajos de UI Builder."
+      },
+      "requestPerfTrace": {
+        "title": "Traza de rendimiento de peticiones",
+        "description": "Persiste tiempos de RBAC, consultas, hooks y total por petición para el depurador de rendimiento."
+      }
+    },
     "appearance": {
       "title": "Apariencia",
       "description": "Personaliza el logo, preset de tema, paletas, tokens semánticos, barra lateral y tipografía del tenant activo.",
@@ -2278,14 +2355,7 @@
       "setFields": "Establecer campos"
     },
     "executionLog": {
-      "title": "Ejecuciones recientes",
-      "loading": "Cargando registro de ejecución…",
-      "empty": "Aún no hay ejecuciones registradas.",
-      "error": "No se pudo cargar el registro de ejecución.",
-      "status": "Estado",
-      "startedAt": "Inicio",
-      "duration": "Duración",
-      "errorColumn": "Error"
+      "title": "Ejecuciones recientes"
     },
     "expression": {
       "literal": "Valor fijo",

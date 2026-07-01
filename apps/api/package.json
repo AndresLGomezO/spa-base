@@ -29,6 +29,7 @@
     "@repo/entity-categories": "workspace:*",
     "@repo/encryption": "workspace:*",
     "@repo/entities": "workspace:*",
+    "@repo/debug-logs": "workspace:*",
     "@repo/entity-relations": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",

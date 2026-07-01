@@ -352,6 +352,9 @@ function runCrudEntityHooks(
         }
       : {}),
     ...(crudHooks?.callWebhook ? { callWebhook: crudHooks.callWebhook } : {}),
+    ...(crudHooks?.hookLogMessageRepository
+      ? { hookLogMessageRepository: crudHooks.hookLogMessageRepository }
+      : {}),
   });
 }
 

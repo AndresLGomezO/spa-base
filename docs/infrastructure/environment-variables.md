@@ -26,7 +26,7 @@ See also [per-environment.md](./per-environment.md) and [deployment.md](./deploy
 | `CACHE_TTL_MS` | `60000` | default | In-process cache TTL |
 | `API_RATE_LIMIT_MAX` | `100` | default | Rate limit max requests |
 | `API_RATE_LIMIT_TIME_WINDOW_MS` | `60000` | default | Rate limit window |
-| `ENABLE_PERF_LOGS` | `true` / `false` | `false` in prod | Request timing logs |
+| `ENABLE_PERF_LOGS` | `true` / `false` | `false` in prod | Request timing logs and Firestore persistence (`__request_perf_logs`). Can be overridden at runtime via **Platform → Observability**. |
 | `STRICT_QUERY_PAGINATION` | `false` | default | Reject unbounded list queries |
 | `PUBSUB_EMULATOR_HOST` | `127.0.0.1:8085` / `firebase-emulator:8085` (Firebase Emulator Suite) | **unset** | Firebase Pub/Sub emulator (local only) |
 | `AGGREGATION_EVENTS_PUBSUB` | `false` (host); `true` in Docker compose and Cloud Run | `true` when aggregation enabled | Publish aggregation events to Pub/Sub instead of inline processing |
@@ -58,6 +58,7 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `TASKS_SA_EMAIL` | local SA email | Cloud Tasks SA | Expected OIDC email when worker auth is enabled |
 | `SCHEDULED_HOOK_USER_UID` | optional in dev | required | Firebase Auth uid used as the triggering user for scheduled data hook ticks (`/tasks/schedule-tick`); must have permissions to run hook actions in each tenant |
 | `WORKER_AUTH_ENABLED` | `false` | `true` in prod | Force OIDC verification even when `IS_LOCAL=true` |
+| `AI_STEP_TRACE_ENABLED` | `true` in local non-prod | `false` in prod unless set | UI Builder orchestrator step trace persistence on AI jobs. Can be overridden at runtime via **Platform → Observability**. |
 
 Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env.dev.example).
 

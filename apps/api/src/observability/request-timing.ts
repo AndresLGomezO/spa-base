@@ -7,6 +7,17 @@ interface RequestTimingState {
   hooksMs: number;
 }
 
+interface RequestTimingRecordInput {
+  readonly tenantId: string;
+  readonly route: string;
+  readonly method: string;
+  readonly statusCode: number;
+  readonly rbacMs: number;
+  readonly queryMs: number;
+  readonly hooksMs: number;
+  readonly totalMs: number;
+}
+
 declare module "fastify" {
   interface FastifyRequest {
     perfTiming?: RequestTimingState;
@@ -15,7 +26,12 @@ declare module "fastify" {
 
 export function registerRequestTiming(
   app: FastifyInstance,
-  options: { readonly enabled: boolean },
+  options: {
+    readonly isEnabled: () => boolean | Promise<boolean>;
+    readonly persist?: (
+      input: RequestTimingRecordInput,
+    ) => void | Promise<void>;
+  },
 ): void {
   app.addHook("onRequest", async (request) => {
     request.perfTiming = {
@@ -26,10 +42,6 @@ export function registerRequestTiming(
     };
   });
 
-  if (!options.enabled) {
-    return;
-  }
-
   app.addHook(
     "onResponse",
     async (request: FastifyRequest, reply: FastifyReply) => {
@@ -38,19 +50,45 @@ export function registerRequestTiming(
         return;
       }
 
+      const enabled = await options.isEnabled();
+      if (!enabled) {
+        return;
+      }
+
       const totalMs = Math.round(performance.now() - timing.startedAt);
+      const route = request.routeOptions.url ?? request.url;
+      const method = request.method;
+      const statusCode = reply.statusCode;
+      const rbacMs = timing.rbacMs;
+      const queryMs = timing.queryMs;
+      const hooksMs = timing.hooksMs;
+
       app.log.info(
         {
-          route: request.routeOptions.url ?? request.url,
-          method: request.method,
-          statusCode: reply.statusCode,
-          rbacMs: timing.rbacMs,
-          queryMs: timing.queryMs,
-          hooksMs: timing.hooksMs,
+          route,
+          method,
+          statusCode,
+          rbacMs,
+          queryMs,
+          hooksMs,
           totalMs,
         },
         "request timing",
       );
+
+      const tenantId = request.ctx?.tenantId;
+      if (tenantId && options.persist) {
+        await options.persist({
+          tenantId,
+          route,
+          method,
+          statusCode,
+          rbacMs,
+          queryMs,
+          hooksMs,
+          totalMs,
+        });
+      }
     },
   );
 }

@@ -17,6 +17,7 @@ COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/entity-categories/package.json ./packages/entity-categories/
 COPY packages/custom-views/package.json ./packages/custom-views/
+COPY packages/debug-logs/package.json ./packages/debug-logs/
 COPY packages/entity-queries/package.json ./packages/entity-queries/
 COPY packages/entity-relations/package.json ./packages/entity-relations/
 COPY packages/encryption/package.json ./packages/encryption/

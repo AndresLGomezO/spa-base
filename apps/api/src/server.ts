@@ -19,12 +19,16 @@ import type {
   UiBuilderAiSuggestionRepository,
   DataHookRepository,
   DataHookExecutionRepository,
+  HookLogMessageRepository,
+  RequestPerfLogRepository,
+  AuditLogRepository,
   JoinCollectionRepository,
   MetricContributionRepository,
   MetricDefinitionRepository,
   MetricValueRepository,
   EntityQueryDefinitionRepository,
   CustomViewRepository,
+  PlatformRuntimeSettingsRepository,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import {
@@ -39,6 +43,10 @@ import {
   createInMemoryUiBuilderPresetRepository,
   createInMemoryDataHookRepository,
   createInMemoryDataHookExecutionRepository,
+  createInMemoryHookLogMessageRepository,
+  createInMemoryRequestPerfLogRepository,
+  createInMemoryAuditLogRepository,
+  createInMemoryPlatformRuntimeSettingsRepository,
   createInMemoryMetricDefinitionRepository,
   createInMemoryEntityQueryDefinitionRepository,
   createInMemoryCustomViewRepository,
@@ -60,6 +68,10 @@ import {
   createFirestoreAdminUiBuilderPresetRepository,
   createFirestoreAdminDataHookRepository,
   createFirestoreAdminDataHookExecutionRepository,
+  createFirestoreAdminHookLogMessageRepository,
+  createFirestoreAdminRequestPerfLogRepository,
+  createFirestoreAdminAuditLogRepository,
+  createFirestoreAdminPlatformRuntimeSettingsRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
@@ -88,6 +100,7 @@ import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
 import { RATES_TENANT_ID } from "./admin/rates-tenant/constants.js";
 import { createAuthenticatePreHandler } from "./auth/authenticate-request.js";
 import { apiEnv } from "./config/env.js";
+import { createRuntimeSettingsCache } from "@repo/debug-logs";
 import { registerRequestTiming } from "./observability/request-timing.js";
 import { registerCrudErrorHandler, registerCrudRoutes } from "./crud/index.js";
 import { createEntityRuntimeMaps } from "./entities/create-entity-runtime-maps.js";
@@ -111,6 +124,7 @@ import { createHookTasksClient } from "./hooks/hook-tasks.client.js";
 import { callDataHookWebhook } from "./hooks/call-data-hook-webhook.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
+import { registerDebugRoutes } from "./debug/register-debug-routes.js";
 import { registerUiBuilderAiSuggestionRoutes } from "./ai/register-ui-builder-ai-suggestion-routes.js";
 import type { SyncTenantAiContextsDeps } from "./ai/sync-tenant-ai-contexts.js";
 import { registerRoleRoutes } from "./roles/register-role-routes.js";
@@ -129,6 +143,7 @@ import { createEntityFileReadEnricher } from "./entity-files/create-entity-file-
 import { registerEntityFileRoutes } from "./entity-files/register-entity-file-routes.js";
 import { sanitizeFileFieldsForWrite } from "./entity-files/entity-file-field-utils.js";
 import { adminRoutes } from "./routes/admin.routes.js";
+import { platformRuntimeSettingsRoutes } from "./routes/platform-runtime-settings.routes.js";
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 import { registerTenantUserRoutes } from "./routes/tenant-users.routes.js";
@@ -150,6 +165,10 @@ interface BuildServerOptions {
   readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: DataHookRepository;
   readonly hookExecutionRepository?: DataHookExecutionRepository;
+  readonly hookLogMessageRepository?: HookLogMessageRepository;
+  readonly requestPerfLogRepository?: RequestPerfLogRepository;
+  readonly platformRuntimeSettingsRepository?: PlatformRuntimeSettingsRepository;
+  readonly auditLogRepository?: AuditLogRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
   readonly customViewRepository?: CustomViewRepository;
@@ -238,8 +257,6 @@ export async function buildServer(options: BuildServerOptions = {}) {
     });
   }
 
-  registerRequestTiming(server, { enabled: apiEnv.ENABLE_PERF_LOGS });
-
   server.get("/health", async () => ({ status: "ok" }));
 
   const firebaseAdminConfig = {
@@ -319,6 +336,52 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryDataHookExecutionRepository()
       : createFirestoreAdminDataHookExecutionRepository(firebaseAdminConfig));
+
+  const hookLogMessageRepository =
+    options.hookLogMessageRepository ??
+    (options.repositories
+      ? createInMemoryHookLogMessageRepository()
+      : createFirestoreAdminHookLogMessageRepository(firebaseAdminConfig));
+
+  const requestPerfLogRepository =
+    options.requestPerfLogRepository ??
+    (options.repositories
+      ? createInMemoryRequestPerfLogRepository()
+      : createFirestoreAdminRequestPerfLogRepository(firebaseAdminConfig));
+
+  const auditLogRepository =
+    options.auditLogRepository ??
+    (options.repositories
+      ? createInMemoryAuditLogRepository()
+      : createFirestoreAdminAuditLogRepository(firebaseAdminConfig));
+
+  const platformRuntimeSettingsRepository =
+    options.platformRuntimeSettingsRepository ??
+    (options.repositories
+      ? createInMemoryPlatformRuntimeSettingsRepository()
+      : createFirestoreAdminPlatformRuntimeSettingsRepository(
+          firebaseAdminConfig,
+        ));
+
+  const runtimeSettingsCache = createRuntimeSettingsCache(
+    platformRuntimeSettingsRepository,
+  );
+
+  registerRequestTiming(server, {
+    isEnabled: () => runtimeSettingsCache.isRequestPerfTraceEnabled(),
+    persist: async (input) => {
+      await requestPerfLogRepository.create(input.tenantId, {
+        route: input.route,
+        method: input.method,
+        statusCode: input.statusCode,
+        rbacMs: input.rbacMs,
+        queryMs: input.queryMs,
+        hooksMs: input.hooksMs,
+        totalMs: input.totalMs,
+        timestamp: new Date().toISOString(),
+      });
+    },
+  });
 
   const tenantUserInviteRepository =
     options.tenantUserInviteRepository ??
@@ -513,6 +576,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     permissionDeps,
     hookExecutionRepository,
+    hookLogMessageRepository,
     enqueueDataHookJob:
       hookTasksClient.enqueueDataHookJob.bind(hookTasksClient),
     callWebhook: callDataHookWebhook,
@@ -538,6 +602,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     registeredUserRepository,
     permissionDeps,
     tenantAiContextSync,
+  });
+
+  await server.register(platformRuntimeSettingsRoutes, {
+    firebaseAdminConfig,
+    permissionDeps,
+    platformRuntimeSettingsRepository,
+    runtimeSettingsCache,
   });
 
   const authenticate = createAuthenticatePreHandler(firebaseAdminConfig);
@@ -622,6 +693,16 @@ export async function buildServer(options: BuildServerOptions = {}) {
       serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
       localDispatch: apiEnv.AI_TASKS_LOCAL_DISPATCH,
     },
+  });
+
+  await registerDebugRoutes(server, {
+    authenticate,
+    permissionDeps,
+    aiJobRepository,
+    hookExecutionRepository,
+    hookLogMessageRepository,
+    auditLogRepository,
+    requestPerfLogRepository,
   });
 
   await registerUiBuilderAiSuggestionRoutes(server, {

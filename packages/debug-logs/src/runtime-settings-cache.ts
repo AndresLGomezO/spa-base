@@ -1,0 +1,68 @@
+import type { PlatformRuntimeSettings } from "./platform-runtime-settings.js";
+import {
+  getObservabilityEnvDefaults,
+  resolveEffectiveObservabilityFlags,
+  resolveAiStepTraceEnabled,
+  resolveRequestPerfTraceEnabled,
+} from "./resolve-observability-flags.js";
+
+export interface RuntimeSettingsReader {
+  get(): Promise<PlatformRuntimeSettings | null>;
+}
+
+const DEFAULT_CACHE_TTL_MS = 5_000;
+
+export function createRuntimeSettingsCache(
+  reader: RuntimeSettingsReader,
+  options?: { readonly ttlMs?: number },
+) {
+  const ttlMs = options?.ttlMs ?? DEFAULT_CACHE_TTL_MS;
+  let cached: PlatformRuntimeSettings | null | undefined;
+  let expiresAt = 0;
+
+  async function getSettings(): Promise<PlatformRuntimeSettings | null> {
+    const now = Date.now();
+    if (now < expiresAt && cached !== undefined) {
+      return cached;
+    }
+    cached = await reader.get();
+    expiresAt = now + ttlMs;
+    return cached;
+  }
+
+  function invalidate(): void {
+    cached = undefined;
+    expiresAt = 0;
+  }
+
+  async function isAiStepTraceEnabled(): Promise<boolean> {
+    const settings = await getSettings();
+    return resolveAiStepTraceEnabled(settings);
+  }
+
+  async function isRequestPerfTraceEnabled(): Promise<boolean> {
+    const settings = await getSettings();
+    return resolveRequestPerfTraceEnabled(settings);
+  }
+
+  async function buildResponse() {
+    const settings = await getSettings();
+    return {
+      settings,
+      effective: resolveEffectiveObservabilityFlags(settings),
+      envDefaults: getObservabilityEnvDefaults(),
+    };
+  }
+
+  return {
+    getSettings,
+    invalidate,
+    isAiStepTraceEnabled,
+    isRequestPerfTraceEnabled,
+    buildResponse,
+  };
+}
+
+export type RuntimeSettingsCache = ReturnType<
+  typeof createRuntimeSettingsCache
+>;

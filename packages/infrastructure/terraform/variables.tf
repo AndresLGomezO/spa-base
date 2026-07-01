@@ -75,3 +75,9 @@ variable "enable_aggregation_pubsub" {
   type        = bool
   default     = true
 }
+
+variable "enable_observability_traces" {
+  description = "Set ENABLE_PERF_LOGS and AI_STEP_TRACE_ENABLED on Cloud Run services (dev default). Runtime Platform toggles can override without redeploy."
+  type        = bool
+  default     = false
+}

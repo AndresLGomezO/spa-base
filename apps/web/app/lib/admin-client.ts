@@ -142,3 +142,48 @@ export async function importAdminTenantBundle(
 }
 
 export type { AdminTenant };
+
+export interface PlatformRuntimeSettingsResponse {
+  readonly settings: {
+    readonly aiStepTraceEnabled: boolean | null;
+    readonly requestPerfTraceEnabled: boolean | null;
+    readonly updatedAt: string;
+    readonly updatedBy: string;
+  } | null;
+  readonly effective: {
+    readonly aiStepTraceEnabled: boolean;
+    readonly requestPerfTraceEnabled: boolean;
+  };
+  readonly envDefaults: {
+    readonly aiStepTraceEnabled: boolean;
+    readonly requestPerfTraceEnabled: boolean;
+  };
+}
+
+export async function getPlatformRuntimeSettings(): Promise<PlatformRuntimeSettingsResponse> {
+  const payload = await adminFetch<
+    PlatformRuntimeSettingsResponse & { ok?: boolean }
+  >("/admin/platform/runtime-settings");
+  return {
+    settings: payload.settings,
+    effective: payload.effective,
+    envDefaults: payload.envDefaults,
+  };
+}
+
+export async function updatePlatformRuntimeSettings(input: {
+  readonly aiStepTraceEnabled?: boolean | null;
+  readonly requestPerfTraceEnabled?: boolean | null;
+}): Promise<PlatformRuntimeSettingsResponse> {
+  const payload = await adminFetch<
+    PlatformRuntimeSettingsResponse & { ok?: boolean }
+  >("/admin/platform/runtime-settings", {
+    method: "PATCH",
+    body: JSON.stringify(input),
+  });
+  return {
+    settings: payload.settings,
+    effective: payload.effective,
+    envDefaults: payload.envDefaults,
+  };
+}

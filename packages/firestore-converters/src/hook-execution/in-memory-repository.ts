@@ -37,5 +37,12 @@ export function createInMemoryDataHookExecutionRepository(): DataHookExecutionRe
         .sort((left, right) => right.startedAt.localeCompare(left.startedAt))
         .slice(0, limit);
     },
+    async listRecent(tenantId, options) {
+      const limit = options?.limit ?? 50;
+      return [...store.values()]
+        .filter((record) => record.tenantId === tenantId)
+        .sort((left, right) => right.startedAt.localeCompare(left.startedAt))
+        .slice(0, limit);
+    },
   };
 }

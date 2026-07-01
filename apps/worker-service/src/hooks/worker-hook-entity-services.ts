@@ -15,6 +15,7 @@ import {
 } from "@repo/rbac";
 
 import type { DataHookExecutionRepository } from "@repo/firestore-converters";
+import type { HookLogMessageRepository } from "@repo/firestore-converters";
 import type { DataHookWebhookRequest } from "@repo/hooks";
 
 import type { WorkerHookEntityRuntime } from "./worker-hook-entity-runtime.js";
@@ -27,6 +28,7 @@ export interface WorkerCrudHookDeps {
   readonly entityRuntime: WorkerHookEntityRuntime;
   readonly permissionDeps: WorkerPermissionDeps;
   readonly hookExecutionRepository?: DataHookExecutionRepository;
+  readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }
 

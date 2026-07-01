@@ -16,6 +16,7 @@
     "@repo/gcp-firebase",
     "@repo/aggregation-engine",
     "@repo/custom-views",
+    "@repo/debug-logs",
     "@repo/ai-context",
     "@repo/ai-engine",
     "@repo/event-engine",

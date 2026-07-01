@@ -645,6 +645,44 @@ function extractAiDebuggerTabKeys(corpus) {
   );
 }
 
+/** debuggerSourceLabelKey() → all keys under debugger.sources */
+function extractDebuggerSourceKeys(corpus) {
+  if (
+    !corpus.includes("debuggerSourceLabelKey") &&
+    !corpus.includes("debugger.sources.")
+  ) {
+    return [];
+  }
+
+  const refDebugger = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).debugger;
+
+  const sources = refDebugger?.sources;
+  if (!sources || typeof sources !== "object") return [];
+
+  return Object.keys(sources).map(
+    (key) => `${DEFAULT_NAMESPACE}:debugger.sources.${key}`,
+  );
+}
+
+/** DEBUGGER_SOURCE_NAV_LABEL_KEYS in debugger-nav.ts → common:nav.* */
+function extractDebuggerNavLabelKeys(files) {
+  const file = files.find((f) => f.path.endsWith("debugger-nav.ts"));
+  if (!file) return [];
+
+  const blockMatch = file.content.match(
+    /DEBUGGER_SOURCE_NAV_LABEL_KEYS[^=]*=\s*\{([\s\S]*?)\n\};/,
+  );
+  if (!blockMatch) return [];
+
+  const keys = new Set();
+  for (const match of blockMatch[1].matchAll(/:\s*"([^"]+)"/g)) {
+    keys.add(`${DEFAULT_NAMESPACE}:nav.${match[1]}`);
+  }
+  return [...keys];
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -925,11 +963,21 @@ mergeUsedKeys(
   extractUiBuilderAiDesignerKeys(corpus),
   uiBuilderAiRequestModalFile,
 );
-const aiDebuggerViewFile = path.join(
+const aiJobDetailFile = path.join(
   SRC_DIR,
-  "features/ai-debugger/AiDebuggerView.tsx",
+  "features/debugger/sources/ai-job-detail.tsx",
 );
-mergeUsedKeys(usedKeys, extractAiDebuggerTabKeys(corpus), aiDebuggerViewFile);
+mergeUsedKeys(usedKeys, extractAiDebuggerTabKeys(corpus), aiJobDetailFile);
+mergeUsedKeys(
+  usedKeys,
+  extractDebuggerSourceKeys(corpus),
+  path.join(SRC_DIR, "features/debugger/debugger-source-config.ts"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractDebuggerNavLabelKeys(files),
+  path.join(SRC_DIR, "routing/debugger-nav.ts"),
+);
 
 console.log("── 1. Key Parity ──────────────────────────────");
 const parityErrs = checkKeyParity();

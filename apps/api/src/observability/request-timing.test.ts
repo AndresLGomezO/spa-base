@@ -6,7 +6,7 @@ import { registerRequestTiming } from "./request-timing.js";
 describe("registerRequestTiming", () => {
   it("attaches timing state to requests", async () => {
     const app = Fastify({ logger: false });
-    registerRequestTiming(app, { enabled: false });
+    registerRequestTiming(app, { isEnabled: () => false });
 
     app.get("/health", async (request) => {
       expect(request.perfTiming?.startedAt).toBeTypeOf("number");

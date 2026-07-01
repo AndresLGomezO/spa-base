@@ -1,4 +1,5 @@
 import { AI_PERMISSIONS } from "@repo/ai-engine/permissions";
+import { DEBUG_PERMISSIONS } from "@repo/debug-logs/permissions";
 import { ENTITY_CATEGORY_PERMISSIONS } from "@repo/entity-categories";
 import {
   ENTITY_DEFINITION_PERMISSIONS,
@@ -31,6 +32,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
     ...METRIC_PERMISSIONS,
     ...ENTITY_QUERY_PERMISSIONS,
     ...CUSTOM_VIEW_PERMISSIONS,
+    ...DEBUG_PERMISSIONS,
     ...AI_PERMISSIONS,
     ...ROLE_PERMISSIONS,
     ...TENANT_USER_PERMISSIONS,

@@ -1,9 +1,11 @@
 import type { LucideIcon } from "lucide-react";
 import {
   BarChart3,
+  Bot,
   Building2,
   Database,
   FolderTree,
+  Gauge,
   Home,
   Layers,
   LayoutTemplate,
@@ -13,7 +15,6 @@ import {
   Settings,
   Shield,
   Users,
-  Bot,
   ScanSearch,
 } from "lucide-react";
 
@@ -25,6 +26,7 @@ export type NavLabelKey =
   | "allEntities"
   | "currentTenant"
   | "appearance"
+  | "observability"
   | "dataModels"
   | "dataStructure"
   | "dataModelBuilder"
@@ -44,7 +46,12 @@ export type NavLabelKey =
   | "designLayoutPresets"
   | "designLayoutDashboard"
   | "aiChat"
-  | "aiDebugger"
+  | "debugger"
+  | "debuggerAiJobs"
+  | "debuggerHookExecutions"
+  | "debuggerHookLogs"
+  | "debuggerAudit"
+  | "debuggerRequestPerf"
   | "systemConfiguration";
 
 export interface NavLinkConfig {
@@ -138,13 +145,7 @@ export const SETTINGS_AI_CHAT_NAV_ITEM: NavLinkConfig = {
   icon: Bot,
 };
 
-export const SETTINGS_AI_DEBUGGER_NAV_ITEM: NavLinkConfig = {
-  id: "ai-debugger",
-  labelKey: "aiDebugger",
-  to: "/settings/ai-debugger",
-  matchPath: "/settings/ai-debugger",
-  icon: ScanSearch,
-};
+export const DEBUGGER_GROUP_ICON = ScanSearch;
 
 export const SETTINGS_METRICS_NAV_ITEM: NavLinkConfig = {
   id: "metrics",
@@ -196,6 +197,14 @@ export const PLATFORM_APPEARANCE_NAV_ITEM: NavLinkConfig = {
   to: "/settings/appearance",
   matchPath: "/settings/appearance",
   icon: Palette,
+};
+
+export const PLATFORM_OBSERVABILITY_NAV_ITEM: NavLinkConfig = {
+  id: "observability",
+  labelKey: "observability",
+  to: "/settings/observability",
+  matchPath: "/settings/observability",
+  icon: Gauge,
 };
 
 export const SETTINGS_GROUP_ICON = Settings;

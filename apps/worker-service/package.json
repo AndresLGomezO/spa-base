@@ -19,6 +19,7 @@
     "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
+    "@repo/debug-logs": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",

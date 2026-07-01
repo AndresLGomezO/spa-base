@@ -944,18 +944,6 @@ export async function deleteDataHook(id: string): Promise<void> {
   });
 }
 
-type DataHookExecutionRecord = import("@repo/hooks").DataHookExecutionRecord;
-
-export async function listDataHookExecutions(
-  hookId: string,
-  options?: { readonly limit?: number },
-): Promise<{ readonly items: readonly DataHookExecutionRecord[] }> {
-  return apiRequest<{ readonly items: readonly DataHookExecutionRecord[] }>(
-    `/api/data-hooks/${hookId}/executions`,
-    options?.limit ? { query: { limit: String(options.limit) } } : undefined,
-  );
-}
-
 type DataHooksCatalogEnvelope = import("@repo/hooks").DataHooksCatalogEnvelope;
 
 export async function putDataHooksCatalog(
@@ -1345,21 +1333,51 @@ export async function getAiJob(jobId: string): Promise<AiJobRecord> {
   return apiRequest<AiJobRecord>(`/api/ai/jobs/${encodeURIComponent(jobId)}`);
 }
 
-export async function listAiJobs(options?: {
-  readonly feature?: "uiBuilder" | "chat" | "dataModelBuilder";
+export type DebugEventSource =
+  | "ai"
+  | "hookExecution"
+  | "hookLog"
+  | "audit"
+  | "requestPerf";
+
+export type DebugEventStatus =
+  | "success"
+  | "error"
+  | "skipped"
+  | "info"
+  | "running"
+  | "pending"
+  | "failed"
+  | "completed";
+
+export interface DebugEvent {
+  readonly id: string;
+  readonly source: DebugEventSource;
+  readonly timestamp: string;
+  readonly title: string;
+  readonly subtitle?: string;
+  readonly status?: DebugEventStatus;
+  readonly summary?: Record<string, unknown>;
+  readonly payload?: unknown;
+}
+
+export async function listDebugEvents(options?: {
   readonly limit?: number;
-}): Promise<{
-  readonly jobs: readonly Omit<AiJobRecord, "output" | "draft" | "stepTrace">[];
-}> {
+  readonly sources?: readonly string[];
+}): Promise<{ readonly items: readonly DebugEvent[] }> {
   const params = new URLSearchParams();
-  if (options?.feature) {
-    params.set("feature", options.feature);
-  }
   if (options?.limit != null) {
     params.set("limit", String(options.limit));
   }
+  if (options?.sources && options.sources.length > 0) {
+    params.set("sources", options.sources.join(","));
+  }
   const query = params.toString();
-  return apiRequest(`/api/ai/jobs${query ? `?${query}` : ""}`);
+  return apiRequest(`/api/debug/events${query ? `?${query}` : ""}`);
+}
+
+export async function getDebugAiJob(jobId: string): Promise<AiJobRecord> {
+  return apiRequest(`/api/debug/ai-jobs/${encodeURIComponent(jobId)}`);
 }
 
 export interface SubmitAiUiBuilderInput {

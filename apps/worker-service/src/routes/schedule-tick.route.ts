@@ -1,6 +1,7 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { HOOK_TASK_ROUTES } from "../hooks/hook-task-routes.js";
+import { createWorkerHookLogger } from "../hooks/create-worker-hook-logger.js";
 import { dispatchHookTaskAsync } from "./dispatch-hook-task-async.js";
 import { processScheduleTick } from "../services/schedule-tick-processor.js";
 import type { DataHookProcessorDeps } from "../services/data-hook-processor.js";
@@ -19,12 +20,11 @@ export async function scheduleTickRoute(
   app.post(
     HOOK_TASK_ROUTES.SCHEDULE_TICK,
     async (request: FastifyRequest, reply: FastifyReply) => {
-      const logger = {
-        info: (message: string, meta?: Record<string, unknown>) =>
-          request.log.info(meta ?? {}, message),
-        error: (message: string, meta?: Record<string, unknown>) =>
-          request.log.error(meta ?? {}, message),
-      };
+      const logger = createWorkerHookLogger(
+        request.log,
+        "platform",
+        deps.hookLogMessageRepository,
+      );
 
       return dispatchHookTaskAsync({
         request,

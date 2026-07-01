@@ -82,6 +82,14 @@ resource "google_cloud_run_v2_service" "worker_service" {
         name  = "TASKS_SA_EMAIL"
         value = google_service_account.tasks_sa[0].email
       }
+
+      dynamic "env" {
+        for_each = local.enable_observability_traces ? [1] : []
+        content {
+          name  = "AI_STEP_TRACE_ENABLED"
+          value = "true"
+        }
+      }
     }
 
     scaling {

@@ -5,6 +5,8 @@ import {
   createFirestoreAdminUiBuilderAiSuggestionRepository,
   initializeFirebaseAdmin,
 } from "@repo/worker-firestore";
+import { createRuntimeSettingsCache } from "@repo/debug-logs";
+import { createFirestoreAdminPlatformRuntimeSettingsRepository } from "@repo/gcp-firebase";
 
 import { vertexAiConfig, workerEnv } from "./config/env.js";
 import { createDataHookProcessorDeps } from "./services/data-hook-processor.js";
@@ -29,6 +31,11 @@ const uiBuilderAiSuggestionRepository =
   createFirestoreAdminUiBuilderAiSuggestionRepository(firebaseAdminConfig);
 const entityDefinitionRepository =
   createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
+const platformRuntimeSettingsRepository =
+  createFirestoreAdminPlatformRuntimeSettingsRepository(firebaseAdminConfig);
+const runtimeSettingsCache = createRuntimeSettingsCache(
+  platformRuntimeSettingsRepository,
+);
 const dataHookProcessorDeps = createDataHookProcessorDeps(firebaseAdminConfig);
 
 const server = await buildWorkerServer({
@@ -38,6 +45,7 @@ const server = await buildWorkerServer({
   entityDefinitionRepository,
   vertexAiConfig,
   firebaseAdminConfig,
+  isAiStepTraceEnabled: () => runtimeSettingsCache.isAiStepTraceEnabled(),
   ...dataHookProcessorDeps,
 });
 

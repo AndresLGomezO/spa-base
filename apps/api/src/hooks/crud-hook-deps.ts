@@ -3,6 +3,7 @@ import type { HookEntityServices } from "@repo/hooks";
 
 import { loadRequestPermissions } from "../rbac/load-request-permissions.js";
 import { buildHookEntityServices } from "./hook-entity-services-factory.js";
+import { createTenantHookLogger } from "./create-tenant-hook-logger.js";
 import type { CrudHookDeps } from "./crud-hook-deps.types.js";
 
 export async function resolveCrudHookEntityServices(
@@ -26,9 +27,10 @@ export async function resolveCrudHookEntityServices(
       tenantRoleNames: ctx.tenantRoleNames ?? [],
     },
     deps,
-    logger: {
-      info: (message, meta) => app.log.info(meta ?? {}, message),
-      error: (message, meta) => app.log.error(meta ?? {}, message),
-    },
+    logger: createTenantHookLogger(
+      app,
+      tenantId,
+      deps.hookLogMessageRepository,
+    ),
   });
 }
