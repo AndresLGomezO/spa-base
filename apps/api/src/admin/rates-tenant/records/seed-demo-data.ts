@@ -494,6 +494,7 @@ export async function seedRatesDemoRecords(
     });
   }
 
+  // Demo payment schedules are written directly — ensureRatesRecord bypasses data hooks.
   const paymentSchedules = financialItems
     .filter((item) => item.status === "ACTIVE" && item.amount > 0)
     .map((item, index) => ({

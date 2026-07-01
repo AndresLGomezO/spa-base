@@ -31,6 +31,7 @@ const workerEnvSchema = z.object({
     .enum(["true", "false"])
     .default("false")
     .transform((value) => value === "true"),
+  SCHEDULED_HOOK_USER_UID: z.string().trim().optional(),
 });
 
 const parsed = workerEnvSchema.safeParse(process.env);
@@ -58,4 +59,8 @@ export const authConfig = {
     process.env.NODE_ENV === "production",
   allowLocalTaskBypass: workerEnv.IS_LOCAL,
   serviceAccountEmail: workerEnv.TASKS_SA_EMAIL ?? "",
+};
+
+export const scheduleTickConfig = {
+  scheduledHookUserUid: workerEnv.SCHEDULED_HOOK_USER_UID ?? "",
 };

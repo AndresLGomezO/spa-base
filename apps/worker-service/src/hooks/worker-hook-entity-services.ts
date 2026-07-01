@@ -4,6 +4,8 @@ import {
   formatHookEvent,
   type HookEntityServices,
   type HookLogger,
+  type HookOperation,
+  type HookPhase,
 } from "@repo/hooks";
 import {
   createHookEntityAccessControl,
@@ -86,8 +88,8 @@ export async function resolveHookUserContext(
 async function dispatchChainedEntityHooks(options: {
   readonly tenantId: string;
   readonly entityName: string;
-  readonly phase: "before" | "after";
-  readonly operation: "create" | "update" | "delete";
+  readonly phase: HookPhase;
+  readonly operation: HookOperation;
   readonly current: Record<string, unknown>;
   readonly previous?: Record<string, unknown>;
   readonly depth: number;

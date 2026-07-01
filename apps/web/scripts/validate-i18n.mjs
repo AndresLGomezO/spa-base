@@ -244,7 +244,15 @@ function extractDataModelFieldTypeKeys(corpus) {
 
 /** dataHooks.<group>.${...} in source → all keys under dataHooks.<group> */
 function extractDataHookDynamicKeys(corpus) {
-  const groups = ["operation", "phase", "actionType", "condition", "execution"];
+  const groups = [
+    "operation",
+    "phase",
+    "actionType",
+    "condition",
+    "execution",
+    "triggerKind",
+    "scheduleScope",
+  ];
   const refDataHooks = readJSON(
     path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
   ).dataHooks;
@@ -258,6 +266,16 @@ function extractDataHookDynamicKeys(corpus) {
       keys.push(`${DEFAULT_NAMESPACE}:dataHooks.${group}.${key}`);
     }
   }
+
+  if (corpus.includes("dataHooks.actions.aggregateOps.\${")) {
+    const aggregateOps = refDataHooks?.actions?.aggregateOps;
+    if (aggregateOps && typeof aggregateOps === "object") {
+      for (const key of Object.keys(aggregateOps)) {
+        keys.push(`${DEFAULT_NAMESPACE}:dataHooks.actions.aggregateOps.${key}`);
+      }
+    }
+  }
+
   return keys;
 }
 

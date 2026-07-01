@@ -56,6 +56,7 @@ Examples: [`apps/api/.env.dev.example`](../../apps/api/.env.dev.example), [`apps
 | `FIREBASE_AUTH_EMULATOR_HOST` | `firebase-emulator:9099` | **unset** | Auth emulator |
 | `FIREBASE_STORAGE_EMULATOR_HOST` | `firebase-emulator:9199` | **unset** | Storage emulator |
 | `TASKS_SA_EMAIL` | local SA email | Cloud Tasks SA | Expected OIDC email when worker auth is enabled |
+| `SCHEDULED_HOOK_USER_UID` | optional in dev | required | Firebase Auth uid used as the triggering user for scheduled data hook ticks (`/tasks/schedule-tick`); must have permissions to run hook actions in each tenant |
 | `WORKER_AUTH_ENABLED` | `false` | `true` in prod | Force OIDC verification even when `IS_LOCAL=true` |
 
 Example: [`apps/worker-service/.env.dev.example`](../../apps/worker-service/.env.dev.example).

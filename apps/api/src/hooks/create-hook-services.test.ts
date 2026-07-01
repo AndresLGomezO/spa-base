@@ -69,6 +69,7 @@ function buildEntityRuntime() {
         update: vi.fn(),
         findById: vi.fn(),
         findByField: vi.fn(async () => ({ items: [] })),
+        delete: vi.fn(async () => true),
       }),
     },
   };
@@ -170,6 +171,7 @@ describe("createHookEntityServices chained writes", () => {
           update: vi.fn(),
           findById: vi.fn(),
           findByField: vi.fn(async () => ({ items: [] })),
+          delete: vi.fn(async () => true),
         }),
       } as never,
       accessControl: createHookEntityAccessControl({
@@ -208,5 +210,126 @@ describe("createHookEntityServices chained writes", () => {
 
     expect(created.note).toBe("from payment hook");
     expect(records.size).toBe(1);
+  });
+
+  it("deletes a record when delete permission is granted", async () => {
+    const repository = {
+      create: vi.fn(),
+      update: vi.fn(),
+      findById: vi.fn(async () => ({
+        id: "pay_1",
+        tenantId: "tenant_a",
+        loanId: "loan_1",
+      })),
+      findByField: vi.fn(async () => ({ items: [] })),
+      delete: vi.fn(async () => true),
+    };
+    const entityRuntime = {
+      resolveEntity: () => ({
+        metadata: { fields: businessFields },
+        createSchema: z.object({
+          loanId: z.string().optional(),
+          note: z.string().optional(),
+        }),
+        updateSchema: z.object({
+          loanId: z.string().optional(),
+          note: z.string().optional(),
+        }),
+        schema: z.object({
+          id: z.string(),
+          tenantId: z.string(),
+          loanId: z.string().optional(),
+          note: z.string().optional(),
+          createdAt: z.string(),
+          updatedAt: z.string(),
+        }),
+      }),
+      getRepository: () => repository,
+    };
+
+    const services = createHookEntityServices({
+      entityRuntime: entityRuntime as never,
+      accessControl: createHookEntityAccessControl({
+        permissions: ["payment.delete"],
+        isSuperAdmin: true,
+        tenantId: "tenant_a",
+      }),
+      tenantId: "tenant_a",
+    });
+
+    const deleted = await services.delete("payment", "pay_1");
+
+    expect(deleted).toBe(true);
+    expect(repository.delete).toHaveBeenCalledWith("pay_1", "tenant_a");
+  });
+
+  it("reads a record when read permission is granted", async () => {
+    const repository = {
+      create: vi.fn(),
+      update: vi.fn(),
+      findById: vi.fn(async () => ({
+        id: "pay_1",
+        tenantId: "tenant_a",
+        loanId: "loan_1",
+        note: "secret",
+      })),
+      findByField: vi.fn(async () => ({ items: [] })),
+      delete: vi.fn(async () => true),
+    };
+    const entityRuntime = {
+      resolveEntity: () => ({
+        metadata: { fields: businessFields },
+        createSchema: z.object({
+          loanId: z.string().optional(),
+          note: z.string().optional(),
+        }),
+        updateSchema: z.object({
+          loanId: z.string().optional(),
+          note: z.string().optional(),
+        }),
+        schema: z.object({
+          id: z.string(),
+          tenantId: z.string(),
+          loanId: z.string().optional(),
+          note: z.string().optional(),
+          createdAt: z.string(),
+          updatedAt: z.string(),
+        }),
+      }),
+      getRepository: () => repository,
+    };
+
+    const services = createHookEntityServices({
+      entityRuntime: entityRuntime as never,
+      accessControl: createHookEntityAccessControl({
+        permissions: ["payment.read"],
+        isSuperAdmin: true,
+        tenantId: "tenant_a",
+      }),
+      tenantId: "tenant_a",
+    });
+
+    const record = await services.get("payment", "pay_1");
+
+    expect(record.id).toBe("pay_1");
+    expect(record.loanId).toBe("loan_1");
+    expect(repository.findById).toHaveBeenCalledWith("pay_1", "tenant_a");
+  });
+
+  it("rejects get when read permission is missing", async () => {
+    const { entityRuntime } = buildEntityRuntime();
+    const services = createHookEntityServices({
+      entityRuntime: entityRuntime as never,
+      accessControl: createHookEntityAccessControl({
+        permissions: ["payment.create"],
+        isSuperAdmin: false,
+        tenantId: "tenant_a",
+      }),
+      tenantId: "tenant_a",
+    });
+
+    await expect(services.get("payment", "pay_1")).rejects.toThrow(
+      /permission to read/,
+    );
   });
 });

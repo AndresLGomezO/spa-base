@@ -154,6 +154,7 @@ services:
       - ./pnpm-lock.yaml:/app/pnpm-lock.yaml
       - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml
       - ./apps/worker-service:/app/apps/worker-service
+      - ./apps/platform:/app/apps/platform
       - ./packages:/app/packages
       - ./scripts:/app/scripts
       - /app/node_modules

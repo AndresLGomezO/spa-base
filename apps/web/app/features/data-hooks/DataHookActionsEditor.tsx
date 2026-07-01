@@ -3,14 +3,22 @@ import { useTranslation } from "react-i18next";
 import { Button, FieldLabel, IconButton, Input, Select, Text } from "@repo/ui";
 import type {
   DataHookAction,
-  DataHookConditionOperator,
+  DataHookExecutionMode,
+  DataHookPhase,
   ExpressionNode,
 } from "@repo/hooks";
-import { DATA_HOOK_CONDITION_OPERATORS } from "@repo/hooks";
+import {
+  DATA_HOOK_AGGREGATE_OPERATORS,
+  MAX_CREATE_RECORDS,
+  MAX_CREATE_RECORDS_QUEUED,
+} from "@repo/hooks";
 
 import { getEntityLabel } from "../../entities/entity-catalog";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import { createDefaultConditionRoot } from "./data-hook-condition-utils";
+import { DataHookConditionEditor } from "./DataHookConditionEditor";
 import { ExpressionEditor } from "./ExpressionEditor";
+import type { LoadedBinding } from "./expression-editor-node-types";
 
 const controlClassName =
   "border-input bg-background flex h-9 w-full rounded-md border px-3 py-1.5 text-sm";
@@ -20,14 +28,12 @@ const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "createRecord",
   "createRecords",
   "updateMatching",
+  "deleteMatching",
+  "deleteRecord",
+  "getRecord",
+  "aggregateMatching",
   "sendNotification",
   "callWebhook",
-];
-
-const VALUELESS_OPERATORS: readonly DataHookConditionOperator[] = [
-  "isEmpty",
-  "isNotEmpty",
-  "changed",
 ];
 
 function literal(): ExpressionNode {
@@ -42,15 +48,47 @@ function useEntityFieldNames(): (entityName: string) => readonly string[] {
   };
 }
 
+function collectLoadedBindingsBefore(
+  actions: readonly DataHookAction[],
+  beforeIndex: number,
+): readonly LoadedBinding[] {
+  const bindings: LoadedBinding[] = [];
+  for (let index = 0; index < beforeIndex; index += 1) {
+    const action = actions[index];
+    if (action?.type === "getRecord" && action.as.trim()) {
+      bindings.push({ alias: action.as, entity: action.entity });
+    }
+  }
+  return bindings;
+}
+
+function collectAggregateBindingsBefore(
+  actions: readonly DataHookAction[],
+  beforeIndex: number,
+): readonly string[] {
+  const aliases: string[] = [];
+  for (let index = 0; index < beforeIndex; index += 1) {
+    const action = actions[index];
+    if (action?.type === "aggregateMatching" && action.as.trim()) {
+      aliases.push(action.as);
+    }
+  }
+  return aliases;
+}
+
 function FieldMapEditor({
   label,
   value,
   fieldNames,
+  loadedBindings,
+  aggregateBindings,
   onChange,
 }: {
   readonly label: string;
   readonly value: Readonly<Record<string, ExpressionNode>>;
   readonly fieldNames: readonly string[];
+  readonly loadedBindings?: readonly LoadedBinding[];
+  readonly aggregateBindings?: readonly string[];
   readonly onChange: (next: Record<string, ExpressionNode>) => void;
 }) {
   const { t } = useTranslation("common");
@@ -117,6 +155,8 @@ function FieldMapEditor({
           <ExpressionEditor
             value={node}
             fieldNames={fieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(nextNode) => onChange({ ...value, [key]: nextNode })}
           />
         </div>
@@ -139,16 +179,29 @@ function FieldMapEditor({
 
 function ActionEditor({
   action,
+  actions,
+  actionIndex,
   triggerFieldNames,
+  hookPhase,
+  hookExecution,
   onChange,
 }: {
   readonly action: DataHookAction;
+  readonly actions: readonly DataHookAction[];
+  readonly actionIndex: number;
   readonly triggerFieldNames: readonly string[];
+  readonly hookPhase: DataHookPhase;
+  readonly hookExecution?: DataHookExecutionMode;
   readonly onChange: (next: DataHookAction) => void;
 }) {
   const { t } = useTranslation("common");
   const { items: entities } = useEntityCatalog();
   const getFieldNames = useEntityFieldNames();
+  const loadedBindings = collectLoadedBindingsBefore(actions, actionIndex);
+  const aggregateBindings = collectAggregateBindingsBefore(
+    actions,
+    actionIndex,
+  );
 
   const entityOptions = (
     <>
@@ -198,6 +251,8 @@ function ActionEditor({
             label={t("dataHooks.actions.value")}
             value={action.value}
             fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(value) => onChange({ ...action, value })}
           />
         </div>
@@ -209,6 +264,8 @@ function ActionEditor({
           label={t("dataHooks.actions.message")}
           value={action.message}
           fieldNames={triggerFieldNames}
+          loadedBindings={loadedBindings}
+          aggregateBindings={aggregateBindings}
           onChange={(message) => onChange({ ...action, message })}
         />
       );
@@ -220,6 +277,8 @@ function ActionEditor({
             label={t("dataHooks.actions.webhookUrl")}
             value={action.url}
             fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(url) => onChange({ ...action, url })}
           />
           <ExpressionEditor
@@ -231,6 +290,8 @@ function ActionEditor({
               }
             }
             fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(body) =>
               onChange({
                 ...action,
@@ -266,6 +327,8 @@ function ActionEditor({
             label={t("dataHooks.actions.recordData")}
             value={action.data}
             fieldNames={getFieldNames(action.entity)}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(data) => onChange({ ...action, data })}
           />
         </div>
@@ -290,12 +353,34 @@ function ActionEditor({
             label={t("dataHooks.actions.count")}
             value={action.count}
             fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(count) => onChange({ ...action, count })}
           />
+          <ExpressionEditor
+            label={t("dataHooks.actions.startIndex")}
+            value={action.startIndex ?? { kind: "literal", value: 0 }}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(startIndex) => onChange({ ...action, startIndex })}
+          />
+          <Text className="text-muted-foreground text-xs">
+            {hookPhase === "after" && hookExecution === "queued"
+              ? t("dataHooks.actions.createRecordsQueuedHint", {
+                  max: MAX_CREATE_RECORDS_QUEUED,
+                })
+              : t("dataHooks.actions.createRecordsLimitsHint", {
+                  max: MAX_CREATE_RECORDS,
+                  queuedMax: MAX_CREATE_RECORDS_QUEUED,
+                })}
+          </Text>
           <FieldMapEditor
             label={t("dataHooks.actions.recordData")}
             value={action.data}
             fieldNames={getFieldNames(action.entity)}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(data) => onChange({ ...action, data })}
           />
         </div>
@@ -316,72 +401,194 @@ function ActionEditor({
               {entityOptions}
             </Select>
           </div>
-          <div className="border-border space-y-2 rounded-md border p-2">
-            <FieldLabel>{t("dataHooks.actions.matchWhere")}</FieldLabel>
-            <div className="flex gap-2">
-              <Select
-                className={`${controlClassName} w-40`}
-                value={action.where.field}
-                onChange={(event) =>
-                  onChange({
-                    ...action,
-                    where: { ...action.where, field: event.target.value },
-                  })
-                }
-              >
-                <option value="">{t("dataHooks.actions.selectField")}</option>
-                {!getFieldNames(action.entity).includes(action.where.field) &&
-                action.where.field ? (
-                  <option value={action.where.field}>
-                    {action.where.field}
-                  </option>
-                ) : null}
-                {getFieldNames(action.entity).map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </Select>
-              <Select
-                className={`${controlClassName} w-32`}
-                value={action.where.operator}
-                onChange={(event) =>
-                  onChange({
-                    ...action,
-                    where: {
-                      ...action.where,
-                      operator: event.target.value as DataHookConditionOperator,
-                    },
-                  })
-                }
-              >
-                {DATA_HOOK_CONDITION_OPERATORS.map((op) => (
-                  <option key={op} value={op}>
-                    {op}
-                  </option>
-                ))}
-              </Select>
-            </div>
-            {VALUELESS_OPERATORS.includes(action.where.operator) ? null : (
-              <ExpressionEditor
-                label={t("dataHooks.actions.matchValue")}
-                value={action.where.value ?? literal()}
-                fieldNames={triggerFieldNames}
-                onChange={(value) =>
-                  onChange({
-                    ...action,
-                    where: { ...action.where, value },
-                  })
-                }
-              />
-            )}
-          </div>
+          <DataHookConditionEditor
+            value={action.where}
+            fieldNames={getFieldNames(action.entity)}
+            valueFieldNames={triggerFieldNames}
+            rootTitle={t("dataHooks.actions.matchWhere")}
+            onChange={(where) => onChange({ ...action, where })}
+          />
           <FieldMapEditor
             label={t("dataHooks.actions.setFields")}
             value={action.set}
             fieldNames={getFieldNames(action.entity)}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
             onChange={(set) => onChange({ ...action, set })}
           />
+        </div>
+      );
+
+    case "deleteMatching":
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
+            <Select
+              className={controlClassName}
+              value={action.entity}
+              onChange={(event) =>
+                onChange({ ...action, entity: event.target.value })
+              }
+            >
+              {entityOptions}
+            </Select>
+          </div>
+          <DataHookConditionEditor
+            value={action.where}
+            fieldNames={getFieldNames(action.entity)}
+            valueFieldNames={triggerFieldNames}
+            rootTitle={t("dataHooks.actions.matchWhere")}
+            onChange={(where) => onChange({ ...action, where })}
+          />
+        </div>
+      );
+
+    case "deleteRecord":
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
+            <Select
+              className={controlClassName}
+              value={action.entity}
+              onChange={(event) =>
+                onChange({ ...action, entity: event.target.value })
+              }
+            >
+              {entityOptions}
+            </Select>
+          </div>
+          <ExpressionEditor
+            label={t("dataHooks.actions.recordId")}
+            value={action.id}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(id) => onChange({ ...action, id })}
+          />
+        </div>
+      );
+
+    case "getRecord":
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
+            <Select
+              className={controlClassName}
+              value={action.entity}
+              onChange={(event) =>
+                onChange({ ...action, entity: event.target.value })
+              }
+            >
+              {entityOptions}
+            </Select>
+          </div>
+          <ExpressionEditor
+            label={t("dataHooks.actions.recordId")}
+            value={action.id}
+            fieldNames={triggerFieldNames}
+            loadedBindings={loadedBindings}
+            aggregateBindings={aggregateBindings}
+            onChange={(id) => onChange({ ...action, id })}
+          />
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.actions.alias")}</FieldLabel>
+            <Input
+              value={action.as}
+              placeholder={t("dataHooks.actions.aliasPlaceholder")}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </div>
+        </div>
+      );
+
+    case "aggregateMatching":
+      return (
+        <div className="space-y-3">
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
+            <Select
+              className={controlClassName}
+              value={action.entity}
+              onChange={(event) =>
+                onChange({ ...action, entity: event.target.value })
+              }
+            >
+              {entityOptions}
+            </Select>
+          </div>
+          <DataHookConditionEditor
+            value={action.where}
+            fieldNames={getFieldNames(action.entity)}
+            valueFieldNames={triggerFieldNames}
+            rootTitle={t("dataHooks.actions.matchWhere")}
+            onChange={(where) => onChange({ ...action, where })}
+          />
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.actions.aggregateOp")}</FieldLabel>
+            <Select
+              className={controlClassName}
+              value={action.op}
+              onChange={(event) =>
+                onChange({
+                  ...action,
+                  op: event.target
+                    .value as (typeof DATA_HOOK_AGGREGATE_OPERATORS)[number],
+                  ...(event.target.value === "count"
+                    ? { field: undefined }
+                    : {}),
+                })
+              }
+            >
+              {DATA_HOOK_AGGREGATE_OPERATORS.map((op) => (
+                <option key={op} value={op}>
+                  {t(`dataHooks.actions.aggregateOps.${op}`)}
+                </option>
+              ))}
+            </Select>
+          </div>
+          {action.op !== "count" ? (
+            <div className="space-y-1">
+              <FieldLabel>{t("dataHooks.actions.aggregateField")}</FieldLabel>
+              {getFieldNames(action.entity).length > 0 ? (
+                <Select
+                  className={controlClassName}
+                  value={action.field ?? ""}
+                  onChange={(event) =>
+                    onChange({ ...action, field: event.target.value })
+                  }
+                >
+                  <option value="">{t("dataHooks.actions.selectField")}</option>
+                  {getFieldNames(action.entity).map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  value={action.field ?? ""}
+                  onChange={(event) =>
+                    onChange({ ...action, field: event.target.value })
+                  }
+                />
+              )}
+            </div>
+          ) : null}
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.actions.alias")}</FieldLabel>
+            <Input
+              value={action.as}
+              placeholder={t("dataHooks.actions.aliasPlaceholder")}
+              onChange={(event) =>
+                onChange({ ...action, as: event.target.value })
+              }
+            />
+          </div>
         </div>
       );
 
@@ -409,8 +616,26 @@ function emptyActionOfType(type: DataHookAction["type"]): DataHookAction {
       return {
         type,
         entity: "",
-        where: { field: "", operator: "==", value: literal() },
+        where: createDefaultConditionRoot(),
         set: {},
+      };
+    case "deleteMatching":
+      return {
+        type,
+        entity: "",
+        where: createDefaultConditionRoot(),
+      };
+    case "deleteRecord":
+      return { type, entity: "", id: literal() };
+    case "getRecord":
+      return { type, entity: "", id: literal(), as: "parent" };
+    case "aggregateMatching":
+      return {
+        type,
+        entity: "",
+        where: createDefaultConditionRoot(),
+        op: "count",
+        as: "total",
       };
     case "sendNotification":
       return { type, message: literal() };
@@ -422,11 +647,15 @@ function emptyActionOfType(type: DataHookAction["type"]): DataHookAction {
 export function DataHookActionsEditor({
   actions,
   triggerEntity,
+  hookPhase,
+  hookExecution,
   disabled,
   onChange,
 }: {
   readonly actions: readonly DataHookAction[];
   readonly triggerEntity: string;
+  readonly hookPhase: DataHookPhase;
+  readonly hookExecution?: DataHookExecutionMode;
   readonly disabled: boolean;
   readonly onChange: (next: readonly DataHookAction[]) => void;
 }) {
@@ -481,7 +710,11 @@ export function DataHookActionsEditor({
           </div>
           <ActionEditor
             action={action}
+            actions={actions}
+            actionIndex={index}
             triggerFieldNames={triggerFieldNames}
+            hookPhase={hookPhase}
+            hookExecution={hookExecution}
             onChange={(next) => updateAt(index, next)}
           />
         </div>

@@ -1,4 +1,7 @@
-import type { DataHookDefinition } from "./data-hook-definition.js";
+import {
+  isScheduleTrigger,
+  type DataHookDefinition,
+} from "./data-hook-definition.js";
 import { formatHookEvent, isBeforePhase, parseHookEvent } from "./event.js";
 import { compileDataHook } from "./interpret-data-hook.js";
 import type {
@@ -43,6 +46,14 @@ export function registerSystemHook(entry: {
 }
 
 function dataHookEvent(definition: DataHookDefinition): string {
+  if (isScheduleTrigger(definition.trigger)) {
+    return formatHookEvent({
+      entity: definition.entity,
+      phase: definition.phase,
+      operation: "schedule",
+    });
+  }
+
   return formatHookEvent({
     entity: definition.entity,
     phase: definition.phase,

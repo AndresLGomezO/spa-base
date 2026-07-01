@@ -12,6 +12,7 @@ const EVENT_SUFFIXES: ReadonlyArray<{
   { suffix: "afterUpdate", phase: "after", operation: "update" },
   { suffix: "beforeDelete", phase: "before", operation: "delete" },
   { suffix: "afterDelete", phase: "after", operation: "delete" },
+  { suffix: "afterSchedule", phase: "after", operation: "schedule" },
 ];
 
 export function formatHookEvent(parsed: ParsedHookEvent): string {

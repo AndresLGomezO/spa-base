@@ -136,6 +136,10 @@ Example create:
 
 Entity must exist in the tenant catalog. Full schema: [data-hook-definition-json.md](./data-hook-definition-json.md).
 
+### Scheduled (time-based) hooks
+
+Hooks with `trigger.kind: "schedule"` register on `{entity}.afterSchedule` and **do not** run on CRUD. Cloud Scheduler (or local curl) POSTs to worker-service `/tasks/schedule-tick` every minute; the worker scans all tenants, finds due cron hooks, and runs them via `runDataHook` using `SCHEDULED_HOOK_USER_UID` as the acting user. See [data-hook-definition-json.md §4](./data-hook-definition-json.md#4-triggers).
+
 ---
 
 ## Action types (Data Hooks)

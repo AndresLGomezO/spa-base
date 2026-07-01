@@ -1,7 +1,10 @@
 import { z } from "zod";
 
-import { DATA_HOOK_OPERATIONS } from "./data-hook-definition.js";
-import type { DataHookDefinition } from "./data-hook-definition.js";
+import {
+  DATA_HOOK_JOB_OPERATIONS,
+  isScheduleTrigger,
+  type DataHookDefinition,
+} from "./data-hook-definition.js";
 import type { HookContext, HookUser } from "./types.js";
 
 export const dataHookJobPayloadSchema = z.object({
@@ -9,7 +12,12 @@ export const dataHookJobPayloadSchema = z.object({
   tenantId: z.string().trim().min(1),
   entityName: z.string().trim().min(1),
   phase: z.literal("after"),
-  operation: z.enum(DATA_HOOK_OPERATIONS),
+  operation: z.enum(
+    DATA_HOOK_JOB_OPERATIONS as unknown as [
+      (typeof DATA_HOOK_JOB_OPERATIONS)[number],
+      ...(typeof DATA_HOOK_JOB_OPERATIONS)[number][],
+    ],
+  ),
   current: z.record(z.string(), z.unknown()),
   previous: z.record(z.string(), z.unknown()).optional(),
   user: z.object({
@@ -18,6 +26,7 @@ export const dataHookJobPayloadSchema = z.object({
   }),
   depth: z.number().int().nonnegative(),
   visitedHookIds: z.array(z.string().trim().min(1)),
+  triggerKind: z.enum(["crud", "schedule"]).optional(),
 });
 
 export type DataHookJobPayload = z.infer<typeof dataHookJobPayloadSchema>;
@@ -26,12 +35,16 @@ export function buildDataHookJobPayload(
   definition: DataHookDefinition,
   context: HookContext,
 ): DataHookJobPayload {
+  const operation = isScheduleTrigger(definition.trigger)
+    ? "schedule"
+    : definition.trigger.operation;
+
   return {
     hookId: definition.id,
     tenantId: context.tenantId,
     entityName: context.entityName,
     phase: "after",
-    operation: definition.trigger.operation,
+    operation,
     current: { ...context.current },
     ...(context.previous ? { previous: { ...context.previous } } : {}),
     user: {
@@ -42,6 +55,9 @@ export function buildDataHookJobPayload(
     },
     depth: context.depth ?? 0,
     visitedHookIds: [...(context.visitedHookIds ?? [])],
+    ...(isScheduleTrigger(definition.trigger)
+      ? { triggerKind: "schedule" as const }
+      : {}),
   };
 }
 

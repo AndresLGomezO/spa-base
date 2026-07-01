@@ -21,256 +21,142 @@
       "order": 0
     },
     {
-      "name": "Set liability balance sheet role",
-      "description": "FI-02: Debt itemTypes → balanceSheetRole LIABILITY.",
+      "name": "Derive balance sheet role on create",
+      "description": "FI-02: Map itemType to balanceSheetRole via switch (debt → LIABILITY, investment → ASSET, default NONE).",
       "entity": "financialItem",
       "phase": "before",
       "trigger": { "operation": "create" },
-      "condition": {
-        "type": "group",
-        "combinator": "or",
-        "children": [
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "MORTGAGE" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "LOAN" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "CREDIT_CARD" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "REVOLVING_CREDIT" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "PERSONAL_DEBT" }
-          }
-        ]
-      },
+      "condition": null,
       "actions": [
         {
           "type": "setField",
           "field": "balanceSheetRole",
-          "value": { "kind": "literal", "value": "LIABILITY" }
+          "value": {
+            "kind": "switch",
+            "input": {
+              "kind": "field",
+              "source": "current",
+              "path": "itemType"
+            },
+            "cases": [
+              {
+                "when": { "kind": "literal", "value": "MORTGAGE" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "LOAN" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "CREDIT_CARD" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "REVOLVING_CREDIT" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "PERSONAL_DEBT" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "SCHEDULED_SAVINGS" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "YIELD_SAVINGS" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "FIDUCIARY" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "INVESTMENT_FUND" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "OTHER_INVESTMENT" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              }
+            ],
+            "default": { "kind": "literal", "value": "NONE" }
+          }
         }
       ],
       "enabled": true,
       "order": 1
     },
     {
-      "name": "Set asset balance sheet role",
-      "description": "FI-02: Investment itemTypes → balanceSheetRole ASSET.",
-      "entity": "financialItem",
-      "phase": "before",
-      "trigger": { "operation": "create" },
-      "condition": {
-        "type": "group",
-        "combinator": "or",
-        "children": [
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "SCHEDULED_SAVINGS" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "YIELD_SAVINGS" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "FIDUCIARY" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "INVESTMENT_FUND" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "OTHER_INVESTMENT" }
-          }
-        ]
-      },
-      "actions": [
-        {
-          "type": "setField",
-          "field": "balanceSheetRole",
-          "value": { "kind": "literal", "value": "ASSET" }
-        }
-      ],
-      "enabled": true,
-      "order": 2
-    },
-    {
-      "name": "Set none balance sheet role",
-      "description": "FI-02: All other itemTypes → balanceSheetRole NONE when not already set.",
-      "entity": "financialItem",
-      "phase": "before",
-      "trigger": { "operation": "create" },
-      "condition": {
-        "type": "condition",
-        "field": "balanceSheetRole",
-        "operator": "isEmpty"
-      },
-      "actions": [
-        {
-          "type": "setField",
-          "field": "balanceSheetRole",
-          "value": { "kind": "literal", "value": "NONE" }
-        }
-      ],
-      "enabled": true,
-      "order": 3
-    },
-    {
-      "name": "Set liability role on type change",
-      "description": "FI-02: Re-apply LIABILITY when itemType changes to a debt type.",
-      "entity": "financialItem",
-      "phase": "before",
-      "trigger": { "operation": "update", "updateFields": ["itemType"] },
-      "condition": {
-        "type": "group",
-        "combinator": "or",
-        "children": [
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "MORTGAGE" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "LOAN" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "CREDIT_CARD" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "REVOLVING_CREDIT" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "PERSONAL_DEBT" }
-          }
-        ]
-      },
-      "actions": [
-        {
-          "type": "setField",
-          "field": "balanceSheetRole",
-          "value": { "kind": "literal", "value": "LIABILITY" }
-        }
-      ],
-      "enabled": true,
-      "order": 0
-    },
-    {
-      "name": "Set asset role on type change",
-      "description": "FI-02: Re-apply ASSET when itemType changes to an investment type.",
-      "entity": "financialItem",
-      "phase": "before",
-      "trigger": { "operation": "update", "updateFields": ["itemType"] },
-      "condition": {
-        "type": "group",
-        "combinator": "or",
-        "children": [
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "SCHEDULED_SAVINGS" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "YIELD_SAVINGS" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "FIDUCIARY" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "INVESTMENT_FUND" }
-          },
-          {
-            "type": "condition",
-            "field": "itemType",
-            "operator": "==",
-            "value": { "kind": "literal", "value": "OTHER_INVESTMENT" }
-          }
-        ]
-      },
-      "actions": [
-        {
-          "type": "setField",
-          "field": "balanceSheetRole",
-          "value": { "kind": "literal", "value": "ASSET" }
-        }
-      ],
-      "enabled": true,
-      "order": 1
-    },
-    {
-      "name": "Set none role on type change",
-      "description": "FI-02 BLOCKED: Needs notIn condition to set NONE when itemType is not debt/asset. Disabled — liability/asset update hooks cover those transitions.",
+      "name": "Derive balance sheet role on type change",
+      "description": "FI-02: Re-apply balanceSheetRole when itemType changes (same switch as create).",
       "entity": "financialItem",
       "phase": "before",
       "trigger": { "operation": "update", "updateFields": ["itemType"] },
       "condition": null,
       "actions": [
         {
-          "type": "sendNotification",
-          "message": {
-            "kind": "literal",
-            "value": "NONE role on type change requires notIn condition operator"
+          "type": "setField",
+          "field": "balanceSheetRole",
+          "value": {
+            "kind": "switch",
+            "input": {
+              "kind": "field",
+              "source": "current",
+              "path": "itemType"
+            },
+            "cases": [
+              {
+                "when": { "kind": "literal", "value": "MORTGAGE" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "LOAN" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "CREDIT_CARD" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "REVOLVING_CREDIT" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "PERSONAL_DEBT" },
+                "then": { "kind": "literal", "value": "LIABILITY" }
+              },
+              {
+                "when": { "kind": "literal", "value": "SCHEDULED_SAVINGS" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "YIELD_SAVINGS" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "FIDUCIARY" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "INVESTMENT_FUND" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              },
+              {
+                "when": { "kind": "literal", "value": "OTHER_INVESTMENT" },
+                "then": { "kind": "literal", "value": "ASSET" }
+              }
+            ],
+            "default": { "kind": "literal", "value": "NONE" }
           }
         }
       ],
-      "enabled": false,
-      "order": 2
+      "enabled": true,
+      "order": 0
     },
     {
       "name": "Create initial schedule row",
-      "description": "FI-03: Create one UPCOMING paymentSchedule row from nextDueDate and amount.",
+      "description": "FI-03/FI-04: Seed paymentSchedule horizon from scheduleHorizonMonths (frequency-aware due dates).",
       "entity": "financialItem",
       "phase": "after",
       "trigger": { "operation": "create" },
@@ -293,8 +179,45 @@
       },
       "actions": [
         {
-          "type": "createRecord",
+          "type": "createRecords",
           "entity": "paymentSchedule",
+          "count": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "frequency"
+                },
+                "right": { "kind": "literal", "value": "ONE_TIME" }
+              },
+              { "kind": "literal", "value": 1 },
+              {
+                "kind": "call",
+                "fn": "min",
+                "args": [
+                  {
+                    "kind": "call",
+                    "fn": "coalesce",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "scheduleHorizonMonths"
+                      },
+                      { "kind": "literal", "value": 12 }
+                    ]
+                  },
+                  { "kind": "literal", "value": 1000 }
+                ]
+              }
+            ]
+          },
+          "startIndex": { "kind": "literal", "value": 0 },
           "data": {
             "financialItemId": {
               "kind": "field",
@@ -302,15 +225,124 @@
               "path": "id"
             },
             "dueDate": {
-              "kind": "field",
-              "source": "current",
-              "path": "nextDueDate"
+              "kind": "switch",
+              "input": {
+                "kind": "field",
+                "source": "current",
+                "path": "frequency"
+              },
+              "cases": [
+                {
+                  "when": { "kind": "literal", "value": "WEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "BIWEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      {
+                        "kind": "binary",
+                        "op": "*",
+                        "left": { "kind": "var", "name": "loopIndex" },
+                        "right": { "kind": "literal", "value": 2 }
+                      },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "MONTHLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "QUARTERLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      {
+                        "kind": "binary",
+                        "op": "*",
+                        "left": { "kind": "var", "name": "loopIndex" },
+                        "right": { "kind": "literal", "value": 3 }
+                      },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "ANNUAL" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "YEAR" }
+                    ]
+                  }
+                }
+              ],
+              "default": {
+                "kind": "call",
+                "fn": "dateAdd",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "nextDueDate"
+                  },
+                  { "kind": "var", "name": "loopIndex" },
+                  { "kind": "literal", "value": "MONTH" }
+                ]
+              }
             },
             "expectedAmount": {
               "kind": "field",
               "source": "current",
               "path": "amount"
             },
+            "sequence": { "kind": "var", "name": "loopIndex" },
             "status": { "kind": "literal", "value": "UPCOMING" }
           }
         }
@@ -422,7 +454,7 @@
     },
     {
       "name": "Update account on income",
-      "description": "TX-04: Increase account.currentBalance for INCOME transactions.",
+      "description": "Increase account.currentBalance for INCOME transactions.",
       "entity": "transaction",
       "phase": "after",
       "trigger": { "operation": "create" },
@@ -475,7 +507,7 @@
     },
     {
       "name": "Update account on expense",
-      "description": "TX-04: Decrease account.currentBalance for EXPENSE transactions.",
+      "description": "Decrease account.currentBalance for EXPENSE transactions.",
       "entity": "transaction",
       "phase": "after",
       "trigger": { "operation": "create" },
@@ -528,7 +560,7 @@
     },
     {
       "name": "Update account on payment",
-      "description": "TX-04: Decrease account.currentBalance for PAYMENT transactions.",
+      "description": "Decrease account.currentBalance for PAYMENT transactions.",
       "entity": "transaction",
       "phase": "after",
       "trigger": { "operation": "create" },
@@ -580,6 +612,247 @@
       "order": 4
     },
     {
+      "name": "Update accounts on transfer",
+      "description": "TX-04: Debit accountId and credit toAccountId for TRANSFER transactions.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": { "kind": "literal", "value": "TRANSFER" }
+          },
+          {
+            "type": "condition",
+            "field": "toAccountId",
+            "operator": "isNotEmpty"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "account",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "accountId"
+            }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "-",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "currentBalance"
+                  },
+                  { "kind": "literal", "value": 0 }
+                ]
+              },
+              "right": {
+                "kind": "field",
+                "source": "previous",
+                "path": "amount"
+              }
+            }
+          }
+        },
+        {
+          "type": "updateMatching",
+          "entity": "account",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "toAccountId"
+            }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "currentBalance"
+                  },
+                  { "kind": "literal", "value": 0 }
+                ]
+              },
+              "right": {
+                "kind": "field",
+                "source": "previous",
+                "path": "amount"
+              }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 5
+    },
+    {
+      "name": "Advance next due date",
+      "description": "TX-02: After payment, set financialItem.nextDueDate to earliest remaining UPCOMING schedule dueDate.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "condition",
+        "field": "financialItemId",
+        "operator": "isNotEmpty"
+      },
+      "actions": [
+        {
+          "type": "aggregateMatching",
+          "entity": "paymentSchedule",
+          "op": "min",
+          "field": "dueDate",
+          "as": "nextDue",
+          "where": {
+            "type": "group",
+            "combinator": "and",
+            "children": [
+              {
+                "type": "condition",
+                "field": "financialItemId",
+                "operator": "==",
+                "value": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "financialItemId"
+                }
+              },
+              {
+                "type": "condition",
+                "field": "status",
+                "operator": "==",
+                "value": { "kind": "literal", "value": "UPCOMING" }
+              }
+            ]
+          }
+        },
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "financialItemId"
+            }
+          },
+          "set": {
+            "nextDueDate": {
+              "kind": "field",
+              "source": "aggregate",
+              "alias": "nextDue"
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 6
+    },
+    {
+      "name": "Complete one-time item on payment",
+      "description": "FI-07: When paying a ONE_TIME item, mark financialItem COMPLETED.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": { "kind": "literal", "value": "PAYMENT" }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId",
+            "operator": "isNotEmpty"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "parent"
+        },
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "financialItemId"
+            }
+          },
+          "set": {
+            "status": {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "binary",
+                  "op": "==",
+                  "left": {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "parent",
+                    "path": "frequency"
+                  },
+                  "right": { "kind": "literal", "value": "ONE_TIME" }
+                },
+                { "kind": "literal", "value": "COMPLETED" },
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "status"
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 7
+    },
+    {
       "name": "Sync item balance from snapshot",
       "description": "BS-01: Copy balanceSnapshot.balance to financialItem.currentBalance.",
       "entity": "balanceSnapshot",
@@ -613,104 +886,1213 @@
     },
     {
       "name": "Regenerate schedules on item update",
-      "description": "FI-05 BLOCKED: Needs compound updateMatching where + delete/CANCELLED. See docs/rates-data-hooks-gap-analysis.md PLAT-01, PLAT-02.",
+      "description": "FI-05: Delete UPCOMING paymentSchedule rows when schedule fields change.",
       "entity": "financialItem",
       "phase": "after",
       "trigger": {
         "operation": "update",
-        "updateFields": ["frequency", "nextDueDate", "amount"]
+        "updateFields": [
+          "frequency",
+          "nextDueDate",
+          "amount",
+          "scheduleHorizonMonths"
+        ]
       },
       "condition": null,
       "actions": [
         {
-          "type": "sendNotification",
-          "message": {
-            "kind": "literal",
-            "value": "Schedule regeneration not implemented — enable after PLAT-01/PLAT-02"
+          "type": "deleteMatching",
+          "entity": "paymentSchedule",
+          "where": {
+            "type": "group",
+            "combinator": "and",
+            "children": [
+              {
+                "type": "condition",
+                "field": "financialItemId",
+                "operator": "==",
+                "value": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "id"
+                }
+              },
+              {
+                "type": "condition",
+                "field": "status",
+                "operator": "==",
+                "value": { "kind": "literal", "value": "UPCOMING" }
+              }
+            ]
           }
         }
       ],
-      "enabled": false,
+      "enabled": true,
       "order": 10
     },
     {
-      "name": "Generate amortization plan",
-      "description": "LD-01 BLOCKED: Needs loanDetails.termMonths, amortization functions. See gap analysis SCHEMA-01, PLAT-05.",
+      "name": "Recreate schedule on item update",
+      "description": "FI-05/FI-04: Recreate paymentSchedule horizon after schedule fields change (pairs with delete hook).",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": {
+        "operation": "update",
+        "updateFields": [
+          "frequency",
+          "nextDueDate",
+          "amount",
+          "scheduleHorizonMonths"
+        ]
+      },
+      "condition": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "amount",
+            "operator": ">",
+            "value": { "kind": "literal", "value": 0 }
+          },
+          {
+            "type": "condition",
+            "field": "nextDueDate",
+            "operator": "isNotEmpty"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "createRecords",
+          "entity": "paymentSchedule",
+          "count": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "frequency"
+                },
+                "right": { "kind": "literal", "value": "ONE_TIME" }
+              },
+              { "kind": "literal", "value": 1 },
+              {
+                "kind": "call",
+                "fn": "min",
+                "args": [
+                  {
+                    "kind": "call",
+                    "fn": "coalesce",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "scheduleHorizonMonths"
+                      },
+                      { "kind": "literal", "value": 12 }
+                    ]
+                  },
+                  { "kind": "literal", "value": 1000 }
+                ]
+              }
+            ]
+          },
+          "startIndex": { "kind": "literal", "value": 0 },
+          "data": {
+            "financialItemId": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            },
+            "dueDate": {
+              "kind": "switch",
+              "input": {
+                "kind": "field",
+                "source": "current",
+                "path": "frequency"
+              },
+              "cases": [
+                {
+                  "when": { "kind": "literal", "value": "WEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "BIWEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      {
+                        "kind": "binary",
+                        "op": "*",
+                        "left": { "kind": "var", "name": "loopIndex" },
+                        "right": { "kind": "literal", "value": 2 }
+                      },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "MONTHLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "QUARTERLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      {
+                        "kind": "binary",
+                        "op": "*",
+                        "left": { "kind": "var", "name": "loopIndex" },
+                        "right": { "kind": "literal", "value": 3 }
+                      },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "ANNUAL" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "YEAR" }
+                    ]
+                  }
+                }
+              ],
+              "default": {
+                "kind": "call",
+                "fn": "dateAdd",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "nextDueDate"
+                  },
+                  { "kind": "var", "name": "loopIndex" },
+                  { "kind": "literal", "value": "MONTH" }
+                ]
+              }
+            },
+            "expectedAmount": {
+              "kind": "field",
+              "source": "current",
+              "path": "amount"
+            },
+            "sequence": { "kind": "var", "name": "loopIndex" },
+            "status": { "kind": "literal", "value": "UPCOMING" }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 11
+    },
+    {
+      "name": "Skip upcoming on pause or close",
+      "description": "FI-06: Mark UPCOMING paymentSchedule rows SKIPPED when item is PAUSED or CLOSED.",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": { "operation": "update", "updateFields": ["status"] },
+      "condition": {
+        "type": "group",
+        "combinator": "or",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": { "kind": "literal", "value": "PAUSED" }
+          },
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": { "kind": "literal", "value": "CLOSED" }
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "paymentSchedule",
+          "where": {
+            "type": "group",
+            "combinator": "and",
+            "children": [
+              {
+                "type": "condition",
+                "field": "financialItemId",
+                "operator": "==",
+                "value": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "id"
+                }
+              },
+              {
+                "type": "condition",
+                "field": "status",
+                "operator": "==",
+                "value": { "kind": "literal", "value": "UPCOMING" }
+              }
+            ]
+          },
+          "set": {
+            "status": { "kind": "literal", "value": "SKIPPED" }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 12
+    },
+    {
+      "name": "Extend schedule horizon",
+      "description": "FI-04: Monthly queued extension — top up paymentSchedule rows toward scheduleHorizonMonths.",
+      "entity": "financialItem",
+      "phase": "after",
+      "execution": "queued",
+      "trigger": {
+        "kind": "schedule",
+        "cron": "0 0 1 * *",
+        "timezone": "UTC",
+        "scope": "eachRecord",
+        "eachRecordWhere": {
+          "type": "condition",
+          "field": "status",
+          "operator": "==",
+          "value": { "kind": "literal", "value": "ACTIVE" }
+        }
+      },
+      "condition": null,
+      "actions": [
+        {
+          "type": "aggregateMatching",
+          "entity": "paymentSchedule",
+          "op": "count",
+          "as": "existingCount",
+          "where": {
+            "type": "condition",
+            "field": "financialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            }
+          }
+        },
+        {
+          "type": "createRecords",
+          "entity": "paymentSchedule",
+          "count": {
+            "kind": "call",
+            "fn": "min",
+            "args": [
+              { "kind": "literal", "value": 100 },
+              {
+                "kind": "binary",
+                "op": "-",
+                "left": {
+                  "kind": "call",
+                  "fn": "coalesce",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "current",
+                      "path": "scheduleHorizonMonths"
+                    },
+                    { "kind": "literal", "value": 12 }
+                  ]
+                },
+                "right": {
+                  "kind": "field",
+                  "source": "aggregate",
+                  "alias": "existingCount"
+                }
+              }
+            ]
+          },
+          "startIndex": {
+            "kind": "field",
+            "source": "aggregate",
+            "alias": "existingCount"
+          },
+          "data": {
+            "financialItemId": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            },
+            "dueDate": {
+              "kind": "switch",
+              "input": {
+                "kind": "field",
+                "source": "current",
+                "path": "frequency"
+              },
+              "cases": [
+                {
+                  "when": { "kind": "literal", "value": "WEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "BIWEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      {
+                        "kind": "binary",
+                        "op": "*",
+                        "left": { "kind": "var", "name": "loopIndex" },
+                        "right": { "kind": "literal", "value": 2 }
+                      },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "MONTHLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "QUARTERLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      {
+                        "kind": "binary",
+                        "op": "*",
+                        "left": { "kind": "var", "name": "loopIndex" },
+                        "right": { "kind": "literal", "value": 3 }
+                      },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "ANNUAL" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "nextDueDate"
+                      },
+                      { "kind": "var", "name": "loopIndex" },
+                      { "kind": "literal", "value": "YEAR" }
+                    ]
+                  }
+                }
+              ],
+              "default": {
+                "kind": "call",
+                "fn": "dateAdd",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "nextDueDate"
+                  },
+                  { "kind": "var", "name": "loopIndex" },
+                  { "kind": "literal", "value": "MONTH" }
+                ]
+              }
+            },
+            "expectedAmount": {
+              "kind": "field",
+              "source": "current",
+              "path": "amount"
+            },
+            "sequence": { "kind": "var", "name": "loopIndex" },
+            "status": { "kind": "literal", "value": "UPCOMING" }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 13
+    },
+    {
+      "name": "Roll forward next schedule",
+      "description": "PS-01: After a schedule row is PAID, create the next UPCOMING row (skipped for ONE_TIME and IRREGULAR items; frequency-aware date step).",
+      "entity": "paymentSchedule",
+      "phase": "after",
+      "trigger": { "operation": "update", "updateFields": ["status"] },
+      "condition": {
+        "type": "condition",
+        "field": "status",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "PAID" }
+      },
+      "actions": [
+        {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "parent"
+        },
+        {
+          "type": "createRecords",
+          "entity": "paymentSchedule",
+          "count": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "frequency"
+                },
+                "right": { "kind": "literal", "value": "ONE_TIME" }
+              },
+              { "kind": "literal", "value": 0 },
+              {
+                "kind": "call",
+                "fn": "if",
+                "args": [
+                  {
+                    "kind": "binary",
+                    "op": "==",
+                    "left": {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "frequency"
+                    },
+                    "right": { "kind": "literal", "value": "IRREGULAR" }
+                  },
+                  { "kind": "literal", "value": 0 },
+                  { "kind": "literal", "value": 1 }
+                ]
+              }
+            ]
+          },
+          "data": {
+            "financialItemId": {
+              "kind": "field",
+              "source": "loaded",
+              "alias": "parent",
+              "path": "id"
+            },
+            "dueDate": {
+              "kind": "switch",
+              "input": {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "frequency"
+              },
+              "cases": [
+                {
+                  "when": { "kind": "literal", "value": "WEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "dueDate"
+                      },
+                      { "kind": "literal", "value": 1 },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "BIWEEKLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "dueDate"
+                      },
+                      { "kind": "literal", "value": 2 },
+                      { "kind": "literal", "value": "WEEK" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "MONTHLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "dueDate"
+                      },
+                      { "kind": "literal", "value": 1 },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "QUARTERLY" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "dueDate"
+                      },
+                      { "kind": "literal", "value": 3 },
+                      { "kind": "literal", "value": "MONTH" }
+                    ]
+                  }
+                },
+                {
+                  "when": { "kind": "literal", "value": "ANNUAL" },
+                  "then": {
+                    "kind": "call",
+                    "fn": "dateAdd",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "dueDate"
+                      },
+                      { "kind": "literal", "value": 1 },
+                      { "kind": "literal", "value": "YEAR" }
+                    ]
+                  }
+                }
+              ],
+              "default": {
+                "kind": "call",
+                "fn": "dateAdd",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "dueDate"
+                  },
+                  { "kind": "literal", "value": 1 },
+                  { "kind": "literal", "value": "MONTH" }
+                ]
+              }
+            },
+            "expectedAmount": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "expectedAmount"
+                },
+                {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "amount"
+                }
+              ]
+            },
+            "principalPortion": {
+              "kind": "field",
+              "source": "current",
+              "path": "principalPortion"
+            },
+            "interestPortion": {
+              "kind": "field",
+              "source": "current",
+              "path": "interestPortion"
+            },
+            "status": { "kind": "literal", "value": "UPCOMING" }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0,
+      "chainHooks": true
+    },
+    {
+      "name": "Generate flat loan plan",
+      "description": "LD-01: Flat monthly plan (static payment/principal/interest per row — not declining-balance amortization).",
       "entity": "loanDetails",
       "phase": "after",
       "trigger": { "operation": "create" },
       "condition": null,
       "actions": [
         {
-          "type": "sendNotification",
-          "message": {
-            "kind": "literal",
-            "value": "Amortization plan generation not implemented"
+          "type": "deleteMatching",
+          "entity": "paymentSchedule",
+          "where": {
+            "type": "group",
+            "combinator": "and",
+            "children": [
+              {
+                "type": "condition",
+                "field": "financialItemId",
+                "operator": "==",
+                "value": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "financialItemId"
+                }
+              },
+              {
+                "type": "condition",
+                "field": "status",
+                "operator": "==",
+                "value": { "kind": "literal", "value": "UPCOMING" }
+              }
+            ]
+          }
+        },
+        {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "parent"
+        },
+        {
+          "type": "createRecords",
+          "entity": "paymentSchedule",
+          "count": {
+            "kind": "call",
+            "fn": "max",
+            "args": [
+              { "kind": "literal", "value": 1 },
+              {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "termMonths"
+                  },
+                  { "kind": "literal", "value": 12 }
+                ]
+              }
+            ]
+          },
+          "data": {
+            "financialItemId": {
+              "kind": "field",
+              "source": "loaded",
+              "alias": "parent",
+              "path": "id"
+            },
+            "dueDate": {
+              "kind": "call",
+              "fn": "dateAdd",
+              "args": [
+                {
+                  "kind": "call",
+                  "fn": "coalesce",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "startDate"
+                    },
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "nextDueDate"
+                    }
+                  ]
+                },
+                { "kind": "var", "name": "loopIndex" },
+                { "kind": "literal", "value": "MONTH" }
+              ]
+            },
+            "expectedAmount": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "paymentAmount"
+                },
+                {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "amount"
+                }
+              ]
+            },
+            "principalPortion": {
+              "kind": "field",
+              "source": "current",
+              "path": "principalPortion"
+            },
+            "interestPortion": {
+              "kind": "field",
+              "source": "current",
+              "path": "interestPortion"
+            },
+            "sequence": { "kind": "var", "name": "loopIndex" },
+            "planVersion": { "kind": "literal", "value": 1 },
+            "status": { "kind": "literal", "value": "UPCOMING" }
           }
         }
       ],
-      "enabled": false,
+      "enabled": true,
       "order": 0
     },
     {
-      "name": "Regenerate plan on loan update",
-      "description": "LD-02 BLOCKED: Inactivate UPCOMING schedules and recreate on rate/term change. See gap analysis PLAT-01, PLAT-02, SCHEMA-02.",
+      "name": "Regenerate flat loan plan",
+      "description": "LD-02: Replace UPCOMING schedule rows when loan terms change (flat plan, not true amortization).",
       "entity": "loanDetails",
       "phase": "after",
       "trigger": {
         "operation": "update",
-        "updateFields": ["interestRate", "paymentAmount", "amortizationType"]
+        "updateFields": [
+          "interestRate",
+          "paymentAmount",
+          "amortizationType",
+          "principalPortion",
+          "interestPortion"
+        ]
       },
       "condition": null,
       "actions": [
         {
-          "type": "sendNotification",
-          "message": {
-            "kind": "literal",
-            "value": "Loan plan regeneration not implemented"
+          "type": "deleteMatching",
+          "entity": "paymentSchedule",
+          "where": {
+            "type": "group",
+            "combinator": "and",
+            "children": [
+              {
+                "type": "condition",
+                "field": "financialItemId",
+                "operator": "==",
+                "value": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "financialItemId"
+                }
+              },
+              {
+                "type": "condition",
+                "field": "status",
+                "operator": "==",
+                "value": { "kind": "literal", "value": "UPCOMING" }
+              }
+            ]
+          }
+        },
+        {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "parent"
+        },
+        {
+          "type": "aggregateMatching",
+          "entity": "paymentSchedule",
+          "op": "max",
+          "field": "planVersion",
+          "as": "prevPlanVersion",
+          "where": {
+            "type": "condition",
+            "field": "financialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "financialItemId"
+            }
+          }
+        },
+        {
+          "type": "createRecords",
+          "entity": "paymentSchedule",
+          "count": {
+            "kind": "call",
+            "fn": "max",
+            "args": [
+              { "kind": "literal", "value": 1 },
+              {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "termMonths"
+                  },
+                  { "kind": "literal", "value": 12 }
+                ]
+              }
+            ]
+          },
+          "data": {
+            "financialItemId": {
+              "kind": "field",
+              "source": "loaded",
+              "alias": "parent",
+              "path": "id"
+            },
+            "dueDate": {
+              "kind": "call",
+              "fn": "dateAdd",
+              "args": [
+                {
+                  "kind": "call",
+                  "fn": "coalesce",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "startDate"
+                    },
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "nextDueDate"
+                    }
+                  ]
+                },
+                { "kind": "var", "name": "loopIndex" },
+                { "kind": "literal", "value": "MONTH" }
+              ]
+            },
+            "expectedAmount": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "paymentAmount"
+                },
+                {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "amount"
+                }
+              ]
+            },
+            "principalPortion": {
+              "kind": "field",
+              "source": "current",
+              "path": "principalPortion"
+            },
+            "interestPortion": {
+              "kind": "field",
+              "source": "current",
+              "path": "interestPortion"
+            },
+            "sequence": { "kind": "var", "name": "loopIndex" },
+            "planVersion": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "aggregate",
+                    "alias": "prevPlanVersion"
+                  },
+                  { "kind": "literal", "value": 0 }
+                ]
+              },
+              "right": { "kind": "literal", "value": 1 }
+            },
+            "status": { "kind": "literal", "value": "UPCOMING" }
           }
         }
       ],
-      "enabled": false,
+      "enabled": true,
       "order": 1
     },
     {
       "name": "Mark overdue schedules",
-      "description": "PS-02 BLOCKED: Needs scheduled/time trigger. See gap analysis PLAT-09.",
+      "description": "PS-02: Daily sweep — UPCOMING rows with dueDate before today become OVERDUE.",
       "entity": "paymentSchedule",
       "phase": "after",
-      "trigger": { "operation": "update" },
+      "trigger": {
+        "kind": "schedule",
+        "cron": "0 6 * * *",
+        "timezone": "UTC",
+        "scope": "eachRecord",
+        "eachRecordWhere": {
+          "type": "group",
+          "combinator": "and",
+          "children": [
+            {
+              "type": "condition",
+              "field": "status",
+              "operator": "==",
+              "value": { "kind": "literal", "value": "UPCOMING" }
+            },
+            {
+              "type": "condition",
+              "field": "dueDate",
+              "operator": "<",
+              "value": { "kind": "var", "name": "now" }
+            }
+          ]
+        }
+      },
       "condition": null,
       "actions": [
         {
-          "type": "sendNotification",
-          "message": {
-            "kind": "literal",
-            "value": "Overdue marking requires scheduled trigger"
-          }
+          "type": "setField",
+          "field": "status",
+          "value": { "kind": "literal", "value": "OVERDUE" }
         }
       ],
-      "enabled": false,
-      "order": 10
+      "enabled": true,
+      "order": 10,
+      "execution": "queued"
     },
     {
-      "name": "Cascade delete schedules",
-      "description": "EX-02 BLOCKED: Needs deleteMatching on financialItem.afterDelete. See gap analysis PLAT-02.",
+      "name": "Cascade delete related records",
+      "description": "EX-02: Remove paymentSchedule, loanDetails, and balanceSnapshot rows when a financialItem is deleted.",
       "entity": "financialItem",
       "phase": "after",
       "trigger": { "operation": "delete" },
       "condition": null,
       "actions": [
         {
-          "type": "sendNotification",
-          "message": {
-            "kind": "literal",
-            "value": "Cascade delete not implemented"
+          "type": "deleteMatching",
+          "entity": "paymentSchedule",
+          "where": {
+            "field": "financialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            }
+          }
+        },
+        {
+          "type": "deleteMatching",
+          "entity": "loanDetails",
+          "where": {
+            "field": "financialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            }
+          }
+        },
+        {
+          "type": "deleteMatching",
+          "entity": "balanceSnapshot",
+          "where": {
+            "field": "financialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            }
           }
         }
       ],
-      "enabled": false,
-      "order": 20
+      "enabled": true,
+      "order": 20,
+      "chainHooks": true
+    },
+    {
+      "name": "Set income payDay from parent",
+      "description": "EX-01: Derive payDay from parent financialItem nextDueDate.",
+      "entity": "incomeDetails",
+      "phase": "before",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "condition",
+        "field": "payDay",
+        "operator": "isEmpty"
+      },
+      "actions": [
+        {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "parent"
+        },
+        {
+          "type": "setField",
+          "field": "payDay",
+          "value": {
+            "kind": "call",
+            "fn": "day",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "nextDueDate"
+              }
+            ]
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Set service billingDay from parent",
+      "description": "EX-01: Derive billingDay from parent financialItem nextDueDate.",
+      "entity": "serviceDetails",
+      "phase": "before",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "condition",
+        "field": "billingDay",
+        "operator": "isEmpty"
+      },
+      "actions": [
+        {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "parent"
+        },
+        {
+          "type": "setField",
+          "field": "billingDay",
+          "value": {
+            "kind": "call",
+            "fn": "day",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "nextDueDate"
+              }
+            ]
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
     }
   ]
 }

@@ -58,9 +58,11 @@ describe("convertLegacyHook", () => {
       order: 0,
     });
 
-    expect(result.phase).toBe("after");
-    expect(result.trigger.operation).toBe("update");
-    expect(result.enabled).toBe(false);
+    expect(result).toMatchObject({
+      phase: "after",
+      trigger: { operation: "update" },
+      enabled: false,
+    });
     expect(result.actions[0]).toEqual({
       type: "createRecord",
       entity: "task",

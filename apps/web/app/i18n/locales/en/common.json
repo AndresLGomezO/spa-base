@@ -2111,6 +2111,13 @@
       "save": "Save",
       "saved": "Automation hook saved.",
       "operation": "Trigger",
+      "triggerKind": "Trigger type",
+      "cron": "Cron schedule",
+      "cronHint": "Five-field cron (minute hour day month weekday). Evaluated in the timezone below.",
+      "timezone": "Timezone",
+      "scheduleScope": "Run scope",
+      "scheduleScopeHint": "Once runs batch actions (e.g. updateMatching). Each record runs the hook once per matched row.",
+      "eachRecordWhere": "Match records",
       "phase": "Timing",
       "status": "Status",
       "enabled": "Enabled",
@@ -2139,7 +2146,12 @@
       "group": "Condition group",
       "leaf": "Condition",
       "empty": "No conditions yet. Add a condition or nested group.",
-      "groupSummary": "{{combinator}} · {{count}} conditions"
+      "groupSummary": "{{combinator}} · {{count}} conditions",
+      "arrayValue": "Match any of these values",
+      "arrayItemPlaceholder": "value",
+      "addArrayItem": "Add value",
+      "removeArrayItem": "Remove",
+      "arrayMaxItemsHint": "Maximum of {{max}} values reached."
     },
     "metadata": {
       "created": "Automation hook created.",
@@ -2157,6 +2169,14 @@
       "update": "On update",
       "delete": "On delete"
     },
+    "triggerKind": {
+      "crud": "On record change",
+      "schedule": "On schedule"
+    },
+    "scheduleScope": {
+      "once": "Once per tick",
+      "eachRecord": "Each matching record"
+    },
     "phase": {
       "before": "Before",
       "after": "After"
@@ -2166,6 +2186,10 @@
       "createRecord": "Create record",
       "createRecords": "Create records (loop)",
       "updateMatching": "Update matching records",
+      "deleteMatching": "Delete matching records",
+      "deleteRecord": "Delete record",
+      "getRecord": "Load record",
+      "aggregateMatching": "Aggregate matching records",
       "sendNotification": "Send notification",
       "callWebhook": "Call webhook"
     },
@@ -2188,8 +2212,23 @@
       "selectEntity": "Select entity…",
       "recordData": "Record data",
       "count": "Number of records",
+      "startIndex": "Start index",
+      "createRecordsLimitsHint": "Up to {{max}} records per run (sync/deferred/before). Use execution Queued for up to {{queuedMax}}, or a rolling horizon with startIndex and scheduled extension hooks.",
+      "createRecordsQueuedHint": "Queued hooks may create up to {{max}} records per run. For longer horizons, use startIndex with scheduled extension hooks.",
       "matchWhere": "Match records where",
       "matchValue": "Value",
+      "recordId": "Record id",
+      "alias": "Alias",
+      "aliasPlaceholder": "e.g. parent",
+      "aggregateOp": "Aggregate operation",
+      "aggregateField": "Field to aggregate",
+      "aggregateOps": {
+        "count": "Count",
+        "sum": "Sum",
+        "min": "Minimum",
+        "max": "Maximum",
+        "avg": "Average"
+      },
       "setFields": "Set fields"
     },
     "executionLog": {
@@ -2210,12 +2249,15 @@
       "binary": "Operation",
       "unary": "Negation / Not",
       "call": "Function",
+      "switch": "Switch (lookup)",
       "advanced": "Advanced (expression)",
       "text": "Text",
       "number": "Number",
       "boolean": "Boolean",
       "current": "Current record",
       "previous": "Previous value",
+      "loaded": "Loaded record",
+      "aggregate": "Aggregate value",
       "fieldPathPlaceholder": "field name",
       "invalidJson": "Invalid expression JSON.",
       "advancedHint": "Edit the raw expression AST as JSON.",
@@ -2229,6 +2271,15 @@
       "addArgument": "Add argument",
       "removeArgument": "Remove",
       "useEndIndex": "Use end index",
+      "switchInput": "Input value",
+      "switchCases": "Cases",
+      "switchCaseIndex": "Case {{index}}",
+      "switchWhen": "When equals",
+      "switchThen": "Then value",
+      "switchDefault": "Default value",
+      "addSwitchCase": "Add case",
+      "removeSwitchCase": "Remove case",
+      "switchMaxCasesHint": "Maximum of {{max}} cases reached.",
       "preview": "Preview",
       "previewError": "Preview could not be evaluated.",
       "previewUnavailable": "Preview unavailable for advanced JSON.",

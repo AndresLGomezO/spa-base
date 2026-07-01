@@ -3,6 +3,7 @@ import { Pencil, Plus, Trash2, Workflow } from "lucide-react";
 import { IconButton, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 import type { DataHooksCatalogEnvelope } from "@repo/hooks/browser";
+import { isScheduleTrigger } from "@repo/hooks";
 
 import { isApiClientError, putDataHooksCatalog } from "../../lib/api-client";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
@@ -126,9 +127,11 @@ export function DataHookListTreePanel() {
                       </Text>
                       <Text className="text-muted-foreground truncate text-xs">
                         {t(`dataHooks.phase.${definition.phase}`)}{" "}
-                        {t(
-                          `dataHooks.operation.${definition.trigger.operation}`,
-                        )}
+                        {isScheduleTrigger(definition.trigger)
+                          ? t("dataHooks.triggerKind.schedule")
+                          : t(
+                              `dataHooks.operation.${definition.trigger.operation}`,
+                            )}
                       </Text>
                     </div>
                   </div>

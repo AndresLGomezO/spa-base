@@ -2,7 +2,7 @@ import { z } from "zod";
 
 import {
   DATA_HOOK_EXECUTION_MODES,
-  DATA_HOOK_OPERATIONS,
+  DATA_HOOK_JOB_OPERATIONS,
   DATA_HOOK_PHASES,
 } from "./data-hook-definition.js";
 
@@ -23,7 +23,12 @@ export const createDataHookExecutionInputSchema = z.object({
   entityName: z.string().trim().min(1),
   event: z.string().trim().min(1),
   phase: z.enum(DATA_HOOK_PHASES),
-  operation: z.enum(DATA_HOOK_OPERATIONS),
+  operation: z.enum(
+    DATA_HOOK_JOB_OPERATIONS as unknown as [
+      (typeof DATA_HOOK_JOB_OPERATIONS)[number],
+      ...(typeof DATA_HOOK_JOB_OPERATIONS)[number][],
+    ],
+  ),
   recordId: z.string().trim().min(1).optional(),
   executionMode: z.enum(DATA_HOOK_EXECUTION_MODES),
   status: z.enum(DATA_HOOK_EXECUTION_STATUSES),

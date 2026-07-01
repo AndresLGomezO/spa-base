@@ -3,10 +3,18 @@ import type {
   DataHookCondition,
   DataHookConditionNode,
   DataHookDefinition,
+  DataHookExecutionMode,
 } from "./data-hook-definition.js";
+import { isScheduleTrigger } from "./data-hook-definition.js";
+import { computeAggregateMatching } from "./aggregate-matching-utils.js";
+import {
+  assertCreateRecordsRuntimeCount,
+  coerceNonNegativeInteger,
+} from "./create-records-utils.js";
 import type { CreateDataHookExecutionInput } from "./data-hook-execution.js";
 import { buildDataHookJobPayload } from "./data-hook-job.js";
 import { isBeforePhase, parseHookEvent } from "./event.js";
+import { listMatchingRecordsForWhere } from "./update-matching-utils.js";
 import {
   evaluateExpression,
   expressionValuesEqual,
@@ -22,8 +30,13 @@ import type {
 } from "./types.js";
 import { HookExecutionError } from "./types.js";
 
-const MAX_LOOP_ITERATIONS = 1_000;
-const MAX_MATCHING_RECORDS = 500;
+function requireAfterPhase(phase: HookPhase, actionType: string): void {
+  if (isBeforePhase(phase)) {
+    throw new HookExecutionError(
+      `${actionType} is only supported in after-phase hooks.`,
+    );
+  }
+}
 
 /**
  * Re-entrancy guard for opt-in nested/chained hooks. Hook-initiated writes are
@@ -37,6 +50,8 @@ function buildScope(context: HookContext, loopIndex?: number): ExpressionScope {
   return {
     current: context.current,
     ...(context.previous ? { previous: context.previous } : {}),
+    ...(context.loaded ? { loaded: context.loaded } : {}),
+    ...(context.aggregates ? { aggregates: context.aggregates } : {}),
     now: new Date(),
     ...(context.user.uid ? { userId: context.user.uid } : {}),
     ...(loopIndex !== undefined ? { loopIndex } : {}),
@@ -197,6 +212,10 @@ function updateFieldsChanged(
   definition: DataHookDefinition,
   context: HookContext,
 ): boolean {
+  if (isScheduleTrigger(definition.trigger)) {
+    return true;
+  }
+
   const fields = definition.trigger.updateFields;
   if (!fields || fields.length === 0) {
     return true;
@@ -223,6 +242,7 @@ async function runAction(
   action: DataHookAction,
   context: HookContext,
   phase: HookPhase,
+  execution: DataHookExecutionMode | undefined,
   writeOptions?: HookEntityWriteOptions,
 ): Promise<void> {
   const scope = buildScope(context);
@@ -263,19 +283,14 @@ async function runAction(
     case "createRecords": {
       const entities = requireEntities(context);
       const rawCount = evaluateExpression(action.count, scope);
-      const count = typeof rawCount === "number" ? Math.trunc(rawCount) : 0;
-      if (count < 0) {
-        throw new HookExecutionError(
-          "createRecords count must be a non-negative number.",
-        );
-      }
-      if (count > MAX_LOOP_ITERATIONS) {
-        throw new HookExecutionError(
-          `createRecords count (${count}) exceeds the maximum of ${MAX_LOOP_ITERATIONS}.`,
-        );
-      }
+      const count = coerceNonNegativeInteger(rawCount, "count");
+      assertCreateRecordsRuntimeCount(count, phase, execution);
+      const rawStartIndex = action.startIndex
+        ? evaluateExpression(action.startIndex, scope)
+        : 0;
+      const startIndex = coerceNonNegativeInteger(rawStartIndex, "startIndex");
       for (let index = 0; index < count; index += 1) {
-        const loopScope = buildScope(context, index);
+        const loopScope = buildScope(context, startIndex + index);
         await entities.create(
           action.entity,
           evaluateExpressionRecord(action.data, loopScope),
@@ -287,29 +302,20 @@ async function runAction(
 
     case "updateMatching": {
       const entities = requireEntities(context);
-      // The lookup value is resolved against the TRIGGER record scope (e.g.
-      // "find commitments where contractId == current.id").
-      const lookupValue = action.where.value
-        ? evaluateExpression(action.where.value, scope)
-        : null;
-      const matches = await entities.list(action.entity, {
-        field: action.where.field,
-        value: lookupValue == null ? "" : String(lookupValue),
-        limit: MAX_MATCHING_RECORDS,
-      });
+      const matches = await listMatchingRecordsForWhere(
+        action.entity,
+        action.where,
+        context,
+        scope,
+        entities.list,
+      );
+      const triggerRecord = context.current;
       for (const match of matches) {
-        const fieldValue = readFieldValue(
-          match as Record<string, unknown>,
-          action.where.field,
-        );
-        if (!matchesLookup(action.where.operator, fieldValue, lookupValue)) {
-          continue;
-        }
-        // `set` expressions see the matched record as `current` and the trigger
-        // record as `previous`, so they can reference both.
         const setScope: ExpressionScope = {
           current: match as Record<string, unknown>,
-          previous: context.current,
+          previous: triggerRecord,
+          ...(context.loaded ? { loaded: context.loaded } : {}),
+          ...(context.aggregates ? { aggregates: context.aggregates } : {}),
           now: new Date(),
           ...(context.user.uid ? { userId: context.user.uid } : {}),
         };
@@ -320,6 +326,68 @@ async function runAction(
           writeOptions,
         );
       }
+      return;
+    }
+
+    case "deleteMatching": {
+      requireAfterPhase(phase, "deleteMatching");
+      const entities = requireEntities(context);
+      const matches = await listMatchingRecordsForWhere(
+        action.entity,
+        action.where,
+        context,
+        scope,
+        entities.list,
+      );
+      for (const match of matches) {
+        await entities.delete(action.entity, match.id, writeOptions);
+      }
+      return;
+    }
+
+    case "deleteRecord": {
+      requireAfterPhase(phase, "deleteRecord");
+      const entities = requireEntities(context);
+      const idValue = evaluateExpression(action.id, scope);
+      if (typeof idValue !== "string" || idValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "deleteRecord id must evaluate to a non-empty string.",
+        );
+      }
+      await entities.delete(action.entity, idValue.trim(), writeOptions);
+      return;
+    }
+
+    case "getRecord": {
+      const entities = requireEntities(context);
+      const idValue = evaluateExpression(action.id, scope);
+      if (typeof idValue !== "string" || idValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "getRecord id must evaluate to a non-empty string.",
+        );
+      }
+      const record = await entities.get(action.entity, idValue.trim());
+      if (!context.loaded) {
+        context.loaded = {};
+      }
+      context.loaded[action.as] = record;
+      return;
+    }
+
+    case "aggregateMatching": {
+      const entities = requireEntities(context);
+      const matches = await listMatchingRecordsForWhere(
+        action.entity,
+        action.where,
+        context,
+        scope,
+        entities.list,
+      );
+      const result = computeAggregateMatching(action.op, action.field, matches);
+      if (!context.aggregates) {
+        context.aggregates = {};
+      }
+      context.aggregates[action.as] = result;
       return;
     }
 
@@ -350,16 +418,17 @@ async function runAction(
       let body: Record<string, unknown>;
       if (action.body) {
         const evaluated = evaluateExpression(action.body, scope);
-        if (
-          evaluated === null ||
-          typeof evaluated !== "object" ||
-          Array.isArray(evaluated)
-        ) {
+        if (evaluated === null || Array.isArray(evaluated)) {
           throw new HookExecutionError(
             "callWebhook body must evaluate to a JSON object.",
           );
         }
-        body = evaluated as Record<string, unknown>;
+        if (typeof evaluated !== "object") {
+          throw new HookExecutionError(
+            "callWebhook body must evaluate to a JSON object.",
+          );
+        }
+        body = evaluated as unknown as Record<string, unknown>;
       } else {
         body = {
           tenantId: context.tenantId,
@@ -380,27 +449,6 @@ async function runAction(
         `Unsupported data hook action: ${JSON.stringify(exhaustive)}`,
       );
     }
-  }
-}
-
-function matchesLookup(
-  operator: DataHookCondition["operator"],
-  fieldValue: ExpressionValue,
-  lookupValue: ExpressionValue,
-): boolean {
-  switch (operator) {
-    case "isEmpty":
-      return isEmptyExpressionValue(fieldValue);
-    case "isNotEmpty":
-      return !isEmptyExpressionValue(fieldValue);
-    case "changed":
-      return true;
-    case "in":
-      return expressionValuesEqual(fieldValue, lookupValue);
-    case "notIn":
-      return !expressionValuesEqual(fieldValue, lookupValue);
-    default:
-      return evaluateComparison(operator, fieldValue, lookupValue);
   }
 }
 
@@ -494,7 +542,13 @@ async function runDataHookCore(
   }
 
   for (const action of definition.actions) {
-    await runAction(action, context, parsed.phase, writeOptions);
+    await runAction(
+      action,
+      context,
+      parsed.phase,
+      definition.execution,
+      writeOptions,
+    );
   }
 }
 

@@ -179,10 +179,10 @@ describe("data-hook-definition-json", () => {
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(19);
+    expect(hooks.length).toBe(24);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(13);
+    expect(enabled.length).toBe(24);
 
     const ratesEntities = new Set([
       "actor",
@@ -205,10 +205,30 @@ describe("data-hook-definition-json", () => {
     expect(markPaid?.entity).toBe("transaction");
     expect(markPaid?.chainHooks).toBe(true);
 
-    const amortization = hooks.find(
-      (hook) => hook.name === "Generate amortization plan",
+    const overdue = hooks.find(
+      (hook) => hook.name === "Mark overdue schedules",
     );
-    expect(amortization?.enabled).toBe(false);
-    expect(amortization?.entity).toBe("loanDetails");
+    expect(overdue?.trigger).toMatchObject({
+      kind: "schedule",
+      scope: "eachRecord",
+    });
+
+    const flatLoan = hooks.find(
+      (hook) => hook.name === "Generate flat loan plan",
+    );
+    expect(flatLoan?.enabled).toBe(true);
+    expect(
+      flatLoan?.actions.some((action) => action.type === "createRecords"),
+    ).toBe(true);
+
+    expect(
+      hooks.some((hook) => hook.name === "Derive balance sheet role on create"),
+    ).toBe(true);
+    expect(hooks.some((hook) => hook.name === "Extend schedule horizon")).toBe(
+      true,
+    );
+    expect(
+      hooks.some((hook) => hook.name === "Update accounts on transfer"),
+    ).toBe(true);
   });
 });

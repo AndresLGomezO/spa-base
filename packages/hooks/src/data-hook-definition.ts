@@ -37,7 +37,21 @@ export type DataHookConditionOperator =
 export const VALUELESS_CONDITION_OPERATORS: readonly DataHookConditionOperator[] =
   ["isEmpty", "isNotEmpty", "changed"];
 
-export const dataHookTriggerSchema = z.object({
+export const DATA_HOOK_TRIGGER_KINDS = ["crud", "schedule"] as const;
+export type DataHookTriggerKind = (typeof DATA_HOOK_TRIGGER_KINDS)[number];
+
+export const DATA_HOOK_SCHEDULE_SCOPES = ["once", "eachRecord"] as const;
+export type DataHookScheduleScope = (typeof DATA_HOOK_SCHEDULE_SCOPES)[number];
+
+/** Job payload and event dispatch include schedule alongside CRUD operations. */
+export const DATA_HOOK_JOB_OPERATIONS = [
+  ...DATA_HOOK_OPERATIONS,
+  "schedule",
+] as const;
+export type DataHookJobOperation = (typeof DATA_HOOK_JOB_OPERATIONS)[number];
+
+export const dataHookCrudTriggerSchema = z.object({
+  kind: z.literal("crud"),
   operation: z.enum(DATA_HOOK_OPERATIONS),
   /**
    * For update triggers, the hook only runs when at least one of these fields
@@ -45,9 +59,40 @@ export const dataHookTriggerSchema = z.object({
    */
   updateFields: z.array(z.string().trim().min(1)).optional(),
 });
-export type DataHookTrigger = z.infer<typeof dataHookTriggerSchema>;
+export type DataHookCrudTrigger = {
+  readonly kind?: "crud";
+  readonly operation: DataHookOperation;
+  readonly updateFields?: readonly string[];
+};
 
-/** Single-field lookup / compare leaf (used by `updateMatching.where`). */
+export type DataHookScheduleTrigger = {
+  readonly kind: "schedule";
+  readonly cron: string;
+  readonly timezone?: string;
+  readonly scope?: DataHookScheduleScope;
+  readonly eachRecordWhere?: DataHookConditionNode;
+};
+
+export type DataHookTrigger = DataHookCrudTrigger | DataHookScheduleTrigger;
+
+function coerceTriggerKind(value: unknown): unknown {
+  if (value == null || typeof value !== "object" || Array.isArray(value)) {
+    return value;
+  }
+  const record = value as Record<string, unknown>;
+  if (record.kind === "schedule" || record.kind === "crud") {
+    return value;
+  }
+  if (typeof record.cron === "string") {
+    return { kind: "schedule", ...record };
+  }
+  if (typeof record.operation === "string") {
+    return { kind: "crud", ...record };
+  }
+  return { kind: "crud", ...record };
+}
+
+/** Single-field compare leaf (legacy `updateMatching.where` and shared condition shape). */
 export const dataHookConditionSchema = z.object({
   field: z.string().trim().min(1),
   operator: z.enum(DATA_HOOK_CONDITION_OPERATORS),
@@ -113,7 +158,74 @@ export const dataHookDefinitionConditionSchema = z.preprocess(
   dataHookConditionNodeSchema.nullable().optional(),
 );
 
+export const dataHookScheduleTriggerSchema = z.object({
+  kind: z.literal("schedule"),
+  cron: z.string().trim().min(1),
+  timezone: z.string().trim().min(1).optional(),
+  scope: z.enum(DATA_HOOK_SCHEDULE_SCOPES).optional(),
+  eachRecordWhere: z
+    .preprocess(
+      coerceLegacyConditionNode,
+      dataHookConditionNodeSchema.optional(),
+    )
+    .optional(),
+});
+
+export const dataHookTriggerSchema = z.preprocess(
+  coerceTriggerKind,
+  z.discriminatedUnion("kind", [
+    dataHookCrudTriggerSchema,
+    dataHookScheduleTriggerSchema,
+  ]),
+);
+
+export function isScheduleTrigger(
+  trigger: DataHookTrigger,
+): trigger is DataHookScheduleTrigger {
+  return trigger.kind === "schedule";
+}
+
+export function isCrudTrigger(
+  trigger: DataHookTrigger,
+): trigger is DataHookCrudTrigger {
+  return trigger.kind !== "schedule";
+}
+
+export const dataHookUpdateMatchingWhereSchema = z.preprocess(
+  coerceLegacyConditionNode,
+  dataHookConditionNodeSchema,
+);
+export type DataHookUpdateMatchingWhere = DataHookConditionNode;
+export type DataHookUpdateMatchingWhereInput =
+  | DataHookConditionNode
+  | DataHookCondition;
+
 const expressionRecordSchema = z.record(z.string(), expressionNodeSchema);
+
+/** Max `getRecord` actions per hook definition. */
+export const MAX_LOADED_RECORDS = 8;
+
+/** Alias pattern for `getRecord.as` and loaded field references. */
+export const DATA_HOOK_LOADED_ALIAS_PATTERN = /^[a-zA-Z][a-zA-Z0-9_]{0,31}$/;
+
+export const DATA_HOOK_AGGREGATE_OPERATORS = [
+  "count",
+  "sum",
+  "min",
+  "max",
+  "avg",
+] as const;
+export type DataHookAggregateOperator =
+  (typeof DATA_HOOK_AGGREGATE_OPERATORS)[number];
+
+/** Max `aggregateMatching` actions per hook definition. */
+export const MAX_AGGREGATE_ACTIONS = 8;
+
+/** Max `createRecords` iterations per hook run (before/sync/deferred). */
+export const MAX_CREATE_RECORDS = 1_000;
+
+/** Max `createRecords` iterations for after-phase queued hooks. */
+export const MAX_CREATE_RECORDS_QUEUED = 5_000;
 
 export const dataHookActionSchema = z.discriminatedUnion("type", [
   z.object({
@@ -130,13 +242,43 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
     type: z.literal("createRecords"),
     entity: z.string().trim().min(1),
     count: expressionNodeSchema,
+    startIndex: expressionNodeSchema.optional(),
     data: expressionRecordSchema,
   }),
   z.object({
     type: z.literal("updateMatching"),
     entity: z.string().trim().min(1),
-    where: dataHookConditionSchema,
+    where: dataHookUpdateMatchingWhereSchema,
     set: expressionRecordSchema,
+  }),
+  z.object({
+    type: z.literal("deleteMatching"),
+    entity: z.string().trim().min(1),
+    where: dataHookUpdateMatchingWhereSchema,
+  }),
+  z.object({
+    type: z.literal("deleteRecord"),
+    entity: z.string().trim().min(1),
+    id: expressionNodeSchema,
+  }),
+  z.object({
+    type: z.literal("getRecord"),
+    entity: z.string().trim().min(1),
+    id: expressionNodeSchema,
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
+  }),
+  z.object({
+    type: z.literal("aggregateMatching"),
+    entity: z.string().trim().min(1),
+    where: dataHookUpdateMatchingWhereSchema,
+    op: z.enum(
+      DATA_HOOK_AGGREGATE_OPERATORS as unknown as [
+        DataHookAggregateOperator,
+        ...DataHookAggregateOperator[],
+      ],
+    ),
+    field: z.string().trim().min(1).optional(),
+    as: z.string().trim().regex(DATA_HOOK_LOADED_ALIAS_PATTERN),
   }),
   z.object({
     type: z.literal("sendNotification"),
@@ -175,7 +317,10 @@ export const dataHookDefinitionSchema = z.object({
   createdAt: z.string().trim().min(1),
   updatedAt: z.string().trim().min(1),
 });
-export type DataHookDefinition = z.infer<typeof dataHookDefinitionSchema>;
+type DataHookDefinitionParsed = z.infer<typeof dataHookDefinitionSchema>;
+export type DataHookDefinition = Omit<DataHookDefinitionParsed, "trigger"> & {
+  trigger: DataHookTrigger;
+};
 
 export const createDataHookInputSchema = dataHookDefinitionSchema
   .omit({
@@ -193,7 +338,10 @@ export const createDataHookInputSchema = dataHookDefinitionSchema
     chainHooks: z.boolean().optional(),
     execution: z.enum(DATA_HOOK_EXECUTION_MODES).optional(),
   });
-export type CreateDataHookInput = z.infer<typeof createDataHookInputSchema>;
+type CreateDataHookInputParsed = z.infer<typeof createDataHookInputSchema>;
+export type CreateDataHookInput = Omit<CreateDataHookInputParsed, "trigger"> & {
+  trigger: DataHookTrigger;
+};
 
 export const patchDataHookInputSchema = z.object({
   name: z.string().trim().min(1).optional(),
@@ -207,7 +355,10 @@ export const patchDataHookInputSchema = z.object({
   chainHooks: z.boolean().optional(),
   execution: z.enum(DATA_HOOK_EXECUTION_MODES).optional(),
 });
-export type PatchDataHookInput = z.infer<typeof patchDataHookInputSchema>;
+type PatchDataHookInputParsed = z.infer<typeof patchDataHookInputSchema>;
+export type PatchDataHookInput = Omit<PatchDataHookInputParsed, "trigger"> & {
+  trigger?: DataHookTrigger;
+};
 
 /** Collect entity names referenced by an action's target (for validation). */
 export function actionTargetEntities(
@@ -217,6 +368,10 @@ export function actionTargetEntities(
     case "createRecord":
     case "createRecords":
     case "updateMatching":
+    case "deleteMatching":
+    case "deleteRecord":
+    case "getRecord":
+    case "aggregateMatching":
       return [action.entity];
     case "setField":
     case "sendNotification":

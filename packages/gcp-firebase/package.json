@@ -18,7 +18,11 @@
     "./firebase-admin": "./src/firebase-admin.ts",
     "./ai-job-repository": "./src/ai-job-repository.ts",
     "./firestore-admin-user-repository": "./src/firestore-admin-user-repository.ts",
-    "./firestore-aggregation-pubsub": "./src/firestore-aggregation-pubsub.ts"
+    "./firestore-aggregation-pubsub": "./src/firestore-aggregation-pubsub.ts",
+    "./firestore-admin-aggregation-event-repository": "./src/firestore-admin-aggregation-event-repository.ts",
+    "./firestore-admin-metric-definition-repository": "./src/firestore-admin-metric-definition-repository.ts",
+    "./firestore-admin-metric-value-repository": "./src/firestore-admin-metric-value-repository.ts",
+    "./firestore-admin-metric-contribution-repository": "./src/firestore-admin-metric-contribution-repository.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

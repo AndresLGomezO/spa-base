@@ -245,6 +245,7 @@ The sheet row, generalized. Every commitment, income source, transfer rule, or i
 |---|---|---|
 | `startDate` | date | When the commitment began |
 | `endDate` | date | Expected end (loans, leases) |
+| `scheduleHorizonMonths` | integer | How many months of `paymentSchedule` rows to generate (default 12) |
 | `description` | string | Free text |
 | `tags` | string[] | Optional labels |
 
@@ -338,6 +339,7 @@ Each extension links to exactly one `financialItem` via `financialItemId` (requi
 | `interestPortion` | decimal | No | Interest |
 | `rateType` | enum | No | `FIXED`, `VARIABLE`, `MIXED` |
 | `amortizationType` | enum | No | `FRENCH`, `GERMAN`, `AMERICAN`, `BULLET`, `NONE` |
+| `termMonths` | integer | No | Loan term in months for schedule generation |
 
 **Note on negative principal:** Credit cards where payment is less than accrued interest can produce negative `principalPortion`. This is valid — it means the balance grew despite a payment. Track real balance via `currentBalance` on `financialItem` and `balanceSnapshot`.
 
@@ -388,6 +390,8 @@ Replaces the implicit "Next Due Date" column. One row per upcoming (or past) due
 | `expectedAmount` | decimal | Yes | Payment amount |
 | `principalPortion` | decimal | No | From `loanDetails` when known |
 | `interestPortion` | decimal | No | From `loanDetails` when known |
+| `sequence` | integer | No | Order within a payment plan (1-based) |
+| `planVersion` | integer | No | Increments when the plan is replanned |
 | `status` | enum | Yes | `UPCOMING`, `PAID`, `OVERDUE`, `SKIPPED` |
 | `paidTransactionId` | relation → `transaction` | No | Set when fulfilled |
 
@@ -406,7 +410,8 @@ Replaces the implicit "Next Due Date" column. One row per upcoming (or past) due
 | `type` | enum | Yes | See enum below |
 | `amount` | decimal | Yes | Always positive; direction implied by type |
 | `date` | date | Yes | |
-| `accountId` | relation → `account` | Yes | |
+| `accountId` | relation → `account` | Yes | Source account (debit leg for transfers) |
+| `toAccountId` | relation → `account` | No | Destination account for `TRANSFER` (credit leg) |
 | `financialItemId` | relation → `financialItem` | No | Link to commitment |
 | `paymentScheduleId` | relation → `paymentSchedule` | No | Ties payment to schedule |
 | `categoryId` | relation → `category` | No | Auto from item when linked |
@@ -471,6 +476,18 @@ Net worth = Σ currentBalance (where balanceSheetRole = ASSET)
 ```
 
 Account balances (`account.currentBalance`) represent **liquidity** (cash position), separate from item balances. Do not double-count: a savings `financialItem` balance is the asset; the `account` it sits in is where cash lives before/after transfer.
+
+### Balance update conventions (payments)
+
+When a `PAYMENT` transaction updates `financialItem.currentBalance`, apply the sign based on `balanceSheetRole`:
+
+| `balanceSheetRole` | Effect on `currentBalance` |
+|---|---|
+| `LIABILITY` | Subtract `transaction.amount` (debt decreases) |
+| `ASSET` | Add for contributions; subtract for withdrawals |
+| `NONE` | Usually no `currentBalance` on the item |
+
+`transaction.amount` is always stored as a positive number; direction is implied by transaction type and balance sheet role.
 
 ---
 
@@ -770,7 +787,7 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 - Mark schedule PAID → optional auto-create transaction
 - Initial migration seed for 23 rows
 
-**Data hooks:** Gap analysis and catalog — [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md). Seed catalog: [`rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json).
+**Data hooks:** Rates backlog — [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md). Platform gaps — [data-hooks-platform-gaps.md](./data-hooks-platform-gaps.md). Seed catalog: [`rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json).
 
 ### Phase C — Metrics dashboards
 
@@ -802,5 +819,6 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 - [entity-system-guide.md](./entity-system-guide.md) — `defineEntity()` and dynamic entities
 - [metrics-consumption.md](./metrics-consumption.md) — metric API contract
 - [rates-metrics-guide.md](./rates-metrics-guide.md) — KPI/Series wiring patterns (adapt entity names)
-- [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md) — automation rules, feasibility, and platform gaps
+- [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md) — Rates automation backlog
+- [data-hooks-platform-gaps.md](./data-hooks-platform-gaps.md) — generic data hooks platform gaps
 - [hooks-system-guide.md](./hooks-system-guide.md) — auto-generate `paymentSchedule`, derive `balanceSheetRole`

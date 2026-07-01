@@ -79,10 +79,11 @@ Canonical event format:
 | `{entity}.afterUpdate` | After successful update |
 | `{entity}.beforeDelete` | After relation checks, before delete |
 | `{entity}.afterDelete` | After successful delete |
+| `{entity}.afterSchedule` | Scheduled tick (time-based trigger) |
 
-Examples: `loan.beforeCreate`, `payment.afterUpdate`.
+Examples: `loan.beforeCreate`, `payment.afterUpdate`, `paymentSchedule.afterSchedule`.
 
-The hook definition stores `entity`, `phase` (`before` | `after`), and `trigger.operation` (`create` | `update` | `delete`) separately; the runtime composes the event string.
+The hook definition stores `entity`, `phase` (`before` | `after`), and `trigger` separately; the runtime composes the event string. CRUD hooks use `trigger.kind: "crud"` (or legacy `{ "operation": "create" }`) with `trigger.operation`. Scheduled hooks use `trigger.kind: "schedule"`.
 
 ### Lifecycle
 
@@ -133,7 +134,7 @@ Relation validation runs before hook `beforeDelete`.
 
 ### Chained hooks (`chainHooks`)
 
-When `chainHooks: true`, entity writes from this hook's actions (`createRecord`, `createRecords`, `updateMatching`, after-phase `setField`) may trigger hooks on the **target entity**. Chaining is **opt-in** per hook definition.
+When `chainHooks: true`, entity writes and deletes from this hook's actions (`createRecord`, `createRecords`, `updateMatching`, `deleteMatching`, `deleteRecord`, after-phase `setField`) may trigger hooks on the **target entity**. Chaining is **opt-in** per hook definition.
 
 - Depth increments on each chained dispatch (`MAX_HOOK_DEPTH = 5`).
 - Visited hook IDs accumulate to prevent cycles.
@@ -143,8 +144,12 @@ When `chainHooks: true`, entity writes from this hook's actions (`createRecord`,
 
 | Limit | Value | Applies to |
 |-------|-------|------------|
-| Max loop iterations | 1,000 | `createRecords` count |
-| Max matching records | 500 | `updateMatching` list query |
+| Max `createRecords` (sync) | 1,000 (`MAX_CREATE_RECORDS`) | `before` phase; `after` + `sync` or `deferred` |
+| Max `createRecords` (queued) | 5,000 (`MAX_CREATE_RECORDS_QUEUED`) | `after` + `execution: "queued"` only |
+| Max matching records | 500 | `updateMatching` / `deleteMatching` / scheduled `eachRecord` fan-out |
+| Max scheduled records per tick | 500 | `eachRecord` scope per hook per tick |
+| Max loaded records | 8 | `getRecord` actions per hook |
+| Max aggregate actions | 8 | `aggregateMatching` actions per hook |
 | Max hook depth | 5 | Chained dispatch |
 | Max call arguments | 16 | Expression `call` nodes |
 
@@ -198,17 +203,61 @@ Action target entities (`createRecord`, `createRecords`, `updateMatching`) must 
 
 ## 4. Triggers
 
+Triggers are a discriminated union on `kind`: **`crud`** (default) or **`schedule`**. Legacy definitions omit `kind` and are treated as CRUD when `operation` is present.
+
+### CRUD trigger (`kind: "crud"`)
+
 ```json
 {
+  "kind": "crud",
   "operation": "create",
   "updateFields": ["status", "amount"]
 }
 ```
 
+Legacy (still valid):
+
+```json
+{ "operation": "create" }
+```
+
 | Property | Type | Required | Description |
 |----------|------|----------|-------------|
+| `kind` | `"crud"` | no | Defaults to CRUD when omitted and `operation` is set |
 | `operation` | `"create"` \| `"update"` \| `"delete"` | yes | CRUD operation that fires the hook |
 | `updateFields` | string[] | no | Update only: run when any listed field changed; omit for any change |
+
+### Schedule trigger (`kind: "schedule"`)
+
+Time-based hooks run on a cron schedule via worker-service (`POST /tasks/schedule-tick`), typically invoked every minute by Cloud Scheduler.
+
+```json
+{
+  "kind": "schedule",
+  "cron": "0 6 * * *",
+  "timezone": "UTC",
+  "scope": "once"
+}
+```
+
+| Property | Type | Required | Description |
+|----------|------|----------|-------------|
+| `kind` | `"schedule"` | yes | Discriminator |
+| `cron` | string | yes | Five-field cron expression |
+| `timezone` | string | no | IANA timezone (default `UTC`) |
+| `scope` | `"once"` \| `"eachRecord"` | no | Default `once` |
+| `eachRecordWhere` | condition tree | when `scope` is `eachRecord` | Same shape as hook conditions; requires at least one `==` leaf for indexed lookup |
+
+**Schedule constraints:**
+
+- `phase` must be `after` (before-phase scheduled hooks are rejected).
+- `scope: "once"` runs the hook once per tick with a synthetic trigger record (`id: "__scheduled__"`). Use batch actions such as `updateMatching`, `deleteMatching`, or `aggregateMatching`.
+- `scope: "eachRecord"` lists up to 500 matching entity rows per tick and runs the hook once per row (`current` = record). Use for per-row `setField`, notifications, etc.
+- Scheduled hooks do not fire on CRUD events (`{entity}.afterSchedule` is separate from `{entity}.afterUpdate`).
+- Design hooks to be **idempotent** — the same cron minute may be evaluated more than once during deploys or retries.
+- `execution: "queued"` is recommended for long-running scheduled hooks; the tick runner invokes `runDataHook` directly on worker-service (no re-enqueue loop).
+
+**Infrastructure:** set `SCHEDULED_HOOK_USER_UID` on worker-service to a user with tenant admin (or equivalent) permissions for hook actions. Cloud Scheduler should POST to `{WORKER_SERVICE_URL}/tasks/schedule-tick` every minute with OIDC from `TASKS_SA_EMAIL`.
 
 ---
 
@@ -265,13 +314,52 @@ An **empty group** evaluates to `true` (hook runs).
 | `isNotEmpty` | no | Field is not empty |
 | `changed` | no | Field differs between `previous` and `current` (update context) |
 
+For `in` and `notIn`, the `value` expression may be a **flat array literal** (1–32 scalar items). This replaces long OR chains of `==` / `!=` comparisons:
+
+```json
+{
+  "type": "condition",
+  "field": "itemType",
+  "operator": "in",
+  "value": {
+    "kind": "literal",
+    "value": ["MORTGAGE", "LOAN", "CREDIT_CARD"]
+  }
+}
+```
+
+Array literals are only valid on `in`/`notIn` condition values (not in action expressions or other operators). Elements are scalars: `string`, `number`, `boolean`, or `null`.
+
 ### Legacy bare leaf
 
 Objects `{ field, operator, value? }` **without** `type` are accepted and normalized to `type: "condition"`.
 
-### `updateMatching.where` (different shape)
+### `updateMatching.where`
 
-The `updateMatching` action uses a **typeless single-field lookup leaf** (no `type` discriminator):
+The `updateMatching` action uses the same **AND/OR condition tree** as hook conditions (`type: "group"` / `type: "condition"`), or a legacy **typeless single leaf** (no `type` discriminator):
+
+```json
+{
+  "type": "group",
+  "combinator": "and",
+  "children": [
+    {
+      "type": "condition",
+      "field": "financialItemId",
+      "operator": "==",
+      "value": { "kind": "field", "source": "current", "path": "id" }
+    },
+    {
+      "type": "condition",
+      "field": "status",
+      "operator": "==",
+      "value": { "kind": "literal", "value": "UPCOMING" }
+    }
+  ]
+}
+```
+
+Legacy single-leaf lookups remain valid:
 
 ```json
 {
@@ -281,7 +369,7 @@ The `updateMatching` action uses a **typeless single-field lookup leaf** (no `ty
 }
 ```
 
-This is a query lookup, not a boolean guard tree.
+Leaf **field** names refer to the **target entity** being matched. Leaf **value** expressions resolve against the **trigger** scope. At least one `==` leaf with a `value` expression is required — the first such leaf (depth-first) drives the indexed `findByField` query; the full tree is re-evaluated per candidate (matched record as `current`, trigger as `previous`).
 
 ---
 
@@ -330,13 +418,14 @@ Typically used in `after` phase. Enforces RBAC create + field write permissions 
 
 ### `createRecords`
 
-Loop `count` times, creating one record per iteration.
+Loop `count` times, creating one record per iteration. Optional `startIndex` offsets the `loopIndex` variable (absolute index = `startIndex + iteration`).
 
 ```json
 {
   "type": "createRecords",
   "entity": "paymentSchedule",
   "count": { "kind": "field", "source": "current", "path": "periods" },
+  "startIndex": { "kind": "literal", "value": 0 },
   "data": {
     "sequence": { "kind": "var", "name": "loopIndex" },
     "dueDate": {
@@ -359,8 +448,13 @@ Loop `count` times, creating one record per iteration.
 
 | Property | Description |
 |----------|-------------|
-| `count` | Expression → non-negative integer (truncated); max 1,000 |
-| `data` | Field map; `loopIndex` variable available (0-based) |
+| `count` | Expression → non-negative integer (truncated); tier limit applies (see runtime limits) |
+| `startIndex` | Optional expression → non-negative integer; defaults to `0`. Sets the initial `loopIndex` for the first iteration. |
+| `data` | Field map; `loopIndex` variable available (absolute index when `startIndex` is set) |
+
+**Tier limits:** literal `count` above `MAX_CREATE_RECORDS` (1,000) requires `after` phase with `execution: "queued"` (up to `MAX_CREATE_RECORDS_QUEUED` = 5,000). Hard ceiling: 5,000 literal count. Dynamic counts are enforced at runtime with the same rules.
+
+**Rolling horizon:** for horizons longer than one batch, create an initial slice on create (`startIndex: 0`, `count = min(horizon, MAX)`), then extend on a schedule with `aggregateMatching` (count existing rows) + `createRecords` (`startIndex = aggregate`, `count = remaining batch`). See cookbook §11.
 
 ### `updateMatching`
 
@@ -369,24 +463,173 @@ Find records on another entity and apply field updates.
 ```json
 {
   "type": "updateMatching",
-  "entity": "commitment",
+  "entity": "paymentSchedule",
   "where": {
-    "field": "contractId",
-    "operator": "==",
-    "value": { "kind": "field", "source": "current", "path": "id" }
+    "type": "group",
+    "combinator": "and",
+    "children": [
+      {
+        "type": "condition",
+        "field": "financialItemId",
+        "operator": "==",
+        "value": { "kind": "field", "source": "current", "path": "id" }
+      },
+      {
+        "type": "condition",
+        "field": "status",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "UPCOMING" }
+      }
+    ]
   },
   "set": {
-    "isActive": { "kind": "literal", "value": false }
+    "status": { "kind": "literal", "value": "SKIPPED" }
   }
 }
 ```
 
 | Property | Description |
 |----------|-------------|
-| `where` | Single-field lookup leaf; value resolved against **trigger** scope |
+| `where` | AND/OR condition tree (or legacy typeless leaf). Value expressions use **trigger** scope; field names refer to the **target** entity. Requires at least one `==` leaf with a `value` expression for indexed lookup. |
 | `set` | Field map; expressions see **matched record** as `current`, **trigger** as `previous` |
 
-List query returns up to 500 candidates filtered by field equality; each match is re-checked with the operator.
+The runtime uses the first `==` leaf (depth-first) for `findByField`, then post-filters up to 500 candidates with the full `where` tree.
+
+### `deleteMatching`
+
+Delete records on another entity matching a compound `where` clause. **After phase only.** Uses the same `where` shape and lookup semantics as `updateMatching`.
+
+```json
+{
+  "type": "deleteMatching",
+  "entity": "paymentSchedule",
+  "where": {
+    "type": "group",
+    "combinator": "and",
+    "children": [
+      {
+        "type": "condition",
+        "field": "financialItemId",
+        "operator": "==",
+        "value": { "kind": "field", "source": "current", "path": "id" }
+      },
+      {
+        "type": "condition",
+        "field": "status",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "UPCOMING" }
+      }
+    ]
+  }
+}
+```
+
+Requires `${entity}.delete` permission on the hook runner. Respects `chainHooks` for `beforeDelete` / `afterDelete` on each removed record.
+
+### `deleteRecord`
+
+Delete one record on another entity by id. **After phase only.**
+
+```json
+{
+  "type": "deleteRecord",
+  "entity": "paymentSchedule",
+  "id": { "kind": "field", "source": "current", "path": "paymentScheduleId" }
+}
+```
+
+The `id` expression is evaluated against the **trigger** scope and must produce a non-empty string.
+
+### `getRecord`
+
+Load one record from another entity into hook scope (read-only). Allowed in **before** and **after** phases. Does not trigger chained hooks.
+
+```json
+{
+  "type": "getRecord",
+  "entity": "financialItem",
+  "id": { "kind": "field", "source": "current", "path": "financialItemId" },
+  "as": "parent"
+}
+```
+
+- `entity` (required): target entity name
+- `id` (required): expression evaluating to a non-empty record id (uses cumulative scope including prior loads in the same hook run)
+- `as` (required): alias name (`/^[a-zA-Z][a-zA-Z0-9_]{0,31}$/`); must be unique within the hook
+
+Requires `${entity}.read` permission. Missing records fail the hook. Later actions reference loaded fields with:
+
+```json
+{ "kind": "field", "source": "loaded", "alias": "parent", "path": "frequency" }
+```
+
+Maximum **8** `getRecord` actions per hook definition.
+
+### `aggregateMatching`
+
+Compute a scalar over records matching a compound `where` tree (same shape as `updateMatching`). Read-only; allowed in **before** and **after** phases. Does not trigger chained hooks.
+
+```json
+{
+  "type": "aggregateMatching",
+  "entity": "childRow",
+  "where": {
+    "type": "group",
+    "combinator": "and",
+    "children": [
+      {
+        "type": "condition",
+        "field": "parentId",
+        "operator": "==",
+        "value": { "kind": "field", "source": "current", "path": "id" }
+      },
+      {
+        "type": "condition",
+        "field": "status",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "ACTIVE" }
+      }
+    ]
+  },
+  "op": "min",
+  "field": "dueDate",
+  "as": "nextDue"
+}
+```
+
+- `entity` (required): target entity name
+- `where` (required): condition tree with at least one `==` lookup leaf (max 500 matched rows)
+- `op` (required): `count` | `sum` | `min` | `max` | `avg`
+- `field` (required when `op` is not `count`): field name on matched records to reduce
+- `as` (required): alias for the result; unique among all `getRecord` / `aggregateMatching` actions in the hook
+
+Requires `${entity}.read` permission. Later actions reference the result with:
+
+```json
+{ "kind": "field", "source": "aggregate", "alias": "nextDue" }
+```
+
+| Op | Empty matches | Result type |
+|----|---------------|-------------|
+| `count` | `0` | number |
+| `sum` | `0` | number (numeric field required) |
+| `min` / `max` | `null` | number or string (ISO dates compare lexicographically) |
+| `avg` | `null` | number (numeric field required) |
+
+Maximum **8** `aggregateMatching` actions per hook definition.
+
+### 6.1 Query and bulk-read patterns (no `list` action)
+
+There is **no** `list` action in the data hooks engine. Expressions cannot perform I/O; use actions to read or mutate related data instead.
+
+| Need | Supported pattern |
+|------|-------------------|
+| Fetch one related row | `getRecord` → reference with `{ "kind": "field", "source": "loaded", "alias": "…" }` |
+| Count / sum / min / max / avg over matches | `aggregateMatching` → `{ "kind": "field", "source": "aggregate", "alias": "…" }` |
+| Update or delete many rows | `updateMatching` / `deleteMatching` with compound `where` (AND/OR tree) |
+| List rows inside an expression | **Not supported** — use aggregates or side-effect actions |
+
+Rolling horizons combine `aggregateMatching` (`count`) with `createRecords` and `startIndex`; see [§11.4.1](#1141-rolling-schedule-horizon).
 
 ### `sendNotification`
 
@@ -459,7 +702,9 @@ Primitive values (`ExpressionValue`): `string | number | boolean | null`. Dates 
 | `previous` | Prior record on update/delete; trigger record in `updateMatching.set` |
 | `now` | Evaluation timestamp (`Date`) |
 | `userId` | Triggering user's UID |
-| `loopIndex` | 0-based iteration index in `createRecords` |
+| `loopIndex` | Iteration index in `createRecords` (`startIndex + offset`; default `startIndex` 0) |
+| `loaded.{alias}` | Record fetched by a prior `getRecord` action in the same run (via `source: "loaded"` field nodes) |
+| `aggregates.{alias}` | Scalar from a prior `aggregateMatching` action (via `source: "aggregate"` field nodes) |
 
 ### AST node kinds
 
@@ -476,6 +721,18 @@ Primitive values (`ExpressionValue`): `string | number | boolean | null`. Dates 
 ```
 
 Dotted paths supported (`"path": "customer.name"`).
+
+Loaded record fields:
+
+```json
+{ "kind": "field", "source": "loaded", "alias": "parent", "path": "frequency" }
+```
+
+Aggregate scalar:
+
+```json
+{ "kind": "field", "source": "aggregate", "alias": "nextDue" }
+```
 
 #### `var`
 
@@ -528,6 +785,30 @@ Division/modulo by zero throws `ExpressionEvaluationError`.
 
 Max 16 arguments per call.
 
+#### `switch`
+
+Flat key→value lookup node. Evaluates `input`, then returns the `then` value of the **first** case whose `when` equals the input (loose equality, same rules as `==`). If no case matches, evaluates and returns `default`. Both `when` and `then` are full expression nodes (typically `when` is a literal).
+
+```json
+{
+  "kind": "switch",
+  "input": { "kind": "field", "source": "current", "path": "itemType" },
+  "cases": [
+    {
+      "when": { "kind": "literal", "value": "MORTGAGE" },
+      "then": { "kind": "literal", "value": "LIABILITY" }
+    },
+    {
+      "when": { "kind": "literal", "value": "INVESTMENT" },
+      "then": { "kind": "literal", "value": "ASSET" }
+    }
+  ],
+  "default": { "kind": "literal", "value": "NONE" }
+}
+```
+
+Limits: at least **1** case, at most **32** cases (`MAX_SWITCH_CASES`). Prefer `switch` over deeply nested `call`/`if` trees when mapping many keys — case rows stay in a shallow array instead of nesting each branch as a child object (important for Firestore document depth).
+
 ### Functions reference
 
 | Function | Args | Returns | Description |
@@ -564,7 +845,7 @@ Max 16 arguments per call.
 
 ### UI authoring note
 
-The Automation **ExpressionEditor** supports simple modes (literal, field, now, loopIndex), structured visual builders for **binary** (operator + left/right operands), **unary** (operator + operand), and **call** (function + arguments with nested editors), plus **Advanced JSON** as a fallback for edge cases and import/debug. Complex trees are built recursively in the UI; Advanced JSON remains available for power users.
+The Automation **ExpressionEditor** supports simple modes (literal, field, now, loopIndex), structured visual builders for **binary** (operator + left/right operands), **unary** (operator + operand), **call** (function + arguments with nested editors), **switch** (input + when/then case rows + default), plus **Advanced JSON** as a fallback for edge cases and import/debug. Complex trees are built recursively in the UI; Advanced JSON remains available for power users.
 
 ---
 
@@ -643,7 +924,7 @@ Duplicate `entity` + `name` pairs within a catalog are rejected.
 
 Requires `hook.create`, `hook.update`, and `hook.delete` permissions.
 
-Seed catalog: [`apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json). Gap analysis and platform asks: [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md).
+Seed catalog: [`apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json). Platform gaps: [data-hooks-platform-gaps.md](./data-hooks-platform-gaps.md). Rates backlog: [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md).
 
 ---
 
@@ -807,6 +1088,16 @@ Condition tree + `setField` — complete loan when amount meets commitment.
   "order": 3
 }
 ```
+
+### 11.4.1 Rolling schedule horizon
+
+For horizons longer than one batch, seed rows on create then extend on a schedule using `startIndex` + `aggregateMatching`:
+
+**Hook A — initial batch (`beforeCreate`):** `count = min(scheduleHorizonMonths, 1000)`, `startIndex = 0`.
+
+**Hook B — monthly extension (`after` + `execution: "queued"` + schedule):** `aggregateMatching` count → `createRecords` with `startIndex = existingCount`, `count = min(batchSize, scheduleHorizonMonths - existingCount)`.
+
+See cookbook fixtures `Seed schedule horizon` and `Extend schedule horizon` in the hooks package tests.
 
 ### 11.5 Cascade update
 
@@ -989,7 +1280,7 @@ Do **not** assume these features exist:
 | Feature | Status |
 |---------|--------|
 | Real email/push notifications | `sendNotification` logs only |
-| Aggregate/list expression functions | Not implemented (would require I/O) |
+| Aggregate/list expression functions | **Done** — use `aggregateMatching` action + `aggregate` field source (no I/O in expressions) |
 | Sandboxed script hooks | Deferred |
 | System events (`user.login`, etc.) | Future |
 
@@ -1001,7 +1292,10 @@ Do **not** assume these features exist:
 - [ ] All **field names** match the entity schema (camelCase).
 - [ ] **Expressions** use valid AST (`kind` discriminator on every node).
 - [ ] **Condition** nodes use `type: "group"` or `type: "condition"` (or legacy bare leaf).
-- [ ] **`updateMatching.where`** uses the typeless lookup shape (not a group node).
+- [ ] **`aggregateMatching`** aliases are unique (including vs `getRecord`); `count` omits `field`; other ops require `field`.
+- [ ] **`getRecord`** aliases are unique; loaded field references use only aliases from prior actions in the same hook.
+- [ ] **`deleteMatching` / `deleteRecord`** are used only on **after** phase hooks.
+- [ ] **`updateMatching.where`** is a condition tree or legacy typeless leaf, and includes at least one `==` leaf with a value expression for lookup.
 - [ ] **`chainHooks`** is enabled only when downstream hooks on target entities are intended.
 - [ ] **`execution: "deferred"`** or **`execution: "queued"`** is used only on `after` phase hooks.
 - [ ] Hook **`name`** is unique per **`entity`** within the catalog.

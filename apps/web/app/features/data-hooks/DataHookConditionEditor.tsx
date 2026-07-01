@@ -14,6 +14,7 @@ import {
 import { Button, FieldLabel, Select, Text } from "@repo/ui";
 
 import { ExpressionEditor } from "./ExpressionEditor";
+import { ConditionArrayValueEditor } from "./ConditionArrayValueEditor";
 import {
   addChildAtPath,
   createEmptyConditionGroup,
@@ -75,6 +76,7 @@ function FilterCollapsibleHeader({
 function ConditionLeafEditor({
   leaf,
   fieldNames,
+  valueFieldNames,
   disabled,
   onChange,
   onRemove,
@@ -82,12 +84,36 @@ function ConditionLeafEditor({
 }: {
   readonly leaf: DataHookConditionLeaf;
   readonly fieldNames: readonly string[];
+  readonly valueFieldNames: readonly string[];
   readonly disabled?: boolean;
   readonly onChange: (patch: Partial<DataHookConditionLeaf>) => void;
   readonly onRemove?: () => void;
   readonly showRemove?: boolean;
 }) {
   const { t } = useTranslation("common");
+  const usesArrayValue = leaf.operator === "in" || leaf.operator === "notIn";
+
+  function handleChange(patch: Partial<DataHookConditionLeaf>) {
+    if (patch.operator && patch.operator !== leaf.operator) {
+      const nextUsesArray =
+        patch.operator === "in" || patch.operator === "notIn";
+      if (nextUsesArray && !usesArrayValue) {
+        onChange({
+          ...patch,
+          value: { kind: "literal", value: [""] },
+        });
+        return;
+      }
+      if (!nextUsesArray && usesArrayValue) {
+        onChange({
+          ...patch,
+          value: { kind: "literal", value: "" },
+        });
+        return;
+      }
+    }
+    onChange(patch);
+  }
 
   return (
     <div className="border-border space-y-2 rounded-md border p-3">
@@ -110,7 +136,7 @@ function ConditionLeafEditor({
           className={`${controlClassName} w-40`}
           value={leaf.field}
           disabled={disabled}
-          onChange={(event) => onChange({ field: event.target.value })}
+          onChange={(event) => handleChange({ field: event.target.value })}
         >
           <option value="">{t("dataHooks.actions.selectField")}</option>
           {!fieldNames.includes(leaf.field) && leaf.field ? (
@@ -127,7 +153,7 @@ function ConditionLeafEditor({
           value={leaf.operator}
           disabled={disabled}
           onChange={(event) =>
-            onChange({
+            handleChange({
               operator: event.target.value as DataHookConditionLeaf["operator"],
             })
           }
@@ -139,12 +165,24 @@ function ConditionLeafEditor({
           ))}
         </Select>
       </div>
-      {VALUELESS_CONDITION_OPERATORS.includes(leaf.operator) ? null : (
+      {VALUELESS_CONDITION_OPERATORS.includes(
+        leaf.operator,
+      ) ? null : usesArrayValue ? (
+        <ConditionArrayValueEditor
+          value={
+            leaf.value?.kind === "literal"
+              ? leaf.value
+              : { kind: "literal", value: [""] }
+          }
+          disabled={disabled}
+          onChange={(value) => handleChange({ value })}
+        />
+      ) : (
         <ExpressionEditor
           label={t("dataHooks.actions.matchValue")}
           value={leaf.value ?? { kind: "literal", value: "" }}
-          fieldNames={fieldNames}
-          onChange={(value) => onChange({ value })}
+          fieldNames={valueFieldNames}
+          onChange={(value) => handleChange({ value })}
         />
       )}
     </div>
@@ -155,6 +193,8 @@ function ConditionGroupEditor({
   root,
   path,
   fieldNames,
+  valueFieldNames,
+  rootTitle,
   disabled,
   isRoot = false,
   depth = 0,
@@ -163,6 +203,8 @@ function ConditionGroupEditor({
   readonly root: DataHookConditionNode;
   readonly path: DataHookConditionPath;
   readonly fieldNames: readonly string[];
+  readonly valueFieldNames: readonly string[];
+  readonly rootTitle?: string;
   readonly disabled?: boolean;
   readonly isRoot?: boolean;
   readonly depth?: number;
@@ -225,7 +267,7 @@ function ConditionGroupEditor({
         onToggle={() => setExpanded((current) => !current)}
         title={
           isRoot
-            ? t("dataHooks.settings.condition")
+            ? (rootTitle ?? t("dataHooks.settings.condition"))
             : t("dataHooks.condition.group")
         }
         summary={groupSummary}
@@ -264,6 +306,7 @@ function ConditionGroupEditor({
                       root={root}
                       path={childPath}
                       fieldNames={fieldNames}
+                      valueFieldNames={valueFieldNames}
                       disabled={disabled}
                       depth={depth + 1}
                       onChange={onChange}
@@ -276,6 +319,7 @@ function ConditionGroupEditor({
                     key={pathKey(childPath)}
                     leaf={child}
                     fieldNames={fieldNames}
+                    valueFieldNames={valueFieldNames}
                     disabled={disabled}
                     showRemove
                     onChange={(patch) =>
@@ -347,6 +391,8 @@ function getGroupAtPath(
 interface DataHookConditionEditorProps {
   readonly value: DataHookConditionNode;
   readonly fieldNames: readonly string[];
+  readonly valueFieldNames?: readonly string[];
+  readonly rootTitle?: string;
   readonly disabled?: boolean;
   readonly onChange: (value: DataHookConditionNode) => void;
 }
@@ -354,6 +400,8 @@ interface DataHookConditionEditorProps {
 export function DataHookConditionEditor({
   value,
   fieldNames,
+  valueFieldNames = fieldNames,
+  rootTitle,
   disabled = false,
   onChange,
 }: DataHookConditionEditorProps) {
@@ -362,6 +410,7 @@ export function DataHookConditionEditor({
       <ConditionLeafEditor
         leaf={value}
         fieldNames={fieldNames}
+        valueFieldNames={valueFieldNames}
         disabled={disabled}
         onChange={(patch) => onChange({ ...value, ...patch })}
       />
@@ -373,6 +422,8 @@ export function DataHookConditionEditor({
       root={value}
       path={[]}
       fieldNames={fieldNames}
+      valueFieldNames={valueFieldNames}
+      rootTitle={rootTitle}
       disabled={disabled}
       isRoot
       onChange={onChange}

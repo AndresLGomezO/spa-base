@@ -208,4 +208,226 @@ describe("evaluateExpression", () => {
       ),
     ).toBe(true);
   });
+
+  it("reads loaded record fields by alias", () => {
+    const node: ExpressionNode = {
+      kind: "field",
+      source: "loaded",
+      alias: "parent",
+      path: "frequency",
+    };
+    expect(
+      evaluateExpression(
+        node,
+        scope({
+          loaded: {
+            parent: { frequency: "MONTHLY", id: "fi_1" },
+          },
+        }),
+      ),
+    ).toBe("MONTHLY");
+  });
+
+  it("returns null for unknown loaded alias", () => {
+    const node: ExpressionNode = {
+      kind: "field",
+      source: "loaded",
+      alias: "missing",
+      path: "frequency",
+    };
+    expect(evaluateExpression(node, scope({ loaded: {} }))).toBe(null);
+  });
+
+  it("reads aggregate alias values", () => {
+    const node: ExpressionNode = {
+      kind: "field",
+      source: "aggregate",
+      alias: "total",
+    };
+    expect(
+      evaluateExpression(
+        node,
+        scope({ aggregates: { total: 42, minDate: "2026-01-01" } }),
+      ),
+    ).toBe(42);
+  });
+
+  it("returns null for unknown aggregate alias", () => {
+    const node: ExpressionNode = {
+      kind: "field",
+      source: "aggregate",
+      alias: "missing",
+    };
+    expect(evaluateExpression(node, scope({ aggregates: {} }))).toBe(null);
+  });
+
+  it("evaluates switch with first matching case", () => {
+    const node: ExpressionNode = {
+      kind: "switch",
+      input: { kind: "field", source: "current", path: "itemType" },
+      cases: [
+        {
+          when: { kind: "literal", value: "MORTGAGE" },
+          then: { kind: "literal", value: "LIABILITY" },
+        },
+        {
+          when: { kind: "literal", value: "INVESTMENT" },
+          then: { kind: "literal", value: "ASSET" },
+        },
+      ],
+      default: { kind: "literal", value: "NONE" },
+    };
+    expect(
+      evaluateExpression(node, scope({ current: { itemType: "INVESTMENT" } })),
+    ).toBe("ASSET");
+  });
+
+  it("evaluates switch default when no case matches", () => {
+    const node: ExpressionNode = {
+      kind: "switch",
+      input: { kind: "field", source: "current", path: "itemType" },
+      cases: [
+        {
+          when: { kind: "literal", value: "MORTGAGE" },
+          then: { kind: "literal", value: "LIABILITY" },
+        },
+      ],
+      default: { kind: "literal", value: "NONE" },
+    };
+    expect(
+      evaluateExpression(node, scope({ current: { itemType: "OTHER" } })),
+    ).toBe("NONE");
+  });
+
+  it("evaluates switch with loose string equality", () => {
+    const node: ExpressionNode = {
+      kind: "switch",
+      input: { kind: "literal", value: 1 },
+      cases: [
+        {
+          when: { kind: "literal", value: "1" },
+          then: { kind: "literal", value: "matched" },
+        },
+      ],
+      default: { kind: "literal", value: "default" },
+    };
+    expect(evaluateExpression(node, scope())).toBe("matched");
+  });
+
+  it("evaluates switch then branch with loaded and aggregate fields", () => {
+    const node: ExpressionNode = {
+      kind: "switch",
+      input: { kind: "literal", value: "A" },
+      cases: [
+        {
+          when: { kind: "literal", value: "A" },
+          then: {
+            kind: "binary",
+            op: "+",
+            left: {
+              kind: "field",
+              source: "loaded",
+              alias: "parent",
+              path: "code",
+            },
+            right: {
+              kind: "field",
+              source: "aggregate",
+              alias: "total",
+            },
+          },
+        },
+      ],
+      default: { kind: "literal", value: "" },
+    };
+    expect(
+      evaluateExpression(
+        node,
+        scope({
+          loaded: { parent: { code: "X" } },
+          aggregates: { total: 3 },
+        }),
+      ),
+    ).toBe("X3");
+  });
+});
+
+describe("expressionNodeSchema switch", () => {
+  it("accepts a valid switch node", () => {
+    const parsed = expressionNodeSchema.parse({
+      kind: "switch",
+      input: { kind: "literal", value: "key" },
+      cases: [
+        {
+          when: { kind: "literal", value: "a" },
+          then: { kind: "literal", value: "b" },
+        },
+      ],
+      default: { kind: "literal", value: "c" },
+    });
+    expect(parsed.kind).toBe("switch");
+  });
+
+  it("rejects switch with more than 32 cases", () => {
+    const cases = Array.from({ length: 33 }, (_, index) => ({
+      when: { kind: "literal", value: String(index) },
+      then: { kind: "literal", value: "x" },
+    }));
+    expect(() =>
+      expressionNodeSchema.parse({
+        kind: "switch",
+        input: { kind: "literal", value: "key" },
+        cases,
+        default: { kind: "literal", value: "default" },
+      }),
+    ).toThrow();
+  });
+
+  it("rejects switch with empty cases array", () => {
+    expect(() =>
+      expressionNodeSchema.parse({
+        kind: "switch",
+        input: { kind: "literal", value: "key" },
+        cases: [],
+        default: { kind: "literal", value: "default" },
+      }),
+    ).toThrow();
+  });
+});
+
+describe("expressionNodeSchema array literal", () => {
+  it("accepts a flat array literal", () => {
+    const parsed = expressionNodeSchema.parse({
+      kind: "literal",
+      value: ["MORTGAGE", "LOAN"],
+    });
+    expect(parsed).toEqual({
+      kind: "literal",
+      value: ["MORTGAGE", "LOAN"],
+    });
+  });
+
+  it("evaluates array literal as-is", () => {
+    expect(
+      evaluateExpression({ kind: "literal", value: ["A", "B"] }, scope()),
+    ).toEqual(["A", "B"]);
+  });
+
+  it("rejects empty array literal", () => {
+    expect(() =>
+      expressionNodeSchema.parse({
+        kind: "literal",
+        value: [],
+      }),
+    ).toThrow();
+  });
+
+  it("rejects array literal with more than 32 items", () => {
+    expect(() =>
+      expressionNodeSchema.parse({
+        kind: "literal",
+        value: Array.from({ length: 33 }, (_, index) => String(index)),
+      }),
+    ).toThrow();
+  });
 });

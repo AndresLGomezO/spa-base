@@ -4,7 +4,10 @@ import type { DateUnit, ExpressionFunction, ExpressionNode } from "@repo/hooks";
 import { DATE_UNITS } from "@repo/hooks";
 import { Button, FieldLabel, Select, Text } from "@repo/ui";
 
-import type { ExpressionEditorNodeRenderer } from "./expression-editor-node-types";
+import type {
+  ExpressionEditorNodeRenderer,
+  LoadedBinding,
+} from "./expression-editor-node-types";
 import {
   canAddCallArgument,
   canRemoveCallArgument,
@@ -20,6 +23,8 @@ interface CallExpressionPanelProps {
   readonly value: Extract<ExpressionNode, { kind: "call" }>;
   readonly onChange: (node: ExpressionNode) => void;
   readonly fieldNames?: readonly string[];
+  readonly loadedBindings?: readonly LoadedBinding[];
+  readonly aggregateBindings?: readonly string[];
   readonly renderNode: ExpressionEditorNodeRenderer;
 }
 
@@ -37,6 +42,8 @@ export function CallExpressionPanel({
   value,
   onChange,
   fieldNames,
+  loadedBindings,
+  aggregateBindings,
   renderNode,
 }: CallExpressionPanelProps) {
   const { t } = useTranslation("common");
@@ -183,6 +190,8 @@ export function CallExpressionPanel({
                   value: arg,
                   onChange: (next) => handleArgChange(index, next),
                   fieldNames,
+                  loadedBindings,
+                  aggregateBindings,
                 })
               )}
             </div>

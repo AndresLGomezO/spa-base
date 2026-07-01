@@ -355,6 +355,116 @@ export function createHookEntityServices(options: {
         };
       });
     },
+
+    async get(entityName, id) {
+      if (!accessControl.hasPermission(`${entityName}.read`)) {
+        throw new Error(
+          `Hook runner lacks permission to read ${entityName} records.`,
+        );
+      }
+
+      const entity = options.entityRuntime.resolveEntity(
+        entityName,
+        options.tenantId,
+      );
+      if (!entity) {
+        throw new Error(`Entity "${entityName}" is not registered.`);
+      }
+
+      const repository = options.entityRuntime.getRepository(
+        options.tenantId,
+        entityName,
+      );
+      if (!repository) {
+        throw new Error(`Repository for "${entityName}" is not available.`);
+      }
+
+      const existing = await repository.findById(id, options.tenantId);
+      if (!existing) {
+        throw new Error(`Record "${id}" was not found for ${entityName}.`);
+      }
+
+      const record = existing as Record<string, unknown>;
+      const businessFieldNames = Object.keys(entity.metadata.fields);
+      const readAccess = accessControl.resolveFieldAccess(
+        entityName,
+        businessFieldNames,
+        "read",
+      );
+      const filtered = accessControl.filterFields(
+        record,
+        readAccess,
+        businessFieldNames,
+      );
+      return {
+        ...filtered,
+        id: record.id as string,
+        tenantId: record.tenantId as string,
+      };
+    },
+
+    async delete(entityName, id, writeOptions) {
+      if (!accessControl.hasPermission(`${entityName}.delete`)) {
+        throw new Error(
+          `Hook runner lacks permission to delete ${entityName} records.`,
+        );
+      }
+
+      const entity = options.entityRuntime.resolveEntity(
+        entityName,
+        options.tenantId,
+      );
+      if (!entity) {
+        throw new Error(`Entity "${entityName}" is not registered.`);
+      }
+
+      const repository = options.entityRuntime.getRepository(
+        options.tenantId,
+        entityName,
+      );
+      if (!repository) {
+        throw new Error(`Repository for "${entityName}" is not available.`);
+      }
+
+      const existing = await repository.findById(id, options.tenantId);
+      if (!existing) {
+        throw new Error(`Record "${id}" was not found for ${entityName}.`);
+      }
+
+      const record = existing as Record<string, unknown>;
+
+      if (writeOptions?.chainHooks && options.dispatchChainedHooks) {
+        await options.dispatchChainedHooks(
+          chainedDispatchParams(
+            entityName,
+            "before",
+            "delete",
+            record,
+            writeOptions,
+          ),
+        );
+
+        const deleted = await repository.delete(id, options.tenantId);
+        if (!deleted) {
+          throw new Error(`Failed to delete ${entityName} record "${id}".`);
+        }
+
+        await options.dispatchChainedHooks(
+          chainedDispatchParams(
+            entityName,
+            "after",
+            "delete",
+            { id, tenantId: options.tenantId },
+            writeOptions,
+            record,
+          ),
+        );
+
+        return true;
+      }
+
+      return repository.delete(id, options.tenantId);
+    },
   };
 }
 

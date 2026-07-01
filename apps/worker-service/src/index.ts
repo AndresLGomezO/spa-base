@@ -37,6 +37,7 @@ const server = await buildWorkerServer({
   uiBuilderAiSuggestionRepository,
   entityDefinitionRepository,
   vertexAiConfig,
+  firebaseAdminConfig,
   ...dataHookProcessorDeps,
 });
 

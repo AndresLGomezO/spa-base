@@ -59,21 +59,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-6b3bb471-53b6-442d-8513-965fec058f10",
+                "id": "root-f601dad5-a81a-430d-aa45-b5d00717b0c2",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-e9b92d21-3584-4395-a4be-255b916aeb2e",
+                    "id": "col-21af4293-7496-4169-8c47-2c56fadb0280",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-93ce7cb6-15a6-42ff-8c54-2a257921312f",
+                        "id": "row-a24750bf-fa58-40d1-a5e1-59d197cf02af",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-4bce0336-6820-42e6-9869-baef76baba1e",
+                              "id": "row-6b175a1f-f601-4111-ba59-339d808aa0d5",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -81,7 +81,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-a2bc1ca7-db0a-4f88-9693-16b22b13ca92",
+                              "id": "row-f45821b8-58d5-40d2-bd4a-00ba06debeee",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "type"
@@ -89,7 +89,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-d9e59a99-16da-4264-aeb1-5f18e3f1de9e",
+                              "id": "row-255e0e11-f04f-44b2-b86e-667b3d0dd777",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "logo"
@@ -97,7 +97,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-3cf908c0-6942-49d9-a333-4c508575c07d",
+                              "id": "row-7a1e77e6-53a0-4105-9377-e907699cb532",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "website"
@@ -105,7 +105,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-af9f00ed-3714-41de-945a-b70814477ddd",
+                              "id": "row-63cc4d9f-0b0a-4f1d-9120-d4a2d36d39a8",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -125,21 +125,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-b14351dd-345d-439c-b076-ba959a67b9d3",
+                "id": "root-c7961720-9922-4d2f-bfc0-d7c439ced896",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-20a6101a-bc98-4bc4-8e7e-a85eddf6186e",
+                    "id": "col-5456d0bd-fc31-4684-a036-68f9b372cb5c",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-7d099d9e-8b40-4bab-b5c5-8f062731ccb4",
+                        "id": "row-194198d7-b92c-43ae-bbf4-c716964e9a29",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-59a034a2-070a-483c-ab25-5fcfef34493d",
+                              "id": "row-d25dca01-8382-4263-b200-13a9ae11df25",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -147,7 +147,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-ad83bafb-863d-4be4-b446-4b445992f2ce",
+                              "id": "row-7c3a5307-c6cd-41a5-8fbf-d43a42191c8f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "type"
@@ -155,7 +155,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-84a22bc4-bcaa-407e-99a6-3570f31bea61",
+                              "id": "row-13346244-11a4-4ce2-919e-72ff3af96f18",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "logo"
@@ -163,7 +163,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-156062da-cc8a-4673-aa13-61e1ca102c46",
+                              "id": "row-daf60526-5b7a-4609-8e62-58199f9a47f1",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "website"
@@ -171,7 +171,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-0a3e2c33-3972-4b72-8c2c-0379751872dd",
+                              "id": "row-61542e42-786c-4f88-aada-78591ae76ebb",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -302,21 +302,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-2e4c817c-b095-4df3-bbb1-d14f7d175a18",
+                "id": "root-df05d3e7-59fb-4058-b620-9249476d6684",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-5d8180d8-0e6b-4e14-8235-f99bb4aa2eb1",
+                    "id": "col-0eca1092-ad84-415b-bb3f-e6c18ab4c011",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-f8a39a4f-21d3-4c10-80ae-1611f26aae4a",
+                        "id": "row-8e4977f4-28f7-49e5-989a-3c67cde28d80",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-22edc280-ec64-4aee-a117-050b9471b829",
+                              "id": "row-1b5820ce-721e-4514-ba98-48716ae172a8",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -324,7 +324,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-5de56f27-f9b9-4001-bc61-9cdeb4a2fd50",
+                              "id": "row-b5467d47-ed75-4e65-a9fb-0f6708c12ce1",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accountType"
@@ -332,7 +332,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-969ac7bd-7302-4ea1-8f6e-43964cc72c5b",
+                              "id": "row-ec0e5c7e-f10f-4aff-940a-c0fa1c9b3eb9",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "actorId"
@@ -340,7 +340,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-20872c99-0cc4-4bb7-91fd-50c6f48d387e",
+                              "id": "row-f3227cb7-e4d7-44fd-a6f9-c3873aa062dd",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currency"
@@ -348,7 +348,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-d5e02d36-dbde-4876-9a30-58e1392b3160",
+                              "id": "row-e1278a20-445b-41db-a51a-94a4c4bea9a2",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currentBalance"
@@ -356,7 +356,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-e9b1cddb-b167-4b0b-9158-603f79d24b3d",
+                              "id": "row-5ce73539-85d0-4402-a136-83b59ba81283",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -376,21 +376,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-fd274dd2-a9a1-4d8d-b5c2-f2d3be5908c9",
+                "id": "root-6ae58a28-b88c-48ee-a8a8-c2a73130cc42",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-eb0dc646-793b-4892-ada9-09478577e77c",
+                    "id": "col-94c5a1a8-b5de-469e-9b64-2b74932e1124",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-a9500851-563f-46e6-8164-e51e88503894",
+                        "id": "row-64d85834-06cb-43e4-a8a1-3b8bda019c23",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-645faad6-049d-4acb-9677-9af879485e79",
+                              "id": "row-02470724-8d79-4ca5-96a2-1eeb8b41e62e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -398,7 +398,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-06acf179-6608-4af1-a796-b4a9387845a2",
+                              "id": "row-715a98a8-7eec-487f-9525-e4e05e1210ee",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accountType"
@@ -406,7 +406,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-2d8a9a17-deb1-43f6-a4bd-79218c2258b1",
+                              "id": "row-f0d6c7eb-1959-4388-88d5-e72c1212a9e7",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "actorId"
@@ -414,7 +414,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-678f853b-8e9b-4ed2-a225-abea400b1196",
+                              "id": "row-d7bcb8be-2112-4668-90b7-95f9db27e14c",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currency"
@@ -422,7 +422,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-4ba9edc6-d2fa-451d-9e80-d6027c423a33",
+                              "id": "row-9038b385-930b-4fe8-a116-701cd405df92",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currentBalance"
@@ -430,7 +430,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-e5c7bb95-32e9-40be-8ec2-5ba2c82ea2e0",
+                              "id": "row-c85f0d41-e3ca-4f64-a753-29aecfa4983f",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -578,21 +578,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-4466bb52-298b-439e-835e-110da0d207c7",
+                "id": "root-7d663462-0b9e-40bb-bef3-b3d87b458564",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-ae282546-e775-4cea-bb44-0ccaee931b3a",
+                    "id": "col-1f1f56be-47da-4648-bda8-947d145ab07b",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-4872069a-1b2d-4d1a-b3b7-96d156a0292a",
+                        "id": "row-f9b4df11-8648-4758-bea5-33491bca000c",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-04f20d70-89d8-40b3-9679-a373e8fcbed8",
+                              "id": "row-32fbfdc5-7a99-41cb-ba31-32184d71240f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -600,7 +600,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-f2fb5df9-fad8-46e4-bd7b-f6db02c6bd03",
+                              "id": "row-9a7d5b6c-81cc-4da9-b1a4-8f4a6ff1dad0",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "kind"
@@ -608,7 +608,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-85191668-9c1b-4f6b-8d6f-0e82d26a1e98",
+                              "id": "row-8b7aa431-be30-4743-a4f1-e95771f3445a",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "parentId"
@@ -616,7 +616,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-89200f0b-f167-478e-8df5-9767792e51f0",
+                              "id": "row-d631bf61-12e2-4ec5-92e4-c07712c3e3b8",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -636,21 +636,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-1eb1c42b-e803-4707-974e-439deaafb8cd",
+                "id": "root-6315b56d-0cbf-4b42-9a74-7e4c97a5b1de",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-56d449db-f2c6-4300-821c-69aca247d5ac",
+                    "id": "col-d3fff8d3-41b0-44d6-8635-49fdb9f85602",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-acf36052-7071-4956-aed6-eac2904a2359",
+                        "id": "row-2875c8cb-2bd1-476b-b26f-180d55b9395f",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-f0e477d4-e508-4912-8baf-0fd553d361cd",
+                              "id": "row-b8beb8d9-dac9-4392-9363-b0582d3e9fa4",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -658,7 +658,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-170cebbd-0764-4507-9f18-1950c895eced",
+                              "id": "row-35e1e83c-0c8f-40f1-91b1-1b3189061bec",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "kind"
@@ -666,7 +666,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-5af7a83e-6d32-42ac-a0f3-6e803de62cd6",
+                              "id": "row-9e583efa-9eac-4ad8-9dcc-fd6d83bc86e2",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "parentId"
@@ -674,7 +674,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-d6ae0484-b968-4f01-bd80-a255df9c63c1",
+                              "id": "row-c359e42f-f624-456f-bd6c-549e63f09810",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -790,7 +790,8 @@
               "tags",
               "categoryId",
               "actorId",
-              "accountId"
+              "accountId",
+              "scheduleHorizonMonths"
             ]
           }
         ],
@@ -799,21 +800,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-4972cee1-530a-4830-8efe-89f557227682",
+                "id": "root-f0dcb92a-7f81-4212-b6ea-aa9477c08ba7",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-a419cc80-1e6a-41a5-8fba-c08da41ecddb",
+                    "id": "col-d8dce8c6-9f4c-4936-b3fe-8ad6b7d6a18c",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-75914399-11c4-4bdd-a277-e30b7eab2369",
+                        "id": "row-c67a123b-519f-40cc-9733-5ed965398863",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-5d45eeea-c127-4f2a-95cf-d1750bed81ea",
+                              "id": "row-8ae5ed6a-15a8-41a5-af61-ea106c4f418e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -821,7 +822,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-9dbdb878-1b8b-40cd-a309-8a60a7224b6a",
+                              "id": "row-1e86e195-b496-4e41-99f2-329c3d5bd77e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "flowKind"
@@ -829,7 +830,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-0c152ad2-7024-4ce3-a18d-92ced33aa5d7",
+                              "id": "row-3a195808-30b8-468b-b8e4-84ca9e1d3a1f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "itemType"
@@ -837,7 +838,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-6b5f22ab-a784-409a-977f-4a17d74c54fd",
+                              "id": "row-f9d21702-e4dc-450d-932e-eef3a38f0c83",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "amount"
@@ -845,7 +846,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-55e66261-9696-4cf5-b0a0-e8802c7904a1",
+                              "id": "row-4985b228-da65-470b-87e6-3492f9571e18",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currency"
@@ -853,7 +854,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-588091e2-ed04-44e4-8ba0-d188ce34881f",
+                              "id": "row-810994ab-f87d-4a84-97c4-fea620acdbd7",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "isRecurring"
@@ -861,7 +862,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-5d40fc13-3960-490f-8a43-3a0e9218c200",
+                              "id": "row-ea7a6e2c-cd76-45b7-a896-ce6b826e0118",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "frequency"
@@ -869,7 +870,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-30f0c701-0938-410b-af75-7e7bcc3909ad",
+                              "id": "row-55b137d3-4b2a-47fd-89e9-d751d85186bc",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "nextDueDate"
@@ -877,7 +878,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-c6e7d6f4-faf3-4c1d-acfc-e5c7def9c6d7",
+                              "id": "row-0fa18c3f-ca08-4b4c-8dab-6f35236d0be8",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currentBalance"
@@ -885,7 +886,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-a937e9f1-0bb3-4f55-882d-35799264bc11",
+                              "id": "row-a38356d4-c8d0-4bc4-b83a-d84a2de8cc85",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "balanceSheetRole"
@@ -893,7 +894,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-548da9e9-f8db-4f41-b9d9-6cd99b521af7",
+                              "id": "row-5b7554f1-c536-458a-88bc-0ca61f14993a",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "status"
@@ -901,7 +902,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-09079212-912b-4767-82b4-0931d132b61c",
+                              "id": "row-b7db19ae-b699-496f-a42b-cf8e1596be1b",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "startDate"
@@ -909,7 +910,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-fdc7996b-7b8e-4ce9-b378-ebf607784a98",
+                              "id": "row-979acb59-1c9a-41ce-ba7f-1939fd7db919",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "endDate"
@@ -917,7 +918,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-16020161-9422-4cac-b424-8cea462691cd",
+                              "id": "row-6c3e5533-9ff8-4a2e-9662-1e65a631b4de",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "description"
@@ -925,7 +926,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-118d7472-26d5-46db-8783-e70834026d6c",
+                              "id": "row-94a631f5-4fc7-4f67-8750-6c192180c659",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "tags"
@@ -933,7 +934,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-5c3d9185-04e1-4398-9779-e51996e7d011",
+                              "id": "row-47d9ffdc-9273-4f14-8ef6-aacf2669faa6",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "categoryId"
@@ -941,7 +942,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-be7744e2-1d36-4325-b131-9fbbabbe2a76",
+                              "id": "row-62cec22d-4d5e-4062-b060-4207f91279a2",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "actorId"
@@ -949,7 +950,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-8cddf937-1edb-48f2-ae8e-77012c49f346",
+                              "id": "row-599a3736-c011-455f-b8f8-a13ec004e783",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accountId"
@@ -957,7 +958,15 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-97724e82-3806-48b7-804d-781cb794e147",
+                              "id": "row-9b66db28-4c5a-45b2-8f76-7bf7e46c6665",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "scheduleHorizonMonths"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-d1264541-8caf-4d44-be9f-2fa8b0802d83",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -977,21 +986,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-f3075481-8551-477b-9a71-6d90340dd178",
+                "id": "root-0ab2c189-fb0c-413e-ad9a-1bf43cc7eada",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-ffbebb99-2b92-4ac8-8c0f-bd0cb3732e78",
+                    "id": "col-427a1992-a685-4080-8b3b-474147715c8d",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-c4bf3ff1-8f71-4edb-bc29-293229e7b80d",
+                        "id": "row-e7a18794-77e2-418f-988f-9930aa1a1a42",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-fad7a026-757f-4b41-99a6-0b13601cf29a",
+                              "id": "row-e0a42237-ffed-44eb-bcd0-1a0e2e60f4cd",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "name"
@@ -999,7 +1008,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-c57ae578-e015-4dac-abe0-89ccf64c8e20",
+                              "id": "row-4bf7d6e1-5cdd-4139-9096-be400664c132",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "flowKind"
@@ -1007,7 +1016,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-fd576c58-3449-4108-9e00-70adf292d619",
+                              "id": "row-3f1fd3e3-c8b9-44fa-9791-5cb41b2055cf",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "itemType"
@@ -1015,7 +1024,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-f964e28d-9339-42b4-91f6-03c4e8828afb",
+                              "id": "row-f957135a-1985-4b29-b0e3-0c515d93b497",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "amount"
@@ -1023,7 +1032,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-a8656900-20cd-4be9-9f80-4fdcf2b3887c",
+                              "id": "row-b96967ab-66ae-4b8f-a088-54432d6a8273",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currency"
@@ -1031,7 +1040,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-d8bff931-0cea-4be4-8259-7f29d19f7558",
+                              "id": "row-e828ef03-dd55-48bb-9aab-b4693bad026d",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "isRecurring"
@@ -1039,7 +1048,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-f2f888e3-5635-487c-8a10-1ef36d7c6238",
+                              "id": "row-4c392da2-e7df-48bc-855e-aa4b9084c6bc",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "frequency"
@@ -1047,7 +1056,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-7f8293c9-0a10-4636-afa6-32a56ffc55c6",
+                              "id": "row-642e1ae4-c893-4f6c-bdea-e4753d65e515",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "nextDueDate"
@@ -1055,7 +1064,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-6a69ef79-c5f7-46b5-a345-495eee391aac",
+                              "id": "row-091ac415-56e4-4a24-8753-76f70fc72fdf",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currentBalance"
@@ -1063,7 +1072,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-9728b00b-8db6-4e9b-91d5-f2987ed24e1b",
+                              "id": "row-1e8de62b-9c0b-46f1-9637-2b9bb7a22c87",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "balanceSheetRole"
@@ -1071,7 +1080,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-69807008-7ee9-4690-9fc3-53f6ff7c20a1",
+                              "id": "row-efb1e289-3a3b-436d-a149-ba9b1571e0c2",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "status"
@@ -1079,7 +1088,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-27459f41-ab45-4348-bbf1-76761844aab0",
+                              "id": "row-b5859c96-759f-41bf-b03a-7239563de719",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "startDate"
@@ -1087,7 +1096,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-1667559a-c698-4f6e-9200-18b9bfed9e81",
+                              "id": "row-a92c55ef-c16f-4d4d-8d19-0aa7f2141e33",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "endDate"
@@ -1095,7 +1104,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-48d14be7-d113-4bf8-8510-74329fbbe384",
+                              "id": "row-6c3f3b9e-1444-4785-a604-34249b737d12",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "description"
@@ -1103,7 +1112,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-efe02dd3-479e-44a7-9ed6-1dbb16e994c2",
+                              "id": "row-eab4a7b5-318c-4add-88df-d0b94257fc93",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "tags"
@@ -1111,7 +1120,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-7180a24e-f47f-4f85-befe-86014634d7af",
+                              "id": "row-4e9a25d0-1507-44ca-b40a-7f065afe44fe",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "categoryId"
@@ -1119,7 +1128,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-9a3770a6-54ca-46ff-a2eb-b73647daeea3",
+                              "id": "row-4b1f3d47-2f5f-4a32-ba9a-59aadf240cf5",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "actorId"
@@ -1127,7 +1136,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-4ec120d5-2ef0-4d08-af36-76462110fd22",
+                              "id": "row-b5c38ffa-3674-452b-b771-886c230795b2",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accountId"
@@ -1135,7 +1144,15 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-faa1d89f-3371-418d-8167-f194623b6543",
+                              "id": "row-44475539-f92f-4468-9097-44565f8179bb",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "scheduleHorizonMonths"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-bd0298ab-85a8-4852-8c3c-e3ac89316e6b",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -1268,6 +1285,13 @@
             "component": "relation",
             "filterable": true,
             "order": 17
+          },
+          "scheduleHorizonMonths": {
+            "label": "Schedule horizon (months)",
+            "component": "number",
+            "displayFormat": "plain",
+            "sortable": true,
+            "order": 18
           }
         }
       },
@@ -1518,6 +1542,18 @@
             "order": 17,
             "filterable": true
           }
+        },
+        {
+          "name": "scheduleHorizonMonths",
+          "type": "number",
+          "numberKind": "integer",
+          "ui": {
+            "label": "Schedule horizon (months)",
+            "order": 18,
+            "displayFormat": "plain",
+            "component": "number",
+            "sortable": true
+          }
         }
       ],
       "inMemoryListQueries": true
@@ -1546,7 +1582,8 @@
               "principalPortion",
               "interestPortion",
               "rateType",
-              "amortizationType"
+              "amortizationType",
+              "termMonths"
             ]
           }
         ],
@@ -1555,21 +1592,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-65f08a33-9e8d-4ed3-849b-4e5deff8cdd4",
+                "id": "root-b6406d67-8834-46c1-8979-dff445eb3b2d",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-74b5a73a-030e-4db4-8d8c-b8063d79f3ec",
+                    "id": "col-1341dca2-16b3-423a-9abb-790ae38aa9f3",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-d4fe2bf5-2d3d-437c-ad68-fb4602cc7279",
+                        "id": "row-8d033781-ac25-4c2c-b983-344b3c09ae47",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-f3267c0f-adeb-4f0b-bf5f-501c4b58fbf6",
+                              "id": "row-5180b567-710d-4d67-93be-e41c3ed17e36",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -1577,7 +1614,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-caf8af7f-68e7-4309-bd5f-6443d2f28a96",
+                              "id": "row-a5cdd240-4b49-47d9-aec5-6ed5b4fe05a2",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "interestRate"
@@ -1585,7 +1622,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-80370b11-03c1-488b-b13c-e64fb12f08de",
+                              "id": "row-7b29ef46-3482-4ffd-a41f-5d6264a84734",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "paymentAmount"
@@ -1593,7 +1630,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-3112bc81-35e7-4582-bdd7-c4a759cd4b23",
+                              "id": "row-f53b4f79-460a-4373-bebb-4bac0d0eca76",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "principalPortion"
@@ -1601,7 +1638,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-002c3f28-3671-4579-8a79-8611f9868a68",
+                              "id": "row-f633745c-b951-400e-b6ee-8beace948f6a",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "interestPortion"
@@ -1609,7 +1646,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-59b6a959-04ce-4e20-bd69-bad43446d826",
+                              "id": "row-5ef2bf99-adae-4f35-b1a8-d01e7ed44804",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "rateType"
@@ -1617,7 +1654,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-1f10b8d9-8c19-4490-9a57-5dbe537bdd8c",
+                              "id": "row-306760cf-dbed-49c8-82f1-97339897184a",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "amortizationType"
@@ -1625,7 +1662,15 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-9f8803c2-f675-4089-94ce-1da9160db5b7",
+                              "id": "row-61550093-6580-4722-838f-52c13de605bc",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "termMonths"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-8a86eade-09fe-4110-8393-72b517e66bec",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -1645,21 +1690,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-1784da1d-9bcc-4ca3-81fe-fb18477c272f",
+                "id": "root-ac9d8a70-e6c6-4b28-a5d3-477078eda69c",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-7fb41bd9-2b30-4b05-9af2-a270846422f7",
+                    "id": "col-23cb1cc2-aece-46c6-9625-20d6ee062571",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-75ee9d7f-615d-4b49-b67d-569cfda5a768",
+                        "id": "row-2badd171-5b96-4e0a-aa2d-4d5ec3cc9fda",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-da226022-8384-4cf2-a4fa-45e2c2edcbea",
+                              "id": "row-3463879b-bcce-4626-8d20-d300da04d4e6",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -1667,7 +1712,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-32f6af24-c764-41c4-9bbe-b33966066087",
+                              "id": "row-ce8beffd-c060-4389-bb4d-10488f3afbc0",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "interestRate"
@@ -1675,7 +1720,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-0be55b06-e96b-4c75-aec2-966ff4e584ac",
+                              "id": "row-2c79fcde-9b71-47b3-8e5a-3c29d4825f06",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "paymentAmount"
@@ -1683,7 +1728,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-c5bdd81c-b658-4c6c-b657-a27fb20a6483",
+                              "id": "row-73300588-c5a2-4563-aa93-eccd137285df",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "principalPortion"
@@ -1691,7 +1736,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-c6578252-be64-4465-a97e-bfa006c74b6b",
+                              "id": "row-9c9eb02a-65f2-44dd-b216-1121b6b28017",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "interestPortion"
@@ -1699,7 +1744,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-1f0dfcd4-11aa-4ef4-a9e4-852c65c34444",
+                              "id": "row-b0c0e18a-9196-4a41-adcd-5d4e5fec393b",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "rateType"
@@ -1707,7 +1752,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-933c288d-463d-4d12-8256-622d67b6d75b",
+                              "id": "row-fe526346-a565-4cfb-86a5-61180df7d81b",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "amortizationType"
@@ -1715,7 +1760,15 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-12c7cd89-8e34-47db-b8f5-d44857a332af",
+                              "id": "row-c223a0af-0585-42eb-9294-8c2045ea0b50",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "termMonths"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-6784e917-96f8-4bc1-88fb-9d96fa2ee24e",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -1778,6 +1831,13 @@
             "component": "select",
             "filterable": true,
             "order": 6
+          },
+          "termMonths": {
+            "label": "Term (months)",
+            "component": "number",
+            "displayFormat": "plain",
+            "sortable": true,
+            "order": 7
           }
         }
       },
@@ -1866,6 +1926,18 @@
             "component": "select",
             "filterable": true
           }
+        },
+        {
+          "name": "termMonths",
+          "type": "number",
+          "numberKind": "integer",
+          "ui": {
+            "label": "Term (months)",
+            "order": 7,
+            "displayFormat": "plain",
+            "component": "number",
+            "sortable": true
+          }
         }
       ],
       "inMemoryListQueries": true
@@ -1900,21 +1972,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-10aae9e2-5abb-4883-a14a-b16bb5333aa2",
+                "id": "root-63e55e8a-b13a-4e25-ae52-18a32a6b8fed",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-76558c52-ce85-4b4f-9383-c2f8dc2ff4fd",
+                    "id": "col-06cddbe3-f1ca-4d26-b17f-7d8056cacb5e",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-f4e25bf6-12de-4bb6-b44c-dfec6b85679b",
+                        "id": "row-499e6f54-9c8d-4868-b4e7-e02b9a2cc1f8",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-45be2572-02cf-42d9-915e-a4b150d4fcca",
+                              "id": "row-b524893c-efa0-4239-a8d3-629287aebe42",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -1922,7 +1994,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-933b3064-cc46-449e-aac2-d8f89017c263",
+                              "id": "row-46b3c472-3967-4bee-be24-f5b88c853679",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "incomeType"
@@ -1930,7 +2002,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-188008c2-8849-4297-a046-d1ff1dcd902c",
+                              "id": "row-8784c422-6147-4853-a7b0-4bef0b5d46e7",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "expectedAmount"
@@ -1938,7 +2010,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-31f99b54-3e2b-40bd-a4e1-6b9b42d70cc3",
+                              "id": "row-a671d7fd-55c5-45d1-ab42-13cf63fa3abc",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "payDay"
@@ -1946,7 +2018,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-ab3ddc3c-9266-417b-83a5-b6ed371e230b",
+                              "id": "row-f521a3d1-6ece-48b6-93df-7cd5832f7a98",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -1966,21 +2038,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-83706d74-411a-49df-a87f-1776d64aacad",
+                "id": "root-0919fb9e-6bc3-42ae-8271-e09a9a2ab040",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-fe533eb0-7ad3-4d2e-9938-55f63c4b3f03",
+                    "id": "col-5c4bf955-3076-40c1-bb2b-edf44724fec2",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-46680c21-1f1d-42c7-b847-62ecc7ee5c1a",
+                        "id": "row-5209db86-2601-4a1b-a43a-007c748d7e16",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-083b453c-021c-4c37-b0dc-361e9f7e0ce5",
+                              "id": "row-cbe30276-035b-42e9-84db-7f8a40f0f537",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -1988,7 +2060,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-4f367423-2787-4c96-bbfe-66de90ba815f",
+                              "id": "row-cea533a2-9f4e-4ba9-93a9-7fb988a4f1dc",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "incomeType"
@@ -1996,7 +2068,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-7f9f7fd7-0654-4e57-bb60-fc0745d35e4d",
+                              "id": "row-43d4a08d-e30d-4478-b4d5-334af6bfbb96",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "expectedAmount"
@@ -2004,7 +2076,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-1973e0ff-560c-49d9-9899-7c3a0e702499",
+                              "id": "row-92563fb8-54ef-4d59-aba6-d6944e5d979e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "payDay"
@@ -2012,7 +2084,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-ad52af9c-bfd1-4df4-996e-aa7433119745",
+                              "id": "row-fe4f581f-e4b1-4d69-8cd7-a7d4c4a3a67d",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -2149,21 +2221,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-65580f4e-bcbe-466a-90b6-c18ea04f2fc9",
+                "id": "root-1188f759-094e-42b3-b2dd-efc021262e19",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-1f60a366-8450-4c5f-8172-fa7c8eda844a",
+                    "id": "col-c6120869-0e9f-424d-8b3e-e49da11a5403",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-a1f73663-f2f2-495e-a938-99c0e946483f",
+                        "id": "row-36682cac-a44a-4c4f-bfdc-abed320e0e9e",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-e071f480-8dc9-4eb6-8d29-9178e44e5aa3",
+                              "id": "row-09202005-331e-46ed-b291-5512c47935f6",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -2171,7 +2243,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-28947e24-53c1-42b9-87f7-39abc12c5ed7",
+                              "id": "row-51fe8384-8b6f-4549-965a-baea75c90191",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "expectedReturnRate"
@@ -2179,7 +2251,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-8da483a2-af41-46ad-802e-0ce3199f7842",
+                              "id": "row-02b8c6d9-7a88-4666-8264-ab534f4a6ae0",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "riskLevel"
@@ -2187,7 +2259,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-d601d335-f5f8-4b0a-808e-3b21c8080775",
+                              "id": "row-d25a9c6d-b75a-4879-b495-831406464f2a",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "liquidity"
@@ -2195,7 +2267,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-92153bdc-c039-48ce-a746-ca4cf1bf5c6b",
+                              "id": "row-3164f392-6948-459f-aaac-ee12f4bf1d85",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "contributionAmount"
@@ -2203,7 +2275,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-eb762b47-11c9-4423-ab87-5a3b7e075a5a",
+                              "id": "row-0e844820-c0b7-4689-9883-ac9a5dda74da",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -2223,21 +2295,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-bebc7946-a9c8-4159-881a-823f30398bba",
+                "id": "root-b52362a9-1455-45dc-a86a-870914707604",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-210c1956-738f-40fb-91e0-99b142488ce0",
+                    "id": "col-462c8a63-3a45-4b54-b848-9f99eb41974e",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-5bd85051-17f0-4018-90f6-7479e8c10e9a",
+                        "id": "row-5d06efde-bb37-4556-9d28-16323d89ea30",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-054556d7-ad74-4f3f-b2c6-fe25999a577c",
+                              "id": "row-154804f1-a166-4bb1-93ed-9f6a475f430b",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -2245,7 +2317,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-c55df675-ac17-486b-8ab0-19e50e6528cd",
+                              "id": "row-ac711a29-41c7-4531-8c50-2f01910362b2",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "expectedReturnRate"
@@ -2253,7 +2325,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-8332fceb-db5d-4755-bda5-cf9ec2fe3c80",
+                              "id": "row-36bbc226-36be-4ad8-b0a4-0fd32b95f1d0",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "riskLevel"
@@ -2261,7 +2333,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-a080a216-0ca4-4782-ac8d-54a991ae4e62",
+                              "id": "row-fa882859-58ed-40ca-b951-8afcb19b9086",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "liquidity"
@@ -2269,7 +2341,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-c2b6815d-98e3-4af8-b318-69acb15f63e3",
+                              "id": "row-5c2e9959-117d-4b9d-8275-0624211eb1e3",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "contributionAmount"
@@ -2277,7 +2349,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-19ef5f01-6991-4871-9684-1711a752a624",
+                              "id": "row-87eadb88-3d0a-4211-a188-077994c34b3c",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -2424,21 +2496,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-2249f0e5-b244-4978-89c1-b876fc5b4a77",
+                "id": "root-54d71135-3375-4cbc-ac48-c8d0379e6c05",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-f0498088-6bcc-46e0-a3b7-b61f068cf331",
+                    "id": "col-8beab551-0474-4f40-8e77-dd0c9dcbc985",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-b8777288-ff09-4a13-a358-13fe7d1990a8",
+                        "id": "row-ca588569-7343-44af-ba9a-540aba87e9d0",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-0e04e6a1-828b-42a5-97c6-d257fd5aa8d8",
+                              "id": "row-68b6da30-1e2b-43d5-bfb8-f361566b3a32",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -2446,7 +2518,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-d06571bc-a21e-4a83-b5c9-5dfdcc8256ae",
+                              "id": "row-651d734c-d431-41b1-ad29-ddc1119a8e85",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "billingDay"
@@ -2454,7 +2526,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-a66910e0-8083-4c59-b6bc-b267c448d090",
+                              "id": "row-0e7a1a3b-3da5-4587-970e-f3fa54b08c04",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "autoPay"
@@ -2462,7 +2534,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-0f7efa0c-fc51-4610-9ca6-825f9d0d0341",
+                              "id": "row-965cde31-88f3-4eda-8e9c-6febc1938fa1",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "meterOrPolicyRef"
@@ -2470,7 +2542,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-5defe9c5-89d2-498b-b38c-f0256932090c",
+                              "id": "row-e1d780e8-ecbb-4d9a-8179-b8263cc79307",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -2490,21 +2562,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-db215abb-7385-4387-bb08-877189320893",
+                "id": "root-dd8fdbed-e19c-4b37-b592-741c425332a1",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-5f3330d1-3dc8-4c9b-bfcc-792119542238",
+                    "id": "col-e276df17-5b03-42b7-8c14-817d2cd26347",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-c0a608be-b7d3-42fe-84df-01106e525606",
+                        "id": "row-9cf3094c-12dd-4b96-9ca2-cd4e93ad32ba",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-6e761793-361f-4123-9800-aca338112e37",
+                              "id": "row-a030f91a-d325-477d-9e88-55061ba07b5e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -2512,7 +2584,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-103b096a-57d9-4ff8-a86b-9e6458e7b10a",
+                              "id": "row-bc3afbe4-6e39-4646-b2a2-e3235a765935",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "billingDay"
@@ -2520,7 +2592,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-b2b35616-7827-41be-b3e6-a4e0346bc509",
+                              "id": "row-ddab2176-00e2-4fe5-a81a-a7b15c16bd5d",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "autoPay"
@@ -2528,7 +2600,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-332f8e5b-2546-4e13-8f0e-58a4bdd76876",
+                              "id": "row-87c7ddb7-9afb-4add-9508-983c4ac66d10",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "meterOrPolicyRef"
@@ -2536,7 +2608,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-743615ba-3b39-465b-b7d5-90576aaa32cd",
+                              "id": "row-657505d0-14bd-4f79-91ff-27ce5f1d1e61",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -2653,6 +2725,7 @@
               "date",
               "description",
               "accountId",
+              "toAccountId",
               "financialItemId",
               "paymentScheduleId",
               "categoryId"
@@ -2664,21 +2737,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-b6485f2a-647f-4156-8e33-bc05ca8a2434",
+                "id": "root-7ad45751-a451-4378-8a09-688e9fd38872",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-8084f055-5de5-489f-89aa-4a1748cc5f10",
+                    "id": "col-61d2032c-7fff-459a-b0ed-3a7cd90a75b1",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-ee2a6a42-5839-469f-83f1-ef922d2011bb",
+                        "id": "row-bc66819a-faa3-4533-a8b0-8f64b7d76fea",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-4c2bc41f-acc4-4d10-b074-7f9b44f965ce",
+                              "id": "row-11f3ed9e-18bc-477c-bd8e-5fce83d1ce26",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "type"
@@ -2686,7 +2759,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-372b533f-31a6-4b92-8007-45f52a2636af",
+                              "id": "row-361e091b-5e95-4116-8bdb-7a695a91535e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "amount"
@@ -2694,7 +2767,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-5aa171b9-9ebc-4977-9587-cd33e2354d7f",
+                              "id": "row-ab8ad736-3908-43c1-9ac9-54f8c9d37510",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "date"
@@ -2702,7 +2775,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-f11f4182-7c0e-485f-aba2-6558b7855726",
+                              "id": "row-3a2100bc-a38a-4967-8f86-3d4200f28070",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "description"
@@ -2710,7 +2783,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-8c9b433b-66c2-4fb2-b348-35c56cc9c188",
+                              "id": "row-04f22774-ab67-4eba-a0dd-8ad2f4d1a21e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accountId"
@@ -2718,7 +2791,15 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-cde79b82-a5e6-4bb1-982d-2108130f6a9e",
+                              "id": "row-48f6fed6-9f01-4348-a8cf-87a340e4982b",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "toAccountId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-b6f599f7-cd98-442a-92bb-b74cb9da59ee",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -2726,7 +2807,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-997cef3a-da75-4b18-86db-b0b52573b0e5",
+                              "id": "row-57a47f7c-cd93-4b4d-9e3e-2f436cf4b360",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "paymentScheduleId"
@@ -2734,7 +2815,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-068583f3-86fa-49b3-9735-c133280e8cbb",
+                              "id": "row-98f8d96e-52ce-4044-9006-89d37fef1beb",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "categoryId"
@@ -2742,7 +2823,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-c8c7845c-6f6b-477c-982b-cfe6b7359bde",
+                              "id": "row-dccf9455-12f2-445c-809c-63aafacc7584",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -2762,21 +2843,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-9a6a362c-9861-4300-9ca1-f76e2031ca55",
+                "id": "root-60960633-82e0-442a-98ee-a31d1de44fde",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-759cb6d0-5e1c-4def-ba1c-d5c947b8da19",
+                    "id": "col-c5856e02-7b7e-4690-b6eb-6f1dc060326c",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-b984e3c1-40f2-4262-9c46-21242ddcb36c",
+                        "id": "row-e2fa1224-485d-4786-aa96-0d84b7da5701",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-62c4ac29-735a-4dc6-b447-95695ef25f4a",
+                              "id": "row-6c02b21d-8713-46d3-9bc7-2e90eaf3b01e",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "type"
@@ -2784,7 +2865,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-1579fbc0-692b-45ba-9da5-8786c8afd868",
+                              "id": "row-312960b0-b029-4b75-9d9a-f4c28a8bb12f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "amount"
@@ -2792,7 +2873,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-e2d8cdcb-f257-4863-be99-d01d6ada3b12",
+                              "id": "row-58ec91cc-7f70-4bc0-b0e9-3c2c86a068f1",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "date"
@@ -2800,7 +2881,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-2958d6cb-2006-47ee-ba20-775eb4b089c1",
+                              "id": "row-afd3c94e-0880-499d-b87e-b3c017532edf",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "description"
@@ -2808,7 +2889,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-8c4ea952-40c2-49c2-bc37-ac28d7d2b83b",
+                              "id": "row-40b3b30b-71b3-4116-a911-1757a50b3146",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accountId"
@@ -2816,7 +2897,15 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-59c61cd0-2c88-4107-9794-5bdbaf63373a",
+                              "id": "row-1f61ba62-ec3e-49f6-9254-ce939e339055",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "toAccountId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-e22ab850-20c9-4091-97a8-d82d069b1e99",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -2824,7 +2913,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-e269d3f9-e7e1-4b33-9e50-09b4e1eaf687",
+                              "id": "row-0d970bd3-8757-40bd-99f6-df90b887aea3",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "paymentScheduleId"
@@ -2832,7 +2921,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-4bd6f499-23e3-4221-9456-e4f0df44de20",
+                              "id": "row-cec50122-5faf-4d68-b8b1-81b60eb0506f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "categoryId"
@@ -2840,7 +2929,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-90e0c6d8-6c7b-4b2d-8d58-5c3aefa2f560",
+                              "id": "row-8d2b3247-d33a-43a6-b97a-0bf44162e8ba",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -2890,23 +2979,29 @@
             "filterable": true,
             "order": 4
           },
+          "toAccountId": {
+            "label": "To account",
+            "component": "relation",
+            "filterable": true,
+            "order": 5
+          },
           "financialItemId": {
             "label": "Financial item",
             "component": "relation",
             "filterable": true,
-            "order": 5
+            "order": 6
           },
           "paymentScheduleId": {
             "label": "Payment schedule",
             "component": "relation",
             "filterable": true,
-            "order": 6
+            "order": 7
           },
           "categoryId": {
             "label": "Category",
             "component": "relation",
             "filterable": true,
-            "order": 7
+            "order": 8
           }
         }
       },
@@ -2979,6 +3074,20 @@
           }
         },
         {
+          "name": "toAccountId",
+          "type": "relation",
+          "relation": {
+            "target": "account",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "To account",
+            "order": 5,
+            "filterable": true
+          }
+        },
+        {
           "name": "financialItemId",
           "type": "relation",
           "relation": {
@@ -2988,7 +3097,7 @@
           },
           "ui": {
             "label": "Financial item",
-            "order": 5,
+            "order": 6,
             "filterable": true
           }
         },
@@ -3002,7 +3111,7 @@
           },
           "ui": {
             "label": "Payment schedule",
-            "order": 6,
+            "order": 7,
             "filterable": true
           }
         },
@@ -3016,7 +3125,7 @@
           },
           "ui": {
             "label": "Category",
-            "order": 7,
+            "order": 8,
             "filterable": true
           }
         }
@@ -3046,6 +3155,8 @@
               "expectedAmount",
               "principalPortion",
               "interestPortion",
+              "sequence",
+              "planVersion",
               "status",
               "paidTransactionId"
             ]
@@ -3056,21 +3167,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-3a9afccd-2c6c-4b55-a0f2-ebc51c1fc808",
+                "id": "root-aa7ca1ca-1b2c-48ac-8b91-8e51d423be46",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-17c48314-8b3a-44f7-a0ca-0ed0b5c62aba",
+                    "id": "col-acef71c0-d363-4243-99b4-15d12cd875a1",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-91dd7290-3cd9-4f99-a3c9-f5dd84652cf4",
+                        "id": "row-60e82bf4-664b-4c64-b5ca-d34ee5f236c2",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-7c7cddfc-c3f5-45aa-80ad-68b237307143",
+                              "id": "row-49bb1134-121a-4399-bf65-b556f5668d07",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -3078,7 +3189,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-b598f922-5f5e-4109-a5a8-061fcca8b340",
+                              "id": "row-e16c349c-a52d-4396-a3df-6cf297bb9f2c",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "dueDate"
@@ -3086,7 +3197,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-7295d572-b762-4092-878c-467dda8d1811",
+                              "id": "row-0686d5b1-e003-41c7-8d00-e79eefc52855",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "expectedAmount"
@@ -3094,7 +3205,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-e07d1129-80b0-4e3f-8b4e-45a07a4ea661",
+                              "id": "row-94791749-1fc2-49b2-a4cc-90da008a3ca3",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "principalPortion"
@@ -3102,7 +3213,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-1b95e216-777e-43d0-babb-cbd6b989b395",
+                              "id": "row-96dcc947-50fe-48e9-9539-337c206907f1",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "interestPortion"
@@ -3110,7 +3221,23 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-b0c90217-8310-4110-a868-ff0b71a9cf87",
+                              "id": "row-8cf56a48-1f2f-4bb9-8b2e-36b1f2bb90fc",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "sequence"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-a6ee6342-bece-4283-bd19-e9f309562235",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "planVersion"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-d9064da2-3c30-4efc-a828-3325516dcfc3",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "status"
@@ -3118,7 +3245,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-276230df-af9c-4229-b8ec-5979680ee915",
+                              "id": "row-1061681a-c9fa-470f-8aec-925fddcba132",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "paidTransactionId"
@@ -3126,7 +3253,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-55f224b9-cea8-48e3-aa62-18c55d0c8f1e",
+                              "id": "row-d6db8857-a93c-4589-bb1a-dd3f83cb7d46",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -3146,21 +3273,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-ea317ee2-a4ed-40c9-b234-f1a0247ce8d3",
+                "id": "root-4f331bc4-7964-4347-9a99-b99c4faf10fb",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-0f4e9c62-c83f-46d2-a7d7-4557009a9926",
+                    "id": "col-1ad25af5-4be2-4e50-8deb-151bfbeaf14e",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-5297c9bf-25b2-475b-b584-5cb43cf9c552",
+                        "id": "row-1e88a630-dbb7-449e-a18d-4f5f1903e597",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-23928523-256b-4249-a447-dc1b578df2df",
+                              "id": "row-8dd085d6-7cac-48f2-b424-11ad9c2a98c0",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -3168,7 +3295,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-6fabc30b-72f8-4f14-9f42-25887594b4b7",
+                              "id": "row-aadce36a-e712-44c9-b8d3-3faad346ce50",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "dueDate"
@@ -3176,7 +3303,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-653dfa3e-5358-4c29-a477-c5b595fc9e02",
+                              "id": "row-9a6e4ffb-fca4-4fb8-b2b6-005381ee8e71",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "expectedAmount"
@@ -3184,7 +3311,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-9386f682-3c9d-4fa6-903c-b3a964f8140d",
+                              "id": "row-77224994-895f-4d5f-9a7a-ae2da806c57f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "principalPortion"
@@ -3192,7 +3319,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-cda58e84-4771-421e-ab69-39a1c506c664",
+                              "id": "row-728f9fec-9c38-4c27-8e2f-b84f989880dd",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "interestPortion"
@@ -3200,7 +3327,23 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-513e644a-5e00-453b-ba95-606df9c582a7",
+                              "id": "row-11ace8ed-0082-40cb-b3d7-6e19645309ae",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "sequence"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-1913a5f2-24ff-4f44-90c1-aa50cd2348bf",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "planVersion"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-10f1a671-5544-4aea-bdca-130ae43bd763",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "status"
@@ -3208,7 +3351,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-d9e14dc2-df73-4455-9db0-61a8d4272dde",
+                              "id": "row-8fb8f744-8b4e-45ba-9b34-59e9258ed2f7",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "paidTransactionId"
@@ -3216,7 +3359,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-bd981e42-a5d2-4260-a62a-560fa2e59ce6",
+                              "id": "row-b0d16a6b-8d69-43c1-b6f7-3358c4bb03f5",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -3268,17 +3411,31 @@
             "sortable": true,
             "order": 4
           },
+          "sequence": {
+            "label": "Sequence",
+            "component": "number",
+            "displayFormat": "plain",
+            "sortable": true,
+            "order": 5
+          },
+          "planVersion": {
+            "label": "Plan version",
+            "component": "number",
+            "displayFormat": "plain",
+            "sortable": true,
+            "order": 6
+          },
           "status": {
             "label": "Status",
             "component": "select",
             "filterable": true,
-            "order": 5
+            "order": 7
           },
           "paidTransactionId": {
             "label": "Paid transaction",
             "component": "relation",
             "filterable": true,
-            "order": 6
+            "order": 8
           }
         }
       },
@@ -3347,13 +3504,37 @@
           }
         },
         {
+          "name": "sequence",
+          "type": "number",
+          "numberKind": "integer",
+          "ui": {
+            "label": "Sequence",
+            "order": 5,
+            "displayFormat": "plain",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "planVersion",
+          "type": "number",
+          "numberKind": "integer",
+          "ui": {
+            "label": "Plan version",
+            "order": 6,
+            "displayFormat": "plain",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
           "name": "status",
           "type": "enum",
           "required": true,
           "enumValues": ["UPCOMING", "PAID", "OVERDUE", "SKIPPED"],
           "ui": {
             "label": "Status",
-            "order": 5,
+            "order": 7,
             "component": "select",
             "filterable": true
           }
@@ -3368,7 +3549,7 @@
           },
           "ui": {
             "label": "Paid transaction",
-            "order": 6,
+            "order": 8,
             "filterable": true
           }
         }
@@ -3400,21 +3581,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-9c3d6bae-83a2-43d2-b9cd-ef9e83c0ea1e",
+                "id": "root-8fbf9138-c8d5-42e7-b359-7f6e438cfaf6",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-7d3d5cda-1084-4c85-83cc-cda5e4730c40",
+                    "id": "col-0123f64d-b41a-4f13-9e73-f991109a9813",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-6a2fa71b-8ffb-43d8-93df-cafeff70ceb1",
+                        "id": "row-ddb31722-79de-4767-88ea-afec78375350",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-5d6fb0b7-87be-4995-833b-0bfff2166cef",
+                              "id": "row-00f84a40-0e6e-4136-8a09-62ebaf61d5ef",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -3422,7 +3603,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-24d4ff89-6155-4380-a9d1-ba372b2de991",
+                              "id": "row-5184f170-2554-433b-bb46-545c8bd04b0f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "date"
@@ -3430,7 +3611,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-25f87b08-5254-4d2b-9cea-e0d3bbb4975f",
+                              "id": "row-9e703198-5e40-4699-b23c-5d7fa931e78f",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "balance"
@@ -3438,7 +3619,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-333a756e-7b76-4b2a-8401-4d428c589651",
+                              "id": "row-550bc06a-d9f1-4236-b56c-32d133b7fb1a",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accruedInterest"
@@ -3446,7 +3627,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-a77cf578-2f49-464f-9964-9f12b6d051b2",
+                              "id": "row-295df361-1646-4ef3-a485-1dc33a630017",
                               "component": {
                                 "kind": "form-actions"
                               }
@@ -3466,21 +3647,21 @@
             "layout": {
               "root": {
                 "type": "root",
-                "id": "root-3ecbb560-14d2-40bd-8d02-86dbb0891fb1",
+                "id": "root-b988130d-3064-4ac5-869a-a7b5ae7c857e",
                 "columnCount": 1,
                 "columns": [
                   {
-                    "id": "col-cb286044-d53d-4af0-b8c8-ef8f2e9f5529",
+                    "id": "col-a0a27af0-97d2-4a9f-a5c0-7dabd45c42ac",
                     "rows": [
                       {
                         "type": "component",
-                        "id": "row-672301dc-3ad2-4075-856c-03ab52075b49",
+                        "id": "row-2fb5a7af-f9d9-4adc-8351-d41144833f96",
                         "component": {
                           "kind": "container",
                           "rows": [
                             {
                               "type": "component",
-                              "id": "row-8273d376-8d29-4882-991d-14b3b7e53df2",
+                              "id": "row-d313a877-ba44-4010-9643-895b23d540dd",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
@@ -3488,7 +3669,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-f4a25a3a-1fe0-4baf-ae1e-edbee3c57b5a",
+                              "id": "row-b681aa31-e5fd-4e6c-bdbd-d127374d5d48",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "date"
@@ -3496,7 +3677,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-04344272-83fd-461c-93a4-94bfde16e322",
+                              "id": "row-49d32309-2715-463b-abff-ae1308cbe176",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "balance"
@@ -3504,7 +3685,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-87a2d232-2367-4f87-bd16-b2696081f13a",
+                              "id": "row-ba61a8c3-fc18-43ea-aa95-5f91e9b81b3c",
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "accruedInterest"
@@ -3512,7 +3693,7 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-885da8cf-2946-4949-9f34-ef0e10d34499",
+                              "id": "row-034e4f32-a2d4-461e-88b2-e955f84b9f62",
                               "component": {
                                 "kind": "form-actions"
                               }

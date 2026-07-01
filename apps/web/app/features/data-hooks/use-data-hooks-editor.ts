@@ -166,7 +166,7 @@ export function useDataHooksEditor(entityName: string) {
           ...(input.description ? { description: input.description } : {}),
           entity: entityName,
           phase: "after",
-          trigger: { operation: input.operation },
+          trigger: { kind: "crud", operation: input.operation },
           condition: null,
           actions: [defaultAction()],
           enabled: true,

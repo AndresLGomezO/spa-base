@@ -2,12 +2,14 @@ import type {
   ExpressionBinaryOperator,
   ExpressionFunction,
   ExpressionNode,
+  ExpressionSwitchCase,
   ExpressionUnaryOperator,
 } from "@repo/hooks";
 import {
   EXPRESSION_BINARY_OPERATORS,
   EXPRESSION_FUNCTIONS,
   EXPRESSION_UNARY_OPERATORS,
+  MAX_SWITCH_CASES,
   getExpressionFunctionSpec,
 } from "@repo/hooks";
 
@@ -19,6 +21,7 @@ export type EditorKind =
   | "binary"
   | "unary"
   | "call"
+  | "switch"
   | "advanced";
 
 export function literalExpression(
@@ -28,7 +31,10 @@ export function literalExpression(
 }
 
 export function resolveEditorKind(node: ExpressionNode): EditorKind {
-  if (node.kind === "literal") return "literal";
+  if (node.kind === "literal") {
+    if (Array.isArray(node.value)) return "advanced";
+    return "literal";
+  }
   if (node.kind === "field") return "field";
   if (node.kind === "var") {
     return node.name === "loopIndex" ? "loopIndex" : "now";
@@ -36,6 +42,7 @@ export function resolveEditorKind(node: ExpressionNode): EditorKind {
   if (node.kind === "binary") return "binary";
   if (node.kind === "unary") return "unary";
   if (node.kind === "call") return "call";
+  if (node.kind === "switch") return "switch";
   return "advanced";
 }
 
@@ -74,6 +81,17 @@ export function createDefaultNode(
         kind: "call",
         fn: "concat",
         args: [literalExpression("")],
+      };
+    case "switch":
+      return {
+        kind: "switch",
+        input: {
+          kind: "field",
+          source: "current",
+          path: fieldNames?.[0] ?? "",
+        },
+        cases: [createDefaultSwitchCase()],
+        default: literalExpression(""),
       };
     case "advanced":
       return literalExpression("");
@@ -163,6 +181,21 @@ export function shouldShowCallArgument(
     return useOptionalThirdArg;
   }
   return argIndex < spec.maxArgs;
+}
+
+export function createDefaultSwitchCase(): ExpressionSwitchCase {
+  return {
+    when: literalExpression(""),
+    then: literalExpression(""),
+  };
+}
+
+export function canAddSwitchCase(currentCount: number): boolean {
+  return currentCount < MAX_SWITCH_CASES;
+}
+
+export function canRemoveSwitchCase(currentCount: number): boolean {
+  return currentCount > 1;
 }
 
 export const EXPRESSION_PREVIEW_MOCK_SCOPE = {

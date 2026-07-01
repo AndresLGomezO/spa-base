@@ -5,6 +5,7 @@ import type { ExpressionNode } from "@repo/hooks";
 
 import { BinaryExpressionPanel } from "./BinaryExpressionPanel";
 import { CallExpressionPanel } from "./CallExpressionPanel";
+import { SwitchExpressionPanel } from "./SwitchExpressionPanel";
 import { UnaryExpressionPanel } from "./UnaryExpressionPanel";
 import {
   createDefaultNode,
@@ -19,14 +20,18 @@ import type {
   ExpressionEditorNodeProps,
   ExpressionEditorNodeRenderer,
 } from "./expression-editor-node-types";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 
 export function ExpressionEditorNode({
   value,
   onChange,
   fieldNames,
+  loadedBindings,
+  aggregateBindings,
   label,
 }: ExpressionEditorNodeProps) {
   const { t } = useTranslation("common");
+  const { items: entities } = useEntityCatalog();
   const resolvedKind = resolveEditorKind(value);
   const [forceAdvanced, setForceAdvanced] = useState(
     () => resolvedKind === "advanced",
@@ -47,6 +52,20 @@ export function ExpressionEditorNode({
     if (typeof literalValue === "boolean") return "boolean";
     return "text";
   }, [literalValue]);
+
+  const loadedFieldNames = useMemo(() => {
+    if (value.kind !== "field" || value.source !== "loaded") {
+      return [];
+    }
+    const binding = loadedBindings?.find(
+      (entry) => entry.alias === value.alias,
+    );
+    if (!binding) {
+      return [];
+    }
+    const entity = entities.find((entry) => entry.name === binding.entity);
+    return entity ? Object.keys(entity.fields) : [];
+  }, [entities, loadedBindings, value]);
 
   function handleKindChange(next: EditorKind) {
     if (next === "advanced") {
@@ -85,6 +104,7 @@ export function ExpressionEditorNode({
         <option value="binary">{t("dataHooks.expression.binary")}</option>
         <option value="unary">{t("dataHooks.expression.unary")}</option>
         <option value="call">{t("dataHooks.expression.call")}</option>
+        <option value="switch">{t("dataHooks.expression.switch")}</option>
         <option value="advanced">{t("dataHooks.expression.advanced")}</option>
       </Select>
 
@@ -148,20 +168,166 @@ export function ExpressionEditorNode({
           <Select
             className={`${expressionControlClassName} w-36`}
             value={value.source}
-            onChange={(event) =>
+            onChange={(event) => {
+              const nextSource = event.target.value as
+                | "current"
+                | "previous"
+                | "loaded"
+                | "aggregate";
+              if (nextSource === "loaded") {
+                const firstAlias = loadedBindings?.[0]?.alias ?? "";
+                onChange({
+                  kind: "field",
+                  source: "loaded",
+                  alias: firstAlias,
+                  path: "",
+                });
+                return;
+              }
+              if (nextSource === "aggregate") {
+                onChange({
+                  kind: "field",
+                  source: "aggregate",
+                  alias: aggregateBindings?.[0] ?? "",
+                });
+                return;
+              }
               onChange({
                 kind: "field",
-                source: event.target.value as "current" | "previous",
-                path: value.path,
-              })
-            }
+                source: nextSource,
+                path:
+                  value.source === "loaded" || value.source === "aggregate"
+                    ? ""
+                    : value.path,
+              });
+            }}
           >
             <option value="current">{t("dataHooks.expression.current")}</option>
             <option value="previous">
               {t("dataHooks.expression.previous")}
             </option>
+            {loadedBindings && loadedBindings.length > 0 ? (
+              <option value="loaded">{t("dataHooks.expression.loaded")}</option>
+            ) : null}
+            {aggregateBindings && aggregateBindings.length > 0 ? (
+              <option value="aggregate">
+                {t("dataHooks.expression.aggregate")}
+              </option>
+            ) : null}
           </Select>
-          {fieldNames && fieldNames.length > 0 ? (
+          {value.source === "loaded" ? (
+            <>
+              {loadedBindings && loadedBindings.length > 0 ? (
+                <Select
+                  className={`${expressionControlClassName} w-36`}
+                  value={value.alias}
+                  onChange={(event) =>
+                    onChange({
+                      kind: "field",
+                      source: "loaded",
+                      alias: event.target.value,
+                      path: value.path,
+                    })
+                  }
+                >
+                  {!loadedBindings.some(
+                    (entry) => entry.alias === value.alias,
+                  ) && value.alias ? (
+                    <option value={value.alias}>{value.alias}</option>
+                  ) : null}
+                  {loadedBindings.map((entry) => (
+                    <option key={entry.alias} value={entry.alias}>
+                      {entry.alias}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  value={value.alias}
+                  placeholder={t("dataHooks.actions.aliasPlaceholder")}
+                  onChange={(event) =>
+                    onChange({
+                      kind: "field",
+                      source: "loaded",
+                      alias: event.target.value,
+                      path: value.path,
+                    })
+                  }
+                />
+              )}
+              {loadedFieldNames.length > 0 ? (
+                <Select
+                  className={expressionControlClassName}
+                  value={value.path}
+                  onChange={(event) =>
+                    onChange({
+                      kind: "field",
+                      source: "loaded",
+                      alias: value.alias,
+                      path: event.target.value,
+                    })
+                  }
+                >
+                  {!loadedFieldNames.includes(value.path) && value.path ? (
+                    <option value={value.path}>{value.path || "—"}</option>
+                  ) : null}
+                  {loadedFieldNames.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  value={value.path}
+                  placeholder={t("dataHooks.expression.fieldPathPlaceholder")}
+                  onChange={(event) =>
+                    onChange({
+                      kind: "field",
+                      source: "loaded",
+                      alias: value.alias,
+                      path: event.target.value,
+                    })
+                  }
+                />
+              )}
+            </>
+          ) : value.source === "aggregate" ? (
+            aggregateBindings && aggregateBindings.length > 0 ? (
+              <Select
+                className={expressionControlClassName}
+                value={value.alias}
+                onChange={(event) =>
+                  onChange({
+                    kind: "field",
+                    source: "aggregate",
+                    alias: event.target.value,
+                  })
+                }
+              >
+                {!aggregateBindings.includes(value.alias) && value.alias ? (
+                  <option value={value.alias}>{value.alias}</option>
+                ) : null}
+                {aggregateBindings.map((alias) => (
+                  <option key={alias} value={alias}>
+                    {alias}
+                  </option>
+                ))}
+              </Select>
+            ) : (
+              <Input
+                value={value.alias}
+                placeholder={t("dataHooks.actions.aliasPlaceholder")}
+                onChange={(event) =>
+                  onChange({
+                    kind: "field",
+                    source: "aggregate",
+                    alias: event.target.value,
+                  })
+                }
+              />
+            )
+          ) : fieldNames && fieldNames.length > 0 ? (
             <Select
               className={expressionControlClassName}
               value={value.path}
@@ -203,6 +369,8 @@ export function ExpressionEditorNode({
           value={value}
           onChange={onChange}
           fieldNames={fieldNames}
+          loadedBindings={loadedBindings}
+          aggregateBindings={aggregateBindings}
           renderNode={renderNestedNode}
         />
       ) : null}
@@ -212,6 +380,8 @@ export function ExpressionEditorNode({
           value={value}
           onChange={onChange}
           fieldNames={fieldNames}
+          loadedBindings={loadedBindings}
+          aggregateBindings={aggregateBindings}
           renderNode={renderNestedNode}
         />
       ) : null}
@@ -221,6 +391,19 @@ export function ExpressionEditorNode({
           value={value}
           onChange={onChange}
           fieldNames={fieldNames}
+          loadedBindings={loadedBindings}
+          aggregateBindings={aggregateBindings}
+          renderNode={renderNestedNode}
+        />
+      ) : null}
+
+      {kind === "switch" && value.kind === "switch" ? (
+        <SwitchExpressionPanel
+          value={value}
+          onChange={onChange}
+          fieldNames={fieldNames}
+          loadedBindings={loadedBindings}
+          aggregateBindings={aggregateBindings}
           renderNode={renderNestedNode}
         />
       ) : null}

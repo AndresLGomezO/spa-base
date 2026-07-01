@@ -1,5 +1,6 @@
 /**
- * Ensures dev Dockerfiles COPY every workspace package required for `pnpm install`.
+ * Ensures dev Dockerfiles COPY every workspace package required for `pnpm install`,
+ * and docker-compose.dev.yml bind-mounts workspace apps/* needed at runtime (tsx dev).
  *
  * Usage:
  *   pnpm check:docker-workspace
@@ -21,28 +22,35 @@ interface DockerTarget {
   id: string;
   dockerfile: string;
   entryManifests: string[];
+  composeService?: string;
 }
+
+const COMPOSE_FILE = "docker-compose.dev.yml";
 
 const TARGETS: DockerTarget[] = [
   {
     id: "web",
     dockerfile: "apps/web/Dockerfile.dev",
     entryManifests: ["apps/web/package.json", "apps/platform/package.json", "package.json"],
+    composeService: "web",
   },
   {
     id: "api",
     dockerfile: "apps/api/Dockerfile.dev",
     entryManifests: ["apps/api/package.json", "apps/platform/package.json", "package.json"],
+    composeService: "api",
   },
   {
     id: "worker-aggregation",
     dockerfile: "apps/worker-aggregation/Dockerfile.dev",
     entryManifests: ["apps/worker-aggregation/package.json", "package.json"],
+    composeService: "worker-aggregation",
   },
   {
     id: "worker-service",
     dockerfile: "apps/worker-service/Dockerfile.dev",
     entryManifests: ["apps/worker-service/package.json", "package.json"],
+    composeService: "worker-service",
   },
 ];
 
@@ -147,6 +155,63 @@ function parseDockerfileCopiedDirs(dockerfilePath: string): Set<string> {
   return copied;
 }
 
+function parseComposeServiceVolumes(serviceName: string): Set<string> {
+  const content = readFileSync(join(repoRoot, COMPOSE_FILE), "utf8");
+  const servicePattern = new RegExp(
+    `^  ${serviceName}:\\n([\\s\\S]*?)(?=^  [a-zA-Z0-9_-]+:\\n|^volumes:)`,
+    "m",
+  );
+  const match = content.match(servicePattern);
+  if (!match) {
+    throw new Error(`Service "${serviceName}" not found in ${COMPOSE_FILE}.`);
+  }
+
+  const mounts = new Set<string>();
+  for (const line of match[1].split("\n")) {
+    const volumeMatch = line.match(/^\s+-\s+\.\/([^:\s]+(?:\/[^:\s]+)*):/);
+    if (volumeMatch) {
+      mounts.add(volumeMatch[1]);
+    }
+  }
+  return mounts;
+}
+
+function validateComposeMounts(
+  target: DockerTarget,
+  requiredDirs: Set<string>,
+): string[] {
+  if (!target.composeService) return [];
+
+  const mounts = parseComposeServiceVolumes(target.composeService);
+  const hasPackagesMount = mounts.has("packages");
+  const errors: string[] = [];
+  const missing = new Set<string>();
+
+  for (const dir of requiredDirs) {
+    if (dir === ".") continue;
+    if (dir.startsWith("packages/")) {
+      if (!hasPackagesMount) {
+        missing.add("./packages:/app/packages");
+      }
+      continue;
+    }
+    if (!dir.startsWith("apps/")) continue;
+    if (!mounts.has(dir)) {
+      missing.add(`./${dir}:/app/${dir}`);
+    }
+  }
+
+  if (missing.size > 0) {
+    errors.push(
+      `[${target.id}] ${COMPOSE_FILE} service "${target.composeService}" is missing bind mounts needed at runtime:`,
+      ...[...missing].sort().map((mount) => `  - ${mount}`),
+      `  packages/* are covered by ./packages:/app/packages; apps/* must be mounted per service.`,
+    );
+  }
+
+  return errors;
+}
+
 function validateTarget(target: DockerTarget, nameToDir: Map<string, string>): string[] {
   const errors: string[] = [];
   const closure = workspaceClosure(target.entryManifests, nameToDir);
@@ -193,6 +258,8 @@ function validateTarget(target: DockerTarget, nameToDir: Map<string, string>): s
       ...extra.sort().map((dir) => `  - ${dir}`),
     );
   }
+
+  errors.push(...validateComposeMounts(target, requiredDirs));
 
   return errors;
 }

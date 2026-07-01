@@ -1,11 +1,19 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
-import type { DataHookOperation, DataHookPhase } from "@repo/hooks";
+import type {
+  DataHookOperation,
+  DataHookPhase,
+  DataHookScheduleScope,
+  DataHookTrigger,
+} from "@repo/hooks";
 import {
   DATA_HOOK_EXECUTION_MODES,
   DATA_HOOK_OPERATIONS,
   DATA_HOOK_PHASES,
+  DATA_HOOK_SCHEDULE_SCOPES,
+  DATA_HOOK_TRIGGER_KINDS,
+  isScheduleTrigger,
 } from "@repo/hooks";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
@@ -23,6 +31,25 @@ import { useDataHooks } from "./data-hooks-context";
 
 const controlClassName =
   "border-input bg-background flex h-9 w-full rounded-md border px-3 py-1.5 text-sm";
+
+function triggerKind(trigger: DataHookTrigger): "crud" | "schedule" {
+  return isScheduleTrigger(trigger) ? "schedule" : "crud";
+}
+
+function defaultCrudTrigger(
+  operation: DataHookOperation = "create",
+): DataHookTrigger {
+  return { kind: "crud", operation };
+}
+
+function defaultScheduleTrigger(): DataHookTrigger {
+  return {
+    kind: "schedule",
+    cron: "0 6 * * *",
+    timezone: "UTC",
+    scope: "once",
+  };
+}
 
 export function DataHookSettingsPanel() {
   const { t } = useTranslation("common");
@@ -59,6 +86,7 @@ export function DataHookSettingsPanel() {
   }
 
   const conditionEnabled = draft.condition !== null;
+  const isScheduled = isScheduleTrigger(draft.trigger);
 
   return (
     <div
@@ -87,36 +115,102 @@ export function DataHookSettingsPanel() {
 
       <div className={designerPreviewPanelBodyFillClassName}>
         <div className="max-w-2xl space-y-5">
-          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            <div className="space-y-1">
-              <FieldLabel>{t("dataHooks.settings.operation")}</FieldLabel>
-              <Select
-                className={controlClassName}
-                value={draft.trigger.operation}
-                disabled={!canUpdate}
-                onChange={(event) =>
+          <div className="space-y-1">
+            <FieldLabel>{t("dataHooks.settings.triggerKind")}</FieldLabel>
+            <Select
+              className={controlClassName}
+              value={triggerKind(draft.trigger)}
+              disabled={!canUpdate}
+              onChange={(event) => {
+                const kind = event.target.value as "crud" | "schedule";
+                if (kind === "schedule") {
                   editor.updateDraft({
-                    trigger: {
-                      ...draft.trigger,
-                      operation: event.target.value as DataHookOperation,
-                    },
-                  })
+                    phase: "after",
+                    execution:
+                      draft.execution === "sync" ? "queued" : draft.execution,
+                    trigger: defaultScheduleTrigger(),
+                  });
+                  return;
                 }
-              >
-                {DATA_HOOK_OPERATIONS.map((operation) => (
-                  <option key={operation} value={operation}>
-                    {t(`dataHooks.operation.${operation}`)}
-                  </option>
-                ))}
-              </Select>
-            </div>
+
+                const operation = isScheduleTrigger(draft.trigger)
+                  ? "create"
+                  : draft.trigger.operation;
+                editor.updateDraft({
+                  trigger: defaultCrudTrigger(operation),
+                });
+              }}
+            >
+              {DATA_HOOK_TRIGGER_KINDS.map((kind) => (
+                <option key={kind} value={kind}>
+                  {t(`dataHooks.triggerKind.${kind}`)}
+                </option>
+              ))}
+            </Select>
+          </div>
+
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            {!isScheduled ? (
+              <div className="space-y-1">
+                <FieldLabel>{t("dataHooks.settings.operation")}</FieldLabel>
+                <Select
+                  className={controlClassName}
+                  value={
+                    isScheduleTrigger(draft.trigger)
+                      ? "create"
+                      : draft.trigger.operation
+                  }
+                  disabled={!canUpdate}
+                  onChange={(event) => {
+                    if (isScheduleTrigger(draft.trigger)) {
+                      return;
+                    }
+                    editor.updateDraft({
+                      trigger: {
+                        ...draft.trigger,
+                        operation: event.target.value as DataHookOperation,
+                      },
+                    });
+                  }}
+                >
+                  {DATA_HOOK_OPERATIONS.map((operation) => (
+                    <option key={operation} value={operation}>
+                      {t(`dataHooks.operation.${operation}`)}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+            ) : (
+              <div className="space-y-1 sm:col-span-2">
+                <FieldLabel>{t("dataHooks.settings.cron")}</FieldLabel>
+                <input
+                  className={controlClassName}
+                  value={draft.trigger.cron}
+                  disabled={!canUpdate}
+                  onChange={(event) => {
+                    if (!isScheduleTrigger(draft.trigger)) {
+                      return;
+                    }
+                    editor.updateDraft({
+                      trigger: {
+                        ...draft.trigger,
+                        cron: event.target.value,
+                      },
+                    });
+                  }}
+                />
+                <Text className="text-muted-foreground text-xs">
+                  {t("dataHooks.settings.cronHint")}
+                </Text>
+              </div>
+            )}
 
             <div className="space-y-1">
               <FieldLabel>{t("dataHooks.settings.phase")}</FieldLabel>
               <Select
                 className={controlClassName}
                 value={draft.phase}
-                disabled={!canUpdate}
+                disabled={!canUpdate || isScheduled}
                 onChange={(event) => {
                   const phase = event.target.value as DataHookPhase;
                   editor.updateDraft({
@@ -157,7 +251,98 @@ export function DataHookSettingsPanel() {
             </div>
           </div>
 
-          {draft.trigger.operation === "update" ? (
+          {isScheduled ? (
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+              <div className="space-y-1">
+                <FieldLabel>{t("dataHooks.settings.timezone")}</FieldLabel>
+                <input
+                  className={controlClassName}
+                  value={draft.trigger.timezone ?? "UTC"}
+                  disabled={!canUpdate}
+                  onChange={(event) => {
+                    if (!isScheduleTrigger(draft.trigger)) {
+                      return;
+                    }
+                    editor.updateDraft({
+                      trigger: {
+                        ...draft.trigger,
+                        timezone: event.target.value,
+                      },
+                    });
+                  }}
+                />
+              </div>
+              <div className="space-y-1">
+                <FieldLabel>{t("dataHooks.settings.scheduleScope")}</FieldLabel>
+                <Select
+                  className={controlClassName}
+                  value={draft.trigger.scope ?? "once"}
+                  disabled={!canUpdate}
+                  onChange={(event) => {
+                    if (!isScheduleTrigger(draft.trigger)) {
+                      return;
+                    }
+                    const scope = event.target.value as DataHookScheduleScope;
+                    editor.updateDraft({
+                      trigger: {
+                        ...draft.trigger,
+                        scope,
+                        ...(scope === "once"
+                          ? { eachRecordWhere: undefined }
+                          : {
+                              eachRecordWhere:
+                                draft.trigger.eachRecordWhere ??
+                                createDefaultConditionRoot(
+                                  triggerFieldNames[0] ?? "",
+                                ),
+                            }),
+                      },
+                    });
+                  }}
+                >
+                  {DATA_HOOK_SCHEDULE_SCOPES.map((scope) => (
+                    <option key={scope} value={scope}>
+                      {t(`dataHooks.scheduleScope.${scope}`)}
+                    </option>
+                  ))}
+                </Select>
+                <Text className="text-muted-foreground text-xs">
+                  {t("dataHooks.settings.scheduleScopeHint")}
+                </Text>
+              </div>
+            </div>
+          ) : null}
+
+          {isScheduled &&
+          isScheduleTrigger(draft.trigger) &&
+          (draft.trigger.scope ?? "once") === "eachRecord" ? (
+            <div className="space-y-2">
+              <FieldLabel>{t("dataHooks.settings.eachRecordWhere")}</FieldLabel>
+              <DataHookConditionEditor
+                value={
+                  draft.trigger.eachRecordWhere ??
+                  createDefaultConditionRoot(triggerFieldNames[0] ?? "")
+                }
+                fieldNames={triggerFieldNames}
+                disabled={!canUpdate}
+                onChange={(eachRecordWhere) => {
+                  if (!isScheduleTrigger(draft.trigger)) {
+                    return;
+                  }
+                  editor.updateDraft({
+                    trigger: {
+                      ...draft.trigger,
+                      eachRecordWhere,
+                    },
+                  });
+                }}
+              />
+            </div>
+          ) : null}
+
+          {!isScheduled &&
+          !isScheduleTrigger(draft.trigger) &&
+          draft.trigger.operation === "update" ? (
             <div className="space-y-2">
               <FieldLabel>{t("dataHooks.settings.updateFields")}</FieldLabel>
               <Text className="text-muted-foreground text-xs">
@@ -165,8 +350,10 @@ export function DataHookSettingsPanel() {
               </Text>
               <div className="flex flex-wrap gap-2">
                 {triggerFieldNames.map((name) => {
+                  const crudTrigger = draft.trigger;
                   const checked =
-                    draft.trigger.updateFields?.includes(name) ?? false;
+                    !isScheduleTrigger(crudTrigger) &&
+                    (crudTrigger.updateFields?.includes(name) ?? false);
                   return (
                     <label
                       key={name}
@@ -177,6 +364,9 @@ export function DataHookSettingsPanel() {
                         checked={checked}
                         disabled={!canUpdate}
                         onChange={(event) => {
+                          if (isScheduleTrigger(draft.trigger)) {
+                            return;
+                          }
                           const current = draft.trigger.updateFields ?? [];
                           const next = event.target.checked
                             ? [...current, name]
@@ -227,6 +417,8 @@ export function DataHookSettingsPanel() {
           <DataHookActionsEditor
             actions={draft.actions}
             triggerEntity={editor.entityName}
+            hookPhase={draft.phase}
+            hookExecution={draft.execution}
             disabled={!canUpdate}
             onChange={(actions) => editor.updateDraft({ actions })}
           />

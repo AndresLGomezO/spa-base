@@ -2111,6 +2111,13 @@
       "save": "Guardar",
       "saved": "Hook de automatización guardado.",
       "operation": "Disparador",
+      "triggerKind": "Tipo de disparador",
+      "cron": "Programación cron",
+      "cronHint": "Cron de cinco campos (minuto hora día mes día de semana). Se evalúa en la zona horaria indicada.",
+      "timezone": "Zona horaria",
+      "scheduleScope": "Alcance de ejecución",
+      "scheduleScopeHint": "Una vez ejecuta acciones por lote (p. ej. updateMatching). Cada registro ejecuta el hook una vez por fila coincidente.",
+      "eachRecordWhere": "Coincidencia de registros",
       "phase": "Momento",
       "status": "Estado",
       "enabled": "Activo",
@@ -2139,7 +2146,12 @@
       "group": "Grupo de condiciones",
       "leaf": "Condición",
       "empty": "Aún no hay condiciones. Agrega una condición o un grupo anidado.",
-      "groupSummary": "{{combinator}} · {{count}} condiciones"
+      "groupSummary": "{{combinator}} · {{count}} condiciones",
+      "arrayValue": "Coincidir con cualquiera de estos valores",
+      "arrayItemPlaceholder": "valor",
+      "addArrayItem": "Agregar valor",
+      "removeArrayItem": "Eliminar",
+      "arrayMaxItemsHint": "Se alcanzó el máximo de {{max}} valores."
     },
     "metadata": {
       "created": "Hook de automatización creado.",
@@ -2157,6 +2169,14 @@
       "update": "Al actualizar",
       "delete": "Al eliminar"
     },
+    "triggerKind": {
+      "crud": "Al cambiar un registro",
+      "schedule": "Programado"
+    },
+    "scheduleScope": {
+      "once": "Una vez por tick",
+      "eachRecord": "Cada registro coincidente"
+    },
     "phase": {
       "before": "Antes",
       "after": "Después"
@@ -2166,6 +2186,10 @@
       "createRecord": "Crear registro",
       "createRecords": "Crear registros (bucle)",
       "updateMatching": "Actualizar registros coincidentes",
+      "deleteMatching": "Eliminar registros coincidentes",
+      "deleteRecord": "Eliminar registro",
+      "getRecord": "Cargar registro",
+      "aggregateMatching": "Agregar registros coincidentes",
       "sendNotification": "Enviar notificación",
       "callWebhook": "Llamar webhook"
     },
@@ -2188,8 +2212,23 @@
       "selectEntity": "Selecciona una entidad…",
       "recordData": "Datos del registro",
       "count": "Número de registros",
+      "startIndex": "Índice inicial",
+      "createRecordsLimitsHint": "Hasta {{max}} registros por ejecución (sync/deferred/before). Usa ejecución En cola para hasta {{queuedMax}}, o un horizonte continuo con startIndex y hooks programados de extensión.",
+      "createRecordsQueuedHint": "Los hooks en cola pueden crear hasta {{max}} registros por ejecución. Para horizontes más largos, usa startIndex con hooks programados de extensión.",
       "matchWhere": "Coincidir registros donde",
       "matchValue": "Valor",
+      "recordId": "Id del registro",
+      "alias": "Alias",
+      "aliasPlaceholder": "p. ej. parent",
+      "aggregateOp": "Operación de agregación",
+      "aggregateField": "Campo a agregar",
+      "aggregateOps": {
+        "count": "Contar",
+        "sum": "Suma",
+        "min": "Mínimo",
+        "max": "Máximo",
+        "avg": "Promedio"
+      },
       "setFields": "Establecer campos"
     },
     "executionLog": {
@@ -2210,12 +2249,15 @@
       "binary": "Operación",
       "unary": "Negación / No",
       "call": "Función",
+      "switch": "Switch (búsqueda)",
       "advanced": "Avanzado (expresión)",
       "text": "Texto",
       "number": "Número",
       "boolean": "Booleano",
       "current": "Registro actual",
       "previous": "Valor anterior",
+      "loaded": "Registro cargado",
+      "aggregate": "Valor agregado",
       "fieldPathPlaceholder": "nombre del campo",
       "invalidJson": "JSON de expresión inválido.",
       "advancedHint": "Edita el AST de la expresión como JSON.",
@@ -2229,6 +2271,15 @@
       "addArgument": "Añadir argumento",
       "removeArgument": "Quitar",
       "useEndIndex": "Usar índice final",
+      "switchInput": "Valor de entrada",
+      "switchCases": "Casos",
+      "switchCaseIndex": "Caso {{index}}",
+      "switchWhen": "Cuando sea igual a",
+      "switchThen": "Entonces valor",
+      "switchDefault": "Valor predeterminado",
+      "addSwitchCase": "Añadir caso",
+      "removeSwitchCase": "Eliminar caso",
+      "switchMaxCasesHint": "Se alcanzó el máximo de {{max}} casos.",
       "preview": "Vista previa",
       "previewError": "No se pudo evaluar la vista previa.",
       "previewUnavailable": "Vista previa no disponible para JSON avanzado.",

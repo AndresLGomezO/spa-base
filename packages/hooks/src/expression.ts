@@ -83,15 +83,47 @@ export const EXPRESSION_VARIABLES = ["now", "loopIndex", "userId"] as const;
 
 export type ExpressionVariable = (typeof EXPRESSION_VARIABLES)[number];
 
-export type ExpressionValue = string | number | boolean | null;
+export type ExpressionScalar = string | number | boolean | null;
 
-export type ExpressionNode =
-  | { readonly kind: "literal"; readonly value: ExpressionValue }
+export type ExpressionLiteralValue =
+  | ExpressionScalar
+  | readonly ExpressionScalar[];
+
+/** Runtime expression result; may be a flat array when evaluating array literals. */
+export type ExpressionValue = ExpressionLiteralValue;
+
+/** Max items per array literal on a `literal` expression node. */
+export const MAX_ARRAY_LITERAL_ITEMS = 32;
+
+/** Max case rows per `switch` expression node. */
+export const MAX_SWITCH_CASES = 32;
+
+export type ExpressionSwitchCase = {
+  readonly when: ExpressionNode;
+  readonly then: ExpressionNode;
+};
+
+export type ExpressionFieldNode =
   | {
       readonly kind: "field";
       readonly source: "current" | "previous";
       readonly path: string;
     }
+  | {
+      readonly kind: "field";
+      readonly source: "loaded";
+      readonly alias: string;
+      readonly path: string;
+    }
+  | {
+      readonly kind: "field";
+      readonly source: "aggregate";
+      readonly alias: string;
+    };
+
+export type ExpressionNode =
+  | { readonly kind: "literal"; readonly value: ExpressionLiteralValue }
+  | ExpressionFieldNode
   | { readonly kind: "var"; readonly name: ExpressionVariable }
   | {
       readonly kind: "unary";
@@ -108,27 +140,58 @@ export type ExpressionNode =
       readonly kind: "call";
       readonly fn: ExpressionFunction;
       readonly args: readonly ExpressionNode[];
+    }
+  | {
+      readonly kind: "switch";
+      readonly input: ExpressionNode;
+      readonly cases: readonly ExpressionSwitchCase[];
+      readonly default: ExpressionNode;
     };
 
 function enumValues<T extends string>(values: readonly T[]): [T, ...T[]] {
   return values as unknown as [T, ...T[]];
 }
 
-const literalValueSchema = z.union([
+const expressionScalarSchema = z.union([
   z.string(),
   z.number(),
   z.boolean(),
   z.null(),
 ]);
 
+const literalValueSchema = z.union([
+  expressionScalarSchema,
+  z.array(expressionScalarSchema).min(1).max(MAX_ARRAY_LITERAL_ITEMS),
+]);
+
+const expressionFieldNodeSchema: z.ZodType<ExpressionFieldNode> = z.union([
+  z.object({
+    kind: z.literal("field"),
+    source: z.enum(["current", "previous"]),
+    path: z.string().trim().min(1),
+  }),
+  z.object({
+    kind: z.literal("field"),
+    source: z.literal("loaded"),
+    alias: z.string().trim().min(1),
+    path: z.string().trim().min(1),
+  }),
+  z.object({
+    kind: z.literal("field"),
+    source: z.literal("aggregate"),
+    alias: z.string().trim().min(1),
+  }),
+]);
+
+const expressionSwitchCaseSchema: z.ZodType<ExpressionSwitchCase> = z.object({
+  when: z.lazy(() => expressionNodeSchema),
+  then: z.lazy(() => expressionNodeSchema),
+});
+
 export const expressionNodeSchema: z.ZodType<ExpressionNode> = z.lazy(() =>
-  z.discriminatedUnion("kind", [
+  z.union([
+    expressionFieldNodeSchema,
     z.object({ kind: z.literal("literal"), value: literalValueSchema }),
-    z.object({
-      kind: z.literal("field"),
-      source: z.enum(["current", "previous"]),
-      path: z.string().trim().min(1),
-    }),
     z.object({
       kind: z.literal("var"),
       name: z.enum(enumValues(EXPRESSION_VARIABLES)),
@@ -149,12 +212,20 @@ export const expressionNodeSchema: z.ZodType<ExpressionNode> = z.lazy(() =>
       fn: z.enum(enumValues(EXPRESSION_FUNCTIONS)),
       args: z.array(expressionNodeSchema).max(16),
     }),
+    z.object({
+      kind: z.literal("switch"),
+      input: expressionNodeSchema,
+      cases: z.array(expressionSwitchCaseSchema).min(1).max(MAX_SWITCH_CASES),
+      default: expressionNodeSchema,
+    }),
   ]),
 ) as z.ZodType<ExpressionNode>;
 
 export interface ExpressionScope {
   readonly current: Record<string, unknown>;
   readonly previous?: Record<string, unknown>;
+  readonly loaded?: Readonly<Record<string, Record<string, unknown>>>;
+  readonly aggregates?: Readonly<Record<string, ExpressionValue>>;
   readonly now: Date;
   readonly userId?: string;
   readonly loopIndex?: number;
@@ -209,6 +280,9 @@ function toExpressionValue(value: unknown): ExpressionValue {
 }
 
 function coerceNumber(value: ExpressionValue): number {
+  if (Array.isArray(value)) {
+    throw new ExpressionEvaluationError("Cannot coerce array to number.");
+  }
   if (typeof value === "number") {
     return value;
   }
@@ -227,6 +301,9 @@ function coerceNumber(value: ExpressionValue): number {
 }
 
 function coerceDate(value: ExpressionValue): Date {
+  if (Array.isArray(value)) {
+    throw new ExpressionEvaluationError("Cannot coerce array to date.");
+  }
   if (typeof value === "number") {
     return new Date(value);
   }
@@ -242,10 +319,16 @@ function coerceDate(value: ExpressionValue): Date {
 }
 
 function isEmptyValue(value: ExpressionValue): boolean {
+  if (Array.isArray(value)) {
+    return value.length === 0;
+  }
   return value == null || value === "";
 }
 
 function looseEquals(left: ExpressionValue, right: ExpressionValue): boolean {
+  if (Array.isArray(left) || Array.isArray(right)) {
+    return false;
+  }
   if (left === right) {
     return true;
   }
@@ -260,6 +343,11 @@ function looseEquals(left: ExpressionValue, right: ExpressionValue): boolean {
 }
 
 function compareOrdered(left: ExpressionValue, right: ExpressionValue): number {
+  if (Array.isArray(left) || Array.isArray(right)) {
+    throw new ExpressionEvaluationError(
+      "Cannot compare array values with ordered operators.",
+    );
+  }
   if (typeof left === "number" || typeof right === "number") {
     return coerceNumber(left) - coerceNumber(right);
   }
@@ -271,6 +359,9 @@ function compareOrdered(left: ExpressionValue, right: ExpressionValue): number {
 }
 
 function truthy(value: ExpressionValue): boolean {
+  if (Array.isArray(value)) {
+    return value.length > 0;
+  }
   if (typeof value === "boolean") return value;
   if (typeof value === "number") return value !== 0;
   if (typeof value === "string") return value.length > 0;
@@ -307,6 +398,11 @@ function diffDates(from: Date, to: Date, unit: DateUnit): number {
 }
 
 function assertDateUnit(value: ExpressionValue): DateUnit {
+  if (Array.isArray(value)) {
+    throw new ExpressionEvaluationError(
+      `Invalid date unit: ${JSON.stringify(value)}. Expected one of ${DATE_UNITS.join(", ")}.`,
+    );
+  }
   if (
     typeof value === "string" &&
     (DATE_UNITS as readonly string[]).includes(value)
@@ -471,6 +567,12 @@ export function evaluateExpression(
     case "literal":
       return node.value;
     case "field":
+      if (node.source === "loaded") {
+        return readPath(scope.loaded?.[node.alias], node.path);
+      }
+      if (node.source === "aggregate") {
+        return scope.aggregates?.[node.alias] ?? null;
+      }
       return readPath(
         node.source === "previous" ? scope.previous : scope.current,
         node.path,
@@ -502,6 +604,21 @@ export function evaluateExpression(
       const args = node.args.map((arg) => evaluateExpression(arg, scope));
       return evaluateCall(node.fn, args, scope);
     }
+    case "switch": {
+      if (node.cases.length > MAX_SWITCH_CASES) {
+        throw new ExpressionEvaluationError(
+          `switch exceeds the maximum of ${MAX_SWITCH_CASES} cases.`,
+        );
+      }
+      const inputValue = evaluateExpression(node.input, scope);
+      for (const switchCase of node.cases) {
+        const whenValue = evaluateExpression(switchCase.when, scope);
+        if (looseEquals(inputValue, whenValue)) {
+          return evaluateExpression(switchCase.then, scope);
+        }
+      }
+      return evaluateExpression(node.default, scope);
+    }
     default: {
       const exhaustive: never = node;
       throw new ExpressionEvaluationError(
@@ -515,3 +632,7 @@ export {
   isEmptyValue as isEmptyExpressionValue,
   looseEquals as expressionValuesEqual,
 };
+
+export function isArrayLiteralNode(node: ExpressionNode): boolean {
+  return node.kind === "literal" && Array.isArray(node.value);
+}

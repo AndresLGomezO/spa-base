@@ -1,8 +1,14 @@
 import type { DataHookDefinition } from "./data-hook-definition.js";
 import type { CreateDataHookExecutionInput } from "./data-hook-execution.js";
 import type { DataHookJobPayload } from "./data-hook-job.js";
+import type { ExpressionValue } from "./expression.js";
 
-export const HOOK_OPERATIONS = ["create", "update", "delete"] as const;
+export const HOOK_OPERATIONS = [
+  "create",
+  "update",
+  "delete",
+  "schedule",
+] as const;
 export const HOOK_PHASES = ["before", "after"] as const;
 
 export type HookOperation = (typeof HOOK_OPERATIONS)[number];
@@ -59,6 +65,7 @@ export interface HookEntityRepository {
     tenantId: string,
     data: Record<string, unknown>,
   ): Promise<HookEntityRepositoryRecord | null>;
+  delete(id: string, tenantId: string): Promise<boolean>;
   findByField(query: {
     tenantId: string;
     field: string;
@@ -94,6 +101,15 @@ export interface HookEntityServices {
     entityName: string,
     query: HookEntityListQuery,
   ) => Promise<readonly HookEntityRecord[]>;
+  readonly delete: (
+    entityName: string,
+    id: string,
+    options?: HookEntityWriteOptions,
+  ) => Promise<boolean>;
+  readonly get: (
+    entityName: string,
+    id: string,
+  ) => Promise<Record<string, unknown>>;
 }
 
 export interface HookLogger {
@@ -134,6 +150,14 @@ export interface HookContext {
    * from re-firing when chained writes loop back.
    */
   readonly visitedHookIds?: ReadonlySet<string>;
+  /**
+   * Records loaded by `getRecord` actions during this hook run, keyed by alias.
+   */
+  loaded?: Record<string, Record<string, unknown>>;
+  /**
+   * Scalars computed by `aggregateMatching` actions during this hook run, keyed by alias.
+   */
+  aggregates?: Record<string, ExpressionValue>;
 }
 
 export type HookHandler = (context: HookContext) => Promise<void> | void;

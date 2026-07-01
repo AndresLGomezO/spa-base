@@ -6,15 +6,15 @@ import { createServer } from "node:http";
 import type { Subscription } from "@google-cloud/pubsub";
 import { aggregationEventMessageSchema } from "@repo/event-engine";
 import { processAggregationEventTransaction } from "@repo/aggregation-engine";
+import { initializeFirebaseAdmin } from "@repo/gcp-firebase/firebase-admin";
+import { createFirestoreAdminAggregationEventRepository } from "@repo/gcp-firebase/firestore-admin-aggregation-event-repository";
+import { createFirestoreAdminMetricContributionRepository } from "@repo/gcp-firebase/firestore-admin-metric-contribution-repository";
+import { createFirestoreAdminMetricDefinitionRepository } from "@repo/gcp-firebase/firestore-admin-metric-definition-repository";
+import { createFirestoreAdminMetricValueRepository } from "@repo/gcp-firebase/firestore-admin-metric-value-repository";
 import {
   AGGREGATION_EVENTS_TOPIC,
-  createFirestoreAdminAggregationEventRepository,
-  createFirestoreAdminMetricDefinitionRepository,
-  createFirestoreAdminMetricContributionRepository,
-  createFirestoreAdminMetricValueRepository,
   ensureAggregationEventsTopic,
-  initializeFirebaseAdmin,
-} from "@repo/gcp-firebase";
+} from "@repo/gcp-firebase/firestore-aggregation-pubsub";
 
 const projectId = process.env.GCP_PROJECT_ID?.trim();
 const topicName =

@@ -2,7 +2,10 @@ import { useTranslation } from "react-i18next";
 import type { ExpressionNode, ExpressionUnaryOperator } from "@repo/hooks";
 import { FieldLabel, Select } from "@repo/ui";
 
-import type { ExpressionEditorNodeRenderer } from "./expression-editor-node-types";
+import type {
+  ExpressionEditorNodeRenderer,
+  LoadedBinding,
+} from "./expression-editor-node-types";
 import {
   listUnaryOperators,
   unaryOperatorLabelKey,
@@ -16,6 +19,8 @@ interface UnaryExpressionPanelProps {
   readonly value: Extract<ExpressionNode, { kind: "unary" }>;
   readonly onChange: (node: ExpressionNode) => void;
   readonly fieldNames?: readonly string[];
+  readonly loadedBindings?: readonly LoadedBinding[];
+  readonly aggregateBindings?: readonly string[];
   readonly renderNode: ExpressionEditorNodeRenderer;
 }
 
@@ -23,6 +28,8 @@ export function UnaryExpressionPanel({
   value,
   onChange,
   fieldNames,
+  loadedBindings,
+  aggregateBindings,
   renderNode,
 }: UnaryExpressionPanelProps) {
   const { t } = useTranslation("common");
@@ -55,6 +62,8 @@ export function UnaryExpressionPanel({
           value: value.operand,
           onChange: (operand) => onChange({ ...value, operand }),
           fieldNames,
+          loadedBindings,
+          aggregateBindings,
         })}
       </div>
     </div>

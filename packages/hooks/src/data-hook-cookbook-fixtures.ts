@@ -121,6 +121,7 @@ export const DATA_HOOK_COOKBOOK_FIXTURES: readonly PortableDataHookDefinition[] 
           type: "updateMatching",
           entity: "commitment",
           where: {
+            type: "condition",
             field: "contractId",
             operator: "==",
             value: { kind: "field", source: "current", path: "id" },
@@ -183,5 +184,114 @@ export const DATA_HOOK_COOKBOOK_FIXTURES: readonly PortableDataHookDefinition[] 
       ],
       enabled: true,
       order: 0,
+    },
+    {
+      name: "Seed schedule horizon",
+      entity: "financialItem",
+      phase: "before",
+      trigger: { operation: "create" },
+      condition: null,
+      actions: [
+        {
+          type: "createRecords",
+          entity: "paymentSchedule",
+          count: {
+            kind: "call",
+            fn: "min",
+            args: [
+              {
+                kind: "field",
+                source: "current",
+                path: "scheduleHorizonMonths",
+              },
+              { kind: "literal", value: 1000 },
+            ],
+          },
+          startIndex: { kind: "literal", value: 0 },
+          data: {
+            sequence: { kind: "var", name: "loopIndex" },
+            financialItemId: {
+              kind: "field",
+              source: "current",
+              path: "id",
+            },
+          },
+        },
+      ],
+      enabled: true,
+      order: 6,
+    },
+    {
+      name: "Extend schedule horizon",
+      entity: "financialItem",
+      phase: "after",
+      execution: "queued",
+      trigger: {
+        kind: "schedule",
+        cron: "0 0 1 * *",
+        timezone: "UTC",
+        scope: "eachRecord",
+        eachRecordWhere: {
+          type: "condition",
+          field: "status",
+          operator: "==",
+          value: { kind: "literal", value: "ACTIVE" },
+        },
+      },
+      condition: null,
+      actions: [
+        {
+          type: "aggregateMatching",
+          entity: "paymentSchedule",
+          op: "count",
+          as: "existingCount",
+          where: {
+            type: "condition",
+            field: "financialItemId",
+            operator: "==",
+            value: { kind: "field", source: "current", path: "id" },
+          },
+        },
+        {
+          type: "createRecords",
+          entity: "paymentSchedule",
+          count: {
+            kind: "call",
+            fn: "min",
+            args: [
+              { kind: "literal", value: 100 },
+              {
+                kind: "binary",
+                op: "-",
+                left: {
+                  kind: "field",
+                  source: "current",
+                  path: "scheduleHorizonMonths",
+                },
+                right: {
+                  kind: "field",
+                  source: "aggregate",
+                  alias: "existingCount",
+                },
+              },
+            ],
+          },
+          startIndex: {
+            kind: "field",
+            source: "aggregate",
+            alias: "existingCount",
+          },
+          data: {
+            sequence: { kind: "var", name: "loopIndex" },
+            financialItemId: {
+              kind: "field",
+              source: "current",
+              path: "id",
+            },
+          },
+        },
+      ],
+      enabled: true,
+      order: 7,
     },
   ] as const;

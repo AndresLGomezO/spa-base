@@ -26,9 +26,7 @@ const portableDataHookDefinitionSchema = createDataHookInputSchema.omit({
   tenantId: true,
 });
 
-export type PortableDataHookDefinition = z.infer<
-  typeof portableDataHookDefinitionSchema
->;
+export type PortableDataHookDefinition = Omit<CreateDataHookInput, "tenantId">;
 
 const dataHookDefinitionEnvelopeSchema = z.object({
   kind: z.literal(DATA_HOOK_DEFINITION_JSON_KIND),
@@ -36,9 +34,7 @@ const dataHookDefinitionEnvelopeSchema = z.object({
   data: portableDataHookDefinitionSchema,
 });
 
-export type DataHookDefinitionFormData = z.infer<
-  typeof dataHookDefinitionEnvelopeSchema
->["data"];
+export type DataHookDefinitionFormData = PortableDataHookDefinition;
 
 const dataHooksCatalogEnvelopeSchema = z.object({
   kind: z.literal(DATA_HOOKS_CATALOG_JSON_KIND),
@@ -49,9 +45,12 @@ const dataHooksCatalogEnvelopeSchema = z.object({
 
 export { dataHooksCatalogEnvelopeSchema };
 
-export type DataHooksCatalogEnvelope = z.infer<
-  typeof dataHooksCatalogEnvelopeSchema
->;
+export type DataHooksCatalogEnvelope = {
+  readonly kind: typeof DATA_HOOKS_CATALOG_JSON_KIND;
+  readonly version: typeof DATA_HOOK_DEFINITION_JSON_VERSION;
+  readonly exportedAt: string;
+  readonly dataHooks: readonly PortableDataHookDefinition[];
+};
 
 export interface DataHooksCatalogReplacePlan {
   readonly toCreate: readonly CreateDataHookInput[];
@@ -197,7 +196,7 @@ export function parseDataHookDefinitionJson(
     return { ok: false, errors: zodIssuesToErrors(result.error) };
   }
 
-  return { ok: true, data: result.data.data };
+  return { ok: true, data: result.data.data as DataHookDefinitionFormData };
 }
 
 export function validateDataHookDefinitionImport(
@@ -224,7 +223,7 @@ export function parseDataHooksCatalogJson(
     return { ok: false, errors: crossRefErrors };
   }
 
-  return { ok: true, data: result.data };
+  return { ok: true, data: result.data as DataHooksCatalogEnvelope };
 }
 
 export function validateDataHooksCatalogImport(
@@ -246,7 +245,7 @@ export function validateDataHooksCatalogEnvelope(
     return { ok: false, errors: crossRefErrors };
   }
 
-  return { ok: true, data: result.data };
+  return { ok: true, data: result.data as DataHooksCatalogEnvelope };
 }
 
 export function computeDataHooksCatalogReplacePlan(input: {

@@ -2,7 +2,10 @@ import { useTranslation } from "react-i18next";
 import type { ExpressionBinaryOperator, ExpressionNode } from "@repo/hooks";
 import { FieldLabel, Select } from "@repo/ui";
 
-import type { ExpressionEditorNodeRenderer } from "./expression-editor-node-types";
+import type {
+  ExpressionEditorNodeRenderer,
+  LoadedBinding,
+} from "./expression-editor-node-types";
 import {
   binaryOperatorLabelKey,
   listBinaryOperators,
@@ -16,6 +19,8 @@ interface BinaryExpressionPanelProps {
   readonly value: Extract<ExpressionNode, { kind: "binary" }>;
   readonly onChange: (node: ExpressionNode) => void;
   readonly fieldNames?: readonly string[];
+  readonly loadedBindings?: readonly LoadedBinding[];
+  readonly aggregateBindings?: readonly string[];
   readonly renderNode: ExpressionEditorNodeRenderer;
 }
 
@@ -23,6 +28,8 @@ export function BinaryExpressionPanel({
   value,
   onChange,
   fieldNames,
+  loadedBindings,
+  aggregateBindings,
   renderNode,
 }: BinaryExpressionPanelProps) {
   const { t } = useTranslation("common");
@@ -55,12 +62,16 @@ export function BinaryExpressionPanel({
           value: value.left,
           onChange: (left) => onChange({ ...value, left }),
           fieldNames,
+          loadedBindings,
+          aggregateBindings,
         })}
         {renderNode({
           label: t("dataHooks.expression.rightOperand"),
           value: value.right,
           onChange: (right) => onChange({ ...value, right }),
           fieldNames,
+          loadedBindings,
+          aggregateBindings,
         })}
       </div>
     </div>
