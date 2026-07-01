@@ -6,6 +6,8 @@ import { fileURLToPath } from "node:url";
 
 // Bundle workspace TypeScript packages into dist; keep npm packages with native/dynamic loads external.
 const npmExternals = [
+  "@google-cloud/firestore",
+  "@google-cloud/pubsub",
   "@google-cloud/vertexai",
   "@google/genai",
   "firebase-admin",

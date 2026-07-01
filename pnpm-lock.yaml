@@ -652,6 +652,12 @@ importers:
       '@app/platform':
         specifier: workspace:*
         version: link:../platform
+      '@google-cloud/firestore':
+        specifier: 'catalog:'
+        version: 7.11.6
+      '@google-cloud/pubsub':
+        specifier: 'catalog:'
+        version: 4.11.0
       '@google-cloud/vertexai':
         specifier: 'catalog:'
         version: 1.12.0

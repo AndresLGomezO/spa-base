@@ -13,6 +13,8 @@
   },
   "dependencies": {
     "@app/platform": "workspace:*",
+    "@google-cloud/firestore": "catalog:",
+    "@google-cloud/pubsub": "catalog:",
     "@google-cloud/vertexai": "catalog:",
     "@repo/ai-context": "workspace:*",
     "@repo/ai-engine": "workspace:*",
