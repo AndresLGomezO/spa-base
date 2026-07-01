@@ -7,8 +7,9 @@ Domain model specification for the **`rates` dev tenant** on the ESP platform. T
 - [`apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-entity-definitions.json) — 11 entities
 - [`apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json) — 20 metrics
 - [`apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json) — 35 saved queries
+- [`apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-custom-views.json) — 21 sidebar custom views
 
-For JSON envelope format, see [entity-definition-json.md](./entity-definition-json.md).
+For JSON envelope format, see [entity-definition-json.md](./entity-definition-json.md), [entity-query-definition-json.md](./entity-query-definition-json.md), and [custom-view-definition-json.md](./custom-view-definition-json.md).
 
 **Platform stack:** Firestore + dynamic entities (`@repo/dynamic-entities`) + UI Builder wizard + metrics engine (`@repo/metrics-engine`).
 
@@ -683,7 +684,16 @@ Uses existing `@repo/metrics-engine` and aggregation pipeline. See [rates-metric
 
 **Catalogs:** Applied via **`pnpm seed:database`** from [`rates-tenant/catalogs/`](../apps/api/src/admin/rates-tenant/catalogs/). Derived KPIs (net result, net worth) combine multiple metric bindings in the UI — see [metric-definition-json.md](./metric-definition-json.md).
 
-**Saved query views:** 35 queries in `rates-query-definitions.json`. Use as the list/filter layer for dashboards before wiring `query-viewer` widgets — see [entity-query-definition-json.md](./entity-query-definition-json.md).
+**Saved query views:** 35 queries in `rates-query-definitions.json`. **21 custom views** in `rates-custom-views.json` replace raw entity list pages in the sidebar — see [custom-view-definition-json.md](./custom-view-definition-json.md).
+
+### Navigation strategy
+
+| Visible in sidebar | Hidden from nav (`hiddenFromNav`) |
+|---|---|
+| Custom views (query-filtered lists at `/app/views/{viewId}`) | `financialItem`, `paymentSchedule`, `transaction`, `account`, `balanceSnapshot` |
+| `actor`, `category` (setup/reference entities) | `loanDetails`, `incomeDetails`, `investmentDetails`, `serviceDetails` |
+
+Import order: entities → metrics → queries → **custom views** (via `pnpm seed:database`).
 
 ### Recommended metric definitions
 
@@ -703,13 +713,14 @@ Uses existing `@repo/metrics-engine` and aggregation pipeline. See [rates-metric
 
 ### Dashboard views
 
-| View | Primary widgets | Data source | Saved queries (catalog) |
+| View | Custom view `viewId` | Query | Also useful |
 |---|---|---|---|
-| **Monthly control** (replaces sheet) | Expandable table of `financialItem` sorted by `nextDueDate`; KPI total payments due this month | `financialItem`, `paymentSchedule` | Active commitments, Commitments due this month, Due this month |
-| **Cashflow calendar** | Series chart by week/month | `paymentSchedule` + `transaction` | Upcoming payments, Transactions this month |
-| **Net worth** | KPI assets / liabilities / net; trend series from `balanceSnapshot` | `financialItem`, `balanceSnapshot` | Assets, Liabilities, Latest balance snapshots |
-| **Personal profitability** | KPI monthly result; table of YIELD items vs expected | `transaction`, `investmentDetails` | Income this month, Expenses this month, Interest this month |
-| **By property** | Filter `financialItem` by PROPERTY actor | `financialItem`, `transaction` | By property |
+| **Monthly control** | `monthly-control` | Active commitments | `commitments-due-this-month`, `past-due-commitments` |
+| **Cashflow calendar** | `upcoming-payments`, `payments-due-this-month` | Upcoming payments, Due this month | `due-today`, `overdue-payments` |
+| **Net worth** | `assets`, `liabilities`, `balance-history` | Assets, Liabilities, Latest balance snapshots | `debts` |
+| **Personal profitability** | `income-this-month`, `expenses-this-month` | Income/Expenses this month | `transactions-this-month` |
+| **By property** | `by-property` | By property | — |
+| **Accounts** | `accounts-by-balance` | Accounts by balance | `actor` entity page |
 
 ---
 

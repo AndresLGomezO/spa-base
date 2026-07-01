@@ -35,6 +35,23 @@ const EntityCatalogContext = createContext<EntityCatalogContextValue | null>(
   null,
 );
 
+const EntityDefinitionOverrideContext =
+  createContext<EntityCatalogEntry | null>(null);
+
+export function EntityDefinitionOverrideProvider({
+  definition,
+  children,
+}: {
+  readonly definition: EntityCatalogEntry;
+  readonly children: ReactNode;
+}) {
+  return (
+    <EntityDefinitionOverrideContext.Provider value={definition}>
+      {children}
+    </EntityDefinitionOverrideContext.Provider>
+  );
+}
+
 function EntityCatalogProviderFromQuery({
   children,
 }: {
@@ -115,6 +132,10 @@ export function useEntityCatalog(): EntityCatalogContextValue {
 }
 
 export function useEntityDefinition(name: EntityName): EntityCatalogEntry {
+  const override = useContext(EntityDefinitionOverrideContext);
   const { getDefinition } = useEntityCatalog();
+  if (override && override.name === name) {
+    return override;
+  }
   return getDefinition(name);
 }

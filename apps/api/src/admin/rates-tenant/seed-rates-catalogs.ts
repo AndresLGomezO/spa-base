@@ -3,11 +3,13 @@ import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
 import { parseEntityDefinitionsCatalogJson } from "@repo/dynamic-entities";
+import { parseCustomViewsCatalogJson } from "@repo/custom-views";
 import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
 import { parseEntityQueryDefinitionsCatalogJson } from "@repo/entity-queries";
 import {
   createFirestoreAdminAggregationEventRepository,
   createFirestoreAdminBackfillJobRepository,
+  createFirestoreAdminCustomViewRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminMetricContributionRepository,
@@ -22,6 +24,7 @@ import { replaceMetricDefinitionsCatalog } from "../../aggregation/replace-metri
 import { createMetricRuntimeContext } from "../../aggregation/metric-runtime-context.js";
 import { listSourceDocumentsForMetric } from "../../aggregation/list-source-documents.js";
 import { replaceEntityQueryDefinitionsCatalog } from "../../entity-queries/replace-entity-query-definitions-catalog.js";
+import { replaceCustomViewsCatalog } from "../../custom-views/replace-custom-views-catalog.js";
 
 const CATALOG_DIR = join(dirname(fileURLToPath(import.meta.url)), "catalogs");
 
@@ -41,6 +44,11 @@ interface SeedRatesCatalogsResult {
     readonly deleted: number;
   };
   readonly queryCounts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly customViewCounts: {
     readonly created: number;
     readonly updated: number;
     readonly deleted: number;
@@ -82,12 +90,23 @@ export async function seedRatesCatalogs(
     );
   }
 
+  const customViewParsed = parseCustomViewsCatalogJson(
+    readCatalogJson("rates-custom-views.json"),
+  );
+  if (!customViewParsed.ok) {
+    throw new Error(
+      `Invalid rates custom views catalog: ${customViewParsed.errors.map((error) => error.message).join("; ")}`,
+    );
+  }
+
   const entityCategoryRepository =
     createFirestoreAdminEntityCategoryRepository(firebaseAdminConfig);
   const metricDefinitionRepository =
     createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig);
   const entityQueryDefinitionRepository =
     createFirestoreAdminEntityQueryDefinitionRepository(firebaseAdminConfig);
+  const customViewRepository =
+    createFirestoreAdminCustomViewRepository(firebaseAdminConfig);
 
   const entityResult = await replaceEntityDefinitionsCatalog(
     {
@@ -134,14 +153,26 @@ export async function seedRatesCatalogs(
     queryParsed.data,
   );
 
+  const customViewResult = await replaceCustomViewsCatalog(
+    {
+      entityRuntime,
+      customViewRepository,
+      entityQueryDefinitionRepository,
+      entityCategoryRepository,
+    },
+    tenantId,
+    customViewParsed.data,
+  );
+
   console.log(
-    `[rates seed] Catalogs: entities +${entityResult.counts.created}/~${entityResult.counts.updated}/-${entityResult.counts.deleted}, metrics +${metricResult.counts.created}/~${metricResult.counts.updated}/-${metricResult.counts.deleted}, queries +${queryResult.counts.created}/~${queryResult.counts.updated}/-${queryResult.counts.deleted}`,
+    `[rates seed] Catalogs: entities +${entityResult.counts.created}/~${entityResult.counts.updated}/-${entityResult.counts.deleted}, metrics +${metricResult.counts.created}/~${metricResult.counts.updated}/-${metricResult.counts.deleted}, queries +${queryResult.counts.created}/~${queryResult.counts.updated}/-${queryResult.counts.deleted}, customViews +${customViewResult.counts.created}/~${customViewResult.counts.updated}/-${customViewResult.counts.deleted}`,
   );
 
   return {
     entityCounts: entityResult.counts,
     metricCounts: metricResult.counts,
     queryCounts: queryResult.counts,
+    customViewCounts: customViewResult.counts,
     definitionRecords: entityResult.items,
   };
 }

@@ -9,6 +9,7 @@ import { ItemListDesignerTabs } from "./ItemListDesignerTabs";
 
 interface ItemListDesignerViewProps {
   readonly entityName: EntityName;
+  readonly customViewId?: string;
 }
 
 function ItemListDesignerPageContent({
@@ -34,9 +35,13 @@ function ItemListDesignerPageContent({
 
 export function ItemListDesignerView({
   entityName,
+  customViewId,
 }: ItemListDesignerViewProps) {
   return (
-    <ItemListDesignerProvider entityName={entityName}>
+    <ItemListDesignerProvider
+      entityName={entityName}
+      customViewId={customViewId}
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <ItemListDesignerPageContent entityName={entityName} />
       </div>

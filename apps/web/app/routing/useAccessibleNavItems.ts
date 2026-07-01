@@ -8,6 +8,10 @@ import {
   useEntityNavItems,
   type EntityNavItem,
 } from "../entities/use-entity-nav-items";
+import {
+  useCustomViewNavItems,
+  type CustomViewNavItem,
+} from "../custom-views/use-custom-view-nav-items";
 import { useEntityNavCategories } from "../hooks/useEntityNavCategories";
 import { resolveLucideIcon } from "../lib/resolve-lucide-icon";
 import {
@@ -24,6 +28,7 @@ import {
   SETTINGS_AI_DEBUGGER_NAV_ITEM,
   SETTINGS_METRICS_NAV_ITEM,
   SETTINGS_QUERY_BUILDER_NAV_ITEM,
+  SETTINGS_CUSTOM_VIEWS_NAV_ITEM,
   SETTINGS_GROUP_ICON,
   SETTINGS_ROLES_NAV_ITEM,
   SETTINGS_USER_MANAGEMENT_NAV_ITEM,
@@ -37,7 +42,10 @@ import {
   useDesignLayoutNavSubGroups,
 } from "./design-layout-nav";
 
-function compareNavItems(left: EntityNavItem, right: EntityNavItem): number {
+function compareNavItems(
+  left: EntityNavItem | CustomViewNavItem,
+  right: EntityNavItem | CustomViewNavItem,
+): number {
   const leftOrder = left.navOrder ?? Number.MAX_SAFE_INTEGER;
   const rightOrder = right.navOrder ?? Number.MAX_SAFE_INTEGER;
   if (leftOrder !== rightOrder) {
@@ -46,7 +54,7 @@ function compareNavItems(left: EntityNavItem, right: EntityNavItem): number {
   return left.label.localeCompare(right.label);
 }
 
-function toNavLink(item: EntityNavItem): NavLinkConfig {
+function toNavLink(item: EntityNavItem | CustomViewNavItem): NavLinkConfig {
   return {
     id: item.id,
     label: item.label,
@@ -60,6 +68,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
   const { permissions, isSuperAdmin, availableTenants = [] } = useAuth();
   const { items: catalogItems } = useEntityCatalog();
   const entityNavItems = useEntityNavItems();
+  const customViewNavItems = useCustomViewNavItems();
   const categoriesQuery = useEntityNavCategories();
   const designLayoutSubGroups = useDesignLayoutNavSubGroups();
 
@@ -87,9 +96,33 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       })
       .sort(compareNavItems);
 
-    const uncategorizedChildren = accessibleEntityLinks
-      .filter((item) => !item.navCategoryId)
-      .map(toNavLink);
+    const accessibleCustomViewLinks = customViewNavItems
+      .filter((item) => {
+        if (
+          item.hiddenFromNav &&
+          !hasPermission("internalEntity.read", permissions, { isSuperAdmin })
+        ) {
+          return false;
+        }
+        return (
+          hasPermission("customView.read", permissions, { isSuperAdmin }) &&
+          hasPermission(`${item.sourceEntity}.read`, permissions, {
+            isSuperAdmin,
+          })
+        );
+      })
+      .sort(compareNavItems);
+
+    const uncategorizedChildren = [
+      ...accessibleEntityLinks
+        .filter((item) => !item.navCategoryId)
+        .map(toNavLink),
+      ...accessibleCustomViewLinks
+        .filter((item) => !item.navCategoryId)
+        .map(toNavLink),
+    ].sort((left, right) =>
+      (left.label ?? "").localeCompare(right.label ?? ""),
+    );
 
     if (uncategorizedChildren.length > 0) {
       items.push({
@@ -103,9 +136,16 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     const categories = categoriesQuery.data ?? [];
     for (const category of categories) {
-      const children = accessibleEntityLinks
-        .filter((item) => item.navCategoryId === category.id)
-        .map(toNavLink);
+      const children = [
+        ...accessibleEntityLinks
+          .filter((item) => item.navCategoryId === category.id)
+          .map(toNavLink),
+        ...accessibleCustomViewLinks
+          .filter((item) => item.navCategoryId === category.id)
+          .map(toNavLink),
+      ].sort((left, right) =>
+        (left.label ?? "").localeCompare(right.label ?? ""),
+      );
       if (children.length === 0) {
         continue;
       }
@@ -178,6 +218,13 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       analyticsChildren.push(SETTINGS_QUERY_BUILDER_NAV_ITEM);
     }
 
+    if (
+      hasPermission("customView.create", permissions, { isSuperAdmin }) ||
+      hasPermission("customView.update", permissions, { isSuperAdmin })
+    ) {
+      analyticsChildren.push(SETTINGS_CUSTOM_VIEWS_NAV_ITEM);
+    }
+
     if (analyticsChildren.length > 0) {
       items.push({
         id: "analytics",
@@ -230,6 +277,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     availableTenants.length,
     catalogItems,
     categoriesQuery.data,
+    customViewNavItems,
     designLayoutSubGroups,
     entityNavItems,
     isSuperAdmin,

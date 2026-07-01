@@ -19,7 +19,7 @@ import {
   DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
   type LayoutPreviewBreakpoint,
 } from "../ui-builder/LayoutPreviewPanel";
-import { useEntityMainPageLayoutEditor } from "../ui-builder/use-entity-main-page-layout-editor";
+import { useDesignerMainPageLayoutEditor } from "../ui-builder/use-designer-main-page-layout-editor";
 import { DEFAULT_MOBILE_PREVIEW_DEVICE_ID } from "../form-designer/mobile-preview-device-presets";
 import type { MobilePreviewDeviceId } from "../form-designer/mobile-preview-device-presets";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
@@ -78,15 +78,17 @@ function applyTabToSearchParams(
 
 interface MainViewDesignerProviderProps {
   readonly entityName: EntityName;
+  readonly customViewId?: string;
   readonly children: ReactNode;
 }
 
 export function MainViewDesignerProvider({
   entityName,
+  customViewId,
   children,
 }: MainViewDesignerProviderProps) {
   const { t } = useTranslation("common");
-  const editor = useEntityMainPageLayoutEditor(entityName);
+  const editor = useDesignerMainPageLayoutEditor(entityName, customViewId);
   const definition = useEntityDefinition(entityName);
   const canSave = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
   const [searchParams, setSearchParams] = useSearchParams();

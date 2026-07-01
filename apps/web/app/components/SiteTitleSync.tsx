@@ -1,32 +1,10 @@
-import { useEffect, useMemo } from "react";
-import { useMatches, type UIMatch } from "react-router";
+import { useLayoutEffect, useMemo } from "react";
+import { useLocation } from "react-router";
 
 import { useAuth } from "../auth/AuthContext";
+import { usePageTitleFromNav } from "../routing/page-title-context";
 
 export const DEFAULT_SITE_NAME = "Entity System - ESP";
-
-type MetaDescriptor = {
-  readonly title?: string;
-};
-
-type RouteMatchWithMeta = UIMatch & {
-  readonly meta?: readonly MetaDescriptor[];
-};
-
-export function getPageTitleFromMatches(matches: UIMatch[]): string | null {
-  for (let index = matches.length - 1; index >= 0; index -= 1) {
-    const meta = (matches[index] as RouteMatchWithMeta | undefined)?.meta;
-    if (!meta) {
-      continue;
-    }
-    for (const descriptor of meta) {
-      if (typeof descriptor.title === "string" && descriptor.title.length > 0) {
-        return descriptor.title;
-      }
-    }
-  }
-  return null;
-}
 
 export function composeDocumentTitle(
   pageTitle: string | null,
@@ -38,24 +16,30 @@ export function composeDocumentTitle(
   return siteName;
 }
 
+function resolveStaticPageTitle(pathname: string): string | null {
+  if (pathname === "/login") {
+    return "Login";
+  }
+
+  return null;
+}
+
 /**
  * Sets the browser tab title using the active tenant as the site name.
  */
 export function SiteTitleSync() {
   const { activeTenantName } = useAuth();
-  const matches = useMatches();
-  const pageTitle = useMemo(() => getPageTitleFromMatches(matches), [matches]);
+  const { pathname } = useLocation();
+  const pageTitleFromNav = usePageTitleFromNav();
+  const pageTitle = pageTitleFromNav ?? resolveStaticPageTitle(pathname);
   const siteName = activeTenantName ?? DEFAULT_SITE_NAME;
-  const documentTitle = composeDocumentTitle(pageTitle, siteName);
+  const documentTitle = useMemo(
+    () => composeDocumentTitle(pageTitle, siteName),
+    [pageTitle, siteName],
+  );
 
-  useEffect(() => {
-    const timer = window.setTimeout(() => {
-      document.title = documentTitle;
-    }, 0);
-
-    return () => {
-      window.clearTimeout(timer);
-    };
+  useLayoutEffect(() => {
+    document.title = documentTitle;
   }, [documentTitle]);
 
   return null;

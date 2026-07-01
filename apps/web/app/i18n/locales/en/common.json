@@ -47,6 +47,7 @@
     "analytics": "Data & Analytics",
     "metricsNav": "Metrics",
     "queryBuilderNav": "Query Builder",
+    "customViewsNav": "Custom Views",
     "entityCategories": "Entity categories",
     "roles": "Roles & Permissions",
     "platform": "Platform",
@@ -61,7 +62,8 @@
     "designLayoutPresets": "Component presets",
     "designLayoutDashboard": "Dashboard layout",
     "aiChat": "AI Chat",
-    "aiDebugger": "AI Debugger"
+    "aiDebugger": "AI Debugger",
+    "systemConfiguration": "System configuration"
   },
   "aiDebugger": {
     "title": "AI Debugger",
@@ -1847,6 +1849,82 @@
       "removeToken": "Remove",
       "moveTokenUp": "Move up",
       "moveTokenDown": "Move down"
+    }
+  },
+  "customViews": {
+    "title": "Custom Views",
+    "subtitle": "Create entity-style pages powered by saved queries, with full UI builder customization and sidebar navigation.",
+    "forbidden": "You do not have permission to manage custom views.",
+    "notFound": "Custom view not found.",
+    "empty": "No custom views yet.",
+    "create": "Create custom view",
+    "createTitle": "Create custom view",
+    "editTitle": "Edit custom view",
+    "edit": "Edit",
+    "delete": "Delete",
+    "openPage": "Open page",
+    "designLayout": "Design layout",
+    "save": "Save",
+    "cancel": "Cancel",
+    "saveSuccess": "Custom view saved.",
+    "saveFailed": "Failed to save custom view.",
+    "deleteSuccess": "Custom view deleted.",
+    "deleteFailed": "Failed to delete custom view.",
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "query": "Saved query",
+      "selectQuery": "Select a saved query",
+      "navLabel": "Sidebar label",
+      "navIcon": "Sidebar icon (Lucide name)",
+      "navCategory": "Sidebar category",
+      "noCategory": "No category",
+      "navOrder": "Sidebar order",
+      "hiddenFromNav": "Hide from sidebar",
+      "status": "Status"
+    },
+    "status": {
+      "active": "Active",
+      "paused": "Paused"
+    },
+    "json": {
+      "viewTrigger": "View JSON",
+      "importTrigger": "Import JSON",
+      "pasteLabel": "Paste JSON",
+      "uploadLabel": "Upload JSON file",
+      "skeletonTitle": "Example format",
+      "skeletonShow": "Show example",
+      "skeletonHide": "Hide example",
+      "valid": "JSON is valid.",
+      "invalid": "JSON validation errors",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "readOnlyHint": "You do not have permission to apply imported JSON.",
+      "viewDescription": "Portable custom view definition JSON for handoff or version control.",
+      "viewCopy": "Copy JSON",
+      "viewCopied": "Copied",
+      "view": {
+        "viewTitle": "Current custom view JSON",
+        "importTitle": "Import custom view JSON",
+        "importDescriptionCreate": "Replace the form with the imported custom view definition. Save to create the view.",
+        "importDescriptionEdit": "Apply the imported custom view definition immediately. viewId and query name must not change.",
+        "viewIdChangeError": "viewId cannot be changed via JSON import.",
+        "queryNameChangeError": "entityQueryDefinitionName cannot be changed via JSON import.",
+        "queryNotFound": "Saved query not found for the imported entityQueryDefinitionName.",
+        "importSuccess": "Custom view updated from JSON.",
+        "importFailed": "Unable to apply imported custom view JSON."
+      },
+      "catalog": {
+        "viewTitle": "Current custom views catalog JSON",
+        "importTitle": "Import custom views catalog JSON",
+        "importDescription": "Replace the tenant custom views catalog with the imported definitions. Views not in the JSON will be removed.",
+        "confirmTitle": "Replace custom views catalog?",
+        "confirmDescription": "This will create, update, and delete custom view definitions to match the imported JSON. Sidebar and design-layout links to removed views are not cleaned up automatically.",
+        "confirmAction": "Replace catalog",
+        "replaceSummary": "Views: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
+        "importSuccess": "Custom views catalog replaced.",
+        "importFailed": "Unable to replace custom views catalog."
+      }
     }
   },
   "queryBuilder": {

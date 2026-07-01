@@ -20,7 +20,7 @@ import {
   DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
   type LayoutPreviewBreakpoint,
 } from "../ui-builder/LayoutPreviewPanel";
-import { useEntityListLayoutEditor } from "../ui-builder/use-entity-list-layout-editor";
+import { useDesignerListLayoutEditor } from "../ui-builder/use-designer-list-layout-editor";
 import { DEFAULT_MOBILE_PREVIEW_DEVICE_ID } from "../form-designer/mobile-preview-device-presets";
 import type { MobilePreviewDeviceId } from "../form-designer/mobile-preview-device-presets";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
@@ -139,15 +139,17 @@ function applyColumnsScopeToSearchParams(
 
 interface ItemListDesignerProviderProps {
   readonly entityName: EntityName;
+  readonly customViewId?: string;
   readonly children: ReactNode;
 }
 
 export function ItemListDesignerProvider({
   entityName,
+  customViewId,
   children,
 }: ItemListDesignerProviderProps) {
   const { t } = useTranslation("common");
-  const editor = useEntityListLayoutEditor(entityName);
+  const editor = useDesignerListLayoutEditor(entityName, customViewId);
   const definition = useEntityDefinition(entityName);
   const canSave = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
   const [searchParams, setSearchParams] = useSearchParams();

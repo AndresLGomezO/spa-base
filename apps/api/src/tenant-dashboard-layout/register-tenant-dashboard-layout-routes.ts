@@ -58,10 +58,7 @@ export async function registerTenantDashboardLayoutRoutes(
   app: FastifyInstance,
   options: RegisterTenantDashboardLayoutRoutesOptions,
 ): Promise<void> {
-  const requireRead = createRequirePermission(
-    options.permissionDeps,
-    "entityUiOverride.read",
-  );
+  const requireRead = createRequirePermission(options.permissionDeps, "*.read");
   const requireWrite = createRequireAnyPermission(
     options.permissionDeps,
     ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS,

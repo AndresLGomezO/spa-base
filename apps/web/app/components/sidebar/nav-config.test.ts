@@ -2,9 +2,11 @@ import { describe, expect, it } from "vitest";
 import { Database } from "lucide-react";
 
 import {
+  findFirstSystemConfigNavIndex,
   isNavGroupActive,
   isNavSubGroupActive,
   isPathActive,
+  shouldShowSystemConfigurationNavSection,
 } from "./nav-config";
 
 describe("isNavGroupActive", () => {
@@ -86,5 +88,41 @@ describe("isNavSubGroupActive", () => {
     expect(
       isNavSubGroupActive("/settings/design-layout/main/account", subgroup),
     ).toBe(false);
+  });
+});
+
+describe("system configuration nav section", () => {
+  it("detects the first system configuration group", () => {
+    const items = [
+      { id: "home" },
+      { id: "data-models" },
+      { id: "category-sales" },
+      { id: "data-structure" },
+      { id: "settings" },
+    ];
+
+    expect(findFirstSystemConfigNavIndex(items)).toBe(3);
+  });
+
+  it("shows the section header when data entities precede system configuration", () => {
+    const items = [
+      { id: "home" },
+      { id: "category-sales" },
+      { id: "settings" },
+    ];
+
+    expect(shouldShowSystemConfigurationNavSection(items)).toBe(true);
+  });
+
+  it("hides the section header for viewers without system configuration", () => {
+    const items = [{ id: "home" }, { id: "data-models" }];
+
+    expect(shouldShowSystemConfigurationNavSection(items)).toBe(false);
+  });
+
+  it("hides the section header when system configuration has no entity groups above it", () => {
+    const items = [{ id: "home" }, { id: "settings" }];
+
+    expect(shouldShowSystemConfigurationNavSection(items)).toBe(false);
   });
 });

@@ -47,6 +47,7 @@
     "analytics": "Analítica",
     "metricsNav": "Métricas",
     "queryBuilderNav": "Constructor de consultas",
+    "customViewsNav": "Vistas personalizadas",
     "entityCategories": "Categorías de entidades",
     "roles": "Roles y permisos",
     "platform": "Plataforma",
@@ -61,7 +62,8 @@
     "designLayoutPresets": "Presets de componentes",
     "designLayoutDashboard": "Layout del dashboard",
     "aiChat": "Chat IA",
-    "aiDebugger": "Depurador IA"
+    "aiDebugger": "Depurador IA",
+    "systemConfiguration": "Configuración del sistema"
   },
   "aiDebugger": {
     "title": "Depurador IA",
@@ -1847,6 +1849,82 @@
       "removeToken": "Eliminar",
       "moveTokenUp": "Subir",
       "moveTokenDown": "Bajar"
+    }
+  },
+  "customViews": {
+    "title": "Vistas personalizadas",
+    "subtitle": "Crea páginas estilo entidad impulsadas por consultas guardadas, con personalización completa del constructor de UI y navegación lateral.",
+    "forbidden": "No tienes permiso para administrar vistas personalizadas.",
+    "notFound": "Vista personalizada no encontrada.",
+    "empty": "Aún no hay vistas personalizadas.",
+    "create": "Crear vista personalizada",
+    "createTitle": "Crear vista personalizada",
+    "editTitle": "Editar vista personalizada",
+    "edit": "Editar",
+    "delete": "Eliminar",
+    "openPage": "Abrir página",
+    "designLayout": "Diseñar layout",
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "saveSuccess": "Vista personalizada guardada.",
+    "saveFailed": "No se pudo guardar la vista personalizada.",
+    "deleteSuccess": "Vista personalizada eliminada.",
+    "deleteFailed": "No se pudo eliminar la vista personalizada.",
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "query": "Consulta guardada",
+      "selectQuery": "Seleccionar una consulta guardada",
+      "navLabel": "Etiqueta en barra lateral",
+      "navIcon": "Icono en barra lateral (nombre Lucide)",
+      "navCategory": "Categoría en barra lateral",
+      "noCategory": "Sin categoría",
+      "navOrder": "Orden en barra lateral",
+      "hiddenFromNav": "Ocultar de la barra lateral",
+      "status": "Estado"
+    },
+    "status": {
+      "active": "Activa",
+      "paused": "Pausada"
+    },
+    "json": {
+      "viewTrigger": "Ver JSON",
+      "importTrigger": "Importar JSON",
+      "pasteLabel": "Pegar JSON",
+      "uploadLabel": "Subir archivo JSON",
+      "skeletonTitle": "Formato de ejemplo",
+      "skeletonShow": "Mostrar ejemplo",
+      "skeletonHide": "Ocultar ejemplo",
+      "valid": "El JSON es válido.",
+      "invalid": "Errores de validación del JSON",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "readOnlyHint": "No tienes permiso para aplicar el JSON importado.",
+      "viewDescription": "JSON portable de definición de vista personalizada para transferencia o control de versiones.",
+      "viewCopy": "Copiar JSON",
+      "viewCopied": "Copiado",
+      "view": {
+        "viewTitle": "JSON de la vista personalizada actual",
+        "importTitle": "Importar JSON de vista personalizada",
+        "importDescriptionCreate": "Reemplaza el formulario con la definición importada. Guarda para crear la vista.",
+        "importDescriptionEdit": "Aplica la definición importada de inmediato. viewId y el nombre de consulta no pueden cambiar.",
+        "viewIdChangeError": "viewId no puede cambiarse mediante importación JSON.",
+        "queryNameChangeError": "entityQueryDefinitionName no puede cambiarse mediante importación JSON.",
+        "queryNotFound": "No se encontró la consulta guardada para entityQueryDefinitionName importado.",
+        "importSuccess": "Vista personalizada actualizada desde JSON.",
+        "importFailed": "No se pudo aplicar el JSON de vista personalizada importado."
+      },
+      "catalog": {
+        "viewTitle": "JSON del catálogo de vistas personalizadas",
+        "importTitle": "Importar catálogo de vistas personalizadas JSON",
+        "importDescription": "Reemplaza el catálogo de vistas personalizadas del tenant con las definiciones importadas. Las vistas que no estén en el JSON se eliminarán.",
+        "confirmTitle": "¿Reemplazar catálogo de vistas personalizadas?",
+        "confirmDescription": "Esto creará, actualizará y eliminará definiciones de vistas personalizadas para que coincidan con el JSON importado. Los enlaces de barra lateral y diseño a vistas eliminadas no se limpian automáticamente.",
+        "confirmAction": "Reemplazar catálogo",
+        "replaceSummary": "Vistas: {{created}} creadas, {{updated}} actualizadas, {{deleted}} eliminadas.",
+        "importSuccess": "Catálogo de vistas personalizadas reemplazado.",
+        "importFailed": "No se pudo reemplazar el catálogo de vistas personalizadas."
+      }
     }
   },
   "queryBuilder": {

@@ -23,6 +23,7 @@ import type {
   MetricDefinitionRepository,
   MetricValueRepository,
   EntityQueryDefinitionRepository,
+  CustomViewRepository,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import {
@@ -38,6 +39,7 @@ import {
   createInMemoryHookRepository,
   createInMemoryMetricDefinitionRepository,
   createInMemoryEntityQueryDefinitionRepository,
+  createInMemoryCustomViewRepository,
   createInMemoryMetricContributionRepository,
   createInMemoryMetricValueRepository,
   createInMemoryTenantAiContextRepository,
@@ -58,6 +60,7 @@ import {
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
+  createFirestoreAdminCustomViewRepository,
   createFirestoreAdminMetricContributionRepository,
   createFirestoreAdminMetricValueRepository,
   createFirestoreAdminPlatformRoleRepository,
@@ -73,6 +76,7 @@ import { listSourceDocumentsForMetric } from "./aggregation/list-source-document
 import { registerMetricDefinitionRoutes } from "./aggregation/register-metric-definition-routes.js";
 import { registerMetricReadRoutes } from "./aggregation/register-metric-read-routes.js";
 import { registerEntityQueryDefinitionRoutes } from "./entity-queries/register-entity-query-definition-routes.js";
+import { registerCustomViewRoutes } from "./custom-views/register-custom-view-routes.js";
 import type { AggregationEmitterDeps } from "./aggregation/emit-aggregation-event.js";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
 
@@ -141,6 +145,7 @@ interface BuildServerOptions {
   readonly hookRepository?: HookRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
+  readonly customViewRepository?: CustomViewRepository;
   readonly aggregationEventRepository?: AggregationEventRepository;
   readonly metricValueRepository?: MetricValueRepository;
   readonly metricContributionRepository?: MetricContributionRepository;
@@ -323,6 +328,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
       : createFirestoreAdminEntityQueryDefinitionRepository(
           firebaseAdminConfig,
         ));
+
+  const customViewRepository =
+    options.customViewRepository ??
+    (options.repositories
+      ? createInMemoryCustomViewRepository()
+      : createFirestoreAdminCustomViewRepository(firebaseAdminConfig));
 
   const aggregationEventRepository =
     options.aggregationEventRepository ??
@@ -605,6 +616,15 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     entityQueryDefinitionRepository,
+  });
+
+  await registerCustomViewRoutes(server, {
+    authenticate,
+    permissionDeps,
+    entityRuntime,
+    customViewRepository,
+    entityQueryDefinitionRepository,
+    entityCategoryRepository,
   });
 
   await registerMetricReadRoutes(server, {

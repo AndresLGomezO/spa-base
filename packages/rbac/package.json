@@ -29,6 +29,7 @@
     "@repo/entities": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/entity-queries": "workspace:*",
+    "@repo/custom-views": "workspace:*",
     "@repo/metrics-engine": "workspace:*",
     "@repo/shared-types": "workspace:*",
     "zod": "catalog:"

@@ -15,16 +15,22 @@ import {
   listEntity,
   type EntityQueryDefinitionRecord,
 } from "../../lib/api-client";
+import { resolveQueryExpansionCatalog } from "../../lib/resolve-query-expansion-catalog";
 
 export async function executeEntityQueryDefinition(
   definition: EntityQueryDefinitionRecord,
   catalog: readonly EntityCatalogEntry[],
 ): Promise<readonly Record<string, unknown>[]> {
   const sort = definition.sort;
+  const expansionCatalog = await resolveQueryExpansionCatalog({
+    baseCatalog: catalog,
+    sourceEntity: definition.sourceEntity,
+    filter: definition.filter,
+  });
 
   const expanded = await expandRelationFiltersInTree({
     sourceEntity: definition.sourceEntity,
-    catalog,
+    catalog: expansionCatalog,
     filter: definition.filter,
     listChildRecords: async (entityName, query) => {
       return fetchAllEntityItems<Record<string, unknown>>(entityName, {
@@ -40,7 +46,11 @@ export async function executeEntityQueryDefinition(
 
   const apiSort =
     sort.length > 0 &&
-    !isRelationSortField(definition.sourceEntity, catalog, sort[0]?.field ?? "")
+    !isRelationSortField(
+      definition.sourceEntity,
+      expansionCatalog,
+      sort[0]?.field ?? "",
+    )
       ? [...sort]
       : [];
 
@@ -82,7 +92,7 @@ export async function executeEntityQueryDefinition(
     if (sort.length > 0) {
       items = await applyRelationSortToItems({
         sourceEntity: definition.sourceEntity,
-        catalog,
+        catalog: expansionCatalog,
         items,
         sort,
         listRecords: listChildRecords,
@@ -102,7 +112,7 @@ export async function executeEntityQueryDefinition(
   if (sort.length > 0) {
     items = await applyRelationSortToItems({
       sourceEntity: definition.sourceEntity,
-      catalog,
+      catalog: expansionCatalog,
       items,
       sort,
       listRecords: listChildRecords,

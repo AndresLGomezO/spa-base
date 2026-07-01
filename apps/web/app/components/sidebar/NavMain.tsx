@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
 import { NavLink, useLocation } from "react-router";
 import { ChevronDown } from "lucide-react";
@@ -12,6 +12,7 @@ import {
   SidebarMenuButton,
   SidebarMenuIcon,
   SidebarMenuItem,
+  SidebarSeparator,
   SidebarSubMenu,
   sidebarMenuButtonClassName,
   useSidebar,
@@ -26,6 +27,8 @@ import {
   resolveNavGroupLabel,
   resolveNavLinkLabel,
   resolveNavSubGroupLabel,
+  shouldShowSystemConfigurationNavSection,
+  findFirstSystemConfigNavIndex,
   type NavGroupConfig,
   type NavGroupChild,
   type NavLinkConfig,
@@ -295,10 +298,33 @@ function SettingsGroup({
   );
 }
 
+function NavSystemConfigurationSectionHeader() {
+  const { t } = useTranslation("common");
+
+  return (
+    <SidebarMenuItem
+      role="presentation"
+      aria-label={t("nav.systemConfiguration")}
+      className={cn(
+        "pointer-events-none mt-4 gap-3 pt-1 pb-2",
+        "group-data-[collapsible=icon]/sidebar:mt-3 group-data-[collapsible=icon]/sidebar:gap-0 group-data-[collapsible=icon]/sidebar:py-1 group-data-[collapsible=icon]/sidebar:pb-0",
+      )}
+    >
+      <SidebarSeparator className="mx-0" />
+      <span className="text-muted-foreground px-2 pt-0.5 text-[11px] font-semibold uppercase tracking-wide group-data-[collapsible=icon]/sidebar:sr-only">
+        {t("nav.systemConfiguration")}
+      </span>
+    </SidebarMenuItem>
+  );
+}
+
 export function NavMain() {
   const { pathname } = useLocation();
   const { setMobileOpen } = useSidebar();
   const navItems = useAccessibleNavItems();
+  const systemConfigStartIndex = findFirstSystemConfigNavIndex(navItems);
+  const showSystemConfigurationSection =
+    shouldShowSystemConfigurationNavSection(navItems);
   const [openGroupPopoverId, setOpenGroupPopoverId] = useState<string | null>(
     null,
   );
@@ -315,21 +341,26 @@ export function NavMain() {
   return (
     <SidebarGroup>
       <SidebarMenu>
-        {navItems.map((item) =>
-          isNavGroup(item) ? (
-            <SettingsGroup
-              key={item.id}
-              group={item}
-              onNavigate={closeMobile}
-              popoverOpen={openGroupPopoverId === item.id}
-              onPopoverOpenChange={(open) =>
-                setOpenGroupPopoverId(open ? item.id : null)
-              }
-            />
-          ) : (
-            <NavLinkItem key={item.id} item={item} onNavigate={closeMobile} />
-          ),
-        )}
+        {navItems.map((item, index) => (
+          <Fragment key={item.id}>
+            {showSystemConfigurationSection &&
+            index === systemConfigStartIndex ? (
+              <NavSystemConfigurationSectionHeader />
+            ) : null}
+            {isNavGroup(item) ? (
+              <SettingsGroup
+                group={item}
+                onNavigate={closeMobile}
+                popoverOpen={openGroupPopoverId === item.id}
+                onPopoverOpenChange={(open) =>
+                  setOpenGroupPopoverId(open ? item.id : null)
+                }
+              />
+            ) : (
+              <NavLinkItem item={item} onNavigate={closeMobile} />
+            )}
+          </Fragment>
+        ))}
       </SidebarMenu>
     </SidebarGroup>
   );

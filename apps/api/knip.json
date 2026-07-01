@@ -14,6 +14,7 @@
     "@repo/firestore-converters",
     "@repo/gcp-firebase",
     "@repo/aggregation-engine",
+    "@repo/custom-views",
     "@repo/ai-context",
     "@repo/ai-engine",
     "@repo/event-engine",

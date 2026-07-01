@@ -41,6 +41,7 @@
     "@repo/firestore-converters": "workspace:*",
     "@repo/event-engine": "workspace:*",
     "@repo/hooks": "workspace:*",
+    "@repo/custom-views": "workspace:*",
     "@repo/entity-queries": "workspace:*",
     "@repo/metrics-engine": "workspace:*",
     "@repo/query-engine": "workspace:*",

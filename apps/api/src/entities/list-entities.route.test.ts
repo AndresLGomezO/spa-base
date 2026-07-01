@@ -330,4 +330,43 @@ describe("GET /api/entities", () => {
         .data.items.map((item: { name: string }) => item.name),
     ).toContain("statusType");
   });
+
+  it("returns hidden entity definitions by name when the viewer has entity read access", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+    await entityDefinitionRepository.create("tenant_a", {
+      name: "statusType",
+      label: "Status Type",
+      tenantWideRead: true,
+      hiddenFromNav: true,
+      fields: [{ name: "name", type: "string", required: true }],
+    });
+
+    const runtime = createInMemoryCrudRuntime({ withTestEntities: true });
+    const server = await buildServer({
+      logger: false,
+      repositories: runtime.repositories,
+      queryExecutors: runtime.queryExecutors,
+      joinRepository: createInMemoryJoinCollectionRepository(),
+      entityDefinitionRepository,
+      getUserAccessProfile: async () => ({
+        platformRole: null,
+        tenants: { tenant_a: ["lookup_viewer"] },
+      }),
+      getRoleCatalog: async () => ({
+        lookup_viewer: { grants: ["statusType.read", "widget.read"] },
+      }),
+      skipPlatformRoleSeed: true,
+      skipPlatformTenantSeed: true,
+    });
+
+    const definitionResponse = await server.inject({
+      method: "GET",
+      url: "/api/entities/statusType/definition",
+      headers: authHeaders,
+    });
+
+    expect(definitionResponse.statusCode).toBe(200);
+    expect(definitionResponse.json().data.definition.name).toBe("statusType");
+  });
 });

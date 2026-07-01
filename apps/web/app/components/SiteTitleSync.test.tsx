@@ -1,4 +1,4 @@
-import { render, waitFor } from "@testing-library/react";
+import { render } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
 import { AuthContext } from "../auth/AuthContext";
@@ -7,16 +7,21 @@ import type { AuthContextValue } from "../auth/auth.types";
 import {
   composeDocumentTitle,
   DEFAULT_SITE_NAME,
-  getPageTitleFromMatches,
   SiteTitleSync,
 } from "./SiteTitleSync";
+
+const mockUsePageTitleFromNav = vi.fn<() => string | null>(() => null);
+
+vi.mock("../routing/page-title-context", () => ({
+  usePageTitleFromNav: () => mockUsePageTitleFromNav(),
+}));
 
 vi.mock("react-router", async () => {
   const actual =
     await vi.importActual<typeof import("react-router")>("react-router");
   return {
     ...actual,
-    useMatches: () => [],
+    useLocation: () => ({ pathname: "/app/accounts" }),
   };
 });
 
@@ -44,6 +49,16 @@ function createAuthValue(
   };
 }
 
+function renderSiteTitleSync(pageTitleFromNav: string | null = null) {
+  mockUsePageTitleFromNav.mockReturnValue(pageTitleFromNav);
+
+  return render(
+    <AuthContext.Provider value={createAuthValue()}>
+      <SiteTitleSync />
+    </AuthContext.Provider>,
+  );
+}
+
 describe("composeDocumentTitle", () => {
   it("uses tenant name alone when no page title is present", () => {
     expect(composeDocumentTitle(null, "Acme Corp")).toBe("Acme Corp");
@@ -58,31 +73,22 @@ describe("composeDocumentTitle", () => {
   });
 });
 
-describe("getPageTitleFromMatches", () => {
-  it("returns the deepest route title", () => {
-    expect(
-      getPageTitleFromMatches([
-        { meta: [{ title: "Entity System - ESP" }] },
-        { meta: [{ title: "Home" }] },
-      ] as never),
-    ).toBe("Home");
-  });
-});
-
 describe("SiteTitleSync", () => {
-  it("sets document title to tenant name", async () => {
-    render(
-      <AuthContext.Provider value={createAuthValue()}>
-        <SiteTitleSync />
-      </AuthContext.Provider>,
-    );
+  it("sets document title to tenant name", () => {
+    renderSiteTitleSync();
 
-    await waitFor(() => {
-      expect(document.title).toBe("Acme Corp");
-    });
+    expect(document.title).toBe("Acme Corp");
   });
 
-  it("falls back to default site name when tenant name is unavailable", async () => {
+  it("sets document title using nav page title when available", () => {
+    renderSiteTitleSync("Accounts");
+
+    expect(document.title).toBe("Accounts · Acme Corp");
+  });
+
+  it("falls back to default site name when tenant name is unavailable", () => {
+    mockUsePageTitleFromNav.mockReturnValue(null);
+
     render(
       <AuthContext.Provider
         value={createAuthValue({ activeTenantName: null, tenantId: null })}
@@ -91,8 +97,6 @@ describe("SiteTitleSync", () => {
       </AuthContext.Provider>,
     );
 
-    await waitFor(() => {
-      expect(document.title).toBe(DEFAULT_SITE_NAME);
-    });
+    expect(document.title).toBe(DEFAULT_SITE_NAME);
   });
 });

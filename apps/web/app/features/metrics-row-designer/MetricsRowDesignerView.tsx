@@ -9,6 +9,7 @@ import { MetricsRowDesignerTabs } from "./MetricsRowDesignerTabs";
 
 interface MetricsRowDesignerViewProps {
   readonly entityName: EntityName;
+  readonly customViewId?: string;
 }
 
 function MetricsRowDesignerPageContent({
@@ -34,9 +35,13 @@ function MetricsRowDesignerPageContent({
 
 export function MetricsRowDesignerView({
   entityName,
+  customViewId,
 }: MetricsRowDesignerViewProps) {
   return (
-    <MetricsRowDesignerProvider entityName={entityName}>
+    <MetricsRowDesignerProvider
+      entityName={entityName}
+      customViewId={customViewId}
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <MetricsRowDesignerPageContent entityName={entityName} />
       </div>

@@ -9,6 +9,7 @@ import { MainViewDesignerTabs } from "./MainViewDesignerTabs";
 
 interface MainViewDesignerViewProps {
   readonly entityName: EntityName;
+  readonly customViewId?: string;
 }
 
 function MainViewDesignerPageContent({
@@ -34,9 +35,13 @@ function MainViewDesignerPageContent({
 
 export function MainViewDesignerView({
   entityName,
+  customViewId,
 }: MainViewDesignerViewProps) {
   return (
-    <MainViewDesignerProvider entityName={entityName}>
+    <MainViewDesignerProvider
+      entityName={entityName}
+      customViewId={customViewId}
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <MainViewDesignerPageContent entityName={entityName} />
       </div>

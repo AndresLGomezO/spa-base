@@ -1,6 +1,7 @@
 import { entityDefinitionRecordSchema } from "@repo/dynamic-entities";
 import { entityCategoryRecordSchema } from "@repo/entity-categories";
 import { entityQueryDefinitionRecordSchema } from "@repo/entity-queries/types";
+import { customViewRecordSchema } from "@repo/custom-views/types";
 import {
   entityUiOverrideRecordSchema,
   tenantDashboardLayoutRecordSchema,
@@ -29,6 +30,7 @@ export const tenantBundleExportDocumentSchema = z
     hooks: z.array(hookRecordSchema),
     metricDefinitions: z.array(metricDefinitionRecordSchema),
     entityQueryDefinitions: z.array(entityQueryDefinitionRecordSchema),
+    customViews: z.array(customViewRecordSchema).default([]),
   })
   .strict();
 
@@ -46,6 +48,7 @@ export interface TenantBundleImportCounts {
   readonly hooks: number;
   readonly metricDefinitions: number;
   readonly entityQueryDefinitions: number;
+  readonly customViews: number;
 }
 
 export function countTenantBundleSections(
@@ -61,5 +64,6 @@ export function countTenantBundleSections(
     hooks: bundle.hooks.length,
     metricDefinitions: bundle.metricDefinitions.length,
     entityQueryDefinitions: bundle.entityQueryDefinitions.length,
+    customViews: bundle.customViews.length,
   };
 }

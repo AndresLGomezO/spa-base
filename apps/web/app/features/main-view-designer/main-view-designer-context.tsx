@@ -2,7 +2,7 @@ import { createContext, useContext } from "react";
 import type { ColorScheme } from "@repo/theme/react";
 
 import type { LayoutPreviewBreakpoint } from "../ui-builder/LayoutPreviewPanel";
-import type { UseEntityMainPageLayoutEditorResult } from "../ui-builder/use-entity-main-page-layout-editor";
+import type { UseDesignerMainPageLayoutEditorResult } from "../ui-builder/use-designer-main-page-layout-editor";
 import type { MobilePreviewDeviceId } from "../form-designer/mobile-preview-device-presets";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
@@ -10,7 +10,7 @@ import type { MainViewUnsavedReason } from "./main-view-designer-panel-session";
 import type { MainViewDesignerTabId } from "./main-view-designer-tabs";
 
 export interface MainViewDesignerContextValue {
-  readonly editor: UseEntityMainPageLayoutEditorResult;
+  readonly editor: UseDesignerMainPageLayoutEditorResult;
   readonly canSave: boolean;
   readonly previewBreakpoint: LayoutPreviewBreakpoint;
   readonly setPreviewBreakpoint: (breakpoint: LayoutPreviewBreakpoint) => void;

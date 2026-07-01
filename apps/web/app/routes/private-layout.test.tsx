@@ -23,6 +23,33 @@ vi.mock("../entities/entity-catalog-context", () => ({
   EntityCatalogProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>
   ),
+  useEntityCatalog: () => ({
+    items: [],
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    getDefinition: vi.fn(),
+    isKnownEntity: vi.fn(),
+  }),
+}));
+
+vi.mock("../custom-views/custom-view-catalog-context", () => ({
+  CustomViewCatalogProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+  useCustomViewCatalog: () => ({
+    items: [],
+    isLoading: false,
+    error: null,
+    refresh: vi.fn(),
+    getByViewId: vi.fn(),
+  }),
+}));
+
+vi.mock("../routing/page-title-context", () => ({
+  PageTitleProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
 }));
 
 vi.mock("../theme/TenantBrandingProvider", () => ({

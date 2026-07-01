@@ -14,7 +14,7 @@ import { COLOR_SCHEME_KEY, ThemeProvider } from "@repo/theme/react";
 import { AuthProvider } from "./auth/AuthProvider";
 import { I18nSync } from "./components/I18nSync";
 import { PwaRegistration } from "./components/PwaRegistration";
-import { SiteTitleSync } from "./components/SiteTitleSync";
+import { DEFAULT_SITE_NAME, SiteTitleSync } from "./components/SiteTitleSync";
 import { TenantBrandingProvider } from "./theme/TenantBrandingProvider";
 import { DEV_CONTENT_SECURITY_POLICY } from "./dev-content-security-policy";
 import { bootstrapWebPlatform } from "./platform/bootstrap";
@@ -28,6 +28,10 @@ export const links: LinksFunction = () => [
   { rel: "icon", href: "/favicon.svg", type: "image/svg+xml" },
   { rel: "icon", href: "/favicon.ico", sizes: "any" },
 ];
+
+export function meta() {
+  return [{ title: DEFAULT_SITE_NAME }];
+}
 
 export function Layout({ children }: { children: React.ReactNode }) {
   return (
@@ -47,6 +51,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
             __html: `(function(){try{if(localStorage.getItem("${COLOR_SCHEME_KEY}")==="dark"){document.documentElement.classList.add("dark")}}catch(e){}})();`,
           }}
         />
+        <title>{DEFAULT_SITE_NAME}</title>
         <Meta />
         <Links />
       </head>

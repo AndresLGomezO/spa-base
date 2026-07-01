@@ -31,6 +31,7 @@ export interface EntityRecord {
 interface UseEntityOptions {
   readonly queryConfig?: QueryConfig;
   readonly page?: number;
+  readonly enabled?: boolean;
 }
 
 interface UseEntityListState {
@@ -109,6 +110,7 @@ export function useEntity(
         query: queryConfig,
         populate: populateParam,
       }),
+    enabled: options.enabled ?? true,
     refetchInterval: (query) => {
       const error = query.state.error;
       if (isApiClientError(error) && isIndexListErrorCode(error.code)) {

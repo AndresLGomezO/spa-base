@@ -101,6 +101,8 @@ export { type MetricDefinitionRepository } from "./metric-definition/repository-
 export { createInMemoryMetricDefinitionRepository } from "./metric-definition/in-memory-repository.js";
 export { type EntityQueryDefinitionRepository } from "./entity-query-definition/repository-contract.js";
 export { createInMemoryEntityQueryDefinitionRepository } from "./entity-query-definition/in-memory-repository.js";
+export { type CustomViewRepository } from "./custom-view/repository-contract.js";
+export { createInMemoryCustomViewRepository } from "./custom-view/in-memory-repository.js";
 export { type AggregationEventRepository } from "./aggregation-event/repository-contract.js";
 export { createInMemoryAggregationEventRepository } from "./aggregation-event/in-memory-repository.js";
 export { type MetricValueRepository } from "./metric-value/repository-contract.js";

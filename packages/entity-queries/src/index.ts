@@ -94,6 +94,8 @@ export type {
   EntityQueryDefinitionJsonError,
   PortableEntityQueryDefinition,
   EntityQueryDefinitionFormData,
-  EntityQueryDefinitionsCatalogEnvelope,
   CatalogReplacePlan,
+  EntityQueryDefinitionsCatalogEnvelope,
 } from "./entity-query-definition-json.js";
+export { createEmptyAndGroup, type FilterNode } from "./filter-tree.js";
+export { isEmptyFilterTree } from "./filter-tree-utils.js";

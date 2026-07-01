@@ -276,6 +276,7 @@
       "displayField": "name",
       "navCategoryId": "cat_my_money",
       "navOrder": 2,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Accounts",
@@ -756,6 +757,7 @@
       "displayField": "name",
       "navCategoryId": "cat_commitments",
       "navOrder": 1,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Financial Items",
@@ -1521,6 +1523,7 @@
       "displayField": "financialItemId",
       "navCategoryId": "cat_details",
       "navOrder": 1,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Loan Details",
@@ -1867,6 +1870,7 @@
       "displayField": "financialItemId",
       "navCategoryId": "cat_details",
       "navOrder": 2,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Income Details",
@@ -2113,6 +2117,7 @@
       "displayField": "financialItemId",
       "navCategoryId": "cat_details",
       "navOrder": 3,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Investment Details",
@@ -2387,6 +2392,7 @@
       "displayField": "financialItemId",
       "navCategoryId": "cat_details",
       "navOrder": 4,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Service Details",
@@ -2621,6 +2627,7 @@
       "displayField": "description",
       "navCategoryId": "cat_movements",
       "navOrder": 2,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Transactions",
@@ -3012,6 +3019,7 @@
       "displayField": "dueDate",
       "navCategoryId": "cat_movements",
       "navOrder": 1,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Payment Schedules",
@@ -3362,6 +3370,7 @@
       "displayField": "date",
       "navCategoryId": "cat_movements",
       "navOrder": 3,
+      "hiddenFromNav": true,
       "ui": {
         "nav": {
           "label": "Balance Snapshots",

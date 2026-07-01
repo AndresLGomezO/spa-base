@@ -5,10 +5,12 @@ import { cn } from "@repo/theme/utils";
 import { SidebarProvider, ThirdRailHost, ThirdRailProvider } from "@repo/ui";
 
 import { EntityCatalogProvider } from "../entities/entity-catalog-context";
+import { CustomViewCatalogProvider } from "../custom-views/custom-view-catalog-context";
 import { EntityFormModalProvider } from "../components/entity/entity-form-modal-context";
 import { EntityFormModalHost } from "../components/entity/EntityFormModalHost";
 import { queryClient } from "../query/query-client";
 import { useLockDocumentScroll } from "../routing/use-lock-document-scroll";
+import { PageTitleProvider } from "../routing/page-title-context";
 import { RequireAuth } from "../routing/RouteGuards";
 import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
@@ -39,24 +41,28 @@ export default function PrivateLayoutRoute() {
     <RequireAuth>
       <QueryClientProvider client={queryClient}>
         <EntityCatalogProvider>
-          <EntityFormModalProvider>
-            <CreateTenantModalProvider>
-              <ThirdRailProvider>
-                <SidebarProvider>
-                  <div className="relative flex h-dvh overflow-hidden">
-                    <AppSidebar />
-                    <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                      <AppHeader />
-                      <MainOutlet />
-                    </div>
-                    <ThirdRailHost />
-                  </div>
-                </SidebarProvider>
-                <CreateTenantModal />
-              </ThirdRailProvider>
-            </CreateTenantModalProvider>
-            <EntityFormModalHost />
-          </EntityFormModalProvider>
+          <CustomViewCatalogProvider>
+            <PageTitleProvider>
+              <EntityFormModalProvider>
+                <CreateTenantModalProvider>
+                  <ThirdRailProvider>
+                    <SidebarProvider>
+                      <div className="relative flex h-dvh overflow-hidden">
+                        <AppSidebar />
+                        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                          <AppHeader />
+                          <MainOutlet />
+                        </div>
+                        <ThirdRailHost />
+                      </div>
+                    </SidebarProvider>
+                    <CreateTenantModal />
+                  </ThirdRailProvider>
+                </CreateTenantModalProvider>
+                <EntityFormModalHost />
+              </EntityFormModalProvider>
+            </PageTitleProvider>
+          </CustomViewCatalogProvider>
         </EntityCatalogProvider>
       </QueryClientProvider>
     </RequireAuth>

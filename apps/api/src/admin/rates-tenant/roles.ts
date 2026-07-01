@@ -15,7 +15,7 @@ const NORMAL_RATES_USER_ROLE: CreateTenantRoleInput = {
   name: "normalRatesUser",
   description:
     "Edit financial items, accounts, transactions, and related records across the Rates tenant model.",
-  grants: [...ENTITY_READS, ...BUSINESS_MUTATIONS, "*"],
+  grants: [...ENTITY_READS, ...BUSINESS_MUTATIONS, "customView.read"],
 };
 
 export function buildRatesCustomRoles(): readonly CreateTenantRoleInput[] {

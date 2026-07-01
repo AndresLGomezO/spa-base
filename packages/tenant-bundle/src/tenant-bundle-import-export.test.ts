@@ -48,6 +48,7 @@ function createMinimalBundle(): TenantBundleExportDocument {
     hooks: [],
     metricDefinitions: [],
     entityQueryDefinitions: [],
+    customViews: [],
   };
 }
 

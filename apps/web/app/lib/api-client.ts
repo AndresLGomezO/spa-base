@@ -12,6 +12,7 @@ import type {
 import type { QueryConfig } from "@repo/query-engine";
 import type { MetricDefinitionsCatalogEnvelope } from "@repo/metrics-engine/browser";
 import type { EntityQueryDefinitionsCatalogEnvelope } from "@repo/entity-queries/browser";
+import type { CustomViewsCatalogEnvelope } from "@repo/custom-views/browser";
 
 import { appConfig } from "../config/app-config";
 import { getAppCheckHeaderValue } from "./app-check";
@@ -192,6 +193,15 @@ export async function listEntities(): Promise<{
   return apiRequest<{
     readonly items: readonly SerializableEntityDefinition[];
   }>("/api/entities");
+}
+
+export async function getAccessibleEntityDefinition(
+  entityName: string,
+): Promise<SerializableEntityDefinition> {
+  const result = await apiRequest<{
+    readonly definition: SerializableEntityDefinition;
+  }>(`/api/entities/${encodeURIComponent(entityName)}/definition`);
+  return result.definition;
 }
 
 export async function listEntity<T>(
@@ -938,6 +948,66 @@ export async function putEntityQueryDefinitionsCatalog(
     method: "PUT",
     body: input,
   });
+}
+
+export type CustomViewRecord = import("@repo/custom-views").CustomViewRecord;
+type CreateCustomViewInput = import("@repo/custom-views").CreateCustomViewInput;
+type PatchCustomViewInput = import("@repo/custom-views").PatchCustomViewInput;
+
+export async function listCustomViews(): Promise<{
+  readonly items: readonly CustomViewRecord[];
+}> {
+  return apiRequest<{ readonly items: readonly CustomViewRecord[] }>(
+    "/api/custom-views",
+  );
+}
+
+export async function createCustomView(
+  input: CreateCustomViewInput,
+): Promise<CustomViewRecord> {
+  return apiRequest<CustomViewRecord>("/api/custom-views", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function patchCustomView(
+  id: string,
+  input: PatchCustomViewInput,
+): Promise<CustomViewRecord> {
+  return apiRequest<CustomViewRecord>(`/api/custom-views/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export async function deleteCustomView(id: string): Promise<void> {
+  await apiRequest<{ readonly ok: boolean }>(`/api/custom-views/${id}`, {
+    method: "DELETE",
+  });
+}
+
+type CustomViewsCatalogReplaceInput = CustomViewsCatalogEnvelope;
+
+interface CustomViewsCatalogReplaceResult {
+  readonly counts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly items: readonly CustomViewRecord[];
+}
+
+export async function putCustomViewsCatalog(
+  input: CustomViewsCatalogReplaceInput,
+): Promise<CustomViewsCatalogReplaceResult> {
+  return apiRequest<CustomViewsCatalogReplaceResult>(
+    "/api/custom-views/catalog",
+    {
+      method: "PUT",
+      body: input,
+    },
+  );
 }
 
 export interface TenantRoleRecord {

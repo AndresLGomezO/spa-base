@@ -108,6 +108,31 @@ function validateTenantBundleCrossReferences(
     }
   }
 
+  const queryDefinitionIds = new Set(
+    bundle.entityQueryDefinitions.map((item) => item.id),
+  );
+
+  for (const view of bundle.customViews) {
+    if (!entityNames.has(view.sourceEntity)) {
+      errors.push({
+        path: `customViews.${view.id}.sourceEntity`,
+        message: `Unknown source entity "${view.sourceEntity}".`,
+      });
+    }
+    if (!queryDefinitionIds.has(view.entityQueryDefinitionId)) {
+      errors.push({
+        path: `customViews.${view.id}.entityQueryDefinitionId`,
+        message: `Unknown entity query definition "${view.entityQueryDefinitionId}".`,
+      });
+    }
+    if (view.navCategoryId && !categoryIds.has(view.navCategoryId)) {
+      errors.push({
+        path: `customViews.${view.id}.navCategoryId`,
+        message: `Unknown category id "${view.navCategoryId}".`,
+      });
+    }
+  }
+
   return errors;
 }
 
@@ -287,6 +312,10 @@ export function rewriteTenantBundleTenantId(
       ...record,
       tenantId: targetTenantId,
     })),
+    customViews: bundle.customViews.map((record) => ({
+      ...record,
+      tenantId: targetTenantId,
+    })),
   });
 }
 
@@ -300,6 +329,7 @@ export const TENANT_BUNDLE_COLLECTION_IMPORT_ORDER = [
   "hooks",
   "__metrics_definitions",
   "__entity_query_definitions",
+  "__custom_views",
 ] as const;
 
 export type TenantBundleCollectionName =

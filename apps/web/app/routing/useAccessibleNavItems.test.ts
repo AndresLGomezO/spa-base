@@ -92,6 +92,10 @@ vi.mock("../hooks/useEntityNavCategories", () => ({
   }),
 }));
 
+vi.mock("../custom-views/use-custom-view-nav-items", () => ({
+  useCustomViewNavItems: () => [],
+}));
+
 vi.mock("./design-layout-nav", () => ({
   DESIGN_LAYOUT_MATCH_PATH: "/settings/design-layout",
   DESIGN_LAYOUT_PRESETS_NAV_ITEM: {
@@ -366,6 +370,21 @@ describe("useAccessibleNavItems", () => {
     expect(result.current.some((item) => item.id === "design-layout")).toBe(
       false,
     );
+  });
+
+  it("shows custom views settings only when create or update is granted", () => {
+    mockDesignLayoutSubGroups = [];
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: false,
+      permissions: ["customView.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+
+    const analytics = result.current.find((item) => item.id === "analytics");
+    expect(analytics).toBeUndefined();
   });
 
   it("includes platform current tenant and appearance for superadmin", () => {

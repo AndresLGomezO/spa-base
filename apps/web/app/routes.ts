@@ -6,6 +6,7 @@ import {
 } from "@react-router/dev/routes";
 
 import { buildEntityRouteConfig } from "./routing/entity-routes";
+import { buildCustomViewRouteConfig } from "./routing/custom-view-routes";
 
 export default [
   route("login", "./routes/login.tsx"),
@@ -21,6 +22,7 @@ export default [
     route("settings/hooks", "./routes/settings/hooks.tsx"),
     route("settings/metrics", "./routes/settings/metrics.tsx"),
     route("settings/query-builder", "./routes/settings/query-builder.tsx"),
+    route("settings/custom-views", "./routes/settings/custom-views.tsx"),
     route(
       "settings/entity-categories",
       "./routes/settings/entity-categories.tsx",
@@ -28,6 +30,18 @@ export default [
     route("settings/roles", "./routes/settings/roles.tsx"),
     route("settings/ai-debugger", "./routes/settings/ai-debugger.tsx"),
     route("ai/chat", "./routes/ai/chat.tsx"),
+    route(
+      "settings/design-layout/main/custom-view/:viewId",
+      "./routes/settings/design-layout/main-custom-view.tsx",
+    ),
+    route(
+      "settings/design-layout/list/custom-view/:viewId",
+      "./routes/settings/design-layout/list-custom-view.tsx",
+    ),
+    route(
+      "settings/design-layout/metrics/custom-view/:viewId",
+      "./routes/settings/design-layout/metrics-custom-view.tsx",
+    ),
     route(
       "settings/design-layout/list/:entityName",
       "./routes/settings/design-layout/list.tsx",
@@ -87,6 +101,7 @@ export default [
     layout("./routes/tenant-layout.tsx", [
       index("./routes/home.tsx"),
       ...buildEntityRouteConfig(),
+      ...buildCustomViewRouteConfig(),
     ]),
   ]),
 ] satisfies RouteConfig;

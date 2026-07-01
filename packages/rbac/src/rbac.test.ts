@@ -38,6 +38,7 @@ describe("expandGrant", () => {
       "metricDefinition.read",
       "metricValue.read",
       "entityQueryDefinition.read",
+      "customView.read",
       "ai.chat.read",
       "ai.uiBuilder.read",
       "role.read",
@@ -86,6 +87,7 @@ describe("resolvePermissions", () => {
       "metricDefinition.read",
       "metricValue.read",
       "entityQueryDefinition.read",
+      "customView.read",
       "ai.chat.read",
       "ai.uiBuilder.read",
       "role.read",
@@ -99,7 +101,7 @@ describe("resolvePermissions", () => {
       tenants: { tenant_a: ["editor"] },
     });
 
-    expect(permissions).toHaveLength(27);
+    expect(permissions).toHaveLength(30);
     expect(permissions).toEqual(
       expect.arrayContaining([
         "entityDefinition.read",
@@ -122,10 +124,14 @@ describe("resolvePermissions", () => {
         "entityQueryDefinition.read",
         "entityQueryDefinition.create",
         "entityQueryDefinition.update",
+        "customView.read",
+        "customView.create",
+        "customView.update",
         "ai.uiBuilder.read",
       ]),
     );
     expect(permissions).not.toContain("entityDefinition.delete");
+    expect(permissions).not.toContain("customView.delete");
     expect(permissions).not.toContain("tenantUser.remove");
   });
 
@@ -147,6 +153,7 @@ describe("resolvePermissions", () => {
       "metricDefinition.read",
       "metricValue.read",
       "entityQueryDefinition.read",
+      "customView.read",
       "ai.chat.read",
       "ai.uiBuilder.read",
       "role.read",
@@ -233,6 +240,7 @@ describe("expandGrants", () => {
       "metricDefinition.read",
       "metricValue.read",
       "entityQueryDefinition.read",
+      "customView.read",
       "ai.chat.read",
       "ai.uiBuilder.read",
       "role.read",

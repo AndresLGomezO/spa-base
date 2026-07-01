@@ -48,20 +48,17 @@ export function EntityPageCompactToolbar({
         />
       </div>
 
-      {!showCompactToolbar ? (
+      {isCompact && !showCompactToolbar ? (
         <div
           className={cn(
             ENTITY_PAGE_CHROME_TRANSITION,
-            isCompact
-              ? "max-lg:relative max-lg:opacity-100"
-              : "max-lg:pointer-events-none max-lg:absolute max-lg:inset-x-0 max-lg:top-0 max-lg:opacity-0",
+            "max-lg:relative max-lg:opacity-100",
           )}
           style={
             compactProgress > 0 && !isCompact
               ? { opacity: compactOpacity }
               : undefined
           }
-          aria-hidden={!isCompact ? true : undefined}
         >
           <WebDataViewToolbar
             {...toolbar}

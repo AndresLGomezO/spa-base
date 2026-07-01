@@ -23,7 +23,8 @@ Index of all platform documentation. Start with the [Phase 2 handoff](./phase-2-
 | [entity-definition-json.md](./entity-definition-json.md) | **Data Entity JSON** — field/entity/catalog envelopes for Model Builder import (data team handoff) |
 | [metric-definition-json.md](./metric-definition-json.md) | **Metrics JSON** — single-metric and catalog envelopes for Settings → Metrics import |
 | [entity-query-definition-json.md](./entity-query-definition-json.md) | **Query JSON** — saved entity query catalog envelopes for Settings → Query Builder import |
-| [rates-data-model.md](./rates-data-model.md) | Rates tenant domain spec; catalogs in [`rates-tenant/catalogs/`](../apps/api/src/admin/rates-tenant/catalogs/) |
+| [custom-view-definition-json.md](./custom-view-definition-json.md) | **Custom Views JSON** — whole-view and catalog envelopes plus design-layout slice handoff |
+| [rates-data-model.md](./rates-data-model.md) | Rates tenant domain spec; catalogs in [`rates-tenant/catalogs/`](../apps/api/src/admin/rates-tenant/catalogs/) (entities, metrics, queries, custom views) |
 
 ---
 

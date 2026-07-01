@@ -19,7 +19,7 @@ import {
   DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
   type LayoutPreviewBreakpoint,
 } from "../ui-builder/LayoutPreviewPanel";
-import { useEntityMetricsWidgetsEditor } from "../ui-builder/use-entity-metrics-widgets-editor";
+import { useDesignerMetricsWidgetsEditor } from "../ui-builder/use-designer-metrics-widgets-editor";
 import { DEFAULT_MOBILE_PREVIEW_DEVICE_ID } from "../form-designer/mobile-preview-device-presets";
 import type { MobilePreviewDeviceId } from "../form-designer/mobile-preview-device-presets";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
@@ -96,15 +96,17 @@ function applyTabToSearchParams(
 
 interface MetricsRowDesignerProviderProps {
   readonly entityName: EntityName;
+  readonly customViewId?: string;
   readonly children: ReactNode;
 }
 
 export function MetricsRowDesignerProvider({
   entityName,
+  customViewId,
   children,
 }: MetricsRowDesignerProviderProps) {
   const { t } = useTranslation("common");
-  const editor = useEntityMetricsWidgetsEditor(entityName);
+  const editor = useDesignerMetricsWidgetsEditor(entityName, customViewId);
   const definition = useEntityDefinition(entityName);
   const canSave = useAnyPermission(ENTITY_UI_OVERRIDE_WRITE_PERMISSIONS);
   const [searchParams, setSearchParams] = useSearchParams();

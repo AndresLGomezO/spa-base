@@ -6,6 +6,8 @@ import { hasPermission } from "@repo/rbac";
 import { useAuth } from "../auth/AuthContext";
 import { getEntityIconName, getEntityLabel } from "../entities/entity-catalog";
 import { useEntityCatalog } from "../entities/entity-catalog-context";
+import { useCustomViewCatalog } from "../custom-views/custom-view-catalog-context";
+import { getCustomViewLabel } from "../custom-views/custom-view-definition";
 import { resolveLucideIcon } from "../lib/resolve-lucide-icon";
 import { listMetricDefinitions } from "../lib/api-client.js";
 import type {
@@ -30,6 +32,13 @@ export function designLayoutEntityPath(
   entityName: string,
 ): string {
   return `/settings/design-layout/${DESIGN_LAYOUT_KIND_PATH_SEGMENT[kind]}/${entityName}`;
+}
+
+export function designLayoutCustomViewPath(
+  kind: Extract<DesignLayoutKind, "main" | "list" | "metrics">,
+  viewId: string,
+): string {
+  return `/settings/design-layout/${DESIGN_LAYOUT_KIND_PATH_SEGMENT[kind]}/custom-view/${viewId}`;
 }
 
 export const DEFAULT_FORM_DESIGN_ROUTE_ID = "default";
@@ -159,29 +168,67 @@ function useDesignLayoutMetricsEntityLinks(): readonly NavLinkConfig[] {
   }, [definitionsQuery.data, isSuperAdmin, items, permissions]);
 }
 
+function useDesignLayoutCustomViewLinks(
+  kind: Extract<DesignLayoutKind, "main" | "list" | "metrics">,
+): readonly NavLinkConfig[] {
+  const { permissions, isSuperAdmin } = useAuth();
+  const { items } = useCustomViewCatalog();
+
+  return useMemo(() => {
+    return items
+      .filter((view) => {
+        if (view.status !== "ACTIVE") {
+          return false;
+        }
+        if (
+          !hasPermission("customView.read", permissions, { isSuperAdmin }) ||
+          !hasPermission("entityUiOverride.read", permissions, {
+            isSuperAdmin,
+          })
+        ) {
+          return false;
+        }
+        return hasPermission(`${view.sourceEntity}.read`, permissions, {
+          isSuperAdmin,
+        });
+      })
+      .map((view) => ({
+        id: `design-layout-${kind}-custom-view-${view.viewId}`,
+        label: getCustomViewLabel(view),
+        to: designLayoutCustomViewPath(kind, view.viewId),
+        matchPath: designLayoutCustomViewPath(kind, view.viewId),
+        icon: resolveLucideIcon(view.nav.icon),
+      }))
+      .sort((left, right) => compareEntityLabels(left.label, right.label));
+  }, [isSuperAdmin, items, kind, permissions]);
+}
+
 export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
   const mainLinks = useDesignLayoutEntityLinks("main");
+  const mainCustomViewLinks = useDesignLayoutCustomViewLinks("main");
   const listLinks = useDesignLayoutEntityLinks("list");
+  const listCustomViewLinks = useDesignLayoutCustomViewLinks("list");
   const detailLinks = useDesignLayoutEntityLinks("detail");
   const formsLinks = useDesignLayoutEntityLinks("forms");
   const metricsLinks = useDesignLayoutMetricsEntityLinks();
+  const metricsCustomViewLinks = useDesignLayoutCustomViewLinks("metrics");
 
   return useMemo(() => {
     const subgroups: NavSubGroupConfig[] = [];
 
-    if (mainLinks.length > 0) {
+    if (mainLinks.length > 0 || mainCustomViewLinks.length > 0) {
       subgroups.push({
         id: "design-layout-main",
         labelKey: "designLayoutMain",
-        children: mainLinks,
+        children: [...mainLinks, ...mainCustomViewLinks],
       });
     }
 
-    if (listLinks.length > 0) {
+    if (listLinks.length > 0 || listCustomViewLinks.length > 0) {
       subgroups.push({
         id: "design-layout-list",
         labelKey: "designLayoutList",
-        children: listLinks,
+        children: [...listLinks, ...listCustomViewLinks],
       });
     }
 
@@ -201,14 +248,23 @@ export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
       });
     }
 
-    if (metricsLinks.length > 0) {
+    if (metricsLinks.length > 0 || metricsCustomViewLinks.length > 0) {
       subgroups.push({
         id: "design-layout-metrics",
         labelKey: "designLayoutMetrics",
-        children: metricsLinks,
+        children: [...metricsLinks, ...metricsCustomViewLinks],
       });
     }
 
     return subgroups;
-  }, [detailLinks, formsLinks, listLinks, mainLinks, metricsLinks]);
+  }, [
+    detailLinks,
+    formsLinks,
+    listCustomViewLinks,
+    listLinks,
+    mainCustomViewLinks,
+    mainLinks,
+    metricsCustomViewLinks,
+    metricsLinks,
+  ]);
 }

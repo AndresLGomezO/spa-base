@@ -34,6 +34,7 @@ interface MainPageRenderContextInput {
   readonly onCreate: () => void;
   readonly previewMode?: boolean;
   readonly metricsDesignerPath?: string;
+  readonly designLayoutMainPath?: string;
   readonly registerPageListScrollElement?: (
     element: HTMLElement | null,
   ) => void;
@@ -110,6 +111,10 @@ export function createEntityMainPageRenderContext(
         canCreate={canCreate}
         onCreate={onCreate}
         previewMode={previewMode}
+        designLayoutMainPath={
+          input.designLayoutMainPath ??
+          designLayoutEntityPath("main", entityName)
+        }
       />
     ),
     registerPageListScrollElement,
@@ -153,17 +158,18 @@ function MetricsPreviewPlaceholder({
 }
 
 function MainPageHeaderPreview({
-  entityName,
   entityLabel,
   canCreate,
   onCreate,
   previewMode,
+  designLayoutMainPath,
 }: {
   readonly entityName: EntityName;
   readonly entityLabel: string;
   readonly canCreate: boolean;
   readonly onCreate: () => void;
   readonly previewMode: boolean;
+  readonly designLayoutMainPath: string;
 }) {
   const { t } = useTranslation("common");
   const navigate = useNavigate();
@@ -180,7 +186,7 @@ function MainPageHeaderPreview({
             type="button"
             variant="outline"
             size="sm"
-            onClick={() => navigate(designLayoutEntityPath("main", entityName))}
+            onClick={() => navigate(designLayoutMainPath)}
           >
             {t("entity.openDesignLayout")}
           </Button>

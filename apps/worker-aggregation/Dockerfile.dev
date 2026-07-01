@@ -19,6 +19,7 @@ COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/entities/package.json ./packages/entities/
 COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
 COPY packages/entity-categories/package.json ./packages/entity-categories/
+COPY packages/custom-views/package.json ./packages/custom-views/
 COPY packages/entity-queries/package.json ./packages/entity-queries/
 COPY packages/event-engine/package.json ./packages/event-engine/
 COPY packages/hooks/package.json ./packages/hooks/

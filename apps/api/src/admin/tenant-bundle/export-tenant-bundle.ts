@@ -2,6 +2,7 @@ import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
+  createFirestoreAdminCustomViewRepository,
   createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminHookRepository,
   createFirestoreAdminMetricDefinitionRepository,
@@ -56,6 +57,9 @@ export async function exportTenantBundle(
     createFirestoreAdminEntityQueryDefinitionRepository(
       deps.firebaseAdminConfig,
     );
+  const customViewRepository = createFirestoreAdminCustomViewRepository(
+    deps.firebaseAdminConfig,
+  );
 
   const tenant = await tenantRepository.getById(tenantId);
   if (!tenant) {
@@ -72,6 +76,7 @@ export async function exportTenantBundle(
     hooks,
     metricDefinitions,
     entityQueryDefinitions,
+    customViews,
   ] = await Promise.all([
     categoryRepository.list(tenantId),
     definitionRepository.list(tenantId),
@@ -82,6 +87,7 @@ export async function exportTenantBundle(
     hookRepository.list(tenantId),
     metricDefinitionRepository.list(tenantId),
     queryDefinitionRepository.list(tenantId),
+    customViewRepository.list(tenantId),
   ]);
 
   return tenantBundleExportDocumentSchema.parse({
@@ -98,5 +104,6 @@ export async function exportTenantBundle(
     hooks,
     metricDefinitions,
     entityQueryDefinitions,
+    customViews,
   });
 }

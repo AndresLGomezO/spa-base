@@ -7,6 +7,7 @@ import {
   Home,
   Layers,
   LayoutTemplate,
+  PanelsTopLeft,
   Palette,
   Search,
   Settings,
@@ -31,6 +32,7 @@ export type NavLabelKey =
   | "analytics"
   | "metricsNav"
   | "queryBuilderNav"
+  | "customViewsNav"
   | "roles"
   | "entityCategories"
   | "designLayout"
@@ -42,7 +44,8 @@ export type NavLabelKey =
   | "designLayoutPresets"
   | "designLayoutDashboard"
   | "aiChat"
-  | "aiDebugger";
+  | "aiDebugger"
+  | "systemConfiguration";
 
 export interface NavLinkConfig {
   readonly id: string;
@@ -167,6 +170,14 @@ export const SETTINGS_QUERY_BUILDER_NAV_ITEM: NavLinkConfig = {
   icon: Search,
 };
 
+export const SETTINGS_CUSTOM_VIEWS_NAV_ITEM: NavLinkConfig = {
+  id: "custom-views",
+  labelKey: "customViewsNav",
+  to: "/settings/custom-views",
+  matchPath: "/settings/custom-views",
+  icon: PanelsTopLeft,
+};
+
 export const ANALYTICS_GROUP_ICON = BarChart3;
 
 export const DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM: NavLinkConfig = {
@@ -196,6 +207,43 @@ export const PLATFORM_APPEARANCE_NAV_ITEM: NavLinkConfig = {
 };
 
 export const SETTINGS_GROUP_ICON = Settings;
+
+const SYSTEM_CONFIG_NAV_GROUP_IDS = [
+  "data-structure",
+  "settings",
+  "analytics",
+  "design-layout",
+  "platform",
+] as const;
+
+type SystemConfigNavGroupId = (typeof SYSTEM_CONFIG_NAV_GROUP_IDS)[number];
+
+function isSystemConfigNavGroupId(id: string): id is SystemConfigNavGroupId {
+  return (SYSTEM_CONFIG_NAV_GROUP_IDS as readonly string[]).includes(id);
+}
+
+function isDataEntityNavGroupId(id: string): boolean {
+  return id === "data-models" || id.startsWith("category-");
+}
+
+export function findFirstSystemConfigNavIndex(
+  items: readonly Pick<NavItemConfig, "id">[],
+): number {
+  return items.findIndex((item) => isSystemConfigNavGroupId(item.id));
+}
+
+export function shouldShowSystemConfigurationNavSection(
+  items: readonly Pick<NavItemConfig, "id">[],
+): boolean {
+  const systemConfigStartIndex = findFirstSystemConfigNavIndex(items);
+  if (systemConfigStartIndex <= 0) {
+    return false;
+  }
+
+  return items
+    .slice(0, systemConfigStartIndex)
+    .some((item) => isDataEntityNavGroupId(item.id));
+}
 
 export function isNavGroup(item: NavItemConfig): item is NavGroupConfig {
   return "children" in item;
