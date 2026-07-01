@@ -3,7 +3,7 @@ import { readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { assertDirectRuntimeDependencies } from "../../scripts/assert-esbuild-runtime-deps.mjs";
+import { assertDirectRuntimeDependencies } from "@repo/esbuild-runtime-deps";
 
 // Bundle workspace TypeScript packages into dist; keep npm packages with native/dynamic loads external.
 const npmExternals = [

@@ -1,0 +1,8 @@
+{
+  "name": "@repo/esbuild-runtime-deps",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": "./index.mjs"
+  }
+}

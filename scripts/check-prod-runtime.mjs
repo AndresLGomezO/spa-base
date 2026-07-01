@@ -21,7 +21,7 @@ import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { collectNpmImports } from "./assert-esbuild-runtime-deps.mjs";
+import { collectNpmImports } from "../packages/esbuild-runtime-deps/index.mjs";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
