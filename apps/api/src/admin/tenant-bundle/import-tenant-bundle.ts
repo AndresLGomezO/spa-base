@@ -94,7 +94,7 @@ function buildCollectionDocuments(
       id: record.id,
       data: toPlainRecord(record as unknown as Record<string, unknown>),
     })),
-    hooks: bundle.hooks.map((record) => ({
+    __data_hooks: bundle.hooks.map((record) => ({
       id: record.id,
       data: toPlainRecord(record as unknown as Record<string, unknown>),
     })),

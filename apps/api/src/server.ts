@@ -17,7 +17,7 @@ import type {
   BackfillJobRepository,
   AiJobRepository,
   UiBuilderAiSuggestionRepository,
-  HookRepository,
+  DataHookRepository,
   JoinCollectionRepository,
   MetricContributionRepository,
   MetricDefinitionRepository,
@@ -36,7 +36,7 @@ import {
   createInMemoryEntityUiOverrideRepository,
   createInMemoryTenantDashboardLayoutRepository,
   createInMemoryUiBuilderPresetRepository,
-  createInMemoryHookRepository,
+  createInMemoryDataHookRepository,
   createInMemoryMetricDefinitionRepository,
   createInMemoryEntityQueryDefinitionRepository,
   createInMemoryCustomViewRepository,
@@ -56,7 +56,7 @@ import {
   createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminTenantDashboardLayoutRepository,
   createFirestoreAdminUiBuilderPresetRepository,
-  createFirestoreAdminHookRepository,
+  createFirestoreAdminDataHookRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
@@ -142,7 +142,7 @@ interface BuildServerOptions {
   readonly tenantDashboardLayoutRepository?: TenantDashboardLayoutRepository;
   readonly uiBuilderPresetRepository?: UiBuilderPresetRepository;
   readonly entityCategoryRepository?: EntityCategoryRepository;
-  readonly hookRepository?: HookRepository;
+  readonly hookRepository?: DataHookRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
   readonly customViewRepository?: CustomViewRepository;
@@ -304,8 +304,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
   const hookRepository =
     options.hookRepository ??
     (options.repositories
-      ? createInMemoryHookRepository()
-      : createFirestoreAdminHookRepository(firebaseAdminConfig));
+      ? createInMemoryDataHookRepository()
+      : createFirestoreAdminDataHookRepository(firebaseAdminConfig));
 
   const tenantUserInviteRepository =
     options.tenantUserInviteRepository ??

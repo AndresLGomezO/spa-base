@@ -267,7 +267,9 @@
             "order": 3
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true,
+      "tenantWideRead": true
     },
     {
       "name": "account",
@@ -549,7 +551,8 @@
             "sortable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "category",
@@ -748,7 +751,9 @@
             "filterable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true,
+      "tenantWideRead": true
     },
     {
       "name": "financialItem",
@@ -1514,7 +1519,8 @@
             "filterable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "loanDetails",
@@ -1861,7 +1867,8 @@
             "filterable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "incomeDetails",
@@ -2108,7 +2115,8 @@
             "sortable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "investmentDetails",
@@ -2383,7 +2391,8 @@
             "sortable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "serviceDetails",
@@ -2618,7 +2627,8 @@
             "searchable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "transaction",
@@ -3010,7 +3020,8 @@
             "filterable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "paymentSchedule",
@@ -3361,7 +3372,8 @@
             "filterable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     },
     {
       "name": "balanceSnapshot",
@@ -3599,7 +3611,8 @@
             "sortable": true
           }
         }
-      ]
+      ],
+      "inMemoryListQueries": true
     }
   ]
 }

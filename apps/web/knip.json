@@ -8,6 +8,7 @@
     "@repo/entities",
     "@repo/entity-queries",
     "@repo/firestore-indexes",
+    "@repo/hooks",
     "@repo/eslint-config",
     "@repo/modules",
     "@repo/metrics-engine",

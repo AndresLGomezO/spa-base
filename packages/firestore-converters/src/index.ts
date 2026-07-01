@@ -95,8 +95,8 @@ export { type UiBuilderPresetRepository } from "./ui-builder-preset/repository-c
 export { createInMemoryUiBuilderPresetRepository } from "./ui-builder-preset/in-memory-repository.js";
 export { type TenantDashboardLayoutRepository } from "./tenant-dashboard-layout/repository-contract.js";
 export { createInMemoryTenantDashboardLayoutRepository } from "./tenant-dashboard-layout/in-memory-repository.js";
-export { type HookRepository } from "./hook/repository-contract.js";
-export { createInMemoryHookRepository } from "./hook/in-memory-repository.js";
+export { type DataHookRepository } from "./hook/repository-contract.js";
+export { createInMemoryDataHookRepository } from "./hook/in-memory-repository.js";
 export { type MetricDefinitionRepository } from "./metric-definition/repository-contract.js";
 export { createInMemoryMetricDefinitionRepository } from "./metric-definition/in-memory-repository.js";
 export { type EntityQueryDefinitionRepository } from "./entity-query-definition/repository-contract.js";

@@ -19,7 +19,10 @@ export default [
     ]),
     route("settings/users", "./routes/settings/users.tsx"),
     route("settings/data-models", "./routes/settings/data-models.tsx"),
-    route("settings/hooks", "./routes/settings/hooks.tsx"),
+    route(
+      "settings/automation/:entityName",
+      "./routes/settings/automation.tsx",
+    ),
     route("settings/metrics", "./routes/settings/metrics.tsx"),
     route("settings/query-builder", "./routes/settings/query-builder.tsx"),
     route("settings/custom-views", "./routes/settings/custom-views.tsx"),

@@ -1,11 +1,10 @@
-import { z } from "zod";
-
-export const HOOKS_COLLECTION = "hooks" as const;
+import type { DataHookDefinition } from "./data-hook-definition.js";
 
 export const HOOK_PERMISSIONS = [
   "hook.read",
   "hook.create",
   "hook.update",
+  "hook.delete",
 ] as const;
 
 export const HOOK_OPERATIONS = ["create", "update", "delete"] as const;
@@ -25,6 +24,18 @@ export interface HookUser {
   readonly email?: string | null;
 }
 
+export interface HookEntityRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly [key: string]: unknown;
+}
+
+export interface HookEntityListQuery {
+  readonly field: string;
+  readonly value: string;
+  readonly limit?: number;
+}
+
 export interface HookEntityServices {
   readonly create: (
     entityName: string,
@@ -35,6 +46,10 @@ export interface HookEntityServices {
     id: string,
     data: Record<string, unknown>,
   ) => Promise<Record<string, unknown>>;
+  readonly list: (
+    entityName: string,
+    query: HookEntityListQuery,
+  ) => Promise<readonly HookEntityRecord[]>;
 }
 
 export interface HookLogger {
@@ -55,6 +70,11 @@ export interface HookContext {
   readonly previous?: Record<string, unknown>;
   readonly user: HookUser;
   readonly services: HookServices;
+  /**
+   * Re-entrancy depth. Incremented when hook-initiated writes trigger further
+   * hooks (opt-in nested execution). Used to guard against infinite loops.
+   */
+  readonly depth?: number;
 }
 
 export type HookHandler = (context: HookContext) => Promise<void> | void;
@@ -70,77 +90,12 @@ export interface RegisteredSystemHook {
 export interface RegisteredDynamicHook {
   readonly source: "dynamic";
   readonly tenantId: string;
-  readonly record: HookRecord;
+  readonly definition: DataHookDefinition;
   readonly handler: HookHandler;
   readonly order: number;
 }
 
 export type RegisteredHook = RegisteredSystemHook | RegisteredDynamicHook;
-
-export const hookActionSchema = z.discriminatedUnion("type", [
-  z.object({
-    type: z.literal("updateField"),
-    field: z.string().trim().min(1),
-    value: z.unknown(),
-  }),
-  z.object({
-    type: z.literal("createRecord"),
-    entity: z.string().trim().min(1),
-    data: z.record(z.string(), z.unknown()),
-  }),
-  z.object({
-    type: z.literal("sendNotification"),
-    message: z.string().trim().min(1),
-  }),
-]);
-
-export type HookAction = z.infer<typeof hookActionSchema>;
-
-export const hookRecordSchema = z.object({
-  id: z.string().trim().min(1),
-  tenantId: z.string().trim().min(1),
-  name: z.string().trim().min(1),
-  entity: z.string().trim().min(1),
-  event: z.string().trim().min(1),
-  type: z.literal("action"),
-  config: z.object({
-    actions: z.array(hookActionSchema).min(1),
-  }),
-  enabled: z.boolean(),
-  order: z.number().int(),
-  createdAt: z.string().trim().min(1),
-  updatedAt: z.string().trim().min(1),
-});
-
-export type HookRecord = z.infer<typeof hookRecordSchema>;
-
-export const createHookInputSchema = hookRecordSchema
-  .omit({
-    id: true,
-    tenantId: true,
-    createdAt: true,
-    updatedAt: true,
-  })
-  .extend({
-    tenantId: z.string().trim().min(1).optional(),
-    order: z.number().int().optional(),
-    enabled: z.boolean().optional(),
-  });
-
-export type CreateHookInput = z.infer<typeof createHookInputSchema>;
-
-export const patchHookInputSchema = z.object({
-  name: z.string().trim().min(1).optional(),
-  config: z
-    .object({
-      actions: z.array(hookActionSchema).min(1),
-    })
-    .optional(),
-  enabled: z.boolean().optional(),
-  order: z.number().int().optional(),
-});
-
-export type PatchHookInput = z.infer<typeof patchHookInputSchema>;
 
 export class HookExecutionError extends Error {
   constructor(message: string) {

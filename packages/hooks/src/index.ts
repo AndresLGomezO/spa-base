@@ -1,5 +1,9 @@
 export { formatHookEvent, parseHookEvent, isBeforePhase } from "./event.js";
-export { interpretActions } from "./action-interpreter.js";
+export {
+  compileDataHook,
+  runDataHook,
+  evaluateCondition,
+} from "./interpret-data-hook.js";
 export {
   registerSystemHook,
   registerDynamicHook,
@@ -14,18 +18,62 @@ export {
   clearSystemHookRegistry,
 } from "./registry.js";
 export {
-  validateHookEntityAndEvent,
-  validateHookActions,
-} from "./validate-hook.js";
+  validateDataHookEntity,
+  validateDataHookActions,
+  validateCreateDataHookInput,
+  validatePatchDataHookInput,
+} from "./validate-data-hook.js";
 export {
-  HOOKS_COLLECTION,
+  DATA_HOOKS_COLLECTION,
+  DATA_HOOK_OPERATIONS,
+  DATA_HOOK_PHASES,
+  DATA_HOOK_CONDITION_OPERATORS,
+  VALUELESS_CONDITION_OPERATORS,
+  dataHookTriggerSchema,
+  dataHookConditionSchema,
+  dataHookActionSchema,
+  dataHookDefinitionSchema,
+  createDataHookInputSchema,
+  patchDataHookInputSchema,
+  actionTargetEntities,
+} from "./data-hook-definition.js";
+export type {
+  DataHookOperation,
+  DataHookPhase,
+  DataHookConditionOperator,
+  DataHookTrigger,
+  DataHookCondition,
+  DataHookAction,
+  DataHookDefinition,
+  CreateDataHookInput,
+  PatchDataHookInput,
+} from "./data-hook-definition.js";
+export {
+  EXPRESSION_BINARY_OPERATORS,
+  EXPRESSION_UNARY_OPERATORS,
+  EXPRESSION_FUNCTIONS,
+  EXPRESSION_VARIABLES,
+  DATE_UNITS,
+  expressionNodeSchema,
+  evaluateExpression,
+  expressionValuesEqual,
+  isEmptyExpressionValue,
+  ExpressionEvaluationError,
+} from "./expression.js";
+export type {
+  ExpressionBinaryOperator,
+  ExpressionUnaryOperator,
+  ExpressionFunction,
+  ExpressionVariable,
+  DateUnit,
+  ExpressionValue,
+  ExpressionNode,
+  ExpressionScope,
+} from "./expression.js";
+export {
   HOOK_PERMISSIONS,
   HOOK_OPERATIONS,
   HOOK_PHASES,
-  hookActionSchema,
-  hookRecordSchema,
-  createHookInputSchema,
-  patchHookInputSchema,
   HookExecutionError,
 } from "./types.js";
 export type {
@@ -33,6 +81,8 @@ export type {
   HookPhase,
   ParsedHookEvent,
   HookUser,
+  HookEntityRecord,
+  HookEntityListQuery,
   HookEntityServices,
   HookLogger,
   HookServices,
@@ -41,8 +91,4 @@ export type {
   RegisteredSystemHook,
   RegisteredDynamicHook,
   RegisteredHook,
-  HookAction,
-  HookRecord,
-  CreateHookInput,
-  PatchHookInput,
 } from "./types.js";

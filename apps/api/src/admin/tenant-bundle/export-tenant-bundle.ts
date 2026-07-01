@@ -4,7 +4,7 @@ import {
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminEntityUiOverrideRepository,
-  createFirestoreAdminHookRepository,
+  createFirestoreAdminDataHookRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminTenantDashboardLayoutRepository,
   createFirestoreAdminTenantRepository,
@@ -48,7 +48,7 @@ export async function exportTenantBundle(
   const roleRepository = createFirestoreAdminTenantRoleRepository(
     deps.firebaseAdminConfig,
   );
-  const hookRepository = createFirestoreAdminHookRepository(
+  const hookRepository = createFirestoreAdminDataHookRepository(
     deps.firebaseAdminConfig,
   );
   const metricDefinitionRepository =

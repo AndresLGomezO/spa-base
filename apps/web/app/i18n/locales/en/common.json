@@ -2084,55 +2084,113 @@
       }
     }
   },
-  "hooks": {
-    "title": "Automation",
-    "description": "Configure hooks that run before or after entity operations.",
-    "listTitle": "Hooks",
-    "create": "Create hook",
-    "createTitle": "Create hook",
-    "editTitle": "Edit {{name}}",
-    "save": "Save hook",
+  "dataHooks": {
+    "navTitle": "Automation",
+    "title": "Automation · {{entity}}",
+    "description": "Define logic that runs automatically when records are created, updated, or deleted.",
+    "forbidden": "You do not have permission to manage automation.",
+    "loading": "Loading automation hooks…",
+    "deleted": "Automation hook deleted.",
     "cancel": "Cancel",
-    "name": "Hook name",
-    "entity": "Entity",
-    "event": "Event",
-    "enabled": "Enabled",
-    "enabledOn": "Yes",
-    "enabledOff": "No",
-    "actions": "Actions",
-    "actionCount": "Actions",
-    "addAction": "Add action",
-    "removeAction": "Remove action",
-    "actionType": "Action type",
-    "actionTypes": {
-      "updateField": "Update field",
+    "delete": {
+      "title": "Delete automation hook",
+      "confirm": "Delete",
+      "message": "Delete \"{{name}}\"? This cannot be undone."
+    },
+    "list": {
+      "title": "Hooks",
+      "add": "New hook",
+      "expandPanel": "Expand hooks panel",
+      "collapsePanel": "Collapse hooks panel",
+      "empty": "No automation hooks for this entity yet.",
+      "edit": "Edit hook",
+      "delete": "Delete hook"
+    },
+    "settings": {
+      "empty": "Select or create a hook to configure it.",
+      "save": "Save",
+      "saved": "Automation hook saved.",
+      "operation": "Trigger",
+      "phase": "Timing",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "updateFields": "Only when these fields change",
+      "updateFieldsHint": "Leave empty to run on any field change.",
+      "condition": "Only run when a condition is met"
+    },
+    "metadata": {
+      "created": "Automation hook created.",
+      "updated": "Automation hook updated.",
+      "createTitle": "New automation hook",
+      "editTitle": "Edit automation hook",
+      "createAction": "Create",
+      "name": "Name",
+      "namePlaceholder": "e.g. Complete transaction",
+      "description": "Description",
+      "trigger": "Trigger"
+    },
+    "operation": {
+      "create": "On create",
+      "update": "On update",
+      "delete": "On delete"
+    },
+    "phase": {
+      "before": "Before",
+      "after": "After"
+    },
+    "actionType": {
+      "setField": "Set field",
       "createRecord": "Create record",
+      "createRecords": "Create records (loop)",
+      "updateMatching": "Update matching records",
       "sendNotification": "Send notification"
     },
-    "field": "Field",
-    "value": "Value",
-    "targetEntity": "Target entity",
-    "recordData": "Record data (JSON)",
-    "message": "Message",
-    "empty": "No hooks configured yet.",
-    "tenant": "Tenant",
-    "forbidden": "You do not have permission to manage hooks.",
-    "forbiddenCreate": "You do not have permission to create hooks.",
-    "forbiddenUpdate": "You do not have permission to update hooks.",
-    "loadFailed": "Unable to load hooks.",
-    "saveFailed": "Unable to save hook.",
-    "validation": {
-      "nameRequired": "Hook name is required.",
-      "entityRequired": "Entity is required.",
-      "actionsRequired": "Add at least one action."
+    "actions": {
+      "title": "Actions",
+      "add": "Add action",
+      "remove": "Remove action",
+      "noFields": "No fields configured.",
+      "selectField": "Select field…",
+      "fieldName": "Field name",
+      "removeField": "Remove field",
+      "addField": "Add field",
+      "targetField": "Target field",
+      "value": "Value",
+      "message": "Message",
+      "targetEntity": "Target entity",
+      "selectEntity": "Select entity…",
+      "recordData": "Record data",
+      "count": "Number of records",
+      "matchWhere": "Match records where",
+      "matchValue": "Value",
+      "setFields": "Set fields"
     },
-    "events": {
-      "beforeCreate": "Before create",
-      "afterCreate": "After create",
-      "beforeUpdate": "Before update",
-      "afterUpdate": "After update",
-      "beforeDelete": "Before delete",
-      "afterDelete": "After delete"
+    "expression": {
+      "literal": "Fixed value",
+      "field": "Field reference",
+      "now": "Current date/time",
+      "loopIndex": "Loop index",
+      "advanced": "Advanced (expression)",
+      "text": "Text",
+      "number": "Number",
+      "boolean": "Boolean",
+      "current": "Current record",
+      "previous": "Previous value",
+      "fieldPathPlaceholder": "field name",
+      "invalidJson": "Invalid expression JSON.",
+      "advancedHint": "Edit the raw expression AST as JSON."
+    },
+    "json": {
+      "view": "View JSON",
+      "import": "Import",
+      "viewTitle": "Automation hook JSON",
+      "importTitle": "Import automation hook",
+      "importHint": "Paste a data hook definition. It will be created as a new hook for this entity.",
+      "copy": "Copy",
+      "copied": "Copied to clipboard.",
+      "imported": "Automation hook imported.",
+      "invalid": "Invalid JSON."
     }
   },
   "share": {

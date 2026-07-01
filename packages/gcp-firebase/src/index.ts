@@ -58,7 +58,7 @@ export { createFirestoreAdminEntityDefinitionRepository } from "./firestore-admi
 export { createFirestoreAdminEntityUiOverrideRepository } from "./firestore-admin-entity-ui-override-repository.js";
 export { createFirestoreAdminUiBuilderPresetRepository } from "./firestore-admin-ui-builder-preset-repository.js";
 export { createFirestoreAdminTenantDashboardLayoutRepository } from "./firestore-admin-tenant-dashboard-layout-repository.js";
-export { createFirestoreAdminHookRepository } from "./firestore-admin-hook-repository.js";
+export { createFirestoreAdminDataHookRepository } from "./firestore-admin-hook-repository.js";
 export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admin-metric-definition-repository.js";
 export { createFirestoreAdminEntityQueryDefinitionRepository } from "./firestore-admin-entity-query-definition-repository.js";
 export { createFirestoreAdminCustomViewRepository } from "./firestore-admin-custom-view-repository.js";

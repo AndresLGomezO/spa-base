@@ -1,5 +1,5 @@
 import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
-import type { HookRecord } from "@repo/hooks";
+import { actionTargetEntities, type DataHookDefinition } from "@repo/hooks";
 
 import {
   TENANT_BUNDLE_EXPORT_VERSION,
@@ -137,7 +137,7 @@ function validateTenantBundleCrossReferences(
 }
 
 function validateHookReferences(
-  hook: HookRecord,
+  hook: DataHookDefinition,
   entityNames: ReadonlySet<string>,
 ): readonly TenantBundleImportError[] {
   const errors: TenantBundleImportError[] = [];
@@ -149,12 +149,14 @@ function validateHookReferences(
     });
   }
 
-  for (const [index, action] of hook.config.actions.entries()) {
-    if (action.type === "createRecord" && !entityNames.has(action.entity)) {
-      errors.push({
-        path: `hooks.${hook.id}.config.actions[${String(index)}].entity`,
-        message: `Unknown entity "${action.entity}".`,
-      });
+  for (const [index, action] of hook.actions.entries()) {
+    for (const target of actionTargetEntities(action)) {
+      if (!entityNames.has(target)) {
+        errors.push({
+          path: `hooks.${hook.id}.actions[${String(index)}].entity`,
+          message: `Unknown entity "${target}".`,
+        });
+      }
     }
   }
 
@@ -326,7 +328,7 @@ export const TENANT_BUNDLE_COLLECTION_IMPORT_ORDER = [
   "ui_builder_presets",
   "tenant_dashboard_layouts",
   "roles",
-  "hooks",
+  "__data_hooks",
   "__metrics_definitions",
   "__entity_query_definitions",
   "__custom_views",

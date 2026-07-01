@@ -242,20 +242,23 @@ function extractDataModelFieldTypeKeys(corpus) {
   );
 }
 
-/** hooks.events.${suffix} in source → all keys under hooks.events */
-function extractHookEventKeys(corpus) {
-  if (!corpus.includes("hooks.events.${")) return [];
-
-  const refHooks = readJSON(
+/** dataHooks.<group>.${...} in source → all keys under dataHooks.<group> */
+function extractDataHookDynamicKeys(corpus) {
+  const groups = ["operation", "phase", "actionType"];
+  const refDataHooks = readJSON(
     path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
-  ).hooks;
+  ).dataHooks;
 
-  const events = refHooks?.events;
-  if (!events || typeof events !== "object") return [];
-
-  return Object.keys(events).map(
-    (key) => `${DEFAULT_NAMESPACE}:hooks.events.${key}`,
-  );
+  const keys = [];
+  for (const group of groups) {
+    if (!corpus.includes(`dataHooks.${group}.\${`)) continue;
+    const bucket = refDataHooks?.[group];
+    if (!bucket || typeof bucket !== "object") continue;
+    for (const key of Object.keys(bucket)) {
+      keys.push(`${DEFAULT_NAMESPACE}:dataHooks.${group}.${key}`);
+    }
+  }
+  return keys;
 }
 
 /** dataModels.relationTypes.${key}.* in source → nested keys under dataModels.relationTypes */
@@ -769,8 +772,8 @@ mergeUsedKeys(
 );
 mergeUsedKeys(
   usedKeys,
-  extractHookEventKeys(corpus),
-  path.join(SRC_DIR, "components/hooks/HookEditor.tsx"),
+  extractDataHookDynamicKeys(corpus),
+  path.join(SRC_DIR, "features/data-hooks/DataHookSettingsPanel.tsx"),
 );
 mergeUsedKeys(
   usedKeys,

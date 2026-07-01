@@ -161,13 +161,13 @@ describe("useAccessibleNavItems", () => {
     expect(getDataModelEntityIds(result.current)).toEqual(["widget"]);
   });
 
-  it("puts model builder in data structure and automation in settings", () => {
+  it("puts model builder in data structure and automation in its own group", () => {
     mockDesignLayoutSubGroups = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
       isSuperAdmin: false,
-      permissions: ["entityDefinition.read", "hook.read"],
+      permissions: ["entityDefinition.read", "hook.read", "widget.read"],
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
@@ -175,6 +175,7 @@ describe("useAccessibleNavItems", () => {
       (item) => item.id === "data-structure",
     );
     const settings = result.current.find((item) => item.id === "settings");
+    const automation = result.current.find((item) => item.id === "automation");
 
     expect(dataStructure && isNavGroup(dataStructure)).toBe(true);
     if (dataStructure && isNavGroup(dataStructure)) {
@@ -190,15 +191,31 @@ describe("useAccessibleNavItems", () => {
       ).toBe(false);
     }
 
-    expect(settings && isNavGroup(settings)).toBe(true);
-    if (settings && isNavGroup(settings)) {
+    // Automation is now its own top-level collapsible group listing entities.
+    expect(automation && isNavGroup(automation)).toBe(true);
+    if (automation && isNavGroup(automation)) {
       expect(
-        settings.children.some((child) => child.id === "data-model-builder"),
-      ).toBe(false);
-      expect(settings.children.some((child) => child.id === "automation")).toBe(
-        true,
-      );
+        automation.children.some((child) => child.id === "automation-widget"),
+      ).toBe(true);
     }
+
+    // With only these permissions, the settings group has no children.
+    expect(settings).toBeUndefined();
+  });
+
+  it("hides automation when the user cannot read any entity", () => {
+    mockDesignLayoutSubGroups = [];
+    mockCatalogItems = MOCK_ENTITY_CATALOG;
+    mockUseAuth.mockReturnValue({
+      ...defaultAuth,
+      isSuperAdmin: false,
+      permissions: ["hook.read"],
+    });
+
+    const { result } = renderHook(() => useAccessibleNavItems());
+    expect(
+      result.current.find((item) => item.id === "automation"),
+    ).toBeUndefined();
   });
 
   it("puts metrics in analytics group, not settings", () => {

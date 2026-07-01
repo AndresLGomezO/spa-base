@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Database } from "lucide-react";
+import { Database, Workflow } from "lucide-react";
 import { canIncludeEntityInCatalog, hasPermission } from "@repo/rbac";
 
 import { useAuth } from "../auth/AuthContext";
@@ -23,7 +23,6 @@ import {
   DATA_STRUCTURE_ENTITY_CATEGORIES_NAV_ITEM,
   DATA_STRUCTURE_GROUP_ICON,
   DATA_STRUCTURE_MODEL_BUILDER_NAV_ITEM,
-  SETTINGS_AUTOMATION_NAV_ITEM,
   SETTINGS_AI_CHAT_NAV_ITEM,
   SETTINGS_AI_DEBUGGER_NAV_ITEM,
   SETTINGS_METRICS_NAV_ITEM,
@@ -41,6 +40,10 @@ import {
   DESIGN_LAYOUT_PRESETS_NAV_ITEM,
   useDesignLayoutNavSubGroups,
 } from "./design-layout-nav";
+import {
+  AUTOMATION_MATCH_PATH,
+  useAutomationEntityLinks,
+} from "./automation-nav";
 
 function compareNavItems(
   left: EntityNavItem | CustomViewNavItem,
@@ -71,6 +74,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
   const customViewNavItems = useCustomViewNavItems();
   const categoriesQuery = useEntityNavCategories();
   const designLayoutSubGroups = useDesignLayoutNavSubGroups();
+  const automationEntityLinks = useAutomationEntityLinks();
 
   return useMemo(() => {
     if (availableTenants.length === 0) {
@@ -186,9 +190,6 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     if (hasPermission("role.read", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_ROLES_NAV_ITEM);
     }
-    if (hasPermission("hook.read", permissions, { isSuperAdmin })) {
-      settingsChildren.push(SETTINGS_AUTOMATION_NAV_ITEM);
-    }
     if (hasPermission("ai.chat.run", permissions, { isSuperAdmin })) {
       settingsChildren.push(SETTINGS_AI_CHAT_NAV_ITEM);
     }
@@ -203,6 +204,16 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
         matchPath: "/settings",
         icon: SETTINGS_GROUP_ICON,
         children: settingsChildren,
+      });
+    }
+
+    if (automationEntityLinks.length > 0) {
+      items.push({
+        id: "automation",
+        labelKey: "automation",
+        matchPath: AUTOMATION_MATCH_PATH,
+        icon: Workflow,
+        children: [...automationEntityLinks],
       });
     }
 
@@ -275,6 +286,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     return items;
   }, [
     availableTenants.length,
+    automationEntityLinks,
     catalogItems,
     categoriesQuery.data,
     customViewNavItems,

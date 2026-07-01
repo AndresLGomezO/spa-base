@@ -1,14 +1,15 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-import { interpretActions } from "./action-interpreter.js";
+import type { DataHookDefinition } from "./data-hook-definition.js";
 import { formatHookEvent, parseHookEvent } from "./event.js";
+import { runDataHook } from "./interpret-data-hook.js";
 import {
   clearHookRegistry,
   executeHooks,
   registerDynamicHook,
   registerSystemHook,
 } from "./registry.js";
-import type { HookContext, HookRecord } from "./types.js";
+import type { HookContext } from "./types.js";
 import { HookExecutionError } from "./types.js";
 
 function createContext(overrides: Partial<HookContext> = {}): HookContext {
@@ -28,16 +29,20 @@ function createContext(overrides: Partial<HookContext> = {}): HookContext {
   };
 }
 
-const sampleRecord: HookRecord = {
+const sampleDefinition: DataHookDefinition = {
   id: "hook_1",
   tenantId: "tenant_a",
   name: "Set status",
   entity: "loan",
-  event: "loan.beforeCreate",
-  type: "action",
-  config: {
-    actions: [{ type: "updateField", field: "status", value: "Pending" }],
-  },
+  phase: "before",
+  trigger: { operation: "create" },
+  actions: [
+    {
+      type: "setField",
+      field: "status",
+      value: { kind: "literal", value: "Pending" },
+    },
+  ],
   enabled: true,
   order: 0,
   createdAt: "2026-01-01T00:00:00.000Z",
@@ -108,30 +113,8 @@ describe("executeHooks", () => {
     ).rejects.toThrow(HookExecutionError);
   });
 
-  it("logs after hook failures without throwing", async () => {
-    const error = vi.fn();
-
-    registerSystemHook({
-      moduleName: "inventory",
-      event: "loan.afterCreate",
-      handler: async () => {
-        throw new Error("after failed");
-      },
-    });
-
-    await executeHooks(
-      "loan.afterCreate",
-      createContext({
-        event: "loan.afterCreate",
-        services: { logger: { info: vi.fn(), error } },
-      }),
-    );
-
-    expect(error).toHaveBeenCalled();
-  });
-
   it("runs tenant dynamic hooks", async () => {
-    registerDynamicHook("tenant_a", sampleRecord);
+    registerDynamicHook("tenant_a", sampleDefinition);
 
     const context = createContext();
     await executeHooks("loan.beforeCreate", context);
@@ -140,37 +123,244 @@ describe("executeHooks", () => {
   });
 });
 
-describe("interpretActions", () => {
-  it("mutates current on before updateField", async () => {
+describe("runDataHook", () => {
+  it("mutates current on before setField", async () => {
     const context = createContext();
 
-    await interpretActions(
-      [{ type: "updateField", field: "status", value: "Approved" }],
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        actions: [
+          {
+            type: "setField",
+            field: "status",
+            value: { kind: "literal", value: "Approved" },
+          },
+        ],
+      },
       context,
     );
 
     expect(context.current.status).toBe("Approved");
   });
 
+  it("evaluates expression-driven setField", async () => {
+    const context = createContext({
+      event: "loan.beforeCreate",
+      current: { amount: 100, commitmentAmount: 100 },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        condition: {
+          field: "amount",
+          operator: ">=",
+          value: { kind: "field", source: "current", path: "commitmentAmount" },
+        },
+        actions: [
+          {
+            type: "setField",
+            field: "status",
+            value: { kind: "literal", value: "COMPLETE" },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(context.current.status).toBe("COMPLETE");
+  });
+
+  it("skips when condition is not met", async () => {
+    const context = createContext({
+      current: { amount: 50, commitmentAmount: 100 },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        condition: {
+          field: "amount",
+          operator: ">=",
+          value: { kind: "field", source: "current", path: "commitmentAmount" },
+        },
+        actions: [
+          {
+            type: "setField",
+            field: "status",
+            value: { kind: "literal", value: "COMPLETE" },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(context.current.status).toBeUndefined();
+  });
+
+  it("only fires update hooks when tracked fields change", async () => {
+    const context = createContext({
+      event: "loan.beforeUpdate",
+      current: { amount: 100, note: "changed" },
+      previous: { amount: 100, note: "original" },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "before",
+        trigger: { operation: "update", updateFields: ["amount"] },
+        actions: [
+          {
+            type: "setField",
+            field: "touched",
+            value: { kind: "literal", value: true },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(context.current.touched).toBeUndefined();
+  });
+
   it("calls entity services on after createRecord", async () => {
     const create = vi.fn(async () => ({ id: "task_1" }));
 
-    await interpretActions(
-      [
-        {
-          type: "createRecord",
-          entity: "task",
-          data: { name: "Follow up" },
-        },
-      ],
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "createRecord",
+            entity: "task",
+            data: { name: { kind: "literal", value: "Follow up" } },
+          },
+        ],
+      },
       createContext({
         event: "loan.afterCreate",
         services: {
-          entities: { create, update: vi.fn() },
+          entities: { create, update: vi.fn(), list: vi.fn() },
         },
       }),
     );
 
     expect(create).toHaveBeenCalledWith("task", { name: "Follow up" });
+  });
+
+  it("generates multiple records with loop index", async () => {
+    const create = vi.fn<
+      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
+    >(async () => ({ id: "c" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "createRecords",
+            entity: "commitment",
+            count: { kind: "field", source: "current", path: "periods" },
+            data: {
+              sequence: { kind: "var", name: "loopIndex" },
+              dueDate: {
+                kind: "call",
+                fn: "dateAdd",
+                args: [
+                  { kind: "field", source: "current", path: "startDate" },
+                  {
+                    kind: "binary",
+                    op: "*",
+                    left: { kind: "var", name: "loopIndex" },
+                    right: { kind: "literal", value: 30 },
+                  },
+                  { kind: "literal", value: "DAY" },
+                ],
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "loan.afterCreate",
+        current: { periods: 3, startDate: "2026-01-01T00:00:00.000Z" },
+        services: {
+          entities: { create, update: vi.fn(), list: vi.fn() },
+        },
+      }),
+    );
+
+    expect(create).toHaveBeenCalledTimes(3);
+    expect(create.mock.calls[0]?.[1]).toMatchObject({ sequence: 0 });
+    expect(create.mock.calls[1]?.[1]).toMatchObject({
+      sequence: 1,
+      dueDate: "2026-01-31T00:00:00.000Z",
+    });
+  });
+
+  it("updates matching related records", async () => {
+    const update = vi.fn<
+      (
+        entity: string,
+        id: string,
+        data: Record<string, unknown>,
+      ) => Promise<{ id: string }>
+    >(async () => ({ id: "x" }));
+    const list = vi.fn(async () => [
+      {
+        id: "cm_1",
+        tenantId: "tenant_a",
+        contractId: "loan_1",
+        isActive: true,
+      },
+      {
+        id: "cm_2",
+        tenantId: "tenant_a",
+        contractId: "loan_1",
+        isActive: true,
+      },
+    ]);
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "update" },
+        actions: [
+          {
+            type: "updateMatching",
+            entity: "commitment",
+            where: {
+              field: "contractId",
+              operator: "==",
+              value: { kind: "field", source: "current", path: "id" },
+            },
+            set: { isActive: { kind: "literal", value: false } },
+          },
+        ],
+      },
+      createContext({
+        event: "loan.afterUpdate",
+        current: { id: "loan_1" },
+        previous: { id: "loan_1" },
+        services: {
+          entities: { create: vi.fn(), update, list },
+        },
+      }),
+    );
+
+    expect(list).toHaveBeenCalledWith("commitment", {
+      field: "contractId",
+      value: "loan_1",
+      limit: 500,
+    });
+    expect(update).toHaveBeenCalledTimes(2);
+    expect(update.mock.calls[0]?.[2]).toEqual({ isActive: false });
   });
 });

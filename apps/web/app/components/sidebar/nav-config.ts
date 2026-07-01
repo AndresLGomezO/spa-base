@@ -13,7 +13,6 @@ import {
   Settings,
   Shield,
   Users,
-  Workflow,
   Bot,
   ScanSearch,
 } from "lucide-react";
@@ -144,14 +143,6 @@ export const SETTINGS_AI_DEBUGGER_NAV_ITEM: NavLinkConfig = {
   to: "/settings/ai-debugger",
   matchPath: "/settings/ai-debugger",
   icon: ScanSearch,
-};
-
-export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
-  id: "automation",
-  labelKey: "automation",
-  to: "/settings/hooks",
-  matchPath: "/settings/hooks",
-  icon: Workflow,
 };
 
 export const SETTINGS_METRICS_NAV_ITEM: NavLinkConfig = {

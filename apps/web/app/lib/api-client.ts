@@ -575,87 +575,6 @@ export async function deleteEntityCategory(id: string): Promise<void> {
   });
 }
 
-export type HookAction =
-  | {
-      readonly type: "updateField";
-      readonly field: string;
-      readonly value: unknown;
-    }
-  | {
-      readonly type: "createRecord";
-      readonly entity: string;
-      readonly data: Record<string, unknown>;
-    }
-  | {
-      readonly type: "sendNotification";
-      readonly message: string;
-    };
-
-export interface HookRecord {
-  readonly id: string;
-  readonly tenantId: string;
-  readonly name: string;
-  readonly entity: string;
-  readonly event: string;
-  readonly type: "action";
-  readonly config: {
-    readonly actions: readonly HookAction[];
-  };
-  readonly enabled: boolean;
-  readonly order: number;
-  readonly createdAt: string;
-  readonly updatedAt: string;
-}
-
-export async function listHooks(options?: {
-  readonly tenantId?: string;
-}): Promise<{ readonly items: readonly HookRecord[] }> {
-  return apiRequest<{ readonly items: readonly HookRecord[] }>("/api/hooks", {
-    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
-  });
-}
-
-interface CreateHookInput {
-  readonly tenantId?: string;
-  readonly name: string;
-  readonly entity: string;
-  readonly event: string;
-  readonly type: "action";
-  readonly config: {
-    readonly actions: readonly HookAction[];
-  };
-  readonly enabled?: boolean;
-  readonly order?: number;
-}
-
-export async function createHook(input: CreateHookInput): Promise<HookRecord> {
-  return apiRequest<HookRecord>("/api/hooks", {
-    method: "POST",
-    body: input,
-  });
-}
-
-interface PatchHookInput {
-  readonly name?: string;
-  readonly config?: {
-    readonly actions: readonly HookAction[];
-  };
-  readonly enabled?: boolean;
-  readonly order?: number;
-}
-
-export async function patchHook(
-  id: string,
-  input: PatchHookInput,
-  options?: { readonly tenantId?: string },
-): Promise<HookRecord> {
-  return apiRequest<HookRecord>(`/api/hooks/${id}`, {
-    method: "PATCH",
-    body: input,
-    query: options?.tenantId ? { tenantId: options.tenantId } : undefined,
-  });
-}
-
 export interface MetricDefinitionRecord {
   readonly id: string;
   readonly tenantId: string;
@@ -947,6 +866,44 @@ export async function putEntityQueryDefinitionsCatalog(
   }>("/api/entity-query-definitions/catalog", {
     method: "PUT",
     body: input,
+  });
+}
+
+export type DataHookDefinitionRecord = import("@repo/hooks").DataHookDefinition;
+type CreateDataHookInput = import("@repo/hooks").CreateDataHookInput;
+type PatchDataHookInput = import("@repo/hooks").PatchDataHookInput;
+
+export async function listDataHooks(options?: {
+  readonly entity?: string;
+}): Promise<{ readonly items: readonly DataHookDefinitionRecord[] }> {
+  return apiRequest<{ readonly items: readonly DataHookDefinitionRecord[] }>(
+    "/api/data-hooks",
+    options?.entity ? { query: { entity: options.entity } } : undefined,
+  );
+}
+
+export async function createDataHook(
+  input: CreateDataHookInput,
+): Promise<DataHookDefinitionRecord> {
+  return apiRequest<DataHookDefinitionRecord>("/api/data-hooks", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function patchDataHook(
+  id: string,
+  input: PatchDataHookInput,
+): Promise<DataHookDefinitionRecord> {
+  return apiRequest<DataHookDefinitionRecord>(`/api/data-hooks/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export async function deleteDataHook(id: string): Promise<void> {
+  await apiRequest<{ readonly id: string }>(`/api/data-hooks/${id}`, {
+    method: "DELETE",
   });
 }
 

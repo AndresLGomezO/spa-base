@@ -2084,55 +2084,113 @@
       }
     }
   },
-  "hooks": {
-    "title": "Automatización",
-    "description": "Configura hooks que se ejecutan antes o después de operaciones de entidad.",
-    "listTitle": "Hooks",
-    "create": "Crear hook",
-    "createTitle": "Crear hook",
-    "editTitle": "Editar {{name}}",
-    "save": "Guardar hook",
+  "dataHooks": {
+    "navTitle": "Automatización",
+    "title": "Automatización · {{entity}}",
+    "description": "Define lógica que se ejecuta automáticamente cuando se crean, actualizan o eliminan registros.",
+    "forbidden": "No tienes permiso para administrar la automatización.",
+    "loading": "Cargando hooks de automatización…",
+    "deleted": "Hook de automatización eliminado.",
     "cancel": "Cancelar",
-    "name": "Nombre del hook",
-    "entity": "Entidad",
-    "event": "Evento",
-    "enabled": "Activo",
-    "enabledOn": "Sí",
-    "enabledOff": "No",
-    "actions": "Acciones",
-    "actionCount": "Acciones",
-    "addAction": "Agregar acción",
-    "removeAction": "Eliminar acción",
-    "actionType": "Tipo de acción",
-    "actionTypes": {
-      "updateField": "Actualizar campo",
+    "delete": {
+      "title": "Eliminar hook de automatización",
+      "confirm": "Eliminar",
+      "message": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer."
+    },
+    "list": {
+      "title": "Hooks",
+      "add": "Nuevo hook",
+      "expandPanel": "Expandir panel de hooks",
+      "collapsePanel": "Colapsar panel de hooks",
+      "empty": "Aún no hay hooks de automatización para esta entidad.",
+      "edit": "Editar hook",
+      "delete": "Eliminar hook"
+    },
+    "settings": {
+      "empty": "Selecciona o crea un hook para configurarlo.",
+      "save": "Guardar",
+      "saved": "Hook de automatización guardado.",
+      "operation": "Disparador",
+      "phase": "Momento",
+      "status": "Estado",
+      "enabled": "Activo",
+      "disabled": "Inactivo",
+      "updateFields": "Solo cuando cambien estos campos",
+      "updateFieldsHint": "Déjalo vacío para ejecutar con cualquier cambio.",
+      "condition": "Ejecutar solo si se cumple una condición"
+    },
+    "metadata": {
+      "created": "Hook de automatización creado.",
+      "updated": "Hook de automatización actualizado.",
+      "createTitle": "Nuevo hook de automatización",
+      "editTitle": "Editar hook de automatización",
+      "createAction": "Crear",
+      "name": "Nombre",
+      "namePlaceholder": "p. ej. Completar transacción",
+      "description": "Descripción",
+      "trigger": "Disparador"
+    },
+    "operation": {
+      "create": "Al crear",
+      "update": "Al actualizar",
+      "delete": "Al eliminar"
+    },
+    "phase": {
+      "before": "Antes",
+      "after": "Después"
+    },
+    "actionType": {
+      "setField": "Establecer campo",
       "createRecord": "Crear registro",
+      "createRecords": "Crear registros (bucle)",
+      "updateMatching": "Actualizar registros coincidentes",
       "sendNotification": "Enviar notificación"
     },
-    "field": "Campo",
-    "value": "Valor",
-    "targetEntity": "Entidad destino",
-    "recordData": "Datos del registro (JSON)",
-    "message": "Mensaje",
-    "empty": "Aún no hay hooks configurados.",
-    "tenant": "Tenant",
-    "forbidden": "No tienes permiso para administrar hooks.",
-    "forbiddenCreate": "No tienes permiso para crear hooks.",
-    "forbiddenUpdate": "No tienes permiso para actualizar hooks.",
-    "loadFailed": "No se pudieron cargar los hooks.",
-    "saveFailed": "No se pudo guardar el hook.",
-    "validation": {
-      "nameRequired": "El nombre del hook es obligatorio.",
-      "entityRequired": "La entidad es obligatoria.",
-      "actionsRequired": "Agrega al menos una acción."
+    "actions": {
+      "title": "Acciones",
+      "add": "Agregar acción",
+      "remove": "Eliminar acción",
+      "noFields": "Sin campos configurados.",
+      "selectField": "Selecciona un campo…",
+      "fieldName": "Nombre del campo",
+      "removeField": "Eliminar campo",
+      "addField": "Agregar campo",
+      "targetField": "Campo destino",
+      "value": "Valor",
+      "message": "Mensaje",
+      "targetEntity": "Entidad destino",
+      "selectEntity": "Selecciona una entidad…",
+      "recordData": "Datos del registro",
+      "count": "Número de registros",
+      "matchWhere": "Coincidir registros donde",
+      "matchValue": "Valor",
+      "setFields": "Establecer campos"
     },
-    "events": {
-      "beforeCreate": "Antes de crear",
-      "afterCreate": "Después de crear",
-      "beforeUpdate": "Antes de actualizar",
-      "afterUpdate": "Después de actualizar",
-      "beforeDelete": "Antes de eliminar",
-      "afterDelete": "Después de eliminar"
+    "expression": {
+      "literal": "Valor fijo",
+      "field": "Referencia a campo",
+      "now": "Fecha/hora actual",
+      "loopIndex": "Índice del bucle",
+      "advanced": "Avanzado (expresión)",
+      "text": "Texto",
+      "number": "Número",
+      "boolean": "Booleano",
+      "current": "Registro actual",
+      "previous": "Valor anterior",
+      "fieldPathPlaceholder": "nombre del campo",
+      "invalidJson": "JSON de expresión inválido.",
+      "advancedHint": "Edita el AST de la expresión como JSON."
+    },
+    "json": {
+      "view": "Ver JSON",
+      "import": "Importar",
+      "viewTitle": "JSON del hook de automatización",
+      "importTitle": "Importar hook de automatización",
+      "importHint": "Pega una definición de data hook. Se creará como un nuevo hook para esta entidad.",
+      "copy": "Copiar",
+      "copied": "Copiado al portapapeles.",
+      "imported": "Hook de automatización importado.",
+      "invalid": "JSON inválido."
     }
   },
   "share": {

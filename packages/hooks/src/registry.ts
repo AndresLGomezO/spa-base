@@ -1,9 +1,9 @@
-import { interpretActions } from "./action-interpreter.js";
-import { isBeforePhase, parseHookEvent } from "./event.js";
+import type { DataHookDefinition } from "./data-hook-definition.js";
+import { formatHookEvent, isBeforePhase, parseHookEvent } from "./event.js";
+import { compileDataHook } from "./interpret-data-hook.js";
 import type {
   HookContext,
   HookHandler,
-  HookRecord,
   RegisteredDynamicHook,
   RegisteredHook,
   RegisteredSystemHook,
@@ -42,30 +42,36 @@ export function registerSystemHook(entry: {
   systemHookRegistry.set(entry.event, existing);
 }
 
+function dataHookEvent(definition: DataHookDefinition): string {
+  return formatHookEvent({
+    entity: definition.entity,
+    phase: definition.phase,
+    operation: definition.trigger.operation,
+  });
+}
+
 export function registerDynamicHook(
   tenantId: string,
-  record: HookRecord,
+  definition: DataHookDefinition,
 ): void {
-  if (!record.enabled) {
-    unregisterDynamicHook(tenantId, record.id);
+  if (!definition.enabled) {
+    unregisterDynamicHook(tenantId, definition.id);
     return;
   }
 
-  const handler: HookHandler = async (context) => {
-    await interpretActions(record.config.actions, context);
-  };
+  const handler: HookHandler = compileDataHook(definition);
 
   const hook: RegisteredDynamicHook = {
     source: "dynamic",
     tenantId,
-    record,
+    definition,
     handler,
-    order: record.order,
+    order: definition.order,
   };
 
-  const key = dynamicKey(tenantId, record.event);
+  const key = dynamicKey(tenantId, dataHookEvent(definition));
   const existing = (dynamicHookRegistry.get(key) ?? []).filter(
-    (entry) => entry.record.id !== record.id,
+    (entry) => entry.definition.id !== definition.id,
   );
   existing.push(hook);
   dynamicHookRegistry.set(key, existing);
@@ -77,7 +83,7 @@ export function unregisterDynamicHook(tenantId: string, hookId: string): void {
       continue;
     }
 
-    const next = hooks.filter((hook) => hook.record.id !== hookId);
+    const next = hooks.filter((hook) => hook.definition.id !== hookId);
     if (next.length === 0) {
       dynamicHookRegistry.delete(key);
     } else {
@@ -146,7 +152,7 @@ export async function executeHooks(
         tenantId: context.tenantId,
         source: hook.source,
         moduleName: hook.source === "system" ? hook.moduleName : undefined,
-        hookId: hook.source === "dynamic" ? hook.record.id : undefined,
+        hookId: hook.source === "dynamic" ? hook.definition.id : undefined,
         error: message,
       });
     }

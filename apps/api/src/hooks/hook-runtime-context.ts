@@ -1,13 +1,17 @@
-import type { HookRepository } from "@repo/firestore-converters";
-import { invalidateTenantHookCache, registerDynamicHook } from "@repo/hooks";
-import type { HookRecord } from "@repo/hooks";
+import type { DataHookRepository } from "@repo/firestore-converters";
+import {
+  invalidateTenantHookCache,
+  registerDynamicHook,
+  unregisterDynamicHook,
+} from "@repo/hooks";
+import type { DataHookDefinition } from "@repo/hooks";
 
 export class HookRuntimeContext {
   private readonly loadedTenants = new Set<string>();
 
-  constructor(private readonly hookRepository: HookRepository) {}
+  constructor(private readonly hookRepository: DataHookRepository) {}
 
-  get repository(): HookRepository {
+  get repository(): DataHookRepository {
     return this.hookRepository;
   }
 
@@ -23,9 +27,13 @@ export class HookRuntimeContext {
     this.loadedTenants.add(tenantId);
   }
 
-  async syncHook(record: HookRecord): Promise<void> {
-    registerDynamicHook(record.tenantId, record);
-    this.loadedTenants.add(record.tenantId);
+  async syncHook(definition: DataHookDefinition): Promise<void> {
+    registerDynamicHook(definition.tenantId, definition);
+    this.loadedTenants.add(definition.tenantId);
+  }
+
+  unregister(tenantId: string, hookId: string): void {
+    unregisterDynamicHook(tenantId, hookId);
   }
 
   async reloadTenantHooks(tenantId: string): Promise<void> {
@@ -36,7 +44,7 @@ export class HookRuntimeContext {
 }
 
 export function createHookRuntimeContext(
-  hookRepository: HookRepository,
+  hookRepository: DataHookRepository,
 ): HookRuntimeContext {
   return new HookRuntimeContext(hookRepository);
 }

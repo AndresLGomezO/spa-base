@@ -424,6 +424,9 @@ importers:
       '@repo/firestore-indexes':
         specifier: workspace:*
         version: link:../../packages/firestore-indexes
+      '@repo/hooks':
+        specifier: workspace:*
+        version: link:../../packages/hooks
       '@repo/metrics-engine':
         specifier: workspace:*
         version: link:../../packages/metrics-engine

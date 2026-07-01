@@ -1,15 +1,15 @@
 import {
-  createHookInputSchema,
-  HOOKS_COLLECTION,
-  hookRecordSchema,
-  patchHookInputSchema,
-  type CreateHookInput,
-  type HookRecord,
-  type PatchHookInput,
+  createDataHookInputSchema,
+  DATA_HOOKS_COLLECTION,
+  dataHookDefinitionSchema,
+  patchDataHookInputSchema,
+  type CreateDataHookInput,
+  type DataHookDefinition,
+  type PatchDataHookInput,
 } from "@repo/hooks";
 import { nanoid } from "nanoid";
 
-import type { HookRepository } from "@repo/firestore-converters";
+import type { DataHookRepository } from "@repo/firestore-converters";
 
 import {
   getFirestoreAdmin,
@@ -17,18 +17,18 @@ import {
 } from "./firebase-admin.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
-function toRecord(data: unknown): HookRecord {
-  return hookRecordSchema.parse(data);
+function toRecord(data: unknown): DataHookDefinition {
+  return dataHookDefinitionSchema.parse(data);
 }
 
-export function createFirestoreAdminHookRepository(
+export function createFirestoreAdminDataHookRepository(
   config: FirebaseAdminConfig,
-): HookRepository {
+): DataHookRepository {
   function collection(tenantId: string) {
     return tenantEntityCollectionRef(
       getFirestoreAdmin(config),
       tenantId,
-      HOOKS_COLLECTION,
+      DATA_HOOKS_COLLECTION,
     );
   }
 
@@ -44,18 +44,20 @@ export function createFirestoreAdminHookRepository(
       if (!snapshot.exists) return null;
       return toRecord({ id: snapshot.id, ...snapshot.data() });
     },
-    async create(tenantId, input: CreateHookInput) {
-      const parsed = createHookInputSchema.parse(input);
+    async create(tenantId, input: CreateDataHookInput) {
+      const parsed = createDataHookInputSchema.parse(input);
       const now = new Date().toISOString();
       const id = `hook_${nanoid(12)}`;
-      const record = hookRecordSchema.parse({
+      const record = dataHookDefinitionSchema.parse({
         id,
         tenantId,
         name: parsed.name,
+        ...(parsed.description ? { description: parsed.description } : {}),
         entity: parsed.entity,
-        event: parsed.event,
-        type: "action",
-        config: parsed.config,
+        phase: parsed.phase ?? "after",
+        trigger: parsed.trigger,
+        condition: parsed.condition ?? null,
+        actions: parsed.actions,
         enabled: parsed.enabled ?? true,
         order: parsed.order ?? 0,
         createdAt: now,
@@ -65,18 +67,26 @@ export function createFirestoreAdminHookRepository(
       await collection(tenantId).doc(id).set(record);
       return record;
     },
-    async update(tenantId, id, input: PatchHookInput) {
+    async update(tenantId, id, input: PatchDataHookInput) {
       const current = await this.getById(tenantId, id);
       if (!current) {
-        throw new Error(`Hook not found: ${id}`);
+        throw new Error(`Data hook not found: ${id}`);
       }
 
-      patchHookInputSchema.parse(input);
+      patchDataHookInputSchema.parse(input);
       const now = new Date().toISOString();
-      const next = hookRecordSchema.parse({
+      const next = dataHookDefinitionSchema.parse({
         ...current,
         ...(input.name ? { name: input.name } : {}),
-        ...(input.config ? { config: input.config } : {}),
+        ...(input.description !== undefined
+          ? { description: input.description ?? undefined }
+          : {}),
+        ...(input.phase ? { phase: input.phase } : {}),
+        ...(input.trigger ? { trigger: input.trigger } : {}),
+        ...(input.condition !== undefined
+          ? { condition: input.condition ?? null }
+          : {}),
+        ...(input.actions ? { actions: input.actions } : {}),
         ...(input.enabled !== undefined ? { enabled: input.enabled } : {}),
         ...(input.order !== undefined ? { order: input.order } : {}),
         updatedAt: now,
@@ -84,6 +94,9 @@ export function createFirestoreAdminHookRepository(
 
       await collection(tenantId).doc(id).set(next);
       return next;
+    },
+    async delete(tenantId, id) {
+      await collection(tenantId).doc(id).delete();
     },
   };
 }

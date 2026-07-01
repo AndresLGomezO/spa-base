@@ -2,11 +2,12 @@ import type { FastifyInstance, preHandlerAsyncHookHandler } from "fastify";
 import { z } from "zod";
 
 import {
-  createHookInputSchema,
+  createDataHookInputSchema,
   HookExecutionError,
-  patchHookInputSchema,
-  validateHookActions,
-  validateHookEntityAndEvent,
+  patchDataHookInputSchema,
+  validateCreateDataHookInput,
+  validateDataHookActions,
+  validateDataHookEntity,
 } from "@repo/hooks";
 
 import { ApiErrorCode } from "../crud/errors.js";
@@ -24,8 +25,9 @@ interface RegisterHookRoutesOptions {
   readonly hookRuntime: HookRuntimeContext;
 }
 
-const tenantIdQuerySchema = z.object({
+const listQuerySchema = z.object({
   tenantId: z.string().trim().min(1).optional(),
+  entity: z.string().trim().min(1).optional(),
 });
 
 function getAvailableEntityNames(
@@ -53,14 +55,18 @@ export async function registerHookRoutes(
     options.permissionDeps,
     "hook.update",
   );
+  const requireHookDelete = createRequirePermission(
+    options.permissionDeps,
+    "hook.delete",
+  );
 
   app.get(
-    "/api/hooks",
+    "/api/data-hooks",
     {
       preHandler: [options.authenticate, requireHookRead],
     },
     async (request, reply) => {
-      const parsedQuery = tenantIdQuerySchema.safeParse(request.query);
+      const parsedQuery = listQuerySchema.safeParse(request.query);
       if (!parsedQuery.success) {
         return replyWithError(
           reply,
@@ -74,13 +80,16 @@ export async function registerHookRoutes(
       if (!tenantId) return;
 
       await options.hookRuntime.ensureTenantHooksLoaded(tenantId);
-      const items = await options.hookRuntime.repository.list(tenantId);
+      const all = await options.hookRuntime.repository.list(tenantId);
+      const items = parsedQuery.data.entity
+        ? all.filter((hook) => hook.entity === parsedQuery.data.entity)
+        : all;
       return reply.send(successEnvelope({ items }));
     },
   );
 
   app.get(
-    "/api/hooks/:id",
+    "/api/data-hooks/:id",
     {
       preHandler: [options.authenticate, requireHookRead],
     },
@@ -88,8 +97,7 @@ export async function registerHookRoutes(
       const parsedParams = z
         .object({ id: z.string().trim().min(1) })
         .safeParse(request.params);
-      const parsedQuery = tenantIdQuerySchema.safeParse(request.query);
-      if (!parsedParams.success || !parsedQuery.success) {
+      if (!parsedParams.success) {
         return replyWithError(
           reply,
           400,
@@ -110,7 +118,7 @@ export async function registerHookRoutes(
           reply,
           404,
           ApiErrorCode.NOT_FOUND,
-          "Hook not found.",
+          "Data hook not found.",
         );
       }
 
@@ -119,12 +127,12 @@ export async function registerHookRoutes(
   );
 
   app.post(
-    "/api/hooks",
+    "/api/data-hooks",
     {
       preHandler: [options.authenticate, requireHookCreate],
     },
     async (request, reply) => {
-      const parsedBody = createHookInputSchema.safeParse(request.body);
+      const parsedBody = createDataHookInputSchema.safeParse(request.body);
       if (!parsedBody.success) {
         return replyWithError(
           reply,
@@ -152,12 +160,7 @@ export async function registerHookRoutes(
           options.entityRuntime,
           tenantId,
         );
-        validateHookEntityAndEvent(
-          parsedBody.data.entity,
-          parsedBody.data.event,
-          availableNames,
-        );
-        validateHookActions(parsedBody.data.config.actions, availableNames);
+        validateCreateDataHookInput(parsedBody.data, availableNames);
 
         const created = await options.hookRuntime.repository.create(
           tenantId,
@@ -169,7 +172,7 @@ export async function registerHookRoutes(
         const message =
           error instanceof HookExecutionError || error instanceof Error
             ? error.message
-            : "Failed to create hook.";
+            : "Failed to create data hook.";
         return replyWithError(
           reply,
           400,
@@ -181,7 +184,7 @@ export async function registerHookRoutes(
   );
 
   app.patch(
-    "/api/hooks/:id",
+    "/api/data-hooks/:id",
     {
       preHandler: [options.authenticate, requireHookUpdate],
     },
@@ -189,13 +192,8 @@ export async function registerHookRoutes(
       const parsedParams = z
         .object({ id: z.string().trim().min(1) })
         .safeParse(request.params);
-      const parsedBody = patchHookInputSchema.safeParse(request.body);
-      const parsedQuery = tenantIdQuerySchema.safeParse(request.query);
-      if (
-        !parsedParams.success ||
-        !parsedBody.success ||
-        !parsedQuery.success
-      ) {
+      const parsedBody = patchDataHookInputSchema.safeParse(request.body);
+      if (!parsedParams.success || !parsedBody.success) {
         return replyWithError(
           reply,
           400,
@@ -216,7 +214,7 @@ export async function registerHookRoutes(
           reply,
           404,
           ApiErrorCode.NOT_FOUND,
-          "Hook not found.",
+          "Data hook not found.",
         );
       }
 
@@ -225,8 +223,9 @@ export async function registerHookRoutes(
           options.entityRuntime,
           tenantId,
         );
-        const nextConfig = parsedBody.data.config ?? current.config;
-        validateHookActions(nextConfig.actions, availableNames);
+        const nextActions = parsedBody.data.actions ?? current.actions;
+        validateDataHookEntity(current.entity, availableNames);
+        validateDataHookActions(nextActions, availableNames);
 
         const updated = await options.hookRuntime.repository.update(
           tenantId,
@@ -239,7 +238,7 @@ export async function registerHookRoutes(
         const message =
           error instanceof HookExecutionError || error instanceof Error
             ? error.message
-            : "Failed to update hook.";
+            : "Failed to update data hook.";
         return replyWithError(
           reply,
           400,
@@ -247,6 +246,49 @@ export async function registerHookRoutes(
           message,
         );
       }
+    },
+  );
+
+  app.delete(
+    "/api/data-hooks/:id",
+    {
+      preHandler: [options.authenticate, requireHookDelete],
+    },
+    async (request, reply) => {
+      const parsedParams = z
+        .object({ id: z.string().trim().min(1) })
+        .safeParse(request.params);
+      if (!parsedParams.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid request.",
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const current = await options.hookRuntime.repository.getById(
+        tenantId,
+        parsedParams.data.id,
+      );
+      if (!current) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Data hook not found.",
+        );
+      }
+
+      await options.hookRuntime.repository.delete(
+        tenantId,
+        parsedParams.data.id,
+      );
+      options.hookRuntime.unregister(tenantId, parsedParams.data.id);
+      return reply.send(successEnvelope({ id: parsedParams.data.id }));
     },
   );
 }

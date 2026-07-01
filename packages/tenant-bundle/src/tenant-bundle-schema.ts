@@ -7,7 +7,7 @@ import {
   tenantDashboardLayoutRecordSchema,
   uiBuilderPresetRecordSchema,
 } from "@repo/entities";
-import { hookRecordSchema } from "@repo/hooks";
+import { dataHookDefinitionSchema } from "@repo/hooks";
 import { metricDefinitionRecordSchema } from "@repo/metrics-engine/types";
 import { tenantRoleRecordSchema } from "@repo/rbac";
 import { tenantAppearanceSchema } from "@repo/shared-types";
@@ -27,7 +27,7 @@ export const tenantBundleExportDocumentSchema = z
     uiBuilderPresets: z.array(uiBuilderPresetRecordSchema),
     tenantDashboardLayout: tenantDashboardLayoutRecordSchema.nullable(),
     roles: z.array(tenantRoleRecordSchema),
-    hooks: z.array(hookRecordSchema),
+    hooks: z.array(dataHookDefinitionSchema),
     metricDefinitions: z.array(metricDefinitionRecordSchema),
     entityQueryDefinitions: z.array(entityQueryDefinitionRecordSchema),
     customViews: z.array(customViewRecordSchema).default([]),

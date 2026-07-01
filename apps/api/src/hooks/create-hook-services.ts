@@ -163,5 +163,57 @@ export function createHookEntityServices(options: {
         businessFieldNames,
       );
     },
+
+    async list(entityName, query) {
+      if (
+        !hasPermission(`${entityName}.read`, options.permissions, {
+          isSuperAdmin: options.isSuperAdmin,
+        })
+      ) {
+        throw new Error(
+          `Hook runner lacks permission to read ${entityName} records.`,
+        );
+      }
+
+      const entity = options.entityRuntime.resolveEntity(
+        entityName,
+        options.tenantId,
+      );
+      if (!entity) {
+        throw new Error(`Entity "${entityName}" is not registered.`);
+      }
+
+      const repository = options.entityRuntime.getRepository(
+        options.tenantId,
+        entityName,
+      );
+      if (!repository) {
+        throw new Error(`Repository for "${entityName}" is not available.`);
+      }
+
+      const businessFieldNames = Object.keys(entity.metadata.fields);
+      const readAccess = resolveFieldAccess(
+        entityName,
+        businessFieldNames,
+        "read",
+      );
+
+      const result = await repository.findByField({
+        tenantId: options.tenantId,
+        field: query.field,
+        value: query.value,
+        ...(query.limit !== undefined ? { limit: query.limit } : {}),
+      });
+
+      return result.items.map((item) => {
+        const record = item as Record<string, unknown>;
+        const filtered = filterFields(record, readAccess, businessFieldNames);
+        return {
+          ...filtered,
+          id: record.id as string,
+          tenantId: record.tenantId as string,
+        };
+      });
+    },
   };
 }

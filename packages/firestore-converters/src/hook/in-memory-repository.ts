@@ -1,17 +1,17 @@
 import {
-  createHookInputSchema,
-  hookRecordSchema,
-  patchHookInputSchema,
-  type HookRecord,
+  createDataHookInputSchema,
+  dataHookDefinitionSchema,
+  patchDataHookInputSchema,
+  type DataHookDefinition,
 } from "@repo/hooks";
 import { nanoid } from "nanoid";
 
-import type { HookRepository } from "./repository-contract.js";
+import type { DataHookRepository } from "./repository-contract.js";
 
-export function createInMemoryHookRepository(): HookRepository & {
-  readonly store: Map<string, HookRecord>;
+export function createInMemoryDataHookRepository(): DataHookRepository & {
+  readonly store: Map<string, DataHookDefinition>;
 } {
-  const store = new Map<string, HookRecord>();
+  const store = new Map<string, DataHookDefinition>();
 
   function key(tenantId: string, id: string): string {
     return `${tenantId}:${id}`;
@@ -20,24 +20,26 @@ export function createInMemoryHookRepository(): HookRepository & {
   return {
     store,
     async list(tenantId) {
-      return [...store.values()].filter(
-        (record) => record.tenantId === tenantId,
-      );
+      return [...store.values()]
+        .filter((record) => record.tenantId === tenantId)
+        .sort((left, right) => left.order - right.order);
     },
     async getById(tenantId, id) {
       return store.get(key(tenantId, id)) ?? null;
     },
     async create(tenantId, input) {
-      const parsed = createHookInputSchema.parse(input);
+      const parsed = createDataHookInputSchema.parse(input);
       const now = new Date().toISOString();
-      const record = hookRecordSchema.parse({
+      const record = dataHookDefinitionSchema.parse({
         id: `hook_${nanoid(12)}`,
         tenantId,
         name: parsed.name,
+        ...(parsed.description ? { description: parsed.description } : {}),
         entity: parsed.entity,
-        event: parsed.event,
-        type: "action",
-        config: parsed.config,
+        phase: parsed.phase ?? "after",
+        trigger: parsed.trigger,
+        condition: parsed.condition ?? null,
+        actions: parsed.actions,
         enabled: parsed.enabled ?? true,
         order: parsed.order ?? 0,
         createdAt: now,
@@ -49,21 +51,32 @@ export function createInMemoryHookRepository(): HookRepository & {
     async update(tenantId, id, input) {
       const current = store.get(key(tenantId, id));
       if (!current) {
-        throw new Error(`Hook not found: ${id}`);
+        throw new Error(`Data hook not found: ${id}`);
       }
 
-      patchHookInputSchema.parse(input);
+      patchDataHookInputSchema.parse(input);
       const now = new Date().toISOString();
-      const next = hookRecordSchema.parse({
+      const next = dataHookDefinitionSchema.parse({
         ...current,
         ...(input.name ? { name: input.name } : {}),
-        ...(input.config ? { config: input.config } : {}),
+        ...(input.description !== undefined
+          ? { description: input.description ?? undefined }
+          : {}),
+        ...(input.phase ? { phase: input.phase } : {}),
+        ...(input.trigger ? { trigger: input.trigger } : {}),
+        ...(input.condition !== undefined
+          ? { condition: input.condition ?? null }
+          : {}),
+        ...(input.actions ? { actions: input.actions } : {}),
         ...(input.enabled !== undefined ? { enabled: input.enabled } : {}),
         ...(input.order !== undefined ? { order: input.order } : {}),
         updatedAt: now,
       });
       store.set(key(tenantId, id), next);
       return next;
+    },
+    async delete(tenantId, id) {
+      store.delete(key(tenantId, id));
     },
   };
 }
