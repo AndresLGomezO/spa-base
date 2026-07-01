@@ -35,6 +35,7 @@ COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
 COPY packages/worker-firestore/package.json ./packages/worker-firestore/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/esbuild-runtime-deps/package.json ./packages/esbuild-runtime-deps/
 COPY packages/typescript-config/ ./packages/typescript-config/
 
 RUN pnpm install --frozen-lockfile

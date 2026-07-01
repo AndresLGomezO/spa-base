@@ -32,6 +32,7 @@ COPY packages/shared-types/package.json ./packages/shared-types/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
+COPY packages/esbuild-runtime-deps/package.json ./packages/esbuild-runtime-deps/
 COPY packages/typescript-config/ ./packages/typescript-config/
 
 RUN pnpm install --frozen-lockfile
