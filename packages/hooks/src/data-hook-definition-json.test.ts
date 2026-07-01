@@ -179,10 +179,10 @@ describe("data-hook-definition-json", () => {
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(15);
+    expect(hooks.length).toBe(19);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(10);
+    expect(enabled.length).toBe(13);
 
     const ratesEntities = new Set([
       "actor",

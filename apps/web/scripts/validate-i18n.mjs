@@ -261,6 +261,37 @@ function extractDataHookDynamicKeys(corpus) {
   return keys;
 }
 
+/** dataHooks.expression.{operators|functions|dateUnits}.* via helper key builders */
+function extractExpressionDynamicKeys(corpus) {
+  if (
+    !corpus.includes("dataHooks.expression.operators.") &&
+    !corpus.includes("dataHooks.expression.functions.") &&
+    !corpus.includes("dataHooks.expression.dateUnits.")
+  ) {
+    return [];
+  }
+
+  const refExpression = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).dataHooks?.expression;
+
+  if (!refExpression || typeof refExpression !== "object") return [];
+
+  const keys = [];
+  for (const [group, bucket] of Object.entries({
+    "operators.binary": refExpression.operators?.binary,
+    "operators.unary": refExpression.operators?.unary,
+    functions: refExpression.functions,
+    dateUnits: refExpression.dateUnits,
+  })) {
+    if (!bucket || typeof bucket !== "object") continue;
+    for (const key of Object.keys(bucket)) {
+      keys.push(`${DEFAULT_NAMESPACE}:dataHooks.expression.${group}.${key}`);
+    }
+  }
+  return keys;
+}
+
 /** dataModels.relationTypes.${key}.* in source → nested keys under dataModels.relationTypes */
 function extractDataModelRelationTypeKeys(corpus) {
   if (!corpus.includes("dataModels.relationTypes.${")) return [];
@@ -774,6 +805,11 @@ mergeUsedKeys(
   usedKeys,
   extractDataHookDynamicKeys(corpus),
   path.join(SRC_DIR, "features/data-hooks/DataHookSettingsPanel.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractExpressionDynamicKeys(corpus),
+  path.join(SRC_DIR, "features/data-hooks/expression-editor-utils.ts"),
 );
 mergeUsedKeys(
   usedKeys,

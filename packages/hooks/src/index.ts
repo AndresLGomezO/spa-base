@@ -118,6 +118,16 @@ export {
   isEmptyExpressionValue,
   ExpressionEvaluationError,
 } from "./expression.js";
+export {
+  EXPRESSION_FUNCTION_SPECS,
+  getExpressionFunctionSpec,
+  listExpressionFunctionSpecs,
+} from "./expression-function-spec.js";
+export type {
+  ExpressionFunctionArgKind,
+  ExpressionFunctionArgSpec,
+  ExpressionFunctionSpec,
+} from "./expression-function-spec.js";
 export type {
   ExpressionBinaryOperator,
   ExpressionUnaryOperator,

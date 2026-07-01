@@ -58,6 +58,20 @@ vi.mock("@repo/ui", async (importOriginal) => {
   const actual = await importOriginal<typeof import("@repo/ui")>();
   return {
     ...actual,
+    Modal: ({
+      open,
+      title,
+      children,
+    }: {
+      readonly open: boolean;
+      readonly title: string;
+      readonly children: ReactNode;
+    }) =>
+      open ? (
+        <div role="dialog" aria-label={title}>
+          {children}
+        </div>
+      ) : null,
     PhotoUpload: ({
       labels,
       onUpload,

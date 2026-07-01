@@ -245,6 +245,10 @@ Priority-ordered asks for the hooks team. Source: [`interpret-data-hook.ts`](../
 
 Complex Rates rules require Advanced JSON for nested `if` / `binary` nodes. Acceptable for seed catalog; templates should be documented in cookbook.
 
+### PLAT-11: Firestore document depth limit
+
+Deeply nested expression ASTs (e.g. chained `if` for 20-way `itemType` lookup) exceed Firestore’s ~20-level document limit when hooks are persisted. **Workaround:** split into multiple hooks with OR condition groups on `itemType` (see Rates catalog). **Suggested:** lookup-table action or flat `switch` expression node.
+
 ---
 
 ## 6. Recommended delivery phases
@@ -256,7 +260,7 @@ Implemented in [`rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/cata
 | Hook | Entity | Covers |
 |------|--------|--------|
 | Default active status | `financialItem` | FI-01 |
-| Derive balance sheet role | `financialItem` | FI-02 (debt + asset types) |
+| Derive balance sheet role | `financialItem` | FI-02 (OR condition hooks, not nested if) |
 | Create initial schedule row | `financialItem` | FI-03 |
 | Mark schedule PAID | `transaction` | TX-01 |
 | Update item balance on payment | `transaction` | TX-03 |

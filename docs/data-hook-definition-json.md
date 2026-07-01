@@ -564,7 +564,7 @@ Max 16 arguments per call.
 
 ### UI authoring note
 
-The Automation **ExpressionEditor** supports simple modes (literal, field, now, loopIndex) plus **Advanced JSON** for `call`, `binary`, and `unary` nodes. Complex expressions are authored via Advanced JSON or external tooling.
+The Automation **ExpressionEditor** supports simple modes (literal, field, now, loopIndex), structured visual builders for **binary** (operator + left/right operands), **unary** (operator + operand), and **call** (function + arguments with nested editors), plus **Advanced JSON** as a fallback for edge cases and import/debug. Complex trees are built recursively in the UI; Advanced JSON remains available for power users.
 
 ---
 
@@ -992,7 +992,6 @@ Do **not** assume these features exist:
 | Aggregate/list expression functions | Not implemented (would require I/O) |
 | Sandboxed script hooks | Deferred |
 | System events (`user.login`, etc.) | Future |
-| Visual builder for `call` / binary / unary nodes | Advanced JSON only |
 
 ---
 

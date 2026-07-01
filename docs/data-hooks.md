@@ -43,6 +43,7 @@ Storage: per-tenant `__data_hooks` collection, loaded lazily into the runtime re
 - **Phase 4** — authoritative specification document ([data-hook-definition-json.md](./data-hook-definition-json.md)).
 - **Phase 5** — durable async after-hooks via Cloud Tasks (`execution: "queued"`) → worker-service; in-process `deferred` retained for local/simple cases.
 - **Phase 6** — Firestore execution logs + `callWebhook` action (URL + optional JSON body).
+- **Phase 7** — Visual expression builder for binary, unary, and call AST nodes in the Automation UI (Advanced JSON retained as fallback).
 
 ## Related
 
