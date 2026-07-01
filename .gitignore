@@ -12,6 +12,7 @@ pnpm-debug.log*
 .pnpm-store/
 coverage/
 .turbo/
+out/
 .tmp/
 .vite/
 # Cypress generated artifacts

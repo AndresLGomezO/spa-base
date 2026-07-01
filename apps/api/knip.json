@@ -11,6 +11,7 @@
     "@repo/entity-queries",
     "@repo/entity-relations",
     "@repo/eslint-config",
+    "@repo/esbuild-runtime-deps",
     "@repo/firestore-converters",
     "@repo/gcp-firebase",
     "@repo/aggregation-engine",
