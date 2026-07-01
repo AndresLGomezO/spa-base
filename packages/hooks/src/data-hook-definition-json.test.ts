@@ -1,3 +1,7 @@
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
+
 import { describe, expect, it } from "vitest";
 
 import { DATA_HOOK_COOKBOOK_FIXTURES } from "./data-hook-cookbook-fixtures.js";
@@ -161,5 +165,50 @@ describe("data-hook-definition-json", () => {
         expect(parsed.data.entity).toBe(fixture.entity);
       }
     }
+  });
+
+  it("parses rates tenant data hooks catalog", () => {
+    const catalogPath = join(
+      dirname(fileURLToPath(import.meta.url)),
+      "../../../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json",
+    );
+    const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+
+    const hooks = parsed.data.dataHooks;
+    expect(hooks.length).toBe(15);
+
+    const enabled = hooks.filter((hook) => hook.enabled);
+    expect(enabled.length).toBe(10);
+
+    const ratesEntities = new Set([
+      "actor",
+      "account",
+      "category",
+      "financialItem",
+      "loanDetails",
+      "incomeDetails",
+      "investmentDetails",
+      "serviceDetails",
+      "transaction",
+      "paymentSchedule",
+      "balanceSnapshot",
+    ]);
+    for (const hook of hooks) {
+      expect(ratesEntities.has(hook.entity), hook.entity).toBe(true);
+    }
+
+    const markPaid = hooks.find((hook) => hook.name === "Mark schedule PAID");
+    expect(markPaid?.entity).toBe("transaction");
+    expect(markPaid?.chainHooks).toBe(true);
+
+    const amortization = hooks.find(
+      (hook) => hook.name === "Generate amortization plan",
+    );
+    expect(amortization?.enabled).toBe(false);
+    expect(amortization?.entity).toBe("loanDetails");
   });
 });

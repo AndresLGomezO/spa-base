@@ -2,7 +2,12 @@ import { formatHookEvent } from "./event.js";
 import type { DataHookDefinition } from "./data-hook-definition.js";
 import type { DataHookJobPayload } from "./data-hook-job.js";
 import { runDataHook } from "./interpret-data-hook.js";
-import type { HookContext, HookLogger, HookEntityServices } from "./types.js";
+import type {
+  HookContext,
+  HookLogger,
+  HookEntityServices,
+  HookServices,
+} from "./types.js";
 import { dataHookJobPayloadToUser } from "./data-hook-job.js";
 
 export async function runQueuedDataHookJob(
@@ -11,6 +16,8 @@ export async function runQueuedDataHookJob(
   services: {
     readonly entities: HookEntityServices;
     readonly logger?: HookLogger;
+    readonly recordDataHookExecution?: HookServices["recordDataHookExecution"];
+    readonly callWebhook?: HookServices["callWebhook"];
   },
 ): Promise<void> {
   const event = formatHookEvent({
@@ -31,6 +38,10 @@ export async function runQueuedDataHookJob(
     services: {
       logger: services.logger,
       entities: services.entities,
+      ...(services.recordDataHookExecution
+        ? { recordDataHookExecution: services.recordDataHookExecution }
+        : {}),
+      ...(services.callWebhook ? { callWebhook: services.callWebhook } : {}),
     },
   };
 

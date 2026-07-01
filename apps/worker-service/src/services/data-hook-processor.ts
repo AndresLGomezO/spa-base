@@ -7,6 +7,7 @@ import {
 import { buildRoleCatalog } from "@repo/rbac";
 import {
   createFirestoreAdminDataHookRepository,
+  createFirestoreAdminDataHookExecutionRepository,
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRoleRepository,
 } from "@repo/gcp-firebase";
@@ -16,6 +17,8 @@ import { platformApp } from "@app/platform/app.config.js";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import { PermanentTaskError } from "./ai-chat-processor.js";
+import { callDataHookWebhook } from "../hooks/call-data-hook-webhook.js";
+import { createRecordDataHookExecution } from "../hooks/record-data-hook-execution.js";
 import { createLoadRequestPermissionsDeps } from "../hooks/worker-permission-deps.js";
 import { HookRuntimeContext } from "../hooks/worker-hook-runtime-context.js";
 import { WorkerHookEntityRuntime } from "../hooks/worker-hook-entity-runtime.js";
@@ -43,6 +46,8 @@ export function createDataHookProcessorDeps(
 
   const hookRepository =
     createFirestoreAdminDataHookRepository(firebaseAdminConfig);
+  const hookExecutionRepository =
+    createFirestoreAdminDataHookExecutionRepository(firebaseAdminConfig);
   const registeredUserRepository =
     createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
   const tenantRoleRepository =
@@ -65,6 +70,8 @@ export function createDataHookProcessorDeps(
       entityDefinitionRepository,
     ),
     permissionDeps,
+    hookExecutionRepository,
+    callWebhook: callDataHookWebhook,
   };
 }
 
@@ -102,5 +109,14 @@ export async function processDataHookJob(
   await runQueuedDataHookJob(definition, payload, {
     entities,
     logger,
+    ...(deps.hookExecutionRepository
+      ? {
+          recordDataHookExecution: createRecordDataHookExecution(
+            deps.hookExecutionRepository,
+            payload.tenantId,
+          ),
+        }
+      : {}),
+    ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
   });
 }

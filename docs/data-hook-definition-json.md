@@ -409,6 +409,35 @@ Log a computed message (no real notification infrastructure yet).
 
 Writes to the hook logger at `info` level with entity, event, and tenant context.
 
+### `callWebhook`
+
+POST JSON to an external HTTPS URL.
+
+```json
+{
+  "type": "callWebhook",
+  "url": {
+    "kind": "literal",
+    "value": "https://example.com/hooks/loan-created"
+  },
+  "body": {
+    "kind": "literal",
+    "value": {
+      "loanId": { "kind": "field", "source": "current", "path": "id" }
+    }
+  }
+}
+```
+
+- `url` (required): expression evaluating to a non-empty string
+- `body` (optional): expression evaluating to a JSON object; when omitted, the runtime sends a default envelope with `tenantId`, `entityName`, `event`, `current`, optional `previous`, and `user`
+- Method is always **POST**; non-2xx responses fail the action
+- HTTPS required in production; SSRF guards block private/local hosts
+
+### Execution logs
+
+When the runtime provides a log recorder, each hook run writes a document to tenant collection `__data_hook_executions` with status `success`, `error`, or `skipped`. List recent entries via `GET /api/data-hooks/:id/executions`.
+
 ### RBAC and chaining
 
 - All entity service calls enforce entity-level and field-level permissions for the **triggering user**.
@@ -614,7 +643,7 @@ Duplicate `entity` + `name` pairs within a catalog are rejected.
 
 Requires `hook.create`, `hook.update`, and `hook.delete` permissions.
 
-Seed catalog: [`apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json).
+Seed catalog: [`apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json). Gap analysis and platform asks: [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md).
 
 ---
 
@@ -909,6 +938,32 @@ Production async path via Cloud Tasks → worker-service. Use when side effects 
 }
 ```
 
+### 11.9 Webhook after-hook
+
+Notify an external system when a loan is created. Execution is logged to `__data_hook_executions`.
+
+```json
+{
+  "name": "Notify CRM on loan create",
+  "entity": "loan",
+  "phase": "after",
+  "trigger": { "operation": "create" },
+  "execution": "sync",
+  "condition": null,
+  "actions": [
+    {
+      "type": "callWebhook",
+      "url": {
+        "kind": "literal",
+        "value": "https://example.com/hooks/loan-created"
+      }
+    }
+  ],
+  "enabled": true,
+  "order": 0
+}
+```
+
 ---
 
 ## 12. Migration from legacy hooks
@@ -933,8 +988,6 @@ Do **not** assume these features exist:
 
 | Feature | Status |
 |---------|--------|
-| BullMQ / Redis queue | Not implemented — use `execution: "queued"` with Cloud Tasks |
-| `callWebhook` action | Not implemented |
 | Real email/push notifications | `sendNotification` logs only |
 | Aggregate/list expression functions | Not implemented (would require I/O) |
 | Sandboxed script hooks | Deferred |

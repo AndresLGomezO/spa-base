@@ -2166,7 +2166,8 @@
       "createRecord": "Create record",
       "createRecords": "Create records (loop)",
       "updateMatching": "Update matching records",
-      "sendNotification": "Send notification"
+      "sendNotification": "Send notification",
+      "callWebhook": "Call webhook"
     },
     "actions": {
       "title": "Actions",
@@ -2180,6 +2181,9 @@
       "targetField": "Target field",
       "value": "Value",
       "message": "Message",
+      "webhookUrl": "Webhook URL",
+      "webhookBody": "Request body (optional)",
+      "webhookBodyHint": "Leave empty to send the default hook context envelope.",
       "targetEntity": "Target entity",
       "selectEntity": "Select entity…",
       "recordData": "Record data",
@@ -2187,6 +2191,16 @@
       "matchWhere": "Match records where",
       "matchValue": "Value",
       "setFields": "Set fields"
+    },
+    "executionLog": {
+      "title": "Recent executions",
+      "loading": "Loading execution log…",
+      "empty": "No executions recorded yet.",
+      "error": "Unable to load execution log.",
+      "status": "Status",
+      "startedAt": "Started",
+      "duration": "Duration",
+      "errorColumn": "Error"
     },
     "expression": {
       "literal": "Fixed value",

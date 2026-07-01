@@ -87,6 +87,17 @@ export type {
   CreateDataHookInput,
   PatchDataHookInput,
 } from "./data-hook-definition.js";
+export {
+  DATA_HOOK_EXECUTIONS_COLLECTION,
+  DATA_HOOK_EXECUTION_STATUSES,
+  createDataHookExecutionInputSchema,
+  dataHookExecutionRecordSchema,
+} from "./data-hook-execution.js";
+export type {
+  DataHookExecutionStatus,
+  CreateDataHookExecutionInput,
+  DataHookExecutionRecord,
+} from "./data-hook-execution.js";
 export type { DataHookJobPayload } from "./data-hook-job.js";
 export type {
   DataHookDefinitionJsonError,
@@ -132,6 +143,7 @@ export type {
   HookLogger,
   HookServices,
   HookContext,
+  DataHookWebhookRequest,
   HookHandler,
   RegisteredSystemHook,
   RegisteredDynamicHook,

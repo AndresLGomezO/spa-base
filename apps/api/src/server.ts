@@ -18,6 +18,7 @@ import type {
   AiJobRepository,
   UiBuilderAiSuggestionRepository,
   DataHookRepository,
+  DataHookExecutionRepository,
   JoinCollectionRepository,
   MetricContributionRepository,
   MetricDefinitionRepository,
@@ -37,6 +38,7 @@ import {
   createInMemoryTenantDashboardLayoutRepository,
   createInMemoryUiBuilderPresetRepository,
   createInMemoryDataHookRepository,
+  createInMemoryDataHookExecutionRepository,
   createInMemoryMetricDefinitionRepository,
   createInMemoryEntityQueryDefinitionRepository,
   createInMemoryCustomViewRepository,
@@ -57,6 +59,7 @@ import {
   createFirestoreAdminTenantDashboardLayoutRepository,
   createFirestoreAdminUiBuilderPresetRepository,
   createFirestoreAdminDataHookRepository,
+  createFirestoreAdminDataHookExecutionRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
@@ -104,6 +107,7 @@ import { registerIndexRoutes } from "./indexes/register-index-routes.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { createHookTasksClient } from "./hooks/hook-tasks.client.js";
+import { callDataHookWebhook } from "./hooks/call-data-hook-webhook.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
 import { registerUiBuilderAiSuggestionRoutes } from "./ai/register-ui-builder-ai-suggestion-routes.js";
@@ -144,6 +148,7 @@ interface BuildServerOptions {
   readonly uiBuilderPresetRepository?: UiBuilderPresetRepository;
   readonly entityCategoryRepository?: EntityCategoryRepository;
   readonly hookRepository?: DataHookRepository;
+  readonly hookExecutionRepository?: DataHookExecutionRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
   readonly customViewRepository?: CustomViewRepository;
@@ -307,6 +312,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     (options.repositories
       ? createInMemoryDataHookRepository()
       : createFirestoreAdminDataHookRepository(firebaseAdminConfig));
+
+  const hookExecutionRepository =
+    options.hookExecutionRepository ??
+    (options.repositories
+      ? createInMemoryDataHookExecutionRepository()
+      : createFirestoreAdminDataHookExecutionRepository(firebaseAdminConfig));
 
   const tenantUserInviteRepository =
     options.tenantUserInviteRepository ??
@@ -500,8 +511,10 @@ export async function buildServer(options: BuildServerOptions = {}) {
     hookRuntime,
     entityRuntime,
     permissionDeps,
+    hookExecutionRepository,
     enqueueDataHookJob:
       hookTasksClient.enqueueDataHookJob.bind(hookTasksClient),
+    callWebhook: callDataHookWebhook,
   };
   const recordReadEnricher = createEntityFileReadEnricher(
     firebaseAdminConfig,
@@ -592,6 +605,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     hookRuntime,
+    hookExecutionRepository,
   });
 
   await registerAiRoutes(server, {

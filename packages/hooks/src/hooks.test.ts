@@ -637,6 +637,144 @@ describe("compileDataHook", () => {
   });
 });
 
+describe("callWebhook action", () => {
+  it("delegates to callWebhook service with default body", async () => {
+    const callWebhook = vi.fn(async () => undefined);
+    const context = createContext({
+      event: "loan.afterCreate",
+      current: { id: "loan_1", amount: 100 },
+      services: {
+        callWebhook,
+        logger: { info: vi.fn(), error: vi.fn() },
+      },
+    });
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "callWebhook",
+            url: { kind: "literal", value: "https://example.com/hook" },
+          },
+        ],
+      },
+      context,
+    );
+
+    expect(callWebhook).toHaveBeenCalledWith({
+      url: "https://example.com/hook",
+      body: {
+        tenantId: "tenant_a",
+        entityName: "loan",
+        event: "loan.afterCreate",
+        current: { id: "loan_1", amount: 100 },
+        user: { uid: "user_1" },
+      },
+    });
+  });
+
+  it("throws when callWebhook service is missing", async () => {
+    await expect(
+      runDataHook(
+        {
+          ...sampleDefinition,
+          actions: [
+            {
+              type: "callWebhook",
+              url: { kind: "literal", value: "https://example.com/hook" },
+            },
+          ],
+        },
+        createContext(),
+      ),
+    ).rejects.toThrow(HookExecutionError);
+  });
+});
+
+describe("execution logging", () => {
+  it("records success when recordDataHookExecution is present", async () => {
+    const record = vi.fn(async () => undefined);
+    await runDataHook(sampleDefinition, {
+      ...createContext(),
+      services: {
+        recordDataHookExecution: record,
+        logger: { info: vi.fn(), error: vi.fn() },
+      },
+    });
+
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookId: "hook_1",
+        status: "success",
+        phase: "before",
+        operation: "create",
+      }),
+    );
+  });
+
+  it("records skipped when condition is false", async () => {
+    const record = vi.fn(async () => undefined);
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        condition: {
+          type: "condition",
+          field: "amount",
+          operator: "==",
+          value: { kind: "literal", value: 999 },
+        },
+      },
+      {
+        ...createContext(),
+        services: {
+          recordDataHookExecution: record,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      },
+    );
+
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "skipped",
+        error: "Condition evaluated to false.",
+      }),
+    );
+  });
+
+  it("records error when action fails", async () => {
+    const record = vi.fn(async () => undefined);
+    await expect(
+      runDataHook(
+        {
+          ...sampleDefinition,
+          actions: [
+            {
+              type: "callWebhook",
+              url: { kind: "literal", value: "https://example.com/hook" },
+            },
+          ],
+        },
+        {
+          ...createContext(),
+          services: {
+            recordDataHookExecution: record,
+            logger: { info: vi.fn(), error: vi.fn() },
+          },
+        },
+      ),
+    ).rejects.toThrow(HookExecutionError);
+
+    expect(record).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "error",
+      }),
+    );
+  });
+});
+
 describe("evaluateConditionNode", () => {
   it("normalizes legacy bare leaf conditions", () => {
     const context = createContext({

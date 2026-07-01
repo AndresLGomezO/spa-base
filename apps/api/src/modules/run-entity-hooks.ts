@@ -1,6 +1,8 @@
 import type { FastifyInstance, FastifyRequest } from "fastify";
 import type {
+  CreateDataHookExecutionInput,
   DataHookJobPayload,
+  DataHookWebhookRequest,
   HookEntityServices,
   HookOperation,
   HookPhase,
@@ -19,6 +21,10 @@ export interface RunEntityHooksParams {
   readonly depth?: number;
   readonly visitedHookIds?: ReadonlySet<string>;
   readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
+  readonly recordDataHookExecution?: (
+    entry: CreateDataHookExecutionInput,
+  ) => Promise<void>;
+  readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }
 
 export async function runEntityHooks(
@@ -52,6 +58,10 @@ export async function runEntityHooks(
       ...(params.enqueueDataHookJob
         ? { enqueueDataHookJob: params.enqueueDataHookJob }
         : {}),
+      ...(params.recordDataHookExecution
+        ? { recordDataHookExecution: params.recordDataHookExecution }
+        : {}),
+      ...(params.callWebhook ? { callWebhook: params.callWebhook } : {}),
     }),
   );
 }

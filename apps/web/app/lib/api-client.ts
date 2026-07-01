@@ -907,6 +907,18 @@ export async function deleteDataHook(id: string): Promise<void> {
   });
 }
 
+type DataHookExecutionRecord = import("@repo/hooks").DataHookExecutionRecord;
+
+export async function listDataHookExecutions(
+  hookId: string,
+  options?: { readonly limit?: number },
+): Promise<{ readonly items: readonly DataHookExecutionRecord[] }> {
+  return apiRequest<{ readonly items: readonly DataHookExecutionRecord[] }>(
+    `/api/data-hooks/${hookId}/executions`,
+    options?.limit ? { query: { limit: String(options.limit) } } : undefined,
+  );
+}
+
 type DataHooksCatalogEnvelope = import("@repo/hooks").DataHooksCatalogEnvelope;
 
 export async function putDataHooksCatalog(

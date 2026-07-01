@@ -17,6 +17,7 @@ import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import type { DataHookExecutionRepository } from "@repo/firestore-converters";
 import type { HookRuntimeContext } from "./hook-runtime-context.js";
 import {
   DataHookCatalogReplaceError,
@@ -28,6 +29,7 @@ interface RegisterHookRoutesOptions {
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly hookRuntime: HookRuntimeContext;
+  readonly hookExecutionRepository: DataHookExecutionRepository;
 }
 
 const listQuerySchema = z.object({
@@ -37,6 +39,10 @@ const listQuerySchema = z.object({
 
 const catalogQuerySchema = z.object({
   entity: z.string().trim().min(1).optional(),
+});
+
+const executionsQuerySchema = z.object({
+  limit: z.coerce.number().int().min(1).max(100).default(50),
 });
 
 function getAvailableEntityNames(
@@ -132,6 +138,60 @@ export async function registerHookRoutes(
       }
 
       return reply.send(successEnvelope(item));
+    },
+  );
+
+  app.get(
+    "/api/data-hooks/:id/executions",
+    {
+      preHandler: [options.authenticate, requireHookRead],
+    },
+    async (request, reply) => {
+      const parsedParams = z
+        .object({ id: z.string().trim().min(1) })
+        .safeParse(request.params);
+      if (!parsedParams.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid request.",
+        );
+      }
+
+      const parsedQuery = executionsQuerySchema.safeParse(request.query);
+      if (!parsedQuery.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid query parameters.",
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const hook = await options.hookRuntime.repository.getById(
+        tenantId,
+        parsedParams.data.id,
+      );
+      if (!hook) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Data hook not found.",
+        );
+      }
+
+      const items = await options.hookExecutionRepository.listByHookId(
+        tenantId,
+        parsedParams.data.id,
+        { limit: parsedQuery.data.limit },
+      );
+
+      return reply.send(successEnvelope({ items }));
     },
   );
 

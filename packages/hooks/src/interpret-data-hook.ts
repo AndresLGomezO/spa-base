@@ -4,6 +4,7 @@ import type {
   DataHookConditionNode,
   DataHookDefinition,
 } from "./data-hook-definition.js";
+import type { CreateDataHookExecutionInput } from "./data-hook-execution.js";
 import { buildDataHookJobPayload } from "./data-hook-job.js";
 import { isBeforePhase, parseHookEvent } from "./event.js";
 import {
@@ -333,6 +334,46 @@ async function runAction(
       return;
     }
 
+    case "callWebhook": {
+      const callWebhook = context.services.callWebhook;
+      if (!callWebhook) {
+        throw new HookExecutionError(
+          "callWebhook service is not available for this hook execution.",
+        );
+      }
+      const urlValue = evaluateExpression(action.url, scope);
+      if (typeof urlValue !== "string" || urlValue.trim().length === 0) {
+        throw new HookExecutionError(
+          "callWebhook url must evaluate to a non-empty string.",
+        );
+      }
+      let body: Record<string, unknown>;
+      if (action.body) {
+        const evaluated = evaluateExpression(action.body, scope);
+        if (
+          evaluated === null ||
+          typeof evaluated !== "object" ||
+          Array.isArray(evaluated)
+        ) {
+          throw new HookExecutionError(
+            "callWebhook body must evaluate to a JSON object.",
+          );
+        }
+        body = evaluated as Record<string, unknown>;
+      } else {
+        body = {
+          tenantId: context.tenantId,
+          entityName: context.entityName,
+          event: context.event,
+          current: context.current,
+          ...(context.previous ? { previous: context.previous } : {}),
+          user: { uid: context.user.uid },
+        };
+      }
+      await callWebhook({ url: urlValue.trim(), body });
+      return;
+    }
+
     default: {
       const exhaustive: never = action;
       throw new HookExecutionError(
@@ -363,7 +404,52 @@ function matchesLookup(
   }
 }
 
-export async function runDataHook(
+function buildExecutionBase(
+  definition: DataHookDefinition,
+  context: HookContext,
+  parsed: ReturnType<typeof parseHookEvent>,
+): Omit<
+  CreateDataHookExecutionInput,
+  "status" | "durationMs" | "startedAt" | "finishedAt" | "error"
+> {
+  return {
+    hookId: definition.id,
+    hookName: definition.name,
+    entityName: context.entityName,
+    event: context.event,
+    phase: parsed.phase,
+    operation: parsed.operation,
+    ...(typeof context.current.id === "string"
+      ? { recordId: context.current.id }
+      : {}),
+    executionMode: definition.execution ?? "sync",
+    triggeredBy: { uid: context.user.uid },
+  };
+}
+
+async function recordExecution(
+  context: HookContext,
+  entry: CreateDataHookExecutionInput,
+): Promise<void> {
+  const record = context.services.recordDataHookExecution;
+  if (!record) {
+    return;
+  }
+  try {
+    await record(entry);
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "Failed to record execution.";
+    context.services.logger?.error("Failed to record data hook execution", {
+      hookId: entry.hookId,
+      entityName: entry.entityName,
+      event: entry.event,
+      error: message,
+    });
+  }
+}
+
+async function runDataHookCore(
   definition: DataHookDefinition,
   context: HookContext,
 ): Promise<void> {
@@ -409,6 +495,85 @@ export async function runDataHook(
 
   for (const action of definition.actions) {
     await runAction(action, context, parsed.phase, writeOptions);
+  }
+}
+
+export async function runDataHook(
+  definition: DataHookDefinition,
+  context: HookContext,
+): Promise<void> {
+  const startedAt = Date.now();
+  const startedAtIso = new Date(startedAt).toISOString();
+  const parsed = parseHookEvent(context.event);
+  const base = buildExecutionBase(definition, context, parsed);
+
+  const finishSkipped = async (error: string) => {
+    const finishedAt = Date.now();
+    await recordExecution(context, {
+      ...base,
+      status: "skipped",
+      error,
+      durationMs: finishedAt - startedAt,
+      startedAt: startedAtIso,
+      finishedAt: new Date(finishedAt).toISOString(),
+    });
+  };
+
+  if ((context.depth ?? 0) > MAX_HOOK_DEPTH) {
+    context.services.logger?.error("Data hook depth limit exceeded", {
+      entityName: context.entityName,
+      event: context.event,
+      depth: context.depth,
+    });
+    await finishSkipped("Hook depth limit exceeded.");
+    return;
+  }
+
+  const visited = context.visitedHookIds ?? new Set<string>();
+  if (visited.has(definition.id)) {
+    await finishSkipped("Hook already visited in this chain.");
+    return;
+  }
+
+  if (
+    parsed.operation === "update" &&
+    !updateFieldsChanged(definition, context)
+  ) {
+    await finishSkipped("No configured update fields changed.");
+    return;
+  }
+
+  if (definition.condition) {
+    const scope = buildScope(context);
+    if (!evaluateConditionNode(definition.condition, context, scope)) {
+      await finishSkipped("Condition evaluated to false.");
+      return;
+    }
+  }
+
+  try {
+    await runDataHookCore(definition, context);
+    const finishedAt = Date.now();
+    await recordExecution(context, {
+      ...base,
+      status: "success",
+      durationMs: finishedAt - startedAt,
+      startedAt: startedAtIso,
+      finishedAt: new Date(finishedAt).toISOString(),
+    });
+  } catch (error) {
+    const finishedAt = Date.now();
+    const message =
+      error instanceof Error ? error.message : "Data hook execution failed.";
+    await recordExecution(context, {
+      ...base,
+      status: "error",
+      error: message,
+      durationMs: finishedAt - startedAt,
+      startedAt: startedAtIso,
+      finishedAt: new Date(finishedAt).toISOString(),
+    });
+    throw error;
   }
 }
 

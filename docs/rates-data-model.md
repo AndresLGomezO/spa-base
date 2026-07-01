@@ -770,6 +770,8 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 - Mark schedule PAID → optional auto-create transaction
 - Initial migration seed for 23 rows
 
+**Data hooks:** Gap analysis and catalog — [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md). Seed catalog: [`rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json).
+
 ### Phase C — Metrics dashboards
 
 - Metric and query catalogs applied with entity definitions via `pnpm seed:database`
@@ -800,4 +802,5 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 - [entity-system-guide.md](./entity-system-guide.md) — `defineEntity()` and dynamic entities
 - [metrics-consumption.md](./metrics-consumption.md) — metric API contract
 - [rates-metrics-guide.md](./rates-metrics-guide.md) — KPI/Series wiring patterns (adapt entity names)
+- [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md) — automation rules, feasibility, and platform gaps
 - [hooks-system-guide.md](./hooks-system-guide.md) — auto-generate `paymentSchedule`, derive `balanceSheetRole`

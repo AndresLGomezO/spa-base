@@ -2166,7 +2166,8 @@
       "createRecord": "Crear registro",
       "createRecords": "Crear registros (bucle)",
       "updateMatching": "Actualizar registros coincidentes",
-      "sendNotification": "Enviar notificación"
+      "sendNotification": "Enviar notificación",
+      "callWebhook": "Llamar webhook"
     },
     "actions": {
       "title": "Acciones",
@@ -2180,6 +2181,9 @@
       "targetField": "Campo destino",
       "value": "Valor",
       "message": "Mensaje",
+      "webhookUrl": "URL del webhook",
+      "webhookBody": "Cuerpo de la solicitud (opcional)",
+      "webhookBodyHint": "Déjalo vacío para enviar el contexto predeterminado del hook.",
       "targetEntity": "Entidad destino",
       "selectEntity": "Selecciona una entidad…",
       "recordData": "Datos del registro",
@@ -2187,6 +2191,16 @@
       "matchWhere": "Coincidir registros donde",
       "matchValue": "Valor",
       "setFields": "Establecer campos"
+    },
+    "executionLog": {
+      "title": "Ejecuciones recientes",
+      "loading": "Cargando registro de ejecución…",
+      "empty": "Aún no hay ejecuciones registradas.",
+      "error": "No se pudo cargar el registro de ejecución.",
+      "status": "Estado",
+      "startedAt": "Inicio",
+      "duration": "Duración",
+      "errorColumn": "Error"
     },
     "expression": {
       "literal": "Valor fijo",

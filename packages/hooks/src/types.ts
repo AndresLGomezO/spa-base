@@ -1,4 +1,5 @@
 import type { DataHookDefinition } from "./data-hook-definition.js";
+import type { CreateDataHookExecutionInput } from "./data-hook-execution.js";
 import type { DataHookJobPayload } from "./data-hook-job.js";
 
 export const HOOK_OPERATIONS = ["create", "update", "delete"] as const;
@@ -100,10 +101,19 @@ export interface HookLogger {
   readonly error: (message: string, meta?: Record<string, unknown>) => void;
 }
 
+export interface DataHookWebhookRequest {
+  readonly url: string;
+  readonly body: Record<string, unknown>;
+}
+
 export interface HookServices {
   readonly logger?: HookLogger;
   readonly entities?: HookEntityServices;
   readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
+  readonly recordDataHookExecution?: (
+    entry: CreateDataHookExecutionInput,
+  ) => Promise<void>;
+  readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }
 
 export interface HookContext {

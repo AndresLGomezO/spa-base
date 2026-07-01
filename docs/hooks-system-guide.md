@@ -146,9 +146,10 @@ Entity must exist in the tenant catalog. Full schema: [data-hook-definition-json
 | `createRecord` | Create one related record |
 | `createRecords` | Loop create (max 1,000) |
 | `updateMatching` | Find and update related records (max 500 matches) |
-| `sendNotification` | Log stub (no real notification infra yet) |
+| `sendNotification` | Log a computed message (no real notification infrastructure yet) |
+| `callWebhook` | POST JSON to an HTTPS URL (optional expression-driven body) |
 
-All values are expressions (JSON AST). `callWebhook` is not supported.
+All values are expressions (JSON AST). Execution outcomes are persisted in `__data_hook_executions` when the runtime provides a log recorder.
 
 ---
 
@@ -181,10 +182,7 @@ Tenant `admin` role (`*` grant) includes all hook permissions. Hook actions that
 ## Deferred
 
 - Sandboxed script runner
-- Queue-based async after-hooks (BullMQ — backlog P0.2)
-- `callWebhook` action
 - Real notification delivery
-- Execution logs in Firestore
 - System events (`user.login`, etc.)
 
 ---

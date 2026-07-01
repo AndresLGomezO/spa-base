@@ -1,32 +1,12 @@
 {
   "kind": "data-hooks-catalog",
   "version": 1,
-  "exportedAt": "2026-07-01T13:00:00.000Z",
+  "exportedAt": "2026-07-01T14:00:00.000Z",
   "dataHooks": [
     {
-      "name": "Log transaction create",
-      "description": "Seed automation hook that logs when a transaction is created (queued after-hook).",
-      "entity": "transaction",
-      "phase": "after",
-      "trigger": { "operation": "create" },
-      "execution": "queued",
-      "condition": null,
-      "actions": [
-        {
-          "type": "sendNotification",
-          "message": {
-            "kind": "literal",
-            "value": "Transaction created"
-          }
-        }
-      ],
-      "enabled": true,
-      "order": 0
-    },
-    {
-      "name": "Set pending status",
-      "description": "Seed hook: default loan status on create.",
-      "entity": "loan",
+      "name": "Default active status",
+      "description": "FI-01: Set status ACTIVE on new financial items.",
+      "entity": "financialItem",
       "phase": "before",
       "trigger": { "operation": "create" },
       "condition": null,
@@ -34,17 +14,311 @@
         {
           "type": "setField",
           "field": "status",
-          "value": { "kind": "literal", "value": "Pending" }
+          "value": { "kind": "literal", "value": "ACTIVE" }
         }
       ],
       "enabled": true,
       "order": 0
     },
     {
-      "name": "Complete when funded",
-      "description": "Seed hook: set COMPLETE when amount meets commitment.",
-      "entity": "loan",
+      "name": "Derive balance sheet role",
+      "description": "FI-02: Set balanceSheetRole from itemType (debt → LIABILITY, investment types → ASSET, else NONE).",
+      "entity": "financialItem",
       "phase": "before",
+      "trigger": { "operation": "create" },
+      "condition": null,
+      "actions": [
+        {
+          "type": "setField",
+          "field": "balanceSheetRole",
+          "value": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": { "kind": "field", "source": "current", "path": "itemType" },
+                "right": { "kind": "literal", "value": "MORTGAGE" }
+              },
+              { "kind": "literal", "value": "LIABILITY" },
+              {
+                "kind": "call",
+                "fn": "if",
+                "args": [
+                  {
+                    "kind": "binary",
+                    "op": "==",
+                    "left": { "kind": "field", "source": "current", "path": "itemType" },
+                    "right": { "kind": "literal", "value": "LOAN" }
+                  },
+                  { "kind": "literal", "value": "LIABILITY" },
+                  {
+                    "kind": "call",
+                    "fn": "if",
+                    "args": [
+                      {
+                        "kind": "binary",
+                        "op": "==",
+                        "left": { "kind": "field", "source": "current", "path": "itemType" },
+                        "right": { "kind": "literal", "value": "CREDIT_CARD" }
+                      },
+                      { "kind": "literal", "value": "LIABILITY" },
+                      {
+                        "kind": "call",
+                        "fn": "if",
+                        "args": [
+                          {
+                            "kind": "binary",
+                            "op": "==",
+                            "left": { "kind": "field", "source": "current", "path": "itemType" },
+                            "right": { "kind": "literal", "value": "REVOLVING_CREDIT" }
+                          },
+                          { "kind": "literal", "value": "LIABILITY" },
+                          {
+                            "kind": "call",
+                            "fn": "if",
+                            "args": [
+                              {
+                                "kind": "binary",
+                                "op": "==",
+                                "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                "right": { "kind": "literal", "value": "PERSONAL_DEBT" }
+                              },
+                              { "kind": "literal", "value": "LIABILITY" },
+                              {
+                                "kind": "call",
+                                "fn": "if",
+                                "args": [
+                                  {
+                                    "kind": "binary",
+                                    "op": "==",
+                                    "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                    "right": { "kind": "literal", "value": "SCHEDULED_SAVINGS" }
+                                  },
+                                  { "kind": "literal", "value": "ASSET" },
+                                  {
+                                    "kind": "call",
+                                    "fn": "if",
+                                    "args": [
+                                      {
+                                        "kind": "binary",
+                                        "op": "==",
+                                        "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                        "right": { "kind": "literal", "value": "YIELD_SAVINGS" }
+                                      },
+                                      { "kind": "literal", "value": "ASSET" },
+                                      {
+                                        "kind": "call",
+                                        "fn": "if",
+                                        "args": [
+                                          {
+                                            "kind": "binary",
+                                            "op": "==",
+                                            "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                            "right": { "kind": "literal", "value": "FIDUCIARY" }
+                                          },
+                                          { "kind": "literal", "value": "ASSET" },
+                                          {
+                                            "kind": "call",
+                                            "fn": "if",
+                                            "args": [
+                                              {
+                                                "kind": "binary",
+                                                "op": "==",
+                                                "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                                "right": { "kind": "literal", "value": "INVESTMENT_FUND" }
+                                              },
+                                              { "kind": "literal", "value": "ASSET" },
+                                              {
+                                                "kind": "call",
+                                                "fn": "if",
+                                                "args": [
+                                                  {
+                                                    "kind": "binary",
+                                                    "op": "==",
+                                                    "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                                    "right": { "kind": "literal", "value": "OTHER_INVESTMENT" }
+                                                  },
+                                                  { "kind": "literal", "value": "ASSET" },
+                                                  { "kind": "literal", "value": "NONE" }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 1
+    },
+    {
+      "name": "Derive balance sheet role on type change",
+      "description": "FI-02: Re-derive balanceSheetRole when itemType changes on update.",
+      "entity": "financialItem",
+      "phase": "before",
+      "trigger": { "operation": "update", "updateFields": ["itemType"] },
+      "condition": null,
+      "actions": [
+        {
+          "type": "setField",
+          "field": "balanceSheetRole",
+          "value": {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "==",
+                "left": { "kind": "field", "source": "current", "path": "itemType" },
+                "right": { "kind": "literal", "value": "MORTGAGE" }
+              },
+              { "kind": "literal", "value": "LIABILITY" },
+              {
+                "kind": "call",
+                "fn": "if",
+                "args": [
+                  {
+                    "kind": "binary",
+                    "op": "==",
+                    "left": { "kind": "field", "source": "current", "path": "itemType" },
+                    "right": { "kind": "literal", "value": "LOAN" }
+                  },
+                  { "kind": "literal", "value": "LIABILITY" },
+                  {
+                    "kind": "call",
+                    "fn": "if",
+                    "args": [
+                      {
+                        "kind": "binary",
+                        "op": "==",
+                        "left": { "kind": "field", "source": "current", "path": "itemType" },
+                        "right": { "kind": "literal", "value": "CREDIT_CARD" }
+                      },
+                      { "kind": "literal", "value": "LIABILITY" },
+                      {
+                        "kind": "call",
+                        "fn": "if",
+                        "args": [
+                          {
+                            "kind": "binary",
+                            "op": "==",
+                            "left": { "kind": "field", "source": "current", "path": "itemType" },
+                            "right": { "kind": "literal", "value": "REVOLVING_CREDIT" }
+                          },
+                          { "kind": "literal", "value": "LIABILITY" },
+                          {
+                            "kind": "call",
+                            "fn": "if",
+                            "args": [
+                              {
+                                "kind": "binary",
+                                "op": "==",
+                                "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                "right": { "kind": "literal", "value": "PERSONAL_DEBT" }
+                              },
+                              { "kind": "literal", "value": "LIABILITY" },
+                              {
+                                "kind": "call",
+                                "fn": "if",
+                                "args": [
+                                  {
+                                    "kind": "binary",
+                                    "op": "==",
+                                    "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                    "right": { "kind": "literal", "value": "SCHEDULED_SAVINGS" }
+                                  },
+                                  { "kind": "literal", "value": "ASSET" },
+                                  {
+                                    "kind": "call",
+                                    "fn": "if",
+                                    "args": [
+                                      {
+                                        "kind": "binary",
+                                        "op": "==",
+                                        "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                        "right": { "kind": "literal", "value": "YIELD_SAVINGS" }
+                                      },
+                                      { "kind": "literal", "value": "ASSET" },
+                                      {
+                                        "kind": "call",
+                                        "fn": "if",
+                                        "args": [
+                                          {
+                                            "kind": "binary",
+                                            "op": "==",
+                                            "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                            "right": { "kind": "literal", "value": "FIDUCIARY" }
+                                          },
+                                          { "kind": "literal", "value": "ASSET" },
+                                          {
+                                            "kind": "call",
+                                            "fn": "if",
+                                            "args": [
+                                              {
+                                                "kind": "binary",
+                                                "op": "==",
+                                                "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                                "right": { "kind": "literal", "value": "INVESTMENT_FUND" }
+                                              },
+                                              { "kind": "literal", "value": "ASSET" },
+                                              {
+                                                "kind": "call",
+                                                "fn": "if",
+                                                "args": [
+                                                  {
+                                                    "kind": "binary",
+                                                    "op": "==",
+                                                    "left": { "kind": "field", "source": "current", "path": "itemType" },
+                                                    "right": { "kind": "literal", "value": "OTHER_INVESTMENT" }
+                                                  },
+                                                  { "kind": "literal", "value": "ASSET" },
+                                                  { "kind": "literal", "value": "NONE" }
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                ]
+                              }
+                            ]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Create initial schedule row",
+      "description": "FI-03: Create one UPCOMING paymentSchedule row from nextDueDate and amount.",
+      "entity": "financialItem",
+      "phase": "after",
       "trigger": { "operation": "create" },
       "condition": {
         "type": "group",
@@ -53,24 +327,360 @@
           {
             "type": "condition",
             "field": "amount",
-            "operator": ">=",
-            "value": {
-              "kind": "field",
-              "source": "current",
-              "path": "commitmentAmount"
-            }
+            "operator": ">",
+            "value": { "kind": "literal", "value": 0 }
+          },
+          {
+            "type": "condition",
+            "field": "nextDueDate",
+            "operator": "isNotEmpty"
           }
         ]
       },
       "actions": [
         {
-          "type": "setField",
-          "field": "status",
-          "value": { "kind": "literal", "value": "COMPLETE" }
+          "type": "createRecord",
+          "entity": "paymentSchedule",
+          "data": {
+            "financialItemId": { "kind": "field", "source": "current", "path": "id" },
+            "dueDate": { "kind": "field", "source": "current", "path": "nextDueDate" },
+            "expectedAmount": { "kind": "field", "source": "current", "path": "amount" },
+            "status": { "kind": "literal", "value": "UPCOMING" }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Mark schedule PAID",
+      "description": "TX-01: When a transaction links paymentScheduleId, mark that schedule PAID.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "chainHooks": true,
+      "condition": {
+        "type": "condition",
+        "field": "paymentScheduleId",
+        "operator": "isNotEmpty"
+      },
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "paymentSchedule",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": { "kind": "field", "source": "current", "path": "paymentScheduleId" }
+          },
+          "set": {
+            "status": { "kind": "literal", "value": "PAID" },
+            "paidTransactionId": { "kind": "field", "source": "previous", "path": "id" }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Update item balance on payment",
+      "description": "TX-03: Decrease financialItem.currentBalance when type is PAYMENT.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": { "kind": "literal", "value": "PAYMENT" }
+          },
+          {
+            "type": "condition",
+            "field": "financialItemId",
+            "operator": "isNotEmpty"
+          }
+        ]
+      },
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": { "kind": "field", "source": "current", "path": "financialItemId" }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "-",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  { "kind": "field", "source": "current", "path": "currentBalance" },
+                  { "kind": "literal", "value": 0 }
+                ]
+              },
+              "right": { "kind": "field", "source": "previous", "path": "amount" }
+            }
+          }
         }
       ],
       "enabled": true,
       "order": 1
+    },
+    {
+      "name": "Update account on income",
+      "description": "TX-04: Increase account.currentBalance for INCOME transactions.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "condition",
+        "field": "type",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "INCOME" }
+      },
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "account",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": { "kind": "field", "source": "current", "path": "accountId" }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  { "kind": "field", "source": "current", "path": "currentBalance" },
+                  { "kind": "literal", "value": 0 }
+                ]
+              },
+              "right": { "kind": "field", "source": "previous", "path": "amount" }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 2
+    },
+    {
+      "name": "Update account on expense",
+      "description": "TX-04: Decrease account.currentBalance for EXPENSE transactions.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "condition",
+        "field": "type",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "EXPENSE" }
+      },
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "account",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": { "kind": "field", "source": "current", "path": "accountId" }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "-",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  { "kind": "field", "source": "current", "path": "currentBalance" },
+                  { "kind": "literal", "value": 0 }
+                ]
+              },
+              "right": { "kind": "field", "source": "previous", "path": "amount" }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 3
+    },
+    {
+      "name": "Update account on payment",
+      "description": "TX-04: Decrease account.currentBalance for PAYMENT transactions.",
+      "entity": "transaction",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": {
+        "type": "condition",
+        "field": "type",
+        "operator": "==",
+        "value": { "kind": "literal", "value": "PAYMENT" }
+      },
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "account",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": { "kind": "field", "source": "current", "path": "accountId" }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "-",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  { "kind": "field", "source": "current", "path": "currentBalance" },
+                  { "kind": "literal", "value": 0 }
+                ]
+              },
+              "right": { "kind": "field", "source": "previous", "path": "amount" }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 4
+    },
+    {
+      "name": "Sync item balance from snapshot",
+      "description": "BS-01: Copy balanceSnapshot.balance to financialItem.currentBalance.",
+      "entity": "balanceSnapshot",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": null,
+      "actions": [
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": { "kind": "field", "source": "current", "path": "financialItemId" }
+          },
+          "set": {
+            "currentBalance": { "kind": "field", "source": "previous", "path": "balance" }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Regenerate schedules on item update",
+      "description": "FI-05 BLOCKED: Needs compound updateMatching where + delete/CANCELLED. See docs/rates-data-hooks-gap-analysis.md PLAT-01, PLAT-02.",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": {
+        "operation": "update",
+        "updateFields": ["frequency", "nextDueDate", "amount"]
+      },
+      "condition": null,
+      "actions": [
+        {
+          "type": "sendNotification",
+          "message": {
+            "kind": "literal",
+            "value": "Schedule regeneration not implemented — enable after PLAT-01/PLAT-02"
+          }
+        }
+      ],
+      "enabled": false,
+      "order": 10
+    },
+    {
+      "name": "Generate amortization plan",
+      "description": "LD-01 BLOCKED: Needs loanDetails.termMonths, amortization functions. See gap analysis SCHEMA-01, PLAT-05.",
+      "entity": "loanDetails",
+      "phase": "after",
+      "trigger": { "operation": "create" },
+      "condition": null,
+      "actions": [
+        {
+          "type": "sendNotification",
+          "message": {
+            "kind": "literal",
+            "value": "Amortization plan generation not implemented"
+          }
+        }
+      ],
+      "enabled": false,
+      "order": 0
+    },
+    {
+      "name": "Regenerate plan on loan update",
+      "description": "LD-02 BLOCKED: Inactivate UPCOMING schedules and recreate on rate/term change. See gap analysis PLAT-01, PLAT-02, SCHEMA-02.",
+      "entity": "loanDetails",
+      "phase": "after",
+      "trigger": {
+        "operation": "update",
+        "updateFields": ["interestRate", "paymentAmount", "amortizationType"]
+      },
+      "condition": null,
+      "actions": [
+        {
+          "type": "sendNotification",
+          "message": {
+            "kind": "literal",
+            "value": "Loan plan regeneration not implemented"
+          }
+        }
+      ],
+      "enabled": false,
+      "order": 1
+    },
+    {
+      "name": "Mark overdue schedules",
+      "description": "PS-02 BLOCKED: Needs scheduled/time trigger. See gap analysis PLAT-09.",
+      "entity": "paymentSchedule",
+      "phase": "after",
+      "trigger": { "operation": "update" },
+      "condition": null,
+      "actions": [
+        {
+          "type": "sendNotification",
+          "message": {
+            "kind": "literal",
+            "value": "Overdue marking requires scheduled trigger"
+          }
+        }
+      ],
+      "enabled": false,
+      "order": 10
+    },
+    {
+      "name": "Cascade delete schedules",
+      "description": "EX-02 BLOCKED: Needs deleteMatching on financialItem.afterDelete. See gap analysis PLAT-02.",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": { "operation": "delete" },
+      "condition": null,
+      "actions": [
+        {
+          "type": "sendNotification",
+          "message": {
+            "kind": "literal",
+            "value": "Cascade delete not implemented"
+          }
+        }
+      ],
+      "enabled": false,
+      "order": 20
     }
   ]
 }

@@ -117,8 +117,8 @@ Source: [dynamic-entity-builder-guide.md](./dynamic-entity-builder-guide.md)
 | | |
 |---|---|
 | **Problem** | No visibility into hook failures; no external integrations |
-| **Current state** | Hooks fire inline; errors fail request |
-| **Suggested approach** | Firestore execution log collection; `callWebhook` action type |
+| **Current state** | **Done (Phase 6):** Firestore `__data_hook_executions` log collection; `callWebhook` action with HTTPS POST |
+| **Suggested approach** | ~~Firestore execution log collection; `callWebhook` action type~~ Implemented |
 | **Depends on** | Async hooks (P0.2) for after-hooks |
 | **Risk if deferred** | Limited automation story |
 

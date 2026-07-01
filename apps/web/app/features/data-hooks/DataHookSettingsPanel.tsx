@@ -17,6 +17,7 @@ import {
 } from "../ui-builder/designer-tree-workbench-classes";
 import { DataHookActionsEditor } from "./DataHookActionsEditor";
 import { DataHookConditionEditor } from "./DataHookConditionEditor";
+import { DataHookExecutionLogPanel } from "./DataHookExecutionLogPanel";
 import { createDefaultConditionRoot } from "./data-hook-condition-utils";
 import { useDataHooks } from "./data-hooks-context";
 
@@ -283,6 +284,13 @@ export function DataHookSettingsPanel() {
               </div>
             ) : null}
           </div>
+        </div>
+
+        <div className="space-y-2 border-t pt-4">
+          <Text className="text-sm font-semibold">
+            {t("dataHooks.executionLog.title")}
+          </Text>
+          <DataHookExecutionLogPanel hookId={definition.id} />
         </div>
       </div>
     </div>

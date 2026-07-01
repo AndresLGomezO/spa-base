@@ -12,14 +12,20 @@ import {
   resolvePermissions,
 } from "@repo/rbac";
 
+import type { DataHookExecutionRepository } from "@repo/firestore-converters";
+import type { DataHookWebhookRequest } from "@repo/hooks";
+
 import type { WorkerHookEntityRuntime } from "./worker-hook-entity-runtime.js";
 import type { WorkerPermissionDeps } from "./worker-permission-deps.js";
 import type { HookRuntimeContext } from "./worker-hook-runtime-context.js";
+import { createRecordDataHookExecution } from "./record-data-hook-execution.js";
 
 export interface WorkerCrudHookDeps {
   readonly hookRuntime: HookRuntimeContext;
   readonly entityRuntime: WorkerHookEntityRuntime;
   readonly permissionDeps: WorkerPermissionDeps;
+  readonly hookExecutionRepository?: DataHookExecutionRepository;
+  readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }
 
 export interface ResolvedHookUserContext {
@@ -89,6 +95,12 @@ async function dispatchChainedEntityHooks(options: {
   readonly user: { readonly uid: string };
   readonly logger: HookLogger;
   readonly entityServices: HookEntityServices;
+  readonly recordDataHookExecution?: (
+    entry: import("@repo/hooks").CreateDataHookExecutionInput,
+  ) => Promise<void>;
+  readonly callWebhook?: (
+    request: import("@repo/hooks").DataHookWebhookRequest,
+  ) => Promise<void>;
 }): Promise<Record<string, unknown>> {
   const event = formatHookEvent({
     entity: options.entityName,
@@ -108,6 +120,10 @@ async function dispatchChainedEntityHooks(options: {
     services: {
       logger: options.logger,
       entities: options.entityServices,
+      ...(options.recordDataHookExecution
+        ? { recordDataHookExecution: options.recordDataHookExecution }
+        : {}),
+      ...(options.callWebhook ? { callWebhook: options.callWebhook } : {}),
     },
   };
 
@@ -121,6 +137,9 @@ export function buildHookEntityServices(options: {
   readonly logger: HookLogger;
 }): HookEntityServices {
   const { user, deps, logger } = options;
+  const recordDataHookExecution = deps.hookExecutionRepository
+    ? createRecordDataHookExecution(deps.hookExecutionRepository, user.tenantId)
+    : undefined;
 
   const services = createHookEntityServices({
     entityRuntime: deps.entityRuntime,
@@ -148,6 +167,8 @@ export function buildHookEntityServices(options: {
         user: { uid: user.uid },
         logger,
         entityServices: services,
+        ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
+        ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
       }),
   });
 

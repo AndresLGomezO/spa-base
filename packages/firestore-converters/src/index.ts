@@ -97,6 +97,8 @@ export { type TenantDashboardLayoutRepository } from "./tenant-dashboard-layout/
 export { createInMemoryTenantDashboardLayoutRepository } from "./tenant-dashboard-layout/in-memory-repository.js";
 export { type DataHookRepository } from "./hook/repository-contract.js";
 export { createInMemoryDataHookRepository } from "./hook/in-memory-repository.js";
+export { type DataHookExecutionRepository } from "./hook-execution/repository-contract.js";
+export { createInMemoryDataHookExecutionRepository } from "./hook-execution/in-memory-repository.js";
 export { type MetricDefinitionRepository } from "./metric-definition/repository-contract.js";
 export { createInMemoryMetricDefinitionRepository } from "./metric-definition/in-memory-repository.js";
 export { type EntityQueryDefinitionRepository } from "./entity-query-definition/repository-contract.js";

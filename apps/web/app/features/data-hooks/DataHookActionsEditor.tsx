@@ -21,6 +21,7 @@ const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "createRecords",
   "updateMatching",
   "sendNotification",
+  "callWebhook",
 ];
 
 const VALUELESS_OPERATORS: readonly DataHookConditionOperator[] = [
@@ -212,6 +213,40 @@ function ActionEditor({
         />
       );
 
+    case "callWebhook":
+      return (
+        <div className="space-y-3">
+          <ExpressionEditor
+            label={t("dataHooks.actions.webhookUrl")}
+            value={action.url}
+            fieldNames={triggerFieldNames}
+            onChange={(url) => onChange({ ...action, url })}
+          />
+          <ExpressionEditor
+            label={t("dataHooks.actions.webhookBody")}
+            value={
+              action.body ?? {
+                kind: "literal",
+                value: null,
+              }
+            }
+            fieldNames={triggerFieldNames}
+            onChange={(body) =>
+              onChange({
+                ...action,
+                body:
+                  body.kind === "literal" && body.value === null
+                    ? undefined
+                    : body,
+              })
+            }
+          />
+          <Text className="text-muted-foreground text-xs">
+            {t("dataHooks.actions.webhookBodyHint")}
+          </Text>
+        </div>
+      );
+
     case "createRecord":
       return (
         <div className="space-y-3">
@@ -379,6 +414,8 @@ function emptyActionOfType(type: DataHookAction["type"]): DataHookAction {
       };
     case "sendNotification":
       return { type, message: literal() };
+    case "callWebhook":
+      return { type, url: literal() };
   }
 }
 

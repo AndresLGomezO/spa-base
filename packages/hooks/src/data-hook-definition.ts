@@ -142,6 +142,11 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
     type: z.literal("sendNotification"),
     message: expressionNodeSchema,
   }),
+  z.object({
+    type: z.literal("callWebhook"),
+    url: expressionNodeSchema,
+    body: expressionNodeSchema.optional(),
+  }),
 ]);
 export type DataHookAction = z.infer<typeof dataHookActionSchema>;
 
@@ -215,6 +220,7 @@ export function actionTargetEntities(
       return [action.entity];
     case "setField":
     case "sendNotification":
+    case "callWebhook":
       return [];
     default: {
       const exhaustive: never = action;

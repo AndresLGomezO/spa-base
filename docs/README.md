@@ -25,7 +25,8 @@ Index of all platform documentation. Start with the [Phase 2 handoff](./phase-2-
 | [entity-query-definition-json.md](./entity-query-definition-json.md) | **Query JSON** — saved entity query catalog envelopes for Settings → Query Builder import |
 | [data-hook-definition-json.md](./data-hook-definition-json.md) | **Data Hooks JSON** — full automation hook specification and catalog envelopes for Settings → Automation import |
 | [custom-view-definition-json.md](./custom-view-definition-json.md) | **Custom Views JSON** — whole-view and catalog envelopes plus design-layout slice handoff |
-| [rates-data-model.md](./rates-data-model.md) | Rates tenant domain spec; catalogs in [`rates-tenant/catalogs/`](../apps/api/src/admin/rates-tenant/catalogs/) (entities, metrics, queries, custom views) |
+| [rates-data-model.md](./rates-data-model.md) | Rates tenant domain spec; catalogs in [`rates-tenant/catalogs/`](../apps/api/src/admin/rates-tenant/catalogs/) (entities, metrics, queries, custom views, data hooks) |
+| [rates-data-hooks-gap-analysis.md](./rates-data-hooks-gap-analysis.md) | Rates automation inventory, schema gaps, and platform asks for the data hooks team |
 
 ---
 
