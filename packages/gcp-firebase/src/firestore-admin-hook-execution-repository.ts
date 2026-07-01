@@ -3,6 +3,7 @@ import {
   DATA_HOOK_EXECUTIONS_COLLECTION,
   dataHookExecutionRecordSchema,
   type CreateDataHookExecutionInput,
+  type DataHookExecutionRecord,
 } from "@repo/hooks";
 import type { DataHookExecutionRepository } from "@repo/firestore-converters";
 import { nanoid } from "nanoid";
@@ -15,6 +16,14 @@ import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 function toRecord(data: unknown) {
   return dataHookExecutionRecordSchema.parse(data);
+}
+
+export function sortExecutionsByStartedAtDesc(
+  records: readonly DataHookExecutionRecord[],
+): DataHookExecutionRecord[] {
+  return [...records].sort((left, right) =>
+    right.startedAt.localeCompare(left.startedAt),
+  );
 }
 
 export function createFirestoreAdminDataHookExecutionRepository(
@@ -42,14 +51,14 @@ export function createFirestoreAdminDataHookExecutionRepository(
     },
     async listByHookId(tenantId, hookId, options) {
       const limit = options?.limit ?? 50;
+      // Equality filter only — sort in memory to avoid a composite index on
+      // hookId + startedAt (single-field indexes are auto-provisioned).
       const snapshot = await collection(tenantId)
         .where("hookId", "==", hookId)
-        .orderBy("startedAt", "desc")
-        .limit(limit)
         .get();
-      return snapshot.docs.map((doc) =>
-        toRecord({ id: doc.id, ...doc.data() }),
-      );
+      return sortExecutionsByStartedAtDesc(
+        snapshot.docs.map((doc) => toRecord({ id: doc.id, ...doc.data() })),
+      ).slice(0, limit);
     },
   };
 }

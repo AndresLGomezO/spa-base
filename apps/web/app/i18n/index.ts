@@ -26,6 +26,13 @@ const enResources = {
 
 const loadedLocales = new Set<SupportedLocale>(["en"]);
 
+const lazyCommonByLocale = {
+  es: () => import("./locales/es/common.json"),
+} satisfies Record<
+  Exclude<SupportedLocale, typeof DEFAULT_LOCALE>,
+  () => Promise<{ default: typeof enCommon }>
+>;
+
 void i18n
   .use(LanguageDetector)
   .use(initReactI18next)
@@ -51,10 +58,9 @@ export { i18n };
  */
 export async function loadLocale(locale: SupportedLocale): Promise<void> {
   if (loadedLocales.has(locale)) return;
+  if (locale === DEFAULT_LOCALE) return;
 
-  const [common] = await Promise.all([
-    import(`./locales/${locale}/common.json`).then((m) => m.default),
-  ]);
+  const common = await lazyCommonByLocale[locale]().then((m) => m.default);
 
   i18n.addResourceBundle(locale, "common", common, true, true);
 
