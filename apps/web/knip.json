@@ -13,6 +13,7 @@
     "@repo/query-engine",
     "@repo/rbac",
     "@repo/shared-types",
+    "@repo/tenant-bundle",
     "@repo/theme",
     "@repo/ui",
     "@repo/ui-builder",

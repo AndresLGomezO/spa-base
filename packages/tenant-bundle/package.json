@@ -11,6 +11,7 @@
   },
   "exports": {
     ".": "./src/index.ts",
+    "./browser": "./src/browser.ts",
     "./tenant-bundle-import-export": "./src/tenant-bundle-import-export.ts"
   },
   "dependencies": {

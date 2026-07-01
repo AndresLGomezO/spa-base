@@ -1,13 +1,13 @@
 import { entityDefinitionRecordSchema } from "@repo/dynamic-entities";
 import { entityCategoryRecordSchema } from "@repo/entity-categories";
-import { entityQueryDefinitionRecordSchema } from "@repo/entity-queries";
+import { entityQueryDefinitionRecordSchema } from "@repo/entity-queries/types";
 import {
   entityUiOverrideRecordSchema,
   tenantDashboardLayoutRecordSchema,
   uiBuilderPresetRecordSchema,
 } from "@repo/entities";
 import { hookRecordSchema } from "@repo/hooks";
-import { metricDefinitionRecordSchema } from "@repo/metrics-engine";
+import { metricDefinitionRecordSchema } from "@repo/metrics-engine/types";
 import { tenantRoleRecordSchema } from "@repo/rbac";
 import { tenantAppearanceSchema } from "@repo/shared-types";
 import { z } from "zod";

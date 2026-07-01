@@ -40,9 +40,16 @@ async function commitBatchSets(
   }
 
   const firestore = collection.firestore;
-  for (let index = 0; index < documents.length; index += FIRESTORE_BATCH_LIMIT) {
+  for (
+    let index = 0;
+    index < documents.length;
+    index += FIRESTORE_BATCH_LIMIT
+  ) {
     const batch = firestore.batch();
-    for (const document of documents.slice(index, index + FIRESTORE_BATCH_LIMIT)) {
+    for (const document of documents.slice(
+      index,
+      index + FIRESTORE_BATCH_LIMIT,
+    )) {
       batch.set(collection.doc(document.id), document.data);
     }
     await batch.commit();

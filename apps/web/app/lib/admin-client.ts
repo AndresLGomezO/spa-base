@@ -2,7 +2,7 @@ import type { TenantAppearance } from "@repo/shared-types";
 import type {
   TenantBundleExportDocument,
   TenantBundleImportCounts,
-} from "@repo/tenant-bundle";
+} from "@repo/tenant-bundle/browser";
 
 import { getAppCheckHeaderValue } from "./app-check";
 import { appConfig } from "../config/app-config";
@@ -113,7 +113,7 @@ export async function uploadTenantLogo(
   });
 }
 
-export interface AdminTenantBundleImportSummary {
+interface AdminTenantBundleImportSummary {
   readonly sourceTenantId: string;
   readonly counts: TenantBundleImportCounts;
 }

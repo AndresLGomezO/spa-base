@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { TenantBundleExportDocument } from "@repo/tenant-bundle";
+import type { TenantBundleExportDocument } from "@repo/tenant-bundle/browser";
 
 import { Alert, Button, Modal, Text, toast } from "@repo/ui";
 
@@ -157,7 +157,9 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
 
       <section className="flex flex-col gap-3">
         <div className="space-y-1">
-          <Text className="text-sm font-medium">{bundleLabels.sectionTitle}</Text>
+          <Text className="text-sm font-medium">
+            {bundleLabels.sectionTitle}
+          </Text>
           <Text className="text-muted-foreground text-sm">
             {bundleLabels.sectionDescription}
           </Text>

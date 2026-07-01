@@ -51,7 +51,9 @@ function validateTenantBundleCrossReferences(
   bundle: TenantBundleExportDocument,
 ): readonly TenantBundleImportError[] {
   const errors: TenantBundleImportError[] = [];
-  const entityNames = new Set(bundle.entityDefinitions.map((item) => item.name));
+  const entityNames = new Set(
+    bundle.entityDefinitions.map((item) => item.name),
+  );
   const categoryIds = new Set(bundle.entityCategories.map((item) => item.id));
 
   for (const definition of bundle.entityDefinitions) {
@@ -195,7 +197,9 @@ export function validateTenantBundleImport(
     ) {
       return {
         ok: false,
-        errors: [{ path: "$", message: "Invalid tenant bundle: missing version." }],
+        errors: [
+          { path: "$", message: "Invalid tenant bundle: missing version." },
+        ],
       };
     }
 

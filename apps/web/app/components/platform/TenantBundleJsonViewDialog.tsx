@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { serializeTenantBundle } from "@repo/tenant-bundle";
+import { serializeTenantBundle } from "@repo/tenant-bundle/browser";
 import { Alert, Button, Modal, Text } from "@repo/ui";
 
 import { exportAdminTenantBundle } from "../../lib/admin-client";

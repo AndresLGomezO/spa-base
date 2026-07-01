@@ -17,7 +17,8 @@
     "./app-check": "./src/app-check.ts",
     "./firebase-admin": "./src/firebase-admin.ts",
     "./ai-job-repository": "./src/ai-job-repository.ts",
-    "./firestore-admin-user-repository": "./src/firestore-admin-user-repository.ts"
+    "./firestore-admin-user-repository": "./src/firestore-admin-user-repository.ts",
+    "./firestore-aggregation-pubsub": "./src/firestore-aggregation-pubsub.ts"
   },
   "devDependencies": {
     "@repo/eslint-config": "workspace:*",

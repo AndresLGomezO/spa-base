@@ -45,7 +45,8 @@
     "emulators": "pnpm run emulators:prepare && firebase emulators:start --only auth,firestore,storage,hosting,pubsub --project demo-project-base",
     "emulators:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up firebase-emulator --force-recreate",
     "dev:docker": "pnpm run emulators:prepare && docker compose -f docker-compose.dev.yml up --build pubsub-init firebase-emulator api worker-aggregation web",
-    "dev:docker:reset": "tsx scripts/docker-dev-reset.ts"
+    "dev:docker:reset": "tsx scripts/docker-dev-reset.ts",
+    "docker:prune": "bash scripts/docker-prune-all.sh"
   },
   "devDependencies": {
     "@repo/ai-context": "workspace:*",

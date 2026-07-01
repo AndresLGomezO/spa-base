@@ -1,14 +1,4 @@
 import {
-  ENTITY_CATEGORIES_COLLECTION,
-} from "@repo/entity-categories";
-import { ENTITY_DEFINITIONS_COLLECTION } from "@repo/dynamic-entities";
-import { ENTITY_QUERY_DEFINITIONS_COLLECTION } from "@repo/entity-queries";
-import {
-  ENTITY_UI_OVERRIDES_COLLECTION,
-  TENANT_DASHBOARD_LAYOUTS_COLLECTION,
-  UI_BUILDER_PRESETS_COLLECTION,
-} from "@repo/entities";
-import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
@@ -21,16 +11,13 @@ import {
   createFirestoreAdminUiBuilderPresetRepository,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
-import { HOOKS_COLLECTION } from "@repo/hooks";
-import { METRICS_DEFINITIONS_COLLECTION } from "@repo/metrics-engine";
-import { TENANT_ROLES_SUBCOLLECTION } from "@repo/rbac";
 import {
   TENANT_BUNDLE_EXPORT_VERSION,
   tenantBundleExportDocumentSchema,
   type TenantBundleExportDocument,
 } from "@repo/tenant-bundle";
 
-export interface ExportTenantBundleDeps {
+interface ExportTenantBundleDeps {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
 }
 
@@ -113,15 +100,3 @@ export async function exportTenantBundle(
     entityQueryDefinitions,
   });
 }
-
-export const TENANT_BUNDLE_EXPORT_COLLECTIONS = {
-  entityCategories: ENTITY_CATEGORIES_COLLECTION,
-  entityDefinitions: ENTITY_DEFINITIONS_COLLECTION,
-  entityUiOverrides: ENTITY_UI_OVERRIDES_COLLECTION,
-  uiBuilderPresets: UI_BUILDER_PRESETS_COLLECTION,
-  tenantDashboardLayout: TENANT_DASHBOARD_LAYOUTS_COLLECTION,
-  roles: TENANT_ROLES_SUBCOLLECTION,
-  hooks: HOOKS_COLLECTION,
-  metricDefinitions: METRICS_DEFINITIONS_COLLECTION,
-  entityQueryDefinitions: ENTITY_QUERY_DEFINITIONS_COLLECTION,
-} as const;

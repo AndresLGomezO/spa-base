@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type ChangeEvent } from "react";
-import type { TenantBundleExportDocument } from "@repo/tenant-bundle";
-import { validateTenantBundleImport } from "@repo/tenant-bundle";
+import {
+  validateTenantBundleImport,
+  type TenantBundleExportDocument,
+} from "@repo/tenant-bundle/browser";
 import { Button, Modal, Text } from "@repo/ui";
 
 import type { TenantBundleJsonLabels } from "./tenant-bundle-json-labels";

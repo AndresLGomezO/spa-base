@@ -13,9 +13,6 @@ import {
   type EntityUiOverrideRecord,
   type TenantDashboardLayoutRecord,
 } from "@repo/entities";
-import { HOOKS_COLLECTION } from "@repo/hooks";
-import { METRICS_DEFINITIONS_COLLECTION } from "@repo/metrics-engine";
-import { TENANT_ROLES_SUBCOLLECTION } from "@repo/rbac";
 import {
   countTenantBundleSections,
   parseTenantBundleDocument,
@@ -31,17 +28,19 @@ import {
   syncThemeAiContextForTenant,
 } from "../../ai/sync-tenant-ai-contexts.js";
 
-export interface ImportTenantBundleDeps {
+interface ImportTenantBundleDeps {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly tenantAiContextSync?: SyncTenantAiContextsDeps;
 }
 
-export interface ImportTenantBundleResult {
+interface ImportTenantBundleResult {
   readonly sourceTenantId: string;
   readonly counts: TenantBundleImportCounts;
 }
 
-function toPlainRecord(record: Record<string, unknown>): Record<string, unknown> {
+function toPlainRecord(
+  record: Record<string, unknown>,
+): Record<string, unknown> {
   return { ...record };
 }
 
@@ -64,16 +63,17 @@ function buildCollectionDocuments(
       id: record.entityName,
       data: toPlainRecord(
         toPersistedUiOverride(
-          entityUiOverrideRecordSchema.parse(
-            record,
-          ) as EntityUiOverrideRecord,
+          entityUiOverrideRecordSchema.parse(record) as EntityUiOverrideRecord,
         ) as unknown as Record<string, unknown>,
       ),
     })),
     ui_builder_presets: bundle.uiBuilderPresets.map((record) => ({
       id: record.id,
       data: toPlainRecord(
-        toPersistedUiBuilderPreset(record) as unknown as Record<string, unknown>,
+        toPersistedUiBuilderPreset(record) as unknown as Record<
+          string,
+          unknown
+        >,
       ),
     })),
     tenant_dashboard_layouts: bundle.tenantDashboardLayout
@@ -147,7 +147,10 @@ export async function importTenantBundle(
       { force: true },
     );
     await syncThemeAiContextForTenant(deps.tenantAiContextSync, targetTenantId);
-    await syncEntityAiContextsForTenant(deps.tenantAiContextSync, targetTenantId);
+    await syncEntityAiContextsForTenant(
+      deps.tenantAiContextSync,
+      targetTenantId,
+    );
   }
 
   return {

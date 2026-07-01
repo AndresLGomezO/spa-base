@@ -7,7 +7,7 @@
 import {
   AGGREGATION_EVENTS_TOPIC,
   ensureAggregationEventsTopic,
-} from "@repo/gcp-firebase";
+} from "@repo/gcp-firebase/firestore-aggregation-pubsub";
 
 const projectId = process.env.GCP_PROJECT_ID?.trim();
 const pubsubHost = process.env.PUBSUB_EMULATOR_HOST?.trim();
