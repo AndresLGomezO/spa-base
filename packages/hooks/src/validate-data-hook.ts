@@ -334,7 +334,11 @@ export function validateDataHookActions(
       action.type === "deleteMatching" ||
       action.type === "aggregateMatching"
     ) {
-      validateUpdateMatchingWhere(action.where);
+      validateUpdateMatchingWhere(
+        action.where,
+        loadedAliases,
+        aggregateAliases,
+      );
     }
 
     if (action.type === "aggregateMatching" && action.op !== "count") {
@@ -371,13 +375,17 @@ export function validateDataHookActions(
   }
 }
 
-function validateUpdateMatchingWhere(where: DataHookConditionNode): void {
+function validateUpdateMatchingWhere(
+  where: DataHookConditionNode,
+  loadedAliases: ReadonlySet<string>,
+  aggregateAliases: ReadonlySet<string>,
+): void {
   if (!hasUpdateMatchingLookupLeaf(where)) {
     throw new HookExecutionError(
       "Matching where must include at least one == leaf with a value expression for lookup.",
     );
   }
-  validateConditionExpressions(where, new Set(), new Set());
+  validateConditionExpressions(where, loadedAliases, aggregateAliases);
 }
 
 export function validateDataHookCondition(
@@ -409,7 +417,7 @@ function validateDataHookTrigger(
         "Scheduled hooks with eachRecord scope require eachRecordWhere.",
       );
     }
-    validateUpdateMatchingWhere(trigger.eachRecordWhere);
+    validateUpdateMatchingWhere(trigger.eachRecordWhere, new Set(), new Set());
   }
 }
 

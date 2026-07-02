@@ -779,6 +779,8 @@
               "frequency",
               "nextDueDate",
               "currentBalance",
+              "revolvingBalance",
+              "parentFinancialItemId",
               "balanceSheetRole",
               "status",
               "startDate",
@@ -879,6 +881,22 @@
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "currentBalance"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-fi-create-revolvingBalance",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "revolvingBalance"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-fi-create-parentFinancialItemId",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "parentFinancialItemId"
                               }
                             },
                             {
@@ -1069,6 +1087,22 @@
                             },
                             {
                               "type": "component",
+                              "id": "row-fi-edit-revolvingBalance",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "revolvingBalance"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-fi-edit-parentFinancialItemId",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "parentFinancialItemId"
+                              }
+                            },
+                            {
+                              "type": "component",
                               "id": "row-1e8de62b-9c0b-46f1-9637-2b9bb7a22c87",
                               "component": {
                                 "kind": "form-field",
@@ -1225,37 +1259,50 @@
             "sortable": true,
             "order": 8
           },
+          "revolvingBalance": {
+            "label": "Revolving balance",
+            "component": "number",
+            "displayFormat": "currency",
+            "sortable": true,
+            "order": 9
+          },
+          "parentFinancialItemId": {
+            "label": "Host credit card",
+            "component": "relation",
+            "filterable": true,
+            "order": 10
+          },
           "balanceSheetRole": {
             "label": "Balance sheet role",
             "component": "select",
             "filterable": true,
-            "order": 9
+            "order": 11
           },
           "status": {
             "label": "Status",
             "component": "select",
             "filterable": true,
-            "order": 10
+            "order": 12
           },
           "startDate": {
             "label": "Start date",
             "component": "date",
             "dateDisplayFormat": "date",
             "sortable": true,
-            "order": 11
+            "order": 13
           },
           "endDate": {
             "label": "End date",
             "component": "date",
             "dateDisplayFormat": "date",
             "sortable": true,
-            "order": 12
+            "order": 14
           },
           "description": {
             "label": "Description",
             "component": "input",
             "searchable": true,
-            "order": 13
+            "order": 15
           },
           "tags": {
             "label": "Tags",
@@ -1263,32 +1310,32 @@
             "filterable": true,
             "sortable": false,
             "searchable": true,
-            "order": 14
+            "order": 16
           },
           "categoryId": {
             "label": "Category",
             "component": "relation",
             "filterable": true,
-            "order": 15
+            "order": 17
           },
           "actorId": {
             "label": "Counterparty",
             "component": "relation",
             "filterable": true,
-            "order": 16
+            "order": 18
           },
           "accountId": {
             "label": "Transfer source account",
             "component": "relation",
             "filterable": true,
-            "order": 17
+            "order": 19
           },
           "scheduleHorizonMonths": {
             "label": "Schedule horizon (months)",
             "component": "number",
             "displayFormat": "plain",
             "sortable": true,
-            "order": 18
+            "order": 20
           }
         }
       },
@@ -1430,12 +1477,38 @@
           }
         },
         {
+          "name": "revolvingBalance",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Revolving balance",
+            "order": 9,
+            "displayFormat": "currency",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "parentFinancialItemId",
+          "type": "relation",
+          "relation": {
+            "target": "financialItem",
+            "type": "many-to-one",
+            "onDelete": "nullify"
+          },
+          "ui": {
+            "label": "Host credit card",
+            "order": 10,
+            "filterable": true
+          }
+        },
+        {
           "name": "balanceSheetRole",
           "type": "enum",
           "enumValues": ["ASSET", "LIABILITY", "NONE"],
           "ui": {
             "label": "Balance sheet role",
-            "order": 9,
+            "order": 11,
             "component": "select",
             "filterable": true
           }
@@ -1453,7 +1526,7 @@
           ],
           "ui": {
             "label": "Status",
-            "order": 10,
+            "order": 12,
             "component": "select",
             "filterable": true
           }
@@ -1463,7 +1536,7 @@
           "type": "date",
           "ui": {
             "label": "Start date",
-            "order": 11,
+            "order": 13,
             "dateDisplayFormat": "date",
             "sortable": true
           }
@@ -1473,7 +1546,7 @@
           "type": "date",
           "ui": {
             "label": "End date",
-            "order": 12,
+            "order": 14,
             "dateDisplayFormat": "date",
             "sortable": true
           }
@@ -1483,7 +1556,7 @@
           "type": "string",
           "ui": {
             "label": "Description",
-            "order": 13,
+            "order": 15,
             "searchable": true
           }
         },
@@ -1493,7 +1566,7 @@
           "isArray": true,
           "ui": {
             "label": "Tags",
-            "order": 14,
+            "order": 16,
             "filterable": true,
             "searchable": true
           }
@@ -1508,7 +1581,7 @@
           },
           "ui": {
             "label": "Category",
-            "order": 15,
+            "order": 17,
             "filterable": true
           }
         },
@@ -1522,7 +1595,7 @@
           },
           "ui": {
             "label": "Counterparty",
-            "order": 16,
+            "order": 18,
             "filterable": true
           }
         },
@@ -1536,7 +1609,7 @@
           },
           "ui": {
             "label": "Transfer source account",
-            "order": 17,
+            "order": 19,
             "filterable": true
           }
         },
@@ -1546,7 +1619,7 @@
           "numberKind": "integer",
           "ui": {
             "label": "Schedule horizon (months)",
-            "order": 18,
+            "order": 20,
             "displayFormat": "plain",
             "component": "number",
             "sortable": true

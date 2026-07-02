@@ -158,6 +158,59 @@
       "order": 1
     },
     {
+      "name": "Exclude card installment loans from liability rollup",
+      "description": "FI-02c: Linked child LOAN items roll up to host card — balanceSheetRole NONE.",
+      "entity": "financialItem",
+      "phase": "before",
+      "trigger": {
+        "operation": "create"
+      },
+      "condition": {
+        "type": "condition",
+        "field": "parentFinancialItemId",
+        "operator": "isNotEmpty"
+      },
+      "actions": [
+        {
+          "type": "setField",
+          "field": "balanceSheetRole",
+          "value": {
+            "kind": "literal",
+            "value": "NONE"
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 2
+    },
+    {
+      "name": "Exclude card installment loans on parent link",
+      "description": "FI-02c: When parentFinancialItemId is set on update, force balanceSheetRole NONE.",
+      "entity": "financialItem",
+      "phase": "before",
+      "trigger": {
+        "operation": "update",
+        "updateFields": ["parentFinancialItemId"]
+      },
+      "condition": {
+        "type": "condition",
+        "field": "parentFinancialItemId",
+        "operator": "isNotEmpty"
+      },
+      "actions": [
+        {
+          "type": "setField",
+          "field": "balanceSheetRole",
+          "value": {
+            "kind": "literal",
+            "value": "NONE"
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 2
+    },
+    {
       "name": "Derive balance sheet role on type change",
       "description": "FI-02: Re-apply balanceSheetRole when itemType changes (same switch as create).",
       "entity": "financialItem",
@@ -614,7 +667,7 @@
     },
     {
       "name": "Update item balance on payment",
-      "description": "TX-03: Decrease financialItem.currentBalance when type is PAYMENT.",
+      "description": "TX-03: Decrease financialItem balance on PAYMENT — revolvingBalance when host card has installment children, else currentBalance.",
       "entity": "transaction",
       "phase": "after",
       "trigger": {
@@ -642,6 +695,33 @@
       },
       "actions": [
         {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "payTarget"
+        },
+        {
+          "type": "aggregateMatching",
+          "entity": "financialItem",
+          "op": "count",
+          "as": "installmentChildCount",
+          "where": {
+            "type": "condition",
+            "field": "parentFinancialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "loaded",
+              "alias": "payTarget",
+              "path": "id"
+            }
+          }
+        },
+        {
           "type": "updateMatching",
           "entity": "financialItem",
           "where": {
@@ -655,34 +735,176 @@
           },
           "set": {
             "currentBalance": {
-              "kind": "binary",
-              "op": "-",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "binary",
+                  "op": "==",
+                  "left": {
                     "kind": "field",
-                    "source": "current",
-                    "path": "currentBalance"
+                    "source": "loaded",
+                    "alias": "payTarget",
+                    "path": "itemType"
                   },
-                  {
+                  "right": {
                     "kind": "literal",
-                    "value": 0
+                    "value": "CREDIT_CARD"
                   }
-                ]
-              },
-              "right": {
-                "kind": "field",
-                "source": "previous",
-                "path": "amount"
-              }
+                },
+                {
+                  "kind": "call",
+                  "fn": "if",
+                  "args": [
+                    {
+                      "kind": "binary",
+                      "op": ">",
+                      "left": {
+                        "kind": "field",
+                        "source": "aggregate",
+                        "alias": "installmentChildCount"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "value": 0
+                      }
+                    },
+                    {
+                      "kind": "field",
+                      "source": "current",
+                      "path": "currentBalance"
+                    },
+                    {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "call",
+                        "fn": "coalesce",
+                        "args": [
+                          {
+                            "kind": "field",
+                            "source": "current",
+                            "path": "currentBalance"
+                          },
+                          {
+                            "kind": "literal",
+                            "value": 0
+                          }
+                        ]
+                      },
+                      "right": {
+                        "kind": "field",
+                        "source": "previous",
+                        "path": "amount"
+                      }
+                    }
+                  ]
+                },
+                {
+                  "kind": "binary",
+                  "op": "-",
+                  "left": {
+                    "kind": "call",
+                    "fn": "coalesce",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "currentBalance"
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 0
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "field",
+                    "source": "previous",
+                    "path": "amount"
+                  }
+                }
+              ]
+            },
+            "revolvingBalance": {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "binary",
+                  "op": "==",
+                  "left": {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "payTarget",
+                    "path": "itemType"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": "CREDIT_CARD"
+                  }
+                },
+                {
+                  "kind": "call",
+                  "fn": "if",
+                  "args": [
+                    {
+                      "kind": "binary",
+                      "op": ">",
+                      "left": {
+                        "kind": "field",
+                        "source": "aggregate",
+                        "alias": "installmentChildCount"
+                      },
+                      "right": {
+                        "kind": "literal",
+                        "value": 0
+                      }
+                    },
+                    {
+                      "kind": "binary",
+                      "op": "-",
+                      "left": {
+                        "kind": "call",
+                        "fn": "coalesce",
+                        "args": [
+                          {
+                            "kind": "field",
+                            "source": "current",
+                            "path": "revolvingBalance"
+                          },
+                          {
+                            "kind": "literal",
+                            "value": 0
+                          }
+                        ]
+                      },
+                      "right": {
+                        "kind": "field",
+                        "source": "previous",
+                        "path": "amount"
+                      }
+                    },
+                    {
+                      "kind": "field",
+                      "source": "current",
+                      "path": "revolvingBalance"
+                    }
+                  ]
+                },
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "revolvingBalance"
+                }
+              ]
             }
           }
         }
       ],
       "enabled": true,
-      "order": 1
+      "order": 1,
+      "chainHooks": true
     },
     {
       "name": "Update account on income",
@@ -14706,6 +14928,427 @@
       ],
       "enabled": true,
       "order": 3,
+      "chainHooks": true
+    },
+    {
+      "name": "Sync card balance after installment child create",
+      "description": "CC-SYNC: Recompute host card currentBalance = revolvingBalance + sum(child installment balances).",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": {
+        "operation": "create"
+      },
+      "condition": {
+        "type": "condition",
+        "field": "parentFinancialItemId",
+        "operator": "isNotEmpty"
+      },
+      "actions": [
+        {
+          "type": "aggregateMatching",
+          "entity": "financialItem",
+          "op": "sum",
+          "field": "currentBalance",
+          "as": "installmentSum",
+          "where": {
+            "type": "condition",
+            "field": "parentFinancialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "parentFinancialItemId"
+            }
+          }
+        },
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "parentFinancialItemId"
+            }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "revolvingBalance"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              },
+              "right": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "aggregate",
+                    "alias": "installmentSum"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Sync card balance after installment child update",
+      "description": "CC-SYNC: Recompute host card currentBalance when a linked child LOAN balance changes.",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": {
+        "operation": "update",
+        "updateFields": ["currentBalance", "parentFinancialItemId", "status"]
+      },
+      "condition": {
+        "type": "condition",
+        "field": "parentFinancialItemId",
+        "operator": "isNotEmpty"
+      },
+      "actions": [
+        {
+          "type": "aggregateMatching",
+          "entity": "financialItem",
+          "op": "sum",
+          "field": "currentBalance",
+          "as": "installmentSum",
+          "where": {
+            "type": "condition",
+            "field": "parentFinancialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "parentFinancialItemId"
+            }
+          }
+        },
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "parentFinancialItemId"
+            }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "revolvingBalance"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              },
+              "right": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "aggregate",
+                    "alias": "installmentSum"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Sync card balance after revolving change",
+      "description": "CC-SYNC: Recompute host card currentBalance when revolvingBalance changes on CREDIT_CARD.",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": {
+        "operation": "update",
+        "updateFields": ["revolvingBalance"]
+      },
+      "condition": {
+        "type": "condition",
+        "field": "itemType",
+        "operator": "==",
+        "value": {
+          "kind": "literal",
+          "value": "CREDIT_CARD"
+        }
+      },
+      "actions": [
+        {
+          "type": "aggregateMatching",
+          "entity": "financialItem",
+          "op": "sum",
+          "field": "currentBalance",
+          "as": "installmentSum",
+          "where": {
+            "type": "condition",
+            "field": "parentFinancialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            }
+          }
+        },
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "id"
+            }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "revolvingBalance"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              },
+              "right": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "aggregate",
+                    "alias": "installmentSum"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Sync card balance after installment child delete",
+      "description": "CC-SYNC: Recompute host card currentBalance when a linked child LOAN is removed.",
+      "entity": "financialItem",
+      "phase": "after",
+      "trigger": {
+        "operation": "delete"
+      },
+      "condition": {
+        "type": "condition",
+        "field": "parentFinancialItemId",
+        "operator": "isNotEmpty"
+      },
+      "actions": [
+        {
+          "type": "aggregateMatching",
+          "entity": "financialItem",
+          "op": "sum",
+          "field": "currentBalance",
+          "as": "installmentSum",
+          "where": {
+            "type": "condition",
+            "field": "parentFinancialItemId",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "parentFinancialItemId"
+            }
+          }
+        },
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "parentFinancialItemId"
+            }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "binary",
+              "op": "+",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "revolvingBalance"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              },
+              "right": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "aggregate",
+                    "alias": "installmentSum"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              }
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 0
+    },
+    {
+      "name": "Initialize card installment loan",
+      "description": "CC-INIT: Seed child LOAN balance from originalPrincipal and sync host card total.",
+      "entity": "loanDetails",
+      "phase": "after",
+      "trigger": {
+        "operation": "create"
+      },
+      "condition": null,
+      "actions": [
+        {
+          "type": "getRecord",
+          "entity": "financialItem",
+          "id": {
+            "kind": "field",
+            "source": "current",
+            "path": "financialItemId"
+          },
+          "as": "installmentItem"
+        },
+        {
+          "type": "updateMatching",
+          "entity": "financialItem",
+          "where": {
+            "field": "id",
+            "operator": "==",
+            "value": {
+              "kind": "field",
+              "source": "current",
+              "path": "financialItemId"
+            }
+          },
+          "set": {
+            "currentBalance": {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "call",
+                  "fn": "isEmpty",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "installmentItem",
+                      "path": "parentFinancialItemId"
+                    }
+                  ]
+                },
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "currentBalance"
+                },
+                {
+                  "kind": "call",
+                  "fn": "coalesce",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "current",
+                      "path": "currentBalance"
+                    },
+                    {
+                      "kind": "field",
+                      "source": "previous",
+                      "path": "originalPrincipal"
+                    }
+                  ]
+                }
+              ]
+            }
+          }
+        }
+      ],
+      "enabled": true,
+      "order": 1,
       "chainHooks": true
     }
   ]

@@ -714,6 +714,15 @@
                 "PERSONAL_DEBT"
               ]
             }
+          },
+          {
+            "type": "condition",
+            "field": "balanceSheetRole",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "LIABILITY"
+            }
           }
         ]
       },

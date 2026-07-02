@@ -546,6 +546,7 @@ Users never see "asset", "liability", or "balance sheet role" in forms. The syst
 | `itemType` | `balanceSheetRole` | Rationale |
 |---|---|---|
 | `MORTGAGE`, `LOAN`, `CREDIT_CARD`, `REVOLVING_CREDIT`, `PERSONAL_DEBT` | `LIABILITY` | Debt — liability |
+| Child `LOAN` with `parentFinancialItemId` (card installment plan) | `NONE` | Rolls up to host card — FI-02c hook |
 | `SCHEDULED_SAVINGS`, `YIELD_SAVINGS`, `FIDUCIARY`, `INVESTMENT_FUND`, `OTHER_INVESTMENT` | `ASSET` | Savings/investment — asset |
 | All INCOME types | `NONE` | Cashflow only, not balance sheet |
 | All EXPENSE types (non-debt) | `NONE` | Cashflow only, not balance sheet |
@@ -580,6 +581,28 @@ When a `PAYMENT` transaction updates `financialItem.currentBalance`, apply the s
 | `NONE` | Usually no `currentBalance` on the item |
 
 `transaction.amount` is always stored as a positive number; direction is implied by transaction type and balance sheet role.
+
+### Card-linked installment plans (portfolio / compra a cuotas)
+
+Bank installment programs on credit cards are **not** modeled as `amortizationType: FRENCH` on the card itself. Use a **parent `CREDIT_CARD` + child `LOAN`** pair:
+
+| Role | Entity | Key fields |
+|---|---|---|
+| Host card | `financialItem` (`CREDIT_CARD`) | `loanDetails.creditLimit`, `revolvingBalance`, rolled-up `currentBalance` |
+| Installment plan | `financialItem` (`LOAN`) | `parentFinancialItemId` → card, full `loanDetails` (FRENCH/NMV/etc.) |
+
+**Balance split on the host card:**
+
+```
+currentBalance = coalesce(revolvingBalance, 0) + Σ(child.currentBalance)
+```
+
+- **`revolvingBalance`** — revolving purchases only (not installment principal).
+- **Child `LOAN`** — normal LD-01/LD-02 amortization on `loanDetails`; `balanceSheetRole = NONE` (FI-02c) so liabilities are not double-counted.
+
+**Hooks:** CC-SYNC recomputes the card total when a child balance, parent link, or `revolvingBalance` changes. CC-INIT seeds child `currentBalance` from `loanDetails.originalPrincipal`. TX-03 reduces `revolvingBalance` (not `currentBalance`) when paying the host card that has installment children.
+
+**Import:** one child `financialItem` + `loanDetails` row per bank plan; set `revolvingBalance` on the card so `currentBalance` matches the latest statement.
 
 ---
 

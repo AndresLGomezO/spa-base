@@ -179,10 +179,10 @@ describe("data-hook-definition-json", () => {
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(28);
+    expect(hooks.length).toBe(35);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(28);
+    expect(enabled.length).toBe(35);
 
     const ratesEntities = new Set([
       "actor",
@@ -279,6 +279,21 @@ describe("data-hook-definition-json", () => {
     );
     expect(
       hooks.some((hook) => hook.name === "Update accounts on transfer"),
+    ).toBe(true);
+    expect(
+      hooks.some(
+        (hook) =>
+          hook.name === "Sync card balance after installment child create",
+      ),
+    ).toBe(true);
+    expect(
+      hooks.some((hook) => hook.name === "Initialize card installment loan"),
+    ).toBe(true);
+    expect(
+      hooks.some(
+        (hook) =>
+          hook.name === "Exclude card installment loans from liability rollup",
+      ),
     ).toBe(true);
   });
 });

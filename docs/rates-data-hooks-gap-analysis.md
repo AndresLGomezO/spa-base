@@ -1,6 +1,6 @@
 # Rates Tenant — Data Hooks Pending Backlog
 
-Outstanding Rates automation and ops work. Shipped hooks: [`rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json) (28 enabled) — import via `pnpm seed:database`.
+Outstanding Rates automation and ops work. Shipped hooks: [`rates-data-hooks.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-data-hooks.json) (35 enabled) — import via `pnpm seed:database`.
 
 Entity schemas and balance conventions: [rates-data-model.md](./rates-data-model.md). Platform asks: [data-hooks-platform-gaps.md](./data-hooks-platform-gaps.md).
 
@@ -42,7 +42,15 @@ Entity schemas and balance conventions: [rates-data-model.md](./rates-data-model
 
 | ID | Rule | Gap | Next step |
 |----|------|-----|-----------|
-| TX-03 | Balance update on PAYMENT | **Shipped** | Decreases liability `currentBalance`; TX-03a chains LD-02 replan for loans with `loanDetails` |
+| TX-03 | Balance update on PAYMENT | **Shipped** | Decreases liability `currentBalance`; card with installment children reduces `revolvingBalance` → CC-SYNC; TX-03a chains LD-02 replan |
+
+### Card installment plans (`financialItem` parent/child)
+
+| ID | Rule | Status | Notes |
+|----|------|--------|-------|
+| FI-02c | Exclude linked child LOAN from liability rollup | **Shipped** | `balanceSheetRole = NONE` when `parentFinancialItemId` set |
+| CC-SYNC | Recompute host card `currentBalance` | **Shipped** | `revolvingBalance + Σ(child balances)` on child/revolving changes |
+| CC-INIT | Seed child installment balance | **Shipped** | `loanDetails.afterCreate` → child `currentBalance` from `originalPrincipal` |
 
 ### Other
 
@@ -76,7 +84,7 @@ Per-row P/I by `amortizationType` (FRENCH / GERMAN / AMERICAN / BULLET / NONE) i
 | **Scheduled hooks (PS-02 overdue, FI-04 extension)** | Worker needs `SCHEDULED_HOOK_USER_UID` + Cloud Scheduler → `POST /tasks/schedule-tick` |
 | **Demo seed** | Replays FI-03 / LD-01 via [`seed-replay-payment-schedule-hooks.ts`](../apps/api/src/admin/rates-tenant/seed-replay-payment-schedule-hooks.ts) |
 | **Manual QA** | Hipoteca Altavista mid-loan: first row interest ~2,978,670, principal ~716,330, additionalPortion 120,000, expectedAmount ~3,815,000, ~196 UPCOMING rows from `nextDueDate` |
-| **Tests** | Catalog JSON validates via `data-hook-definition-json.test.ts`; LD-01 / LU-01 / TX-03a runtime tests in `packages/hooks` |
+| **Tests** | Catalog JSON validates via `data-hook-definition-json.test.ts`; LD-01 / LU-01 / TX-03a / CC-SYNC runtime tests in `packages/hooks` |
 
 ---
 
