@@ -36,10 +36,12 @@ interface DebuggerContextValue {
     Record<DebugEventSource, readonly DebugEvent[]>
   >;
   readonly selectedRecordKey: string | null;
+  readonly selectedIndexSignature: string | null;
   readonly selectedEvent: DebugEvent | null;
   readonly isLoading: boolean;
   readonly loadError: string | null;
   readonly selectRecord: (event: DebugEvent) => void;
+  readonly selectIndexJob: (signature: string) => void;
   readonly clearSelectedRecord: () => void;
   readonly dismissRecord: (event: DebugEvent) => void;
   readonly refresh: () => void;
@@ -109,6 +111,7 @@ export function DebuggerProvider({
   }, [visibleEvents]);
 
   const selectedRecordKey = searchParams.get("record");
+  const selectedIndexSignature = searchParams.get("index");
 
   const selectedEvent = useMemo(() => {
     if (!selectedRecordKey) {
@@ -144,6 +147,17 @@ export function DebuggerProvider({
     (event: DebugEvent) => {
       const next = new URLSearchParams(searchParams);
       next.set("record", buildDebugRecordKey(event.source, event.id));
+      next.delete("index");
+      setSearchParams(next, { replace: true });
+    },
+    [searchParams, setSearchParams],
+  );
+
+  const selectIndexJob = useCallback(
+    (signature: string) => {
+      const next = new URLSearchParams(searchParams);
+      next.set("index", signature);
+      next.delete("record");
       setSearchParams(next, { replace: true });
     },
     [searchParams, setSearchParams],
@@ -152,6 +166,7 @@ export function DebuggerProvider({
   const clearSelectedRecord = useCallback(() => {
     const next = new URLSearchParams(searchParams);
     next.delete("record");
+    next.delete("index");
     setSearchParams(next, { replace: true });
   }, [searchParams, setSearchParams]);
 
@@ -172,6 +187,7 @@ export function DebuggerProvider({
       sourceEvents,
       groupedEvents,
       selectedRecordKey,
+      selectedIndexSignature,
       selectedEvent,
       isLoading: eventsQuery.isLoading,
       loadError: eventsQuery.error
@@ -180,6 +196,7 @@ export function DebuggerProvider({
           : t("debugger.loadError")
         : null,
       selectRecord,
+      selectIndexJob,
       clearSelectedRecord,
       dismissRecord,
       refresh,
@@ -193,8 +210,10 @@ export function DebuggerProvider({
       eventsQuery.isLoading,
       groupedEvents,
       refresh,
+      selectIndexJob,
       selectRecord,
       selectedEvent,
+      selectedIndexSignature,
       selectedRecordKey,
       sourceEvents,
       t,

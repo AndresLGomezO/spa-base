@@ -1014,6 +1014,7 @@
       "title": "Index provisioning",
       "summary": "{{total}} indexes · {{creating}} creating · {{failed}} failed (manual action required)",
       "progress": "{{ready}}/{{total}} ready",
+      "logTitle": "Provisioning log",
       "manualActionRequired": "Manual action required",
       "loadError": "Could not load index provisioning status.",
       "empty": "No indexes match this filter.",

@@ -1060,7 +1060,7 @@ mergeUsedKeys(
   extractIndexProvisioningProcessListFilterKeys(corpus),
   path.join(
     SRC_DIR,
-    "features/debugger/components/IndexProvisioningProcessList.tsx",
+    "features/debugger/components/IndexProvisioningTreePanel.tsx",
   ),
 );
 

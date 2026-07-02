@@ -19,6 +19,10 @@ import type { DebugEvent, DebugEventStatus } from "../../lib/api-client";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { DebuggerJsonViewDialog } from "./components/DebuggerJsonViewDialog";
+import {
+  IndexProvisioningTreeJobs,
+  IndexProvisioningTreeScope,
+} from "./components/IndexProvisioningTreePanel";
 import { DebuggerStatusBadge } from "./components/DebuggerStatusBadge";
 import { DebuggerStatusSummary } from "./components/DebuggerStatusSummary";
 import { useDebugger } from "./debugger-context";
@@ -128,6 +132,7 @@ export function DebuggerListTreePanel() {
     refresh,
     isLoading,
     selectedEvent,
+    selectedIndexSignature,
     clearSelectedRecord,
   } = useDebugger();
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
@@ -179,7 +184,7 @@ export function DebuggerListTreePanel() {
       type="button"
       className={cn(
         "flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-150",
-        selectedEvent == null
+        selectedEvent == null && !selectedIndexSignature
           ? DEBUGGER_LIST_ROW_SELECTED_CLASS
           : DEBUGGER_LIST_ROW_HOVER_CLASS,
       )}
@@ -236,7 +241,11 @@ export function DebuggerListTreePanel() {
     </div>
   );
 
-  const scopeSection = (
+  const isIndexProvisionSource = activeSource === "indexProvision";
+
+  const scopeSection = isIndexProvisionSource ? (
+    <IndexProvisioningTreeScope />
+  ) : (
     <div className="flex w-full min-w-0 flex-col gap-3 px-2 pb-2">
       <div className="w-full py-0.5">
         <SearchField
@@ -330,6 +339,32 @@ export function DebuggerListTreePanel() {
     </div>
   );
 
+  const treeBody = isIndexProvisionSource ? (
+    <div className="flex w-full min-w-0 flex-col gap-2 py-1">
+      {overviewRow}
+      {refreshRow}
+      <IndexProvisioningTreeJobs />
+    </div>
+  ) : (
+    <div className="flex w-full min-w-0 flex-col gap-2 py-1">
+      {overviewRow}
+      {refreshRow}
+      {listEvents.length === 0 && !isLoading ? (
+        <Text className="text-muted-foreground px-2 py-3 text-sm">
+          {emptyMessage}
+        </Text>
+      ) : (
+        <ul className="space-y-2.5 px-1">
+          {listEvents.map((event) => (
+            <li key={buildDebugRecordKey(event.source, event.id)}>
+              <DebuggerRecordRow event={event} />
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+
   const emptyMessage =
     sourceEvents.length === 0
       ? t("debugger.list.emptySource")
@@ -350,23 +385,7 @@ export function DebuggerListTreePanel() {
         collapsedContent={refreshRow}
         scopeSection={scopeSection}
       >
-        <div className="flex w-full min-w-0 flex-col gap-2 py-1">
-          {overviewRow}
-          {refreshRow}
-          {listEvents.length === 0 && !isLoading ? (
-            <Text className="text-muted-foreground px-2 py-3 text-sm">
-              {emptyMessage}
-            </Text>
-          ) : (
-            <ul className="space-y-2.5 px-1">
-              {listEvents.map((event) => (
-                <li key={buildDebugRecordKey(event.source, event.id)}>
-                  <DebuggerRecordRow event={event} />
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
+        {treeBody}
       </ItemListDesignerTreePanelShell>
 
       <DebuggerJsonViewDialog

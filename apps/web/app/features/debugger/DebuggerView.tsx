@@ -10,16 +10,11 @@ import {
   designerTreeWorkbenchClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
 import { DebuggerDetailPanel } from "./DebuggerDetailPanel";
-import { IndexProvisioningProcessList } from "./components/IndexProvisioningProcessList";
 import { DebuggerListTreePanel } from "./DebuggerListTreePanel";
 import { DebuggerProvider, useDebugger } from "./debugger-context";
 import { debuggerSourceLabelKey } from "./debugger-source-config";
 
-function DebuggerWorkbench({
-  activeSource,
-}: {
-  readonly activeSource: DebugEventSource;
-}) {
+function DebuggerWorkbench() {
   const { loadError } = useDebugger();
 
   if (loadError) {
@@ -28,11 +23,6 @@ function DebuggerWorkbench({
 
   return (
     <div className={designerTreeTabRootClassName}>
-      {activeSource === "indexProvision" ? (
-        <div className="mb-4">
-          <IndexProvisioningProcessList />
-        </div>
-      ) : null}
       <div className={designerTreeWorkbenchClassName}>
         <DebuggerListTreePanel />
         <div className={designerPreviewColumnClassName}>
@@ -80,7 +70,7 @@ function DebuggerPageContent({
 
   return (
     <DebuggerProvider activeSource={activeSource}>
-      <DebuggerWorkbench activeSource={activeSource} />
+      <DebuggerWorkbench />
     </DebuggerProvider>
   );
 }

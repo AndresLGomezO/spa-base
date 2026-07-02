@@ -1014,6 +1014,7 @@
       "title": "Aprovisionamiento de índices",
       "summary": "{{total}} índices · {{creating}} en creación · {{failed}} fallidos (acción manual requerida)",
       "progress": "{{ready}}/{{total}} listos",
+      "logTitle": "Registro de aprovisionamiento",
       "manualActionRequired": "Acción manual requerida",
       "loadError": "No se pudo cargar el estado de aprovisionamiento de índices.",
       "empty": "Ningún índice coincide con este filtro.",
