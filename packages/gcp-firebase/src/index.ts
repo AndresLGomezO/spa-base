@@ -83,6 +83,10 @@ export {
   replaceTenantCollectionDocuments,
   type TenantCollectionDocument,
 } from "./replace-tenant-collection-documents.js";
+export {
+  deserializeDataHookFromFirestore,
+  serializeDataHookForFirestore,
+} from "./data-hook-firestore-serialization.js";
 export { createFirestoreAdminEntityCategoryRepository } from "./firestore-admin-entity-category-repository.js";
 export { createFirestoreAdminTenantRoleRepository } from "./firestore-admin-tenant-role-repository.js";
 export {

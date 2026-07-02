@@ -1,9 +1,11 @@
 import {
   createFirestoreAdminTenantRepository,
   replaceTenantCollectionDocuments,
+  serializeDataHookForFirestore,
   type FirebaseAdminConfig,
   type TenantCollectionDocument,
 } from "@repo/gcp-firebase";
+import { dataHookDefinitionSchema, type DataHookDefinition } from "@repo/hooks";
 import {
   entityUiOverrideRecordSchema,
   tenantDashboardLayoutRecordSchema,
@@ -96,7 +98,9 @@ function buildCollectionDocuments(
     })),
     __data_hooks: bundle.hooks.map((record) => ({
       id: record.id,
-      data: toPlainRecord(record as unknown as Record<string, unknown>),
+      data: serializeDataHookForFirestore(
+        dataHookDefinitionSchema.parse(record) as DataHookDefinition,
+      ),
     })),
     __metrics_definitions: bundle.metricDefinitions.map((record) => ({
       id: record.id,

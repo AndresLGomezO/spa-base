@@ -1,9 +1,30 @@
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+import { serializeDataHookForFirestore } from "@repo/gcp-firebase";
+import { parseDataHooksCatalogJson } from "@repo/hooks";
 import { describe, expect, it } from "vitest";
 
 import {
   TENANT_BUNDLE_COLLECTION_IMPORT_ORDER,
   assertTenantBundleCollectionImportOrder,
 } from "@repo/tenant-bundle";
+
+function maxFirestoreDepth(value: unknown, depth = 0): number {
+  if (value === null || typeof value !== "object") {
+    return depth;
+  }
+  if (Array.isArray(value)) {
+    return Math.max(
+      depth,
+      ...value.map((entry) => maxFirestoreDepth(entry, depth + 1)),
+    );
+  }
+  return Math.max(
+    depth,
+    ...Object.values(value).map((entry) => maxFirestoreDepth(entry, depth + 1)),
+  );
+}
 
 describe("tenant bundle import order", () => {
   it("imports categories before definitions and UI overrides", () => {
@@ -21,5 +42,36 @@ describe("tenant bundle import order", () => {
 
     expect(categoriesIndex).toBeLessThan(definitionsIndex);
     expect(definitionsIndex).toBeLessThan(overridesIndex);
+  });
+
+  it("serializes imported data hooks within Firestore nesting limits", () => {
+    const catalogPath = resolve(
+      import.meta.dirname,
+      "../rates-tenant/catalogs/rates-data-hooks.json",
+    );
+    const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+
+    for (const hook of parsed.data.dataHooks) {
+      const serialized = serializeDataHookForFirestore({
+        id: "hook_test",
+        tenantId: "tenant_test",
+        createdAt: "2026-01-01T00:00:00.000Z",
+        updatedAt: "2026-01-01T00:00:00.000Z",
+        phase: hook.phase ?? "after",
+        trigger: hook.trigger,
+        condition: hook.condition ?? null,
+        actions: hook.actions,
+        enabled: hook.enabled ?? true,
+        order: hook.order ?? 0,
+        name: hook.name,
+        entity: hook.entity,
+      });
+
+      expect(maxFirestoreDepth(serialized)).toBeLessThanOrEqual(20);
+    }
   });
 });
