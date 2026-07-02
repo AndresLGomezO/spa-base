@@ -7,8 +7,19 @@
       "name": "Total Income (All Time)",
       "description": "Sum of all income transactions ever recorded.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
-      "filters": [{ "field": "type", "op": "eq", "value": "INCOME" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "INCOME"
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
@@ -22,8 +33,19 @@
       "name": "Total Expenses (All Time)",
       "description": "Sum of expense transactions ever recorded.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
-      "filters": [{ "field": "type", "op": "eq", "value": "EXPENSE" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "EXPENSE"
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
@@ -37,8 +59,19 @@
       "name": "Total Payments (All Time)",
       "description": "Sum of loan and card payment transactions ever recorded.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
-      "filters": [{ "field": "type", "op": "eq", "value": "PAYMENT" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "PAYMENT"
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
@@ -52,11 +85,24 @@
       "name": "Income by Month",
       "description": "Sum of income transactions bucketed by calendar month on date.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
-      "filters": [{ "field": "type", "op": "eq", "value": "INCOME" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "INCOME"
+        }
+      ],
       "groupBy": [],
       "dimensions": ["date"],
-      "dateFieldGranularity": { "date": "month" },
+      "dateFieldGranularity": {
+        "date": "month"
+      },
       "valueDisplayFormat": "currency",
       "version": 1,
       "schemaVersionDependency": 0,
@@ -67,13 +113,24 @@
       "name": "Outflows by Month",
       "description": "Sum of expense and payment transactions bucketed by calendar month on date.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
       "filters": [
-        { "field": "type", "op": "in", "value": ["EXPENSE", "PAYMENT"] }
+        {
+          "field": "type",
+          "op": "in",
+          "value": ["EXPENSE", "PAYMENT"]
+        }
       ],
       "groupBy": ["type"],
       "dimensions": ["date"],
-      "dateFieldGranularity": { "date": "month" },
+      "dateFieldGranularity": {
+        "date": "month"
+      },
       "valueDisplayFormat": "currency",
       "version": 1,
       "schemaVersionDependency": 0,
@@ -84,11 +141,24 @@
       "name": "Income by Category (Month)",
       "description": "Sum of income transactions grouped by category, bucketed by calendar month.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
-      "filters": [{ "field": "type", "op": "eq", "value": "INCOME" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "INCOME"
+        }
+      ],
       "groupBy": ["categoryId"],
       "dimensions": ["date"],
-      "dateFieldGranularity": { "date": "month" },
+      "dateFieldGranularity": {
+        "date": "month"
+      },
       "valueDisplayFormat": "currency",
       "version": 1,
       "schemaVersionDependency": 0,
@@ -99,8 +169,19 @@
       "name": "Upcoming Payment Total",
       "description": "Sum of expected amounts for upcoming payment schedule rows.",
       "sourceModel": "paymentSchedule",
-      "aggregations": [{ "operation": "SUM", "field": "expectedAmount" }],
-      "filters": [{ "field": "status", "op": "eq", "value": "UPCOMING" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "expectedAmount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "UPCOMING"
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
@@ -114,8 +195,18 @@
       "name": "Upcoming Payment Count",
       "description": "Count of payment schedule rows with upcoming status.",
       "sourceModel": "paymentSchedule",
-      "aggregations": [{ "operation": "COUNT" }],
-      "filters": [{ "field": "status", "op": "eq", "value": "UPCOMING" }],
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "UPCOMING"
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
@@ -129,11 +220,24 @@
       "name": "Upcoming Payments by Due Month",
       "description": "Sum of upcoming payment amounts grouped by due date month.",
       "sourceModel": "paymentSchedule",
-      "aggregations": [{ "operation": "SUM", "field": "expectedAmount" }],
-      "filters": [{ "field": "status", "op": "eq", "value": "UPCOMING" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "expectedAmount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "UPCOMING"
+        }
+      ],
       "groupBy": [],
       "dimensions": ["dueDate"],
-      "dateFieldGranularity": { "dueDate": "month" },
+      "dateFieldGranularity": {
+        "dueDate": "month"
+      },
       "valueDisplayFormat": "currency",
       "version": 1,
       "schemaVersionDependency": 0,
@@ -144,10 +248,23 @@
       "name": "Total Assets",
       "description": "Sum of current balances for active financial items classified as assets.",
       "sourceModel": "financialItem",
-      "aggregations": [{ "operation": "SUM", "field": "currentBalance" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "currentBalance"
+        }
+      ],
       "filters": [
-        { "field": "status", "op": "eq", "value": "ACTIVE" },
-        { "field": "balanceSheetRole", "op": "eq", "value": "ASSET" }
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        },
+        {
+          "field": "balanceSheetRole",
+          "op": "eq",
+          "value": "ASSET"
+        }
       ],
       "groupBy": [],
       "dimensions": [],
@@ -162,10 +279,23 @@
       "name": "Total Liabilities",
       "description": "Sum of current balances for active financial items classified as liabilities.",
       "sourceModel": "financialItem",
-      "aggregations": [{ "operation": "SUM", "field": "currentBalance" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "currentBalance"
+        }
+      ],
       "filters": [
-        { "field": "status", "op": "eq", "value": "ACTIVE" },
-        { "field": "balanceSheetRole", "op": "eq", "value": "LIABILITY" }
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        },
+        {
+          "field": "balanceSheetRole",
+          "op": "eq",
+          "value": "LIABILITY"
+        }
       ],
       "groupBy": [],
       "dimensions": [],
@@ -180,10 +310,23 @@
       "name": "Assets by Item Type",
       "description": "Sum of asset balances grouped by financial item type.",
       "sourceModel": "financialItem",
-      "aggregations": [{ "operation": "SUM", "field": "currentBalance" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "currentBalance"
+        }
+      ],
       "filters": [
-        { "field": "status", "op": "eq", "value": "ACTIVE" },
-        { "field": "balanceSheetRole", "op": "eq", "value": "ASSET" }
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        },
+        {
+          "field": "balanceSheetRole",
+          "op": "eq",
+          "value": "ASSET"
+        }
       ],
       "groupBy": ["itemType"],
       "dimensions": [],
@@ -203,10 +346,23 @@
       "name": "Liabilities by Item Type",
       "description": "Sum of liability balances grouped by financial item type.",
       "sourceModel": "financialItem",
-      "aggregations": [{ "operation": "SUM", "field": "currentBalance" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "currentBalance"
+        }
+      ],
       "filters": [
-        { "field": "status", "op": "eq", "value": "ACTIVE" },
-        { "field": "balanceSheetRole", "op": "eq", "value": "LIABILITY" }
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        },
+        {
+          "field": "balanceSheetRole",
+          "op": "eq",
+          "value": "LIABILITY"
+        }
       ],
       "groupBy": ["itemType"],
       "dimensions": [],
@@ -224,25 +380,62 @@
     },
     {
       "name": "Total Debt Service",
-      "description": "Sum of configured payment amounts across all loan detail records.",
-      "sourceModel": "loanDetails",
-      "aggregations": [{ "operation": "SUM", "field": "paymentAmount" }],
-      "filters": [],
+      "description": "Sum of recurring payment amounts on active liability items.",
+      "sourceModel": "financialItem",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        },
+        {
+          "field": "balanceSheetRole",
+          "op": "eq",
+          "value": "LIABILITY"
+        },
+        {
+          "field": "isRecurring",
+          "op": "eq",
+          "value": true
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
       "valueDisplayFormat": "currency",
       "version": 1,
       "schemaVersionDependency": 0,
-      "fieldsDependency": ["paymentAmount"],
+      "fieldsDependency": [
+        "amount",
+        "status",
+        "balanceSheetRole",
+        "isRecurring"
+      ],
       "status": "ACTIVE"
     },
     {
       "name": "Interest Income by Item",
       "description": "Sum of interest transactions grouped by linked financial item.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
-      "filters": [{ "field": "type", "op": "eq", "value": "INTEREST" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "INTEREST"
+        }
+      ],
       "groupBy": ["financialItemId"],
       "dimensions": [],
       "dateFieldGranularity": {},
@@ -256,11 +449,24 @@
       "name": "Interest Income by Month",
       "description": "Sum of interest transactions bucketed by calendar month on date.",
       "sourceModel": "transaction",
-      "aggregations": [{ "operation": "SUM", "field": "amount" }],
-      "filters": [{ "field": "type", "op": "eq", "value": "INTEREST" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "INTEREST"
+        }
+      ],
       "groupBy": [],
       "dimensions": ["date"],
-      "dateFieldGranularity": { "date": "month" },
+      "dateFieldGranularity": {
+        "date": "month"
+      },
       "valueDisplayFormat": "currency",
       "version": 1,
       "schemaVersionDependency": 0,
@@ -271,7 +477,12 @@
       "name": "Total Account Liquidity",
       "description": "Sum of current balances across all accounts.",
       "sourceModel": "account",
-      "aggregations": [{ "operation": "SUM", "field": "currentBalance" }],
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "currentBalance"
+        }
+      ],
       "filters": [],
       "groupBy": [],
       "dimensions": [],
@@ -284,25 +495,51 @@
     },
     {
       "name": "Expected Monthly Income",
-      "description": "Sum of expected amounts from income detail records.",
-      "sourceModel": "incomeDetails",
-      "aggregations": [{ "operation": "SUM", "field": "expectedAmount" }],
-      "filters": [],
+      "description": "Sum of payment amounts on active income items.",
+      "sourceModel": "financialItem",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        },
+        {
+          "field": "flowKind",
+          "op": "eq",
+          "value": "INCOME"
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
       "valueDisplayFormat": "currency",
       "version": 1,
       "schemaVersionDependency": 0,
-      "fieldsDependency": ["expectedAmount"],
+      "fieldsDependency": ["amount", "status", "flowKind"],
       "status": "ACTIVE"
     },
     {
       "name": "Active Financial Items",
       "description": "Count of financial items with active status.",
       "sourceModel": "financialItem",
-      "aggregations": [{ "operation": "COUNT" }],
-      "filters": [{ "field": "status", "op": "eq", "value": "ACTIVE" }],
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        }
+      ],
       "groupBy": [],
       "dimensions": [],
       "dateFieldGranularity": {},
@@ -316,8 +553,18 @@
       "name": "Financial Items by Flow Kind",
       "description": "Count of active financial items grouped by flow kind.",
       "sourceModel": "financialItem",
-      "aggregations": [{ "operation": "COUNT" }],
-      "filters": [{ "field": "status", "op": "eq", "value": "ACTIVE" }],
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "ACTIVE"
+        }
+      ],
       "groupBy": ["flowKind"],
       "dimensions": [],
       "dateFieldGranularity": {},

@@ -158,7 +158,7 @@ export async function executeHooks(
         throw new HookExecutionError(message);
       }
 
-      context.services.logger?.error("Hook execution failed.", {
+      context.services.logger?.error(`Hook execution failed: ${message}`, {
         event,
         tenantId: context.tenantId,
         source: hook.source,

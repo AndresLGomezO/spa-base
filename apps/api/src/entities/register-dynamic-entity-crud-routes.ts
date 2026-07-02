@@ -86,6 +86,9 @@ export async function registerDynamicEntityCrudRoutes(
     ...(crudHooks ? { crudHooks } : {}),
     ...(recordReadEnricher ? { recordReadEnricher } : {}),
     ...(aggregation ? { aggregation } : {}),
+    onRecordMutated: (tenantId, entityName) => {
+      entityRuntime.invalidateInMemoryListSnapshot(tenantId, entityName);
+    },
   });
 
   registeredContexts.set(entityRuntime, true);

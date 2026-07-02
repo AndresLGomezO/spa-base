@@ -85,14 +85,35 @@
       "audit": "Audit",
       "requestPerf": "Request Performance"
     },
+    "status": {
+      "success": "Success",
+      "error": "Error",
+      "skipped": "Skipped",
+      "info": "Info",
+      "running": "Running",
+      "pending": "Pending",
+      "failed": "Failed",
+      "completed": "Completed"
+    },
     "list": {
       "emptySource": "No records in this source.",
+      "emptyFiltered": "No records match the current filters.",
       "expandPanel": "Expand panel",
-      "collapsePanel": "Collapse panel"
+      "collapsePanel": "Collapse panel",
+      "searchPlaceholder": "Search records…",
+      "searchClear": "Clear search",
+      "filter": "Filter",
+      "sort": "Sort",
+      "sortNewest": "Newest first",
+      "sortOldest": "Oldest first",
+      "sortStatus": "Status (issues first)",
+      "sortTitle": "Title A–Z",
+      "filterByStatus": "Status",
+      "clearFilters": "Clear filters",
+      "summary": "{{count}} {{status}}",
+      "removeBadge": "Remove filter: {{label}}"
     },
     "detail": {
-      "title": "Details",
-      "selectRecord": "Select a log record to inspect its details.",
       "rawRecord": "Raw record",
       "metadata": "Metadata",
       "output": "Output",
@@ -117,7 +138,43 @@
       "copy": "Copy",
       "copied": "Copied to clipboard",
       "dismiss": "Dismiss",
-      "close": "Close"
+      "close": "Close",
+      "backToSummary": "Overview",
+      "expandChart": "Expand {{title}} chart"
+    },
+    "summary": {
+      "title": "Overview",
+      "subtitle": "{{source}} diagnostics",
+      "totalRecords": "Total records",
+      "totalLabel": "Total",
+      "errorRate": "Error rate",
+      "avgDuration": "Avg duration",
+      "avgLatency": "Avg latency",
+      "avgHooksMs": "Avg hooks",
+      "avgQueryMs": "Avg query",
+      "inProgressBanner": "Some jobs are still running or pending.",
+      "needsAttention": "Needs attention",
+      "topEntities": "Top entities",
+      "topHooks": "Top hooks with errors",
+      "topRoutes": "Slowest routes",
+      "topFeatures": "Jobs by feature",
+      "topActions": "Top actions",
+      "statusCodes": "Status codes",
+      "statusDistribution": "Status distribution",
+      "activityTimeline": "Activity timeline",
+      "timelineEvents": "Events",
+      "sampleLimit": "Based on the latest 50 records.",
+      "filteredNote": "Stats reflect the current list filters.",
+      "noIssues": "No issues detected in the current sample.",
+      "uniqueActors": "Unique actors",
+      "errors": "Errors",
+      "successes": "Successes",
+      "skipped": "Skipped",
+      "info": "Info",
+      "failed": "Failed",
+      "completed": "Completed",
+      "running": "Running",
+      "pending": "Pending"
     }
   },
   "aiDebugger": {
@@ -998,8 +1055,8 @@
         "detailFileReference": "File reference shape: { storagePath, contentType, fileName }",
         "detailDefault": "Default when omitted: {{value}}",
         "detailSensitive": "Sensitive field.",
-        "detailIdCreateHint": "Omit id to create a new record.",
-        "detailIdUpdateHint": "Include an existing id to update that record."
+        "detailIdCreateHint": "Omit id to auto-generate one, or include id to create a record with that stable id.",
+        "detailIdUpdateHint": "When the id already exists in this tenant, that record is updated."
       }
     },
     "viewSettings": {

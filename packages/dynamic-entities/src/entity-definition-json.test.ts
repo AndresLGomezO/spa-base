@@ -271,13 +271,15 @@ describe("entity-definition-json", () => {
     }
 
     expect(parsed.data.entityCategories).toHaveLength(5);
-    expect(parsed.data.entityDefinitions).toHaveLength(11);
+    expect(parsed.data.entityDefinitions).toHaveLength(13);
     expect(parsed.data.entityDefinitions.map((entity) => entity.name)).toEqual([
       "actor",
       "account",
       "category",
       "financialItem",
       "loanDetails",
+      "loanMonthlyCost",
+      "loanUtilization",
       "incomeDetails",
       "investmentDetails",
       "serviceDetails",
@@ -306,5 +308,23 @@ describe("entity-definition-json", () => {
       expect(definition.ui?.views?.length).toBeGreaterThan(0);
       expect(definition.ui?.forms?.create).toBeDefined();
     }
+
+    const fieldNames = (name: string) =>
+      parsed.data.entityDefinitions
+        .find((entity) => entity.name === name)!
+        .fields.map((field) => field.name);
+
+    expect(fieldNames("loanDetails")).not.toContain("paymentAmount");
+    expect(fieldNames("loanDetails")).toContain("originalPrincipal");
+    expect(fieldNames("loanDetails")).toContain("creditLimit");
+    expect(fieldNames("investmentDetails")).not.toContain("contributionAmount");
+    expect(fieldNames("serviceDetails")).not.toContain("billingDay");
+    expect(fieldNames("incomeDetails")).toEqual([
+      "financialItemId",
+      "amountBasis",
+      "leaseReference",
+      "annualEscalationRate",
+    ]);
+    expect(fieldNames("financialItem")).toContain("amount");
   });
 });

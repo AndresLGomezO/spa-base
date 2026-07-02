@@ -17,9 +17,8 @@ A **metric definition** tells the aggregation engine which entity to watch (`sou
 | Model | Use for |
 |-------|---------|
 | `transaction` | Income, expenses, payments, interest — actual cash movements |
-| `financialItem` | Balances, assets, liabilities — commitment-level totals |
+| `financialItem` | Balances, assets, liabilities, recurring payment/income totals |
 | `paymentSchedule` | Upcoming and overdue payment amounts |
-| `loanDetails` | Debt service (scheduled payment totals) |
 
 ---
 
@@ -43,6 +42,8 @@ A **metric definition** tells the aggregation engine which entity to watch (`sou
 | Total Assets | SUM currentBalance | balanceSheetRole=ASSET |
 | Total Liabilities | SUM currentBalance | balanceSheetRole=LIABILITY |
 | Assets by Role | SUM currentBalance | groupBy balanceSheetRole |
+| Total Debt Service | SUM amount | status=ACTIVE, balanceSheetRole=LIABILITY, isRecurring=true |
+| Expected Monthly Income | SUM amount | status=ACTIVE, flowKind=INCOME |
 
 ### Payment schedule metrics
 
@@ -50,12 +51,6 @@ A **metric definition** tells the aggregation engine which entity to watch (`sou
 |------|-------------|--------|
 | Upcoming Payments Total | SUM expectedAmount | status=UPCOMING |
 | Overdue Payments Total | SUM expectedAmount | status=OVERDUE |
-
-### Loan details metrics
-
-| Name | Aggregation |
-|------|-------------|
-| Total Debt Service | SUM paymentAmount |
 
 **Derived KPIs (UI-only):** Net result = income − expenses; Net worth = assets − liabilities. Bind two KPI widgets or compute in layout — not stored as metric definitions.
 

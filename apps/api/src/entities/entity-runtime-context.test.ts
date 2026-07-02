@@ -6,6 +6,7 @@ import {
   registerEntity,
 } from "@repo/entities";
 import { createInMemoryEntityDefinitionRepository } from "@repo/firestore-converters";
+import { buildInMemoryListSnapshotInvalidationPrefix } from "@repo/gcp-firebase";
 import { platformApp } from "@app/platform/app.config.js";
 import {
   bootstrapPlatformApp,
@@ -175,5 +176,66 @@ describe("EntityRuntimeContext", () => {
     });
 
     expect(() => entityRuntime.ensureCatalogIndexes("rates")).not.toThrow();
+  });
+
+  it("invalidateInMemoryListSnapshot is a no-op for missing or non-in-memory entities", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+    const entityRuntime = createEntityRuntimeContext({
+      firebaseAdminConfig: {
+        projectId: "demo",
+      },
+      entityDefinitionRepository,
+      definitionCacheTtlMs: 60_000,
+      repositories: {},
+    });
+
+    const created = await entityDefinitionRepository.create("tenant_a", {
+      name: "note",
+      label: "Note",
+      fields: [{ name: "title", type: "string", required: true }],
+    });
+    await entityRuntime.syncDefinition(created);
+
+    expect(() =>
+      entityRuntime.invalidateInMemoryListSnapshot("tenant_a", "missing"),
+    ).not.toThrow();
+    expect(() =>
+      entityRuntime.invalidateInMemoryListSnapshot("tenant_a", "note"),
+    ).not.toThrow();
+  });
+
+  it("invalidateInMemoryListSnapshot targets the entity collection prefix", async () => {
+    const entityDefinitionRepository =
+      createInMemoryEntityDefinitionRepository();
+    const entityRuntime = createEntityRuntimeContext({
+      firebaseAdminConfig: {
+        projectId: "demo",
+      },
+      entityDefinitionRepository,
+      definitionCacheTtlMs: 60_000,
+      repositories: {},
+    });
+
+    const created = await entityDefinitionRepository.create("tenant_a", {
+      name: "tag",
+      label: "Tag",
+      inMemoryListQueries: true,
+      fields: [{ name: "label", type: "string", required: true }],
+    });
+    await entityRuntime.syncDefinition(created);
+
+    const entity = entityRuntime.resolveEntity("tag", "tenant_a");
+    expect(entity).toBeDefined();
+
+    const prefix = buildInMemoryListSnapshotInvalidationPrefix(
+      "tenant_a",
+      entity!.metadata.collection,
+    );
+    expect(prefix).toBe("tenant_a:tags:");
+
+    expect(() =>
+      entityRuntime.invalidateInMemoryListSnapshot("tenant_a", "tag"),
+    ).not.toThrow();
   });
 });

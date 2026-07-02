@@ -62,6 +62,8 @@ export const EXPRESSION_FUNCTIONS = [
   "startsWith",
   "endsWith",
   "includes",
+  "pow",
+  "ln",
 ] as const;
 
 export type ExpressionFunction = (typeof EXPRESSION_FUNCTIONS)[number];
@@ -79,7 +81,12 @@ export const DATE_UNITS = [
 
 export type DateUnit = (typeof DATE_UNITS)[number];
 
-export const EXPRESSION_VARIABLES = ["now", "loopIndex", "userId"] as const;
+export const EXPRESSION_VARIABLES = [
+  "now",
+  "loopIndex",
+  "loopState",
+  "userId",
+] as const;
 
 export type ExpressionVariable = (typeof EXPRESSION_VARIABLES)[number];
 
@@ -229,6 +236,7 @@ export interface ExpressionScope {
   readonly now: Date;
   readonly userId?: string;
   readonly loopIndex?: number;
+  readonly loopState?: number;
 }
 
 export class ExpressionEvaluationError extends Error {
@@ -496,6 +504,13 @@ function evaluateCall(
       return String(args[0] ?? "").endsWith(String(args[1] ?? ""));
     case "includes":
       return String(args[0] ?? "").includes(String(args[1] ?? ""));
+    case "pow":
+      return Math.pow(
+        coerceNumber(args[0] ?? null),
+        coerceNumber(args[1] ?? null),
+      );
+    case "ln":
+      return Math.log(coerceNumber(args[0] ?? null));
     default: {
       const exhaustive: never = fn;
       throw new ExpressionEvaluationError(
@@ -559,6 +574,34 @@ function evaluateBinary(
   }
 }
 
+function evaluateCallNode(
+  node: Extract<ExpressionNode, { kind: "call" }>,
+  scope: ExpressionScope,
+): ExpressionValue {
+  if (node.fn === "coalesce") {
+    for (const arg of node.args) {
+      const value = evaluateExpression(arg, scope);
+      if (value != null) {
+        return value;
+      }
+    }
+    return null;
+  }
+
+  if (node.fn === "if") {
+    const condition = evaluateExpression(node.args[0]!, scope);
+    const thenNode = node.args[1];
+    const elseNode = node.args[2];
+    if (truthy(condition)) {
+      return thenNode != null ? evaluateExpression(thenNode, scope) : null;
+    }
+    return elseNode != null ? evaluateExpression(elseNode, scope) : null;
+  }
+
+  const args = node.args.map((arg) => evaluateExpression(arg, scope));
+  return evaluateCall(node.fn, args, scope);
+}
+
 export function evaluateExpression(
   node: ExpressionNode,
   scope: ExpressionScope,
@@ -584,6 +627,9 @@ export function evaluateExpression(
       if (node.name === "userId") {
         return scope.userId ?? null;
       }
+      if (node.name === "loopState") {
+        return scope.loopState ?? null;
+      }
       return scope.loopIndex ?? null;
     case "unary": {
       const operand = evaluateExpression(node.operand, scope);
@@ -600,10 +646,8 @@ export function evaluateExpression(
       const right = evaluateExpression(node.right, scope);
       return evaluateBinary(node.op, left, right);
     }
-    case "call": {
-      const args = node.args.map((arg) => evaluateExpression(arg, scope));
-      return evaluateCall(node.fn, args, scope);
-    }
+    case "call":
+      return evaluateCallNode(node, scope);
     case "switch": {
       if (node.cases.length > MAX_SWITCH_CASES) {
         throw new ExpressionEvaluationError(

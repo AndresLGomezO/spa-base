@@ -153,6 +153,20 @@ export class EntityRuntimeContext {
     this.queryExecutorCache.delete(key);
   }
 
+  invalidateInMemoryListSnapshot(tenantId: string, entityName: string): void {
+    const entity = this.resolveEntity(entityName, tenantId);
+    if (!entity || entity.metadata.inMemoryListQueries !== true) {
+      return;
+    }
+
+    this.inMemoryListSnapshotCache.invalidateByPrefix(
+      buildInMemoryListSnapshotInvalidationPrefix(
+        tenantId,
+        entity.metadata.collection,
+      ),
+    );
+  }
+
   private invalidateTenantRuntime(tenantId: string): void {
     const prefix = `${tenantId}:`;
     for (const key of this.repositoryCache.keys()) {

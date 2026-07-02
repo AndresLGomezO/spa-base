@@ -450,7 +450,9 @@ Loop `count` times, creating one record per iteration. Optional `startIndex` off
 |----------|-------------|
 | `count` | Expression → non-negative integer (truncated); tier limit applies (see runtime limits) |
 | `startIndex` | Optional expression → non-negative integer; defaults to `0`. Sets the initial `loopIndex` for the first iteration. |
-| `data` | Field map; `loopIndex` variable available (absolute index when `startIndex` is set) |
+| `data` | Field map; `loopIndex` and optional `loopState` variables available (absolute index when `startIndex` is set) |
+
+**Loop state:** set `data.__loopState` to an expression; its evaluated value becomes `loopState` on the next iteration. Fields whose names start with `__` are stripped before the entity write.
 
 **Tier limits:** literal `count` above `MAX_CREATE_RECORDS` (1,000) requires `after` phase with `execution: "queued"` (up to `MAX_CREATE_RECORDS_QUEUED` = 5,000). Hard ceiling: 5,000 literal count. Dynamic counts are enforced at runtime with the same rules.
 
@@ -703,6 +705,7 @@ Primitive values (`ExpressionValue`): `string | number | boolean | null`. Dates 
 | `now` | Evaluation timestamp (`Date`) |
 | `userId` | Triggering user's UID |
 | `loopIndex` | Iteration index in `createRecords` (`startIndex + offset`; default `startIndex` 0) |
+| `loopState` | Carried value from the prior iteration's `data.__loopState` in `createRecords` (undefined on first iteration) |
 | `loaded.{alias}` | Record fetched by a prior `getRecord` action in the same run (via `source: "loaded"` field nodes) |
 | `aggregates.{alias}` | Scalar from a prior `aggregateMatching` action (via `source: "aggregate"` field nodes) |
 
@@ -740,7 +743,7 @@ Aggregate scalar:
 { "kind": "var", "name": "loopIndex" }
 ```
 
-Names: `now`, `loopIndex`, `userId`. (`now` as var returns ISO string; prefer `call`/`var` consistently — `var: now` and scope `now` are equivalent in practice.)
+Names: `now`, `loopIndex`, `loopState`, `userId`. (`now` as var returns ISO string; prefer `call`/`var` consistently — `var: now` and scope `now` are equivalent in practice.)
 
 #### `unary`
 

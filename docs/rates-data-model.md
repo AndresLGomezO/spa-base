@@ -171,17 +171,42 @@ Replaces separate Bank / Provider / Person entities. Any party you pay, receive 
 
 ---
 
-### 4.2 `account` — where money lives
+### 4.2 `account` — liquid holdings only
+
+**Purpose:** Places where **cash you own** lives — checking, savings, cash on hand, digital wallets. Always interpret `currentBalance` as **available money** (an asset).
+
+**Not in `account`:** Credit cards, mortgages, loans, or any amount **you owe**. Those are `financialItem` rows with `balanceSheetRole = LIABILITY`.
 
 | Field | Type | Required on create | Notes |
 |---|---|---|---|
-| `name` | string | Yes | "Main account", "Nequi" |
+| `name` | string | Yes | "Ahorros", "Nequi" |
 | `accountType` | enum | Yes | See enum below |
 | `actorId` | relation → `actor` | No | Institution that holds the account |
 | `currency` | enum | Yes (default `COP`) | `COP`, `USD` — extensible |
-| `currentBalance` | decimal | No | Updated by transactions or manual edit |
+| `currentBalance` | decimal | No | **Money you have** — updated by transactions or manual edit |
 
-**`accountType` enum:** `BANK`, `CASH`, `SAVINGS`, `INVESTMENT`, `CREDIT`, `DIGITAL_WALLET`
+**`accountType` enum:** `BANK`, `CASH`, `SAVINGS`, `INVESTMENT`, `DIGITAL_WALLET`
+
+(`INVESTMENT` is for cash held at a broker/fiduciary before it is allocated — not the investment product itself.)
+
+#### Credit card example (limit 25M, owed 20M)
+
+Do **not** create an `account` for the card. Use:
+
+| Entity | Fields | Values |
+|---|---|---|
+| `financialItem` | `itemType`, `currentBalance`, `amount`, `balanceSheetRole` | `CREDIT_CARD`, `20000000`, `390557`, `LIABILITY` |
+| `loanDetails` | `creditLimit`, `interestRate`, `principalPortion`, `interestPortion` | `25000000` cupo, rate, P&I split |
+
+**Computed (UI/metrics, not stored):**
+
+```
+availableCredit = creditLimit − currentBalance   → 5,000,000
+```
+
+When you **charge** the card: `financialItem.currentBalance` increases (more owed); asset accounts unchanged.
+
+When you **pay** the card: `transaction` type `PAYMENT` debits an asset `account` (chosen per payment) and reduces `financialItem.currentBalance`.
 
 ---
 
@@ -217,20 +242,20 @@ The sheet row, generalized. Every commitment, income source, transfer rule, or i
 | `name` | string | User input |
 | `flowKind` | enum | Wizard Level 1 |
 | `itemType` | enum | Wizard Level 3 |
-| `amount` | decimal | Payment amount / expected amount / transfer amount |
+| `amount` | decimal | **Canonical** recurring payment, income, or contribution amount (cuota) |
 | `currency` | enum | Default tenant currency (`COP`) |
 | `isRecurring` | boolean | From frequency choice |
 | `frequency` | enum | `MONTHLY`, `ONE_TIME`, etc. |
 | `nextDueDate` | date | Next due date — if recurring or one-time future |
 | `categoryId` | relation → `category` | Auto-assigned from wizard Level 2 |
 | `actorId` | relation → `actor` | Optional quick-pick counterparty |
-| `accountId` | relation → `account` | Required for transfers; optional otherwise |
+| `accountId` | relation → `account` | **Transfers only** — optional default source account for transfer rules. For all other items, pick the account on each `transaction`. |
 
 #### Optional on create (shown only when relevant)
 
 | Field | Type | When shown |
 |---|---|---|
-| `currentBalance` | decimal | Debts, cards, savings, investments |
+| `currentBalance` | decimal | Debts: **remaining owed**. Assets/investments: **principal or accumulated value**. Not the original loan amount or credit limit. |
 
 #### Auto-derived (never asked)
 
@@ -243,8 +268,8 @@ The sheet row, generalized. Every commitment, income source, transfer rule, or i
 
 | Field | Type | Notes |
 |---|---|---|
-| `startDate` | date | When the commitment began |
-| `endDate` | date | Expected end (loans, leases) |
+| `startDate` | date | When the commitment began (salary, lease, subscription — not loan origination) |
+| `endDate` | date | Expected end of commitment (lease, subscription — not loan maturity) |
 | `scheduleHorizonMonths` | integer | How many months of `paymentSchedule` rows to generate (default 12) |
 | `description` | string | Free text |
 | `tags` | string[] | Optional labels |
@@ -326,22 +351,84 @@ The sheet row, generalized. Every commitment, income source, transfer rule, or i
 
 Each extension links to exactly one `financialItem` via `financialItemId` (required). Created after the parent item exists — never blocking initial save.
 
+**Canonical ownership — do not duplicate on extensions:**
+
+| Data | Lives on |
+|---|---|
+| Recurring payment / income / contribution | `financialItem.amount` |
+| Next due / receipt date | `financialItem.nextDueDate` |
+| Item classification | `financialItem.itemType` |
+| Per-installment schedule row amount | `paymentSchedule.expectedAmount` (materialized from parent `amount`) |
+| Actual cash movement | `transaction.amount` |
+| **Outstanding debt** (remaining owed) | `financialItem.currentBalance` when `balanceSheetRole = LIABILITY` |
+| **Asset principal / accumulated value** | `financialItem.currentBalance` when `balanceSheetRole = ASSET` |
+| **Original loan disbursement** | `loanDetails.originalPrincipal` — term loans only (`MORTGAGE`, `LOAN`, `PERSONAL_DEBT`) |
+| **Revolving credit line (cupo)** | `loanDetails.creditLimit` — `CREDIT_CARD` and `REVOLVING_CREDIT` only |
+
+**Not the same thing:** `creditLimit` is the max revolving line, not initial balance. For a hipoteca, `originalPrincipal` is what was borrowed at origination; `currentBalance` is what remains today. For a tarjeta, `creditLimit` is the cupo and `currentBalance` is the saldo deuda; available credit = `creditLimit − currentBalance`.
+
 #### `loanDetails`
 
 **When:** `itemType` ∈ { `MORTGAGE`, `LOAN`, `CREDIT_CARD`, `REVOLVING_CREDIT`, `PERSONAL_DEBT` }
 
-| Field | Type | Required | Sheet column |
+| Field | Type | Required | Notes |
 |---|---|---|---|
 | `financialItemId` | relation | Yes | — |
-| `interestRate` | decimal (%) | No | Interest Rate |
-| `paymentAmount` | decimal | No | Payment Amount |
-| `principalPortion` | decimal | No | Principal |
-| `interestPortion` | decimal | No | Interest |
-| `rateType` | enum | No | `FIXED`, `VARIABLE`, `MIXED` |
+| `interestRateQuote` | enum | Yes | What `interestRate` means: `EA` (annual effective), `NA` (annual nominal), `NMV` (monthly nominal) |
+| `interestRate` | decimal (%) | Yes | **Quoted rate as stated by the bank** — pair with `interestRateQuote` (e.g. `10.56` + `EA`, or `2.04` + `NMV`) |
+| `principalPortion` | decimal | No | Principal portion of each payment (template for schedule) |
+| `interestPortion` | decimal | No | Interest portion of each payment (template for schedule) |
+| `rateType` | enum | No | Product behavior: `FIXED`, `VARIABLE`, `MIXED` — not the quote basis |
 | `amortizationType` | enum | No | `FRENCH`, `GERMAN`, `AMERICAN`, `BULLET`, `NONE` |
 | `termMonths` | integer | No | Loan term in months for schedule generation |
+| `originationDate` | date | No | Loan disbursement / schedule month 0 (inferred by LD-01a when absent) |
+| `maturityDate` | date | No | Expected payoff date (optional; may be derived from origination + term) |
+| `originalPrincipal` | decimal | No | **Term loans only** — amount originally disbursed at origination. Not the same as `currentBalance` (remaining owed). |
+| `creditLimit` | decimal | No | **Revolving credit only** (`CREDIT_CARD`, `REVOLVING_CREDIT`) — max line size (cupo). Available credit = `creditLimit − financialItem.currentBalance`. Do not use on hipotecas or fixed-term loans. |
+| `planRevision` | integer | No | Internal counter bumped by LD-04 / LU-01 / TX-03a when costs, utilizations, or payments change; triggers LD-02 replan |
+
+Payment amount (cuota) is **`financialItem.amount`**, not stored on `loanDetails`.
+
+**Two-field rate contract:** Store the bank's number in `interestRate` and its meaning in `interestRateQuote`. LD-01/LD-02 convert via a generic `switch` on `interestRateQuote` in hook JSON (`NMV` → `rate/100`, `NA` → `rate/100/12`, `EA` → `(1+rate/100)^(1/12)-1`) — no finance-specific platform functions.
+
+| Quote | `interestRate` example | Monthly decimal |
+|-------|------------------------|-----------------|
+| `EA` | `10.56` (hipoteca) | `(1 + rate/100)^(1/12) - 1` |
+| `NA` | `18.96` (annual nominal) | `rate / 100 / 12` |
+| `NMV` | `2.04` (Crediservice statement) | `rate / 100` |
+
+**Deferred amortizing revolving credit (`REVOLVING_CREDIT`):** Products like Crediservice Rotativo defer each draw to a configurable term (typically `termMonths: 60`) and amortize the **combined outstanding balance** under **`GERMAN`** (constant principal, declining interest and total payment). Use `creditLimit` for the line cap and `loanUtilization` rows to record draws. `amortizationType: FRENCH` is for fixed-cuota loans (hipotecas); `NONE` is flat minimum-payment revolving only.
 
 **Note on negative principal:** Credit cards where payment is less than accrued interest can produce negative `principalPortion`. This is valid — it means the balance grew despite a payment. Track real balance via `currentBalance` on `financialItem` and `balanceSnapshot`.
+
+#### `loanMonthlyCost`
+
+**When:** optional recurring costs bundled with a loan payment (e.g. life insurance on a hipoteca).
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `financialItemId` | relation | Yes | Parent mortgage/loan |
+| `name` | string | Yes | Label (e.g. `Life insurance`) |
+| `amount` | decimal | Yes | Monthly add-on amount |
+| `status` | enum | No | `ACTIVE` / `INACTIVE` — only `ACTIVE` rows are summed into schedules |
+
+LD-01/LD-02 sum active rows via `aggregateMatching` and set `paymentSchedule.additionalPortion` plus `expectedAmount = principalPortion + interestPortion + additionalPortion`.
+
+#### `loanUtilization`
+
+**When:** deferred amortizing revolving credit (`REVOLVING_CREDIT` with `loanDetails.amortizationType = GERMAN` and `termMonths` set).
+
+| Field | Type | Required | Notes |
+|---|---|---|---|
+| `financialItemId` | relation | Yes | Parent revolving line |
+| `amount` | decimal | Yes | Draw amount — LU-01 adds this to `financialItem.currentBalance` and triggers LD-02 replan |
+| `utilizedAt` | date | Yes | Date of use / deferral start |
+| `termMonths` | integer | No | Optional per-draw term override (defaults to `loanDetails.termMonths` in future tranche math) |
+| `interestRate` | decimal (%) | No | Optional rate snapshot at draw |
+| `interestRateQuote` | enum | No | Optional quote basis snapshot (`EA`, `NA`, `NMV`) |
+| `description` | string | No | Merchant / memo |
+
+Each create runs **LU-01**: balance increases, `loanDetails.planRevision` bumps, **LD-02** regenerates the forward `paymentSchedule` from live balance. **TX-03a** does the same after **TX-03** payment transactions.
 
 #### `incomeDetails`
 
@@ -350,9 +437,11 @@ Each extension links to exactly one `financialItem` via `financialItemId` (requi
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `financialItemId` | relation | Yes | |
-| `incomeType` | enum | No | Redundant with `itemType` for most cases; useful for `OTHER_INCOME` |
-| `expectedAmount` | decimal | No | Defaults to `financialItem.amount` |
-| `payDay` | integer (1–31) | No | Day of month for salary/rent |
+| `amountBasis` | enum | No | `GROSS` or `NET` — clarifies what `financialItem.amount` represents for salary/freelance |
+| `leaseReference` | string | No | Contract or lease ID for rental income |
+| `annualEscalationRate` | decimal (%) | No | Optional IPC/COL rent increase for leases |
+
+Amount and receipt timing live on the parent: `financialItem.amount` and `financialItem.nextDueDate`.
 
 #### `investmentDetails`
 
@@ -364,7 +453,8 @@ Each extension links to exactly one `financialItem` via `financialItemId` (requi
 | `expectedReturnRate` | decimal (%) | No | e.g. 1.00% monthly on Av Colon |
 | `riskLevel` | enum | No | `LOW`, `MEDIUM`, `HIGH` |
 | `liquidity` | enum | No | `HIGH`, `MEDIUM`, `LOW` |
-| `contributionAmount` | decimal | No | Monthly contributions (Payment Amount column for savings) |
+
+Monthly contribution is **`financialItem.amount`**, not stored on `investmentDetails`.
 
 #### `serviceDetails`
 
@@ -373,9 +463,10 @@ Each extension links to exactly one `financialItem` via `financialItemId` (requi
 | Field | Type | Required | Notes |
 |---|---|---|---|
 | `financialItemId` | relation | Yes | |
-| `billingDay` | integer (1–31) | No | Derived from `nextDueDate` if not set |
 | `autoPay` | boolean | No | Default false |
 | `meterOrPolicyRef` | string | No | Account number, policy ID, etc. |
+
+Billing day is derived from **`financialItem.nextDueDate`**, not stored on `serviceDetails`.
 
 ---
 
@@ -387,9 +478,10 @@ Replaces the implicit "Next Due Date" column. One row per upcoming (or past) due
 |---|---|---|---|
 | `financialItemId` | relation | Yes | Parent item |
 | `dueDate` | date | Yes | From sheet or generated |
-| `expectedAmount` | decimal | Yes | Payment amount |
-| `principalPortion` | decimal | No | From `loanDetails` when known |
-| `interestPortion` | decimal | No | From `loanDetails` when known |
+| `expectedAmount` | decimal | Yes | Total due: principal + interest + additional portions for loan rows |
+| `principalPortion` | decimal | No | From evolving loan plan or `loanDetails` snapshot |
+| `interestPortion` | decimal | No | From evolving loan plan or `loanDetails` snapshot |
+| `additionalPortion` | decimal | No | Sum of active `loanMonthlyCost` rows (0 when none) |
 | `sequence` | integer | No | Order within a payment plan (1-based) |
 | `planVersion` | integer | No | Increments when the plan is replanned |
 | `status` | enum | Yes | `UPCOMING`, `PAID`, `OVERDUE`, `SKIPPED` |
@@ -475,7 +567,7 @@ Net worth = Σ currentBalance (where balanceSheetRole = ASSET)
           − Σ currentBalance (where balanceSheetRole = LIABILITY)
 ```
 
-Account balances (`account.currentBalance`) represent **liquidity** (cash position), separate from item balances. Do not double-count: a savings `financialItem` balance is the asset; the `account` it sits in is where cash lives before/after transfer.
+Account balances (`account.currentBalance`) represent **liquidity** (cash you hold). Item balances on `financialItem` represent **obligations or invested principal** (liabilities/assets on the balance sheet). Do not duplicate the same debt on both an `account` and a `financialItem`.
 
 ### Balance update conventions (payments)
 
@@ -585,7 +677,7 @@ After `financialItem` is saved, show a non-blocking prompt based on `itemType`:
 | `itemType` group | Prompt | Opens |
 |---|---|---|
 | Debt types | "Add interest rate and principal/interest breakdown?" | `loanDetails` form |
-| Income types | "Add pay day and expected amount details?" | `incomeDetails` form |
+| Income types | "Add gross/net basis or lease reference?" | `incomeDetails` form |
 | Investment types | "Add expected return rate?" | `investmentDetails` form |
 | Service types | "Enable auto-pay or add a reference number?" | `serviceDetails` form |
 
@@ -683,7 +775,7 @@ The dev tenant seed in [`apps/api/src/admin/rates-tenant/records/seed-demo-data.
 | `financialItem` | Primary Mortgage | flowKind=EXPENSE, itemType=MORTGAGE, amount=1850 |
 | `financialItem` | Monthly Salary | flowKind=INCOME, itemType=SALARY, amount=6500 |
 | `financialItem` | Electric Utility | flowKind=EXPENSE, itemType=UTILITY, amount=140 |
-| `loanDetails` | (linked to mortgage) | interestRate=0.045, paymentAmount=1850 |
+| `loanDetails` | (linked to mortgage) | interestRate=0.045, principalPortion=1200, interestPortion=650 |
 | `paymentSchedule` | (linked to mortgage) | status=UPCOMING, dueDate=2026-07-05 |
 | `transaction` | July salary deposit | type=INCOME, amount=6500, date=2026-07-01 |
 
@@ -725,7 +817,7 @@ Import order: entities → metrics → queries → **custom views** (via `pnpm s
 | M7 | Total assets | `financialItem` | Sum `currentBalance` | balanceSheetRole=ASSET | KPI |
 | M8 | Total liabilities | `financialItem` | Sum `currentBalance` | balanceSheetRole=LIABILITY | KPI |
 | M9 | Net worth | derived | M7 − M8 | — | KPI |
-| M10 | Debt service | `loanDetails` | Sum `paymentAmount` | — | KPI |
+| M10 | Debt service | `financialItem` | Sum `amount` where balanceSheetRole=LIABILITY, isRecurring | — | KPI |
 | M11 | Actual yield | `transaction` | Sum `amount` where type=INTEREST | financialItemId | Series |
 
 ### Dashboard views

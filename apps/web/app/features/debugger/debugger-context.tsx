@@ -40,6 +40,7 @@ interface DebuggerContextValue {
   readonly isLoading: boolean;
   readonly loadError: string | null;
   readonly selectRecord: (event: DebugEvent) => void;
+  readonly clearSelectedRecord: () => void;
   readonly dismissRecord: (event: DebugEvent) => void;
   readonly refresh: () => void;
 }
@@ -148,6 +149,12 @@ export function DebuggerProvider({
     [searchParams, setSearchParams],
   );
 
+  const clearSelectedRecord = useCallback(() => {
+    const next = new URLSearchParams(searchParams);
+    next.delete("record");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams]);
+
   const dismissRecord = useCallback((event: DebugEvent) => {
     dismissDebugRecord(buildDebugRecordKey(event.source, event.id));
     setDismissedRevision((current) => current + 1);
@@ -173,11 +180,13 @@ export function DebuggerProvider({
           : t("debugger.loadError")
         : null,
       selectRecord,
+      clearSelectedRecord,
       dismissRecord,
       refresh,
     }),
     [
       activeSource,
+      clearSelectedRecord,
       dismissRecord,
       eventsQuery.data?.items,
       eventsQuery.error,

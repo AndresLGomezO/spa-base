@@ -51,7 +51,7 @@ async function ensureRecord(
   id: string,
   ownerId: string,
   business: Record<string, unknown>,
-): Promise<void> {
+): Promise<boolean> {
   const existing = await repository.findById(id, tenantId);
   const now = new Date().toISOString();
   const draft = applySearchMirrorFields(
@@ -70,11 +70,29 @@ async function ensureRecord(
     });
     const parsed = entity.schema.parse(withMirrors);
     await repository.update(id, tenantId, parsed as GenericRecord);
-    return;
+    return false;
   }
 
   const parsed = entity.schema.parse(draft);
   await repository.create(tenantId, parsed as GenericRecord);
+  return true;
+}
+
+export async function loadRatesSeedRecord(
+  context: RatesRecordSeedContext,
+  entityName: string,
+  id: string,
+): Promise<Record<string, unknown> | null> {
+  const entity = context.entities.get(entityName);
+  if (!entity) {
+    throw new Error(
+      `Entity "${entityName}" is not registered for rates seed on tenant "${context.tenantId}".`,
+    );
+  }
+
+  const repository = createEntityRepository(context.config, entity);
+  const existing = await repository.findById(id, context.tenantId);
+  return existing ? (existing as Record<string, unknown>) : null;
 }
 
 export type RatesRecordSeedContext = {

@@ -46,7 +46,11 @@ function requireAfterPhase(phase: HookPhase, actionType: string): void {
  */
 const MAX_HOOK_DEPTH = 5;
 
-function buildScope(context: HookContext, loopIndex?: number): ExpressionScope {
+function buildScope(
+  context: HookContext,
+  loopIndex?: number,
+  loopVars?: { readonly loopState?: number },
+): ExpressionScope {
   return {
     current: context.current,
     ...(context.previous ? { previous: context.previous } : {}),
@@ -55,7 +59,36 @@ function buildScope(context: HookContext, loopIndex?: number): ExpressionScope {
     now: new Date(),
     ...(context.user.uid ? { userId: context.user.uid } : {}),
     ...(loopIndex !== undefined ? { loopIndex } : {}),
+    ...(loopVars?.loopState !== undefined
+      ? { loopState: loopVars.loopState }
+      : {}),
   };
+}
+
+function tryCoerceNumber(value: unknown): number {
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return value;
+  }
+  if (typeof value === "string" && value.trim() !== "") {
+    const parsed = Number(value);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return 0;
+}
+
+/** Strip hook-internal `__*` fields from createRecords payloads before entity write. */
+function omitInternalLoopFields(
+  data: Record<string, unknown>,
+): Record<string, unknown> {
+  const record: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (!key.startsWith("__")) {
+      record[key] = value;
+    }
+  }
+  return record;
 }
 
 function evaluateExpressionRecord(
@@ -65,6 +98,18 @@ function evaluateExpressionRecord(
   const output: Record<string, unknown> = {};
   for (const [field, node] of Object.entries(record)) {
     output[field] = evaluateExpression(node, scope);
+  }
+  return output;
+}
+
+function omitNullishRecordValues(
+  record: Record<string, unknown>,
+): Record<string, unknown> {
+  const output: Record<string, unknown> = {};
+  for (const [field, value] of Object.entries(record)) {
+    if (value != null) {
+      output[field] = value;
+    }
   }
   return output;
 }
@@ -260,13 +305,18 @@ async function runAction(
           "Current record id is required for setField in after hooks.",
         );
       }
-      await entities.update(
-        context.entityName,
-        context.current.id,
-        { [action.field]: value },
-        writeOptions,
-      );
-      context.current[action.field] = value;
+      const patch = omitNullishRecordValues({ [action.field]: value });
+      if (Object.keys(patch).length > 0) {
+        await entities.update(
+          context.entityName,
+          context.current.id,
+          patch,
+          writeOptions,
+        );
+      }
+      if (value != null) {
+        context.current[action.field] = value;
+      }
       return;
     }
 
@@ -289,13 +339,23 @@ async function runAction(
         ? evaluateExpression(action.startIndex, scope)
         : 0;
       const startIndex = coerceNonNegativeInteger(rawStartIndex, "startIndex");
+      let runningLoopState: number | undefined;
       for (let index = 0; index < count; index += 1) {
-        const loopScope = buildScope(context, startIndex + index);
-        await entities.create(
-          action.entity,
-          evaluateExpressionRecord(action.data, loopScope),
-          writeOptions,
+        const loopIndex = startIndex + index;
+        const loopScope = buildScope(
+          context,
+          loopIndex,
+          runningLoopState !== undefined
+            ? { loopState: runningLoopState }
+            : undefined,
         );
+        const data = evaluateExpressionRecord(action.data, loopScope);
+        const nextLoopState = data.__loopState;
+        if (nextLoopState !== undefined) {
+          runningLoopState = tryCoerceNumber(nextLoopState);
+        }
+        const record = omitInternalLoopFields(data);
+        await entities.create(action.entity, record, writeOptions);
       }
       return;
     }
@@ -319,12 +379,13 @@ async function runAction(
           now: new Date(),
           ...(context.user.uid ? { userId: context.user.uid } : {}),
         };
-        await entities.update(
-          action.entity,
-          match.id,
+        const patch = omitNullishRecordValues(
           evaluateExpressionRecord(action.set, setScope),
-          writeOptions,
         );
+        if (Object.keys(patch).length === 0) {
+          continue;
+        }
+        await entities.update(action.entity, match.id, patch, writeOptions);
       }
       return;
     }

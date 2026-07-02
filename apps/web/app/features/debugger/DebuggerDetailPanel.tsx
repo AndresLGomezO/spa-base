@@ -1,4 +1,6 @@
 import { Button, Heading, Text, toast } from "@repo/ui";
+import { cn } from "@repo/theme/utils";
+import { ArrowLeft } from "lucide-react";
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -6,9 +8,11 @@ import {
   designerPreviewPanelBodyFillClassName,
   designerPreviewPanelHeaderClassName,
   designerPreviewPanelShellClassName,
+  designerPreviewPanelShellFillClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
 import { DebuggerJsonViewDialog } from "./components/DebuggerJsonViewDialog";
 import { DebuggerStatusBadge } from "./components/DebuggerStatusBadge";
+import { DebuggerSummaryPanel } from "./DebuggerSummaryPanel";
 import { useDebugger } from "./debugger-context";
 import { AiJobDebugDetail } from "./sources/ai-job-detail";
 import { AuditDebugDetail } from "./sources/audit-detail";
@@ -47,7 +51,7 @@ function DebuggerDetailBody({
 
 export function DebuggerDetailPanel() {
   const { t } = useTranslation("common");
-  const { selectedEvent } = useDebugger();
+  const { selectedEvent, clearSelectedRecord } = useDebugger();
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
 
   const detailValue = useMemo(() => {
@@ -58,24 +62,18 @@ export function DebuggerDetailPanel() {
   }, [selectedEvent]);
 
   if (!selectedEvent) {
-    return (
-      <section className={designerPreviewPanelShellClassName}>
-        <div className={designerPreviewPanelHeaderClassName}>
-          <Heading level={2}>{t("debugger.detail.title")}</Heading>
-        </div>
-        <div className={designerPreviewPanelBodyFillClassName}>
-          <Text className="text-muted-foreground">
-            {t("debugger.detail.selectRecord")}
-          </Text>
-        </div>
-      </section>
-    );
+    return <DebuggerSummaryPanel />;
   }
 
   return (
     <>
-      <section className={designerPreviewPanelShellClassName}>
-        <div className={designerPreviewPanelHeaderClassName}>
+      <section
+        className={cn(
+          designerPreviewPanelShellClassName,
+          designerPreviewPanelShellFillClassName,
+        )}
+      >
+        <div className={cn(designerPreviewPanelHeaderClassName, "shrink-0")}>
           <div className="min-w-0 flex-1">
             <Heading level={2}>{selectedEvent.title}</Heading>
             <div className="mt-1 flex flex-wrap items-center gap-2">
@@ -86,6 +84,15 @@ export function DebuggerDetailPanel() {
             </div>
           </div>
           <div className="flex flex-wrap items-center gap-2">
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={clearSelectedRecord}
+            >
+              <ArrowLeft aria-hidden className="mr-2 size-4" />
+              {t("debugger.actions.backToSummary")}
+            </Button>
             <Button
               type="button"
               size="sm"

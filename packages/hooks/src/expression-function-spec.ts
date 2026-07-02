@@ -89,6 +89,8 @@ export const EXPRESSION_FUNCTION_SPECS: Record<
   startsWith: fixedArgs(2),
   endsWith: fixedArgs(2),
   includes: fixedArgs(2),
+  pow: fixedArgs(2),
+  ln: fixedArgs(1),
 };
 
 export function getExpressionFunctionSpec(

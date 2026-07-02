@@ -14,6 +14,17 @@ Open platform and product work for the **generic** data hooks engine. Domain-spe
 
 ---
 
+## createRecords loop state
+
+| Capability | Status | Notes |
+|------------|--------|-------|
+| `loopState` variable | **Shipped** | Exposed per iteration in `createRecords`; set from prior row via hook-authored `data.__loopState` (stripped before write) |
+| `pow`, `ln`, `ceil`, `floor`, `min`, `max` | **Shipped** | Generic math for hook-authored formulas |
+
+Domain formulas (e.g. tenant loan schedules) belong in catalog hook JSON, not platform TypeScript.
+
+---
+
 ## Related documentation
 
 - [data-hook-definition-json.md](./data-hook-definition-json.md)

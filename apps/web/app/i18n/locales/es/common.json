@@ -85,14 +85,35 @@
       "audit": "Auditoría",
       "requestPerf": "Rendimiento de peticiones"
     },
+    "status": {
+      "success": "Éxito",
+      "error": "Error",
+      "skipped": "Omitido",
+      "info": "Info",
+      "running": "En ejecución",
+      "pending": "Pendiente",
+      "failed": "Fallido",
+      "completed": "Completado"
+    },
     "list": {
       "emptySource": "No hay registros en esta fuente.",
+      "emptyFiltered": "Ningún registro coincide con los filtros actuales.",
       "expandPanel": "Expandir panel",
-      "collapsePanel": "Contraer panel"
+      "collapsePanel": "Contraer panel",
+      "searchPlaceholder": "Buscar registros…",
+      "searchClear": "Borrar búsqueda",
+      "filter": "Filtrar",
+      "sort": "Ordenar",
+      "sortNewest": "Más recientes primero",
+      "sortOldest": "Más antiguos primero",
+      "sortStatus": "Estado (problemas primero)",
+      "sortTitle": "Título A–Z",
+      "filterByStatus": "Estado",
+      "clearFilters": "Borrar filtros",
+      "summary": "{{count}} {{status}}",
+      "removeBadge": "Quitar filtro: {{label}}"
     },
     "detail": {
-      "title": "Detalles",
-      "selectRecord": "Selecciona un registro para ver sus detalles.",
       "rawRecord": "Registro completo",
       "metadata": "Metadatos",
       "output": "Salida",
@@ -117,7 +138,43 @@
       "copy": "Copiar",
       "copied": "Copiado al portapapeles",
       "dismiss": "Descartar",
-      "close": "Cerrar"
+      "close": "Cerrar",
+      "backToSummary": "Resumen",
+      "expandChart": "Ampliar gráfico de {{title}}"
+    },
+    "summary": {
+      "title": "Resumen",
+      "subtitle": "Diagnóstico de {{source}}",
+      "totalRecords": "Total de registros",
+      "totalLabel": "Total",
+      "errorRate": "Tasa de error",
+      "avgDuration": "Duración media",
+      "avgLatency": "Latencia media",
+      "avgHooksMs": "Media hooks",
+      "avgQueryMs": "Media consulta",
+      "inProgressBanner": "Algunos trabajos siguen en ejecución o pendientes.",
+      "needsAttention": "Requiere atención",
+      "topEntities": "Entidades principales",
+      "topHooks": "Hooks con más errores",
+      "topRoutes": "Rutas más lentas",
+      "topFeatures": "Trabajos por función",
+      "topActions": "Acciones principales",
+      "statusCodes": "Códigos de estado",
+      "statusDistribution": "Distribución por estado",
+      "activityTimeline": "Línea de actividad",
+      "timelineEvents": "Eventos",
+      "sampleLimit": "Basado en los últimos 50 registros.",
+      "filteredNote": "Las estadísticas reflejan los filtros actuales de la lista.",
+      "noIssues": "No se detectaron problemas en la muestra actual.",
+      "uniqueActors": "Actores únicos",
+      "errors": "Errores",
+      "successes": "Éxitos",
+      "skipped": "Omitidos",
+      "info": "Info",
+      "failed": "Fallidos",
+      "completed": "Completados",
+      "running": "En ejecución",
+      "pending": "Pendientes"
     }
   },
   "aiDebugger": {
@@ -998,8 +1055,8 @@
         "detailFileReference": "Forma de referencia de archivo: { storagePath, contentType, fileName }",
         "detailDefault": "Valor predeterminado si se omite: {{value}}",
         "detailSensitive": "Campo sensible.",
-        "detailIdCreateHint": "Omite id para crear un registro nuevo.",
-        "detailIdUpdateHint": "Incluye un id existente para actualizar ese registro."
+        "detailIdCreateHint": "Omite id para generar uno automáticamente, o incluye id para crear un registro con ese id estable.",
+        "detailIdUpdateHint": "Si el id ya existe en este tenant, se actualiza ese registro."
       }
     },
     "viewSettings": {

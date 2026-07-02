@@ -2,6 +2,7 @@ import {
   ensureRatesRecord,
   type RatesRecordSeedContext,
 } from "../seed-record-helpers.js";
+import type { SeedPaymentScheduleHookTarget } from "../seed-replay-payment-schedule-hooks.js";
 
 const CURRENCY = "USD" as const;
 
@@ -15,7 +16,7 @@ function priorMonthDate(day: number): string {
 
 export async function seedRatesDemoRecords(
   context: RatesRecordSeedContext,
-): Promise<void> {
+): Promise<SeedPaymentScheduleHookTarget> {
   const actors = [
     { id: "rd_actor_metro_bank", name: "Metro Bank", type: "BANK" },
     { id: "rd_actor_north_cu", name: "North Credit Union", type: "BANK" },
@@ -83,13 +84,6 @@ export async function seedRatesDemoRecords(
       actorId: "rd_actor_metro_bank",
       currentBalance: 45000,
     },
-    {
-      id: "rd_acct_credit",
-      name: "Rewards Credit Card",
-      accountType: "CREDIT",
-      actorId: "rd_actor_north_cu",
-      currentBalance: 3200,
-    },
   ] as const;
 
   for (const account of accounts) {
@@ -150,7 +144,7 @@ export async function seedRatesDemoRecords(
       status: "ACTIVE",
       categoryId: "rd_cat_debt",
       actorId: "rd_actor_north_cu",
-      accountId: "rd_acct_credit",
+      accountId: "rd_acct_checking",
     },
     {
       id: "rd_fi_salary",
@@ -367,28 +361,30 @@ export async function seedRatesDemoRecords(
 
   await ensureRatesRecord(context, "loanDetails", "rd_loan_mortgage", {
     financialItemId: "rd_fi_mortgage",
+    interestRateQuote: "EA",
     interestRate: 4.5,
-    paymentAmount: 1850,
     principalPortion: 1200,
     interestPortion: 650,
     rateType: "FIXED",
     amortizationType: "FRENCH",
+    originalPrincipal: 300000,
   });
 
   await ensureRatesRecord(context, "loanDetails", "rd_loan_credit", {
     financialItemId: "rd_fi_credit_card",
+    interestRateQuote: "NA",
     interestRate: 18.99,
-    paymentAmount: 450,
     principalPortion: 200,
     interestPortion: 250,
     rateType: "VARIABLE",
     amortizationType: "NONE",
+    creditLimit: 10000,
   });
 
   await ensureRatesRecord(context, "loanDetails", "rd_loan_personal", {
     financialItemId: "rd_fi_personal_loan",
+    interestRateQuote: "EA",
     interestRate: 0,
-    paymentAmount: 2500,
     principalPortion: 2500,
     interestPortion: 0,
     rateType: "FIXED",
@@ -397,23 +393,18 @@ export async function seedRatesDemoRecords(
 
   await ensureRatesRecord(context, "incomeDetails", "rd_income_salary", {
     financialItemId: "rd_fi_salary",
-    incomeType: "SALARY",
-    expectedAmount: 6500,
-    payDay: 1,
+    amountBasis: "GROSS",
   });
 
   await ensureRatesRecord(context, "incomeDetails", "rd_income_rental_a", {
     financialItemId: "rd_fi_rental_a",
-    incomeType: "RENTAL_INCOME",
-    expectedAmount: 2200,
-    payDay: 3,
+    leaseReference: "LEASE-A-2024",
   });
 
   await ensureRatesRecord(context, "incomeDetails", "rd_income_rental_b", {
     financialItemId: "rd_fi_rental_b",
-    incomeType: "RENTAL_INCOME",
-    expectedAmount: 1800,
-    payDay: 8,
+    leaseReference: "LEASE-B-2024",
+    annualEscalationRate: 3.5,
   });
 
   await ensureRatesRecord(context, "investmentDetails", "rd_inv_savings", {
@@ -421,7 +412,6 @@ export async function seedRatesDemoRecords(
     expectedReturnRate: 4.0,
     riskLevel: "LOW",
     liquidity: "HIGH",
-    contributionAmount: 500,
   });
 
   await ensureRatesRecord(context, "investmentDetails", "rd_inv_fiduciary", {
@@ -429,7 +419,6 @@ export async function seedRatesDemoRecords(
     expectedReturnRate: 7.0,
     riskLevel: "MEDIUM",
     liquidity: "MEDIUM",
-    contributionAmount: 1000,
   });
 
   await ensureRatesRecord(context, "investmentDetails", "rd_inv_yield_income", {
@@ -437,22 +426,25 @@ export async function seedRatesDemoRecords(
     expectedReturnRate: 1.0,
     riskLevel: "LOW",
     liquidity: "HIGH",
-    contributionAmount: 0,
   });
 
   await ensureRatesRecord(context, "serviceDetails", "rd_svc_electric", {
     financialItemId: "rd_fi_electric",
-    billingDay: 18,
     autoPay: true,
     meterOrPolicyRef: "ACCT-1001",
   });
 
   await ensureRatesRecord(context, "serviceDetails", "rd_svc_hoa", {
     financialItemId: "rd_fi_hoa_a",
-    billingDay: 15,
     autoPay: false,
     meterOrPolicyRef: "HOA-A",
   });
+
+  const loanDetails = [
+    { id: "rd_loan_mortgage", financialItemId: "rd_fi_mortgage" },
+    { id: "rd_loan_credit", financialItemId: "rd_fi_credit_card" },
+    { id: "rd_loan_personal", financialItemId: "rd_fi_personal_loan" },
+  ] as const;
 
   const balanceSnapshots = [
     {
@@ -492,35 +484,6 @@ export async function seedRatesDemoRecords(
       balance: snapshot.balance,
       accruedInterest: snapshot.accruedInterest,
     });
-  }
-
-  // Demo payment schedules are written directly — ensureRatesRecord bypasses data hooks.
-  const paymentSchedules = financialItems
-    .filter((item) => item.status === "ACTIVE" && item.amount > 0)
-    .map((item, index) => ({
-      id: `rd_sched_${index + 1}`,
-      financialItemId: item.id,
-      dueDate: item.nextDueDate,
-      expectedAmount: item.amount,
-      principalPortion:
-        item.itemType === "MORTGAGE"
-          ? 1200
-          : item.itemType === "CREDIT_CARD"
-            ? 200
-            : item.itemType === "PERSONAL_DEBT"
-              ? item.amount
-              : 0,
-      interestPortion:
-        item.itemType === "MORTGAGE"
-          ? 650
-          : item.itemType === "CREDIT_CARD"
-            ? 250
-            : 0,
-      status: "UPCOMING" as const,
-    }));
-
-  for (const schedule of paymentSchedules) {
-    await ensureRatesRecord(context, "paymentSchedule", schedule.id, schedule);
   }
 
   const transactions = [
@@ -619,7 +582,7 @@ export async function seedRatesDemoRecords(
       amount: 450,
       date: priorMonthDate(12),
       description: "Credit card payment",
-      accountId: "rd_acct_credit",
+      accountId: "rd_acct_checking",
       financialItemId: "rd_fi_credit_card",
       categoryId: "rd_cat_debt",
     },
@@ -633,4 +596,9 @@ export async function seedRatesDemoRecords(
       transaction,
     );
   }
+
+  return {
+    loanDetails: [...loanDetails],
+    financialItemIds: financialItems.map((item) => item.id),
+  };
 }

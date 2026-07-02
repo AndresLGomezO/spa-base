@@ -2,6 +2,7 @@ import type { FastifyInstance, FastifyRequest } from "fastify";
 import { RelationError } from "@repo/entity-relations";
 import {
   createEntityRecordsExportEnvelope,
+  getForeignKeyRelationFields,
   getJoinCollectionRelations,
   normalizeEntityRecordsImportInput,
   prepareRecordSearchFields,
@@ -244,12 +245,171 @@ async function syncJoinRelationTargets(
   }
 }
 
+interface ImportPreparedItem {
+  readonly mode: "create" | "update";
+  readonly id?: string;
+  readonly documentPayload: Record<string, unknown>;
+  readonly relations: Record<string, readonly string[]>;
+  readonly existingRecord?: Record<string, unknown>;
+}
+
+function isMissingRelationValue(value: unknown): boolean {
+  return value === undefined || value === null || value === "";
+}
+
+function buildImportBatchIdsByEntity(
+  entityName: string,
+  items: readonly { readonly id?: string }[],
+): ReadonlyMap<string, ReadonlySet<string>> {
+  const batchIds = new Set<string>();
+  for (const item of items) {
+    if (item.id) {
+      batchIds.add(item.id);
+    }
+  }
+  return new Map([[entityName, batchIds]]);
+}
+
+async function validateImportForeignKeyRelations(
+  entity: AnyDefinedEntity,
+  record: Record<string, unknown>,
+  tenantId: string,
+  pathPrefix: string,
+  deps: ImportExportEntityRecordsDeps,
+  batchIdsByEntity: ReadonlyMap<string, ReadonlySet<string>>,
+  mode: "create" | "update",
+): Promise<readonly EntityRecordJsonError[]> {
+  const errors: EntityRecordJsonError[] = [];
+
+  for (const { fieldName, relation } of getForeignKeyRelationFields(
+    entity.metadata,
+  )) {
+    const value = record[fieldName];
+    const isRequired =
+      relation.required === true ||
+      entity.metadata.fields[fieldName]?.required === true;
+
+    if (isMissingRelationValue(value)) {
+      if (mode === "create" && isRequired) {
+        errors.push({
+          path: pathPrefix,
+          message: `Relation field "${fieldName}" is required.`,
+        });
+      }
+      continue;
+    }
+
+    if (typeof value !== "string") {
+      errors.push({
+        path: pathPrefix,
+        message: `Relation field "${fieldName}" must be a string id.`,
+      });
+      continue;
+    }
+
+    const targetEntity = deps.entityRuntime.resolveEntity(
+      relation.target,
+      tenantId,
+    );
+    if (!targetEntity) {
+      errors.push({
+        path: pathPrefix,
+        message: `Unknown relation target "${relation.target}".`,
+      });
+      continue;
+    }
+
+    const repository = deps.entityRuntime.getRepository(
+      tenantId,
+      relation.target,
+    );
+    if (!repository) {
+      errors.push({
+        path: pathPrefix,
+        message: `Relation target "${relation.target}" repository not found.`,
+      });
+      continue;
+    }
+
+    const referenced = await repository.findById(value, tenantId);
+    if (!referenced) {
+      if (batchIdsByEntity.get(relation.target)?.has(value)) {
+        continue;
+      }
+
+      errors.push({
+        path: pathPrefix,
+        message: `Referenced ${relation.target} "${value}" was not found in this tenant.`,
+      });
+      continue;
+    }
+  }
+
+  return errors;
+}
+
+function sortPreparedItemsByBatchDependencies(
+  entity: AnyDefinedEntity,
+  items: readonly ImportPreparedItem[],
+  batchIds: ReadonlySet<string>,
+): ImportPreparedItem[] | { readonly ok: false; readonly message: string } {
+  if (items.length <= 1) {
+    return [...items];
+  }
+
+  const fkFields = getForeignKeyRelationFields(entity.metadata);
+  const sorted: ImportPreparedItem[] = [];
+  const placedIds = new Set<string>();
+  const remaining = [...items];
+
+  let progress = true;
+  while (remaining.length > 0 && progress) {
+    progress = false;
+    for (let index = remaining.length - 1; index >= 0; index -= 1) {
+      const item = remaining[index]!;
+      const batchDependencies = fkFields.flatMap(({ fieldName, relation }) => {
+        if (relation.target !== entity.name) {
+          return [];
+        }
+
+        const value = item.documentPayload[fieldName];
+        if (typeof value !== "string" || value.trim().length === 0) {
+          return [];
+        }
+
+        return batchIds.has(value) ? [value] : [];
+      });
+
+      if (
+        batchDependencies.every((dependencyId) => placedIds.has(dependencyId))
+      ) {
+        sorted.push(item);
+        if (item.id) {
+          placedIds.add(item.id);
+        }
+        remaining.splice(index, 1);
+        progress = true;
+      }
+    }
+  }
+
+  if (remaining.length > 0) {
+    return {
+      ok: false,
+      message:
+        "Import batch contains circular or unresolved relation dependencies.",
+    };
+  }
+
+  return sorted;
+}
 async function validateManyToManyTargets(
   entity: AnyDefinedEntity,
   relations: Record<string, readonly string[]>,
   tenantId: string,
   pathPrefix: string,
   deps: ImportExportEntityRecordsDeps,
+  batchIdsByEntity: ReadonlyMap<string, ReadonlySet<string>>,
 ): Promise<readonly EntityRecordJsonError[]> {
   const errors: EntityRecordJsonError[] = [];
 
@@ -287,7 +447,10 @@ async function validateManyToManyTargets(
 
     for (const [targetIndex, targetId] of targetIds.entries()) {
       const targetRecord = await repository.findById(targetId, tenantId);
-      if (!targetRecord) {
+      if (
+        !targetRecord &&
+        !batchIdsByEntity.get(relationEntry.relation.target)?.has(targetId)
+      ) {
         errors.push({
           path: `${pathPrefix}.relations.${fieldName}[${targetIndex}]`,
           message: `Referenced ${relationEntry.relation.target} "${targetId}" was not found in this tenant.`,
@@ -339,74 +502,66 @@ export async function importEntityRecordsJson(
   }
 
   const errors: EntityRecordJsonError[] = [];
-  const relationHooks = deps.relationContext.hooksFor(entityName);
-  const preparedItems: Array<{
-    readonly mode: "create" | "update";
-    readonly id?: string;
-    readonly documentPayload: Record<string, unknown>;
-    readonly relations: Record<string, readonly string[]>;
-    readonly existingRecord?: Record<string, unknown>;
-  }> = [];
+  const batchIdsByEntity = buildImportBatchIdsByEntity(
+    entityName,
+    validated.data,
+  );
+  const preparedItems: ImportPreparedItem[] = [];
 
   for (const [index, item] of validated.data.entries()) {
     const pathPrefix = `[${index}]`;
 
     if (item.mode === "update" && item.id) {
       const existing = await repository.findById(item.id, tenantId);
-      if (!existing) {
-        errors.push({
-          path: `${pathPrefix}.id`,
-          message: `Record "${item.id}" was not found in this tenant.`,
+      if (existing) {
+        const existingRecord = existing as unknown as Record<string, unknown>;
+        const mergedDraft = prepareEntityRecordForWrite(entity, {
+          ...existingRecord,
+          ...item.documentPayload,
+          id: item.id,
+          tenantId,
+        });
+
+        errors.push(
+          ...(await validateImportForeignKeyRelations(
+            entity,
+            mergedDraft,
+            tenantId,
+            pathPrefix,
+            deps,
+            batchIdsByEntity,
+            "update",
+          )),
+        );
+
+        errors.push(
+          ...(await validateManyToManyTargets(
+            entity,
+            item.relations,
+            tenantId,
+            pathPrefix,
+            deps,
+            batchIdsByEntity,
+          )),
+        );
+
+        preparedItems.push({
+          mode: "update",
+          id: item.id,
+          documentPayload: item.documentPayload,
+          relations: item.relations,
+          existingRecord,
         });
         continue;
       }
-
-      const existingRecord = existing as unknown as Record<string, unknown>;
-      const mergedDraft = prepareEntityRecordForWrite(entity, {
-        ...existingRecord,
-        ...item.documentPayload,
-        id: item.id,
-        tenantId,
-      });
-
-      if (relationHooks) {
-        try {
-          await relationHooks.validateWrite(mergedDraft, "update");
-        } catch (error) {
-          if (error instanceof RelationError) {
-            errors.push({
-              path: pathPrefix,
-              message: error.message,
-            });
-          } else {
-            throw error;
-          }
-        }
-      }
-
-      errors.push(
-        ...(await validateManyToManyTargets(
-          entity,
-          item.relations,
-          tenantId,
-          pathPrefix,
-          deps,
-        )),
-      );
-
-      preparedItems.push({
-        mode: "update",
-        id: item.id,
-        documentPayload: item.documentPayload,
-        relations: item.relations,
-        existingRecord,
-      });
-      continue;
     }
+
+    const specifiedId =
+      item.mode === "update" && item.id ? item.id.trim() : undefined;
 
     const createDraft = prepareEntityRecordForWrite(entity, {
       ...item.documentPayload,
-      id: "pending",
+      id: specifiedId ?? "pending",
       tenantId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
@@ -415,20 +570,17 @@ export async function importEntityRecordsJson(
       sharedWith: {},
     });
 
-    if (relationHooks) {
-      try {
-        await relationHooks.validateWrite(createDraft, "create");
-      } catch (error) {
-        if (error instanceof RelationError) {
-          errors.push({
-            path: pathPrefix,
-            message: error.message,
-          });
-        } else {
-          throw error;
-        }
-      }
-    }
+    errors.push(
+      ...(await validateImportForeignKeyRelations(
+        entity,
+        createDraft,
+        tenantId,
+        pathPrefix,
+        deps,
+        batchIdsByEntity,
+        "create",
+      )),
+    );
 
     errors.push(
       ...(await validateManyToManyTargets(
@@ -437,11 +589,13 @@ export async function importEntityRecordsJson(
         tenantId,
         pathPrefix,
         deps,
+        batchIdsByEntity,
       )),
     );
 
     preparedItems.push({
       mode: "create",
+      ...(specifiedId ? { id: specifiedId } : {}),
       documentPayload: item.documentPayload,
       relations: item.relations,
     });
@@ -451,15 +605,28 @@ export async function importEntityRecordsJson(
     return { ok: false, errors };
   }
 
+  const batchIds = batchIdsByEntity.get(entityName) ?? new Set<string>();
+  const sortedPreparedItems = sortPreparedItemsByBatchDependencies(
+    entity,
+    preparedItems,
+    batchIds,
+  );
+  if (!Array.isArray(sortedPreparedItems)) {
+    return {
+      ok: false,
+      errors: [{ path: "(root)", message: sortedPreparedItems.message }],
+    };
+  }
+
   const items: ImportEntityRecordsResult["items"][number][] = [];
   let created = 0;
   let updated = 0;
   const now = new Date().toISOString();
   const ownerId = request.ctx?.uid ?? "";
 
-  for (const item of preparedItems) {
+  for (const item of sortedPreparedItems) {
     if (item.mode === "create") {
-      const recordId = nanoid();
+      const recordId = item.id ?? nanoid();
       let currentData = prepareEntityRecordForWrite(entity, {
         ...item.documentPayload,
         id: recordId,
@@ -609,6 +776,10 @@ export async function importEntityRecordsJson(
 
     updated += 1;
     items.push({ id: recordId, operation: "updated" });
+  }
+
+  if (created + updated > 0) {
+    deps.entityRuntime.invalidateInMemoryListSnapshot(tenantId, entityName);
   }
 
   return {

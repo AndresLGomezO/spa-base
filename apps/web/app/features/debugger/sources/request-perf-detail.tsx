@@ -1,9 +1,8 @@
-import { Heading, Text } from "@repo/ui";
+import { Heading } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
 import type { DebugEvent } from "../../../lib/api-client";
 import { DebuggerJsonBlock } from "../components/DebuggerJsonBlock";
-import { DebuggerStatusBadge } from "../components/DebuggerStatusBadge";
 
 function TimingBar({
   label,
@@ -46,16 +45,6 @@ export function RequestPerfDebugDetail({
 
   return (
     <div className="space-y-4">
-      <div>
-        <Heading level={2}>{event.title}</Heading>
-        <div className="mt-2 flex flex-wrap items-center gap-2">
-          <DebuggerStatusBadge status={event.status} />
-          <Text className="text-muted-foreground text-sm">
-            {event.timestamp}
-          </Text>
-        </div>
-      </div>
-
       <div className="space-y-3">
         <TimingBar
           label={t("debugger.detail.rbacMs")}

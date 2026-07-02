@@ -15,8 +15,7 @@ import { DebuggerProvider, useDebugger } from "./debugger-context";
 import { debuggerSourceLabelKey } from "./debugger-source-config";
 
 function DebuggerWorkbench() {
-  const { t } = useTranslation("common");
-  const { isLoading, loadError } = useDebugger();
+  const { loadError } = useDebugger();
 
   if (loadError) {
     return <Text className="text-destructive text-sm">{loadError}</Text>;
@@ -27,13 +26,7 @@ function DebuggerWorkbench() {
       <div className={designerTreeWorkbenchClassName}>
         <DebuggerListTreePanel />
         <div className={designerPreviewColumnClassName}>
-          {isLoading ? (
-            <Text className="text-muted-foreground px-4 py-3 text-sm">
-              {t("loading")}
-            </Text>
-          ) : (
-            <DebuggerDetailPanel />
-          )}
+          <DebuggerDetailPanel />
         </div>
       </div>
     </div>

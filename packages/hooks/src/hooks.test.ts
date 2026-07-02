@@ -386,6 +386,72 @@ describe("runDataHook", () => {
     expect(create.mock.calls[1]?.[1]).toMatchObject({ sequence: 6 });
   });
 
+  it("carries loopState across createRecords iterations", async () => {
+    const create = vi.fn<
+      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
+    >(async () => ({ id: "c" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "createRecords",
+            entity: "lineItem",
+            count: { kind: "literal", value: 3 },
+            data: {
+              portion: {
+                kind: "binary",
+                op: "/",
+                left: { kind: "field", source: "current", path: "total" },
+                right: { kind: "literal", value: 3 },
+              },
+              __loopState: {
+                kind: "binary",
+                op: "-",
+                left: {
+                  kind: "call",
+                  fn: "coalesce",
+                  args: [
+                    { kind: "var", name: "loopState" },
+                    { kind: "field", source: "current", path: "total" },
+                  ],
+                },
+                right: {
+                  kind: "binary",
+                  op: "/",
+                  left: { kind: "field", source: "current", path: "total" },
+                  right: { kind: "literal", value: 3 },
+                },
+              },
+            },
+          },
+        ],
+      },
+      createContext({
+        event: "loan.afterCreate",
+        current: { total: 300 },
+        services: {
+          entities: {
+            create,
+            update: vi.fn(),
+            list: vi.fn(),
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+        },
+      }),
+    );
+
+    expect(create).toHaveBeenCalledTimes(3);
+    expect(create.mock.calls[0]?.[1]).toMatchObject({ portion: 100 });
+    expect(create.mock.calls[0]?.[1]).not.toHaveProperty("__loopState");
+    expect(create.mock.calls[1]?.[1]).toMatchObject({ portion: 100 });
+    expect(create.mock.calls[2]?.[1]).toMatchObject({ portion: 100 });
+  });
+
   it("rejects createRecords count above sync tier at runtime", async () => {
     await expect(
       runDataHook(

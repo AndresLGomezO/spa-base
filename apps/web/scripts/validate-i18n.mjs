@@ -666,6 +666,27 @@ function extractDebuggerSourceKeys(corpus) {
   );
 }
 
+/** debuggerStatusLabelKey() → all keys under debugger.status */
+function extractDebuggerStatusLabelKeys(corpus) {
+  if (
+    !corpus.includes("debuggerStatusLabelKey") &&
+    !corpus.includes("debugger.status.")
+  ) {
+    return [];
+  }
+
+  const refDebugger = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).debugger;
+
+  const status = refDebugger?.status;
+  if (!status || typeof status !== "object") return [];
+
+  return Object.keys(status).map(
+    (key) => `${DEFAULT_NAMESPACE}:debugger.status.${key}`,
+  );
+}
+
 /** DEBUGGER_SOURCE_NAV_LABEL_KEYS in debugger-nav.ts → common:nav.* */
 function extractDebuggerNavLabelKeys(files) {
   const file = files.find((f) => f.path.endsWith("debugger-nav.ts"));
@@ -972,6 +993,11 @@ mergeUsedKeys(
   usedKeys,
   extractDebuggerSourceKeys(corpus),
   path.join(SRC_DIR, "features/debugger/debugger-source-config.ts"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractDebuggerStatusLabelKeys(corpus),
+  path.join(SRC_DIR, "features/debugger/components/DebuggerStatusBadge.tsx"),
 );
 mergeUsedKeys(
   usedKeys,

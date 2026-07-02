@@ -481,4 +481,62 @@ describe("entity definitions integration", () => {
       ]),
     );
   });
+
+  it("invalidates in-memory list snapshot cache after record create and delete", async () => {
+    mockCreateInMemoryListSnapshotCache.mockClear();
+    const server = await buildTestServer();
+    const cache =
+      mockCreateInMemoryListSnapshotCache.mock.results.at(-1)?.value;
+    const invalidateSpy = vi.spyOn(cache, "invalidateByPrefix");
+
+    const headers = {
+      authorization: "Bearer fake-token",
+      "x-firebase-appcheck": "fake-appcheck",
+    };
+
+    const createDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers,
+      payload: {
+        name: "memTag",
+        label: "Memory Tags",
+        inMemoryListQueries: true,
+        fields: [
+          { name: "code", type: "string", required: true },
+          { name: "label", type: "string", required: true },
+        ],
+      },
+    });
+    expect(createDefinition.statusCode).toBe(201);
+    invalidateSpy.mockClear();
+
+    const createRecord = await server.inject({
+      method: "POST",
+      url: "/api/memTag",
+      headers,
+      payload: { code: "VIP", label: "Bancolombia VIP" },
+    });
+    expect(createRecord.statusCode).toBe(201);
+    expect(invalidateSpy).toHaveBeenCalledWith("tenant_a:memTags:");
+
+    const createdId = createRecord.json().data.id as string;
+    invalidateSpy.mockClear();
+
+    const deleteRecord = await server.inject({
+      method: "DELETE",
+      url: `/api/memTag/${createdId}`,
+      headers,
+    });
+    expect(deleteRecord.statusCode).toBe(200);
+    expect(invalidateSpy).toHaveBeenCalledWith("tenant_a:memTags:");
+
+    const listAfterDelete = await server.inject({
+      method: "GET",
+      url: "/api/memTag?limit=10",
+      headers,
+    });
+    expect(listAfterDelete.statusCode).toBe(200);
+    expect(listAfterDelete.json().data.items).toEqual([]);
+  });
 });

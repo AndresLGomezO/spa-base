@@ -145,6 +145,18 @@ interface RegisterCrudRoutesOptions<
   readonly crudHooks?: CrudHookDeps;
   readonly recordReadEnricher?: import("../entity-files/create-entity-file-read-enricher.js").RecordReadEnricher;
   readonly aggregation?: AggregationEmitterDeps;
+  readonly onRecordMutated?: (tenantId: string, entityName: string) => void;
+}
+
+function notifyRecordMutated<
+  TRecord extends { readonly id: string; readonly tenantId: string },
+  TUpdate,
+>(
+  options: RegisterCrudRoutesOptions<TRecord, TUpdate>,
+  tenantId: string,
+  entityName: string,
+): void {
+  options.onRecordMutated?.(tenantId, entityName);
 }
 
 async function tryEmitAggregationEvent(
@@ -963,6 +975,8 @@ export async function registerCrudRoutes<
           currentData as unknown as TRecord,
         );
 
+        notifyRecordMutated(options, tenantId, activeEntity.name);
+
         await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,
           phase: "after",
@@ -1228,6 +1242,8 @@ export async function registerCrudRoutes<
           );
         }
 
+        notifyRecordMutated(options, tenantId, activeEntity.name);
+
         await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,
           phase: "after",
@@ -1413,6 +1429,8 @@ export async function registerCrudRoutes<
             "Record not found.",
           );
         }
+
+        notifyRecordMutated(options, tenantId, activeEntity.name);
 
         await runCrudEntityHooks(app, request, options.crudHooks, {
           entityName: activeEntity.name,

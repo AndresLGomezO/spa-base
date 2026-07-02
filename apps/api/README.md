@@ -237,6 +237,26 @@ Re-run after `pnpm dev:docker:reset` or when refreshing catalog/demo data.
 
 Sign in through the web app with the Auth emulator enabled. No manual Firestore edits are required for this account.
 
+### Local tenant import (optional)
+
+If JSON files exist under [`.local/tenant-import/`](../../.local/tenant-import/) at the repo root, `pnpm seed:database` imports them **in addition to** the demo mock data above. Missing files are skipped individually.
+
+| Field           | Value                                                                                                                                                          |
+| --------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Owner           | First email in `PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS` (default `andreslgomezo@gmail.com`)                                                                      |
+| Tenant role     | `admin`                                                                                                                                                        |
+| Supported files | `category.json`, `actor.json`, `account.json`, `financialItem.json`, `loanDetails.json`, `incomeDetails.json`, `investmentDetails.json`, `serviceDetails.json` |
+
+The Auth user must already exist in the emulator (sign in once). If the user is missing, personal import is skipped and only the test-user mock data is seeded.
+
+After import, the seed script replays **after-create data hooks** for `loanDetails` (LD-01 loan plans) and non-loan `financialItem` rows (FI-03 bill schedules).
+
+Generate import JSON from [`tenant-data.yaml`](../../.local/tenant-import/tenant-data.yaml):
+
+```bash
+python3 .local/tenant-import/generate-import-json.py
+```
+
 To test a different user with the same role, assign manually:
 
 ```json

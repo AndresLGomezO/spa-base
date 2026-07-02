@@ -11,7 +11,6 @@ import {
   type DebugEvent,
 } from "../../../lib/api-client";
 import { DebuggerJsonBlock } from "../components/DebuggerJsonBlock";
-import { DebuggerStatusBadge } from "../components/DebuggerStatusBadge";
 import { DebuggerTextBlock } from "../components/DebuggerTextBlock";
 
 type InspectorTab = "prompt" | "raw" | "parsed" | "draft";
@@ -267,6 +266,7 @@ function JobOverviewSection({ job }: { readonly job: AiJobRecord }) {
     <section className="space-y-3">
       <Heading level={3}>{t("debugger.detail.metadata")}</Heading>
       <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+        <DetailField label={t("debugger.detail.recordId")} value={job.id} />
         <DetailField
           label={t("aiDebugger.fields.feature")}
           value={job.feature}
@@ -369,33 +369,18 @@ export function AiJobDebugDetail({ event }: { readonly event: DebugEvent }) {
   }
 
   if (!job) {
-    return (
-      <div className="space-y-3">
-        <Heading level={2}>{event.title}</Heading>
-        <DebuggerStatusBadge status={event.status} />
-        {event.payload ? <DebuggerJsonBlock value={event.payload} /> : null}
-      </div>
-    );
+    return event.payload ? <DebuggerJsonBlock value={event.payload} /> : null;
   }
 
   return (
     <div className="flex min-h-0 flex-1 flex-col gap-4">
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <div>
-          <Heading level={2}>{job.id}</Heading>
-          <div className="mt-1 flex flex-wrap items-center gap-2">
-            <DebuggerStatusBadge status={job.status} />
-            <Text className="text-muted-foreground text-sm">
-              {job.feature} · {job.updatedAt}
-            </Text>
-          </div>
-        </div>
-        {trace.length > 0 ? (
+      {trace.length > 0 ? (
+        <div className="flex justify-end">
           <Button type="button" size="sm" variant="outline" onClick={copyTrace}>
             {t("aiDebugger.copyTrace")}
           </Button>
-        ) : null}
-      </div>
+        </div>
+      ) : null}
 
       {job.error ? <Alert>{job.error}</Alert> : null}
 

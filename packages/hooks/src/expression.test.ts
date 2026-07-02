@@ -209,6 +209,63 @@ describe("evaluateExpression", () => {
     ).toBe(true);
   });
 
+  it("short-circuits coalesce and if", () => {
+    expect(
+      evaluateExpression(
+        {
+          kind: "call",
+          fn: "coalesce",
+          args: [
+            {
+              kind: "field",
+              source: "loaded",
+              alias: "parent",
+              path: "amount",
+            },
+            {
+              kind: "binary",
+              op: "+",
+              left: {
+                kind: "field",
+                source: "current",
+                path: "principalPortion",
+              },
+              right: {
+                kind: "field",
+                source: "current",
+                path: "interestPortion",
+              },
+            },
+          ],
+        },
+        scope({
+          loaded: { parent: { amount: 626684 } },
+          current: { principalPortion: null, interestPortion: null },
+        }),
+      ),
+    ).toBe(626684);
+
+    expect(
+      evaluateExpression(
+        {
+          kind: "call",
+          fn: "if",
+          args: [
+            { kind: "literal", value: true },
+            { kind: "literal", value: "kept" },
+            {
+              kind: "binary",
+              op: "+",
+              left: { kind: "literal", value: null },
+              right: { kind: "literal", value: null },
+            },
+          ],
+        },
+        scope(),
+      ),
+    ).toBe("kept");
+  });
+
   it("reads loaded record fields by alias", () => {
     const node: ExpressionNode = {
       kind: "field",
@@ -429,5 +486,64 @@ describe("expressionNodeSchema array literal", () => {
         value: Array.from({ length: 33 }, (_, index) => String(index)),
       }),
     ).toThrow();
+  });
+
+  it("evaluates pow and ln", () => {
+    expect(
+      evaluateExpression(
+        {
+          kind: "call",
+          fn: "pow",
+          args: [
+            { kind: "literal", value: 2 },
+            { kind: "literal", value: 10 },
+          ],
+        },
+        scope(),
+      ),
+    ).toBe(1024);
+    expect(
+      evaluateExpression(
+        { kind: "call", fn: "ln", args: [{ kind: "literal", value: Math.E }] },
+        scope(),
+      ),
+    ).toBeCloseTo(1);
+    const compoundStep = evaluateExpression(
+      {
+        kind: "binary",
+        op: "-",
+        left: {
+          kind: "call",
+          fn: "pow",
+          args: [
+            {
+              kind: "binary",
+              op: "+",
+              left: { kind: "literal", value: 1 },
+              right: {
+                kind: "binary",
+                op: "/",
+                left: { kind: "literal", value: 12 },
+                right: { kind: "literal", value: 100 },
+              },
+            },
+            { kind: "literal", value: 1 / 12 },
+          ],
+        },
+        right: { kind: "literal", value: 1 },
+      },
+      scope(),
+    );
+    expect(compoundStep).toBeGreaterThan(0.009);
+    expect(compoundStep).toBeLessThan(0.011);
+  });
+
+  it("reads loopState variable", () => {
+    expect(
+      evaluateExpression(
+        { kind: "var", name: "loopState" },
+        scope({ loopState: 42 }),
+      ),
+    ).toBe(42);
   });
 });

@@ -268,13 +268,12 @@
           }
         }
       ],
-      "inMemoryListQueries": true,
-      "tenantWideRead": true
+      "inMemoryListQueries": true
     },
     {
       "name": "account",
       "label": "Accounts",
-      "description": "Bank accounts, wallets, and cash holdings",
+      "description": "Liquid holdings only — cash you can spend, receive, or transfer. Debts and credit lines belong on financialItem.",
       "displayField": "name",
       "navCategoryId": "cat_my_money",
       "navOrder": 2,
@@ -474,7 +473,7 @@
             "order": 3
           },
           "currentBalance": {
-            "label": "Current balance",
+            "label": "Available balance",
             "component": "number",
             "displayFormat": "currency",
             "sortable": true,
@@ -503,7 +502,6 @@
             "CASH",
             "SAVINGS",
             "INVESTMENT",
-            "CREDIT",
             "DIGITAL_WALLET"
           ],
           "ui": {
@@ -544,7 +542,7 @@
           "type": "number",
           "numberKind": "decimal",
           "ui": {
-            "label": "Current balance",
+            "label": "Available balance",
             "order": 4,
             "displayFormat": "currency",
             "component": "number",
@@ -752,8 +750,7 @@
           }
         }
       ],
-      "inMemoryListQueries": true,
-      "tenantWideRead": true
+      "inMemoryListQueries": true
     },
     {
       "name": "financialItem",
@@ -1190,7 +1187,7 @@
             "order": 2
           },
           "amount": {
-            "label": "Amount",
+            "label": "Payment amount",
             "component": "number",
             "displayFormat": "currency",
             "sortable": true,
@@ -1222,7 +1219,7 @@
             "order": 7
           },
           "currentBalance": {
-            "label": "Current balance",
+            "label": "Outstanding balance",
             "component": "number",
             "displayFormat": "currency",
             "sortable": true,
@@ -1281,7 +1278,7 @@
             "order": 16
           },
           "accountId": {
-            "label": "Account",
+            "label": "Transfer source account",
             "component": "relation",
             "filterable": true,
             "order": 17
@@ -1362,7 +1359,7 @@
           "required": true,
           "numberKind": "decimal",
           "ui": {
-            "label": "Amount",
+            "label": "Payment amount",
             "order": 3,
             "displayFormat": "currency",
             "component": "number",
@@ -1425,7 +1422,7 @@
           "type": "number",
           "numberKind": "decimal",
           "ui": {
-            "label": "Current balance",
+            "label": "Outstanding balance",
             "order": 8,
             "displayFormat": "currency",
             "component": "number",
@@ -1538,7 +1535,7 @@
             "onDelete": "nullify"
           },
           "ui": {
-            "label": "Account",
+            "label": "Transfer source account",
             "order": 17,
             "filterable": true
           }
@@ -1561,7 +1558,7 @@
     {
       "name": "loanDetails",
       "label": "Loan Details",
-      "description": "Interest rate and payment breakdown for debt items",
+      "description": "Loan terms: rates, amortization, original principal (term loans), credit limit and deferral term (deferred revolving credit)",
       "displayField": "financialItemId",
       "navCategoryId": "cat_details",
       "navOrder": 1,
@@ -1577,13 +1574,18 @@
             "name": "default",
             "fields": [
               "financialItemId",
+              "interestRateQuote",
               "interestRate",
-              "paymentAmount",
               "principalPortion",
               "interestPortion",
               "rateType",
               "amortizationType",
-              "termMonths"
+              "termMonths",
+              "originationDate",
+              "maturityDate",
+              "originalPrincipal",
+              "creditLimit",
+              "planRevision"
             ]
           }
         ],
@@ -1614,18 +1616,18 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-a5cdd240-4b49-47d9-aec5-6ed5b4fe05a2",
+                              "id": "row-ld-create-interestRateQuote",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "interestRate"
+                                "fieldPath": "interestRateQuote"
                               }
                             },
                             {
                               "type": "component",
-                              "id": "row-7b29ef46-3482-4ffd-a41f-5d6264a84734",
+                              "id": "row-a5cdd240-4b49-47d9-aec5-6ed5b4fe05a2",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "paymentAmount"
+                                "fieldPath": "interestRate"
                               }
                             },
                             {
@@ -1666,6 +1668,38 @@
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "termMonths"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-ld-create-originationDate",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "originationDate"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-ld-create-maturityDate",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "maturityDate"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-ld-create-originalPrincipal",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "originalPrincipal"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-ld-create-creditLimit",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "creditLimit"
                               }
                             },
                             {
@@ -1712,18 +1746,18 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-ce8beffd-c060-4389-bb4d-10488f3afbc0",
+                              "id": "row-ld-edit-interestRateQuote",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "interestRate"
+                                "fieldPath": "interestRateQuote"
                               }
                             },
                             {
                               "type": "component",
-                              "id": "row-2c79fcde-9b71-47b3-8e5a-3c29d4825f06",
+                              "id": "row-ce8beffd-c060-4389-bb4d-10488f3afbc0",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "paymentAmount"
+                                "fieldPath": "interestRate"
                               }
                             },
                             {
@@ -1768,6 +1802,38 @@
                             },
                             {
                               "type": "component",
+                              "id": "row-ld-edit-originationDate",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "originationDate"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-ld-edit-maturityDate",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "maturityDate"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-ld-edit-originalPrincipal",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "originalPrincipal"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-ld-edit-creditLimit",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "creditLimit"
+                              }
+                            },
+                            {
+                              "type": "component",
                               "id": "row-6784e917-96f8-4bc1-88fb-9d96fa2ee24e",
                               "component": {
                                 "kind": "form-actions"
@@ -1792,17 +1858,16 @@
             "filterable": true,
             "order": 0
           },
-          "interestRate": {
-            "label": "Interest rate",
-            "component": "number",
-            "displayFormat": "percentage",
-            "sortable": true,
+          "interestRateQuote": {
+            "label": "Rate quote type",
+            "component": "select",
+            "filterable": true,
             "order": 1
           },
-          "paymentAmount": {
-            "label": "Payment amount",
+          "interestRate": {
+            "label": "Interest rate (%)",
             "component": "number",
-            "displayFormat": "currency",
+            "displayFormat": "percentage",
             "sortable": true,
             "order": 2
           },
@@ -1838,6 +1903,41 @@
             "displayFormat": "plain",
             "sortable": true,
             "order": 7
+          },
+          "originationDate": {
+            "label": "Origination date",
+            "component": "date",
+            "dateDisplayFormat": "date",
+            "sortable": true,
+            "order": 8
+          },
+          "maturityDate": {
+            "label": "Maturity date",
+            "component": "date",
+            "dateDisplayFormat": "date",
+            "sortable": true,
+            "order": 9
+          },
+          "creditLimit": {
+            "label": "Credit limit (revolving)",
+            "component": "number",
+            "displayFormat": "currency",
+            "sortable": true,
+            "order": 11
+          },
+          "originalPrincipal": {
+            "label": "Original principal",
+            "component": "number",
+            "displayFormat": "currency",
+            "sortable": true,
+            "order": 10
+          },
+          "planRevision": {
+            "label": "Plan revision",
+            "component": "number",
+            "displayFormat": "plain",
+            "sortable": true,
+            "order": 12
           }
         }
       },
@@ -1858,27 +1958,29 @@
           }
         },
         {
-          "name": "interestRate",
-          "type": "number",
-          "numberKind": "decimal",
+          "name": "interestRateQuote",
+          "type": "enum",
+          "required": true,
+          "enumValues": ["EA", "NA", "NMV"],
           "ui": {
-            "label": "Interest rate",
+            "label": "Rate quote type",
             "order": 1,
-            "displayFormat": "percentage",
-            "component": "number",
-            "sortable": true
+            "filterable": true,
+            "description": "EA = annual effective; NA = annual nominal; NMV = monthly nominal."
           }
         },
         {
-          "name": "paymentAmount",
+          "name": "interestRate",
           "type": "number",
+          "required": true,
           "numberKind": "decimal",
           "ui": {
-            "label": "Payment amount",
+            "label": "Interest rate (%)",
             "order": 2,
-            "displayFormat": "currency",
+            "displayFormat": "percentage",
             "component": "number",
-            "sortable": true
+            "sortable": true,
+            "description": "Quoted rate as stated by the bank; pair with Rate quote type."
           }
         },
         {
@@ -1887,7 +1989,7 @@
           "numberKind": "decimal",
           "ui": {
             "label": "Principal portion",
-            "order": 3,
+            "order": 2,
             "displayFormat": "currency",
             "component": "number",
             "sortable": true
@@ -1899,7 +2001,7 @@
           "numberKind": "decimal",
           "ui": {
             "label": "Interest portion",
-            "order": 4,
+            "order": 3,
             "displayFormat": "currency",
             "component": "number",
             "sortable": true
@@ -1911,7 +2013,7 @@
           "enumValues": ["FIXED", "VARIABLE", "MIXED"],
           "ui": {
             "label": "Rate type",
-            "order": 5,
+            "order": 4,
             "component": "select",
             "filterable": true
           }
@@ -1922,7 +2024,7 @@
           "enumValues": ["FRENCH", "GERMAN", "AMERICAN", "BULLET", "NONE"],
           "ui": {
             "label": "Amortization type",
-            "order": 6,
+            "order": 5,
             "component": "select",
             "filterable": true
           }
@@ -1933,7 +2035,63 @@
           "numberKind": "integer",
           "ui": {
             "label": "Term (months)",
+            "order": 6,
+            "displayFormat": "plain",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "originationDate",
+          "type": "date",
+          "ui": {
+            "label": "Origination date",
             "order": 7,
+            "dateDisplayFormat": "date",
+            "sortable": true
+          }
+        },
+        {
+          "name": "maturityDate",
+          "type": "date",
+          "ui": {
+            "label": "Maturity date",
+            "order": 8,
+            "dateDisplayFormat": "date",
+            "sortable": true
+          }
+        },
+        {
+          "name": "originalPrincipal",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Original principal",
+            "order": 9,
+            "displayFormat": "currency",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "creditLimit",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Credit limit (revolving)",
+            "order": 10,
+            "displayFormat": "currency",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "planRevision",
+          "type": "number",
+          "numberKind": "integer",
+          "ui": {
+            "label": "Plan revision",
+            "order": 11,
             "displayFormat": "plain",
             "component": "number",
             "sortable": true
@@ -1943,9 +2101,507 @@
       "inMemoryListQueries": true
     },
     {
+      "name": "loanMonthlyCost",
+      "label": "Loan Monthly Costs",
+      "description": "Optional recurring monthly costs bundled with a loan payment (e.g. life insurance)",
+      "displayField": "name",
+      "navCategoryId": "cat_details",
+      "navOrder": 5,
+      "hiddenFromNav": true,
+      "ui": {
+        "nav": {
+          "label": "Loan Monthly Costs",
+          "icon": "Shield"
+        },
+        "views": [
+          {
+            "type": "table",
+            "name": "default",
+            "fields": ["financialItemId", "name", "amount", "status"]
+          }
+        ],
+        "forms": {
+          "create": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-lmc-create",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-lmc-create",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-lmc-create",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-lmc-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "financialItemId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-name",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "name"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-amount",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "amount"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-status",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "status"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          },
+          "edit": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-lmc-edit",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-lmc-edit",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-lmc-edit",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-lmc-edit-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "financialItemId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-edit-name",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "name"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-edit-amount",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "amount"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-edit-status",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "status"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lmc-edit-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          }
+        },
+        "fields": {
+          "financialItemId": {
+            "label": "Financial item",
+            "component": "relation",
+            "filterable": true,
+            "order": 0
+          },
+          "name": {
+            "label": "Name",
+            "component": "input",
+            "searchable": true,
+            "order": 1
+          },
+          "amount": {
+            "label": "Monthly amount",
+            "component": "number",
+            "displayFormat": "currency",
+            "sortable": true,
+            "order": 2
+          },
+          "status": {
+            "label": "Status",
+            "component": "select",
+            "filterable": true,
+            "order": 3
+          }
+        }
+      },
+      "fields": [
+        {
+          "name": "financialItemId",
+          "type": "relation",
+          "required": true,
+          "relation": {
+            "target": "financialItem",
+            "type": "many-to-one",
+            "onDelete": "restrict"
+          },
+          "ui": {
+            "label": "Financial item",
+            "order": 0,
+            "filterable": true
+          }
+        },
+        {
+          "name": "name",
+          "type": "string",
+          "required": true,
+          "ui": {
+            "label": "Name",
+            "order": 1,
+            "searchable": true
+          }
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Monthly amount",
+            "order": 2,
+            "displayFormat": "currency",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "status",
+          "type": "enum",
+          "enumValues": ["ACTIVE", "INACTIVE"],
+          "ui": {
+            "label": "Status",
+            "order": 3,
+            "filterable": true
+          }
+        }
+      ],
+      "inMemoryListQueries": true
+    },
+    {
+      "name": "loanUtilization",
+      "label": "Loan Utilizations",
+      "description": "Credit line draws deferred to an amortizing term (e.g. Crediservice Rotativo)",
+      "displayField": "utilizedAt",
+      "navCategoryId": "cat_details",
+      "navOrder": 6,
+      "hiddenFromNav": true,
+      "ui": {
+        "nav": {
+          "label": "Loan Utilizations",
+          "icon": "CreditCard"
+        },
+        "views": [
+          {
+            "type": "table",
+            "name": "default",
+            "fields": ["financialItemId", "amount", "utilizedAt", "description"]
+          }
+        ],
+        "forms": {
+          "create": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-lu-create",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-lu-create",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-lu-create",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-lu-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "financialItemId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-amount",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "amount"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-date",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "utilizedAt"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-desc",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "description"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          },
+          "edit": {
+            "layout": {
+              "root": {
+                "type": "root",
+                "id": "root-lu-edit",
+                "columnCount": 1,
+                "columns": [
+                  {
+                    "id": "col-lu-edit",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-lu-edit",
+                        "component": {
+                          "kind": "container",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-lu-edit-fi",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "financialItemId"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-edit-amount",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "amount"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-edit-date",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "utilizedAt"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-edit-desc",
+                              "component": {
+                                "kind": "form-field",
+                                "fieldPath": "description"
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-lu-edit-actions",
+                              "component": {
+                                "kind": "form-actions"
+                              }
+                            }
+                          ]
+                        }
+                      }
+                    ]
+                  }
+                ]
+              },
+              "showActions": true,
+              "cardsPerRow": 1
+            }
+          }
+        },
+        "fields": {
+          "financialItemId": {
+            "label": "Financial item",
+            "component": "relation",
+            "filterable": true,
+            "order": 0
+          },
+          "amount": {
+            "label": "Draw amount",
+            "component": "number",
+            "displayFormat": "currency",
+            "sortable": true,
+            "order": 1
+          },
+          "utilizedAt": {
+            "label": "Utilized on",
+            "component": "date",
+            "sortable": true,
+            "order": 2
+          },
+          "description": {
+            "label": "Description",
+            "component": "input",
+            "searchable": true,
+            "order": 3
+          }
+        }
+      },
+      "fields": [
+        {
+          "name": "financialItemId",
+          "type": "relation",
+          "required": true,
+          "relation": {
+            "target": "financialItem",
+            "type": "many-to-one",
+            "onDelete": "restrict"
+          },
+          "ui": {
+            "label": "Financial item",
+            "order": 0,
+            "filterable": true
+          }
+        },
+        {
+          "name": "amount",
+          "type": "number",
+          "required": true,
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Draw amount",
+            "order": 1,
+            "displayFormat": "currency",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
+          "name": "utilizedAt",
+          "type": "date",
+          "required": true,
+          "ui": {
+            "label": "Utilized on",
+            "order": 2,
+            "sortable": true
+          }
+        },
+        {
+          "name": "termMonths",
+          "type": "number",
+          "required": false,
+          "numberKind": "integer",
+          "ui": {
+            "label": "Term override (months)",
+            "order": 3
+          }
+        },
+        {
+          "name": "interestRate",
+          "type": "number",
+          "required": false,
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Rate snapshot (%)",
+            "order": 4
+          }
+        },
+        {
+          "name": "interestRateQuote",
+          "type": "enum",
+          "required": false,
+          "enumValues": ["EA", "NA", "NMV"],
+          "ui": {
+            "label": "Rate quote snapshot",
+            "order": 5
+          }
+        },
+        {
+          "name": "description",
+          "type": "string",
+          "required": false,
+          "ui": {
+            "label": "Description",
+            "order": 6,
+            "searchable": true
+          }
+        }
+      ],
+      "inMemoryListQueries": true
+    },
+    {
       "name": "incomeDetails",
       "label": "Income Details",
-      "description": "Pay day and expected amount for income items",
+      "description": "Income-specific terms for salary and rental items",
       "displayField": "financialItemId",
       "navCategoryId": "cat_details",
       "navOrder": 2,
@@ -1961,9 +2617,9 @@
             "name": "default",
             "fields": [
               "financialItemId",
-              "incomeType",
-              "expectedAmount",
-              "payDay"
+              "amountBasis",
+              "leaseReference",
+              "annualEscalationRate"
             ]
           }
         ],
@@ -1994,26 +2650,26 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-46b3c472-3967-4bee-be24-f5b88c853679",
+                              "id": "row-inc-create-amountBasis",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "incomeType"
+                                "fieldPath": "amountBasis"
                               }
                             },
                             {
                               "type": "component",
-                              "id": "row-8784c422-6147-4853-a7b0-4bef0b5d46e7",
+                              "id": "row-inc-create-leaseReference",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "expectedAmount"
+                                "fieldPath": "leaseReference"
                               }
                             },
                             {
                               "type": "component",
-                              "id": "row-a671d7fd-55c5-45d1-ab42-13cf63fa3abc",
+                              "id": "row-inc-create-annualEscalationRate",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "payDay"
+                                "fieldPath": "annualEscalationRate"
                               }
                             },
                             {
@@ -2060,26 +2716,26 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-cea533a2-9f4e-4ba9-93a9-7fb988a4f1dc",
+                              "id": "row-inc-edit-amountBasis",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "incomeType"
+                                "fieldPath": "amountBasis"
                               }
                             },
                             {
                               "type": "component",
-                              "id": "row-43d4a08d-e30d-4478-b4d5-334af6bfbb96",
+                              "id": "row-inc-edit-leaseReference",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "expectedAmount"
+                                "fieldPath": "leaseReference"
                               }
                             },
                             {
                               "type": "component",
-                              "id": "row-92563fb8-54ef-4d59-aba6-d6944e5d979e",
+                              "id": "row-inc-edit-annualEscalationRate",
                               "component": {
                                 "kind": "form-field",
-                                "fieldPath": "payDay"
+                                "fieldPath": "annualEscalationRate"
                               }
                             },
                             {
@@ -2108,23 +2764,22 @@
             "filterable": true,
             "order": 0
           },
-          "incomeType": {
-            "label": "Income type",
+          "amountBasis": {
+            "label": "Amount basis",
             "component": "select",
             "filterable": true,
             "order": 1
           },
-          "expectedAmount": {
-            "label": "Expected amount",
-            "component": "number",
-            "displayFormat": "currency",
-            "sortable": true,
+          "leaseReference": {
+            "label": "Lease reference",
+            "component": "input",
+            "searchable": true,
             "order": 2
           },
-          "payDay": {
-            "label": "Pay day",
+          "annualEscalationRate": {
+            "label": "Annual escalation rate",
             "component": "number",
-            "displayFormat": "plain",
+            "displayFormat": "percentage",
             "sortable": true,
             "order": 3
           }
@@ -2147,42 +2802,34 @@
           }
         },
         {
-          "name": "incomeType",
+          "name": "amountBasis",
           "type": "enum",
-          "enumValues": [
-            "SALARY",
-            "RENTAL_INCOME",
-            "BUSINESS_INCOME",
-            "YIELD_INCOME",
-            "OTHER_INCOME"
-          ],
+          "enumValues": ["GROSS", "NET"],
           "ui": {
-            "label": "Income type",
+            "label": "Amount basis",
             "order": 1,
             "component": "select",
             "filterable": true
           }
         },
         {
-          "name": "expectedAmount",
-          "type": "number",
-          "numberKind": "decimal",
+          "name": "leaseReference",
+          "type": "string",
           "ui": {
-            "label": "Expected amount",
+            "label": "Lease reference",
             "order": 2,
-            "displayFormat": "currency",
-            "component": "number",
-            "sortable": true
+            "component": "input",
+            "searchable": true
           }
         },
         {
-          "name": "payDay",
+          "name": "annualEscalationRate",
           "type": "number",
-          "numberKind": "integer",
+          "numberKind": "decimal",
           "ui": {
-            "label": "Pay day",
+            "label": "Annual escalation rate",
             "order": 3,
-            "displayFormat": "plain",
+            "displayFormat": "percentage",
             "component": "number",
             "sortable": true
           }
@@ -2211,8 +2858,7 @@
               "financialItemId",
               "expectedReturnRate",
               "riskLevel",
-              "liquidity",
-              "contributionAmount"
+              "liquidity"
             ]
           }
         ],
@@ -2263,14 +2909,6 @@
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "liquidity"
-                              }
-                            },
-                            {
-                              "type": "component",
-                              "id": "row-3164f392-6948-459f-aaac-ee12f4bf1d85",
-                              "component": {
-                                "kind": "form-field",
-                                "fieldPath": "contributionAmount"
                               }
                             },
                             {
@@ -2341,14 +2979,6 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-5c2e9959-117d-4b9d-8275-0624211eb1e3",
-                              "component": {
-                                "kind": "form-field",
-                                "fieldPath": "contributionAmount"
-                              }
-                            },
-                            {
-                              "type": "component",
                               "id": "row-87eadb88-3d0a-4211-a188-077994c34b3c",
                               "component": {
                                 "kind": "form-actions"
@@ -2391,13 +3021,6 @@
             "component": "select",
             "filterable": true,
             "order": 3
-          },
-          "contributionAmount": {
-            "label": "Contribution amount",
-            "component": "number",
-            "displayFormat": "currency",
-            "sortable": true,
-            "order": 4
           }
         }
       },
@@ -2450,18 +3073,6 @@
             "component": "select",
             "filterable": true
           }
-        },
-        {
-          "name": "contributionAmount",
-          "type": "number",
-          "numberKind": "decimal",
-          "ui": {
-            "label": "Contribution amount",
-            "order": 4,
-            "displayFormat": "currency",
-            "component": "number",
-            "sortable": true
-          }
         }
       ],
       "inMemoryListQueries": true
@@ -2483,12 +3094,7 @@
           {
             "type": "table",
             "name": "default",
-            "fields": [
-              "financialItemId",
-              "billingDay",
-              "autoPay",
-              "meterOrPolicyRef"
-            ]
+            "fields": ["financialItemId", "autoPay", "meterOrPolicyRef"]
           }
         ],
         "forms": {
@@ -2514,14 +3120,6 @@
                               "component": {
                                 "kind": "form-field",
                                 "fieldPath": "financialItemId"
-                              }
-                            },
-                            {
-                              "type": "component",
-                              "id": "row-651d734c-d431-41b1-ad29-ddc1119a8e85",
-                              "component": {
-                                "kind": "form-field",
-                                "fieldPath": "billingDay"
                               }
                             },
                             {
@@ -2584,14 +3182,6 @@
                             },
                             {
                               "type": "component",
-                              "id": "row-bc3afbe4-6e39-4646-b2a2-e3235a765935",
-                              "component": {
-                                "kind": "form-field",
-                                "fieldPath": "billingDay"
-                              }
-                            },
-                            {
-                              "type": "component",
                               "id": "row-ddab2176-00e2-4fe5-a81a-a7b15c16bd5d",
                               "component": {
                                 "kind": "form-field",
@@ -2632,24 +3222,17 @@
             "filterable": true,
             "order": 0
           },
-          "billingDay": {
-            "label": "Billing day",
-            "component": "number",
-            "displayFormat": "plain",
-            "sortable": true,
-            "order": 1
-          },
           "autoPay": {
             "label": "Auto pay",
             "component": "toggle",
             "filterable": true,
-            "order": 2
+            "order": 1
           },
           "meterOrPolicyRef": {
             "label": "Reference",
             "component": "input",
             "searchable": true,
-            "order": 3
+            "order": 2
           }
         }
       },
@@ -2670,23 +3253,11 @@
           }
         },
         {
-          "name": "billingDay",
-          "type": "number",
-          "numberKind": "integer",
-          "ui": {
-            "label": "Billing day",
-            "order": 1,
-            "displayFormat": "plain",
-            "component": "number",
-            "sortable": true
-          }
-        },
-        {
           "name": "autoPay",
           "type": "boolean",
           "ui": {
             "label": "Auto pay",
-            "order": 2,
+            "order": 1,
             "filterable": true
           }
         },
@@ -2695,7 +3266,7 @@
           "type": "string",
           "ui": {
             "label": "Reference",
-            "order": 3,
+            "order": 2,
             "searchable": true
           }
         }
@@ -3155,6 +3726,7 @@
               "expectedAmount",
               "principalPortion",
               "interestPortion",
+              "additionalPortion",
               "sequence",
               "planVersion",
               "status",
@@ -3411,31 +3983,38 @@
             "sortable": true,
             "order": 4
           },
+          "additionalPortion": {
+            "label": "Additional portion",
+            "component": "number",
+            "displayFormat": "currency",
+            "sortable": true,
+            "order": 5
+          },
           "sequence": {
             "label": "Sequence",
             "component": "number",
             "displayFormat": "plain",
             "sortable": true,
-            "order": 5
+            "order": 6
           },
           "planVersion": {
             "label": "Plan version",
             "component": "number",
             "displayFormat": "plain",
             "sortable": true,
-            "order": 6
+            "order": 7
           },
           "status": {
             "label": "Status",
             "component": "select",
             "filterable": true,
-            "order": 7
+            "order": 8
           },
           "paidTransactionId": {
             "label": "Paid transaction",
             "component": "relation",
             "filterable": true,
-            "order": 8
+            "order": 9
           }
         }
       },
@@ -3504,12 +4083,24 @@
           }
         },
         {
+          "name": "additionalPortion",
+          "type": "number",
+          "numberKind": "decimal",
+          "ui": {
+            "label": "Additional portion",
+            "order": 5,
+            "displayFormat": "currency",
+            "component": "number",
+            "sortable": true
+          }
+        },
+        {
           "name": "sequence",
           "type": "number",
           "numberKind": "integer",
           "ui": {
             "label": "Sequence",
-            "order": 5,
+            "order": 6,
             "displayFormat": "plain",
             "component": "number",
             "sortable": true
@@ -3521,7 +4112,7 @@
           "numberKind": "integer",
           "ui": {
             "label": "Plan version",
-            "order": 6,
+            "order": 7,
             "displayFormat": "plain",
             "component": "number",
             "sortable": true

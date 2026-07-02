@@ -83,6 +83,7 @@ export interface HookEntityRuntime {
     tenantId: string,
     entityName: string,
   ): HookEntityRepository | undefined;
+  invalidateInMemoryListSnapshot?(tenantId: string, entityName: string): void;
 }
 
 export interface HookEntityServices {

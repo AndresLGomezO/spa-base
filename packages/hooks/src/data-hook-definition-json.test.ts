@@ -179,10 +179,10 @@ describe("data-hook-definition-json", () => {
     }
 
     const hooks = parsed.data.dataHooks;
-    expect(hooks.length).toBe(24);
+    expect(hooks.length).toBe(28);
 
     const enabled = hooks.filter((hook) => hook.enabled);
-    expect(enabled.length).toBe(24);
+    expect(enabled.length).toBe(28);
 
     const ratesEntities = new Set([
       "actor",
@@ -190,6 +190,8 @@ describe("data-hook-definition-json", () => {
       "category",
       "financialItem",
       "loanDetails",
+      "loanMonthlyCost",
+      "loanUtilization",
       "incomeDetails",
       "investmentDetails",
       "serviceDetails",
@@ -214,11 +216,59 @@ describe("data-hook-definition-json", () => {
     });
 
     const flatLoan = hooks.find(
-      (hook) => hook.name === "Generate flat loan plan",
+      (hook) => hook.name === "Generate loan payment plan",
     );
     expect(flatLoan?.enabled).toBe(true);
     expect(
       flatLoan?.actions.some((action) => action.type === "createRecords"),
+    ).toBe(true);
+    const ld01Create = flatLoan?.actions.find(
+      (action) => action.type === "createRecords",
+    );
+    expect(ld01Create?.type).toBe("createRecords");
+    if (ld01Create?.type === "createRecords") {
+      expect(ld01Create.data.__loopState).toBeDefined();
+      expect(ld01Create.data.additionalPortion).toBeDefined();
+    }
+
+    const ld01Aggregate = flatLoan?.actions.find(
+      (action) =>
+        action.type === "aggregateMatching" && action.as === "monthlyAddOns",
+    );
+    expect(ld01Aggregate?.type).toBe("aggregateMatching");
+    if (ld01Aggregate?.type === "aggregateMatching") {
+      expect(ld01Aggregate.entity).toBe("loanMonthlyCost");
+    }
+
+    const persistStart = hooks.find(
+      (hook) => hook.name === "Persist inferred loan origination date",
+    );
+    expect(persistStart?.entity).toBe("loanDetails");
+    expect(persistStart?.order).toBe(-1);
+
+    const regenerateLoan = hooks.find(
+      (hook) => hook.name === "Regenerate loan payment plan",
+    );
+    expect(regenerateLoan?.trigger).toMatchObject({
+      operation: "update",
+      updateFields: expect.arrayContaining([
+        "termMonths",
+        "originalPrincipal",
+        "originationDate",
+        "planRevision",
+      ]),
+    });
+
+    expect(
+      hooks.some((hook) => hook.name === "Replan loan on monthly cost create"),
+    ).toBe(true);
+    expect(
+      hooks.some(
+        (hook) => hook.name === "Apply utilization to balance and replan",
+      ),
+    ).toBe(true);
+    expect(
+      hooks.some((hook) => hook.name === "Replan loan after payment"),
     ).toBe(true);
 
     expect(

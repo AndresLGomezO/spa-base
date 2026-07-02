@@ -240,6 +240,201 @@ describe("entity records import/export routes integration", () => {
     });
   });
 
+  it("invalidates in-memory list snapshot cache after JSON import", async () => {
+    mockCreateInMemoryListSnapshotCache.mockClear();
+    const server = await buildTestServer();
+    const cache =
+      mockCreateInMemoryListSnapshotCache.mock.results.at(-1)?.value;
+    const invalidateSpy = vi.spyOn(cache, "invalidateByPrefix");
+
+    const createDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers: authHeaders,
+      payload: {
+        name: "memTag",
+        label: "Memory Tags",
+        inMemoryListQueries: true,
+        fields: [
+          { name: "code", type: "string", required: true },
+          { name: "label", type: "string", required: true },
+        ],
+      },
+    });
+    expect(createDefinition.statusCode).toBe(201);
+    invalidateSpy.mockClear();
+
+    const importResponse = await server.inject({
+      method: "POST",
+      url: "/api/memTag/import-json",
+      headers: authHeaders,
+      payload: [{ code: "VIP", label: "Imported tag" }],
+    });
+    expect(importResponse.statusCode).toBe(200);
+    expect(importResponse.json().data.created).toBe(1);
+    expect(invalidateSpy).toHaveBeenCalledWith("tenant_a:memTags:");
+
+    const listResponse = await server.inject({
+      method: "GET",
+      url: "/api/memTag?limit=10",
+      headers: authHeaders,
+    });
+    expect(listResponse.statusCode).toBe(200);
+    expect(listResponse.json().data.items).toEqual([
+      expect.objectContaining({ code: "VIP", label: "Imported tag" }),
+    ]);
+  });
+
+  it("creates records with stable ids when those ids do not exist yet", async () => {
+    const server = await buildTestServer();
+
+    const createDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers: authHeaders,
+      payload: {
+        name: "actor",
+        label: "Actors",
+        fields: [
+          { name: "name", type: "string", required: true },
+          {
+            name: "type",
+            type: "enum",
+            enumValues: ["BANK", "PERSON", "OTHER"],
+            required: true,
+          },
+        ],
+      },
+    });
+    expect(createDefinition.statusCode).toBe(201);
+
+    const stableId = "48e8ddfb-4184-49fd-955d-f50768ba91ca";
+    const importResponse = await server.inject({
+      method: "POST",
+      url: "/api/actor/import-json",
+      headers: authHeaders,
+      payload: [
+        {
+          id: stableId,
+          name: "Banco de Bogotá",
+          type: "BANK",
+        },
+      ],
+    });
+    expect(importResponse.statusCode).toBe(200);
+    expect(importResponse.json().data).toEqual({
+      created: 1,
+      updated: 0,
+      items: [{ id: stableId, operation: "created" }],
+    });
+
+    const getResponse = await server.inject({
+      method: "GET",
+      url: `/api/actor/${stableId}`,
+      headers: authHeaders,
+    });
+    expect(getResponse.statusCode).toBe(200);
+    expect(getResponse.json().data).toMatchObject({
+      id: stableId,
+      name: "Banco de Bogotá",
+      type: "BANK",
+    });
+
+    const reimportResponse = await server.inject({
+      method: "POST",
+      url: "/api/actor/import-json",
+      headers: authHeaders,
+      payload: [
+        {
+          id: stableId,
+          name: "Banco de Bogotá Updated",
+          type: "BANK",
+        },
+      ],
+    });
+    expect(reimportResponse.statusCode).toBe(200);
+    expect(reimportResponse.json().data).toEqual({
+      created: 0,
+      updated: 1,
+      items: [{ id: stableId, operation: "updated" }],
+    });
+  });
+
+  it("imports hierarchical records that reference parents in the same batch", async () => {
+    const server = await buildTestServer();
+
+    const createDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers: authHeaders,
+      payload: {
+        name: "nestedCategory",
+        label: "Nested Categories",
+        fields: [
+          { name: "name", type: "string", required: true },
+          {
+            name: "kind",
+            type: "enum",
+            enumValues: ["INCOME", "EXPENSE", "TRANSFER", "INVESTMENT"],
+            required: true,
+          },
+        ],
+      },
+    });
+    expect(createDefinition.statusCode).toBe(201);
+    const definitionId = createDefinition.json().data.id as string;
+
+    const patchDefinition = await server.inject({
+      method: "PATCH",
+      url: `/api/entity-definitions/${definitionId}`,
+      headers: authHeaders,
+      payload: {
+        fields: [
+          { name: "name", type: "string", required: true },
+          {
+            name: "kind",
+            type: "enum",
+            enumValues: ["INCOME", "EXPENSE", "TRANSFER", "INVESTMENT"],
+            required: true,
+          },
+          {
+            name: "parentId",
+            type: "relation",
+            relation: { target: "nestedCategory", type: "many-to-one" },
+          },
+        ],
+      },
+    });
+    expect(patchDefinition.statusCode).toBe(200);
+
+    const rootId = "de24aa6a-acd0-442c-9ccb-bdab8fa6a728";
+    const childId = "22a9bd68-d3cd-481d-81df-424b387dac21";
+
+    const importResponse = await server.inject({
+      method: "POST",
+      url: "/api/nestedCategory/import-json",
+      headers: authHeaders,
+      payload: [
+        { id: childId, name: "Salary", kind: "INCOME", parentId: rootId },
+        { id: rootId, name: "Income", kind: "INCOME" },
+      ],
+    });
+    expect(importResponse.statusCode).toBe(200);
+    expect(importResponse.json().data.created).toBe(2);
+
+    const childResponse = await server.inject({
+      method: "GET",
+      url: `/api/nestedCategory/${childId}`,
+      headers: authHeaders,
+    });
+    expect(childResponse.statusCode).toBe(200);
+    expect(childResponse.json().data).toMatchObject({
+      id: childId,
+      name: "Salary",
+      parentId: rootId,
+    });
+  });
+
   it("rejects batch imports when any record is invalid", async () => {
     const server = await buildTestServer();
     await seedCatalog(server);

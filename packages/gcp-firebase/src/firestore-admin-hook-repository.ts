@@ -16,9 +16,17 @@ import {
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
+import {
+  deserializeDataHookFromFirestore,
+  serializeDataHookForFirestore,
+} from "./data-hook-firestore-serialization.js";
 
 function toRecord(data: unknown): DataHookDefinition {
-  return dataHookDefinitionSchema.parse(data);
+  const payload =
+    typeof data === "object" && data !== null
+      ? deserializeDataHookFromFirestore(data as Record<string, unknown>)
+      : data;
+  return dataHookDefinitionSchema.parse(payload);
 }
 
 export function createFirestoreAdminDataHookRepository(
@@ -36,7 +44,19 @@ export function createFirestoreAdminDataHookRepository(
     async list(tenantId) {
       const snapshot = await collection(tenantId).get();
       return snapshot.docs
-        .map((doc) => toRecord({ id: doc.id, ...doc.data() }))
+        .map((doc) => {
+          try {
+            return toRecord({ id: doc.id, ...doc.data() });
+          } catch (error) {
+            const name =
+              typeof doc.data().name === "string" ? doc.data().name : doc.id;
+            const message =
+              error instanceof Error ? error.message : String(error);
+            throw new Error(
+              `Failed to load data hook "${name}" (${doc.id}): ${message}`,
+            );
+          }
+        })
         .sort((left, right) => left.order - right.order);
     },
     async getById(tenantId, id) {
@@ -70,7 +90,9 @@ export function createFirestoreAdminDataHookRepository(
         updatedAt: now,
       });
 
-      await collection(tenantId).doc(id).set(record);
+      await collection(tenantId)
+        .doc(id)
+        .set(serializeDataHookForFirestore(record));
       return record;
     },
     async update(tenantId, id, input: PatchDataHookInput) {
@@ -104,7 +126,9 @@ export function createFirestoreAdminDataHookRepository(
         updatedAt: now,
       });
 
-      await collection(tenantId).doc(id).set(next);
+      await collection(tenantId)
+        .doc(id)
+        .set(serializeDataHookForFirestore(next));
       return next;
     },
     async delete(tenantId, id) {

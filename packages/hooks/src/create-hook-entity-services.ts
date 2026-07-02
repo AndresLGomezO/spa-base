@@ -85,6 +85,13 @@ export function createHookEntityServices(options: {
     };
   }
 
+  function invalidateInMemoryListSnapshot(entityName: string): void {
+    options.entityRuntime.invalidateInMemoryListSnapshot?.(
+      options.tenantId,
+      entityName,
+    );
+  }
+
   return {
     async create(entityName, data, writeOptions) {
       if (!accessControl.hasPermission(`${entityName}.create`)) {
@@ -164,6 +171,8 @@ export function createHookEntityServices(options: {
           ),
         );
 
+        invalidateInMemoryListSnapshot(entityName);
+
         return filterReadResult(
           accessControl,
           entityName,
@@ -176,6 +185,7 @@ export function createHookEntityServices(options: {
         options.tenantId,
         record as { readonly id: string; readonly tenantId: string },
       );
+      invalidateInMemoryListSnapshot(entityName);
       return filterReadResult(
         accessControl,
         entityName,
@@ -278,6 +288,8 @@ export function createHookEntityServices(options: {
           ),
         );
 
+        invalidateInMemoryListSnapshot(entityName);
+
         return filterReadResult(
           accessControl,
           entityName,
@@ -296,6 +308,7 @@ export function createHookEntityServices(options: {
       }
 
       const validated = entity.schema.parse(updated) as Record<string, unknown>;
+      invalidateInMemoryListSnapshot(entityName);
       return filterReadResult(
         accessControl,
         entityName,
@@ -460,10 +473,16 @@ export function createHookEntityServices(options: {
           ),
         );
 
+        invalidateInMemoryListSnapshot(entityName);
+
         return true;
       }
 
-      return repository.delete(id, options.tenantId);
+      const deleted = await repository.delete(id, options.tenantId);
+      if (deleted) {
+        invalidateInMemoryListSnapshot(entityName);
+      }
+      return deleted;
     },
   };
 }

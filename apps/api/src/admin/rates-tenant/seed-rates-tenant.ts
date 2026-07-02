@@ -12,6 +12,7 @@ import { seedRatesBusinessRecords } from "./records/index.js";
 import { buildRatesCustomRoles } from "./roles.js";
 import { seedRatesCatalogs } from "./seed-rates-catalogs.js";
 import { seedRatesGcpDemoUserAccess } from "./seed-gcp-demo-user-access.js";
+import { seedLocalTenantImportIfPresent } from "./seed-local-tenant-import.js";
 import { ensureRatesRole } from "./seed-helpers.js";
 import { seedRatesTestUser } from "./seed-rates-test-user.js";
 
@@ -99,6 +100,16 @@ async function seedRatesTenant(
       firebaseAdminConfig,
       catalogResult.definitionRecords,
       demoOwnerId,
+      entityRuntime,
+    );
+  }
+
+  if (demoOwnerStrategy === "localTestUser") {
+    await seedLocalTenantImportIfPresent(
+      tenantId,
+      firebaseAdminConfig,
+      catalogResult.definitionRecords,
+      entityRuntime,
     );
   }
 

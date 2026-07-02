@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { Database, Workflow } from "lucide-react";
-import { canIncludeEntityInCatalog, hasPermission } from "@repo/rbac";
+import { hasPermission } from "@repo/rbac";
 
 import { useAuth } from "../auth/AuthContext";
 import { useEntityCatalog } from "../entities/entity-catalog-context";
@@ -51,6 +51,7 @@ import {
   buildAccessibleDebuggerNavLinks,
   DEBUGGER_MATCH_PATH,
 } from "./debugger-nav";
+import { mergeCategoryNavChildren } from "./merge-category-nav-children.js";
 
 function compareNavItems(
   left: EntityNavItem | CustomViewNavItem,
@@ -62,16 +63,6 @@ function compareNavItems(
     return leftOrder - rightOrder;
   }
   return left.label.localeCompare(right.label);
-}
-
-function toNavLink(item: EntityNavItem | CustomViewNavItem): NavLinkConfig {
-  return {
-    id: item.id,
-    label: item.label,
-    to: item.to,
-    matchPath: item.matchPath,
-    icon: item.icon,
-  };
 }
 
 export function useAccessibleNavItems(): readonly NavItemConfig[] {
@@ -94,14 +85,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
     const accessibleEntityLinks = entityNavItems
       .filter((item) => {
         const definition = catalogItems.find((entry) => entry.name === item.id);
-        if (
-          definition?.hiddenFromNav &&
-          !canIncludeEntityInCatalog(
-            definition.hiddenFromNav,
-            permissions,
-            isSuperAdmin,
-          )
-        ) {
+        if (definition?.hiddenFromNav) {
           return false;
         }
         return hasPermission(`${item.id}.read`, permissions, { isSuperAdmin });
@@ -125,15 +109,10 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       })
       .sort(compareNavItems);
 
-    const uncategorizedChildren = [
-      ...accessibleEntityLinks
-        .filter((item) => !item.navCategoryId)
-        .map(toNavLink),
-      ...accessibleCustomViewLinks
-        .filter((item) => !item.navCategoryId)
-        .map(toNavLink),
-    ].sort((left, right) =>
-      (left.label ?? "").localeCompare(right.label ?? ""),
+    const uncategorizedChildren = mergeCategoryNavChildren(
+      undefined,
+      accessibleEntityLinks,
+      accessibleCustomViewLinks,
     );
 
     if (uncategorizedChildren.length > 0) {
@@ -148,15 +127,10 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     const categories = categoriesQuery.data ?? [];
     for (const category of categories) {
-      const children = [
-        ...accessibleEntityLinks
-          .filter((item) => item.navCategoryId === category.id)
-          .map(toNavLink),
-        ...accessibleCustomViewLinks
-          .filter((item) => item.navCategoryId === category.id)
-          .map(toNavLink),
-      ].sort((left, right) =>
-        (left.label ?? "").localeCompare(right.label ?? ""),
+      const children = mergeCategoryNavChildren(
+        category.id,
+        accessibleEntityLinks,
+        accessibleCustomViewLinks,
       );
       if (children.length === 0) {
         continue;
