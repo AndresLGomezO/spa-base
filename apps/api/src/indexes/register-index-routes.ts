@@ -3,6 +3,7 @@ import { z } from "zod";
 
 import {
   buildOwnershipListIndex,
+  computeIndexSignature,
   dedupeIndexes,
   indexesForEntity,
   planIndexesForTenant,
@@ -14,6 +15,7 @@ import {
   type FirestoreIndexStatusStore,
 } from "@repo/gcp-firebase";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
+import type { IndexProvisionEventRepository } from "@repo/firestore-converters";
 
 import { requireRequestTenant } from "../auth/resolve-target-tenant-id.js";
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
@@ -27,15 +29,29 @@ const statusQuerySchema = z.object({
   signature: z.string().trim().min(1).optional(),
 });
 
-const provisionBodySchema = z.object({
-  collection: z.string().trim().min(1),
-});
+const provisionBodySchema = z
+  .object({
+    collection: z.string().trim().min(1),
+    signatures: z.array(z.string().trim().min(1)).optional(),
+    retryFailed: z.boolean().optional(),
+  })
+  .refine(
+    (value) =>
+      value.retryFailed !== true ||
+      value.signatures == null ||
+      value.signatures.length === 0,
+    {
+      message: "Use either retryFailed or signatures, not both.",
+      path: ["retryFailed"],
+    },
+  );
 
 interface RegisterIndexRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly entityRuntime: EntityRuntimeContext;
   readonly statusStore?: FirestoreIndexStatusStore;
+  readonly indexProvisionEventRepository?: IndexProvisionEventRepository;
   readonly ensureFirestoreIndexes: boolean;
   readonly indexProvisioningTopic?: string;
   readonly publishToPubSub: boolean;
@@ -120,6 +136,7 @@ export async function registerIndexRoutes(
         options.statusStore,
         options.entityRuntime,
         tenantId,
+        options.indexProvisionEventRepository,
       );
       return reply.send(successEnvelope(summary));
     },
@@ -157,12 +174,55 @@ export async function registerIndexRoutes(
         return;
       }
 
-      const { collection } = parsed.data;
-      const indexes = resolveIndexesForCollection(
+      const { collection, signatures, retryFailed } = parsed.data;
+      let indexes = resolveIndexesForCollection(
         options.entityRuntime,
         tenantId,
         collection,
       );
+
+      if (signatures && signatures.length > 0) {
+        const signatureSet = new Set(signatures);
+        indexes = indexes.filter((index) =>
+          signatureSet.has(computeIndexSignature(index)),
+        );
+      } else if (retryFailed) {
+        if (!options.statusStore) {
+          return replyWithError(
+            reply,
+            501,
+            ApiErrorCode.QUERY_UNSUPPORTED,
+            "Index status tracking is not configured.",
+          );
+        }
+        const failedRecords =
+          await options.statusStore.getFailedRecords(collection);
+        const failedSignatures = new Set(
+          failedRecords.map((record) => record.signature),
+        );
+        indexes = indexes.filter((index) =>
+          failedSignatures.has(computeIndexSignature(index)),
+        );
+      }
+
+      if (indexes.length === 0) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          retryFailed
+            ? "No failed indexes found for this collection."
+            : "No matching indexes found for this collection.",
+        );
+      }
+
+      if (options.statusStore) {
+        for (const index of indexes) {
+          await options.statusStore.clearErrorForRetry(
+            computeIndexSignature(index),
+          );
+        }
+      }
 
       if (options.publishToPubSub && options.indexProvisioningTopic) {
         const { publishIndexProvisioningMessage } =
@@ -179,6 +239,8 @@ export async function registerIndexRoutes(
             collection,
             queued: indexes.length,
             mode: "pubsub",
+            ...(retryFailed ? { retryFailed: true } : {}),
+            ...(signatures ? { signatures } : {}),
           }),
         );
       }
@@ -186,6 +248,9 @@ export async function registerIndexRoutes(
       await ensureFirestoreIndexes(indexes, {
         projectId: options.firebaseAdminConfig.projectId,
         statusStore: options.statusStore,
+        forceRetry: true,
+        provisionTenantId: tenantId,
+        provisionTrigger: retryFailed ? "manual_retry_failed" : "manual_retry",
       });
 
       return reply.status(202).send(
@@ -193,6 +258,8 @@ export async function registerIndexRoutes(
           collection,
           provisioned: indexes.length,
           mode: "inline",
+          ...(retryFailed ? { retryFailed: true } : {}),
+          ...(signatures ? { signatures } : {}),
         }),
       );
     },

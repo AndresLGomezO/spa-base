@@ -26,6 +26,7 @@ const accessProfileState = {
 };
 
 vi.mock("@repo/gcp-firebase", () => ({
+  configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: authState.uid,
     tenantId: authState.tenantId,

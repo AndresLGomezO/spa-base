@@ -27,7 +27,8 @@ const INDEX_TIP_KEYS = [
   "indexes.tips.tip4",
 ] as const;
 
-const DEBUGGER_INDEX_PROVISIONING_PATH = `${DEBUGGER_MATCH_PATH}/index-provisioning`;
+const DEBUGGER_INDEX_PROVISIONING_BASE_PATH = `${DEBUGGER_MATCH_PATH}/index-provisioning`;
+const DEBUGGER_INDEX_PROVISIONING_FAILED_PATH = `${DEBUGGER_INDEX_PROVISIONING_BASE_PATH}?filter=failed`;
 
 function readMinimizedFromSession(): boolean {
   try {
@@ -58,8 +59,15 @@ function formatCollectionList(collections: readonly string[]): string {
 export function IndexProvisioningGlobalBanner() {
   const { t } = useTranslation("common");
   const { tenantId } = useAuth();
-  const { phase, buildingCollections, errorCollections, totalCreatingCount } =
-    useTenantIndexReadiness(Boolean(tenantId));
+  const {
+    phase,
+    buildingCollections,
+    errorCollections,
+    totalCreatingCount,
+    totalIndexes,
+    readyCount,
+    requiresManualActionCount,
+  } = useTenantIndexReadiness(Boolean(tenantId));
   const [minimized, setMinimized] = useState(readMinimizedFromSession);
   const [tipIndex, setTipIndex] = useState(0);
   const previousBuildingKeyRef = useRef<string>("");
@@ -116,6 +124,10 @@ export function IndexProvisioningGlobalBanner() {
     ? t("indexProvisioning.globalBanner.buildingTitle")
     : t("indexProvisioning.globalBanner.errorTitle");
 
+  const debuggerLink = isError
+    ? DEBUGGER_INDEX_PROVISIONING_FAILED_PATH
+    : DEBUGGER_INDEX_PROVISIONING_BASE_PATH;
+
   if (minimized) {
     return (
       <div
@@ -138,7 +150,7 @@ export function IndexProvisioningGlobalBanner() {
           {title}
         </Text>
         <Link
-          to={DEBUGGER_INDEX_PROVISIONING_PATH}
+          to={debuggerLink}
           className="text-primary shrink-0"
           aria-label={t("indexProvisioning.globalBanner.openDebugger")}
         >
@@ -182,11 +194,22 @@ export function IndexProvisioningGlobalBanner() {
           {isBuilding ? (
             <>
               <Text className="text-muted-foreground text-sm">
-                {t("indexProvisioning.globalBanner.buildingProgress", {
-                  creating: totalCreatingCount,
-                  collections: buildingCollections.length,
-                  collectionList,
-                })}
+                {totalIndexes > 0
+                  ? t(
+                      "indexProvisioning.globalBanner.buildingProgressWithTotal",
+                      {
+                        ready: readyCount,
+                        total: totalIndexes,
+                        creating: totalCreatingCount,
+                        collections: buildingCollections.length,
+                        collectionList,
+                      },
+                    )
+                  : t("indexProvisioning.globalBanner.buildingProgress", {
+                      creating: totalCreatingCount,
+                      collections: buildingCollections.length,
+                      collectionList,
+                    })}
               </Text>
               {tipMessages.length > 0 ? (
                 <Text className="text-muted-foreground text-sm italic">
@@ -197,13 +220,14 @@ export function IndexProvisioningGlobalBanner() {
           ) : (
             <Text className="text-muted-foreground text-sm">
               {t("indexProvisioning.globalBanner.errorSubtitle", {
+                count: requiresManualActionCount,
                 collectionList,
               })}
             </Text>
           )}
           <div className="flex flex-wrap items-center gap-2 pt-1">
             <Link
-              to={DEBUGGER_INDEX_PROVISIONING_PATH}
+              to={debuggerLink}
               className={cn(
                 "inline-flex items-center justify-center gap-2 rounded-sm border border-transparent font-medium transition-colors",
                 buttonVariants.outline,

@@ -50,6 +50,12 @@ const ApiEnvSchema = z.object({
     .trim()
     .min(1)
     .default("index-provisioning"),
+  INDEX_PROVISIONING_CONCURRENCY: z.coerce.number().int().positive().default(1),
+  INDEX_PROVISIONING_BATCH_DELAY_MS: z.coerce
+    .number()
+    .int()
+    .nonnegative()
+    .default(400),
   AGGREGATION_EVENTS_PUBSUB: z
     .enum(["true", "false"])
     .default("false")

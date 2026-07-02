@@ -5,6 +5,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { runFirestoreTransactionWithRetry } from "./firestore-transaction-retry.js";
 
 class FirestoreAdminPlatformRoleRepositoryImpl {
   constructor(private readonly config: FirebaseAdminConfig) {}
@@ -38,7 +39,7 @@ class FirestoreAdminPlatformRoleRepositoryImpl {
     const firestore = getFirestoreAdmin(this.config);
     const docRef = this.collection.doc(parsedName);
 
-    await firestore.runTransaction(async (transaction) => {
+    await runFirestoreTransactionWithRetry(firestore, async (transaction) => {
       const existing = await transaction.get(docRef);
       const nowIso = new Date().toISOString();
 

@@ -1,3 +1,8 @@
+export {
+  runFirestoreTransactionWithRetry,
+  isFirestoreTransactionContentionError,
+  type RunFirestoreTransactionWithRetryOptions,
+} from "./firestore-transaction-retry.js";
 export { FirebaseRuntimeEnvSchema, type FirebaseRuntimeEnv } from "./env.js";
 export {
   FieldValue,
@@ -19,9 +24,11 @@ export {
 export type { FirestoreIndexHint } from "./firestore-entity-query-executor.js";
 export {
   buildIndexFromHint,
+  configureIndexProvisioningQueue,
   ensureEntityFirestoreIndexes,
   ensureFirestoreIndexes,
   scheduleEnsureEntityFirestoreIndexes,
+  scheduleEnsureFirestoreIndexes,
   scheduleEnsureFirestoreIndexesFromHint,
 } from "./firestore-index-provisioner.js";
 export type { FirestoreCompositeIndex } from "@repo/firestore-indexes";

@@ -19,6 +19,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { runFirestoreTransactionWithRetry } from "./firestore-transaction-retry.js";
 
 function normalizeOptionalString(
   value: string | null | undefined,
@@ -88,7 +89,7 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
       .collection(USERS_COLLECTION)
       .doc(parsedAuthUser.uid);
 
-    return firestore.runTransaction(async (transaction) => {
+    return runFirestoreTransactionWithRetry(firestore, async (transaction) => {
       const nowIso = new Date().toISOString();
       const existingSnapshot = await transaction.get(userDocRef);
       const created = !existingSnapshot.exists;
@@ -155,7 +156,7 @@ class FirestoreAdminRegisteredUserRepository implements RegisteredUserRepository
     const firestore = getFirestoreAdmin(this.config);
     const userDocRef = firestore.collection(USERS_COLLECTION).doc(parsedUid);
 
-    return firestore.runTransaction(async (transaction) => {
+    return runFirestoreTransactionWithRetry(firestore, async (transaction) => {
       const existingSnapshot = await transaction.get(userDocRef);
       if (!existingSnapshot.exists) {
         return null;

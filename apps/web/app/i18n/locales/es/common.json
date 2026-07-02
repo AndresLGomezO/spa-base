@@ -1003,11 +1003,27 @@
     "globalBanner": {
       "buildingTitle": "Se están creando índices",
       "buildingProgress": "{{creating}} índices en creación en {{collections}} colecciones ({{collectionList}})",
+      "buildingProgressWithTotal": "{{ready}}/{{total}} listos · {{creating}} en creación en {{collections}} colecciones ({{collectionList}})",
       "errorTitle": "Error de aprovisionamiento de índices",
-      "errorSubtitle": "Algunos índices no se pudieron crear. Colecciones afectadas: {{collectionList}}.",
+      "errorSubtitle": "{{count}} índice(s) fallaron y requieren acción manual. Colecciones afectadas: {{collectionList}}.",
       "openDebugger": "Abrir depurador",
       "minimize": "Minimizar banner",
       "expand": "Expandir banner"
+    },
+    "processList": {
+      "title": "Aprovisionamiento de índices",
+      "summary": "{{total}} índices · {{creating}} en creación · {{failed}} fallidos (acción manual requerida)",
+      "progress": "{{ready}}/{{total}} listos",
+      "manualActionRequired": "Acción manual requerida",
+      "loadError": "No se pudo cargar el estado de aprovisionamiento de índices.",
+      "empty": "Ningún índice coincide con este filtro.",
+      "noLogEntries": "Aún no hay entradas de registro.",
+      "filters": {
+        "all": "Todos",
+        "creating": "En creación",
+        "failed": "Fallidos",
+        "ready": "Listos"
+      }
     }
   },
   "entity": {

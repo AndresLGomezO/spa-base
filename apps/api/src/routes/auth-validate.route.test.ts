@@ -11,6 +11,7 @@ import { createInMemoryTenantRepository } from "../test/mock-tenant-repository.j
 import { createInMemoryCrudRuntime } from "../test/in-memory-entity-runtime.js";
 
 vi.mock("@repo/gcp-firebase", () => ({
+  configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: "user_123",
     tenantId: "tenant_a",

@@ -729,6 +729,24 @@ function extractIndexProvisioningEnvironmentBlockedKeys(corpus) {
   return keys;
 }
 
+/** indexProvisioning.processList.filters.${option} in IndexProvisioningProcessList */
+function extractIndexProvisioningProcessListFilterKeys(corpus) {
+  if (!corpus.includes("indexProvisioning.processList.filters.${")) return [];
+
+  const refFilters = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).indexProvisioning?.processList?.filters;
+
+  if (!refFilters || typeof refFilters !== "object") {
+    return [];
+  }
+
+  return Object.keys(refFilters).map(
+    (option) =>
+      `${DEFAULT_NAMESPACE}:indexProvisioning.processList.filters.${option}`,
+  );
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -1035,6 +1053,14 @@ mergeUsedKeys(
   path.join(
     SRC_DIR,
     "components/index-provisioning/IndexEnvironmentBlockedNotice.tsx",
+  ),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractIndexProvisioningProcessListFilterKeys(corpus),
+  path.join(
+    SRC_DIR,
+    "features/debugger/components/IndexProvisioningProcessList.tsx",
   ),
 );
 

@@ -5,6 +5,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { runFirestoreTransactionWithRetry } from "./firestore-transaction-retry.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 const DEFAULT_LIMIT = 20;
@@ -188,7 +189,7 @@ class FirestoreAdminEntityRepository<
     );
     const docRef = collectionRef.doc(parsedId);
 
-    return firestore.runTransaction(async (transaction) => {
+    return runFirestoreTransactionWithRetry(firestore, async (transaction) => {
       const existingSnapshot = await transaction.get(docRef);
       if (!existingSnapshot.exists) {
         return null;

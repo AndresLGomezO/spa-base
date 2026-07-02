@@ -33,6 +33,7 @@ const originalEnablePerfLogs = process.env.ENABLE_PERF_LOGS;
 const originalAiStepTrace = process.env.AI_STEP_TRACE_ENABLED;
 
 vi.mock("@repo/gcp-firebase", () => ({
+  configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: authState.uid,
     tenantId: authState.tenantId,

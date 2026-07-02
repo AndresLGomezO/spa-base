@@ -1003,11 +1003,27 @@
     "globalBanner": {
       "buildingTitle": "Indexes are building",
       "buildingProgress": "{{creating}} indexes building across {{collections}} collections ({{collectionList}})",
+      "buildingProgressWithTotal": "{{ready}}/{{total}} ready · {{creating}} creating across {{collections}} collections ({{collectionList}})",
       "errorTitle": "Index provisioning error",
-      "errorSubtitle": "Some indexes failed to build. Affected collections: {{collectionList}}.",
+      "errorSubtitle": "{{count}} index(es) failed and require manual action. Affected collections: {{collectionList}}.",
       "openDebugger": "Open Debugger",
       "minimize": "Minimize banner",
       "expand": "Expand banner"
+    },
+    "processList": {
+      "title": "Index provisioning",
+      "summary": "{{total}} indexes · {{creating}} creating · {{failed}} failed (manual action required)",
+      "progress": "{{ready}}/{{total}} ready",
+      "manualActionRequired": "Manual action required",
+      "loadError": "Could not load index provisioning status.",
+      "empty": "No indexes match this filter.",
+      "noLogEntries": "No log entries recorded yet.",
+      "filters": {
+        "all": "All",
+        "creating": "Creating",
+        "failed": "Failed",
+        "ready": "Ready"
+      }
     }
   },
   "entity": {

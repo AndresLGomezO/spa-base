@@ -14,6 +14,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "./firebase-admin.js";
+import { runFirestoreTransactionWithRetry } from "./firestore-transaction-retry.js";
 
 function slugifyTenantId(name: string): string {
   const slug = name
@@ -69,7 +70,7 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
     const firestore = getFirestoreAdmin(this.config);
     const docRef = this.collection.doc(id);
 
-    return firestore.runTransaction(async (transaction) => {
+    return runFirestoreTransactionWithRetry(firestore, async (transaction) => {
       const existing = await transaction.get(docRef);
       if (existing.exists) {
         throw new Error(`Tenant already exists: ${id}`);
@@ -97,7 +98,7 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
     const firestore = getFirestoreAdmin(this.config);
     const docRef = this.collection.doc(parsedId);
 
-    return firestore.runTransaction(async (transaction) => {
+    return runFirestoreTransactionWithRetry(firestore, async (transaction) => {
       const existingSnapshot = await transaction.get(docRef);
       if (!existingSnapshot.exists) {
         return null;
@@ -136,7 +137,7 @@ class FirestoreAdminTenantRepositoryImpl implements TenantRepository {
     const firestore = getFirestoreAdmin(this.config);
     const docRef = this.collection.doc(parsedId);
 
-    await firestore.runTransaction(async (transaction) => {
+    await runFirestoreTransactionWithRetry(firestore, async (transaction) => {
       const existing = await transaction.get(docRef);
       if (existing.exists) {
         return;

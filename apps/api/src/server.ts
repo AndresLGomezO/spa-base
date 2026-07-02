@@ -6,6 +6,7 @@ import { isRateLimitExemptRequest } from "./rate-limit-allowlist.js";
 import Fastify from "fastify";
 
 import { getAllEntities, prepareRecordSearchFields } from "@repo/entities";
+import { computeIndexSignature } from "@repo/firestore-indexes";
 import type {
   EntityCategoryRepository,
   EntityDefinitionRepository,
@@ -87,6 +88,7 @@ import {
   createFirestoreAdminTenantRepository,
   createFirestoreAdminTenantAiContextRepository,
   createFirestoreIndexStatusStore,
+  configureIndexProvisioningQueue,
 } from "@repo/gcp-firebase";
 import { createMetricRuntimeContext } from "./aggregation/metric-runtime-context.js";
 import { listSourceDocumentsForMetric } from "./aggregation/list-source-documents.js";
@@ -488,6 +490,38 @@ export async function buildServer(options: BuildServerOptions = {}) {
       ? createFirestoreIndexStatusStore(firebaseAdminConfig)
       : undefined;
 
+  configureIndexProvisioningQueue({
+    concurrency: apiEnv.INDEX_PROVISIONING_CONCURRENCY,
+    batchDelayMs: apiEnv.INDEX_PROVISIONING_BATCH_DELAY_MS,
+  });
+
+  const warnedIndexFailureSignatures = new Set<string>();
+  let indexProgressLogTimer: ReturnType<typeof setTimeout> | undefined;
+  const indexProgressCounts = {
+    ready: 0,
+    creating: 0,
+    error: 0,
+    total: 0,
+  };
+
+  function scheduleIndexProgressSummaryLog(): void {
+    if (indexProgressLogTimer) {
+      return;
+    }
+    indexProgressLogTimer = setTimeout(() => {
+      indexProgressLogTimer = undefined;
+      server.log.info(
+        {
+          ready: indexProgressCounts.ready,
+          creating: indexProgressCounts.creating,
+          failed: indexProgressCounts.error,
+          total: indexProgressCounts.total,
+        },
+        `Index provisioning progress: ${indexProgressCounts.ready}/${indexProgressCounts.total} ready, ${indexProgressCounts.creating} creating, ${indexProgressCounts.error} failed`,
+      );
+    }, 10_000);
+  }
+
   const entityRuntime = createEntityRuntimeContext({
     firebaseAdminConfig,
     entityDefinitionRepository,
@@ -497,6 +531,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
     indexProvisioningExcludedTenants: new Set([RATES_TENANT_ID]),
     indexStatusStore,
+    indexProvisioningConcurrency: apiEnv.INDEX_PROVISIONING_CONCURRENCY,
+    indexProvisioningBatchDelayMs: apiEnv.INDEX_PROVISIONING_BATCH_DELAY_MS,
     onIndexHint: (hint) => {
       void recordIndexProvisionEvent({
         timestamp: new Date().toISOString(),
@@ -524,22 +560,43 @@ export async function buildServer(options: BuildServerOptions = {}) {
       );
     },
     onIndexEnsureError: (error, index) => {
-      server.log.error(
+      const signature = computeIndexSignature(index);
+      if (warnedIndexFailureSignatures.has(signature)) {
+        return;
+      }
+      warnedIndexFailureSignatures.add(signature);
+      const message = error instanceof Error ? error.message : String(error);
+      server.log.warn(
         {
-          err: error,
           collection: index.collectionGroup,
-          fields: index.fields,
+          signature,
+          err: error,
         },
-        "Failed to ensure Firestore composite index",
+        `Index provisioning permanently failed for ${index.collectionGroup} (${signature}): ${message}`,
       );
     },
     onProvisionEvent: async (event) => {
+      if (event.event === "ready") {
+        indexProgressCounts.ready += 1;
+      } else if (event.event === "creating") {
+        indexProgressCounts.creating += 1;
+        indexProgressCounts.total += 1;
+      } else if (event.event === "error") {
+        indexProgressCounts.error += 1;
+        indexProgressCounts.creating = Math.max(
+          0,
+          indexProgressCounts.creating - 1,
+        );
+      }
+      scheduleIndexProgressSummaryLog();
+
       await recordIndexProvisionEvent(
         indexProvisionEventFromCompositeIndex(event.index, event.event, {
           tenantId: event.tenantId,
           trigger: event.trigger,
           errorMessage: event.errorMessage,
           operationName: event.operationName,
+          retryExhausted: event.retryExhausted,
         }),
       );
     },
@@ -809,6 +866,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     firebaseAdminConfig,
     entityRuntime,
     statusStore: indexStatusStore,
+    indexProvisionEventRepository,
     ensureFirestoreIndexes: apiEnv.ENSURE_FIRESTORE_INDEXES,
     publishToPubSub: apiEnv.INDEX_PROVISIONING_PUBSUB,
     indexProvisioningTopic: apiEnv.INDEX_PROVISIONING_TOPIC,

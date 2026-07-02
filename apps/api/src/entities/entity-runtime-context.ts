@@ -25,13 +25,14 @@ import type {
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import { createEntityConverter } from "@repo/firestore-converters";
-import { indexesForEntity } from "@repo/firestore-indexes";
+import { dedupeIndexes, indexesForEntity } from "@repo/firestore-indexes";
 import {
   buildInMemoryListSnapshotInvalidationPrefix,
   createFirestoreAdminEntityRepository,
   createFirestoreEntityQueryExecutor,
   createInMemoryListSnapshotCache,
   scheduleEnsureEntityFirestoreIndexes,
+  scheduleEnsureFirestoreIndexes,
   scheduleEnsureFirestoreIndexesFromHint,
   scheduleReconcileIndexesForDefinitionChange,
   type FirestoreCompositeIndex,
@@ -59,6 +60,8 @@ interface EntityRuntimeContextOptions {
   readonly ensureFirestoreIndexes?: boolean;
   readonly indexProvisioningExcludedTenants?: ReadonlySet<string>;
   readonly indexStatusStore?: FirestoreIndexStatusStore;
+  readonly indexProvisioningConcurrency?: number;
+  readonly indexProvisioningBatchDelayMs?: number;
   readonly onIndexHint?: (hint: FirestoreIndexHint) => void;
   readonly onIndexEnsured?: (index: FirestoreCompositeIndex) => void;
   readonly onIndexEnsureError?: (
@@ -332,6 +335,12 @@ export class EntityRuntimeContext {
       ...(this.options.indexStatusStore
         ? { statusStore: this.options.indexStatusStore }
         : {}),
+      ...(this.options.indexProvisioningConcurrency !== undefined
+        ? { concurrency: this.options.indexProvisioningConcurrency }
+        : {}),
+      ...(this.options.indexProvisioningBatchDelayMs !== undefined
+        ? { batchDelayMs: this.options.indexProvisioningBatchDelayMs }
+        : {}),
       ...(this.options.onIndexEnsured
         ? { onEnsured: this.options.onIndexEnsured }
         : {}),
@@ -386,9 +395,21 @@ export class EntityRuntimeContext {
       return;
     }
 
-    for (const entity of this.getEntitiesForTenant(tenantId)) {
-      this.ensureIndexesForEntity(entity, tenantId, "catalog_sync");
+    const ensureOptions = this.getIndexEnsureOptions();
+    if (!ensureOptions) {
+      return;
     }
+
+    const indexes = dedupeIndexes(
+      this.getEntitiesForTenant(tenantId).flatMap((entity) =>
+        indexesForEntity(entity),
+      ),
+    );
+    scheduleEnsureFirestoreIndexes(indexes, {
+      ...ensureOptions,
+      provisionTenantId: tenantId,
+      provisionTrigger: "catalog_sync",
+    });
   }
 
   async syncDefinition(

@@ -29,6 +29,7 @@ const entityDefinitionRepository = createInMemoryEntityDefinitionRepository();
 const tenantRepository = createInMemoryTenantRepository();
 
 vi.mock("@repo/gcp-firebase", () => ({
+  configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: "user_123",
     tenantId: "tenant_a",

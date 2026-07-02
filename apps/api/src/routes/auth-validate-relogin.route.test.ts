@@ -113,6 +113,7 @@ vi.mock("../config/env.js", () => ({
 }));
 
 vi.mock("@repo/gcp-firebase", () => ({
+  configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
     uid: "user_relogin",
     email: "admin@example.com",

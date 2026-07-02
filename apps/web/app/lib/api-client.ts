@@ -40,6 +40,36 @@ export interface ApiClientError extends Error {
 
 export type IndexProvisioningPhase = "idle" | "building" | "ready" | "error";
 
+export type IndexProvisioningJobPhase =
+  | "pending"
+  | "creating"
+  | "ready"
+  | "error";
+
+export type IndexProvisioningLogLevel =
+  | "info"
+  | "success"
+  | "warning"
+  | "error";
+
+export interface IndexProvisioningLogEntry {
+  readonly timestamp: string;
+  readonly level: IndexProvisioningLogLevel;
+  readonly event: string;
+  readonly message: string;
+  readonly detail?: string;
+}
+
+export interface IndexProvisioningJob {
+  readonly signature: string;
+  readonly collection: string;
+  readonly phase: IndexProvisioningJobPhase;
+  readonly requiresManualAction: boolean;
+  readonly errorMessage?: string;
+  readonly fields?: readonly Record<string, unknown>[];
+  readonly log: readonly IndexProvisioningLogEntry[];
+}
+
 export interface IndexStatusRecord {
   readonly signature: string;
   readonly collection: string;
@@ -63,6 +93,12 @@ interface TenantIndexProvisioningStatus {
   readonly collections: readonly IndexProvisioningStatusSummary[];
   readonly buildingCollections: readonly string[];
   readonly errorCollections: readonly string[];
+  readonly totalIndexes: number;
+  readonly creatingCount: number;
+  readonly readyCount: number;
+  readonly errorCount: number;
+  readonly requiresManualActionCount: number;
+  readonly indexes: readonly IndexProvisioningJob[];
 }
 
 const INDEX_LIST_ERROR_CODES = new Set([

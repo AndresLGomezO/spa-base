@@ -32,6 +32,7 @@ export const createIndexProvisionEventInputSchema = z.object({
   errorMessage: z.string().trim().optional(),
   trigger: z.string().trim().optional(),
   operationName: z.string().trim().optional(),
+  retryExhausted: z.boolean().optional(),
   blockedOperation: z.enum(INDEX_PROVISION_BLOCKED_OPERATIONS).optional(),
   tenantId: z.string().trim().min(1).optional(),
 });

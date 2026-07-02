@@ -16,6 +16,7 @@ const { publishAggregationEventMessage } = vi.hoisted(() => ({
 }));
 
 vi.mock("@repo/gcp-firebase", () => ({
+  configureIndexProvisioningQueue: vi.fn(),
   AGGREGATION_EVENTS_TOPIC: "aggregation-events",
   publishAggregationEventMessage,
 }));

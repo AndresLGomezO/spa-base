@@ -6,6 +6,7 @@
  */
 import {
   INDEX_PROVISIONING_TOPIC,
+  configureIndexProvisioningQueue,
   createFirestoreIndexStatusStore,
   ensureFirestoreIndexes,
   initializeFirebaseAdmin,
@@ -32,7 +33,24 @@ const firebaseAdminConfig = {
   storageBucket: process.env.GCP_STORAGE_BUCKET,
 };
 
+const INDEX_PROVISIONING_CONCURRENCY = Number.parseInt(
+  process.env.INDEX_PROVISIONING_CONCURRENCY ?? "1",
+  10,
+);
+const INDEX_PROVISIONING_BATCH_DELAY_MS = Number.parseInt(
+  process.env.INDEX_PROVISIONING_BATCH_DELAY_MS ?? "400",
+  10,
+);
+
 initializeFirebaseAdmin(firebaseAdminConfig);
+configureIndexProvisioningQueue({
+  concurrency: Number.isFinite(INDEX_PROVISIONING_CONCURRENCY)
+    ? Math.max(1, INDEX_PROVISIONING_CONCURRENCY)
+    : 1,
+  batchDelayMs: Number.isFinite(INDEX_PROVISIONING_BATCH_DELAY_MS)
+    ? Math.max(0, INDEX_PROVISIONING_BATCH_DELAY_MS)
+    : 400,
+});
 const statusStore = createFirestoreIndexStatusStore(firebaseAdminConfig);
 
 async function main(): Promise<void> {

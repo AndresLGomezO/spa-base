@@ -16,6 +16,7 @@ export interface IndexStatusRecord {
   readonly fields: FirestoreCompositeIndex["fields"];
   readonly operationName?: string;
   readonly errorMessage?: string;
+  readonly retryExhausted?: boolean;
   readonly updatedAt: string;
 }
 
@@ -51,6 +52,7 @@ export function createFirestoreIndexStatusStore(config: FirebaseAdminConfig) {
           fields: index.fields,
           updatedAt: new Date().toISOString(),
           errorMessage: FieldValue.delete(),
+          retryExhausted: FieldValue.delete(),
         },
         { merge: true },
       );
@@ -59,16 +61,24 @@ export function createFirestoreIndexStatusStore(config: FirebaseAdminConfig) {
     async markError(
       index: FirestoreCompositeIndex,
       errorMessage: string,
+      options?: { readonly retryExhausted?: boolean },
     ): Promise<void> {
       const signature = computeIndexSignature(index);
-      await collection().doc(signature).set(
-        {
-          status: "ERROR",
-          errorMessage,
-          updatedAt: new Date().toISOString(),
-        },
-        { merge: true },
-      );
+      await collection()
+        .doc(signature)
+        .set(
+          {
+            status: "ERROR",
+            errorMessage,
+            updatedAt: new Date().toISOString(),
+            ...(options?.retryExhausted ? { retryExhausted: true } : {}),
+          },
+          { merge: true },
+        );
+    },
+
+    async clearErrorForRetry(signature: string): Promise<void> {
+      await collection().doc(signature).delete();
     },
 
     async getBySignature(signature: string): Promise<IndexStatusRecord | null> {

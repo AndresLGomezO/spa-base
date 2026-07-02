@@ -1,6 +1,7 @@
 import {
   FieldValue,
   getFirestoreAdmin,
+  runFirestoreTransactionWithRetry,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 import type { AuditLogger } from "../audit/audit-log.js";
@@ -88,7 +89,7 @@ export function createShareService(deps: ShareServiceDeps): ShareService {
         params.recordId,
       );
 
-      await firestore.runTransaction(async (transaction) => {
+      await runFirestoreTransactionWithRetry(firestore, async (transaction) => {
         const doc = await transaction.get(docRef);
         if (!doc.exists) {
           throw new ShareAccessError("Record not found.");
@@ -127,7 +128,7 @@ export function createShareService(deps: ShareServiceDeps): ShareService {
         params.recordId,
       );
 
-      await firestore.runTransaction(async (transaction) => {
+      await runFirestoreTransactionWithRetry(firestore, async (transaction) => {
         const doc = await transaction.get(docRef);
         if (!doc.exists) {
           throw new ShareAccessError("Record not found.");
