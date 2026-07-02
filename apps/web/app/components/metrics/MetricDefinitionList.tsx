@@ -20,6 +20,8 @@ import { formatAggregationLabel } from "./metric-field-utils";
 import { metricDefinitionsCatalogJsonLabels } from "./json/metric-definition-json-labels";
 import { MetricDefinitionsCatalogJsonImportDialog } from "./json/MetricDefinitionsCatalogJsonImportDialog";
 import { MetricDefinitionsCatalogJsonViewDialog } from "./json/MetricDefinitionsCatalogJsonViewDialog";
+import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 
 function formatMetricStatus(
   status: MetricDefinitionRecord["status"],
@@ -60,6 +62,7 @@ export function MetricDefinitionList({
     [t],
   );
   const canReplaceCatalog = canCreate && canUpdate && canBackfill;
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
   const handleCatalogImport = useCallback(
     async (catalog: MetricDefinitionsCatalogEnvelope) => {
@@ -140,6 +143,7 @@ export function MetricDefinitionList({
         <MetricDefinitionsCatalogJsonImportDialog
           existingItems={items}
           canApply={canReplaceCatalog}
+          importDisabled={!isEnvironmentReady}
           labels={catalogLabels}
           onApply={(catalog) => void handleCatalogImport(catalog)}
         />
@@ -149,6 +153,13 @@ export function MetricDefinitionList({
           </Button>
         ) : null}
       </div>
+
+      {!isEnvironmentReady ? (
+        <IndexEnvironmentBlockedNotice
+          feature="import"
+          buildingCollections={buildingCollections}
+        />
+      ) : null}
 
       <WebDataViewToolbar
         {...dataView}

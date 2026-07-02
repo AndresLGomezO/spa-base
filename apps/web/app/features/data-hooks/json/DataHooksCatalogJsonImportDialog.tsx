@@ -18,6 +18,7 @@ interface DataHooksCatalogJsonImportDialogProps {
   readonly labels: DataHooksCatalogJsonLabels;
   readonly onApply: (catalog: DataHooksCatalogEnvelope) => void;
   readonly triggerSize?: "sm" | "md" | "lg";
+  readonly importDisabled?: boolean;
 }
 
 export function DataHooksCatalogJsonImportDialog({
@@ -26,6 +27,7 @@ export function DataHooksCatalogJsonImportDialog({
   labels,
   onApply,
   triggerSize = "sm",
+  importDisabled = false,
 }: DataHooksCatalogJsonImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [jsonText, setJsonText] = useState("");
@@ -136,6 +138,7 @@ export function DataHooksCatalogJsonImportDialog({
         type="button"
         variant="outline"
         size={triggerSize}
+        disabled={importDisabled}
         onClick={() => setOpen(true)}
       >
         {labels.importTrigger}

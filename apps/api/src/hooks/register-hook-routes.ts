@@ -23,6 +23,7 @@ import {
   DataHookCatalogReplaceError,
   replaceDataHooksCatalog,
 } from "./replace-data-hooks-catalog.js";
+import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
 
 interface RegisterHookRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
@@ -30,6 +31,7 @@ interface RegisterHookRoutesOptions {
   readonly entityRuntime: EntityRuntimeContext;
   readonly hookRuntime: HookRuntimeContext;
   readonly hookExecutionRepository: DataHookExecutionRepository;
+  readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
 const listQuerySchema = z.object({
@@ -397,6 +399,12 @@ export async function registerHookRoutes(
       if (!tenantId) return;
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "catalog_replace",
+          );
+        }
         const result = await replaceDataHooksCatalog(
           {
             entityRuntime: options.entityRuntime,
@@ -414,6 +422,9 @@ export async function registerHookRoutes(
           }),
         );
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof DataHookCatalogReplaceError ||
           error instanceof HookExecutionError ||

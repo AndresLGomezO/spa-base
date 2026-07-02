@@ -15,8 +15,10 @@ import {
   type PortableEntityRecord,
 } from "@repo/entities";
 import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
+import type { QueryContext, QueryEngine } from "@repo/query-engine";
 import { nanoid } from "nanoid";
 
+import { checkRecordAccess } from "../access/record-access.js";
 import { emitAggregationEventIfNeeded } from "../aggregation/emit-aggregation-event.js";
 import type { AggregationEmitterDeps } from "../aggregation/emit-aggregation-event.js";
 import { sanitizeFileFieldsForWrite } from "../entity-files/entity-file-field-utils.js";
@@ -33,9 +35,12 @@ type AnyDefinedEntity = DefinedEntity<string, FieldDefinitions>;
 interface ImportExportEntityRecordsDeps {
   readonly entityRuntime: EntityRuntimeContext;
   readonly relationContext: ReturnType<typeof createRelationRuntimeContext>;
+  readonly queryEngine?: QueryEngine;
   readonly crudHooks?: CrudHookDeps;
   readonly aggregation?: AggregationEmitterDeps;
 }
+
+const EXPORT_PAGE_SIZE = 100;
 
 interface ImportEntityRecordsResult {
   readonly created: number;
@@ -80,6 +85,23 @@ async function runCrudEntityHooks(
   });
 }
 
+function isRecordAccessibleToUser(
+  entity: AnyDefinedEntity,
+  record: Record<string, unknown>,
+  userId: string,
+): boolean {
+  if (entity.metadata.tenantWideRead) {
+    return true;
+  }
+
+  const accessUserIds = record.accessUserIds;
+  if (Array.isArray(accessUserIds) && accessUserIds.includes(userId)) {
+    return true;
+  }
+
+  return checkRecordAccess(record, userId).canRead;
+}
+
 async function fetchAllRecords(
   repository: TenantScopedEntityRepository<GenericRecord, unknown>,
   tenantId: string,
@@ -90,7 +112,7 @@ async function fetchAllRecords(
   do {
     const page = await repository.findAll({
       tenantId,
-      limit: 100,
+      limit: EXPORT_PAGE_SIZE,
       ...(cursor ? { cursor } : {}),
     });
     records.push(...page.items);
@@ -98,6 +120,46 @@ async function fetchAllRecords(
   } while (cursor);
 
   return records;
+}
+
+async function fetchAccessibleRecords(
+  deps: ImportExportEntityRecordsDeps,
+  entity: AnyDefinedEntity,
+  entityName: string,
+  tenantId: string,
+  queryContext: QueryContext,
+  repository: TenantScopedEntityRepository<GenericRecord, unknown>,
+): Promise<GenericRecord[]> {
+  if (deps.queryEngine) {
+    const records: GenericRecord[] = [];
+    let cursor: string | undefined;
+
+    do {
+      const result = await deps.queryEngine.find(
+        entityName,
+        {
+          pagination: {
+            limit: EXPORT_PAGE_SIZE,
+            ...(cursor ? { cursor } : {}),
+          },
+        },
+        queryContext,
+      );
+      records.push(...(result.data as GenericRecord[]));
+      cursor = result.nextCursor;
+    } while (cursor);
+
+    return records;
+  }
+
+  const allRecords = await fetchAllRecords(repository, tenantId);
+  return allRecords.filter((record) =>
+    isRecordAccessibleToUser(
+      entity,
+      record as unknown as Record<string, unknown>,
+      queryContext.userId,
+    ),
+  );
 }
 
 async function loadManyToManyRelations(
@@ -144,6 +206,7 @@ export async function exportEntityRecordsJson(
   deps: ImportExportEntityRecordsDeps,
   tenantId: string,
   entityName: string,
+  queryContext: QueryContext,
 ): Promise<ReturnType<typeof createEntityRecordsExportEnvelope>> {
   await deps.entityRuntime.loadTenantDefinitions(tenantId);
 
@@ -157,7 +220,14 @@ export async function exportEntityRecordsJson(
     throw new Error("Entity repository not found.");
   }
 
-  const records = await fetchAllRecords(repository, tenantId);
+  const records = await fetchAccessibleRecords(
+    deps,
+    entity,
+    entityName,
+    tenantId,
+    queryContext,
+    repository,
+  );
   const portableRecords: PortableEntityRecord[] = [];
 
   for (const record of records) {

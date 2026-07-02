@@ -19,12 +19,14 @@ import {
   EntityQueryCatalogReplaceError,
   replaceEntityQueryDefinitionsCatalog,
 } from "./replace-entity-query-definitions-catalog.js";
+import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
 
 interface RegisterEntityQueryDefinitionRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly entityQueryDefinitionRepository: EntityQueryDefinitionRepository;
+  readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
 const tenantIdQuerySchema = z.object({
@@ -311,6 +313,12 @@ export async function registerEntityQueryDefinitionRoutes(
       if (!tenantId) return;
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "catalog_replace",
+          );
+        }
         const result = await replaceEntityQueryDefinitionsCatalog(
           {
             entityRuntime: options.entityRuntime,
@@ -327,6 +335,9 @@ export async function registerEntityQueryDefinitionRoutes(
           }),
         );
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof EntityQueryCatalogReplaceError ||
           error instanceof Error

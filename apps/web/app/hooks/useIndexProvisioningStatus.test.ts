@@ -3,12 +3,12 @@ import { describe, expect, it } from "vitest";
 import { resolveEffectiveIndexPhase } from "./useIndexProvisioningStatus";
 
 describe("resolveEffectiveIndexPhase", () => {
-  it("does not treat COMPOSITE_INDEX_REQUIRED as building", () => {
+  it("treats COMPOSITE_INDEX_REQUIRED as building while indexes catch up", () => {
     expect(
       resolveEffectiveIndexPhase("ready", "COMPOSITE_INDEX_REQUIRED"),
-    ).toBe("ready");
+    ).toBe("building");
     expect(resolveEffectiveIndexPhase("idle", "COMPOSITE_INDEX_REQUIRED")).toBe(
-      "idle",
+      "building",
     );
   });
 

@@ -12,6 +12,7 @@ import type {
   DataHookExecutionRepository,
   HookLogMessageRepository,
   RequestPerfLogRepository,
+  IndexProvisionEventRepository,
 } from "@repo/firestore-converters";
 import { hasPermission } from "@repo/rbac";
 
@@ -27,8 +28,11 @@ import {
   toAuditDebugEvent,
   toHookExecutionDebugEvent,
   toHookLogDebugEvent,
+  toIndexProvisionDebugEvent,
   toRequestPerfDebugEvent,
 } from "./build-debug-events.js";
+import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
+import { resolveEntityCollection } from "@repo/firestore-indexes";
 
 interface RegisterDebugRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
@@ -38,6 +42,8 @@ interface RegisterDebugRoutesOptions {
   readonly hookLogMessageRepository: HookLogMessageRepository;
   readonly auditLogRepository: AuditLogRepository;
   readonly requestPerfLogRepository: RequestPerfLogRepository;
+  readonly indexProvisionEventRepository: IndexProvisionEventRepository;
+  readonly entityRuntime: EntityRuntimeContext;
 }
 
 const eventsQuerySchema = z.object({
@@ -131,6 +137,23 @@ export async function registerDebugRoutes(
           { limit: perSourceLimit },
         );
         groups.push(perfLogs.map(toRequestPerfDebugEvent));
+      }
+
+      if (sources.includes("indexProvision") && canReadSensitive) {
+        const tenantCollections = [
+          ...new Set(
+            options.entityRuntime
+              .getEntitiesForTenant(tenantId)
+              .map((entity) => resolveEntityCollection(entity)),
+          ),
+        ];
+        const indexEvents =
+          await options.indexProvisionEventRepository.listRecentForTenant(
+            tenantId,
+            tenantCollections,
+            { limit: perSourceLimit },
+          );
+        groups.push(indexEvents.map(toIndexProvisionDebugEvent));
       }
 
       return reply.send(

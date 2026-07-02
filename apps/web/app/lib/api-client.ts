@@ -57,6 +57,14 @@ export interface IndexProvisioningStatusSummary {
   readonly errorCount: number;
 }
 
+interface TenantIndexProvisioningStatus {
+  readonly phase: IndexProvisioningPhase;
+  readonly isEnvironmentReady: boolean;
+  readonly collections: readonly IndexProvisioningStatusSummary[];
+  readonly buildingCollections: readonly string[];
+  readonly errorCollections: readonly string[];
+}
+
 const INDEX_LIST_ERROR_CODES = new Set([
   "INDEX_CREATING",
   "COMPOSITE_INDEX_REQUIRED",
@@ -68,7 +76,7 @@ export function isIndexListErrorCode(code: string): boolean {
 }
 
 export function isTransientIndexListError(code: string): boolean {
-  return code === "INDEX_CREATING";
+  return code === "INDEX_CREATING" || code === "COMPOSITE_INDEX_REQUIRED";
 }
 
 export function isHardIndexListError(code: string): boolean {
@@ -385,6 +393,12 @@ export async function getIndexProvisioningStatus(
   return apiRequest<IndexProvisioningStatusSummary>("/api/indexes/status", {
     query: { collection },
   });
+}
+
+export async function getTenantIndexProvisioningStatus(): Promise<TenantIndexProvisioningStatus> {
+  return apiRequest<TenantIndexProvisioningStatus>(
+    "/api/indexes/tenant-status",
+  );
 }
 
 import type { EntityFileReference } from "@repo/entities";
@@ -1338,7 +1352,8 @@ export type DebugEventSource =
   | "hookExecution"
   | "hookLog"
   | "audit"
-  | "requestPerf";
+  | "requestPerf"
+  | "indexProvision";
 
 export type DebugEventStatus =
   | "success"

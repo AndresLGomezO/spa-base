@@ -19,6 +19,8 @@ import {
   type DataViewColumnDescriptor,
 } from "../data-view";
 import { DataModelsListSkeleton } from "../loading/DataModelsListSkeleton";
+import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 import { entityDefinitionsCatalogJsonLabels } from "./json/entity-definition-json-labels";
 import { EntityDefinitionsCatalogJsonImportDialog } from "./json/EntityDefinitionsCatalogJsonImportDialog";
 import { EntityDefinitionsCatalogJsonViewDialog } from "./json/EntityDefinitionsCatalogJsonViewDialog";
@@ -51,6 +53,7 @@ export function EntityDefinitionList({
     [t],
   );
   const canReplaceCatalog = canCreate && canUpdate;
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
   const handleCatalogImport = useCallback(
     async (catalog: EntityDefinitionsCatalogEnvelope) => {
@@ -133,6 +136,7 @@ export function EntityDefinitionList({
             existingItems={items}
             existingCategories={categories}
             canApply={canReplaceCatalog}
+            importDisabled={!isEnvironmentReady}
             labels={catalogLabels}
             onApply={(catalog) => void handleCatalogImport(catalog)}
           />
@@ -143,6 +147,13 @@ export function EntityDefinitionList({
           ) : null}
         </div>
       </div>
+
+      {!isEnvironmentReady ? (
+        <IndexEnvironmentBlockedNotice
+          feature="import"
+          buildingCollections={buildingCollections}
+        />
+      ) : null}
 
       {items.length > 0 ? (
         <Text className="text-muted-foreground text-sm">

@@ -34,6 +34,7 @@ import {
   CustomViewCatalogReplaceError,
   replaceCustomViewsCatalog,
 } from "./replace-custom-views-catalog.js";
+import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
 
 interface RegisterCustomViewRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
@@ -42,6 +43,7 @@ interface RegisterCustomViewRoutesOptions {
   readonly customViewRepository: CustomViewRepository;
   readonly entityQueryDefinitionRepository: EntityQueryDefinitionRepository;
   readonly entityCategoryRepository: EntityCategoryRepository;
+  readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
 const tenantIdQuerySchema = z.object({
@@ -465,6 +467,12 @@ export async function registerCustomViewRoutes(
       if (!tenantId) return;
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "catalog_replace",
+          );
+        }
         const result = await replaceCustomViewsCatalog(
           {
             entityRuntime: options.entityRuntime,
@@ -483,6 +491,9 @@ export async function registerCustomViewRoutes(
           }),
         );
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof CustomViewCatalogReplaceError ||
           error instanceof Error

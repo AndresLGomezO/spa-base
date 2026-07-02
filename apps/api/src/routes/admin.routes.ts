@@ -29,6 +29,12 @@ import { seedTenantRolesFromTemplates } from "../admin/seed-tenant-roles-from-te
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
 import { createRequireSuperAdmin } from "../admin/require-superadmin.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
+import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
+import {
+  IndexCreatingError,
+  IndexProvisioningFailedError,
+} from "../indexes/index-query-guard.js";
 
 const updateUserAccessBodySchema = z.object({
   tenants: z.record(
@@ -86,6 +92,8 @@ export const adminRoutes: FastifyPluginAsync<{
   registeredUserRepository: RegisteredUserRepository;
   permissionDeps: LoadRequestPermissionsDeps;
   tenantAiContextSync?: SyncTenantAiContextsDeps;
+  tenantIndexGuard?: TenantIndexGuard;
+  entityRuntime?: EntityRuntimeContext;
 }> = async (fastify, opts) => {
   const authenticate = createAuthenticatePreHandler(opts.firebaseAdminConfig, {
     requireTenant: false,
@@ -361,16 +369,39 @@ export const adminRoutes: FastifyPluginAsync<{
       }
 
       try {
+        if (opts.tenantIndexGuard) {
+          await opts.tenantIndexGuard.assertEnvironmentReady(
+            parsedParams.data.id,
+            "import",
+          );
+        }
         const summary = await importTenantBundle(
           {
             firebaseAdminConfig: opts.firebaseAdminConfig,
             tenantAiContextSync: opts.tenantAiContextSync,
+            entityRuntime: opts.entityRuntime,
           },
           parsedParams.data.id,
           parsedBody.data.bundle,
         );
         return reply.send({ ok: true, summary });
       } catch (error) {
+        if (error instanceof IndexCreatingError) {
+          reply.header("Retry-After", String(error.retryAfterSeconds));
+          return reply.status(503).send({
+            ok: false,
+            message: error.message,
+            code: error.code,
+          });
+        }
+        if (error instanceof IndexProvisioningFailedError) {
+          return reply.status(503).send({
+            ok: false,
+            message: error.message,
+            code: error.code,
+            errors: error.errors,
+          });
+        }
         const message =
           error instanceof Error
             ? error.message

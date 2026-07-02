@@ -3,6 +3,7 @@ import type { DataHookExecutionRecord } from "@repo/hooks";
 import type {
   AuditLogRecord,
   HookLogMessageRecord,
+  IndexProvisionEventRecord,
   RequestPerfLogRecord,
   DebugEvent,
   DebugEventSource,
@@ -142,6 +143,43 @@ export function toRequestPerfDebugEvent(
   };
 }
 
+function indexProvisionEventStatus(
+  event: IndexProvisionEventRecord["event"],
+): DebugEvent["status"] | undefined {
+  if (event === "creating" || event === "ensure_requested") {
+    return "running";
+  }
+  if (event === "ready") {
+    return "success";
+  }
+  if (event === "error" || event === "operation_blocked") {
+    return "error";
+  }
+  return "info";
+}
+
+export function toIndexProvisionDebugEvent(
+  record: IndexProvisionEventRecord,
+): DebugEvent {
+  return {
+    id: record.id,
+    source: "indexProvision",
+    timestamp: record.timestamp,
+    title: `${record.collection} · ${record.event}`,
+    subtitle: record.blockedOperation ?? record.trigger,
+    status: indexProvisionEventStatus(record.event),
+    summary: {
+      event: record.event,
+      collection: record.collection,
+      signature: record.signature,
+      status: record.status,
+      blockedOperation: record.blockedOperation,
+      errorMessage: record.errorMessage,
+    },
+    payload: record,
+  };
+}
+
 export function mergeDebugEvents(
   groups: readonly (readonly DebugEvent[])[],
   limit: number,
@@ -156,7 +194,14 @@ export function parseDebugSources(
   raw: string | undefined,
 ): readonly DebugEventSource[] {
   if (!raw?.trim()) {
-    return ["ai", "hookExecution", "hookLog", "audit", "requestPerf"];
+    return [
+      "ai",
+      "hookExecution",
+      "hookLog",
+      "audit",
+      "requestPerf",
+      "indexProvision",
+    ];
   }
 
   const allowed = new Set<DebugEventSource>([
@@ -165,6 +210,7 @@ export function parseDebugSources(
     "hookLog",
     "audit",
     "requestPerf",
+    "indexProvision",
   ]);
   const aliases: Record<string, DebugEventSource> = {
     ai: "ai",
@@ -175,6 +221,8 @@ export function parseDebugSources(
     audit: "audit",
     perf: "requestPerf",
     requestPerf: "requestPerf",
+    indexProvision: "indexProvision",
+    indexProvisioning: "indexProvision",
   };
 
   const parsed = raw
@@ -187,5 +235,12 @@ export function parseDebugSources(
 
   return parsed.length > 0
     ? [...new Set(parsed)]
-    : ["ai", "hookExecution", "hookLog", "audit", "requestPerf"];
+    : [
+        "ai",
+        "hookExecution",
+        "hookLog",
+        "audit",
+        "requestPerf",
+        "indexProvision",
+      ];
 }

@@ -14,12 +14,15 @@ import { replyWithError, successEnvelope } from "../crud/response.js";
 import { parseOrFormatError } from "../crud/validation.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
+import type { QueryEngine } from "@repo/query-engine";
+
 import type { createRelationRuntimeContext } from "../relations/create-relation-services.js";
 import {
   exportEntityRecordsJson,
   importEntityRecordsJson,
 } from "./import-export-entity-records.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
+import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
 
 const entityNameParamsSchema = z.object({
   entityName: z.string().trim().min(1),
@@ -30,8 +33,10 @@ interface RegisterEntityRecordsImportExportRoutesOptions {
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly relationContext: ReturnType<typeof createRelationRuntimeContext>;
+  readonly queryEngine?: QueryEngine;
   readonly crudHooks?: CrudHookDeps;
   readonly aggregation?: AggregationEmitterDeps;
+  readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
 function handleRelationError(reply: FastifyReply, error: unknown): boolean {
@@ -50,6 +55,7 @@ export async function registerEntityRecordsImportExportRoutes(
   const deps = {
     entityRuntime: options.entityRuntime,
     relationContext: options.relationContext,
+    queryEngine: options.queryEngine,
     crudHooks: options.crudHooks,
     aggregation: options.aggregation,
   };
@@ -75,11 +81,27 @@ export async function registerEntityRecordsImportExportRoutes(
         );
       }
 
+      const ctx = request.ctx;
+      if (!ctx?.uid) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
       try {
         const envelope = await exportEntityRecordsJson(
           deps,
           tenantId,
           parsedParams.data.entityName,
+          {
+            userId: ctx.uid,
+            tenantId,
+            permissions: ctx.permissions ?? [],
+            ...(ctx.isSuperAdmin ? { isSuperAdmin: true } : {}),
+          },
         );
         return reply.send(successEnvelope(envelope));
       } catch (error) {
@@ -121,6 +143,12 @@ export async function registerEntityRecordsImportExportRoutes(
       }
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "import",
+          );
+        }
         const result = await importEntityRecordsJson(
           app,
           request,
@@ -144,6 +172,9 @@ export async function registerEntityRecordsImportExportRoutes(
 
         return reply.send(successEnvelope(result.data));
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         if (handleRelationError(reply, error)) {
           return;
         }

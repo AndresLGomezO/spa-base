@@ -6,10 +6,12 @@ import type {
 } from "fastify";
 import { RelationError } from "@repo/entity-relations";
 import {
-  parseListQueryInput,
   QueryError,
+  QueryErrorCode,
+  parseListQueryInput,
   type QueryEngine,
 } from "@repo/query-engine";
+import { isMissingIndexError } from "@repo/gcp-firebase";
 import { nanoid } from "nanoid";
 import { z } from "zod";
 
@@ -34,8 +36,8 @@ import { measureQueryTiming } from "../observability/request-timing.js";
 import { apiEnv } from "../config/env.js";
 import {
   assertCollectionIndexesReady,
-  IndexCreatingError,
-  IndexProvisioningFailedError,
+  mapIndexGuardError,
+  type IndexProvisionEventWriter,
 } from "../indexes/index-query-guard.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import {
@@ -139,6 +141,7 @@ interface RegisterCrudRoutesOptions<
         | undefined);
   readonly queryEngine?: QueryEngine;
   readonly indexStatusStore?: import("@repo/gcp-firebase").FirestoreIndexStatusStore;
+  readonly indexProvisionEventWriter?: IndexProvisionEventWriter;
   readonly referencePopulator?: ReferencePopulatorDeps;
   readonly prefix?: string;
   readonly parametricEntityName?: boolean;
@@ -238,32 +241,6 @@ function mapQueryErrorToResponse(reply: FastifyReply, error: QueryError): void {
         : 400;
 
   replyWithError(reply, statusCode, error.code as ApiErrorCode, error.message);
-}
-
-function mapIndexCreatingError(
-  reply: FastifyReply,
-  error: IndexCreatingError,
-): void {
-  reply.header("Retry-After", String(error.retryAfterSeconds));
-  replyWithError(reply, 503, ApiErrorCode.INDEX_CREATING, error.message, {
-    collection: error.collection,
-  });
-}
-
-function mapIndexProvisioningFailedError(
-  reply: FastifyReply,
-  error: IndexProvisioningFailedError,
-): void {
-  replyWithError(
-    reply,
-    503,
-    ApiErrorCode.INDEX_PROVISIONING_FAILED,
-    error.message,
-    {
-      collection: error.collection,
-      errors: error.errors,
-    },
-  );
 }
 
 function handleFieldAccessError(reply: FastifyReply, error: unknown): boolean {
@@ -371,16 +348,21 @@ function runCrudEntityHooks(
 }
 
 function handleQueryError(reply: FastifyReply, error: unknown): boolean {
-  if (error instanceof IndexCreatingError) {
-    mapIndexCreatingError(reply, error);
-    return true;
-  }
-  if (error instanceof IndexProvisioningFailedError) {
-    mapIndexProvisioningFailedError(reply, error);
+  if (mapIndexGuardError(reply, error)) {
     return true;
   }
   if (error instanceof QueryError) {
     mapQueryErrorToResponse(reply, error);
+    return true;
+  }
+  if (isMissingIndexError(error)) {
+    mapQueryErrorToResponse(
+      reply,
+      new QueryError(
+        QueryErrorCode.COMPOSITE_INDEX_REQUIRED,
+        "This query requires a composite index. Indexes may still be building.",
+      ),
+    );
     return true;
   }
   return false;
@@ -589,6 +571,11 @@ export async function registerCrudRoutes<
           await assertCollectionIndexesReady(
             options.indexStatusStore,
             collection,
+            {
+              blockedOperation: "list_query",
+              tenantId: ctx.tenantId,
+              recordEvent: options.indexProvisionEventWriter,
+            },
           );
         }
         const result = await measureQueryTiming(request, async () =>

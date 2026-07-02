@@ -23,6 +23,8 @@ import {
   backfillMetricDefinition,
   type MetricDefinitionRecord,
 } from "../../lib/api-client";
+import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 import { MetricFieldLabel } from "./MetricFieldHelp";
 import { MetricDefinitionSummary } from "./MetricDefinitionSummary";
 import { DateFieldGranularityPicker } from "./DateFieldGranularityPicker";
@@ -78,6 +80,7 @@ export function MetricDefinitionEditor({
 }: MetricDefinitionEditorProps) {
   const { t } = useTranslation("common");
   const { items: entities } = useEntityCatalog();
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
   const isCreate = metric === null;
   const metricAggregation = getInitialAggregationFromMetric(metric);
 
@@ -678,22 +681,31 @@ export function MetricDefinitionEditor({
         <MetricDefinitionSummary context={summaryContext} />
       ) : null}
 
-      <div className="flex flex-wrap gap-2">
-        <Button type="submit" disabled={isSaving}>
-          {isSaving ? t("metrics.saving") : t("metrics.saveAction")}
-        </Button>
-        <Button type="button" variant="outline" onClick={onCancel}>
-          {t("metrics.cancel")}
-        </Button>
-        {!isCreate && canBackfill ? (
-          <Button
-            type="button"
-            variant="outline"
-            onClick={() => void handleBackfill()}
-          >
-            {t("metrics.runBackfill")}
-          </Button>
+      <div className="flex flex-col gap-3">
+        {!isEnvironmentReady ? (
+          <IndexEnvironmentBlockedNotice
+            feature="backfill"
+            buildingCollections={buildingCollections}
+          />
         ) : null}
+        <div className="flex flex-wrap gap-2">
+          <Button type="submit" disabled={isSaving || !isEnvironmentReady}>
+            {isSaving ? t("metrics.saving") : t("metrics.saveAction")}
+          </Button>
+          <Button type="button" variant="outline" onClick={onCancel}>
+            {t("metrics.cancel")}
+          </Button>
+          {!isCreate && canBackfill ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled={!isEnvironmentReady}
+              onClick={() => void handleBackfill()}
+            >
+              {t("metrics.runBackfill")}
+            </Button>
+          ) : null}
+        </div>
       </div>
     </Form>
   );

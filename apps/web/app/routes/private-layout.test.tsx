@@ -68,6 +68,15 @@ vi.mock("@repo/ui", async (importOriginal) => {
   };
 });
 
+vi.mock(
+  "../components/index-provisioning/IndexProvisioningGlobalBanner",
+  () => ({
+    IndexProvisioningGlobalBanner: () => (
+      <div data-testid="index-provisioning-global-banner" />
+    ),
+  }),
+);
+
 describe("PrivateLayoutRoute", () => {
   it("uses a fixed viewport shell with scroll contained in the page outlet", () => {
     render(

@@ -71,6 +71,7 @@
     "debuggerHookLogs": "Logs de hooks",
     "debuggerAudit": "Auditoría",
     "debuggerRequestPerf": "Rendimiento de peticiones",
+    "debuggerIndexProvision": "Aprovisionamiento de índices",
     "systemConfiguration": "Configuración del sistema"
   },
   "debugger": {
@@ -83,7 +84,8 @@
       "hookExecution": "Ejecuciones de hooks",
       "hookLog": "Logs de hooks",
       "audit": "Auditoría",
-      "requestPerf": "Rendimiento de peticiones"
+      "requestPerf": "Rendimiento de peticiones",
+      "indexProvision": "Aprovisionamiento de índices"
     },
     "status": {
       "success": "Éxito",
@@ -129,7 +131,13 @@
       "rbacMs": "RBAC",
       "queryMs": "Consulta",
       "hooksMs": "Hooks",
-      "totalMs": "Total"
+      "totalMs": "Total",
+      "collection": "Colección",
+      "eventType": "Evento",
+      "blockedOperation": "Operación bloqueada",
+      "trigger": "Disparador",
+      "signature": "Firma",
+      "errorMessage": "Error"
     },
     "actions": {
       "refresh": "Actualizar",
@@ -970,6 +978,37 @@
     "errorStepConsole": "Abre el enlace del índice del error del servidor (si aparece) y créalo o corrígelo manualmente.",
     "errorStepConsoleGeneric": "Revisa Firebase Console → Firestore → Índices para este grupo de colección.",
     "errorStepModel": "Edita la entidad para quitar filtros de relación no usados, o contacta a un administrador."
+  },
+  "indexProvisioning": {
+    "environmentBlocked": {
+      "retryHint": "Sigue el progreso en",
+      "debuggerLink": "Depurador → Aprovisionamiento de índices",
+      "import": {
+        "title": "Importación no disponible mientras se crean índices",
+        "description": "Los índices de Firestore aún se están creando. Espera a que el entorno esté listo antes de importar."
+      },
+      "backfill": {
+        "title": "Backfill no disponible mientras se crean índices",
+        "description": "El backfill de métricas necesita colecciones de entidades que pueden no ser consultables aún."
+      },
+      "saveDefinition": {
+        "title": "Guardar no disponible mientras se crean índices",
+        "description": "Los cambios en definiciones de entidad activan actualizaciones de índices. Espera a que terminen de crearse."
+      },
+      "generic": {
+        "title": "Esta acción no está disponible mientras se crean índices",
+        "description": "El entorno del tenant aún está aprovisionando índices de Firestore."
+      }
+    },
+    "globalBanner": {
+      "buildingTitle": "Se están creando índices",
+      "buildingProgress": "{{creating}} índices en creación en {{collections}} colecciones ({{collectionList}})",
+      "errorTitle": "Error de aprovisionamiento de índices",
+      "errorSubtitle": "Algunos índices no se pudieron crear. Colecciones afectadas: {{collectionList}}.",
+      "openDebugger": "Abrir depurador",
+      "minimize": "Minimizar banner",
+      "expand": "Expandir banner"
+    }
   },
   "entity": {
     "create": "Crear",

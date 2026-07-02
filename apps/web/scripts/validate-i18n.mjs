@@ -704,6 +704,31 @@ function extractDebuggerNavLabelKeys(files) {
   return [...keys];
 }
 
+/** indexProvisioning.environmentBlocked.${feature}.* in IndexEnvironmentBlockedNotice */
+function extractIndexProvisioningEnvironmentBlockedKeys(corpus) {
+  if (!corpus.includes("indexProvisioning.environmentBlocked.${")) return [];
+
+  const refEnvironmentBlocked = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).indexProvisioning?.environmentBlocked;
+
+  if (!refEnvironmentBlocked || typeof refEnvironmentBlocked !== "object") {
+    return [];
+  }
+
+  const keys = [];
+  for (const [feature, bucket] of Object.entries(refEnvironmentBlocked)) {
+    if (feature === "retryHint" || feature === "debuggerLink") continue;
+    if (!bucket || typeof bucket !== "object") continue;
+    for (const suffix of Object.keys(bucket)) {
+      keys.push(
+        `${DEFAULT_NAMESPACE}:indexProvisioning.environmentBlocked.${feature}.${suffix}`,
+      );
+    }
+  }
+  return keys;
+}
+
 function mergeUsedKeys(usedKeys, qualifiedKeys, filePath) {
   for (const qualified of qualifiedKeys) {
     if (!usedKeys.has(qualified)) usedKeys.set(qualified, new Set());
@@ -1003,6 +1028,14 @@ mergeUsedKeys(
   usedKeys,
   extractDebuggerNavLabelKeys(files),
   path.join(SRC_DIR, "routing/debugger-nav.ts"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractIndexProvisioningEnvironmentBlockedKeys(corpus),
+  path.join(
+    SRC_DIR,
+    "components/index-provisioning/IndexEnvironmentBlockedNotice.tsx",
+  ),
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

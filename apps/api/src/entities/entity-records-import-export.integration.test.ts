@@ -435,6 +435,76 @@ describe("entity records import/export routes integration", () => {
     });
   });
 
+  it("exports only records accessible to the current user", async () => {
+    const server = await buildTestServer();
+
+    const createDefinition = await server.inject({
+      method: "POST",
+      url: "/api/entity-definitions",
+      headers: authHeaders,
+      payload: {
+        name: "account",
+        label: "Accounts",
+        fields: [
+          { name: "name", type: "string", required: true },
+          {
+            name: "accountType",
+            type: "enum",
+            enumValues: ["BANK", "SAVINGS"],
+            required: true,
+          },
+        ],
+      },
+    });
+    expect(createDefinition.statusCode).toBe(201);
+
+    authState.uid = "owner_andres";
+    const andresImport = await server.inject({
+      method: "POST",
+      url: "/api/account/import-json",
+      headers: authHeaders,
+      payload: [
+        {
+          id: "acct_andres",
+          name: "Andres Checking",
+          accountType: "BANK",
+        },
+      ],
+    });
+    expect(andresImport.statusCode).toBe(200);
+
+    authState.uid = "owner_testuser";
+    const demoImport = await server.inject({
+      method: "POST",
+      url: "/api/account/import-json",
+      headers: authHeaders,
+      payload: [
+        {
+          id: "rd_acct_checking",
+          name: "Primary Checking",
+          accountType: "BANK",
+        },
+      ],
+    });
+    expect(demoImport.statusCode).toBe(200);
+
+    authState.uid = "owner_andres";
+    const exportResponse = await server.inject({
+      method: "GET",
+      url: "/api/account/export-json",
+      headers: authHeaders,
+    });
+    expect(exportResponse.statusCode).toBe(200);
+    expect(exportResponse.json().data.records).toEqual([
+      expect.objectContaining({
+        id: "acct_andres",
+        name: "Andres Checking",
+      }),
+    ]);
+
+    authState.uid = "superadmin_user";
+  });
+
   it("rejects batch imports when any record is invalid", async () => {
     const server = await buildTestServer();
     await seedCatalog(server);

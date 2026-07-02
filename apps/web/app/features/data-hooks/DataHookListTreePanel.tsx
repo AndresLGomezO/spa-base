@@ -13,6 +13,8 @@ import { useDataHooks } from "./data-hooks-context";
 import { dataHooksCatalogJsonLabels } from "./json/data-hook-definition-json-labels";
 import { DataHooksCatalogJsonImportDialog } from "./json/DataHooksCatalogJsonImportDialog";
 import { DataHooksCatalogJsonViewDialog } from "./json/DataHooksCatalogJsonViewDialog";
+import { IndexEnvironmentBlockedNotice } from "../../components/index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 
 export function DataHookListTreePanel() {
   const { t } = useTranslation("common");
@@ -27,6 +29,7 @@ export function DataHookListTreePanel() {
   const [createModalOpen, setCreateModalOpen] = useState(false);
   const catalogLabels = useMemo(() => dataHooksCatalogJsonLabels(t), [t]);
   const canReplaceCatalog = canCreate && canUpdate && canDelete;
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
   const handleCatalogImport = useCallback(
     async (catalog: DataHooksCatalogEnvelope) => {
@@ -46,17 +49,26 @@ export function DataHookListTreePanel() {
   );
 
   const catalogActions = (
-    <div className="flex flex-wrap items-center gap-2 px-2 pb-2">
-      <DataHooksCatalogJsonViewDialog
-        items={editor.definitions}
-        labels={catalogLabels}
-      />
-      <DataHooksCatalogJsonImportDialog
-        existingItems={editor.definitions}
-        canApply={canReplaceCatalog}
-        labels={catalogLabels}
-        onApply={(catalog) => void handleCatalogImport(catalog)}
-      />
+    <div className="flex flex-col gap-2 px-2 pb-2">
+      {!isEnvironmentReady ? (
+        <IndexEnvironmentBlockedNotice
+          feature="import"
+          buildingCollections={buildingCollections}
+        />
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <DataHooksCatalogJsonViewDialog
+          items={editor.definitions}
+          labels={catalogLabels}
+        />
+        <DataHooksCatalogJsonImportDialog
+          existingItems={editor.definitions}
+          canApply={canReplaceCatalog}
+          importDisabled={!isEnvironmentReady}
+          labels={catalogLabels}
+          onApply={(catalog) => void handleCatalogImport(catalog)}
+        />
+      </div>
     </div>
   );
 

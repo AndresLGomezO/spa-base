@@ -24,6 +24,7 @@ interface EntityDefinitionsCatalogJsonImportDialogProps {
   readonly triggerSize?: "sm" | "md" | "lg";
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
+  readonly importDisabled?: boolean;
 }
 
 export function EntityDefinitionsCatalogJsonImportDialog({
@@ -35,6 +36,7 @@ export function EntityDefinitionsCatalogJsonImportDialog({
   triggerSize = "sm",
   open: openProp,
   onOpenChange,
+  importDisabled = false,
 }: EntityDefinitionsCatalogJsonImportDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
@@ -160,6 +162,7 @@ export function EntityDefinitionsCatalogJsonImportDialog({
           type="button"
           variant="outline"
           size={triggerSize}
+          disabled={importDisabled}
           onClick={() => setOpen(true)}
         >
           {labels.importTrigger}

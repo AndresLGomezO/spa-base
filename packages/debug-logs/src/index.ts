@@ -29,6 +29,17 @@ export {
   type RequestPerfLogRecord,
 } from "./request-perf-log.js";
 export {
+  createIndexProvisionEventInputSchema,
+  INDEX_PROVISION_BLOCKED_OPERATIONS,
+  INDEX_PROVISION_EVENTS_COLLECTION,
+  INDEX_PROVISION_EVENT_TYPES,
+  indexProvisionEventRecordSchema,
+  type CreateIndexProvisionEventInput,
+  type IndexProvisionBlockedOperation,
+  type IndexProvisionEventRecord,
+  type IndexProvisionEventType,
+} from "./index-provision-event.js";
+export {
   createPersistingHookLogger,
   type HookLogMessageWriter,
 } from "./create-persisting-hook-logger.js";

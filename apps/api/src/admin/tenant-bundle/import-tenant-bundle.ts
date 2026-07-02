@@ -32,6 +32,7 @@ import {
 
 interface ImportTenantBundleDeps {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
+  readonly entityRuntime?: SyncTenantAiContextsDeps["entityRuntime"];
   readonly tenantAiContextSync?: SyncTenantAiContextsDeps;
 }
 
@@ -149,11 +150,14 @@ export async function importTenantBundle(
     });
   }
 
+  const entityRuntime =
+    deps.entityRuntime ?? deps.tenantAiContextSync?.entityRuntime;
+  if (entityRuntime) {
+    await entityRuntime.loadTenantDefinitions(targetTenantId, { force: true });
+    entityRuntime.ensureCatalogIndexes(targetTenantId);
+  }
+
   if (deps.tenantAiContextSync) {
-    await deps.tenantAiContextSync.entityRuntime.loadTenantDefinitions(
-      targetTenantId,
-      { force: true },
-    );
     await syncThemeAiContextForTenant(deps.tenantAiContextSync, targetTenantId);
     await syncEntityAiContextsForTenant(
       deps.tenantAiContextSync,

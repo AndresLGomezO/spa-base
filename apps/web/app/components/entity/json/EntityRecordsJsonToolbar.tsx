@@ -14,6 +14,8 @@ import {
   type ApiClientError,
 } from "../../../lib/api-client";
 import { queryClient } from "../../../query/query-client";
+import { IndexEnvironmentBlockedNotice } from "../../index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../../hooks/useTenantIndexReadiness";
 import { EntityRecordsJsonImportDialog } from "./EntityRecordsJsonImportDialog.js";
 import { EntityRecordsJsonViewDialog } from "./EntityRecordsJsonViewDialog.js";
 import type { EntityRecordsJsonLabels } from "./entity-records-json-labels.js";
@@ -76,6 +78,7 @@ export function EntityRecordsJsonToolbar({
   );
 
   const resolvedExport = exportEnvelope ?? fetchedExport;
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
   const exportJsonText = useMemo(
     () =>
       resolvedExport
@@ -137,31 +140,40 @@ export function EntityRecordsJsonToolbar({
   );
 
   return (
-    <div className="flex flex-wrap items-center gap-2">
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
-        loading={exportLoading}
-        onClick={() => void handleExportOpen()}
-      >
-        {labels.exportTrigger}
-      </Button>
-      <EntityRecordsJsonViewDialog
-        jsonText={exportJsonText}
-        labels={labels}
-        loading={exportLoading}
-        open={exportOpen}
-        onOpenChange={setExportOpen}
-        showTrigger={false}
-      />
-      <EntityRecordsJsonImportDialog
-        definition={definition}
-        labels={labels}
-        triggerSize={triggerSize}
-        applying={importing}
-        onApply={handleImport}
-      />
+    <div className="flex flex-col gap-2">
+      {!isEnvironmentReady ? (
+        <IndexEnvironmentBlockedNotice
+          feature="import"
+          buildingCollections={buildingCollections}
+        />
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <Button
+          type="button"
+          variant="outline"
+          size={triggerSize}
+          loading={exportLoading}
+          onClick={() => void handleExportOpen()}
+        >
+          {labels.exportTrigger}
+        </Button>
+        <EntityRecordsJsonViewDialog
+          jsonText={exportJsonText}
+          labels={labels}
+          loading={exportLoading}
+          open={exportOpen}
+          onOpenChange={setExportOpen}
+          showTrigger={false}
+        />
+        <EntityRecordsJsonImportDialog
+          definition={definition}
+          labels={labels}
+          triggerSize={triggerSize}
+          applying={importing}
+          importDisabled={!isEnvironmentReady}
+          onApply={handleImport}
+        />
+      </div>
     </div>
   );
 }

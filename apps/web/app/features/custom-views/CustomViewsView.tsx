@@ -46,6 +46,8 @@ import {
 } from "./json/custom-view-definition-json-labels";
 import { CustomViewsCatalogJsonImportDialog } from "./json/CustomViewsCatalogJsonImportDialog";
 import { CustomViewsCatalogJsonViewDialog } from "./json/CustomViewsCatalogJsonViewDialog";
+import { IndexEnvironmentBlockedNotice } from "../../components/index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 import {
   resolveQueryIdByName,
   resolveQueryNameById,
@@ -127,6 +129,7 @@ export function CustomViewsView() {
   );
   const catalogLabels = useMemo(() => customViewsCatalogJsonLabels(t), [t]);
   const canReplaceCatalog = canCreate && canUpdate && canDelete;
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
   const queries = useMemo(() => queriesQuery.data ?? [], [queriesQuery.data]);
 
   const queryOptions = useMemo(
@@ -371,6 +374,7 @@ export function CustomViewsView() {
           <CustomViewsCatalogJsonImportDialog
             existingItems={items}
             canApply={canReplaceCatalog}
+            importDisabled={!isEnvironmentReady}
             labels={catalogLabels}
             onApply={(catalog) => void handleCatalogImport(catalog)}
           />
@@ -381,6 +385,13 @@ export function CustomViewsView() {
           ) : null}
         </div>
       </div>
+
+      {!isEnvironmentReady ? (
+        <IndexEnvironmentBlockedNotice
+          feature="import"
+          buildingCollections={buildingCollections}
+        />
+      ) : null}
 
       {error ? <Alert>{error}</Alert> : null}
       {isLoading ? <Text>{t("loading")}</Text> : null}

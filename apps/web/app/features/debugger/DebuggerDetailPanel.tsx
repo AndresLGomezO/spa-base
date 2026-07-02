@@ -19,6 +19,7 @@ import { AuditDebugDetail } from "./sources/audit-detail";
 import { HookExecutionDebugDetail } from "./sources/hook-execution-detail";
 import { HookLogDebugDetail } from "./sources/hook-log-detail";
 import { RequestPerfDebugDetail } from "./sources/request-perf-detail";
+import { IndexProvisionDebugDetail } from "./sources/index-provision-detail";
 
 function formatJson(value: unknown): string {
   try {
@@ -44,6 +45,8 @@ function DebuggerDetailBody({
       return <AuditDebugDetail event={event} />;
     case "requestPerf":
       return <RequestPerfDebugDetail event={event} />;
+    case "indexProvision":
+      return <IndexProvisionDebugDetail event={event} />;
     default:
       return null;
   }

@@ -126,7 +126,9 @@ export async function runDatabaseSeed(): Promise<void> {
   console.log("[seed] Seeding platform roles...");
   await seedPlatformRoles(firebaseAdminConfig);
 
-  console.log("[seed] Seeding platform tenants (rates catalog + demo data)...");
+  console.log(
+    "[seed] Seeding platform tenants (rates catalog + per-user dev data)...",
+  );
   await seedPlatformTenants(firebaseAdminConfig, entityRuntime);
 
   console.log("[seed] Database seed complete.");

@@ -20,6 +20,7 @@ interface CustomViewsCatalogJsonImportDialogProps {
   readonly triggerSize?: "sm" | "md" | "lg";
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
+  readonly importDisabled?: boolean;
 }
 
 export function CustomViewsCatalogJsonImportDialog({
@@ -30,6 +31,7 @@ export function CustomViewsCatalogJsonImportDialog({
   triggerSize = "sm",
   open: openProp,
   onOpenChange,
+  importDisabled = false,
 }: CustomViewsCatalogJsonImportDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
@@ -136,6 +138,7 @@ export function CustomViewsCatalogJsonImportDialog({
           type="button"
           variant="outline"
           size={triggerSize}
+          disabled={importDisabled}
           onClick={() => setOpen(true)}
         >
           {labels.importTrigger}

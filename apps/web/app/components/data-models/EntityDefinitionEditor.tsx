@@ -27,6 +27,7 @@ import {
 } from "@repo/ui";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 import {
   getEntityDefinition,
   isApiClientError,
@@ -37,6 +38,7 @@ import {
   type EntityDefinitionRecord,
   type FieldDefinitionInput,
 } from "../../lib/api-client";
+import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
 import { LucideIconField } from "../shared/LucideIconField";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { buildEntityDefinitionUiForSave } from "./build-entity-definition-ui-patch";
@@ -83,6 +85,7 @@ export function EntityDefinitionEditor({
 }: EntityDefinitionEditorProps) {
   const { t } = useTranslation("common");
   const { refresh } = useEntityCatalog();
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
   const jsonLabels = useMemo(() => entityDefinitionFormJsonLabels(t), [t]);
   const [record, setRecord] = useState<EntityDefinitionRecord | null>(null);
   const [label, setLabel] = useState("");
@@ -236,14 +239,22 @@ export function EntityDefinitionEditor({
           <Button
             type="submit"
             form={ENTITY_DEFINITION_EDITOR_FORM_ID}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isEnvironmentReady}
           >
             {isSubmitting ? t("loading") : t("dataModels.saveModel")}
           </Button>
         ) : null}
       </div>,
     );
-  }, [canUpdate, isLoading, isSubmitting, onFooterChange, record, t]);
+  }, [
+    canUpdate,
+    isEnvironmentReady,
+    isLoading,
+    isSubmitting,
+    onFooterChange,
+    record,
+    t,
+  ]);
 
   useEffect(() => {
     return () => {
@@ -253,7 +264,7 @@ export function EntityDefinitionEditor({
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!canUpdate || !record) {
+    if (!canUpdate || !record || !isEnvironmentReady) {
       return;
     }
 
@@ -610,13 +621,23 @@ export function EntityDefinitionEditor({
           indexPlanInput={indexPlanInput}
         />
 
+        {!isEnvironmentReady ? (
+          <IndexEnvironmentBlockedNotice
+            feature="saveDefinition"
+            buildingCollections={buildingCollections}
+          />
+        ) : null}
+
         {!useModalFooter ? (
           <div className="flex gap-2">
             <Button type="button" variant="ghost" onClick={onCancel}>
               {t("entity.cancel")}
             </Button>
             {canUpdate ? (
-              <Button type="submit" disabled={isSubmitting}>
+              <Button
+                type="submit"
+                disabled={isSubmitting || !isEnvironmentReady}
+              >
                 {isSubmitting ? t("loading") : t("dataModels.saveModel")}
               </Button>
             ) : null}

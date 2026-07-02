@@ -5,6 +5,19 @@ import { afterEach, vi } from "vitest";
 
 import "./app/i18n";
 
+vi.mock("./app/hooks/useTenantIndexReadiness", () => ({
+  useTenantIndexReadiness: () => ({
+    isEnvironmentReady: true,
+    phase: "ready",
+    buildingCollections: [],
+    errorCollections: [],
+    collections: [],
+    totalCreatingCount: 0,
+    isLoading: false,
+    isError: false,
+  }),
+}));
+
 Object.defineProperty(window, "matchMedia", {
   writable: true,
   value: vi.fn().mockImplementation((query: string) => ({

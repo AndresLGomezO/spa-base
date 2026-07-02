@@ -20,6 +20,7 @@ import {
 } from "./replace-metric-definitions-catalog.js";
 import { runMetricBackfill } from "./run-backfill.js";
 import type { MetricRuntimeContext } from "./metric-runtime-context.js";
+import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
 import {
   findEntityForSourceModel,
   validateMetricDefinitionDateGranularity,
@@ -30,6 +31,7 @@ interface RegisterMetricDefinitionRoutesOptions {
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly metricRuntime: MetricRuntimeContext;
+  readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
 const tenantIdQuerySchema = z.object({
@@ -379,6 +381,12 @@ export async function registerMetricDefinitionRoutes(
       if (!tenantId) return;
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "catalog_replace",
+          );
+        }
         const result = await replaceMetricDefinitionsCatalog(
           {
             entityRuntime: options.entityRuntime,
@@ -395,6 +403,9 @@ export async function registerMetricDefinitionRoutes(
           }),
         );
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof MetricCatalogReplaceError || error instanceof Error
             ? error.message
@@ -431,6 +442,12 @@ export async function registerMetricDefinitionRoutes(
       if (!tenantId) return;
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "backfill",
+          );
+        }
         const result = await runMetricBackfill(
           options.metricRuntime,
           tenantId,
@@ -445,6 +462,9 @@ export async function registerMetricDefinitionRoutes(
         );
         return reply.send(successEnvelope(result));
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof Error ? error.message : "Backfill failed.";
         return replyWithError(

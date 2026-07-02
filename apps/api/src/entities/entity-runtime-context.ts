@@ -65,6 +65,9 @@ interface EntityRuntimeContextOptions {
     error: unknown,
     index: FirestoreCompositeIndex,
   ) => void;
+  readonly onProvisionEvent?: Parameters<
+    typeof scheduleEnsureEntityFirestoreIndexes
+  >[1]["onProvisionEvent"];
   readonly cursorSecret?: string;
   readonly clientFallbackMaxDocs?: number;
   readonly repositories?: Record<
@@ -335,6 +338,9 @@ export class EntityRuntimeContext {
       ...(this.options.onIndexEnsureError
         ? { onError: this.options.onIndexEnsureError }
         : {}),
+      ...(this.options.onProvisionEvent
+        ? { onProvisionEvent: this.options.onProvisionEvent }
+        : {}),
     };
   }
 
@@ -342,7 +348,11 @@ export class EntityRuntimeContext {
     return this.options.indexStatusStore;
   }
 
-  ensureIndexesForEntity(entity: AnyDefinedEntity, tenantId?: string): void {
+  ensureIndexesForEntity(
+    entity: AnyDefinedEntity,
+    tenantId?: string,
+    trigger = "entity_sync",
+  ): void {
     if (tenantId && this.isIndexProvisioningExcluded(tenantId)) {
       return;
     }
@@ -351,7 +361,12 @@ export class EntityRuntimeContext {
     if (!ensureOptions) {
       return;
     }
-    scheduleEnsureEntityFirestoreIndexes(entity, ensureOptions);
+    scheduleEnsureEntityFirestoreIndexes(entity, {
+      ...ensureOptions,
+      ...(tenantId
+        ? { provisionTenantId: tenantId, provisionTrigger: trigger }
+        : {}),
+    });
   }
 
   ensureIndexesFromHint(hint: FirestoreIndexHint): void {
@@ -372,7 +387,7 @@ export class EntityRuntimeContext {
     }
 
     for (const entity of this.getEntitiesForTenant(tenantId)) {
-      this.ensureIndexesForEntity(entity, tenantId);
+      this.ensureIndexesForEntity(entity, tenantId, "catalog_sync");
     }
   }
 

@@ -6,6 +6,7 @@ export const DEBUG_EVENT_SOURCES = [
   "hookLog",
   "audit",
   "requestPerf",
+  "indexProvision",
 ] as const;
 export type DebugEventSource = (typeof DEBUG_EVENT_SOURCES)[number];
 

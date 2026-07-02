@@ -20,6 +20,7 @@ interface MetricDefinitionsCatalogJsonImportDialogProps {
   readonly triggerSize?: "sm" | "md" | "lg";
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
+  readonly importDisabled?: boolean;
 }
 
 export function MetricDefinitionsCatalogJsonImportDialog({
@@ -30,6 +31,7 @@ export function MetricDefinitionsCatalogJsonImportDialog({
   triggerSize = "sm",
   open: openProp,
   onOpenChange,
+  importDisabled = false,
 }: MetricDefinitionsCatalogJsonImportDialogProps) {
   const [internalOpen, setInternalOpen] = useState(false);
   const open = openProp ?? internalOpen;
@@ -143,6 +145,7 @@ export function MetricDefinitionsCatalogJsonImportDialog({
           type="button"
           variant="outline"
           size={triggerSize}
+          disabled={importDisabled}
           onClick={() => setOpen(true)}
         >
           {labels.importTrigger}

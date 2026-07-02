@@ -15,6 +15,7 @@ import { RequireAuth } from "../routing/RouteGuards";
 import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
 import { CreateTenantModal } from "../components/platform/CreateTenantModal";
+import { IndexProvisioningGlobalBanner } from "../components/index-provisioning/IndexProvisioningGlobalBanner";
 
 function MainOutlet() {
   const location = useLocation();
@@ -57,6 +58,7 @@ export default function PrivateLayoutRoute() {
                       </div>
                     </SidebarProvider>
                     <CreateTenantModal />
+                    <IndexProvisioningGlobalBanner />
                   </ThirdRailProvider>
                 </CreateTenantModalProvider>
                 <EntityFormModalHost />

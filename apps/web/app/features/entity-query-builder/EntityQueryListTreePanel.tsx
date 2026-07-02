@@ -17,6 +17,8 @@ import { useEntityQueryBuilder } from "./entity-query-builder-context";
 import { entityQueryDefinitionsCatalogJsonLabels } from "./json/entity-query-definition-json-labels";
 import { EntityQueryDefinitionsCatalogJsonImportDialog } from "./json/EntityQueryDefinitionsCatalogJsonImportDialog";
 import { EntityQueryDefinitionsCatalogJsonViewDialog } from "./json/EntityQueryDefinitionsCatalogJsonViewDialog";
+import { IndexEnvironmentBlockedNotice } from "../../components/index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 
 export function EntityQueryListTreePanel() {
   const { t } = useTranslation("common");
@@ -35,6 +37,7 @@ export function EntityQueryListTreePanel() {
     [t],
   );
   const canReplaceCatalog = canCreate && canUpdate && canDelete;
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
   const handleCatalogImport = useCallback(
     async (catalog: EntityQueryDefinitionsCatalogEnvelope) => {
@@ -70,17 +73,26 @@ export function EntityQueryListTreePanel() {
   );
 
   const catalogActions = (
-    <div className="flex flex-wrap items-center gap-2 px-2 pb-2">
-      <EntityQueryDefinitionsCatalogJsonViewDialog
-        items={editor.definitions}
-        labels={catalogLabels}
-      />
-      <EntityQueryDefinitionsCatalogJsonImportDialog
-        existingItems={editor.definitions}
-        canApply={canReplaceCatalog}
-        labels={catalogLabels}
-        onApply={(catalog) => void handleCatalogImport(catalog)}
-      />
+    <div className="flex flex-col gap-2 px-2 pb-2">
+      {!isEnvironmentReady ? (
+        <IndexEnvironmentBlockedNotice
+          feature="import"
+          buildingCollections={buildingCollections}
+        />
+      ) : null}
+      <div className="flex flex-wrap items-center gap-2">
+        <EntityQueryDefinitionsCatalogJsonViewDialog
+          items={editor.definitions}
+          labels={catalogLabels}
+        />
+        <EntityQueryDefinitionsCatalogJsonImportDialog
+          existingItems={editor.definitions}
+          canApply={canReplaceCatalog}
+          importDisabled={!isEnvironmentReady}
+          labels={catalogLabels}
+          onApply={(catalog) => void handleCatalogImport(catalog)}
+        />
+      </div>
     </div>
   );
 

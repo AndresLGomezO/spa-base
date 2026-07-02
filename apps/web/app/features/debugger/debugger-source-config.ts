@@ -6,6 +6,7 @@ export const DEBUGGER_SOURCE_ORDER: readonly DebugEventSource[] = [
   "hookLog",
   "audit",
   "requestPerf",
+  "indexProvision",
 ];
 
 export const DEBUGGER_SOURCE_ROUTE_SLUGS: Record<DebugEventSource, string> = {
@@ -14,6 +15,7 @@ export const DEBUGGER_SOURCE_ROUTE_SLUGS: Record<DebugEventSource, string> = {
   hookLog: "hook-logs",
   audit: "audit",
   requestPerf: "request-performance",
+  indexProvision: "index-provisioning",
 };
 
 export const DEBUGGER_SOURCE_API_NAMES: Record<DebugEventSource, string> = {
@@ -22,6 +24,7 @@ export const DEBUGGER_SOURCE_API_NAMES: Record<DebugEventSource, string> = {
   hookLog: "hookLogs",
   audit: "audit",
   requestPerf: "perf",
+  indexProvision: "indexProvision",
 };
 
 export function debuggerSourceLabelKey(

@@ -12,7 +12,10 @@ export {
 } from "./auth.js";
 export { verifyFirebaseAppCheckToken } from "./app-check.js";
 export { createFirestoreAdminEntityRepository } from "./firestore-admin-entity-repository.js";
-export { createFirestoreEntityQueryExecutor } from "./firestore-entity-query-executor.js";
+export {
+  createFirestoreEntityQueryExecutor,
+  isMissingIndexError,
+} from "./firestore-entity-query-executor.js";
 export type { FirestoreIndexHint } from "./firestore-entity-query-executor.js";
 export {
   buildIndexFromHint,
@@ -62,6 +65,7 @@ export { createFirestoreAdminDataHookRepository } from "./firestore-admin-hook-r
 export { createFirestoreAdminDataHookExecutionRepository } from "./firestore-admin-hook-execution-repository.js";
 export { createFirestoreAdminHookLogMessageRepository } from "./firestore-admin-hook-log-message-repository.js";
 export { createFirestoreAdminRequestPerfLogRepository } from "./firestore-admin-request-perf-log-repository.js";
+export { createFirestoreAdminIndexProvisionEventRepository } from "./firestore-admin-index-provision-event-repository.js";
 export { createFirestoreAdminAuditLogRepository } from "./firestore-admin-audit-log-repository.js";
 export { createFirestoreAdminPlatformRuntimeSettingsRepository } from "./firestore-admin-platform-runtime-settings-repository.js";
 export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admin-metric-definition-repository.js";

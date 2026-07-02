@@ -8,6 +8,7 @@ import { clearModuleRegistries } from "@repo/modules";
 import {
   createInMemoryAuditLogRepository,
   createInMemoryHookLogMessageRepository,
+  createInMemoryIndexProvisionEventRepository,
   createInMemoryRequestPerfLogRepository,
 } from "@repo/firestore-converters";
 
@@ -112,6 +113,15 @@ async function buildTestServer() {
     timestamp: "2026-01-02T08:00:00.000Z",
   });
 
+  const indexProvisionEventRepository =
+    createInMemoryIndexProvisionEventRepository();
+  await indexProvisionEventRepository.create("tenant_a", {
+    timestamp: "2026-01-02T07:00:00.000Z",
+    event: "creating",
+    collection: "deal",
+    tenantId: "tenant_a",
+  });
+
   return {
     server: await buildServer({
       logger: false,
@@ -121,6 +131,7 @@ async function buildTestServer() {
       auditLogRepository,
       hookLogMessageRepository,
       requestPerfLogRepository,
+      indexProvisionEventRepository,
       getRoleCatalog: async () => buildRoleCatalog([]),
       getUserAccessProfile: async () => ({
         platformRole: null,
@@ -161,5 +172,24 @@ describe("debug events integration", () => {
     expect(sources.has("audit")).toBe(true);
     expect(sources.has("hookLog")).toBe(true);
     expect(sources.has("requestPerf")).toBe(true);
+    expect(sources.has("indexProvision")).toBe(true);
+  });
+
+  it("returns index provision events when requested", async () => {
+    const { server } = await buildTestServer();
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/debug/events?sources=indexProvision&limit=20",
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: { items: Array<{ source: string; title: string }> };
+    };
+    expect(
+      body.data.items.some((item) => item.source === "indexProvision"),
+    ).toBe(true);
   });
 });

@@ -103,6 +103,16 @@ export interface EnsureFirestoreIndexesOptions {
   readonly onEnsured?: (index: FirestoreCompositeIndex) => void;
   readonly onError?: (error: unknown, index: FirestoreCompositeIndex) => void;
   readonly concurrency?: number;
+  readonly provisionTenantId?: string;
+  readonly provisionTrigger?: string;
+  readonly onProvisionEvent?: (event: {
+    readonly event: "ensure_requested" | "creating" | "ready" | "error";
+    readonly index: FirestoreCompositeIndex;
+    readonly tenantId?: string;
+    readonly trigger?: string;
+    readonly errorMessage?: string;
+    readonly operationName?: string;
+  }) => void | Promise<void>;
 }
 
 const ensuredSignatures = new Set<string>();
@@ -165,19 +175,45 @@ async function ensureSingleFirestoreIndex(
       (operation as { latestResponse?: { name?: string } }).latestResponse
         ?.name;
     await options.statusStore?.upsertCreating(index, operationName);
+    await options.onProvisionEvent?.({
+      event: "creating",
+      index,
+      tenantId: options.provisionTenantId,
+      trigger: options.provisionTrigger,
+      operationName,
+    });
     options.onEnsured?.(index);
     void operation
       .promise()
       .then(async () => {
         await options.statusStore?.markReady(index);
+        await options.onProvisionEvent?.({
+          event: "ready",
+          index,
+          tenantId: options.provisionTenantId,
+          trigger: options.provisionTrigger,
+        });
       })
       .catch(async (error: unknown) => {
         if (isAlreadyExistsError(error)) {
           await options.statusStore?.markReady(index);
+          await options.onProvisionEvent?.({
+            event: "ready",
+            index,
+            tenantId: options.provisionTenantId,
+            trigger: options.provisionTrigger,
+          });
           return;
         }
         const message = error instanceof Error ? error.message : String(error);
         await options.statusStore?.markError(index, message);
+        await options.onProvisionEvent?.({
+          event: "error",
+          index,
+          tenantId: options.provisionTenantId,
+          trigger: options.provisionTrigger,
+          errorMessage: message,
+        });
         options.onError?.(error, index);
       });
   } catch (error) {
@@ -185,10 +221,23 @@ async function ensureSingleFirestoreIndex(
     if (isAlreadyExistsError(error)) {
       ensuredSignatures.add(signature);
       await options.statusStore?.markReady(index);
+      await options.onProvisionEvent?.({
+        event: "ready",
+        index,
+        tenantId: options.provisionTenantId,
+        trigger: options.provisionTrigger,
+      });
       return;
     }
     const message = error instanceof Error ? error.message : String(error);
     await options.statusStore?.markError(index, message);
+    await options.onProvisionEvent?.({
+      event: "error",
+      index,
+      tenantId: options.provisionTenantId,
+      trigger: options.provisionTrigger,
+      errorMessage: message,
+    });
     options.onError?.(error, index);
   }
 }
@@ -213,6 +262,16 @@ export async function ensureEntityFirestoreIndexes(
   if (indexes.length === 0) {
     return;
   }
+
+  for (const index of indexes) {
+    await options.onProvisionEvent?.({
+      event: "ensure_requested",
+      index,
+      tenantId: options.provisionTenantId,
+      trigger: options.provisionTrigger,
+    });
+  }
+
   await ensureFirestoreIndexes(indexes, options);
 }
 

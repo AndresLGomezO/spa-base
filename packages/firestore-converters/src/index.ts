@@ -157,6 +157,8 @@ export { type HookLogMessageRepository } from "./hook-log-message/repository-con
 export { createInMemoryHookLogMessageRepository } from "./hook-log-message/in-memory-repository.js";
 export { type RequestPerfLogRepository } from "./request-perf-log/repository-contract.js";
 export { createInMemoryRequestPerfLogRepository } from "./request-perf-log/in-memory-repository.js";
+export { type IndexProvisionEventRepository } from "./index-provision-event/repository-contract.js";
+export { createInMemoryIndexProvisionEventRepository } from "./index-provision-event/in-memory-repository.js";
 export { type AuditLogRepository } from "./audit-log/repository-contract.js";
 export { createInMemoryAuditLogRepository } from "./audit-log/in-memory-repository.js";
 export { type PlatformRuntimeSettingsRepository } from "./platform-runtime-settings/repository-contract.js";

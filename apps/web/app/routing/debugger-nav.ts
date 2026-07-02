@@ -1,5 +1,6 @@
 import {
   Bot,
+  Database,
   Gauge,
   ScrollText,
   Shield,
@@ -23,6 +24,7 @@ const DEBUGGER_SOURCE_NAV_IDS: Record<DebugEventSource, string> = {
   hookLog: "debugger-hook-logs",
   audit: "debugger-audit",
   requestPerf: "debugger-request-performance",
+  indexProvision: "debugger-index-provisioning",
 };
 
 const DEBUGGER_SOURCE_NAV_LABEL_KEYS: Record<
@@ -34,6 +36,7 @@ const DEBUGGER_SOURCE_NAV_LABEL_KEYS: Record<
   hookLog: "debuggerHookLogs",
   audit: "debuggerAudit",
   requestPerf: "debuggerRequestPerf",
+  indexProvision: "debuggerIndexProvision",
 };
 
 const DEBUGGER_SOURCE_ICONS: Record<DebugEventSource, LucideIcon> = {
@@ -42,6 +45,7 @@ const DEBUGGER_SOURCE_ICONS: Record<DebugEventSource, LucideIcon> = {
   hookLog: ScrollText,
   audit: Shield,
   requestPerf: Gauge,
+  indexProvision: Database,
 };
 
 export function canAccessDebuggerSource(
@@ -64,6 +68,7 @@ export function canAccessDebuggerSource(
       return hasPermission("hook.read", permissions, { isSuperAdmin });
     case "audit":
     case "requestPerf":
+    case "indexProvision":
       return false;
     default:
       return false;

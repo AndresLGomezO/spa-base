@@ -20,6 +20,7 @@ import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
 import { parseOrFormatError } from "../crud/validation.js";
+import { summarizeTenantIndexProvisioningStatus } from "./tenant-index-status.js";
 
 const statusQuerySchema = z.object({
   collection: z.string().trim().min(1),
@@ -94,6 +95,33 @@ export async function registerIndexRoutes(
 
       const entities = options.entityRuntime.getEntitiesForTenant(tenantId);
       return reply.send(successEnvelope(planIndexesForTenant(entities)));
+    },
+  );
+
+  app.get(
+    `${basePath}/tenant-status`,
+    { preHandler: [options.authenticate] },
+    async (request, reply) => {
+      if (!options.statusStore) {
+        return replyWithError(
+          reply,
+          501,
+          ApiErrorCode.QUERY_UNSUPPORTED,
+          "Index status tracking is not configured.",
+        );
+      }
+
+      const tenantId = requireRequestTenant(request, reply);
+      if (!tenantId) {
+        return;
+      }
+
+      const summary = await summarizeTenantIndexProvisioningStatus(
+        options.statusStore,
+        options.entityRuntime,
+        tenantId,
+      );
+      return reply.send(successEnvelope(summary));
     },
   );
 

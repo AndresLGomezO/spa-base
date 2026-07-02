@@ -25,6 +25,7 @@ import { createRequirePermission } from "../rbac/create-require-permission.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
 import { replaceEntityDefinitionsCatalog } from "./replace-entity-definitions-catalog.js";
+import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
 import {
   syncEntityAiContextsForTenant,
   type SyncTenantAiContextsDeps,
@@ -37,6 +38,7 @@ interface RegisterEntityDefinitionRoutesOptions {
   readonly entityCategoryRepository: EntityCategoryRepository;
   readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly tenantAiContextSync?: SyncTenantAiContextsDeps;
+  readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
 const tenantIdQuerySchema = z.object({
@@ -179,6 +181,12 @@ export async function registerEntityDefinitionRoutes(
       }
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "catalog_replace",
+          );
+        }
         assertDynamicNameAvailable(parsedBody.data.name);
         await options.entityRuntime.loadTenantDefinitions(tenantId);
         const availableNames = getAvailableEntityNamesForTenant(
@@ -221,6 +229,9 @@ export async function registerEntityDefinitionRoutes(
         }
         return reply.status(201).send(successEnvelope(created));
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof DynamicEntityError || error instanceof Error
             ? error.message
@@ -279,6 +290,12 @@ export async function registerEntityDefinitionRoutes(
       }
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "catalog_replace",
+          );
+        }
         const next = applyDescription(
           applyDisplayFieldToRecord(
             {
@@ -331,6 +348,9 @@ export async function registerEntityDefinitionRoutes(
         }
         return reply.send(successEnvelope(updated));
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof DynamicEntityError || error instanceof Error
             ? error.message
@@ -372,6 +392,12 @@ export async function registerEntityDefinitionRoutes(
       if (!tenantId) return;
 
       try {
+        if (options.tenantIndexGuard) {
+          await options.tenantIndexGuard.assertEnvironmentReady(
+            tenantId,
+            "catalog_replace",
+          );
+        }
         const result = await replaceEntityDefinitionsCatalog(
           {
             entityRuntime: options.entityRuntime,
@@ -399,6 +425,9 @@ export async function registerEntityDefinitionRoutes(
           }),
         );
       } catch (error) {
+        if (options.tenantIndexGuard?.mapError(reply, error)) {
+          return;
+        }
         const message =
           error instanceof DynamicEntityError || error instanceof Error
             ? error.message

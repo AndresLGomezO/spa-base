@@ -13,6 +13,7 @@ export const DEBUGGER_STATUSES_BY_SOURCE: Record<
   hookLog: ["info", "error"],
   audit: ["info"],
   requestPerf: ["success", "error"],
+  indexProvision: ["running", "success", "error", "info"],
 };
 
 /** Badge surfaces — aligned with CardFieldBadge / theme badge tokens. */

@@ -71,6 +71,7 @@
     "debuggerHookLogs": "Hook Logs",
     "debuggerAudit": "Audit",
     "debuggerRequestPerf": "Request Performance",
+    "debuggerIndexProvision": "Index Provisioning",
     "systemConfiguration": "System configuration"
   },
   "debugger": {
@@ -83,7 +84,8 @@
       "hookExecution": "Hook Executions",
       "hookLog": "Hook Logs",
       "audit": "Audit",
-      "requestPerf": "Request Performance"
+      "requestPerf": "Request Performance",
+      "indexProvision": "Index Provisioning"
     },
     "status": {
       "success": "Success",
@@ -129,7 +131,13 @@
       "rbacMs": "RBAC",
       "queryMs": "Query",
       "hooksMs": "Hooks",
-      "totalMs": "Total"
+      "totalMs": "Total",
+      "collection": "Collection",
+      "eventType": "Event",
+      "blockedOperation": "Blocked operation",
+      "trigger": "Trigger",
+      "signature": "Signature",
+      "errorMessage": "Error"
     },
     "actions": {
       "refresh": "Refresh",
@@ -970,6 +978,37 @@
     "errorStepConsole": "Open the index link from the server error (if shown) and create or fix the index manually.",
     "errorStepConsoleGeneric": "Check Firebase Console → Firestore → Indexes for this collection group.",
     "errorStepModel": "Edit the entity to remove unused relation filters, or contact an administrator."
+  },
+  "indexProvisioning": {
+    "environmentBlocked": {
+      "retryHint": "Track progress in the",
+      "debuggerLink": "Debugger → Index provisioning",
+      "import": {
+        "title": "Import unavailable while indexes are building",
+        "description": "Firestore indexes are still being created. Wait until the environment is ready before importing."
+      },
+      "backfill": {
+        "title": "Backfill unavailable while indexes are building",
+        "description": "Metric backfill needs entity collections that may not be queryable yet."
+      },
+      "saveDefinition": {
+        "title": "Saving is unavailable while indexes are building",
+        "description": "Entity definition changes trigger index updates. Wait until current indexes finish building."
+      },
+      "generic": {
+        "title": "This action is unavailable while indexes are building",
+        "description": "The tenant environment is still provisioning Firestore indexes."
+      }
+    },
+    "globalBanner": {
+      "buildingTitle": "Indexes are building",
+      "buildingProgress": "{{creating}} indexes building across {{collections}} collections ({{collectionList}})",
+      "errorTitle": "Index provisioning error",
+      "errorSubtitle": "Some indexes failed to build. Affected collections: {{collectionList}}.",
+      "openDebugger": "Open Debugger",
+      "minimize": "Minimize banner",
+      "expand": "Expand banner"
+    }
   },
   "entity": {
     "create": "Create",

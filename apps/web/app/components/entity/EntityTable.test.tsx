@@ -144,26 +144,37 @@ describe("EntityTable", () => {
     expect(screen.queryByText("Jane Doe")).not.toBeInTheDocument();
   });
 
-  it("shows list error for COMPOSITE_INDEX_REQUIRED when indexes are not building", () => {
+  it("shows index building panel for COMPOSITE_INDEX_REQUIRED while indexes catch up", () => {
     const compositeIndexMessage =
-      "A Firestore index is required for this query. Create it from the model or Firebase console.";
+      "This query requires a composite index. Indexes may still be building.";
 
-    renderTable({
-      items: [],
-      totalCount: 0,
-      isLoading: false,
-      error: compositeIndexMessage,
-      listError: Object.assign(new Error(compositeIndexMessage), {
-        name: "ApiClientError",
-        statusCode: 503,
-        code: "COMPOSITE_INDEX_REQUIRED",
-        fieldErrors: {},
-      }) as ApiClientError,
-    });
+    renderTable(
+      {
+        items: [],
+        totalCount: 0,
+        isLoading: false,
+        error: compositeIndexMessage,
+        listError: Object.assign(new Error(compositeIndexMessage), {
+          name: "ApiClientError",
+          statusCode: 503,
+          code: "COMPOSITE_INDEX_REQUIRED",
+          fieldErrors: {},
+        }) as ApiClientError,
+      },
+      {
+        phase: "building",
+        isBlocking: true,
+        isLoading: false,
+        isFetching: false,
+        summary: undefined,
+        error: null,
+        refresh: vi.fn(),
+      },
+    );
 
-    expect(screen.getByText(compositeIndexMessage)).toBeInTheDocument();
     expect(
-      screen.queryByLabelText("Preparing database indexes"),
-    ).not.toBeInTheDocument();
+      screen.getByLabelText("Preparing database indexes"),
+    ).toBeInTheDocument();
+    expect(screen.queryByText(compositeIndexMessage)).not.toBeInTheDocument();
   });
 });

@@ -11,6 +11,8 @@ import {
   type AdminTenant,
 } from "../../lib/admin-client";
 import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
+import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
+import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 import { EditTenantNameModal } from "./EditTenantNameModal";
 import { TenantBundleJsonImportDialog } from "./TenantBundleJsonImportDialog";
 import { TenantBundleJsonViewDialog } from "./TenantBundleJsonViewDialog";
@@ -34,6 +36,7 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   const [isImporting, setIsImporting] = useState(false);
 
   const bundleLabels = useMemo(() => tenantBundleJsonLabels(t), [t]);
+  const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
   const loadTenant = useCallback(async () => {
     setIsLoading(true);
@@ -86,7 +89,7 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   }
 
   async function handleConfirmImport() {
-    if (!pendingBundle) {
+    if (!pendingBundle || !isEnvironmentReady) {
       return;
     }
 
@@ -177,11 +180,18 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
             type="button"
             variant="outline"
             size="sm"
+            disabled={!isEnvironmentReady}
             onClick={() => setImportDialogOpen(true)}
           >
             {bundleLabels.importTrigger}
           </Button>
         </div>
+        {!isEnvironmentReady ? (
+          <IndexEnvironmentBlockedNotice
+            feature="import"
+            buildingCollections={buildingCollections}
+          />
+        ) : null}
       </section>
 
       <Button

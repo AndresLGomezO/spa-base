@@ -206,7 +206,7 @@ function buildSuggestedIndexFields(
   return [...fields];
 }
 
-function isMissingIndexError(error: unknown): boolean {
+export function isMissingIndexError(error: unknown): boolean {
   if (!error || typeof error !== "object") {
     return false;
   }
@@ -455,21 +455,54 @@ class FirestoreEntityQueryExecutor<
           sortDirection: "ASCENDING",
         });
 
-      const firestoreQuery = canUseBaseline
-        ? buildFirestoreQuery(collectionRef, baselineQuery)
-        : buildFirestoreQuery(collectionRef, {
-            ...baselineQuery,
-            filters: [],
-          });
+      const readSnapshot = async (
+        queryToRun: NormalizedEntityQuery,
+      ): Promise<Record<string, unknown>[]> => {
+        const snapshot = await buildFirestoreQuery(collectionRef, queryToRun)
+          .limit(maxDocs)
+          .get();
+        return snapshot.docs.map(
+          (doc) =>
+            this.executorConfig.converter.read(doc.data()) as Record<
+              string,
+              unknown
+            >,
+        );
+      };
 
-      const snapshot = await firestoreQuery.limit(maxDocs).get();
-      return snapshot.docs.map(
-        (doc) =>
-          this.executorConfig.converter.read(doc.data()) as Record<
-            string,
-            unknown
-          >,
-      );
+      const ownershipUserId = ownershipFilters.find(
+        (filter) =>
+          filter.field === "accessUserIds" &&
+          filter.operator === "array-contains" &&
+          typeof filter.value === "string",
+      )?.value;
+
+      try {
+        if (canUseBaseline) {
+          return await readSnapshot(baselineQuery);
+        }
+        return await readSnapshot({ ...baselineQuery, filters: [] });
+      } catch (error) {
+        if (!isMissingIndexError(error)) {
+          throw error;
+        }
+
+        let items = await readSnapshot({ ...baselineQuery, filters: [] });
+        if (
+          !tenantWideRead &&
+          typeof ownershipUserId === "string" &&
+          ownershipUserId.length > 0
+        ) {
+          items = items.filter((record) => {
+            const accessUserIds = record.accessUserIds;
+            return (
+              Array.isArray(accessUserIds) &&
+              accessUserIds.includes(ownershipUserId)
+            );
+          });
+        }
+        return items;
+      }
     };
 
     const cache = this.executorConfig.inMemoryListSnapshotCache;

@@ -7,7 +7,11 @@ import {
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
 import { seedTenantRolesFromTemplates } from "../seed-tenant-roles-from-templates.js";
 import { activateAndBackfillRatesMetrics } from "./backfill-rates-metrics.js";
-import { RATES_TENANT_ID, RATES_TENANT_NAME } from "./constants.js";
+import {
+  RATES_TENANT_ID,
+  RATES_TENANT_NAME,
+  RATES_TEST_USER_EMAIL,
+} from "./constants.js";
 import { seedRatesBusinessRecords } from "./records/index.js";
 import { buildRatesCustomRoles } from "./roles.js";
 import { seedRatesCatalogs } from "./seed-rates-catalogs.js";
@@ -94,7 +98,10 @@ async function seedRatesTenant(
     );
   }
 
-  if (demoOwnerId) {
+  if (demoOwnerId && demoOwnerStrategy === "localTestUser") {
+    console.log(
+      `[seed] Seeding fictional demo business records for ${RATES_TEST_USER_EMAIL}...`,
+    );
     await seedRatesBusinessRecords(
       tenantId,
       firebaseAdminConfig,

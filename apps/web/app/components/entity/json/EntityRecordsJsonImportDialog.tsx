@@ -22,6 +22,7 @@ interface EntityRecordsJsonImportDialogProps {
   readonly onApply: (body: unknown) => Promise<void>;
   readonly triggerSize?: "sm" | "md" | "lg";
   readonly applying?: boolean;
+  readonly importDisabled?: boolean;
 }
 
 export function EntityRecordsJsonImportDialog({
@@ -30,6 +31,7 @@ export function EntityRecordsJsonImportDialog({
   onApply,
   triggerSize = "sm",
   applying = false,
+  importDisabled = false,
 }: EntityRecordsJsonImportDialogProps) {
   const { t } = useTranslation("common");
   const [open, setOpen] = useState(false);
@@ -113,6 +115,7 @@ export function EntityRecordsJsonImportDialog({
         type="button"
         variant="outline"
         size={triggerSize}
+        disabled={importDisabled}
         onClick={() => setOpen(true)}
       >
         {labels.importTrigger}

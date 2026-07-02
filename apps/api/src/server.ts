@@ -45,6 +45,7 @@ import {
   createInMemoryDataHookExecutionRepository,
   createInMemoryHookLogMessageRepository,
   createInMemoryRequestPerfLogRepository,
+  createInMemoryIndexProvisionEventRepository,
   createInMemoryAuditLogRepository,
   createInMemoryPlatformRuntimeSettingsRepository,
   createInMemoryMetricDefinitionRepository,
@@ -70,6 +71,7 @@ import {
   createFirestoreAdminDataHookExecutionRepository,
   createFirestoreAdminHookLogMessageRepository,
   createFirestoreAdminRequestPerfLogRepository,
+  createFirestoreAdminIndexProvisionEventRepository,
   createFirestoreAdminAuditLogRepository,
   createFirestoreAdminPlatformRuntimeSettingsRepository,
   createFirestoreAdminJoinCollectionRepository,
@@ -118,6 +120,11 @@ import { registerTenantDashboardLayoutRoutes } from "./tenant-dashboard-layout/r
 import { registerEntityCategoryRoutes } from "./entity-categories/register-entity-category-routes.js";
 import { registerEntityDefinitionRoutes } from "./entities/register-entity-definition-routes.js";
 import { registerIndexRoutes } from "./indexes/register-index-routes.js";
+import {
+  createIndexProvisionEventWriter,
+  indexProvisionEventFromCompositeIndex,
+} from "./indexes/index-provision-events.js";
+import { createTenantIndexGuard } from "./indexes/create-tenant-index-guard.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { createHookTasksClient } from "./hooks/hook-tasks.client.js";
@@ -167,6 +174,7 @@ interface BuildServerOptions {
   readonly hookExecutionRepository?: DataHookExecutionRepository;
   readonly hookLogMessageRepository?: HookLogMessageRepository;
   readonly requestPerfLogRepository?: RequestPerfLogRepository;
+  readonly indexProvisionEventRepository?: import("@repo/firestore-converters").IndexProvisionEventRepository;
   readonly platformRuntimeSettingsRepository?: PlatformRuntimeSettingsRepository;
   readonly auditLogRepository?: AuditLogRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
@@ -349,6 +357,16 @@ export async function buildServer(options: BuildServerOptions = {}) {
       ? createInMemoryRequestPerfLogRepository()
       : createFirestoreAdminRequestPerfLogRepository(firebaseAdminConfig));
 
+  const indexProvisionEventRepository =
+    options.indexProvisionEventRepository ??
+    (options.repositories
+      ? createInMemoryIndexProvisionEventRepository()
+      : createFirestoreAdminIndexProvisionEventRepository(firebaseAdminConfig));
+
+  const recordIndexProvisionEvent = createIndexProvisionEventWriter(
+    indexProvisionEventRepository,
+  );
+
   const auditLogRepository =
     options.auditLogRepository ??
     (options.repositories
@@ -480,6 +498,14 @@ export async function buildServer(options: BuildServerOptions = {}) {
     indexProvisioningExcludedTenants: new Set([RATES_TENANT_ID]),
     indexStatusStore,
     onIndexHint: (hint) => {
+      void recordIndexProvisionEvent({
+        timestamp: new Date().toISOString(),
+        event: "operation_blocked",
+        collection: hint.collection,
+        blockedOperation: "list_query",
+        tenantId: hint.tenantId,
+        trigger: "missing_index_hint",
+      });
       server.log.warn(
         {
           collection: hint.collection,
@@ -507,8 +533,24 @@ export async function buildServer(options: BuildServerOptions = {}) {
         "Failed to ensure Firestore composite index",
       );
     },
+    onProvisionEvent: async (event) => {
+      await recordIndexProvisionEvent(
+        indexProvisionEventFromCompositeIndex(event.index, event.event, {
+          tenantId: event.tenantId,
+          trigger: event.trigger,
+          errorMessage: event.errorMessage,
+          operationName: event.operationName,
+        }),
+      );
+    },
     repositories: options.repositories,
     queryExecutors: options.queryExecutors,
+  });
+
+  const tenantIndexGuard = createTenantIndexGuard({
+    statusStore: indexStatusStore,
+    entityRuntime,
+    recordEvent: recordIndexProvisionEvent,
   });
 
   const tenantAiContextSync: SyncTenantAiContextsDeps | undefined =
@@ -602,6 +644,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     registeredUserRepository,
     permissionDeps,
     tenantAiContextSync,
+    tenantIndexGuard,
+    entityRuntime,
   });
 
   await server.register(platformRuntimeSettingsRoutes, {
@@ -663,6 +707,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityCategoryRepository,
     firebaseAdminConfig,
     tenantAiContextSync,
+    tenantIndexGuard,
   });
 
   await registerEntityCategoryRoutes(server, {
@@ -678,6 +723,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     hookRuntime,
     hookExecutionRepository,
+    tenantIndexGuard,
   });
 
   await registerAiRoutes(server, {
@@ -703,6 +749,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     hookLogMessageRepository,
     auditLogRepository,
     requestPerfLogRepository,
+    indexProvisionEventRepository,
+    entityRuntime,
   });
 
   await registerUiBuilderAiSuggestionRoutes(server, {
@@ -716,6 +764,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     metricRuntime,
+    tenantIndexGuard,
   });
 
   await registerEntityQueryDefinitionRoutes(server, {
@@ -723,6 +772,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     entityQueryDefinitionRepository,
+    tenantIndexGuard,
   });
 
   await registerCustomViewRoutes(server, {
@@ -732,6 +782,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     customViewRepository,
     entityQueryDefinitionRepository,
     entityCategoryRepository,
+    tenantIndexGuard,
   });
 
   await registerMetricReadRoutes(server, {
@@ -789,6 +840,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
       relations: relationContext.hooksFor(entity.name),
       queryEngine: queryContext.queryEngine,
       indexStatusStore,
+      indexProvisionEventWriter: recordIndexProvisionEvent,
       referencePopulator: {
         getEntityDefinition: (name, tenantId) =>
           entityRuntime.getEntityDefinition(name, tenantId),
@@ -828,8 +880,10 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     relationContext,
+    queryEngine: queryContext.queryEngine,
     crudHooks,
     aggregation: aggregationEmitter,
+    tenantIndexGuard,
   });
 
   if (!options.repositories) {
