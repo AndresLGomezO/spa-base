@@ -5,7 +5,16 @@
       "queryScope": "COLLECTION",
       "fields": [
         { "fieldPath": "hookId", "order": "ASCENDING" },
-        { "fieldPath": "startedAt", "order": "DESCENDING" }
+        { "fieldPath": "startedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "__data_hook_executions",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "startedAt", "order": "DESCENDING" },
+        { "fieldPath": "id", "order": "DESCENDING" }
       ]
     }
   ],

@@ -138,13 +138,41 @@ export type {
 export {
   DATA_HOOK_EXECUTIONS_COLLECTION,
   DATA_HOOK_EXECUTION_STATUSES,
+  DATA_HOOK_EXECUTION_TERMINAL_STATUSES,
+  DATA_HOOK_EXECUTION_ACTIVE_STATUSES,
   createDataHookExecutionInputSchema,
+  updateDataHookExecutionPatchSchema,
   dataHookExecutionRecordSchema,
 } from "./data-hook-execution.js";
+export {
+  formatHookExecutionSubtitle,
+  formatHookExecutionWritesSummary,
+  totalHookExecutionWrites,
+} from "./hook-execution-presentation.js";
+export {
+  MAX_HOOK_ACTION_TRACE_ENTRIES,
+  entityWriteCountsSchema,
+  dataHookActionTraceEntrySchema,
+  dataHookExecutionMetricsSchema,
+  HookWriteMetricsCollector,
+  wrapHookEntityServicesWithMetrics,
+  appendActionTraceEntry,
+  buildExecutionMetricsSnapshot,
+} from "./hook-execution-metrics.js";
+export type {
+  EntityWriteCounts,
+  DataHookActionTraceEntry,
+  DataHookExecutionMetrics,
+} from "./hook-execution-metrics.js";
 export type {
   DataHookExecutionStatus,
+  DataHookExecutionTerminalStatus,
+  DataHookExecutionActiveStatus,
+  DataHookExecutionBaseFields,
   CreateDataHookExecutionInput,
+  UpdateDataHookExecutionPatch,
   DataHookExecutionRecord,
+  DataHookExecutionRecorder,
 } from "./data-hook-execution.js";
 export type { DataHookJobPayload } from "./data-hook-job.js";
 export type {

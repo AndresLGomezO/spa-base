@@ -31,7 +31,10 @@ import {
   type ReferencePopulatorDeps,
 } from "../access/reference-populator.js";
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
-import { createRecordDataHookExecution } from "../hooks/record-data-hook-execution.js";
+import {
+  createDataHookExecutionRecorderForTenant,
+  createRecordDataHookExecution,
+} from "../hooks/record-data-hook-execution.js";
 import { measureQueryTiming } from "../observability/request-timing.js";
 import { apiEnv } from "../config/env.js";
 import {
@@ -335,6 +338,10 @@ function runCrudEntityHooks(
     ...(crudHooks?.hookExecutionRepository && ctx?.tenantId
       ? {
           recordDataHookExecution: createRecordDataHookExecution(
+            crudHooks.hookExecutionRepository,
+            ctx.tenantId,
+          ),
+          dataHookExecutionRecorder: createDataHookExecutionRecorderForTenant(
             crudHooks.hookExecutionRepository,
             ctx.tenantId,
           ),

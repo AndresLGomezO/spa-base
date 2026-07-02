@@ -1378,6 +1378,69 @@ describe("compileDataHook", () => {
     await new Promise((resolve) => setTimeout(resolve, 0));
     expect(info).toHaveBeenCalled();
   });
+
+  it("logs sendNotification with the evaluated message and hook context", async () => {
+    const info = vi.fn();
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      phase: "after",
+      trigger: { operation: "create" },
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "Origination date missing" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loanDetails.afterCreate",
+        entityName: "loanDetails",
+        current: { id: "loan_1" },
+        services: {
+          logger: { info, error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(info).toHaveBeenCalledWith("Origination date missing", {
+      hookId: "hook_1",
+      hookName: "Set status",
+      entityName: "loanDetails",
+      event: "loanDetails.afterCreate",
+      tenantId: "tenant_a",
+      action: "sendNotification",
+      recordId: "loan_1",
+    });
+  });
+
+  it("skips sendNotification logging when the evaluated message is empty", async () => {
+    const info = vi.fn();
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      phase: "after",
+      trigger: { operation: "create" },
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loanDetails.afterCreate",
+        entityName: "loanDetails",
+        services: {
+          logger: { info, error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(info).not.toHaveBeenCalled();
+  });
 });
 
 describe("callWebhook action", () => {
@@ -1438,28 +1501,45 @@ describe("callWebhook action", () => {
 });
 
 describe("execution logging", () => {
-  it("records success when recordDataHookExecution is present", async () => {
-    const record = vi.fn(async () => undefined);
+  function createMockRecorder() {
+    const recorder = {
+      createPending: vi.fn(async () => ({ id: "exec_pending" })),
+      markRunning: vi.fn(async () => undefined),
+      beginRunning: vi.fn(async () => ({ id: "exec_running" })),
+      finish: vi.fn(async () => undefined),
+      createTerminal: vi.fn(async () => undefined),
+    };
+    return recorder;
+  }
+
+  it("records success when dataHookExecutionRecorder is present", async () => {
+    const recorder = createMockRecorder();
     await runDataHook(sampleDefinition, {
       ...createContext(),
       services: {
-        recordDataHookExecution: record,
+        dataHookExecutionRecorder: recorder,
         logger: { info: vi.fn(), error: vi.fn() },
       },
     });
 
-    expect(record).toHaveBeenCalledWith(
+    expect(recorder.beginRunning).toHaveBeenCalledWith(
       expect.objectContaining({
         hookId: "hook_1",
-        status: "success",
         phase: "before",
         operation: "create",
+      }),
+      undefined,
+    );
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "exec_running",
+        status: "success",
       }),
     );
   });
 
   it("records skipped when condition is false", async () => {
-    const record = vi.fn(async () => undefined);
+    const recorder = createMockRecorder();
     await runDataHook(
       {
         ...sampleDefinition,
@@ -1473,22 +1553,23 @@ describe("execution logging", () => {
       {
         ...createContext(),
         services: {
-          recordDataHookExecution: record,
+          dataHookExecutionRecorder: recorder,
           logger: { info: vi.fn(), error: vi.fn() },
         },
       },
     );
 
-    expect(record).toHaveBeenCalledWith(
+    expect(recorder.createTerminal).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "skipped",
         error: "Condition evaluated to false.",
       }),
     );
+    expect(recorder.beginRunning).not.toHaveBeenCalled();
   });
 
   it("records error when action fails", async () => {
-    const record = vi.fn(async () => undefined);
+    const recorder = createMockRecorder();
     await expect(
       runDataHook(
         {
@@ -1503,16 +1584,119 @@ describe("execution logging", () => {
         {
           ...createContext(),
           services: {
-            recordDataHookExecution: record,
+            dataHookExecutionRecorder: recorder,
             logger: { info: vi.fn(), error: vi.fn() },
           },
         },
       ),
     ).rejects.toThrow(HookExecutionError);
 
-    expect(record).toHaveBeenCalledWith(
+    expect(recorder.finish).toHaveBeenCalledWith(
       expect.objectContaining({
+        id: "exec_running",
         status: "error",
+      }),
+    );
+  });
+
+  it("records write metrics and action trace for createRecords", async () => {
+    const recorder = createMockRecorder();
+    const create = vi.fn<
+      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
+    >(async () => ({ id: "c" }));
+
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        phase: "after",
+        trigger: { operation: "create" },
+        actions: [
+          {
+            type: "createRecords",
+            entity: "commitment",
+            count: { kind: "literal", value: 3 },
+            data: {
+              sequence: { kind: "var", name: "loopIndex" },
+            },
+          },
+        ],
+      },
+      {
+        ...createContext({
+          event: "loan.afterCreate",
+          services: {
+            entities: {
+              create,
+              update: vi.fn(),
+              list: vi.fn(),
+              delete: vi.fn(),
+              get: vi.fn(),
+            },
+            dataHookExecutionRecorder: recorder,
+            logger: { info: vi.fn(), error: vi.fn() },
+          },
+        }),
+      },
+    );
+
+    expect(create).toHaveBeenCalledTimes(3);
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        status: "success",
+        writesCreated: 3,
+        writesByEntity: {
+          commitment: { created: 3, updated: 0, deleted: 0 },
+        },
+        actionTrace: [
+          expect.objectContaining({
+            type: "createRecords",
+            entity: "commitment",
+            count: 3,
+            durationMs: expect.any(Number),
+          }),
+        ],
+      }),
+    );
+  });
+
+  it("creates pending execution when queued hook is enqueued", async () => {
+    const enqueue = vi.fn(async () => undefined);
+    const recorder = createMockRecorder();
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      id: "hook_queued",
+      phase: "after",
+      trigger: { operation: "create" },
+      execution: "queued",
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "queued" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loan.afterCreate",
+        services: {
+          enqueueDataHookJob: enqueue,
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      }),
+    );
+
+    expect(recorder.createPending).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookId: "hook_queued",
+        executionMode: "queued",
+      }),
+    );
+    expect(enqueue).toHaveBeenCalledWith(
+      expect.objectContaining({
+        hookId: "hook_queued",
+        executionId: "exec_pending",
       }),
     );
   });

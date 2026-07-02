@@ -681,7 +681,23 @@ POST JSON to an external HTTPS URL.
 
 ### Execution logs
 
-When the runtime provides a log recorder, each hook run writes a document to tenant collection `__data_hook_executions` with status `success`, `error`, or `skipped`. List recent entries via `GET /api/data-hooks/:id/executions`.
+When the runtime provides a log recorder, each hook run writes a document to tenant collection `__data_hook_executions` with status `success`, `error`, or `skipped`. List recent entries via `GET /api/data-hooks/:id/executions` (cursor-paginated with `nextCursor`).
+
+**Executions vs records created:** one execution is one run of one hook for one trigger context. Actions such as `createRecords` may create many child documents inside that single execution. The debugger and execution list show **runs**, not one row per child document.
+
+Each execution document includes:
+
+| Field | Meaning |
+|-------|---------|
+| `hookId`, `hookName`, `entityName`, `event`, `phase`, `operation` | Trigger context |
+| `recordId` | Trigger record id (not children created) |
+| `chainDepth` | Nesting depth when chained hooks fire |
+| `durationMs`, `status`, `error`, `executionMode` | Outcome and cost |
+| `writesCreated`, `writesUpdated`, `writesDeleted` | Total writes during the run |
+| `writesByEntity` | Per-entity write breakdown |
+| `actionTrace` | Per-action timing (capped at 50 entries); `createRecords` includes evaluated `count` |
+
+Use the debugger **Hook executions** source for paginated history, write totals in list subtitles, and per-run detail (writes breakdown, action trace). Per-hook **Recent executions** appears in Data Hook settings.
 
 ### RBAC and chaining
 

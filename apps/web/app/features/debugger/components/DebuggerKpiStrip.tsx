@@ -2,13 +2,17 @@ import type { LucideIcon } from "lucide-react";
 import {
   CheckCircle2,
   Clock,
+  Cloud,
+  FilePlus,
   Hourglass,
   Info,
   Layers,
   Loader2,
   MinusCircle,
+  Pencil,
   Percent,
   Timer,
+  Trash2,
   Users,
   XCircle,
 } from "lucide-react";
@@ -25,6 +29,7 @@ export interface DebuggerKpiItem {
   readonly key: string;
   readonly label: string;
   readonly value: string | number;
+  readonly subValue?: string;
 }
 
 const KPI_ICON_CONFIG: Record<
@@ -92,6 +97,25 @@ const KPI_ICON_CONFIG: Record<
     icon: Hourglass,
     iconClass: "bg-badge-warning text-badge-warning-foreground",
   },
+  queuedPending: {
+    icon: Hourglass,
+    iconClass: "bg-badge-warning text-badge-warning-foreground",
+  },
+  inlineRunning: {
+    icon: Loader2,
+    iconClass: "bg-badge-warning text-badge-warning-foreground",
+    spin: true,
+  },
+  deferredRunning: {
+    icon: Timer,
+    iconClass: "bg-badge-warning text-badge-warning-foreground",
+    spin: true,
+  },
+  cloudRunning: {
+    icon: Cloud,
+    iconClass: "bg-badge-info text-badge-info-foreground",
+    spin: true,
+  },
   info: {
     icon: Info,
     iconClass: "bg-badge-info text-badge-info-foreground",
@@ -99,6 +123,22 @@ const KPI_ICON_CONFIG: Record<
   actors: {
     icon: Users,
     iconClass: "bg-muted text-muted-foreground",
+  },
+  writesCreated: {
+    icon: FilePlus,
+    iconClass: "bg-badge-success text-badge-success-foreground",
+  },
+  writesUpdated: {
+    icon: Pencil,
+    iconClass: "bg-badge-info text-badge-info-foreground",
+  },
+  writesDeleted: {
+    icon: Trash2,
+    iconClass: "bg-badge-danger text-badge-danger-foreground",
+  },
+  totalWrites: {
+    icon: Layers,
+    iconClass: "bg-muted text-foreground",
   },
 };
 
@@ -156,9 +196,16 @@ export function DebuggerKpiStrip({
                 <Text className="text-muted-foreground truncate text-[10px] font-medium uppercase tracking-wide">
                   {item.label}
                 </Text>
-                <Text className="text-lg font-semibold tabular-nums leading-tight">
-                  {item.value}
-                </Text>
+                <div className="flex items-baseline gap-1.5">
+                  <Text className="text-lg font-semibold tabular-nums leading-tight">
+                    {item.value}
+                  </Text>
+                  {item.subValue ? (
+                    <Text className="text-muted-foreground text-xs tabular-nums">
+                      {item.subValue}
+                    </Text>
+                  ) : null}
+                </div>
               </div>
             </div>
           </Card>

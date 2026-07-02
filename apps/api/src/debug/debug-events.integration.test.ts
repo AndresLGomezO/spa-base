@@ -7,6 +7,7 @@ import { clearHookRegistry } from "@repo/hooks";
 import { clearModuleRegistries } from "@repo/modules";
 import {
   createInMemoryAuditLogRepository,
+  createInMemoryDataHookExecutionRepository,
   createInMemoryHookLogMessageRepository,
   createInMemoryIndexProvisionEventRepository,
   createInMemoryRequestPerfLogRepository,
@@ -82,6 +83,9 @@ vi.mock("@repo/gcp-firebase", () => ({
 
 async function buildTestServer() {
   const runtime = createInMemoryCrudRuntime();
+  const now = Date.now();
+  const minutesAgo = (minutes: number) =>
+    new Date(now - minutes * 60 * 1000).toISOString();
   const auditLogRepository = createInMemoryAuditLogRepository();
   auditLogRepository.seed({
     id: "audit_1",
@@ -90,16 +94,23 @@ async function buildTestServer() {
     entity: "deal",
     recordId: "deal_1",
     actorId: "user_123",
-    timestamp: "2026-01-02T10:00:00.000Z",
+    timestamp: minutesAgo(180),
   });
 
   const hookLogMessageRepository = createInMemoryHookLogMessageRepository();
   await hookLogMessageRepository.create("tenant_a", {
     level: "info",
-    message: "Data hook notification",
+    message: "Origination date missing",
     hookId: "hook_1",
     entityName: "deal",
-    timestamp: "2026-01-02T09:00:00.000Z",
+    timestamp: minutesAgo(200),
+    meta: {
+      hookId: "hook_1",
+      hookName: "Notify deal",
+      entityName: "deal",
+      event: "deal.afterCreate",
+      action: "sendNotification",
+    },
   });
 
   const requestPerfLogRepository = createInMemoryRequestPerfLogRepository();
@@ -111,16 +122,96 @@ async function buildTestServer() {
     queryMs: 2,
     hooksMs: 3,
     totalMs: 10,
-    timestamp: "2026-01-02T08:00:00.000Z",
+    timestamp: minutesAgo(220),
   });
 
   const indexProvisionEventRepository =
     createInMemoryIndexProvisionEventRepository();
   await indexProvisionEventRepository.create("tenant_a", {
-    timestamp: "2026-01-02T07:00:00.000Z",
+    timestamp: minutesAgo(240),
     event: "creating",
     collection: "deal",
     tenantId: "tenant_a",
+  });
+
+  const hookExecutionRepository = createInMemoryDataHookExecutionRepository();
+  await hookExecutionRepository.create("tenant_a", {
+    hookId: "hook_running_sync",
+    hookName: "Inline Hook",
+    entityName: "deal",
+    event: "deal.afterCreate",
+    phase: "after",
+    operation: "create",
+    executionMode: "sync",
+    status: "running",
+    triggeredBy: { uid: "user_123" },
+    startedAt: minutesAgo(5),
+  });
+  await hookExecutionRepository.create("tenant_a", {
+    hookId: "hook_running_deferred",
+    hookName: "Deferred Hook",
+    entityName: "deal",
+    event: "deal.afterCreate",
+    phase: "after",
+    operation: "create",
+    executionMode: "deferred",
+    status: "running",
+    triggeredBy: { uid: "user_123" },
+    startedAt: minutesAgo(10),
+  });
+  await hookExecutionRepository.create("tenant_a", {
+    hookId: "hook_running_cloud",
+    hookName: "Cloud Running Hook",
+    entityName: "deal",
+    event: "deal.afterCreate",
+    phase: "after",
+    operation: "create",
+    executionMode: "queued",
+    status: "running",
+    triggeredBy: { uid: "user_123" },
+    startedAt: minutesAgo(15),
+  });
+  await hookExecutionRepository.create("tenant_a", {
+    hookId: "hook_pending",
+    hookName: "Queued Hook",
+    entityName: "deal",
+    event: "deal.afterCreate",
+    phase: "after",
+    operation: "create",
+    executionMode: "queued",
+    status: "pending",
+    triggeredBy: { uid: "user_123" },
+    startedAt: minutesAgo(20),
+  });
+  await hookExecutionRepository.create("tenant_a", {
+    hookId: "hook_done",
+    hookName: "Completed Hook",
+    entityName: "deal",
+    event: "deal.afterCreate",
+    phase: "after",
+    operation: "create",
+    executionMode: "sync",
+    status: "success",
+    triggeredBy: { uid: "user_123" },
+    startedAt: minutesAgo(60),
+    finishedAt: minutesAgo(59),
+    durationMs: 1000,
+    writesCreated: 24,
+  });
+  await hookExecutionRepository.create("tenant_a", {
+    hookId: "hook_heavy",
+    hookName: "Heavy Hook",
+    entityName: "deal",
+    event: "deal.afterCreate",
+    phase: "after",
+    operation: "create",
+    executionMode: "sync",
+    status: "success",
+    triggeredBy: { uid: "user_123" },
+    startedAt: minutesAgo(90),
+    finishedAt: minutesAgo(88),
+    durationMs: 2000,
+    writesCreated: 50,
   });
 
   return {
@@ -133,6 +224,7 @@ async function buildTestServer() {
       hookLogMessageRepository,
       requestPerfLogRepository,
       indexProvisionEventRepository,
+      hookExecutionRepository,
       getRoleCatalog: async () => buildRoleCatalog([]),
       getUserAccessProfile: async () => ({
         platformRole: null,
@@ -144,6 +236,7 @@ async function buildTestServer() {
     auditLogRepository,
     hookLogMessageRepository,
     requestPerfLogRepository,
+    hookExecutionRepository,
   };
 }
 
@@ -174,6 +267,122 @@ describe("debug events integration", () => {
     expect(sources.has("hookLog")).toBe(true);
     expect(sources.has("requestPerf")).toBe(true);
     expect(sources.has("indexProvision")).toBe(true);
+  });
+
+  it("returns hook execution live counts and active items first", async () => {
+    const { server } = await buildTestServer();
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/debug/events?sources=hooks&limit=20",
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: {
+        items: Array<{ source: string; id: string; status?: string }>;
+        hookExecutionLive?: {
+          pending: number;
+          running: number;
+          queuedPending: number;
+          inlineRunning: number;
+          deferredRunning: number;
+          cloudRunning: number;
+        };
+      };
+    };
+    expect(body.data.hookExecutionLive).toEqual({
+      pending: 1,
+      running: 3,
+      queuedPending: 1,
+      inlineRunning: 1,
+      deferredRunning: 1,
+      cloudRunning: 1,
+    });
+    expect(body.data.items[0]?.status).toBe("running");
+    expect(body.data.items.some((item) => item.status === "pending")).toBe(
+      true,
+    );
+    expect(body.data.items.some((item) => item.status === "success")).toBe(
+      true,
+    );
+  });
+
+  it("returns hook execution pagination cursor for hooks source", async () => {
+    const { server } = await buildTestServer();
+
+    const firstPage = await server.inject({
+      method: "GET",
+      url: "/api/debug/events?sources=hooks&limit=2",
+      headers: authHeaders,
+    });
+
+    expect(firstPage.statusCode).toBe(200);
+    const firstBody = firstPage.json() as {
+      data: {
+        items: Array<{ source: string; id: string; status?: string }>;
+        nextCursor?: string | null;
+      };
+    };
+    expect(firstBody.data.items).toHaveLength(2);
+    expect(firstBody.data.nextCursor).toBeTruthy();
+
+    const secondPage = await server.inject({
+      method: "GET",
+      url: `/api/debug/events?sources=hooks&limit=2&cursor=${encodeURIComponent(firstBody.data.nextCursor ?? "")}`,
+      headers: authHeaders,
+    });
+
+    expect(secondPage.statusCode).toBe(200);
+    const secondBody = secondPage.json() as {
+      data: {
+        items: Array<{ source: string; id: string; status?: string }>;
+      };
+    };
+    expect(secondBody.data.items.length).toBeGreaterThan(0);
+
+    const activeIdsOnFirstPage = firstBody.data.items
+      .filter(
+        (item) =>
+          item.source === "hookExecution" &&
+          (item.status === "running" || item.status === "pending"),
+      )
+      .map((item) => item.id);
+    const secondPageIds = secondBody.data.items
+      .filter((item) => item.source === "hookExecution")
+      .map((item) => item.id);
+    for (const id of activeIdsOnFirstPage) {
+      expect(secondPageIds).not.toContain(id);
+    }
+  });
+
+  it("returns hook execution summary aggregates", async () => {
+    const { server } = await buildTestServer();
+
+    const response = await server.inject({
+      method: "GET",
+      url: "/api/debug/hook-executions/summary",
+      headers: authHeaders,
+    });
+
+    expect(response.statusCode).toBe(200);
+    const body = response.json() as {
+      data: {
+        hooks: Array<{
+          hookId: string;
+          executionCount: number;
+          totalWritesCreated: number;
+        }>;
+      };
+    };
+    const heavy = body.data.hooks.find((item) => item.hookId === "hook_heavy");
+    expect(heavy).toEqual(
+      expect.objectContaining({
+        executionCount: 1,
+        totalWritesCreated: 50,
+      }),
+    );
   });
 
   it("returns index provision events when requested", async () => {

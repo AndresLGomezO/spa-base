@@ -9,7 +9,7 @@ export const DEBUGGER_STATUSES_BY_SOURCE: Record<
   readonly DebugEventStatus[]
 > = {
   ai: ["running", "pending", "failed", "completed"],
-  hookExecution: ["success", "error", "skipped"],
+  hookExecution: ["running", "pending", "success", "error", "skipped"],
   hookLog: ["info", "error"],
   audit: ["info"],
   requestPerf: ["success", "error"],
@@ -26,6 +26,7 @@ export const DEBUGGER_STATUS_BADGE_CLASS: Record<string, string> = {
   info: "bg-badge-info text-badge-info-foreground",
   running: "bg-badge-warning text-badge-warning-foreground",
   pending: "bg-badge-warning text-badge-warning-foreground",
+  queued: "bg-badge-warning text-badge-warning-foreground",
 };
 
 /** Row left accent — semantic border tokens from theme. */
@@ -38,6 +39,7 @@ export const DEBUGGER_STATUS_ACCENT_CLASS: Record<string, string> = {
   info: "border-l-info",
   running: "border-l-warning",
   pending: "border-l-warning",
+  queued: "border-l-warning",
 };
 
 /** Dot indicators — semantic foreground tokens from theme. */
@@ -50,6 +52,7 @@ export const DEBUGGER_STATUS_DOT_CLASS: Record<string, string> = {
   info: "bg-info",
   running: "bg-warning",
   pending: "bg-warning",
+  queued: "bg-warning",
 };
 
 const STATUS_SORT_PRIORITY: Record<string, number> = {
@@ -57,6 +60,7 @@ const STATUS_SORT_PRIORITY: Record<string, number> = {
   error: 0,
   running: 1,
   pending: 1,
+  queued: 1,
   skipped: 2,
   success: 3,
   completed: 3,
@@ -86,7 +90,13 @@ export function debuggerEventSearchHaystack(event: DebugEvent): string {
     event.title,
     event.subtitle,
     typeof summary.hookId === "string" ? summary.hookId : "",
+    typeof summary.hookName === "string" ? summary.hookName : "",
     typeof summary.entityName === "string" ? summary.entityName : "",
+    typeof summary.event === "string" ? summary.event : "",
+    typeof summary.recordId === "string" ? summary.recordId : "",
+    typeof summary.message === "string" ? summary.message : "",
+    typeof summary.error === "string" ? summary.error : "",
+    typeof summary.executionMode === "string" ? summary.executionMode : "",
   ];
   return parts.join(" ").toLowerCase();
 }

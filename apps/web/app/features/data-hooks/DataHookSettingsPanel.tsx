@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { Link } from "react-router";
+import { useQuery } from "@tanstack/react-query";
 import { useTranslation } from "react-i18next";
 import { Button, FieldLabel, Select, Text, toast } from "@repo/ui";
 import type {
@@ -18,6 +19,8 @@ import {
 } from "@repo/hooks";
 
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
+import { listDataHookExecutions } from "../../lib/api-client";
+import { buildDebugRecordKey } from "../debugger/dismissed-debug-records";
 import {
   designerPreviewPanelBodyFillClassName,
   designerPreviewPanelHeaderClassName,
@@ -31,6 +34,61 @@ import { useDataHooks } from "./data-hooks-context";
 
 const controlClassName =
   "border-input bg-background flex h-9 w-full rounded-md border px-3 py-1.5 text-sm";
+
+function HookRecentExecutions({ hookId }: { readonly hookId: string }) {
+  const { t } = useTranslation("common");
+  const executionsQuery = useQuery({
+    queryKey: ["data-hook-executions", hookId],
+    queryFn: () => listDataHookExecutions(hookId, { limit: 5 }),
+    enabled: hookId.trim().length > 0,
+  });
+
+  const items = executionsQuery.data?.items ?? [];
+  if (executionsQuery.isLoading) {
+    return (
+      <Text className="text-muted-foreground text-sm">
+        {t("table.loading")}
+      </Text>
+    );
+  }
+
+  if (items.length === 0) {
+    return (
+      <Text className="text-muted-foreground text-sm">
+        {t("dataHooks.executionLog.empty")}
+      </Text>
+    );
+  }
+
+  return (
+    <ul className="space-y-2">
+      {items.map((item) => {
+        const writes =
+          (item.writesCreated ?? 0) +
+          (item.writesUpdated ?? 0) +
+          (item.writesDeleted ?? 0);
+        const recordKey = buildDebugRecordKey("hookExecution", item.id);
+        return (
+          <li key={item.id}>
+            <Link
+              to={`/debugger/hook-executions?record=${encodeURIComponent(recordKey)}`}
+              className="hover:bg-muted flex flex-col rounded-md px-2 py-1.5 text-sm"
+            >
+              <span className="font-medium">
+                {item.status} · {item.event}
+              </span>
+              <span className="text-muted-foreground text-xs">
+                {item.startedAt}
+                {item.durationMs != null ? ` · ${item.durationMs}ms` : ""}
+                {writes > 0 ? ` · ${writes} writes` : ""}
+              </span>
+            </Link>
+          </li>
+        );
+      })}
+    </ul>
+  );
+}
 
 function triggerKind(trigger: DataHookTrigger): "crud" | "schedule" {
   return isScheduleTrigger(trigger) ? "schedule" : "crud";
@@ -482,6 +540,7 @@ export function DataHookSettingsPanel() {
           <Text className="text-sm font-semibold">
             {t("dataHooks.executionLog.title")}
           </Text>
+          <HookRecentExecutions hookId={definition.id} />
           <Link
             to="/debugger/hook-executions"
             className="text-primary inline-flex text-sm font-medium hover:underline"

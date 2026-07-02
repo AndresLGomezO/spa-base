@@ -94,6 +94,7 @@
       "info": "Info",
       "running": "En ejecución",
       "pending": "Pendiente",
+      "queued": "En cola",
       "failed": "Fallido",
       "completed": "Completado"
     },
@@ -111,8 +112,12 @@
       "sortStatus": "Estado (problemas primero)",
       "sortTitle": "Título A–Z",
       "filterByStatus": "Estado",
+      "filterByTypology": "Tipo de ejecución",
       "clearFilters": "Borrar filtros",
-      "summary": "{{count}} {{status}}",
+      "loadMore": "Cargar más",
+      "minWrites": "Mín. escrituras",
+      "minDuration": "Duración mín. (ms)",
+      "summary": "{{count}} {{status}} ({{percent}}%)",
       "removeBadge": "Quitar filtro: {{label}}"
     },
     "detail": {
@@ -125,7 +130,18 @@
       "phase": "Fase",
       "operation": "Operación",
       "duration": "Duración",
+      "executionMode": "Modo de ejecución",
+      "startedAt": "Inicio",
+      "finishedAt": "Fin",
+      "inProgress": "En curso",
       "recordId": "ID de registro",
+      "level": "Nivel",
+      "writesCreated": "Creados",
+      "writesUpdated": "Actualizados",
+      "writesDeleted": "Eliminados",
+      "chainDepth": "Profundidad de cadena",
+      "actionTrace": "Traza de acciones",
+      "writesByEntity": "Escrituras por entidad",
       "actor": "Actor",
       "targetUser": "Usuario destino",
       "rbacMs": "RBAC",
@@ -150,11 +166,32 @@
       "backToSummary": "Resumen",
       "expandChart": "Ampliar gráfico de {{title}}"
     },
+    "chart": {
+      "unit": {
+        "writes": "escrituras",
+        "milliseconds": "ms",
+        "executions": "ejecuciones",
+        "errors": "errores",
+        "requests": "peticiones",
+        "records": "registros",
+        "jobs": "trabajos"
+      },
+      "legend": {
+        "writesByEntity": "Escrituras totales de hooks por entidad (creadas + actualizadas + eliminadas)",
+        "topHooksByWrites": "Escrituras totales de hooks por hook en las ejecuciones cargadas",
+        "topHooksByDuration": "Ejecución más lenta por hook",
+        "topHooksErrors": "Ejecuciones fallidas por hook",
+        "topRoutes": "Rutas más lentas por tiempo total de respuesta",
+        "statusCodes": "Peticiones por código de estado HTTP",
+        "topFeatures": "Trabajos de IA por función",
+        "topActions": "Eventos de auditoría por acción",
+        "timeline": "Eventos por intervalo de tiempo; la línea discontinua muestra errores cuando aplica"
+      }
+    },
     "summary": {
       "title": "Resumen",
       "subtitle": "Diagnóstico de {{source}}",
       "totalRecords": "Total de registros",
-      "totalLabel": "Total",
       "errorRate": "Tasa de error",
       "avgDuration": "Duración media",
       "avgLatency": "Latencia media",
@@ -163,15 +200,24 @@
       "inProgressBanner": "Algunos trabajos siguen en ejecución o pendientes.",
       "needsAttention": "Requiere atención",
       "topEntities": "Entidades principales",
+      "writesByEntity": "Escrituras por entidad",
       "topHooks": "Hooks con más errores",
+      "topHooksByWrites": "Hooks con más escrituras",
+      "topHooksByDuration": "Hooks más lentos",
       "topRoutes": "Rutas más lentas",
       "topFeatures": "Trabajos por función",
       "topActions": "Acciones principales",
       "statusCodes": "Códigos de estado",
-      "statusDistribution": "Distribución por estado",
       "activityTimeline": "Línea de actividad",
       "timelineEvents": "Eventos",
-      "sampleLimit": "Basado en los últimos 50 registros.",
+      "sampleLimit": "Basado en los registros cargados.",
+      "writesCreated": "Creados",
+      "writesUpdated": "Actualizados",
+      "writesDeleted": "Eliminados",
+      "writesAcrossExecutions": "{{total}} escrituras en {{count}} ejecuciones",
+      "loadingExecutionHistory": "Cargando historial completo de ejecuciones…",
+      "partialExecutionHistory": "Los totales incluyen {{count}} ejecuciones cargadas. Carga más para ver ejecuciones anteriores.",
+      "totalWrites": "Escrituras totales",
       "filteredNote": "Las estadísticas reflejan los filtros actuales de la lista.",
       "noIssues": "No se detectaron problemas en la muestra actual.",
       "uniqueActors": "Actores únicos",
@@ -182,7 +228,18 @@
       "failed": "Fallidos",
       "completed": "Completados",
       "running": "En ejecución",
-      "pending": "Pendientes"
+      "pending": "Pendientes",
+      "queued": "En cola",
+      "liveStatus": "En vivo",
+      "queuedPending": "Cloud (en cola)",
+      "inlineRunning": "Sync (ejecutando)",
+      "deferredRunning": "Diferido (ejecutando)",
+      "cloudRunning": "Cloud (ejecutando)"
+    },
+    "executionType": {
+      "sync": "Sync",
+      "deferred": "Diferido",
+      "queued": "Cloud"
     }
   },
   "aiDebugger": {
@@ -1011,7 +1068,6 @@
       "expand": "Expandir banner"
     },
     "processList": {
-      "title": "Aprovisionamiento de índices",
       "summary": "{{total}} índices · {{creating}} en creación · {{failed}} fallidos (acción manual requerida)",
       "progress": "{{ready}}/{{total}} listos",
       "logTitle": "Registro de aprovisionamiento",
@@ -2468,7 +2524,8 @@
       "setFields": "Establecer campos"
     },
     "executionLog": {
-      "title": "Ejecuciones recientes"
+      "title": "Ejecuciones recientes",
+      "empty": "Aún no hay ejecuciones registradas."
     },
     "expression": {
       "literal": "Valor fijo",

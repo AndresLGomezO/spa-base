@@ -13,7 +13,10 @@ import { listAllTenantIds, type FirebaseAdminConfig } from "@repo/gcp-firebase";
 
 import { PermanentHookTaskError } from "./data-hook-processor.js";
 import type { DataHookProcessorDeps } from "./data-hook-processor.js";
-import { createRecordDataHookExecution } from "../hooks/record-data-hook-execution.js";
+import {
+  createDataHookExecutionRecorderForTenant,
+  createRecordDataHookExecution,
+} from "../hooks/record-data-hook-execution.js";
 import {
   buildHookEntityServices,
   resolveHookUserContext,
@@ -80,11 +83,18 @@ async function processTenantScheduleTick(
         options.tenantId,
       )
     : undefined;
+  const dataHookExecutionRecorder = deps.hookExecutionRepository
+    ? createDataHookExecutionRecorderForTenant(
+        deps.hookExecutionRepository,
+        options.tenantId,
+      )
+    : undefined;
 
   const services = {
     logger: options.logger,
     entities,
     ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
+    ...(dataHookExecutionRecorder ? { dataHookExecutionRecorder } : {}),
     ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
   };
 

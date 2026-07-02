@@ -94,6 +94,7 @@
       "info": "Info",
       "running": "Running",
       "pending": "Pending",
+      "queued": "Queued",
       "failed": "Failed",
       "completed": "Completed"
     },
@@ -111,8 +112,12 @@
       "sortStatus": "Status (issues first)",
       "sortTitle": "Title A–Z",
       "filterByStatus": "Status",
+      "filterByTypology": "Execution type",
       "clearFilters": "Clear filters",
-      "summary": "{{count}} {{status}}",
+      "loadMore": "Load more",
+      "minWrites": "Min writes",
+      "minDuration": "Min duration (ms)",
+      "summary": "{{count}} {{status}} ({{percent}}%)",
       "removeBadge": "Remove filter: {{label}}"
     },
     "detail": {
@@ -125,7 +130,18 @@
       "phase": "Phase",
       "operation": "Operation",
       "duration": "Duration",
+      "executionMode": "Execution mode",
+      "startedAt": "Started at",
+      "finishedAt": "Finished at",
+      "inProgress": "In progress",
       "recordId": "Record ID",
+      "level": "Level",
+      "writesCreated": "Created",
+      "writesUpdated": "Updated",
+      "writesDeleted": "Deleted",
+      "chainDepth": "Chain depth",
+      "actionTrace": "Action trace",
+      "writesByEntity": "Writes by entity",
       "actor": "Actor",
       "targetUser": "Target user",
       "rbacMs": "RBAC",
@@ -150,11 +166,32 @@
       "backToSummary": "Overview",
       "expandChart": "Expand {{title}} chart"
     },
+    "chart": {
+      "unit": {
+        "writes": "writes",
+        "milliseconds": "ms",
+        "executions": "executions",
+        "errors": "errors",
+        "requests": "requests",
+        "records": "records",
+        "jobs": "jobs"
+      },
+      "legend": {
+        "writesByEntity": "Total hook writes per entity (created + updated + deleted)",
+        "topHooksByWrites": "Total hook writes per hook across loaded executions",
+        "topHooksByDuration": "Longest single run per hook",
+        "topHooksErrors": "Failed hook executions per hook",
+        "topRoutes": "Slowest routes by total response time",
+        "statusCodes": "Request count by HTTP status code",
+        "topFeatures": "AI job count by feature",
+        "topActions": "Audit event count by action",
+        "timeline": "Events per time bucket; dashed line shows errors when available"
+      }
+    },
     "summary": {
       "title": "Overview",
       "subtitle": "{{source}} diagnostics",
       "totalRecords": "Total records",
-      "totalLabel": "Total",
       "errorRate": "Error rate",
       "avgDuration": "Avg duration",
       "avgLatency": "Avg latency",
@@ -163,15 +200,24 @@
       "inProgressBanner": "Some jobs are still running or pending.",
       "needsAttention": "Needs attention",
       "topEntities": "Top entities",
+      "writesByEntity": "Writes by entity",
       "topHooks": "Top hooks with errors",
+      "topHooksByWrites": "Top hooks by writes",
+      "topHooksByDuration": "Slowest hooks",
       "topRoutes": "Slowest routes",
       "topFeatures": "Jobs by feature",
       "topActions": "Top actions",
       "statusCodes": "Status codes",
-      "statusDistribution": "Status distribution",
       "activityTimeline": "Activity timeline",
       "timelineEvents": "Events",
-      "sampleLimit": "Based on the latest 50 records.",
+      "sampleLimit": "Based on loaded records.",
+      "writesCreated": "Created",
+      "writesUpdated": "Updated",
+      "writesDeleted": "Deleted",
+      "writesAcrossExecutions": "{{total}} writes across {{count}} executions",
+      "loadingExecutionHistory": "Loading full hook execution history…",
+      "partialExecutionHistory": "Totals include {{count}} loaded executions so far. Load more for older runs.",
+      "totalWrites": "Total writes",
       "filteredNote": "Stats reflect the current list filters.",
       "noIssues": "No issues detected in the current sample.",
       "uniqueActors": "Unique actors",
@@ -182,7 +228,18 @@
       "failed": "Failed",
       "completed": "Completed",
       "running": "Running",
-      "pending": "Pending"
+      "pending": "Pending",
+      "queued": "Queued",
+      "liveStatus": "Live",
+      "queuedPending": "Cloud (queued)",
+      "inlineRunning": "Sync (running)",
+      "deferredRunning": "Deferred (running)",
+      "cloudRunning": "Cloud (running)"
+    },
+    "executionType": {
+      "sync": "Sync",
+      "deferred": "Deferred",
+      "queued": "Cloud"
     }
   },
   "aiDebugger": {
@@ -1011,7 +1068,6 @@
       "expand": "Expand banner"
     },
     "processList": {
-      "title": "Index provisioning",
       "summary": "{{total}} indexes · {{creating}} creating · {{failed}} failed (manual action required)",
       "progress": "{{ready}}/{{total}} ready",
       "logTitle": "Provisioning log",
@@ -2468,7 +2524,8 @@
       "setFields": "Set fields"
     },
     "executionLog": {
-      "title": "Recent executions"
+      "title": "Recent executions",
+      "empty": "No executions recorded yet."
     },
     "expression": {
       "literal": "Fixed value",

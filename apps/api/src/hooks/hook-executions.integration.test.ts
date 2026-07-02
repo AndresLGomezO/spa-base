@@ -156,9 +156,13 @@ describe("data hook executions integration", () => {
       headers: authHeaders,
     });
     expect(listed.statusCode).toBe(200);
-    const items = listed.json().data.items as Array<{ status: string }>;
-    expect(items.length).toBeGreaterThan(0);
-    expect(items[0]?.status).toBe("success");
+    const listedBody = listed.json().data as {
+      items: Array<{ status: string }>;
+      nextCursor?: string | null;
+    };
+    expect(listedBody.items.length).toBeGreaterThan(0);
+    expect(listedBody.items[0]?.status).toBe("success");
+    expect(listedBody.nextCursor).toBeNull();
 
     await server.close();
   });

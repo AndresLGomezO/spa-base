@@ -19,22 +19,33 @@ export function DebuggerStatusSummary({
     return null;
   }
 
+  const total = Object.values(counts).reduce(
+    (sum, count) => sum + (count ?? 0),
+    0,
+  );
+
   return (
     <div className="flex flex-wrap items-center gap-1.5 px-2 pb-1">
-      {entries.map(([status, count]) => (
-        <span
-          key={status}
-          className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
-            DEBUGGER_STATUS_BADGE_CLASS[status] ??
-            "bg-muted text-muted-foreground"
-          }`}
-        >
-          {t("debugger.list.summary", {
-            count,
-            status: t(debuggerStatusLabelKey(status)),
-          })}
-        </span>
-      ))}
+      {entries.map(([status, count]) => {
+        const percent =
+          total > 0 ? Math.round((count / total) * 100) : undefined;
+
+        return (
+          <span
+            key={status}
+            className={`inline-flex rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              DEBUGGER_STATUS_BADGE_CLASS[status] ??
+              "bg-muted text-muted-foreground"
+            }`}
+          >
+            {t("debugger.list.summary", {
+              count,
+              status: t(debuggerStatusLabelKey(status)),
+              percent,
+            })}
+          </span>
+        );
+      })}
     </div>
   );
 }

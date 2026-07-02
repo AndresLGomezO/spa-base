@@ -11,6 +11,10 @@ import {
   validateDataHooksCatalogEnvelope,
 } from "@repo/hooks";
 
+import {
+  decodeHookExecutionListCursor,
+  encodeHookExecutionListCursor,
+} from "@repo/firestore-converters";
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
 import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
@@ -45,6 +49,7 @@ const catalogQuerySchema = z.object({
 
 const executionsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
+  cursor: z.string().trim().optional(),
 });
 
 function getAvailableEntityNames(
@@ -187,13 +192,23 @@ export async function registerHookRoutes(
         );
       }
 
-      const items = await options.hookExecutionRepository.listByHookId(
+      const page = await options.hookExecutionRepository.listByHookId(
         tenantId,
         parsedParams.data.id,
-        { limit: parsedQuery.data.limit },
+        {
+          limit: parsedQuery.data.limit,
+          cursor: decodeHookExecutionListCursor(parsedQuery.data.cursor),
+        },
       );
 
-      return reply.send(successEnvelope({ items }));
+      return reply.send(
+        successEnvelope({
+          items: page.items,
+          nextCursor: page.nextCursor
+            ? encodeHookExecutionListCursor(page.nextCursor)
+            : null,
+        }),
+      );
     },
   );
 

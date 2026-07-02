@@ -10,7 +10,7 @@ import {
 const TENANT_INDEX_PROCESS_LIST_QUERY_KEY =
   "tenant-index-process-list" as const;
 
-export type IndexProvisioningProcessListFilter =
+type IndexProvisioningProcessListFilter =
   | "all"
   | "creating"
   | "failed"
@@ -87,7 +87,7 @@ export function useIndexProvisioningJobs() {
   });
 
   const summary = statusQuery.data;
-  const indexes = summary?.indexes ?? [];
+  const indexes = useMemo(() => summary?.indexes ?? [], [summary?.indexes]);
 
   const filteredIndexes = useMemo(
     () => indexes.filter((job) => matchesFilter(job, filter)),

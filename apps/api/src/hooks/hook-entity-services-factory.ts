@@ -6,7 +6,10 @@ import {
 } from "./create-hook-services.js";
 import type { CrudHookDeps } from "./crud-hook-deps.types.js";
 import { dispatchChainedEntityHooks } from "./dispatch-chained-entity-hooks.js";
-import { createRecordDataHookExecution } from "./record-data-hook-execution.js";
+import {
+  createRecordDataHookExecution,
+  createDataHookExecutionRecorderForTenant,
+} from "./record-data-hook-execution.js";
 
 interface ResolvedHookUserContext {
   readonly tenantId: string;
@@ -63,6 +66,11 @@ export function buildHookEntityServices(options: {
                 deps.hookExecutionRepository,
                 user.tenantId,
               ),
+              dataHookExecutionRecorder:
+                createDataHookExecutionRecorderForTenant(
+                  deps.hookExecutionRepository,
+                  user.tenantId,
+                ),
             }
           : {}),
         ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),

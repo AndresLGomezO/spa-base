@@ -11,7 +11,10 @@ import { createHookEntityServices, type HookLogger } from "@repo/hooks";
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
 import { dispatchChainedEntityHooks } from "../../hooks/dispatch-chained-entity-hooks.js";
 import { createHookRuntimeContext } from "../../hooks/hook-runtime-context.js";
-import { createRecordDataHookExecution } from "../../hooks/record-data-hook-execution.js";
+import {
+  createDataHookExecutionRecorderForTenant,
+  createRecordDataHookExecution,
+} from "../../hooks/record-data-hook-execution.js";
 
 const seedHookConsoleLogger: HookLogger = {
   info(message, meta) {
@@ -61,6 +64,10 @@ export async function createSeedHookRunner(options: {
     hookExecutionRepository,
     options.tenantId,
   );
+  const dataHookExecutionRecorder = createDataHookExecutionRecorderForTenant(
+    hookExecutionRepository,
+    options.tenantId,
+  );
 
   const hookLogMessageRepository = createFirestoreAdminHookLogMessageRepository(
     options.firebaseAdminConfig,
@@ -96,6 +103,7 @@ export async function createSeedHookRunner(options: {
         logger,
         entityServices,
         recordDataHookExecution,
+        dataHookExecutionRecorder,
       }),
   });
 
@@ -113,6 +121,7 @@ export async function createSeedHookRunner(options: {
         logger,
         entityServices,
         recordDataHookExecution,
+        dataHookExecutionRecorder,
       });
     },
   };

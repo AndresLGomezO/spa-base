@@ -40,6 +40,10 @@ export {
   type IndexProvisionEventType,
 } from "./index-provision-event.js";
 export {
+  formatHookLogDebugPresentation,
+  type HookLogDebugPresentation,
+} from "./format-hook-log-debug-presentation.js";
+export {
   createPersistingHookLogger,
   type HookLogMessageWriter,
 } from "./create-persisting-hook-logger.js";

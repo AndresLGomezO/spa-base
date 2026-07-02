@@ -14,15 +14,16 @@ import {
   SidebarMobile,
   SidebarSeparator,
   SidebarTrigger,
+  useSidebar,
 } from "@repo/ui";
 
 import { useAuth } from "../../auth/AuthContext";
 import { DEFAULT_SITE_NAME } from "../SiteTitleSync";
-import { NavMain } from "./NavMain";
+import { NavMain, NavigationProgressBar } from "./NavMain";
 import { SidebarUser } from "./SidebarUser";
 import { TenantSwitcher } from "../TenantSwitcher";
 
-function SidebarBrand() {
+function SidebarBrand({ onNavigate }: { readonly onNavigate?: () => void }) {
   const { activeTenantName, tenantAppearance } = useAuth();
   const logoUrl = tenantAppearance?.logoUrl;
   const title = activeTenantName ?? DEFAULT_SITE_NAME;
@@ -30,6 +31,8 @@ function SidebarBrand() {
   return (
     <Link
       to="/"
+      prefetch="intent"
+      onClick={onNavigate}
       className={cn(
         "hover:bg-sidebar-highlight hover:text-sidebar-foreground flex w-full min-w-0 items-center gap-2 rounded-md p-2 transition-colors",
         "group-data-[collapsible=icon]/sidebar:justify-center group-data-[collapsible=icon]/sidebar:gap-0 group-data-[collapsible=icon]/sidebar:px-1.5",
@@ -56,8 +59,10 @@ function SidebarBrand() {
 
 function SidebarBody({
   showCollapse = true,
+  onNavigate,
 }: {
   readonly showCollapse?: boolean;
+  readonly onNavigate?: () => void;
 }) {
   const { t } = useTranslation("common");
   const { isSuperAdmin, availableTenants } = useAuth();
@@ -67,7 +72,7 @@ function SidebarBody({
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarBrand />
+            <SidebarBrand onNavigate={onNavigate} />
           </SidebarMenuItem>
         </SidebarMenu>
         {showCollapse ? (
@@ -99,6 +104,11 @@ function SidebarBody({
 
 export function AppSidebar() {
   const { t } = useTranslation("common");
+  const { setMobileOpen } = useSidebar();
+
+  const closeMobile = () => {
+    setMobileOpen(false);
+  };
 
   return (
     <>
@@ -110,7 +120,7 @@ export function AppSidebar() {
           className="group/sidebar flex h-full flex-col"
           data-collapsible="expanded"
         >
-          <SidebarBody showCollapse={false} />
+          <SidebarBody showCollapse={false} onNavigate={closeMobile} />
         </div>
       </SidebarMobile>
     </>
@@ -122,6 +132,7 @@ export function AppHeader() {
 
   return (
     <header className="border-border relative z-20 flex h-14 shrink-0 items-center border-b px-4 md:hidden">
+      <NavigationProgressBar />
       <SidebarTrigger label={t("nav.open")} />
     </header>
   );

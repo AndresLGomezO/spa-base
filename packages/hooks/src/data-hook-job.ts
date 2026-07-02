@@ -27,6 +27,7 @@ export const dataHookJobPayloadSchema = z.object({
   depth: z.number().int().nonnegative(),
   visitedHookIds: z.array(z.string().trim().min(1)),
   triggerKind: z.enum(["crud", "schedule"]).optional(),
+  executionId: z.string().trim().min(1).optional(),
 });
 
 export type DataHookJobPayload = z.infer<typeof dataHookJobPayloadSchema>;
@@ -34,6 +35,7 @@ export type DataHookJobPayload = z.infer<typeof dataHookJobPayloadSchema>;
 export function buildDataHookJobPayload(
   definition: DataHookDefinition,
   context: HookContext,
+  executionId?: string,
 ): DataHookJobPayload {
   const operation = isScheduleTrigger(definition.trigger)
     ? "schedule"
@@ -58,6 +60,7 @@ export function buildDataHookJobPayload(
     ...(isScheduleTrigger(definition.trigger)
       ? { triggerKind: "schedule" as const }
       : {}),
+    ...(executionId ? { executionId } : {}),
   };
 }
 

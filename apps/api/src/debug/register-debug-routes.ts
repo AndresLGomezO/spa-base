@@ -9,10 +9,16 @@ import {
 import type {
   AiJobRepository,
   AuditLogRepository,
+  DataHookExecutionActiveCounts,
   DataHookExecutionRepository,
   HookLogMessageRepository,
   RequestPerfLogRepository,
   IndexProvisionEventRepository,
+} from "@repo/firestore-converters";
+import {
+  decodeHookExecutionListCursor,
+  encodeHookExecutionListCursor,
+  summarizeHookExecutions,
 } from "@repo/firestore-converters";
 import { hasPermission } from "@repo/rbac";
 
@@ -23,10 +29,10 @@ import { createRequireAnyPermission } from "../rbac/create-require-any-permissio
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import {
   mergeDebugEvents,
+  mergeHookExecutionDebugEvents,
   parseDebugSources,
   toAiDebugEvent,
   toAuditDebugEvent,
-  toHookExecutionDebugEvent,
   toHookLogDebugEvent,
   toIndexProvisionDebugEvent,
   toRequestPerfDebugEvent,
@@ -49,6 +55,12 @@ interface RegisterDebugRoutesOptions {
 const eventsQuerySchema = z.object({
   limit: z.coerce.number().int().min(1).max(100).default(50),
   sources: z.string().trim().optional(),
+  cursor: z.string().trim().optional(),
+});
+
+const hookExecutionSummaryQuerySchema = z.object({
+  windowHours: z.coerce.number().int().min(1).max(168).default(24),
+  limit: z.coerce.number().int().min(1).max(500).default(200),
 });
 
 export async function registerDebugRoutes(
@@ -85,8 +97,10 @@ export async function registerDebugRoutes(
       const isSuperAdmin = request.ctx?.isSuperAdmin ?? false;
       const limit = parsedQuery.data.limit;
       const sources = parseDebugSources(parsedQuery.data.sources);
-      const perSourceLimit = Math.min(limit, 50);
+      const perSourceLimit = Math.min(limit, 100);
       const groups: Awaited<ReturnType<typeof toAiDebugEvent>>[][] = [];
+      let hookExecutionLive: DataHookExecutionActiveCounts | undefined;
+      let hookExecutionNextCursor: string | undefined;
 
       const canReadAi =
         hasPermission("debug.read", permissions, { isSuperAdmin }) ||
@@ -109,11 +123,27 @@ export async function registerDebugRoutes(
       }
 
       if (sources.includes("hookExecution") && canReadHooks) {
-        const executions = await options.hookExecutionRepository.listRecent(
-          tenantId,
-          { limit: perSourceLimit },
+        const [active, recentPage, liveCounts] = await Promise.all([
+          options.hookExecutionRepository.listActive(tenantId),
+          options.hookExecutionRepository.listRecent(tenantId, {
+            limit: perSourceLimit,
+            cursor: decodeHookExecutionListCursor(parsedQuery.data.cursor),
+          }),
+          options.hookExecutionRepository.countActiveByStatus(tenantId),
+        ]);
+        hookExecutionLive = liveCounts;
+        if (recentPage.nextCursor) {
+          hookExecutionNextCursor = encodeHookExecutionListCursor(
+            recentPage.nextCursor,
+          );
+        }
+        groups.push(
+          mergeHookExecutionDebugEvents(
+            parsedQuery.data.cursor ? [] : active,
+            recentPage.items,
+            perSourceLimit,
+          ),
         );
-        groups.push(executions.map(toHookExecutionDebugEvent));
       }
 
       if (sources.includes("hookLog") && canReadHooks) {
@@ -159,6 +189,63 @@ export async function registerDebugRoutes(
       return reply.send(
         successEnvelope({
           items: mergeDebugEvents(groups, limit),
+          ...(hookExecutionLive ? { hookExecutionLive } : {}),
+          nextCursor: hookExecutionNextCursor ?? null,
+        }),
+      );
+    },
+  );
+
+  app.get(
+    "/api/debug/hook-executions/summary",
+    {
+      preHandler: [options.authenticate, requireDebugRead],
+    },
+    async (request, reply) => {
+      const parsedQuery = hookExecutionSummaryQuerySchema.safeParse(
+        request.query,
+      );
+      if (!parsedQuery.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid query parameters.",
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const permissions = request.ctx?.permissions ?? [];
+      const isSuperAdmin = request.ctx?.isSuperAdmin ?? false;
+      const canReadHooks =
+        hasPermission("debug.read", permissions, { isSuperAdmin }) ||
+        hasPermission("hook.read", permissions, { isSuperAdmin });
+      if (!canReadHooks) {
+        return replyWithError(
+          reply,
+          403,
+          ApiErrorCode.FORBIDDEN,
+          "You do not have permission to view hook executions.",
+        );
+      }
+
+      const recentPage = await options.hookExecutionRepository.listRecent(
+        tenantId,
+        { limit: parsedQuery.data.limit },
+      );
+      const cutoffMs =
+        Date.now() - parsedQuery.data.windowHours * 60 * 60 * 1000;
+      const filtered = recentPage.items.filter((record) => {
+        const startedAt = Date.parse(record.startedAt);
+        return Number.isFinite(startedAt) && startedAt >= cutoffMs;
+      });
+
+      return reply.send(
+        successEnvelope({
+          windowHours: parsedQuery.data.windowHours,
+          hooks: summarizeHookExecutions(filtered),
         }),
       );
     },

@@ -1,12 +1,6 @@
 import { Alert, Button, Card, Heading, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
-import {
-  Activity,
-  AlertTriangle,
-  BarChart3,
-  PieChart,
-  RefreshCw,
-} from "lucide-react";
+import { Activity, AlertTriangle, BarChart3, RefreshCw } from "lucide-react";
 import type { TFunction } from "i18next";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
@@ -14,8 +8,12 @@ import { useTranslation } from "react-i18next";
 import type {
   DebugEvent,
   DebugEventSource,
-  DebugEventStatus,
+  HookExecutionLiveCounts,
 } from "../../lib/api-client";
+import {
+  HOOK_EXECUTION_LIVE_METRIC_KEYS,
+  hookExecutionLiveMetricLabelKey,
+} from "./hook-execution-live-metrics";
 import {
   designerPreviewPanelBodyFillClassName,
   designerPreviewPanelHeaderClassName,
@@ -27,42 +25,62 @@ import {
   type DebuggerBarChartStats,
   type DebuggerSourceStats,
 } from "./compute-debugger-source-stats";
-import {
-  DebuggerStatusBadge,
-  debuggerStatusLabelKey,
-} from "./components/DebuggerStatusBadge";
+import { DebuggerStatusBadge } from "./components/DebuggerStatusBadge";
 import { DebuggerExpandableChartCard } from "./components/DebuggerExpandableChartCard";
 import {
   DebuggerKpiStrip,
   type DebuggerKpiItem,
 } from "./components/DebuggerKpiStrip";
 import { DebuggerSectionHeading } from "./components/DebuggerSectionHeading";
-import {
-  DebuggerDonutChart,
-  type DebuggerDonutSegment,
-} from "./components/charts/DebuggerDonutChart";
 import { DebuggerHorizontalBarChart } from "./components/charts/DebuggerHorizontalBarChart";
 import { DebuggerTimelineChart } from "./components/charts/DebuggerTimelineChart";
 import { useDebugger } from "./debugger-context";
 import { debuggerSourceLabelKey } from "./debugger-source-config";
 import {
   DEBUGGER_LIST_ROW_HOVER_CLASS,
-  DEBUGGER_STATUSES_BY_SOURCE,
   DEBUGGER_STATUS_ACCENT_CLASS,
 } from "./debugger-status-styles";
 import { DEBUGGER_CHART_CARD_CLASS } from "./debugger-summary-motion";
+import {
+  barChartLegendKey,
+  barChartValueUnitKey,
+  timelineChartLegendKey,
+  timelineChartValueUnitKey,
+} from "./debugger-chart-labels";
 import { useDebuggerListQuery } from "./use-debugger-list-query";
 
-const DONUT_STROKE_CLASS: Record<string, string> = {
-  success: "stroke-success",
-  completed: "stroke-success",
-  error: "stroke-destructive",
-  failed: "stroke-destructive",
-  skipped: "stroke-muted-foreground",
-  info: "stroke-info",
-  running: "stroke-warning",
-  pending: "stroke-warning",
-};
+const STATUS_KPI_KEYS = new Set([
+  "success",
+  "error",
+  "skipped",
+  "running",
+  "pending",
+  "failed",
+  "completed",
+  "info",
+  "errors",
+]);
+
+function formatSharePercent(count: number, total: number): string | undefined {
+  if (total <= 0 || count <= 0) {
+    return undefined;
+  }
+  return `${Math.round((count / total) * 100)}%`;
+}
+
+function withStatusSharePercents(
+  items: DebuggerKpiItem[],
+  total: number,
+): DebuggerKpiItem[] {
+  return items.map((item) => {
+    if (!STATUS_KPI_KEYS.has(item.key) || typeof item.value !== "number") {
+      return item;
+    }
+
+    const subValue = formatSharePercent(item.value, total);
+    return subValue ? { ...item, subValue } : item;
+  });
+}
 
 function formatMs(value: number | null): string {
   return value == null ? "—" : `${value}ms`;
@@ -72,54 +90,11 @@ function formatPercent(value: number | null): string {
   return value == null ? "—" : `${value}%`;
 }
 
-function DonutCenter({
-  total,
-  label,
-  expanded = false,
-}: {
-  readonly total: number;
-  readonly label: string;
-  readonly expanded?: boolean;
-}) {
-  return (
-    <div className="space-y-0.5 px-2 text-center">
-      <Text
-        className={cn(
-          "font-semibold tabular-nums",
-          expanded ? "text-3xl" : "text-xl",
-        )}
-      >
-        {total}
-      </Text>
-      <Text className="text-muted-foreground text-xs">{label}</Text>
-    </div>
-  );
-}
-
-function mapBarChartItems(
-  chart: DebuggerBarChartStats,
-  activeSource: DebugEventSource,
-) {
+function mapBarChartItems(chart: DebuggerBarChartStats) {
   return chart.groups.map((group) => ({
     key: group.key,
     label: group.label,
     value: group.count,
-    suffix:
-      activeSource === "requestPerf" && chart.id === "routes"
-        ? "ms"
-        : undefined,
-  }));
-}
-
-function buildDonutSegments(
-  statusCounts: Partial<Record<DebugEventStatus, number>>,
-  activeSource: DebugEventSource,
-  t: TFunction<"common">,
-): DebuggerDonutSegment[] {
-  return DEBUGGER_STATUSES_BY_SOURCE[activeSource].map((status) => ({
-    label: t(debuggerStatusLabelKey(status)),
-    value: statusCounts[status] ?? 0,
-    className: DONUT_STROKE_CLASS[status],
   }));
 }
 
@@ -127,6 +102,7 @@ function buildKpiItems(
   stats: DebuggerSourceStats,
   activeSource: DebugEventSource,
   t: TFunction<"common">,
+  hookExecutionLive?: HookExecutionLiveCounts | null,
 ): DebuggerKpiItem[] {
   const items: DebuggerKpiItem[] = [
     {
@@ -138,6 +114,28 @@ function buildKpiItems(
 
   switch (activeSource) {
     case "hookExecution":
+      if (hookExecutionLive) {
+        for (const key of HOOK_EXECUTION_LIVE_METRIC_KEYS) {
+          items.push({
+            key,
+            label: t(hookExecutionLiveMetricLabelKey(key)),
+            value: hookExecutionLive[key],
+          });
+        }
+      } else {
+        items.push(
+          {
+            key: "running",
+            label: t("debugger.summary.running"),
+            value: stats.statusCounts.running ?? 0,
+          },
+          {
+            key: "pending",
+            label: t("debugger.summary.queued"),
+            value: stats.statusCounts.pending ?? 0,
+          },
+        );
+      }
       items.push(
         {
           key: "success",
@@ -163,6 +161,26 @@ function buildKpiItems(
           key: "avgDuration",
           label: t("debugger.summary.avgDuration"),
           value: formatMs(stats.avgDurationMs),
+        },
+        {
+          key: "writesCreated",
+          label: t("debugger.summary.writesCreated"),
+          value: stats.writesCreated ?? 0,
+        },
+        {
+          key: "writesUpdated",
+          label: t("debugger.summary.writesUpdated"),
+          value: stats.writesUpdated ?? 0,
+        },
+        {
+          key: "writesDeleted",
+          label: t("debugger.summary.writesDeleted"),
+          value: stats.writesDeleted ?? 0,
+        },
+        {
+          key: "totalWrites",
+          label: t("debugger.summary.totalWrites"),
+          value: stats.totalWrites ?? 0,
         },
       );
       break;
@@ -252,7 +270,7 @@ function buildKpiItems(
       break;
   }
 
-  return items;
+  return withStatusSharePercents(items, stats.total);
 }
 
 function SummarySkeleton() {
@@ -327,8 +345,17 @@ function AttentionList({
 
 export function DebuggerSummaryPanel() {
   const { t } = useTranslation("common");
-  const { activeSource, sourceEvents, isLoading, refresh, selectRecord } =
-    useDebugger();
+  const {
+    activeSource,
+    sourceEvents,
+    isLoading,
+    refresh,
+    selectRecord,
+    hookExecutionLive,
+    hasMoreEvents,
+    isLoadingAllExecutions,
+    loadedExecutionCount,
+  } = useDebugger();
   const { listEvents, hasActiveFilters } = useDebuggerListQuery(
     sourceEvents,
     activeSource,
@@ -339,15 +366,39 @@ export function DebuggerSummaryPanel() {
     [activeSource, listEvents],
   );
 
-  const donutSegments = useMemo(
-    () => buildDonutSegments(stats.statusCounts, activeSource, t),
-    [activeSource, stats.statusCounts, t],
+  const kpiItems = useMemo(
+    () => buildKpiItems(stats, activeSource, t, hookExecutionLive),
+    [activeSource, hookExecutionLive, stats, t],
   );
 
-  const kpiItems = useMemo(
-    () => buildKpiItems(stats, activeSource, t),
-    [activeSource, stats, t],
+  const liveKpiItems = useMemo(
+    () =>
+      activeSource === "hookExecution"
+        ? kpiItems.filter((item) =>
+            HOOK_EXECUTION_LIVE_METRIC_KEYS.includes(
+              item.key as (typeof HOOK_EXECUTION_LIVE_METRIC_KEYS)[number],
+            ),
+          )
+        : [],
+    [activeSource, kpiItems],
   );
+
+  const mainKpiItems = useMemo(
+    () =>
+      activeSource === "hookExecution"
+        ? kpiItems.filter(
+            (item) =>
+              !HOOK_EXECUTION_LIVE_METRIC_KEYS.includes(
+                item.key as (typeof HOOK_EXECUTION_LIVE_METRIC_KEYS)[number],
+              ),
+          )
+        : kpiItems,
+    [activeSource, kpiItems],
+  );
+
+  const hasLiveHookExecutions =
+    hookExecutionLive != null &&
+    (hookExecutionLive.pending > 0 || hookExecutionLive.running > 0);
 
   const emptyMessage =
     sourceEvents.length === 0
@@ -392,48 +443,52 @@ export function DebuggerSummaryPanel() {
           <Text className="text-muted-foreground text-sm">{emptyMessage}</Text>
         ) : (
           <div className="space-y-4">
-            {stats.inProgressCount > 0 ? (
+            {stats.inProgressCount > 0 || hasLiveHookExecutions ? (
               <Alert>{t("debugger.summary.inProgressBanner")}</Alert>
             ) : null}
 
-            <DebuggerKpiStrip items={kpiItems} />
+            <DebuggerKpiStrip items={mainKpiItems} />
+
+            {activeSource === "hookExecution" &&
+            stats.writeExecutionCount != null &&
+            stats.totalWrites != null ? (
+              <div className="space-y-1">
+                <Text className="text-muted-foreground text-xs">
+                  {t("debugger.summary.writesAcrossExecutions", {
+                    total: stats.totalWrites,
+                    count: stats.writeExecutionCount,
+                  })}
+                </Text>
+                {isLoadingAllExecutions ? (
+                  <Text className="text-muted-foreground text-xs">
+                    {t("debugger.summary.loadingExecutionHistory")}
+                  </Text>
+                ) : hasMoreEvents ? (
+                  <Text className="text-muted-foreground text-xs">
+                    {t("debugger.summary.partialExecutionHistory", {
+                      count: loadedExecutionCount,
+                    })}
+                  </Text>
+                ) : null}
+              </div>
+            ) : null}
+
+            {liveKpiItems.length > 0 ? (
+              <DebuggerKpiStrip items={liveKpiItems} />
+            ) : null}
 
             <div className="flex gap-3 overflow-x-auto pb-1">
-              <DebuggerExpandableChartCard
-                title={t("debugger.summary.statusDistribution")}
-                icon={PieChart}
-                contentLayout="contain"
-                compactChart={
-                  <DebuggerDonutChart
-                    segments={donutSegments}
-                    ariaLabel={t("debugger.summary.statusDistribution")}
-                    size="default"
-                    center={
-                      <DonutCenter
-                        total={stats.total}
-                        label={t("debugger.summary.totalLabel")}
-                      />
-                    }
-                  />
+              {stats.barCharts.map((chart) => {
+                if (chart.groups.length === 0) {
+                  return null;
                 }
-                expandedChart={
-                  <DebuggerDonutChart
-                    segments={donutSegments}
-                    ariaLabel={t("debugger.summary.statusDistribution")}
-                    layout="expanded"
-                    center={
-                      <DonutCenter
-                        total={stats.total}
-                        label={t("debugger.summary.totalLabel")}
-                        expanded
-                      />
-                    }
-                  />
-                }
-              />
 
-              {stats.barCharts.map((chart) =>
-                chart.groups.length > 0 ? (
+                const unitKey = barChartValueUnitKey(chart);
+                const legendKey = barChartLegendKey(chart);
+                const unitLabel = unitKey ? t(unitKey) : undefined;
+                const legend = legendKey ? t(legendKey) : undefined;
+
+                return (
                   <DebuggerExpandableChartCard
                     key={chart.id}
                     title={t(chart.titleKey)}
@@ -441,18 +496,22 @@ export function DebuggerSummaryPanel() {
                     contentLayout="contain"
                     compactChart={
                       <DebuggerHorizontalBarChart
-                        items={mapBarChartItems(chart, activeSource)}
+                        items={mapBarChartItems(chart)}
+                        unitLabel={unitLabel}
+                        legend={legend}
                       />
                     }
                     expandedChart={
                       <DebuggerHorizontalBarChart
-                        items={mapBarChartItems(chart, activeSource)}
+                        items={mapBarChartItems(chart)}
+                        unitLabel={unitLabel}
+                        legend={legend}
                         layout="expanded"
                       />
                     }
                   />
-                ) : null,
-              )}
+                );
+              })}
 
               {stats.timelineBuckets.some((bucket) => bucket.total > 0) ? (
                 <DebuggerExpandableChartCard
@@ -467,6 +526,10 @@ export function DebuggerSummaryPanel() {
                         activeSource === "hookExecution" ||
                         activeSource === "requestPerf"
                       }
+                      valueUnitLabel={t(
+                        timelineChartValueUnitKey(activeSource),
+                      )}
+                      legend={t(timelineChartLegendKey())}
                     />
                   }
                   expandedChart={
@@ -478,6 +541,10 @@ export function DebuggerSummaryPanel() {
                         activeSource === "requestPerf"
                       }
                       size="large"
+                      valueUnitLabel={t(
+                        timelineChartValueUnitKey(activeSource),
+                      )}
+                      legend={t(timelineChartLegendKey())}
                     />
                   }
                 />

@@ -11,7 +11,18 @@ import {
   assertCreateRecordsRuntimeCount,
   coerceNonNegativeInteger,
 } from "./create-records-utils.js";
-import type { CreateDataHookExecutionInput } from "./data-hook-execution.js";
+import type {
+  CreateDataHookExecutionInput,
+  DataHookExecutionRecorder,
+} from "./data-hook-execution.js";
+import { actionTargetEntities } from "./data-hook-definition.js";
+import {
+  appendActionTraceEntry,
+  buildExecutionMetricsSnapshot,
+  HookWriteMetricsCollector,
+  wrapHookEntityServicesWithMetrics,
+  type DataHookActionTraceEntry,
+} from "./hook-execution-metrics.js";
 import { buildDataHookJobPayload } from "./data-hook-job.js";
 import { isBeforePhase, parseHookEvent } from "./event.js";
 import { listMatchingRecordsForWhere } from "./update-matching-utils.js";
@@ -283,11 +294,76 @@ function requireEntities(
   return context.services.entities;
 }
 
+interface DataHookActionMeta {
+  readonly hookId: string;
+  readonly hookName: string;
+}
+
+interface HookExecutionInstrumentation {
+  readonly writeMetrics: HookWriteMetricsCollector;
+  readonly actionTrace: DataHookActionTraceEntry[];
+}
+
+function prepareHookRunContext(context: HookContext): {
+  readonly context: HookContext;
+  readonly instrumentation: HookExecutionInstrumentation;
+} {
+  const writeMetrics = new HookWriteMetricsCollector();
+  const actionTrace: DataHookActionTraceEntry[] = [];
+  const instrumentation = { writeMetrics, actionTrace };
+  const entities = context.services.entities
+    ? wrapHookEntityServicesWithMetrics(context.services.entities, writeMetrics)
+    : undefined;
+
+  return {
+    instrumentation,
+    context: {
+      ...context,
+      executionInstrumentation: instrumentation,
+      services: {
+        ...context.services,
+        ...(entities ? { entities } : {}),
+      },
+    },
+  };
+}
+
+function recordActionTrace(
+  context: HookContext,
+  action: DataHookAction,
+  scope: ExpressionScope,
+  durationMs: number,
+  error?: string,
+): void {
+  const trace = context.executionInstrumentation?.actionTrace;
+  if (!trace) {
+    return;
+  }
+
+  const targetEntities = actionTargetEntities(action);
+  let count: number | undefined;
+  if (action.type === "createRecords") {
+    count = coerceNonNegativeInteger(
+      evaluateExpression(action.count, scope),
+      "count",
+    );
+  }
+
+  appendActionTraceEntry(trace, {
+    type: action.type,
+    ...(targetEntities[0] ? { entity: targetEntities[0] } : {}),
+    ...(count != null ? { count } : {}),
+    durationMs,
+    ...(error ? { error } : {}),
+  });
+}
+
 async function runAction(
   action: DataHookAction,
   context: HookContext,
   phase: HookPhase,
   execution: DataHookExecutionMode | undefined,
+  hookMeta: DataHookActionMeta,
   writeOptions?: HookEntityWriteOptions,
 ): Promise<void> {
   const scope = buildScope(context);
@@ -454,11 +530,22 @@ async function runAction(
 
     case "sendNotification": {
       const message = evaluateExpression(action.message, scope);
-      context.services.logger?.info("Data hook notification", {
-        message: message == null ? "" : String(message),
+      const text = message == null ? "" : String(message).trim();
+      if (text.length === 0) {
+        return;
+      }
+
+      context.services.logger?.info(text, {
+        hookId: hookMeta.hookId,
+        hookName: hookMeta.hookName,
         entityName: context.entityName,
         event: context.event,
         tenantId: context.tenantId,
+        action: "sendNotification",
+        recordId:
+          typeof context.current.id === "string"
+            ? context.current.id
+            : undefined,
       });
       return;
     }
@@ -532,27 +619,42 @@ function buildExecutionBase(
       ? { recordId: context.current.id }
       : {}),
     executionMode: definition.execution ?? "sync",
+    chainDepth: context.depth ?? 0,
     triggeredBy: { uid: context.user.uid },
   };
 }
 
-async function recordExecution(
+function buildExecutionMetrics(
   context: HookContext,
-  entry: CreateDataHookExecutionInput,
+  instrumentation: HookExecutionInstrumentation,
+): ReturnType<typeof buildExecutionMetricsSnapshot> {
+  return buildExecutionMetricsSnapshot({
+    chainDepth: context.depth ?? 0,
+    writeMetrics: instrumentation.writeMetrics,
+    actionTrace: instrumentation.actionTrace,
+  });
+}
+
+function getExecutionRecorder(
+  context: HookContext,
+): DataHookExecutionRecorder | undefined {
+  return context.services.dataHookExecutionRecorder;
+}
+
+async function safeRecorderCall(
+  context: HookContext,
+  hookId: string,
+  action: () => Promise<void>,
 ): Promise<void> {
-  const record = context.services.recordDataHookExecution;
-  if (!record) {
-    return;
-  }
   try {
-    await record(entry);
+    await action();
   } catch (error) {
     const message =
       error instanceof Error ? error.message : "Failed to record execution.";
     context.services.logger?.error("Failed to record data hook execution", {
-      hookId: entry.hookId,
-      entityName: entry.entityName,
-      event: entry.event,
+      hookId,
+      entityName: context.entityName,
+      event: context.event,
       error: message,
     });
   }
@@ -603,48 +705,80 @@ async function runDataHookCore(
   }
 
   for (const action of definition.actions) {
-    await runAction(
-      action,
-      context,
-      parsed.phase,
-      definition.execution,
-      writeOptions,
-    );
+    const scope = buildScope(context);
+    const startedAt = Date.now();
+    try {
+      await runAction(
+        action,
+        context,
+        parsed.phase,
+        definition.execution,
+        {
+          hookId: definition.id,
+          hookName: definition.name,
+        },
+        writeOptions,
+      );
+      recordActionTrace(context, action, scope, Date.now() - startedAt);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Hook action failed.";
+      recordActionTrace(
+        context,
+        action,
+        scope,
+        Date.now() - startedAt,
+        message,
+      );
+      throw error;
+    }
   }
 }
 
 export async function runDataHook(
   definition: DataHookDefinition,
   context: HookContext,
+  options?: { readonly executionId?: string },
 ): Promise<void> {
+  const { context: runContext, instrumentation } =
+    prepareHookRunContext(context);
   const startedAt = Date.now();
   const startedAtIso = new Date(startedAt).toISOString();
-  const parsed = parseHookEvent(context.event);
-  const base = buildExecutionBase(definition, context, parsed);
+  const parsed = parseHookEvent(runContext.event);
+  const base = buildExecutionBase(definition, runContext, parsed);
+  const recorder = getExecutionRecorder(runContext);
+  let executionId = options?.executionId;
+  const metricsSnapshot = () =>
+    buildExecutionMetrics(runContext, instrumentation);
 
   const finishSkipped = async (error: string) => {
-    const finishedAt = Date.now();
-    await recordExecution(context, {
-      ...base,
-      status: "skipped",
-      error,
-      durationMs: finishedAt - startedAt,
-      startedAt: startedAtIso,
-      finishedAt: new Date(finishedAt).toISOString(),
-    });
+    if (!recorder) {
+      return;
+    }
+    await safeRecorderCall(runContext, base.hookId, () =>
+      recorder.createTerminal({
+        ...base,
+        ...metricsSnapshot(),
+        startedAt: startedAtIso,
+        status: "skipped",
+        error,
+        durationMs: Date.now() - startedAt,
+        finishedAt: new Date().toISOString(),
+      }),
+    );
   };
 
-  if ((context.depth ?? 0) > MAX_HOOK_DEPTH) {
-    context.services.logger?.error("Data hook depth limit exceeded", {
-      entityName: context.entityName,
-      event: context.event,
-      depth: context.depth,
+  if ((runContext.depth ?? 0) > MAX_HOOK_DEPTH) {
+    runContext.services.logger?.error("Data hook depth limit exceeded", {
+      entityName: runContext.entityName,
+      event: runContext.event,
+      depth: runContext.depth,
     });
     await finishSkipped("Hook depth limit exceeded.");
     return;
   }
 
-  const visited = context.visitedHookIds ?? new Set<string>();
+  const visited = runContext.visitedHookIds ?? new Set<string>();
   if (visited.has(definition.id)) {
     await finishSkipped("Hook already visited in this chain.");
     return;
@@ -652,42 +786,64 @@ export async function runDataHook(
 
   if (
     parsed.operation === "update" &&
-    !updateFieldsChanged(definition, context)
+    !updateFieldsChanged(definition, runContext)
   ) {
     await finishSkipped("No configured update fields changed.");
     return;
   }
 
   if (definition.condition) {
-    const scope = buildScope(context);
-    if (!evaluateConditionNode(definition.condition, context, scope)) {
+    const scope = buildScope(runContext);
+    if (!evaluateConditionNode(definition.condition, runContext, scope)) {
       await finishSkipped("Condition evaluated to false.");
       return;
     }
   }
 
+  if (recorder) {
+    const begun = await recorder
+      .beginRunning({ ...base, startedAt: startedAtIso }, executionId)
+      .catch((error: unknown) => {
+        void safeRecorderCall(runContext, base.hookId, async () => {
+          throw error;
+        });
+        return null;
+      });
+    if (begun) {
+      executionId = begun.id;
+    }
+  }
+
   try {
-    await runDataHookCore(definition, context);
+    await runDataHookCore(definition, runContext);
     const finishedAt = Date.now();
-    await recordExecution(context, {
-      ...base,
-      status: "success",
-      durationMs: finishedAt - startedAt,
-      startedAt: startedAtIso,
-      finishedAt: new Date(finishedAt).toISOString(),
-    });
+    if (recorder && executionId) {
+      await safeRecorderCall(runContext, base.hookId, () =>
+        recorder.finish({
+          id: executionId,
+          status: "success",
+          durationMs: finishedAt - startedAt,
+          finishedAt: new Date(finishedAt).toISOString(),
+          ...metricsSnapshot(),
+        }),
+      );
+    }
   } catch (error) {
     const finishedAt = Date.now();
     const message =
       error instanceof Error ? error.message : "Data hook execution failed.";
-    await recordExecution(context, {
-      ...base,
-      status: "error",
-      error: message,
-      durationMs: finishedAt - startedAt,
-      startedAt: startedAtIso,
-      finishedAt: new Date(finishedAt).toISOString(),
-    });
+    if (recorder && executionId) {
+      await safeRecorderCall(runContext, base.hookId, () =>
+        recorder.finish({
+          id: executionId,
+          status: "error",
+          error: message,
+          durationMs: finishedAt - startedAt,
+          finishedAt: new Date(finishedAt).toISOString(),
+          ...metricsSnapshot(),
+        }),
+      );
+    }
     throw error;
   }
 }
@@ -699,7 +855,28 @@ export function compileDataHook(
     return async (context) => {
       const enqueue = context.services.enqueueDataHookJob;
       if (enqueue) {
-        await enqueue(buildDataHookJobPayload(definition, context));
+        const parsed = parseHookEvent(context.event);
+        const base = buildExecutionBase(definition, context, parsed);
+        const startedAtIso = new Date().toISOString();
+        const recorder = getExecutionRecorder(context);
+        let executionId: string | undefined;
+        if (recorder) {
+          const pending = await recorder
+            .createPending({
+              ...base,
+              startedAt: startedAtIso,
+            })
+            .catch((error: unknown) => {
+              void safeRecorderCall(context, definition.id, async () => {
+                throw error;
+              });
+              return null;
+            });
+          executionId = pending?.id;
+        }
+        await enqueue(
+          buildDataHookJobPayload(definition, context, executionId),
+        );
         return;
       }
 
@@ -707,6 +884,7 @@ export function compileDataHook(
         "Queued data hook missing enqueue service; falling back to deferred execution",
         {
           hookId: definition.id,
+          hookName: definition.name,
           entityName: context.entityName,
           event: context.event,
         },
@@ -716,6 +894,7 @@ export function compileDataHook(
           error instanceof Error ? error.message : "Deferred data hook failed.";
         context.services.logger?.error("Deferred data hook failed", {
           hookId: definition.id,
+          hookName: definition.name,
           entityName: context.entityName,
           event: context.event,
           error: message,
@@ -731,6 +910,7 @@ export function compileDataHook(
           error instanceof Error ? error.message : "Deferred data hook failed.";
         context.services.logger?.error("Deferred data hook failed", {
           hookId: definition.id,
+          hookName: definition.name,
           entityName: context.entityName,
           event: context.event,
           error: message,

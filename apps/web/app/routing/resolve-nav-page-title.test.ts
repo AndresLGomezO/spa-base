@@ -7,7 +7,11 @@ import {
   type NavItemConfig,
 } from "../components/sidebar/nav-config";
 
-import { flattenNavLinks, resolveNavPageTitle } from "./resolve-nav-page-title";
+import {
+  flattenNavLinks,
+  resolveNavPageTitle,
+  resolveNavPageTitleFromFlatLinks,
+} from "./resolve-nav-page-title";
 
 const ACCOUNTS_NAV_ITEM = {
   id: "accounts",
@@ -106,5 +110,17 @@ describe("resolveNavPageTitle", () => {
 
   it("returns null when no nav item matches", () => {
     expect(resolveNavPageTitle("/unknown/path", NAV_ITEMS)).toBeNull();
+  });
+});
+
+describe("resolveNavPageTitleFromFlatLinks", () => {
+  it("returns the label for a pre-sorted flat link match", () => {
+    const flatLinks = [...flattenNavLinks(NAV_ITEMS)].sort(
+      (left, right) => right.matchPath.length - left.matchPath.length,
+    );
+
+    expect(resolveNavPageTitleFromFlatLinks("/app/accounts", flatLinks)).toBe(
+      "Accounts",
+    );
   });
 });

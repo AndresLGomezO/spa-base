@@ -8,6 +8,8 @@ import type {
   DebugEvent,
   DebugEventSource,
 } from "@repo/debug-logs";
+import { formatHookLogDebugPresentation } from "@repo/debug-logs";
+import { formatHookExecutionSubtitle } from "@repo/hooks";
 
 function aiJobStatus(
   status: AiJobRecord["status"],
@@ -66,7 +68,7 @@ export function toAiDebugEvent(job: AiJobRecord): DebugEvent {
   };
 }
 
-export function toHookExecutionDebugEvent(
+function toHookExecutionDebugEvent(
   record: DataHookExecutionRecord,
 ): DebugEvent {
   return {
@@ -74,33 +76,52 @@ export function toHookExecutionDebugEvent(
     source: "hookExecution",
     timestamp: record.startedAt,
     title: record.hookName,
-    subtitle: `${record.entityName} · ${record.event}`,
+    subtitle: formatHookExecutionSubtitle(record),
     status: record.status,
     summary: {
       hookId: record.hookId,
+      hookName: record.hookName,
       entityName: record.entityName,
       phase: record.phase,
       operation: record.operation,
+      executionMode: record.executionMode,
       durationMs: record.durationMs,
       error: record.error,
+      recordId: record.recordId,
+      chainDepth: record.chainDepth,
+      writesCreated: record.writesCreated,
+      writesUpdated: record.writesUpdated,
+      writesDeleted: record.writesDeleted,
+      writesByEntity: record.writesByEntity,
+      actionTrace: record.actionTrace,
     },
     payload: record,
   };
 }
 
+export function mergeHookExecutionDebugEvents(
+  active: readonly DataHookExecutionRecord[],
+  recent: readonly DataHookExecutionRecord[],
+  limit: number,
+): DebugEvent[] {
+  const activeIds = new Set(active.map((record) => record.id));
+  return [...active, ...recent.filter((record) => !activeIds.has(record.id))]
+    .sort((left, right) => right.startedAt.localeCompare(left.startedAt))
+    .slice(0, limit)
+    .map(toHookExecutionDebugEvent);
+}
+
 export function toHookLogDebugEvent(record: HookLogMessageRecord): DebugEvent {
+  const presentation = formatHookLogDebugPresentation(record);
+
   return {
     id: record.id,
     source: "hookLog",
     timestamp: record.timestamp,
-    title: record.message,
-    subtitle: record.hookId ?? record.entityName,
+    title: presentation.title,
+    subtitle: presentation.subtitle,
     status: record.level === "error" ? "error" : "info",
-    summary: {
-      level: record.level,
-      hookId: record.hookId,
-      entityName: record.entityName,
-    },
+    summary: presentation.summary,
     payload: record,
   };
 }

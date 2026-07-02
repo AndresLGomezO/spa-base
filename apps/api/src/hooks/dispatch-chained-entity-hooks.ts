@@ -2,6 +2,7 @@ import {
   executeHooks,
   formatHookEvent,
   type CreateDataHookExecutionInput,
+  type DataHookExecutionRecorder,
   type DataHookJobPayload,
   type DataHookWebhookRequest,
   type HookEntityServices,
@@ -27,6 +28,7 @@ interface DispatchChainedEntityHooksParams {
   readonly recordDataHookExecution?: (
     entry: CreateDataHookExecutionInput,
   ) => Promise<void>;
+  readonly dataHookExecutionRecorder?: DataHookExecutionRecorder;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }
 
@@ -56,6 +58,9 @@ export async function dispatchChainedEntityHooks(
         : {}),
       ...(params.recordDataHookExecution
         ? { recordDataHookExecution: params.recordDataHookExecution }
+        : {}),
+      ...(params.dataHookExecutionRecorder
+        ? { dataHookExecutionRecorder: params.dataHookExecutionRecorder }
         : {}),
       ...(params.callWebhook ? { callWebhook: params.callWebhook } : {}),
     },

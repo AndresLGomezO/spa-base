@@ -3,6 +3,11 @@ import type {
   DebugEventSource,
   DebugEventStatus,
 } from "../../lib/api-client";
+import {
+  aggregateHookExecutionWrites,
+  aggregateHookExecutionWritesByEntity,
+  totalHookExecutionWritesFromEvent,
+} from "./hook-execution-presentation";
 
 export interface DebuggerStatGroup {
   readonly key: string;
@@ -14,8 +19,11 @@ export interface DebuggerStatGroup {
 export interface DebuggerBarChartStats {
   readonly id: string;
   readonly titleKey:
+    | "debugger.summary.writesByEntity"
     | "debugger.summary.topEntities"
     | "debugger.summary.topHooks"
+    | "debugger.summary.topHooksByWrites"
+    | "debugger.summary.topHooksByDuration"
     | "debugger.summary.topRoutes"
     | "debugger.summary.topFeatures"
     | "debugger.summary.topActions"
@@ -36,6 +44,11 @@ export interface DebuggerSourceStats {
   readonly statusCounts: Partial<Record<DebugEventStatus, number>>;
   readonly errorRate: number | null;
   readonly avgDurationMs: number | null;
+  readonly totalWrites: number | null;
+  readonly writesCreated: number | null;
+  readonly writesUpdated: number | null;
+  readonly writesDeleted: number | null;
+  readonly writeExecutionCount: number | null;
   readonly avgTotalMs: number | null;
   readonly avgHooksMs: number | null;
   readonly avgQueryMs: number | null;
@@ -236,7 +249,14 @@ export function pickAttentionEvents(
   switch (activeSource) {
     case "hookExecution":
     case "hookLog":
-      return sorted.filter((event) => isErrorEvent(event)).slice(0, limit);
+      return sorted
+        .filter(
+          (event) =>
+            isErrorEvent(event) ||
+            event.status === "running" ||
+            event.status === "pending",
+        )
+        .slice(0, limit);
     case "ai":
       return sorted
         .filter(
@@ -361,6 +381,97 @@ export function computeTimelineBuckets(
   return buckets;
 }
 
+function topHooksByWrites(
+  events: readonly DebugEvent[],
+  limit: number,
+): DebuggerStatGroup[] {
+  const groups = new Map<string, { label: string; count: number }>();
+
+  for (const event of events) {
+    if (event.source !== "hookExecution") {
+      continue;
+    }
+    const hookId =
+      typeof event.summary?.hookId === "string" ? event.summary.hookId : null;
+    const hookName =
+      typeof event.summary?.hookName === "string"
+        ? event.summary.hookName
+        : event.title;
+    if (!hookId) {
+      continue;
+    }
+    const writes = totalHookExecutionWritesFromEvent(event);
+    const existing = groups.get(hookId) ?? { label: hookName, count: 0 };
+    existing.count += writes;
+    groups.set(hookId, existing);
+  }
+
+  return [...groups.values()]
+    .filter((entry) => entry.count > 0)
+    .sort((left, right) => right.count - left.count)
+    .slice(0, limit)
+    .map((entry) => ({
+      key: entry.label,
+      label: entry.label,
+      count: entry.count,
+    }));
+}
+
+function topHooksByDuration(
+  events: readonly DebugEvent[],
+  limit: number,
+): DebuggerStatGroup[] {
+  const groups = new Map<
+    string,
+    { label: string; durationMs: number; count: number }
+  >();
+
+  for (const event of events) {
+    if (event.source !== "hookExecution") {
+      continue;
+    }
+    const durationMs = event.summary?.durationMs;
+    if (typeof durationMs !== "number") {
+      continue;
+    }
+    const hookId =
+      typeof event.summary?.hookId === "string" ? event.summary.hookId : null;
+    const hookName =
+      typeof event.summary?.hookName === "string"
+        ? event.summary.hookName
+        : event.title;
+    if (!hookId) {
+      continue;
+    }
+    const existing = groups.get(hookId);
+    if (!existing || durationMs > existing.durationMs) {
+      groups.set(hookId, { label: hookName, durationMs, count: 1 });
+    }
+  }
+
+  return [...groups.values()]
+    .sort((left, right) => right.durationMs - left.durationMs)
+    .slice(0, limit)
+    .map((entry) => ({
+      key: entry.label,
+      label: entry.label,
+      count: entry.durationMs,
+    }));
+}
+
+function topEntitiesByWrites(
+  events: readonly DebugEvent[],
+  limit: number,
+): DebuggerStatGroup[] {
+  return aggregateHookExecutionWritesByEntity(events)
+    .slice(0, limit)
+    .map((entry) => ({
+      key: entry.entityName,
+      label: entry.entityName,
+      count: entry.total,
+    }));
+}
+
 function buildBarCharts(
   events: readonly DebugEvent[],
   activeSource: DebugEventSource,
@@ -369,11 +480,19 @@ function buildBarCharts(
     case "hookExecution":
       return [
         {
-          id: "entities",
-          titleKey: "debugger.summary.topEntities",
-          groups: topBySummaryField(events, "entityName", 5, {
-            trackErrors: true,
-          }),
+          id: "entities-by-writes",
+          titleKey: "debugger.summary.writesByEntity",
+          groups: topEntitiesByWrites(events, 6),
+        },
+        {
+          id: "hooks-by-writes",
+          titleKey: "debugger.summary.topHooksByWrites",
+          groups: topHooksByWrites(events, 5),
+        },
+        {
+          id: "hooks-by-duration",
+          titleKey: "debugger.summary.topHooksByDuration",
+          groups: topHooksByDuration(events, 5),
         },
         {
           id: "hooks",
@@ -436,6 +555,11 @@ export function computeDebuggerSourceStats(
     (event) => event.status != null && IN_PROGRESS_STATUSES.has(event.status),
   ).length;
 
+  const writeTotals =
+    activeSource === "hookExecution"
+      ? aggregateHookExecutionWrites(events)
+      : null;
+
   return {
     total: events.length,
     statusCounts,
@@ -444,6 +568,11 @@ export function computeDebuggerSourceStats(
       activeSource === "hookExecution"
         ? avgNumericSummary(events, "durationMs")
         : null,
+    totalWrites: writeTotals?.total ?? null,
+    writesCreated: writeTotals?.created ?? null,
+    writesUpdated: writeTotals?.updated ?? null,
+    writesDeleted: writeTotals?.deleted ?? null,
+    writeExecutionCount: writeTotals?.executionCount ?? null,
     avgTotalMs:
       activeSource === "requestPerf"
         ? avgNumericSummary(events, "totalMs")

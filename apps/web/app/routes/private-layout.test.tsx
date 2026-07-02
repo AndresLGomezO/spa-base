@@ -52,6 +52,18 @@ vi.mock("../routing/page-title-context", () => ({
   ),
 }));
 
+vi.mock("../routing/nav-items-context", () => ({
+  NavItemsProvider: ({ children }: { children: React.ReactNode }) => (
+    <>{children}</>
+  ),
+}));
+
+vi.mock("../routing/NavigationPendingOutlet", () => ({
+  NavigationPendingOutlet: () => (
+    <div data-testid="navigation-pending-outlet" />
+  ),
+}));
+
 vi.mock("../theme/TenantBrandingProvider", () => ({
   TenantBrandingProvider: ({ children }: { children: React.ReactNode }) => (
     <>{children}</>

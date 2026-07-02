@@ -4,6 +4,7 @@ import {
   FilterPanel,
   FilterPanelBody,
   IconButton,
+  Input,
   SearchField,
   Select,
   Text,
@@ -18,6 +19,7 @@ import { useTranslation } from "react-i18next";
 import type { DebugEvent, DebugEventStatus } from "../../lib/api-client";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
+import { DebuggerHookLiveStatus } from "./components/DebuggerHookLiveStatus";
 import { DebuggerJsonViewDialog } from "./components/DebuggerJsonViewDialog";
 import {
   IndexProvisioningTreeJobs,
@@ -34,7 +36,11 @@ import {
   type DebuggerListSort,
 } from "./debugger-status-styles";
 import { buildDebugRecordKey } from "./dismissed-debug-records";
-import { useDebuggerListQuery } from "./use-debugger-list-query";
+import { type HookExecutionTypeKey } from "./hook-execution-live-metrics";
+import {
+  parsePositiveInt,
+  useDebuggerListQuery,
+} from "./use-debugger-list-query";
 
 function formatJson(value: unknown): string {
   try {
@@ -134,6 +140,10 @@ export function DebuggerListTreePanel() {
     selectedEvent,
     selectedIndexSignature,
     clearSelectedRecord,
+    hookExecutionLive,
+    hasMoreEvents,
+    isLoadingMore,
+    loadMore,
   } = useDebugger();
   const [jsonDialogOpen, setJsonDialogOpen] = useState(false);
   const [filtersOpen, setFiltersOpen] = useState(false);
@@ -144,13 +154,18 @@ export function DebuggerListTreePanel() {
     listEvents,
     statusCounts,
     availableStatuses,
+    availableExecutionTypes,
     hasActiveFilters,
     activeFilterBadges,
     setSearch,
     setSort,
     toggleStatus,
+    toggleExecutionType,
+    setMinWrites,
+    setMinDurationMs,
     clearFilters,
     debuggerStatusLabelKey,
+    hookExecutionTypeLabelKey,
   } = useDebuggerListQuery(sourceEvents, activeSource);
 
   useFilterPanelDismiss(filtersOpen, setFiltersOpen, toolbarRef);
@@ -174,9 +189,36 @@ export function DebuggerListTreePanel() {
             label: t(debuggerStatusLabelKey(status)),
           };
         }
+        if (badge.id.startsWith("executionType:")) {
+          const executionType = badge.id.slice(
+            "executionType:".length,
+          ) as HookExecutionTypeKey;
+          return {
+            ...badge,
+            label: t(hookExecutionTypeLabelKey(executionType)),
+          };
+        }
+        if (badge.id === "minWrites") {
+          return {
+            ...badge,
+            label: `${t("debugger.list.minWrites")}: ${badge.label}`,
+          };
+        }
+        if (badge.id === "minDuration") {
+          return {
+            ...badge,
+            label: `${t("debugger.list.minDuration")}: ${badge.label}`,
+          };
+        }
         return badge;
       }),
-    [activeFilterBadges, debuggerStatusLabelKey, query.sort, t],
+    [
+      activeFilterBadges,
+      debuggerStatusLabelKey,
+      hookExecutionTypeLabelKey,
+      query.sort,
+      t,
+    ],
   );
 
   const overviewRow = (
@@ -219,29 +261,95 @@ export function DebuggerListTreePanel() {
   );
 
   const filterBody = (
-    <div className="space-y-3">
-      <Text className="text-muted-foreground text-xs font-medium">
-        {t("debugger.list.filterByStatus")}
-      </Text>
-      <div className="flex flex-col gap-2">
-        {availableStatuses.map((status) => (
-          <Checkbox
-            key={status}
-            id={`debugger-status-${status}`}
-            checked={query.statuses.includes(status)}
-            onChange={() => toggleStatus(status)}
-            label={
-              <span className="inline-flex items-center gap-2">
-                <DebuggerStatusBadge status={status} size="compact" />
-              </span>
-            }
-          />
-        ))}
+    <div
+      className={
+        activeSource === "hookExecution"
+          ? "grid gap-6 sm:grid-cols-2"
+          : "space-y-3"
+      }
+    >
+      <div className="space-y-3">
+        <Text className="text-muted-foreground text-xs font-medium">
+          {t("debugger.list.filterByStatus")}
+        </Text>
+        <div className="flex flex-col gap-2">
+          {availableStatuses.map((status) => (
+            <Checkbox
+              key={status}
+              id={`debugger-status-${status}`}
+              checked={query.statuses.includes(status)}
+              onChange={() => toggleStatus(status)}
+              label={
+                <span className="inline-flex items-center gap-2">
+                  <DebuggerStatusBadge status={status} size="compact" />
+                </span>
+              }
+            />
+          ))}
+        </div>
       </div>
+
+      {activeSource === "hookExecution" ? (
+        <div className="space-y-3">
+          <Text className="text-muted-foreground text-xs font-medium">
+            {t("debugger.list.filterByTypology")}
+          </Text>
+          <div className="flex flex-col gap-2">
+            {availableExecutionTypes.map((executionType) => (
+              <Checkbox
+                key={executionType}
+                id={`debugger-execution-type-${executionType}`}
+                checked={query.executionTypes.includes(executionType)}
+                onChange={() => toggleExecutionType(executionType)}
+                label={t(hookExecutionTypeLabelKey(executionType))}
+              />
+            ))}
+          </div>
+          <div className="grid gap-3 pt-2">
+            <label className="space-y-1">
+              <span className="text-muted-foreground text-xs font-medium">
+                {t("debugger.list.minWrites")}
+              </span>
+              <Input
+                type="number"
+                min={0}
+                value={query.minWrites > 0 ? String(query.minWrites) : ""}
+                onChange={(event) =>
+                  setMinWrites(parsePositiveInt(event.target.value))
+                }
+                placeholder="0"
+                className="h-8"
+              />
+            </label>
+            <label className="space-y-1">
+              <span className="text-muted-foreground text-xs font-medium">
+                {t("debugger.list.minDuration")}
+              </span>
+              <Input
+                type="number"
+                min={0}
+                value={
+                  query.minDurationMs > 0 ? String(query.minDurationMs) : ""
+                }
+                onChange={(event) =>
+                  setMinDurationMs(parsePositiveInt(event.target.value))
+                }
+                placeholder="0"
+                className="h-8"
+              />
+            </label>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 
   const isIndexProvisionSource = activeSource === "indexProvision";
+
+  const emptyMessage =
+    sourceEvents.length === 0
+      ? t("debugger.list.emptySource")
+      : t("debugger.list.emptyFiltered");
 
   const scopeSection = isIndexProvisionSource ? (
     <IndexProvisioningTreeScope />
@@ -325,6 +433,10 @@ export function DebuggerListTreePanel() {
         </FilterPanelBody>
       </div>
 
+      {activeSource === "hookExecution" && hookExecutionLive ? (
+        <DebuggerHookLiveStatus live={hookExecutionLive} />
+      ) : null}
+
       <DebuggerStatusSummary counts={statusCounts} />
 
       <Button
@@ -362,13 +474,21 @@ export function DebuggerListTreePanel() {
           ))}
         </ul>
       )}
+      {hasMoreEvents ? (
+        <div className="px-2 pb-2">
+          <Button
+            type="button"
+            variant="outline"
+            className="w-full"
+            onClick={loadMore}
+            disabled={isLoadingMore}
+          >
+            {t("debugger.list.loadMore")}
+          </Button>
+        </div>
+      ) : null}
     </div>
   );
-
-  const emptyMessage =
-    sourceEvents.length === 0
-      ? t("debugger.list.emptySource")
-      : t("debugger.list.emptyFiltered");
 
   return (
     <>

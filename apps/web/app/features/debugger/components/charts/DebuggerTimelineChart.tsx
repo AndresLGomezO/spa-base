@@ -58,11 +58,15 @@ export function DebuggerTimelineChart({
   ariaLabel,
   showErrors = true,
   size = "default",
+  valueUnitLabel,
+  legend,
 }: {
   readonly buckets: readonly DebuggerTimelineBucket[];
   readonly ariaLabel: string;
   readonly showErrors?: boolean;
   readonly size?: keyof typeof VIEWBOX_SIZES;
+  readonly valueUnitLabel?: string;
+  readonly legend?: string;
 }) {
   const { t } = useTranslation("common");
   const viewbox = VIEWBOX_SIZES[size];
@@ -142,6 +146,17 @@ export function DebuggerTimelineChart({
         className="w-full"
         preserveAspectRatio="xMidYMid meet"
       >
+        {valueUnitLabel ? (
+          <text
+            x={margin.left - 8}
+            y={margin.top - (size === "large" ? 4 : 2)}
+            textAnchor="end"
+            className={axisFontClass}
+          >
+            {valueUnitLabel}
+          </text>
+        ) : null}
+
         {chart.yTicks.map((tick) => {
           const y =
             margin.top +
@@ -275,7 +290,10 @@ export function DebuggerTimelineChart({
             style={{ backgroundColor: "var(--color-chart-1)" }}
             aria-hidden
           />
-          <Text>{t("debugger.summary.timelineEvents")}</Text>
+          <Text>
+            {t("debugger.summary.timelineEvents")}
+            {valueUnitLabel ? ` (${valueUnitLabel})` : ""}
+          </Text>
         </span>
         {showErrors ? (
           <span className="inline-flex items-center gap-1.5">
@@ -287,6 +305,11 @@ export function DebuggerTimelineChart({
           </span>
         ) : null}
       </div>
+      {legend ? (
+        <Text className="text-muted-foreground text-xs leading-snug">
+          {legend}
+        </Text>
+      ) : null}
     </div>
   );
 }

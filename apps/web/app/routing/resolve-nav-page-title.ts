@@ -22,16 +22,12 @@ export function flattenNavLinks(
   return links;
 }
 
-export function resolveNavPageTitle(
+export function resolveNavPageTitleFromFlatLinks(
   pathname: string,
-  navItems: readonly NavItemConfig[],
+  flatLinks: readonly NavLinkConfig[],
   resolveLinkLabel?: (link: NavLinkConfig) => string | null,
 ): string | null {
-  const links = [...flattenNavLinks(navItems)].sort(
-    (left, right) => right.matchPath.length - left.matchPath.length,
-  );
-
-  for (const link of links) {
+  for (const link of flatLinks) {
     if (!isPathActive(pathname, link.matchPath)) {
       continue;
     }
@@ -47,4 +43,16 @@ export function resolveNavPageTitle(
   }
 
   return null;
+}
+
+export function resolveNavPageTitle(
+  pathname: string,
+  navItems: readonly NavItemConfig[],
+  resolveLinkLabel?: (link: NavLinkConfig) => string | null,
+): string | null {
+  const links = [...flattenNavLinks(navItems)].sort(
+    (left, right) => right.matchPath.length - left.matchPath.length,
+  );
+
+  return resolveNavPageTitleFromFlatLinks(pathname, links, resolveLinkLabel);
 }

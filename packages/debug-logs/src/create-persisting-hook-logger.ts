@@ -32,8 +32,9 @@ export function createPersistingHookLogger(options: {
         level: input.level,
         message: input.message,
         meta: input.meta,
-        hookId: input.hookId,
-        entityName: input.entityName,
+        hookId: input.hookId ?? readMetaString(input.meta, "hookId"),
+        entityName:
+          input.entityName ?? readMetaString(input.meta, "entityName"),
         timestamp: new Date().toISOString(),
       })
       .catch(() => undefined);

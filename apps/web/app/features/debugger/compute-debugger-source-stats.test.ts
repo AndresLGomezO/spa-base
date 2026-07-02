@@ -121,6 +121,10 @@ describe("computeDebuggerSourceStats", () => {
             durationMs: 100,
             entityName: "loanDetails",
             hookId: "LD-01",
+            writesCreated: 10,
+            writesByEntity: {
+              loanDetails: { created: 10, updated: 0, deleted: 0 },
+            },
           },
         }),
         hookExecutionEvent({
@@ -130,6 +134,11 @@ describe("computeDebuggerSourceStats", () => {
             durationMs: 300,
             entityName: "loanDetails",
             hookId: "LD-02",
+            writesCreated: 5,
+            writesUpdated: 2,
+            writesByEntity: {
+              loanDetails: { created: 5, updated: 2, deleted: 0 },
+            },
           },
         }),
         hookExecutionEvent({
@@ -139,6 +148,9 @@ describe("computeDebuggerSourceStats", () => {
             durationMs: 50,
             entityName: "paymentSchedule",
             hookId: "LD-01",
+            writesByEntity: {
+              paymentSchedule: { created: 0, updated: 0, deleted: 0 },
+            },
           },
         }),
       ],
@@ -148,8 +160,26 @@ describe("computeDebuggerSourceStats", () => {
     expect(stats.total).toBe(3);
     expect(stats.errorRate).toBe(33);
     expect(stats.avgDurationMs).toBe(150);
+    expect(stats.writesCreated).toBe(15);
+    expect(stats.writesUpdated).toBe(2);
+    expect(stats.writesDeleted).toBe(0);
+    expect(stats.totalWrites).toBe(17);
+    expect(stats.writeExecutionCount).toBe(3);
+    expect(stats.barCharts[0]?.titleKey).toBe(
+      "debugger.summary.writesByEntity",
+    );
+    expect(stats.barCharts[0]?.groups[0]).toEqual(
+      expect.objectContaining({
+        label: "loanDetails",
+        count: 17,
+      }),
+    );
+    expect(stats.totalWrites).toBe(
+      (stats.writesCreated ?? 0) +
+        (stats.writesUpdated ?? 0) +
+        (stats.writesDeleted ?? 0),
+    );
     expect(stats.statusCounts).toEqual({ success: 1, error: 1, skipped: 1 });
-    expect(stats.barCharts[0]?.groups[0]?.label).toBe("loanDetails");
     expect(stats.attentionItems).toHaveLength(1);
     expect(stats.attentionItems[0]?.id).toBe("2");
   });
@@ -237,5 +267,36 @@ describe("pickAttentionEvents", () => {
     );
 
     expect(items.map((item) => item.id)).toEqual(["2", "3"]);
+  });
+
+  it("includes running and pending hook executions in attention list", () => {
+    const items = pickAttentionEvents(
+      [
+        hookExecutionEvent({
+          id: "1",
+          status: "success",
+          timestamp: "2026-01-01T13:00:00.000Z",
+        }),
+        hookExecutionEvent({
+          id: "2",
+          status: "running",
+          timestamp: "2026-01-01T12:00:00.000Z",
+        }),
+        hookExecutionEvent({
+          id: "3",
+          status: "pending",
+          timestamp: "2026-01-01T11:00:00.000Z",
+        }),
+        hookExecutionEvent({
+          id: "4",
+          status: "error",
+          timestamp: "2026-01-01T10:00:00.000Z",
+        }),
+      ],
+      "hookExecution",
+      5,
+    );
+
+    expect(items.map((item) => item.id)).toEqual(["2", "3", "4"]);
   });
 });

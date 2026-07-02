@@ -1412,10 +1412,24 @@ export interface DebugEvent {
   readonly payload?: unknown;
 }
 
+export interface HookExecutionLiveCounts {
+  readonly pending: number;
+  readonly running: number;
+  readonly queuedPending: number;
+  readonly inlineRunning: number;
+  readonly deferredRunning: number;
+  readonly cloudRunning: number;
+}
+
 export async function listDebugEvents(options?: {
   readonly limit?: number;
   readonly sources?: readonly string[];
-}): Promise<{ readonly items: readonly DebugEvent[] }> {
+  readonly cursor?: string;
+}): Promise<{
+  readonly items: readonly DebugEvent[];
+  readonly hookExecutionLive?: HookExecutionLiveCounts;
+  readonly nextCursor?: string;
+}> {
   const params = new URLSearchParams();
   if (options?.limit != null) {
     params.set("limit", String(options.limit));
@@ -1423,8 +1437,47 @@ export async function listDebugEvents(options?: {
   if (options?.sources && options.sources.length > 0) {
     params.set("sources", options.sources.join(","));
   }
+  if (options?.cursor) {
+    params.set("cursor", options.cursor);
+  }
   const query = params.toString();
   return apiRequest(`/api/debug/events${query ? `?${query}` : ""}`);
+}
+
+interface DataHookExecutionRecord {
+  readonly id: string;
+  readonly hookId: string;
+  readonly hookName: string;
+  readonly entityName: string;
+  readonly event: string;
+  readonly status: string;
+  readonly startedAt: string;
+  readonly finishedAt?: string;
+  readonly durationMs?: number;
+  readonly writesCreated?: number;
+  readonly writesUpdated?: number;
+  readonly writesDeleted?: number;
+  readonly error?: string;
+}
+
+export async function listDataHookExecutions(
+  hookId: string,
+  options?: { readonly limit?: number; readonly cursor?: string },
+): Promise<{
+  readonly items: readonly DataHookExecutionRecord[];
+  readonly nextCursor?: string;
+}> {
+  const params = new URLSearchParams();
+  if (options?.limit != null) {
+    params.set("limit", String(options.limit));
+  }
+  if (options?.cursor) {
+    params.set("cursor", options.cursor);
+  }
+  const query = params.toString();
+  return apiRequest(
+    `/api/data-hooks/${encodeURIComponent(hookId)}/executions${query ? `?${query}` : ""}`,
+  );
 }
 
 export async function getDebugAiJob(jobId: string): Promise<AiJobRecord> {

@@ -1,20 +1,27 @@
 import { useQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
 import { LayoutGrid, LayoutDashboard } from "lucide-react";
 import { hasPermission } from "@repo/rbac";
+import { metricStripHasContent } from "@repo/entities";
 
 import { useAuth } from "../auth/AuthContext";
-import { getEntityIconName, getEntityLabel } from "../entities/entity-catalog";
+import {
+  getEntityIconName,
+  getEntityLabel,
+  type EntityCatalogEntry,
+} from "../entities/entity-catalog";
 import { useEntityCatalog } from "../entities/entity-catalog-context";
 import { useCustomViewCatalog } from "../custom-views/custom-view-catalog-context";
 import { getCustomViewLabel } from "../custom-views/custom-view-definition";
 import { resolveLucideIcon } from "../lib/resolve-lucide-icon";
-import { listMetricDefinitions } from "../lib/api-client.js";
+import {
+  listMetricDefinitions,
+  type CustomViewRecord,
+  type MetricDefinitionRecord,
+} from "../lib/api-client.js";
 import type {
   NavLinkConfig,
   NavSubGroupConfig,
 } from "../components/sidebar/nav-config";
-import { metricStripHasContent } from "@repo/entities";
 import { entityHasActiveMetrics } from "./entity-metrics-nav.js";
 
 type DesignLayoutKind = "main" | "list" | "detail" | "forms" | "metrics";
@@ -76,42 +83,179 @@ function compareEntityLabels(left: string, right: string): number {
   return left.localeCompare(right);
 }
 
-function useDesignLayoutEntityLinks(
-  kind: DesignLayoutKind,
-): readonly NavLinkConfig[] {
-  const { permissions, isSuperAdmin } = useAuth();
-  const { items } = useEntityCatalog();
-
-  return useMemo(() => {
-    const links = items
-      .filter((definition) => {
-        if (
-          !hasPermission("entityUiOverride.read", permissions, {
-            isSuperAdmin,
-          })
-        ) {
-          return false;
-        }
-        return hasPermission(`${definition.name}.read`, permissions, {
-          isSuperAdmin,
-        });
-      })
-      .map((definition) => ({
-        id: `design-layout-${kind}-${definition.name}`,
-        label: getEntityLabel(definition),
-        to: designLayoutEntityPath(kind, definition.name),
-        matchPath: designLayoutEntityPath(kind, definition.name),
-        icon: resolveLucideIcon(getEntityIconName(definition)),
-      }))
-      .sort((left, right) => compareEntityLabels(left.label, right.label));
-
-    return links;
-  }, [items, isSuperAdmin, kind, permissions]);
+interface BuildDesignLayoutNavInput {
+  readonly permissions: readonly string[];
+  readonly isSuperAdmin: boolean;
+  readonly entityItems: readonly EntityCatalogEntry[];
+  readonly customViewItems: readonly CustomViewRecord[];
+  readonly metricDefinitions: readonly MetricDefinitionRecord[];
 }
 
-function useDesignLayoutMetricsEntityLinks(): readonly NavLinkConfig[] {
-  const { permissions, isSuperAdmin } = useAuth();
-  const { items } = useEntityCatalog();
+function buildDesignLayoutEntityLinks(
+  kind: DesignLayoutKind,
+  input: BuildDesignLayoutNavInput,
+): NavLinkConfig[] {
+  const { permissions, isSuperAdmin, entityItems } = input;
+
+  if (
+    !hasPermission("entityUiOverride.read", permissions, {
+      isSuperAdmin,
+    })
+  ) {
+    return [];
+  }
+
+  return entityItems
+    .filter((definition) =>
+      hasPermission(`${definition.name}.read`, permissions, {
+        isSuperAdmin,
+      }),
+    )
+    .map((definition) => ({
+      id: `design-layout-${kind}-${definition.name}`,
+      label: getEntityLabel(definition),
+      to: designLayoutEntityPath(kind, definition.name),
+      matchPath: designLayoutEntityPath(kind, definition.name),
+      icon: resolveLucideIcon(getEntityIconName(definition)),
+    }))
+    .sort((left, right) => compareEntityLabels(left.label, right.label));
+}
+
+function buildDesignLayoutMetricsEntityLinks(
+  input: BuildDesignLayoutNavInput,
+): NavLinkConfig[] {
+  const { permissions, isSuperAdmin, entityItems, metricDefinitions } = input;
+
+  if (
+    !hasPermission("entityUiOverride.read", permissions, {
+      isSuperAdmin,
+    })
+  ) {
+    return [];
+  }
+
+  return entityItems
+    .filter((definition) => {
+      if (
+        !hasPermission(`${definition.name}.read`, permissions, {
+          isSuperAdmin,
+        })
+      ) {
+        return false;
+      }
+      return entityHasActiveMetrics(
+        definition.name,
+        metricDefinitions,
+        metricStripHasContent(definition.ui.metricRowLayout),
+      );
+    })
+    .map((definition) => ({
+      id: `design-layout-metrics-${definition.name}`,
+      label: getEntityLabel(definition),
+      to: designLayoutEntityPath("metrics", definition.name),
+      matchPath: designLayoutEntityPath("metrics", definition.name),
+      icon: resolveLucideIcon(getEntityIconName(definition)),
+    }))
+    .sort((left, right) => compareEntityLabels(left.label, right.label));
+}
+
+function buildDesignLayoutCustomViewLinks(
+  kind: Extract<DesignLayoutKind, "main" | "list" | "metrics">,
+  input: BuildDesignLayoutNavInput,
+): NavLinkConfig[] {
+  const { permissions, isSuperAdmin, customViewItems } = input;
+
+  return customViewItems
+    .filter((view) => {
+      if (view.status !== "ACTIVE") {
+        return false;
+      }
+      if (
+        !hasPermission("customView.read", permissions, { isSuperAdmin }) ||
+        !hasPermission("entityUiOverride.read", permissions, {
+          isSuperAdmin,
+        })
+      ) {
+        return false;
+      }
+      return hasPermission(`${view.sourceEntity}.read`, permissions, {
+        isSuperAdmin,
+      });
+    })
+    .map((view) => ({
+      id: `design-layout-${kind}-custom-view-${view.viewId}`,
+      label: getCustomViewLabel(view),
+      to: designLayoutCustomViewPath(kind, view.viewId),
+      matchPath: designLayoutCustomViewPath(kind, view.viewId),
+      icon: resolveLucideIcon(view.nav.icon),
+    }))
+    .sort((left, right) => compareEntityLabels(left.label, right.label));
+}
+
+function buildDesignLayoutNavSubGroups(
+  input: BuildDesignLayoutNavInput,
+): NavSubGroupConfig[] {
+  const mainLinks = buildDesignLayoutEntityLinks("main", input);
+  const mainCustomViewLinks = buildDesignLayoutCustomViewLinks("main", input);
+  const listLinks = buildDesignLayoutEntityLinks("list", input);
+  const listCustomViewLinks = buildDesignLayoutCustomViewLinks("list", input);
+  const detailLinks = buildDesignLayoutEntityLinks("detail", input);
+  const formsLinks = buildDesignLayoutEntityLinks("forms", input);
+  const metricsLinks = buildDesignLayoutMetricsEntityLinks(input);
+  const metricsCustomViewLinks = buildDesignLayoutCustomViewLinks(
+    "metrics",
+    input,
+  );
+
+  const subgroups: NavSubGroupConfig[] = [];
+
+  if (mainLinks.length > 0 || mainCustomViewLinks.length > 0) {
+    subgroups.push({
+      id: "design-layout-main",
+      labelKey: "designLayoutMain",
+      children: [...mainLinks, ...mainCustomViewLinks],
+    });
+  }
+
+  if (listLinks.length > 0 || listCustomViewLinks.length > 0) {
+    subgroups.push({
+      id: "design-layout-list",
+      labelKey: "designLayoutList",
+      children: [...listLinks, ...listCustomViewLinks],
+    });
+  }
+
+  if (detailLinks.length > 0) {
+    subgroups.push({
+      id: "design-layout-detail",
+      labelKey: "designLayoutDetail",
+      children: detailLinks,
+    });
+  }
+
+  if (formsLinks.length > 0) {
+    subgroups.push({
+      id: "design-layout-forms",
+      labelKey: "designLayoutForms",
+      children: formsLinks,
+    });
+  }
+
+  if (metricsLinks.length > 0 || metricsCustomViewLinks.length > 0) {
+    subgroups.push({
+      id: "design-layout-metrics",
+      labelKey: "designLayoutMetrics",
+      children: [...metricsLinks, ...metricsCustomViewLinks],
+    });
+  }
+
+  return subgroups;
+}
+
+export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
+  const { permissions, isSuperAdmin, tenantId } = useAuth();
+  const { items: entityItems } = useEntityCatalog();
+  const { items: customViewItems } = useCustomViewCatalog();
 
   const canListDefinitions = hasPermission(
     "metricDefinition.read",
@@ -122,149 +266,36 @@ function useDesignLayoutMetricsEntityLinks(): readonly NavLinkConfig[] {
   );
 
   const definitionsQuery = useQuery({
-    queryKey: ["metric-definitions", "design-layout-nav"],
+    queryKey: ["metric-definitions", "design-layout-nav", tenantId],
     queryFn: async () => {
       const result = await listMetricDefinitions();
       return result.items;
     },
-    enabled: canListDefinitions,
+    enabled: canListDefinitions && Boolean(tenantId),
+    staleTime: 30_000,
   });
 
-  return useMemo(() => {
-    const definitions = definitionsQuery.data ?? [];
+  const subGroupsQuery = useQuery({
+    queryKey: [
+      "nav",
+      "design-layout",
+      tenantId,
+      permissions,
+      entityItems,
+      customViewItems,
+      definitionsQuery.data,
+    ],
+    queryFn: () =>
+      buildDesignLayoutNavSubGroups({
+        permissions,
+        isSuperAdmin,
+        entityItems,
+        customViewItems,
+        metricDefinitions: definitionsQuery.data ?? [],
+      }),
+    enabled: Boolean(tenantId),
+    staleTime: 30_000,
+  });
 
-    const links = items
-      .filter((definition) => {
-        if (
-          !hasPermission("entityUiOverride.read", permissions, {
-            isSuperAdmin,
-          })
-        ) {
-          return false;
-        }
-        if (
-          !hasPermission(`${definition.name}.read`, permissions, {
-            isSuperAdmin,
-          })
-        ) {
-          return false;
-        }
-        return entityHasActiveMetrics(
-          definition.name,
-          definitions,
-          metricStripHasContent(definition.ui.metricRowLayout),
-        );
-      })
-      .map((definition) => ({
-        id: `design-layout-metrics-${definition.name}`,
-        label: getEntityLabel(definition),
-        to: designLayoutEntityPath("metrics", definition.name),
-        matchPath: designLayoutEntityPath("metrics", definition.name),
-        icon: resolveLucideIcon(getEntityIconName(definition)),
-      }))
-      .sort((left, right) => compareEntityLabels(left.label, right.label));
-
-    return links;
-  }, [definitionsQuery.data, isSuperAdmin, items, permissions]);
-}
-
-function useDesignLayoutCustomViewLinks(
-  kind: Extract<DesignLayoutKind, "main" | "list" | "metrics">,
-): readonly NavLinkConfig[] {
-  const { permissions, isSuperAdmin } = useAuth();
-  const { items } = useCustomViewCatalog();
-
-  return useMemo(() => {
-    return items
-      .filter((view) => {
-        if (view.status !== "ACTIVE") {
-          return false;
-        }
-        if (
-          !hasPermission("customView.read", permissions, { isSuperAdmin }) ||
-          !hasPermission("entityUiOverride.read", permissions, {
-            isSuperAdmin,
-          })
-        ) {
-          return false;
-        }
-        return hasPermission(`${view.sourceEntity}.read`, permissions, {
-          isSuperAdmin,
-        });
-      })
-      .map((view) => ({
-        id: `design-layout-${kind}-custom-view-${view.viewId}`,
-        label: getCustomViewLabel(view),
-        to: designLayoutCustomViewPath(kind, view.viewId),
-        matchPath: designLayoutCustomViewPath(kind, view.viewId),
-        icon: resolveLucideIcon(view.nav.icon),
-      }))
-      .sort((left, right) => compareEntityLabels(left.label, right.label));
-  }, [isSuperAdmin, items, kind, permissions]);
-}
-
-export function useDesignLayoutNavSubGroups(): readonly NavSubGroupConfig[] {
-  const mainLinks = useDesignLayoutEntityLinks("main");
-  const mainCustomViewLinks = useDesignLayoutCustomViewLinks("main");
-  const listLinks = useDesignLayoutEntityLinks("list");
-  const listCustomViewLinks = useDesignLayoutCustomViewLinks("list");
-  const detailLinks = useDesignLayoutEntityLinks("detail");
-  const formsLinks = useDesignLayoutEntityLinks("forms");
-  const metricsLinks = useDesignLayoutMetricsEntityLinks();
-  const metricsCustomViewLinks = useDesignLayoutCustomViewLinks("metrics");
-
-  return useMemo(() => {
-    const subgroups: NavSubGroupConfig[] = [];
-
-    if (mainLinks.length > 0 || mainCustomViewLinks.length > 0) {
-      subgroups.push({
-        id: "design-layout-main",
-        labelKey: "designLayoutMain",
-        children: [...mainLinks, ...mainCustomViewLinks],
-      });
-    }
-
-    if (listLinks.length > 0 || listCustomViewLinks.length > 0) {
-      subgroups.push({
-        id: "design-layout-list",
-        labelKey: "designLayoutList",
-        children: [...listLinks, ...listCustomViewLinks],
-      });
-    }
-
-    if (detailLinks.length > 0) {
-      subgroups.push({
-        id: "design-layout-detail",
-        labelKey: "designLayoutDetail",
-        children: detailLinks,
-      });
-    }
-
-    if (formsLinks.length > 0) {
-      subgroups.push({
-        id: "design-layout-forms",
-        labelKey: "designLayoutForms",
-        children: formsLinks,
-      });
-    }
-
-    if (metricsLinks.length > 0 || metricsCustomViewLinks.length > 0) {
-      subgroups.push({
-        id: "design-layout-metrics",
-        labelKey: "designLayoutMetrics",
-        children: [...metricsLinks, ...metricsCustomViewLinks],
-      });
-    }
-
-    return subgroups;
-  }, [
-    detailLinks,
-    formsLinks,
-    listCustomViewLinks,
-    listLinks,
-    mainCustomViewLinks,
-    mainLinks,
-    metricsCustomViewLinks,
-    metricsLinks,
-  ]);
+  return subGroupsQuery.data ?? [];
 }

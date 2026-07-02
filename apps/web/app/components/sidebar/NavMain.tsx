@@ -1,6 +1,6 @@
-import { useEffect, useState, Fragment } from "react";
+import { memo, useEffect, useState, Fragment } from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLocation } from "react-router";
+import { Link, useLocation, useNavigation } from "react-router";
 import { ChevronDown } from "lucide-react";
 
 import { cn } from "@repo/theme/utils";
@@ -34,17 +34,18 @@ import {
   type NavLinkConfig,
   type NavSubGroupConfig,
 } from "./nav-config";
-import { useAccessibleNavItems } from "../../routing/useAccessibleNavItems";
+import { useNavItems } from "../../routing/nav-items-context";
 
-function NavLinkItem({
+const NavLinkItem = memo(function NavLinkItem({
   item,
+  pathname,
   onNavigate,
 }: {
   readonly item: NavLinkConfig;
+  readonly pathname: string;
   readonly onNavigate?: () => void;
 }) {
   const { t } = useTranslation("common");
-  const { pathname } = useLocation();
   const Icon = item.icon;
   const active = isPathActive(pathname, item.matchPath);
 
@@ -52,6 +53,7 @@ function NavLinkItem({
     <SidebarMenuItem>
       <Link
         to={item.to}
+        prefetch="intent"
         onClick={onNavigate}
         aria-current={active ? "page" : undefined}
         className={cn(
@@ -66,17 +68,18 @@ function NavLinkItem({
       </Link>
     </SidebarMenuItem>
   );
-}
+});
 
-function NavSubGroupLink({
+const NavSubGroupLink = memo(function NavSubGroupLink({
   link,
+  pathname,
   onNavigate,
 }: {
   readonly link: NavLinkConfig;
+  readonly pathname: string;
   readonly onNavigate?: () => void;
 }) {
   const { t } = useTranslation("common");
-  const { pathname } = useLocation();
   const ChildIcon = link.icon;
   const active = isPathActive(pathname, link.matchPath);
 
@@ -84,6 +87,7 @@ function NavSubGroupLink({
     <li className="list-none min-w-0 w-full">
       <Link
         to={link.to}
+        prefetch="intent"
         onClick={onNavigate}
         aria-current={active ? "page" : undefined}
         className={cn(
@@ -98,9 +102,9 @@ function NavSubGroupLink({
       </Link>
     </li>
   );
-}
+});
 
-function NavLinkPopoverItem({
+const NavLinkPopoverItem = memo(function NavLinkPopoverItem({
   link,
   pathname,
   onNavigate,
@@ -118,6 +122,7 @@ function NavLinkPopoverItem({
   return (
     <Link
       to={link.to}
+      prefetch="intent"
       onClick={() => {
         onNavigate?.();
         onClosePopover();
@@ -131,17 +136,18 @@ function NavLinkPopoverItem({
       <SidebarLabel>{resolveNavLinkLabel(link, t)}</SidebarLabel>
     </Link>
   );
-}
+});
 
-function NavSubGroupCollapsible({
+const NavSubGroupCollapsible = memo(function NavSubGroupCollapsible({
   subgroup,
+  pathname,
   onNavigate,
 }: {
   readonly subgroup: NavSubGroupConfig;
+  readonly pathname: string;
   readonly onNavigate?: () => void;
 }) {
   const { t } = useTranslation("common");
-  const { pathname } = useLocation();
   const subgroupActive = isNavSubGroupActive(pathname, subgroup);
   const [open, setOpen] = useState(subgroupActive);
 
@@ -173,6 +179,7 @@ function NavSubGroupCollapsible({
             <NavSubGroupLink
               key={link.id}
               link={link}
+              pathname={pathname}
               onNavigate={onNavigate}
             />
           ))}
@@ -180,35 +187,46 @@ function NavSubGroupCollapsible({
       ) : null}
     </li>
   );
-}
+});
 
-function NavGroupChildLinks({
+const NavGroupChildLinks = memo(function NavGroupChildLinks({
   child,
+  pathname,
   onNavigate,
 }: {
   readonly child: NavGroupChild;
+  readonly pathname: string;
   readonly onNavigate?: () => void;
 }) {
   if (isNavSubGroup(child)) {
-    return <NavSubGroupCollapsible subgroup={child} onNavigate={onNavigate} />;
+    return (
+      <NavSubGroupCollapsible
+        subgroup={child}
+        pathname={pathname}
+        onNavigate={onNavigate}
+      />
+    );
   }
 
-  return <NavSubGroupLink link={child} onNavigate={onNavigate} />;
-}
+  return (
+    <NavSubGroupLink link={child} pathname={pathname} onNavigate={onNavigate} />
+  );
+});
 
-function SettingsGroup({
+const SettingsGroup = memo(function SettingsGroup({
   onNavigate,
   group,
+  pathname,
   popoverOpen,
   onPopoverOpenChange,
 }: {
   readonly onNavigate?: () => void;
   readonly group: NavGroupConfig;
+  readonly pathname: string;
   readonly popoverOpen: boolean;
   readonly onPopoverOpenChange: (open: boolean) => void;
 }) {
   const { t } = useTranslation("common");
-  const { pathname } = useLocation();
   const { collapsed, isMobile } = useSidebar();
   const usePopoverNav = collapsed && !isMobile;
   const groupActive = isNavGroupActive(pathname, group);
@@ -297,6 +315,7 @@ function SettingsGroup({
             <NavGroupChildLinks
               key={child.id}
               child={child}
+              pathname={pathname}
               onNavigate={onNavigate}
             />
           ))}
@@ -304,7 +323,7 @@ function SettingsGroup({
       ) : null}
     </SidebarMenuItem>
   );
-}
+});
 
 function NavSystemConfigurationSectionHeader() {
   const { t } = useTranslation("common");
@@ -329,7 +348,7 @@ function NavSystemConfigurationSectionHeader() {
 export function NavMain() {
   const { pathname } = useLocation();
   const { setMobileOpen } = useSidebar();
-  const navItems = useAccessibleNavItems();
+  const { navItems } = useNavItems();
   const systemConfigStartIndex = findFirstSystemConfigNavIndex(navItems);
   const showSystemConfigurationSection =
     shouldShowSystemConfigurationNavSection(navItems);
@@ -358,6 +377,7 @@ export function NavMain() {
             {isNavGroup(item) ? (
               <SettingsGroup
                 group={item}
+                pathname={pathname}
                 onNavigate={closeMobile}
                 popoverOpen={openGroupPopoverId === item.id}
                 onPopoverOpenChange={(open) =>
@@ -365,11 +385,31 @@ export function NavMain() {
                 }
               />
             ) : (
-              <NavLinkItem item={item} onNavigate={closeMobile} />
+              <NavLinkItem
+                item={item}
+                pathname={pathname}
+                onNavigate={closeMobile}
+              />
             )}
           </Fragment>
         ))}
       </SidebarMenu>
     </SidebarGroup>
+  );
+}
+
+export function NavigationProgressBar() {
+  const navigation = useNavigation();
+  const isNavigating = navigation.state === "loading";
+
+  if (!isNavigating) {
+    return null;
+  }
+
+  return (
+    <div
+      className="bg-primary absolute inset-x-0 top-0 h-0.5 animate-pulse"
+      aria-hidden
+    />
   );
 }

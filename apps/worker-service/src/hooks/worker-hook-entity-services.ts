@@ -21,7 +21,10 @@ import type { DataHookWebhookRequest } from "@repo/hooks";
 import type { WorkerHookEntityRuntime } from "./worker-hook-entity-runtime.js";
 import type { WorkerPermissionDeps } from "./worker-permission-deps.js";
 import type { HookRuntimeContext } from "./worker-hook-runtime-context.js";
-import { createRecordDataHookExecution } from "./record-data-hook-execution.js";
+import {
+  createDataHookExecutionRecorderForTenant,
+  createRecordDataHookExecution,
+} from "./record-data-hook-execution.js";
 
 export interface WorkerCrudHookDeps {
   readonly hookRuntime: HookRuntimeContext;
@@ -102,6 +105,7 @@ async function dispatchChainedEntityHooks(options: {
   readonly recordDataHookExecution?: (
     entry: import("@repo/hooks").CreateDataHookExecutionInput,
   ) => Promise<void>;
+  readonly dataHookExecutionRecorder?: import("@repo/hooks").DataHookExecutionRecorder;
   readonly callWebhook?: (
     request: import("@repo/hooks").DataHookWebhookRequest,
   ) => Promise<void>;
@@ -127,6 +131,9 @@ async function dispatchChainedEntityHooks(options: {
       ...(options.recordDataHookExecution
         ? { recordDataHookExecution: options.recordDataHookExecution }
         : {}),
+      ...(options.dataHookExecutionRecorder
+        ? { dataHookExecutionRecorder: options.dataHookExecutionRecorder }
+        : {}),
       ...(options.callWebhook ? { callWebhook: options.callWebhook } : {}),
     },
   };
@@ -143,6 +150,12 @@ export function buildHookEntityServices(options: {
   const { user, deps, logger } = options;
   const recordDataHookExecution = deps.hookExecutionRepository
     ? createRecordDataHookExecution(deps.hookExecutionRepository, user.tenantId)
+    : undefined;
+  const dataHookExecutionRecorder = deps.hookExecutionRepository
+    ? createDataHookExecutionRecorderForTenant(
+        deps.hookExecutionRepository,
+        user.tenantId,
+      )
     : undefined;
 
   const services = createHookEntityServices({
@@ -172,6 +185,7 @@ export function buildHookEntityServices(options: {
         logger,
         entityServices: services,
         ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
+        ...(dataHookExecutionRecorder ? { dataHookExecutionRecorder } : {}),
         ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
       }),
   });

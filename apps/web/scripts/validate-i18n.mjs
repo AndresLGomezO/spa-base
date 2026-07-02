@@ -666,6 +666,49 @@ function extractDebuggerSourceKeys(corpus) {
   );
 }
 
+/** hookExecutionLiveMetricLabelKey() → live hook execution KPI labels */
+function extractHookExecutionLiveMetricLabelKeys(corpus) {
+  if (!corpus.includes("hookExecutionLiveMetricLabelKey")) {
+    return [];
+  }
+
+  const refDebugger = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).debugger;
+
+  const summary = refDebugger?.summary;
+  if (!summary || typeof summary !== "object") return [];
+
+  const liveKeys = [
+    "inlineRunning",
+    "deferredRunning",
+    "queuedPending",
+    "cloudRunning",
+  ];
+
+  return liveKeys
+    .filter((key) => key in summary)
+    .map((key) => `${DEFAULT_NAMESPACE}:debugger.summary.${key}`);
+}
+
+/** hookExecutionTypeLabelKey() → debugger.executionType.* */
+function extractHookExecutionTypeLabelKeys(corpus) {
+  if (!corpus.includes("hookExecutionTypeLabelKey")) {
+    return [];
+  }
+
+  const refDebugger = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).debugger;
+
+  const executionType = refDebugger?.executionType;
+  if (!executionType || typeof executionType !== "object") return [];
+
+  return Object.keys(executionType).map(
+    (key) => `${DEFAULT_NAMESPACE}:debugger.executionType.${key}`,
+  );
+}
+
 /** debuggerStatusLabelKey() → all keys under debugger.status */
 function extractDebuggerStatusLabelKeys(corpus) {
   if (
@@ -1041,6 +1084,16 @@ mergeUsedKeys(
   usedKeys,
   extractDebuggerStatusLabelKeys(corpus),
   path.join(SRC_DIR, "features/debugger/components/DebuggerStatusBadge.tsx"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractHookExecutionLiveMetricLabelKeys(corpus),
+  path.join(SRC_DIR, "features/debugger/hook-execution-live-metrics.ts"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractHookExecutionTypeLabelKeys(corpus),
+  path.join(SRC_DIR, "features/debugger/hook-execution-live-metrics.ts"),
 );
 mergeUsedKeys(
   usedKeys,

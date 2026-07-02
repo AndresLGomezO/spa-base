@@ -24,7 +24,10 @@ import type { AggregationEmitterDeps } from "../aggregation/emit-aggregation-eve
 import { sanitizeFileFieldsForWrite } from "../entity-files/entity-file-field-utils.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
-import { createRecordDataHookExecution } from "../hooks/record-data-hook-execution.js";
+import {
+  createDataHookExecutionRecorderForTenant,
+  createRecordDataHookExecution,
+} from "../hooks/record-data-hook-execution.js";
 import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import type { createRelationRuntimeContext } from "../relations/create-relation-services.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
@@ -76,6 +79,10 @@ async function runCrudEntityHooks(
     ...(crudHooks?.hookExecutionRepository && ctx?.tenantId
       ? {
           recordDataHookExecution: createRecordDataHookExecution(
+            crudHooks.hookExecutionRepository,
+            ctx.tenantId,
+          ),
+          dataHookExecutionRecorder: createDataHookExecutionRecorderForTenant(
             crudHooks.hookExecutionRepository,
             ctx.tenantId,
           ),

@@ -20,10 +20,14 @@ interface DebuggerHorizontalBarItem {
 export function DebuggerHorizontalBarChart({
   items,
   valueSuffix,
+  unitLabel,
+  legend,
   layout = "compact",
 }: {
   readonly items: readonly DebuggerHorizontalBarItem[];
   readonly valueSuffix?: string;
+  readonly unitLabel?: string;
+  readonly legend?: string;
   readonly layout?: "compact" | "expanded";
 }) {
   if (items.length === 0) {
@@ -31,12 +35,13 @@ export function DebuggerHorizontalBarChart({
   }
 
   const maxValue = Math.max(...items.map((item) => item.value), 1);
+  const suffix = valueSuffix ?? (unitLabel ? ` ${unitLabel}` : "");
   const isExpanded = layout === "expanded";
 
   return (
     <div
       className={cn(
-        "w-full",
+        "w-full space-y-2",
         isExpanded &&
           "flex min-h-[min(50vh,28rem)] flex-col justify-center px-4 py-2",
       )}
@@ -63,7 +68,7 @@ export function DebuggerHorizontalBarChart({
                 <Text className="min-w-0 break-words">{item.label}</Text>
                 <Text className="text-muted-foreground shrink-0 tabular-nums">
                   {item.value}
-                  {item.suffix ?? valueSuffix ?? ""}
+                  {item.suffix ?? suffix}
                 </Text>
               </div>
               <div
@@ -88,6 +93,11 @@ export function DebuggerHorizontalBarChart({
           );
         })}
       </ul>
+      {legend ? (
+        <Text className="text-muted-foreground text-xs leading-snug">
+          {legend}
+        </Text>
+      ) : null}
     </div>
   );
 }

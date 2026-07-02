@@ -1,5 +1,8 @@
 import type { DataHookDefinition } from "./data-hook-definition.js";
-import type { CreateDataHookExecutionInput } from "./data-hook-execution.js";
+import type {
+  CreateDataHookExecutionInput,
+  DataHookExecutionRecorder,
+} from "./data-hook-execution.js";
 import type { DataHookJobPayload } from "./data-hook-job.js";
 import type { ExpressionValue } from "./expression.js";
 
@@ -130,6 +133,7 @@ export interface HookServices {
   readonly recordDataHookExecution?: (
     entry: CreateDataHookExecutionInput,
   ) => Promise<void>;
+  readonly dataHookExecutionRecorder?: DataHookExecutionRecorder;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }
 
@@ -159,6 +163,13 @@ export interface HookContext {
    * Scalars computed by `aggregateMatching` actions during this hook run, keyed by alias.
    */
   aggregates?: Record<string, ExpressionValue>;
+  /**
+   * Per-run write and action instrumentation populated by `runDataHook`.
+   */
+  executionInstrumentation?: {
+    readonly writeMetrics: import("./hook-execution-metrics.js").HookWriteMetricsCollector;
+    readonly actionTrace: import("./hook-execution-metrics.js").DataHookActionTraceEntry[];
+  };
 }
 
 export type HookHandler = (context: HookContext) => Promise<void> | void;
