@@ -53,14 +53,46 @@ export function initializeFirebaseAdmin(config: FirebaseAdminConfig): App {
   return initializeApp(options);
 }
 
-let firestoreSettingsApplied = false;
+const CONFIGURED_FIRESTORE_INSTANCES_KEY =
+  "__repoGcpFirebaseConfiguredFirestoreInstances";
+
+function getConfiguredFirestoreInstances(): WeakSet<Firestore> {
+  const globalRef = globalThis as typeof globalThis & {
+    [CONFIGURED_FIRESTORE_INSTANCES_KEY]?: WeakSet<Firestore>;
+  };
+  if (!globalRef[CONFIGURED_FIRESTORE_INSTANCES_KEY]) {
+    globalRef[CONFIGURED_FIRESTORE_INSTANCES_KEY] = new WeakSet<Firestore>();
+  }
+  return globalRef[CONFIGURED_FIRESTORE_INSTANCES_KEY];
+}
+
+function isFirestoreAlreadyInitializedError(error: unknown): boolean {
+  return (
+    error instanceof Error &&
+    error.message.includes("Firestore has already been initialized")
+  );
+}
+
+function applyFirestoreSettings(firestore: Firestore): void {
+  const configuredInstances = getConfiguredFirestoreInstances();
+  if (configuredInstances.has(firestore)) {
+    return;
+  }
+
+  try {
+    firestore.settings({ ignoreUndefinedProperties: true });
+  } catch (error) {
+    if (!isFirestoreAlreadyInitializedError(error)) {
+      throw error;
+    }
+  }
+
+  configuredInstances.add(firestore);
+}
 
 export function getFirestoreAdmin(config: FirebaseAdminConfig): Firestore {
   const app = initializeFirebaseAdmin(config);
   const firestore = getFirestore(app);
-  if (!firestoreSettingsApplied) {
-    firestore.settings({ ignoreUndefinedProperties: true });
-    firestoreSettingsApplied = true;
-  }
+  applyFirestoreSettings(firestore);
   return firestore;
 }
