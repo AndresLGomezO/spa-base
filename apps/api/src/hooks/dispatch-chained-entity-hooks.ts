@@ -12,7 +12,7 @@ import {
   type HookPhase,
   type HookUser,
 } from "@repo/hooks";
-import type { CreateUserNotificationInput } from "@repo/user-notifications";
+import type { CreateUserNotificationInput } from "@repo/firestore-converters";
 
 interface DispatchChainedEntityHooksParams {
   readonly tenantId: string;

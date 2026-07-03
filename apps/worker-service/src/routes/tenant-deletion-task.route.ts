@@ -1,7 +1,6 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
 
 import { HOOK_TASK_ROUTES } from "../hooks/hook-task-routes.js";
-import { createWorkerHookLogger } from "../hooks/create-worker-hook-logger.js";
 import { dispatchHookTaskAsync } from "./dispatch-hook-task-async.js";
 import {
   processTenantDeletionTask,
@@ -25,12 +24,6 @@ export async function tenantDeletionTaskRoute(
           message: "Invalid tenant deletion task payload.",
         });
       }
-
-      const logger = createWorkerHookLogger(
-        request.log,
-        parsed.data.tenantId,
-        undefined,
-      );
 
       return dispatchHookTaskAsync({
         request,

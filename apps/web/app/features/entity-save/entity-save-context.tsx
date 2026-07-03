@@ -23,7 +23,7 @@ import { toast } from "@repo/ui";
 
 import { bumpHookExecutionWatch } from "../notifications/use-silent-hook-execution-refresh";
 
-export interface EntitySaveRequest {
+interface EntitySaveRequest {
   readonly entityName: EntityName;
   readonly entityLabel: string;
   readonly mode: "create" | "edit";
@@ -38,9 +38,9 @@ export interface EntitySaveRequest {
   >;
 }
 
-export type EntitySaveTaskStatus = "running" | "success" | "error";
+type EntitySaveTaskStatus = "running" | "success" | "error";
 
-export interface EntitySaveTask {
+interface EntitySaveTask {
   readonly id: string;
   readonly entityName: EntityName;
   readonly mode: "create" | "edit";
@@ -123,15 +123,21 @@ export function EntitySaveManagerProvider({
             throw new Error("Record id is missing after save.");
           }
 
+          let relationSyncFailed = false;
+
           for (const [fieldName, targetIds] of Object.entries(
             request.joinRelations,
           )) {
-            await syncEntityRelationTargets(
-              request.entityName,
-              recordId,
-              fieldName,
-              targetIds,
-            );
+            try {
+              await syncEntityRelationTargets(
+                request.entityName,
+                recordId,
+                fieldName,
+                targetIds,
+              );
+            } catch {
+              relationSyncFailed = true;
+            }
           }
 
           await queryClient.invalidateQueries({
@@ -145,25 +151,29 @@ export function EntitySaveManagerProvider({
           void invalidateLivePageData(queryClient);
           bumpHookExecutionWatch();
 
-          toast.success(
-            request.mode === "create"
-              ? t("entity.createSuccess", { entity: request.entityLabel })
-              : t("entity.updateSuccess", { entity: request.entityLabel }),
-            { id: toastId },
-          );
+          if (relationSyncFailed) {
+            toast.error(t("entity.relationSyncFailed"), { id: toastId });
+          } else {
+            toast.success(
+              request.mode === "create"
+                ? t("entity.createSuccess", { entity: request.entityLabel })
+                : t("entity.updateSuccess", { entity: request.entityLabel }),
+              { id: toastId },
+            );
+          }
 
           setTasks((current) =>
             current.map((task) =>
-              task.id === taskId ? { ...task, status: "success" } : task,
+              task.id === taskId
+                ? { ...task, status: relationSyncFailed ? "error" : "success" }
+                : task,
             ),
           );
         } catch (error) {
           const message = isApiClientError(error)
             ? error.message
             : getErrorMessage(error);
-          const fieldErrors = isApiClientError(error)
-            ? error.fieldErrors
-            : {};
+          const fieldErrors = isApiClientError(error) ? error.fieldErrors : {};
 
           toast.error(message, {
             id: toastId,

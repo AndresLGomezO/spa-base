@@ -118,7 +118,9 @@ export function ExpressionEditorNode({
 
   const editorBody = (
     <div className="space-y-2">
-      {!useCollapsibleWrapper && label ? <FieldLabel>{label}</FieldLabel> : null}
+      {!useCollapsibleWrapper && label ? (
+        <FieldLabel>{label}</FieldLabel>
+      ) : null}
       <Select
         className={expressionControlClassName}
         value={kind}
@@ -358,13 +360,13 @@ export function ExpressionEditorNode({
                 placeholder={t("dataHooks.actions.aliasPlaceholder")}
                 disabled={readOnly}
                 onChange={(event) =>
-                    onChange({
-                      kind: "field",
-                      source: "aggregate",
-                      alias: event.target.value,
-                    })
-                  }
-                />
+                  onChange({
+                    kind: "field",
+                    source: "aggregate",
+                    alias: event.target.value,
+                  })
+                }
+              />
             )
           ) : fieldNames && fieldNames.length > 0 ? (
             <Select

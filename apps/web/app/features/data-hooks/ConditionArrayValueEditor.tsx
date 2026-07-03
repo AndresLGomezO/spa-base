@@ -1,7 +1,8 @@
 import { useTranslation } from "react-i18next";
 import type { ExpressionLiteralValue, ExpressionNode } from "@repo/hooks";
 import { MAX_ARRAY_LITERAL_ITEMS } from "@repo/hooks";
-import { Button, FieldLabel, Input, Text } from "@repo/ui";
+import { CollapsibleEditorCard } from "@repo/ui-builder-react";
+import { Button, Input, Text } from "@repo/ui";
 
 const controlClassName =
   "border-input bg-background flex h-9 w-full rounded-md border px-3 py-1.5 text-sm";
@@ -55,8 +56,17 @@ export function ConditionArrayValueEditor({
   }
 
   return (
-    <div className="space-y-2">
-      <FieldLabel>{t("dataHooks.condition.arrayValue")}</FieldLabel>
+    <CollapsibleEditorCard
+      title={t("dataHooks.condition.arrayValue")}
+      defaultOpen={items.some((item) => item.trim().length > 0)}
+      className="bg-muted/20 shadow-sm"
+      onAdd={
+        disabled || items.length >= MAX_ARRAY_LITERAL_ITEMS
+          ? undefined
+          : handleAddItem
+      }
+      addLabel={t("dataHooks.condition.addArrayItem")}
+    >
       <div className="space-y-2">
         {items.map((item, index) => (
           <div key={index} className="flex items-center gap-2">
@@ -81,23 +91,13 @@ export function ConditionArrayValueEditor({
           </div>
         ))}
       </div>
-      {items.length < MAX_ARRAY_LITERAL_ITEMS ? (
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          disabled={disabled}
-          onClick={handleAddItem}
-        >
-          {t("dataHooks.condition.addArrayItem")}
-        </Button>
-      ) : (
+      {items.length >= MAX_ARRAY_LITERAL_ITEMS ? (
         <Text className="text-muted-foreground text-xs">
           {t("dataHooks.condition.arrayMaxItemsHint", {
             max: MAX_ARRAY_LITERAL_ITEMS,
           })}
         </Text>
-      )}
-    </div>
+      ) : null}
+    </CollapsibleEditorCard>
   );
 }

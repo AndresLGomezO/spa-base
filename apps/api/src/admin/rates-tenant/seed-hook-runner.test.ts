@@ -57,8 +57,8 @@ describe("buildSeedHookObservabilityServices", () => {
     expect(services.recordDataHookExecution).toEqual(expect.any(Function));
     expect(services.dataHookExecutionRecorder).toBeDefined();
     expect(services.sendUserNotification).toEqual(expect.any(Function));
-    expect(
-      (services.logger as { __persisting?: boolean }).__persisting,
-    ).toBe(true);
+    expect((services.logger as { __persisting?: boolean }).__persisting).toBe(
+      true,
+    );
   });
 });

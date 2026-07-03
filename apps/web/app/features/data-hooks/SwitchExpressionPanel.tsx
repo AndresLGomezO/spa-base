@@ -131,11 +131,14 @@ export function SwitchExpressionPanel({
           {t("dataHooks.expression.switchCases")}
         </Text>
         {value.cases.map((switchCase, index) => {
-          const caseTitle = t("dataHooks.expression.switchCaseCollapsibleTitle", {
-            index: index + 1,
-            when: summarizeExpressionNode(switchCase.when),
-            then: summarizeSwitchBranch(switchCase.then),
-          });
+          const caseTitle = t(
+            "dataHooks.expression.switchCaseCollapsibleTitle",
+            {
+              index: index + 1,
+              when: summarizeExpressionNode(switchCase.when),
+              then: summarizeSwitchBranch(switchCase.then),
+            },
+          );
 
           if (collapsibleNested) {
             return (

@@ -124,7 +124,9 @@ export function createInMemoryTenantDeletionArchiveRepository(): TenantDeletionA
       const next = tenantDeletionArchiveRecordSchema.parse({
         ...current,
         ...patch,
-        stats: patch.stats ? { ...current.stats, ...patch.stats } : current.stats,
+        stats: patch.stats
+          ? { ...current.stats, ...patch.stats }
+          : current.stats,
       });
       store.set(id, next);
       return next;

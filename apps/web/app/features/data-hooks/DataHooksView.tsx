@@ -6,10 +6,10 @@ import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import {
   designerPreviewColumnClassName,
   designerTreeTabRootClassName,
-  designerTreeWorkbenchClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
 import { DataHookListTreePanel } from "./DataHookListTreePanel";
 import { DataHookMetadataModal } from "./DataHookMetadataModal";
+import { DataHookPreviewPanel } from "./preview/DataHookPreviewPanel";
 import { DataHookSettingsPanel } from "./DataHookSettingsPanel";
 import { DataHooksProvider, useDataHooks } from "./data-hooks-context";
 
@@ -56,8 +56,13 @@ function DataHooksWorkbench() {
   return (
     <>
       <div className={designerTreeTabRootClassName}>
-        <div className={designerTreeWorkbenchClassName}>
-          <DataHookListTreePanel />
+        <div className="flex min-h-0 flex-1 gap-4 overflow-hidden">
+          <div className="shrink-0 min-w-0">
+            <DataHookListTreePanel />
+          </div>
+          <div className="shrink-0 min-w-0">
+            <DataHookPreviewPanel />
+          </div>
           <div className={designerPreviewColumnClassName}>
             <DataHookSettingsPanel />
           </div>

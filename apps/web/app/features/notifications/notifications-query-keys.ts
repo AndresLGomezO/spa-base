@@ -4,10 +4,8 @@ export const NOTIFICATIONS_PAGE_LIMIT = 20;
 export const notificationsQueryKeys = {
   preview: (tenantId: string | null | undefined) =>
     ["notifications-preview", tenantId] as const,
-  page: (
-    tenantId: string | null | undefined,
-    filter: "all" | "unread",
-  ) => ["notifications-page", tenantId, filter] as const,
+  page: (tenantId: string | null | undefined, filter: "all" | "unread") =>
+    ["notifications-page", tenantId, filter] as const,
   unreadCount: (tenantId: string | null | undefined) =>
     ["notifications-unread-count", tenantId] as const,
 };

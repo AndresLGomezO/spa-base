@@ -86,8 +86,10 @@ export async function registerNotificationRoutes(
         return;
       }
 
-      const unreadCount =
-        await options.userNotificationRepository.countUnread(tenantId, uid);
+      const unreadCount = await options.userNotificationRepository.countUnread(
+        tenantId,
+        uid,
+      );
 
       return reply.send(successEnvelope({ unreadCount }));
     },
@@ -103,8 +105,10 @@ export async function registerNotificationRoutes(
         return;
       }
 
-      const updatedCount =
-        await options.userNotificationRepository.markAllRead(tenantId, uid);
+      const updatedCount = await options.userNotificationRepository.markAllRead(
+        tenantId,
+        uid,
+      );
 
       return reply.send(successEnvelope({ updatedCount }));
     },

@@ -7,7 +7,9 @@ import {
 } from "../ai/cloud-tasks.client.js";
 import { HOOK_TASK_ROUTES } from "../hooks/hook-task-routes.js";
 
-export function createTenantDeletionTasksClient(config: CloudTasksClientConfig) {
+export function createTenantDeletionTasksClient(
+  config: CloudTasksClientConfig,
+) {
   const cloudTasks = createCloudTasksClient(config);
 
   return {

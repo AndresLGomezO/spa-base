@@ -1974,33 +1974,19 @@
     "title": "Formulas",
     "description": "Reusable expression definitions referenced from data hooks and automation.",
     "loading": "Loading formulas…",
-    "listTitle": "Formula library",
-    "create": "New formula",
-    "createTitle": "Create formula",
-    "editTitle": "Edit {{name}}",
-    "viewTitle": "View {{name}}",
-    "view": "View",
-    "edit": "Edit",
     "delete": {
       "title": "Delete formula",
       "confirm": "Delete",
       "message": "Delete \"{{name}}\"? This cannot be undone."
     },
-    "save": "Save",
-    "saved": "Formula saved.",
-    "saveFailed": "Failed to save formula.",
     "deleted": "Formula deleted.",
-    "deleteFailed": "Failed to delete formula.",
-    "loadFailed": "Failed to load formulas.",
     "forbidden": "You do not have permission to view formulas.",
     "cancel": "Cancel",
-    "disabled": "Disabled",
     "list": {
       "title": "Formulas",
       "add": "New formula",
       "expandPanel": "Expand formulas panel",
       "collapsePanel": "Collapse formulas panel",
-      "empty": "No formulas match the current filters.",
       "emptySource": "No formulas in this library.",
       "emptyFiltered": "No formulas match the current filters.",
       "edit": "Edit formula",
@@ -2016,12 +2002,8 @@
       "sortNameDesc": "Name (Z–A)",
       "sortSource": "Source",
       "sortUpdatedDesc": "Recently updated",
-      "sourceFilter": "Source",
-      "sourceAll": "All sources",
       "sourcePlatform": "Platform",
       "sourceTenant": "Tenant",
-      "statusFilter": "Status",
-      "statusAll": "All statuses",
       "statusEnabled": "Enabled",
       "statusDisabled": "Disabled",
       "searchPlaceholder": "Search formulas…",
@@ -2043,6 +2025,29 @@
     },
     "preview": {
       "title": "Expression structure"
+    },
+    "summaryModal": {
+      "viewFormula": "View formula {{name}}",
+      "close": "Close",
+      "notFound": "Formula \"{{name}}\" was not found in the catalog.",
+      "loading": "Loading formula…",
+      "sections": {
+        "summary": "Summary",
+        "inputs": "Inputs",
+        "output": "Output example",
+        "expression": "Expression structure"
+      },
+      "example": "Example",
+      "outputUnavailable": "Example output could not be evaluated.",
+      "source": "Source",
+      "sourcePlatform": "Platform",
+      "sourceTenant": "Tenant",
+      "status": "Status",
+      "required": "Required",
+      "optional": "Optional",
+      "backTo": "Back to {{name}}",
+      "breadcrumbLabel": "Formula navigation",
+      "nestedFormulaHint": "Click underlined formula names to view their definition."
     },
     "metadata": {
       "createTitle": "New formula",
@@ -2089,8 +2094,7 @@
     },
     "fields": {
       "name": "Name",
-      "description": "Description",
-      "body": "Body expression"
+      "description": "Description"
     },
     "expression": {
       "formula": "Formula",
@@ -2587,20 +2591,26 @@
       "timezone": "Timezone",
       "scheduleScope": "Run scope",
       "scheduleScopeHint": "Once runs batch actions (e.g. updateMatching). Each record runs the hook once per matched row.",
-      "eachRecordWhere": "Match records",
       "phase": "Timing",
       "status": "Status",
       "enabled": "Enabled",
       "disabled": "Disabled",
-      "updateFields": "Only when these fields change",
       "updateFieldsHint": "Leave empty to run on any field change.",
       "condition": "Only run when a condition is met",
-      "advanced": "Advanced",
       "chainHooks": "Chain hooks on writes",
       "chainHooksHint": "When enabled, creates and updates from this hook can trigger automation on other entities.",
       "execution": "Execution",
       "executionDeferredHint": "Deferred hooks run outside the request. Errors are logged only.",
-      "executionQueuedHint": "Queued hooks run asynchronously via Cloud Tasks. The API returns before the hook completes."
+      "executionQueuedHint": "Queued hooks run asynchronously via Cloud Tasks. The API returns before the hook completes.",
+      "sections": {
+        "trigger": "Trigger",
+        "condition": "Condition",
+        "actions": "Actions",
+        "advanced": "Advanced",
+        "executionLog": "Recent executions",
+        "updateFields": "Field change filter",
+        "eachRecordWhere": "Match records"
+      }
     },
     "execution": {
       "sync": "Synchronous",
@@ -2702,7 +2712,6 @@
       "setFields": "Set fields"
     },
     "executionLog": {
-      "title": "Recent executions",
       "empty": "No executions recorded yet."
     },
     "expression": {
@@ -2842,6 +2851,153 @@
         "replaceSummary": "Hooks: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
         "importSuccess": "Automation hooks catalog replaced.",
         "importFailed": "Unable to replace automation hooks catalog."
+      }
+    },
+    "preview": {
+      "panelTitle": "How it works",
+      "expandPanel": "Expand preview panel",
+      "collapsePanel": "Collapse preview panel",
+      "empty": "Select a hook to see how it works.",
+      "tabs": {
+        "overview": "Overview",
+        "details": "Details",
+        "advanced": "Advanced"
+      },
+      "steps": {
+        "trigger": "Trigger",
+        "condition": "Condition",
+        "conditionSummary": "Only when these rules match"
+      },
+      "trigger": {
+        "crud": {
+          "create": {
+            "before": "Before a new {{entity}} record is saved",
+            "after": "After a new {{entity}} record is saved"
+          },
+          "update": {
+            "before": "Before changes to a {{entity}} record are saved",
+            "after": "After a {{entity}} record is updated"
+          },
+          "delete": {
+            "before": "Before a {{entity}} record is deleted",
+            "after": "After a {{entity}} record is deleted"
+          }
+        },
+        "schedule": "Runs on a schedule for {{entity}} — {{cron}} ({{timezone}}, {{scope}})",
+        "updateFields": "Only when these fields change: {{fields}}"
+      },
+      "conditionGroupAnd": "All of the following must be true",
+      "conditionGroupOr": "Any of the following can be true",
+      "conditionLeaf": "{{field}} {{operator}} {{value}}",
+      "conditionLeafValueless": "{{field}} {{operator}}",
+      "conditionOrItem": "{{line}}",
+      "literalEmpty": "empty",
+      "loadedAlias": "{{entity}} ({{alias}})",
+      "loadedAliasGeneric": "Loaded record ({{alias}})",
+      "aggregateAlias": "Aggregate {{alias}}",
+      "previousField": "Previous {{field}}",
+      "meta": {
+        "chainHooks": "Chains other hooks"
+      },
+      "details": {
+        "matchWhere": "Match records where"
+      },
+      "advanced": {
+        "value": "Value expression",
+        "count": "Row count expression",
+        "message": "Notification message"
+      },
+      "actions": {
+        "setField": "Set {{field}} to {{value}}",
+        "createRecord": "Create one {{entity}} record",
+        "createRecords": "Create {{count}} {{entity}} rows",
+        "updateMatching": "Update matching {{entity}} records",
+        "deleteMatching": "Delete matching {{entity}} records",
+        "deleteRecord": "Delete a {{entity}} record",
+        "getRecord": "Load {{entity}} as \"{{alias}}\"",
+        "aggregateMatching": "{{op}} {{entity}} records → {{alias}}",
+        "sendNotification": "Send a notification to the user",
+        "callWebhook": "Call an external webhook",
+        "fieldAssignment": "{{field}} = {{value}}"
+      },
+      "operators": {
+        "==": "equals",
+        "!=": "does not equal",
+        ">": "is greater than",
+        "<": "is less than",
+        ">=": "is at least",
+        "<=": "is at most",
+        "in": "is one of",
+        "notIn": "is not one of",
+        "isEmpty": "is empty",
+        "isNotEmpty": "is set",
+        "changed": "changed"
+      },
+      "vars": {
+        "loopIndex": "payment number",
+        "loopState": "carried balance",
+        "now": "current date and time",
+        "userId": "current user"
+      },
+      "fields": {
+        "nextDueDate": "first payment date",
+        "frequency": "how often",
+        "amount": "payment amount",
+        "scheduleHorizonMonths": "schedule horizon (months)",
+        "revolvingBalance": "revolving balance",
+        "planRevision": "plan revision"
+      },
+      "formulas": {
+        "frequencyScheduleDueDate": "Due dates follow the payment frequency",
+        "frequencyScheduleDueDateDetail1": "Starts from the first payment date",
+        "frequencyScheduleDueDateDetail2": "Each row steps forward by frequency",
+        "frequencyAdvanceDueDate": "Advance due date by one payment period",
+        "recurringScheduleInitialRowCount": "One row if one-time; otherwise up to the schedule horizon (max 1000)",
+        "recurringScheduleExtensionRowCount": "Top up rows toward the horizon (max 100 per run)",
+        "balanceSheetRoleFromItemType": "Set balance sheet role from item type",
+        "cardHostCurrentBalance": "Card balance = revolving balance + installment children",
+        "incrementPlanRevision": "Bump loan plan revision by one",
+        "inferFlatLoanOriginationDate": "Infer loan origination date from balance trail",
+        "paymentScheduleRowCount": "Calculate number of loan payment rows",
+        "paymentScheduleDueDate": "Calculate loan payment due date",
+        "scheduleExpectedAmount": "Calculate expected payment amount",
+        "schedulePrincipalPortion": "Calculate principal portion",
+        "scheduleInterestPortion": "Calculate interest portion",
+        "amortizationLoopState": "Carry remaining balance to next row"
+      },
+      "frequencyTable": {
+        "title": "How dates are calculated",
+        "frequency": "Frequency",
+        "schedule": "What happens",
+        "example": "Example (monthly): Jan 1 → Feb 1 → Mar 1 → …",
+        "labels": {
+          "WEEKLY": "Weekly",
+          "BIWEEKLY": "Biweekly",
+          "MONTHLY": "Monthly",
+          "QUARTERLY": "Quarterly",
+          "ANNUAL": "Annual"
+        },
+        "schedules": {
+          "weekly": "Add 1 week each time",
+          "biweekly": "Add 2 weeks each time",
+          "monthly": "Add 1 month each time",
+          "quarterly": "Add 3 months each time",
+          "annual": "Add 1 year each time"
+        }
+      },
+      "loop": {
+        "title": "Repeat for each payment",
+        "payment": "Payment #{{number}}"
+      },
+      "rowCount": {
+        "initial": {
+          "oneTime": "If one-time → create exactly 1 row",
+          "recurring": "Otherwise → up to schedule horizon (max 1000 rows)"
+        },
+        "extension": {
+          "horizon": "Fill toward schedule horizon",
+          "batch": "Create at most 100 rows per scheduled run"
+        }
       }
     }
   },

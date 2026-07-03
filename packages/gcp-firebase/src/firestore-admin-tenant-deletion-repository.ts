@@ -167,7 +167,9 @@ export function createFirestoreAdminTenantDeletionArchiveRepository(
       const next = tenantDeletionArchiveRecordSchema.parse({
         ...current,
         ...patch,
-        stats: patch.stats ? { ...current.stats, ...patch.stats } : current.stats,
+        stats: patch.stats
+          ? { ...current.stats, ...patch.stats }
+          : current.stats,
       });
       await collection().doc(id).set(next);
       return next;

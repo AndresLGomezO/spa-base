@@ -32,6 +32,17 @@ function evaluateRatesFormula(
   );
 }
 
+function evaluateRatesFormulaWithInputs(
+  name: string,
+  inputs: Record<string, ExpressionNode>,
+  overrides: Partial<ExpressionScope> = {},
+): unknown {
+  return evaluateExpression(
+    { kind: "formula", name, inputs },
+    scope(overrides),
+  );
+}
+
 const hipotecaScope: Partial<ExpressionScope> = {
   current: {
     termMonths: 240,
@@ -113,9 +124,10 @@ describe("loan state atoms", () => {
   });
 
   it("converts EA quote to loanMonthlyRate", () => {
-    expect(
-      evaluateRatesFormula("loanMonthlyRate", hipotecaScope),
-    ).toBeCloseTo(0.008401, 4);
+    expect(evaluateRatesFormula("loanMonthlyRate", hipotecaScope)).toBeCloseTo(
+      0.008401,
+      4,
+    );
   });
 
   it("prefers loopState for loanPeriodBalance", () => {
@@ -160,5 +172,161 @@ describe("loan strategy formulas", () => {
 
     expect(principal).toEqual(Number(payment) - Number(interest));
     expect(Number(principal)).toBeGreaterThan(0);
+  });
+});
+
+describe("recurring schedule formulas", () => {
+  const frequencyInput = (frequency: string): ExpressionNode => ({
+    kind: "literal",
+    value: frequency,
+  });
+
+  it("maps frequency to step multiplier", () => {
+    expect(
+      evaluateRatesFormulaWithInputs("frequencyStepMultiplier", {
+        frequency: frequencyInput("BIWEEKLY"),
+      }),
+    ).toBe(2);
+    expect(
+      evaluateRatesFormulaWithInputs("frequencyStepMultiplier", {
+        frequency: frequencyInput("QUARTERLY"),
+      }),
+    ).toBe(3);
+    expect(
+      evaluateRatesFormulaWithInputs("frequencyStepMultiplier", {
+        frequency: frequencyInput("MONTHLY"),
+      }),
+    ).toBe(1);
+  });
+
+  it("maps frequency to dateAdd unit", () => {
+    expect(
+      evaluateRatesFormulaWithInputs("frequencyUnit", {
+        frequency: frequencyInput("ANNUAL"),
+      }),
+    ).toBe("YEAR");
+    expect(
+      evaluateRatesFormulaWithInputs("frequencyUnit", {
+        frequency: frequencyInput("BIWEEKLY"),
+      }),
+    ).toBe("WEEK");
+  });
+
+  it("computes batch schedule due dates from loopIndex", () => {
+    const anchor = "2026-01-15";
+    const quarterlyDueDate = evaluateRatesFormulaWithInputs(
+      "frequencyScheduleDueDate",
+      {
+        baseDate: { kind: "literal", value: anchor },
+        frequency: frequencyInput("QUARTERLY"),
+      },
+      { loopIndex: 2 },
+    );
+    expect(quarterlyDueDate).toBe("2026-07-15T00:00:00.000Z");
+  });
+
+  it("advances due date by one frequency step", () => {
+    const advanced = evaluateRatesFormulaWithInputs("frequencyAdvanceDueDate", {
+      baseDate: { kind: "literal", value: "2026-03-01" },
+      frequency: frequencyInput("BIWEEKLY"),
+    });
+    expect(advanced).toBe("2026-03-15T00:00:00.000Z");
+  });
+
+  it("defaults schedule horizon to 12 months", () => {
+    expect(evaluateRatesFormula("scheduleHorizonOrDefault")).toBe(12);
+    expect(
+      evaluateRatesFormula("scheduleHorizonOrDefault", {
+        current: { scheduleHorizonMonths: 24 },
+      }),
+    ).toBe(24);
+  });
+
+  it("computes initial row count for ONE_TIME vs recurring items", () => {
+    expect(
+      evaluateRatesFormulaWithInputs("recurringScheduleInitialRowCount", {
+        frequency: frequencyInput("ONE_TIME"),
+      }),
+    ).toBe(1);
+    expect(
+      evaluateRatesFormulaWithInputs(
+        "recurringScheduleInitialRowCount",
+        {
+          frequency: frequencyInput("MONTHLY"),
+        },
+        { current: { scheduleHorizonMonths: 18 } },
+      ),
+    ).toBe(18);
+  });
+
+  it("computes extension row count from existing rows", () => {
+    expect(
+      evaluateRatesFormulaWithInputs(
+        "recurringScheduleExtensionRowCount",
+        {
+          existingCount: { kind: "literal", value: 10 },
+        },
+        { current: { scheduleHorizonMonths: 24 } },
+      ),
+    ).toBe(14);
+  });
+});
+
+describe("financial item formulas", () => {
+  it("maps itemType to balanceSheetRole", () => {
+    expect(
+      evaluateRatesFormulaWithInputs("balanceSheetRoleFromItemType", {
+        itemType: { kind: "literal", value: "MORTGAGE" },
+      }),
+    ).toBe("LIABILITY");
+    expect(
+      evaluateRatesFormulaWithInputs("balanceSheetRoleFromItemType", {
+        itemType: { kind: "literal", value: "YIELD_SAVINGS" },
+      }),
+    ).toBe("ASSET");
+    expect(
+      evaluateRatesFormulaWithInputs("balanceSheetRoleFromItemType", {
+        itemType: { kind: "literal", value: "SUBSCRIPTION" },
+      }),
+    ).toBe("NONE");
+  });
+
+  it("sums revolving balance and installment children", () => {
+    expect(
+      evaluateRatesFormulaWithInputs("cardHostCurrentBalance", {
+        revolvingBalance: { kind: "literal", value: 1_000_000 },
+        installmentSum: { kind: "literal", value: 22_000_000 },
+      }),
+    ).toBe(23_000_000);
+    expect(
+      evaluateRatesFormulaWithInputs("cardHostCurrentBalance", {
+        installmentSum: { kind: "literal", value: 5_000_000 },
+      }),
+    ).toBe(5_000_000);
+  });
+
+  it("increments planRevision from current value", () => {
+    expect(evaluateRatesFormula("incrementPlanRevision")).toBe(1);
+    expect(
+      evaluateRatesFormula("incrementPlanRevision", {
+        current: { planRevision: 4 },
+      }),
+    ).toBe(5);
+  });
+
+  it("infers flat loan origination date from parent balance trail", () => {
+    const inferred = evaluateRatesFormula("inferFlatLoanOriginationDate", {
+      current: {
+        originalPrincipal: 10_000_000,
+        principalPortion: 500_000,
+      },
+      loaded: {
+        parent: {
+          currentBalance: 8_500_000,
+          nextDueDate: "2026-06-01",
+        },
+      },
+    });
+    expect(inferred).toBe("2026-03-01T00:00:00.000Z");
   });
 });

@@ -52,8 +52,7 @@ export function useSilentHookExecutionRefresh(): void {
           sources: ["hookExecution"],
         });
         const live = response.hookExecutionLive;
-        const isActive =
-          (live?.pending ?? 0) > 0 || (live?.running ?? 0) > 0;
+        const isActive = (live?.pending ?? 0) > 0 || (live?.running ?? 0) > 0;
 
         if (isActive) {
           wasActiveRef.current = true;

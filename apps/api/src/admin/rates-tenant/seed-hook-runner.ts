@@ -16,7 +16,7 @@ import {
   type DataHookExecutionRecorder,
   type HookLogger,
 } from "@repo/hooks";
-import type { CreateUserNotificationInput } from "@repo/user-notifications";
+import type { CreateUserNotificationInput } from "@repo/firestore-converters";
 
 import type { EntityRuntimeForCrudHooks } from "../../hooks/crud-hook-deps.types.js";
 import { apiEnv } from "../../config/env.js";
@@ -62,7 +62,7 @@ const seedHookConsoleLogger: HookLogger = {
   },
 };
 
-export interface SeedHookObservabilityServices {
+interface SeedHookObservabilityServices {
   readonly logger: HookLogger;
   readonly recordDataHookExecution?: (
     entry: CreateDataHookExecutionInput,

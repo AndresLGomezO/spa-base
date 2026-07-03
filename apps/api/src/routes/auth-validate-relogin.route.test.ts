@@ -109,6 +109,7 @@ vi.mock("../config/env.js", () => ({
     API_PORT: 3000,
     API_CORS_ORIGINS: "http://localhost:5173",
     PLATFORM_BOOTSTRAP_SUPERADMIN_EMAILS: "admin@example.com",
+    TENANT_DELETION_PROTECTED_IDS: "rates",
   },
 }));
 

@@ -10,7 +10,10 @@ import {
   TENANTS_COLLECTION,
 } from "@repo/shared-types";
 
-import { getFirestoreAdmin, type FirebaseAdminConfig } from "../firebase-admin.js";
+import {
+  getFirestoreAdmin,
+  type FirebaseAdminConfig,
+} from "../firebase-admin.js";
 
 export interface DocumentTreeProgress {
   readonly collectionsCopied: number;
@@ -97,7 +100,9 @@ export async function copyTenantToArchiveMirror(params: {
   readonly onProgress?: DocumentTreeProgressCallback;
 }): Promise<DocumentTreeProgress> {
   const firestore = getFirestoreAdmin(params.config);
-  const tenantRef = firestore.collection(TENANTS_COLLECTION).doc(params.tenantId);
+  const tenantRef = firestore
+    .collection(TENANTS_COLLECTION)
+    .doc(params.tenantId);
   const archiveRef = firestore
     .collection(TENANT_DELETION_ARCHIVES_COLLECTION)
     .doc(params.archiveId);
@@ -149,7 +154,9 @@ export async function purgeLiveTenantData(params: {
   readonly onProgress?: DocumentTreeProgressCallback;
 }): Promise<DocumentTreeProgress> {
   const firestore = getFirestoreAdmin(params.config);
-  const tenantRef = firestore.collection(TENANTS_COLLECTION).doc(params.tenantId);
+  const tenantRef = firestore
+    .collection(TENANTS_COLLECTION)
+    .doc(params.tenantId);
 
   let collectionsCopied = 0;
   let docsCopied = 0;

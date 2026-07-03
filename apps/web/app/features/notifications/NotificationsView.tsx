@@ -126,7 +126,10 @@ function NotificationsPageContent() {
 
         {groupedNotifications.map(({ group, items }) => (
           <section key={group} className="space-y-1">
-            <Heading level={2} className="text-muted-foreground text-sm font-medium">
+            <Heading
+              level={2}
+              className="text-muted-foreground text-sm font-medium"
+            >
               {group === "today"
                 ? t("notifications.groupToday")
                 : t("notifications.groupEarlier")}

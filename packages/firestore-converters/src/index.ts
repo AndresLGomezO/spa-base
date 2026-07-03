@@ -175,6 +175,7 @@ export {
 export { type HookLogMessageRepository } from "./hook-log-message/repository-contract.js";
 export { createInMemoryHookLogMessageRepository } from "./hook-log-message/in-memory-repository.js";
 export {
+  type CreateUserNotificationInput,
   type UserNotificationRepository,
   type UserNotificationListCursor,
   type UserNotificationListPage,

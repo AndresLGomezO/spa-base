@@ -1,6 +1,8 @@
 import { Plus, Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Button, FieldLabel, IconButton, Input, Select, Text } from "@repo/ui";
+import type { ReactNode } from "react";
+import { CollapsibleEditorCard } from "@repo/ui-builder-react";
+import { Button, IconButton, Input, Select, Text } from "@repo/ui";
 import type {
   DataHookAction,
   DataHookExecutionMode,
@@ -22,6 +24,97 @@ import type { LoadedBinding } from "./expression-editor-node-types";
 
 const controlClassName =
   "border-input bg-background flex h-9 w-full rounded-md border px-3 py-1.5 text-sm";
+
+const nestedCardClassName = "bg-muted/20 shadow-sm";
+
+function CollapsibleSection({
+  title,
+  defaultOpen = false,
+  headerEnd,
+  onAdd,
+  addLabel,
+  children,
+}: {
+  readonly title: string;
+  readonly defaultOpen?: boolean;
+  readonly headerEnd?: ReactNode;
+  readonly onAdd?: () => void;
+  readonly addLabel?: string;
+  readonly children: ReactNode;
+}) {
+  return (
+    <CollapsibleEditorCard
+      title={title}
+      defaultOpen={defaultOpen}
+      className={nestedCardClassName}
+      headerEnd={headerEnd}
+      onAdd={onAdd}
+      addLabel={addLabel}
+    >
+      {children}
+    </CollapsibleEditorCard>
+  );
+}
+
+function CollapsibleExpressionEditor({
+  label,
+  defaultOpen = false,
+  showPreview = true,
+  value,
+  onChange,
+  fieldNames,
+  loadedBindings,
+  aggregateBindings,
+}: {
+  readonly label: string;
+  readonly defaultOpen?: boolean;
+  readonly showPreview?: boolean;
+  readonly value: ExpressionNode;
+  readonly onChange: (node: ExpressionNode) => void;
+  readonly fieldNames?: readonly string[];
+  readonly loadedBindings?: readonly LoadedBinding[];
+  readonly aggregateBindings?: readonly string[];
+}) {
+  return (
+    <CollapsibleSection title={label} defaultOpen={defaultOpen}>
+      <ExpressionEditor
+        value={value}
+        onChange={onChange}
+        fieldNames={fieldNames}
+        loadedBindings={loadedBindings}
+        aggregateBindings={aggregateBindings}
+        showPreview={showPreview}
+        collapsibleNested
+      />
+    </CollapsibleSection>
+  );
+}
+
+function TargetEntitySelect({
+  label,
+  value,
+  defaultOpen = true,
+  onChange,
+  entityOptions,
+}: {
+  readonly label: string;
+  readonly value: string;
+  readonly defaultOpen?: boolean;
+  readonly onChange: (entity: string) => void;
+  readonly entityOptions: ReactNode;
+}) {
+  return (
+    <CollapsibleSection title={label} defaultOpen={defaultOpen}>
+      <Select
+        className={controlClassName}
+        value={value}
+        onChange={(event) => onChange(event.target.value)}
+      >
+        {entityOptions}
+      </Select>
+    </CollapsibleSection>
+  );
+}
 
 const ACTION_TYPES: readonly DataHookAction["type"][] = [
   "setField",
@@ -103,77 +196,78 @@ function FieldMapEditor({
   }
 
   return (
-    <div className="space-y-2">
-      <FieldLabel>{label}</FieldLabel>
+    <CollapsibleSection
+      title={label}
+      defaultOpen={entries.length > 0}
+      onAdd={() => {
+        const nextKey = `field${String(entries.length + 1)}`;
+        onChange({ ...value, [nextKey]: literal() });
+      }}
+      addLabel={t("dataHooks.actions.addField")}
+    >
       {entries.length === 0 ? (
         <Text className="text-muted-foreground text-xs">
           {t("dataHooks.actions.noFields")}
         </Text>
       ) : null}
-      {entries.map(([key, node]) => (
-        <div
-          key={key}
-          className="border-border space-y-2 rounded-md border p-2"
-        >
-          <div className="flex items-center gap-2">
-            {fieldNames.length > 0 ? (
-              <Select
-                className={controlClassName}
-                value={fieldNames.includes(key) ? key : ""}
-                onChange={(event) => renameKey(key, event.target.value)}
+      <div className="space-y-2">
+        {entries.map(([key, node]) => (
+          <CollapsibleSection
+            key={key}
+            title={key.trim() || t("dataHooks.actions.selectField")}
+            headerEnd={
+              <IconButton
+                type="button"
+                size="sm"
+                label={t("dataHooks.actions.removeField")}
+                onClick={() => {
+                  const next = { ...value };
+                  delete next[key];
+                  onChange(next);
+                }}
               >
-                <option value="">{t("dataHooks.actions.selectField")}</option>
-                {!fieldNames.includes(key) && key ? (
-                  <option value={key}>{key}</option>
-                ) : null}
-                {fieldNames.map((name) => (
-                  <option key={name} value={name}>
-                    {name}
-                  </option>
-                ))}
-              </Select>
-            ) : (
-              <Input
-                value={key}
-                placeholder={t("dataHooks.actions.fieldName")}
-                onChange={(event) => renameKey(key, event.target.value)}
+                <Trash2 aria-hidden className="size-4" />
+              </IconButton>
+            }
+          >
+            <div className="space-y-2">
+              {fieldNames.length > 0 ? (
+                <Select
+                  className={controlClassName}
+                  value={fieldNames.includes(key) ? key : ""}
+                  onChange={(event) => renameKey(key, event.target.value)}
+                >
+                  <option value="">{t("dataHooks.actions.selectField")}</option>
+                  {!fieldNames.includes(key) && key ? (
+                    <option value={key}>{key}</option>
+                  ) : null}
+                  {fieldNames.map((name) => (
+                    <option key={name} value={name}>
+                      {name}
+                    </option>
+                  ))}
+                </Select>
+              ) : (
+                <Input
+                  value={key}
+                  placeholder={t("dataHooks.actions.fieldName")}
+                  onChange={(event) => renameKey(key, event.target.value)}
+                />
+              )}
+              <ExpressionEditor
+                value={node}
+                fieldNames={fieldNames}
+                loadedBindings={loadedBindings}
+                aggregateBindings={aggregateBindings}
+                onChange={(nextNode) => onChange({ ...value, [key]: nextNode })}
+                collapsibleNested
+                showPreview={false}
               />
-            )}
-            <IconButton
-              type="button"
-              size="sm"
-              label={t("dataHooks.actions.removeField")}
-              onClick={() => {
-                const next = { ...value };
-                delete next[key];
-                onChange(next);
-              }}
-            >
-              <Trash2 aria-hidden className="size-4" />
-            </IconButton>
-          </div>
-          <ExpressionEditor
-            value={node}
-            fieldNames={fieldNames}
-            loadedBindings={loadedBindings}
-            aggregateBindings={aggregateBindings}
-            onChange={(nextNode) => onChange({ ...value, [key]: nextNode })}
-          />
-        </div>
-      ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        onClick={() => {
-          const nextKey = `field${String(entries.length + 1)}`;
-          onChange({ ...value, [nextKey]: literal() });
-        }}
-      >
-        <Plus aria-hidden className="mr-1 size-4" />
-        {t("dataHooks.actions.addField")}
-      </Button>
-    </div>
+            </div>
+          </CollapsibleSection>
+        ))}
+      </div>
+    </CollapsibleSection>
   );
 }
 
@@ -218,8 +312,10 @@ function ActionEditor({
     case "setField":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetField")}</FieldLabel>
+          <CollapsibleSection
+            title={t("dataHooks.actions.targetField")}
+            defaultOpen={Boolean(action.field)}
+          >
             {triggerFieldNames.length > 0 ? (
               <Select
                 className={controlClassName}
@@ -246,8 +342,8 @@ function ActionEditor({
                 }
               />
             )}
-          </div>
-          <ExpressionEditor
+          </CollapsibleSection>
+          <CollapsibleExpressionEditor
             label={t("dataHooks.actions.value")}
             value={action.value}
             fieldNames={triggerFieldNames}
@@ -260,8 +356,9 @@ function ActionEditor({
 
     case "sendNotification":
       return (
-        <ExpressionEditor
+        <CollapsibleExpressionEditor
           label={t("dataHooks.actions.message")}
+          defaultOpen
           value={action.message}
           fieldNames={triggerFieldNames}
           loadedBindings={loadedBindings}
@@ -273,15 +370,16 @@ function ActionEditor({
     case "callWebhook":
       return (
         <div className="space-y-3">
-          <ExpressionEditor
+          <CollapsibleExpressionEditor
             label={t("dataHooks.actions.webhookUrl")}
+            defaultOpen
             value={action.url}
             fieldNames={triggerFieldNames}
             loadedBindings={loadedBindings}
             aggregateBindings={aggregateBindings}
             onChange={(url) => onChange({ ...action, url })}
           />
-          <ExpressionEditor
+          <CollapsibleExpressionEditor
             label={t("dataHooks.actions.webhookBody")}
             value={
               action.body ?? {
@@ -311,18 +409,12 @@ function ActionEditor({
     case "createRecord":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={action.entity}
-              onChange={(event) =>
-                onChange({ ...action, entity: event.target.value })
-              }
-            >
-              {entityOptions}
-            </Select>
-          </div>
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
+          />
           <FieldMapEditor
             label={t("dataHooks.actions.recordData")}
             value={action.data}
@@ -337,27 +429,22 @@ function ActionEditor({
     case "createRecords":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={action.entity}
-              onChange={(event) =>
-                onChange({ ...action, entity: event.target.value })
-              }
-            >
-              {entityOptions}
-            </Select>
-          </div>
-          <ExpressionEditor
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
+          />
+          <CollapsibleExpressionEditor
             label={t("dataHooks.actions.count")}
+            defaultOpen
             value={action.count}
             fieldNames={triggerFieldNames}
             loadedBindings={loadedBindings}
             aggregateBindings={aggregateBindings}
             onChange={(count) => onChange({ ...action, count })}
           />
-          <ExpressionEditor
+          <CollapsibleExpressionEditor
             label={t("dataHooks.actions.startIndex")}
             value={action.startIndex ?? { kind: "literal", value: 0 }}
             fieldNames={triggerFieldNames}
@@ -389,25 +476,24 @@ function ActionEditor({
     case "updateMatching":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={action.entity}
-              onChange={(event) =>
-                onChange({ ...action, entity: event.target.value })
-              }
-            >
-              {entityOptions}
-            </Select>
-          </div>
-          <DataHookConditionEditor
-            value={action.where}
-            fieldNames={getFieldNames(action.entity)}
-            valueFieldNames={triggerFieldNames}
-            rootTitle={t("dataHooks.actions.matchWhere")}
-            onChange={(where) => onChange({ ...action, where })}
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
           />
+          <CollapsibleSection
+            title={t("dataHooks.actions.matchWhere")}
+            defaultOpen
+          >
+            <DataHookConditionEditor
+              value={action.where}
+              fieldNames={getFieldNames(action.entity)}
+              valueFieldNames={triggerFieldNames}
+              suppressRootHeader
+              onChange={(where) => onChange({ ...action, where })}
+            />
+          </CollapsibleSection>
           <FieldMapEditor
             label={t("dataHooks.actions.setFields")}
             value={action.set}
@@ -422,45 +508,39 @@ function ActionEditor({
     case "deleteMatching":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={action.entity}
-              onChange={(event) =>
-                onChange({ ...action, entity: event.target.value })
-              }
-            >
-              {entityOptions}
-            </Select>
-          </div>
-          <DataHookConditionEditor
-            value={action.where}
-            fieldNames={getFieldNames(action.entity)}
-            valueFieldNames={triggerFieldNames}
-            rootTitle={t("dataHooks.actions.matchWhere")}
-            onChange={(where) => onChange({ ...action, where })}
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
           />
+          <CollapsibleSection
+            title={t("dataHooks.actions.matchWhere")}
+            defaultOpen
+          >
+            <DataHookConditionEditor
+              value={action.where}
+              fieldNames={getFieldNames(action.entity)}
+              valueFieldNames={triggerFieldNames}
+              suppressRootHeader
+              onChange={(where) => onChange({ ...action, where })}
+            />
+          </CollapsibleSection>
         </div>
       );
 
     case "deleteRecord":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={action.entity}
-              onChange={(event) =>
-                onChange({ ...action, entity: event.target.value })
-              }
-            >
-              {entityOptions}
-            </Select>
-          </div>
-          <ExpressionEditor
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
+          />
+          <CollapsibleExpressionEditor
             label={t("dataHooks.actions.recordId")}
+            defaultOpen
             value={action.id}
             fieldNames={triggerFieldNames}
             loadedBindings={loadedBindings}
@@ -473,28 +553,25 @@ function ActionEditor({
     case "getRecord":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={action.entity}
-              onChange={(event) =>
-                onChange({ ...action, entity: event.target.value })
-              }
-            >
-              {entityOptions}
-            </Select>
-          </div>
-          <ExpressionEditor
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
+          />
+          <CollapsibleExpressionEditor
             label={t("dataHooks.actions.recordId")}
+            defaultOpen
             value={action.id}
             fieldNames={triggerFieldNames}
             loadedBindings={loadedBindings}
             aggregateBindings={aggregateBindings}
             onChange={(id) => onChange({ ...action, id })}
           />
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.alias")}</FieldLabel>
+          <CollapsibleSection
+            title={t("dataHooks.actions.alias")}
+            defaultOpen={Boolean(action.as)}
+          >
             <Input
               value={action.as}
               placeholder={t("dataHooks.actions.aliasPlaceholder")}
@@ -502,34 +579,35 @@ function ActionEditor({
                 onChange({ ...action, as: event.target.value })
               }
             />
-          </div>
+          </CollapsibleSection>
         </div>
       );
 
     case "aggregateMatching":
       return (
         <div className="space-y-3">
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.targetEntity")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={action.entity}
-              onChange={(event) =>
-                onChange({ ...action, entity: event.target.value })
-              }
-            >
-              {entityOptions}
-            </Select>
-          </div>
-          <DataHookConditionEditor
-            value={action.where}
-            fieldNames={getFieldNames(action.entity)}
-            valueFieldNames={triggerFieldNames}
-            rootTitle={t("dataHooks.actions.matchWhere")}
-            onChange={(where) => onChange({ ...action, where })}
+          <TargetEntitySelect
+            label={t("dataHooks.actions.targetEntity")}
+            value={action.entity}
+            onChange={(entity) => onChange({ ...action, entity })}
+            entityOptions={entityOptions}
           />
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.aggregateOp")}</FieldLabel>
+          <CollapsibleSection
+            title={t("dataHooks.actions.matchWhere")}
+            defaultOpen
+          >
+            <DataHookConditionEditor
+              value={action.where}
+              fieldNames={getFieldNames(action.entity)}
+              valueFieldNames={triggerFieldNames}
+              suppressRootHeader
+              onChange={(where) => onChange({ ...action, where })}
+            />
+          </CollapsibleSection>
+          <CollapsibleSection
+            title={t("dataHooks.actions.aggregateOp")}
+            defaultOpen
+          >
             <Select
               className={controlClassName}
               value={action.op}
@@ -550,10 +628,12 @@ function ActionEditor({
                 </option>
               ))}
             </Select>
-          </div>
+          </CollapsibleSection>
           {action.op !== "count" ? (
-            <div className="space-y-1">
-              <FieldLabel>{t("dataHooks.actions.aggregateField")}</FieldLabel>
+            <CollapsibleSection
+              title={t("dataHooks.actions.aggregateField")}
+              defaultOpen={Boolean(action.field)}
+            >
               {getFieldNames(action.entity).length > 0 ? (
                 <Select
                   className={controlClassName}
@@ -577,10 +657,12 @@ function ActionEditor({
                   }
                 />
               )}
-            </div>
+            </CollapsibleSection>
           ) : null}
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.actions.alias")}</FieldLabel>
+          <CollapsibleSection
+            title={t("dataHooks.actions.alias")}
+            defaultOpen={Boolean(action.as)}
+          >
             <Input
               value={action.as}
               placeholder={t("dataHooks.actions.aliasPlaceholder")}
@@ -588,7 +670,7 @@ function ActionEditor({
                 onChange({ ...action, as: event.target.value })
               }
             />
-          </div>
+          </CollapsibleSection>
         </div>
       );
 
@@ -599,7 +681,9 @@ function ActionEditor({
   }
 }
 
-function emptyActionOfType(type: DataHookAction["type"]): DataHookAction {
+export function emptyActionOfType(
+  type: DataHookAction["type"],
+): DataHookAction {
   switch (type) {
     case "setField":
       return { type, field: "", value: literal() };
@@ -651,6 +735,7 @@ export function DataHookActionsEditor({
   hookExecution,
   disabled,
   onChange,
+  showAddButton = true,
 }: {
   readonly actions: readonly DataHookAction[];
   readonly triggerEntity: string;
@@ -658,6 +743,7 @@ export function DataHookActionsEditor({
   readonly hookExecution?: DataHookExecutionMode;
   readonly disabled: boolean;
   readonly onChange: (next: readonly DataHookAction[]) => void;
+  readonly showAddButton?: boolean;
 }) {
   const { t } = useTranslation("common");
   const getFieldNames = useEntityFieldNames();
@@ -669,19 +755,30 @@ export function DataHookActionsEditor({
 
   return (
     <div className="space-y-3">
-      <div className="flex items-center justify-between">
-        <FieldLabel>{t("dataHooks.actions.title")}</FieldLabel>
-      </div>
       {actions.map((action, index) => (
-        <div
+        <CollapsibleEditorCard
           key={index}
-          className="border-border bg-muted/20 space-y-3 rounded-lg border p-3"
+          title={t(`dataHooks.actionType.${action.type}`)}
+          defaultOpen={index === 0}
+          className="bg-muted/20 shadow-sm"
+          headerEnd={
+            <IconButton
+              type="button"
+              size="sm"
+              label={t("dataHooks.actions.remove")}
+              disabled={disabled || actions.length <= 1}
+              onClick={() => onChange(actions.filter((_, i) => i !== index))}
+            >
+              <Trash2 aria-hidden className="size-4" />
+            </IconButton>
+          }
         >
-          <div className="flex items-center gap-2">
+          <div className="space-y-3">
             <Select
-              className={`${controlClassName} w-52`}
+              className={`${controlClassName} w-full max-w-xs`}
               value={action.type}
               disabled={disabled}
+              aria-label={t("dataHooks.actions.title")}
               onChange={(event) =>
                 updateAt(
                   index,
@@ -697,38 +794,30 @@ export function DataHookActionsEditor({
                 </option>
               ))}
             </Select>
-            <div className="flex-1" />
-            <IconButton
-              type="button"
-              size="sm"
-              label={t("dataHooks.actions.remove")}
-              disabled={disabled || actions.length <= 1}
-              onClick={() => onChange(actions.filter((_, i) => i !== index))}
-            >
-              <Trash2 aria-hidden className="size-4" />
-            </IconButton>
+            <ActionEditor
+              action={action}
+              actions={actions}
+              actionIndex={index}
+              triggerFieldNames={triggerFieldNames}
+              hookPhase={hookPhase}
+              hookExecution={hookExecution}
+              onChange={(next) => updateAt(index, next)}
+            />
           </div>
-          <ActionEditor
-            action={action}
-            actions={actions}
-            actionIndex={index}
-            triggerFieldNames={triggerFieldNames}
-            hookPhase={hookPhase}
-            hookExecution={hookExecution}
-            onChange={(next) => updateAt(index, next)}
-          />
-        </div>
+        </CollapsibleEditorCard>
       ))}
-      <Button
-        type="button"
-        variant="outline"
-        size="sm"
-        disabled={disabled}
-        onClick={() => onChange([...actions, emptyActionOfType("setField")])}
-      >
-        <Plus aria-hidden className="mr-1 size-4" />
-        {t("dataHooks.actions.add")}
-      </Button>
+      {showAddButton ? (
+        <Button
+          type="button"
+          variant="outline"
+          size="sm"
+          disabled={disabled}
+          onClick={() => onChange([...actions, emptyActionOfType("setField")])}
+        >
+          <Plus aria-hidden className="mr-1 size-4" />
+          {t("dataHooks.actions.add")}
+        </Button>
+      ) : null}
     </div>
   );
 }

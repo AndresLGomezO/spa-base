@@ -39,117 +39,14 @@
           "type": "setField",
           "field": "balanceSheetRole",
           "value": {
-            "kind": "switch",
-            "input": {
-              "kind": "field",
-              "source": "current",
-              "path": "itemType"
-            },
-            "cases": [
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "MORTGAGE"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "LOAN"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "CREDIT_CARD"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "REVOLVING_CREDIT"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "PERSONAL_DEBT"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "SCHEDULED_SAVINGS"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "YIELD_SAVINGS"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "FIDUCIARY"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "INVESTMENT_FUND"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "OTHER_INVESTMENT"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
+            "kind": "formula",
+            "name": "balanceSheetRoleFromItemType",
+            "inputs": {
+              "itemType": {
+                "kind": "field",
+                "source": "current",
+                "path": "itemType"
               }
-            ],
-            "default": {
-              "kind": "literal",
-              "value": "NONE"
             }
           }
         }
@@ -190,9 +87,7 @@
       "phase": "before",
       "trigger": {
         "operation": "update",
-        "updateFields": [
-          "parentFinancialItemId"
-        ]
+        "updateFields": ["parentFinancialItemId"]
       },
       "condition": {
         "type": "condition",
@@ -219,9 +114,7 @@
       "phase": "before",
       "trigger": {
         "operation": "update",
-        "updateFields": [
-          "itemType"
-        ]
+        "updateFields": ["itemType"]
       },
       "condition": null,
       "actions": [
@@ -229,117 +122,14 @@
           "type": "setField",
           "field": "balanceSheetRole",
           "value": {
-            "kind": "switch",
-            "input": {
-              "kind": "field",
-              "source": "current",
-              "path": "itemType"
-            },
-            "cases": [
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "MORTGAGE"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "LOAN"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "CREDIT_CARD"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "REVOLVING_CREDIT"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "PERSONAL_DEBT"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "LIABILITY"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "SCHEDULED_SAVINGS"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "YIELD_SAVINGS"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "FIDUCIARY"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "INVESTMENT_FUND"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
-              },
-              {
-                "when": {
-                  "kind": "literal",
-                  "value": "OTHER_INVESTMENT"
-                },
-                "then": {
-                  "kind": "literal",
-                  "value": "ASSET"
-                }
+            "kind": "formula",
+            "name": "balanceSheetRoleFromItemType",
+            "inputs": {
+              "itemType": {
+                "kind": "field",
+                "source": "current",
+                "path": "itemType"
               }
-            ],
-            "default": {
-              "kind": "literal",
-              "value": "NONE"
             }
           }
         }
@@ -380,52 +170,15 @@
           "type": "createRecords",
           "entity": "paymentSchedule",
           "count": {
-            "kind": "call",
-            "fn": "if",
-            "args": [
-              {
-                "kind": "binary",
-                "op": "==",
-                "left": {
-                  "kind": "field",
-                  "source": "current",
-                  "path": "frequency"
-                },
-                "right": {
-                  "kind": "literal",
-                  "value": "ONE_TIME"
-                }
-              },
-              {
-                "kind": "literal",
-                "value": 1
-              },
-              {
-                "kind": "call",
-                "fn": "min",
-                "args": [
-                  {
-                    "kind": "call",
-                    "fn": "coalesce",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "scheduleHorizonMonths"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": 12
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 1000
-                  }
-                ]
+            "kind": "formula",
+            "name": "recurringScheduleInitialRowCount",
+            "inputs": {
+              "frequency": {
+                "kind": "field",
+                "source": "current",
+                "path": "frequency"
               }
-            ]
+            }
           },
           "startIndex": {
             "kind": "literal",
@@ -438,173 +191,19 @@
               "path": "id"
             },
             "dueDate": {
-              "kind": "switch",
-              "input": {
-                "kind": "field",
-                "source": "current",
-                "path": "frequency"
-              },
-              "cases": [
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "WEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
+              "kind": "formula",
+              "name": "frequencyScheduleDueDate",
+              "inputs": {
+                "baseDate": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "nextDueDate"
                 },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "BIWEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "binary",
-                        "op": "*",
-                        "left": {
-                          "kind": "var",
-                          "name": "loopIndex"
-                        },
-                        "right": {
-                          "kind": "literal",
-                          "value": 2
-                        }
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "MONTHLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "QUARTERLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "binary",
-                        "op": "*",
-                        "left": {
-                          "kind": "var",
-                          "name": "loopIndex"
-                        },
-                        "right": {
-                          "kind": "literal",
-                          "value": 3
-                        }
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "ANNUAL"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "YEAR"
-                      }
-                    ]
-                  }
+                "frequency": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "frequency"
                 }
-              ],
-              "default": {
-                "kind": "call",
-                "fn": "dateAdd",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "nextDueDate"
-                  },
-                  {
-                    "kind": "var",
-                    "name": "loopIndex"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": "MONTH"
-                  }
-                ]
               }
             },
             "expectedAmount": {
@@ -1543,52 +1142,15 @@
           "type": "createRecords",
           "entity": "paymentSchedule",
           "count": {
-            "kind": "call",
-            "fn": "if",
-            "args": [
-              {
-                "kind": "binary",
-                "op": "==",
-                "left": {
-                  "kind": "field",
-                  "source": "current",
-                  "path": "frequency"
-                },
-                "right": {
-                  "kind": "literal",
-                  "value": "ONE_TIME"
-                }
-              },
-              {
-                "kind": "literal",
-                "value": 1
-              },
-              {
-                "kind": "call",
-                "fn": "min",
-                "args": [
-                  {
-                    "kind": "call",
-                    "fn": "coalesce",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "scheduleHorizonMonths"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": 12
-                      }
-                    ]
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 1000
-                  }
-                ]
+            "kind": "formula",
+            "name": "recurringScheduleInitialRowCount",
+            "inputs": {
+              "frequency": {
+                "kind": "field",
+                "source": "current",
+                "path": "frequency"
               }
-            ]
+            }
           },
           "startIndex": {
             "kind": "literal",
@@ -1601,173 +1163,19 @@
               "path": "id"
             },
             "dueDate": {
-              "kind": "switch",
-              "input": {
-                "kind": "field",
-                "source": "current",
-                "path": "frequency"
-              },
-              "cases": [
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "WEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
+              "kind": "formula",
+              "name": "frequencyScheduleDueDate",
+              "inputs": {
+                "baseDate": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "nextDueDate"
                 },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "BIWEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "binary",
-                        "op": "*",
-                        "left": {
-                          "kind": "var",
-                          "name": "loopIndex"
-                        },
-                        "right": {
-                          "kind": "literal",
-                          "value": 2
-                        }
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "MONTHLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "QUARTERLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "binary",
-                        "op": "*",
-                        "left": {
-                          "kind": "var",
-                          "name": "loopIndex"
-                        },
-                        "right": {
-                          "kind": "literal",
-                          "value": 3
-                        }
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "ANNUAL"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "YEAR"
-                      }
-                    ]
-                  }
+                "frequency": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "frequency"
                 }
-              ],
-              "default": {
-                "kind": "call",
-                "fn": "dateAdd",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "nextDueDate"
-                  },
-                  {
-                    "kind": "var",
-                    "name": "loopIndex"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": "MONTH"
-                  }
-                ]
               }
             },
             "expectedAmount": {
@@ -1796,9 +1204,7 @@
       "phase": "after",
       "trigger": {
         "operation": "update",
-        "updateFields": [
-          "status"
-        ]
+        "updateFields": ["status"]
       },
       "condition": {
         "type": "group",
@@ -1908,38 +1314,15 @@
           "type": "createRecords",
           "entity": "paymentSchedule",
           "count": {
-            "kind": "call",
-            "fn": "min",
-            "args": [
-              {
-                "kind": "literal",
-                "value": 100
-              },
-              {
-                "kind": "binary",
-                "op": "-",
-                "left": {
-                  "kind": "call",
-                  "fn": "coalesce",
-                  "args": [
-                    {
-                      "kind": "field",
-                      "source": "current",
-                      "path": "scheduleHorizonMonths"
-                    },
-                    {
-                      "kind": "literal",
-                      "value": 12
-                    }
-                  ]
-                },
-                "right": {
-                  "kind": "field",
-                  "source": "aggregate",
-                  "alias": "existingCount"
-                }
+            "kind": "formula",
+            "name": "recurringScheduleExtensionRowCount",
+            "inputs": {
+              "existingCount": {
+                "kind": "field",
+                "source": "aggregate",
+                "alias": "existingCount"
               }
-            ]
+            }
           },
           "startIndex": {
             "kind": "field",
@@ -1953,173 +1336,19 @@
               "path": "id"
             },
             "dueDate": {
-              "kind": "switch",
-              "input": {
-                "kind": "field",
-                "source": "current",
-                "path": "frequency"
-              },
-              "cases": [
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "WEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
+              "kind": "formula",
+              "name": "frequencyScheduleDueDate",
+              "inputs": {
+                "baseDate": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "nextDueDate"
                 },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "BIWEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "binary",
-                        "op": "*",
-                        "left": {
-                          "kind": "var",
-                          "name": "loopIndex"
-                        },
-                        "right": {
-                          "kind": "literal",
-                          "value": 2
-                        }
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "MONTHLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "QUARTERLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "binary",
-                        "op": "*",
-                        "left": {
-                          "kind": "var",
-                          "name": "loopIndex"
-                        },
-                        "right": {
-                          "kind": "literal",
-                          "value": 3
-                        }
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "ANNUAL"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "nextDueDate"
-                      },
-                      {
-                        "kind": "var",
-                        "name": "loopIndex"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "YEAR"
-                      }
-                    ]
-                  }
+                "frequency": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "frequency"
                 }
-              ],
-              "default": {
-                "kind": "call",
-                "fn": "dateAdd",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "nextDueDate"
-                  },
-                  {
-                    "kind": "var",
-                    "name": "loopIndex"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": "MONTH"
-                  }
-                ]
               }
             },
             "expectedAmount": {
@@ -2148,9 +1377,7 @@
       "phase": "after",
       "trigger": {
         "operation": "update",
-        "updateFields": [
-          "status"
-        ]
+        "updateFields": ["status"]
       },
       "condition": {
         "type": "condition",
@@ -2235,158 +1462,20 @@
               "path": "id"
             },
             "dueDate": {
-              "kind": "switch",
-              "input": {
-                "kind": "field",
-                "source": "loaded",
-                "alias": "parent",
-                "path": "frequency"
-              },
-              "cases": [
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "WEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "dueDate"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": 1
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
+              "kind": "formula",
+              "name": "frequencyAdvanceDueDate",
+              "inputs": {
+                "baseDate": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "dueDate"
                 },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "BIWEEKLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "dueDate"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": 2
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "WEEK"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "MONTHLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "dueDate"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": 1
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "QUARTERLY"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "dueDate"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": 3
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "MONTH"
-                      }
-                    ]
-                  }
-                },
-                {
-                  "when": {
-                    "kind": "literal",
-                    "value": "ANNUAL"
-                  },
-                  "then": {
-                    "kind": "call",
-                    "fn": "dateAdd",
-                    "args": [
-                      {
-                        "kind": "field",
-                        "source": "current",
-                        "path": "dueDate"
-                      },
-                      {
-                        "kind": "literal",
-                        "value": 1
-                      },
-                      {
-                        "kind": "literal",
-                        "value": "YEAR"
-                      }
-                    ]
-                  }
+                "frequency": {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "frequency"
                 }
-              ],
-              "default": {
-                "kind": "call",
-                "fn": "dateAdd",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "dueDate"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 1
-                  },
-                  {
-                    "kind": "literal",
-                    "value": "MONTH"
-                  }
-                ]
               }
             },
             "expectedAmount": {
@@ -2518,156 +1607,9 @@
           },
           "set": {
             "originationDate": {
-              "kind": "call",
-              "fn": "if",
-              "args": [
-                {
-                  "kind": "binary",
-                  "op": "&&",
-                  "left": {
-                    "kind": "binary",
-                    "op": "&&",
-                    "left": {
-                      "kind": "binary",
-                      "op": "&&",
-                      "left": {
-                        "kind": "unary",
-                        "op": "!",
-                        "operand": {
-                          "kind": "call",
-                          "fn": "isEmpty",
-                          "args": [
-                            {
-                              "kind": "field",
-                              "source": "current",
-                              "path": "originalPrincipal"
-                            }
-                          ]
-                        }
-                      },
-                      "right": {
-                        "kind": "unary",
-                        "op": "!",
-                        "operand": {
-                          "kind": "call",
-                          "fn": "isEmpty",
-                          "args": [
-                            {
-                              "kind": "field",
-                              "source": "loaded",
-                              "alias": "parent",
-                              "path": "currentBalance"
-                            }
-                          ]
-                        }
-                      }
-                    },
-                    "right": {
-                      "kind": "binary",
-                      "op": "&&",
-                      "left": {
-                        "kind": "unary",
-                        "op": "!",
-                        "operand": {
-                          "kind": "call",
-                          "fn": "isEmpty",
-                          "args": [
-                            {
-                              "kind": "field",
-                              "source": "current",
-                              "path": "principalPortion"
-                            }
-                          ]
-                        }
-                      },
-                      "right": {
-                        "kind": "binary",
-                        "op": ">",
-                        "left": {
-                          "kind": "field",
-                          "source": "current",
-                          "path": "principalPortion"
-                        },
-                        "right": {
-                          "kind": "literal",
-                          "value": 0
-                        }
-                      }
-                    }
-                  },
-                  "right": {
-                    "kind": "unary",
-                    "op": "!",
-                    "operand": {
-                      "kind": "call",
-                      "fn": "isEmpty",
-                      "args": [
-                        {
-                          "kind": "field",
-                          "source": "loaded",
-                          "alias": "parent",
-                          "path": "nextDueDate"
-                        }
-                      ]
-                    }
-                  }
-                },
-                {
-                  "kind": "call",
-                  "fn": "dateAdd",
-                  "args": [
-                    {
-                      "kind": "field",
-                      "source": "loaded",
-                      "alias": "parent",
-                      "path": "nextDueDate"
-                    },
-                    {
-                      "kind": "unary",
-                      "op": "-",
-                      "operand": {
-                        "kind": "call",
-                        "fn": "floor",
-                        "args": [
-                          {
-                            "kind": "binary",
-                            "op": "/",
-                            "left": {
-                              "kind": "binary",
-                              "op": "-",
-                              "left": {
-                                "kind": "field",
-                                "source": "current",
-                                "path": "originalPrincipal"
-                              },
-                              "right": {
-                                "kind": "field",
-                                "source": "loaded",
-                                "alias": "parent",
-                                "path": "currentBalance"
-                              }
-                            },
-                            "right": {
-                              "kind": "field",
-                              "source": "current",
-                              "path": "principalPortion"
-                            }
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "kind": "literal",
-                      "value": "MONTH"
-                    }
-                  ]
-                },
-                {
-                  "kind": "field",
-                  "source": "current",
-                  "path": "originationDate"
-                }
-              ]
+              "kind": "formula",
+              "name": "inferFlatLoanOriginationDate",
+              "inputs": {}
             }
           }
         }
@@ -3469,27 +2411,9 @@
           },
           "set": {
             "planRevision": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "planRevision"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "literal",
-                "value": 1
-              }
+              "kind": "formula",
+              "name": "incrementPlanRevision",
+              "inputs": {}
             }
           }
         }
@@ -3524,27 +2448,9 @@
           },
           "set": {
             "planRevision": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "planRevision"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "literal",
-                "value": 1
-              }
+              "kind": "formula",
+              "name": "incrementPlanRevision",
+              "inputs": {}
             }
           }
         }
@@ -3579,27 +2485,9 @@
           },
           "set": {
             "planRevision": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "planRevision"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "literal",
-                "value": 1
-              }
+              "kind": "formula",
+              "name": "incrementPlanRevision",
+              "inputs": {}
             }
           }
         }
@@ -3674,27 +2562,9 @@
           },
           "set": {
             "planRevision": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "planRevision"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "literal",
-                "value": 1
-              }
+              "kind": "formula",
+              "name": "incrementPlanRevision",
+              "inputs": {}
             }
           }
         }
@@ -3748,27 +2618,9 @@
           },
           "set": {
             "planRevision": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "planRevision"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "literal",
-                "value": 1
-              }
+              "kind": "formula",
+              "name": "incrementPlanRevision",
+              "inputs": {}
             }
           }
         }
@@ -3822,37 +2674,19 @@
           },
           "set": {
             "currentBalance": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "revolvingBalance"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "aggregate",
-                    "alias": "installmentSum"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
+              "kind": "formula",
+              "name": "cardHostCurrentBalance",
+              "inputs": {
+                "revolvingBalance": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "revolvingBalance"
+                },
+                "installmentSum": {
+                  "kind": "field",
+                  "source": "aggregate",
+                  "alias": "installmentSum"
+                }
               }
             }
           }
@@ -3869,11 +2703,7 @@
       "phase": "after",
       "trigger": {
         "operation": "update",
-        "updateFields": [
-          "currentBalance",
-          "parentFinancialItemId",
-          "status"
-        ]
+        "updateFields": ["currentBalance", "parentFinancialItemId", "status"]
       },
       "condition": {
         "type": "condition",
@@ -3912,37 +2742,19 @@
           },
           "set": {
             "currentBalance": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "revolvingBalance"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "aggregate",
-                    "alias": "installmentSum"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
+              "kind": "formula",
+              "name": "cardHostCurrentBalance",
+              "inputs": {
+                "revolvingBalance": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "revolvingBalance"
+                },
+                "installmentSum": {
+                  "kind": "field",
+                  "source": "aggregate",
+                  "alias": "installmentSum"
+                }
               }
             }
           }
@@ -3959,9 +2771,7 @@
       "phase": "after",
       "trigger": {
         "operation": "update",
-        "updateFields": [
-          "revolvingBalance"
-        ]
+        "updateFields": ["revolvingBalance"]
       },
       "condition": {
         "type": "condition",
@@ -4004,37 +2814,19 @@
           },
           "set": {
             "currentBalance": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "revolvingBalance"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "aggregate",
-                    "alias": "installmentSum"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
+              "kind": "formula",
+              "name": "cardHostCurrentBalance",
+              "inputs": {
+                "revolvingBalance": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "revolvingBalance"
+                },
+                "installmentSum": {
+                  "kind": "field",
+                  "source": "aggregate",
+                  "alias": "installmentSum"
+                }
               }
             }
           }
@@ -4089,37 +2881,19 @@
           },
           "set": {
             "currentBalance": {
-              "kind": "binary",
-              "op": "+",
-              "left": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "current",
-                    "path": "revolvingBalance"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
-              },
-              "right": {
-                "kind": "call",
-                "fn": "coalesce",
-                "args": [
-                  {
-                    "kind": "field",
-                    "source": "aggregate",
-                    "alias": "installmentSum"
-                  },
-                  {
-                    "kind": "literal",
-                    "value": 0
-                  }
-                ]
+              "kind": "formula",
+              "name": "cardHostCurrentBalance",
+              "inputs": {
+                "revolvingBalance": {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "revolvingBalance"
+                },
+                "installmentSum": {
+                  "kind": "field",
+                  "source": "aggregate",
+                  "alias": "installmentSum"
+                }
               }
             }
           }

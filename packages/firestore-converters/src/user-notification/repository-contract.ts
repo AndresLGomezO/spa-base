@@ -8,7 +8,11 @@ import type {
   UserNotificationListPage,
 } from "./pagination.js";
 
-export type { UserNotificationListCursor, UserNotificationListPage };
+export type {
+  CreateUserNotificationInput,
+  UserNotificationListCursor,
+  UserNotificationListPage,
+};
 export {
   buildUserNotificationNextCursor,
   decodeUserNotificationListCursor,

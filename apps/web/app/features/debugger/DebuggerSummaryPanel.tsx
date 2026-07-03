@@ -45,7 +45,10 @@ import {
   DEBUGGER_LIST_ROW_HOVER_CLASS,
   DEBUGGER_STATUS_ACCENT_CLASS,
 } from "./debugger-status-styles";
-import { DEBUGGER_CHART_CARD_CLASS, DEBUGGER_REFRESH_PULSE_CLASS } from "./debugger-summary-motion";
+import {
+  DEBUGGER_CHART_CARD_CLASS,
+  DEBUGGER_REFRESH_PULSE_CLASS,
+} from "./debugger-summary-motion";
 import {
   barChartLegendKey,
   barChartValueUnitKey,

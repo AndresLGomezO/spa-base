@@ -36,6 +36,7 @@ export default [
       "src/firestore-entity-query-executor.ts",
       "src/tenant-entity-path.ts",
       "src/replace-tenant-collection-documents.ts",
+      "src/tenant-deletion/document-tree.ts",
     ],
     rules: {
       "no-restricted-imports": "off",

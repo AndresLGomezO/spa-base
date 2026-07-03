@@ -104,6 +104,7 @@ describe("CC-SYNC runtime", () => {
       current: childLoan,
       previous: { ...childLoan, currentBalance: 22_500_000 },
       user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
       services: {
         logger: { info: vi.fn(), error: vi.fn() },
         entities: {
@@ -144,6 +145,7 @@ describe("CC-SYNC runtime", () => {
       current: cardWithRevolving,
       previous: parentCard,
       user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
       services: {
         logger: { info: vi.fn(), error: vi.fn() },
         entities: {
@@ -332,5 +334,120 @@ describe("LD-01 on card installment child", () => {
     expect(firstRow?.expectedAmount).toEqual(expect.any(Number));
     expect(firstRow?.expectedAmount as number).toBeGreaterThan(600_000);
     expect(firstRow?.expectedAmount as number).toBeLessThan(650_000);
+  });
+});
+
+describe("recurring schedule hooks", () => {
+  it("creates initial payment schedule rows with formula-backed due dates", async () => {
+    const hook = loadCatalogHook("Create initial schedule row");
+    const createMany = vi.fn<HookEntityServices["createMany"]>(
+      async (_entity, records) => records.map(() => ({ id: "ps_1" })),
+    );
+    const create = vi.fn<HookEntityServices["create"]>(async () => ({
+      id: "ps_1",
+    }));
+    const financialItem = {
+      id: "fi_recurring_1",
+      name: "Rent",
+      amount: 1_500_000,
+      frequency: "MONTHLY",
+      nextDueDate: "2026-07-01",
+      scheduleHorizonMonths: 3,
+    };
+
+    const context: HookContext = {
+      tenantId: "tenant_test",
+      entityName: "financialItem",
+      event: "financialItem.afterCreate",
+      current: financialItem,
+      user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
+      services: {
+        logger: { info: vi.fn(), error: vi.fn() },
+        entities: {
+          create,
+          createMany,
+          update: vi.fn(),
+          delete: vi.fn(),
+          list: vi.fn(async () => []),
+          get: vi.fn(),
+        },
+      },
+    };
+
+    await runDataHook(
+      toDataHookDefinition(hook, "schedule_create_test"),
+      context,
+    );
+
+    expect(createMany).toHaveBeenCalledTimes(1);
+    const rows = createMany.mock.calls[0]?.[1] ?? [];
+    expect(rows).toHaveLength(3);
+    expect((rows[0] as Record<string, unknown>).dueDate).toBe(
+      "2026-07-01T00:00:00.000Z",
+    );
+    expect((rows[1] as Record<string, unknown>).dueDate).toBe(
+      "2026-08-01T00:00:00.000Z",
+    );
+    expect((rows[2] as Record<string, unknown>).dueDate).toBe(
+      "2026-09-01T00:00:00.000Z",
+    );
+  });
+
+  it("rolls forward schedule due date after a row is paid", async () => {
+    const hook = loadCatalogHook("Roll forward next schedule");
+    const create = vi.fn<HookEntityServices["create"]>(async () => ({
+      id: "ps_next",
+    }));
+    const parentItem = {
+      id: "fi_parent_1",
+      frequency: "BIWEEKLY",
+      amount: 500_000,
+    };
+    const paidSchedule = {
+      id: "ps_paid_1",
+      financialItemId: parentItem.id,
+      status: "PAID",
+      dueDate: "2026-07-01",
+    };
+
+    const get = vi.fn<HookEntityServices["get"]>(async (entity, id) => {
+      if (entity === "financialItem" && id === parentItem.id) {
+        return parentItem;
+      }
+      throw new Error(`Unexpected get: ${entity}/${id}`);
+    });
+
+    const context: HookContext = {
+      tenantId: "tenant_test",
+      entityName: "paymentSchedule",
+      event: "paymentSchedule.afterUpdate",
+      current: paidSchedule,
+      previous: { ...paidSchedule, status: "UPCOMING" },
+      user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
+      services: {
+        logger: { info: vi.fn(), error: vi.fn() },
+        entities: {
+          create,
+          createMany: vi.fn(async () => []),
+          update: vi.fn(),
+          delete: vi.fn(),
+          list: vi.fn(async () => []),
+          get,
+        },
+      },
+    };
+
+    await runDataHook(
+      toDataHookDefinition(hook, "schedule_roll_forward_test"),
+      context,
+    );
+
+    expect(create).toHaveBeenCalledTimes(1);
+    const row = create.mock.calls[0]?.[1] as
+      | Record<string, unknown>
+      | undefined;
+    expect(row?.dueDate).toBe("2026-07-15T00:00:00.000Z");
   });
 });

@@ -37,9 +37,7 @@ function parseSources(raw: string | null): FormulaSourceFilter[] {
   return raw
     .split(",")
     .map((entry) => entry.trim())
-    .filter((entry): entry is FormulaSourceFilter =>
-      allowed.has(entry),
-    );
+    .filter((entry): entry is FormulaSourceFilter => allowed.has(entry));
 }
 
 function parseStatuses(raw: string | null): FormulaStatusFilter[] {
@@ -51,17 +49,11 @@ function parseStatuses(raw: string | null): FormulaStatusFilter[] {
   return raw
     .split(",")
     .map((entry) => entry.trim())
-    .filter((entry): entry is FormulaStatusFilter =>
-      allowed.has(entry),
-    );
+    .filter((entry): entry is FormulaStatusFilter => allowed.has(entry));
 }
 
 function formulaSearchHaystack(definition: FormulaDefinitionRecord): string {
-  return [
-    definition.name,
-    definition.description ?? "",
-    definition.id,
-  ]
+  return [definition.name, definition.description ?? "", definition.id]
     .join(" ")
     .toLowerCase();
 }

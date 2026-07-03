@@ -5,9 +5,7 @@ import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { useDebugger } from "../debugger-context";
-import {
-  DEBUGGER_LIST_ROW_HOVER_CLASS,
-} from "../debugger-status-styles";
+import { DEBUGGER_LIST_ROW_HOVER_CLASS } from "../debugger-status-styles";
 
 function formatRelativeTime(timestampMs: number, locale: string): string {
   const deltaMs = timestampMs - Date.now();
@@ -78,7 +76,9 @@ export function DebuggerRefreshButton() {
           isRefreshing && "animate-spin motion-reduce:animate-none",
         )}
       />
-      {isRefreshing ? t("debugger.actions.refreshing") : t("debugger.actions.refresh")}
+      {isRefreshing
+        ? t("debugger.actions.refreshing")
+        : t("debugger.actions.refresh")}
     </Button>
   );
 }
@@ -105,7 +105,9 @@ export function DebuggerRefreshRow() {
         )}
       />
       <Text className="text-sm font-medium">
-        {isRefreshing ? t("debugger.actions.refreshing") : t("debugger.actions.refresh")}
+        {isRefreshing
+          ? t("debugger.actions.refreshing")
+          : t("debugger.actions.refresh")}
       </Text>
     </button>
   );

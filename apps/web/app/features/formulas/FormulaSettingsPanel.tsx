@@ -58,7 +58,7 @@ export function FormulaSettingsPanel() {
           <Text className="text-foreground text-base font-semibold">
             {definition.name}
           </Text>
-          {(draft.description || definition.description) ? (
+          {draft.description || definition.description ? (
             <Text className="text-muted-foreground text-sm">
               {draft.description || definition.description}
             </Text>

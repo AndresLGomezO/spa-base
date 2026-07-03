@@ -10,9 +10,9 @@ export function buildEntityRecordPath(
   return `/app/${entityName}/${recordId}`;
 }
 
-export type NotificationTimeGroup = "today" | "earlier";
+type NotificationTimeGroup = "today" | "earlier";
 
-export interface GroupedNotifications {
+interface GroupedNotifications {
   readonly group: NotificationTimeGroup;
   readonly items: readonly UserNotificationRecord[];
 }

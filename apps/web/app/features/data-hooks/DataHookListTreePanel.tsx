@@ -1,11 +1,16 @@
 import { useCallback, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2, Workflow } from "lucide-react";
+import { Pencil, Plus, Trash2 } from "lucide-react";
 import { IconButton, Text, toast } from "@repo/ui";
+import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 import type { DataHooksCatalogEnvelope } from "@repo/hooks/browser";
 import { isScheduleTrigger } from "@repo/hooks";
 
 import { isApiClientError, putDataHooksCatalog } from "../../lib/api-client";
+import {
+  DEBUGGER_LIST_ROW_HOVER_CLASS,
+  DEBUGGER_LIST_ROW_SELECTED_CLASS,
+} from "../debugger/debugger-status-styles";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { DataHookMetadataModal } from "./DataHookMetadataModal";
@@ -49,7 +54,7 @@ export function DataHookListTreePanel() {
   );
 
   const catalogActions = (
-    <div className="flex flex-col gap-2 px-2 pb-2">
+    <div className="flex w-full min-w-0 flex-col gap-2 px-2 pb-2">
       {!isEnvironmentReady ? (
         <IndexEnvironmentBlockedNotice
           feature="import"
@@ -77,12 +82,14 @@ export function DataHookListTreePanel() {
   const addRow = (
     <button
       type="button"
-      className="hover:bg-muted/50 flex w-full min-w-max items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors"
+      className="hover:bg-muted/50 flex w-full min-w-0 items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors"
       onClick={() => setCreateModalOpen(true)}
       disabled={!canCreate}
     >
       <Plus aria-hidden className="text-muted-foreground size-4 shrink-0" />
-      <Text className="text-sm font-medium">{t("dataHooks.list.add")}</Text>
+      <Text className="min-w-0 break-words text-sm font-medium">
+        {t("dataHooks.list.add")}
+      </Text>
     </button>
   );
 
@@ -92,84 +99,91 @@ export function DataHookListTreePanel() {
         title={t("dataHooks.list.title")}
         expandLabel={t("dataHooks.list.expandPanel")}
         collapseLabel={t("dataHooks.list.collapsePanel")}
-        expandedClassName={designerTreePanelShellClassName}
+        expandedClassName={cn(
+          designerTreePanelShellClassName,
+          "w-80 shrink-0 min-w-0",
+        )}
         collapsedClassName={designerTreePanelShellClassName}
+        expandedBodyClassName="w-full min-w-0 overflow-x-hidden"
         collapsedContent={addRow}
         scopeSection={scopeSection}
       >
-        <div className="flex w-full min-w-max flex-col gap-1 py-1">
+        <div className="flex w-full min-w-0 flex-col gap-2 py-1">
           {addRow}
           {editor.definitions.length === 0 ? (
             <Text className="text-muted-foreground px-2 py-3 text-sm">
               {t("dataHooks.list.empty")}
             </Text>
           ) : (
-            editor.definitions.map((definition) => {
-              const isSelected = editor.selectedId === definition.id;
-              return (
-                <div
-                  key={definition.id}
-                  role="treeitem"
-                  data-tree-node-id={`data-hook-${definition.id}`}
-                  className={`group/node flex w-full min-w-max items-center gap-1 rounded-md py-1 pr-1 transition-all duration-150 ${
-                    isSelected
-                      ? "bg-primary/10 ring-primary ring-2 ring-inset"
-                      : "hover:bg-muted/50"
-                  }`}
-                  onClick={() => editor.setSelectedId(definition.id)}
-                >
-                  <div className="flex min-w-0 flex-1 items-center gap-2 px-2">
-                    <Workflow
-                      aria-hidden
-                      className={`size-4 shrink-0 ${
+            <ul className="space-y-2.5 px-1">
+              {editor.definitions.map((definition) => {
+                const isSelected = editor.selectedId === definition.id;
+                const subtitle = `${t(`dataHooks.phase.${definition.phase}`)} ${
+                  isScheduleTrigger(definition.trigger)
+                    ? t("dataHooks.triggerKind.schedule")
+                    : t(`dataHooks.operation.${definition.trigger.operation}`)
+                }`;
+
+                return (
+                  <li key={definition.id}>
+                    <div
+                      role="treeitem"
+                      data-tree-node-id={`data-hook-${definition.id}`}
+                      className={cn(
+                        "group/node flex w-full min-w-0 cursor-pointer items-start gap-1 rounded-md border-l-2 py-2 pr-1 transition-colors duration-150",
                         definition.enabled
-                          ? "text-muted-foreground"
-                          : "text-muted-foreground/40"
-                      }`}
-                    />
-                    <div className="min-w-0">
-                      <Text className="truncate text-sm font-medium">
-                        {definition.name}
-                      </Text>
-                      <Text className="text-muted-foreground truncate text-xs">
-                        {t(`dataHooks.phase.${definition.phase}`)}{" "}
-                        {isScheduleTrigger(definition.trigger)
-                          ? t("dataHooks.triggerKind.schedule")
-                          : t(
-                              `dataHooks.operation.${definition.trigger.operation}`,
-                            )}
-                      </Text>
+                          ? "border-l-transparent"
+                          : "border-l-muted-foreground/40",
+                        isSelected
+                          ? DEBUGGER_LIST_ROW_SELECTED_CLASS
+                          : DEBUGGER_LIST_ROW_HOVER_CLASS,
+                      )}
+                      onClick={() => editor.setSelectedId(definition.id)}
+                    >
+                      <div className="min-w-0 flex-1 px-2">
+                        <Text
+                          className={cn(
+                            "min-w-0 break-words text-sm font-medium",
+                            !definition.enabled && "text-muted-foreground",
+                          )}
+                        >
+                          {definition.name}
+                        </Text>
+                        <Text className="text-muted-foreground mt-0.5 break-words text-xs">
+                          {subtitle}
+                        </Text>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/node:opacity-100">
+                        <IconButton
+                          type="button"
+                          size="sm"
+                          label={t("dataHooks.list.edit")}
+                          disabled={!canUpdate}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            requestMetadataEdit(definition.id);
+                          }}
+                        >
+                          <Pencil aria-hidden className="size-4" />
+                        </IconButton>
+                        <IconButton
+                          type="button"
+                          size="sm"
+                          label={t("dataHooks.list.delete")}
+                          disabled={!canDelete}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            requestDelete(definition.id);
+                          }}
+                        >
+                          <Trash2 aria-hidden className="size-4" />
+                        </IconButton>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex shrink-0 items-center gap-0.5 opacity-100 sm:opacity-0 sm:group-hover/node:opacity-100">
-                    <IconButton
-                      type="button"
-                      size="sm"
-                      label={t("dataHooks.list.edit")}
-                      disabled={!canUpdate}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        requestMetadataEdit(definition.id);
-                      }}
-                    >
-                      <Pencil aria-hidden className="size-4" />
-                    </IconButton>
-                    <IconButton
-                      type="button"
-                      size="sm"
-                      label={t("dataHooks.list.delete")}
-                      disabled={!canDelete}
-                      onClick={(event) => {
-                        event.stopPropagation();
-                        requestDelete(definition.id);
-                      }}
-                    >
-                      <Trash2 aria-hidden className="size-4" />
-                    </IconButton>
-                  </div>
-                </div>
-              );
-            })
+                  </li>
+                );
+              })}
+            </ul>
           )}
         </div>
       </ItemListDesignerTreePanelShell>

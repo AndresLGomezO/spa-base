@@ -94,7 +94,11 @@ describe("formatExpressionDsl", () => {
         kind: "binary",
         op: "-",
         left: { kind: "formula", name: "loanPeriodBalance", inputs: {} },
-        right: { kind: "formula", name: "schedulePrincipalPortion", inputs: {} },
+        right: {
+          kind: "formula",
+          name: "schedulePrincipalPortion",
+          inputs: {},
+        },
       }),
     ).toBe("loanPeriodBalance - schedulePrincipalPortion");
 
@@ -170,7 +174,7 @@ describe("formatExpressionDsl", () => {
       default: { kind: "literal", value: 0 },
     });
 
-    expect(dsl).toContain('switch current.amortizationType {');
+    expect(dsl).toContain("switch current.amortizationType {");
     expect(dsl).toContain('  when "NONE":');
     expect(dsl).toContain("    coalesce(current.principalPortion, 0)");
     expect(dsl).toContain('  when "GERMAN":');
@@ -186,7 +190,11 @@ describe("formatExpressionDsl", () => {
         kind: "formula",
         name: "monthlyRateFromQuote",
         inputs: {
-          quote: { kind: "field", source: "current", path: "interestRateQuote" },
+          quote: {
+            kind: "field",
+            source: "current",
+            path: "interestRateQuote",
+          },
           rate: { kind: "field", source: "current", path: "interestRate" },
         },
       }),

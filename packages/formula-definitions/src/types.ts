@@ -65,3 +65,5 @@ export interface FormulaDefinitionForEval {
   }[];
   readonly body: ExpressionNode;
 }
+
+export type { FormulaDefinitionRepository } from "./repository-contract.js";

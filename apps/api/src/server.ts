@@ -32,6 +32,8 @@ import type {
   EntityQueryDefinitionRepository,
   CustomViewRepository,
   PlatformRuntimeSettingsRepository,
+  TenantDeletionArchiveRepository,
+  TenantDeletionJobRepository,
   TenantScopedEntityRepository,
 } from "@repo/firestore-converters";
 import {
@@ -212,6 +214,8 @@ interface BuildServerOptions {
   readonly getRoleCatalog?: (tenantId: string) => Promise<RoleCatalog>;
   readonly skipPlatformRoleSeed?: boolean;
   readonly skipPlatformTenantSeed?: boolean;
+  readonly tenantDeletionJobRepository?: TenantDeletionJobRepository;
+  readonly tenantDeletionArchiveRepository?: TenantDeletionArchiveRepository;
   readonly tenantUserInviteRepository?: import("@repo/firestore-converters").TenantUserInviteRepository;
 }
 

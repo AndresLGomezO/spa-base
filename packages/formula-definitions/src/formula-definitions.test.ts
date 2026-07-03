@@ -1,10 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import {
-  evaluateExpression,
-  type ExpressionNode,
-  type ExpressionScope,
-} from "@repo/hooks";
+import { evaluateExpression, type ExpressionScope } from "@repo/hooks";
 
 import {
   createFormulaResolver,

@@ -1,7 +1,7 @@
 {
   "kind": "formula-definitions-catalog",
   "version": 1,
-  "exportedAt": "2026-07-03T01:56:32.973Z",
+  "exportedAt": "2026-07-03T12:24:35.537Z",
   "formulaDefinitions": [
     {
       "name": "monthlyRateFromQuote",
@@ -1169,6 +1169,756 @@
           {
             "kind": "literal",
             "value": "MONTH"
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "frequencyStepMultiplier",
+      "description": "Recurring schedule: period step multiplier by frequency",
+      "inputs": [
+        {
+          "name": "frequency",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "input",
+          "name": "frequency"
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "WEEKLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": 1
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "BIWEEKLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": 2
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "MONTHLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": 1
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "QUARTERLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": 3
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "ANNUAL"
+            },
+            "then": {
+              "kind": "literal",
+              "value": 1
+            }
+          }
+        ],
+        "default": {
+          "kind": "literal",
+          "value": 1
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "frequencyUnit",
+      "description": "Recurring schedule: dateAdd unit by frequency",
+      "inputs": [
+        {
+          "name": "frequency",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "input",
+          "name": "frequency"
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "WEEKLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "WEEK"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "BIWEEKLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "WEEK"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "MONTHLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "MONTH"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "QUARTERLY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "MONTH"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "ANNUAL"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "YEAR"
+            }
+          }
+        ],
+        "default": {
+          "kind": "literal",
+          "value": "MONTH"
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "frequencyDueDate",
+      "description": "Recurring schedule: due date from base date, frequency, and period index",
+      "inputs": [
+        {
+          "name": "baseDate",
+          "required": true
+        },
+        {
+          "name": "frequency",
+          "required": true
+        },
+        {
+          "name": "periodIndex",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "call",
+        "fn": "dateAdd",
+        "args": [
+          {
+            "kind": "input",
+            "name": "baseDate"
+          },
+          {
+            "kind": "input",
+            "name": "periodIndex"
+          },
+          {
+            "kind": "formula",
+            "name": "frequencyUnit",
+            "inputs": {
+              "frequency": {
+                "kind": "input",
+                "name": "frequency"
+              }
+            }
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "frequencyScheduleDueDate",
+      "description": "Recurring schedule: batch row due date (loopIndex * step multiplier)",
+      "inputs": [
+        {
+          "name": "baseDate",
+          "required": true
+        },
+        {
+          "name": "frequency",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "formula",
+        "name": "frequencyDueDate",
+        "inputs": {
+          "baseDate": {
+            "kind": "input",
+            "name": "baseDate"
+          },
+          "frequency": {
+            "kind": "input",
+            "name": "frequency"
+          },
+          "periodIndex": {
+            "kind": "binary",
+            "op": "*",
+            "left": {
+              "kind": "var",
+              "name": "loopIndex"
+            },
+            "right": {
+              "kind": "formula",
+              "name": "frequencyStepMultiplier",
+              "inputs": {
+                "frequency": {
+                  "kind": "input",
+                  "name": "frequency"
+                }
+              }
+            }
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "frequencyAdvanceDueDate",
+      "description": "Recurring schedule: single-step roll-forward due date",
+      "inputs": [
+        {
+          "name": "baseDate",
+          "required": true
+        },
+        {
+          "name": "frequency",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "formula",
+        "name": "frequencyDueDate",
+        "inputs": {
+          "baseDate": {
+            "kind": "input",
+            "name": "baseDate"
+          },
+          "frequency": {
+            "kind": "input",
+            "name": "frequency"
+          },
+          "periodIndex": {
+            "kind": "formula",
+            "name": "frequencyStepMultiplier",
+            "inputs": {
+              "frequency": {
+                "kind": "input",
+                "name": "frequency"
+              }
+            }
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "scheduleHorizonOrDefault",
+      "description": "Recurring schedule: coalesce(scheduleHorizonMonths, 12)",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "scheduleHorizonMonths"
+          },
+          {
+            "kind": "literal",
+            "value": 12
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "recurringScheduleInitialRowCount",
+      "description": "Recurring schedule: initial createRecords count",
+      "inputs": [
+        {
+          "name": "frequency",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "call",
+        "fn": "if",
+        "args": [
+          {
+            "kind": "binary",
+            "op": "==",
+            "left": {
+              "kind": "input",
+              "name": "frequency"
+            },
+            "right": {
+              "kind": "literal",
+              "value": "ONE_TIME"
+            }
+          },
+          {
+            "kind": "literal",
+            "value": 1
+          },
+          {
+            "kind": "call",
+            "fn": "min",
+            "args": [
+              {
+                "kind": "formula",
+                "name": "scheduleHorizonOrDefault",
+                "inputs": {}
+              },
+              {
+                "kind": "literal",
+                "value": 1000
+              }
+            ]
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "recurringScheduleExtensionRowCount",
+      "description": "Recurring schedule: monthly horizon extension row count",
+      "inputs": [
+        {
+          "name": "existingCount",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "call",
+        "fn": "min",
+        "args": [
+          {
+            "kind": "literal",
+            "value": 100
+          },
+          {
+            "kind": "binary",
+            "op": "-",
+            "left": {
+              "kind": "formula",
+              "name": "scheduleHorizonOrDefault",
+              "inputs": {}
+            },
+            "right": {
+              "kind": "input",
+              "name": "existingCount"
+            }
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "balanceSheetRoleFromItemType",
+      "description": "Financial item: map itemType to balanceSheetRole",
+      "inputs": [
+        {
+          "name": "itemType",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "input",
+          "name": "itemType"
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "MORTGAGE"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "LIABILITY"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "LOAN"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "LIABILITY"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "CREDIT_CARD"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "LIABILITY"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "REVOLVING_CREDIT"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "LIABILITY"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "PERSONAL_DEBT"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "LIABILITY"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "SCHEDULED_SAVINGS"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "ASSET"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "YIELD_SAVINGS"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "ASSET"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "FIDUCIARY"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "ASSET"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "INVESTMENT_FUND"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "ASSET"
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "OTHER_INVESTMENT"
+            },
+            "then": {
+              "kind": "literal",
+              "value": "ASSET"
+            }
+          }
+        ],
+        "default": {
+          "kind": "literal",
+          "value": "NONE"
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "cardHostCurrentBalance",
+      "description": "Credit card: host currentBalance from revolving + installment sum",
+      "inputs": [
+        {
+          "name": "revolvingBalance",
+          "required": false
+        },
+        {
+          "name": "installmentSum",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "binary",
+        "op": "+",
+        "left": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "input",
+              "name": "revolvingBalance"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ]
+        },
+        "right": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "input",
+              "name": "installmentSum"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ]
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "incrementPlanRevision",
+      "description": "Loan: bump planRevision by one",
+      "inputs": [],
+      "body": {
+        "kind": "binary",
+        "op": "+",
+        "left": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "field",
+              "source": "current",
+              "path": "planRevision"
+            },
+            {
+              "kind": "literal",
+              "value": 0
+            }
+          ]
+        },
+        "right": {
+          "kind": "literal",
+          "value": 1
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "inferFlatLoanOriginationDate",
+      "description": "Loan: infer originationDate for flat/NONE amortization plans",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "if",
+        "args": [
+          {
+            "kind": "binary",
+            "op": "&&",
+            "left": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "unary",
+                  "op": "!",
+                  "operand": {
+                    "kind": "call",
+                    "fn": "isEmpty",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "originalPrincipal"
+                      }
+                    ]
+                  }
+                },
+                "right": {
+                  "kind": "unary",
+                  "op": "!",
+                  "operand": {
+                    "kind": "call",
+                    "fn": "isEmpty",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "loaded",
+                        "alias": "parent",
+                        "path": "currentBalance"
+                      }
+                    ]
+                  }
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "&&",
+                "left": {
+                  "kind": "unary",
+                  "op": "!",
+                  "operand": {
+                    "kind": "call",
+                    "fn": "isEmpty",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "principalPortion"
+                      }
+                    ]
+                  }
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": ">",
+                  "left": {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "principalPortion"
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                }
+              }
+            },
+            "right": {
+              "kind": "unary",
+              "op": "!",
+              "operand": {
+                "kind": "call",
+                "fn": "isEmpty",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "parent",
+                    "path": "nextDueDate"
+                  }
+                ]
+              }
+            }
+          },
+          {
+            "kind": "call",
+            "fn": "dateAdd",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "nextDueDate"
+              },
+              {
+                "kind": "unary",
+                "op": "-",
+                "operand": {
+                  "kind": "call",
+                  "fn": "floor",
+                  "args": [
+                    {
+                      "kind": "binary",
+                      "op": "/",
+                      "left": {
+                        "kind": "binary",
+                        "op": "-",
+                        "left": {
+                          "kind": "field",
+                          "source": "current",
+                          "path": "originalPrincipal"
+                        },
+                        "right": {
+                          "kind": "field",
+                          "source": "loaded",
+                          "alias": "parent",
+                          "path": "currentBalance"
+                        }
+                      },
+                      "right": {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "principalPortion"
+                      }
+                    }
+                  ]
+                }
+              },
+              {
+                "kind": "literal",
+                "value": "MONTH"
+              }
+            ]
+          },
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "originationDate"
           }
         ]
       },

@@ -31,9 +31,7 @@ import { useNavigateComponentClick } from "../../features/ui-builder/ComponentCl
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
 import { useFieldAccess } from "../../hooks/useFieldAccess";
 import { useEntity } from "../../hooks/useEntity";
-import {
-  getEntityRelationTargets,
-} from "../../lib/api-client";
+import { getEntityRelationTargets } from "../../lib/api-client";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { applyCreateFormPrefill } from "./coerce-create-form-prefill-value";
 import {

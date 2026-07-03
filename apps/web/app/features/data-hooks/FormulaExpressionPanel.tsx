@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { FieldLabel, Select, Text } from "@repo/ui";
 import type { ExpressionNode } from "@repo/hooks";
 
+import { FormulaDefinitionInfoButton } from "../formulas/FormulaDefinitionInfoButton";
 import type { ExpressionEditorNodeRenderer } from "./expression-editor-node-types";
 import { expressionControlClassName } from "./expression-editor-shared";
 import { useExpressionEditorReadOnly } from "./expression-editor-read-only-context";
@@ -68,31 +69,41 @@ export function FormulaExpressionPanel({
   return (
     <div className="space-y-3">
       <FieldLabel>{t("formulas.expression.formulaName")}</FieldLabel>
-      <Select
-        className={expressionControlClassName}
-        value={value.name}
-        disabled={readOnly}
-        onChange={(event) => {
-          const nextName = event.target.value;
-          const nextFormula = catalog.find((entry) => entry.name === nextName);
-          const nextInputs: Record<string, ExpressionNode> = {};
-          for (const input of nextFormula?.inputs ?? []) {
-            nextInputs[input.name] = value.inputs[input.name] ?? {
-              kind: "literal",
-              value: null,
-            };
-          }
-          onChange({ kind: "formula", name: nextName, inputs: nextInputs });
-        }}
-      >
-        <option value="">{t("formulas.expression.selectFormula")}</option>
-        {catalog.map((entry) => (
-          <option key={entry.id} value={entry.name}>
-            {entry.name}
-            {entry.source === "platform" ? " (platform)" : ""}
-          </option>
-        ))}
-      </Select>
+      <div className="flex items-center gap-2">
+        <Select
+          className={`${expressionControlClassName} min-w-0 flex-1`}
+          value={value.name}
+          disabled={readOnly}
+          onChange={(event) => {
+            const nextName = event.target.value;
+            const nextFormula = catalog.find(
+              (entry) => entry.name === nextName,
+            );
+            const nextInputs: Record<string, ExpressionNode> = {};
+            for (const input of nextFormula?.inputs ?? []) {
+              nextInputs[input.name] = value.inputs[input.name] ?? {
+                kind: "literal",
+                value: null,
+              };
+            }
+            onChange({ kind: "formula", name: nextName, inputs: nextInputs });
+          }}
+        >
+          <option value="">{t("formulas.expression.selectFormula")}</option>
+          {catalog.map((entry) => (
+            <option key={entry.id} value={entry.name}>
+              {entry.name}
+              {entry.source === "platform" ? " (platform)" : ""}
+            </option>
+          ))}
+        </Select>
+        {value.name.trim().length > 0 ? (
+          <FormulaDefinitionInfoButton
+            formulaName={value.name}
+            definition={selectedFormula}
+          />
+        ) : null}
+      </div>
 
       {selectedFormula?.description ? (
         <Text className="text-sm text-muted-foreground">

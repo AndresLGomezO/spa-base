@@ -1974,33 +1974,19 @@
     "title": "Fórmulas",
     "description": "Definiciones de expresiones reutilizables referenciadas desde hooks y automatización.",
     "loading": "Cargando fórmulas…",
-    "listTitle": "Biblioteca de fórmulas",
-    "create": "Nueva fórmula",
-    "createTitle": "Crear fórmula",
-    "editTitle": "Editar {{name}}",
-    "viewTitle": "Ver {{name}}",
-    "view": "Ver",
-    "edit": "Editar",
     "delete": {
       "title": "Eliminar fórmula",
       "confirm": "Eliminar",
       "message": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer."
     },
-    "save": "Guardar",
-    "saved": "Fórmula guardada.",
-    "saveFailed": "No se pudo guardar la fórmula.",
     "deleted": "Fórmula eliminada.",
-    "deleteFailed": "No se pudo eliminar la fórmula.",
-    "loadFailed": "No se pudieron cargar las fórmulas.",
     "forbidden": "No tienes permiso para ver fórmulas.",
     "cancel": "Cancelar",
-    "disabled": "Deshabilitada",
     "list": {
       "title": "Fórmulas",
       "add": "Nueva fórmula",
       "expandPanel": "Expandir panel de fórmulas",
       "collapsePanel": "Contraer panel de fórmulas",
-      "empty": "Ninguna fórmula coincide con los filtros actuales.",
       "emptySource": "No hay fórmulas en esta biblioteca.",
       "emptyFiltered": "Ninguna fórmula coincide con los filtros actuales.",
       "edit": "Editar fórmula",
@@ -2016,12 +2002,8 @@
       "sortNameDesc": "Nombre (Z–A)",
       "sortSource": "Origen",
       "sortUpdatedDesc": "Actualizadas recientemente",
-      "sourceFilter": "Origen",
-      "sourceAll": "Todos los orígenes",
       "sourcePlatform": "Plataforma",
       "sourceTenant": "Tenant",
-      "statusFilter": "Estado",
-      "statusAll": "Todos los estados",
       "statusEnabled": "Habilitadas",
       "statusDisabled": "Deshabilitadas",
       "searchPlaceholder": "Buscar fórmulas…",
@@ -2043,6 +2025,29 @@
     },
     "preview": {
       "title": "Estructura de la expresión"
+    },
+    "summaryModal": {
+      "viewFormula": "Ver fórmula {{name}}",
+      "close": "Cerrar",
+      "notFound": "La fórmula \"{{name}}\" no se encontró en el catálogo.",
+      "loading": "Cargando fórmula…",
+      "sections": {
+        "summary": "Resumen",
+        "inputs": "Entradas",
+        "output": "Ejemplo de salida",
+        "expression": "Estructura de la expresión"
+      },
+      "example": "Ejemplo",
+      "outputUnavailable": "No se pudo evaluar el ejemplo de salida.",
+      "source": "Origen",
+      "sourcePlatform": "Plataforma",
+      "sourceTenant": "Inquilino",
+      "status": "Estado",
+      "required": "Obligatoria",
+      "optional": "Opcional",
+      "backTo": "Volver a {{name}}",
+      "breadcrumbLabel": "Navegación de fórmulas",
+      "nestedFormulaHint": "Haz clic en los nombres de fórmula subrayados para ver su definición."
     },
     "metadata": {
       "createTitle": "Nueva fórmula",
@@ -2089,8 +2094,7 @@
     },
     "fields": {
       "name": "Nombre",
-      "description": "Descripción",
-      "body": "Expresión del cuerpo"
+      "description": "Descripción"
     },
     "expression": {
       "formula": "Fórmula",
@@ -2587,20 +2591,26 @@
       "timezone": "Zona horaria",
       "scheduleScope": "Alcance de ejecución",
       "scheduleScopeHint": "Una vez ejecuta acciones por lote (p. ej. updateMatching). Cada registro ejecuta el hook una vez por fila coincidente.",
-      "eachRecordWhere": "Coincidencia de registros",
       "phase": "Momento",
       "status": "Estado",
       "enabled": "Activo",
       "disabled": "Inactivo",
-      "updateFields": "Solo cuando cambien estos campos",
       "updateFieldsHint": "Déjalo vacío para ejecutar con cualquier cambio.",
       "condition": "Ejecutar solo si se cumple una condición",
-      "advanced": "Avanzado",
       "chainHooks": "Encadenar hooks en escrituras",
       "chainHooksHint": "Si está activo, las creaciones y actualizaciones de este hook pueden disparar automatización en otras entidades.",
       "execution": "Ejecución",
       "executionDeferredHint": "Los hooks diferidos se ejecutan fuera de la solicitud. Los errores solo se registran.",
-      "executionQueuedHint": "Los hooks en cola se ejecutan de forma asíncrona mediante Cloud Tasks. La API responde antes de que termine el hook."
+      "executionQueuedHint": "Los hooks en cola se ejecutan de forma asíncrona mediante Cloud Tasks. La API responde antes de que termine el hook.",
+      "sections": {
+        "trigger": "Disparador",
+        "condition": "Condición",
+        "actions": "Acciones",
+        "advanced": "Avanzado",
+        "executionLog": "Ejecuciones recientes",
+        "updateFields": "Filtro por cambio de campos",
+        "eachRecordWhere": "Coincidencia de registros"
+      }
     },
     "execution": {
       "sync": "Síncrona",
@@ -2702,7 +2712,6 @@
       "setFields": "Establecer campos"
     },
     "executionLog": {
-      "title": "Ejecuciones recientes",
       "empty": "Aún no hay ejecuciones registradas."
     },
     "expression": {
@@ -2842,6 +2851,153 @@
         "replaceSummary": "Hooks: {{created}} creados, {{updated}} actualizados, {{deleted}} eliminados.",
         "importSuccess": "Catálogo de hooks de automatización reemplazado.",
         "importFailed": "No se pudo reemplazar el catálogo de hooks de automatización."
+      }
+    },
+    "preview": {
+      "panelTitle": "Cómo funciona",
+      "expandPanel": "Expandir panel de vista previa",
+      "collapsePanel": "Contraer panel de vista previa",
+      "empty": "Selecciona un hook para ver cómo funciona.",
+      "tabs": {
+        "overview": "Resumen",
+        "details": "Detalles",
+        "advanced": "Avanzado"
+      },
+      "steps": {
+        "trigger": "Disparador",
+        "condition": "Condición",
+        "conditionSummary": "Solo cuando se cumplan estas reglas"
+      },
+      "trigger": {
+        "crud": {
+          "create": {
+            "before": "Antes de guardar un nuevo registro de {{entity}}",
+            "after": "Después de guardar un nuevo registro de {{entity}}"
+          },
+          "update": {
+            "before": "Antes de guardar cambios en un registro de {{entity}}",
+            "after": "Después de actualizar un registro de {{entity}}"
+          },
+          "delete": {
+            "before": "Antes de eliminar un registro de {{entity}}",
+            "after": "Después de eliminar un registro de {{entity}}"
+          }
+        },
+        "schedule": "Se ejecuta según programación para {{entity}} — {{cron}} ({{timezone}}, {{scope}})",
+        "updateFields": "Solo cuando cambien estos campos: {{fields}}"
+      },
+      "conditionGroupAnd": "Deben cumplirse todas las siguientes",
+      "conditionGroupOr": "Puede cumplirse cualquiera de las siguientes",
+      "conditionLeaf": "{{field}} {{operator}} {{value}}",
+      "conditionLeafValueless": "{{field}} {{operator}}",
+      "conditionOrItem": "{{line}}",
+      "literalEmpty": "vacío",
+      "loadedAlias": "{{entity}} ({{alias}})",
+      "loadedAliasGeneric": "Registro cargado ({{alias}})",
+      "aggregateAlias": "Agregado {{alias}}",
+      "previousField": "Anterior {{field}}",
+      "meta": {
+        "chainHooks": "Encadena otros hooks"
+      },
+      "details": {
+        "matchWhere": "Coincidir registros donde"
+      },
+      "advanced": {
+        "value": "Expresión de valor",
+        "count": "Expresión de cantidad de filas",
+        "message": "Mensaje de notificación"
+      },
+      "actions": {
+        "setField": "Establecer {{field}} en {{value}}",
+        "createRecord": "Crear un registro de {{entity}}",
+        "createRecords": "Crear {{count}} filas de {{entity}}",
+        "updateMatching": "Actualizar registros coincidentes de {{entity}}",
+        "deleteMatching": "Eliminar registros coincidentes de {{entity}}",
+        "deleteRecord": "Eliminar un registro de {{entity}}",
+        "getRecord": "Cargar {{entity}} como \"{{alias}}\"",
+        "aggregateMatching": "{{op}} registros de {{entity}} → {{alias}}",
+        "sendNotification": "Enviar una notificación al usuario",
+        "callWebhook": "Llamar un webhook externo",
+        "fieldAssignment": "{{field}} = {{value}}"
+      },
+      "operators": {
+        "==": "es igual a",
+        "!=": "no es igual a",
+        ">": "es mayor que",
+        "<": "es menor que",
+        ">=": "es al menos",
+        "<=": "es como máximo",
+        "in": "es uno de",
+        "notIn": "no es uno de",
+        "isEmpty": "está vacío",
+        "isNotEmpty": "tiene valor",
+        "changed": "cambió"
+      },
+      "vars": {
+        "loopIndex": "número de pago",
+        "loopState": "saldo arrastrado",
+        "now": "fecha y hora actual",
+        "userId": "usuario actual"
+      },
+      "fields": {
+        "nextDueDate": "primera fecha de pago",
+        "frequency": "frecuencia",
+        "amount": "monto del pago",
+        "scheduleHorizonMonths": "horizonte del calendario (meses)",
+        "revolvingBalance": "saldo rotativo",
+        "planRevision": "revisión del plan"
+      },
+      "formulas": {
+        "frequencyScheduleDueDate": "Las fechas siguen la frecuencia de pago",
+        "frequencyScheduleDueDateDetail1": "Comienza desde la primera fecha de pago",
+        "frequencyScheduleDueDateDetail2": "Cada fila avanza según la frecuencia",
+        "frequencyAdvanceDueDate": "Avanzar la fecha un período de pago",
+        "recurringScheduleInitialRowCount": "Una fila si es único; si no, hasta el horizonte (máx. 1000)",
+        "recurringScheduleExtensionRowCount": "Completar hacia el horizonte (máx. 100 por ejecución)",
+        "balanceSheetRoleFromItemType": "Rol de balance según tipo de ítem",
+        "cardHostCurrentBalance": "Saldo tarjeta = rotativo + cuotas hijas",
+        "incrementPlanRevision": "Incrementar revisión del plan en uno",
+        "inferFlatLoanOriginationDate": "Inferir fecha de origen del préstamo",
+        "paymentScheduleRowCount": "Calcular cantidad de filas de pago",
+        "paymentScheduleDueDate": "Calcular fecha de vencimiento",
+        "scheduleExpectedAmount": "Calcular monto esperado",
+        "schedulePrincipalPortion": "Calcular porción de capital",
+        "scheduleInterestPortion": "Calcular porción de interés",
+        "amortizationLoopState": "Arrastrar saldo a la siguiente fila"
+      },
+      "frequencyTable": {
+        "title": "Cómo se calculan las fechas",
+        "frequency": "Frecuencia",
+        "schedule": "Qué ocurre",
+        "example": "Ejemplo (mensual): 1 ene → 1 feb → 1 mar → …",
+        "labels": {
+          "WEEKLY": "Semanal",
+          "BIWEEKLY": "Quincenal",
+          "MONTHLY": "Mensual",
+          "QUARTERLY": "Trimestral",
+          "ANNUAL": "Anual"
+        },
+        "schedules": {
+          "weekly": "Sumar 1 semana cada vez",
+          "biweekly": "Sumar 2 semanas cada vez",
+          "monthly": "Sumar 1 mes cada vez",
+          "quarterly": "Sumar 3 meses cada vez",
+          "annual": "Sumar 1 año cada vez"
+        }
+      },
+      "loop": {
+        "title": "Repetir para cada pago",
+        "payment": "Pago #{{number}}"
+      },
+      "rowCount": {
+        "initial": {
+          "oneTime": "Si es único → crear exactamente 1 fila",
+          "recurring": "Si no → hasta el horizonte (máx. 1000 filas)"
+        },
+        "extension": {
+          "horizon": "Completar hacia el horizonte",
+          "batch": "Crear como máximo 100 filas por ejecución programada"
+        }
       }
     }
   },

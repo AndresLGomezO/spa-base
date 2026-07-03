@@ -7,6 +7,7 @@ import {
   runDataHook,
   type DataHookDefinition,
   type HookContext,
+  type HookEntityRecord,
   type HookEntityServices,
   type PortableDataHookDefinition,
 } from "@repo/hooks";
@@ -95,15 +96,22 @@ function createContext(options: {
   readonly list: HookEntityServices["list"];
   readonly loan?: typeof loanDetails | typeof revolvingLoanDetails;
   readonly parent?: typeof financialItem | typeof revolvingFinancialItem;
+  readonly sendUserNotification?: NonNullable<
+    HookContext["services"]["sendUserNotification"]
+  >;
+  readonly createMany?: HookEntityServices["createMany"];
 }): {
   readonly context: HookContext;
-  readonly createMany: ReturnType<typeof vi.fn<HookEntityServices["createMany"]>>;
+  readonly createMany: ReturnType<
+    typeof vi.fn<HookEntityServices["createMany"]>
+  >;
 } {
   const create = vi.fn<HookEntityServices["create"]>(async () => ({
     id: "ps_1",
   }));
   const createMany = vi.fn<HookEntityServices["createMany"]>(
-    async (_entity, records) => records.map(() => ({ id: "ps_1" })),
+    options.createMany ??
+      (async (_entity, records) => records.map(() => ({ id: "ps_1" }))),
   );
   const activeLoan = options.loan ?? loanDetails;
   const activeParent = options.parent ?? financialItem;
@@ -131,6 +139,9 @@ function createContext(options: {
           info: vi.fn(),
           error: vi.fn(),
         },
+        ...(options.sendUserNotification
+          ? { sendUserNotification: options.sendUserNotification }
+          : {}),
         entities: {
           create,
           createMany,
@@ -250,19 +261,20 @@ describe("loan payment schedule runtime", () => {
 
   it("sends success notification with schedule row count after plan generation", async () => {
     const hook = loadLoanPaymentPlanHook();
-    const scheduleRows: Array<Record<string, unknown>> = [];
+    const scheduleRows: HookEntityRecord[] = [];
     const sendUserNotification = vi.fn(async () => undefined);
-    const createMany = vi.fn<HookEntityServices["createMany"]>(
-      async (_entity, records) => {
-        for (const record of records) {
-          scheduleRows.push({
-            ...(record as Record<string, unknown>),
-            status: "UPCOMING",
-          });
-        }
-        return records.map((_, index) => ({ id: `ps_${index}` }));
-      },
-    );
+    const trackScheduleRows = async (
+      _entity: string,
+      records: readonly Record<string, unknown>[],
+    ) => {
+      for (const record of records) {
+        scheduleRows.push({
+          ...(record as HookEntityRecord),
+          status: "UPCOMING",
+        });
+      }
+      return records.map((_, index) => ({ id: `ps_${index}` }));
+    };
     const { context } = createContext({
       list: vi.fn(async (entity) => {
         if (entity === "loanMonthlyCost") {
@@ -273,15 +285,9 @@ describe("loan payment schedule runtime", () => {
         }
         return [];
       }),
-    });
-    context.services = {
-      ...context.services,
       sendUserNotification,
-      entities: {
-        ...context.services.entities,
-        createMany,
-      },
-    };
+      createMany: trackScheduleRows,
+    });
 
     await runDataHook(toDataHookDefinition(hook), context);
 

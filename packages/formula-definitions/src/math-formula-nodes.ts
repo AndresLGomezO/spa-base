@@ -1,8 +1,6 @@
 import type { ExpressionNode } from "@repo/hooks";
 
-export function lit(
-  value: string | number | boolean | null,
-): ExpressionNode {
+export function lit(value: string | number | boolean | null): ExpressionNode {
   return { kind: "literal", value };
 }
 
@@ -17,10 +15,7 @@ export function formulaRef(
   return { kind: "formula", name, inputs };
 }
 
-export function call(
-  fn: string,
-  ...args: ExpressionNode[]
-): ExpressionNode {
+export function call(fn: string, ...args: ExpressionNode[]): ExpressionNode {
   return { kind: "call", fn: fn as never, args };
 }
 
@@ -29,17 +24,14 @@ export function coalesce(...args: ExpressionNode[]): ExpressionNode {
 }
 
 export function binary(
-  op: "+" | "-" | "*" | "/" | ">=" | "==" | "!=" | "&&" | "||",
+  op: "+" | "-" | "*" | "/" | ">=" | ">" | "==" | "!=" | "&&" | "||",
   left: ExpressionNode,
   right: ExpressionNode,
 ): ExpressionNode {
   return { kind: "binary", op, left, right };
 }
 
-export function unary(
-  op: "!" | "-",
-  operand: ExpressionNode,
-): ExpressionNode {
+export function unary(op: "!" | "-", operand: ExpressionNode): ExpressionNode {
   return { kind: "unary", op, operand };
 }
 

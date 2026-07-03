@@ -50,3 +50,7 @@ export type {
   FormulaDefinitionsCatalogEnvelope,
   FormulaCatalogReplacePlan,
 } from "./formula-definition-json.js";
+export {
+  createRatesFormulaResolver,
+  loadRatesFormulaDefinitions,
+} from "./rates-formula-test-utils.js";

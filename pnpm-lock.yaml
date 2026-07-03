@@ -1344,9 +1344,6 @@ importers:
 
   packages/formula-definitions:
     dependencies:
-      '@repo/firestore-converters':
-        specifier: workspace:*
-        version: link:../firestore-converters
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks

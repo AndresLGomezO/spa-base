@@ -107,7 +107,10 @@ export function DeleteTenantModal({
       size="md"
       scrollable={false}
     >
-      <Form className="grid gap-4" onSubmit={(event) => void handleDelete(event)}>
+      <Form
+        className="grid gap-4"
+        onSubmit={(event) => void handleDelete(event)}
+      >
         <Alert>{t("platform.currentTenant.deleteWarning")}</Alert>
         <Text className="text-muted-foreground text-sm">
           {t("platform.currentTenant.deleteDescription")}

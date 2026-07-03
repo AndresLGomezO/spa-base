@@ -30,10 +30,7 @@ export function FormulaStatusSummary({
 
   const showSourceSummary = sourceEntries.length > 1;
 
-  if (
-    total <= 0 ||
-    (statusEntries.length === 0 && !showSourceSummary)
-  ) {
+  if (total <= 0 || (statusEntries.length === 0 && !showSourceSummary)) {
     return null;
   }
 

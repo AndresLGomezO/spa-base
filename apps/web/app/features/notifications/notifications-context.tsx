@@ -71,7 +71,7 @@ export function NotificationsProvider({
 }: {
   readonly children: ReactNode;
 }) {
-  const { t, i18n } = useTranslation("common");
+  const { t } = useTranslation("common");
   const { isReady, tenantId } = useAuth();
   const queryClient = useQueryClient();
   const [isPanelOpen, setPanelOpen] = useState(false);
@@ -94,7 +94,10 @@ export function NotificationsProvider({
     refetchInterval: isPanelOpen ? POLL_INTERVAL_OPEN_MS : POLL_INTERVAL_MS,
   });
 
-  const notifications = notificationsQuery.data?.items ?? [];
+  const notifications = useMemo(
+    () => notificationsQuery.data?.items ?? [],
+    [notificationsQuery.data?.items],
+  );
   const unreadCount = unreadCountQuery.data?.unreadCount ?? 0;
 
   useEffect(() => {
@@ -185,9 +188,6 @@ export function useNotifications(): NotificationsContextValue {
   return context;
 }
 
-export function formatNotificationTime(
-  iso: string,
-  locale: string,
-): string {
+export function formatNotificationTime(iso: string, locale: string): string {
   return formatRelativeTime(iso, locale);
 }

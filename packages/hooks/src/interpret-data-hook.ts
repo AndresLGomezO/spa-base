@@ -467,6 +467,10 @@ async function runAction(
           ...(context.loaded ? { loaded: context.loaded } : {}),
           ...(context.aggregates ? { aggregates: context.aggregates } : {}),
           now: new Date(),
+          tenantId: context.tenantId,
+          ...(context.formulaResolver
+            ? { formulaResolver: context.formulaResolver }
+            : {}),
           ...(context.user.uid ? { userId: context.user.uid } : {}),
         };
         const patch = omitNullishRecordValues(
@@ -809,9 +813,10 @@ export async function runDataHook(
     const finishedAt = new Date().toISOString();
     const durationMs = Date.now() - startedAt;
     if (executionId) {
+      const resolvedExecutionId = executionId;
       await safeRecorderCall(runContext, base.hookId, () =>
         recorder.finish({
-          id: executionId,
+          id: resolvedExecutionId,
           status: "skipped",
           error,
           durationMs,
@@ -884,9 +889,10 @@ export async function runDataHook(
     await runDataHookCore(definition, runContext);
     const finishedAt = Date.now();
     if (recorder && executionId) {
+      const resolvedExecutionId = executionId;
       await safeRecorderCall(runContext, base.hookId, () =>
         recorder.finish({
-          id: executionId,
+          id: resolvedExecutionId,
           status: "success",
           durationMs: finishedAt - startedAt,
           finishedAt: new Date(finishedAt).toISOString(),
@@ -899,9 +905,10 @@ export async function runDataHook(
     const message =
       error instanceof Error ? error.message : "Data hook execution failed.";
     if (recorder && executionId) {
+      const resolvedExecutionId = executionId;
       await safeRecorderCall(runContext, base.hookId, () =>
         recorder.finish({
-          id: executionId,
+          id: resolvedExecutionId,
           status: "error",
           error: message,
           durationMs: finishedAt - startedAt,

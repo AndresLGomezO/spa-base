@@ -114,7 +114,10 @@ class FirestoreAdminEntityRepository<
       index += FIRESTORE_BATCH_LIMIT
     ) {
       const batch = firestore.batch();
-      for (const record of records.slice(index, index + FIRESTORE_BATCH_LIMIT)) {
+      for (const record of records.slice(
+        index,
+        index + FIRESTORE_BATCH_LIMIT,
+      )) {
         const persisted = toDocumentData(
           this.repositoryConfig.converter.write(record),
         );

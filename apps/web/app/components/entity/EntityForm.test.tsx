@@ -1,4 +1,5 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { describe, expect, it, vi } from "vitest";
 import { I18nextProvider } from "react-i18next";
 import { MemoryRouter } from "react-router";
@@ -18,8 +19,9 @@ import { MOCK_ENTITY_CATALOG } from "../../test/entity-catalog-fixtures";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { EntityForm } from "./EntityForm";
 import { EntityFormModalProvider } from "./entity-form-modal-context";
+import { EntitySaveManagerProvider } from "../../features/entity-save/entity-save-context";
 import { useEntity, type EntityRecord } from "../../hooks/useEntity";
-import { getEntity } from "../../lib/api-client";
+import { createEntity, getEntity } from "../../lib/api-client";
 
 const createMock = vi.fn(async (): Promise<EntityRecord | null> => null);
 
@@ -75,6 +77,12 @@ vi.mock("../../lib/api-client", async (importOriginal) => {
   return {
     ...actual,
     getEntity: vi.fn(),
+    createEntity: vi.fn(async () => ({
+      id: "widget-1",
+      tenantId: "tenant-1",
+      createdAt: "2026-01-01T00:00:00.000Z",
+      updatedAt: "2026-01-01T00:00:00.000Z",
+    })),
     getEntityRelationTargets: vi.fn(async () => []),
     syncEntityRelationTargets: vi.fn(async () => undefined),
   };
@@ -87,13 +95,21 @@ function TestEntityFormProviders({
   readonly children: React.ReactNode;
   readonly items?: readonly EntityCatalogEntry[];
 }) {
+  const queryClient = new QueryClient({
+    defaultOptions: { queries: { retry: false } },
+  });
+
   return (
     <TestEntityCatalogProvider items={items}>
-      <EntityFormModalProvider>
-        <MemoryRouter>
-          <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
-        </MemoryRouter>
-      </EntityFormModalProvider>
+      <QueryClientProvider client={queryClient}>
+        <EntityFormModalProvider>
+          <EntitySaveManagerProvider>
+            <MemoryRouter>
+              <I18nextProvider i18n={i18n}>{children}</I18nextProvider>
+            </MemoryRouter>
+          </EntitySaveManagerProvider>
+        </EntityFormModalProvider>
+      </QueryClientProvider>
     </TestEntityCatalogProvider>
   );
 }
@@ -442,12 +458,12 @@ describe("EntityForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
-      expect(createMock).toHaveBeenCalled();
+      expect(createEntity).toHaveBeenCalled();
     });
   });
 
   it("does not create when advancing to the wizard last step", async () => {
-    createMock.mockClear();
+    vi.mocked(createEntity).mockClear();
 
     render(
       <TestEntityFormProviders items={[createTwoStepWizardEntity()]}>
@@ -463,11 +479,11 @@ describe("EntityForm", () => {
       ).toBeInTheDocument();
     });
 
-    expect(createMock).not.toHaveBeenCalled();
+    expect(createEntity).not.toHaveBeenCalled();
   });
 
   it("keeps Create disabled on the wizard last step until required fields are valid", async () => {
-    createMock.mockClear();
+    vi.mocked(createEntity).mockClear();
 
     render(
       <TestEntityFormProviders items={[createTwoStepWizardEntity()]}>
@@ -481,11 +497,11 @@ describe("EntityForm", () => {
     expect(createButton).toBeDisabled();
 
     fireEvent.click(createButton);
-    expect(createMock).not.toHaveBeenCalled();
+    expect(createEntity).not.toHaveBeenCalled();
   });
 
   it("submits optional wizard fields like description and tags", async () => {
-    createMock.mockResolvedValueOnce({
+    vi.mocked(createEntity).mockResolvedValueOnce({
       id: "widget-1",
       tenantId: "tenant-1",
       createdAt: "2026-01-01T00:00:00.000Z",
@@ -563,7 +579,7 @@ describe("EntityForm", () => {
     fireEvent.click(screen.getByRole("button", { name: "Create" }));
 
     await waitFor(() => {
-      expect(createMock).toHaveBeenCalledWith({
+      expect(createEntity).toHaveBeenCalledWith("widget", {
         name: "Loan",
         description: "Product notes",
         tags: ["streaming"],
@@ -572,7 +588,7 @@ describe("EntityForm", () => {
   });
 
   it("creates and shows a success toast when the wizard last step is valid", async () => {
-    createMock.mockResolvedValueOnce({
+    vi.mocked(createEntity).mockResolvedValueOnce({
       id: "widget-1",
       tenantId: "tenant-1",
       createdAt: "2026-01-01T00:00:00.000Z",
@@ -597,7 +613,7 @@ describe("EntityForm", () => {
     fireEvent.click(createButton);
 
     await waitFor(() => {
-      expect(createMock).toHaveBeenCalled();
+      expect(createEntity).toHaveBeenCalled();
       expect(toast.success).toHaveBeenCalled();
     });
   });

@@ -6,19 +6,12 @@ import {
   coalesce,
   formulaRef,
   ifExpr,
+  inputRef,
   lit,
   unary,
 } from "./math-formula-nodes.js";
 
-export {
-  binary,
-  call,
-  coalesce,
-  formulaRef,
-  ifExpr,
-  lit,
-  unary,
-};
+export { binary, call, coalesce, formulaRef, ifExpr, inputRef, lit, unary };
 
 export function fieldCurrent(path: string): ExpressionNode {
   return { kind: "field", source: "current", path };
@@ -32,7 +25,13 @@ export function fieldTerms(path: string): ExpressionNode {
   return { kind: "field", source: "loaded", alias: "terms", path };
 }
 
-export function varRef(name: "loopIndex" | "loopState" | "now"): ExpressionNode {
+export function fieldAggregate(alias: string): ExpressionNode {
+  return { kind: "field", source: "aggregate", alias };
+}
+
+export function varRef(
+  name: "loopIndex" | "loopState" | "now",
+): ExpressionNode {
   return { kind: "var", name };
 }
 

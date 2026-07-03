@@ -121,7 +121,7 @@ async function dispatchChainedEntityHooks(options: {
     request: import("@repo/hooks").DataHookWebhookRequest,
   ) => Promise<void>;
   readonly sendUserNotification?: (
-    input: import("@repo/user-notifications").CreateUserNotificationInput,
+    input: import("@repo/firestore-converters").CreateUserNotificationInput,
   ) => Promise<void>;
   readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
   readonly formulaResolver?: FormulaResolver;

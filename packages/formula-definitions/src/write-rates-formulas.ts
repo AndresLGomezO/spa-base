@@ -37,11 +37,16 @@ function loadUtilityFormulas(): readonly PortableFormulaDefinition[] {
     );
   }
 
-  return utilities.map((formula) => ({ ...formula, source: "tenant" as const }));
+  return utilities.map((formula) => ({
+    ...formula,
+    source: "tenant" as const,
+  }));
 }
 
 function main() {
-  const formulaDefinitions = buildRatesFormulaDefinitions(loadUtilityFormulas());
+  const formulaDefinitions = buildRatesFormulaDefinitions(
+    loadUtilityFormulas(),
+  );
 
   writeFileSync(
     ratesCatalogPath,

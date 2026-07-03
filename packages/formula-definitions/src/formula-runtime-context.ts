@@ -1,4 +1,4 @@
-import type { FormulaDefinitionRepository } from "@repo/firestore-converters";
+import type { FormulaDefinitionRepository } from "./repository-contract.js";
 import type { FormulaResolver } from "@repo/hooks";
 
 import {

@@ -308,7 +308,9 @@ describe("data-hook-definition-json", () => {
       const createIndex = hook!.actions.findIndex(
         (action) => action.type === "createRecords",
       );
-      expect(createIndex, `${hookName} createRecords`).toBeGreaterThanOrEqual(0);
+      expect(createIndex, `${hookName} createRecords`).toBeGreaterThanOrEqual(
+        0,
+      );
       const trailing = hook!.actions.slice(createIndex + 1);
       expect(
         trailing.some(

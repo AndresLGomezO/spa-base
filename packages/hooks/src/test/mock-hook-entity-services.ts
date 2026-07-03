@@ -14,13 +14,15 @@ export function mockHookEntityServices(
 
   const createMany =
     overrides.createMany ??
-    vi.fn<HookEntityServices["createMany"]>(async (entity, records, options) => {
-      const created: Record<string, unknown>[] = [];
-      for (const record of records) {
-        created.push(await create(entity, record, options));
-      }
-      return created;
-    });
+    vi.fn<HookEntityServices["createMany"]>(
+      async (entity, records, options) => {
+        const created: Record<string, unknown>[] = [];
+        for (const record of records) {
+          created.push(await create(entity, record, options));
+        }
+        return created;
+      },
+    );
 
   return {
     create,

@@ -7,7 +7,7 @@ import type {
 
 import type { createTenantDeletionTasksClient } from "./tenant-deletion-tasks.client.js";
 
-export interface EnqueueTenantDeletionDeps {
+interface EnqueueTenantDeletionDeps {
   readonly tenantRepository: TenantRepository;
   readonly jobRepository: TenantDeletionJobRepository;
   readonly archiveRepository: TenantDeletionArchiveRepository;
@@ -17,13 +17,13 @@ export interface EnqueueTenantDeletionDeps {
   readonly protectedTenantIds: readonly string[];
 }
 
-export interface EnqueueTenantDeletionInput {
+interface EnqueueTenantDeletionInput {
   readonly tenantId: string;
   readonly confirmTenantId: string;
   readonly deletedBy: string | null;
 }
 
-export interface EnqueueTenantDeletionResult {
+interface EnqueueTenantDeletionResult {
   readonly jobId: string;
   readonly archiveId: string;
 }

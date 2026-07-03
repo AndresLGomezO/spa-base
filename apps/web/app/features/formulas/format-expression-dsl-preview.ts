@@ -52,7 +52,7 @@ export function summarizeExpressionNode(node: ExpressionNode): string {
   return formatNodeInline(node);
 }
 
-function formatNodeInline(node: ExpressionNode): string {
+export function formatNodeInline(node: ExpressionNode): string {
   switch (node.kind) {
     case "literal":
       return formatLiteral(node);
@@ -107,7 +107,9 @@ function formatCallMultiline(
       const argLines = formatNode(arg, level + 1);
       for (let lineIndex = 0; lineIndex < argLines.length; lineIndex += 1) {
         const isLastLine = lineIndex === argLines.length - 1;
-        lines.push(isLastLine ? `${argLines[lineIndex]}${suffix}` : argLines[lineIndex]!);
+        lines.push(
+          isLastLine ? `${argLines[lineIndex]}${suffix}` : argLines[lineIndex]!,
+        );
       }
     }
   }
@@ -136,7 +138,9 @@ function formatFormulaMultiline(
     const suffix = index < entries.length - 1 ? "," : "";
     const label = `${key}: `;
     if (isSimpleNode(value)) {
-      lines.push(`${indent(level + 1)}${label}${formatNodeInline(value)}${suffix}`);
+      lines.push(
+        `${indent(level + 1)}${label}${formatNodeInline(value)}${suffix}`,
+      );
     } else {
       const valueLines = formatNode(value, level + 1);
       lines.push(`${indent(level + 1)}${label}${valueLines[0]!.trimStart()}`);
@@ -168,11 +172,7 @@ function formatBinaryMultiline(
     ? [`${indent(level + 1)}${formatNodeInline(node.right)}`]
     : formatNode(node.right, level + 1);
 
-  return [
-    ...leftLines,
-    `${pad}  ${node.op}`,
-    ...rightLines,
-  ];
+  return [...leftLines, `${pad}  ${node.op}`, ...rightLines];
 }
 
 function formatSwitch(

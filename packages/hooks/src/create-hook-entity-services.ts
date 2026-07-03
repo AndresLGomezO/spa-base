@@ -266,12 +266,7 @@ export function createHookEntityServices(options: {
       invalidateInMemoryListSnapshot(entityName);
 
       return created.map((record) =>
-        filterReadResult(
-          accessControl,
-          entityName,
-          businessFieldNames,
-          record,
-        ),
+        filterReadResult(accessControl, entityName, businessFieldNames, record),
       );
     },
 

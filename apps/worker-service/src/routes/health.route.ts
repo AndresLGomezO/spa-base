@@ -25,13 +25,15 @@ export async function healthRoute(
     return;
   }
 
+  const hookRuntime = options.hookRuntime;
+
   app.post("/dev/reload-hook-cache", async (request, reply) => {
     const parsed = reloadHookCacheBodySchema.safeParse(request.body);
     if (!parsed.success) {
       return reply.status(400).send({ error: "INVALID_BODY" });
     }
 
-    await options.hookRuntime.reloadTenantHooks(parsed.data.tenantId);
+    await hookRuntime.reloadTenantHooks(parsed.data.tenantId);
     return reply.send({ success: true });
   });
 }

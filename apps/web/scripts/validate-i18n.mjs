@@ -310,6 +310,63 @@ function extractExpressionDynamicKeys(corpus) {
   return keys;
 }
 
+/** dataHooks.preview.* dynamic template keys in hook preview UI */
+function extractDataHookPreviewDynamicKeys(corpus) {
+  if (!corpus.includes("dataHooks.preview.")) return [];
+
+  const refPreview = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).dataHooks?.preview;
+
+  if (!refPreview || typeof refPreview !== "object") return [];
+
+  const keys = [];
+
+  if (corpus.includes("dataHooks.preview.operators.${")) {
+    for (const key of Object.keys(refPreview.operators ?? {})) {
+      keys.push(`${DEFAULT_NAMESPACE}:dataHooks.preview.operators.${key}`);
+    }
+  }
+
+  if (corpus.includes("dataHooks.preview.tabs.${")) {
+    for (const key of Object.keys(refPreview.tabs ?? {})) {
+      keys.push(`${DEFAULT_NAMESPACE}:dataHooks.preview.tabs.${key}`);
+    }
+  }
+
+  if (corpus.includes("dataHooks.preview.frequencyTable.labels.${")) {
+    for (const key of Object.keys(refPreview.frequencyTable?.labels ?? {})) {
+      keys.push(
+        `${DEFAULT_NAMESPACE}:dataHooks.preview.frequencyTable.labels.${key}`,
+      );
+    }
+  }
+
+  if (corpus.includes("dataHooks.preview.frequencyTable.schedules.${")) {
+    for (const key of Object.keys(refPreview.frequencyTable?.schedules ?? {})) {
+      keys.push(
+        `${DEFAULT_NAMESPACE}:dataHooks.preview.frequencyTable.schedules.${key}`,
+      );
+    }
+  }
+
+  if (corpus.includes("dataHooks.preview.trigger.crud.${")) {
+    const crud = refPreview.trigger?.crud;
+    if (crud && typeof crud === "object") {
+      for (const [operation, phases] of Object.entries(crud)) {
+        if (!phases || typeof phases !== "object") continue;
+        for (const phase of Object.keys(phases)) {
+          keys.push(
+            `${DEFAULT_NAMESPACE}:dataHooks.preview.trigger.crud.${operation}.${phase}`,
+          );
+        }
+      }
+    }
+  }
+
+  return keys;
+}
+
 /** dataModels.relationTypes.${key}.* in source → nested keys under dataModels.relationTypes */
 function extractDataModelRelationTypeKeys(corpus) {
   if (!corpus.includes("dataModels.relationTypes.${")) return [];
@@ -1115,6 +1172,12 @@ mergeUsedKeys(
     SRC_DIR,
     "features/debugger/components/IndexProvisioningTreePanel.tsx",
   ),
+);
+
+mergeUsedKeys(
+  usedKeys,
+  extractDataHookPreviewDynamicKeys(corpus),
+  path.join(SRC_DIR, "features/data-hooks/preview/DataHookPreviewPanel.tsx"),
 );
 
 console.log("── 1. Key Parity ──────────────────────────────");

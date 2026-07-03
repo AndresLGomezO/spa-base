@@ -7,13 +7,14 @@ import type { FormulaDefinitionRecord } from "../../lib/api-client";
 import { useFormulasListQuery } from "./use-formulas-list-query";
 
 function createDefinition(
-  overrides: Partial<FormulaDefinitionRecord> & Pick<FormulaDefinitionRecord, "id" | "name">,
+  overrides: Partial<FormulaDefinitionRecord> &
+    Pick<FormulaDefinitionRecord, "id" | "name">,
 ): FormulaDefinitionRecord {
   return {
     tenantId: "tenant-1",
     description: "",
     inputs: [],
-    body: { type: "literal", value: 1 },
+    body: { kind: "literal", value: 1 },
     enabled: true,
     source: "tenant",
     createdAt: "2026-01-01T00:00:00.000Z",
@@ -57,14 +58,11 @@ function createWrapper(initialEntries = ["/settings/formulas"]) {
 
 describe("useFormulasListQuery", () => {
   it("filters by search, source, and status", () => {
-    const { result } = renderHook(
-      () => useFormulasListQuery(definitions),
-      {
-        wrapper: createWrapper([
-          "/settings/formulas?q=alpha&source=platform&status=enabled",
-        ]),
-      },
-    );
+    const { result } = renderHook(() => useFormulasListQuery(definitions), {
+      wrapper: createWrapper([
+        "/settings/formulas?q=alpha&source=platform&status=enabled",
+      ]),
+    });
 
     expect(result.current.listDefinitions.map((entry) => entry.id)).toEqual([
       "alpha",
@@ -78,10 +76,9 @@ describe("useFormulasListQuery", () => {
   });
 
   it("sorts by recently updated descending", () => {
-    const { result } = renderHook(
-      () => useFormulasListQuery(definitions),
-      { wrapper: createWrapper(["/settings/formulas?sort=updatedDesc"]) },
-    );
+    const { result } = renderHook(() => useFormulasListQuery(definitions), {
+      wrapper: createWrapper(["/settings/formulas?sort=updatedDesc"]),
+    });
 
     expect(result.current.listDefinitions.map((entry) => entry.id)).toEqual([
       "alpha",
@@ -94,10 +91,9 @@ describe("useFormulasListQuery", () => {
   });
 
   it("updates URL when toggling filters", async () => {
-    const { result } = renderHook(
-      () => useFormulasListQuery(definitions),
-      { wrapper: createWrapper(["/settings/formulas"]) },
-    );
+    const { result } = renderHook(() => useFormulasListQuery(definitions), {
+      wrapper: createWrapper(["/settings/formulas"]),
+    });
 
     result.current.toggleSource("tenant");
 
@@ -115,20 +111,18 @@ describe("useFormulasListQuery", () => {
   });
 
   it("computes source and status counts on filtered set", () => {
-    const { result } = renderHook(
-      () => useFormulasListQuery(definitions),
-      { wrapper: createWrapper(["/settings/formulas?source=tenant"]) },
-    );
+    const { result } = renderHook(() => useFormulasListQuery(definitions), {
+      wrapper: createWrapper(["/settings/formulas?source=tenant"]),
+    });
 
     expect(result.current.sourceCounts).toEqual({ tenant: 2 });
     expect(result.current.statusCounts).toEqual({ enabled: 1, disabled: 1 });
   });
 
   it("matches search against id and description", () => {
-    const { result } = renderHook(
-      () => useFormulasListQuery(definitions),
-      { wrapper: createWrapper(["/settings/formulas?q=special"]) },
-    );
+    const { result } = renderHook(() => useFormulasListQuery(definitions), {
+      wrapper: createWrapper(["/settings/formulas?q=special"]),
+    });
 
     expect(result.current.listDefinitions.map((entry) => entry.id)).toEqual([
       "gamma",

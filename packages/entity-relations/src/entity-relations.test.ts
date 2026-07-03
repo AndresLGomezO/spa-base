@@ -79,6 +79,12 @@ function createMemoryEntityRepository(): TenantScopedEntityRepository<TestRecord
       store.set(`${tenantId}:${record.id}`, record);
       return record;
     },
+    async createMany(tenantId, records) {
+      for (const record of records) {
+        store.set(`${tenantId}:${record.id}`, record);
+      }
+      return records;
+    },
     async findAll(params: ListParams): Promise<PaginatedResult<TestRecord>> {
       const items = [...store.values()].filter(
         (record) => record.tenantId === params.tenantId,

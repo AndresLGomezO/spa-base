@@ -1,4 +1,4 @@
-import type { CreateUserNotificationInput } from "@repo/user-notifications";
+import type { CreateUserNotificationInput } from "@repo/firestore-converters";
 import type { UserNotificationRepository } from "@repo/firestore-converters";
 
 export function createSendUserNotification(

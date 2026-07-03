@@ -63,7 +63,7 @@ interface DebuggerContextValue {
   readonly selectIndexJob: (signature: string) => void;
   readonly clearSelectedRecord: () => void;
   readonly dismissRecord: (event: DebugEvent) => void;
-  readonly refresh: () => void;
+  readonly refresh: () => Promise<void>;
 }
 
 const DebuggerContext = createContext<DebuggerContextValue | null>(null);
@@ -286,8 +286,7 @@ export function DebuggerProvider({
     }
   }, [activeSource, eventsQuery, queryClient]);
 
-  const isFetching =
-    eventsQuery.isFetching && !eventsQuery.isFetchingNextPage;
+  const isFetching = eventsQuery.isFetching && !eventsQuery.isFetchingNextPage;
 
   const hookExecutionLive = useMemo((): HookExecutionLiveCounts | null => {
     if (activeSource !== "hookExecution") {
@@ -353,7 +352,6 @@ export function DebuggerProvider({
       clearSelectedRecord,
       dismissRecord,
       eventsQuery.hasNextPage,
-      eventsQuery.isFetching,
       eventsQuery.isFetchingNextPage,
       eventsQuery.isLoading,
       eventsQuery.error,

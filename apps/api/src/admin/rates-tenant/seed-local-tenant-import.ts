@@ -187,12 +187,7 @@ export async function seedLocalTenantImportIfPresent(
         financialItemIds.push(recordId);
         financialItemRecords.set(
           recordId,
-          snapshotRatesSeedRecord(
-            context,
-            spec.entityName,
-            recordId,
-            business,
-          ),
+          snapshotRatesSeedRecord(context, spec.entityName, recordId, business),
         );
       }
       if (spec.entityName === "loanDetails") {

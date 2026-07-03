@@ -1,9 +1,7 @@
-import {
-  tenantDeletionArchiveRecordSchema,
-  tenantDeletionJobRecordSchema,
-  type Tenant,
-  type TenantDeletionArchiveRecord,
-  type TenantDeletionJobRecord,
+import type {
+  Tenant,
+  TenantDeletionArchiveRecord,
+  TenantDeletionJobRecord,
 } from "@repo/shared-types";
 
 export {
@@ -43,11 +41,7 @@ export interface TenantDeletionJobRepository {
     patch: Partial<
       Pick<
         TenantDeletionJobRecord,
-        | "status"
-        | "startedAt"
-        | "completedAt"
-        | "error"
-        | "progress"
+        "status" | "startedAt" | "completedAt" | "error" | "progress"
       >
     >,
   ): Promise<TenantDeletionJobRecord>;
@@ -64,8 +58,6 @@ export interface TenantDeletionArchiveRepository {
   ): Promise<readonly TenantDeletionArchiveRecord[]>;
   update(
     id: string,
-    patch: Partial<
-      Pick<TenantDeletionArchiveRecord, "status" | "stats">
-    >,
+    patch: Partial<Pick<TenantDeletionArchiveRecord, "status" | "stats">>,
   ): Promise<TenantDeletionArchiveRecord>;
 }

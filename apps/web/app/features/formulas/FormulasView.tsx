@@ -41,7 +41,9 @@ function FormulasWorkbench() {
 
   if (editor.isLoading) {
     return (
-      <Text className="text-muted-foreground text-sm">{t("formulas.loading")}</Text>
+      <Text className="text-muted-foreground text-sm">
+        {t("formulas.loading")}
+      </Text>
     );
   }
 
@@ -73,7 +75,11 @@ function FormulasWorkbench() {
         title={t("formulas.delete.title")}
         footer={
           <div className="flex justify-end gap-2">
-            <Button type="button" variant="outline" onClick={closeDeleteConfirm}>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={closeDeleteConfirm}
+            >
               {t("formulas.cancel")}
             </Button>
             <Button

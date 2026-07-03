@@ -8,10 +8,7 @@ import { Pencil } from "lucide-react";
 
 import { useAuth } from "../../auth/AuthContext";
 import type { EntityName } from "../../entities/entity-catalog";
-import {
-  getEntityLabel,
-  formatFieldLabel,
-} from "../../entities/entity-catalog";
+import { formatFieldLabel } from "../../entities/entity-catalog";
 import {
   useEntityCatalog,
   useEntityDefinition,
@@ -56,7 +53,6 @@ export function EntityRecordDetail({
   const recordDetailLayout =
     definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
   const { items: catalogItems } = useEntityCatalog();
-  const entityLabel = getEntityLabel(definition);
 
   const fkFields = useMemo(
     () =>

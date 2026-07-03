@@ -15,7 +15,10 @@ import { cn } from "@repo/theme/utils";
 import { useTranslation } from "react-i18next";
 import type { FormulaDefinitionsCatalogEnvelope } from "@repo/formula-definitions/browser";
 
-import { isApiClientError, replaceFormulaDefinitionsCatalog } from "../../lib/api-client";
+import {
+  isApiClientError,
+  replaceFormulaDefinitionsCatalog,
+} from "../../lib/api-client";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { FormulaListBadge } from "./components/FormulaListBadge";
@@ -85,7 +88,10 @@ export function FormulaListTreePanel() {
 
   useFilterPanelDismiss(filtersOpen, setFiltersOpen, toolbarRef);
 
-  const catalogLabels = useMemo(() => formulaDefinitionsCatalogJsonLabels(t), [t]);
+  const catalogLabels = useMemo(
+    () => formulaDefinitionsCatalogJsonLabels(t),
+    [t],
+  );
   const canReplaceCatalog = canCreate && canUpdate;
 
   const displayBadges = useMemo(
@@ -101,14 +107,18 @@ export function FormulaListTreePanel() {
           };
         }
         if (badge.id.startsWith("source:")) {
-          const source = badge.id.slice("source:".length) as FormulaSourceFilter;
+          const source = badge.id.slice(
+            "source:".length,
+          ) as FormulaSourceFilter;
           return {
             ...badge,
             label: t(formulaSourceLabelKey(source)),
           };
         }
         if (badge.id.startsWith("status:")) {
-          const status = badge.id.slice("status:".length) as FormulaStatusFilter;
+          const status = badge.id.slice(
+            "status:".length,
+          ) as FormulaStatusFilter;
           return {
             ...badge,
             label: t(formulaStatusLabelKey(status)),
@@ -174,7 +184,11 @@ export function FormulaListTreePanel() {
               onChange={() => toggleSource(source)}
               label={
                 <span className="inline-flex items-center gap-2">
-                  <FormulaListBadge kind="source" value={source} size="compact" />
+                  <FormulaListBadge
+                    kind="source"
+                    value={source}
+                    size="compact"
+                  />
                 </span>
               }
             />
@@ -195,7 +209,11 @@ export function FormulaListTreePanel() {
               onChange={() => toggleStatus(status)}
               label={
                 <span className="inline-flex items-center gap-2">
-                  <FormulaListBadge kind="status" value={status} size="compact" />
+                  <FormulaListBadge
+                    kind="status"
+                    value={status}
+                    size="compact"
+                  />
                 </span>
               }
             />

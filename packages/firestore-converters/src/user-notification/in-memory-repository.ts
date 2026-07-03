@@ -52,7 +52,8 @@ export function createInMemoryUserNotificationRepository(): UserNotificationRepo
       let items = listMatching(tenantId, userId, unreadOnly);
       if (cursor) {
         const cursorIndex = items.findIndex(
-          (item) => item.id === cursor.id && item.createdAt === cursor.createdAt,
+          (item) =>
+            item.id === cursor.id && item.createdAt === cursor.createdAt,
         );
         items = cursorIndex >= 0 ? items.slice(cursorIndex + 1) : items;
       }

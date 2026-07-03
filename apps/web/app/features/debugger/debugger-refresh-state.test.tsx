@@ -61,14 +61,12 @@ describe("debugger refresh state", () => {
 
   it("sets isRefreshing while manual refresh is in flight", async () => {
     let resolveRefetch!: (value: typeof emptyPage) => void;
-    mockListDebugEvents
-      .mockResolvedValueOnce(emptyPage)
-      .mockImplementation(
-        () =>
-          new Promise((resolve) => {
-            resolveRefetch = resolve;
-          }),
-      );
+    mockListDebugEvents.mockResolvedValueOnce(emptyPage).mockImplementation(
+      () =>
+        new Promise((resolve) => {
+          resolveRefetch = resolve;
+        }),
+    );
 
     const { wrapper } = createWrapper();
     const { result } = renderHook(() => useDebugger(), { wrapper });

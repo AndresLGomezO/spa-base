@@ -120,7 +120,9 @@ export const adminRoutes: FastifyPluginAsync<{
     createFirestoreAdminTenantRepository(opts.firebaseAdminConfig);
   const protectedTenantIds =
     opts.tenantDeletionProtectedIds ??
-    parseProtectedTenantIds(process.env.TENANT_DELETION_PROTECTED_IDS ?? "rates");
+    parseProtectedTenantIds(
+      process.env.TENANT_DELETION_PROTECTED_IDS ?? "rates",
+    );
 
   fastify.get(
     "/admin/roles",

@@ -10,6 +10,7 @@ import {
   type HookEntityServices,
   type PortableDataHookDefinition,
 } from "@repo/hooks";
+import { createIncrementPlanRevisionFormulaResolver } from "./test/increment-plan-revision-formula-resolver.js";
 
 const catalogPath = resolve(
   import.meta.dirname,
@@ -97,6 +98,7 @@ describe("LU-01 runtime", () => {
       event: "loanUtilization.afterCreate",
       current: loanUtilization,
       user: { uid: "user_test" },
+      formulaResolver: createIncrementPlanRevisionFormulaResolver(),
       services: {
         logger: {
           info: vi.fn(),
@@ -107,7 +109,8 @@ describe("LU-01 runtime", () => {
           update,
           delete: vi.fn(),
           list,
-          get: vi.fn(),          createMany: vi.fn(async () => []),
+          get: vi.fn(),
+          createMany: vi.fn(async () => []),
         },
       },
     };

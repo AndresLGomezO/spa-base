@@ -18,7 +18,6 @@
     "./types": "./src/types.ts"
   },
   "dependencies": {
-    "@repo/firestore-converters": "workspace:*",
     "@repo/hooks": "workspace:*",
     "zod": "catalog:"
   },

@@ -105,7 +105,11 @@ export function useFormulasEditor() {
   }, []);
 
   const saveSelectedFormula = useCallback(async (): Promise<string | null> => {
-    if (!selectedDefinition || !draft || selectedDefinition.source === "platform") {
+    if (
+      !selectedDefinition ||
+      !draft ||
+      selectedDefinition.source === "platform"
+    ) {
       return null;
     }
 
@@ -123,9 +127,7 @@ export function useFormulasEditor() {
       setDraft(buildDraftFromDefinition(updated));
       return null;
     } catch (error) {
-      return error instanceof Error
-        ? error.message
-        : "Failed to save formula.";
+      return error instanceof Error ? error.message : "Failed to save formula.";
     } finally {
       setIsSaving(false);
     }

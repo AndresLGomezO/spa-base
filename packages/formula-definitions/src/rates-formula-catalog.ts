@@ -9,6 +9,7 @@ import {
   fieldTerms,
   formulaRef,
   ifExpr,
+  inputRef,
   lit,
   switchExpr,
   tenantAnnuityPaymentCall,
@@ -51,7 +52,10 @@ function layer1Formulas(): readonly PortableFormulaDefinition[] {
     tenant(
       "loanCoalescePrincipal",
       "Loan: coalesce(originalPrincipal, parent.currentBalance)",
-      coalesce(fieldCurrent("originalPrincipal"), fieldParent("currentBalance")),
+      coalesce(
+        fieldCurrent("originalPrincipal"),
+        fieldParent("currentBalance"),
+      ),
     ),
     tenant(
       "loanBasePrincipal",
@@ -228,11 +232,7 @@ function scheduleFormulas(): readonly PortableFormulaDefinition[] {
   const frenchPaymentDenominator = binary(
     "-",
     loanAnnuityPaymentRef,
-    binary(
-      "*",
-      fieldParent("currentBalance"),
-      formulaRef("loanMonthlyRate"),
-    ),
+    binary("*", fieldParent("currentBalance"), formulaRef("loanMonthlyRate")),
   );
 
   return [
@@ -249,7 +249,10 @@ function scheduleFormulas(): readonly PortableFormulaDefinition[] {
             "ceil",
             binary(
               "/",
-              call("ln", binary("/", loanAnnuityPaymentRef, frenchPaymentDenominator)),
+              call(
+                "ln",
+                binary("/", loanAnnuityPaymentRef, frenchPaymentDenominator),
+              ),
               call("ln", binary("+", lit(1), formulaRef("loanMonthlyRate"))),
             ),
           ),
@@ -328,6 +331,227 @@ export function buildRatesScheduleFormulas(): readonly PortableFormulaDefinition
   return scheduleFormulas();
 }
 
+const LIABILITY_ITEM_TYPES = [
+  "MORTGAGE",
+  "LOAN",
+  "CREDIT_CARD",
+  "REVOLVING_CREDIT",
+  "PERSONAL_DEBT",
+] as const;
+
+const ASSET_ITEM_TYPES = [
+  "SCHEDULED_SAVINGS",
+  "YIELD_SAVINGS",
+  "FIDUCIARY",
+  "INVESTMENT_FUND",
+  "OTHER_INVESTMENT",
+] as const;
+
+function frequencyStepMultiplierBody(): PortableFormulaDefinition["body"] {
+  return switchExpr(
+    inputRef("frequency"),
+    [
+      { when: lit("WEEKLY"), then: lit(1) },
+      { when: lit("BIWEEKLY"), then: lit(2) },
+      { when: lit("MONTHLY"), then: lit(1) },
+      { when: lit("QUARTERLY"), then: lit(3) },
+      { when: lit("ANNUAL"), then: lit(1) },
+    ],
+    lit(1),
+  );
+}
+
+function frequencyUnitBody(): PortableFormulaDefinition["body"] {
+  return switchExpr(
+    inputRef("frequency"),
+    [
+      { when: lit("WEEKLY"), then: lit("WEEK") },
+      { when: lit("BIWEEKLY"), then: lit("WEEK") },
+      { when: lit("MONTHLY"), then: lit("MONTH") },
+      { when: lit("QUARTERLY"), then: lit("MONTH") },
+      { when: lit("ANNUAL"), then: lit("YEAR") },
+    ],
+    lit("MONTH"),
+  );
+}
+
+function buildRatesRecurringScheduleFormulas(): readonly PortableFormulaDefinition[] {
+  const frequencyInput = { name: "frequency", required: true };
+
+  return [
+    tenant(
+      "frequencyStepMultiplier",
+      "Recurring schedule: period step multiplier by frequency",
+      frequencyStepMultiplierBody(),
+      [frequencyInput],
+    ),
+    tenant(
+      "frequencyUnit",
+      "Recurring schedule: dateAdd unit by frequency",
+      frequencyUnitBody(),
+      [frequencyInput],
+    ),
+    tenant(
+      "frequencyDueDate",
+      "Recurring schedule: due date from base date, frequency, and period index",
+      call(
+        "dateAdd",
+        inputRef("baseDate"),
+        inputRef("periodIndex"),
+        formulaRef("frequencyUnit", { frequency: inputRef("frequency") }),
+      ),
+      [
+        { name: "baseDate", required: true },
+        frequencyInput,
+        { name: "periodIndex", required: true },
+      ],
+    ),
+    tenant(
+      "frequencyScheduleDueDate",
+      "Recurring schedule: batch row due date (loopIndex * step multiplier)",
+      formulaRef("frequencyDueDate", {
+        baseDate: inputRef("baseDate"),
+        frequency: inputRef("frequency"),
+        periodIndex: binary(
+          "*",
+          varRef("loopIndex"),
+          formulaRef("frequencyStepMultiplier", {
+            frequency: inputRef("frequency"),
+          }),
+        ),
+      }),
+      [{ name: "baseDate", required: true }, frequencyInput],
+    ),
+    tenant(
+      "frequencyAdvanceDueDate",
+      "Recurring schedule: single-step roll-forward due date",
+      formulaRef("frequencyDueDate", {
+        baseDate: inputRef("baseDate"),
+        frequency: inputRef("frequency"),
+        periodIndex: formulaRef("frequencyStepMultiplier", {
+          frequency: inputRef("frequency"),
+        }),
+      }),
+      [{ name: "baseDate", required: true }, frequencyInput],
+    ),
+    tenant(
+      "scheduleHorizonOrDefault",
+      "Recurring schedule: coalesce(scheduleHorizonMonths, 12)",
+      coalesce(fieldCurrent("scheduleHorizonMonths"), lit(12)),
+    ),
+    tenant(
+      "recurringScheduleInitialRowCount",
+      "Recurring schedule: initial createRecords count",
+      ifExpr(
+        binary("==", inputRef("frequency"), lit("ONE_TIME")),
+        lit(1),
+        call("min", formulaRef("scheduleHorizonOrDefault"), lit(1000)),
+      ),
+      [frequencyInput],
+    ),
+    tenant(
+      "recurringScheduleExtensionRowCount",
+      "Recurring schedule: monthly horizon extension row count",
+      call(
+        "min",
+        lit(100),
+        binary(
+          "-",
+          formulaRef("scheduleHorizonOrDefault"),
+          inputRef("existingCount"),
+        ),
+      ),
+      [{ name: "existingCount", required: true }],
+    ),
+  ];
+}
+
+function buildRatesFinancialItemFormulas(): readonly PortableFormulaDefinition[] {
+  return [
+    tenant(
+      "balanceSheetRoleFromItemType",
+      "Financial item: map itemType to balanceSheetRole",
+      switchExpr(
+        inputRef("itemType"),
+        [
+          ...LIABILITY_ITEM_TYPES.map((itemType) => ({
+            when: lit(itemType),
+            then: lit("LIABILITY"),
+          })),
+          ...ASSET_ITEM_TYPES.map((itemType) => ({
+            when: lit(itemType),
+            then: lit("ASSET"),
+          })),
+        ],
+        lit("NONE"),
+      ),
+      [{ name: "itemType", required: true }],
+    ),
+    tenant(
+      "cardHostCurrentBalance",
+      "Credit card: host currentBalance from revolving + installment sum",
+      binary(
+        "+",
+        coalesce(inputRef("revolvingBalance"), lit(0)),
+        coalesce(inputRef("installmentSum"), lit(0)),
+      ),
+      [
+        { name: "revolvingBalance", required: false },
+        { name: "installmentSum", required: true },
+      ],
+    ),
+    tenant(
+      "incrementPlanRevision",
+      "Loan: bump planRevision by one",
+      binary("+", coalesce(fieldCurrent("planRevision"), lit(0)), lit(1)),
+    ),
+    tenant(
+      "inferFlatLoanOriginationDate",
+      "Loan: infer originationDate for flat/NONE amortization plans",
+      ifExpr(
+        binary(
+          "&&",
+          binary(
+            "&&",
+            binary(
+              "&&",
+              unary("!", call("isEmpty", fieldCurrent("originalPrincipal"))),
+              unary("!", call("isEmpty", fieldParent("currentBalance"))),
+            ),
+            binary(
+              "&&",
+              unary("!", call("isEmpty", fieldCurrent("principalPortion"))),
+              binary(">", fieldCurrent("principalPortion"), lit(0)),
+            ),
+          ),
+          unary("!", call("isEmpty", fieldParent("nextDueDate"))),
+        ),
+        call(
+          "dateAdd",
+          fieldParent("nextDueDate"),
+          unary(
+            "-",
+            call(
+              "floor",
+              binary(
+                "/",
+                binary(
+                  "-",
+                  fieldCurrent("originalPrincipal"),
+                  fieldParent("currentBalance"),
+                ),
+                fieldCurrent("principalPortion"),
+              ),
+            ),
+          ),
+          lit("MONTH"),
+        ),
+        fieldCurrent("originationDate"),
+      ),
+    ),
+  ];
+}
+
 export function buildRatesFormulaDefinitions(
   utilities: readonly PortableFormulaDefinition[],
 ): readonly PortableFormulaDefinition[] {
@@ -335,6 +559,8 @@ export function buildRatesFormulaDefinitions(
     ...utilities,
     ...buildRatesLoanFormulas(),
     ...buildRatesScheduleFormulas(),
+    ...buildRatesRecurringScheduleFormulas(),
+    ...buildRatesFinancialItemFormulas(),
   ];
 }
 

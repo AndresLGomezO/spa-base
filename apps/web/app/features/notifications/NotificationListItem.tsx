@@ -41,7 +41,9 @@ export function NotificationListItem({
 
   const metadataParts: string[] = [];
   if (notification.hookName) {
-    metadataParts.push(t("notifications.fromHook", { hook: notification.hookName }));
+    metadataParts.push(
+      t("notifications.fromHook", { hook: notification.hookName }),
+    );
   }
   if (entityLabel) {
     metadataParts.push(t("notifications.onEntity", { entity: entityLabel }));

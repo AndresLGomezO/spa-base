@@ -276,7 +276,8 @@ describe("runDataHook", () => {
             update: vi.fn(),
             list: vi.fn(),
             delete: vi.fn(),
-            get: vi.fn(),            createMany: vi.fn(async () => []),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -563,7 +564,8 @@ describe("runDataHook", () => {
             update,
             list,
             delete: vi.fn(),
-            get: vi.fn(),            createMany: vi.fn(async () => []),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -648,7 +650,8 @@ describe("runDataHook", () => {
             update,
             list,
             delete: vi.fn(),
-            get: vi.fn(),            createMany: vi.fn(async () => []),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -699,7 +702,8 @@ describe("runDataHook", () => {
               update: vi.fn(),
               list: vi.fn(async () => []),
               delete: vi.fn(),
-              get: vi.fn(),              createMany: vi.fn(async () => []),
+              get: vi.fn(),
+              createMany: vi.fn(async () => []),
             },
           },
         }),
@@ -777,7 +781,8 @@ describe("runDataHook", () => {
             update: vi.fn(),
             list,
             delete: deleteFn,
-            get: vi.fn(),            createMany: vi.fn(async () => []),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -824,7 +829,8 @@ describe("runDataHook", () => {
             update: vi.fn(),
             list: vi.fn(),
             delete: deleteFn,
-            get: vi.fn(),            createMany: vi.fn(async () => []),
+            get: vi.fn(),
+            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -969,7 +975,8 @@ describe("runDataHook", () => {
           update,
           list,
           delete: vi.fn(),
-          get: vi.fn(),          createMany: vi.fn(async () => []),
+          get: vi.fn(),
+          createMany: vi.fn(async () => []),
         },
       },
     });
@@ -1028,7 +1035,8 @@ describe("runDataHook", () => {
           update: vi.fn(),
           list,
           delete: vi.fn(),
-          get: vi.fn(),          createMany: vi.fn(async () => []),
+          get: vi.fn(),
+          createMany: vi.fn(async () => []),
         },
       },
     });
@@ -1097,7 +1105,8 @@ describe("runDataHook", () => {
               update: vi.fn(),
               list: vi.fn(),
               delete: vi.fn(),
-              get: vi.fn(),              createMany: vi.fn(async () => []),
+              get: vi.fn(),
+              createMany: vi.fn(async () => []),
             },
           },
         }),
@@ -1225,7 +1234,8 @@ describe("runDataHook", () => {
           update: vi.fn(),
           list: vi.fn(),
           delete: vi.fn(),
-          get: vi.fn(),          createMany: vi.fn(async () => []),
+          get: vi.fn(),
+          createMany: vi.fn(async () => []),
         },
       },
     });
@@ -1457,7 +1467,7 @@ describe("compileDataHook", () => {
           type: "sendNotification",
           message: {
             kind: "call",
-            "fn": "concat",
+            fn: "concat",
             args: [
               { kind: "literal", value: "Generated plan for " },
               {
@@ -1503,8 +1513,18 @@ describe("compileDataHook", () => {
 
   it("delivers sendUserNotification when success message uses aggregate count", async () => {
     const list = vi.fn(async () => [
-      { id: "ps_1", financialItemId: "fi_1", status: "UPCOMING" },
-      { id: "ps_2", financialItemId: "fi_1", status: "UPCOMING" },
+      {
+        id: "ps_1",
+        tenantId: "tenant_test",
+        financialItemId: "fi_1",
+        status: "UPCOMING",
+      },
+      {
+        id: "ps_2",
+        tenantId: "tenant_test",
+        financialItemId: "fi_1",
+        status: "UPCOMING",
+      },
     ]);
     const sendUserNotification = vi.fn(async () => undefined);
     const handler = compileDataHook({
