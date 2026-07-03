@@ -470,7 +470,7 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
 
       - name: Build ${{ matrix.workspace }}
-        run: pnpm --filter ${{ matrix.workspace }} build
+        run: pnpm --filter ${{ matrix.workspace }}... build
 
   # ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
   # DOCKER-API — production API image (turbo prune, matches deploy)
