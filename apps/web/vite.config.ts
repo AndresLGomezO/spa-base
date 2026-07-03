@@ -42,9 +42,13 @@ export default defineConfig(({ command }) => ({
         ],
       },
       workbox: {
+        globDirectory: "build/client",
         globPatterns: ["**/*.{js,css,html,ico,svg,png,woff2,webmanifest}"],
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/api\//],
+      },
+      devOptions: {
+        enabled: false,
       },
     }),
     ...(command === "serve" ? [devDocumentCspPlugin()] : []),
