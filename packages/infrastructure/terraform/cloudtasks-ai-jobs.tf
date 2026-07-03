@@ -80,6 +80,15 @@ resource "google_project_iam_member" "worker_service_vertex_ai" {
   member  = "serviceAccount:${google_service_account.worker_service_sa[0].email}"
 }
 
+# Worker hooks, tenant deletion, and AI renders use the default Firebase Storage bucket.
+resource "google_project_iam_member" "worker_service_storage" {
+  count = local.enable_ai_worker ? 1 : 0
+
+  project = local.gcp_project_id
+  role    = "roles/storage.objectAdmin"
+  member  = "serviceAccount:${google_service_account.worker_service_sa[0].email}"
+}
+
 resource "google_cloud_run_v2_service_iam_member" "tasks_sa_worker_invoker" {
   count = local.enable_ai_worker ? 1 : 0
 

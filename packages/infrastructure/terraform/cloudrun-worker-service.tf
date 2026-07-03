@@ -13,6 +13,7 @@ resource "google_cloud_run_v2_service" "worker_service" {
     google_cloud_tasks_queue.ai_jobs,
     google_project_iam_member.worker_service_firestore,
     google_project_iam_member.worker_service_vertex_ai,
+    google_project_iam_member.worker_service_storage,
     google_service_account_iam_member.ci_deployer_act_as_worker_service_sa,
     google_project_service.aiplatform_api,
   ]
