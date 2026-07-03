@@ -26,8 +26,12 @@ import { collectNpmImports } from "../packages/esbuild-runtime-deps/index.mjs";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const TARGETS = [
-  { appName: "api", filter: "api" },
-  { appName: "worker-service", filter: "worker-service" },
+  { appName: "api", filter: "api", runtimeAssets: ["dist/platform-formulas.json"] },
+  {
+    appName: "worker-service",
+    filter: "worker-service",
+    runtimeAssets: ["dist/platform-formulas.json"],
+  },
   { appName: "worker-aggregation", filter: "worker-aggregation" },
 ];
 
@@ -100,11 +104,22 @@ function assertImportsResolvable(appName, deployDir, bundlePath) {
   }
 }
 
+function assertRuntimeAssets(appName, deployDir, runtimeAssets = []) {
+  for (const relativePath of runtimeAssets) {
+    const assetPath = join(deployDir, relativePath);
+    if (!existsSync(assetPath)) {
+      throw new Error(
+        `${appName}: missing runtime asset ${assetPath} in prod deploy layout (${deployDir}).`,
+      );
+    }
+  }
+}
+
 function main() {
   const deployRoot = mkdtempSync(join(tmpdir(), "prod-runtime-"));
 
   try {
-    for (const { appName, filter } of TARGETS) {
+    for (const { appName, filter, runtimeAssets } of TARGETS) {
       assertBuilt(appName, filter);
       const deployDir = join(deployRoot, filter);
       deployProd(filter, deployDir);
@@ -114,6 +129,7 @@ function main() {
         throw new Error(`${appName}: deploy layout missing ${bundlePath}`);
       }
 
+      assertRuntimeAssets(appName, deployDir, runtimeAssets);
       assertImportsResolvable(appName, deployDir, bundlePath);
       console.log(
         `✓ ${appName}: prod deploy layout resolves all bundle imports`,

@@ -1,6 +1,6 @@
 import * as esbuild from "esbuild";
 import { cpSync, mkdirSync } from "node:fs";
-import { readFile, stat } from "node:fs/promises";
+import { copyFile, readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -28,6 +28,10 @@ const forceExternalPlugin = {
 };
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
+const platformFormulasSource = join(
+  rootDir,
+  "../../packages/formula-definitions/src/platform-formulas.json",
+);
 
 await esbuild.build({
   entryPoints: ["src/index.ts"],
@@ -47,6 +51,11 @@ const generatedSrc = join(rootDir, "../../packages/ai-context/src/generated");
 const generatedDest = join(rootDir, "dist/ai-context-generated");
 mkdirSync(generatedDest, { recursive: true });
 cpSync(generatedSrc, generatedDest, { recursive: true });
+
+await copyFile(
+  platformFormulasSource,
+  join(rootDir, "dist/platform-formulas.json"),
+);
 
 assertDirectRuntimeDependencies({
   appName: "worker-service",
