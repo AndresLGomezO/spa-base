@@ -26,7 +26,11 @@ import { collectNpmImports } from "../packages/esbuild-runtime-deps/index.mjs";
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
 const TARGETS = [
-  { appName: "api", filter: "api", runtimeAssets: ["dist/platform-formulas.json"] },
+  {
+    appName: "api",
+    filter: "api",
+    runtimeAssets: ["dist/platform-formulas.json", "dist/formula-admin.js"],
+  },
   {
     appName: "worker-service",
     filter: "worker-service",
