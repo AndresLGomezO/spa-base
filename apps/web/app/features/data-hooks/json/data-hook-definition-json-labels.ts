@@ -18,6 +18,14 @@ interface DataHookDefinitionJsonLabels {
   readonly viewCopied: string;
 }
 
+export interface DataHookDefinitionFormJsonLabels extends DataHookDefinitionJsonLabels {
+  readonly viewTitle: string;
+  readonly importTitle: string;
+  readonly importDescriptionEdit: string;
+  readonly nameChangeError: string;
+  readonly entityChangeError: string;
+}
+
 export interface DataHooksCatalogJsonLabels extends DataHookDefinitionJsonLabels {
   readonly viewTitle: string;
   readonly importTitle: string;
@@ -47,6 +55,19 @@ function sharedLabels(t: TFunction<"common">): DataHookDefinitionJsonLabels {
     viewDescription: t("dataHooks.json.viewDescription"),
     viewCopy: t("dataHooks.json.viewCopy"),
     viewCopied: t("dataHooks.json.viewCopied"),
+  };
+}
+
+export function dataHookDefinitionFormJsonLabels(
+  t: TFunction<"common">,
+): DataHookDefinitionFormJsonLabels {
+  return {
+    ...sharedLabels(t),
+    viewTitle: t("dataHooks.json.hook.viewTitle"),
+    importTitle: t("dataHooks.json.hook.importTitle"),
+    importDescriptionEdit: t("dataHooks.json.hook.importDescriptionEdit"),
+    nameChangeError: t("dataHooks.json.hook.nameChangeError"),
+    entityChangeError: t("dataHooks.json.hook.entityChangeError"),
   };
 }
 

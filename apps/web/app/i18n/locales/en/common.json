@@ -2646,6 +2646,13 @@
       "viewDescription": "Portable automation hook definition JSON for handoff or version control.",
       "viewCopy": "Copy JSON",
       "viewCopied": "Copied",
+      "hook": {
+        "viewTitle": "Current hook JSON",
+        "importTitle": "Import hook JSON",
+        "importDescriptionEdit": "Replace the hook settings with the imported definition. Hook name and entity must not change. Save to persist.",
+        "nameChangeError": "Hook name cannot be changed via JSON import.",
+        "entityChangeError": "Entity cannot be changed via JSON import."
+      },
       "catalog": {
         "viewTitle": "Current hooks catalog JSON",
         "importTitle": "Import hooks catalog JSON",

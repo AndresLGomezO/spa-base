@@ -31,6 +31,9 @@ import { DataHookActionsEditor } from "./DataHookActionsEditor";
 import { DataHookConditionEditor } from "./DataHookConditionEditor";
 import { createDefaultConditionRoot } from "./data-hook-condition-utils";
 import { useDataHooks } from "./data-hooks-context";
+import { DataHookDefinitionJsonToolbar } from "./json/DataHookDefinitionJsonToolbar";
+import { dataHookDefinitionFormJsonLabels } from "./json/data-hook-definition-json-labels";
+import type { DataHookFormStateImportResult } from "./json/export-data-hook-form-state";
 
 const controlClassName =
   "border-input bg-background flex h-9 w-full rounded-md border px-3 py-1.5 text-sm";
@@ -113,6 +116,7 @@ export function DataHookSettingsPanel() {
   const { t } = useTranslation("common");
   const { editor, canUpdate } = useDataHooks();
   const { items: entities } = useEntityCatalog();
+  const jsonLabels = useMemo(() => dataHookDefinitionFormJsonLabels(t), [t]);
 
   const triggerFieldNames = useMemo(() => {
     const entity = entities.find((entry) => entry.name === editor.entityName);
@@ -143,6 +147,22 @@ export function DataHookSettingsPanel() {
     toast.success(t("dataHooks.settings.saved"));
   }
 
+  const handleJsonImport = (imported: DataHookFormStateImportResult) => {
+    editor.updateDraft({
+      ...(imported.description !== undefined
+        ? { description: imported.description }
+        : {}),
+      phase: imported.phase,
+      trigger: imported.trigger,
+      condition: imported.condition,
+      actions: [...imported.actions],
+      enabled: imported.enabled,
+      order: imported.order,
+      chainHooks: imported.chainHooks,
+      execution: imported.execution,
+    });
+  };
+
   const conditionEnabled = draft.condition !== null;
   const isScheduled = isScheduleTrigger(draft.trigger);
 
@@ -155,20 +175,46 @@ export function DataHookSettingsPanel() {
           <Text className="text-foreground text-base font-semibold">
             {definition.name}
           </Text>
-          {definition.description ? (
+          {(draft.description ?? definition.description) ? (
             <Text className="text-muted-foreground text-sm">
-              {definition.description}
+              {draft.description ?? definition.description}
             </Text>
           ) : null}
         </div>
-        <Button
-          type="button"
-          loading={editor.isSaving}
-          disabled={!canUpdate || !editor.isDirty}
-          onClick={() => void handleSave()}
-        >
-          {t("dataHooks.settings.save")}
-        </Button>
+        <div className="flex flex-wrap items-center gap-2">
+          <DataHookDefinitionJsonToolbar
+            existingName={definition.name}
+            existingEntity={editor.entityName}
+            canApply={canUpdate}
+            labels={jsonLabels}
+            formState={{
+              name: definition.name,
+              ...(draft.description !== undefined
+                ? { description: draft.description }
+                : definition.description !== undefined
+                  ? { description: definition.description }
+                  : {}),
+              entity: editor.entityName,
+              phase: draft.phase,
+              trigger: draft.trigger,
+              condition: draft.condition,
+              actions: draft.actions,
+              enabled: draft.enabled,
+              order: draft.order,
+              chainHooks: draft.chainHooks,
+              execution: draft.execution,
+            }}
+            onImport={handleJsonImport}
+          />
+          <Button
+            type="button"
+            loading={editor.isSaving}
+            disabled={!canUpdate || !editor.isDirty}
+            onClick={() => void handleSave()}
+          >
+            {t("dataHooks.settings.save")}
+          </Button>
+        </div>
       </div>
 
       <div className={designerPreviewPanelBodyFillClassName}>

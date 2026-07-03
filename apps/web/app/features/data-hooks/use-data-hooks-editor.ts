@@ -17,6 +17,7 @@ import {
 } from "../../lib/api-client";
 
 interface DataHookDraftState {
+  readonly description?: string;
   readonly phase: DataHookPhase;
   readonly trigger: DataHookTrigger;
   readonly condition: DataHookConditionNode | null;
@@ -31,6 +32,9 @@ function buildDraftFromDefinition(
   definition: DataHookDefinitionRecord,
 ): DataHookDraftState {
   return {
+    ...(definition.description !== undefined
+      ? { description: definition.description }
+      : {}),
     phase: definition.phase,
     trigger: definition.trigger,
     condition: definition.condition ?? null,
@@ -131,6 +135,9 @@ export function useDataHooksEditor(entityName: string) {
     setIsSaving(true);
     try {
       const updated = await patchDataHook(selectedDefinition.id, {
+        ...(draft.description !== undefined
+          ? { description: draft.description || null }
+          : {}),
         phase: draft.phase,
         trigger: draft.trigger,
         condition: draft.condition,

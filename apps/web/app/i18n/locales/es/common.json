@@ -2646,6 +2646,13 @@
       "viewDescription": "JSON portable de definición de hook de automatización para transferencia o control de versiones.",
       "viewCopy": "Copiar JSON",
       "viewCopied": "Copiado",
+      "hook": {
+        "viewTitle": "JSON del hook actual",
+        "importTitle": "Importar JSON del hook",
+        "importDescriptionEdit": "Reemplaza la configuración del hook con la definición importada. El nombre del hook y la entidad no pueden cambiar. Guarda para persistir.",
+        "nameChangeError": "El nombre del hook no puede cambiarse mediante importación JSON.",
+        "entityChangeError": "La entidad no puede cambiarse mediante importación JSON."
+      },
       "catalog": {
         "viewTitle": "Catálogo JSON de hooks actual",
         "importTitle": "Importar catálogo JSON de hooks",
