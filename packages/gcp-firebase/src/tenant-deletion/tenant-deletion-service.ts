@@ -11,16 +11,24 @@ import {
   type TenantDeletionArchiveRepository,
   type TenantDeletionJobRepository,
 } from "@repo/firestore-converters";
+import { registeredUserConverter } from "@repo/firestore-converters";
 import {
   TENANT_DELETION_ARCHIVE_MIRROR_ROOT_DOC,
   TENANT_DELETION_ARCHIVE_MIRROR_SUBCOLLECTION,
   TENANT_DELETION_ARCHIVES_COLLECTION,
   TENANTS_COLLECTION,
+  USERS_COLLECTION,
+  registeredUserSchemaV1,
 } from "@repo/shared-types";
 
 import type { EntityDefinitionRepository } from "@repo/firestore-converters";
 import type { FirebaseAdminConfig } from "../firebase-admin.js";
 import { getFirestoreAdmin } from "../firebase-admin.js";
+import {
+  commitBatchDeletes,
+  createThrottledProgressReporter,
+  FIRESTORE_BATCH_LIMIT,
+} from "../firestore-bulk-helpers.js";
 import {
   computeDesiredIndexesFromRepository,
   deleteFirestoreIndex,
@@ -56,9 +64,11 @@ export interface TenantDeletionTaskPayload {
 }
 
 export async function removeTenantFromAllUsers(params: {
+  readonly firebaseAdminConfig: FirebaseAdminConfig;
   readonly registeredUserRepository: RegisteredUserRepository;
   readonly tenantId: string;
 }): Promise<number> {
+  const firestore = getFirestoreAdmin(params.firebaseAdminConfig);
   let updatedCount = 0;
   let cursor: string | undefined;
 
@@ -67,17 +77,42 @@ export async function removeTenantFromAllUsers(params: {
       limit: 100,
       cursor,
     });
-    for (const user of page.items) {
-      if (!user.tenants?.[params.tenantId]) {
+    const updates = page.items
+      .filter((user) => user.tenants?.[params.tenantId])
+      .map((user) => {
+        const nextTenants = { ...user.tenants };
+        Reflect.deleteProperty(nextTenants, params.tenantId);
+        return { user, nextTenants };
+      });
+
+    for (
+      let index = 0;
+      index < updates.length;
+      index += FIRESTORE_BATCH_LIMIT
+    ) {
+      const chunk = updates.slice(index, index + FIRESTORE_BATCH_LIMIT);
+      if (chunk.length === 0) {
         continue;
       }
-      const nextTenants = { ...user.tenants };
-      Reflect.deleteProperty(nextTenants, params.tenantId);
-      await params.registeredUserRepository.updateAccess(user.uid, {
-        tenants: nextTenants,
-      });
-      updatedCount += 1;
+
+      const nowIso = new Date().toISOString();
+      const batch = firestore.batch();
+      for (const { user, nextTenants } of chunk) {
+        const nextUser = registeredUserSchemaV1.parse({
+          ...user,
+          tenants: nextTenants,
+          updatedAt: nowIso,
+        });
+        batch.set(
+          firestore.collection(USERS_COLLECTION).doc(user.uid),
+          registeredUserConverter.write(nextUser),
+          { merge: false },
+        );
+      }
+      await batch.commit();
+      updatedCount += chunk.length;
     }
+
     cursor = page.nextCursor ?? undefined;
   } while (cursor);
 
@@ -98,12 +133,7 @@ export async function deleteAllTenantUserInvites(
     return 0;
   }
 
-  const firestore = getFirestoreAdmin(config);
-  const batch = firestore.batch();
-  for (const doc of snapshot.docs) {
-    batch.delete(doc.ref);
-  }
-  await batch.commit();
+  await commitBatchDeletes(snapshot.docs.map((doc) => doc.ref));
   return snapshot.size;
 }
 
@@ -192,18 +222,23 @@ export async function processTenantDeletion(
   );
 
   let progressState = { ...job.progress };
-  const updateProgress = async (
-    delta: Parameters<DocumentTreeProgressCallback>[0],
-  ) => {
-    progressState = {
-      collectionsCopied:
-        progressState.collectionsCopied + (delta.collectionsCopied ?? 0),
-      docsCopied: progressState.docsCopied + (delta.docsCopied ?? 0),
-      docsDeleted: progressState.docsDeleted + (delta.docsDeleted ?? 0),
-    };
-    await deps.jobRepository.update(payload.jobId, {
-      progress: progressState,
-    });
+  const throttledProgress = createThrottledProgressReporter(
+    async (delta) => {
+      progressState = {
+        collectionsCopied:
+          progressState.collectionsCopied + (delta.collectionsCopied ?? 0),
+        docsCopied: progressState.docsCopied + (delta.docsCopied ?? 0),
+        docsDeleted: progressState.docsDeleted + (delta.docsDeleted ?? 0),
+      };
+      await deps.jobRepository.update(payload.jobId, {
+        progress: progressState,
+      });
+    },
+    { flushEveryDocs: 500, flushEveryMs: 3000 },
+  );
+
+  const reportProgress: DocumentTreeProgressCallback = (delta) => {
+    throttledProgress.report(delta);
   };
 
   try {
@@ -216,10 +251,12 @@ export async function processTenantDeletion(
       config: deps.firebaseAdminConfig,
       tenantId: payload.tenantId,
       archiveId: payload.archiveId,
-      onProgress: updateProgress,
+      onProgress: reportProgress,
     });
+    await throttledProgress.close();
 
     await removeTenantFromAllUsers({
+      firebaseAdminConfig: deps.firebaseAdminConfig,
       registeredUserRepository: deps.registeredUserRepository,
       tenantId: payload.tenantId,
     });
@@ -231,8 +268,9 @@ export async function processTenantDeletion(
     const purgeProgress = await purgeLiveTenantData({
       config: deps.firebaseAdminConfig,
       tenantId: payload.tenantId,
-      onProgress: updateProgress,
+      onProgress: reportProgress,
     });
+    await throttledProgress.close();
 
     const gcsObjectsDeleted = await deleteTenantStoragePrefix(
       deps.firebaseAdminConfig,

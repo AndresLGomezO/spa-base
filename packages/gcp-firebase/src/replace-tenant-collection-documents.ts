@@ -1,34 +1,16 @@
-import {
-  type CollectionReference,
-  type DocumentReference,
-} from "firebase-admin/firestore";
+import { type CollectionReference } from "firebase-admin/firestore";
 
 import type { FirebaseAdminConfig } from "./firebase-admin.js";
 import { getFirestoreAdmin } from "./firebase-admin.js";
+import {
+  commitBatchDeletes,
+  FIRESTORE_BATCH_LIMIT,
+} from "./firestore-bulk-helpers.js";
 import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
-
-const FIRESTORE_BATCH_LIMIT = 500;
 
 export interface TenantCollectionDocument {
   readonly id: string;
   readonly data: Record<string, unknown>;
-}
-
-async function commitBatchDeletes(
-  docRefs: readonly DocumentReference[],
-): Promise<void> {
-  const firestore = docRefs[0]?.firestore;
-  if (!firestore || docRefs.length === 0) {
-    return;
-  }
-
-  for (let index = 0; index < docRefs.length; index += FIRESTORE_BATCH_LIMIT) {
-    const batch = firestore.batch();
-    for (const docRef of docRefs.slice(index, index + FIRESTORE_BATCH_LIMIT)) {
-      batch.delete(docRef);
-    }
-    await batch.commit();
-  }
 }
 
 async function commitBatchSets(

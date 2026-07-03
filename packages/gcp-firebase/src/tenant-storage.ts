@@ -154,6 +154,12 @@ export async function deleteTenantStoragePrefix(
   if (files.length === 0) {
     return 0;
   }
-  await Promise.all(files.map((file) => file.delete()));
+
+  const concurrentDeletes = 100;
+  for (let index = 0; index < files.length; index += concurrentDeletes) {
+    const chunk = files.slice(index, index + concurrentDeletes);
+    await Promise.all(chunk.map((file) => file.delete()));
+  }
+
   return files.length;
 }

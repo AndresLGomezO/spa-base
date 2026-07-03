@@ -1,4 +1,5 @@
 import type {
+  BulkWriter,
   CollectionReference,
   DocumentReference,
 } from "firebase-admin/firestore";
@@ -14,6 +15,7 @@ import {
   getFirestoreAdmin,
   type FirebaseAdminConfig,
 } from "../firebase-admin.js";
+import { createBulkWriterWithRetry } from "../firestore-bulk-helpers.js";
 
 export interface DocumentTreeProgress {
   readonly collectionsCopied: number;
@@ -31,29 +33,60 @@ export type DocumentTreeProgressCallback = (
   delta: DocumentTreeProgressDelta,
 ) => void;
 
+interface CopyDocumentTreeContext {
+  readonly bulkWriter: BulkWriter;
+  readonly onProgress?: DocumentTreeProgressCallback;
+}
+
+async function copyDocumentTreeInternal(
+  sourceRef: DocumentReference,
+  targetRef: DocumentReference,
+  context: CopyDocumentTreeContext,
+): Promise<void> {
+  const snapshot = await sourceRef.get();
+  if (snapshot.exists) {
+    context.bulkWriter.set(targetRef, snapshot.data() ?? {});
+  }
+
+  const subcollections = await sourceRef.listCollections();
+  await Promise.all(
+    subcollections.map(async (subcollection) => {
+      context.onProgress?.({ collectionsCopied: 1 });
+      const targetSubcollection = targetRef.collection(subcollection.id);
+      const docsSnapshot = await subcollection.get();
+      await Promise.all(
+        docsSnapshot.docs.map((doc) =>
+          copyDocumentTreeInternal(
+            doc.ref,
+            targetSubcollection.doc(doc.id),
+            context,
+          ),
+        ),
+      );
+    }),
+  );
+}
+
 export async function copyDocumentTree(
   sourceRef: DocumentReference,
   targetRef: DocumentReference,
   onProgress?: DocumentTreeProgressCallback,
 ): Promise<void> {
-  const snapshot = await sourceRef.get();
-  if (snapshot.exists) {
-    await targetRef.set(snapshot.data() ?? {});
-    onProgress?.({ docsCopied: 1 });
-  }
+  const bulkWriter = createBulkWriterWithRetry(sourceRef.firestore, {
+    onWriteSuccess: () => {
+      onProgress?.({ docsCopied: 1 });
+    },
+  });
 
-  const subcollections = await sourceRef.listCollections();
-  for (const subcollection of subcollections) {
-    onProgress?.({ collectionsCopied: 1 });
-    const targetSubcollection = targetRef.collection(subcollection.id);
-    const docsSnapshot = await subcollection.get();
-    for (const doc of docsSnapshot.docs) {
-      await copyDocumentTree(
-        doc.ref,
-        targetSubcollection.doc(doc.id),
-        onProgress,
-      );
-    }
+  try {
+    await copyDocumentTreeInternal(sourceRef, targetRef, {
+      bulkWriter,
+      onProgress,
+    });
+    await bulkWriter.close();
+  } catch (error) {
+    await bulkWriter.close();
+    throw error;
   }
 }
 
@@ -61,25 +94,24 @@ export async function deleteDocumentTree(
   docRef: DocumentReference,
   onProgress?: DocumentTreeProgressCallback,
 ): Promise<number> {
-  let deleted = 0;
-  const subcollections = await docRef.listCollections();
+  const firestore = docRef.firestore;
+  let docsDeleted = 0;
+  const bulkWriter = createBulkWriterWithRetry(firestore, {
+    onWriteSuccess: () => {
+      docsDeleted += 1;
+      onProgress?.({ docsDeleted: 1 });
+    },
+  });
 
-  for (const subcollection of subcollections) {
-    onProgress?.({ collectionsCopied: 1 });
-    const docsSnapshot = await subcollection.get();
-    for (const doc of docsSnapshot.docs) {
-      deleted += await deleteDocumentTree(doc.ref, onProgress);
-    }
+  try {
+    await firestore.recursiveDelete(docRef, bulkWriter);
+    await bulkWriter.close();
+  } catch (error) {
+    await bulkWriter.close();
+    throw error;
   }
 
-  const snapshot = await docRef.get();
-  if (snapshot.exists) {
-    await docRef.delete();
-    deleted += 1;
-    onProgress?.({ docsDeleted: 1 });
-  }
-
-  return deleted;
+  return docsDeleted;
 }
 
 export async function listTenantSubcollectionNames(
@@ -112,7 +144,7 @@ export async function copyTenantToArchiveMirror(params: {
 
   let collectionsCopied = 0;
   let docsCopied = 0;
-  let docsDeleted = 0;
+  const docsDeleted = 0;
 
   const trackProgress: DocumentTreeProgressCallback = (delta) => {
     if (delta.collectionsCopied) {
@@ -121,24 +153,36 @@ export async function copyTenantToArchiveMirror(params: {
     if (delta.docsCopied) {
       docsCopied += delta.docsCopied;
     }
-    if (delta.docsDeleted) {
-      docsDeleted += delta.docsDeleted;
-    }
     params.onProgress?.(delta);
   };
 
-  const subcollections = await tenantRef.listCollections();
-  for (const subcollection of subcollections) {
-    trackProgress({ collectionsCopied: 1 });
-    const docsSnapshot = await subcollection.get();
-    const targetCollection = mirrorRootRef.collection(subcollection.id);
-    for (const doc of docsSnapshot.docs) {
-      await copyDocumentTree(
-        doc.ref,
-        targetCollection.doc(doc.id),
-        trackProgress,
-      );
-    }
+  const bulkWriter = createBulkWriterWithRetry(firestore, {
+    onWriteSuccess: () => {
+      trackProgress({ docsCopied: 1 });
+    },
+  });
+
+  try {
+    const subcollections = await tenantRef.listCollections();
+    await Promise.all(
+      subcollections.map(async (subcollection) => {
+        trackProgress({ collectionsCopied: 1 });
+        const docsSnapshot = await subcollection.get();
+        const targetCollection = mirrorRootRef.collection(subcollection.id);
+        await Promise.all(
+          docsSnapshot.docs.map((doc) =>
+            copyDocumentTreeInternal(doc.ref, targetCollection.doc(doc.id), {
+              bulkWriter,
+              onProgress: trackProgress,
+            }),
+          ),
+        );
+      }),
+    );
+    await bulkWriter.close();
+  } catch (error) {
+    await bulkWriter.close();
+    throw error;
   }
 
   return {
@@ -159,15 +203,12 @@ export async function purgeLiveTenantData(params: {
     .doc(params.tenantId);
 
   let collectionsCopied = 0;
-  let docsCopied = 0;
+  const docsCopied = 0;
   let docsDeleted = 0;
 
   const trackProgress: DocumentTreeProgressCallback = (delta) => {
     if (delta.collectionsCopied) {
       collectionsCopied += delta.collectionsCopied;
-    }
-    if (delta.docsCopied) {
-      docsCopied += delta.docsCopied;
     }
     if (delta.docsDeleted) {
       docsDeleted += delta.docsDeleted;
@@ -176,19 +217,22 @@ export async function purgeLiveTenantData(params: {
   };
 
   const subcollections = await tenantRef.listCollections();
-  for (const subcollection of subcollections) {
-    trackProgress({ collectionsCopied: 1 });
-    const docsSnapshot = await subcollection.get();
-    for (const doc of docsSnapshot.docs) {
-      await deleteDocumentTree(doc.ref, trackProgress);
-    }
+  if (subcollections.length > 0) {
+    trackProgress({ collectionsCopied: subcollections.length });
   }
 
-  const tenantSnapshot = await tenantRef.get();
-  if (tenantSnapshot.exists) {
-    await tenantRef.delete();
-    docsDeleted += 1;
-    trackProgress({ docsDeleted: 1 });
+  const bulkWriter = createBulkWriterWithRetry(firestore, {
+    onWriteSuccess: () => {
+      trackProgress({ docsDeleted: 1 });
+    },
+  });
+
+  try {
+    await firestore.recursiveDelete(tenantRef, bulkWriter);
+    await bulkWriter.close();
+  } catch (error) {
+    await bulkWriter.close();
+    throw error;
   }
 
   return {
@@ -211,12 +255,18 @@ export async function purgeArchiveMirror(params: {
     .doc(TENANT_DELETION_ARCHIVE_MIRROR_ROOT_DOC);
 
   let deleted = 0;
-  const subcollections = await mirrorRootRef.listCollections();
-  for (const subcollection of subcollections) {
-    const docsSnapshot = await subcollection.get();
-    for (const doc of docsSnapshot.docs) {
-      deleted += await deleteDocumentTree(doc.ref);
-    }
+  const bulkWriter = createBulkWriterWithRetry(firestore, {
+    onWriteSuccess: () => {
+      deleted += 1;
+    },
+  });
+
+  try {
+    await firestore.recursiveDelete(mirrorRootRef, bulkWriter);
+    await bulkWriter.close();
+  } catch (error) {
+    await bulkWriter.close();
+    throw error;
   }
 
   const archiveSnapshot = await archiveRef.get();
@@ -231,10 +281,21 @@ export async function purgeArchiveMirror(params: {
 export async function deleteAllDocumentsInCollection(
   collection: CollectionReference,
 ): Promise<number> {
-  const snapshot = await collection.get();
+  const firestore = collection.firestore;
   let deleted = 0;
-  for (const doc of snapshot.docs) {
-    deleted += await deleteDocumentTree(doc.ref);
+  const bulkWriter = createBulkWriterWithRetry(firestore, {
+    onWriteSuccess: () => {
+      deleted += 1;
+    },
+  });
+
+  try {
+    await firestore.recursiveDelete(collection, bulkWriter);
+    await bulkWriter.close();
+  } catch (error) {
+    await bulkWriter.close();
+    throw error;
   }
+
   return deleted;
 }
