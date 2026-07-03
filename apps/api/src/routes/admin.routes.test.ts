@@ -44,6 +44,14 @@ vi.mock("../admin/seed-tenant-roles-from-templates.js", () => ({
   seedTenantRolesFromTemplates: vi.fn(async () => undefined),
 }));
 
+const enqueueTenantDeletionTask = vi.fn(async () => undefined);
+
+vi.mock("../admin/tenant-deletion-tasks.client.js", () => ({
+  createTenantDeletionTasksClient: vi.fn(() => ({
+    enqueueTenantDeletionTask,
+  })),
+}));
+
 vi.mock("@repo/gcp-firebase", () => ({
   configureIndexProvisioningQueue: vi.fn(),
   verifyFirebaseIdToken: vi.fn(async () => ({
@@ -171,6 +179,7 @@ describe("Admin routes", () => {
   beforeEach(() => {
     authState.uid = "superadmin_user";
     authState.tenantId = "tenant_a";
+    enqueueTenantDeletionTask.mockClear();
   });
 
   it("returns 403 for non-superadmin users", async () => {
@@ -349,5 +358,36 @@ describe("Admin routes", () => {
 
     expect(response.statusCode).toBe(400);
     expect(response.json().message).toContain("not active");
+  });
+
+  it("enqueues tenant deletion for superadmin", async () => {
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/admin/tenants/tenant_b/delete",
+      headers: authHeaders,
+      payload: { confirmTenantId: "tenant_b" },
+    });
+
+    expect(response.statusCode).toBe(202);
+    expect(response.json()).toMatchObject({
+      ok: true,
+      jobId: expect.stringMatching(/^tdjob_/),
+      archiveId: expect.stringMatching(/^tdarch_/),
+    });
+    expect(enqueueTenantDeletionTask).toHaveBeenCalledOnce();
+  });
+
+  it("returns 400 when tenant deletion confirmation mismatches", async () => {
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: "/admin/tenants/tenant_b/delete",
+      headers: authHeaders,
+      payload: { confirmTenantId: "wrong_id" },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().message).toContain("Confirmation");
   });
 });

@@ -222,22 +222,22 @@ describe("data-hook-definition-json", () => {
     expect(
       flatLoan?.actions.some((action) => action.type === "createRecords"),
     ).toBe(true);
-    const ld01Create = flatLoan?.actions.find(
+    const paymentPlanCreate = flatLoan?.actions.find(
       (action) => action.type === "createRecords",
     );
-    expect(ld01Create?.type).toBe("createRecords");
-    if (ld01Create?.type === "createRecords") {
-      expect(ld01Create.data.__loopState).toBeDefined();
-      expect(ld01Create.data.additionalPortion).toBeDefined();
+    expect(paymentPlanCreate?.type).toBe("createRecords");
+    if (paymentPlanCreate?.type === "createRecords") {
+      expect(paymentPlanCreate.data.__loopState).toBeDefined();
+      expect(paymentPlanCreate.data.additionalPortion).toBeDefined();
     }
 
-    const ld01Aggregate = flatLoan?.actions.find(
+    const paymentPlanAggregate = flatLoan?.actions.find(
       (action) =>
         action.type === "aggregateMatching" && action.as === "monthlyAddOns",
     );
-    expect(ld01Aggregate?.type).toBe("aggregateMatching");
-    if (ld01Aggregate?.type === "aggregateMatching") {
-      expect(ld01Aggregate.entity).toBe("loanMonthlyCost");
+    expect(paymentPlanAggregate?.type).toBe("aggregateMatching");
+    if (paymentPlanAggregate?.type === "aggregateMatching") {
+      expect(paymentPlanAggregate.entity).toBe("loanMonthlyCost");
     }
 
     const persistStart = hooks.find(
@@ -295,5 +295,34 @@ describe("data-hook-definition-json", () => {
           hook.name === "Exclude card installment loans from liability rollup",
       ),
     ).toBe(true);
+
+    const successNotificationHooks = [
+      "Create initial schedule row",
+      "Generate loan payment plan",
+      "Regenerate loan payment plan",
+    ] as const;
+
+    for (const hookName of successNotificationHooks) {
+      const hook = hooks.find((entry) => entry.name === hookName);
+      expect(hook, hookName).toBeDefined();
+      const createIndex = hook!.actions.findIndex(
+        (action) => action.type === "createRecords",
+      );
+      expect(createIndex, `${hookName} createRecords`).toBeGreaterThanOrEqual(0);
+      const trailing = hook!.actions.slice(createIndex + 1);
+      expect(
+        trailing.some(
+          (action) =>
+            action.type === "aggregateMatching" &&
+            action.as === "scheduleRowCount" &&
+            action.op === "count",
+        ),
+        `${hookName} scheduleRowCount aggregate`,
+      ).toBe(true);
+      expect(
+        trailing.some((action) => action.type === "sendNotification"),
+        `${hookName} success sendNotification`,
+      ).toBe(true);
+    }
   });
 });

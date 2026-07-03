@@ -8,6 +8,7 @@ import {
   uiBuilderPresetRecordSchema,
 } from "@repo/entities";
 import { dataHookDefinitionSchema } from "@repo/hooks";
+import { formulaDefinitionSchema } from "@repo/formula-definitions/types";
 import { metricDefinitionRecordSchema } from "@repo/metrics-engine/types";
 import { tenantRoleRecordSchema } from "@repo/rbac";
 import { tenantAppearanceSchema } from "@repo/shared-types";
@@ -27,6 +28,7 @@ export const tenantBundleExportDocumentSchema = z
     uiBuilderPresets: z.array(uiBuilderPresetRecordSchema),
     tenantDashboardLayout: tenantDashboardLayoutRecordSchema.nullable(),
     roles: z.array(tenantRoleRecordSchema),
+    formulaDefinitions: z.array(formulaDefinitionSchema).default([]),
     hooks: z.array(dataHookDefinitionSchema),
     metricDefinitions: z.array(metricDefinitionRecordSchema),
     entityQueryDefinitions: z.array(entityQueryDefinitionRecordSchema),
@@ -45,6 +47,7 @@ export interface TenantBundleImportCounts {
   readonly uiBuilderPresets: number;
   readonly tenantDashboardLayout: number;
   readonly roles: number;
+  readonly formulaDefinitions: number;
   readonly hooks: number;
   readonly metricDefinitions: number;
   readonly entityQueryDefinitions: number;
@@ -61,6 +64,7 @@ export function countTenantBundleSections(
     uiBuilderPresets: bundle.uiBuilderPresets.length,
     tenantDashboardLayout: bundle.tenantDashboardLayout ? 1 : 0,
     roles: bundle.roles.length,
+    formulaDefinitions: bundle.formulaDefinitions.length,
     hooks: bundle.hooks.length,
     metricDefinitions: bundle.metricDefinitions.length,
     entityQueryDefinitions: bundle.entityQueryDefinitions.length,

@@ -31,6 +31,9 @@
     "dashboardLoadFailed": "Unable to load the dashboard.",
     "dashboardEmpty": "Your dashboard is empty. Configure it in Settings → Design layout → Dashboard."
   },
+  "navigation": {
+    "back": "Back"
+  },
   "nav": {
     "home": "Home",
     "settings": "Settings",
@@ -46,6 +49,7 @@
     "automation": "Automation",
     "analytics": "Data & Analytics",
     "metricsNav": "Metrics",
+    "formulasNav": "Formulas",
     "queryBuilderNav": "Query Builder",
     "customViewsNav": "Custom Views",
     "entityCategories": "Entity categories",
@@ -157,6 +161,7 @@
     },
     "actions": {
       "refresh": "Refresh",
+      "refreshing": "Refreshing…",
       "viewJson": "View JSON",
       "copyJson": "Copy JSON",
       "copy": "Copy",
@@ -191,6 +196,8 @@
     "summary": {
       "title": "Overview",
       "subtitle": "{{source}} diagnostics",
+      "lastUpdated": "Updated {{time}}",
+      "refreshingData": "Refreshing data…",
       "totalRecords": "Total records",
       "errorRate": "Error rate",
       "avgDuration": "Avg duration",
@@ -1036,6 +1043,32 @@
     "errorStepConsoleGeneric": "Check Firebase Console → Firestore → Indexes for this collection group.",
     "errorStepModel": "Edit the entity to remove unused relation filters, or contact an administrator."
   },
+  "entitySave": {
+    "savingCreate": "Saving {{entity}}…",
+    "savingUpdate": "Updating {{entity}}…",
+    "review": "Review"
+  },
+  "notifications": {
+    "bellLabel": "Notifications",
+    "bellAriaLabel": "Notifications, {{count}} unread",
+    "panelTitle": "Notifications",
+    "pageTitle": "Notifications",
+    "empty": "No notifications yet.",
+    "allCaughtUp": "You're all caught up.",
+    "loading": "Loading notifications…",
+    "markAllRead": "Mark all read",
+    "viewAll": "View all",
+    "filterAll": "All",
+    "filterUnread": "Unread",
+    "filterAriaLabel": "Filter notifications",
+    "groupToday": "Today",
+    "groupEarlier": "Earlier",
+    "loadMore": "Load more",
+    "fromHook": "From {{hook}}",
+    "onEntity": "on {{entity}}",
+    "newFromHook": "From {{hook}}",
+    "viewRecord": "View record"
+  },
   "indexProvisioning": {
     "environmentBlocked": {
       "retryHint": "Track progress in the",
@@ -1457,7 +1490,20 @@
         "confirmAction": "Replace configuration",
         "importSuccess": "Tenant configuration imported.",
         "importFailed": "Unable to import tenant configuration."
-      }
+      },
+      "dangerZoneTitle": "Danger zone",
+      "dangerZoneDescription": "Permanently delete this tenant, all related data, and storage. A Firestore archive is kept for 30 days before automatic purge.",
+      "deleteTrigger": "Delete tenant permanently",
+      "deleteTitle": "Delete tenant permanently",
+      "deleteWarning": "This action cannot be undone. The tenant will be suspended immediately and removed in the background.",
+      "deleteDescription": "All tenant configuration, business records, indexes, memberships, and storage objects will be removed. Data is archived in Firestore for 30 days, then purged automatically.",
+      "deleteConfirmLabel": "Type {{tenantId}} to confirm",
+      "deleteConfirmAction": "Delete tenant",
+      "deleteInProgress": "Deleting…",
+      "deleteProgress": "Status: {{status}} — archived {{docsCopied}} docs, deleted {{docsDeleted}} live docs.",
+      "deleteSuccess": "Tenant deleted.",
+      "deleteFailed": "Unable to delete tenant.",
+      "deleted": "This tenant has been deleted."
     },
     "observability": {
       "title": "Observability",
@@ -1477,6 +1523,10 @@
       "requestPerfTrace": {
         "title": "Request performance trace",
         "description": "Persist per-request RBAC, query, hook, and total timing for the Debugger request performance view."
+      },
+      "seedHookObservability": {
+        "title": "Seed hook observability",
+        "description": "Persist hook executions, hook logs, and notifications while replaying hooks during database seed."
       }
     },
     "appearance": {
@@ -1918,6 +1968,134 @@
       "nameRequired": "Name is required.",
       "iconRequired": "Icon is required.",
       "orderRequired": "Order must be a whole number."
+    }
+  },
+  "formulas": {
+    "title": "Formulas",
+    "description": "Reusable expression definitions referenced from data hooks and automation.",
+    "loading": "Loading formulas…",
+    "listTitle": "Formula library",
+    "create": "New formula",
+    "createTitle": "Create formula",
+    "editTitle": "Edit {{name}}",
+    "viewTitle": "View {{name}}",
+    "view": "View",
+    "edit": "Edit",
+    "delete": {
+      "title": "Delete formula",
+      "confirm": "Delete",
+      "message": "Delete \"{{name}}\"? This cannot be undone."
+    },
+    "save": "Save",
+    "saved": "Formula saved.",
+    "saveFailed": "Failed to save formula.",
+    "deleted": "Formula deleted.",
+    "deleteFailed": "Failed to delete formula.",
+    "loadFailed": "Failed to load formulas.",
+    "forbidden": "You do not have permission to view formulas.",
+    "cancel": "Cancel",
+    "disabled": "Disabled",
+    "list": {
+      "title": "Formulas",
+      "add": "New formula",
+      "expandPanel": "Expand formulas panel",
+      "collapsePanel": "Collapse formulas panel",
+      "empty": "No formulas match the current filters.",
+      "emptySource": "No formulas in this library.",
+      "emptyFiltered": "No formulas match the current filters.",
+      "edit": "Edit formula",
+      "delete": "Delete formula",
+      "filter": "Filter",
+      "sort": "Sort",
+      "clearFilters": "Clear filters",
+      "removeBadge": "Remove filter: {{label}}",
+      "filterBySource": "Source",
+      "filterByStatus": "Status",
+      "summary": "{{count}} {{status}} ({{percent}}%)",
+      "sortNameAsc": "Name (A–Z)",
+      "sortNameDesc": "Name (Z–A)",
+      "sortSource": "Source",
+      "sortUpdatedDesc": "Recently updated",
+      "sourceFilter": "Source",
+      "sourceAll": "All sources",
+      "sourcePlatform": "Platform",
+      "sourceTenant": "Tenant",
+      "statusFilter": "Status",
+      "statusAll": "All statuses",
+      "statusEnabled": "Enabled",
+      "statusDisabled": "Disabled",
+      "searchPlaceholder": "Search formulas…",
+      "searchClear": "Clear search"
+    },
+    "settings": {
+      "empty": "Select or create a formula to configure it.",
+      "save": "Save",
+      "saved": "Formula saved.",
+      "status": "Status",
+      "enabled": "Enabled",
+      "disabled": "Disabled",
+      "platformReadOnly": "Platform formula (read-only)",
+      "sections": {
+        "metadata": "Metadata",
+        "preview": "Expression structure",
+        "body": "Body expression"
+      }
+    },
+    "preview": {
+      "title": "Expression structure"
+    },
+    "metadata": {
+      "createTitle": "New formula",
+      "editTitle": "Edit formula",
+      "createAction": "Create",
+      "saveAction": "Save",
+      "created": "Formula created.",
+      "updated": "Formula updated.",
+      "platformReadOnly": "Platform formulas cannot be renamed."
+    },
+    "json": {
+      "viewTrigger": "View JSON",
+      "importTrigger": "Import JSON",
+      "pasteLabel": "Paste JSON",
+      "uploadLabel": "Upload file",
+      "skeletonTitle": "Example envelope",
+      "skeletonShow": "Show example",
+      "skeletonHide": "Hide example",
+      "valid": "JSON is valid.",
+      "invalid": "JSON has errors:",
+      "apply": "Apply",
+      "cancel": "Cancel",
+      "readOnlyHint": "You do not have permission to apply imports.",
+      "viewDescription": "Portable formula-definition envelope for import elsewhere.",
+      "viewCopy": "Copy JSON",
+      "viewCopied": "Copied",
+      "formula": {
+        "viewTitle": "Formula JSON",
+        "importTitle": "Import formula JSON",
+        "importDescriptionEdit": "Paste a formula-definition envelope. The name must match the formula being edited.",
+        "nameChangeError": "Imported name must match the current formula name."
+      },
+      "catalog": {
+        "viewTitle": "Formula catalog JSON",
+        "importTitle": "Import formula catalog",
+        "importDescription": "Replace tenant formulas with the imported catalog. Platform formulas are not affected.",
+        "confirmTitle": "Replace formula catalog?",
+        "confirmDescription": "This will create, update, and delete tenant formulas to match the import.",
+        "confirmAction": "Replace catalog",
+        "replaceSummary": "{{created}} to create, {{updated}} to update, {{deleted}} to delete.",
+        "importSuccess": "Formula catalog imported.",
+        "importFailed": "Failed to import formula catalog."
+      }
+    },
+    "fields": {
+      "name": "Name",
+      "description": "Description",
+      "body": "Body expression"
+    },
+    "expression": {
+      "formula": "Formula",
+      "formulaName": "Formula name",
+      "selectFormula": "Select a formula"
     }
   },
   "metrics": {
@@ -2560,6 +2738,7 @@
       "switchInput": "Input value",
       "switchCases": "Cases",
       "switchCaseIndex": "Case {{index}}",
+      "switchCaseCollapsibleTitle": "Case {{index}}: when {{when}} → {{then}}",
       "switchWhen": "When equals",
       "switchThen": "Then value",
       "switchDefault": "Default value",

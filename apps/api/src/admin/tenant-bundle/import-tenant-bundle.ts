@@ -97,6 +97,12 @@ function buildCollectionDocuments(
       id: record.id,
       data: toPlainRecord(record as unknown as Record<string, unknown>),
     })),
+    __formula_definitions: bundle.formulaDefinitions
+      .filter((record) => record.source === "tenant")
+      .map((record) => ({
+        id: record.id,
+        data: toPlainRecord(record as unknown as Record<string, unknown>),
+      })),
     __data_hooks: bundle.hooks.map((record) => ({
       id: record.id,
       data: serializeDataHookForFirestore(

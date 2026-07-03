@@ -45,6 +45,7 @@ const server = await buildWorkerServer({
   entityDefinitionRepository,
   vertexAiConfig,
   firebaseAdminConfig,
+  indexProjectId: workerEnv.GCP_PROJECT_ID,
   isAiStepTraceEnabled: () => runtimeSettingsCache.isAiStepTraceEnabled(),
   ...dataHookProcessorDeps,
 });

@@ -45,6 +45,7 @@ function createMinimalBundle(): TenantBundleExportDocument {
     uiBuilderPresets: [],
     tenantDashboardLayout: null,
     roles: [],
+    formulaDefinitions: [],
     hooks: [],
     metricDefinitions: [],
     entityQueryDefinitions: [],

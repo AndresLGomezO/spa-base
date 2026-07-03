@@ -13,7 +13,6 @@ import {
 import { getAuth } from "firebase-admin/auth";
 
 import { apiEnv } from "../../config/env.js";
-import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
 import {
   RATES_LOCAL_IMPORT_OWNER_EMAIL,
   RATES_LOCAL_IMPORT_TENANT_ROLE,
@@ -22,6 +21,7 @@ import { replaySeedPaymentScheduleHooks } from "./seed-replay-payment-schedule-h
 import {
   createRatesRecordSeedContext,
   ensureRatesRecord,
+  snapshotRatesSeedRecord,
 } from "./seed-record-helpers.js";
 
 const LOCAL_IMPORT_DIR = join(process.cwd(), ".local/tenant-import");
@@ -135,7 +135,6 @@ export async function seedLocalTenantImportIfPresent(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
   definitionRecords: readonly EntityDefinitionRecord[],
-  entityRuntime: EntityRuntimeContext,
   importDir: string = LOCAL_IMPORT_DIR,
 ): Promise<{ readonly seeded: boolean; readonly ownerEmail: string | null }> {
   const presentSpecs = listPresentLocalImportSpecs(importDir);
@@ -167,8 +166,13 @@ export async function seedLocalTenantImportIfPresent(
     `[seed] Importing ${presentSpecs.length} local JSON file(s) for ${ownerEmail} from ${importDir}...`,
   );
 
-  const loanDetails: Array<{ id: string; financialItemId: string }> = [];
+  const loanDetails: Array<{
+    id: string;
+    financialItemId: string;
+    record: Record<string, unknown>;
+  }> = [];
   const financialItemIds: string[] = [];
+  const financialItemRecords = new Map<string, Record<string, unknown>>();
 
   for (const spec of presentSpecs) {
     const filePath = join(importDir, spec.fileName);
@@ -176,15 +180,34 @@ export async function seedLocalTenantImportIfPresent(
 
     for (const record of records) {
       const { id, ...business } = record;
-      await ensureRatesRecord(context, spec.entityName, id as string, business);
+      const recordId = id as string;
+      await ensureRatesRecord(context, spec.entityName, recordId, business);
 
       if (spec.entityName === "financialItem") {
-        financialItemIds.push(id as string);
+        financialItemIds.push(recordId);
+        financialItemRecords.set(
+          recordId,
+          snapshotRatesSeedRecord(
+            context,
+            spec.entityName,
+            recordId,
+            business,
+          ),
+        );
       }
       if (spec.entityName === "loanDetails") {
         const financialItemId = business.financialItemId;
         if (typeof financialItemId === "string" && financialItemId.length > 0) {
-          loanDetails.push({ id: id as string, financialItemId });
+          loanDetails.push({
+            id: recordId,
+            financialItemId,
+            record: snapshotRatesSeedRecord(
+              context,
+              spec.entityName,
+              recordId,
+              business,
+            ),
+          });
         }
       }
     }
@@ -199,10 +222,10 @@ export async function seedLocalTenantImportIfPresent(
     firebaseAdminConfig,
     definitionRecords,
     ownerId,
-    entityRuntime,
     {
       loanDetails,
       financialItemIds,
+      financialItemRecords,
     },
   );
 

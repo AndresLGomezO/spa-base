@@ -283,6 +283,8 @@ export const dataHookActionSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("sendNotification"),
     message: expressionNodeSchema,
+    recordEntity: expressionNodeSchema.optional(),
+    recordId: expressionNodeSchema.optional(),
   }),
   z.object({
     type: z.literal("callWebhook"),

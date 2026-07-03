@@ -18,6 +18,8 @@ import { AppHeader, AppSidebar } from "../components/sidebar/AppSidebar";
 import { CreateTenantModalProvider } from "../components/platform/create-tenant-modal-context";
 import { CreateTenantModal } from "../components/platform/CreateTenantModal";
 import { IndexProvisioningGlobalBanner } from "../components/index-provisioning/IndexProvisioningGlobalBanner";
+import { NotificationsProvider } from "../features/notifications/notifications-context";
+import { EntitySaveManagerProvider } from "../features/entity-save/entity-save-context";
 
 function MainOutlet() {
   const location = useLocation();
@@ -48,23 +50,27 @@ export default function PrivateLayoutRoute() {
             <NavItemsProvider>
               <PageTitleProvider>
                 <EntityFormModalProvider>
-                  <CreateTenantModalProvider>
-                    <ThirdRailProvider>
-                      <SidebarProvider>
-                        <div className="relative flex h-dvh overflow-hidden">
-                          <AppSidebar />
-                          <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-                            <AppHeader />
-                            <MainOutlet />
-                          </div>
-                          <ThirdRailHost />
-                        </div>
-                      </SidebarProvider>
-                      <CreateTenantModal />
-                      <IndexProvisioningGlobalBanner />
-                    </ThirdRailProvider>
-                  </CreateTenantModalProvider>
-                  <EntityFormModalHost />
+                  <NotificationsProvider>
+                    <EntitySaveManagerProvider>
+                      <CreateTenantModalProvider>
+                        <ThirdRailProvider>
+                          <SidebarProvider>
+                            <div className="relative flex h-dvh overflow-hidden">
+                              <AppSidebar />
+                              <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
+                                <AppHeader />
+                                <MainOutlet />
+                              </div>
+                              <ThirdRailHost />
+                            </div>
+                          </SidebarProvider>
+                          <CreateTenantModal />
+                          <IndexProvisioningGlobalBanner />
+                        </ThirdRailProvider>
+                      </CreateTenantModalProvider>
+                      <EntityFormModalHost />
+                    </EntitySaveManagerProvider>
+                  </NotificationsProvider>
                 </EntityFormModalProvider>
               </PageTitleProvider>
             </NavItemsProvider>

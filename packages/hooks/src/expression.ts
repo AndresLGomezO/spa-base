@@ -128,10 +128,27 @@ export type ExpressionFieldNode =
       readonly alias: string;
     };
 
+/** Max nested formula calls per evaluation stack. */
+export const MAX_FORMULA_DEPTH = 16;
+
+export interface FormulaDefinitionForEval {
+  readonly name: string;
+  readonly inputs: readonly {
+    readonly name: string;
+    readonly required?: boolean;
+  }[];
+  readonly body: ExpressionNode;
+}
+
+export interface FormulaResolver {
+  resolve(name: string, tenantId: string): FormulaDefinitionForEval | undefined;
+}
+
 export type ExpressionNode =
   | { readonly kind: "literal"; readonly value: ExpressionLiteralValue }
   | ExpressionFieldNode
   | { readonly kind: "var"; readonly name: ExpressionVariable }
+  | { readonly kind: "input"; readonly name: string }
   | {
       readonly kind: "unary";
       readonly op: ExpressionUnaryOperator;
@@ -153,6 +170,11 @@ export type ExpressionNode =
       readonly input: ExpressionNode;
       readonly cases: readonly ExpressionSwitchCase[];
       readonly default: ExpressionNode;
+    }
+  | {
+      readonly kind: "formula";
+      readonly name: string;
+      readonly inputs: Readonly<Record<string, ExpressionNode>>;
     };
 
 function enumValues<T extends string>(values: readonly T[]): [T, ...T[]] {
@@ -204,6 +226,10 @@ export const expressionNodeSchema: z.ZodType<ExpressionNode> = z.lazy(() =>
       name: z.enum(enumValues(EXPRESSION_VARIABLES)),
     }),
     z.object({
+      kind: z.literal("input"),
+      name: z.string().trim().min(1),
+    }),
+    z.object({
       kind: z.literal("unary"),
       op: z.enum(enumValues(EXPRESSION_UNARY_OPERATORS)),
       operand: expressionNodeSchema,
@@ -225,6 +251,11 @@ export const expressionNodeSchema: z.ZodType<ExpressionNode> = z.lazy(() =>
       cases: z.array(expressionSwitchCaseSchema).min(1).max(MAX_SWITCH_CASES),
       default: expressionNodeSchema,
     }),
+    z.object({
+      kind: z.literal("formula"),
+      name: z.string().trim().min(1),
+      inputs: z.record(z.string().trim().min(1), expressionNodeSchema),
+    }),
   ]),
 ) as z.ZodType<ExpressionNode>;
 
@@ -237,6 +268,15 @@ export interface ExpressionScope {
   readonly userId?: string;
   readonly loopIndex?: number;
   readonly loopState?: number;
+  /** Bound formula input values when evaluating a formula body. */
+  readonly inputs?: Readonly<Record<string, ExpressionValue>>;
+  /** Active formula names on the evaluation stack (cycle guard). */
+  readonly formulaStack?: ReadonlySet<string>;
+  /** Resolves tenant and platform formulas by name. */
+  readonly formulaResolver?: FormulaResolver;
+  readonly tenantId?: string;
+  /** Per-run memo for invariant formula evaluations (e.g. createRecords loops). */
+  readonly formulaResultCache?: Map<string, ExpressionValue>;
 }
 
 export class ExpressionEvaluationError extends Error {
@@ -602,6 +642,242 @@ function evaluateCallNode(
   return evaluateCall(node.fn, args, scope);
 }
 
+const loopDependentFormulaBodies = new WeakMap<
+  FormulaDefinitionForEval,
+  boolean
+>();
+const loopDependentFormulaNames = new Set<string>();
+
+function formulaBodyDependsOnLoopVars(
+  body: ExpressionNode,
+  resolver?: FormulaResolver,
+  tenantId?: string,
+  stack: ReadonlySet<string> = new Set(),
+): boolean {
+  let depends = false;
+  walkExpressionNodes(body, (current) => {
+    if (depends) {
+      return;
+    }
+    if (
+      current.kind === "var" &&
+      (current.name === "loopIndex" || current.name === "loopState")
+    ) {
+      depends = true;
+      return;
+    }
+    if (current.kind === "formula" && resolver && tenantId) {
+      if (loopDependentFormulaNames.has(current.name)) {
+        depends = true;
+        return;
+      }
+      if (stack.has(current.name)) {
+        return;
+      }
+      const nested = resolver.resolve(current.name, tenantId);
+      if (
+        nested &&
+        formulaDependsOnLoopVars(
+          nested,
+          resolver,
+          tenantId,
+          new Set([...stack, current.name]),
+        )
+      ) {
+        depends = true;
+      }
+    }
+  });
+  return depends;
+}
+
+function formulaDependsOnLoopVars(
+  definition: FormulaDefinitionForEval,
+  resolver: FormulaResolver,
+  tenantId: string,
+  stack: ReadonlySet<string> = new Set(),
+): boolean {
+  const cached = loopDependentFormulaBodies.get(definition);
+  if (cached !== undefined) {
+    if (cached) {
+      loopDependentFormulaNames.add(definition.name);
+    }
+    return cached;
+  }
+  if (stack.has(definition.name)) {
+    return false;
+  }
+
+  const depends = formulaBodyDependsOnLoopVars(
+    definition.body,
+    resolver,
+    tenantId,
+    new Set([...stack, definition.name]),
+  );
+  loopDependentFormulaBodies.set(definition, depends);
+  if (depends) {
+    loopDependentFormulaNames.add(definition.name);
+  }
+  return depends;
+}
+
+function isLoopDependentFormula(
+  definition: FormulaDefinitionForEval,
+  resolver: FormulaResolver,
+  tenantId: string,
+): boolean {
+  return formulaDependsOnLoopVars(definition, resolver, tenantId);
+}
+
+function stableSerializeExpressionValue(value: ExpressionValue): string {
+  if (value == null) {
+    return "null";
+  }
+  if (typeof value === "number" || typeof value === "boolean") {
+    return String(value);
+  }
+  if (typeof value === "string") {
+    return JSON.stringify(value);
+  }
+  return JSON.stringify(value);
+}
+
+function buildFormulaCacheKey(
+  name: string,
+  inputValues: Readonly<Record<string, ExpressionValue>>,
+): string {
+  const inputEntries = Object.entries(inputValues).sort(([left], [right]) =>
+    left.localeCompare(right),
+  );
+  const serializedInputs = inputEntries
+    .map(
+      ([inputName, value]) =>
+        `${inputName}:${stableSerializeExpressionValue(value)}`,
+    )
+    .join(",");
+  return `${name}|${serializedInputs}`;
+}
+
+function evaluateFormulaNode(
+  node: Extract<ExpressionNode, { kind: "formula" }>,
+  scope: ExpressionScope,
+): ExpressionValue {
+  if (!scope.formulaResolver) {
+    throw new ExpressionEvaluationError(
+      `Formula "${node.name}" requires a formula resolver.`,
+    );
+  }
+  if (!scope.tenantId) {
+    throw new ExpressionEvaluationError(
+      `Formula "${node.name}" requires tenantId in expression scope.`,
+    );
+  }
+
+  const stack = scope.formulaStack ?? new Set<string>();
+  if (stack.has(node.name)) {
+    throw new ExpressionEvaluationError(
+      `Circular formula reference detected: ${node.name}.`,
+    );
+  }
+  if (stack.size >= MAX_FORMULA_DEPTH) {
+    throw new ExpressionEvaluationError(
+      `Formula call depth exceeds the maximum of ${MAX_FORMULA_DEPTH}.`,
+    );
+  }
+
+  const inputValues: Record<string, ExpressionValue> = {};
+  for (const [inputName, inputNode] of Object.entries(node.inputs)) {
+    inputValues[inputName] = evaluateExpression(inputNode, scope);
+  }
+
+  const cache = scope.formulaResultCache;
+  const cacheKey =
+    cache && !loopDependentFormulaNames.has(node.name)
+      ? buildFormulaCacheKey(node.name, inputValues)
+      : undefined;
+  if (cacheKey && cache?.has(cacheKey)) {
+    return cache.get(cacheKey)!;
+  }
+
+  const definition = scope.formulaResolver.resolve(node.name, scope.tenantId);
+  if (!definition) {
+    throw new ExpressionEvaluationError(`Formula "${node.name}" not found.`);
+  }
+
+  for (const inputSpec of definition.inputs) {
+    if (inputSpec.required === false) {
+      continue;
+    }
+    if (inputValues[inputSpec.name] == null) {
+      throw new ExpressionEvaluationError(
+        `Formula "${node.name}" missing required input "${inputSpec.name}".`,
+      );
+    }
+  }
+
+  const formulaScope: ExpressionScope = {
+    ...scope,
+    inputs: inputValues,
+    formulaStack: new Set([...stack, node.name]),
+  };
+
+  const result = evaluateExpression(definition.body, formulaScope);
+  if (
+    cacheKey &&
+    cache &&
+    !isLoopDependentFormula(definition, scope.formulaResolver, scope.tenantId)
+  ) {
+    cache.set(cacheKey, result);
+  }
+  return result;
+}
+
+export function walkExpressionNodes(
+  node: ExpressionNode,
+  visit: (node: ExpressionNode) => void,
+): void {
+  visit(node);
+  if (node.kind === "unary") {
+    walkExpressionNodes(node.operand, visit);
+    return;
+  }
+  if (node.kind === "binary") {
+    walkExpressionNodes(node.left, visit);
+    walkExpressionNodes(node.right, visit);
+    return;
+  }
+  if (node.kind === "call") {
+    for (const arg of node.args) {
+      walkExpressionNodes(arg, visit);
+    }
+    return;
+  }
+  if (node.kind === "switch") {
+    walkExpressionNodes(node.input, visit);
+    for (const switchCase of node.cases) {
+      walkExpressionNodes(switchCase.when, visit);
+      walkExpressionNodes(switchCase.then, visit);
+    }
+    walkExpressionNodes(node.default, visit);
+    return;
+  }
+  if (node.kind === "formula") {
+    for (const inputNode of Object.values(node.inputs)) {
+      walkExpressionNodes(inputNode, visit);
+    }
+  }
+}
+
+export function collectFormulaNames(node: ExpressionNode): readonly string[] {
+  const names: string[] = [];
+  walkExpressionNodes(node, (current) => {
+    if (current.kind === "formula") {
+      names.push(current.name);
+    }
+  });
+  return names;
+}
+
 export function evaluateExpression(
   node: ExpressionNode,
   scope: ExpressionScope,
@@ -620,6 +896,8 @@ export function evaluateExpression(
         node.source === "previous" ? scope.previous : scope.current,
         node.path,
       );
+    case "input":
+      return scope.inputs?.[node.name] ?? null;
     case "var":
       if (node.name === "now") {
         return scope.now.toISOString();
@@ -648,6 +926,8 @@ export function evaluateExpression(
     }
     case "call":
       return evaluateCallNode(node, scope);
+    case "formula":
+      return evaluateFormulaNode(node, scope);
     case "switch": {
       if (node.cases.length > MAX_SWITCH_CASES) {
         throw new ExpressionEvaluationError(

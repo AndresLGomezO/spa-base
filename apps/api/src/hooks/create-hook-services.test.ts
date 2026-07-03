@@ -66,6 +66,17 @@ function buildEntityRuntime() {
             return record;
           },
         ),
+        createMany: vi.fn(
+          async (
+            _tenantId: string,
+            batch: readonly Record<string, unknown>[],
+          ) => {
+            for (const record of batch) {
+              records.set(record.id as string, record);
+            }
+            return batch;
+          },
+        ),
         update: vi.fn(),
         findById: vi.fn(),
         findByField: vi.fn(async () => ({ items: [] })),

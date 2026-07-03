@@ -18,6 +18,8 @@ export interface EntityFormModalRequest {
     Record<string, Record<string, unknown> | null>
   >;
   readonly formDesignId?: string;
+  readonly draftValues?: Readonly<Record<string, unknown>>;
+  readonly draftFieldErrors?: Readonly<Record<string, string>>;
   readonly onClose?: () => void;
 }
 

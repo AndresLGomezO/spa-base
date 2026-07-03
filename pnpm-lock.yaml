@@ -320,6 +320,9 @@ importers:
       '@repo/firestore-converters':
         specifier: workspace:*
         version: link:../../packages/firestore-converters
+      '@repo/formula-definitions':
+        specifier: workspace:*
+        version: link:../../packages/formula-definitions
       '@repo/gcp-firebase':
         specifier: workspace:*
         version: link:../../packages/gcp-firebase
@@ -436,6 +439,9 @@ importers:
       '@repo/firestore-indexes':
         specifier: workspace:*
         version: link:../../packages/firestore-indexes
+      '@repo/formula-definitions':
+        specifier: workspace:*
+        version: link:../../packages/formula-definitions
       '@repo/hooks':
         specifier: workspace:*
         version: link:../../packages/hooks
@@ -691,6 +697,9 @@ importers:
       '@repo/firestore-converters':
         specifier: workspace:*
         version: link:../../packages/firestore-converters
+      '@repo/formula-definitions':
+        specifier: workspace:*
+        version: link:../../packages/formula-definitions
       '@repo/gcp-firebase':
         specifier: workspace:*
         version: link:../../packages/gcp-firebase
@@ -1258,6 +1267,9 @@ importers:
       '@repo/event-engine':
         specifier: workspace:*
         version: link:../event-engine
+      '@repo/formula-definitions':
+        specifier: workspace:*
+        version: link:../formula-definitions
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
@@ -1270,6 +1282,9 @@ importers:
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      '@repo/user-notifications':
+        specifier: workspace:*
+        version: link:../user-notifications
       nanoid:
         specifier: 'catalog:'
         version: 5.1.11
@@ -1304,6 +1319,40 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../entities
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.22.3)(yaml@2.9.0)
+
+  packages/formula-definitions:
+    dependencies:
+      '@repo/firestore-converters':
+        specifier: workspace:*
+        version: link:../firestore-converters
+      '@repo/hooks':
+        specifier: workspace:*
+        version: link:../hooks
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
     devDependencies:
       '@repo/eslint-config':
         specifier: workspace:*
@@ -1368,6 +1417,9 @@ importers:
       '@repo/firestore-indexes':
         specifier: workspace:*
         version: link:../firestore-indexes
+      '@repo/formula-definitions':
+        specifier: workspace:*
+        version: link:../formula-definitions
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
@@ -1383,6 +1435,9 @@ importers:
       '@repo/shared-types':
         specifier: workspace:*
         version: link:../shared-types
+      '@repo/user-notifications':
+        specifier: workspace:*
+        version: link:../user-notifications
       firebase-admin:
         specifier: 'catalog:'
         version: 13.10.0
@@ -1420,6 +1475,9 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../entities
+      '@repo/user-notifications':
+        specifier: workspace:*
+        version: link:../user-notifications
       cron-parser:
         specifier: 'catalog:'
         version: 4.9.0
@@ -1577,6 +1635,9 @@ importers:
       '@repo/entity-queries':
         specifier: workspace:*
         version: link:../entity-queries
+      '@repo/formula-definitions':
+        specifier: workspace:*
+        version: link:../formula-definitions
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
@@ -1654,6 +1715,9 @@ importers:
       '@repo/entity-queries':
         specifier: workspace:*
         version: link:../entity-queries
+      '@repo/formula-definitions':
+        specifier: workspace:*
+        version: link:../formula-definitions
       '@repo/hooks':
         specifier: workspace:*
         version: link:../hooks
@@ -1964,6 +2028,34 @@ importers:
       react-dom:
         specifier: 'catalog:'
         version: 19.2.6(react@19.2.6)
+      typescript:
+        specifier: 'catalog:'
+        version: 5.9.3
+      vitest:
+        specifier: 'catalog:'
+        version: 3.2.4(@types/node@22.19.19)(jiti@2.7.0)(jsdom@26.1.0)(lightningcss@1.32.0)(terser@5.48.0)(tsx@4.22.3)(yaml@2.9.0)
+
+  packages/user-notifications:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.4.3
+    devDependencies:
+      '@repo/eslint-config':
+        specifier: workspace:*
+        version: link:../eslint-config
+      '@repo/typescript-config':
+        specifier: workspace:*
+        version: link:../typescript-config
+      '@types/node':
+        specifier: 'catalog:'
+        version: 22.19.19
+      eslint:
+        specifier: 'catalog:'
+        version: 9.39.4(jiti@2.7.0)
+      prettier:
+        specifier: 'catalog:'
+        version: 3.8.3
       typescript:
         specifier: 'catalog:'
         version: 5.9.3

@@ -99,6 +99,13 @@ export function wrapHookEntityServicesWithMetrics(
       metrics.recordCreate(entityName);
       return result;
     },
+    async createMany(entityName, records, options) {
+      const result = await services.createMany(entityName, records, options);
+      for (let index = 0; index < records.length; index += 1) {
+        metrics.recordCreate(entityName);
+      }
+      return result;
+    },
     async update(entityName, id, data, options) {
       const result = await services.update(entityName, id, data, options);
       metrics.recordUpdate(entityName);

@@ -49,6 +49,10 @@ export function createFirestoreAdminPlatformRuntimeSettingsRepository(
           parsed.requestPerfTraceEnabled ??
           existing?.requestPerfTraceEnabled ??
           null,
+        seedHookObservabilityEnabled:
+          parsed.seedHookObservabilityEnabled ??
+          existing?.seedHookObservabilityEnabled ??
+          null,
         updatedAt: nowIso,
         updatedBy,
       });

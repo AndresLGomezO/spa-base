@@ -16,7 +16,10 @@ import {
 
 import type { DataHookExecutionRepository } from "@repo/firestore-converters";
 import type { HookLogMessageRepository } from "@repo/firestore-converters";
-import type { DataHookWebhookRequest } from "@repo/hooks";
+import type { UserNotificationRepository } from "@repo/firestore-converters";
+import type { DataHookJobPayload, DataHookWebhookRequest } from "@repo/hooks";
+import type { FormulaRuntimeContext } from "@repo/formula-definitions/runtime";
+import type { FormulaResolver } from "@repo/hooks";
 
 import type { WorkerHookEntityRuntime } from "./worker-hook-entity-runtime.js";
 import type { WorkerPermissionDeps } from "./worker-permission-deps.js";
@@ -25,13 +28,16 @@ import {
   createDataHookExecutionRecorderForTenant,
   createRecordDataHookExecution,
 } from "./record-data-hook-execution.js";
+import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
 
 export interface WorkerCrudHookDeps {
   readonly hookRuntime: HookRuntimeContext;
+  readonly formulaRuntime: FormulaRuntimeContext;
   readonly entityRuntime: WorkerHookEntityRuntime;
   readonly permissionDeps: WorkerPermissionDeps;
   readonly hookExecutionRepository?: DataHookExecutionRepository;
   readonly hookLogMessageRepository?: HookLogMessageRepository;
+  readonly userNotificationRepository?: UserNotificationRepository;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
 }
 
@@ -58,11 +64,16 @@ export async function resolveHookUserContext(
   tenantId: string,
   uid: string,
   permissionDeps: WorkerPermissionDeps,
+  options?: {
+    readonly getKnownPermissions?: (tenantId: string) => readonly string[];
+  },
 ): Promise<ResolvedHookUserContext> {
   const [profile, roleCatalog, knownPermissions] = await Promise.all([
     permissionDeps.getUserAccessProfile(uid),
     permissionDeps.getRoleCatalog(tenantId),
-    getTenantKnownPermissions(tenantId),
+    options?.getKnownPermissions
+      ? Promise.resolve(options.getKnownPermissions(tenantId))
+      : getTenantKnownPermissions(tenantId),
   ]);
 
   const accessProfile = profile ?? {
@@ -109,6 +120,11 @@ async function dispatchChainedEntityHooks(options: {
   readonly callWebhook?: (
     request: import("@repo/hooks").DataHookWebhookRequest,
   ) => Promise<void>;
+  readonly sendUserNotification?: (
+    input: import("@repo/user-notifications").CreateUserNotificationInput,
+  ) => Promise<void>;
+  readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
+  readonly formulaResolver?: FormulaResolver;
 }): Promise<Record<string, unknown>> {
   const event = formatHookEvent({
     entity: options.entityName,
@@ -125,6 +141,9 @@ async function dispatchChainedEntityHooks(options: {
     user: options.user,
     depth: options.depth,
     visitedHookIds: options.visitedHookIds,
+    ...(options.formulaResolver
+      ? { formulaResolver: options.formulaResolver }
+      : {}),
     services: {
       logger: options.logger,
       entities: options.entityServices,
@@ -135,6 +154,12 @@ async function dispatchChainedEntityHooks(options: {
         ? { dataHookExecutionRecorder: options.dataHookExecutionRecorder }
         : {}),
       ...(options.callWebhook ? { callWebhook: options.callWebhook } : {}),
+      ...(options.sendUserNotification
+        ? { sendUserNotification: options.sendUserNotification }
+        : {}),
+      ...(options.enqueueDataHookJob
+        ? { enqueueDataHookJob: options.enqueueDataHookJob }
+        : {}),
     },
   };
 
@@ -146,8 +171,10 @@ export function buildHookEntityServices(options: {
   readonly user: ResolvedHookUserContext;
   readonly deps: WorkerCrudHookDeps;
   readonly logger: HookLogger;
+  readonly formulaResolver?: FormulaResolver;
+  readonly enqueueDataHookJob?: (payload: DataHookJobPayload) => Promise<void>;
 }): HookEntityServices {
-  const { user, deps, logger } = options;
+  const { user, deps, logger, formulaResolver, enqueueDataHookJob } = options;
   const recordDataHookExecution = deps.hookExecutionRepository
     ? createRecordDataHookExecution(deps.hookExecutionRepository, user.tenantId)
     : undefined;
@@ -187,6 +214,16 @@ export function buildHookEntityServices(options: {
         ...(recordDataHookExecution ? { recordDataHookExecution } : {}),
         ...(dataHookExecutionRecorder ? { dataHookExecutionRecorder } : {}),
         ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+        ...(deps.userNotificationRepository
+          ? {
+              sendUserNotification: createSendUserNotification(
+                deps.userNotificationRepository,
+                user.tenantId,
+              ),
+            }
+          : {}),
+        ...(formulaResolver ? { formulaResolver } : {}),
+        ...(enqueueDataHookJob ? { enqueueDataHookJob } : {}),
       }),
   });
 

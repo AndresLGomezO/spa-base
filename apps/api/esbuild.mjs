@@ -1,5 +1,5 @@
 import * as esbuild from "esbuild";
-import { readFile, stat } from "node:fs/promises";
+import { copyFile, readFile, stat } from "node:fs/promises";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -30,24 +30,39 @@ const forceExternalPlugin = {
     build.onResolve({ filter: /^google-auth-library/ }, markExternal);
     build.onResolve({ filter: /^cron-parser/ }, markExternal);
     build.onResolve({ filter: /^luxon/ }, markExternal);
+    build.onResolve({ filter: /formula-admin\.js$/ }, markExternal);
   },
 };
 
 const rootDir = dirname(fileURLToPath(import.meta.url));
+const platformFormulasSource = join(
+  rootDir,
+  "../../packages/formula-definitions/src/platform-formulas.json",
+);
 
 await esbuild.build({
-  entryPoints: ["src/index.ts"],
+  entryPoints: {
+    index: "src/index.ts",
+    "formula-admin": "src/formulas/formula-admin-entry.ts",
+  },
   bundle: true,
   platform: "node",
   target: "node22",
   format: "esm",
-  outfile: "dist/index.js",
+  outdir: "dist",
   sourcemap: true,
   packages: "bundle",
   external: npmExternals,
   plugins: [forceExternalPlugin],
+  legalComments: "none",
+  minifyWhitespace: true,
   logLevel: "info",
 });
+
+await copyFile(
+  platformFormulasSource,
+  join(rootDir, "dist/platform-formulas.json"),
+);
 
 assertDirectRuntimeDependencies({
   appName: "api",
@@ -55,7 +70,7 @@ assertDirectRuntimeDependencies({
   packageJsonPath: join(rootDir, "package.json"),
 });
 
-const { size } = await stat("dist/index.js");
+const { size } = await stat(join(rootDir, "dist/index.js"));
 // Soft cap on bundled workspace code. The GCP guard below catches accidental client inlining.
 const maxBundleBytes = 2_070_000;
 if (size > maxBundleBytes) {
@@ -65,7 +80,7 @@ if (size > maxBundleBytes) {
   );
 }
 
-const bundle = await readFile("dist/index.js", "utf8");
+const bundle = await readFile(join(rootDir, "dist/index.js"), "utf8");
 if (
   bundle.includes("__require2") ||
   bundle.includes("google-auth-library") ||

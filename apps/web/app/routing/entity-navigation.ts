@@ -38,11 +38,11 @@ export function buildCurrentReturnTo(
 }
 
 export function isSafeAppReturnTo(path: string): boolean {
-  if (!path.startsWith("/app/")) {
+  if (!path.startsWith("/") || path.startsWith("//")) {
     return false;
   }
 
-  if (path.includes("://") || path.startsWith("//")) {
+  if (path.includes("://") || path.startsWith("/login")) {
     return false;
   }
 

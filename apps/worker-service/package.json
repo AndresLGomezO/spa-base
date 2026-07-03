@@ -22,6 +22,7 @@
     "@repo/debug-logs": "workspace:*",
     "@repo/entities": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
+    "@repo/formula-definitions": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/rbac": "workspace:*",

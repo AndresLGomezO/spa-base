@@ -18,6 +18,7 @@ export type EditorKind =
   | "field"
   | "now"
   | "loopIndex"
+  | "formula"
   | "binary"
   | "unary"
   | "call"
@@ -43,6 +44,7 @@ export function resolveEditorKind(node: ExpressionNode): EditorKind {
   if (node.kind === "unary") return "unary";
   if (node.kind === "call") return "call";
   if (node.kind === "switch") return "switch";
+  if (node.kind === "formula") return "formula";
   return "advanced";
 }
 
@@ -63,6 +65,8 @@ export function createDefaultNode(
       return { kind: "var", name: "now" };
     case "loopIndex":
       return { kind: "var", name: "loopIndex" };
+    case "formula":
+      return { kind: "formula", name: "", inputs: {} };
     case "binary":
       return {
         kind: "binary",

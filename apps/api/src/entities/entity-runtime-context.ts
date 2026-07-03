@@ -173,7 +173,7 @@ export class EntityRuntimeContext {
     );
   }
 
-  private invalidateTenantRuntime(tenantId: string): void {
+  invalidateTenantRuntime(tenantId: string): void {
     const prefix = `${tenantId}:`;
     for (const key of this.repositoryCache.keys()) {
       if (key.startsWith(prefix)) {

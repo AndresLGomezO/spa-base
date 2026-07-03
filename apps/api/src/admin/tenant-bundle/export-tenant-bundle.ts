@@ -5,6 +5,7 @@ import {
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminDataHookRepository,
+  createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminTenantDashboardLayoutRepository,
   createFirestoreAdminTenantRepository,
@@ -51,6 +52,8 @@ export async function exportTenantBundle(
   const hookRepository = createFirestoreAdminDataHookRepository(
     deps.firebaseAdminConfig,
   );
+  const formulaDefinitionRepository =
+    createFirestoreAdminFormulaDefinitionRepository(deps.firebaseAdminConfig);
   const metricDefinitionRepository =
     createFirestoreAdminMetricDefinitionRepository(deps.firebaseAdminConfig);
   const queryDefinitionRepository =
@@ -74,6 +77,7 @@ export async function exportTenantBundle(
     tenantDashboardLayout,
     roles,
     hooks,
+    formulaDefinitions,
     metricDefinitions,
     entityQueryDefinitions,
     customViews,
@@ -85,6 +89,7 @@ export async function exportTenantBundle(
     dashboardLayoutRepository.get(tenantId),
     roleRepository.list(tenantId),
     hookRepository.list(tenantId),
+    formulaDefinitionRepository.list(tenantId),
     metricDefinitionRepository.list(tenantId),
     queryDefinitionRepository.list(tenantId),
     customViewRepository.list(tenantId),
@@ -102,6 +107,9 @@ export async function exportTenantBundle(
     tenantDashboardLayout,
     roles,
     hooks,
+    formulaDefinitions: formulaDefinitions.filter(
+      (record) => record.source === "tenant",
+    ),
     metricDefinitions,
     entityQueryDefinitions,
     customViews,

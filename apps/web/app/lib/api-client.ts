@@ -1444,6 +1444,66 @@ export async function listDebugEvents(options?: {
   return apiRequest(`/api/debug/events${query ? `?${query}` : ""}`);
 }
 
+export interface UserNotificationRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly userId: string;
+  readonly message: string;
+  readonly level: "info" | "error";
+  readonly read: boolean;
+  readonly readAt?: string;
+  readonly createdAt: string;
+  readonly hookId?: string;
+  readonly hookName?: string;
+  readonly entityName?: string;
+  readonly recordId?: string;
+  readonly event?: string;
+}
+
+export async function listNotifications(options?: {
+  readonly limit?: number;
+  readonly cursor?: string;
+  readonly unreadOnly?: boolean;
+}): Promise<{
+  readonly items: readonly UserNotificationRecord[];
+  readonly nextCursor: string | null;
+}> {
+  const params = new URLSearchParams();
+  if (options?.limit != null) {
+    params.set("limit", String(options.limit));
+  }
+  if (options?.cursor) {
+    params.set("cursor", options.cursor);
+  }
+  if (options?.unreadOnly) {
+    params.set("unreadOnly", "true");
+  }
+  const query = params.toString();
+  return apiRequest(`/api/notifications${query ? `?${query}` : ""}`);
+}
+
+export async function getUnreadNotificationCount(): Promise<{
+  readonly unreadCount: number;
+}> {
+  return apiRequest("/api/notifications/unread-count");
+}
+
+export async function markNotificationRead(
+  id: string,
+): Promise<UserNotificationRecord> {
+  return apiRequest(`/api/notifications/${encodeURIComponent(id)}/read`, {
+    method: "PATCH",
+  });
+}
+
+export async function markAllNotificationsRead(): Promise<{
+  readonly updatedCount: number;
+}> {
+  return apiRequest("/api/notifications/read-all", {
+    method: "PATCH",
+  });
+}
+
 interface DataHookExecutionRecord {
   readonly id: string;
   readonly hookId: string;
@@ -1552,4 +1612,80 @@ export async function listUiBuilderAiSuggestions(
   }>(
     `/api/entities/${encodeURIComponent(entityName)}/ui-builder/ai-suggestions?surface=${encodeURIComponent(surface)}`,
   );
+}
+
+export interface FormulaDefinitionRecord {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly name: string;
+  readonly description?: string;
+  readonly inputs: readonly {
+    readonly name: string;
+    readonly description?: string;
+    readonly required?: boolean;
+  }[];
+  readonly body: import("@repo/hooks").ExpressionNode;
+  readonly enabled: boolean;
+  readonly source: "platform" | "tenant";
+  readonly createdAt: string;
+  readonly updatedAt: string;
+}
+
+export async function listFormulaDefinitions(): Promise<{
+  readonly items: readonly FormulaDefinitionRecord[];
+}> {
+  return apiRequest<{ readonly items: readonly FormulaDefinitionRecord[] }>(
+    "/api/formula-definitions",
+  );
+}
+
+type CreateFormulaDefinitionInput = Omit<
+  FormulaDefinitionRecord,
+  "id" | "tenantId" | "source" | "createdAt" | "updatedAt"
+>;
+
+export async function createFormulaDefinition(
+  input: CreateFormulaDefinitionInput,
+): Promise<FormulaDefinitionRecord> {
+  return apiRequest<FormulaDefinitionRecord>("/api/formula-definitions", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function updateFormulaDefinition(
+  id: string,
+  input: Partial<CreateFormulaDefinitionInput>,
+): Promise<FormulaDefinitionRecord> {
+  return apiRequest<FormulaDefinitionRecord>(`/api/formula-definitions/${id}`, {
+    method: "PATCH",
+    body: input,
+  });
+}
+
+export async function deleteFormulaDefinition(id: string): Promise<void> {
+  await apiRequest<void>(`/api/formula-definitions/${id}`, {
+    method: "DELETE",
+  });
+}
+
+export async function replaceFormulaDefinitionsCatalog(body: unknown): Promise<{
+  readonly counts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly items: readonly FormulaDefinitionRecord[];
+}> {
+  return apiRequest<{
+    readonly counts: {
+      readonly created: number;
+      readonly updated: number;
+      readonly deleted: number;
+    };
+    readonly items: readonly FormulaDefinitionRecord[];
+  }>("/api/formula-definitions/catalog", {
+    method: "PUT",
+    body,
+  });
 }

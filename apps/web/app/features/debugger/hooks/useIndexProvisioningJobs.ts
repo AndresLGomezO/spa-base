@@ -7,7 +7,7 @@ import {
   type IndexProvisioningJob,
 } from "../../../lib/api-client";
 
-const TENANT_INDEX_PROCESS_LIST_QUERY_KEY =
+export const TENANT_INDEX_PROCESS_LIST_QUERY_KEY =
   "tenant-index-process-list" as const;
 
 type IndexProvisioningProcessListFilter =

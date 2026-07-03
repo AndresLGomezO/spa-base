@@ -1,4 +1,5 @@
 import type { HookEntityServices, HookLogger } from "@repo/hooks";
+import type { FormulaResolver } from "@repo/hooks";
 
 import {
   createHookEntityAccessControl,
@@ -10,6 +11,7 @@ import {
   createRecordDataHookExecution,
   createDataHookExecutionRecorderForTenant,
 } from "./record-data-hook-execution.js";
+import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
 
 interface ResolvedHookUserContext {
   readonly tenantId: string;
@@ -28,8 +30,9 @@ export function buildHookEntityServices(options: {
   readonly user: ResolvedHookUserContext;
   readonly deps: CrudHookDeps;
   readonly logger: HookLogger;
+  readonly formulaResolver?: FormulaResolver;
 }): HookEntityServices {
-  const { user, deps, logger } = options;
+  const { user, deps, logger, formulaResolver } = options;
 
   const services = createHookEntityServices({
     entityRuntime: deps.entityRuntime,
@@ -74,6 +77,15 @@ export function buildHookEntityServices(options: {
             }
           : {}),
         ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+        ...(deps.userNotificationRepository
+          ? {
+              sendUserNotification: createSendUserNotification(
+                deps.userNotificationRepository,
+                user.tenantId,
+              ),
+            }
+          : {}),
+        ...(formulaResolver ? { formulaResolver } : {}),
       }),
   });
 

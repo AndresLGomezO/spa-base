@@ -18,11 +18,23 @@ export interface PaginatedResult<T> {
   readonly totalCount: number;
 }
 
+export interface EntityCreateOptions {
+  readonly skipExistsCheck?: boolean;
+}
+
 export interface TenantScopedEntityRepository<
   TRecord extends { readonly id: string; readonly tenantId: string },
   TUpdate = Partial<TRecord>,
 > {
-  create(tenantId: string, record: TRecord): Promise<TRecord>;
+  create(
+    tenantId: string,
+    record: TRecord,
+    options?: EntityCreateOptions,
+  ): Promise<TRecord>;
+  createMany(
+    tenantId: string,
+    records: readonly TRecord[],
+  ): Promise<readonly TRecord[]>;
   findAll(params: ListParams): Promise<PaginatedResult<TRecord>>;
   findByField(params: FindByFieldParams): Promise<PaginatedResult<TRecord>>;
   findById(id: string, tenantId: string): Promise<TRecord | null>;

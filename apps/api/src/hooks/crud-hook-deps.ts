@@ -14,6 +14,7 @@ export async function resolveCrudHookEntityServices(
 ): Promise<HookEntityServices> {
   await deps.hookRuntime.ensureTenantHooksLoaded(tenantId);
   const ctx = await loadRequestPermissions(request, deps.permissionDeps);
+  const formulaResolver = await deps.formulaRuntime.getFormulaResolver(tenantId);
 
   return buildHookEntityServices({
     user: {
@@ -27,6 +28,7 @@ export async function resolveCrudHookEntityServices(
       tenantRoleNames: ctx.tenantRoleNames ?? [],
     },
     deps,
+    formulaResolver,
     logger: createTenantHookLogger(
       app,
       tenantId,

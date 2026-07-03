@@ -31,9 +31,11 @@ describe("schedule tick route", () => {
   it("accepts tick requests and returns 202", async () => {
     const deps = {
       hookRuntime: {} as never,
+      formulaRuntime: {} as never,
       entityRuntime: {} as never,
       permissionDeps: {} as never,
       firebaseAdminConfig: { projectId: "demo" },
+      indexProjectId: "demo",
     };
 
     const app = fastify({ logger: false });

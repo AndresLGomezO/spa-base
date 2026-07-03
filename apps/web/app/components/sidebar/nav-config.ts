@@ -5,6 +5,7 @@ import {
   Building2,
   Database,
   FolderTree,
+  FunctionSquare,
   Gauge,
   Home,
   Layers,
@@ -33,6 +34,7 @@ export type NavLabelKey =
   | "automation"
   | "analytics"
   | "metricsNav"
+  | "formulasNav"
   | "queryBuilderNav"
   | "customViewsNav"
   | "roles"
@@ -154,6 +156,14 @@ export const SETTINGS_METRICS_NAV_ITEM: NavLinkConfig = {
   to: "/settings/metrics",
   matchPath: "/settings/metrics",
   icon: BarChart3,
+};
+
+export const SETTINGS_FORMULAS_NAV_ITEM: NavLinkConfig = {
+  id: "formulas",
+  labelKey: "formulasNav",
+  to: "/settings/formulas",
+  matchPath: "/settings/formulas",
+  icon: FunctionSquare,
 };
 
 export const SETTINGS_QUERY_BUILDER_NAV_ITEM: NavLinkConfig = {

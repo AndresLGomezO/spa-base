@@ -1,5 +1,5 @@
 describe("Routing tenant guard", () => {
-  it("redirects unauthenticated users from home to login", () => {
+  it("shows loading on home while tenant auto-bind is pending", () => {
     cy.intercept("GET", "**/auth/validate", {
       statusCode: 200,
       body: {
@@ -19,6 +19,7 @@ describe("Routing tenant guard", () => {
     }).as("validate");
 
     cy.visit("/");
-    cy.location("pathname", { timeout: 10000 }).should("eq", "/login");
+    cy.location("pathname", { timeout: 10000 }).should("eq", "/");
+    cy.get('[role="status"]', { timeout: 10000 }).should("exist");
   });
 });

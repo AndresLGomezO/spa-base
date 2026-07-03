@@ -18,6 +18,7 @@ import {
   shouldShowCallArgument,
 } from "./expression-editor-utils";
 import { expressionControlClassName } from "./expression-editor-shared";
+import { useExpressionEditorReadOnly } from "./expression-editor-read-only-context";
 
 interface CallExpressionPanelProps {
   readonly value: Extract<ExpressionNode, { kind: "call" }>;
@@ -47,6 +48,7 @@ export function CallExpressionPanel({
   renderNode,
 }: CallExpressionPanelProps) {
   const { t } = useTranslation("common");
+  const readOnly = useExpressionEditorReadOnly();
   const functions = listExpressionFunctions();
   const useOptionalThirdArg = value.fn === "substring" && value.args.length > 2;
 
@@ -122,6 +124,7 @@ export function CallExpressionPanel({
         <Select
           className={expressionControlClassName}
           value={value.fn}
+          disabled={readOnly}
           onChange={(event) =>
             handleFunctionChange(event.target.value as ExpressionFunction)
           }
@@ -163,6 +166,7 @@ export function CallExpressionPanel({
                     type="button"
                     variant="ghost"
                     size="sm"
+                    disabled={readOnly}
                     onClick={() => handleRemoveArgument(index)}
                   >
                     {t("dataHooks.expression.removeArgument")}
@@ -173,6 +177,7 @@ export function CallExpressionPanel({
                 <Select
                   className={expressionControlClassName}
                   value={isDateUnitLiteral(arg) ? arg.value : "DAY"}
+                  disabled={readOnly}
                   onChange={(event) =>
                     handleDateUnitChange(index, event.target.value as DateUnit)
                   }
@@ -204,6 +209,7 @@ export function CallExpressionPanel({
           <input
             type="checkbox"
             checked={useOptionalThirdArg}
+            disabled={readOnly}
             onChange={(event) =>
               handleOptionalThirdArgToggle(event.target.checked)
             }
@@ -217,6 +223,7 @@ export function CallExpressionPanel({
           type="button"
           variant="outline"
           size="sm"
+          disabled={readOnly}
           onClick={handleAddArgument}
         >
           {t("dataHooks.expression.addArgument")}

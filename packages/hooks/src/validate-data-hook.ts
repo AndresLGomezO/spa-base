@@ -13,7 +13,11 @@ import {
   type PatchDataHookInput,
 } from "./data-hook-definition.js";
 import type { ExpressionNode } from "./expression.js";
-import { isArrayLiteralNode } from "./expression.js";
+import {
+  collectFormulaNames,
+  isArrayLiteralNode,
+  walkExpressionNodes,
+} from "./expression.js";
 import { validateCreateRecordsLiteralCount } from "./create-records-utils.js";
 import {
   getScheduleScope,
@@ -34,34 +38,29 @@ export function validateDataHookEntity(
   }
 }
 
-function walkExpressionNodes(
-  node: ExpressionNode,
-  visit: (node: ExpressionNode) => void,
+function validateFormulaNames(
+  names: readonly string[],
+  available: ReadonlySet<string>,
 ): void {
-  visit(node);
-  if (node.kind === "unary") {
-    walkExpressionNodes(node.operand, visit);
-    return;
-  }
-  if (node.kind === "binary") {
-    walkExpressionNodes(node.left, visit);
-    walkExpressionNodes(node.right, visit);
-    return;
-  }
-  if (node.kind === "call") {
-    for (const arg of node.args) {
-      walkExpressionNodes(arg, visit);
+  for (const name of names) {
+    if (!available.has(name)) {
+      throw new HookExecutionError(
+        `Expression references unknown formula "${name}".`,
+      );
     }
-    return;
   }
-  if (node.kind === "switch") {
-    walkExpressionNodes(node.input, visit);
-    for (const switchCase of node.cases) {
-      walkExpressionNodes(switchCase.when, visit);
-      walkExpressionNodes(switchCase.then, visit);
-    }
-    walkExpressionNodes(node.default, visit);
-  }
+}
+
+function validateExpressionReferences(
+  node: ExpressionNode,
+  availableLoaded: ReadonlySet<string>,
+  availableAggregates: ReadonlySet<string>,
+  availableFormulas: ReadonlySet<string>,
+): void {
+  rejectArrayLiteralsInExpression(node);
+  validateLoadedAliases(collectLoadedAliases(node), availableLoaded);
+  validateAggregateAliases(collectAggregateAliases(node), availableAggregates);
+  validateFormulaNames(collectFormulaNames(node), availableFormulas);
 }
 
 function collectLoadedAliases(node: ExpressionNode): readonly string[] {
@@ -84,24 +83,17 @@ function collectAggregateAliases(node: ExpressionNode): readonly string[] {
   return aliases;
 }
 
-function collectLoadedAliasesInRecord(
-  record: Readonly<Record<string, ExpressionNode>>,
-): readonly string[] {
-  const aliases: string[] = [];
-  for (const node of Object.values(record)) {
-    aliases.push(...collectLoadedAliases(node));
+function walkConditionNodes(
+  node: DataHookConditionNode,
+  visitLeaf: (leaf: DataHookCondition) => void,
+): void {
+  if (node.type === "condition") {
+    visitLeaf(node);
+    return;
   }
-  return aliases;
-}
-
-function collectAggregateAliasesInRecord(
-  record: Readonly<Record<string, ExpressionNode>>,
-): readonly string[] {
-  const aliases: string[] = [];
-  for (const node of Object.values(record)) {
-    aliases.push(...collectAggregateAliases(node));
+  for (const child of node.children) {
+    walkConditionNodes(child, visitLeaf);
   }
-  return aliases;
 }
 
 function validateLoadedAliases(
@@ -140,23 +132,11 @@ function rejectArrayLiteralsInExpression(node: ExpressionNode): void {
   });
 }
 
-function walkConditionNodes(
-  node: DataHookConditionNode,
-  visitLeaf: (leaf: DataHookCondition) => void,
-): void {
-  if (node.type === "condition") {
-    visitLeaf(node);
-    return;
-  }
-  for (const child of node.children) {
-    walkConditionNodes(child, visitLeaf);
-  }
-}
-
 function validateConditionExpressions(
   condition: DataHookConditionNode,
   availableLoaded: ReadonlySet<string>,
   availableAggregates: ReadonlySet<string>,
+  availableFormulas: ReadonlySet<string>,
 ): void {
   walkConditionNodes(condition, (leaf) => {
     const allowsArray = leaf.operator === "in" || leaf.operator === "notIn";
@@ -173,6 +153,7 @@ function validateConditionExpressions(
         collectAggregateAliases(leaf.value),
         availableAggregates,
       );
+      validateFormulaNames(collectFormulaNames(leaf.value), availableFormulas);
     }
   });
 }
@@ -181,114 +162,107 @@ function validateActionExpressions(
   action: DataHookAction,
   availableLoaded: ReadonlySet<string>,
   availableAggregates: ReadonlySet<string>,
+  availableFormulas: ReadonlySet<string>,
 ): void {
   switch (action.type) {
     case "setField":
-      rejectArrayLiteralsInExpression(action.value);
-      validateLoadedAliases(
-        collectLoadedAliases(action.value),
+      validateExpressionReferences(
+        action.value,
         availableLoaded,
-      );
-      validateAggregateAliases(
-        collectAggregateAliases(action.value),
         availableAggregates,
+        availableFormulas,
       );
       return;
     case "createRecord":
       for (const node of Object.values(action.data)) {
-        rejectArrayLiteralsInExpression(node);
+        validateExpressionReferences(
+          node,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
       }
-      validateLoadedAliases(
-        collectLoadedAliasesInRecord(action.data),
-        availableLoaded,
-      );
-      validateAggregateAliases(
-        collectAggregateAliasesInRecord(action.data),
-        availableAggregates,
-      );
       return;
     case "createRecords":
-      rejectArrayLiteralsInExpression(action.count);
+      validateExpressionReferences(
+        action.count,
+        availableLoaded,
+        availableAggregates,
+        availableFormulas,
+      );
       if (action.startIndex) {
-        rejectArrayLiteralsInExpression(action.startIndex);
-        validateLoadedAliases(
-          collectLoadedAliases(action.startIndex),
+        validateExpressionReferences(
+          action.startIndex,
           availableLoaded,
-        );
-        validateAggregateAliases(
-          collectAggregateAliases(action.startIndex),
           availableAggregates,
+          availableFormulas,
         );
       }
-      validateLoadedAliases(
-        collectLoadedAliases(action.count),
-        availableLoaded,
-      );
-      validateAggregateAliases(
-        collectAggregateAliases(action.count),
-        availableAggregates,
-      );
       for (const node of Object.values(action.data)) {
-        rejectArrayLiteralsInExpression(node);
+        validateExpressionReferences(
+          node,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
       }
-      validateLoadedAliases(
-        collectLoadedAliasesInRecord(action.data),
-        availableLoaded,
-      );
-      validateAggregateAliases(
-        collectAggregateAliasesInRecord(action.data),
-        availableAggregates,
-      );
       return;
     case "updateMatching":
       for (const node of Object.values(action.set)) {
-        rejectArrayLiteralsInExpression(node);
+        validateExpressionReferences(
+          node,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
       }
-      validateLoadedAliases(
-        collectLoadedAliasesInRecord(action.set),
-        availableLoaded,
-      );
-      validateAggregateAliases(
-        collectAggregateAliasesInRecord(action.set),
-        availableAggregates,
-      );
       return;
     case "deleteRecord":
     case "getRecord":
-      rejectArrayLiteralsInExpression(action.id);
-      validateLoadedAliases(collectLoadedAliases(action.id), availableLoaded);
-      validateAggregateAliases(
-        collectAggregateAliases(action.id),
+      validateExpressionReferences(
+        action.id,
+        availableLoaded,
         availableAggregates,
+        availableFormulas,
       );
       return;
     case "sendNotification":
-      rejectArrayLiteralsInExpression(action.message);
-      validateLoadedAliases(
-        collectLoadedAliases(action.message),
+      validateExpressionReferences(
+        action.message,
         availableLoaded,
-      );
-      validateAggregateAliases(
-        collectAggregateAliases(action.message),
         availableAggregates,
+        availableFormulas,
       );
+      if (action.recordEntity) {
+        validateExpressionReferences(
+          action.recordEntity,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
+      if (action.recordId) {
+        validateExpressionReferences(
+          action.recordId,
+          availableLoaded,
+          availableAggregates,
+          availableFormulas,
+        );
+      }
       return;
     case "callWebhook":
-      rejectArrayLiteralsInExpression(action.url);
-      validateLoadedAliases(collectLoadedAliases(action.url), availableLoaded);
-      validateAggregateAliases(
-        collectAggregateAliases(action.url),
+      validateExpressionReferences(
+        action.url,
+        availableLoaded,
         availableAggregates,
+        availableFormulas,
       );
       if (action.body) {
-        rejectArrayLiteralsInExpression(action.body);
-        validateLoadedAliases(
-          collectLoadedAliases(action.body),
+        validateExpressionReferences(
+          action.body,
           availableLoaded,
-        );
-        validateAggregateAliases(
-          collectAggregateAliases(action.body),
           availableAggregates,
+          availableFormulas,
         );
       }
       return;
@@ -314,10 +288,14 @@ function registerBindingAlias(alias: string, boundAliases: Set<string>): void {
 export function validateDataHookActions(
   actions: readonly DataHookAction[],
   availableEntities: readonly string[],
+  options?: {
+    readonly availableFormulaNames?: ReadonlySet<string>;
+  },
 ): void {
   const boundAliases = new Set<string>();
   const loadedAliases = new Set<string>();
   const aggregateAliases = new Set<string>();
+  const availableFormulas = options?.availableFormulaNames ?? new Set<string>();
   let getRecordCount = 0;
   let aggregateCount = 0;
 
@@ -338,6 +316,7 @@ export function validateDataHookActions(
         action.where,
         loadedAliases,
         aggregateAliases,
+        availableFormulas,
       );
     }
 
@@ -349,7 +328,12 @@ export function validateDataHookActions(
       }
     }
 
-    validateActionExpressions(action, loadedAliases, aggregateAliases);
+    validateActionExpressions(
+      action,
+      loadedAliases,
+      aggregateAliases,
+      availableFormulas,
+    );
 
     if (action.type === "getRecord") {
       getRecordCount += 1;
@@ -379,19 +363,33 @@ function validateUpdateMatchingWhere(
   where: DataHookConditionNode,
   loadedAliases: ReadonlySet<string>,
   aggregateAliases: ReadonlySet<string>,
+  availableFormulas: ReadonlySet<string>,
 ): void {
   if (!hasUpdateMatchingLookupLeaf(where)) {
     throw new HookExecutionError(
       "Matching where must include at least one == leaf with a value expression for lookup.",
     );
   }
-  validateConditionExpressions(where, loadedAliases, aggregateAliases);
+  validateConditionExpressions(
+    where,
+    loadedAliases,
+    aggregateAliases,
+    availableFormulas,
+  );
 }
 
 export function validateDataHookCondition(
   condition: DataHookConditionNode,
+  options?: {
+    readonly availableFormulaNames?: ReadonlySet<string>;
+  },
 ): void {
-  validateConditionExpressions(condition, new Set(), new Set());
+  validateConditionExpressions(
+    condition,
+    new Set(),
+    new Set(),
+    options?.availableFormulaNames ?? new Set(),
+  );
 }
 
 function validateDataHookTrigger(
@@ -417,15 +415,21 @@ function validateDataHookTrigger(
         "Scheduled hooks with eachRecord scope require eachRecordWhere.",
       );
     }
-    validateUpdateMatchingWhere(trigger.eachRecordWhere, new Set(), new Set());
+    validateUpdateMatchingWhere(
+      trigger.eachRecordWhere,
+      new Set(),
+      new Set(),
+      new Set(),
+    );
   }
 }
 
 function validateHookCondition(
   condition: DataHookConditionNode | null | undefined,
+  availableFormulaNames?: ReadonlySet<string>,
 ): void {
   if (condition) {
-    validateDataHookCondition(condition);
+    validateDataHookCondition(condition, { availableFormulaNames });
   }
 }
 
@@ -450,11 +454,14 @@ function validateCreateRecordsInActions(
 export function validateCreateDataHookInput(
   input: CreateDataHookInput,
   availableEntities: readonly string[],
+  options?: {
+    readonly availableFormulaNames?: ReadonlySet<string>;
+  },
 ): void {
   validateDataHookEntity(input.entity, availableEntities);
   validateDataHookTrigger(input.trigger, input.phase);
-  validateHookCondition(input.condition);
-  validateDataHookActions(input.actions, availableEntities);
+  validateHookCondition(input.condition, options?.availableFormulaNames);
+  validateDataHookActions(input.actions, availableEntities, options);
   validateCreateRecordsInActions(
     input.actions,
     input.phase ?? "after",
@@ -466,6 +473,9 @@ export function validatePatchDataHookInput(
   input: PatchDataHookInput,
   availableEntities: readonly string[],
   existing?: Pick<CreateDataHookInput, "phase" | "trigger" | "execution">,
+  options?: {
+    readonly availableFormulaNames?: ReadonlySet<string>;
+  },
 ): void {
   const phase = input.phase ?? existing?.phase ?? "after";
   const execution = input.execution ?? existing?.execution;
@@ -474,10 +484,10 @@ export function validatePatchDataHookInput(
     validateDataHookTrigger(input.trigger, phase);
   }
   if (input.condition !== undefined) {
-    validateHookCondition(input.condition);
+    validateHookCondition(input.condition, options?.availableFormulaNames);
   }
   if (input.actions) {
-    validateDataHookActions(input.actions, availableEntities);
+    validateDataHookActions(input.actions, availableEntities, options);
     validateCreateRecordsInActions(input.actions, phase, execution);
   }
 }

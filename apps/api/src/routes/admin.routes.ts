@@ -11,6 +11,8 @@ import {
 import type {
   PlatformRoleRepository,
   RegisteredUserRepository,
+  TenantDeletionArchiveRepository,
+  TenantDeletionJobRepository,
   TenantRepository,
 } from "@repo/firestore-converters";
 import { tenantStatusSchema, tenantAppearanceSchema } from "@repo/shared-types";
@@ -22,8 +24,13 @@ import { uploadTenantLogo } from "@repo/gcp-firebase";
 
 import { syncThemeAiContextForTenant } from "../ai/sync-tenant-ai-contexts.js";
 import type { SyncTenantAiContextsDeps } from "../ai/sync-tenant-ai-contexts.js";
-import { exportTenantBundle } from "../admin/tenant-bundle/export-tenant-bundle.js";
-import { importTenantBundle } from "../admin/tenant-bundle/import-tenant-bundle.js";
+import {
+  enqueueTenantDeletion,
+  TenantDeletionRequestError,
+  parseProtectedTenantIds,
+} from "../admin/enqueue-tenant-deletion.js";
+import type { createTenantDeletionTasksClient } from "../admin/tenant-deletion-tasks.client.js";
+import { loadFormulaAdmin } from "../formulas/load-formula-admin.js";
 import { validateActiveTenantIds } from "../admin/list-available-tenants.js";
 import { seedTenantRolesFromTemplates } from "../admin/seed-tenant-roles-from-templates.js";
 import { createAuthenticatePreHandler } from "../auth/authenticate-request.js";
@@ -63,6 +70,10 @@ const importTenantBundleBodySchema = z.object({
   bundle: tenantBundleExportDocumentSchema,
 });
 
+const deleteTenantBodySchema = z.object({
+  confirmTenantId: z.string().trim().min(1),
+});
+
 function isKnownRoleName(name: string, roleCatalog: RoleCatalog): boolean {
   return isBuiltInRoleName(name) || name in roleCatalog;
 }
@@ -94,6 +105,10 @@ export const adminRoutes: FastifyPluginAsync<{
   tenantAiContextSync?: SyncTenantAiContextsDeps;
   tenantIndexGuard?: TenantIndexGuard;
   entityRuntime?: EntityRuntimeContext;
+  tenantDeletionJobRepository: TenantDeletionJobRepository;
+  tenantDeletionArchiveRepository: TenantDeletionArchiveRepository;
+  tenantDeletionTasksClient: ReturnType<typeof createTenantDeletionTasksClient>;
+  tenantDeletionProtectedIds?: readonly string[];
 }> = async (fastify, opts) => {
   const authenticate = createAuthenticatePreHandler(opts.firebaseAdminConfig, {
     requireTenant: false,
@@ -103,6 +118,9 @@ export const adminRoutes: FastifyPluginAsync<{
     createFirestoreAdminPlatformRoleRepository(opts.firebaseAdminConfig);
   const tenantRepository: TenantRepository =
     createFirestoreAdminTenantRepository(opts.firebaseAdminConfig);
+  const protectedTenantIds =
+    opts.tenantDeletionProtectedIds ??
+    parseProtectedTenantIds(process.env.TENANT_DELETION_PROTECTED_IDS ?? "rates");
 
   fastify.get(
     "/admin/roles",
@@ -241,6 +259,108 @@ export const adminRoutes: FastifyPluginAsync<{
   );
 
   fastify.post(
+    "/admin/tenants/:id/delete",
+    { preHandler: [authenticate, requireSuperAdmin] },
+    async (request, reply) => {
+      const paramsSchema = z.object({
+        id: z.string().trim().min(1),
+      });
+      const parsedParams = paramsSchema.safeParse(request.params);
+      if (!parsedParams.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Invalid tenant id.",
+        });
+      }
+
+      const parsedBody = deleteTenantBodySchema.safeParse(request.body);
+      if (!parsedBody.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Request body must include confirmTenantId.",
+        });
+      }
+
+      try {
+        const result = await enqueueTenantDeletion(
+          {
+            tenantRepository,
+            jobRepository: opts.tenantDeletionJobRepository,
+            archiveRepository: opts.tenantDeletionArchiveRepository,
+            tenantDeletionTasksClient: opts.tenantDeletionTasksClient,
+            protectedTenantIds,
+          },
+          {
+            tenantId: parsedParams.data.id,
+            confirmTenantId: parsedBody.data.confirmTenantId,
+            deletedBy: request.ctx?.uid ?? null,
+          },
+        );
+
+        return reply.status(202).send({
+          ok: true,
+          jobId: result.jobId,
+          archiveId: result.archiveId,
+        });
+      } catch (error) {
+        if (error instanceof TenantDeletionRequestError) {
+          return reply.status(error.statusCode).send({
+            ok: false,
+            message: error.message,
+          });
+        }
+        const message =
+          error instanceof Error
+            ? error.message
+            : "Unable to enqueue tenant deletion.";
+        return reply.status(500).send({ ok: false, message });
+      }
+    },
+  );
+
+  fastify.get(
+    "/admin/tenant-deletion-jobs/:jobId",
+    { preHandler: [authenticate, requireSuperAdmin] },
+    async (request, reply) => {
+      const paramsSchema = z.object({
+        jobId: z.string().trim().min(1),
+      });
+      const parsedParams = paramsSchema.safeParse(request.params);
+      if (!parsedParams.success) {
+        return reply.status(400).send({
+          ok: false,
+          message: "Invalid job id.",
+        });
+      }
+
+      const job = await opts.tenantDeletionJobRepository.getById(
+        parsedParams.data.jobId,
+      );
+      if (!job) {
+        return reply.status(404).send({
+          ok: false,
+          message: "Tenant deletion job not found.",
+        });
+      }
+
+      if (job.status === "completed" && opts.entityRuntime) {
+        opts.entityRuntime.invalidateTenantRuntime(job.tenantId);
+      }
+
+      return reply.send({ ok: true, job });
+    },
+  );
+
+  fastify.get(
+    "/admin/tenant-deletion-archives",
+    { preHandler: [authenticate, requireSuperAdmin] },
+    async (_request, reply) => {
+      const archives = await opts.tenantDeletionArchiveRepository.list();
+      return reply.send({ ok: true, archives });
+    },
+  );
+
+  fastify.post(
     "/admin/tenants/:id/logo",
     { preHandler: [authenticate, requireSuperAdmin] },
     async (request, reply) => {
@@ -321,6 +441,7 @@ export const adminRoutes: FastifyPluginAsync<{
       }
 
       try {
+        const { exportTenantBundle } = await loadFormulaAdmin();
         const bundle = await exportTenantBundle(
           { firebaseAdminConfig: opts.firebaseAdminConfig },
           parsedParams.data.id,
@@ -374,6 +495,17 @@ export const adminRoutes: FastifyPluginAsync<{
             parsedParams.data.id,
             "import",
           );
+        }
+        const { importTenantBundle, validateTenantBundleFormulaReferences } =
+          await loadFormulaAdmin();
+        const formulaErrors = validateTenantBundleFormulaReferences(
+          parsedBody.data.bundle,
+        );
+        if (formulaErrors.length > 0) {
+          return reply.status(400).send({
+            ok: false,
+            message: formulaErrors[0]?.message ?? "Invalid tenant bundle.",
+          });
         }
         const summary = await importTenantBundle(
           {

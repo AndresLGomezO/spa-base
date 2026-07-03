@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
-import type { ExpressionNode, ExpressionUnaryOperator } from "@repo/hooks";
-import { FieldLabel, Select } from "@repo/ui";
+import type { ExpressionNode } from "@repo/hooks";
+import { FieldLabel } from "@repo/ui";
 
 import type {
   ExpressionEditorNodeRenderer,
@@ -11,9 +11,11 @@ import {
   unaryOperatorLabelKey,
 } from "./expression-editor-utils";
 import {
-  expressionControlClassName,
-  expressionNestedClassName,
+  expressionBinaryOperandClassName,
+  expressionUnaryRowClassName,
 } from "./expression-editor-shared";
+import { useExpressionEditorReadOnly } from "./expression-editor-read-only-context";
+import { ExpressionOperatorSelect } from "./ExpressionOperatorSelect";
 
 interface UnaryExpressionPanelProps {
   readonly value: Extract<ExpressionNode, { kind: "unary" }>;
@@ -33,30 +35,25 @@ export function UnaryExpressionPanel({
   renderNode,
 }: UnaryExpressionPanelProps) {
   const { t } = useTranslation("common");
+  const readOnly = useExpressionEditorReadOnly();
   const operators = listUnaryOperators();
 
   return (
-    <div className="space-y-3">
-      <div>
-        <FieldLabel>{t("dataHooks.expression.operator")}</FieldLabel>
-        <Select
-          className={expressionControlClassName}
+    <div className={expressionUnaryRowClassName}>
+      <div className="flex shrink-0 flex-col gap-1 sm:pt-6">
+        <FieldLabel className="sr-only">
+          {t("dataHooks.expression.operator")}
+        </FieldLabel>
+        <ExpressionOperatorSelect
           value={value.op}
-          onChange={(event) =>
-            onChange({
-              ...value,
-              op: event.target.value as ExpressionUnaryOperator,
-            })
-          }
-        >
-          {operators.map((op) => (
-            <option key={op} value={op}>
-              {t(unaryOperatorLabelKey(op), { defaultValue: op })}
-            </option>
-          ))}
-        </Select>
+          options={operators}
+          disabled={readOnly}
+          ariaLabel={t("dataHooks.expression.operator")}
+          getLabel={(op) => t(unaryOperatorLabelKey(op), { defaultValue: op })}
+          onChange={(op) => onChange({ ...value, op })}
+        />
       </div>
-      <div className={expressionNestedClassName}>
+      <div className={`${expressionBinaryOperandClassName} min-w-0 flex-1`}>
         {renderNode({
           label: t("dataHooks.expression.operand"),
           value: value.operand,

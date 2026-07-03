@@ -12,6 +12,7 @@ import {
 import type { DataHookRepository } from "@repo/firestore-converters";
 
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
+import type { FormulaRuntimeContext } from "../formulas/formula-runtime-context.js";
 import type { HookRuntimeContext } from "./hook-runtime-context.js";
 
 export class DataHookCatalogReplaceError extends Error {
@@ -25,6 +26,7 @@ interface ReplaceDataHooksCatalogDeps {
   readonly entityRuntime: EntityRuntimeContext;
   readonly hookRepository: DataHookRepository;
   readonly hookRuntime: HookRuntimeContext;
+  readonly formulaRuntime: FormulaRuntimeContext;
 }
 
 interface ReplaceDataHooksCatalogOptions {
@@ -108,9 +110,12 @@ export async function replaceDataHooksCatalog(
 
   await deps.entityRuntime.loadTenantDefinitions(tenantId);
   const availableNames = getAvailableEntityNames(deps.entityRuntime, tenantId);
+  const availableFormulaNames =
+    await deps.formulaRuntime.getAvailableFormulaNames(tenantId);
+  const validationOptions = { availableFormulaNames };
 
   for (const hook of imported) {
-    validateCreateDataHookInput(hook, availableNames);
+    validateCreateDataHookInput(hook, availableNames, validationOptions);
   }
 
   for (const record of plan.toDelete) {
@@ -119,7 +124,7 @@ export async function replaceDataHooksCatalog(
 
   for (const { existing: current, input } of plan.toUpdate) {
     validateDataHookEntity(current.entity, availableNames);
-    validateDataHookActions(input.actions, availableNames);
+    validateDataHookActions(input.actions, availableNames, validationOptions);
     await deps.hookRepository.update(
       tenantId,
       current.id,

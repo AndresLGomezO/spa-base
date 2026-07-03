@@ -55,7 +55,10 @@ function ObservabilityToggleRow({
 
 function resolveToggleValue(
   settings: PlatformRuntimeSettingsResponse["settings"],
-  key: "aiStepTraceEnabled" | "requestPerfTraceEnabled",
+  key:
+    | "aiStepTraceEnabled"
+    | "requestPerfTraceEnabled"
+    | "seedHookObservabilityEnabled",
   effective: PlatformRuntimeSettingsResponse["effective"],
 ): boolean {
   const override = settings?.[key];
@@ -101,7 +104,10 @@ export function PlatformObservabilityPanel() {
   };
 
   const patchToggle = (
-    key: "aiStepTraceEnabled" | "requestPerfTraceEnabled",
+    key:
+      | "aiStepTraceEnabled"
+      | "requestPerfTraceEnabled"
+      | "seedHookObservabilityEnabled",
     checked: boolean,
   ) => {
     updateMutation.mutate({ [key]: checked });
@@ -143,6 +149,30 @@ export function PlatformObservabilityPanel() {
         )}`}
         disabled={pending}
         onChange={(checked) => patchToggle("requestPerfTraceEnabled", checked)}
+      />
+
+      <ObservabilityToggleRow
+        title={t("platform.observability.seedHookObservability.title")}
+        description={t(
+          "platform.observability.seedHookObservability.description",
+        )}
+        checked={resolveToggleValue(
+          settings,
+          "seedHookObservabilityEnabled",
+          effective,
+        )}
+        effectiveLabel={`${t("platform.observability.effective")}: ${formatEnabledLabel(
+          effective.seedHookObservabilityEnabled,
+          enabledLabels,
+        )}`}
+        envDefaultLabel={`${t("platform.observability.envDefaultLabel")}: ${formatEnabledLabel(
+          envDefaults.seedHookObservabilityEnabled,
+          enabledLabels,
+        )}`}
+        disabled={pending}
+        onChange={(checked) =>
+          patchToggle("seedHookObservabilityEnabled", checked)
+        }
       />
 
       <Text className="text-muted-foreground text-sm">

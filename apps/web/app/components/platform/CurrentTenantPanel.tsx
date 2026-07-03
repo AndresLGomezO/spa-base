@@ -14,6 +14,7 @@ import { SettingsPanelSkeleton } from "../loading/SettingsPanelSkeleton";
 import { IndexEnvironmentBlockedNotice } from "../index-provisioning/IndexEnvironmentBlockedNotice";
 import { useTenantIndexReadiness } from "../../hooks/useTenantIndexReadiness";
 import { EditTenantNameModal } from "./EditTenantNameModal";
+import { DeleteTenantModal } from "./DeleteTenantModal";
 import { TenantBundleJsonImportDialog } from "./TenantBundleJsonImportDialog";
 import { TenantBundleJsonViewDialog } from "./TenantBundleJsonViewDialog";
 import { tenantBundleJsonLabels } from "./tenant-bundle-json-labels";
@@ -34,6 +35,8 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [isImporting, setIsImporting] = useState(false);
+  const [deleteOpen, setDeleteOpen] = useState(false);
+  const [tenantDeleted, setTenantDeleted] = useState(false);
 
   const bundleLabels = useMemo(() => tenantBundleJsonLabels(t), [t]);
   const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
@@ -116,7 +119,13 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
   }
 
   if (!tenant) {
-    return <Alert>{t("platform.currentTenant.notFound")}</Alert>;
+    return (
+      <Alert>
+        {tenantDeleted
+          ? t("platform.currentTenant.deleted")
+          : t("platform.currentTenant.notFound")}
+      </Alert>
+    );
   }
 
   return (
@@ -205,6 +214,26 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
           : t("admin.tenants.activate")}
       </Button>
 
+      <section className="border-destructive/30 flex flex-col gap-3 rounded-lg border p-4">
+        <div className="space-y-1">
+          <Text className="text-destructive text-sm font-medium">
+            {t("platform.currentTenant.dangerZoneTitle")}
+          </Text>
+          <Text className="text-muted-foreground text-sm">
+            {t("platform.currentTenant.dangerZoneDescription")}
+          </Text>
+        </div>
+        <Button
+          type="button"
+          variant="primary"
+          size="sm"
+          className="bg-destructive hover:bg-destructive/90 text-destructive-foreground self-start"
+          onClick={() => setDeleteOpen(true)}
+        >
+          {t("platform.currentTenant.deleteTrigger")}
+        </Button>
+      </section>
+
       <EditTenantNameModal
         open={editOpen}
         tenant={tenant}
@@ -224,6 +253,16 @@ export function CurrentTenantPanel({ tenantId }: CurrentTenantPanelProps) {
         open={importDialogOpen}
         onOpenChange={setImportDialogOpen}
         onApply={handleImportApply}
+      />
+
+      <DeleteTenantModal
+        open={deleteOpen}
+        tenant={tenant}
+        onClose={() => setDeleteOpen(false)}
+        onDeleted={() => {
+          setTenantDeleted(true);
+          setTenant(null);
+        }}
       />
 
       <Modal

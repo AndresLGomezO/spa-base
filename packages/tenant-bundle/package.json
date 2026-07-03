@@ -20,6 +20,7 @@
     "@repo/entity-queries": "workspace:*",
     "@repo/custom-views": "workspace:*",
     "@repo/entities": "workspace:*",
+    "@repo/formula-definitions": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/metrics-engine": "workspace:*",
     "@repo/rbac": "workspace:*",

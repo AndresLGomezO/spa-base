@@ -36,6 +36,26 @@ export {
   type TenantStatus,
 } from "./tenant/tenant.js";
 export {
+  TENANT_DELETION_ARCHIVE_MIRROR_SUBCOLLECTION,
+  TENANT_DELETION_ARCHIVE_MIRROR_ROOT_DOC,
+  TENANT_DELETION_ARCHIVES_COLLECTION,
+  TENANT_DELETION_JOBS_COLLECTION,
+  TENANT_DELETION_RETENTION_DAYS,
+  computeTenantDeletionPurgeAfter,
+  tenantDeletionArchiveRecordSchema,
+  tenantDeletionArchiveStatsSchema,
+  tenantDeletionArchiveStatusSchema,
+  tenantDeletionJobProgressSchema,
+  tenantDeletionJobRecordSchema,
+  tenantDeletionJobStatusSchema,
+  type TenantDeletionArchiveRecord,
+  type TenantDeletionArchiveStats,
+  type TenantDeletionArchiveStatus,
+  type TenantDeletionJobProgress,
+  type TenantDeletionJobRecord,
+  type TenantDeletionJobStatus,
+} from "./tenant/tenant-deletion.js";
+export {
   COLOR_SCALE_STEPS,
   APPEARANCE_PRESETS,
   appearancePresetSchema,

@@ -5,12 +5,14 @@ import {
   type DataHookExecutionRecorder,
   type DataHookJobPayload,
   type DataHookWebhookRequest,
+  type FormulaResolver,
   type HookEntityServices,
   type HookLogger,
   type HookOperation,
   type HookPhase,
   type HookUser,
 } from "@repo/hooks";
+import type { CreateUserNotificationInput } from "@repo/user-notifications";
 
 interface DispatchChainedEntityHooksParams {
   readonly tenantId: string;
@@ -30,6 +32,10 @@ interface DispatchChainedEntityHooksParams {
   ) => Promise<void>;
   readonly dataHookExecutionRecorder?: DataHookExecutionRecorder;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
+  readonly sendUserNotification?: (
+    input: CreateUserNotificationInput,
+  ) => Promise<void>;
+  readonly formulaResolver?: FormulaResolver;
 }
 
 export async function dispatchChainedEntityHooks(
@@ -50,6 +56,9 @@ export async function dispatchChainedEntityHooks(
     user: params.user,
     depth: params.depth,
     visitedHookIds: params.visitedHookIds,
+    ...(params.formulaResolver
+      ? { formulaResolver: params.formulaResolver }
+      : {}),
     services: {
       logger: params.logger,
       ...(params.entityServices ? { entities: params.entityServices } : {}),
@@ -63,6 +72,9 @@ export async function dispatchChainedEntityHooks(
         ? { dataHookExecutionRecorder: params.dataHookExecutionRecorder }
         : {}),
       ...(params.callWebhook ? { callWebhook: params.callWebhook } : {}),
+      ...(params.sendUserNotification
+        ? { sendUserNotification: params.sendUserNotification }
+        : {}),
     },
   };
 

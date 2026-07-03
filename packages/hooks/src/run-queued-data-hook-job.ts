@@ -2,6 +2,7 @@ import { formatHookEvent } from "./event.js";
 import type { DataHookDefinition } from "./data-hook-definition.js";
 import type { DataHookExecutionRecorder } from "./data-hook-execution.js";
 import type { DataHookJobPayload } from "./data-hook-job.js";
+import type { FormulaResolver } from "./expression.js";
 import { runDataHook } from "./interpret-data-hook.js";
 import type {
   HookContext,
@@ -20,6 +21,8 @@ export async function runQueuedDataHookJob(
     readonly recordDataHookExecution?: HookServices["recordDataHookExecution"];
     readonly dataHookExecutionRecorder?: DataHookExecutionRecorder;
     readonly callWebhook?: HookServices["callWebhook"];
+    readonly sendUserNotification?: HookServices["sendUserNotification"];
+    readonly formulaResolver?: FormulaResolver;
   },
 ): Promise<void> {
   const event = formatHookEvent({
@@ -37,6 +40,9 @@ export async function runQueuedDataHookJob(
     user: dataHookJobPayloadToUser(payload),
     depth: payload.depth,
     visitedHookIds: new Set(payload.visitedHookIds),
+    ...(services.formulaResolver
+      ? { formulaResolver: services.formulaResolver }
+      : {}),
     services: {
       logger: services.logger,
       entities: services.entities,
@@ -47,6 +53,9 @@ export async function runQueuedDataHookJob(
         ? { dataHookExecutionRecorder: services.dataHookExecutionRecorder }
         : {}),
       ...(services.callWebhook ? { callWebhook: services.callWebhook } : {}),
+      ...(services.sendUserNotification
+        ? { sendUserNotification: services.sendUserNotification }
+        : {}),
     },
   };
 

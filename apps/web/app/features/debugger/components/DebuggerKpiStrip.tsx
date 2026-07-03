@@ -153,15 +153,22 @@ function resolveKpiIcon(key: string) {
 
 export function DebuggerKpiStrip({
   items,
+  className,
 }: {
   readonly items: readonly DebuggerKpiItem[];
+  readonly className?: string;
 }) {
   if (items.length === 0) {
     return null;
   }
 
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-wrap">
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:flex xl:flex-wrap",
+        className,
+      )}
+    >
       {items.map((item) => {
         const { icon: Icon, iconClass, spin } = resolveKpiIcon(item.key);
         const numericValue =

@@ -1,0 +1,1179 @@
+{
+  "kind": "formula-definitions-catalog",
+  "version": 1,
+  "exportedAt": "2026-07-03T01:56:32.973Z",
+  "formulaDefinitions": [
+    {
+      "name": "monthlyRateFromQuote",
+      "description": "Convert quoted bank rate (EA/NA/NMV) to monthly decimal",
+      "inputs": [
+        {
+          "name": "rate",
+          "required": true
+        },
+        {
+          "name": "quote",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "input",
+              "name": "quote"
+            },
+            {
+              "kind": "literal",
+              "value": "EA"
+            }
+          ]
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "NMV"
+            },
+            "then": {
+              "kind": "binary",
+              "op": "/",
+              "left": {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "input",
+                    "name": "rate"
+                  },
+                  {
+                    "kind": "literal",
+                    "value": 0
+                  }
+                ]
+              },
+              "right": {
+                "kind": "literal",
+                "value": 100
+              }
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "NA"
+            },
+            "then": {
+              "kind": "binary",
+              "op": "/",
+              "left": {
+                "kind": "binary",
+                "op": "/",
+                "left": {
+                  "kind": "call",
+                  "fn": "coalesce",
+                  "args": [
+                    {
+                      "kind": "input",
+                      "name": "rate"
+                    },
+                    {
+                      "kind": "literal",
+                      "value": 0
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": 100
+                }
+              },
+              "right": {
+                "kind": "literal",
+                "value": 12
+              }
+            }
+          }
+        ],
+        "default": {
+          "kind": "binary",
+          "op": "-",
+          "left": {
+            "kind": "call",
+            "fn": "pow",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "+",
+                "left": {
+                  "kind": "literal",
+                  "value": 1
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "/",
+                  "left": {
+                    "kind": "call",
+                    "fn": "coalesce",
+                    "args": [
+                      {
+                        "kind": "input",
+                        "name": "rate"
+                      },
+                      {
+                        "kind": "literal",
+                        "value": 0
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "literal",
+                    "value": 100
+                  }
+                }
+              },
+              {
+                "kind": "literal",
+                "value": 0.08333333333333333
+              }
+            ]
+          },
+          "right": {
+            "kind": "literal",
+            "value": 1
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "scheduleAnchorDate",
+      "description": "Pick originationDate when set, otherwise nextDueDate",
+      "inputs": [
+        {
+          "name": "originationDate",
+          "required": false
+        },
+        {
+          "name": "nextDueDate",
+          "required": false
+        }
+      ],
+      "body": {
+        "kind": "call",
+        "fn": "if",
+        "args": [
+          {
+            "kind": "unary",
+            "op": "!",
+            "operand": {
+              "kind": "call",
+              "fn": "isEmpty",
+              "args": [
+                {
+                  "kind": "input",
+                  "name": "originationDate"
+                }
+              ]
+            }
+          },
+          {
+            "kind": "input",
+            "name": "originationDate"
+          },
+          {
+            "kind": "input",
+            "name": "nextDueDate"
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanOriginationDate",
+      "description": "Loan: coalesced origination date (terms or current loanDetails)",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "terms",
+            "path": "originationDate"
+          },
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "originationDate"
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanScheduleAnchorDate",
+      "description": "Loan: schedule anchor date (origination or parent next due)",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "if",
+        "args": [
+          {
+            "kind": "unary",
+            "op": "!",
+            "operand": {
+              "kind": "call",
+              "fn": "isEmpty",
+              "args": [
+                {
+                  "kind": "formula",
+                  "name": "loanOriginationDate",
+                  "inputs": {}
+                }
+              ]
+            }
+          },
+          {
+            "kind": "formula",
+            "name": "loanOriginationDate",
+            "inputs": {}
+          },
+          {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "parent",
+            "path": "nextDueDate"
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanCoalescePrincipal",
+      "description": "Loan: coalesce(originalPrincipal, parent.currentBalance)",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "originalPrincipal"
+          },
+          {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "parent",
+            "path": "currentBalance"
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanBasePrincipal",
+      "description": "Loan: opening principal resolved from origination anchor",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "if",
+        "args": [
+          {
+            "kind": "unary",
+            "op": "!",
+            "operand": {
+              "kind": "call",
+              "fn": "isEmpty",
+              "args": [
+                {
+                  "kind": "formula",
+                  "name": "loanOriginationDate",
+                  "inputs": {}
+                }
+              ]
+            }
+          },
+          {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "current",
+                "path": "originalPrincipal"
+              },
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "currentBalance"
+              }
+            ]
+          },
+          {
+            "kind": "call",
+            "fn": "coalesce",
+            "args": [
+              {
+                "kind": "field",
+                "source": "loaded",
+                "alias": "parent",
+                "path": "currentBalance"
+              },
+              {
+                "kind": "call",
+                "fn": "coalesce",
+                "args": [
+                  {
+                    "kind": "field",
+                    "source": "current",
+                    "path": "originalPrincipal"
+                  },
+                  {
+                    "kind": "field",
+                    "source": "loaded",
+                    "alias": "parent",
+                    "path": "currentBalance"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanPeriodBalance",
+      "description": "Loan: period opening balance (coalesce loopState, base principal)",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "var",
+            "name": "loopState"
+          },
+          {
+            "kind": "formula",
+            "name": "loanBasePrincipal",
+            "inputs": {}
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanTermMonths",
+      "description": "Loan: term length in months",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "current",
+            "path": "termMonths"
+          },
+          {
+            "kind": "literal",
+            "value": 12
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanIsLastPeriod",
+      "description": "Loan: true when loopIndex is on the final period",
+      "inputs": [],
+      "body": {
+        "kind": "binary",
+        "op": ">=",
+        "left": {
+          "kind": "var",
+          "name": "loopIndex"
+        },
+        "right": {
+          "kind": "binary",
+          "op": "-",
+          "left": {
+            "kind": "formula",
+            "name": "loanTermMonths",
+            "inputs": {}
+          },
+          "right": {
+            "kind": "literal",
+            "value": 1
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanMonthlyRate",
+      "description": "Loan: monthly decimal rate from current quote fields",
+      "inputs": [],
+      "body": {
+        "kind": "formula",
+        "name": "monthlyRateFromQuote",
+        "inputs": {
+          "rate": {
+            "kind": "field",
+            "source": "current",
+            "path": "interestRate"
+          },
+          "quote": {
+            "kind": "field",
+            "source": "current",
+            "path": "interestRateQuote"
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanAnnuityPayment",
+      "description": "Loan: French annuity payment amount",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "coalesce",
+        "args": [
+          {
+            "kind": "field",
+            "source": "loaded",
+            "alias": "parent",
+            "path": "amount"
+          },
+          {
+            "kind": "formula",
+            "name": "annuityPayment",
+            "inputs": {
+              "principal": {
+                "kind": "formula",
+                "name": "loanCoalescePrincipal",
+                "inputs": {}
+              },
+              "ratePerPeriod": {
+                "kind": "formula",
+                "name": "loanMonthlyRate",
+                "inputs": {}
+              },
+              "periods": {
+                "kind": "formula",
+                "name": "loanTermMonths",
+                "inputs": {}
+              }
+            }
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanInterestPayment",
+      "description": "Loan: interest portion by amortization strategy",
+      "inputs": [],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "field",
+              "source": "current",
+              "path": "amortizationType"
+            },
+            {
+              "kind": "literal",
+              "value": "FRENCH"
+            }
+          ]
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "NONE"
+            },
+            "then": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "interestPortion"
+                },
+                {
+                  "kind": "literal",
+                  "value": 0
+                }
+              ]
+            }
+          }
+        ],
+        "default": {
+          "kind": "formula",
+          "name": "simpleInterest",
+          "inputs": {
+            "amount": {
+              "kind": "formula",
+              "name": "loanPeriodBalance",
+              "inputs": {}
+            },
+            "rate": {
+              "kind": "formula",
+              "name": "loanMonthlyRate",
+              "inputs": {}
+            }
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "loanPrincipalPayment",
+      "description": "Loan: principal portion by amortization strategy",
+      "inputs": [],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "field",
+              "source": "current",
+              "path": "amortizationType"
+            },
+            {
+              "kind": "literal",
+              "value": "FRENCH"
+            }
+          ]
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "NONE"
+            },
+            "then": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "current",
+                  "path": "principalPortion"
+                },
+                {
+                  "kind": "literal",
+                  "value": 0
+                }
+              ]
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "GERMAN"
+            },
+            "then": {
+              "kind": "binary",
+              "op": "/",
+              "left": {
+                "kind": "formula",
+                "name": "loanPeriodBalance",
+                "inputs": {}
+              },
+              "right": {
+                "kind": "formula",
+                "name": "loanTermMonths",
+                "inputs": {}
+              }
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "AMERICAN"
+            },
+            "then": {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "formula",
+                  "name": "loanIsLastPeriod",
+                  "inputs": {}
+                },
+                {
+                  "kind": "formula",
+                  "name": "loanPeriodBalance",
+                  "inputs": {}
+                },
+                {
+                  "kind": "literal",
+                  "value": 0
+                }
+              ]
+            }
+          },
+          {
+            "when": {
+              "kind": "literal",
+              "value": "BULLET"
+            },
+            "then": {
+              "kind": "call",
+              "fn": "if",
+              "args": [
+                {
+                  "kind": "formula",
+                  "name": "loanIsLastPeriod",
+                  "inputs": {}
+                },
+                {
+                  "kind": "formula",
+                  "name": "loanPeriodBalance",
+                  "inputs": {}
+                },
+                {
+                  "kind": "literal",
+                  "value": 0
+                }
+              ]
+            }
+          }
+        ],
+        "default": {
+          "kind": "binary",
+          "op": "-",
+          "left": {
+            "kind": "formula",
+            "name": "loanAnnuityPayment",
+            "inputs": {}
+          },
+          "right": {
+            "kind": "formula",
+            "name": "loanInterestPayment",
+            "inputs": {}
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "schedulePrincipalPortion",
+      "description": "Schedule: principal portion for payment row",
+      "inputs": [],
+      "body": {
+        "kind": "formula",
+        "name": "loanPrincipalPayment",
+        "inputs": {}
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "scheduleInterestPortion",
+      "description": "Schedule: interest portion for payment row",
+      "inputs": [],
+      "body": {
+        "kind": "formula",
+        "name": "loanInterestPayment",
+        "inputs": {}
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "scheduleExpectedAmount",
+      "description": "Schedule: expected payment amount for row",
+      "inputs": [],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "field",
+              "source": "current",
+              "path": "amortizationType"
+            },
+            {
+              "kind": "literal",
+              "value": "FRENCH"
+            }
+          ]
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "NONE"
+            },
+            "then": {
+              "kind": "call",
+              "fn": "coalesce",
+              "args": [
+                {
+                  "kind": "field",
+                  "source": "loaded",
+                  "alias": "parent",
+                  "path": "amount"
+                },
+                {
+                  "kind": "binary",
+                  "op": "+",
+                  "left": {
+                    "kind": "formula",
+                    "name": "loanPrincipalPayment",
+                    "inputs": {}
+                  },
+                  "right": {
+                    "kind": "formula",
+                    "name": "loanInterestPayment",
+                    "inputs": {}
+                  }
+                }
+              ]
+            }
+          }
+        ],
+        "default": {
+          "kind": "binary",
+          "op": "+",
+          "left": {
+            "kind": "formula",
+            "name": "loanPrincipalPayment",
+            "inputs": {}
+          },
+          "right": {
+            "kind": "formula",
+            "name": "loanInterestPayment",
+            "inputs": {}
+          }
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "amortizationLoopState",
+      "description": "Schedule: remaining balance after principal payment",
+      "inputs": [],
+      "body": {
+        "kind": "binary",
+        "op": "-",
+        "left": {
+          "kind": "formula",
+          "name": "loanPeriodBalance",
+          "inputs": {}
+        },
+        "right": {
+          "kind": "formula",
+          "name": "schedulePrincipalPortion",
+          "inputs": {}
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "paymentScheduleFrenchRowCount",
+      "description": "Schedule: French amortization row count",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "max",
+        "args": [
+          {
+            "kind": "literal",
+            "value": 1
+          },
+          {
+            "kind": "call",
+            "fn": "min",
+            "args": [
+              {
+                "kind": "formula",
+                "name": "loanTermMonths",
+                "inputs": {}
+              },
+              {
+                "kind": "call",
+                "fn": "ceil",
+                "args": [
+                  {
+                    "kind": "binary",
+                    "op": "/",
+                    "left": {
+                      "kind": "call",
+                      "fn": "ln",
+                      "args": [
+                        {
+                          "kind": "binary",
+                          "op": "/",
+                          "left": {
+                            "kind": "formula",
+                            "name": "loanAnnuityPayment",
+                            "inputs": {}
+                          },
+                          "right": {
+                            "kind": "binary",
+                            "op": "-",
+                            "left": {
+                              "kind": "formula",
+                              "name": "loanAnnuityPayment",
+                              "inputs": {}
+                            },
+                            "right": {
+                              "kind": "binary",
+                              "op": "*",
+                              "left": {
+                                "kind": "field",
+                                "source": "loaded",
+                                "alias": "parent",
+                                "path": "currentBalance"
+                              },
+                              "right": {
+                                "kind": "formula",
+                                "name": "loanMonthlyRate",
+                                "inputs": {}
+                              }
+                            }
+                          }
+                        }
+                      ]
+                    },
+                    "right": {
+                      "kind": "call",
+                      "fn": "ln",
+                      "args": [
+                        {
+                          "kind": "binary",
+                          "op": "+",
+                          "left": {
+                            "kind": "literal",
+                            "value": 1
+                          },
+                          "right": {
+                            "kind": "formula",
+                            "name": "loanMonthlyRate",
+                            "inputs": {}
+                          }
+                        }
+                      ]
+                    }
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "paymentScheduleAmortizedRowCount",
+      "description": "Schedule: amortized row count by type",
+      "inputs": [],
+      "body": {
+        "kind": "switch",
+        "input": {
+          "kind": "call",
+          "fn": "coalesce",
+          "args": [
+            {
+              "kind": "field",
+              "source": "current",
+              "path": "amortizationType"
+            },
+            {
+              "kind": "literal",
+              "value": "FRENCH"
+            }
+          ]
+        },
+        "cases": [
+          {
+            "when": {
+              "kind": "literal",
+              "value": "GERMAN"
+            },
+            "then": {
+              "kind": "call",
+              "fn": "max",
+              "args": [
+                {
+                  "kind": "literal",
+                  "value": 1
+                },
+                {
+                  "kind": "formula",
+                  "name": "loanTermMonths",
+                  "inputs": {}
+                }
+              ]
+            }
+          }
+        ],
+        "default": {
+          "kind": "formula",
+          "name": "paymentScheduleFrenchRowCount",
+          "inputs": {}
+        }
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "paymentScheduleRowCount",
+      "description": "Schedule: payment row count",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "if",
+        "args": [
+          {
+            "kind": "binary",
+            "op": "||",
+            "left": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "binary",
+                "op": "!=",
+                "left": {
+                  "kind": "call",
+                  "fn": "coalesce",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "current",
+                      "path": "amortizationType"
+                    },
+                    {
+                      "kind": "literal",
+                      "value": "FRENCH"
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "literal",
+                  "value": "NONE"
+                }
+              },
+              "right": {
+                "kind": "binary",
+                "op": "||",
+                "left": {
+                  "kind": "call",
+                  "fn": "isEmpty",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "current",
+                      "path": "interestRate"
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "binary",
+                  "op": "||",
+                  "left": {
+                    "kind": "call",
+                    "fn": "isEmpty",
+                    "args": [
+                      {
+                        "kind": "field",
+                        "source": "current",
+                        "path": "termMonths"
+                      }
+                    ]
+                  },
+                  "right": {
+                    "kind": "call",
+                    "fn": "isEmpty",
+                    "args": [
+                      {
+                        "kind": "formula",
+                        "name": "loanCoalescePrincipal",
+                        "inputs": {}
+                      }
+                    ]
+                  }
+                }
+              }
+            },
+            "right": {
+              "kind": "binary",
+              "op": "&&",
+              "left": {
+                "kind": "call",
+                "fn": "isEmpty",
+                "args": [
+                  {
+                    "kind": "formula",
+                    "name": "loanOriginationDate",
+                    "inputs": {}
+                  }
+                ]
+              },
+              "right": {
+                "kind": "binary",
+                "op": "||",
+                "left": {
+                  "kind": "call",
+                  "fn": "isEmpty",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "currentBalance"
+                    }
+                  ]
+                },
+                "right": {
+                  "kind": "call",
+                  "fn": "isEmpty",
+                  "args": [
+                    {
+                      "kind": "field",
+                      "source": "loaded",
+                      "alias": "parent",
+                      "path": "amount"
+                    }
+                  ]
+                }
+              }
+            }
+          },
+          {
+            "kind": "literal",
+            "value": 0
+          },
+          {
+            "kind": "call",
+            "fn": "if",
+            "args": [
+              {
+                "kind": "call",
+                "fn": "isEmpty",
+                "args": [
+                  {
+                    "kind": "formula",
+                    "name": "loanScheduleAnchorDate",
+                    "inputs": {}
+                  }
+                ]
+              },
+              {
+                "kind": "literal",
+                "value": 0
+              },
+              {
+                "kind": "call",
+                "fn": "if",
+                "args": [
+                  {
+                    "kind": "unary",
+                    "op": "!",
+                    "operand": {
+                      "kind": "call",
+                      "fn": "isEmpty",
+                      "args": [
+                        {
+                          "kind": "formula",
+                          "name": "loanOriginationDate",
+                          "inputs": {}
+                        }
+                      ]
+                    }
+                  },
+                  {
+                    "kind": "call",
+                    "fn": "max",
+                    "args": [
+                      {
+                        "kind": "literal",
+                        "value": 1
+                      },
+                      {
+                        "kind": "formula",
+                        "name": "loanTermMonths",
+                        "inputs": {}
+                      }
+                    ]
+                  },
+                  {
+                    "kind": "formula",
+                    "name": "paymentScheduleAmortizedRowCount",
+                    "inputs": {}
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    },
+    {
+      "name": "paymentScheduleDueDate",
+      "description": "Schedule: payment due date for row",
+      "inputs": [],
+      "body": {
+        "kind": "call",
+        "fn": "dateAdd",
+        "args": [
+          {
+            "kind": "formula",
+            "name": "loanScheduleAnchorDate",
+            "inputs": {}
+          },
+          {
+            "kind": "var",
+            "name": "loopIndex"
+          },
+          {
+            "kind": "literal",
+            "value": "MONTH"
+          }
+        ]
+      },
+      "enabled": true,
+      "source": "tenant"
+    }
+  ]
+}

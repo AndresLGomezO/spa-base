@@ -1,8 +1,10 @@
 import { useTranslation } from "react-i18next";
 import type { ExpressionNode } from "@repo/hooks";
 import { MAX_SWITCH_CASES } from "@repo/hooks";
+import { CollapsibleEditorCard } from "@repo/ui-builder-react";
 import { Button, FieldLabel, Text } from "@repo/ui";
 
+import { summarizeExpressionNode } from "../formulas/format-expression-dsl-preview";
 import type {
   ExpressionEditorNodeRenderer,
   LoadedBinding,
@@ -13,6 +15,7 @@ import {
   createDefaultSwitchCase,
 } from "./expression-editor-utils";
 import { expressionNestedClassName } from "./expression-editor-shared";
+import { useExpressionEditorReadOnly } from "./expression-editor-read-only-context";
 
 interface SwitchExpressionPanelProps {
   readonly value: Extract<ExpressionNode, { kind: "switch" }>;
@@ -21,6 +24,12 @@ interface SwitchExpressionPanelProps {
   readonly loadedBindings?: readonly LoadedBinding[];
   readonly aggregateBindings?: readonly string[];
   readonly renderNode: ExpressionEditorNodeRenderer;
+  readonly collapsibleNested?: boolean;
+}
+
+function summarizeSwitchBranch(node: ExpressionNode): string {
+  const summary = summarizeExpressionNode(node);
+  return summary.length > 40 ? `${summary.slice(0, 37)}...` : summary;
 }
 
 export function SwitchExpressionPanel({
@@ -30,8 +39,10 @@ export function SwitchExpressionPanel({
   loadedBindings,
   aggregateBindings,
   renderNode,
+  collapsibleNested = false,
 }: SwitchExpressionPanelProps) {
   const { t } = useTranslation("common");
+  const readOnly = useExpressionEditorReadOnly();
 
   function handleInputChange(input: ExpressionNode) {
     onChange({ ...value, input });
@@ -72,6 +83,36 @@ export function SwitchExpressionPanel({
     });
   }
 
+  function renderCaseBody(
+    switchCase: (typeof value.cases)[number],
+    index: number,
+  ) {
+    return (
+      <>
+        <div className="space-y-2">
+          <FieldLabel>{t("dataHooks.expression.switchWhen")}</FieldLabel>
+          {renderNode({
+            value: switchCase.when,
+            onChange: (next) => handleCaseChange(index, "when", next),
+            fieldNames,
+            loadedBindings,
+            aggregateBindings,
+          })}
+        </div>
+        <div className="space-y-2">
+          <FieldLabel>{t("dataHooks.expression.switchThen")}</FieldLabel>
+          {renderNode({
+            value: switchCase.then,
+            onChange: (next) => handleCaseChange(index, "then", next),
+            fieldNames,
+            loadedBindings,
+            aggregateBindings,
+          })}
+        </div>
+      </>
+    );
+  }
+
   return (
     <div className="space-y-4">
       <div className={expressionNestedClassName}>
@@ -89,55 +130,72 @@ export function SwitchExpressionPanel({
         <Text className="text-sm font-medium">
           {t("dataHooks.expression.switchCases")}
         </Text>
-        {value.cases.map((switchCase, index) => (
-          <div
-            key={index}
-            className={`${expressionNestedClassName} space-y-3 border-b pb-3 last:border-b-0 last:pb-0`}
-          >
-            <div className="flex items-center justify-between gap-2">
-              <Text className="text-sm font-medium">
-                {t("dataHooks.expression.switchCaseIndex", {
-                  index: index + 1,
-                })}
-              </Text>
-              {canRemoveSwitchCase(value.cases.length) ? (
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => handleRemoveCase(index)}
-                >
-                  {t("dataHooks.expression.removeSwitchCase")}
-                </Button>
-              ) : null}
+        {value.cases.map((switchCase, index) => {
+          const caseTitle = t("dataHooks.expression.switchCaseCollapsibleTitle", {
+            index: index + 1,
+            when: summarizeExpressionNode(switchCase.when),
+            then: summarizeSwitchBranch(switchCase.then),
+          });
+
+          if (collapsibleNested) {
+            return (
+              <CollapsibleEditorCard
+                key={index}
+                title={caseTitle}
+                defaultOpen={false}
+                className="bg-muted/20 shadow-sm"
+                headerEnd={
+                  canRemoveSwitchCase(value.cases.length) ? (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      disabled={readOnly}
+                      onClick={() => handleRemoveCase(index)}
+                    >
+                      {t("dataHooks.expression.removeSwitchCase")}
+                    </Button>
+                  ) : undefined
+                }
+              >
+                {renderCaseBody(switchCase, index)}
+              </CollapsibleEditorCard>
+            );
+          }
+
+          return (
+            <div
+              key={index}
+              className={`${expressionNestedClassName} space-y-3 border-b pb-3 last:border-b-0 last:pb-0`}
+            >
+              <div className="flex items-center justify-between gap-2">
+                <Text className="text-sm font-medium">
+                  {t("dataHooks.expression.switchCaseIndex", {
+                    index: index + 1,
+                  })}
+                </Text>
+                {canRemoveSwitchCase(value.cases.length) ? (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    disabled={readOnly}
+                    onClick={() => handleRemoveCase(index)}
+                  >
+                    {t("dataHooks.expression.removeSwitchCase")}
+                  </Button>
+                ) : null}
+              </div>
+              {renderCaseBody(switchCase, index)}
             </div>
-            <div className="space-y-2">
-              <FieldLabel>{t("dataHooks.expression.switchWhen")}</FieldLabel>
-              {renderNode({
-                value: switchCase.when,
-                onChange: (next) => handleCaseChange(index, "when", next),
-                fieldNames,
-                loadedBindings,
-                aggregateBindings,
-              })}
-            </div>
-            <div className="space-y-2">
-              <FieldLabel>{t("dataHooks.expression.switchThen")}</FieldLabel>
-              {renderNode({
-                value: switchCase.then,
-                onChange: (next) => handleCaseChange(index, "then", next),
-                fieldNames,
-                loadedBindings,
-                aggregateBindings,
-              })}
-            </div>
-          </div>
-        ))}
+          );
+        })}
         {canAddSwitchCase(value.cases.length) ? (
           <Button
             type="button"
             variant="outline"
             size="sm"
+            disabled={readOnly}
             onClick={handleAddCase}
           >
             {t("dataHooks.expression.addSwitchCase")}
@@ -151,16 +209,14 @@ export function SwitchExpressionPanel({
         )}
       </div>
 
-      <div className={expressionNestedClassName}>
-        <FieldLabel>{t("dataHooks.expression.switchDefault")}</FieldLabel>
-        {renderNode({
-          value: value.default,
-          onChange: handleDefaultChange,
-          fieldNames,
-          loadedBindings,
-          aggregateBindings,
-        })}
-      </div>
+      {renderNode({
+        value: value.default,
+        onChange: handleDefaultChange,
+        fieldNames,
+        loadedBindings,
+        aggregateBindings,
+        label: t("dataHooks.expression.switchDefault"),
+      })}
     </div>
   );
 }

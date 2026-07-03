@@ -107,7 +107,7 @@ describe("LU-01 runtime", () => {
           update,
           delete: vi.fn(),
           list,
-          get: vi.fn(),
+          get: vi.fn(),          createMany: vi.fn(async () => []),
         },
       },
     };

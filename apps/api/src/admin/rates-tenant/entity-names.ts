@@ -5,6 +5,8 @@ export const RATES_ENTITY_NAMES = [
   "category",
   "financialItem",
   "loanDetails",
+  "loanMonthlyCost",
+  "loanUtilization",
   "incomeDetails",
   "investmentDetails",
   "serviceDetails",

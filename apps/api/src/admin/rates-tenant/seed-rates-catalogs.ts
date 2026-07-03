@@ -12,6 +12,7 @@ import {
   createFirestoreAdminBackfillJobRepository,
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminDataHookRepository,
+  createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminMetricContributionRepository,
@@ -29,6 +30,9 @@ import { replaceEntityQueryDefinitionsCatalog } from "../../entity-queries/repla
 import { replaceCustomViewsCatalog } from "../../custom-views/replace-custom-views-catalog.js";
 import { createHookRuntimeContext } from "../../hooks/hook-runtime-context.js";
 import { replaceDataHooksCatalog } from "../../hooks/replace-data-hooks-catalog.js";
+import { parseFormulaDefinitionsCatalogJson } from "@repo/formula-definitions";
+import { createFormulaRuntimeContext } from "../../formulas/formula-runtime-context.js";
+import { replaceFormulasCatalog } from "../../formulas/replace-formulas-catalog.js";
 
 const CATALOG_DIR = join(dirname(fileURLToPath(import.meta.url)), "catalogs");
 
@@ -58,6 +62,11 @@ interface SeedRatesCatalogsResult {
     readonly deleted: number;
   };
   readonly hookCounts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly formulaCounts: {
     readonly created: number;
     readonly updated: number;
     readonly deleted: number;
@@ -117,6 +126,15 @@ export async function seedRatesCatalogs(
     );
   }
 
+  const formulasParsed = parseFormulaDefinitionsCatalogJson(
+    readCatalogJson("rates-formula-definitions.json"),
+  );
+  if (!formulasParsed.ok) {
+    throw new Error(
+      `Invalid rates formula catalog: ${formulasParsed.errors.map((error) => error.message).join("; ")}`,
+    );
+  }
+
   const entityCategoryRepository =
     createFirestoreAdminEntityCategoryRepository(firebaseAdminConfig);
   const metricDefinitionRepository =
@@ -127,7 +145,12 @@ export async function seedRatesCatalogs(
     createFirestoreAdminCustomViewRepository(firebaseAdminConfig);
   const dataHookRepository =
     createFirestoreAdminDataHookRepository(firebaseAdminConfig);
+  const formulaDefinitionRepository =
+    createFirestoreAdminFormulaDefinitionRepository(firebaseAdminConfig);
   const hookRuntime = createHookRuntimeContext(dataHookRepository);
+  const formulaRuntime = createFormulaRuntimeContext(
+    formulaDefinitionRepository,
+  );
 
   const entityResult = await replaceEntityDefinitionsCatalog(
     {
@@ -174,11 +197,18 @@ export async function seedRatesCatalogs(
     queryParsed.data,
   );
 
+  const formulaResult = await replaceFormulasCatalog(
+    formulaRuntime,
+    tenantId,
+    formulasParsed.data,
+  );
+
   const hookResult = await replaceDataHooksCatalog(
     {
       entityRuntime,
       hookRepository: dataHookRepository,
       hookRuntime,
+      formulaRuntime,
     },
     tenantId,
     dataHooksParsed.data,
@@ -196,13 +226,14 @@ export async function seedRatesCatalogs(
   );
 
   console.log(
-    `[rates seed] Catalogs: entities +${entityResult.counts.created}/~${entityResult.counts.updated}/-${entityResult.counts.deleted}, metrics +${metricResult.counts.created}/~${metricResult.counts.updated}/-${metricResult.counts.deleted}, queries +${queryResult.counts.created}/~${queryResult.counts.updated}/-${queryResult.counts.deleted}, hooks +${hookResult.counts.created}/~${hookResult.counts.updated}/-${hookResult.counts.deleted}, customViews +${customViewResult.counts.created}/~${customViewResult.counts.updated}/-${customViewResult.counts.deleted}`,
+    `[rates seed] Catalogs: entities +${entityResult.counts.created}/~${entityResult.counts.updated}/-${entityResult.counts.deleted}, metrics +${metricResult.counts.created}/~${metricResult.counts.updated}/-${metricResult.counts.deleted}, queries +${queryResult.counts.created}/~${queryResult.counts.updated}/-${queryResult.counts.deleted}, formulas +${formulaResult.counts.created}/~${formulaResult.counts.updated}/-${formulaResult.counts.deleted}, hooks +${hookResult.counts.created}/~${hookResult.counts.updated}/-${hookResult.counts.deleted}, customViews +${customViewResult.counts.created}/~${customViewResult.counts.updated}/-${customViewResult.counts.deleted}`,
   );
 
   return {
     entityCounts: entityResult.counts,
     metricCounts: metricResult.counts,
     queryCounts: queryResult.counts,
+    formulaCounts: formulaResult.counts,
     hookCounts: hookResult.counts,
     customViewCounts: customViewResult.counts,
     definitionRecords: entityResult.items,

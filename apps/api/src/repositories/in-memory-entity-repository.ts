@@ -1,4 +1,5 @@
 import type {
+  EntityCreateOptions,
   FindByFieldParams,
   ListParams,
   PaginatedResult,
@@ -72,19 +73,41 @@ export function createInMemoryEntityRepository<
     store.set(storageKey(record.tenantId, record.id), record);
   }
 
+  const persistCreate = (
+    tenantId: string,
+    record: TRecord,
+    options?: EntityCreateOptions,
+  ): TRecord => {
+    if (record.tenantId !== tenantId) {
+      throw new Error("Record tenantId does not match authenticated tenant.");
+    }
+
+    const key = storageKey(tenantId, record.id);
+    if (!options?.skipExistsCheck && store.has(key)) {
+      throw new Error(`Record already exists: ${record.id}`);
+    }
+
+    store.set(key, record);
+    return record;
+  };
+
   return {
-    async create(tenantId: string, record: TRecord): Promise<TRecord> {
-      if (record.tenantId !== tenantId) {
-        throw new Error("Record tenantId does not match authenticated tenant.");
-      }
+    async create(
+      tenantId: string,
+      record: TRecord,
+      options?: EntityCreateOptions,
+    ): Promise<TRecord> {
+      return persistCreate(tenantId, record, options);
+    },
 
-      const key = storageKey(tenantId, record.id);
-      if (store.has(key)) {
-        throw new Error(`Record already exists: ${record.id}`);
+    async createMany(
+      tenantId: string,
+      records: readonly TRecord[],
+    ): Promise<readonly TRecord[]> {
+      for (const record of records) {
+        persistCreate(tenantId, record, { skipExistsCheck: true });
       }
-
-      store.set(key, record);
-      return record;
+      return records;
     },
 
     async findAll(params: ListParams): Promise<PaginatedResult<TRecord>> {

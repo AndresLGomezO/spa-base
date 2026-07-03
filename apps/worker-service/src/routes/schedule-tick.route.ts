@@ -11,6 +11,8 @@ import { scheduleTickConfig } from "../config/env.js";
 
 export type ScheduleTickRouteDeps = DataHookProcessorDeps & {
   readonly firebaseAdminConfig: FirebaseAdminConfig;
+  readonly indexProjectId: string;
+  readonly indexDatabaseId?: string;
 };
 
 export async function scheduleTickRoute(

@@ -10,6 +10,7 @@ import {
   type HookEntityServices,
   type PortableDataHookDefinition,
 } from "@repo/hooks";
+import { createRatesFormulaResolver } from "./rates-formula-test-utils.js";
 
 const catalogPath = resolve(
   import.meta.dirname,
@@ -26,6 +27,7 @@ const loanDetails = {
   rateType: "FIXED",
   amortizationType: "FRENCH",
   termMonths: 240,
+  originationDate: "2024-05-19",
   originalPrincipal: 361000000,
 };
 
@@ -37,7 +39,7 @@ const financialItem = {
   nextDueDate: "2026-07-19",
 };
 
-function loadLd01Hook() {
+function loadLoanPaymentPlanHook() {
   const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
   expect(parsed.ok).toBe(true);
   if (!parsed.ok) {
@@ -60,7 +62,7 @@ function toDataHookDefinition(
 ): DataHookDefinition {
   return {
     ...hook,
-    id: "ld01_test",
+    id: "loan_payment_plan_test",
     tenantId: "tenant_test",
     phase: hook.phase ?? "after",
     enabled: hook.enabled ?? true,
@@ -95,11 +97,14 @@ function createContext(options: {
   readonly parent?: typeof financialItem | typeof revolvingFinancialItem;
 }): {
   readonly context: HookContext;
-  readonly create: ReturnType<typeof vi.fn<HookEntityServices["create"]>>;
+  readonly createMany: ReturnType<typeof vi.fn<HookEntityServices["createMany"]>>;
 } {
   const create = vi.fn<HookEntityServices["create"]>(async () => ({
     id: "ps_1",
   }));
+  const createMany = vi.fn<HookEntityServices["createMany"]>(
+    async (_entity, records) => records.map(() => ({ id: "ps_1" })),
+  );
   const activeLoan = options.loan ?? loanDetails;
   const activeParent = options.parent ?? financialItem;
   const get = vi.fn<HookEntityServices["get"]>(async (entity, id) => {
@@ -113,13 +118,14 @@ function createContext(options: {
   });
 
   return {
-    create,
+    createMany,
     context: {
       tenantId: "tenant_test",
       entityName: "loanDetails",
       event: "loanDetails.afterCreate",
       current: activeLoan,
       user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
       services: {
         logger: {
           info: vi.fn(),
@@ -127,6 +133,7 @@ function createContext(options: {
         },
         entities: {
           create,
+          createMany,
           update: vi.fn(),
           delete: vi.fn(),
           list: options.list,
@@ -137,25 +144,25 @@ function createContext(options: {
   };
 }
 
-describe("LD-01 runtime", () => {
+describe("loan payment schedule runtime", () => {
   it("creates payment schedule rows for Hipoteca Altavista import shape", async () => {
-    const hook = loadLd01Hook();
-    const { context, create } = createContext({
+    const hook = loadLoanPaymentPlanHook();
+    const { context, createMany } = createContext({
       list: vi.fn(async () => []),
     });
 
     await runDataHook(toDataHookDefinition(hook), context);
 
-    expect(create).toHaveBeenCalled();
-    const firstRow = create.mock.calls[0]?.[1] as
-      | Record<string, unknown>
-      | undefined;
+    expect(createMany).toHaveBeenCalledTimes(1);
+    const rows = createMany.mock.calls[0]?.[1] ?? [];
+    expect(rows).toHaveLength(240);
+    const firstRow = rows[0] as Record<string, unknown> | undefined;
     expect(firstRow?.additionalPortion).toBe(0);
   });
 
   it("includes active loanMonthlyCost rows in additionalPortion and expectedAmount", async () => {
-    const hook = loadLd01Hook();
-    const { context, create } = createContext({
+    const hook = loadLoanPaymentPlanHook();
+    const { context, createMany } = createContext({
       list: vi.fn(async (entity) => {
         if (entity !== "loanMonthlyCost") {
           return [];
@@ -191,22 +198,22 @@ describe("LD-01 runtime", () => {
 
     await runDataHook(toDataHookDefinition(hook), context);
 
-    const firstRow = create.mock.calls[0]?.[1] as
-      | Record<string, unknown>
-      | undefined;
+    const rows = (createMany.mock.calls[0]?.[1] ?? []) as Record<
+      string,
+      unknown
+    >[];
+    const firstRow = rows[0];
     expect(firstRow?.additionalPortion).toBe(150_000);
     expect(firstRow?.principalPortion).toEqual(expect.any(Number));
     expect(firstRow?.interestPortion).toEqual(expect.any(Number));
     expect(firstRow?.expectedAmount).toBe(
-      Number(firstRow?.principalPortion) +
-        Number(firstRow?.interestPortion) +
-        150_000,
+      Number(firstRow?.principalPortion) + Number(firstRow?.interestPortion),
     );
   });
 
   it("creates GERMAN Crediservice rows matching bank statement P/I (NMV)", async () => {
-    const hook = loadLd01Hook();
-    const { context, create } = createContext({
+    const hook = loadLoanPaymentPlanHook();
+    const { context, createMany } = createContext({
       list: vi.fn(async () => []),
       loan: revolvingLoanDetails,
       parent: revolvingFinancialItem,
@@ -214,10 +221,11 @@ describe("LD-01 runtime", () => {
 
     await runDataHook(toDataHookDefinition(hook), context);
 
-    expect(create).toHaveBeenCalled();
-    const rows = create.mock.calls.map(
-      (call) => call[1] as Record<string, unknown>,
-    );
+    expect(createMany).toHaveBeenCalledTimes(1);
+    const rows = (createMany.mock.calls[0]?.[1] ?? []) as Record<
+      string,
+      unknown
+    >[];
 
     expect(rows[0]?.principalPortion).toBeCloseTo(310_833, 0);
     expect(rows[0]?.interestPortion).toBeCloseTo(380_460, 0);
@@ -239,10 +247,60 @@ describe("LD-01 runtime", () => {
       Number(rows[0]?.expectedAmount),
     );
   });
+
+  it("sends success notification with schedule row count after plan generation", async () => {
+    const hook = loadLoanPaymentPlanHook();
+    const scheduleRows: Array<Record<string, unknown>> = [];
+    const sendUserNotification = vi.fn(async () => undefined);
+    const createMany = vi.fn<HookEntityServices["createMany"]>(
+      async (_entity, records) => {
+        for (const record of records) {
+          scheduleRows.push({
+            ...(record as Record<string, unknown>),
+            status: "UPCOMING",
+          });
+        }
+        return records.map((_, index) => ({ id: `ps_${index}` }));
+      },
+    );
+    const { context } = createContext({
+      list: vi.fn(async (entity) => {
+        if (entity === "loanMonthlyCost") {
+          return [];
+        }
+        if (entity === "paymentSchedule") {
+          return scheduleRows;
+        }
+        return [];
+      }),
+    });
+    context.services = {
+      ...context.services,
+      sendUserNotification,
+      entities: {
+        ...context.services.entities,
+        createMany,
+      },
+    };
+
+    await runDataHook(toDataHookDefinition(hook), context);
+
+    expect(sendUserNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_test",
+        message: expect.stringMatching(
+          /^Generated loan payment plan: 240 row\(s\) for Hipoteca Altavista$/,
+        ),
+        entityName: "financialItem",
+        recordId: financialItem.id,
+        hookName: "Generate loan payment plan",
+      }),
+    );
+  });
 });
 
-describe("LD-01a runtime", () => {
-  function loadLd01aHook() {
+describe("loan origination date inference runtime", () => {
+  function loadOriginationDateHook() {
     const parsed = parseDataHooksCatalogJson(readFileSync(catalogPath, "utf8"));
     expect(parsed.ok).toBe(true);
     if (!parsed.ok) {
@@ -261,7 +319,7 @@ describe("LD-01a runtime", () => {
   }
 
   it("skips deferred GERMAN revolving loans without principal snapshots", async () => {
-    const hook = loadLd01aHook();
+    const hook = loadOriginationDateHook();
     const update = vi.fn<HookEntityServices["update"]>(async () => ({
       id: revolvingLoanDetails.id,
     }));
@@ -284,6 +342,7 @@ describe("LD-01a runtime", () => {
       event: "loanDetails.afterCreate",
       current: revolvingLoanDetails,
       user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
       services: {
         logger: {
           info: vi.fn(),
@@ -291,6 +350,7 @@ describe("LD-01a runtime", () => {
         },
         entities: {
           create: vi.fn(),
+          createMany: vi.fn(async () => []),
           update,
           delete: vi.fn(),
           list,

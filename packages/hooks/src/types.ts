@@ -1,3 +1,5 @@
+import type { CreateUserNotificationInput } from "@repo/user-notifications";
+
 import type { DataHookDefinition } from "./data-hook-definition.js";
 import type {
   CreateDataHookExecutionInput,
@@ -58,7 +60,12 @@ export interface HookEntityRepository {
   create(
     tenantId: string,
     record: HookEntityRepositoryRecord,
+    options?: { readonly skipExistsCheck?: boolean },
   ): Promise<HookEntityRepositoryRecord>;
+  createMany(
+    tenantId: string,
+    records: readonly HookEntityRepositoryRecord[],
+  ): Promise<readonly HookEntityRepositoryRecord[]>;
   findById(
     id: string,
     tenantId: string,
@@ -95,6 +102,11 @@ export interface HookEntityServices {
     data: Record<string, unknown>,
     options?: HookEntityWriteOptions,
   ) => Promise<Record<string, unknown>>;
+  readonly createMany: (
+    entityName: string,
+    records: readonly Record<string, unknown>[],
+    options?: HookEntityWriteOptions,
+  ) => Promise<readonly Record<string, unknown>[]>;
   readonly update: (
     entityName: string,
     id: string,
@@ -135,6 +147,9 @@ export interface HookServices {
   ) => Promise<void>;
   readonly dataHookExecutionRecorder?: DataHookExecutionRecorder;
   readonly callWebhook?: (request: DataHookWebhookRequest) => Promise<void>;
+  readonly sendUserNotification?: (
+    input: CreateUserNotificationInput,
+  ) => Promise<void>;
 }
 
 export interface HookContext {
@@ -163,6 +178,10 @@ export interface HookContext {
    * Scalars computed by `aggregateMatching` actions during this hook run, keyed by alias.
    */
   aggregates?: Record<string, ExpressionValue>;
+  /**
+   * Resolves tenant and platform formulas referenced by expression `formula` nodes.
+   */
+  formulaResolver?: import("./expression.js").FormulaResolver;
   /**
    * Per-run write and action instrumentation populated by `runDataHook`.
    */

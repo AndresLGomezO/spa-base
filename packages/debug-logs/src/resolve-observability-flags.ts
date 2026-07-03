@@ -35,12 +35,23 @@ export function resolveEnvRequestPerfTraceEnabled(
   return env.NODE_ENV !== "production";
 }
 
+export function resolveEnvSeedHookObservabilityEnabled(
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  const explicit = parseBooleanEnvFlag(env.SEED_HOOK_OBSERVABILITY_ENABLED);
+  if (explicit !== undefined) {
+    return explicit;
+  }
+  return env.NODE_ENV !== "production";
+}
+
 export function getObservabilityEnvDefaults(
   env: NodeJS.ProcessEnv = process.env,
 ): ObservabilityEnvDefaults {
   return {
     aiStepTraceEnabled: resolveEnvAiStepTraceEnabled(env),
     requestPerfTraceEnabled: resolveEnvRequestPerfTraceEnabled(env),
+    seedHookObservabilityEnabled: resolveEnvSeedHookObservabilityEnabled(env),
   };
 }
 
@@ -70,6 +81,19 @@ export function resolveRequestPerfTraceEnabled(
   return resolveEnvRequestPerfTraceEnabled(env);
 }
 
+export function resolveSeedHookObservabilityEnabled(
+  settings: PlatformRuntimeSettings | null | undefined,
+  env: NodeJS.ProcessEnv = process.env,
+): boolean {
+  if (
+    settings?.seedHookObservabilityEnabled !== null &&
+    settings?.seedHookObservabilityEnabled !== undefined
+  ) {
+    return settings.seedHookObservabilityEnabled;
+  }
+  return resolveEnvSeedHookObservabilityEnabled(env);
+}
+
 export function resolveEffectiveObservabilityFlags(
   settings: PlatformRuntimeSettings | null | undefined,
   env: NodeJS.ProcessEnv = process.env,
@@ -77,5 +101,9 @@ export function resolveEffectiveObservabilityFlags(
   return {
     aiStepTraceEnabled: resolveAiStepTraceEnabled(settings, env),
     requestPerfTraceEnabled: resolveRequestPerfTraceEnabled(settings, env),
+    seedHookObservabilityEnabled: resolveSeedHookObservabilityEnabled(
+      settings,
+      env,
+    ),
   };
 }

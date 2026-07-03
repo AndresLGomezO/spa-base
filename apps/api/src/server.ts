@@ -21,11 +21,13 @@ import type {
   DataHookRepository,
   DataHookExecutionRepository,
   HookLogMessageRepository,
+  UserNotificationRepository,
   RequestPerfLogRepository,
   AuditLogRepository,
   JoinCollectionRepository,
   MetricContributionRepository,
   MetricDefinitionRepository,
+  FormulaDefinitionRepository,
   MetricValueRepository,
   EntityQueryDefinitionRepository,
   CustomViewRepository,
@@ -45,11 +47,13 @@ import {
   createInMemoryDataHookRepository,
   createInMemoryDataHookExecutionRepository,
   createInMemoryHookLogMessageRepository,
+  createInMemoryUserNotificationRepository,
   createInMemoryRequestPerfLogRepository,
   createInMemoryIndexProvisionEventRepository,
   createInMemoryAuditLogRepository,
   createInMemoryPlatformRuntimeSettingsRepository,
   createInMemoryMetricDefinitionRepository,
+  createInMemoryFormulaDefinitionRepository,
   createInMemoryEntityQueryDefinitionRepository,
   createInMemoryCustomViewRepository,
   createInMemoryMetricContributionRepository,
@@ -57,6 +61,8 @@ import {
   createInMemoryTenantAiContextRepository,
   createInMemoryTenantRoleRepository,
   createInMemoryTenantUserInviteRepository,
+  createInMemoryTenantDeletionArchiveRepository,
+  createInMemoryTenantDeletionJobRepository,
 } from "@repo/firestore-converters";
 import {
   createFirestoreAdminAggregationEventRepository,
@@ -71,12 +77,14 @@ import {
   createFirestoreAdminDataHookRepository,
   createFirestoreAdminDataHookExecutionRepository,
   createFirestoreAdminHookLogMessageRepository,
+  createFirestoreAdminUserNotificationRepository,
   createFirestoreAdminRequestPerfLogRepository,
   createFirestoreAdminIndexProvisionEventRepository,
   createFirestoreAdminAuditLogRepository,
   createFirestoreAdminPlatformRuntimeSettingsRepository,
   createFirestoreAdminJoinCollectionRepository,
   createFirestoreAdminMetricDefinitionRepository,
+  createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminMetricContributionRepository,
@@ -85,6 +93,8 @@ import {
   createFirestoreAdminRegisteredUserRepository,
   createFirestoreAdminTenantRoleRepository,
   createFirestoreAdminTenantUserInviteRepository,
+  createFirestoreAdminTenantDeletionArchiveRepository,
+  createFirestoreAdminTenantDeletionJobRepository,
   createFirestoreAdminTenantRepository,
   createFirestoreAdminTenantAiContextRepository,
   createFirestoreIndexStatusStore,
@@ -128,12 +138,17 @@ import {
 } from "./indexes/index-provision-events.js";
 import { createTenantIndexGuard } from "./indexes/create-tenant-index-guard.js";
 import type { CrudHookDeps } from "./hooks/crud-hook-deps.types.js";
+import { createFormulaRuntimeContext } from "./formulas/formula-runtime-context.js";
+import { loadFormulaAdmin } from "./formulas/load-formula-admin.js";
 import { createHookRuntimeContext } from "./hooks/hook-runtime-context.js";
 import { createHookTasksClient } from "./hooks/hook-tasks.client.js";
+import { createTenantDeletionTasksClient } from "./admin/tenant-deletion-tasks.client.js";
+import { parseProtectedTenantIds } from "./admin/enqueue-tenant-deletion.js";
 import { callDataHookWebhook } from "./hooks/call-data-hook-webhook.js";
 import { registerHookRoutes } from "./hooks/register-hook-routes.js";
 import { registerAiRoutes } from "./ai/register-ai-routes.js";
 import { registerDebugRoutes } from "./debug/register-debug-routes.js";
+import { registerNotificationRoutes } from "./notifications/register-notification-routes.js";
 import { registerUiBuilderAiSuggestionRoutes } from "./ai/register-ui-builder-ai-suggestion-routes.js";
 import type { SyncTenantAiContextsDeps } from "./ai/sync-tenant-ai-contexts.js";
 import { registerRoleRoutes } from "./roles/register-role-routes.js";
@@ -156,6 +171,7 @@ import { platformRuntimeSettingsRoutes } from "./routes/platform-runtime-setting
 import { authSelectTenantRoute } from "./routes/auth-select-tenant.route.js";
 import { authValidateRoute } from "./routes/auth-validate.route.js";
 import { registerTenantUserRoutes } from "./routes/tenant-users.routes.js";
+import { reloadHookCacheRoute } from "./dev/reload-hook-cache.route.js";
 
 type GenericRecord = { readonly id: string; readonly tenantId: string };
 
@@ -175,11 +191,13 @@ interface BuildServerOptions {
   readonly hookRepository?: DataHookRepository;
   readonly hookExecutionRepository?: DataHookExecutionRepository;
   readonly hookLogMessageRepository?: HookLogMessageRepository;
+  readonly userNotificationRepository?: UserNotificationRepository;
   readonly requestPerfLogRepository?: RequestPerfLogRepository;
   readonly indexProvisionEventRepository?: import("@repo/firestore-converters").IndexProvisionEventRepository;
   readonly platformRuntimeSettingsRepository?: PlatformRuntimeSettingsRepository;
   readonly auditLogRepository?: AuditLogRepository;
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
+  readonly formulaDefinitionRepository?: FormulaDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
   readonly customViewRepository?: CustomViewRepository;
   readonly aggregationEventRepository?: AggregationEventRepository;
@@ -353,6 +371,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
       ? createInMemoryHookLogMessageRepository()
       : createFirestoreAdminHookLogMessageRepository(firebaseAdminConfig));
 
+  const userNotificationRepository =
+    options.userNotificationRepository ??
+    (options.repositories
+      ? createInMemoryUserNotificationRepository()
+      : createFirestoreAdminUserNotificationRepository(firebaseAdminConfig));
+
   const requestPerfLogRepository =
     options.requestPerfLogRepository ??
     (options.repositories
@@ -410,6 +434,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
       : createFirestoreAdminTenantUserInviteRepository(firebaseAdminConfig));
 
   const hookRuntime = createHookRuntimeContext(hookRepository);
+  await server.register(reloadHookCacheRoute, { hookRuntime });
   const hookTasksClient = createHookTasksClient({
     projectId: apiEnv.GCP_PROJECT_ID,
     region: apiEnv.GCP_REGION,
@@ -419,11 +444,44 @@ export async function buildServer(options: BuildServerOptions = {}) {
     localDispatch: apiEnv.HOOK_TASKS_LOCAL_DISPATCH,
   });
 
+  const tenantDeletionTasksClient = createTenantDeletionTasksClient({
+    projectId: apiEnv.GCP_PROJECT_ID,
+    region: apiEnv.GCP_REGION,
+    queueName: apiEnv.HOOK_TASKS_QUEUE_NAME,
+    workerBaseUrl: apiEnv.WORKER_SERVICE_URL,
+    serviceAccountEmail: apiEnv.TASKS_SA_EMAIL,
+    localDispatch: apiEnv.HOOK_TASKS_LOCAL_DISPATCH,
+  });
+
+  const tenantDeletionJobRepository =
+    options.tenantDeletionJobRepository ??
+    (options.repositories
+      ? createInMemoryTenantDeletionJobRepository()
+      : createFirestoreAdminTenantDeletionJobRepository(firebaseAdminConfig));
+
+  const tenantDeletionArchiveRepository =
+    options.tenantDeletionArchiveRepository ??
+    (options.repositories
+      ? createInMemoryTenantDeletionArchiveRepository()
+      : createFirestoreAdminTenantDeletionArchiveRepository(
+          firebaseAdminConfig,
+        ));
+
   const metricDefinitionRepository =
     options.metricDefinitionRepository ??
     (options.repositories
       ? createInMemoryMetricDefinitionRepository()
       : createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig));
+
+  const formulaDefinitionRepository =
+    options.formulaDefinitionRepository ??
+    (options.repositories
+      ? createInMemoryFormulaDefinitionRepository()
+      : createFirestoreAdminFormulaDefinitionRepository(firebaseAdminConfig));
+
+  const formulaRuntime = createFormulaRuntimeContext(
+    formulaDefinitionRepository,
+  );
 
   const entityQueryDefinitionRepository =
     options.entityQueryDefinitionRepository ??
@@ -672,10 +730,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
   const queryContext = entityRuntime.createQueryContext(ownershipQueryInjector);
   const crudHooks: CrudHookDeps = {
     hookRuntime,
+    formulaRuntime,
     entityRuntime,
     permissionDeps,
     hookExecutionRepository,
     hookLogMessageRepository,
+    userNotificationRepository,
     enqueueDataHookJob:
       hookTasksClient.enqueueDataHookJob.bind(hookTasksClient),
     callWebhook: callDataHookWebhook,
@@ -703,6 +763,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     tenantAiContextSync,
     tenantIndexGuard,
     entityRuntime,
+    tenantDeletionJobRepository,
+    tenantDeletionArchiveRepository,
+    tenantDeletionTasksClient,
+    tenantDeletionProtectedIds: parseProtectedTenantIds(
+      apiEnv.TENANT_DELETION_PROTECTED_IDS,
+    ),
   });
 
   await server.register(platformRuntimeSettingsRoutes, {
@@ -779,6 +845,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     hookRuntime,
+    formulaRuntime,
     hookExecutionRepository,
     tenantIndexGuard,
   });
@@ -810,6 +877,11 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
   });
 
+  await registerNotificationRoutes(server, {
+    authenticate,
+    userNotificationRepository,
+  });
+
   await registerUiBuilderAiSuggestionRoutes(server, {
     authenticate,
     permissionDeps,
@@ -822,6 +894,13 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityRuntime,
     metricRuntime,
     tenantIndexGuard,
+  });
+
+  const { registerFormulaDefinitionRoutes } = await loadFormulaAdmin();
+  await registerFormulaDefinitionRoutes(server, {
+    authenticate,
+    permissionDeps,
+    formulaRuntime,
   });
 
   await registerEntityQueryDefinitionRoutes(server, {

@@ -141,3 +141,19 @@ export async function uploadTenantDashboardImage(params: {
 
   return buildFirebaseStorageDownloadUrl(bucketName, objectPath, downloadToken);
 }
+
+export async function deleteTenantStoragePrefix(
+  config: FirebaseAdminConfig,
+  tenantId: string,
+): Promise<number> {
+  const bucketName = resolveStorageBucket(config);
+  const app = getFirebaseAdminApp(config);
+  const bucket = getStorage(app).bucket(bucketName);
+  const prefix = `tenants/${tenantId}/`;
+  const [files] = await bucket.getFiles({ prefix });
+  if (files.length === 0) {
+    return 0;
+  }
+  await Promise.all(files.map((file) => file.delete()));
+  return files.length;
+}

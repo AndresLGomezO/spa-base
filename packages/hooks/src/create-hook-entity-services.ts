@@ -159,6 +159,7 @@ export function createHookEntityServices(options: {
         const created = await repository.create(
           options.tenantId,
           record as { readonly id: string; readonly tenantId: string },
+          { skipExistsCheck: true },
         );
 
         await options.dispatchChainedHooks(
@@ -184,6 +185,7 @@ export function createHookEntityServices(options: {
       const created = await repository.create(
         options.tenantId,
         record as { readonly id: string; readonly tenantId: string },
+        { skipExistsCheck: true },
       );
       invalidateInMemoryListSnapshot(entityName);
       return filterReadResult(
@@ -191,6 +193,85 @@ export function createHookEntityServices(options: {
         entityName,
         businessFieldNames,
         created,
+      );
+    },
+
+    async createMany(entityName, records, writeOptions) {
+      if (records.length === 0) {
+        return [];
+      }
+
+      if (writeOptions?.chainHooks) {
+        throw new Error(
+          `createMany does not support chained hooks for ${entityName}.`,
+        );
+      }
+
+      if (!accessControl.hasPermission(`${entityName}.create`)) {
+        throw new Error(
+          `Hook runner lacks permission to create ${entityName} records.`,
+        );
+      }
+
+      const entity = options.entityRuntime.resolveEntity(
+        entityName,
+        options.tenantId,
+      );
+      if (!entity) {
+        throw new Error(`Entity "${entityName}" is not registered.`);
+      }
+
+      const businessFieldNames = Object.keys(entity.metadata.fields);
+      const fieldAccess = accessControl.resolveFieldAccess(
+        entityName,
+        businessFieldNames,
+        "create",
+      );
+
+      const repository = options.entityRuntime.getRepository(
+        options.tenantId,
+        entityName,
+      );
+      if (!repository) {
+        throw new Error(`Repository for "${entityName}" is not available.`);
+      }
+
+      const now = new Date().toISOString();
+      const prepared = records.map((data) => {
+        accessControl.assertWritableFields(
+          data,
+          fieldAccess,
+          businessFieldNames,
+        );
+        const parsed = entity.createSchema.parse(data);
+        return entity.schema.parse(
+          prepareRecordSearchFields(
+            entity,
+            withOwnershipDefaults({
+              ...parsed,
+              id: nanoid(),
+              tenantId: options.tenantId,
+              createdAt: now,
+              updatedAt: now,
+            }),
+          ),
+        ) as Record<string, unknown>;
+      });
+
+      const created = await repository.createMany(
+        options.tenantId,
+        prepared as Array<{ readonly id: string; readonly tenantId: string }>,
+      );
+
+      invalidateInMemoryListSnapshot(entityName);
+
+      return created.map((record) =>
+        filterReadResult(
+          accessControl,
+          entityName,
+          businessFieldNames,
+          record,
+        ),
       );
     },
 

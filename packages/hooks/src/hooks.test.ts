@@ -24,6 +24,7 @@ import {
 } from "./registry.js";
 import type { HookContext } from "./types.js";
 import { HookExecutionError } from "./types.js";
+import { mockHookEntityServices } from "./test/mock-hook-entity-services.js";
 
 function createContext(overrides: Partial<HookContext> = {}): HookContext {
   return {
@@ -275,7 +276,7 @@ describe("runDataHook", () => {
             update: vi.fn(),
             list: vi.fn(),
             delete: vi.fn(),
-            get: vi.fn(),
+            get: vi.fn(),            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -289,9 +290,12 @@ describe("runDataHook", () => {
   });
 
   it("generates multiple records with loop index", async () => {
-    const create = vi.fn<
-      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
-    >(async () => ({ id: "c" }));
+    const createMany = vi.fn<
+      (
+        entity: string,
+        records: readonly Record<string, unknown>[],
+      ) => Promise<Array<{ id: string }>>
+    >(async (_entity, records) => records.map(() => ({ id: "c" })));
 
     await runDataHook(
       {
@@ -327,29 +331,28 @@ describe("runDataHook", () => {
         event: "loan.afterCreate",
         current: { periods: 3, startDate: "2026-01-01T00:00:00.000Z" },
         services: {
-          entities: {
-            create,
-            update: vi.fn(),
-            list: vi.fn(),
-            delete: vi.fn(),
-            get: vi.fn(),
-          },
+          entities: mockHookEntityServices({ createMany }),
         },
       }),
     );
 
-    expect(create).toHaveBeenCalledTimes(3);
-    expect(create.mock.calls[0]?.[1]).toMatchObject({ sequence: 0 });
-    expect(create.mock.calls[1]?.[1]).toMatchObject({
+    expect(createMany).toHaveBeenCalledTimes(1);
+    const records = createMany.mock.calls[0]?.[1] ?? [];
+    expect(records).toHaveLength(3);
+    expect(records[0]).toMatchObject({ sequence: 0 });
+    expect(records[1]).toMatchObject({
       sequence: 1,
       dueDate: "2026-01-31T00:00:00.000Z",
     });
   });
 
   it("uses startIndex as absolute loopIndex offset", async () => {
-    const create = vi.fn<
-      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
-    >(async () => ({ id: "c" }));
+    const createMany = vi.fn<
+      (
+        entity: string,
+        records: readonly Record<string, unknown>[],
+      ) => Promise<Array<{ id: string }>>
+    >(async (_entity, records) => records.map(() => ({ id: "c" })));
 
     await runDataHook(
       {
@@ -371,25 +374,23 @@ describe("runDataHook", () => {
       createContext({
         event: "loan.afterCreate",
         services: {
-          entities: {
-            create,
-            update: vi.fn(),
-            list: vi.fn(),
-            delete: vi.fn(),
-            get: vi.fn(),
-          },
+          entities: mockHookEntityServices({ createMany }),
         },
       }),
     );
 
-    expect(create.mock.calls[0]?.[1]).toMatchObject({ sequence: 5 });
-    expect(create.mock.calls[1]?.[1]).toMatchObject({ sequence: 6 });
+    const records = createMany.mock.calls[0]?.[1] ?? [];
+    expect(records[0]).toMatchObject({ sequence: 5 });
+    expect(records[1]).toMatchObject({ sequence: 6 });
   });
 
   it("carries loopState across createRecords iterations", async () => {
-    const create = vi.fn<
-      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
-    >(async () => ({ id: "c" }));
+    const createMany = vi.fn<
+      (
+        entity: string,
+        records: readonly Record<string, unknown>[],
+      ) => Promise<Array<{ id: string }>>
+    >(async (_entity, records) => records.map(() => ({ id: "c" })));
 
     await runDataHook(
       {
@@ -434,22 +435,17 @@ describe("runDataHook", () => {
         event: "loan.afterCreate",
         current: { total: 300 },
         services: {
-          entities: {
-            create,
-            update: vi.fn(),
-            list: vi.fn(),
-            delete: vi.fn(),
-            get: vi.fn(),
-          },
+          entities: mockHookEntityServices({ createMany }),
         },
       }),
     );
 
-    expect(create).toHaveBeenCalledTimes(3);
-    expect(create.mock.calls[0]?.[1]).toMatchObject({ portion: 100 });
-    expect(create.mock.calls[0]?.[1]).not.toHaveProperty("__loopState");
-    expect(create.mock.calls[1]?.[1]).toMatchObject({ portion: 100 });
-    expect(create.mock.calls[2]?.[1]).toMatchObject({ portion: 100 });
+    const records = createMany.mock.calls[0]?.[1] ?? [];
+    expect(records).toHaveLength(3);
+    expect(records[0]).toMatchObject({ portion: 100 });
+    expect(records[0]).not.toHaveProperty("__loopState");
+    expect(records[1]).toMatchObject({ portion: 100 });
+    expect(records[2]).toMatchObject({ portion: 100 });
   });
 
   it("rejects createRecords count above sync tier at runtime", async () => {
@@ -471,13 +467,7 @@ describe("runDataHook", () => {
         createContext({
           event: "loan.afterCreate",
           services: {
-            entities: {
-              create: vi.fn(),
-              update: vi.fn(),
-              list: vi.fn(),
-              delete: vi.fn(),
-              get: vi.fn(),
-            },
+            entities: mockHookEntityServices(),
           },
         }),
       ),
@@ -485,9 +475,12 @@ describe("runDataHook", () => {
   });
 
   it("allows createRecords count above sync tier when queued", async () => {
-    const create = vi.fn<
-      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
-    >(async () => ({ id: "c" }));
+    const createMany = vi.fn<
+      (
+        entity: string,
+        records: readonly Record<string, unknown>[],
+      ) => Promise<Array<{ id: string }>>
+    >(async (_entity, records) => records.map(() => ({ id: "c" })));
 
     await runDataHook(
       {
@@ -509,18 +502,13 @@ describe("runDataHook", () => {
       createContext({
         event: "loan.afterCreate",
         services: {
-          entities: {
-            create,
-            update: vi.fn(),
-            list: vi.fn(),
-            delete: vi.fn(),
-            get: vi.fn(),
-          },
+          entities: mockHookEntityServices({ createMany }),
         },
       }),
     );
 
-    expect(create).toHaveBeenCalledTimes(1_500);
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(createMany.mock.calls[0]?.[1]).toHaveLength(1_500);
   });
 
   it("updates matching related records", async () => {
@@ -575,7 +563,7 @@ describe("runDataHook", () => {
             update,
             list,
             delete: vi.fn(),
-            get: vi.fn(),
+            get: vi.fn(),            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -660,7 +648,7 @@ describe("runDataHook", () => {
             update,
             list,
             delete: vi.fn(),
-            get: vi.fn(),
+            get: vi.fn(),            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -711,7 +699,7 @@ describe("runDataHook", () => {
               update: vi.fn(),
               list: vi.fn(async () => []),
               delete: vi.fn(),
-              get: vi.fn(),
+              get: vi.fn(),              createMany: vi.fn(async () => []),
             },
           },
         }),
@@ -789,7 +777,7 @@ describe("runDataHook", () => {
             update: vi.fn(),
             list,
             delete: deleteFn,
-            get: vi.fn(),
+            get: vi.fn(),            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -836,7 +824,7 @@ describe("runDataHook", () => {
             update: vi.fn(),
             list: vi.fn(),
             delete: deleteFn,
-            get: vi.fn(),
+            get: vi.fn(),            createMany: vi.fn(async () => []),
           },
         },
       }),
@@ -895,6 +883,7 @@ describe("runDataHook", () => {
         services: {
           entities: {
             create,
+            createMany: vi.fn(async () => []),
             update: vi.fn(),
             list: vi.fn(),
             delete: vi.fn(),
@@ -936,6 +925,7 @@ describe("runDataHook", () => {
           services: {
             entities: {
               create: vi.fn(),
+              createMany: vi.fn(async () => []),
               update: vi.fn(),
               list: vi.fn(),
               delete: vi.fn(),
@@ -979,7 +969,7 @@ describe("runDataHook", () => {
           update,
           list,
           delete: vi.fn(),
-          get: vi.fn(),
+          get: vi.fn(),          createMany: vi.fn(async () => []),
         },
       },
     });
@@ -1038,7 +1028,7 @@ describe("runDataHook", () => {
           update: vi.fn(),
           list,
           delete: vi.fn(),
-          get: vi.fn(),
+          get: vi.fn(),          createMany: vi.fn(async () => []),
         },
       },
     });
@@ -1107,7 +1097,7 @@ describe("runDataHook", () => {
               update: vi.fn(),
               list: vi.fn(),
               delete: vi.fn(),
-              get: vi.fn(),
+              get: vi.fn(),              createMany: vi.fn(async () => []),
             },
           },
         }),
@@ -1235,7 +1225,7 @@ describe("runDataHook", () => {
           update: vi.fn(),
           list: vi.fn(),
           delete: vi.fn(),
-          get: vi.fn(),
+          get: vi.fn(),          createMany: vi.fn(async () => []),
         },
       },
     });
@@ -1415,6 +1405,173 @@ describe("compileDataHook", () => {
     });
   });
 
+  it("delivers sendNotification to sendUserNotification when wired", async () => {
+    const info = vi.fn();
+    const sendUserNotification = vi.fn(async () => undefined);
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      phase: "after",
+      trigger: { operation: "create" },
+      actions: [
+        {
+          type: "sendNotification",
+          message: { kind: "literal", value: "Loan plan generated" },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loanDetails.afterCreate",
+        entityName: "loanDetails",
+        current: { id: "loan_1" },
+        services: {
+          logger: { info, error: vi.fn() },
+          sendUserNotification,
+        },
+      }),
+    );
+
+    expect(sendUserNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_1",
+        message: "Loan plan generated",
+        level: "info",
+        hookId: "hook_1",
+        hookName: "Set status",
+        entityName: "loanDetails",
+        event: "loanDetails.afterCreate",
+        recordId: "loan_1",
+      }),
+    );
+  });
+
+  it("delivers sendUserNotification with recordEntity and recordId overrides", async () => {
+    const sendUserNotification = vi.fn(async () => undefined);
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      phase: "after",
+      trigger: { operation: "create" },
+      actions: [
+        {
+          type: "sendNotification",
+          message: {
+            kind: "call",
+            "fn": "concat",
+            args: [
+              { kind: "literal", value: "Generated plan for " },
+              {
+                kind: "field",
+                source: "loaded",
+                alias: "parent",
+                path: "name",
+              },
+            ],
+          },
+          recordEntity: { kind: "literal", value: "financialItem" },
+          recordId: {
+            kind: "field",
+            source: "loaded",
+            alias: "parent",
+            path: "id",
+          },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "loanDetails.afterCreate",
+        entityName: "loanDetails",
+        current: { id: "loan_1", financialItemId: "fi_1" },
+        loaded: { parent: { id: "fi_1", name: "Hipoteca Altavista" } },
+        services: {
+          logger: { info: vi.fn(), error: vi.fn() },
+          sendUserNotification,
+        },
+      }),
+    );
+
+    expect(sendUserNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        message: "Generated plan for Hipoteca Altavista",
+        entityName: "financialItem",
+        recordId: "fi_1",
+      }),
+    );
+  });
+
+  it("delivers sendUserNotification when success message uses aggregate count", async () => {
+    const list = vi.fn(async () => [
+      { id: "ps_1", financialItemId: "fi_1", status: "UPCOMING" },
+      { id: "ps_2", financialItemId: "fi_1", status: "UPCOMING" },
+    ]);
+    const sendUserNotification = vi.fn(async () => undefined);
+    const handler = compileDataHook({
+      ...sampleDefinition,
+      phase: "after",
+      trigger: { operation: "create" },
+      actions: [
+        {
+          type: "aggregateMatching",
+          entity: "paymentSchedule",
+          op: "count",
+          as: "scheduleRowCount",
+          where: {
+            type: "condition",
+            field: "financialItemId",
+            operator: "==",
+            value: { kind: "field", source: "current", path: "id" },
+          },
+        },
+        {
+          type: "sendNotification",
+          message: {
+            kind: "call",
+            fn: "concat",
+            args: [
+              { kind: "literal", value: "Created " },
+              {
+                kind: "field",
+                source: "aggregate",
+                alias: "scheduleRowCount",
+              },
+              { kind: "literal", value: " payment schedule row(s)" },
+            ],
+          },
+        },
+      ],
+    });
+
+    await handler(
+      createContext({
+        event: "financialItem.afterCreate",
+        entityName: "financialItem",
+        current: { id: "fi_1" },
+        services: {
+          logger: { info: vi.fn(), error: vi.fn() },
+          entities: {
+            create: vi.fn(),
+            createMany: vi.fn(async () => []),
+            update: vi.fn(),
+            list,
+            delete: vi.fn(),
+            get: vi.fn(),
+          },
+          sendUserNotification,
+        },
+      }),
+    );
+
+    expect(sendUserNotification).toHaveBeenCalledWith(
+      expect.objectContaining({
+        userId: "user_1",
+        message: "Created 2 payment schedule row(s)",
+        entityName: "financialItem",
+      }),
+    );
+  });
+
   it("skips sendNotification logging when the evaluated message is empty", async () => {
     const info = vi.fn();
     const handler = compileDataHook({
@@ -1568,6 +1725,39 @@ describe("execution logging", () => {
     expect(recorder.beginRunning).not.toHaveBeenCalled();
   });
 
+  it("finishes existing execution when skipped with executionId", async () => {
+    const recorder = createMockRecorder();
+    await runDataHook(
+      {
+        ...sampleDefinition,
+        condition: {
+          type: "condition",
+          field: "amount",
+          operator: "==",
+          value: { kind: "literal", value: 999 },
+        },
+      },
+      {
+        ...createContext(),
+        services: {
+          dataHookExecutionRecorder: recorder,
+          logger: { info: vi.fn(), error: vi.fn() },
+        },
+      },
+      { executionId: "exec_pending" },
+    );
+
+    expect(recorder.finish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        id: "exec_pending",
+        status: "skipped",
+        error: "Condition evaluated to false.",
+      }),
+    );
+    expect(recorder.createTerminal).not.toHaveBeenCalled();
+    expect(recorder.beginRunning).not.toHaveBeenCalled();
+  });
+
   it("records error when action fails", async () => {
     const recorder = createMockRecorder();
     await expect(
@@ -1601,9 +1791,12 @@ describe("execution logging", () => {
 
   it("records write metrics and action trace for createRecords", async () => {
     const recorder = createMockRecorder();
-    const create = vi.fn<
-      (entity: string, data: Record<string, unknown>) => Promise<{ id: string }>
-    >(async () => ({ id: "c" }));
+    const createMany = vi.fn<
+      (
+        entity: string,
+        records: readonly Record<string, unknown>[],
+      ) => Promise<Array<{ id: string }>>
+    >(async (_entity, records) => records.map(() => ({ id: "c" })));
 
     await runDataHook(
       {
@@ -1625,13 +1818,7 @@ describe("execution logging", () => {
         ...createContext({
           event: "loan.afterCreate",
           services: {
-            entities: {
-              create,
-              update: vi.fn(),
-              list: vi.fn(),
-              delete: vi.fn(),
-              get: vi.fn(),
-            },
+            entities: mockHookEntityServices({ createMany }),
             dataHookExecutionRecorder: recorder,
             logger: { info: vi.fn(), error: vi.fn() },
           },
@@ -1639,7 +1826,8 @@ describe("execution logging", () => {
       },
     );
 
-    expect(create).toHaveBeenCalledTimes(3);
+    expect(createMany).toHaveBeenCalledTimes(1);
+    expect(createMany.mock.calls[0]?.[1]).toHaveLength(3);
     expect(recorder.finish).toHaveBeenCalledWith(
       expect.objectContaining({
         status: "success",

@@ -93,7 +93,7 @@ describe("TX-03a runtime", () => {
           update,
           delete: vi.fn(),
           list,
-          get: vi.fn(),
+          get: vi.fn(),          createMany: vi.fn(async () => []),
         },
       },
     };
@@ -132,7 +132,7 @@ describe("TX-03a runtime", () => {
           update,
           delete: vi.fn(),
           list: vi.fn(async () => []),
-          get: vi.fn(),
+          get: vi.fn(),          createMany: vi.fn(async () => []),
         },
       },
     });

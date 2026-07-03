@@ -189,9 +189,12 @@ export {
   EXPRESSION_VARIABLES,
   DATE_UNITS,
   MAX_SWITCH_CASES,
+  MAX_FORMULA_DEPTH,
   MAX_ARRAY_LITERAL_ITEMS,
   expressionNodeSchema,
   evaluateExpression,
+  walkExpressionNodes,
+  collectFormulaNames,
   expressionValuesEqual,
   isEmptyExpressionValue,
   isArrayLiteralNode,
@@ -219,6 +222,8 @@ export type {
   ExpressionNode,
   ExpressionSwitchCase,
   ExpressionScope,
+  FormulaDefinitionForEval,
+  FormulaResolver,
 } from "./expression.js";
 export { HOOK_PERMISSIONS } from "./permissions.js";
 export { HOOK_OPERATIONS, HOOK_PHASES, HookExecutionError } from "./types.js";

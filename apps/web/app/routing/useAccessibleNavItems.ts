@@ -27,6 +27,7 @@ import {
   SETTINGS_AI_CHAT_NAV_ITEM,
   DEBUGGER_GROUP_ICON,
   SETTINGS_METRICS_NAV_ITEM,
+  SETTINGS_FORMULAS_NAV_ITEM,
   SETTINGS_QUERY_BUILDER_NAV_ITEM,
   SETTINGS_CUSTOM_VIEWS_NAV_ITEM,
   SETTINGS_GROUP_ICON,
@@ -222,6 +223,10 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
 
     if (hasPermission("metricDefinition.read", permissions, { isSuperAdmin })) {
       analyticsChildren.push(SETTINGS_METRICS_NAV_ITEM);
+    }
+
+    if (hasPermission("formula.read", permissions, { isSuperAdmin })) {
+      analyticsChildren.push(SETTINGS_FORMULAS_NAV_ITEM);
     }
 
     if (

@@ -71,17 +71,40 @@ export { createFirestoreAdminTenantDashboardLayoutRepository } from "./firestore
 export { createFirestoreAdminDataHookRepository } from "./firestore-admin-hook-repository.js";
 export { createFirestoreAdminDataHookExecutionRepository } from "./firestore-admin-hook-execution-repository.js";
 export { createFirestoreAdminHookLogMessageRepository } from "./firestore-admin-hook-log-message-repository.js";
+export { createFirestoreAdminUserNotificationRepository } from "./firestore-admin-user-notification-repository.js";
 export { createFirestoreAdminRequestPerfLogRepository } from "./firestore-admin-request-perf-log-repository.js";
 export { createFirestoreAdminIndexProvisionEventRepository } from "./firestore-admin-index-provision-event-repository.js";
 export { createFirestoreAdminAuditLogRepository } from "./firestore-admin-audit-log-repository.js";
 export { createFirestoreAdminPlatformRuntimeSettingsRepository } from "./firestore-admin-platform-runtime-settings-repository.js";
 export { createFirestoreAdminMetricDefinitionRepository } from "./firestore-admin-metric-definition-repository.js";
+export { createFirestoreAdminFormulaDefinitionRepository } from "./firestore-admin-formula-definition-repository.js";
 export { createFirestoreAdminEntityQueryDefinitionRepository } from "./firestore-admin-entity-query-definition-repository.js";
 export { createFirestoreAdminCustomViewRepository } from "./firestore-admin-custom-view-repository.js";
 export { createFirestoreAdminAggregationEventRepository } from "./firestore-admin-aggregation-event-repository.js";
 export { createFirestoreAdminMetricValueRepository } from "./firestore-admin-metric-value-repository.js";
 export { createFirestoreAdminMetricContributionRepository } from "./firestore-admin-metric-contribution-repository.js";
 export { createFirestoreAdminBackfillJobRepository } from "./firestore-admin-backfill-job-repository.js";
+export {
+  createFirestoreAdminTenantDeletionArchiveRepository,
+  createFirestoreAdminTenantDeletionJobRepository,
+} from "./firestore-admin-tenant-deletion-repository.js";
+export {
+  copyDocumentTree,
+  copyTenantToArchiveMirror,
+  deleteAllDocumentsInCollection,
+  deleteDocumentTree,
+  deleteAllTenantUserInvites,
+  listTenantSubcollectionNames,
+  processTenantDeletion,
+  purgeArchiveMirror,
+  purgeExpiredTenantArchives,
+  purgeLiveTenantData,
+  removeTenantFromAllUsers,
+  type DocumentTreeProgress,
+  type DocumentTreeProgressCallback,
+  type TenantDeletionProcessorDeps,
+  type TenantDeletionTaskPayload,
+} from "./tenant-deletion/index.js";
 export { createFirestoreAdminAiJobRepository } from "./firestore-admin-ai-job-repository.js";
 export { createFirestoreAdminUiBuilderAiSuggestionRepository } from "./firestore-admin-ui-builder-ai-suggestion-repository.js";
 export { createFirestoreAdminTenantAiContextRepository } from "./firestore-admin-tenant-ai-context-repository.js";
@@ -112,6 +135,7 @@ export {
   uploadTenantLogo,
   uploadTenantDashboardImage,
   validateStorageObjectId,
+  deleteTenantStoragePrefix,
 } from "./tenant-storage.js";
 export {
   downloadAiUiRenderImage,

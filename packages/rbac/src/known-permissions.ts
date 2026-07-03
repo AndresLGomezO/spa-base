@@ -7,6 +7,7 @@ import {
   getDynamicPermissionsForTenant,
 } from "@repo/dynamic-entities";
 import { ENTITY_UI_OVERRIDE_PERMISSIONS } from "@repo/entities";
+import { FORMULA_PERMISSIONS } from "@repo/formula-definitions/permissions";
 import { HOOK_PERMISSIONS } from "@repo/hooks/permissions";
 import { ENTITY_QUERY_PERMISSIONS } from "@repo/entity-queries/permissions";
 import { CUSTOM_VIEW_PERMISSIONS } from "@repo/custom-views/permissions";
@@ -29,6 +30,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
     ...ENTITY_CATEGORY_PERMISSIONS,
     ...INTERNAL_ENTITY_PERMISSIONS,
     ...HOOK_PERMISSIONS,
+    ...FORMULA_PERMISSIONS,
     ...METRIC_PERMISSIONS,
     ...ENTITY_QUERY_PERMISSIONS,
     ...CUSTOM_VIEW_PERMISSIONS,

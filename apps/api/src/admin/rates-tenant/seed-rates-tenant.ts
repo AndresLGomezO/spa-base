@@ -107,7 +107,6 @@ async function seedRatesTenant(
       firebaseAdminConfig,
       catalogResult.definitionRecords,
       demoOwnerId,
-      entityRuntime,
     );
   }
 
@@ -116,7 +115,6 @@ async function seedRatesTenant(
       tenantId,
       firebaseAdminConfig,
       catalogResult.definitionRecords,
-      entityRuntime,
     );
   }
 

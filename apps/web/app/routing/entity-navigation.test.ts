@@ -34,9 +34,12 @@ describe("entity-navigation", () => {
 
   it("validates safe app returnTo paths", () => {
     expect(isSafeAppReturnTo("/app/contact?q=foo")).toBe(true);
+    expect(isSafeAppReturnTo("/notifications")).toBe(true);
+    expect(isSafeAppReturnTo("/")).toBe(true);
+    expect(isSafeAppReturnTo("/settings/design-layout")).toBe(true);
     expect(isSafeAppReturnTo("https://evil.example/app/contact")).toBe(false);
     expect(isSafeAppReturnTo("//evil.example/app/contact")).toBe(false);
-    expect(isSafeAppReturnTo("/settings/design-layout")).toBe(false);
+    expect(isSafeAppReturnTo("/login")).toBe(false);
   });
 
   it("reads returnTo from location state when safe", () => {
@@ -45,6 +48,11 @@ describe("entity-navigation", () => {
         state: { returnTo: "/app/contact?q=foo" },
       }),
     ).toBe("/app/contact?q=foo");
+    expect(
+      readReturnToFromLocation({
+        state: { returnTo: "/notifications" },
+      }),
+    ).toBe("/notifications");
   });
 
   it("rejects unsafe returnTo in location state", () => {
@@ -72,6 +80,19 @@ describe("entity-navigation", () => {
         "contact",
       ),
     ).toBe("/app/all-entities/contact");
+  });
+
+  it("uses notifications returnTo from location state", () => {
+    expect(
+      resolveEntityReturnTo(
+        {
+          pathname: "/app/contact/abc",
+          search: "",
+          state: { returnTo: "/notifications" },
+        },
+        "contact",
+      ),
+    ).toBe("/notifications");
   });
 
   it("merges edit param without dropping list filters", () => {

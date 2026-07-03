@@ -61,6 +61,7 @@ function buildScope(
   context: HookContext,
   loopIndex?: number,
   loopVars?: { readonly loopState?: number },
+  formulaResultCache?: Map<string, ExpressionValue>,
 ): ExpressionScope {
   return {
     current: context.current,
@@ -68,11 +69,16 @@ function buildScope(
     ...(context.loaded ? { loaded: context.loaded } : {}),
     ...(context.aggregates ? { aggregates: context.aggregates } : {}),
     now: new Date(),
+    tenantId: context.tenantId,
+    ...(context.formulaResolver
+      ? { formulaResolver: context.formulaResolver }
+      : {}),
     ...(context.user.uid ? { userId: context.user.uid } : {}),
     ...(loopIndex !== undefined ? { loopIndex } : {}),
     ...(loopVars?.loopState !== undefined
       ? { loopState: loopVars.loopState }
       : {}),
+    ...(formulaResultCache ? { formulaResultCache } : {}),
   };
 }
 
@@ -416,6 +422,8 @@ async function runAction(
         : 0;
       const startIndex = coerceNonNegativeInteger(rawStartIndex, "startIndex");
       let runningLoopState: number | undefined;
+      const formulaResultCache = new Map<string, ExpressionValue>();
+      const pending: Record<string, unknown>[] = [];
       for (let index = 0; index < count; index += 1) {
         const loopIndex = startIndex + index;
         const loopScope = buildScope(
@@ -424,14 +432,20 @@ async function runAction(
           runningLoopState !== undefined
             ? { loopState: runningLoopState }
             : undefined,
+          formulaResultCache,
         );
         const data = evaluateExpressionRecord(action.data, loopScope);
         const nextLoopState = data.__loopState;
         if (nextLoopState !== undefined) {
           runningLoopState = tryCoerceNumber(nextLoopState);
         }
-        const record = omitInternalLoopFields(data);
-        await entities.create(action.entity, record, writeOptions);
+        pending.push(omitInternalLoopFields(data));
+      }
+
+      if (pending.length === 1) {
+        await entities.create(action.entity, pending[0]!, writeOptions);
+      } else if (pending.length > 1) {
+        await entities.createMany(action.entity, pending, writeOptions);
       }
       return;
     }
@@ -535,18 +549,55 @@ async function runAction(
         return;
       }
 
+      const defaultRecordId =
+        typeof context.current.id === "string" ? context.current.id : undefined;
+      const notificationEntity =
+        action.recordEntity != null
+          ? String(evaluateExpression(action.recordEntity, scope) ?? "").trim()
+          : context.entityName;
+      const notificationRecordId =
+        action.recordId != null
+          ? String(evaluateExpression(action.recordId, scope) ?? "").trim()
+          : defaultRecordId;
+
       context.services.logger?.info(text, {
         hookId: hookMeta.hookId,
         hookName: hookMeta.hookName,
-        entityName: context.entityName,
+        entityName: notificationEntity || context.entityName,
         event: context.event,
         tenantId: context.tenantId,
         action: "sendNotification",
-        recordId:
-          typeof context.current.id === "string"
-            ? context.current.id
-            : undefined,
+        recordId: notificationRecordId,
       });
+
+      const sendUserNotification = context.services.sendUserNotification;
+      if (sendUserNotification && context.user.uid.trim().length > 0) {
+        void sendUserNotification({
+          userId: context.user.uid,
+          message: text,
+          level: "info",
+          hookId: hookMeta.hookId,
+          hookName: hookMeta.hookName,
+          entityName: notificationEntity || context.entityName,
+          event: context.event,
+          ...(notificationRecordId ? { recordId: notificationRecordId } : {}),
+          createdAt: new Date().toISOString(),
+        }).catch((error: unknown) => {
+          const message =
+            error instanceof Error
+              ? error.message
+              : "Failed to deliver user notification.";
+          context.services.logger?.error(
+            "Failed to deliver user notification",
+            {
+              hookId: hookMeta.hookId,
+              entityName: context.entityName,
+              event: context.event,
+              error: message,
+            },
+          );
+        });
+      }
       return;
     }
 
@@ -755,6 +806,21 @@ export async function runDataHook(
     if (!recorder) {
       return;
     }
+    const finishedAt = new Date().toISOString();
+    const durationMs = Date.now() - startedAt;
+    if (executionId) {
+      await safeRecorderCall(runContext, base.hookId, () =>
+        recorder.finish({
+          id: executionId,
+          status: "skipped",
+          error,
+          durationMs,
+          finishedAt,
+          ...metricsSnapshot(),
+        }),
+      );
+      return;
+    }
     await safeRecorderCall(runContext, base.hookId, () =>
       recorder.createTerminal({
         ...base,
@@ -762,8 +828,8 @@ export async function runDataHook(
         startedAt: startedAtIso,
         status: "skipped",
         error,
-        durationMs: Date.now() - startedAt,
-        finishedAt: new Date().toISOString(),
+        durationMs,
+        finishedAt,
       }),
     );
   };
@@ -880,7 +946,7 @@ export function compileDataHook(
         return;
       }
 
-      context.services.logger?.error(
+      context.services.logger?.info(
         "Queued data hook missing enqueue service; falling back to deferred execution",
         {
           hookId: definition.id,

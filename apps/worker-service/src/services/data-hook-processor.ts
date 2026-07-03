@@ -4,15 +4,19 @@ import {
   type DataHookJobPayload,
   type HookLogger,
 } from "@repo/hooks";
-import { buildRoleCatalog } from "@repo/rbac";
+import { getAllKnownPermissions, buildTenantRoleCatalog } from "@repo/rbac";
 import {
   createFirestoreAdminDataHookRepository,
   createFirestoreAdminDataHookExecutionRepository,
+  createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminHookLogMessageRepository,
+  createFirestoreAdminUserNotificationRepository,
   createFirestoreAdminRegisteredUserRepository,
+  createFirestoreAdminPlatformRoleRepository,
   createFirestoreAdminTenantRoleRepository,
 } from "@repo/gcp-firebase";
 import { createFirestoreAdminEntityDefinitionRepository } from "@repo/gcp-firebase";
+import { createFormulaRuntimeContext } from "@repo/formula-definitions/runtime";
 import { bootstrapPlatformApp } from "@app/platform/bootstrap.js";
 import { platformApp } from "@app/platform/app.config.js";
 import type { FirebaseAdminConfig } from "@repo/gcp-firebase";
@@ -31,6 +35,7 @@ import {
   resolveHookUserContext,
   type WorkerCrudHookDeps,
 } from "../hooks/worker-hook-entity-services.js";
+import { createSendUserNotification } from "../notifications/create-send-user-notification.js";
 
 export { dataHookJobPayloadSchema };
 
@@ -54,23 +59,33 @@ export function createDataHookProcessorDeps(
     createFirestoreAdminDataHookExecutionRepository(firebaseAdminConfig);
   const hookLogMessageRepository =
     createFirestoreAdminHookLogMessageRepository(firebaseAdminConfig);
+  const userNotificationRepository =
+    createFirestoreAdminUserNotificationRepository(firebaseAdminConfig);
   const registeredUserRepository =
     createFirestoreAdminRegisteredUserRepository(firebaseAdminConfig);
   const tenantRoleRepository =
     createFirestoreAdminTenantRoleRepository(firebaseAdminConfig);
+  const platformRoleRepository =
+    createFirestoreAdminPlatformRoleRepository(firebaseAdminConfig);
   const entityDefinitionRepository =
     createFirestoreAdminEntityDefinitionRepository(firebaseAdminConfig);
 
   const permissionDeps = createLoadRequestPermissionsDeps(
     registeredUserRepository,
     async (tenantId) => {
-      const roles = await tenantRoleRepository.list(tenantId);
-      return buildRoleCatalog(roles);
+      const [globalTemplates, tenantRoles] = await Promise.all([
+        platformRoleRepository.listGlobal(),
+        tenantRoleRepository.list(tenantId),
+      ]);
+      return buildTenantRoleCatalog(tenantRoles, globalTemplates);
     },
   );
 
   return {
     hookRuntime: new HookRuntimeContext(hookRepository),
+    formulaRuntime: createFormulaRuntimeContext(
+      createFirestoreAdminFormulaDefinitionRepository(firebaseAdminConfig),
+    ),
     entityRuntime: new WorkerHookEntityRuntime(
       firebaseAdminConfig,
       entityDefinitionRepository,
@@ -78,8 +93,62 @@ export function createDataHookProcessorDeps(
     permissionDeps,
     hookExecutionRepository,
     hookLogMessageRepository,
+    userNotificationRepository,
     callWebhook: callDataHookWebhook,
   };
+}
+
+function createInProcessHookTaskDispatcher(
+  deps: DataHookProcessorDeps,
+  logger: HookLogger,
+): (payload: DataHookJobPayload) => Promise<void> {
+  return async (payload) => {
+    void processDataHookJob(deps, payload, logger).catch((error: unknown) => {
+      const message =
+        error instanceof Error ? error.message : "Nested data hook job failed.";
+      logger.error("Nested data hook job failed", {
+        hookId: payload.hookId,
+        tenantId: payload.tenantId,
+        entityName: payload.entityName,
+        error: message,
+      });
+    });
+  };
+}
+
+async function resolveHookDefinition(
+  deps: DataHookProcessorDeps,
+  tenantId: string,
+  hookId: string,
+) {
+  let definition = await deps.hookRuntime.repository.getById(tenantId, hookId);
+  if (!definition) {
+    await deps.hookRuntime.reloadTenantHooks(tenantId);
+    definition = await deps.hookRuntime.repository.getById(tenantId, hookId);
+  }
+  return definition;
+}
+
+async function finishHookNotFoundExecution(
+  deps: DataHookProcessorDeps,
+  payload: DataHookJobPayload,
+): Promise<void> {
+  if (!payload.executionId || !deps.hookExecutionRepository) {
+    return;
+  }
+
+  const recorder = createDataHookExecutionRecorderForTenant(
+    deps.hookExecutionRepository,
+    payload.tenantId,
+  );
+  const finishedAt = new Date().toISOString();
+  await recorder.finish({
+    id: payload.executionId,
+    status: "error",
+    error: "Hook not found.",
+    durationMs: 0,
+    finishedAt,
+  });
 }
 
 export async function processDataHookJob(
@@ -90,11 +159,13 @@ export async function processDataHookJob(
   await deps.entityRuntime.ensureTenantEntitiesLoaded(payload.tenantId);
   await deps.hookRuntime.ensureTenantHooksLoaded(payload.tenantId);
 
-  const definition = await deps.hookRuntime.repository.getById(
+  const definition = await resolveHookDefinition(
+    deps,
     payload.tenantId,
     payload.hookId,
   );
   if (!definition) {
+    await finishHookNotFoundExecution(deps, payload);
     throw new PermanentHookTaskError("HOOK_NOT_FOUND");
   }
   if (!definition.enabled) {
@@ -105,17 +176,27 @@ export async function processDataHookJob(
     payload.tenantId,
     payload.user.uid,
     deps.permissionDeps,
+    {
+      getKnownPermissions: (tenantId) => getAllKnownPermissions(tenantId),
+    },
+  );
+
+  const formulaResolver = await deps.formulaRuntime.getFormulaResolver(
+    payload.tenantId,
   );
 
   const entities = buildHookEntityServices({
     user,
     deps,
     logger,
+    formulaResolver,
+    enqueueDataHookJob: createInProcessHookTaskDispatcher(deps, logger),
   });
 
   await runQueuedDataHookJob(definition, payload, {
     entities,
     logger,
+    formulaResolver,
     ...(deps.hookExecutionRepository
       ? {
           recordDataHookExecution: createRecordDataHookExecution(
@@ -129,5 +210,13 @@ export async function processDataHookJob(
         }
       : {}),
     ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
+    ...(deps.userNotificationRepository
+      ? {
+          sendUserNotification: createSendUserNotification(
+            deps.userNotificationRepository,
+            payload.tenantId,
+          ),
+        }
+      : {}),
   });
 }

@@ -141,22 +141,68 @@ export async function importAdminTenantBundle(
   return payload.summary;
 }
 
+export interface TenantDeletionJob {
+  readonly id: string;
+  readonly tenantId: string;
+  readonly archiveId: string;
+  readonly status: "queued" | "running" | "completed" | "failed";
+  readonly deletedBy: string | null;
+  readonly createdAt: string;
+  readonly startedAt: string | null;
+  readonly completedAt: string | null;
+  readonly error: string | null;
+  readonly progress: {
+    readonly collectionsCopied: number;
+    readonly docsCopied: number;
+    readonly docsDeleted: number;
+  };
+}
+
+export async function deleteAdminTenant(
+  tenantId: string,
+  input: { readonly confirmTenantId: string },
+): Promise<{ readonly jobId: string; readonly archiveId: string }> {
+  const payload = await adminFetch<{
+    jobId: string;
+    archiveId: string;
+  }>(`/admin/tenants/${encodeURIComponent(tenantId)}/delete`, {
+    method: "POST",
+    body: JSON.stringify(input),
+  });
+  return {
+    jobId: payload.jobId,
+    archiveId: payload.archiveId,
+  };
+}
+
+export async function getTenantDeletionJob(
+  jobId: string,
+): Promise<TenantDeletionJob> {
+  const payload = await adminFetch<{ job: TenantDeletionJob }>(
+    `/admin/tenant-deletion-jobs/${encodeURIComponent(jobId)}`,
+  );
+  return payload.job;
+}
+
 export type { AdminTenant };
 
 export interface PlatformRuntimeSettingsResponse {
   readonly settings: {
     readonly aiStepTraceEnabled: boolean | null;
     readonly requestPerfTraceEnabled: boolean | null;
+    readonly seedHookObservabilityEnabled: boolean | null;
     readonly updatedAt: string;
     readonly updatedBy: string;
   } | null;
   readonly effective: {
     readonly aiStepTraceEnabled: boolean;
     readonly requestPerfTraceEnabled: boolean;
+    readonly seedHookObservabilityEnabled: boolean;
   };
   readonly envDefaults: {
     readonly aiStepTraceEnabled: boolean;
     readonly requestPerfTraceEnabled: boolean;
+    readonly seedHookObservabilityEnabled: boolean;
   };
 }
 
@@ -174,6 +220,7 @@ export async function getPlatformRuntimeSettings(): Promise<PlatformRuntimeSetti
 export async function updatePlatformRuntimeSettings(input: {
   readonly aiStepTraceEnabled?: boolean | null;
   readonly requestPerfTraceEnabled?: boolean | null;
+  readonly seedHookObservabilityEnabled?: boolean | null;
 }): Promise<PlatformRuntimeSettingsResponse> {
   const payload = await adminFetch<
     PlatformRuntimeSettingsResponse & { ok?: boolean }

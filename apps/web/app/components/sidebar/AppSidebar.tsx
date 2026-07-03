@@ -22,6 +22,7 @@ import { DEFAULT_SITE_NAME } from "../SiteTitleSync";
 import { NavMain, NavigationProgressBar } from "./NavMain";
 import { SidebarUser } from "./SidebarUser";
 import { TenantSwitcher } from "../TenantSwitcher";
+import { NotificationBell } from "../../features/notifications/NotificationBell";
 
 function SidebarBrand({ onNavigate }: { readonly onNavigate?: () => void }) {
   const { activeTenantName, tenantAppearance } = useAuth();
@@ -93,6 +94,9 @@ function SidebarBody({
               <TenantSwitcher />
             </SidebarMenuItem>
           ) : null}
+          <SidebarMenuItem>
+            <NotificationBell />
+          </SidebarMenuItem>
           <SidebarMenuItem>
             <SidebarUser />
           </SidebarMenuItem>

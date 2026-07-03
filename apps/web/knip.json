@@ -6,6 +6,7 @@
     "@repo/data-view",
     "@repo/dynamic-entities",
     "@repo/entities",
+    "@repo/formula-definitions",
     "@repo/entity-queries",
     "@repo/firestore-indexes",
     "@repo/hooks",

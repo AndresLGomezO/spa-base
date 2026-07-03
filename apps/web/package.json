@@ -28,6 +28,7 @@
     "@repo/ui": "workspace:*",
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entities": "workspace:*",
+    "@repo/formula-definitions": "workspace:*",
     "@repo/hooks": "workspace:*",
     "@repo/firestore-indexes": "workspace:*",
     "@repo/modules": "workspace:*",

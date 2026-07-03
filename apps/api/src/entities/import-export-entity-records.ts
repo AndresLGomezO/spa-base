@@ -24,10 +24,7 @@ import type { AggregationEmitterDeps } from "../aggregation/emit-aggregation-eve
 import { sanitizeFileFieldsForWrite } from "../entity-files/entity-file-field-utils.js";
 import type { CrudHookDeps } from "../hooks/crud-hook-deps.types.js";
 import { resolveCrudHookEntityServices } from "../hooks/crud-hook-deps.js";
-import {
-  createDataHookExecutionRecorderForTenant,
-  createRecordDataHookExecution,
-} from "../hooks/record-data-hook-execution.js";
+import { buildCrudHookRunParams } from "../hooks/build-crud-hook-run-params.js";
 import { runEntityHooks } from "../modules/run-entity-hooks.js";
 import type { createRelationRuntimeContext } from "../relations/create-relation-services.js";
 import type { EntityRuntimeContext } from "./entity-runtime-context.js";
@@ -70,26 +67,11 @@ async function runCrudEntityHooks(
   crudHooks: CrudHookDeps | undefined,
   params: Parameters<typeof runEntityHooks>[2],
 ): Promise<Record<string, unknown>> {
-  const ctx = request.ctx;
-  return runEntityHooks(app, request, {
-    ...params,
-    ...(crudHooks?.enqueueDataHookJob
-      ? { enqueueDataHookJob: crudHooks.enqueueDataHookJob }
-      : {}),
-    ...(crudHooks?.hookExecutionRepository && ctx?.tenantId
-      ? {
-          recordDataHookExecution: createRecordDataHookExecution(
-            crudHooks.hookExecutionRepository,
-            ctx.tenantId,
-          ),
-          dataHookExecutionRecorder: createDataHookExecutionRecorderForTenant(
-            crudHooks.hookExecutionRepository,
-            ctx.tenantId,
-          ),
-        }
-      : {}),
-    ...(crudHooks?.callWebhook ? { callWebhook: crudHooks.callWebhook } : {}),
-  });
+  return runEntityHooks(
+    app,
+    request,
+    buildCrudHookRunParams(crudHooks, request.ctx?.tenantId, params),
+  );
 }
 
 function isRecordAccessibleToUser(

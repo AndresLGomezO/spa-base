@@ -724,6 +724,7 @@ Primitive values (`ExpressionValue`): `string | number | boolean | null`. Dates 
 | `loopState` | Carried value from the prior iteration's `data.__loopState` in `createRecords` (undefined on first iteration) |
 | `loaded.{alias}` | Record fetched by a prior `getRecord` action in the same run (via `source: "loaded"` field nodes) |
 | `aggregates.{alias}` | Scalar from a prior `aggregateMatching` action (via `source: "aggregate"` field nodes) |
+| `inputs.{name}` | Formula input bindings (only inside formula bodies; see `input` node) |
 
 ### AST node kinds
 
@@ -827,6 +828,43 @@ Flat key→value lookup node. Evaluates `input`, then returns the `then` value o
 ```
 
 Limits: at least **1** case, at most **32** cases (`MAX_SWITCH_CASES`). Prefer `switch` over deeply nested `call`/`if` trees when mapping many keys — case rows stay in a shallow array instead of nesting each branch as a child object (important for Firestore document depth).
+
+#### `formula`
+
+Invoke a named reusable formula definition (platform library or tenant-defined). Tenant formulas override platform names with the same name.
+
+```json
+{
+  "kind": "formula",
+  "name": "schedulePrincipalPortion",
+  "inputs": {}
+}
+```
+
+With explicit input wiring:
+
+```json
+{
+  "kind": "formula",
+  "name": "monthlyRateFromQuote",
+  "inputs": {
+    "rate": { "kind": "field", "source": "current", "path": "interestRate" },
+    "quote": { "kind": "field", "source": "current", "path": "interestRateQuote" }
+  }
+}
+```
+
+Resolution order: tenant formula by name → platform library → evaluation error. Formulas may call other formulas (composition). Max depth 16; circular references are rejected at catalog import and runtime.
+
+#### `input`
+
+Reference a formula input binding. Valid only inside formula bodies (not in hook expressions directly).
+
+```json
+{ "kind": "input", "name": "rate" }
+```
+
+Outer hook scope (`current`, `loaded.*`, `loopState`, etc.) remains visible inside formulas unless shadowed by an input name.
 
 ### Functions reference
 

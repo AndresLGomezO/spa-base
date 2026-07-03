@@ -25,6 +25,7 @@ describe("data hook task route", () => {
   it("accepts valid payloads and returns 202", async () => {
     const deps = {
       hookRuntime: {} as never,
+      formulaRuntime: {} as never,
       entityRuntime: {} as never,
       permissionDeps: {} as never,
     };
@@ -70,6 +71,7 @@ describe("data hook task route", () => {
   it("rejects invalid payloads with 200 and error code", async () => {
     const deps = {
       hookRuntime: {} as never,
+      formulaRuntime: {} as never,
       entityRuntime: {} as never,
       permissionDeps: {} as never,
     };

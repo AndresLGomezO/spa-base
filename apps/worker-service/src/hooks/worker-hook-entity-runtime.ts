@@ -41,10 +41,6 @@ export class WorkerHookEntityRuntime implements WorkerEntityRuntimeForCrudHooks 
   ) {}
 
   async ensureTenantEntitiesLoaded(tenantId: string): Promise<void> {
-    if (this.loadedTenants.has(tenantId)) {
-      return;
-    }
-
     const records = await this.entityDefinitionRepository.list(tenantId);
     for (const record of records) {
       registerDynamicEntity(tenantId, record);

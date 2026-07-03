@@ -30,6 +30,10 @@ export function createInMemoryPlatformRuntimeSettingsRepository(): PlatformRunti
           parsed.requestPerfTraceEnabled ??
           store.current?.requestPerfTraceEnabled ??
           null,
+        seedHookObservabilityEnabled:
+          parsed.seedHookObservabilityEnabled ??
+          store.current?.seedHookObservabilityEnabled ??
+          null,
         updatedAt: nowIso,
         updatedBy,
       });

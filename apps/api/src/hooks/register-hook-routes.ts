@@ -29,11 +29,14 @@ import {
 } from "./replace-data-hooks-catalog.js";
 import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
 
+import type { FormulaRuntimeContext } from "../formulas/formula-runtime-context.js";
+
 interface RegisterHookRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly hookRuntime: HookRuntimeContext;
+  readonly formulaRuntime: FormulaRuntimeContext;
   readonly hookExecutionRepository: DataHookExecutionRepository;
   readonly tenantIndexGuard?: TenantIndexGuard;
 }
@@ -246,7 +249,11 @@ export async function registerHookRoutes(
           options.entityRuntime,
           tenantId,
         );
-        validateCreateDataHookInput(parsedBody.data, availableNames);
+        const availableFormulaNames =
+          await options.formulaRuntime.getAvailableFormulaNames(tenantId);
+        validateCreateDataHookInput(parsedBody.data, availableNames, {
+          availableFormulaNames,
+        });
 
         const created = await options.hookRuntime.repository.create(
           tenantId,
@@ -309,9 +316,13 @@ export async function registerHookRoutes(
           options.entityRuntime,
           tenantId,
         );
+        const availableFormulaNames =
+          await options.formulaRuntime.getAvailableFormulaNames(tenantId);
         const nextActions = parsedBody.data.actions ?? current.actions;
         validateDataHookEntity(current.entity, availableNames);
-        validateDataHookActions(nextActions, availableNames);
+        validateDataHookActions(nextActions, availableNames, {
+          availableFormulaNames,
+        });
 
         const updated = await options.hookRuntime.repository.update(
           tenantId,
@@ -425,6 +436,7 @@ export async function registerHookRoutes(
             entityRuntime: options.entityRuntime,
             hookRepository: options.hookRuntime.repository,
             hookRuntime: options.hookRuntime,
+            formulaRuntime: options.formulaRuntime,
           },
           tenantId,
           parsedBody.data,

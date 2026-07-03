@@ -1,0 +1,124 @@
+{
+  "formulaDefinitions": [
+    {
+      "name": "annuityPayment",
+      "description": "Math: fixed payment for equal installments",
+      "inputs": [
+        {
+          "name": "principal",
+          "required": true
+        },
+        {
+          "name": "ratePerPeriod",
+          "required": true
+        },
+        {
+          "name": "periods",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "binary",
+        "op": "/",
+        "left": {
+          "kind": "binary",
+          "op": "*",
+          "left": {
+            "kind": "binary",
+            "op": "*",
+            "left": {
+              "kind": "input",
+              "name": "principal"
+            },
+            "right": {
+              "kind": "input",
+              "name": "ratePerPeriod"
+            }
+          },
+          "right": {
+            "kind": "call",
+            "fn": "pow",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "+",
+                "left": {
+                  "kind": "literal",
+                  "value": 1
+                },
+                "right": {
+                  "kind": "input",
+                  "name": "ratePerPeriod"
+                }
+              },
+              {
+                "kind": "input",
+                "name": "periods"
+              }
+            ]
+          }
+        },
+        "right": {
+          "kind": "binary",
+          "op": "-",
+          "left": {
+            "kind": "call",
+            "fn": "pow",
+            "args": [
+              {
+                "kind": "binary",
+                "op": "+",
+                "left": {
+                  "kind": "literal",
+                  "value": 1
+                },
+                "right": {
+                  "kind": "input",
+                  "name": "ratePerPeriod"
+                }
+              },
+              {
+                "kind": "input",
+                "name": "periods"
+              }
+            ]
+          },
+          "right": {
+            "kind": "literal",
+            "value": 1
+          }
+        }
+      },
+      "enabled": true,
+      "source": "platform"
+    },
+    {
+      "name": "simpleInterest",
+      "description": "Math: simple interest for one period (amount × rate)",
+      "inputs": [
+        {
+          "name": "amount",
+          "required": true
+        },
+        {
+          "name": "rate",
+          "required": true
+        }
+      ],
+      "body": {
+        "kind": "binary",
+        "op": "*",
+        "left": {
+          "kind": "input",
+          "name": "amount"
+        },
+        "right": {
+          "kind": "input",
+          "name": "rate"
+        }
+      },
+      "enabled": true,
+      "source": "platform"
+    }
+  ]
+}

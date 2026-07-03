@@ -1,4 +1,7 @@
-import type { TenantScopedEntityRepository } from "@repo/firestore-converters";
+import type {
+  EntityCreateOptions,
+  TenantScopedEntityRepository,
+} from "@repo/firestore-converters";
 import type { DocumentData } from "firebase-admin/firestore";
 
 import {
@@ -10,6 +13,7 @@ import { tenantEntityCollectionRef } from "./tenant-entity-path.js";
 
 const DEFAULT_LIMIT = 20;
 const MAX_LIMIT = 100;
+const FIRESTORE_BATCH_LIMIT = 400;
 
 function normalizeLimit(limit: number | undefined): number {
   if (limit === undefined) {
@@ -62,16 +66,22 @@ class FirestoreAdminEntityRepository<
     );
   }
 
-  async create(tenantId: string, record: TRecord): Promise<TRecord> {
+  async create(
+    tenantId: string,
+    record: TRecord,
+    options?: EntityCreateOptions,
+  ): Promise<TRecord> {
     if (!assertTenantMatch(record, tenantId)) {
       throw new Error("Record tenantId does not match authenticated tenant.");
     }
 
     const collectionRef = this.getCollection(tenantId);
     const docRef = collectionRef.doc(record.id);
-    const existing = await docRef.get();
-    if (existing.exists) {
-      throw new Error(`Record already exists: ${record.id}`);
+    if (!options?.skipExistsCheck) {
+      const existing = await docRef.get();
+      if (existing.exists) {
+        throw new Error(`Record already exists: ${record.id}`);
+      }
     }
 
     const persisted = toDocumentData(
@@ -79,6 +89,41 @@ class FirestoreAdminEntityRepository<
     );
     await docRef.set(persisted);
     return record;
+  }
+
+  async createMany(
+    tenantId: string,
+    records: readonly TRecord[],
+  ): Promise<readonly TRecord[]> {
+    if (records.length === 0) {
+      return [];
+    }
+
+    for (const record of records) {
+      if (!assertTenantMatch(record, tenantId)) {
+        throw new Error("Record tenantId does not match authenticated tenant.");
+      }
+    }
+
+    const collectionRef = this.getCollection(tenantId);
+    const firestore = getFirestoreAdmin(this.repositoryConfig.config);
+
+    for (
+      let index = 0;
+      index < records.length;
+      index += FIRESTORE_BATCH_LIMIT
+    ) {
+      const batch = firestore.batch();
+      for (const record of records.slice(index, index + FIRESTORE_BATCH_LIMIT)) {
+        const persisted = toDocumentData(
+          this.repositoryConfig.converter.write(record),
+        );
+        batch.set(collectionRef.doc(record.id), persisted);
+      }
+      await batch.commit();
+    }
+
+    return records;
   }
 
   async findAll(params: {

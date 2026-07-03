@@ -14,6 +14,8 @@ import {
 
 type GenericRecord = { readonly id: string; readonly tenantId: string };
 
+import type { EntityRuntimeForCrudHooks } from "../../hooks/crud-hook-deps.types.js";
+
 function buildSeedRecord(
   tenantId: string,
   business: Record<string, unknown>,
@@ -33,15 +35,27 @@ function buildSeedRecord(
   };
 }
 
-function createEntityRepository(
-  firebaseAdminConfig: FirebaseAdminConfig,
+function repositoryCacheKey(tenantId: string, entityName: string): string {
+  return `${tenantId}:${entityName}`;
+}
+
+function getSeedEntityRepository(
+  context: RatesRecordSeedContext,
   entity: DefinedEntity<string, FieldDefinitions>,
 ): TenantScopedEntityRepository<GenericRecord, unknown> {
-  return createFirestoreAdminEntityRepository({
-    config: firebaseAdminConfig,
+  const key = repositoryCacheKey(context.tenantId, entity.name);
+  const cached = context.repositoryCache.get(key);
+  if (cached) {
+    return cached;
+  }
+
+  const repository = createFirestoreAdminEntityRepository({
+    config: context.config,
     collection: entity.metadata.collection,
     converter: createEntityConverter(entity),
   });
+  context.repositoryCache.set(key, repository);
+  return repository;
 }
 
 async function ensureRecord(
@@ -78,6 +92,29 @@ async function ensureRecord(
   return true;
 }
 
+export function createSeedHookEntityRuntime(
+  context: RatesRecordSeedContext,
+): EntityRuntimeForCrudHooks {
+  return {
+    resolveEntity(entityName, tenantId) {
+      if (tenantId !== context.tenantId) {
+        return undefined;
+      }
+      return context.entities.get(entityName);
+    },
+    getRepository(tenantId, entityName) {
+      if (tenantId !== context.tenantId) {
+        return undefined;
+      }
+      const entity = context.entities.get(entityName);
+      if (!entity) {
+        return undefined;
+      }
+      return getSeedEntityRepository(context, entity);
+    },
+  };
+}
+
 export async function loadRatesSeedRecord(
   context: RatesRecordSeedContext,
   entityName: string,
@@ -90,9 +127,30 @@ export async function loadRatesSeedRecord(
     );
   }
 
-  const repository = createEntityRepository(context.config, entity);
+  const repository = getSeedEntityRepository(context, entity);
   const existing = await repository.findById(id, context.tenantId);
   return existing ? (existing as Record<string, unknown>) : null;
+}
+
+export function snapshotRatesSeedRecord(
+  context: RatesRecordSeedContext,
+  entityName: string,
+  id: string,
+  business: Record<string, unknown>,
+): Record<string, unknown> {
+  const entity = context.entities.get(entityName);
+  if (!entity) {
+    throw new Error(
+      `Entity "${entityName}" is not registered for rates seed on tenant "${context.tenantId}".`,
+    );
+  }
+
+  const now = new Date().toISOString();
+  const draft = applySearchMirrorFields(
+    entity,
+    buildSeedRecord(context.tenantId, business, id, context.ownerId, now),
+  );
+  return entity.schema.parse(draft) as Record<string, unknown>;
 }
 
 export type RatesRecordSeedContext = {
@@ -100,6 +158,10 @@ export type RatesRecordSeedContext = {
   readonly config: FirebaseAdminConfig;
   readonly entities: Map<string, DefinedEntity<string, FieldDefinitions>>;
   readonly ownerId: string;
+  readonly repositoryCache: Map<
+    string,
+    TenantScopedEntityRepository<GenericRecord, unknown>
+  >;
 };
 
 export function createRatesRecordSeedContext(
@@ -122,6 +184,7 @@ export function createRatesRecordSeedContext(
       ]),
     ),
     ownerId,
+    repositoryCache: new Map(),
   };
 }
 
@@ -138,7 +201,7 @@ export async function ensureRatesRecord(
     );
   }
 
-  const repository = createEntityRepository(context.config, entity);
+  const repository = getSeedEntityRepository(context, entity);
   await ensureRecord(
     context.tenantId,
     repository,

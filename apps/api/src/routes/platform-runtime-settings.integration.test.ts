@@ -31,6 +31,8 @@ const authHeaders = {
 
 const originalEnablePerfLogs = process.env.ENABLE_PERF_LOGS;
 const originalAiStepTrace = process.env.AI_STEP_TRACE_ENABLED;
+const originalSeedHookObservability =
+  process.env.SEED_HOOK_OBSERVABILITY_ENABLED;
 
 vi.mock("@repo/gcp-firebase", () => ({
   configureIndexProvisioningQueue: vi.fn(),
@@ -115,6 +117,7 @@ describe("platform runtime settings integration", () => {
     authState.tenantId = "tenant_a";
     process.env.ENABLE_PERF_LOGS = "false";
     process.env.AI_STEP_TRACE_ENABLED = "false";
+    process.env.SEED_HOOK_OBSERVABILITY_ENABLED = "false";
   });
 
   afterEach(() => {
@@ -127,6 +130,12 @@ describe("platform runtime settings integration", () => {
       delete process.env.AI_STEP_TRACE_ENABLED;
     } else {
       process.env.AI_STEP_TRACE_ENABLED = originalAiStepTrace;
+    }
+    if (originalSeedHookObservability === undefined) {
+      delete process.env.SEED_HOOK_OBSERVABILITY_ENABLED;
+    } else {
+      process.env.SEED_HOOK_OBSERVABILITY_ENABLED =
+        originalSeedHookObservability;
     }
   });
 
@@ -142,12 +151,41 @@ describe("platform runtime settings integration", () => {
     expect(response.statusCode).toBe(200);
     const body = response.json() as {
       settings: null;
-      effective: { requestPerfTraceEnabled: boolean };
-      envDefaults: { requestPerfTraceEnabled: boolean };
+      effective: {
+        requestPerfTraceEnabled: boolean;
+        seedHookObservabilityEnabled: boolean;
+      };
+      envDefaults: {
+        requestPerfTraceEnabled: boolean;
+        seedHookObservabilityEnabled: boolean;
+      };
     };
     expect(body.settings).toBeNull();
     expect(body.envDefaults.requestPerfTraceEnabled).toBe(false);
     expect(body.effective.requestPerfTraceEnabled).toBe(false);
+    expect(body.envDefaults.seedHookObservabilityEnabled).toBe(false);
+    expect(body.effective.seedHookObservabilityEnabled).toBe(false);
+  });
+
+  it("persists seed hook observability runtime toggle", async () => {
+    const { server } = await buildTestServer();
+
+    const patchResponse = await server.inject({
+      method: "PATCH",
+      url: "/admin/platform/runtime-settings",
+      headers: authHeaders,
+      payload: {
+        seedHookObservabilityEnabled: true,
+      },
+    });
+
+    expect(patchResponse.statusCode).toBe(200);
+    const body = patchResponse.json() as {
+      settings: { seedHookObservabilityEnabled: boolean | null };
+      effective: { seedHookObservabilityEnabled: boolean };
+    };
+    expect(body.settings.seedHookObservabilityEnabled).toBe(true);
+    expect(body.effective.seedHookObservabilityEnabled).toBe(true);
   });
 
   it("persists request perf logs after runtime toggle is enabled", async () => {

@@ -25,6 +25,7 @@ export default [
       "./routes/settings/automation.tsx",
     ),
     route("settings/metrics", "./routes/settings/metrics.tsx"),
+    route("settings/formulas", "./routes/settings/formulas.tsx"),
     route("settings/query-builder", "./routes/settings/query-builder.tsx"),
     route("settings/custom-views", "./routes/settings/custom-views.tsx"),
     route(
@@ -34,6 +35,7 @@ export default [
     route("settings/roles", "./routes/settings/roles.tsx"),
     route("settings/ai-debugger", "./routes/settings/ai-debugger-redirect.tsx"),
     route("debugger", "./routes/debugger-index-redirect.tsx"),
+    route("notifications", "./routes/notifications.tsx"),
     route("debugger/:sourceSlug", "./routes/debugger.tsx"),
     route("ai/chat", "./routes/ai/chat.tsx"),
     route(

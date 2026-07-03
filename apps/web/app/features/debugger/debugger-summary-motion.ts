@@ -9,3 +9,5 @@ export const DEBUGGER_BAR_FILL_CLASS =
 
 export const DEBUGGER_TIMELINE_LINE_CLASS =
   "transition-opacity duration-500 ease-out motion-reduce:transition-none";
+
+export const DEBUGGER_REFRESH_PULSE_CLASS = "debugger-refresh-pulse";

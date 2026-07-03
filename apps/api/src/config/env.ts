@@ -78,6 +78,7 @@ const ApiEnvSchema = z.object({
     .enum(["true", "false"])
     .default(process.env.NODE_ENV === "production" ? "false" : "true")
     .transform((value) => value === "true"),
+  TENANT_DELETION_PROTECTED_IDS: z.string().trim().default("rates"),
 });
 
 const ParsedEnvSchema = ApiEnvSchema.merge(FirebaseRuntimeEnvSchema);

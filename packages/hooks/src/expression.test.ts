@@ -546,4 +546,81 @@ describe("expressionNodeSchema array literal", () => {
       ),
     ).toBe(42);
   });
+
+  it("memoizes invariant formula results within a shared cache scope", () => {
+    let resolveCount = 0;
+    const formulaResultCache = new Map<string, unknown>();
+    const sharedScope = scope({
+      tenantId: "tenant_a",
+      current: { amount: 100 },
+      formulaResultCache: formulaResultCache as Map<
+        string,
+        import("./expression.js").ExpressionValue
+      >,
+      formulaResolver: {
+        resolve(name: string) {
+          if (name !== "doubleAmount") {
+            return undefined;
+          }
+          resolveCount += 1;
+          return {
+            name: "doubleAmount",
+            inputs: [],
+            body: {
+              kind: "binary",
+              op: "*",
+              left: { kind: "field", source: "current", path: "amount" },
+              right: { kind: "literal", value: 2 },
+            },
+          };
+        },
+      },
+    });
+
+    const node: ExpressionNode = {
+      kind: "formula",
+      name: "doubleAmount",
+      inputs: {},
+    };
+
+    expect(evaluateExpression(node, sharedScope)).toBe(200);
+    expect(evaluateExpression(node, sharedScope)).toBe(200);
+    expect(resolveCount).toBe(1);
+  });
+
+  it("does not memoize formulas that depend on loopIndex", () => {
+    let resolveCount = 0;
+    const formulaResultCache = new Map<string, unknown>();
+    const sharedScope = scope({
+      tenantId: "tenant_a",
+      loopIndex: 0,
+      formulaResultCache: formulaResultCache as Map<
+        string,
+        import("./expression.js").ExpressionValue
+      >,
+      formulaResolver: {
+        resolve(name: string) {
+          if (name !== "withLoopIndex") {
+            return undefined;
+          }
+          resolveCount += 1;
+          return {
+            name: "withLoopIndex",
+            inputs: [],
+            body: { kind: "var", name: "loopIndex" },
+          };
+        },
+      },
+    });
+
+    const node: ExpressionNode = {
+      kind: "formula",
+      name: "withLoopIndex",
+      inputs: {},
+    };
+
+    expect(evaluateExpression(node, sharedScope)).toBe(0);
+    expect(evaluateExpression(node, { ...sharedScope, loopIndex: 1 })).toBe(1);
+    expect(resolveCount).toBe(2);
+  });
 });

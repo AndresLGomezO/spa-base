@@ -32,6 +32,7 @@ COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/hooks/package.json ./packages/hooks/
+COPY packages/formula-definitions/package.json ./packages/formula-definitions/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/ai-engine/package.json ./packages/ai-engine/
 COPY packages/ai-context/package.json ./packages/ai-context/
@@ -40,6 +41,7 @@ COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/tenant-bundle/package.json ./packages/tenant-bundle/
+COPY packages/user-notifications/package.json ./packages/user-notifications/
 COPY packages/ui/package.json ./packages/ui/
 COPY packages/data-view/package.json ./packages/data-view/
 COPY packages/debug-logs/package.json ./packages/debug-logs/

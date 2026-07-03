@@ -7,7 +7,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { useInfiniteQuery } from "@tanstack/react-query";
+import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "react-router";
 import { useTranslation } from "react-i18next";
 
@@ -31,6 +31,7 @@ import {
   mergeAccumulatedDebugEvents,
   sortDebugEventsByTimestamp,
 } from "./merge-accumulated-debug-events";
+import { TENANT_INDEX_PROCESS_LIST_QUERY_KEY } from "./hooks/useIndexProvisioningJobs";
 
 const DEBUGGER_HOOK_EXECUTION_PAGE_LIMIT = 100;
 const MAX_AUTO_LOADED_HOOK_EXECUTIONS = 2000;
@@ -53,6 +54,10 @@ interface DebuggerContextValue {
   readonly loadedExecutionCount: number;
   readonly loadMore: () => void;
   readonly isLoading: boolean;
+  readonly isRefreshing: boolean;
+  readonly isFetching: boolean;
+  readonly lastUpdatedAt: number | null;
+  readonly refreshGeneration: number;
   readonly loadError: string | null;
   readonly selectRecord: (event: DebugEvent) => void;
   readonly selectIndexJob: (signature: string) => void;
@@ -72,8 +77,12 @@ export function DebuggerProvider({
 }) {
   const { t } = useTranslation("common");
   const { isReady, tenantId } = useAuth();
+  const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const [dismissedRevision, setDismissedRevision] = useState(0);
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [refreshGeneration, setRefreshGeneration] = useState(0);
+  const [lastUpdatedAt, setLastUpdatedAt] = useState<number | null>(null);
   const [accumulatedEvents, setAccumulatedEvents] = useState<
     ReadonlyMap<string, DebugEvent>
   >(() => new Map());
@@ -113,7 +122,15 @@ export function DebuggerProvider({
 
   useEffect(() => {
     setAccumulatedEvents(new Map());
+    setLastUpdatedAt(null);
   }, [activeSource, tenantId]);
+
+  useEffect(() => {
+    if (eventsQuery.isLoading || eventsQuery.dataUpdatedAt <= 0) {
+      return;
+    }
+    setLastUpdatedAt((current) => current ?? eventsQuery.dataUpdatedAt);
+  }, [eventsQuery.dataUpdatedAt, eventsQuery.isLoading]);
 
   useEffect(() => {
     const pages = eventsQuery.data?.pages;
@@ -253,9 +270,24 @@ export function DebuggerProvider({
     setDismissedRevision((current) => current + 1);
   }, []);
 
-  const refresh = useCallback(() => {
-    void eventsQuery.refetch();
-  }, [eventsQuery]);
+  const refresh = useCallback(async () => {
+    setIsManualRefreshing(true);
+    try {
+      await eventsQuery.refetch();
+      if (activeSource === "indexProvision") {
+        await queryClient.invalidateQueries({
+          queryKey: [TENANT_INDEX_PROCESS_LIST_QUERY_KEY],
+        });
+      }
+      setRefreshGeneration((current) => current + 1);
+      setLastUpdatedAt(Date.now());
+    } finally {
+      setIsManualRefreshing(false);
+    }
+  }, [activeSource, eventsQuery, queryClient]);
+
+  const isFetching =
+    eventsQuery.isFetching && !eventsQuery.isFetchingNextPage;
 
   const hookExecutionLive = useMemo((): HookExecutionLiveCounts | null => {
     if (activeSource !== "hookExecution") {
@@ -300,6 +332,10 @@ export function DebuggerProvider({
       loadedExecutionCount,
       loadMore,
       isLoading: eventsQuery.isLoading,
+      isRefreshing: isManualRefreshing,
+      isFetching,
+      lastUpdatedAt,
+      refreshGeneration,
       loadError: eventsQuery.error
         ? eventsQuery.error instanceof Error
           ? eventsQuery.error.message
@@ -317,9 +353,14 @@ export function DebuggerProvider({
       clearSelectedRecord,
       dismissRecord,
       eventsQuery.hasNextPage,
+      eventsQuery.isFetching,
       eventsQuery.isFetchingNextPage,
       eventsQuery.isLoading,
       eventsQuery.error,
+      isFetching,
+      isManualRefreshing,
+      lastUpdatedAt,
+      refreshGeneration,
       groupedEvents,
       hookExecutionLive,
       isLoadingAllExecutions,

@@ -1,8 +1,8 @@
-import { Alert, Button, Card, Heading, Text } from "@repo/ui";
+import { Alert, Card, Heading, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
-import { Activity, AlertTriangle, BarChart3, RefreshCw } from "lucide-react";
+import { Activity, AlertTriangle, BarChart3 } from "lucide-react";
 import type { TFunction } from "i18next";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import type {
@@ -26,6 +26,11 @@ import {
   type DebuggerSourceStats,
 } from "./compute-debugger-source-stats";
 import { DebuggerStatusBadge } from "./components/DebuggerStatusBadge";
+import {
+  DebuggerLastUpdatedLabel,
+  DebuggerRefreshButton,
+  DebuggerRefreshingOverlay,
+} from "./components/DebuggerRefreshControls";
 import { DebuggerExpandableChartCard } from "./components/DebuggerExpandableChartCard";
 import {
   DebuggerKpiStrip,
@@ -40,7 +45,7 @@ import {
   DEBUGGER_LIST_ROW_HOVER_CLASS,
   DEBUGGER_STATUS_ACCENT_CLASS,
 } from "./debugger-status-styles";
-import { DEBUGGER_CHART_CARD_CLASS } from "./debugger-summary-motion";
+import { DEBUGGER_CHART_CARD_CLASS, DEBUGGER_REFRESH_PULSE_CLASS } from "./debugger-summary-motion";
 import {
   barChartLegendKey,
   barChartValueUnitKey,
@@ -349,7 +354,7 @@ export function DebuggerSummaryPanel() {
     activeSource,
     sourceEvents,
     isLoading,
-    refresh,
+    refreshGeneration,
     selectRecord,
     hookExecutionLive,
     hasMoreEvents,
@@ -400,6 +405,19 @@ export function DebuggerSummaryPanel() {
     hookExecutionLive != null &&
     (hookExecutionLive.pending > 0 || hookExecutionLive.running > 0);
 
+  const hasData = sourceEvents.length > 0;
+  const showInitialSkeleton = isLoading && !hasData;
+  const [pulseActive, setPulseActive] = useState(false);
+
+  useEffect(() => {
+    if (refreshGeneration === 0) {
+      return;
+    }
+    setPulseActive(true);
+    const timeoutId = window.setTimeout(() => setPulseActive(false), 600);
+    return () => window.clearTimeout(timeoutId);
+  }, [refreshGeneration]);
+
   const emptyMessage =
     sourceEvents.length === 0
       ? t("debugger.list.emptySource")
@@ -420,24 +438,14 @@ export function DebuggerSummaryPanel() {
               source: t(debuggerSourceLabelKey(activeSource)),
             })}
           </Text>
+          <DebuggerLastUpdatedLabel className="mt-1" />
         </div>
-        <Button
-          type="button"
-          size="sm"
-          variant="outline"
-          onClick={refresh}
-          disabled={isLoading}
-        >
-          <RefreshCw
-            aria-hidden
-            className={`mr-2 size-4 ${isLoading ? "animate-spin" : ""}`}
-          />
-          {t("debugger.actions.refresh")}
-        </Button>
+        <DebuggerRefreshButton />
       </div>
 
-      <div className={designerPreviewPanelBodyFillClassName}>
-        {isLoading ? (
+      <div className={cn(designerPreviewPanelBodyFillClassName, "relative")}>
+        <DebuggerRefreshingOverlay />
+        {showInitialSkeleton ? (
           <SummarySkeleton />
         ) : listEvents.length === 0 ? (
           <Text className="text-muted-foreground text-sm">{emptyMessage}</Text>
@@ -447,7 +455,10 @@ export function DebuggerSummaryPanel() {
               <Alert>{t("debugger.summary.inProgressBanner")}</Alert>
             ) : null}
 
-            <DebuggerKpiStrip items={mainKpiItems} />
+            <DebuggerKpiStrip
+              items={mainKpiItems}
+              className={cn(pulseActive && DEBUGGER_REFRESH_PULSE_CLASS)}
+            />
 
             {activeSource === "hookExecution" &&
             stats.writeExecutionCount != null &&

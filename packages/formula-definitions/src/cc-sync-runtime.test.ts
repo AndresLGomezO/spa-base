@@ -10,6 +10,7 @@ import {
   type HookEntityServices,
   type PortableDataHookDefinition,
 } from "@repo/hooks";
+import { createRatesFormulaResolver } from "./rates-formula-test-utils.js";
 
 const catalogPath = resolve(
   import.meta.dirname,
@@ -107,6 +108,7 @@ describe("CC-SYNC runtime", () => {
         logger: { info: vi.fn(), error: vi.fn() },
         entities: {
           create: vi.fn(),
+          createMany: vi.fn(async () => []),
           update,
           delete: vi.fn(),
           list: createFinancialItemList([parentCard, childLoan]),
@@ -146,6 +148,7 @@ describe("CC-SYNC runtime", () => {
         logger: { info: vi.fn(), error: vi.fn() },
         entities: {
           create: vi.fn(),
+          createMany: vi.fn(async () => []),
           update,
           delete: vi.fn(),
           list: createFinancialItemList([cardWithRevolving, childLoan]),
@@ -195,6 +198,7 @@ describe("CC-INIT runtime", () => {
         logger: { info: vi.fn(), error: vi.fn() },
         entities: {
           create: vi.fn(),
+          createMany: vi.fn(async () => []),
           update,
           delete: vi.fn(),
           list,
@@ -252,6 +256,7 @@ describe("CC-INIT runtime", () => {
         logger: { info: vi.fn(), error: vi.fn() },
         entities: {
           create: vi.fn(),
+          createMany: vi.fn(async () => []),
           update,
           delete: vi.fn(),
           list,
@@ -279,6 +284,9 @@ describe("LD-01 on card installment child", () => {
     const create = vi.fn<HookEntityServices["create"]>(async () => ({
       id: "ps_1",
     }));
+    const createMany = vi.fn<HookEntityServices["createMany"]>(
+      async (_entity, records) => records.map(() => ({ id: "ps_1" })),
+    );
     const parentItem = {
       id: childLoan.id,
       amount: 626_757,
@@ -302,10 +310,12 @@ describe("LD-01 on card installment child", () => {
       event: "loanDetails.afterCreate",
       current: childLoanDetails,
       user: { uid: "user_test" },
+      formulaResolver: createRatesFormulaResolver(),
       services: {
         logger: { info: vi.fn(), error: vi.fn() },
         entities: {
           create,
+          createMany,
           update: vi.fn(),
           delete: vi.fn(),
           list: vi.fn(async () => []),
@@ -314,12 +324,11 @@ describe("LD-01 on card installment child", () => {
       },
     };
 
-    await runDataHook(toDataHookDefinition(hook, "ld01_cc_test"), context);
+    await runDataHook(toDataHookDefinition(hook, "cc_sync_test"), context);
 
-    expect(create).toHaveBeenCalled();
-    const firstRow = create.mock.calls[0]?.[1] as
-      | Record<string, unknown>
-      | undefined;
+    expect(createMany).toHaveBeenCalledTimes(1);
+    const rows = createMany.mock.calls[0]?.[1] ?? [];
+    const firstRow = rows[0] as Record<string, unknown> | undefined;
     expect(firstRow?.expectedAmount).toEqual(expect.any(Number));
     expect(firstRow?.expectedAmount as number).toBeGreaterThan(600_000);
     expect(firstRow?.expectedAmount as number).toBeLessThan(650_000);

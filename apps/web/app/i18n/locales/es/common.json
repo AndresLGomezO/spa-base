@@ -31,6 +31,9 @@
     "dashboardLoadFailed": "No se pudo cargar el panel.",
     "dashboardEmpty": "Tu panel está vacío. Configúralo en Configuración → Diseño de layout → Panel."
   },
+  "navigation": {
+    "back": "Volver"
+  },
   "nav": {
     "home": "Inicio",
     "settings": "Configuración",
@@ -46,6 +49,7 @@
     "automation": "Automatización",
     "analytics": "Analítica",
     "metricsNav": "Métricas",
+    "formulasNav": "Fórmulas",
     "queryBuilderNav": "Constructor de consultas",
     "customViewsNav": "Vistas personalizadas",
     "entityCategories": "Categorías de entidades",
@@ -157,6 +161,7 @@
     },
     "actions": {
       "refresh": "Actualizar",
+      "refreshing": "Actualizando…",
       "viewJson": "Ver JSON",
       "copyJson": "Copiar JSON",
       "copy": "Copiar",
@@ -191,6 +196,8 @@
     "summary": {
       "title": "Resumen",
       "subtitle": "Diagnóstico de {{source}}",
+      "lastUpdated": "Actualizado {{time}}",
+      "refreshingData": "Actualizando datos…",
       "totalRecords": "Total de registros",
       "errorRate": "Tasa de error",
       "avgDuration": "Duración media",
@@ -1036,6 +1043,32 @@
     "errorStepConsoleGeneric": "Revisa Firebase Console → Firestore → Índices para este grupo de colección.",
     "errorStepModel": "Edita la entidad para quitar filtros de relación no usados, o contacta a un administrador."
   },
+  "entitySave": {
+    "savingCreate": "Guardando {{entity}}…",
+    "savingUpdate": "Actualizando {{entity}}…",
+    "review": "Revisar"
+  },
+  "notifications": {
+    "bellLabel": "Notificaciones",
+    "bellAriaLabel": "Notificaciones, {{count}} sin leer",
+    "panelTitle": "Notificaciones",
+    "pageTitle": "Notificaciones",
+    "empty": "Aún no hay notificaciones.",
+    "allCaughtUp": "Estás al día.",
+    "loading": "Cargando notificaciones…",
+    "markAllRead": "Marcar todas como leídas",
+    "viewAll": "Ver todas",
+    "filterAll": "Todas",
+    "filterUnread": "Sin leer",
+    "filterAriaLabel": "Filtrar notificaciones",
+    "groupToday": "Hoy",
+    "groupEarlier": "Anteriores",
+    "loadMore": "Cargar más",
+    "fromHook": "De {{hook}}",
+    "onEntity": "en {{entity}}",
+    "newFromHook": "De {{hook}}",
+    "viewRecord": "Ver registro"
+  },
   "indexProvisioning": {
     "environmentBlocked": {
       "retryHint": "Sigue el progreso en",
@@ -1457,7 +1490,20 @@
         "confirmAction": "Reemplazar configuración",
         "importSuccess": "Configuración del tenant importada.",
         "importFailed": "No se pudo importar la configuración del tenant."
-      }
+      },
+      "dangerZoneTitle": "Zona de peligro",
+      "dangerZoneDescription": "Elimina permanentemente este tenant, todos los datos relacionados y el almacenamiento. Se conserva un archivo en Firestore durante 30 días antes del purgado automático.",
+      "deleteTrigger": "Eliminar tenant permanentemente",
+      "deleteTitle": "Eliminar tenant permanentemente",
+      "deleteWarning": "Esta acción no se puede deshacer. El tenant se suspenderá de inmediato y se eliminará en segundo plano.",
+      "deleteDescription": "Se eliminarán toda la configuración del tenant, registros de negocio, índices, membresías y objetos de almacenamiento. Los datos se archivan en Firestore durante 30 días y luego se purgan automáticamente.",
+      "deleteConfirmLabel": "Escribe {{tenantId}} para confirmar",
+      "deleteConfirmAction": "Eliminar tenant",
+      "deleteInProgress": "Eliminando…",
+      "deleteProgress": "Estado: {{status}} — archivados {{docsCopied}} docs, eliminados {{docsDeleted}} docs en vivo.",
+      "deleteSuccess": "Tenant eliminado.",
+      "deleteFailed": "No se pudo eliminar el tenant.",
+      "deleted": "Este tenant ha sido eliminado."
     },
     "observability": {
       "title": "Observabilidad",
@@ -1477,6 +1523,10 @@
       "requestPerfTrace": {
         "title": "Traza de rendimiento de peticiones",
         "description": "Persiste tiempos de RBAC, consultas, hooks y total por petición para el depurador de rendimiento."
+      },
+      "seedHookObservability": {
+        "title": "Observabilidad de hooks en seed",
+        "description": "Persiste ejecuciones de hooks, logs de hooks y notificaciones al reproducir hooks durante el seed de la base de datos."
       }
     },
     "appearance": {
@@ -1918,6 +1968,134 @@
       "nameRequired": "El nombre es obligatorio.",
       "iconRequired": "El icono es obligatorio.",
       "orderRequired": "El orden debe ser un número entero."
+    }
+  },
+  "formulas": {
+    "title": "Fórmulas",
+    "description": "Definiciones de expresiones reutilizables referenciadas desde hooks y automatización.",
+    "loading": "Cargando fórmulas…",
+    "listTitle": "Biblioteca de fórmulas",
+    "create": "Nueva fórmula",
+    "createTitle": "Crear fórmula",
+    "editTitle": "Editar {{name}}",
+    "viewTitle": "Ver {{name}}",
+    "view": "Ver",
+    "edit": "Editar",
+    "delete": {
+      "title": "Eliminar fórmula",
+      "confirm": "Eliminar",
+      "message": "¿Eliminar \"{{name}}\"? Esta acción no se puede deshacer."
+    },
+    "save": "Guardar",
+    "saved": "Fórmula guardada.",
+    "saveFailed": "No se pudo guardar la fórmula.",
+    "deleted": "Fórmula eliminada.",
+    "deleteFailed": "No se pudo eliminar la fórmula.",
+    "loadFailed": "No se pudieron cargar las fórmulas.",
+    "forbidden": "No tienes permiso para ver fórmulas.",
+    "cancel": "Cancelar",
+    "disabled": "Deshabilitada",
+    "list": {
+      "title": "Fórmulas",
+      "add": "Nueva fórmula",
+      "expandPanel": "Expandir panel de fórmulas",
+      "collapsePanel": "Contraer panel de fórmulas",
+      "empty": "Ninguna fórmula coincide con los filtros actuales.",
+      "emptySource": "No hay fórmulas en esta biblioteca.",
+      "emptyFiltered": "Ninguna fórmula coincide con los filtros actuales.",
+      "edit": "Editar fórmula",
+      "delete": "Eliminar fórmula",
+      "filter": "Filtrar",
+      "sort": "Ordenar",
+      "clearFilters": "Borrar filtros",
+      "removeBadge": "Quitar filtro: {{label}}",
+      "filterBySource": "Origen",
+      "filterByStatus": "Estado",
+      "summary": "{{count}} {{status}} ({{percent}}%)",
+      "sortNameAsc": "Nombre (A–Z)",
+      "sortNameDesc": "Nombre (Z–A)",
+      "sortSource": "Origen",
+      "sortUpdatedDesc": "Actualizadas recientemente",
+      "sourceFilter": "Origen",
+      "sourceAll": "Todos los orígenes",
+      "sourcePlatform": "Plataforma",
+      "sourceTenant": "Tenant",
+      "statusFilter": "Estado",
+      "statusAll": "Todos los estados",
+      "statusEnabled": "Habilitadas",
+      "statusDisabled": "Deshabilitadas",
+      "searchPlaceholder": "Buscar fórmulas…",
+      "searchClear": "Borrar búsqueda"
+    },
+    "settings": {
+      "empty": "Selecciona o crea una fórmula para configurarla.",
+      "save": "Guardar",
+      "saved": "Fórmula guardada.",
+      "status": "Estado",
+      "enabled": "Habilitada",
+      "disabled": "Deshabilitada",
+      "platformReadOnly": "Fórmula de plataforma (solo lectura)",
+      "sections": {
+        "metadata": "Metadatos",
+        "preview": "Estructura de la expresión",
+        "body": "Expresión del cuerpo"
+      }
+    },
+    "preview": {
+      "title": "Estructura de la expresión"
+    },
+    "metadata": {
+      "createTitle": "Nueva fórmula",
+      "editTitle": "Editar fórmula",
+      "createAction": "Crear",
+      "saveAction": "Guardar",
+      "created": "Fórmula creada.",
+      "updated": "Fórmula actualizada.",
+      "platformReadOnly": "Las fórmulas de plataforma no se pueden renombrar."
+    },
+    "json": {
+      "viewTrigger": "Ver JSON",
+      "importTrigger": "Importar JSON",
+      "pasteLabel": "Pegar JSON",
+      "uploadLabel": "Subir archivo",
+      "skeletonTitle": "Ejemplo de sobre",
+      "skeletonShow": "Mostrar ejemplo",
+      "skeletonHide": "Ocultar ejemplo",
+      "valid": "El JSON es válido.",
+      "invalid": "El JSON tiene errores:",
+      "apply": "Aplicar",
+      "cancel": "Cancelar",
+      "readOnlyHint": "No tienes permiso para aplicar importaciones.",
+      "viewDescription": "Sobre portable de definición de fórmula para importar en otro entorno.",
+      "viewCopy": "Copiar JSON",
+      "viewCopied": "Copiado",
+      "formula": {
+        "viewTitle": "JSON de fórmula",
+        "importTitle": "Importar JSON de fórmula",
+        "importDescriptionEdit": "Pega un sobre de definición de fórmula. El nombre debe coincidir con la fórmula que editas.",
+        "nameChangeError": "El nombre importado debe coincidir con el nombre actual de la fórmula."
+      },
+      "catalog": {
+        "viewTitle": "JSON del catálogo de fórmulas",
+        "importTitle": "Importar catálogo de fórmulas",
+        "importDescription": "Reemplaza las fórmulas del tenant con el catálogo importado. Las fórmulas de plataforma no se modifican.",
+        "confirmTitle": "¿Reemplazar catálogo de fórmulas?",
+        "confirmDescription": "Esto creará, actualizará y eliminará fórmulas del tenant para que coincidan con la importación.",
+        "confirmAction": "Reemplazar catálogo",
+        "replaceSummary": "{{created}} por crear, {{updated}} por actualizar, {{deleted}} por eliminar.",
+        "importSuccess": "Catálogo de fórmulas importado.",
+        "importFailed": "No se pudo importar el catálogo de fórmulas."
+      }
+    },
+    "fields": {
+      "name": "Nombre",
+      "description": "Descripción",
+      "body": "Expresión del cuerpo"
+    },
+    "expression": {
+      "formula": "Fórmula",
+      "formulaName": "Nombre de la fórmula",
+      "selectFormula": "Selecciona una fórmula"
     }
   },
   "metrics": {
@@ -2560,6 +2738,7 @@
       "switchInput": "Valor de entrada",
       "switchCases": "Casos",
       "switchCaseIndex": "Caso {{index}}",
+      "switchCaseCollapsibleTitle": "Caso {{index}}: cuando {{when}} → {{then}}",
       "switchWhen": "Cuando sea igual a",
       "switchThen": "Entonces valor",
       "switchDefault": "Valor predeterminado",

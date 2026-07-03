@@ -25,6 +25,7 @@ import {
   useEntityCatalog,
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
+import { useEntitySaveManager } from "../../features/entity-save/entity-save-context";
 import { createEntityFormRenderContext } from "../../features/ui-builder/create-entity-form-render-context";
 import { useNavigateComponentClick } from "../../features/ui-builder/ComponentClickTargetWrapper";
 import { useEntityPermissions } from "../../hooks/useEntityPermissions";
@@ -32,7 +33,6 @@ import { useFieldAccess } from "../../hooks/useFieldAccess";
 import { useEntity } from "../../hooks/useEntity";
 import {
   getEntityRelationTargets,
-  syncEntityRelationTargets,
 } from "../../lib/api-client";
 import { EntityFormSkeleton } from "../loading/EntityFormSkeleton";
 import { applyCreateFormPrefill } from "./coerce-create-form-prefill-value";
@@ -68,6 +68,8 @@ interface EntityFormProps {
   readonly createPrefillPopulated?: Readonly<
     Record<string, Record<string, unknown> | null>
   >;
+  readonly draftValues?: Readonly<Record<string, unknown>>;
+  readonly draftFieldErrors?: Readonly<Record<string, string>>;
   readonly formDesignId?: string;
   readonly onCancel: () => void;
   readonly onSuccess?: () => void;
@@ -75,7 +77,6 @@ interface EntityFormProps {
   readonly modalActionPlacement?: "inline" | "footer";
   readonly modalFooterLayout?: UiLayoutDocument;
   readonly onFooterChange?: (footer: ReactNode | null) => void;
-  readonly onSubmittingChange?: (isSubmitting: boolean) => void;
 }
 
 export function EntityForm({
@@ -84,6 +85,8 @@ export function EntityForm({
   recordId,
   createPrefill,
   createPrefillPopulated,
+  draftValues,
+  draftFieldErrors,
   formDesignId,
   onCancel,
   onSuccess,
@@ -91,7 +94,6 @@ export function EntityForm({
   modalActionPlacement = "inline",
   modalFooterLayout,
   onFooterChange,
-  onSubmittingChange,
 }: EntityFormProps) {
   const { t, i18n } = useTranslation("common");
   const navigate = useNavigate();
@@ -105,8 +107,8 @@ export function EntityForm({
       ? entityPermissions.canCreate
       : entityPermissions.canUpdate;
   const entityState = useEntity(entityName);
-  const { getById, fieldErrors, error, isSubmitting, create, update } =
-    entityState;
+  const { getById, fieldErrors, error } = entityState;
+  const { enqueueSave } = useEntitySaveManager();
   const presentation = resolveFormPresentation(definition, formDesignId);
   const plainLayout = resolvePlainFormLayout(definition, formDesignId);
   const wizardConfig = resolveWizardForm(definition, formDesignId);
@@ -115,6 +117,9 @@ export function EntityForm({
     [definition],
   );
   const [values, setValues] = useState<Record<string, unknown>>(() => {
+    if (draftValues) {
+      return { ...draftValues };
+    }
     let initial = buildInitialValuesFromLayout(
       definition,
       mode,
@@ -140,6 +145,13 @@ export function EntityForm({
   });
   const valuesRef = useRef(values);
   valuesRef.current = values;
+  const resolvedFieldErrors = useMemo(
+    () => ({
+      ...fieldErrors,
+      ...(draftFieldErrors ?? {}),
+    }),
+    [draftFieldErrors, fieldErrors],
+  );
   const applyFieldChange = useCallback(
     (
       fieldName: string,
@@ -200,7 +212,7 @@ export function EntityForm({
   }, [createPrefill, createPrefillPopulated, definition, getDefinition, mode]);
 
   useEffect(() => {
-    if (mode !== "edit" || !recordId) return;
+    if (mode !== "edit" || !recordId || draftValues) return;
 
     let cancelled = false;
     void (async () => {
@@ -249,6 +261,7 @@ export function EntityForm({
     joinRelationFieldNames,
     mode,
     recordId,
+    draftValues,
   ]);
 
   useEffect(() => {
@@ -259,11 +272,7 @@ export function EntityForm({
     toast.error(error);
   }, [error]);
 
-  useEffect(() => {
-    onSubmittingChange?.(isSubmitting);
-  }, [isSubmitting, onSubmittingChange]);
-
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const submitFieldPaths =
       presentation === "wizard" && wizardConfig
@@ -280,66 +289,20 @@ export function EntityForm({
       cleanedValues,
     );
 
-    if (mode === "create") {
-      const created = await create(documentPayload);
-      if (!created) {
-        return;
-      }
+    enqueueSave({
+      entityName,
+      entityLabel: getEntityLabel(definition),
+      mode,
+      recordId,
+      documentPayload,
+      joinRelations,
+      draftValues: cleanedValues,
+      formDesignId,
+      createPrefill,
+      createPrefillPopulated,
+    });
 
-      try {
-        for (const [fieldName, targetIds] of Object.entries(joinRelations)) {
-          await syncEntityRelationTargets(
-            entityName,
-            created.id,
-            fieldName,
-            targetIds,
-          );
-        }
-        toast.success(
-          t("entity.createSuccess", {
-            entity: getEntityLabel(definition),
-          }),
-        );
-        onSuccess?.();
-      } catch (syncError) {
-        toast.error(
-          syncError instanceof Error
-            ? syncError.message
-            : t("entity.relationSyncFailed"),
-        );
-      }
-      return;
-    }
-
-    if (!recordId) return;
-
-    const updated = await update(recordId, documentPayload);
-    if (!updated) {
-      return;
-    }
-
-    try {
-      for (const [fieldName, targetIds] of Object.entries(joinRelations)) {
-        await syncEntityRelationTargets(
-          entityName,
-          recordId,
-          fieldName,
-          targetIds,
-        );
-      }
-      toast.success(
-        t("entity.updateSuccess", {
-          entity: getEntityLabel(definition),
-        }),
-      );
-      onSuccess?.();
-    } catch (syncError) {
-      toast.error(
-        syncError instanceof Error
-          ? syncError.message
-          : t("entity.relationSyncFailed"),
-      );
-    }
+    onSuccess?.();
   };
 
   const saveLabel = mode === "create" ? t("entity.create") : t("entity.save");
@@ -354,7 +317,7 @@ export function EntityForm({
         locale: i18n.language,
         mode,
         values,
-        errors: fieldErrors,
+        errors: resolvedFieldErrors,
         fieldAccess,
         canRead: entityPermissions.canRead,
         canWrite,
@@ -362,7 +325,7 @@ export function EntityForm({
         onChange: applyFieldChange,
         onCancel,
         hideActions: suppressInlineActions,
-        isSubmitting,
+        isSubmitting: false,
         cancelLabel: t("entity.cancel"),
         saveLabel,
         getDefinition,
@@ -374,14 +337,13 @@ export function EntityForm({
       entityName,
       entityPermissions.canRead,
       fieldAccess,
-      fieldErrors,
+      resolvedFieldErrors,
       applyFieldChange,
       canWrite,
       getDefinition,
       navigate,
       navigateComponentClick,
       i18n.language,
-      isSubmitting,
       mode,
       onCancel,
       recordId,
@@ -400,7 +362,7 @@ export function EntityForm({
         locale: i18n.language,
         mode,
         values,
-        errors: fieldErrors,
+        errors: resolvedFieldErrors,
         fieldAccess,
         canRead: entityPermissions.canRead,
         canWrite,
@@ -408,7 +370,7 @@ export function EntityForm({
         onChange: applyFieldChange,
         onCancel,
         hideActions: false,
-        isSubmitting,
+        isSubmitting: false,
         cancelLabel: t("entity.cancel"),
         saveLabel,
         getDefinition,
@@ -421,13 +383,12 @@ export function EntityForm({
       entityName,
       entityPermissions.canRead,
       fieldAccess,
-      fieldErrors,
+      resolvedFieldErrors,
       canWrite,
       getDefinition,
       navigate,
       navigateComponentClick,
       i18n.language,
-      isSubmitting,
       mode,
       onCancel,
       recordId,
@@ -457,8 +418,8 @@ export function EntityForm({
   );
 
   const orphanFieldErrors = useMemo(
-    () => collectOrphanFieldErrors(fieldErrors, renderedFieldRoots),
-    [fieldErrors, renderedFieldRoots],
+    () => collectOrphanFieldErrors(resolvedFieldErrors, renderedFieldRoots),
+    [resolvedFieldErrors, renderedFieldRoots],
   );
 
   if (isLoadingRecord || isHydratingPrefill) {
@@ -474,7 +435,7 @@ export function EntityForm({
         wizard={wizardConfig}
         locale={i18n.language}
         values={values}
-        fieldErrors={fieldErrors}
+        fieldErrors={resolvedFieldErrors}
         fieldAccess={fieldAccess}
         canRead={entityPermissions.canRead}
         canWrite={canWrite}
@@ -485,7 +446,7 @@ export function EntityForm({
         modalActionPlacement={modalActionPlacement}
         modalFooterLayout={modalFooterLayout}
         onFooterChange={onFooterChange}
-        isSubmitting={isSubmitting}
+        isSubmitting={false}
         cancelLabel={t("entity.cancel")}
         saveLabel={saveLabel}
         onSubmit={handleSubmit}

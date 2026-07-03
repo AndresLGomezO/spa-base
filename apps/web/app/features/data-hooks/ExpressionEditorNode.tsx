@@ -1,12 +1,16 @@
 import { useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
+import { CollapsibleEditorCard } from "@repo/ui-builder-react";
 import { FieldLabel, Input, Select, Text } from "@repo/ui";
 import type { ExpressionNode } from "@repo/hooks";
 
+import { summarizeExpressionNode } from "../formulas/format-expression-dsl-preview";
 import { BinaryExpressionPanel } from "./BinaryExpressionPanel";
 import { CallExpressionPanel } from "./CallExpressionPanel";
+import { FormulaExpressionPanel } from "./FormulaExpressionPanel";
 import { SwitchExpressionPanel } from "./SwitchExpressionPanel";
 import { UnaryExpressionPanel } from "./UnaryExpressionPanel";
+import { useExpressionEditorReadOnly } from "./expression-editor-read-only-context";
 import {
   createDefaultNode,
   resolveEditorKind,
@@ -22,6 +26,20 @@ import type {
 } from "./expression-editor-node-types";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 
+const EXPRESSION_SUMMARY_MAX_LENGTH = 60;
+
+function buildCollapsibleTitle(
+  label: string | undefined,
+  node: ExpressionNode,
+): string {
+  const summary = summarizeExpressionNode(node);
+  const truncated =
+    summary.length > EXPRESSION_SUMMARY_MAX_LENGTH
+      ? `${summary.slice(0, EXPRESSION_SUMMARY_MAX_LENGTH - 3)}...`
+      : summary;
+  return label ? `${label}: ${truncated}` : truncated;
+}
+
 export function ExpressionEditorNode({
   value,
   onChange,
@@ -29,8 +47,11 @@ export function ExpressionEditorNode({
   loadedBindings,
   aggregateBindings,
   label,
+  depth = 0,
+  collapsibleNested = false,
 }: ExpressionEditorNodeProps) {
   const { t } = useTranslation("common");
+  const readOnly = useExpressionEditorReadOnly();
   const { items: entities } = useEntityCatalog();
   const resolvedKind = resolveEditorKind(value);
   const [forceAdvanced, setForceAdvanced] = useState(
@@ -43,8 +64,14 @@ export function ExpressionEditorNode({
   const [advancedError, setAdvancedError] = useState<string | null>(null);
 
   const renderNestedNode: ExpressionEditorNodeRenderer = (nestedProps) => (
-    <ExpressionEditorNode {...nestedProps} />
+    <ExpressionEditorNode
+      {...nestedProps}
+      depth={depth + 1}
+      collapsibleNested={collapsibleNested}
+    />
   );
+
+  const useCollapsibleWrapper = collapsibleNested && depth > 0;
 
   const literalValue = value.kind === "literal" ? value.value : null;
   const literalType = useMemo<"text" | "number" | "boolean">(() => {
@@ -89,12 +116,13 @@ export function ExpressionEditorNode({
     }
   }
 
-  return (
+  const editorBody = (
     <div className="space-y-2">
-      {label ? <FieldLabel>{label}</FieldLabel> : null}
+      {!useCollapsibleWrapper && label ? <FieldLabel>{label}</FieldLabel> : null}
       <Select
         className={expressionControlClassName}
         value={kind}
+        disabled={readOnly}
         onChange={(event) => handleKindChange(event.target.value as EditorKind)}
       >
         <option value="literal">{t("dataHooks.expression.literal")}</option>
@@ -104,6 +132,7 @@ export function ExpressionEditorNode({
         <option value="binary">{t("dataHooks.expression.binary")}</option>
         <option value="unary">{t("dataHooks.expression.unary")}</option>
         <option value="call">{t("dataHooks.expression.call")}</option>
+        <option value="formula">{t("formulas.expression.formula")}</option>
         <option value="switch">{t("dataHooks.expression.switch")}</option>
         <option value="advanced">{t("dataHooks.expression.advanced")}</option>
       </Select>
@@ -113,6 +142,7 @@ export function ExpressionEditorNode({
           <Select
             className={`${expressionControlClassName} w-32`}
             value={literalType}
+            disabled={readOnly}
             onChange={(event) => {
               const nextType = event.target.value as
                 | "text"
@@ -135,6 +165,7 @@ export function ExpressionEditorNode({
             <Select
               className={expressionControlClassName}
               value={literalValue === true ? "true" : "false"}
+              disabled={readOnly}
               onChange={(event) =>
                 onChange({
                   kind: "literal",
@@ -149,6 +180,7 @@ export function ExpressionEditorNode({
             <Input
               type={literalType === "number" ? "number" : "text"}
               value={literalValue == null ? "" : String(literalValue)}
+              disabled={readOnly}
               onChange={(event) =>
                 onChange({
                   kind: "literal",
@@ -168,6 +200,7 @@ export function ExpressionEditorNode({
           <Select
             className={`${expressionControlClassName} w-36`}
             value={value.source}
+            disabled={readOnly}
             onChange={(event) => {
               const nextSource = event.target.value as
                 | "current"
@@ -221,6 +254,7 @@ export function ExpressionEditorNode({
                 <Select
                   className={`${expressionControlClassName} w-36`}
                   value={value.alias}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       kind: "field",
@@ -245,6 +279,7 @@ export function ExpressionEditorNode({
                 <Input
                   value={value.alias}
                   placeholder={t("dataHooks.actions.aliasPlaceholder")}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       kind: "field",
@@ -259,6 +294,7 @@ export function ExpressionEditorNode({
                 <Select
                   className={expressionControlClassName}
                   value={value.path}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       kind: "field",
@@ -281,6 +317,7 @@ export function ExpressionEditorNode({
                 <Input
                   value={value.path}
                   placeholder={t("dataHooks.expression.fieldPathPlaceholder")}
+                  disabled={readOnly}
                   onChange={(event) =>
                     onChange({
                       kind: "field",
@@ -297,6 +334,7 @@ export function ExpressionEditorNode({
               <Select
                 className={expressionControlClassName}
                 value={value.alias}
+                disabled={readOnly}
                 onChange={(event) =>
                   onChange({
                     kind: "field",
@@ -318,19 +356,21 @@ export function ExpressionEditorNode({
               <Input
                 value={value.alias}
                 placeholder={t("dataHooks.actions.aliasPlaceholder")}
+                disabled={readOnly}
                 onChange={(event) =>
-                  onChange({
-                    kind: "field",
-                    source: "aggregate",
-                    alias: event.target.value,
-                  })
-                }
-              />
+                    onChange({
+                      kind: "field",
+                      source: "aggregate",
+                      alias: event.target.value,
+                    })
+                  }
+                />
             )
           ) : fieldNames && fieldNames.length > 0 ? (
             <Select
               className={expressionControlClassName}
               value={value.path}
+              disabled={readOnly}
               onChange={(event) =>
                 onChange({
                   kind: "field",
@@ -352,6 +392,7 @@ export function ExpressionEditorNode({
             <Input
               value={value.path}
               placeholder={t("dataHooks.expression.fieldPathPlaceholder")}
+              disabled={readOnly}
               onChange={(event) =>
                 onChange({
                   kind: "field",
@@ -397,8 +438,8 @@ export function ExpressionEditorNode({
         />
       ) : null}
 
-      {kind === "switch" && value.kind === "switch" ? (
-        <SwitchExpressionPanel
+      {kind === "formula" && value.kind === "formula" ? (
+        <FormulaExpressionPanel
           value={value}
           onChange={onChange}
           fieldNames={fieldNames}
@@ -408,11 +449,24 @@ export function ExpressionEditorNode({
         />
       ) : null}
 
+      {kind === "switch" && value.kind === "switch" ? (
+        <SwitchExpressionPanel
+          value={value}
+          onChange={onChange}
+          fieldNames={fieldNames}
+          loadedBindings={loadedBindings}
+          aggregateBindings={aggregateBindings}
+          renderNode={renderNestedNode}
+          collapsibleNested={collapsibleNested}
+        />
+      ) : null}
+
       {kind === "advanced" ? (
         <div className="space-y-1">
           <textarea
             className={expressionTextareaClassName}
             value={advancedText}
+            disabled={readOnly}
             onChange={(event) => handleAdvancedChange(event.target.value)}
             spellCheck={false}
           />
@@ -427,4 +481,18 @@ export function ExpressionEditorNode({
       ) : null}
     </div>
   );
+
+  if (useCollapsibleWrapper) {
+    return (
+      <CollapsibleEditorCard
+        title={buildCollapsibleTitle(label, value)}
+        defaultOpen={false}
+        className="bg-muted/20 shadow-sm"
+      >
+        {editorBody}
+      </CollapsibleEditorCard>
+    );
+  }
+
+  return editorBody;
 }

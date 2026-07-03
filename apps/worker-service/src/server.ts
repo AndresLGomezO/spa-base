@@ -34,7 +34,7 @@ export async function buildWorkerServer(
   const app = fastify({ logger: true });
   registerLenientJsonParser(app);
 
-  await app.register(healthRoute);
+  await app.register(healthRoute, { hookRuntime: deps.hookRuntime });
   await app.register(taskScope, deps);
 
   return app;

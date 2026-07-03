@@ -5,12 +5,14 @@ import {
   resolveAiStepTraceEnabled,
   resolveEffectiveObservabilityFlags,
   resolveRequestPerfTraceEnabled,
+  resolveSeedHookObservabilityEnabled,
 } from "./resolve-observability-flags.js";
 import type { PlatformRuntimeSettings } from "./platform-runtime-settings.js";
 
 const baseSettings: PlatformRuntimeSettings = {
   aiStepTraceEnabled: null,
   requestPerfTraceEnabled: null,
+  seedHookObservabilityEnabled: null,
   updatedAt: "2026-01-01T00:00:00.000Z",
   updatedBy: "admin",
 };
@@ -38,6 +40,7 @@ describe("resolveObservabilityFlags", () => {
     ).toEqual({
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
+      seedHookObservabilityEnabled: true,
     });
   });
 
@@ -75,10 +78,11 @@ describe("resolveObservabilityFlags", () => {
     ).toEqual({
       aiStepTraceEnabled: true,
       requestPerfTraceEnabled: true,
+      seedHookObservabilityEnabled: false,
     });
   });
 
-  it("allows runtime overrides to disable tracing", () => {
+  it("prefers runtime overrides to disable tracing", () => {
     expect(
       resolveEffectiveObservabilityFlags(
         {
@@ -91,6 +95,25 @@ describe("resolveObservabilityFlags", () => {
     ).toEqual({
       aiStepTraceEnabled: false,
       requestPerfTraceEnabled: false,
+      seedHookObservabilityEnabled: true,
     });
+  });
+
+  it("resolves seed hook observability from env and runtime overrides", () => {
+    expect(
+      resolveSeedHookObservabilityEnabled(null, {
+        NODE_ENV: "production",
+        SEED_HOOK_OBSERVABILITY_ENABLED: "true",
+      }),
+    ).toBe(true);
+    expect(
+      resolveSeedHookObservabilityEnabled(
+        {
+          ...baseSettings,
+          seedHookObservabilityEnabled: false,
+        },
+        { NODE_ENV: "development" },
+      ),
+    ).toBe(false);
   });
 });

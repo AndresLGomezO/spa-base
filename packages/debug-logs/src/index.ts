@@ -63,7 +63,9 @@ export {
   resolveEffectiveObservabilityFlags,
   resolveEnvAiStepTraceEnabled,
   resolveEnvRequestPerfTraceEnabled,
+  resolveEnvSeedHookObservabilityEnabled,
   resolveRequestPerfTraceEnabled,
+  resolveSeedHookObservabilityEnabled,
 } from "./resolve-observability-flags.js";
 export {
   createRuntimeSettingsCache,

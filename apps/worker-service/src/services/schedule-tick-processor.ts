@@ -10,9 +10,11 @@ import {
   type HookLogger,
 } from "@repo/hooks";
 import { listAllTenantIds, type FirebaseAdminConfig } from "@repo/gcp-firebase";
+import { getAllKnownPermissions } from "@repo/rbac";
 
 import { PermanentHookTaskError } from "./data-hook-processor.js";
 import type { DataHookProcessorDeps } from "./data-hook-processor.js";
+import { processExpiredTenantArchivePurge } from "./tenant-deletion-processor.js";
 import {
   createDataHookExecutionRecorderForTenant,
   createRecordDataHookExecution,
@@ -23,7 +25,11 @@ import {
 } from "../hooks/worker-hook-entity-services.js";
 
 export async function processScheduleTick(
-  deps: DataHookProcessorDeps,
+  deps: DataHookProcessorDeps & {
+    readonly firebaseAdminConfig: FirebaseAdminConfig;
+    readonly indexProjectId: string;
+    readonly indexDatabaseId?: string;
+  },
   options: {
     readonly firebaseAdminConfig: FirebaseAdminConfig;
     readonly scheduledHookUserUid: string;
@@ -34,6 +40,18 @@ export async function processScheduleTick(
   const uid = options.scheduledHookUserUid.trim();
   if (!uid) {
     throw new PermanentHookTaskError("SCHEDULED_HOOK_USER_UID_MISSING");
+  }
+
+  const purgeResult = await processExpiredTenantArchivePurge({
+    firebaseAdminConfig: options.firebaseAdminConfig,
+    indexProjectId: deps.indexProjectId,
+    indexDatabaseId: deps.indexDatabaseId,
+  });
+  if (purgeResult.purged > 0 || purgeResult.failed > 0) {
+    options.logger.info("Tenant archive purge tick completed.", {
+      purged: purgeResult.purged,
+      failed: purgeResult.failed,
+    });
   }
 
   const tenantIds = await listAllTenantIds(options.firebaseAdminConfig);
@@ -69,12 +87,20 @@ async function processTenantScheduleTick(
     options.tenantId,
     options.scheduledHookUserUid,
     deps.permissionDeps,
+    {
+      getKnownPermissions: (tenantId) => getAllKnownPermissions(tenantId),
+    },
+  );
+
+  const formulaResolver = await deps.formulaRuntime.getFormulaResolver(
+    options.tenantId,
   );
 
   const entities = buildHookEntityServices({
     user,
     deps,
     logger: options.logger,
+    formulaResolver,
   });
 
   const recordDataHookExecution = deps.hookExecutionRepository
@@ -98,6 +124,13 @@ async function processTenantScheduleTick(
     ...(deps.callWebhook ? { callWebhook: deps.callWebhook } : {}),
   };
 
+  const withFormulaResolver = (
+    context: ReturnType<typeof buildScheduledHookContext>,
+  ) => ({
+    ...context,
+    formulaResolver,
+  });
+
   for (const definition of dueHooks) {
     if (!isScheduleTrigger(definition.trigger)) {
       continue;
@@ -114,7 +147,7 @@ async function processTenantScheduleTick(
         current: buildSyntheticScheduledRecord(options.tenantId, options.at),
         services,
       });
-      await runDataHook(definition, context);
+      await runDataHook(definition, withFormulaResolver(context));
       continue;
     }
 
@@ -168,7 +201,7 @@ async function processTenantScheduleTick(
         previous: { ...recordData },
         services,
       });
-      await runDataHook(definition, context);
+      await runDataHook(definition, withFormulaResolver(context));
     }
   }
 }

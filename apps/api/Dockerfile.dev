@@ -34,10 +34,12 @@ COPY packages/metrics-engine/package.json ./packages/metrics-engine/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/hooks/package.json ./packages/hooks/
+COPY packages/formula-definitions/package.json ./packages/formula-definitions/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/theme/package.json ./packages/theme/
 COPY packages/tenant-bundle/package.json ./packages/tenant-bundle/
+COPY packages/user-notifications/package.json ./packages/user-notifications/
 COPY packages/eslint-config/package.json ./packages/eslint-config/
 COPY packages/esbuild-runtime-deps/package.json ./packages/esbuild-runtime-deps/
 COPY packages/typescript-config/ ./packages/typescript-config/

@@ -20,7 +20,7 @@ Entity schemas and balance conventions: [rates-data-model.md](./rates-data-model
 
 | ID | Rule | Status | Notes |
 |----|------|--------|-------|
-| LD-01 | Evolving P/I plan (hook JSON math) | **Shipped** | `Generate loan payment plan` — all formulas in catalog JSON |
+| LD-01 | Evolving P/I plan (hook JSON math) | **Shipped** | `Generate loan payment plan` — uses platform `formula` nodes; hook JSON ~4KB (was ~61KB) |
 | LD-01a | Persist inferred `loanDetails.originationDate` | **Shipped** | **NONE / flat plans only** — skipped for FRENCH/GERMAN/etc. |
 | LD-02 | Replan on term / rate / type changes | **Shipped** | Same hook expressions as LD-01 |
 | LD-04 | Replan when `loanMonthlyCost` changes | **Shipped** | Bumps `loanDetails.planRevision` → LD-02 |

@@ -27,6 +27,7 @@
   },
   "dependencies": {
     "@repo/entities": "workspace:*",
+    "@repo/user-notifications": "workspace:*",
     "cron-parser": "catalog:",
     "nanoid": "catalog:",
     "zod": "catalog:"

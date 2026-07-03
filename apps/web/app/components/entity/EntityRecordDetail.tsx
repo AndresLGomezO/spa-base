@@ -164,7 +164,7 @@ export function EntityRecordDetail({
   return (
     <div className="space-y-6">
       <div className="flex items-center gap-3">
-        <EntityBackButton entityName={entityName} label={entityLabel} />
+        <EntityBackButton entityName={entityName} />
       </div>
 
       <div className="flex items-center justify-between gap-4">

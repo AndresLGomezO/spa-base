@@ -306,6 +306,10 @@ export function rewriteTenantBundleTenantId(
       ...record,
       tenantId: targetTenantId,
     })),
+    formulaDefinitions: bundle.formulaDefinitions.map((record) => ({
+      ...record,
+      tenantId: targetTenantId,
+    })),
     metricDefinitions: bundle.metricDefinitions.map((record) => ({
       ...record,
       tenantId: targetTenantId,
@@ -328,6 +332,7 @@ export const TENANT_BUNDLE_COLLECTION_IMPORT_ORDER = [
   "ui_builder_presets",
   "tenant_dashboard_layouts",
   "roles",
+  "__formula_definitions",
   "__data_hooks",
   "__metrics_definitions",
   "__entity_query_definitions",

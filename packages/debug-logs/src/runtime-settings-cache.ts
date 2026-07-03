@@ -4,6 +4,7 @@ import {
   resolveEffectiveObservabilityFlags,
   resolveAiStepTraceEnabled,
   resolveRequestPerfTraceEnabled,
+  resolveSeedHookObservabilityEnabled,
 } from "./resolve-observability-flags.js";
 
 export interface RuntimeSettingsReader {
@@ -45,6 +46,11 @@ export function createRuntimeSettingsCache(
     return resolveRequestPerfTraceEnabled(settings);
   }
 
+  async function isSeedHookObservabilityEnabled(): Promise<boolean> {
+    const settings = await getSettings();
+    return resolveSeedHookObservabilityEnabled(settings);
+  }
+
   async function buildResponse() {
     const settings = await getSettings();
     return {
@@ -59,6 +65,7 @@ export function createRuntimeSettingsCache(
     invalidate,
     isAiStepTraceEnabled,
     isRequestPerfTraceEnabled,
+    isSeedHookObservabilityEnabled,
     buildResponse,
   };
 }

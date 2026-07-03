@@ -7,6 +7,7 @@ export const platformRuntimeSettingsSchema = z
   .object({
     aiStepTraceEnabled: z.boolean().nullable(),
     requestPerfTraceEnabled: z.boolean().nullable(),
+    seedHookObservabilityEnabled: z.boolean().nullable(),
     updatedAt: z.string().trim().min(1),
     updatedBy: z.string().trim().min(1),
   })
@@ -20,12 +21,14 @@ export const updatePlatformRuntimeSettingsInputSchema = z
   .object({
     aiStepTraceEnabled: z.boolean().nullable().optional(),
     requestPerfTraceEnabled: z.boolean().nullable().optional(),
+    seedHookObservabilityEnabled: z.boolean().nullable().optional(),
   })
   .strict()
   .refine(
     (value) =>
       value.aiStepTraceEnabled !== undefined ||
-      value.requestPerfTraceEnabled !== undefined,
+      value.requestPerfTraceEnabled !== undefined ||
+      value.seedHookObservabilityEnabled !== undefined,
     { message: "At least one setting must be provided." },
   );
 
@@ -36,9 +39,11 @@ export type UpdatePlatformRuntimeSettingsInput = z.infer<
 export interface ObservabilityEnvDefaults {
   readonly aiStepTraceEnabled: boolean;
   readonly requestPerfTraceEnabled: boolean;
+  readonly seedHookObservabilityEnabled: boolean;
 }
 
 export interface EffectiveObservabilityFlags {
   readonly aiStepTraceEnabled: boolean;
   readonly requestPerfTraceEnabled: boolean;
+  readonly seedHookObservabilityEnabled: boolean;
 }

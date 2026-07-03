@@ -12,7 +12,7 @@ import {
   useFilterPanelDismiss,
 } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
-import { Clipboard, LayoutDashboard, RefreshCw, Trash2 } from "lucide-react";
+import { Clipboard, LayoutDashboard, Trash2 } from "lucide-react";
 import { useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 
@@ -20,6 +20,11 @@ import type { DebugEvent, DebugEventStatus } from "../../lib/api-client";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { DebuggerHookLiveStatus } from "./components/DebuggerHookLiveStatus";
+import {
+  DebuggerLastUpdatedLabel,
+  DebuggerRefreshRow,
+  DebuggerRefreshingOverlay,
+} from "./components/DebuggerRefreshControls";
 import { DebuggerJsonViewDialog } from "./components/DebuggerJsonViewDialog";
 import {
   IndexProvisioningTreeJobs,
@@ -135,7 +140,6 @@ export function DebuggerListTreePanel() {
   const {
     activeSource,
     sourceEvents,
-    refresh,
     isLoading,
     selectedEvent,
     selectedIndexSignature,
@@ -240,25 +244,7 @@ export function DebuggerListTreePanel() {
     </button>
   );
 
-  const refreshRow = (
-    <button
-      type="button"
-      className={cn(
-        "flex w-full min-w-0 cursor-pointer items-center gap-2 rounded-md px-2 py-1.5 text-left transition-colors duration-150",
-        DEBUGGER_LIST_ROW_HOVER_CLASS,
-      )}
-      onClick={refresh}
-      disabled={isLoading}
-    >
-      <RefreshCw
-        aria-hidden
-        className={`text-muted-foreground size-4 shrink-0 ${isLoading ? "animate-spin" : ""}`}
-      />
-      <Text className="text-sm font-medium">
-        {t("debugger.actions.refresh")}
-      </Text>
-    </button>
-  );
+  const refreshRow = <DebuggerRefreshRow />;
 
   const filterBody = (
     <div
@@ -439,6 +425,8 @@ export function DebuggerListTreePanel() {
 
       <DebuggerStatusSummary counts={statusCounts} />
 
+      <DebuggerLastUpdatedLabel />
+
       <Button
         type="button"
         size="sm"
@@ -452,13 +440,15 @@ export function DebuggerListTreePanel() {
   );
 
   const treeBody = isIndexProvisionSource ? (
-    <div className="flex w-full min-w-0 flex-col gap-2 py-1">
+    <div className="relative flex w-full min-w-0 flex-col gap-2 py-1">
+      <DebuggerRefreshingOverlay />
       {overviewRow}
       {refreshRow}
       <IndexProvisioningTreeJobs />
     </div>
   ) : (
-    <div className="flex w-full min-w-0 flex-col gap-2 py-1">
+    <div className="relative flex w-full min-w-0 flex-col gap-2 py-1">
+      <DebuggerRefreshingOverlay />
       {overviewRow}
       {refreshRow}
       {listEvents.length === 0 && !isLoading ? (

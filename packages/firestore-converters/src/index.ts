@@ -1,4 +1,5 @@
 export {
+  type EntityCreateOptions,
   type FindByFieldParams,
   type ListParams,
   type PaginatedResult,
@@ -117,6 +118,8 @@ export { summarizeHookExecutions } from "./hook-execution/summarize-hook-executi
 export type { HookExecutionSummaryRow } from "./hook-execution/summarize-hook-executions.js";
 export { type MetricDefinitionRepository } from "./metric-definition/repository-contract.js";
 export { createInMemoryMetricDefinitionRepository } from "./metric-definition/in-memory-repository.js";
+export { type FormulaDefinitionRepository } from "./formula-definition/repository-contract.js";
+export { createInMemoryFormulaDefinitionRepository } from "./formula-definition/in-memory-repository.js";
 export { type EntityQueryDefinitionRepository } from "./entity-query-definition/repository-contract.js";
 export { createInMemoryEntityQueryDefinitionRepository } from "./entity-query-definition/in-memory-repository.js";
 export { type CustomViewRepository } from "./custom-view/repository-contract.js";
@@ -171,6 +174,15 @@ export {
 } from "./user/user-mapper.js";
 export { type HookLogMessageRepository } from "./hook-log-message/repository-contract.js";
 export { createInMemoryHookLogMessageRepository } from "./hook-log-message/in-memory-repository.js";
+export {
+  type UserNotificationRepository,
+  type UserNotificationListCursor,
+  type UserNotificationListPage,
+  buildUserNotificationNextCursor,
+  decodeUserNotificationListCursor,
+  encodeUserNotificationListCursor,
+} from "./user-notification/repository-contract.js";
+export { createInMemoryUserNotificationRepository } from "./user-notification/in-memory-repository.js";
 export { type RequestPerfLogRepository } from "./request-perf-log/repository-contract.js";
 export { createInMemoryRequestPerfLogRepository } from "./request-perf-log/in-memory-repository.js";
 export { type IndexProvisionEventRepository } from "./index-provision-event/repository-contract.js";
@@ -179,3 +191,21 @@ export { type AuditLogRepository } from "./audit-log/repository-contract.js";
 export { createInMemoryAuditLogRepository } from "./audit-log/in-memory-repository.js";
 export { type PlatformRuntimeSettingsRepository } from "./platform-runtime-settings/repository-contract.js";
 export { createInMemoryPlatformRuntimeSettingsRepository } from "./platform-runtime-settings/in-memory-repository.js";
+export {
+  type CreateTenantDeletionArchiveInput,
+  type CreateTenantDeletionJobInput,
+  type TenantDeletionArchiveRepository,
+  type TenantDeletionJobRepository,
+  tenantDeletionArchiveRecordSchema,
+  tenantDeletionJobRecordSchema,
+  type TenantDeletionArchiveRecord,
+  type TenantDeletionArchiveStats,
+  type TenantDeletionArchiveStatus,
+  type TenantDeletionJobProgress,
+  type TenantDeletionJobRecord,
+  type TenantDeletionJobStatus,
+} from "./tenant-deletion/repository-contract.js";
+export {
+  createInMemoryTenantDeletionArchiveRepository,
+  createInMemoryTenantDeletionJobRepository,
+} from "./tenant-deletion/in-memory-repository.js";
