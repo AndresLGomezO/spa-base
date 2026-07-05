@@ -18,4 +18,8 @@ export interface MetricDefinitionRepository {
     input: PatchMetricDefinitionInput,
   ): Promise<MetricDefinitionRecord>;
   delete(tenantId: string, id: string): Promise<void>;
+  countBySourceQueryDefinitionId(
+    tenantId: string,
+    entityQueryDefinitionId: string,
+  ): Promise<number>;
 }

@@ -20,11 +20,11 @@ export function ItemListDesignerUnsavedChangesModal() {
       ? "itemListDesigner.unsavedChanges.structurePanelMessage"
       : unsavedReason === "columnsScope"
         ? "itemListDesigner.unsavedChanges.columnsScopeMessage"
-        : unsavedTabId === "columns"
-          ? "itemListDesigner.unsavedChanges.columnsMessage"
-          : unsavedTabId === "layout"
+        : unsavedTabId === "design"
+          ? editor.viewType === "card"
             ? "itemListDesigner.unsavedChanges.layoutMessage"
-            : "itemListDesigner.unsavedChanges.settingsMessage";
+            : "itemListDesigner.unsavedChanges.columnsMessage"
+          : "itemListDesigner.unsavedChanges.settingsMessage";
 
   const saveLabelKey =
     unsavedReason === "structurePanel"

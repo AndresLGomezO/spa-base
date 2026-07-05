@@ -41,12 +41,6 @@ export function entityRecordQueryKey(
   return ["entity", entityName, "record", id];
 }
 
-export function metricDefinitionQueryKey(
-  metricDefinitionId: string,
-): readonly ["metric-definition", string] {
-  return ["metric-definition", metricDefinitionId];
-}
-
 export function metricRowQueryKey(
   metricDefinitionId: string,
   query: unknown,

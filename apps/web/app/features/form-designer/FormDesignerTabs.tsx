@@ -4,7 +4,6 @@ import { useTranslation } from "react-i18next";
 
 import type { FormDesignerTabId } from "./form-designer-tabs";
 import { useFormDesigner } from "./form-designer-context";
-import { FormDesignerLayoutTab } from "./FormDesignerLayoutTab";
 import { FormDesignerSettingsTab } from "./FormDesignerSettingsTab";
 import { FormDesignerComponentsTab } from "./FormDesignerComponentsTab";
 import { FormDesignerUnsavedChangesModal } from "./FormDesignerUnsavedChangesModal";
@@ -21,12 +20,7 @@ export function FormDesignerTabs() {
         panel: <FormDesignerSettingsTab />,
       },
       {
-        id: "layout" as const,
-        label: t("formDesigner.tabs.layout"),
-        panel: <FormDesignerLayoutTab />,
-      },
-      {
-        id: "components" as const,
+        id: "design" as const,
         label: t("formDesigner.tabs.components"),
         panel: <FormDesignerComponentsTab />,
         panelScrollable: false,

@@ -13,7 +13,7 @@ This document is the **authoritative reference for Query Builder JSON** used by 
 |----------|---------|
 | [query-engine-guide.md](./query-engine-guide.md) | Runtime list `?query=` JSON, filter tree shape, RBAC |
 | [entity-definition-json.md](./entity-definition-json.md) | Entity catalog JSON — queries reference `sourceEntity` names |
-| [metric-definition-json.md](./metric-definition-json.md) | Metrics JSON (separate catalog) |
+| [metric-definition-json.md](./metric-definition-json.md) | Metrics JSON — optional `sourceQueryDefinitionId` references queries from this catalog |
 | Tenant bundle (`entityQueryDefinitions[]`) | Admin-only full records — not the portable envelope format below |
 
 ---
@@ -161,6 +161,7 @@ Each item matches **`createEntityQueryDefinitionInput`** — the same shape as `
 | `name` | string | yes | Match key for catalog replace |
 | `description` | string | no | |
 | `sourceEntity` | string | yes | Entity **name**; immutable after create |
+| `parameters` | array | no | Declared runtime parameters (default `[]`) |
 | `filter` | filter tree root | yes | Nested `group` / `condition` nodes (not legacy flat `filters[]`) |
 | `sort` | array | no | `{ field, direction: "asc" \| "desc" }[]` |
 | `select` | string[] | no | Omit or empty for all fields |
@@ -181,6 +182,22 @@ Conditions use typed values:
 ```json
 { "type": "temporal", "preset": "startOfMonth" }
 ```
+
+Parameter references (require a matching entry in `parameters[]`):
+
+```json
+{ "type": "parameter", "name": "period", "bound": "start" }
+```
+
+Parameter declaration example:
+
+```json
+"parameters": [
+  { "name": "period", "valueType": "dateBucket", "granularity": "month", "field": "date" }
+]
+```
+
+At runtime, `query-viewer` and metric components bind parameter values via `parameterBindings` / `queryParameterBindings` using the same `MetricBindingSource` shapes as metric dimensions. During aggregation, query-backed metrics resolve parameters from each source record’s field values.
 
 Supported temporal presets: `today`, `startOfDay`, `endOfDay`, `startOfMonth`, `endOfMonth`, `startOfYear`, `endOfYear`.
 
@@ -221,6 +238,7 @@ Groups nest with `combinator`: `"and"` or `"or"`. Depth and OR-branch limits are
 **Limitations:**
 
 - UI layout bindings (`entityQueryDefinitionId` in `query-viewer` widgets) are **not** auto-cleaned when queries are removed.
+- Metrics referencing a query via `sourceQueryDefinitionId` **block** single delete and catalog-replace deletion of that query until metrics are removed or repointed.
 
 ---
 

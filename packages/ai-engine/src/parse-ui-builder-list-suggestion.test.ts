@@ -1,9 +1,12 @@
 import { describe, expect, it } from "vitest";
 import {
+  asEditableLayoutRoot,
   createDefaultFormLayout,
   createDefaultUiLayout,
-  createEmptyColumn,
+  createLayoutId,
   isContainerComponent,
+  isGridComponent,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 
 import { defineEntity } from "@repo/entities";
@@ -142,23 +145,36 @@ describe("normalizeAiListSliceSuggestion", () => {
     ]);
   });
 
-  it("repairs expandableTable layouts when nested columnCount is wrong", () => {
-    const layoutWithBadNestedCount = () => {
+  it("repairs expandableTable layouts when grid track count is wrong", () => {
+    const layoutWithBadGridTracks = () => {
       const base = createDefaultUiLayout(["name", "email"]);
-      const nested = {
-        type: "nested-layout" as const,
-        id: "nested-1",
-        columnCount: 3,
-        columns: [createEmptyColumn(), createEmptyColumn()],
+      const editableRoot = asEditableLayoutRoot(base.root);
+      const gridRow = {
+        type: "component" as const,
+        id: "grid-1",
+        component: {
+          kind: "grid" as const,
+          gridTemplateColumns: "repeat(3, 1fr)",
+          rows: [
+            {
+              type: "component" as const,
+              id: createLayoutId("row"),
+              component: { kind: "container" as const, rows: [] },
+            },
+            {
+              type: "component" as const,
+              id: createLayoutId("row"),
+              component: { kind: "container" as const, rows: [] },
+            },
+          ],
+        },
       };
       return {
         ...base,
         root: {
-          ...base.root,
-          columnCount: 3,
-          columns: base.root.columns.map((column, index) =>
-            index === 0 ? { ...column, rows: [nested] } : column,
-          ),
+          ...editableRoot,
+          columnCount: 1,
+          columns: [{ ...editableRoot.columns[0]!, rows: [gridRow] }],
         },
       };
     };
@@ -170,40 +186,49 @@ describe("normalizeAiListSliceSuggestion", () => {
           {
             id: "col-1",
             label: "Main",
-            cellLayout: layoutWithBadNestedCount(),
+            cellLayout: layoutWithBadGridTracks(),
           },
         ],
-        rowExpandLayout: layoutWithBadNestedCount(),
+        rowExpandLayout: layoutWithBadGridTracks(),
         showActions: true,
       },
     });
 
-    const cellContainer =
-      normalized?.expandableTable.columns[0]?.cellLayout.root.columns[0]
-        ?.rows[0];
+    const cellLayout = normalized?.expandableTable.columns[0]?.cellLayout;
+    const cellContainer = cellLayout
+      ? resolveLayoutRootColumns(cellLayout)[0]?.rows[0]
+      : undefined;
     expect(cellContainer?.type).toBe("component");
     if (
       cellContainer?.type === "component" &&
       isContainerComponent(cellContainer.component)
     ) {
-      const cellNested = cellContainer.component.rows[0];
-      expect(cellNested?.type).toBe("nested-layout");
-      if (cellNested?.type === "nested-layout") {
-        expect(cellNested.columnCount).toBe(2);
+      const cellGrid = cellContainer.component.rows[0];
+      expect(cellGrid?.type).toBe("component");
+      if (
+        cellGrid?.type === "component" &&
+        isGridComponent(cellGrid.component)
+      ) {
+        expect(cellGrid.component.rows).toHaveLength(2);
       }
     }
 
-    const expandContainer =
-      normalized?.expandableTable.rowExpandLayout.root.columns[0]?.rows[0];
+    const rowExpandLayout = normalized?.expandableTable.rowExpandLayout;
+    const expandContainer = rowExpandLayout
+      ? resolveLayoutRootColumns(rowExpandLayout)[0]?.rows[0]
+      : undefined;
     expect(expandContainer?.type).toBe("component");
     if (
       expandContainer?.type === "component" &&
       isContainerComponent(expandContainer.component)
     ) {
-      const expandNested = expandContainer.component.rows[0];
-      expect(expandNested?.type).toBe("nested-layout");
-      if (expandNested?.type === "nested-layout") {
-        expect(expandNested.columnCount).toBe(2);
+      const expandGrid = expandContainer.component.rows[0];
+      expect(expandGrid?.type).toBe("component");
+      if (
+        expandGrid?.type === "component" &&
+        isGridComponent(expandGrid.component)
+      ) {
+        expect(expandGrid.component.rows).toHaveLength(2);
       }
     }
   });
@@ -312,23 +337,36 @@ describe("parseUiBuilderListSuggestion", () => {
     ]);
   });
 
-  it("accepts expandableTable output when nested columnCount is wrong", () => {
-    const layoutWithBadNestedCount = () => {
+  it("accepts expandableTable output when grid track count is wrong", () => {
+    const layoutWithBadGridTracks = () => {
       const base = createDefaultUiLayout(["name", "email"]);
-      const nested = {
-        type: "nested-layout" as const,
-        id: "nested-1",
-        columnCount: 3,
-        columns: [createEmptyColumn(), createEmptyColumn()],
+      const editableRoot = asEditableLayoutRoot(base.root);
+      const gridRow = {
+        type: "component" as const,
+        id: "grid-1",
+        component: {
+          kind: "grid" as const,
+          gridTemplateColumns: "repeat(3, 1fr)",
+          rows: [
+            {
+              type: "component" as const,
+              id: createLayoutId("row"),
+              component: { kind: "container" as const, rows: [] },
+            },
+            {
+              type: "component" as const,
+              id: createLayoutId("row"),
+              component: { kind: "container" as const, rows: [] },
+            },
+          ],
+        },
       };
       return {
         ...base,
         root: {
-          ...base.root,
-          columnCount: 3,
-          columns: base.root.columns.map((column, index) =>
-            index === 0 ? { ...column, rows: [nested] } : column,
-          ),
+          ...editableRoot,
+          columnCount: 1,
+          columns: [{ ...editableRoot.columns[0]!, rows: [gridRow] }],
         },
       };
     };
@@ -346,10 +384,10 @@ describe("parseUiBuilderListSuggestion", () => {
               {
                 id: "col-1",
                 label: "Main",
-                cellLayout: layoutWithBadNestedCount(),
+                cellLayout: layoutWithBadGridTracks(),
               },
             ],
-            rowExpandLayout: layoutWithBadNestedCount(),
+            rowExpandLayout: layoutWithBadGridTracks(),
             showActions: true,
           },
         },

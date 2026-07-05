@@ -5,28 +5,12 @@ import { DashboardLayoutDesignerComponentColumnPanelHeaderMenu } from "./Dashboa
 import { DashboardLayoutDesignerComponentRowPanel } from "./DashboardLayoutDesignerComponentRowPanel";
 import { DashboardLayoutDesignerComponentRowPanelHeaderMenu } from "./DashboardLayoutDesignerComponentRowPanelHeaderMenu";
 import { DashboardLayoutDesignerStructurePanelFooter } from "./DashboardLayoutDesignerStructurePanelFooter";
-import {
-  DashboardLayoutDesignerContext,
-  type DashboardLayoutDesignerContextValue,
-} from "./dashboard-layout-designer-context";
 import type { DashboardLayoutPanelSession } from "./dashboard-layout-designer-panel-session";
 
-function withMainViewContext(
-  value: DashboardLayoutDesignerContextValue,
-  children: ReactNode,
-): ReactNode {
-  return (
-    <DashboardLayoutDesignerContext.Provider value={value}>
-      {children}
-    </DashboardLayoutDesignerContext.Provider>
-  );
-}
-
-export function renderDashboardLayoutStructurePanelChrome(
-  contextValue: DashboardLayoutDesignerContextValue,
+export function renderDashboardLayoutStructurePanelContent(
   session: DashboardLayoutPanelSession,
 ): {
-  readonly headerActions?: ReactNode;
+  readonly headerActions: ReactNode;
   readonly body: ReactNode;
   readonly footer: ReactNode;
 } {
@@ -34,39 +18,27 @@ export function renderDashboardLayoutStructurePanelChrome(
 
   if (target.kind === "column") {
     return {
-      headerActions: withMainViewContext(
-        contextValue,
+      headerActions: (
         <DashboardLayoutDesignerComponentColumnPanelHeaderMenu
           columnRef={target.columnRef}
-        />,
+        />
       ),
-      body: withMainViewContext(
-        contextValue,
+      body: (
         <DashboardLayoutDesignerComponentColumnPanel
           columnRef={target.columnRef}
-        />,
+        />
       ),
-      footer: withMainViewContext(
-        contextValue,
-        <DashboardLayoutDesignerStructurePanelFooter />,
-      ),
+      footer: <DashboardLayoutDesignerStructurePanelFooter />,
     };
   }
 
   return {
-    headerActions: withMainViewContext(
-      contextValue,
+    headerActions: (
       <DashboardLayoutDesignerComponentRowPanelHeaderMenu
         rowRef={target.rowRef}
-      />,
+      />
     ),
-    body: withMainViewContext(
-      contextValue,
-      <DashboardLayoutDesignerComponentRowPanel rowRef={target.rowRef} />,
-    ),
-    footer: withMainViewContext(
-      contextValue,
-      <DashboardLayoutDesignerStructurePanelFooter />,
-    ),
+    body: <DashboardLayoutDesignerComponentRowPanel rowRef={target.rowRef} />,
+    footer: <DashboardLayoutDesignerStructurePanelFooter />,
   };
 }

@@ -41,17 +41,48 @@ export function MetricDefinitionJsonImportDialog({
     () =>
       JSON.stringify(
         createMetricDefinitionEnvelope({
-          name: "Total principal",
-          sourceModel: "loan",
+          name: "Income MoM %",
+          description: "Month-over-month percent change for income.",
+          sourceModel: "transaction",
+          computationMode: "computed",
+          valueDisplayFormat: "percent",
+          parameters: [
+            {
+              name: "currentPeriod",
+              valueType: "dateBucket",
+              granularity: "month",
+            },
+            {
+              name: "comparisonPeriod",
+              valueType: "dateBucket",
+              granularity: "month",
+              deriveFrom: {
+                parameter: "currentPeriod",
+                shift: { unit: "month", offset: -1 },
+              },
+            },
+          ],
+          computation: {
+            type: "percentChange",
+            current: {
+              type: "metricRef",
+              metricDefinitionId: "Income by Month",
+              parameterMap: { date: "currentPeriod" },
+            },
+            baseline: {
+              type: "metricRef",
+              metricDefinitionId: "Income by Month",
+              parameterMap: { date: "comparisonPeriod" },
+            },
+          },
           filters: [],
           groupBy: [],
           dimensions: [],
           dateFieldGranularity: {},
-          valueDisplayFormat: "number",
-          aggregations: [{ operation: "SUM", field: "principal" }],
+          aggregations: [{ operation: "COUNT" }],
           version: 1,
           schemaVersionDependency: 0,
-          fieldsDependency: ["principal"],
+          fieldsDependency: [],
           status: "ACTIVE",
         }),
         null,

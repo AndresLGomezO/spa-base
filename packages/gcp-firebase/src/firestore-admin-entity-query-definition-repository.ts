@@ -71,6 +71,7 @@ export function createFirestoreAdminEntityQueryDefinitionRepository(
         name: parsed.name,
         ...(parsed.description ? { description: parsed.description } : {}),
         sourceEntity: parsed.sourceEntity,
+        parameters: parsed.parameters,
         filter: parsed.filter,
         sort: parsed.sort,
         ...(parsed.select ? { select: parsed.select } : {}),
@@ -101,6 +102,9 @@ export function createFirestoreAdminEntityQueryDefinitionRepository(
         ...(input.name ? { name: input.name } : {}),
         ...(input.description !== undefined
           ? { description: input.description }
+          : {}),
+        ...(input.parameters !== undefined
+          ? { parameters: input.parameters }
           : {}),
         ...(input.filter ? { filter: input.filter } : {}),
         ...(input.sort ? { sort: input.sort } : {}),

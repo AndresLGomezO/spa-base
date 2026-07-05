@@ -27,6 +27,11 @@ import {
   type ViewFilterPageState,
 } from "./view-filter-page-context";
 import { ViewFilterDateField } from "./ViewFilterDateField";
+import {
+  resolveViewFilterDateLabel,
+  viewFilterDateLabelAlignClassName,
+  viewFilterDateLabelColorClassName,
+} from "./resolve-view-filter-date-label";
 
 interface ViewFilterComponentProps {
   readonly config: ViewFilterComponentConfig;
@@ -243,26 +248,60 @@ export function ViewFilterComponent({ config }: ViewFilterComponentProps) {
   }
 
   const dateFilterConfig = pageState.dateFilter.config;
-  const dateField =
+  const resolvedDateLabel = resolveViewFilterDateLabel(
+    config,
+    t("viewFilterComponents.dateFilterLabel"),
+  );
+  const datePicker =
     enableDateFilter && dateFilterConfig ? (
-      <div
-        className="w-auto shrink-0 overflow-visible py-0.5"
-        data-testid="view-filter-date-field"
-      >
-        <label className="inline-flex w-auto flex-col gap-1">
-          <span className="text-muted-foreground text-xs font-medium">
-            {t("viewFilterComponents.dateFilterLabel")}
-          </span>
-          <ViewFilterDateField
-            granularity={dateFilterConfig.granularity}
-            value={pageState.dateFilter.value}
-            onChange={pageState.dateFilter.setValue}
-            isExplicit={pageState.dateFilter.isExplicit}
-            locale={i18n.language}
-          />
-        </label>
-      </div>
+      <ViewFilterDateField
+        granularity={dateFilterConfig.granularity}
+        value={pageState.dateFilter.value}
+        onChange={pageState.dateFilter.setValue}
+        isExplicit={pageState.dateFilter.isExplicit}
+        locale={i18n.language}
+      />
     ) : null;
+  const dateLabel = resolvedDateLabel.show ? (
+    <span
+      className={cn(
+        "text-xs font-medium",
+        viewFilterDateLabelColorClassName(resolvedDateLabel.color),
+        viewFilterDateLabelAlignClassName(resolvedDateLabel.align),
+        resolvedDateLabel.bold && "font-bold",
+        resolvedDateLabel.thin && "font-light",
+        resolvedDateLabel.italic && "italic",
+        resolvedDateLabel.underline && "underline",
+        !resolvedDateLabel.bold && !resolvedDateLabel.thin && "font-medium",
+      )}
+    >
+      {resolvedDateLabel.text}
+    </span>
+  ) : null;
+  const dateField = datePicker ? (
+    <div
+      className="w-auto shrink-0 overflow-visible py-0.5"
+      data-testid="view-filter-date-field"
+    >
+      {dateLabel ? (
+        <label className="inline-flex w-auto flex-col gap-1">
+          {resolvedDateLabel.position === "below" ? (
+            <>
+              {datePicker}
+              {dateLabel}
+            </>
+          ) : (
+            <>
+              {dateLabel}
+              {datePicker}
+            </>
+          )}
+        </label>
+      ) : (
+        datePicker
+      )}
+    </div>
+  ) : null;
 
   const labels = {
     removeBadge: (label: string) => t("dataView.removeBadge", { label }),

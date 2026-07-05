@@ -1,6 +1,9 @@
 import { describe, expect, it } from "vitest";
 
-import { createEmptyLayout } from "@repo/ui-builder-core";
+import {
+  createEmptyLayout,
+  resolveLayoutRootColumns,
+} from "@repo/ui-builder-core";
 
 import { isComponentRowPanelDirty } from "./form-designer-component-row-panel-session";
 
@@ -19,7 +22,10 @@ describe("isComponentRowPanelDirty", () => {
       root: {
         ...baseline.root,
         columnCount: 3,
-        columns: [...baseline.root.columns, { id: "new-col", rows: [] }],
+        columns: [
+          ...resolveLayoutRootColumns(baseline),
+          { id: "new-col", rows: [] },
+        ],
       },
     };
     expect(isComponentRowPanelDirty(baseline, current)).toBe(true);

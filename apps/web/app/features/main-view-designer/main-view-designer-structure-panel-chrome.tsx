@@ -5,25 +5,9 @@ import { MainViewDesignerComponentColumnPanelHeaderMenu } from "./MainViewDesign
 import { MainViewDesignerComponentRowPanel } from "./MainViewDesignerComponentRowPanel";
 import { MainViewDesignerComponentRowPanelHeaderMenu } from "./MainViewDesignerComponentRowPanelHeaderMenu";
 import { MainViewDesignerStructurePanelFooter } from "./MainViewDesignerStructurePanelFooter";
-import {
-  MainViewDesignerContext,
-  type MainViewDesignerContextValue,
-} from "./main-view-designer-context";
 import type { MainViewPanelSession } from "./main-view-designer-panel-session";
 
-function withMainViewContext(
-  value: MainViewDesignerContextValue,
-  children: ReactNode,
-): ReactNode {
-  return (
-    <MainViewDesignerContext.Provider value={value}>
-      {children}
-    </MainViewDesignerContext.Provider>
-  );
-}
-
-export function renderMainViewStructurePanelChrome(
-  contextValue: MainViewDesignerContextValue,
+export function renderMainViewStructurePanelContent(
   session: MainViewPanelSession,
 ): {
   readonly headerActions?: ReactNode;
@@ -34,35 +18,23 @@ export function renderMainViewStructurePanelChrome(
 
   if (target.kind === "column") {
     return {
-      headerActions: withMainViewContext(
-        contextValue,
+      headerActions: (
         <MainViewDesignerComponentColumnPanelHeaderMenu
           columnRef={target.columnRef}
-        />,
+        />
       ),
-      body: withMainViewContext(
-        contextValue,
-        <MainViewDesignerComponentColumnPanel columnRef={target.columnRef} />,
+      body: (
+        <MainViewDesignerComponentColumnPanel columnRef={target.columnRef} />
       ),
-      footer: withMainViewContext(
-        contextValue,
-        <MainViewDesignerStructurePanelFooter />,
-      ),
+      footer: <MainViewDesignerStructurePanelFooter />,
     };
   }
 
   return {
-    headerActions: withMainViewContext(
-      contextValue,
-      <MainViewDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />,
+    headerActions: (
+      <MainViewDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />
     ),
-    body: withMainViewContext(
-      contextValue,
-      <MainViewDesignerComponentRowPanel rowRef={target.rowRef} />,
-    ),
-    footer: withMainViewContext(
-      contextValue,
-      <MainViewDesignerStructurePanelFooter />,
-    ),
+    body: <MainViewDesignerComponentRowPanel rowRef={target.rowRef} />,
+    footer: <MainViewDesignerStructurePanelFooter />,
   };
 }

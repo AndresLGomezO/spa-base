@@ -1,3 +1,5 @@
+import { resolveFilterBindingMap } from "@repo/entity-queries";
+import type { FilterBindingSource } from "@repo/entities";
 import {
   buildExpandedQueryConfig,
   expandRelationFiltersInTree,
@@ -16,11 +18,26 @@ import {
   type EntityQueryDefinitionRecord,
 } from "../../lib/api-client";
 import { resolveQueryExpansionCatalog } from "../../lib/resolve-query-expansion-catalog";
+import type { PageFilterContext } from "../../lib/metric-binding-resolution";
 
 export async function executeEntityQueryDefinition(
   definition: EntityQueryDefinitionRecord,
   catalog: readonly EntityCatalogEntry[],
+  options: {
+    readonly parameterBindings?: Readonly<Record<string, FilterBindingSource>>;
+    readonly context?: PageFilterContext;
+  } = {},
 ): Promise<readonly Record<string, unknown>[]> {
+  const parameterValues =
+    options.parameterBindings && options.context
+      ? resolveFilterBindingMap(options.parameterBindings, options.context, {})
+      : null;
+
+  const buildOptions = {
+    parameterValues: parameterValues ?? undefined,
+    parameters: definition.parameters ?? [],
+  };
+
   const sort = definition.sort;
   const expansionCatalog = await resolveQueryExpansionCatalog({
     baseCatalog: catalog,
@@ -38,6 +55,7 @@ export async function executeEntityQueryDefinition(
         query: { filter: [...query.filter] },
       });
     },
+    options: buildOptions,
   });
 
   if (expanded.emptyResult) {

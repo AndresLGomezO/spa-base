@@ -4,6 +4,9 @@ export {
   ENTITY_QUERY_LIMIT_MODES,
   ENTITY_QUERY_FILTER_OPERATORS,
   ENTITY_QUERY_TEMPORAL_PRESETS,
+  ENTITY_QUERY_PARAMETER_VALUE_TYPES,
+  ENTITY_QUERY_PARAMETER_BOUNDS,
+  entityQueryParameterSchema,
   entityQueryFilterValueSchema,
   entityQueryFilterSchema,
   entityQueryFilterConditionSchema,
@@ -19,6 +22,9 @@ export type {
   EntityQueryLimitMode,
   EntityQueryFilterOperator,
   EntityQueryTemporalPreset,
+  EntityQueryParameterValueType,
+  EntityQueryParameterBound,
+  EntityQueryParameter,
   EntityQueryFilterValue,
   EntityQueryFilter,
   EntityQueryFilterCondition,
@@ -34,6 +40,20 @@ export {
   ENTITY_QUERY_PERMISSIONS,
 } from "./permissions.js";
 export { resolveTemporalPreset } from "./temporal.js";
+export {
+  buildIntrinsicQueryParameterMap,
+  resolveQueryParameterFilterValue,
+  resolveDateBucketParameterBound,
+  validateQueryParameterReferences,
+} from "./query-parameter-resolution.js";
+export {
+  resolveFilterBindingSource,
+  resolveFilterBindingMap,
+} from "./resolve-filter-bindings.js";
+export type {
+  PageFilterContext,
+  DashboardDateFilterContextValue,
+} from "./resolve-filter-bindings.js";
 export {
   buildQueryConfigFromDefinition,
   resolveEntityQueryFilterValue,
@@ -99,3 +119,9 @@ export type {
 } from "./entity-query-definition-json.js";
 export { createEmptyAndGroup, type FilterNode } from "./filter-tree.js";
 export { isEmptyFilterTree } from "./filter-tree-utils.js";
+export {
+  collectQueryFilterFieldPaths,
+  evaluateEntityQueryFilterTree,
+  recordMatchesEntityQueryDefinition,
+} from "./record-matches-entity-query-definition.js";
+export type { RecordMatchesEntityQueryDefinitionInput } from "./record-matches-entity-query-definition.js";

@@ -3,37 +3,37 @@ export const UI_LAYOUT_BASE_ATOM_ID = "ui.layout.base";
 export function buildUiLayoutBaseAtom(): string {
   return `# UiLayoutDocument structure
 
-Recursive layout tree persisted as JSON. Almost all layouts use nested columns and rows.
+Recursive layout tree persisted as JSON. Use **grid** for multi-column sections; **container** wraps content at the document root.
 
 ## Hierarchy
 
 \`\`\`
 UiLayoutDocument
 ├── showActions?, cardsPerRow?, motion?
-└── root (type: "root", id, columnCount, columns[], styles?)
-    └── ColumnNode (id, rows[], widthPercent?, stackDirection?, styles?, displayFrom?, displayTo?)
-        └── RowNode
-            ├── type: "component" → component config + row.styles? + row.motion? + displayFrom/To?
-            │   └── kind: "container" → rows[] (user content lives here at root)
-            └── type: "nested-layout" → columnCount, columns[] (recursive ColumnNode), styles?, displayFrom/To?
+└── root
+    ├── screen-root (screen scope): gridTemplateColumns, gap?, rows[]
+    └── root (component/block scope): columnCount, columns[] → single container row
+        └── RowNode (type: "component")
+            ├── kind: "container" → rows[] (user content lives here at root)
+            └── kind: "grid" → gridTemplateColumns, gap?, rows[] (one row per track)
 \`\`\`
 
 **Rules:**
-- **Root container:** \`root\` has exactly **one column** with exactly **one** \`container\` component row. User content (components, nested-layout rows) goes in \`container.rows\`.
-- \`nested-layout\` may appear inside the root container (or deeper) for multi-column sections — not as the root row itself.
-- \`columnCount\` must equal \`columns.length\` (integer 1–6) on root and nested-layout rows.
-- Columns stack rows vertically by default (\`stackDirection: "column"\`); use \`"row"\` for horizontal stacking within a column.
-- \`widthPercent\` (1–100) sets column share; omitted = equal split.
+- **Root container:** \`root\` has exactly **one column** with exactly **one** \`container\` component row. User content goes in \`container.rows\`.
+- **Multi-column layout:** insert a \`grid\` component row inside \`container.rows\`. Set \`gridTemplateColumns\` (e.g. \`"1fr 1fr"\`, \`"minmax(0, 2fr) minmax(0, 1fr)"\`). Each \`grid.rows[]\` entry is one track — typically a \`container\` holding stacked components.
+- **Screen scope:** use \`screen-root\` instead of column \`root\` for full-page layouts (dashboards, custom views).
+- Do **not** use \`nested-layout\` — it is deprecated. Use \`grid\` instead.
+- Legacy column \`root\` with \`columnCount\` / \`columns[]\` is still accepted on import but normalized to grid at runtime.
 
 ## Node types
 
-| Node | type | Key fields |
-|------|------|------------|
-| Root | \`root\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\` |
-| Column | — | \`id\`, \`rows[]\`, \`widthPercent?\`, \`stackDirection?\`, \`styles?\`, \`displayFrom?\`, \`displayTo?\` |
+| Node | type / kind | Key fields |
+|------|-------------|------------|
+| Screen root | \`screen-root\` | \`id\`, \`gridTemplateColumns\`, \`gap?\`, \`rows[]\`, \`styles?\` |
+| Column root | \`root\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\` |
 | Component row | \`component\` | \`id\`, \`component\`, \`styles?\`, \`motion?\`, \`displayFrom?\`, \`displayTo?\` |
-| Container component | \`container\` (in component row) | \`rows[]\`, \`stackDirection?\`, \`styles?\` |
-| Nested layout | \`nested-layout\` | \`id\`, \`columnCount\`, \`columns[]\`, \`styles?\`, \`displayFrom?\`, \`displayTo?\` |
+| Container | \`container\` | \`rows[]\`, \`stackDirection?\`, \`styles?\` |
+| Grid | \`grid\` | \`gridTemplateColumns\`, \`gap?\`, \`alignItems?\`, \`rows[]\`, \`styles?\` |
 
 Optional document fields: \`showActions\`, \`cardsPerRow\` (1–4), \`motion\`.
 
@@ -41,14 +41,14 @@ See \`ui.responsive-visibility\` for breakpoint visibility rules.
 
 ## List card pattern (recommended)
 
-Root has **one column** with a **container** row; multi-column content uses **nested-layout** inside \`container.rows\`:
+Root → **container** → **grid** (2 tracks) → left track: text fields, right track: badge/numeric:
 
 \`\`\`
 root (1 col)
 └── container
-    └── nested-layout (2 cols)
-        ├── col-left: text rows (name, subtitle, …)
-        └── col-right: badge, numeric, bold text
+    └── grid (2 tracks)
+        ├── track-left (container): name, subtitle, …
+        └── track-right (container): badge, bold amount
 \`\`\`
 
 \`\`\`json
@@ -65,66 +65,71 @@ root (1 col)
         "id": "row-container",
         "component": {
           "kind": "container",
-          "stackDirection": "column",
           "rows": [{
-            "type": "nested-layout",
-            "id": "row-nested",
-            "columnCount": 2,
-            "styles": [
-              { "property": "gridColumns", "value": "1" },
-              { "property": "gridColumnsMd", "value": "2" },
-              { "property": "gap", "value": "12px" }
-            ],
-            "columns": [
-              {
-                "id": "col-left",
-                "rows": [
-                  {
-                    "type": "component",
-                    "id": "row-name",
-                    "component": {
-                      "kind": "text",
-                      "primary": { "type": "field", "path": "name" },
-                      "label": { "show": true }
-                    }
-                  },
-                  {
-                    "type": "component",
-                    "id": "row-subtitle",
-                    "component": {
-                      "kind": "text",
-                      "primary": { "type": "field", "path": "bank.name" },
-                      "label": { "show": false }
-                    }
+            "type": "component",
+            "id": "row-grid",
+            "component": {
+              "kind": "grid",
+              "gridTemplateColumns": "minmax(0, 2fr) minmax(0, 1fr)",
+              "gap": "12px",
+              "rows": [
+                {
+                  "type": "component",
+                  "id": "track-left",
+                  "component": {
+                    "kind": "container",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-name",
+                        "component": {
+                          "kind": "text",
+                          "primary": { "type": "field", "path": "name" },
+                          "label": { "show": true }
+                        }
+                      },
+                      {
+                        "type": "component",
+                        "id": "row-subtitle",
+                        "component": {
+                          "kind": "text",
+                          "primary": { "type": "field", "path": "bank.name" },
+                          "label": { "show": false }
+                        }
+                      }
+                    ]
                   }
-                ]
-              },
-              {
-                "id": "col-right",
-                "rows": [
-                  {
-                    "type": "component",
-                    "id": "row-status",
-                    "component": {
-                      "kind": "badge",
-                      "primary": { "type": "field", "path": "status" },
-                      "label": { "show": true, "text": "Status", "position": "above" }
-                    }
-                  },
-                  {
-                    "type": "component",
-                    "id": "row-amount",
-                    "styles": [{ "property": "padding", "value": "4px" }],
-                    "component": {
-                      "kind": "numeric",
-                      "primary": { "type": "field", "path": "amount" },
-                      "displayFormat": "currency",
-                      "styles": [{ "property": "fontWeight", "value": "bold" }]
-                    }
+                },
+                {
+                  "type": "component",
+                  "id": "track-right",
+                  "component": {
+                    "kind": "container",
+                    "rows": [
+                      {
+                        "type": "component",
+                        "id": "row-status",
+                        "component": {
+                          "kind": "badge",
+                          "primary": { "type": "field", "path": "status" },
+                          "label": { "show": true, "text": "Status", "position": "above" }
+                        }
+                      },
+                      {
+                        "type": "component",
+                        "id": "row-amount",
+                        "component": {
+                          "kind": "numeric",
+                          "primary": { "type": "field", "path": "amount" },
+                          "displayFormat": "currency",
+                          "styles": [{ "property": "fontWeight", "value": "bold" }]
+                        }
+                      }
+                    ]
                   }
-                ]
-              }
-            ]
+                }
+              ]
+            }
           }]
         }
       }]
@@ -169,7 +174,7 @@ export function buildUiStyleRulesAtom(): string {
 
 Attach \`styles: StyleRule[]\` as \`{ "property": "<key>", "value": "<token or css>" }\`.
 
-See \`ui.style-layers\` for **where** to attach styles (component vs row wrapper vs column vs nested grid).
+See \`ui.style-layers\` for **where** to attach styles (component vs row wrapper vs grid track).
 See \`theme.style-rules\` for the full property enum and color vs pixel conventions.
 `;
 }

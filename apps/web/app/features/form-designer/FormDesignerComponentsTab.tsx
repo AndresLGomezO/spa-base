@@ -1,11 +1,10 @@
 import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Button, toast } from "@repo/ui";
 import { entityFormFieldAdapter } from "@repo/ui-builder-react";
 import type {
-  DesignSurface,
   ComponentRowNode,
-  NestedLayoutRowNode,
+  CompositionScope,
+  DesignSurface,
 } from "@repo/ui-builder-core";
 
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
@@ -27,11 +26,7 @@ import {
 } from "./form-designer-components-layout";
 import type { InsertAnchor } from "./form-designer-structure-tree";
 import { useFormDesigner } from "./form-designer-context";
-import {
-  designerPreviewColumnClassName,
-  designerTreeTabRootClassName,
-  designerTreeWorkbenchClassName,
-} from "../ui-builder/designer-tree-workbench-classes";
+import { UnifiedDesignerLayoutTab } from "../unified-builder/UnifiedDesignerLayoutTab";
 
 function resolveDesignSurface(
   presentation: "plain" | "wizard",
@@ -46,6 +41,17 @@ function resolveDesignSurface(
   }
 
   return "formPlain";
+}
+
+function resolveCompositionScope(
+  presentation: "plain" | "wizard",
+  treeScope: ComponentsTreeScope,
+): CompositionScope {
+  if (presentation === "wizard") {
+    return treeScope === "shell" ? "screen" : "section";
+  }
+
+  return "section";
 }
 
 function FormDesignerComponentsTabContent() {
@@ -68,6 +74,7 @@ function FormDesignerComponentsTabContent() {
   const definition = useEntityDefinition(editor.definition.name);
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
   const designSurface = resolveDesignSurface(editor.presentation, treeScope);
+  const scope = resolveCompositionScope(editor.presentation, treeScope);
   const [insertAnchor, setInsertAnchor] = useState<InsertAnchor | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
@@ -127,7 +134,7 @@ function FormDesignerComponentsTabContent() {
   );
 
   const handleImportRow = useCallback(
-    (anchor: InsertAnchor, row: ComponentRowNode | NestedLayoutRowNode) => {
+    (anchor: InsertAnchor, row: ComponentRowNode) => {
       const { rowRef, label } = insertImportedRowAtAnchor(
         binding,
         anchor,
@@ -164,54 +171,37 @@ function FormDesignerComponentsTabContent() {
     setInsertAnchor(null);
   }, []);
 
-  const handleSave = async () => {
-    if (!canSave || !componentsIsDirty) {
-      return;
-    }
-
-    const error = await saveComponents();
-    if (!error) {
-      toast.success(t("entity.viewSettings.saved"));
-    } else {
-      toast.error(error);
-    }
-  };
-
   return (
-    <div className={designerTreeTabRootClassName}>
-      <div className="flex shrink-0 items-start justify-end">
-        <Button
-          type="button"
-          className="shrink-0"
-          loading={editor.isSaving}
-          disabled={!canSave || !componentsIsDirty}
-          onClick={() => void handleSave()}
-        >
-          {t("entity.viewSettings.save")}
-        </Button>
-      </div>
+    <>
+      <UnifiedDesignerLayoutTab
+        scope={scope}
+        designSurface={designSurface}
+        layout={binding.layout}
+        setLayout={binding.setLayout}
+        canSave={canSave}
+        isDirty={componentsIsDirty}
+        isSaving={editor.isSaving}
+        onSave={saveComponents}
+        treePanel={<FormDesignerStructureTreePanel onInsert={handleInsert} />}
+        previewPanel={
+          <FormDesignerPreviewPanel previewTabId="design" showCard />
+        }
+        sessionWrapper={(workbench) => workbench}
+      />
 
-      <div className={designerTreeWorkbenchClassName}>
-        <FormDesignerStructureTreePanel onInsert={handleInsert} />
-
-        <div className={designerPreviewColumnClassName}>
-          <FormDesignerPreviewPanel previewTabId="components" showCard />
-        </div>
-
-        <FormDesignerAddComponentModal
-          open={modalOpen}
-          designSurface={designSurface}
-          definition={definition}
-          defaultFieldPath={editor.defaultFieldPath}
-          labels={labels}
-          insertAnchor={insertAnchor}
-          actionsInModalFooter={treeScope === "footer"}
-          onClose={handleCloseModal}
-          onSelect={handleSelect}
-          onImportRow={handleImportRow}
-        />
-      </div>
-    </div>
+      <FormDesignerAddComponentModal
+        open={modalOpen}
+        designSurface={designSurface}
+        definition={definition}
+        defaultFieldPath={editor.defaultFieldPath}
+        labels={labels}
+        insertAnchor={insertAnchor}
+        actionsInModalFooter={treeScope === "footer"}
+        onClose={handleCloseModal}
+        onSelect={handleSelect}
+        onImportRow={handleImportRow}
+      />
+    </>
   );
 }
 

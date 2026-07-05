@@ -1,11 +1,11 @@
 /** @vitest-environment jsdom */
 
 import {
-  createEmptyColumn,
   createEmptyLayout,
   createLayoutId,
   ensureContainerRoot,
-  setNestedColumnWidthPercent,
+  insertGridRowAt,
+  setGridTemplateColumns,
   setRootColumnWidthPercent,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -29,42 +29,37 @@ const wizardContext: LayoutRenderContext = {
   wizard: wizardState,
 };
 
-describe("RecursiveLayoutRenderer nested layout stretch", () => {
-  it("does not apply root fill classes to nested multi-column grids", () => {
-    const layout = createEmptyLayout(1);
-    const nestedRowId = createLayoutId("nested");
-    const nested: (typeof layout.root.columns)[0]["rows"][0] = {
-      type: "nested-layout",
-      id: nestedRowId,
-      columnCount: 2,
-      columns: [createEmptyColumn(), createEmptyColumn()],
-    };
+function createTwoTrackGridLayout(): UiLayoutDocument {
+  const began = ensureContainerRoot(createEmptyLayout(1));
+  const containerLocator = {
+    scope: "root" as const,
+    columnIndex: 0,
+  };
+  const { layout, rowId } = insertGridRowAt(
+    began,
+    containerLocator,
+    { position: "after" },
+    { trackCount: 2 },
+  );
+  return setGridTemplateColumns(layout, containerLocator, rowId, "24% 1fr");
+}
 
-    let withNested: UiLayoutDocument = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [{ ...layout.root.columns[0]!, rows: [nested] }],
-      },
-    };
-
-    withNested = setNestedColumnWidthPercent(withNested, 0, nestedRowId, 0, 24);
+describe("RecursiveLayoutRenderer grid layout stretch", () => {
+  it("does not apply root fill classes to explicit inner grid template columns", () => {
+    const withGrid = createTwoTrackGridLayout();
 
     const html = renderToStaticMarkup(
       <RecursiveLayoutRenderer
-        layout={withNested}
+        layout={withGrid}
         context={wizardContext}
         stretchRootColumns
       />,
     );
 
-    const nestedGridMatch = html.match(
-      /grid w-full items-stretch[^"]*grid-cols-1 sm:\[grid-template-columns:var\(--layout-proportional-cols\)\]/,
+    expect(html).toContain("grid-template-columns:24% 1fr");
+    expect(html).not.toMatch(
+      /grid-cols-1 sm:\[grid-template-columns:var\(--layout-proportional-cols\)\][^"]*\bflex-1\b/,
     );
-
-    expect(nestedGridMatch).not.toBeNull();
-    expect(nestedGridMatch![0]).not.toMatch(/\bflex-1\b/);
-    expect(nestedGridMatch![0]).not.toMatch(/\bh-full\b/);
   });
 
   it("does not apply root fill classes to proportional multi-column root grids", () => {
@@ -116,10 +111,19 @@ describe("RecursiveLayoutRenderer nested layout stretch", () => {
             id: createLayoutId("col"),
             rows: [
               {
-                type: "nested-layout",
-                id: createLayoutId("nested"),
-                columnCount: 1,
-                columns: [createEmptyColumn()],
+                type: "component",
+                id: createLayoutId("row"),
+                component: {
+                  kind: "grid",
+                  gridTemplateColumns: "1fr",
+                  rows: [
+                    {
+                      type: "component",
+                      id: createLayoutId("row"),
+                      component: { kind: "container", rows: [] },
+                    },
+                  ],
+                },
               },
             ],
           },

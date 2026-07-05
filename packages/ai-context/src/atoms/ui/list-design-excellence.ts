@@ -17,7 +17,7 @@ Design layouts that feel premium, memorable, and differentiated — not generic 
 
 ## Component mix (card / cell layouts)
 - Combine \`image\` or \`icon\` + bold \`text\` title + \`badge\` status + \`date\`/\`numeric\` metadata in one card.
-- Prefer **2–3 column nested-layout** rows over a single flat column when it improves scanability.
+- Prefer **2–3 track grid** rows over a single flat column when it improves scanability.
 - Use \`label\` config intentionally: hide labels on obvious titles; show concise labels on metadata.
 - Set \`imageSize\` (48–96) for avatars/logos; use \`displayFormat\` on numeric fields when amounts matter.
 

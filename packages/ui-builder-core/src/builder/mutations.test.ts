@@ -1,124 +1,148 @@
+import {
+  asEditableLayoutRoot,
+  resolveLayoutRootColumns,
+} from "../layout/layout-root-adapters.js";
 import { describe, expect, it } from "vitest";
 
 import { createLayoutId } from "./id.js";
 import {
   addComponentRowAt,
   createDefaultComponent,
-  createEmptyColumn,
   createEmptyLayout,
   insertComponentRowAt,
-  insertNestedLayoutRowAt,
+  insertGridRowAt,
   moveRootColumn,
   normalizeLayout,
   replaceComponentRowAt,
   replaceLayoutDocument,
-  replaceNestedLayoutRowAt,
+  resolveGridTrackLocators,
   setRootColumnCount,
   setRootColumnWidthPercent,
   updateComponentRowMetaAt,
-  updateNestedLayoutRowMetaAt,
+  updateGridRowMetaAt,
   updateRootColumnDisplayRange,
   updateRootColumnMetaAt,
 } from "./mutations.js";
+import { beginContainerRootLayout } from "../layout/ensure-container-root.js";
+import { isContainerComponent } from "../types/component.js";
 
 describe("addComponentRowAt", () => {
-  it("adds a component to the third nested column at the root level", () => {
-    const layout = createEmptyLayout(1);
-    const nestedRowId = createLayoutId("nested");
-    const nested: (typeof layout.root.columns)[0]["rows"][0] = {
-      type: "nested-layout",
-      id: nestedRowId,
-      columnCount: 3,
-      columns: [createEmptyColumn(), createEmptyColumn(), createEmptyColumn()],
-    };
-
-    const withNested = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [{ ...layout.root.columns[0]!, rows: [nested] }],
-      },
-    };
+  it("adds a component to the third grid track inside a container", () => {
+    const { layout: beganLayout, containerLocator } =
+      beginContainerRootLayout();
+    const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+      beganLayout,
+      containerLocator,
+      { position: "after" },
+      { trackCount: 3 },
+    );
+    const trackLocators = resolveGridTrackLocators(
+      withGrid,
+      containerLocator,
+      gridRowId,
+    );
+    const thirdTrack = trackLocators[2];
+    expect(thirdTrack).toBeDefined();
+    if (!thirdTrack) {
+      return;
+    }
 
     const next = addComponentRowAt(
-      withNested,
-      {
-        scope: "nested",
-        columnIndex: 0,
-        rowId: nestedRowId,
-        nestedColumnIndex: 2,
-      },
+      withGrid,
+      thirdTrack,
       createDefaultComponent("text", "name"),
     );
 
-    expect(next.root.columns[0]?.rows[0]).toMatchObject({
-      type: "nested-layout",
-      columns: [
-        { rows: [] },
-        { rows: [] },
-        { rows: [{ type: "component", component: { kind: "text" } }] },
-      ],
-    });
+    const containerRow = resolveLayoutRootColumns(next)[0]?.rows[0];
+    expect(containerRow?.type).toBe("component");
+    if (
+      containerRow?.type !== "component" ||
+      containerRow.component.kind !== "grid"
+    ) {
+      return;
+    }
+
+    expect(containerRow.component.rows[2]?.type).toBe("component");
+    const thirdTrackRow = containerRow.component.rows[2];
+    if (
+      thirdTrackRow?.type === "component" &&
+      isContainerComponent(thirdTrackRow.component)
+    ) {
+      expect(thirdTrackRow.component.rows).toHaveLength(1);
+    }
   });
 
-  it("adds a component when the nested layout is inside another nested column", () => {
-    const layout = createEmptyLayout(1);
-    const outerNestedId = createLayoutId("nested_outer");
-    const innerNestedId = createLayoutId("nested_inner");
+  it("adds a component when the grid is inside another container", () => {
+    const { layout: beganLayout, containerLocator } =
+      beginContainerRootLayout();
+    const { layout: withOuterGrid, rowId: outerGridRowId } = insertGridRowAt(
+      beganLayout,
+      containerLocator,
+      { position: "after" },
+      { trackCount: 2 },
+    );
+    const [leftTrack] = resolveGridTrackLocators(
+      withOuterGrid,
+      containerLocator,
+      outerGridRowId,
+    );
+    expect(leftTrack).toBeDefined();
+    if (!leftTrack) {
+      return;
+    }
 
-    const innerNested = {
-      type: "nested-layout" as const,
-      id: innerNestedId,
-      columnCount: 3,
-      columns: [createEmptyColumn(), createEmptyColumn(), createEmptyColumn()],
-    };
-
-    const outerNested = {
-      type: "nested-layout" as const,
-      id: outerNestedId,
-      columnCount: 2,
-      columns: [
-        createEmptyColumn(),
-        { ...createEmptyColumn(), rows: [innerNested] },
-      ],
-    };
-
-    const withNested = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [{ ...layout.root.columns[0]!, rows: [outerNested] }],
-      },
-    };
+    const { layout: withInnerGrid, rowId: innerGridRowId } = insertGridRowAt(
+      withOuterGrid,
+      leftTrack,
+      { position: "after" },
+      { trackCount: 3 },
+    );
+    const innerTracks = resolveGridTrackLocators(
+      withInnerGrid,
+      leftTrack,
+      innerGridRowId,
+    );
+    const thirdInnerTrack = innerTracks[2];
+    expect(thirdInnerTrack).toBeDefined();
+    if (!thirdInnerTrack) {
+      return;
+    }
 
     const next = addComponentRowAt(
-      withNested,
-      {
-        scope: "nested",
-        columnIndex: 0,
-        rowId: innerNestedId,
-        nestedColumnIndex: 2,
-      },
+      withInnerGrid,
+      thirdInnerTrack,
       createDefaultComponent("text", "balance"),
     );
 
-    const outer = next.root.columns[0]?.rows[0];
-    expect(outer?.type).toBe("nested-layout");
-    if (outer?.type !== "nested-layout") {
+    const containerRow = resolveLayoutRootColumns(next)[0]?.rows[0];
+    expect(containerRow?.type).toBe("component");
+    if (
+      containerRow?.type !== "component" ||
+      containerRow.component.kind !== "grid"
+    ) {
       return;
     }
 
-    const inner = outer.columns[1]?.rows[0];
-    expect(inner?.type).toBe("nested-layout");
-    if (inner?.type !== "nested-layout") {
+    const leftTrackRow = containerRow.component.rows[0];
+    expect(leftTrackRow?.type).toBe("component");
+    if (
+      leftTrackRow?.type !== "component" ||
+      leftTrackRow.component.kind !== "grid"
+    ) {
       return;
     }
 
-    expect(inner.columns[2]?.rows).toHaveLength(1);
-    expect(inner.columns[2]?.rows[0]).toMatchObject({
-      type: "component",
-      component: { kind: "text", primary: { path: "balance" } },
-    });
+    expect(leftTrackRow.component.rows[2]?.type).toBe("component");
+    const thirdInnerTrackRow = leftTrackRow.component.rows[2];
+    if (
+      thirdInnerTrackRow?.type === "component" &&
+      isContainerComponent(thirdInnerTrackRow.component)
+    ) {
+      expect(thirdInnerTrackRow.component.rows[0]).toMatchObject({
+        type: "component",
+        component: { kind: "text", primary: { path: "balance" } },
+      });
+    }
   });
 });
 
@@ -141,7 +165,7 @@ describe("insertComponentRowAt", () => {
       createDefaultComponent("text", "email"),
     );
 
-    const rows = second.layout.root.columns[0]?.rows ?? [];
+    const rows = resolveLayoutRootColumns(second.layout)[0]?.rows ?? [];
     expect(rows).toHaveLength(2);
     expect(rows[0]?.id).toBe(second.rowId);
     expect(rows[1]?.id).toBe(firstRowId);
@@ -164,7 +188,7 @@ describe("insertComponentRowAt", () => {
       createDefaultComponent("text", "email"),
     );
 
-    const rows = second.layout.root.columns[0]?.rows ?? [];
+    const rows = resolveLayoutRootColumns(second.layout)[0]?.rows ?? [];
     expect(rows).toHaveLength(2);
     expect(rows[0]?.id).toBe(first.rowId);
     expect(rows[1]?.id).toBe(second.rowId);
@@ -179,68 +203,68 @@ describe("insertComponentRowAt", () => {
       createDefaultComponent("text", "name"),
     );
 
-    const rows = result.layout.root.columns[0]?.rows ?? [];
+    const rows = resolveLayoutRootColumns(result.layout)[0]?.rows ?? [];
     expect(rows).toHaveLength(1);
     expect(rows[0]?.id).toBe(result.rowId);
   });
 
-  it("inserts into a nested column at the requested position", () => {
-    const layout = createEmptyLayout(1);
-    const nestedRowId = createLayoutId("nested");
-    const nested = {
-      type: "nested-layout" as const,
-      id: nestedRowId,
-      columnCount: 2,
-      columns: [createEmptyColumn(), createEmptyColumn()],
-    };
-
-    const withNested = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [{ ...layout.root.columns[0]!, rows: [nested] }],
-      },
-    };
+  it("inserts into a grid track at the requested position", () => {
+    const { layout: beganLayout, containerLocator } =
+      beginContainerRootLayout();
+    const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+      beganLayout,
+      containerLocator,
+      { position: "after" },
+      { trackCount: 2 },
+    );
+    const trackLocators = resolveGridTrackLocators(
+      withGrid,
+      containerLocator,
+      gridRowId,
+    );
+    const rightTrack = trackLocators[1];
+    expect(rightTrack).toBeDefined();
+    if (!rightTrack) {
+      return;
+    }
 
     const first = insertComponentRowAt(
-      withNested,
-      {
-        scope: "nested",
-        columnIndex: 0,
-        rowId: nestedRowId,
-        nestedColumnIndex: 1,
-      },
+      withGrid,
+      rightTrack,
       { position: "after" },
       createDefaultComponent("text", "name"),
     );
 
     const second = insertComponentRowAt(
       first.layout,
-      {
-        scope: "nested",
-        columnIndex: 0,
-        rowId: nestedRowId,
-        nestedColumnIndex: 1,
-      },
+      rightTrack,
       { position: "before", referenceRowId: first.rowId },
       createDefaultComponent("badge", "status"),
     );
 
-    const outer = second.layout.root.columns[0]?.rows[0];
-    expect(outer?.type).toBe("nested-layout");
-    if (outer?.type !== "nested-layout") {
+    const containerRow = resolveLayoutRootColumns(second.layout)[0]?.rows[0];
+    expect(containerRow?.type).toBe("component");
+    if (
+      containerRow?.type !== "component" ||
+      containerRow.component.kind !== "grid"
+    ) {
       return;
     }
 
-    const rows = outer.columns[1]?.rows ?? [];
+    const secondTrack = containerRow.component.rows[1];
+    const rows =
+      secondTrack?.type === "component" &&
+      isContainerComponent(secondTrack.component)
+        ? secondTrack.component.rows
+        : [];
     expect(rows).toHaveLength(2);
     expect(rows[0]?.id).toBe(second.rowId);
     expect(rows[1]?.id).toBe(first.rowId);
   });
 });
 
-describe("insertNestedLayoutRowAt", () => {
-  it("inserts a nested layout row before a reference row", () => {
+describe("insertGridRowAt", () => {
+  it("inserts a grid row before a reference row", () => {
     let layout = createEmptyLayout(1);
     const component = insertComponentRowAt(
       layout,
@@ -250,17 +274,20 @@ describe("insertNestedLayoutRowAt", () => {
     );
     layout = component.layout;
 
-    const nested = insertNestedLayoutRowAt(
+    const grid = insertGridRowAt(
       layout,
       { scope: "root", columnIndex: 0 },
       { position: "before", referenceRowId: component.rowId },
-      2,
+      { trackCount: 2 },
     );
 
-    const rows = nested.layout.root.columns[0]?.rows ?? [];
+    const rows = resolveLayoutRootColumns(grid.layout)[0]?.rows ?? [];
     expect(rows).toHaveLength(2);
-    expect(rows[0]?.id).toBe(nested.rowId);
-    expect(rows[0]).toMatchObject({ type: "nested-layout", columnCount: 2 });
+    expect(rows[0]?.id).toBe(grid.rowId);
+    expect(rows[0]?.type).toBe("component");
+    if (rows[0]?.type === "component") {
+      expect(rows[0].component.kind).toBe("grid");
+    }
     expect(rows[1]?.id).toBe(component.rowId);
   });
 });
@@ -269,20 +296,20 @@ describe("setRootColumnWidthPercent", () => {
   it("sets explicit width on a column", () => {
     const layout = createEmptyLayout(2);
     const next = setRootColumnWidthPercent(layout, 0, 20);
-    expect(next.root.columns[0]?.widthPercent).toBe(20);
-    expect(next.root.columns[1]?.widthPercent).toBeUndefined();
+    expect(resolveLayoutRootColumns(next)[0]?.widthPercent).toBe(20);
+    expect(resolveLayoutRootColumns(next)[1]?.widthPercent).toBeUndefined();
   });
 
   it("clamps width when other columns are auto", () => {
     const layout = setRootColumnWidthPercent(createEmptyLayout(3), 0, 80);
     const next = setRootColumnWidthPercent(layout, 1, 50);
-    expect(next.root.columns[1]?.widthPercent).toBe(20);
+    expect(resolveLayoutRootColumns(next)[1]?.widthPercent).toBe(20);
   });
 
   it("clears explicit width when percent is undefined", () => {
     const layout = setRootColumnWidthPercent(createEmptyLayout(2), 0, 30);
     const next = setRootColumnWidthPercent(layout, 0, undefined);
-    expect(next.root.columns[0]?.widthPercent).toBeUndefined();
+    expect(resolveLayoutRootColumns(next)[0]?.widthPercent).toBeUndefined();
   });
 });
 
@@ -293,8 +320,8 @@ describe("updateRootColumnDisplayRange", () => {
       displayFrom: "md",
       displayTo: "xl",
     });
-    expect(next.root.columns[1]?.displayFrom).toBe("md");
-    expect(next.root.columns[1]?.displayTo).toBe("xl");
+    expect(resolveLayoutRootColumns(next)[1]?.displayFrom).toBe("md");
+    expect(resolveLayoutRootColumns(next)[1]?.displayTo).toBe("xl");
   });
 
   it("strips display range when set to all screens", () => {
@@ -306,8 +333,8 @@ describe("updateRootColumnDisplayRange", () => {
       displayFrom: "base",
       displayTo: "xl",
     });
-    expect(layout.root.columns[0]?.displayFrom).toBeUndefined();
-    expect(layout.root.columns[0]?.displayTo).toBeUndefined();
+    expect(resolveLayoutRootColumns(layout)[0]?.displayFrom).toBeUndefined();
+    expect(resolveLayoutRootColumns(layout)[0]?.displayTo).toBeUndefined();
   });
 });
 
@@ -317,8 +344,8 @@ describe("moveRootColumn", () => {
     layout = setRootColumnWidthPercent(layout, 0, 25);
     layout = setRootColumnWidthPercent(layout, 1, 75);
     const next = moveRootColumn(layout, 0, 1);
-    expect(next.root.columns[0]?.widthPercent).toBe(75);
-    expect(next.root.columns[1]?.widthPercent).toBe(25);
+    expect(resolveLayoutRootColumns(next)[0]?.widthPercent).toBe(75);
+    expect(resolveLayoutRootColumns(next)[1]?.widthPercent).toBe(25);
   });
 });
 
@@ -328,8 +355,8 @@ describe("setRootColumnCount", () => {
     layout = setRootColumnWidthPercent(layout, 0, 20);
     layout = setRootColumnWidthPercent(layout, 1, 30);
     const next = setRootColumnCount(layout, 2);
-    expect(next.root.columns[0]?.widthPercent).toBeUndefined();
-    expect(next.root.columns[1]?.widthPercent).toBeUndefined();
+    expect(resolveLayoutRootColumns(next)[0]?.widthPercent).toBeUndefined();
+    expect(resolveLayoutRootColumns(next)[1]?.widthPercent).toBeUndefined();
   });
 });
 
@@ -342,7 +369,7 @@ describe("replaceLayoutDocument", () => {
         ...base.root,
         columns: [
           {
-            ...base.root.columns[0]!,
+            ...resolveLayoutRootColumns(base)[0]!,
             rows: [
               {
                 type: "component" as const,
@@ -351,14 +378,16 @@ describe("replaceLayoutDocument", () => {
               },
             ],
           },
-          ...base.root.columns.slice(1),
+          ...resolveLayoutRootColumns(base).slice(1),
         ],
       },
     };
 
     const next = replaceLayoutDocument(imported);
-    expect(next.root.columnCount).toBe(2);
-    expect(next.root.columns[0]?.rows[0]?.id).not.toBe("imported-row");
+    expect(asEditableLayoutRoot(next.root).columnCount).toBe(2);
+    expect(resolveLayoutRootColumns(next)[0]?.rows[0]?.id).not.toBe(
+      "imported-row",
+    );
   });
 });
 
@@ -366,7 +395,7 @@ describe("replaceComponentRowAt", () => {
   it("replaces a component row while preserving row id", () => {
     const layout = createEmptyLayout(1);
     const rowId = createLayoutId("row");
-    const column = layout.root.columns[0];
+    const column = resolveLayoutRootColumns(layout)[0];
     if (!column) {
       throw new Error("missing column");
     }
@@ -403,150 +432,9 @@ describe("replaceComponentRowAt", () => {
       imported,
     );
 
-    expect(next.root.columns[0]?.rows[0]).toMatchObject({
+    expect(resolveLayoutRootColumns(next)[0]?.rows[0]).toMatchObject({
       id: rowId,
       component: { kind: "badge" },
-    });
-  });
-});
-
-describe("replaceNestedLayoutRowAt", () => {
-  it("replaces a nested layout row while preserving row id", () => {
-    const layout = createEmptyLayout(1);
-    const nestedRowId = createLayoutId("nested");
-    const column = layout.root.columns[0];
-    if (!column) {
-      throw new Error("missing column");
-    }
-
-    const withNested = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [
-          {
-            ...column,
-            rows: [
-              {
-                type: "nested-layout" as const,
-                id: nestedRowId,
-                columnCount: 1,
-                columns: [createEmptyColumn()],
-              },
-            ],
-          },
-        ],
-      },
-    };
-
-    const imported = {
-      type: "nested-layout" as const,
-      id: "imported-nested",
-      columnCount: 2,
-      columns: [createEmptyColumn(), createEmptyColumn()],
-    };
-
-    const next = replaceNestedLayoutRowAt(withNested, nestedRowId, imported);
-    expect(next.root.columns[0]?.rows[0]).toMatchObject({
-      id: nestedRowId,
-      columnCount: 2,
-    });
-  });
-});
-
-describe("updateNestedLayoutRowMetaAt display range", () => {
-  it("sets displayFrom and displayTo on a root nested layout row", () => {
-    const layout = createEmptyLayout(1);
-    const nestedRowId = createLayoutId("nested");
-    const withNested = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [
-          {
-            ...layout.root.columns[0]!,
-            rows: [
-              {
-                type: "nested-layout" as const,
-                id: nestedRowId,
-                columnCount: 1,
-                columns: [createEmptyColumn()],
-              },
-            ],
-          },
-        ],
-      },
-    };
-
-    const next = updateNestedLayoutRowMetaAt(
-      withNested,
-      { scope: "root", columnIndex: 0 },
-      nestedRowId,
-      { displayFrom: "md", displayTo: "xl" },
-    );
-
-    expect(next.root.columns[0]?.rows[0]).toMatchObject({
-      type: "nested-layout",
-      id: nestedRowId,
-      displayFrom: "md",
-      displayTo: "xl",
-    });
-  });
-
-  it("sets displayFrom and displayTo on a nested layout inside another nested column", () => {
-    const layout = createEmptyLayout(1);
-    const outerNestedId = createLayoutId("nested_outer");
-    const innerNestedId = createLayoutId("nested_inner");
-
-    const innerNested = {
-      type: "nested-layout" as const,
-      id: innerNestedId,
-      columnCount: 1,
-      columns: [createEmptyColumn()],
-    };
-
-    const outerNested = {
-      type: "nested-layout" as const,
-      id: outerNestedId,
-      columnCount: 2,
-      columns: [
-        createEmptyColumn(),
-        { ...createEmptyColumn(), rows: [innerNested] },
-      ],
-    };
-
-    const withNested = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [{ ...layout.root.columns[0]!, rows: [outerNested] }],
-      },
-    };
-
-    const next = updateNestedLayoutRowMetaAt(
-      withNested,
-      {
-        scope: "nested",
-        columnIndex: 0,
-        rowId: outerNestedId,
-        nestedColumnIndex: 1,
-      },
-      innerNestedId,
-      { displayFrom: "lg", displayTo: "xl" },
-    );
-
-    const outer = next.root.columns[0]?.rows[0];
-    expect(outer?.type).toBe("nested-layout");
-    if (outer?.type !== "nested-layout") {
-      return;
-    }
-
-    const inner = outer.columns[1]?.rows[0];
-    expect(inner).toMatchObject({
-      type: "nested-layout",
-      id: innerNestedId,
-      displayFrom: "lg",
-      displayTo: "xl",
     });
   });
 });
@@ -561,7 +449,7 @@ describe("updateComponentRowMetaAt display range", () => {
         ...layout.root,
         columns: [
           {
-            ...layout.root.columns[0]!,
+            ...resolveLayoutRootColumns(layout)[0]!,
             rows: [
               {
                 type: "component" as const,
@@ -583,7 +471,7 @@ describe("updateComponentRowMetaAt display range", () => {
       { displayFrom: undefined, displayTo: undefined },
     );
 
-    const row = next.root.columns[0]?.rows[0];
+    const row = resolveLayoutRootColumns(next)[0]?.rows[0];
     expect(row).toMatchObject({ type: "component", id: rowId });
     expect(row).not.toHaveProperty("displayFrom");
     expect(row).not.toHaveProperty("displayTo");
@@ -600,7 +488,7 @@ describe("structure item name mutations", () => {
         ...layout.root,
         columns: [
           {
-            ...layout.root.columns[0]!,
+            ...resolveLayoutRootColumns(layout)[0]!,
             rows: [
               {
                 type: "component" as const,
@@ -619,7 +507,7 @@ describe("structure item name mutations", () => {
       rowId,
       { name: "  Header  " },
     );
-    expect(named.root.columns[0]?.rows[0]).toMatchObject({
+    expect(resolveLayoutRootColumns(named)[0]?.rows[0]).toMatchObject({
       name: "Header",
     });
 
@@ -629,7 +517,7 @@ describe("structure item name mutations", () => {
       rowId,
       { name: undefined },
     );
-    const row = cleared.root.columns[0]?.rows[0];
+    const row = resolveLayoutRootColumns(cleared)[0]?.rows[0];
     expect(row).toMatchObject({ type: "component", id: rowId });
     expect(row).not.toHaveProperty("name");
   });
@@ -638,10 +526,10 @@ describe("structure item name mutations", () => {
     const layout = createEmptyLayout(1);
 
     const named = updateRootColumnMetaAt(layout, 0, { name: "Main" });
-    expect(named.root.columns[0]).toMatchObject({ name: "Main" });
+    expect(resolveLayoutRootColumns(named)[0]).toMatchObject({ name: "Main" });
 
     const cleared = updateRootColumnMetaAt(named, 0, { name: undefined });
-    expect(cleared.root.columns[0]).not.toHaveProperty("name");
+    expect(resolveLayoutRootColumns(cleared)[0]).not.toHaveProperty("name");
   });
 });
 
@@ -663,32 +551,51 @@ describe("createDefaultComponent", () => {
   });
 });
 
+describe("updateGridRowMetaAt", () => {
+  it("stores gap on the grid component and strips legacy gap style rules", () => {
+    const { layout: beganLayout, containerLocator } =
+      beginContainerRootLayout();
+    const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+      beganLayout,
+      containerLocator,
+      { position: "after" },
+      { trackCount: 2 },
+    );
+
+    const next = updateGridRowMetaAt(withGrid, containerLocator, gridRowId, {
+      gap: "32",
+    });
+
+    const gridRow = resolveLayoutRootColumns(next)[0]?.rows[0];
+    expect(gridRow?.type).toBe("component");
+    if (gridRow?.type !== "component" || gridRow.component.kind !== "grid") {
+      return;
+    }
+
+    expect(gridRow.component.gap).toBe("32");
+    expect(gridRow.component.styles ?? []).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: "gap" })]),
+    );
+    expect(gridRow.styles ?? []).not.toEqual(
+      expect.arrayContaining([expect.objectContaining({ property: "gap" })]),
+    );
+  });
+});
+
 describe("normalizeLayout", () => {
-  it("repairs nested-layout columnCount to match columns.length", () => {
+  it("repairs root columnCount to match columns.length", () => {
     const layout = createEmptyLayout(1);
-    const nestedRowId = createLayoutId("nested");
-    const nested: (typeof layout.root.columns)[0]["rows"][0] = {
-      type: "nested-layout",
-      id: nestedRowId,
-      columnCount: 3,
-      columns: [createEmptyColumn(), createEmptyColumn()],
-    };
-    const withNested = {
+    const withMismatch = {
       ...layout,
       root: {
         ...layout.root,
         columnCount: 3,
-        columns: [{ ...layout.root.columns[0]!, rows: [nested] }],
+        columns: [resolveLayoutRootColumns(layout)[0]!],
       },
     };
 
-    const normalized = normalizeLayout(withNested);
-    const row = normalized.root.columns[0]?.rows[0];
-    expect(row?.type).toBe("nested-layout");
-    if (row?.type === "nested-layout") {
-      expect(row.columnCount).toBe(2);
-      expect(row.columns).toHaveLength(2);
-    }
-    expect(normalized.root.columnCount).toBe(1);
+    const normalized = normalizeLayout(withMismatch);
+    expect(asEditableLayoutRoot(normalized.root).columnCount).toBe(1);
+    expect(resolveLayoutRootColumns(normalized)).toHaveLength(1);
   });
 });

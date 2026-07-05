@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Pencil, Plus, Trash2 } from "lucide-react";
+import { LayoutTemplate, Pencil, Plus, Trash2 } from "lucide-react";
 import {
   Button,
   FieldLabel,
@@ -9,9 +9,19 @@ import {
   Text,
   Select,
 } from "@repo/ui";
-import { isRootContainerRow, moveRowAt } from "@repo/ui-builder-core";
+import {
+  ensureContainerRoot,
+  isRootContainerRow,
+  moveRowAt,
+  type ColumnNode,
+  type ComponentRowNode,
+  type UiLayoutDocument,
+} from "@repo/ui-builder-core";
+import { InsertPresetDialog } from "@repo/ui-builder-react";
 import { useTranslation } from "react-i18next";
 
+import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { FormDesignerStructureTree } from "../form-designer/FormDesignerStructureTree";
 import { toComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
@@ -51,6 +61,8 @@ export function MetricsRowDesignerStructureTreePanel({
     structurePanelIsDirty,
     commitStructurePanelSave,
   } = useMetricsRowDesigner();
+  const definition = useEntityDefinition(editor.entityName);
+  const presetStore = useUiBuilderPresetStore(definition.name);
   const {
     focusedRow,
     focusedColumn,
@@ -87,6 +99,15 @@ export function MetricsRowDesignerStructureTreePanel({
   const canRemoveWidget = hasSelectedWidget;
 
   const canEditWidget = hasSelectedWidget;
+
+  const handleApplyWidgetPreset = useCallback(
+    (data: UiLayoutDocument | ColumnNode | ComponentRowNode) => {
+      editor.updateSelectedWidgetLayout(
+        ensureContainerRoot(data as UiLayoutDocument),
+      );
+    },
+    [editor],
+  );
 
   const handleOpenAddWidget = useCallback(() => {
     setNewWidgetName(`Widget ${editor.widgets.length + 1}`);
@@ -318,6 +339,28 @@ export function MetricsRowDesignerStructureTreePanel({
           >
             <Trash2 aria-hidden className="size-4" />
           </IconButton>
+          <InsertPresetDialog
+            kind="layout-document"
+            designSurface="metricWidget"
+            definition={definition}
+            fieldDescriptors={[]}
+            presets={presetStore.presets}
+            canApply={presetStore.canApplyPresets && hasSelectedWidget}
+            labels={presetStore.presetInsertLabels}
+            onApply={handleApplyWidgetPreset}
+            triggerSize="sm"
+            renderTrigger={({ open }) => (
+              <IconButton
+                type="button"
+                size="sm"
+                label={presetStore.presetInsertLabels.insertTrigger}
+                disabled={!hasSelectedWidget}
+                onClick={open}
+              >
+                <LayoutTemplate aria-hidden className="size-4" />
+              </IconButton>
+            )}
+          />
         </div>
       </label>
     </div>
@@ -358,6 +401,28 @@ export function MetricsRowDesignerStructureTreePanel({
       >
         <Trash2 aria-hidden className="size-4" />
       </IconButton>
+      <InsertPresetDialog
+        kind="layout-document"
+        designSurface="metricWidget"
+        definition={definition}
+        fieldDescriptors={[]}
+        presets={presetStore.presets}
+        canApply={presetStore.canApplyPresets && hasSelectedWidget}
+        labels={presetStore.presetInsertLabels}
+        onApply={handleApplyWidgetPreset}
+        triggerSize="sm"
+        renderTrigger={({ open }) => (
+          <IconButton
+            type="button"
+            size="sm"
+            label={presetStore.presetInsertLabels.insertTrigger}
+            disabled={!hasSelectedWidget}
+            onClick={open}
+          >
+            <LayoutTemplate aria-hidden className="size-4" />
+          </IconButton>
+        )}
+      />
     </>
   );
 

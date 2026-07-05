@@ -1,9 +1,11 @@
 import {
+  asEditableLayoutRoot,
   createDefaultComponent,
   createLayoutId,
   ensureContainerRoot,
+  isContainerComponent,
+  isGridComponent,
   resolveRootContainer,
-  type ColumnNode,
   type RowNode,
   type UiComponentConfig,
   type UiLayoutDocument,
@@ -35,23 +37,30 @@ function repairRows(
   const repaired: RowNode[] = [];
 
   for (const row of rows) {
-    if (row.type === "nested-layout") {
-      const columns = row.columns
-        .map((column) => repairColumn(column, defaultFieldPath))
-        .filter((column) => column.rows.length > 0);
+    if (row.type === "component" && isGridComponent(row.component)) {
+      const tracks = row.component.rows.map((track) => {
+        if (
+          track.type !== "component" ||
+          !isContainerComponent(track.component)
+        ) {
+          return track;
+        }
 
-      if (columns.length === 0) {
-        continue;
-      }
+        return {
+          ...track,
+          component: {
+            ...track.component,
+            rows: repairRows(track.component.rows, defaultFieldPath),
+          },
+        };
+      });
 
       repaired.push({
-        type: "nested-layout",
-        id: row.id,
-        columnCount: columns.length,
-        columns,
-        ...(row.displayFrom ? { displayFrom: row.displayFrom } : {}),
-        ...(row.displayTo ? { displayTo: row.displayTo } : {}),
-        ...(row.styles ? { styles: row.styles } : {}),
+        ...row,
+        component: {
+          ...row.component,
+          rows: tracks,
+        },
       });
       continue;
     }
@@ -78,16 +87,6 @@ function repairRows(
   return repaired;
 }
 
-function repairColumn(
-  column: ColumnNode,
-  defaultFieldPath: string,
-): ColumnNode {
-  return {
-    ...column,
-    rows: repairRows(column.rows, defaultFieldPath),
-  };
-}
-
 export function repairListLayoutDocument(
   layout: UiLayoutDocument,
   defaultFieldPath = "name",
@@ -99,7 +98,8 @@ export function repairListLayoutDocument(
   }
 
   const repairedRows = repairRows(rootContainer.config.rows, defaultFieldPath);
-  const rootColumn = withContainer.root.columns[0] ?? {
+  const editableRoot = asEditableLayoutRoot(withContainer.root);
+  const rootColumn = editableRoot.columns[0] ?? {
     id: createLayoutId("col"),
     rows: [],
   };
@@ -107,7 +107,7 @@ export function repairListLayoutDocument(
   return {
     ...withContainer,
     root: {
-      ...withContainer.root,
+      ...editableRoot,
       columnCount: 1,
       columns: [
         {

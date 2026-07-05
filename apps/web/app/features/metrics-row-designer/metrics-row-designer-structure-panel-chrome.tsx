@@ -5,28 +5,12 @@ import { MetricsRowDesignerComponentColumnPanelHeaderMenu } from "./MetricsRowDe
 import { MetricsRowDesignerComponentRowPanel } from "./MetricsRowDesignerComponentRowPanel";
 import { MetricsRowDesignerComponentRowPanelHeaderMenu } from "./MetricsRowDesignerComponentRowPanelHeaderMenu";
 import { MetricsRowDesignerStructurePanelFooter } from "./MetricsRowDesignerStructurePanelFooter";
-import {
-  MetricsRowDesignerContext,
-  type MetricsRowDesignerContextValue,
-} from "./metrics-row-designer-context";
 import type { MetricsRowPanelSession } from "./metrics-row-designer-panel-session";
 
-function withMainViewContext(
-  value: MetricsRowDesignerContextValue,
-  children: ReactNode,
-): ReactNode {
-  return (
-    <MetricsRowDesignerContext.Provider value={value}>
-      {children}
-    </MetricsRowDesignerContext.Provider>
-  );
-}
-
-export function renderMetricsRowStructurePanelChrome(
-  contextValue: MetricsRowDesignerContextValue,
+export function renderMetricsRowStructurePanelContent(
   session: MetricsRowPanelSession,
 ): {
-  readonly headerActions?: ReactNode;
+  readonly headerActions: ReactNode;
   readonly body: ReactNode;
   readonly footer: ReactNode;
 } {
@@ -34,35 +18,23 @@ export function renderMetricsRowStructurePanelChrome(
 
   if (target.kind === "column") {
     return {
-      headerActions: withMainViewContext(
-        contextValue,
+      headerActions: (
         <MetricsRowDesignerComponentColumnPanelHeaderMenu
           columnRef={target.columnRef}
-        />,
+        />
       ),
-      body: withMainViewContext(
-        contextValue,
-        <MetricsRowDesignerComponentColumnPanel columnRef={target.columnRef} />,
+      body: (
+        <MetricsRowDesignerComponentColumnPanel columnRef={target.columnRef} />
       ),
-      footer: withMainViewContext(
-        contextValue,
-        <MetricsRowDesignerStructurePanelFooter />,
-      ),
+      footer: <MetricsRowDesignerStructurePanelFooter />,
     };
   }
 
   return {
-    headerActions: withMainViewContext(
-      contextValue,
-      <MetricsRowDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />,
+    headerActions: (
+      <MetricsRowDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />
     ),
-    body: withMainViewContext(
-      contextValue,
-      <MetricsRowDesignerComponentRowPanel rowRef={target.rowRef} />,
-    ),
-    footer: withMainViewContext(
-      contextValue,
-      <MetricsRowDesignerStructurePanelFooter />,
-    ),
+    body: <MetricsRowDesignerComponentRowPanel rowRef={target.rowRef} />,
+    footer: <MetricsRowDesignerStructurePanelFooter />,
   };
 }

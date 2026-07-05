@@ -1,42 +1,22 @@
-import {
-  Button,
-  SegmentedSwitch,
-  toast,
-  type SegmentedSwitchOption,
-} from "@repo/ui";
-import { useMemo } from "react";
+import { Button, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
+import { LayoutSystemPresetPicker } from "../ui-builder/LayoutSystemPresetPicker";
 import { useItemListDesigner } from "./item-list-designer-context";
 import { ItemListDesignerPreviewPanel } from "./ItemListDesignerPreviewPanel";
 
+const LIST_PRESET_SURFACES = ["listItem"] as const;
+
 export function ItemListDesignerSettingsTab() {
   const { t } = useTranslation("common");
-  const { editor, canSave, settingsIsDirty, saveSettings } =
-    useItemListDesigner();
-
-  const presentationOptions = useMemo(
-    (): readonly SegmentedSwitchOption<
-      "table" | "card" | "expandableTable"
-    >[] => [
-      {
-        value: "table",
-        label: t("entity.viewSettings.table"),
-        ariaLabel: t("entity.viewSettings.table"),
-      },
-      {
-        value: "expandableTable",
-        label: t("designLayout.presentationExpandableTable"),
-        ariaLabel: t("designLayout.presentationExpandableTable"),
-      },
-      {
-        value: "card",
-        label: t("entity.viewSettings.card"),
-        ariaLabel: t("entity.viewSettings.card"),
-      },
-    ],
-    [t],
-  );
+  const {
+    editor,
+    canSave,
+    settingsIsDirty,
+    layoutIsDirty,
+    columnsIsDirty,
+    saveSettings,
+  } = useItemListDesigner();
 
   const handleSave = async () => {
     if (!canSave || !settingsIsDirty) {
@@ -54,17 +34,24 @@ export function ItemListDesignerSettingsTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-muted-foreground text-sm">
-            {t("designLayout.presentation")}
-          </span>
-          <SegmentedSwitch
-            value={editor.viewType}
-            options={presentationOptions}
-            onChange={(value) => editor.setViewType(value)}
-            ariaLabel={t("designLayout.presentation")}
-          />
-        </div>
+        <LayoutSystemPresetPicker
+          entityName={editor.entityName}
+          surfaces={LIST_PRESET_SURFACES}
+          fieldPaths={editor.fieldPaths}
+          value={editor.layoutPresetId}
+          canApply={canSave}
+          confirmOnReplace={layoutIsDirty || columnsIsDirty}
+          onApplyBuiltin={(selection) =>
+            editor.applyListSystemPreset(selection)
+          }
+          onApplyTenant={(preset, layout) =>
+            editor.applyListSystemPreset({
+              source: "tenant",
+              preset,
+              layout,
+            })
+          }
+        />
         <Button
           type="button"
           className="ml-auto"

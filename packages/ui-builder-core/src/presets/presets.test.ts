@@ -1,3 +1,4 @@
+import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -5,6 +6,11 @@ import {
   createEmptyLayout,
 } from "../builder/mutations.js";
 import { applyPresetSlots } from "./apply-preset-slots.js";
+import {
+  applyBuiltInTemplate,
+  resolveBuiltInFormPresentation,
+  resolveListBuiltinTemplateId,
+} from "./apply-built-in-template.js";
 import {
   genericizeLayoutNode,
   GenericizeLayoutNodeError,
@@ -22,7 +28,7 @@ const definition = {
 describe("genericizeLayoutNode", () => {
   it("replaces field paths with slot tokens", () => {
     const base = createEmptyLayout(1);
-    const column = base.root.columns[0];
+    const column = resolveLayoutRootColumns(base)[0];
     if (!column) {
       throw new Error("missing column");
     }
@@ -55,7 +61,7 @@ describe("genericizeLayoutNode", () => {
 
   it("rejects metric-kpi components", () => {
     const base = createEmptyLayout(1);
-    const column = base.root.columns[0];
+    const column = resolveLayoutRootColumns(base)[0];
     if (!column) {
       throw new Error("missing column");
     }
@@ -92,7 +98,7 @@ describe("genericizeLayoutNode", () => {
 describe("applyPresetSlots", () => {
   it("applies slot mappings and validates against the entity", () => {
     const base = createEmptyLayout(1);
-    const column = base.root.columns[0];
+    const column = resolveLayoutRootColumns(base)[0];
     if (!column) {
       throw new Error("missing column");
     }
@@ -140,5 +146,23 @@ describe("applyPresetSlots", () => {
         ],
       },
     });
+  });
+});
+
+describe("built-in template helpers", () => {
+  it("maps built-in form templates to presentation", () => {
+    expect(resolveBuiltInFormPresentation("plain-form")).toBe("plain");
+    expect(resolveBuiltInFormPresentation("wizard-form")).toBe("wizard");
+    expect(resolveBuiltInFormPresentation("kpi-strip")).toBeUndefined();
+  });
+
+  it("resolves list builtin template ids from layout shape", () => {
+    const plain = applyBuiltInTemplate("plain-table-list", {
+      fieldPaths: ["name"],
+    });
+    const card = applyBuiltInTemplate("card-list", { fieldPaths: ["name"] });
+
+    expect(resolveListBuiltinTemplateId(plain)).toBe("plain-table-list");
+    expect(resolveListBuiltinTemplateId(card)).toBe("card-list");
   });
 });

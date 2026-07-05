@@ -49,6 +49,39 @@ export const ENTITY_QUERY_TEMPORAL_PRESETS = [
 export type EntityQueryTemporalPreset =
   (typeof ENTITY_QUERY_TEMPORAL_PRESETS)[number];
 
+export const ENTITY_QUERY_PARAMETER_VALUE_TYPES = [
+  "dateBucket",
+  "scalar",
+] as const;
+
+export type EntityQueryParameterValueType =
+  (typeof ENTITY_QUERY_PARAMETER_VALUE_TYPES)[number];
+
+export const ENTITY_QUERY_PARAMETER_BOUNDS = ["start", "end", "value"] as const;
+
+export type EntityQueryParameterBound =
+  (typeof ENTITY_QUERY_PARAMETER_BOUNDS)[number];
+
+export const entityQueryParameterSchema = z
+  .object({
+    name: z.string().trim().min(1),
+    valueType: z.enum(ENTITY_QUERY_PARAMETER_VALUE_TYPES),
+    granularity: z.enum(["day", "month", "year"]).optional(),
+    field: z.string().trim().min(1).optional(),
+  })
+  .strict()
+  .superRefine((value, context) => {
+    if (value.valueType === "dateBucket" && !value.field) {
+      context.addIssue({
+        code: "custom",
+        message: "dateBucket parameters require a field.",
+        path: ["field"],
+      });
+    }
+  });
+
+export type EntityQueryParameter = z.infer<typeof entityQueryParameterSchema>;
+
 export const entityQueryFilterValueSchema = z.discriminatedUnion("type", [
   z
     .object({
@@ -65,6 +98,13 @@ export const entityQueryFilterValueSchema = z.discriminatedUnion("type", [
     .object({
       type: z.literal("temporal"),
       preset: z.enum(ENTITY_QUERY_TEMPORAL_PRESETS),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("parameter"),
+      name: z.string().trim().min(1),
+      bound: z.enum(ENTITY_QUERY_PARAMETER_BOUNDS).optional(),
     })
     .strict(),
 ]);
@@ -250,10 +290,56 @@ export function migrateEntityQueryDefinitionRecord<
   };
 }
 
+function refineQueryParameterFilterTree(
+  filter: EntityQueryFilterNode,
+  parameters: readonly EntityQueryParameter[],
+  context: z.RefinementCtx,
+  pathPrefix: string[] = ["filter"],
+): void {
+  if (filter.type === "condition") {
+    const conditionValue = filter.value;
+    if (conditionValue.type === "parameter") {
+      const parameter = parameters.find(
+        (entry) => entry.name === conditionValue.name,
+      );
+      if (!parameter) {
+        context.addIssue({
+          code: "custom",
+          message: `Unknown query parameter "${conditionValue.name}".`,
+          path: pathPrefix,
+        });
+        return;
+      }
+      if (
+        conditionValue.bound &&
+        conditionValue.bound !== "value" &&
+        parameter.valueType !== "dateBucket"
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: `Parameter bound "${conditionValue.bound}" requires a dateBucket parameter.`,
+          path: pathPrefix,
+        });
+      }
+    }
+    return;
+  }
+
+  for (let index = 0; index < filter.children.length; index += 1) {
+    refineQueryParameterFilterTree(
+      filter.children[index]!,
+      parameters,
+      context,
+      [...pathPrefix, "children", String(index)],
+    );
+  }
+}
+
 const entityQueryDefinitionBodySchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().optional(),
   sourceEntity: z.string().trim().min(1),
+  parameters: z.array(entityQueryParameterSchema).default([]),
   filter: entityQueryFilterGroupSchema.optional().default({
     type: "group",
     combinator: "and",
@@ -271,6 +357,7 @@ function refineEntityQueryDefinitionBody(
     readonly limitMode: EntityQueryLimitMode;
     readonly limit?: number;
     readonly filter: EntityQueryFilterNode;
+    readonly parameters: readonly EntityQueryParameter[];
   },
   context: z.RefinementCtx,
 ): void {
@@ -283,6 +370,7 @@ function refineEntityQueryDefinitionBody(
   }
 
   refineEntityQueryFilterTree(value.filter, context);
+  refineQueryParameterFilterTree(value.filter, value.parameters, context);
 }
 
 const legacyEntityQueryDefinitionRecordSchema = entityQueryDefinitionBodySchema
@@ -300,6 +388,7 @@ const legacyEntityQueryDefinitionRecordSchema = entityQueryDefinitionBodySchema
         limitMode: value.limitMode,
         limit: value.limit,
         filter: value.filter,
+        parameters: value.parameters ?? [],
       },
       context,
     );
@@ -333,6 +422,7 @@ export const patchEntityQueryDefinitionInputSchema = z
   .object({
     name: z.string().trim().min(1).optional(),
     description: z.string().trim().optional(),
+    parameters: z.array(entityQueryParameterSchema).optional(),
     filter: entityQueryFilterGroupSchema.optional(),
     sort: z.array(entityQuerySortSchema).optional(),
     select: z.array(z.string().trim().min(1)).optional(),

@@ -1,7 +1,8 @@
 import {
   addComponentRowAt,
   createDefaultComponent,
-  insertNestedLayoutRowAt,
+  insertGridRowAt,
+  resolveGridTrackLocators,
 } from "../builder/mutations.js";
 import { createLayoutId } from "../builder/id.js";
 import type { UiLayoutDocument } from "../types/layout.js";
@@ -9,32 +10,27 @@ import { beginContainerRootLayout } from "./ensure-container-root.js";
 
 export function createDefaultWizardShellLayout(): UiLayoutDocument {
   const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
-  let layout = beganLayout;
-  const { layout: withNested, rowId: nestedRowId } = insertNestedLayoutRowAt(
-    layout,
+  const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+    beganLayout,
     containerLocator,
     { position: "after" },
-    2,
+    {
+      trackCount: 2,
+      gridTemplateColumns: "minmax(0, 1fr) minmax(0, 2fr)",
+    },
   );
-  layout = withNested;
 
-  const leftLocator = {
-    scope: "nested" as const,
-    columnIndex: containerLocator.columnIndex,
-    containerRowId: containerLocator.containerRowId,
-    rowId: nestedRowId,
-    nestedColumnIndex: 0,
-  };
-  const rightLocator = {
-    scope: "nested" as const,
-    columnIndex: containerLocator.columnIndex,
-    containerRowId: containerLocator.containerRowId,
-    rowId: nestedRowId,
-    nestedColumnIndex: 1,
-  };
+  const [leftLocator, rightLocator] = resolveGridTrackLocators(
+    withGrid,
+    containerLocator,
+    gridRowId,
+  );
+  if (!leftLocator || !rightLocator) {
+    return withGrid;
+  }
 
   let next = addComponentRowAt(
-    layout,
+    withGrid,
     leftLocator,
     createDefaultComponent("wizard-progress"),
   );

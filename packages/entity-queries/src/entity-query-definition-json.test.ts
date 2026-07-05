@@ -20,6 +20,7 @@ const baseRecord: EntityQueryDefinitionRecord = {
   queryId: "upcoming_payments",
   name: "Upcoming payments",
   sourceEntity: "transaction",
+  parameters: [],
   filter: {
     type: "group",
     combinator: "and",

@@ -1,10 +1,10 @@
 export type {
   UiLayoutDocument,
   LayoutRootNode,
+  ScreenRootNode,
   ColumnNode,
   RowNode,
   ComponentRowNode,
-  NestedLayoutRowNode,
   LayoutAlign,
   ColumnStackDirection,
 } from "./types/layout.js";
@@ -25,12 +25,23 @@ export {
 } from "./types/click-action.js";
 
 export { resolveColumnStackDirection } from "./types/layout.js";
+export { isScreenRootNode, isLayoutRootNode } from "./types/layout.js";
 export {
   resolveColumnWidthPercents,
   resolveMaxColumnWidthPercent,
   resolveColumnWidthPercentInput,
   buildGridTemplateColumnsFromPercents,
 } from "./layout/resolve-column-width-percents.js";
+export {
+  analyzeGridTemplateColumns,
+  normalizeGridTemplateColumnsForCss,
+  type AnalyzeGridTemplateColumnsOptions,
+  type GridTemplateColumnsAnalysis,
+  type GridTemplateColumnsAnalysisFailure,
+  type GridTemplateColumnsAnalysisSuccess,
+  type GridTemplateColumnsErrorCode,
+  countDefinedGridTemplateTracks,
+} from "./layout/parse-grid-template-columns.js";
 export { migrateViewSearchFilterLayout } from "./layout/migrate-view-search-filter-layout.js";
 export { resolveComponentBoundFieldPath } from "./layout/resolve-component-bound-field-path.js";
 export {
@@ -108,6 +119,7 @@ export type {
   UserDisplayMode,
   UserNameFormat,
   ContainerComponentConfig,
+  GridComponentConfig,
   QueryViewerComponentConfig,
   RowHolderComponentConfig,
   FormFieldComponentConfig,
@@ -131,6 +143,7 @@ export {
   isIconComponent,
   isUserComponent,
   isContainerComponent,
+  isGridComponent,
   isQueryViewerComponent,
   isRowHolderComponent,
   isEntityFieldSelectorComponent,
@@ -145,6 +158,102 @@ export {
   resolveRootContainerLocator,
   beginContainerRootLayout,
 } from "./layout/ensure-container-root.js";
+export {
+  ensureStandardRoot,
+  createDefaultLayoutDocument,
+  createDefaultScreenRootLayout,
+  resolveDocumentRootKind,
+  migrateLayoutToSection15,
+} from "./layout/ensure-standard-root.js";
+export {
+  migrateContainerLayoutToGrid,
+  migrateNestedLayoutsInDocument,
+  createScreenRootNode,
+  ensureScreenRootDocument,
+  layoutRootToScreenRoot,
+} from "./layout/migrate-to-grid.js";
+export {
+  asEditableLayoutRoot,
+  toEditableLayoutRoot,
+  toEditableLayoutDocument,
+  fromEditableLayoutDocument,
+  resolveLayoutRootColumns,
+  withEditableRootColumns,
+} from "./layout/layout-root-adapters.js";
+export type { CompositionScope, RootNodeKind } from "./types/composition.js";
+export {
+  COMPOSITION_SCOPES,
+  resolveRootNodeKind,
+} from "./types/composition.js";
+export type {
+  PreviewContextConfig,
+  PreviewContextConstraints,
+  PreviewContextControls,
+  PreviewWidthConstraint,
+  PreviewHeightConstraint,
+} from "./types/preview-context.js";
+export {
+  DEFAULT_PREVIEW_WIDTH_PX,
+  MIN_PREVIEW_WIDTH_PX,
+  MAX_PREVIEW_WIDTH_PX,
+  createPreviewContextConfig,
+  resolvePreviewContextControls,
+  resolvePreviewContextConstraints,
+} from "./types/preview-context.js";
+export type {
+  PreviewDevice,
+  PreviewStrategy,
+} from "./types/preview-strategy.js";
+export {
+  FULL_DEVICE_SET,
+  MOBILE_DESKTOP_DEVICE_SET,
+  FULL_DEVICE_STRATEGY,
+  MOBILE_DESKTOP_STRATEGY,
+  WIDGET_WIDTH_STRATEGY,
+  SECTION_WIDTH_STRATEGY,
+  FORM_WIDTH_STRATEGY,
+  resolvePreviewStrategy,
+  resolvePreviewStrategyFromScope,
+} from "./types/preview-strategy-map.js";
+export {
+  resolveCompositionScope,
+  isScreenScope,
+} from "./types/composition-scope.js";
+export type { LayoutProps, StyleProps } from "./types/layout-props.js";
+export {
+  LAYOUT_STYLE_PROPERTIES,
+  isLayoutStyleProperty,
+  filterLayoutStyleRules,
+  filterVisualStyleRules,
+  readGridGapEditorValue,
+  stripGapStyleRules,
+} from "./types/layout-props.js";
+export {
+  validateStyleProps,
+  sanitizeStyleProps,
+  StylePropsValidationError,
+} from "./validation/validate-style-props.js";
+export { resolveTemplatePlaceholders } from "./presets/resolve-template-placeholders.js";
+export {
+  BUILT_IN_TEMPLATE_DEFINITIONS,
+  type BuiltInComponentTemplate,
+  type BuiltInComponentTemplateDefinition,
+  type BuiltInComponentTemplateId,
+} from "./presets/built-in-component-templates.js";
+export {
+  applyBuiltInTemplate,
+  deriveListPresentationFromLayout,
+  getBuiltInComponentTemplate,
+  getDefaultBuiltInTemplateForSurface,
+  listBuiltInTemplates,
+  resolveBuiltInFormPresentation,
+  resolveBuiltInTemplatePresentation,
+  resolveListBuiltinTemplateId,
+  type BuiltInTemplateContext,
+  type FormPresentationKind,
+  type ListPresentationKind,
+} from "./presets/apply-built-in-template.js";
+export type { TemplateBindingContext } from "./presets/resolve-template-placeholders.js";
 export {
   resolveContainerChildRows,
   resolveRowHolderChildRows,
@@ -320,6 +429,7 @@ export {
   rowSiblingContainerShellClassName,
   gapPxFromStyles,
   gapStyleFromStyleRules,
+  resolveGridGapCSSValue,
   fontSizePxFromStyles,
   FONT_SIZE_STYLE_PROPERTY,
   FLEX_LAYOUT_PROPERTIES,
@@ -405,7 +515,6 @@ export {
 export {
   regenerateLayoutDocumentIds,
   regenerateComponentRowSubtree,
-  regenerateNestedLayoutRowSubtree,
   regenerateColumnSubtree,
 } from "./validation/regenerate-layout-ids.js";
 
@@ -432,7 +541,6 @@ export { styleRuleSchema } from "./schema/ui-layout-schema.js";
 export {
   uiLayoutDocumentSchema,
   componentRowSchema,
-  nestedLayoutRowSchema,
   columnNodeSchema,
   type UiLayoutDocumentInput,
 } from "./schema/ui-layout-schema.js";
@@ -448,35 +556,25 @@ export {
   setRootColumnWidthPercent,
   moveRootColumn,
   removeRootColumn,
-  setNestedColumnCount,
-  setNestedColumnWidthPercent,
-  moveNestedColumn,
-  removeNestedColumn,
   updateRootColumnStyles,
   updateRootNodeStyles,
-  updateNestedLayoutRowStyles,
-  updateNestedLayoutRowDisplayRange,
-  updateNestedLayoutRowMetaAt,
-  updateNestedColumnStyles,
   updateRootColumnDisplayRange,
   updateRootColumnMetaAt,
-  updateNestedColumnDisplayRange,
-  updateNestedColumnMetaAt,
-  replaceNestedColumnAt,
   updateRootColumnStackDirection,
-  updateNestedColumnStackDirection,
   addComponentRow,
-  addNestedLayoutRow,
   updateComponentRow,
   removeRow,
   moveRow,
   updateLayoutMeta,
   normalizeLayout,
   addComponentRowAt,
-  addNestedLayoutRowAt,
   insertRowAt,
   insertComponentRowAt,
-  insertNestedLayoutRowAt,
+  insertGridRowAt,
+  resolveGridTrackLocators,
+  setGridTrackCount,
+  setGridTemplateColumns,
+  updateGridRowMetaAt,
   type RowInsertPosition,
   removeRowAt,
   moveRowAt,
@@ -484,10 +582,8 @@ export {
   updateComponentRowMetaAt,
   replaceLayoutDocument,
   replaceComponentRowAt,
-  replaceNestedLayoutRowAt,
   insertColumnAt,
   appendComponentRowAt,
-  appendNestedLayoutRowAt,
   updateContainerStylesAt,
   MAX_ROOT_COLUMNS,
   MAX_NESTED_COLUMNS,
@@ -522,4 +618,8 @@ export {
   type DerivedExpressionError,
   type DerivedExpressionGrammarError,
 } from "./metrics/derived-expression.js";
+export {
+  resolveMetricKpiValueToneClass,
+  type MetricKpiTonePolarity,
+} from "./metrics/metric-kpi-tone.js";
 export { metricDerivedExpressionTokenSchema } from "./schema/ui-layout-schema.js";

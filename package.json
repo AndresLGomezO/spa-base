@@ -33,6 +33,7 @@
     "entity:api": "tsx scripts/firestore-doc-manager/entity-api.ts",
     "generate:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts",
     "generate:ai-context": "tsx scripts/generate-ai-context.ts",
+    "validate:ui-design-manual": "tsx scripts/validate-ui-design-manual-examples.ts",
     "prune:firestore-indexes": "tsx scripts/prune-all-firestore-composite-indexes.ts",
     "check:firestore-indexes": "tsx scripts/generate-firestore-indexes.ts && git diff --exit-code firestore.indexes.json",
     "check:ai-context": "tsx scripts/generate-ai-context.ts && git diff --exit-code packages/ai-context/src/generated/",

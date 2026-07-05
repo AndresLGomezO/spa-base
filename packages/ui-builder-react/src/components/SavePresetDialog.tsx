@@ -3,7 +3,6 @@ import type {
   ColumnNode,
   ComponentRowNode,
   DesignSurface,
-  NestedLayoutRowNode,
   UiBuilderPresetKind,
   UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -31,7 +30,7 @@ export interface SavePresetDialogProps {
     | UiLayoutDocument
     | ColumnNode
     | ComponentRowNode
-    | NestedLayoutRowNode;
+    | ComponentRowNode;
   readonly designSurface?: DesignSurface;
   readonly sourceEntityName?: string;
   readonly canSave: boolean;

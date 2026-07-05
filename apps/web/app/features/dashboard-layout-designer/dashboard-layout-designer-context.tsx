@@ -7,7 +7,10 @@ import type { MobilePreviewDeviceId } from "../form-designer/mobile-preview-devi
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import type { DashboardLayoutUnsavedReason } from "./dashboard-layout-designer-panel-session";
-import type { DashboardLayoutDesignerTabId } from "./dashboard-layout-designer-tabs";
+import type {
+  DashboardLayoutDesignFocus,
+  DashboardLayoutDesignerTabId,
+} from "./dashboard-layout-designer-tabs";
 
 export interface DashboardLayoutDesignerContextValue {
   readonly editor: UseTenantDashboardLayoutEditorResult;
@@ -19,15 +22,20 @@ export interface DashboardLayoutDesignerContextValue {
   readonly previewColorScheme: ColorScheme;
   readonly setPreviewColorScheme: (colorScheme: ColorScheme) => void;
   readonly activeTabId: DashboardLayoutDesignerTabId;
+  readonly designFocus: DashboardLayoutDesignFocus;
   readonly sectionsIsDirty: boolean;
   readonly layoutIsDirty: boolean;
   readonly unsavedTabId: DashboardLayoutDesignerTabId | null;
+  readonly unsavedDesignFocus: DashboardLayoutDesignFocus | null;
   readonly unsavedReason: DashboardLayoutUnsavedReason | null;
   readonly saveSections: () => Promise<string | null>;
   readonly saveLayout: () => Promise<string | null>;
   readonly discardSections: () => void;
   readonly discardLayout: () => void;
   readonly requestTabChange: (tabId: DashboardLayoutDesignerTabId) => void;
+  readonly requestDesignFocusChange: (
+    focus: DashboardLayoutDesignFocus,
+  ) => void;
   readonly requestSectionChange: (sectionId: string) => void;
   readonly unsavedChangesOpen: boolean;
   readonly confirmUnsavedSave: () => Promise<void>;

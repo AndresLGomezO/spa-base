@@ -20,6 +20,8 @@ const baseDefinition: MetricDefinitionRecord = {
   dimensions: ["categoryId"],
   dateFieldGranularity: {},
   valueDisplayFormat: "number",
+  computationMode: "aggregated",
+  parameters: [],
   aggregations: [{ field: "amount", operation: "SUM" }],
   target: { collection: "def_1", granularity: "dynamic" },
   version: 1,

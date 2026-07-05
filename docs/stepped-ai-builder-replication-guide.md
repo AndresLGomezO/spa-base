@@ -949,11 +949,28 @@ Mirror the selective inclusion pattern from `assemble-ui-builder-step-context.ts
 
 ## 10. Context fragment catalog
 
+**Design team manual:** [ui-design-manual/README.md](./ui-design-manual/README.md) — human SSOT for layout JSON. Recipe pages under `docs/ui-design-manual/07-recipes/` feed AI via `generate/manual-recipes.ts`.
+
 ### 10.1 Static UI fragments (generated)
 
 **Regenerate:** `pnpm generate:ai-context`  
 **Manifest:** `packages/ai-context/src/generated/manifest.json`  
 **Markdown sources:** `packages/ai-context/src/generated/ui/*.md`
+
+#### Handbook and preset atoms
+
+| Fragment ID | Source file |
+|-------------|-------------|
+| `ui.design-handbook.router` | `atoms/ui/design-handbook-router.ts` |
+| `ui.presets.platform` | `atoms/ui/platform-presets.ts` |
+| `ui.import.scopes` | `atoms/ui/import-scopes.ts` |
+| `ui.persistence.keys` | `atoms/ui/persistence-keys.ts` |
+
+#### Recipe fragments (from manual)
+
+Pattern: `ui.recipes.{slug}` — parsed from YAML frontmatter in `docs/ui-design-manual/07-recipes/*.md` via `generate/manual-recipes.ts`.
+
+Examples: `ui.recipes.card-list-with-badge`, `ui.recipes.wizard-form`, `ui.recipes.kpi-strip`.
 
 #### Surface variants (`SURFACE_VARIANTS` in `surface-variants.ts`)
 
@@ -986,7 +1003,7 @@ Mirror the selective inclusion pattern from `assemble-ui-builder-step-context.ts
 
 #### Component atoms
 
-Pattern: `ui.components.{kind}` — generated via `componentAtomId()` in `generate/component-descriptions.ts`.
+Pattern: `ui.components.{kind}` — generated via `componentAtomId()` in `generate/component-descriptions.ts`. Includes structural `ui.components.grid`.
 
 Examples: `ui.components.text`, `ui.components.badge`, `ui.components.form-field`, `ui.components.metric-widget`, `ui.components.page-header`, `ui.components.related-records`.
 

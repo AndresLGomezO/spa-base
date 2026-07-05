@@ -89,7 +89,9 @@ export function buildThemeStyleRulesAtom(): string {
 ## Image overlay (\`displayMode: "overlay"\`)
 - Use on decorative chart/background images inside \`container\` rows.
 - Renderer auto-layers overlay images behind sibling content (\`zIndex\` 0 vs 1) and sets the container to \`position: relative\` unless overridden.
-- Prefer \`objectFit: "cover"\` for full-bleed overlays; \`imageSize\` is ignored in overlay mode.
+- **Full-bleed:** \`objectFit: "cover"\`. **Decorative charts:** last sibling in \`container.rows\`, \`objectFit: "contain"\`, negative \`marginBottom\` on the row (e.g. \`-110\`).
+- Static sources: HTTPS, \`/images/...\`, or serialized entity-file JSON from builder upload. \`imageSize\` is ignored in overlay mode.
+- Prefer \`rgba(...)\` on \`color\`/\`backgroundColor\` over row \`opacity\` for semi-transparent text/pills.
 
 ## All style properties
 ${STYLE_PROPERTY_OPTIONS.join(", ")}

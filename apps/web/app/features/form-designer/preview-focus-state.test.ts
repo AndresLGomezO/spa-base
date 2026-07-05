@@ -2,8 +2,11 @@ import {
   addComponentRowAt,
   beginContainerRootLayout,
   createDefaultComponent,
-  insertNestedLayoutRowAt,
+  insertGridRowAt,
   isContainerComponent,
+  isGridComponent,
+  resolveLayoutRootColumns,
+  resolveRootContainer,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
@@ -21,7 +24,8 @@ import {
 
 const labels: StructureTreeLabels = {
   column: (column) => `Column ${column}`,
-  nestedLayout: (count) => `Nested layout (${count} cols)`,
+  track: (track) => `Track ${track}`,
+  grid: (count) => `Grid (${count} tracks)`,
   container: "Container",
   section: "Section",
   actions: "Actions",
@@ -79,7 +83,7 @@ describe("preview-focus-state", () => {
         createDefaultComponent("container"),
       );
 
-      const rootContainer = layout.root.columns[0]?.rows[0];
+      const rootContainer = resolveLayoutRootColumns(layout)[0]?.rows[0];
       if (
         !rootContainer ||
         rootContainer.type !== "component" ||
@@ -239,7 +243,7 @@ describe("preview-focus-state", () => {
         createDefaultComponent("container"),
       );
 
-      const rootContainer = layout.root.columns[0]?.rows[0];
+      const rootContainer = resolveLayoutRootColumns(layout)[0]?.rows[0];
       if (
         !rootContainer ||
         rootContainer.type !== "component" ||
@@ -356,72 +360,68 @@ describe("preview-focus-state", () => {
       );
     });
 
-    it("focuses nested-layout children inside a container without dimming the nested layout shell", () => {
+    it("focuses grid track children inside a container without dimming the grid shell", () => {
       const { layout: beganLayout, containerLocator } =
         beginContainerRootLayout();
-      const rootContainerId =
-        beganLayout.root.columns[0]?.rows[0]?.type === "component"
-          ? beganLayout.root.columns[0].rows[0].id
-          : null;
+      const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+        beganLayout,
+        containerLocator,
+        { position: "after" },
+        { trackCount: 2 },
+      );
 
-      if (!rootContainerId) {
-        throw new Error("Expected root container id");
+      const gridRow = resolveRootContainer(withGrid)?.config.rows.find(
+        (row) => row.id === gridRowId,
+      );
+      const trackRow =
+        gridRow?.type === "component" && isGridComponent(gridRow.component)
+          ? gridRow.component.rows[0]
+          : undefined;
+
+      if (!trackRow || trackRow.type !== "component") {
+        throw new Error("Expected grid track row");
       }
 
-      const { layout: withNested, rowId: nestedRowId } =
-        insertNestedLayoutRowAt(
-          beganLayout,
-          containerLocator,
-          { position: "after" },
-          2,
-        );
-
       const layout = addComponentRowAt(
-        withNested,
+        withGrid,
         {
-          scope: "nested",
+          scope: "container",
           columnIndex: containerLocator.columnIndex,
-          rowId: nestedRowId,
-          nestedColumnIndex: 0,
-          containerRowId: rootContainerId,
+          containerRowId: trackRow.id,
         },
         createDefaultComponent("user"),
       );
 
       const tree = buildStructureTree(layout, labels, []);
-      const containerNode = tree[0]?.rows[0];
-      const nestedLayoutNode =
-        containerNode?.type === "component"
-          ? containerNode.childRows?.find((row) => row.type === "nested-layout")
+      const gridNode =
+        tree[0]?.rows[0]?.type === "component"
+          ? tree[0].rows[0].childRows?.find(
+              (row) => row.type === "component" && row.kind === "grid",
+            )
           : undefined;
       const userNode =
-        nestedLayoutNode?.type === "nested-layout"
-          ? nestedLayoutNode.columns[0]?.rows[0]
+        gridNode?.type === "component" && gridNode.kind === "grid"
+          ? gridNode.tracks?.[0]?.rows[0]
           : undefined;
 
       if (
-        !nestedLayoutNode ||
-        nestedLayoutNode.type !== "nested-layout" ||
+        !gridNode ||
+        gridNode.type !== "component" ||
         !userNode ||
         userNode.type !== "component"
       ) {
-        throw new Error(
-          "Expected nested layout with user row inside container",
-        );
+        throw new Error("Expected grid with user row in first track");
       }
 
-      const nestedLayoutRef = toComponentRowRef(
-        nestedLayoutNode.rowId,
-        nestedLayoutNode.locator,
-      );
+      const gridRef = toComponentRowRef(gridNode.rowId, gridNode.locator);
       const userRef = toComponentRowRef(userNode.rowId, userNode.locator);
 
       expect(resolvePreviewRowFocusState(layout, userRef, userRef, null)).toBe(
         "focused",
       );
-      expect(
-        resolvePreviewRowFocusState(layout, nestedLayoutRef, userRef, null),
-      ).toBe("none");
+      expect(resolvePreviewRowFocusState(layout, gridRef, userRef, null)).toBe(
+        "none",
+      );
     });
   });
 
@@ -451,99 +451,105 @@ describe("preview-focus-state", () => {
       ).toBe("dimmed");
     });
 
-    it("does not dim nested columns that contain the focused row", () => {
-      let layout = beginContainerRootLayout().layout;
-      const { layout: withNested, rowId: nestedRowId } =
-        insertNestedLayoutRowAt(
-          layout,
-          { scope: "root", columnIndex: 0 },
-          { position: "after" },
-          2,
-        );
+    it("does not dim grid tracks that contain the focused row", () => {
+      const { layout: beganLayout, containerLocator } =
+        beginContainerRootLayout();
+      const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+        beganLayout,
+        containerLocator,
+        { position: "after" },
+        { trackCount: 2 },
+      );
 
-      layout = addComponentRowAt(
-        withNested,
+      const gridRow = resolveRootContainer(withGrid)?.config.rows.find(
+        (row) => row.id === gridRowId,
+      );
+      const trackRow =
+        gridRow?.type === "component" && isGridComponent(gridRow.component)
+          ? gridRow.component.rows[1]
+          : undefined;
+
+      if (!trackRow || trackRow.type !== "component") {
+        throw new Error("Expected second grid track");
+      }
+
+      const layout = addComponentRowAt(
+        withGrid,
         {
-          scope: "nested",
-          columnIndex: 0,
-          rowId: nestedRowId,
-          nestedColumnIndex: 1,
+          scope: "container",
+          columnIndex: containerLocator.columnIndex,
+          containerRowId: trackRow.id,
         },
         createDefaultComponent("user"),
       );
 
-      const nestedRow = layout.root.columns[0]?.rows.find(
-        (row) => row.id === nestedRowId,
+      const updatedGridRow = resolveRootContainer(layout)?.config.rows.find(
+        (row) => row.id === gridRowId,
       );
-      const userRow =
-        nestedRow?.type === "nested-layout"
-          ? nestedRow.columns[1]?.rows[0]
+      const updatedTrackRow =
+        updatedGridRow?.type === "component" &&
+        isGridComponent(updatedGridRow.component)
+          ? updatedGridRow.component.rows[1]
           : undefined;
 
-      if (!userRow || userRow.type !== "component") {
-        throw new Error("Expected user row in nested column");
+      const userInTrack =
+        updatedTrackRow?.type === "component" &&
+        isContainerComponent(updatedTrackRow.component)
+          ? updatedTrackRow.component.rows[0]
+          : undefined;
+
+      if (!userInTrack || userInTrack.type !== "component") {
+        throw new Error("Expected user row in grid track");
       }
 
-      const userRef = toComponentRowRef(userRow.id, {
-        scope: "nested",
-        columnIndex: 0,
-        rowId: nestedRowId,
-        nestedColumnIndex: 1,
+      const userRef = toComponentRowRef(userInTrack.id, {
+        scope: "container",
+        columnIndex: containerLocator.columnIndex,
+        containerRowId: updatedTrackRow!.id,
       });
 
-      const nestedColumnRef = {
+      const trackColumnRef = {
         rootColumnIndex: 0,
-        nestedParentRowId: nestedRowId,
+        nestedParentRowId: gridRowId,
         nestedColumnIndex: 1,
       };
-      const peerNestedColumnRef = {
+      const peerTrackColumnRef = {
         rootColumnIndex: 0,
-        nestedParentRowId: nestedRowId,
+        nestedParentRowId: gridRowId,
         nestedColumnIndex: 0,
       };
 
       expect(
-        resolvePreviewColumnFocusState(layout, nestedColumnRef, userRef, null),
+        resolvePreviewColumnFocusState(layout, trackColumnRef, userRef, null),
       ).toBe("none");
       expect(
         resolvePreviewColumnFocusState(
           layout,
-          peerNestedColumnRef,
+          peerTrackColumnRef,
           userRef,
           null,
         ),
       ).toBe("none");
     });
 
-    it("dims peer nested columns when another nested column is focused", () => {
+    it("dims peer grid tracks when another grid track column is focused", () => {
       let layout = beginContainerRootLayout().layout;
-      const { layout: withNested, rowId: nestedRowId } =
-        insertNestedLayoutRowAt(
-          layout,
-          { scope: "root", columnIndex: 0 },
-          { position: "after" },
-          2,
-        );
-
-      layout = addComponentRowAt(
-        withNested,
-        {
-          scope: "nested",
-          columnIndex: 0,
-          rowId: nestedRowId,
-          nestedColumnIndex: 1,
-        },
-        createDefaultComponent("user"),
+      const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+        layout,
+        { scope: "root", columnIndex: 0 },
+        { position: "after" },
+        { trackCount: 2 },
       );
+      layout = withGrid;
 
       const focusedColumnRef = {
         rootColumnIndex: 0,
-        nestedParentRowId: nestedRowId,
+        nestedParentRowId: gridRowId,
         nestedColumnIndex: 1,
       };
-      const peerNestedColumnRef = {
+      const peerColumnRef = {
         rootColumnIndex: 0,
-        nestedParentRowId: nestedRowId,
+        nestedParentRowId: gridRowId,
         nestedColumnIndex: 0,
       };
 
@@ -558,337 +564,11 @@ describe("preview-focus-state", () => {
       expect(
         resolvePreviewColumnFocusState(
           layout,
-          peerNestedColumnRef,
+          peerColumnRef,
           null,
           focusedColumnRef,
         ),
       ).toBe("dimmed");
-    });
-  });
-
-  describe("deep nesting: container > container > nested layout > column > container", () => {
-    function buildDeepNestedLayout() {
-      const { layout: beganLayout, containerLocator } =
-        beginContainerRootLayout();
-      let layout = addComponentRowAt(
-        beganLayout,
-        containerLocator,
-        createDefaultComponent("container"),
-      );
-
-      const rootContainer = layout.root.columns[0]?.rows[0];
-      if (
-        !rootContainer ||
-        rootContainer.type !== "component" ||
-        !isContainerComponent(rootContainer.component)
-      ) {
-        throw new Error("Expected root container");
-      }
-
-      const childContainer = rootContainer.component.rows.find(
-        (row) =>
-          row.type === "component" && isContainerComponent(row.component),
-      );
-      if (!childContainer || childContainer.type !== "component") {
-        throw new Error("Expected child container");
-      }
-
-      const { layout: withNested, rowId: nestedRowId } =
-        insertNestedLayoutRowAt(
-          layout,
-          {
-            scope: "container",
-            columnIndex: containerLocator.columnIndex,
-            containerRowId: childContainer.id,
-          },
-          { position: "after" },
-          2,
-        );
-
-      layout = withNested;
-
-      const updatedRootContainer = layout.root.columns[0]?.rows[0];
-      const updatedChildContainer =
-        updatedRootContainer?.type === "component" &&
-        isContainerComponent(updatedRootContainer.component)
-          ? updatedRootContainer.component.rows.find(
-              (row) =>
-                row.type === "component" &&
-                isContainerComponent(row.component) &&
-                row.id === childContainer.id,
-            )
-          : undefined;
-
-      const nestedLayoutRow =
-        updatedChildContainer?.type === "component" &&
-        isContainerComponent(updatedChildContainer.component)
-          ? updatedChildContainer.component.rows.find(
-              (row) => row.type === "nested-layout" && row.id === nestedRowId,
-            )
-          : undefined;
-
-      if (!nestedLayoutRow || nestedLayoutRow.type !== "nested-layout") {
-        throw new Error("Expected nested layout inside child container");
-      }
-
-      layout = addComponentRowAt(
-        layout,
-        {
-          scope: "nested",
-          columnIndex: containerLocator.columnIndex,
-          rowId: nestedRowId,
-          nestedColumnIndex: 0,
-          containerRowId: childContainer.id,
-        },
-        createDefaultComponent("container"),
-      );
-
-      const layoutAfterInnerContainer = layout.root.columns[0]?.rows[0];
-      const childContainerAfterInsert =
-        layoutAfterInnerContainer?.type === "component" &&
-        isContainerComponent(layoutAfterInnerContainer.component)
-          ? layoutAfterInnerContainer.component.rows.find(
-              (row) =>
-                row.type === "component" &&
-                isContainerComponent(row.component) &&
-                row.id === childContainer.id,
-            )
-          : undefined;
-      const nestedLayoutAfterInsert =
-        childContainerAfterInsert?.type === "component" &&
-        isContainerComponent(childContainerAfterInsert.component)
-          ? childContainerAfterInsert.component.rows.find(
-              (row) => row.type === "nested-layout" && row.id === nestedRowId,
-            )
-          : undefined;
-
-      const innerContainer =
-        nestedLayoutAfterInsert?.type === "nested-layout"
-          ? nestedLayoutAfterInsert.columns[0]?.rows.find(
-              (row) =>
-                row.type === "component" && isContainerComponent(row.component),
-            )
-          : undefined;
-      if (!innerContainer || innerContainer.type !== "component") {
-        throw new Error("Expected inner container in nested column 1");
-      }
-
-      layout = addComponentRowAt(
-        layout,
-        {
-          scope: "container",
-          columnIndex: containerLocator.columnIndex,
-          containerRowId: innerContainer.id,
-        },
-        createDefaultComponent("user"),
-      );
-
-      return { layout, nestedRowId, childContainerId: childContainer.id };
-    }
-
-    it("does not dim rows inside a focused nested column when they use container scope", () => {
-      const { layout, nestedRowId } = buildDeepNestedLayout();
-      const tree = buildStructureTree(layout, labels, []);
-
-      const rootContainerNode = tree[0]?.rows[0];
-      const childContainerNode =
-        rootContainerNode?.type === "component"
-          ? rootContainerNode.childRows?.[0]
-          : undefined;
-      const nestedLayoutNode =
-        childContainerNode?.type === "component"
-          ? childContainerNode.childRows?.find(
-              (row) => row.type === "nested-layout",
-            )
-          : undefined;
-      const nestedColumnNode =
-        nestedLayoutNode?.type === "nested-layout"
-          ? nestedLayoutNode.columns[0]
-          : undefined;
-      const innerContainerNode = nestedColumnNode?.rows.find(
-        (row) => row.type === "component" && row.kind === "container",
-      );
-      const userNode =
-        innerContainerNode?.type === "component"
-          ? innerContainerNode.childRows?.[0]
-          : undefined;
-
-      if (
-        !nestedLayoutNode ||
-        nestedLayoutNode.type !== "nested-layout" ||
-        !innerContainerNode ||
-        innerContainerNode.type !== "component" ||
-        !userNode ||
-        userNode.type !== "component"
-      ) {
-        throw new Error("Expected deep nested structure nodes");
-      }
-
-      const focusedColumnRef = {
-        rootColumnIndex: 0,
-        nestedParentRowId: nestedRowId,
-        nestedColumnIndex: 0,
-      };
-      const innerContainerRef = toComponentRowRef(
-        innerContainerNode.rowId,
-        innerContainerNode.locator,
-      );
-      const userRef = toComponentRowRef(userNode.rowId, userNode.locator);
-
-      expect(userRef.locator.scope).toBe("container");
-      expect(
-        resolvePreviewRowFocusState(
-          layout,
-          innerContainerRef,
-          null,
-          focusedColumnRef,
-        ),
-      ).toBe("none");
-      expect(
-        resolvePreviewRowFocusState(layout, userRef, null, focusedColumnRef),
-      ).toBe("none");
-      expect(
-        resolvePreviewColumnFocusState(layout, focusedColumnRef, userRef, null),
-      ).toBe("none");
-    });
-
-    it("focuses container-scoped rows inside nested columns without ancestor dim overlays", () => {
-      const { layout, nestedRowId } = buildDeepNestedLayout();
-      const tree = buildStructureTree(layout, labels, []);
-
-      const rootContainerNode = tree[0]?.rows[0];
-      const childContainerNode =
-        rootContainerNode?.type === "component"
-          ? rootContainerNode.childRows?.[0]
-          : undefined;
-      const nestedLayoutNode =
-        childContainerNode?.type === "component"
-          ? childContainerNode.childRows?.find(
-              (row) => row.type === "nested-layout",
-            )
-          : undefined;
-      const nestedColumnNode =
-        nestedLayoutNode?.type === "nested-layout"
-          ? nestedLayoutNode.columns[0]
-          : undefined;
-      const innerContainerNode = nestedColumnNode?.rows.find(
-        (row) => row.type === "component" && row.kind === "container",
-      );
-      const userNode =
-        innerContainerNode?.type === "component"
-          ? innerContainerNode.childRows?.[0]
-          : undefined;
-
-      if (
-        !rootContainerNode ||
-        rootContainerNode.type !== "component" ||
-        !childContainerNode ||
-        childContainerNode.type !== "component" ||
-        !nestedLayoutNode ||
-        nestedLayoutNode.type !== "nested-layout" ||
-        !innerContainerNode ||
-        innerContainerNode.type !== "component" ||
-        !userNode ||
-        userNode.type !== "component"
-      ) {
-        throw new Error("Expected deep nested structure nodes");
-      }
-
-      const rootContainerRef = toComponentRowRef(
-        rootContainerNode.rowId,
-        rootContainerNode.locator,
-      );
-      const childContainerRef = toComponentRowRef(
-        childContainerNode.rowId,
-        childContainerNode.locator,
-      );
-      const nestedLayoutRef = toComponentRowRef(
-        nestedLayoutNode.rowId,
-        nestedLayoutNode.locator,
-      );
-      const innerContainerRef = toComponentRowRef(
-        innerContainerNode.rowId,
-        innerContainerNode.locator,
-      );
-      const userRef = toComponentRowRef(userNode.rowId, userNode.locator);
-      const nestedColumnRef = {
-        rootColumnIndex: 0,
-        nestedParentRowId: nestedRowId,
-        nestedColumnIndex: 0,
-      };
-
-      expect(resolvePreviewRowFocusState(layout, userRef, userRef, null)).toBe(
-        "focused",
-      );
-      expect(
-        resolvePreviewRowFocusState(layout, rootContainerRef, userRef, null),
-      ).toBe("none");
-      expect(
-        resolvePreviewRowFocusState(layout, childContainerRef, userRef, null),
-      ).toBe("none");
-      expect(
-        resolvePreviewRowFocusState(layout, nestedLayoutRef, userRef, null),
-      ).toBe("none");
-      expect(
-        resolvePreviewRowFocusState(layout, innerContainerRef, userRef, null),
-      ).toBe("none");
-      expect(
-        resolvePreviewColumnFocusState(layout, nestedColumnRef, userRef, null),
-      ).toBe("none");
-    });
-
-    it("focuses direct nested-column rows even when the column is selected", () => {
-      const { layout, nestedRowId } = buildDeepNestedLayout();
-      const tree = buildStructureTree(layout, labels, []);
-      const rootContainerNode = tree[0]?.rows[0];
-      const childContainerNode =
-        rootContainerNode?.type === "component"
-          ? rootContainerNode.childRows?.[0]
-          : undefined;
-      const nestedLayoutNode =
-        childContainerNode?.type === "component"
-          ? childContainerNode.childRows?.find(
-              (row) => row.type === "nested-layout",
-            )
-          : undefined;
-      const directContainerNode =
-        nestedLayoutNode?.type === "nested-layout"
-          ? nestedLayoutNode.columns[0]?.rows.find(
-              (row) => row.type === "component" && row.kind === "container",
-            )
-          : undefined;
-
-      if (!directContainerNode || directContainerNode.type !== "component") {
-        throw new Error("Expected direct container row in column 1");
-      }
-
-      const focusedColumnRef = {
-        rootColumnIndex: 0,
-        nestedParentRowId: nestedRowId,
-        nestedColumnIndex: 0,
-      };
-      const directContainerRef = toComponentRowRef(
-        directContainerNode.rowId,
-        directContainerNode.locator,
-      );
-
-      expect(directContainerRef.locator.scope).toBe("nested");
-      expect(
-        resolvePreviewRowFocusState(
-          layout,
-          directContainerRef,
-          directContainerRef,
-          focusedColumnRef,
-        ),
-      ).toBe("focused");
-      expect(
-        resolvePreviewColumnFocusState(
-          layout,
-          focusedColumnRef,
-          directContainerRef,
-          focusedColumnRef,
-        ),
-      ).toBe("none");
     });
   });
 });

@@ -2,7 +2,7 @@
 
 Card grid using `listItem` UiLayoutDocument per record.
 
-Set `listViewType: "card"`. Layout uses display components only. Prefer root → single nested-layout row → inner columns (see `ui.layout.base` card pattern).
+Set `listViewType: "card"`. Default preset: `card-list`. Layout uses display components only. Prefer root → container → grid with two tracks (see `ui.layout.base` card pattern).
 
 ## Allowed component kinds
 - `text`
@@ -46,80 +46,91 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
                   "kind": "container",
                   "rows": [
                     {
-                      "type": "nested-layout",
-                      "id": "nested-example",
-                      "columnCount": 2,
-                      "columns": [
-                        {
-                          "id": "col-example",
-                          "rows": [
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "name"
-                                },
-                                "label": {
-                                  "show": true
-                                }
-                              }
-                            },
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "status"
-                                },
-                                "label": {
-                                  "show": true
-                                }
-                              }
-                            },
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "amount"
-                                },
-                                "label": {
-                                  "show": true
-                                }
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "id": "col-example",
-                          "rows": [
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "name"
-                                },
-                                "styles": [
-                                  {
-                                    "property": "fontWeight",
-                                    "value": "bold"
+                      "type": "component",
+                      "id": "row-example",
+                      "component": {
+                        "kind": "grid",
+                        "gridTemplateColumns": "minmax(0, 2fr) minmax(0, 1fr)",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "name"
+                                    },
+                                    "label": {
+                                      "show": true
+                                    }
                                   }
-                                ]
-                              }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "status"
+                                    },
+                                    "label": {
+                                      "show": true
+                                    }
+                                  }
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "amount"
+                                    },
+                                    "label": {
+                                      "show": true
+                                    }
+                                  }
+                                }
+                              ]
                             }
-                          ]
-                        }
-                      ]
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "name"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
                     }
                   ]
                 }
@@ -152,52 +163,63 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
                         "kind": "container",
                         "rows": [
                           {
-                            "type": "nested-layout",
-                            "id": "nested-example",
-                            "columnCount": 2,
-                            "columns": [
-                              {
-                                "id": "col-example",
-                                "rows": [
-                                  {
-                                    "type": "component",
-                                    "id": "row-example",
-                                    "component": {
-                                      "kind": "text",
-                                      "primary": {
-                                        "type": "field",
-                                        "path": "name"
-                                      },
-                                      "label": {
-                                        "show": true
-                                      }
-                                    }
-                                  }
-                                ]
-                              },
-                              {
-                                "id": "col-example",
-                                "rows": [
-                                  {
-                                    "type": "component",
-                                    "id": "row-example",
-                                    "component": {
-                                      "kind": "text",
-                                      "primary": {
-                                        "type": "field",
-                                        "path": "name"
-                                      },
-                                      "styles": [
-                                        {
-                                          "property": "fontWeight",
-                                          "value": "bold"
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "grid",
+                              "gridTemplateColumns": "repeat(2, 1fr)",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "name"
+                                          },
+                                          "label": {
+                                            "show": true
+                                          }
                                         }
-                                      ]
-                                    }
+                                      }
+                                    ]
                                   }
-                                ]
-                              }
-                            ]
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "name"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
                           }
                         ]
                       }
@@ -227,52 +249,63 @@ Set `listViewType: "card"`. Layout uses display components only. Prefer root →
                     "kind": "container",
                     "rows": [
                       {
-                        "type": "nested-layout",
-                        "id": "nested-example",
-                        "columnCount": 2,
-                        "columns": [
-                          {
-                            "id": "col-example",
-                            "rows": [
-                              {
-                                "type": "component",
-                                "id": "row-example",
-                                "component": {
-                                  "kind": "text",
-                                  "primary": {
-                                    "type": "field",
-                                    "path": "name"
-                                  },
-                                  "label": {
-                                    "show": true
-                                  }
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "id": "col-example",
-                            "rows": [
-                              {
-                                "type": "component",
-                                "id": "row-example",
-                                "component": {
-                                  "kind": "text",
-                                  "primary": {
-                                    "type": "field",
-                                    "path": "name"
-                                  },
-                                  "styles": [
-                                    {
-                                      "property": "fontWeight",
-                                      "value": "bold"
+                        "type": "component",
+                        "id": "row-example",
+                        "component": {
+                          "kind": "grid",
+                          "gridTemplateColumns": "repeat(2, 1fr)",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "container",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "label": {
+                                        "show": true
+                                      }
                                     }
-                                  ]
-                                }
+                                  }
+                                ]
                               }
-                            ]
-                          }
-                        ]
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "container",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "styles": [
+                                        {
+                                          "property": "fontWeight",
+                                          "value": "bold"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
                       }
                     ]
                   }

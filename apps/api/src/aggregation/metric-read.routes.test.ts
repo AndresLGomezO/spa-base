@@ -121,12 +121,14 @@ describe("metric read routes", () => {
       authState.tenantId,
       {
         name: "Spend by category",
+        computationMode: "aggregated",
         sourceModel: "transaction",
         filters: [],
         groupBy: ["month"],
         dimensions: ["categoryId"],
         dateFieldGranularity: {},
         valueDisplayFormat: "number",
+        parameters: [],
         aggregations: [{ field: "amount", operation: "SUM" }],
         schemaVersionDependency: 1,
         fieldsDependency: ["amount", "month", "categoryId"],
@@ -325,5 +327,204 @@ describe("metric read routes", () => {
 
     expect(response.statusCode).toBe(200);
     expect(response.json().data.values.sum_amount).toBe(99);
+  });
+
+  it("evaluates a computed percentChange metric", async () => {
+    const incomeMetric = await metricDefinitionRepository.create(
+      authState.tenantId,
+      {
+        name: "Income by Month",
+        computationMode: "aggregated",
+        sourceModel: "transaction",
+        filters: [],
+        groupBy: [],
+        dimensions: ["date"],
+        dateFieldGranularity: { date: "month" },
+        valueDisplayFormat: "currency",
+        parameters: [],
+        aggregations: [{ field: "amount", operation: "SUM" }],
+        schemaVersionDependency: 1,
+        fieldsDependency: ["amount", "date"],
+        status: "ACTIVE",
+        version: 1,
+      },
+    );
+
+    const momMetric = await metricDefinitionRepository.create(
+      authState.tenantId,
+      {
+        name: "Income MoM %",
+        computationMode: "computed",
+        sourceModel: "transaction",
+        filters: [],
+        groupBy: [],
+        dimensions: [],
+        dateFieldGranularity: {},
+        valueDisplayFormat: "percent",
+        parameters: [
+          {
+            name: "currentPeriod",
+            valueType: "dateBucket",
+            granularity: "month",
+          },
+          {
+            name: "comparisonPeriod",
+            valueType: "dateBucket",
+            granularity: "month",
+            deriveFrom: {
+              parameter: "currentPeriod",
+              shift: { unit: "month", offset: -1 },
+            },
+          },
+        ],
+        computation: {
+          type: "percentChange",
+          current: {
+            type: "metricRef",
+            metricDefinitionId: incomeMetric.id,
+            parameterMap: { date: "currentPeriod" },
+          },
+          baseline: {
+            type: "metricRef",
+            metricDefinitionId: incomeMetric.id,
+            parameterMap: { date: "comparisonPeriod" },
+          },
+        },
+        aggregations: [{ operation: "COUNT" }],
+        schemaVersionDependency: 1,
+        fieldsDependency: [],
+        status: "ACTIVE",
+        version: 1,
+      },
+    );
+
+    const incomeDefinition = (await metricDefinitionRepository.getById(
+      authState.tenantId,
+      incomeMetric.id,
+    ))!;
+
+    for (const [period, amount] of [
+      ["2026-06", 1100],
+      ["2026-05", 1000],
+    ] as const) {
+      const docId = buildMetricDocId(authState.uid, {}, { date: period });
+      await metricValueRepository.applyIncrements(
+        authState.tenantId,
+        incomeDefinition.target.collection,
+        docId,
+        {
+          userId: authState.uid,
+          group: {},
+          dimensions: { date: period },
+          increments: { sum_amount: amount },
+        },
+      );
+    }
+
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: `/api/metrics/${momMetric.id}/evaluate`,
+      headers: authHeaders,
+      payload: { parameters: { currentPeriod: "2026-06" } },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data.values.primary).toBeCloseTo(0.1);
+  });
+
+  it("returns empty values when computed metric inputs are missing", async () => {
+    const incomeMetric = await metricDefinitionRepository.create(
+      authState.tenantId,
+      {
+        name: "Invested by Month",
+        computationMode: "aggregated",
+        sourceModel: "transaction",
+        filters: [],
+        groupBy: [],
+        dimensions: ["date"],
+        dateFieldGranularity: { date: "month" },
+        valueDisplayFormat: "currency",
+        parameters: [],
+        aggregations: [{ field: "amount", operation: "SUM" }],
+        schemaVersionDependency: 1,
+        fieldsDependency: ["amount", "date"],
+        status: "ACTIVE",
+        version: 1,
+      },
+    );
+
+    const momMetric = await metricDefinitionRepository.create(
+      authState.tenantId,
+      {
+        name: "Invested MoM %",
+        computationMode: "computed",
+        sourceModel: "transaction",
+        filters: [],
+        groupBy: [],
+        dimensions: [],
+        dateFieldGranularity: {},
+        valueDisplayFormat: "percent",
+        parameters: [
+          {
+            name: "currentPeriod",
+            valueType: "dateBucket",
+            granularity: "month",
+          },
+          {
+            name: "comparisonPeriod",
+            valueType: "dateBucket",
+            granularity: "month",
+            deriveFrom: {
+              parameter: "currentPeriod",
+              shift: { unit: "month", offset: -1 },
+            },
+          },
+        ],
+        computation: {
+          type: "percentChange",
+          current: {
+            type: "metricRef",
+            metricDefinitionId: incomeMetric.id,
+            parameterMap: { date: "currentPeriod" },
+          },
+          baseline: {
+            type: "metricRef",
+            metricDefinitionId: incomeMetric.id,
+            parameterMap: { date: "comparisonPeriod" },
+          },
+        },
+        aggregations: [{ operation: "COUNT" }],
+        schemaVersionDependency: 1,
+        fieldsDependency: [],
+        status: "ACTIVE",
+        version: 1,
+      },
+    );
+
+    const server = await buildTestServer();
+    const response = await server.inject({
+      method: "POST",
+      url: `/api/metrics/${momMetric.id}/evaluate`,
+      headers: authHeaders,
+      payload: { parameters: { currentPeriod: "2026-06" } },
+    });
+
+    expect(response.statusCode).toBe(200);
+    expect(response.json().data.values).toEqual({});
+  });
+
+  it("rejects evaluate for aggregated metrics", async () => {
+    const server = await buildTestServer();
+
+    const response = await server.inject({
+      method: "POST",
+      url: `/api/metrics/${metricDefinitionId}/evaluate`,
+      headers: authHeaders,
+      payload: { parameters: {} },
+    });
+
+    expect(response.statusCode).toBe(400);
+    expect(response.json().error.code).toBe("VALIDATION_ERROR");
   });
 });

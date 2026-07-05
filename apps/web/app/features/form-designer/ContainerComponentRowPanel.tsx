@@ -8,6 +8,7 @@ import {
 } from "@repo/ui-builder-react";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
 import {
+  isContainerComponent,
   isRowHolderComponent,
   type ComponentRowNode,
   type DesignSurface,
@@ -68,13 +69,18 @@ export function ContainerComponentRowPanel({
           onChange={(name) => binding.updateRowMeta(rowRef, { name })}
         />
         {extraControls}
-        <ColumnStackDirectionEditor
-          stackDirection={container.stackDirection}
-          onChange={(stackDirection) =>
-            binding.updateComponent(rowRef, { ...container, stackDirection })
-          }
-          labels={labels.stackDirection}
-        />
+        {isContainerComponent(container) ? (
+          <ColumnStackDirectionEditor
+            stackDirection={container.stackDirection}
+            onChange={(stackDirection) =>
+              binding.updateComponent(rowRef, {
+                ...container,
+                stackDirection,
+              })
+            }
+            labels={labels.stackDirection}
+          />
+        ) : null}
         <ComponentDisplayRangeEditor
           displayFrom={row.displayFrom}
           displayTo={row.displayTo}

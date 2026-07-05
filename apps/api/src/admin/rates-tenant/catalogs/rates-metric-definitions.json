@@ -126,7 +126,35 @@
           "value": ["EXPENSE", "PAYMENT"]
         }
       ],
-      "groupBy": ["type"],
+      "groupBy": [],
+      "dimensions": ["date"],
+      "dateFieldGranularity": {
+        "date": "month"
+      },
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["amount", "type", "date"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Invested by Month",
+      "description": "Sum of investment transactions bucketed by calendar month on date.",
+      "sourceModel": "transaction",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "amount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "type",
+          "op": "eq",
+          "value": "INVESTMENT"
+        }
+      ],
+      "groupBy": [],
       "dimensions": ["date"],
       "dateFieldGranularity": {
         "date": "month"
@@ -572,6 +600,296 @@
       "version": 1,
       "schemaVersionDependency": 0,
       "fieldsDependency": ["status", "flowKind"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Total Balance by Month",
+      "description": "Sum of balance snapshot amounts bucketed by calendar month on date.",
+      "sourceModel": "balanceSnapshot",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "balance"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": ["date"],
+      "dateFieldGranularity": {
+        "date": "month"
+      },
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["balance", "date"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Net Balance by Month",
+      "description": "Income minus outflows for a selected month bucket.",
+      "computationMode": "computed",
+      "sourceModel": "transaction",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        }
+      ],
+      "computation": {
+        "type": "difference",
+        "current": {
+          "type": "metricRef",
+          "metricDefinitionId": "Income by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        },
+        "baseline": {
+          "type": "metricRef",
+          "metricDefinitionId": "Outflows by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Income MoM %",
+      "description": "Month-over-month percent change for income.",
+      "computationMode": "computed",
+      "sourceModel": "transaction",
+      "parameters": [
+        {
+          "name": "currentPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        },
+        {
+          "name": "comparisonPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "deriveFrom": {
+            "parameter": "currentPeriod",
+            "shift": {
+              "unit": "month",
+              "offset": -1
+            }
+          }
+        }
+      ],
+      "computation": {
+        "type": "percentChange",
+        "current": {
+          "type": "metricRef",
+          "metricDefinitionId": "Income by Month",
+          "parameterMap": {
+            "date": "currentPeriod"
+          }
+        },
+        "baseline": {
+          "type": "metricRef",
+          "metricDefinitionId": "Income by Month",
+          "parameterMap": {
+            "date": "comparisonPeriod"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "percent",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Outflows MoM %",
+      "description": "Month-over-month percent change for outflows.",
+      "computationMode": "computed",
+      "sourceModel": "transaction",
+      "parameters": [
+        {
+          "name": "currentPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        },
+        {
+          "name": "comparisonPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "deriveFrom": {
+            "parameter": "currentPeriod",
+            "shift": {
+              "unit": "month",
+              "offset": -1
+            }
+          }
+        }
+      ],
+      "computation": {
+        "type": "percentChange",
+        "current": {
+          "type": "metricRef",
+          "metricDefinitionId": "Outflows by Month",
+          "parameterMap": {
+            "date": "currentPeriod"
+          }
+        },
+        "baseline": {
+          "type": "metricRef",
+          "metricDefinitionId": "Outflows by Month",
+          "parameterMap": {
+            "date": "comparisonPeriod"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "percent",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Invested MoM %",
+      "description": "Month-over-month percent change for invested amount.",
+      "computationMode": "computed",
+      "sourceModel": "transaction",
+      "parameters": [
+        {
+          "name": "currentPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        },
+        {
+          "name": "comparisonPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "deriveFrom": {
+            "parameter": "currentPeriod",
+            "shift": {
+              "unit": "month",
+              "offset": -1
+            }
+          }
+        }
+      ],
+      "computation": {
+        "type": "percentChange",
+        "current": {
+          "type": "metricRef",
+          "metricDefinitionId": "Invested by Month",
+          "parameterMap": {
+            "date": "currentPeriod"
+          }
+        },
+        "baseline": {
+          "type": "metricRef",
+          "metricDefinitionId": "Invested by Month",
+          "parameterMap": {
+            "date": "comparisonPeriod"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "percent",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Total Balance MoM %",
+      "description": "Month-over-month percent change for net balance.",
+      "computationMode": "computed",
+      "sourceModel": "transaction",
+      "parameters": [
+        {
+          "name": "currentPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        },
+        {
+          "name": "comparisonPeriod",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "deriveFrom": {
+            "parameter": "currentPeriod",
+            "shift": {
+              "unit": "month",
+              "offset": -1
+            }
+          }
+        }
+      ],
+      "computation": {
+        "type": "percentChange",
+        "current": {
+          "type": "metricRef",
+          "metricDefinitionId": "Net Balance by Month",
+          "parameterMap": {
+            "period": "currentPeriod"
+          }
+        },
+        "baseline": {
+          "type": "metricRef",
+          "metricDefinitionId": "Net Balance by Month",
+          "parameterMap": {
+            "period": "comparisonPeriod"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "percent",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
       "status": "ACTIVE"
     }
   ]

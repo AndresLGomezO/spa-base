@@ -135,14 +135,14 @@ function walkSkeletonComponents(
     const component = components[index]!;
     const componentPath = `${context.prefix}/${index}`;
 
-    if (component.kind === "nested-layout") {
-      const columns = component.columns ?? [];
+    if (component.kind === "grid" || component.kind === "nested-layout") {
+      const tracks = component.tracks ?? component.columns ?? [];
       if (context.depth >= MAX_NESTED_DEPTH) {
         continue;
       }
-      for (let colIndex = 0; colIndex < columns.length; colIndex++) {
+      for (let colIndex = 0; colIndex < tracks.length; colIndex++) {
         walkSkeletonComponents(
-          columns[colIndex]!.components,
+          tracks[colIndex]!.components,
           {
             pathKey: context.pathKey,
             prefix: `${componentPath}/col${colIndex}`,

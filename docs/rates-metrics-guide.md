@@ -6,7 +6,7 @@ End-to-end guide for metrics on the **`rates` dev tenant**: seeded definitions, 
 
 ## 1. Core concepts
 
-A **metric definition** tells the aggregation engine which entity to watch (`sourceModel`), what to compute (`aggregations`), and how to slice rows (`groupBy`, `dimensions`). Pre-aggregated results are read in O(1) by KPI and Series widgets.
+A **metric definition** tells the aggregation engine which entity to watch (`sourceModel`), what to compute (`aggregations`), and how to slice rows (`groupBy`, `dimensions`). Optionally, population can be scoped to a **saved custom query** (`sourceQueryDefinitionId`) instead of metric-level `filters[]`. Pre-aggregated results are read in O(1) by KPI and Series widgets.
 
 **Catalog location:** [`apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-metric-definitions.json) (20 metrics, seeded on API startup).
 
@@ -84,6 +84,8 @@ See [metrics-consumption.md](./metrics-consumption.md) for binding shapes and AP
 ## 6. Saved queries (companion layer)
 
 35 saved queries in [`rates-query-definitions.json`](../apps/api/src/admin/rates-tenant/catalogs/rates-query-definitions.json) power list views: Upcoming payments, Active commitments, Income this month, By property, etc. Wire via **query-viewer** widgets in Design layout.
+
+You can also use **ACTIVE** queries with `limitMode: "all"` as metric population sources (`sourceQueryDefinitionId` in Settings → Metrics) instead of duplicating filters on the metric. The seeded rates metric catalog uses entity-level `filters[]` today; query-backed metrics are optional for new definitions.
 
 ---
 

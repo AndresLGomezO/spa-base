@@ -18,6 +18,7 @@
   },
   "dependencies": {
     "@repo/entities": "workspace:*",
+    "@repo/metrics-engine": "workspace:*",
     "zod": "catalog:"
   },
   "devDependencies": {

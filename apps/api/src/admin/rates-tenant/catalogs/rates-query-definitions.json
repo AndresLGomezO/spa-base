@@ -150,8 +150,9 @@
             "field": "dueDate",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -159,8 +160,9 @@
             "field": "dueDate",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           }
         ]
@@ -173,7 +175,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "dueDate"
+        }
+      ]
     },
     {
       "name": "Paid this month",
@@ -196,8 +206,9 @@
             "field": "dueDate",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -205,8 +216,9 @@
             "field": "dueDate",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           }
         ]
@@ -219,7 +231,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "dueDate"
+        }
+      ]
     },
     {
       "name": "Active commitments",
@@ -270,8 +290,9 @@
             "field": "nextDueDate",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -279,8 +300,9 @@
             "field": "nextDueDate",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           }
         ]
@@ -293,7 +315,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "nextDueDate"
+        }
+      ]
     },
     {
       "name": "Past due commitments",
@@ -1044,8 +1074,9 @@
             "field": "date",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -1053,8 +1084,9 @@
             "field": "date",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           }
         ]
@@ -1067,7 +1099,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ]
     },
     {
       "name": "Income this month",
@@ -1081,8 +1121,9 @@
             "field": "date",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -1090,8 +1131,9 @@
             "field": "date",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           },
           {
@@ -1113,7 +1155,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ]
     },
     {
       "name": "Expenses this month",
@@ -1127,8 +1177,9 @@
             "field": "date",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -1136,8 +1187,9 @@
             "field": "date",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           },
           {
@@ -1159,7 +1211,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ]
     },
     {
       "name": "Transfers this month",
@@ -1173,8 +1233,9 @@
             "field": "date",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -1182,8 +1243,9 @@
             "field": "date",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           },
           {
@@ -1205,7 +1267,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ]
     },
     {
       "name": "Interest this month",
@@ -1219,8 +1289,9 @@
             "field": "date",
             "operator": ">=",
             "value": {
-              "type": "temporal",
-              "preset": "startOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
             }
           },
           {
@@ -1228,8 +1299,9 @@
             "field": "date",
             "operator": "<=",
             "value": {
-              "type": "temporal",
-              "preset": "endOfMonth"
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
             }
           },
           {
@@ -1251,7 +1323,15 @@
       ],
       "limitMode": "topN",
       "limit": 100,
-      "status": "ACTIVE"
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ]
     },
     {
       "name": "Accounts by balance",

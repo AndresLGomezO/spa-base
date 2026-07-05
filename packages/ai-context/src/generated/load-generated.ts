@@ -37,6 +37,22 @@ import {
   buildUiStyleLayersAtom,
   UI_STYLE_LAYERS_ATOM_ID,
 } from "../atoms/ui/style-layers.js";
+import {
+  buildUiDesignHandbookRouterAtom,
+  UI_DESIGN_HANDBOOK_ROUTER_ATOM_ID,
+} from "../atoms/ui/design-handbook-router.js";
+import {
+  buildUiImportScopesAtom,
+  UI_IMPORT_SCOPES_ATOM_ID,
+} from "../atoms/ui/import-scopes.js";
+import {
+  buildUiPersistenceKeysAtom,
+  UI_PERSISTENCE_KEYS_ATOM_ID,
+} from "../atoms/ui/persistence-keys.js";
+import {
+  buildUiPresetsPlatformAtom,
+  UI_PRESETS_PLATFORM_ATOM_ID,
+} from "../atoms/ui/platform-presets.js";
 
 export interface AiContextManifest {
   readonly versionHash: string;
@@ -81,6 +97,10 @@ export function getStaticAtomFragments(): Record<string, string> {
     [UI_STYLE_RULES_ATOM_ID]: buildUiStyleRulesAtom(),
     [UI_CONDITIONAL_STYLES_ATOM_ID]: buildUiConditionalStylesAtom(),
     [UI_METRIC_BINDINGS_ATOM_ID]: buildUiMetricBindingsAtom(),
+    [UI_PRESETS_PLATFORM_ATOM_ID]: buildUiPresetsPlatformAtom(),
+    [UI_IMPORT_SCOPES_ATOM_ID]: buildUiImportScopesAtom(),
+    [UI_PERSISTENCE_KEYS_ATOM_ID]: buildUiPersistenceKeysAtom(),
+    [UI_DESIGN_HANDBOOK_ROUTER_ATOM_ID]: buildUiDesignHandbookRouterAtom(),
   };
 }
 

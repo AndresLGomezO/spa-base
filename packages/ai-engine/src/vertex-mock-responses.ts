@@ -206,7 +206,7 @@ export function buildMockUiBuilderStepAnswer(
       return JSON.stringify({
         components: [
           {
-            kind: "nested-layout",
+            kind: "grid",
             columnCount: 2,
             columns: [
               {

@@ -4,6 +4,26 @@ import type {
   SerializableEntityDefinition,
   ViewConfig,
 } from "@repo/entities";
+import { deriveListPresentationFromLayout } from "@repo/ui-builder-core";
+
+export type ListPresentationKind = "table" | "card" | "expandableTable";
+
+function resolveListPresentation(
+  definition: SerializableEntityDefinition,
+): ListPresentationKind {
+  if (definition.ui.listItem) {
+    return deriveListPresentationFromLayout(definition.ui.listItem);
+  }
+
+  const listViewType = definition.ui.listViewType;
+  if (listViewType === "card") {
+    return "card";
+  }
+  if (listViewType === "expandableTable") {
+    return "expandableTable";
+  }
+  return "table";
+}
 
 function isExpandableTableView(
   view: ViewConfig,
@@ -93,7 +113,7 @@ export function getExpandableTableShowActions(
 export function getListToolbarFields(
   definition: SerializableEntityDefinition,
 ): readonly string[] {
-  const presentation = definition.ui.listViewType ?? "table";
+  const presentation = resolveListPresentation(definition);
   if (presentation === "expandableTable") {
     try {
       return [...resolveExpandableTableView(definition).fields];
@@ -152,3 +172,5 @@ export function getViewFilters(
 ) {
   return resolveActiveView(definition, viewName).filters ?? [];
 }
+
+export { resolveListPresentation };

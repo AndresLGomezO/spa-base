@@ -416,14 +416,10 @@
     "tabs": {
       "ariaLabel": "Secciones del diseñador de formularios",
       "settings": "Configuración",
-      "layout": "Layout",
       "components": "Componentes"
     },
     "layout": {
       "rootLayoutPanelTitle": "Propiedades del layout",
-      "rootLayoutPanel": {
-        "open": "Editar propiedades del layout"
-      },
       "columnPanelTitle": "Columna {{column}}",
       "columnPanel": {
         "jsonTitleColumn": "Importar JSON de columna",
@@ -437,9 +433,6 @@
           "import": "Importar"
         }
       },
-      "moveColumnLeft": "Mover columna a la izquierda",
-      "moveColumnRight": "Mover columna a la derecha",
-      "removeColumn": "Eliminar columna {{column}}",
       "selectColumn": "Editar columna {{column}}"
     },
     "components": {
@@ -447,7 +440,8 @@
       "expandPanel": "Expandir panel de estructura",
       "collapsePanel": "Contraer panel de estructura",
       "emptyColumn": "Aún no hay componentes en esta columna.",
-      "nestedLayout": "Diseño anidado ({{count}} columnas)",
+      "gridLayout": "Cuadrícula ({{count}} pistas)",
+      "gridTrack": "Pista {{track}}",
       "container": "Contenedor",
       "section": "Sección",
       "actions": "Acciones",
@@ -459,6 +453,7 @@
       "modalCancel": "Cancelar",
       "importSectionTitle": "Importar",
       "importJsonOption": "Importar JSON",
+      "templatesSectionTitle": "Plantillas",
       "wizardScopeShell": "Carcasa",
       "wizardScopeStep": "Contenido del paso",
       "wizardScopeFooter": "Pie",
@@ -500,7 +495,6 @@
         "dataControls": "Búsqueda y filtros"
       },
       "options": {
-        "nestedLayout": "Columna anidada",
         "text": "Texto",
         "image": "Imagen",
         "icon": "Icono",
@@ -543,7 +537,6 @@
     "unsavedChanges": {
       "title": "Cambios sin guardar",
       "message": "Tienes cambios de configuración sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
-      "layoutMessage": "Tienes cambios de layout sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
       "componentsMessage": "Tienes cambios de componentes sin guardar. Guárdalos antes de salir de esta pestaña o descártalos.",
       "columnPanelMessage": "Tienes cambios sin guardar en la columna. Guárdalos para conservar tus ediciones o descártalos para revertir.",
       "columnPanelSave": "Guardar cambios de columna",
@@ -801,8 +794,7 @@
     "settings": "Configuración",
     "tabs": {
       "settings": "Configuración",
-      "columns": "Columnas",
-      "layout": "Layout",
+      "design": "Diseño",
       "groupedColumns": "Columnas agrupadas",
       "expandedRow": "Fila expandida",
       "ariaLabel": "Secciones del diseñador de lista de ítems"
@@ -854,10 +846,25 @@
   "forms": {
     "stepIndicator": "Paso {{step}} de {{total}}"
   },
+  "unifiedBuilder": {
+    "preview": {
+      "screenHint": "Vista previa de pantalla responsive",
+      "constraintHint": "Vista previa del componente dentro de restricciones de ancho",
+      "width": "Ancho",
+      "device": "Dispositivo",
+      "devices": {
+        "mobile": "Móvil",
+        "tablet": "Tablet",
+        "desktop": "Escritorio"
+      }
+    },
+    "properties": {
+      "ariaLabel": "Propiedades"
+    }
+  },
   "designLayout": {
     "forbidden": "No tienes permiso para configurar layouts de entidades.",
     "readOnly": "Puedes previsualizar este layout pero necesitas permiso de override de UI para guardar cambios.",
-    "presentation": "Presentación",
     "listItemStructure": "Layout de ítem de lista",
     "formModalSize": "Tamaño del modal crear/editar",
     "formModalSizeSm": "Pequeño",
@@ -870,8 +877,6 @@
     "formModalShowHeader": "Mostrar encabezado del modal",
     "formModalFlushContent": "Contenido a ras (sin relleno)",
     "formModalFooterDedicated": "Usar diseño dedicado para el pie del modal",
-    "formPresentationPlain": "Simple",
-    "formPresentationWizard": "Asistente",
     "iconName": "Icono (nombre Lucide)",
     "iconNameHint": "Usa un nombre de icono Lucide, por ejemplo CircleCheck o Database.",
     "structureName": {
@@ -890,7 +895,6 @@
     "removeColumn": "Quitar columna",
     "addTableColumn": "Añadir columna",
     "addTableColumnPlaceholder": "Selecciona un campo…",
-    "presentationExpandableTable": "Tabla expandible",
     "expandableTableColumns": "Columnas agrupadas",
     "expandableTableColumnLabel": "Encabezado de columna",
     "addExpandableTableColumn": "Añadir columna",
@@ -957,23 +961,17 @@
     "presets": {
       "title": "Presets de componentes",
       "description": "Fragmentos de layout reutilizables guardados para este tenant. Aplicar un preset copia su estructura; los cambios posteriores al preset no afectan layouts que ya lo usaron.",
-      "listTitle": "Presets guardados",
-      "detailTitle": "Detalles del preset",
-      "empty": "Aún no hay presets. Guárdalos desde cualquier superficie del UI Builder.",
       "selectHint": "Selecciona un preset para previsualizar o editar.",
       "name": "Nombre",
       "descriptionField": "Descripción",
       "templateJson": "JSON de plantilla",
       "fieldSlotsTitle": "Campos (slots)",
-      "noFieldSlots": "No se requieren mapeos de campos.",
       "save": "Guardar",
       "delete": "Eliminar",
       "saved": "Preset actualizado.",
       "savedToStore": "Preset guardado en la biblioteca.",
       "saveFailed": "No se pudo guardar el preset.",
-      "deleteFailed": "No se pudo eliminar el preset.",
       "deleted": "Preset eliminado.",
-      "loadFailed": "No se pudieron cargar los presets.",
       "saveTrigger": "Guardar preset",
       "saveTitle": "Guardar en biblioteca de presets",
       "insertTrigger": "Insertar preset",
@@ -986,13 +984,70 @@
       "readOnlyHint": "Puedes previsualizar presets, pero necesitas permiso de override de UI de entidad para guardar o aplicarlos.",
       "noPresets": "No hay presets compatibles para este bloque.",
       "slotLabel": "Campo",
-      "slot": "slot",
-      "slots": "slots",
       "kind": {
         "layout-document": "Layout completo",
         "column": "Columna",
+        "grid-track": "Pista de cuadrícula",
         "component-row": "Fila de componente",
         "nested-layout-row": "Fila de layout anidado"
+      },
+      "list": {
+        "title": "Presets",
+        "add": "Agregar preset",
+        "edit": "Editar",
+        "delete": "Eliminar",
+        "expandPanel": "Expandir panel",
+        "collapsePanel": "Contraer panel",
+        "searchPlaceholder": "Buscar presets…",
+        "searchClear": "Limpiar búsqueda",
+        "filter": "Filtrar",
+        "clearFilters": "Limpiar filtros",
+        "removeBadge": "Quitar {{label}}",
+        "filterBySource": "Origen",
+        "sort": "Ordenar",
+        "sortNameAsc": "Nombre (A–Z)",
+        "sortNameDesc": "Nombre (Z–A)",
+        "sortSource": "Origen",
+        "sortUpdatedDesc": "Actualizados recientemente",
+        "sourcePlatform": "Plataforma",
+        "sourceTenant": "Tenant",
+        "emptySource": "No hay presets disponibles.",
+        "emptyFiltered": "Ningún preset coincide con los filtros actuales.",
+        "summary": "{{count}} visibles · {{platform}} plataforma · {{tenant}} tenant",
+        "platformReadOnly": "solo lectura",
+        "kindLabel": "Tipo",
+        "surfaceLabel": "Superficie de diseño",
+        "previewUnavailable": "La vista previa no está disponible para este preset.",
+        "previewEntity": "Vista previa con datos de ejemplo de {{entity}}"
+      },
+      "createTitle": "Crear preset",
+      "deleteTitle": "Eliminar preset",
+      "deleteMessage": "¿Eliminar el preset \"{{name}}\"? Esta acción no se puede deshacer."
+    },
+    "systemPresets": {
+      "label": "Preset de layout",
+      "selectPreset": "Seleccionar preset de layout",
+      "platformGroup": "Plataforma",
+      "tenantGroup": "Tenant",
+      "custom": "Layout personalizado",
+      "default": "predeterminado",
+      "confirmTitle": "¿Reemplazar layout?",
+      "confirmBody": "Aplicar este preset reemplaza la estructura del layout actual. Los cambios de layout sin guardar pueden perderse.",
+      "confirmApply": "Aplicar preset",
+      "tenantPresetTitle": "Aplicar preset del tenant",
+      "builtin": {
+        "plainForm": "Formulario simple",
+        "plainFormDescription": "Formulario de creación/edición predeterminado con campos y acciones.",
+        "plainTableList": "Lista en tabla simple",
+        "plainTableListDescription": "Celda de lista predeterminada con texto de campo etiquetado.",
+        "cardList": "Lista en tarjetas",
+        "cardListDescription": "Layout de tarjeta de dos pistas con acciones.",
+        "expandableTableList": "Fila expandible",
+        "expandableTableListDescription": "Panel de expansión de fila para tablas agrupadas.",
+        "wizardForm": "Formulario asistente",
+        "wizardFormDescription": "Shell de asistente multipaso con progreso y host de pasos.",
+        "kpiStrip": "Franja KPI",
+        "kpiStripDescription": "Fila horizontal de métricas KPI."
       }
     }
   },
@@ -1205,8 +1260,6 @@
       }
     },
     "viewSettings": {
-      "table": "Tabla",
-      "card": "Tarjeta",
       "save": "Guardar diseño",
       "saved": "Configuración de vista guardada.",
       "saveFailed": "No se pudo guardar la configuración de vista.",
@@ -1370,6 +1423,24 @@
       "labelAlignRight": "Derecha",
       "showActions": "Mostrar menú de acciones",
       "layoutColumns": "Columnas del diseño",
+      "gridGap": "Espacio del grid",
+      "gridTemplateColumns": "Plantilla de columnas del grid",
+      "gridTemplateColumnsHint": "Cadena CSS grid-template-columns — un ancho por pista ({{count}} pistas). Valores separados por espacios.",
+      "gridTemplateColumnsPreview": "Por pista: {{preview}}",
+      "gridTemplateColumnsPreviewDynamic": "Por pista: {{preview}} (el número de pistas depende del ancho del contenedor)",
+      "gridTemplateColumnsPreviewFlexible": "Las pistas fr, minmax y % son flexibles — el ancho exacto en px depende del espacio disponible.",
+      "gridTemplateColumnsErrors": {
+        "empty": "Introduce un valor grid-template-columns.",
+        "unbalanced_delimiters": "Paréntesis o corchetes desbalanceados.",
+        "invalid_repeat": "Sintaxis repeat() no válida. Usa repeat(cantidad, tamaño) con cantidad ≥ 1.",
+        "invalid_track": "Tamaño de pista no válido. Usa valores como 1fr, 200px, minmax(200px, 1fr) o repeat(n, tamaño).",
+        "track_count_mismatch": "Define {{defined}} pistas pero Columnas del diseño es {{expected}}."
+      },
+      "gridTemplateColumnsHelp": {
+        "title": "Plantilla de columnas del grid",
+        "description": "Un valor CSS grid-template-columns: una expresión de tamaño por pista de columna, separadas por espacios. Usa fr para proporciones flexibles, px o rem para anchos fijos, y minmax(mín, máx) para límites. repeat(n, tamaño) expande n pistas idénticas. Columnas del diseño define cuántas pistas hay; este campo define el ancho de cada una. Prefiere minmax(0, …fr) en pistas flexibles para evitar desbordes.",
+        "example": "minmax(500px, 600px) repeat(3, 200px) — una columna principal flexible más tres columnas fijas de 200px"
+      },
       "cardsPerRow": "Máximo de tarjetas por fila",
       "columnTab": "Columna {{column}}",
       "columnWidthPercent": "Ancho (%)",
@@ -2104,11 +2175,8 @@
   },
   "metrics": {
     "title": "Métricas",
-    "description": "Define métricas de agregación que se actualizan cuando cambian los registros.",
-    "createTitle": "Crear métrica",
     "create": "Nueva métrica",
     "empty": "Aún no hay definiciones de métricas.",
-    "editTitle": "Editar métrica",
     "version": "Versión",
     "statusValues": {
       "ACTIVE": "Activa",
@@ -2118,6 +2186,11 @@
     "descriptionLabel": "Descripción (opcional)",
     "descriptionPlaceholder": "Qué mide esta métrica y cuándo usarla",
     "sourceModel": "Entidad origen",
+    "sourceTypes": {
+      "entity": "Entidad",
+      "query": "Consulta personalizada"
+    },
+    "selectQuery": "Selecciona una consulta personalizada",
     "operation": "Agregación",
     "operations": {
       "SUM": "Suma",
@@ -2141,7 +2214,6 @@
       "valuePlaceholder": "Introduce un valor",
       "relationPlaceholder": "Introduce el id del registro relacionado",
       "listPlaceholder": "Valores separados por comas",
-      "validationRequired": "Introduce un valor de filtro válido para {{field}}.",
       "operators": {
         "eq": "Igual a",
         "in": "Es uno de"
@@ -2154,14 +2226,8 @@
     "selectField": "Selecciona un campo",
     "selectModelFirst": "Selecciona una entidad origen para elegir campos.",
     "versionLabel": "Versión {{version}}",
-    "runBackfill": "Ejecutar backfill",
     "forbidden": "No tienes permiso para gestionar métricas.",
-    "loadFailed": "No se pudieron cargar las definiciones de métricas.",
-    "saveAction": "Guardar",
     "cancel": "Cancelar",
-    "saving": "Guardando…",
-    "saved": "Métrica guardada.",
-    "saveFailed": "No se pudo guardar la métrica.",
     "json": {
       "viewTrigger": "Ver JSON",
       "importTrigger": "Importar JSON",
@@ -2198,12 +2264,10 @@
         "importFailed": "No se pudo reemplazar el catálogo de métricas."
       }
     },
-    "validationRequired": "Nombre, campo de agregación y dependencias son obligatorios.",
     "dateGranularity": {
       "title": "División de campos de fecha",
       "description": "Elige cómo se agrupa cada campo de fecha al agrupar o guardar dimensiones.",
       "select": "Seleccionar división…",
-      "validationRequired": "Selecciona una división de fecha para {{field}}.",
       "hint": "Formato de bucket almacenado: {{format}}",
       "options": {
         "day": "Día (día, mes y año)",
@@ -2217,12 +2281,126 @@
       }
     },
     "valueDisplayFormat": {
-      "label": "Formato de visualización del resultado",
-      "number": "Número simple",
-      "currency": "Moneda"
+      "label": "Formato de visualización del resultado"
     },
-    "backfillComplete": "Backfill procesó {{count}} registros origen.",
-    "backfillFailed": "Falló el backfill.",
+    "computed": {
+      "sections": {
+        "parameters": "Parámetros",
+        "computation": "Cómputo",
+        "preview": "Vista previa",
+        "display": "Visualización"
+      },
+      "displayHint": "Las métricas calculadas usan una agregación COUNT de marcador de posición. Elige cómo se muestra el resultado evaluado.",
+      "parameters": {
+        "empty": "Aún no hay parámetros definidos.",
+        "itemLabel": "Parámetro {{index}}",
+        "remove": "Quitar parámetro",
+        "name": "Nombre del parámetro",
+        "namePlaceholder": "currentPeriod",
+        "valueType": "Tipo de valor",
+        "granularity": "Granularidad de fecha",
+        "deriveFromEnabled": "Derivar de otro parámetro",
+        "deriveFromSource": "Parámetro origen",
+        "noSourceOptions": "Agrega otro parámetro primero.",
+        "shiftUnit": "Unidad de desplazamiento",
+        "shiftOffset": "Desplazamiento",
+        "add": "Agregar parámetro"
+      },
+      "computation": {
+        "type": "Tipo de cómputo",
+        "current": "Entrada actual",
+        "baseline": "Entrada base",
+        "numerator": "Entrada numerador",
+        "denominator": "Entrada denominador",
+        "expressionInputs": "Entradas con nombre",
+        "noInputs": "Aún no hay entradas definidas.",
+        "inputName": "Nombre de entrada",
+        "removeInput": "Quitar entrada",
+        "addInput": "Agregar entrada",
+        "expressionTokens": "Expresión",
+        "insertInput": "Insertar token de entrada",
+        "insertLiteral": "Insertar literal",
+        "types": {
+          "percentChange": "Cambio porcentual",
+          "difference": "Diferencia",
+          "ratio": "Ratio",
+          "expression": "Expresión"
+        },
+        "tokenTypes": {
+          "input": "Entrada",
+          "literal": "Literal"
+        }
+      },
+      "inputRef": {
+        "parameterMap": "Mapa de parámetros",
+        "parameterMapEmpty": "Aún no hay mapeos de parámetros.",
+        "fieldKey": "Campo o dimensión",
+        "selectParameter": "Seleccionar parámetro…",
+        "removeMapping": "Quitar mapeo",
+        "addMapping": "Agregar mapeo",
+        "type": "Tipo de entrada",
+        "types": {
+          "metricRef": "Referencia de métrica",
+          "queryRef": "Referencia de consulta"
+        },
+        "metricDefinition": "Definición de métrica",
+        "queryDefinition": "Definición de consulta",
+        "aggregationFieldPlaceholder": "amount"
+      },
+      "preview": {
+        "title": "Vista previa del cómputo",
+        "parametersHeading": "Parámetros",
+        "computationHeading": "Cómputo",
+        "noParameters": "(ninguno)",
+        "deriveFrom": "derivar de",
+        "shift": "desplazar"
+      }
+    },
+    "workbench": {
+      "title": "Métricas",
+      "description": "Define métricas agregadas y calculadas en un workbench de árbol.",
+      "loading": "Cargando métricas…",
+      "list": {
+        "title": "Métricas",
+        "add": "Nueva métrica",
+        "expandPanel": "Expandir panel de métricas",
+        "collapsePanel": "Contraer panel de métricas",
+        "emptySource": "Aún no hay definiciones de métricas.",
+        "emptyFiltered": "Ninguna métrica coincide con los filtros actuales.",
+        "filter": "Filtrar",
+        "sort": "Ordenar",
+        "clearFilters": "Limpiar filtros",
+        "removeBadge": "Quitar filtro: {{label}}",
+        "filterBySourceType": "Tipo de origen",
+        "filterByMode": "Modo",
+        "filterByStatus": "Estado",
+        "filterByEntity": "Entidad origen",
+        "summary": "{{count}} {{status}} ({{percent}}%)",
+        "sortNameAsc": "Nombre (A–Z)",
+        "sortNameDesc": "Nombre (Z–A)",
+        "sortSourceModel": "Entidad origen",
+        "sortMode": "Modo",
+        "sortUpdatedDesc": "Actualizadas recientemente",
+        "sourceTypeEntity": "Entidad",
+        "sourceTypeQuery": "Consulta",
+        "modeAggregated": "Agregada",
+        "modeComputed": "Calculada",
+        "searchPlaceholder": "Buscar métricas…",
+        "searchClear": "Limpiar búsqueda"
+      },
+      "settings": {
+        "empty": "Selecciona o crea una métrica para configurarla.",
+        "save": "Guardar",
+        "saved": "Métrica guardada."
+      },
+      "metadata": {
+        "createTitle": "Nueva métrica",
+        "createAction": "Crear",
+        "created": "Métrica creada.",
+        "computationMode": "Modo de métrica",
+        "computedHint": "Configura parámetros y cómputo después de crear la métrica."
+      }
+    },
     "multiselect": {
       "placeholder": "Seleccionar campos…",
       "selectedCount": "{{count}} seleccionados",
@@ -2254,31 +2432,13 @@
         "example": "type = INCOME — solo ingresos; type in EXPENSE, PAYMENT — salidas"
       }
     },
-    "summary": {
-      "title": "Resumen antes de guardar",
-      "whatCreatingNumeric": "{{operation}} de {{field}} en {{model}}",
-      "whatCreatingCount": "Conteo de registros de {{model}}",
-      "description": "Descripción: {{text}}",
-      "whenUpdates": "Se recalcula cuando cambian: {{fields}}",
-      "anyFieldChange": "cualquier campo rastreado",
-      "filters": "Filtros de registro: {{filters}}",
-      "noFilters": "sin filtros (todos los registros)",
-      "groupBy": "Agrupado por: {{fields}}",
-      "noGrouping": "total único (sin agrupación)",
-      "dimensions": "Dimensiones en filas: {{fields}}",
-      "noDimensions": "ninguna",
-      "dateGranularity": "Divisiones de fecha: {{fields}}",
-      "valueDisplayFormat": "Formato del resultado: {{format}}",
-      "storagePathCreate": "Valores en tenants/{tenantId}/metrics/{id-auto}/rows/…",
-      "storagePathEdit": "Valores en tenants/{tenantId}/metrics/{{collection}}/rows/…",
-      "exampleRow": "Ejemplo de fila: {{values}}"
-    },
     "widget": {
       "loading": "Cargando métrica…",
       "error": "No se pudo cargar la métrica",
       "forbidden": "Los valores de métricas no están disponibles para tu rol.",
       "unconfigured": "Selecciona una métrica para este KPI.",
-      "unknown": "No se encontró la definición de la métrica."
+      "unknown": "No se encontró la definición de la métrica.",
+      "noValue": "-"
     },
     "derivedKpi": {
       "defaultLabel": "Métrica derivada",

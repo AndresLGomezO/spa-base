@@ -5,11 +5,12 @@ import type {
 } from "@repo/entities";
 import {
   collectLayoutInputFieldPaths,
-  isContainerComponent,
+  isRowHolderComponent,
   type ColumnNode,
   type RowNode,
   type UiComponentConfig,
   type UiLayoutDocument,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 
 import { getFieldAccessLevel } from "../../hooks/useFieldAccess";
@@ -52,20 +53,13 @@ function walkRows(
   options: CollectRenderedFieldRootsOptions,
 ): void {
   for (const row of rows) {
-    if (row.type === "component") {
-      const component = row.component;
-      if (isContainerComponent(component)) {
-        walkRows(component.rows, options);
-        continue;
-      }
-
-      collectRenderedRootFromComponent(component, options);
+    const component = row.component;
+    if (isRowHolderComponent(component)) {
+      walkRows(component.rows, options);
       continue;
     }
 
-    for (const column of row.columns) {
-      walkColumn(column, options);
-    }
+    collectRenderedRootFromComponent(component, options);
   }
 }
 
@@ -91,7 +85,7 @@ export function collectFormRenderedFieldRoots(options: {
   };
 
   for (const layout of options.layouts) {
-    for (const column of layout.root.columns) {
+    for (const column of resolveLayoutRootColumns(layout)) {
       walkColumn(column, walkOptions);
     }
   }

@@ -5,12 +5,14 @@ import type {
   ViewFilterEntry,
 } from "@repo/ui-builder-core";
 import {
-  isContainerComponent,
   isDashboardSectionComponent,
+  isGridComponent,
+  isRowHolderComponent,
   isViewFilterComponent,
   isViewSearchComponent,
   resolveDashboardDateFilterConfig,
   type DashboardDateFilterConfig,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 import type { RowNode } from "@repo/ui-builder-core";
 import type { DashboardSectionDefinition } from "@repo/entities";
@@ -41,17 +43,26 @@ function walkRows(
 ): void {
   for (const row of rows) {
     if (row.type === "component") {
-      if (isContainerComponent(row.component)) {
+      if (isRowHolderComponent(row.component)) {
+        if (isGridComponent(row.component)) {
+          for (const trackRow of row.component.rows) {
+            if (trackRow.type === "component") {
+              walkRows(
+                isRowHolderComponent(trackRow.component)
+                  ? trackRow.component.rows
+                  : [trackRow],
+                visit,
+              );
+            }
+          }
+          continue;
+        }
+
         walkRows(row.component.rows, visit);
         continue;
       }
 
       visit(row.component);
-      continue;
-    }
-
-    for (const column of row.columns) {
-      walkRows(column.rows, visit);
     }
   }
 }
@@ -60,7 +71,7 @@ function walkLayout(
   layout: UiLayoutDocument,
   visit: (component: UiComponentConfig) => void,
 ): void {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     walkRows(column.rows, visit);
   }
 }

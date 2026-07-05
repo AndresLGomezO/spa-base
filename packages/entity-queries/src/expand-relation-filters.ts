@@ -260,7 +260,9 @@ export function buildExpandedQueryConfig(
   definition: Pick<
     import("./types.js").EntityQueryDefinitionRecord,
     "filter" | "sort" | "select" | "limitMode" | "limit"
-  >,
+  > & {
+    readonly parameters?: readonly import("./types.js").EntityQueryParameter[];
+  },
   expandedFilterTree: FilterNode | null,
   options: BuildQueryConfigOptions = {},
 ): import("./build-query-config.js").ResolvedEntityQueryConfig {
@@ -271,6 +273,7 @@ export function buildExpandedQueryConfig(
       select: definition.select,
       limitMode: definition.limitMode,
       limit: definition.limit,
+      parameters: definition.parameters ?? [],
     },
     options,
   );

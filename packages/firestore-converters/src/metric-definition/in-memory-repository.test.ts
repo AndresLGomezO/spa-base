@@ -7,12 +7,14 @@ describe("createInMemoryMetricDefinitionRepository", () => {
     const repository = createInMemoryMetricDefinitionRepository();
     const base = {
       name: "Loan Total",
+      computationMode: "aggregated" as const,
       sourceModel: "loan",
       filters: [],
       groupBy: [],
       dimensions: [],
       dateFieldGranularity: {},
       valueDisplayFormat: "number" as const,
+      parameters: [],
       aggregations: [{ field: "amount", operation: "SUM" as const }],
       schemaVersionDependency: 1,
       fieldsDependency: ["amount"],

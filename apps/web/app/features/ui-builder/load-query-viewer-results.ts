@@ -13,8 +13,18 @@ interface QueryViewerResults {
 export async function loadQueryViewerResults(
   queryId: string,
   catalogItems: readonly EntityCatalogEntry[],
+  options: {
+    readonly parameterBindings?: Readonly<
+      Record<string, import("@repo/entities").FilterBindingSource>
+    >;
+    readonly context?: import("../../lib/metric-binding-resolution.js").PageFilterContext;
+  } = {},
 ): Promise<QueryViewerResults> {
   const definition = await getEntityQueryDefinition(queryId);
-  const items = await executeEntityQueryDefinition(definition, catalogItems);
+  const items = await executeEntityQueryDefinition(
+    definition,
+    catalogItems,
+    options,
+  );
   return { definition, items };
 }

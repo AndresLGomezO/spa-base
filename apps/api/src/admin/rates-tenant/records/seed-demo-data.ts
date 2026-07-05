@@ -475,6 +475,48 @@ export async function seedRatesDemoRecords(
       balance: 74000,
       accruedInterest: 430,
     },
+    {
+      id: "rd_snap_mortgage_m2",
+      financialItemId: "rd_fi_mortgage",
+      date: priorMonthDate(2),
+      balance: 253500,
+      accruedInterest: 620,
+    },
+    {
+      id: "rd_snap_credit_m2",
+      financialItemId: "rd_fi_credit_card",
+      date: priorMonthDate(2),
+      balance: 3100,
+      accruedInterest: 40,
+    },
+    {
+      id: "rd_snap_savings_m2",
+      financialItemId: "rd_fi_yield_savings",
+      date: priorMonthDate(2),
+      balance: 43800,
+      accruedInterest: 145,
+    },
+    {
+      id: "rd_snap_fiduciary_m2",
+      financialItemId: "rd_fi_fiduciary",
+      date: priorMonthDate(2),
+      balance: 73500,
+      accruedInterest: 410,
+    },
+    {
+      id: "rd_snap_mortgage_m3",
+      financialItemId: "rd_fi_mortgage",
+      date: priorMonthDate(3),
+      balance: 255000,
+      accruedInterest: 600,
+    },
+    {
+      id: "rd_snap_savings_m3",
+      financialItemId: "rd_fi_yield_savings",
+      date: priorMonthDate(3),
+      balance: 43100,
+      accruedInterest: 140,
+    },
   ] as const;
 
   for (const snapshot of balanceSnapshots) {

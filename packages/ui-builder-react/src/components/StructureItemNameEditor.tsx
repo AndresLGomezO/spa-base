@@ -1,5 +1,7 @@
 import type { ReactElement } from "react";
-import { FieldLabel, Input, Text } from "@repo/ui";
+import { FieldLabel, Text } from "@repo/ui";
+
+import { PreservedTextInput } from "./PreservedTextInput.js";
 
 export interface StructureItemNameEditorLabels {
   readonly label: string;
@@ -37,12 +39,12 @@ export function StructureItemNameEditor({
       }
     >
       <FieldLabel htmlFor={id}>{labels.label}</FieldLabel>
-      <Input
+      <PreservedTextInput
         id={id}
         value={name ?? ""}
         placeholder={labels.placeholder}
-        onChange={(event) => {
-          onChange(normalizeStructureItemName(event.target.value));
+        onChange={(nextValue) => {
+          onChange(normalizeStructureItemName(nextValue));
         }}
       />
       <Text className="text-muted-foreground text-xs">{labels.hint}</Text>

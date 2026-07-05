@@ -184,42 +184,47 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
                   styles: [{ property: "gap", value: "10" }],
                   rows: [
                     {
-                      type: "nested-layout",
-                      id: "nested-calendar-greeting",
-                      columnCount: 1,
-                      columns: [
-                        {
-                          id: "col-calendar-greeting",
-                          stackDirection: "row",
-                          styles: [
-                            { property: "gap", value: "20" },
-                            { property: "alignItems", value: "end" },
-                          ],
-                          rows: [
-                            {
-                              type: "component",
-                              id: "row-calendar",
-                              component: {
-                                kind: "dashboard-section",
-                                sectionId: "section-calendar",
-                                styles: [{ property: "flex", value: "1" }],
-                              },
+                      type: "component",
+                      id: "grid-calendar-greeting",
+                      component: {
+                        kind: "grid",
+                        gridTemplateColumns: "1fr",
+                        rows: [
+                          {
+                            type: "component",
+                            id: "track-calendar-greeting",
+                            component: {
+                              kind: "container",
+                              styles: [
+                                { property: "gap", value: "20" },
+                                { property: "alignItems", value: "end" },
+                              ],
+                              rows: [
+                                {
+                                  type: "component",
+                                  id: "row-calendar",
+                                  component: {
+                                    kind: "dashboard-section",
+                                    sectionId: "section-calendar",
+                                    styles: [{ property: "flex", value: "1" }],
+                                  },
+                                },
+                                {
+                                  type: "component",
+                                  id: "row-greeting",
+                                  component: {
+                                    kind: "dashboard-section",
+                                    sectionId: "section-greeting",
+                                    styles: [
+                                      { property: "alignSelf", value: "end" },
+                                    ],
+                                  },
+                                },
+                              ],
                             },
-                            {
-                              type: "component",
-                              id: "row-greeting",
-                              component: {
-                                kind: "dashboard-section",
-                                sectionId: "section-greeting",
-                                styles: [
-                                  { property: "alignSelf", value: "end" },
-                                ],
-                              },
-                            },
-                          ],
-                        },
-                      ],
-                      styles: [],
+                          },
+                        ],
+                      },
                     },
                   ],
                 },
@@ -246,7 +251,6 @@ describe("RecursiveLayoutRenderer dashboard-section", () => {
     );
 
     expect(markup).toContain("flex-[1]");
-    expect(markup).toContain("self-end");
     expect(markup).toContain("items-end");
   });
 

@@ -73,7 +73,7 @@ export function MetricsRowDesignerWidgetsTreePanel() {
       anchor: InsertAnchor,
       row:
         | import("@repo/ui-builder-core").ComponentRowNode
-        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+        | import("@repo/ui-builder-core").ComponentRowNode,
     ) => {
       if (!binding) {
         return;

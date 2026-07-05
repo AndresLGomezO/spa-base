@@ -249,13 +249,42 @@ If JSON files exist under [`.local/tenant-import/`](../../.local/tenant-import/)
 
 The Auth user must already exist in the emulator (sign in once). If the user is missing, personal import is skipped and only the test-user mock data is seeded.
 
-After import, the seed script replays **after-create data hooks** for `loanDetails` (LD-01 loan plans) and non-loan `financialItem` rows (FI-03 bill schedules).
+During seed, if [`.local/tenant-import/generate-schedule-payment-mocks.ts`](../../.local/tenant-import/generate-schedule-payment-mocks.ts) exists, the seed runs it to build historical **payment schedules**, **transactions**, and **balance snapshots** from your imported definitions (2022 default start, or loan `originationDate`). Output is written to [`.local/tenant-import/generated/`](../../.local/tenant-import/generated/) and imported automatically:
 
-Generate import JSON from [`tenant-data.yaml`](../../.local/tenant-import/tenant-data.yaml):
+| Generated file                          | Entity                        |
+| --------------------------------------- | ----------------------------- |
+| `generated/paymentSchedule.json`        | `paymentSchedule`             |
+| `generated/transaction.json`            | `transaction`                 |
+| `generated/balanceSnapshot.json`        | `balanceSnapshot`             |
+| `generated/schedule-payment-mocks.json` | Combined artifact (same data) |
+
+Past due rows are marked **PAID** (~88%) or **OVERDUE** (~12%) with payment dates ±5 days around the due date. Current-day and future rows stay **UPCOMING**. Default payment account: **Ahorros** (`account.json`).
+
+Run the generator manually (from repo root):
+
+```bash
+pnpm --filter=api exec tsx .local/tenant-import/generate-schedule-payment-mocks.ts
+```
+
+Run its tests:
+
+```bash
+pnpm --filter=api test:local-import
+```
+
+Generate static entity import JSON from [`tenant-data.yaml`](../../.local/tenant-import/tenant-data.yaml):
 
 ```bash
 python3 .local/tenant-import/generate-import-json.py
 ```
+
+**Total Balance chart asset (optional):** place `total-balance-chart.png` under [`.local/tenant-import/assets/`](../../.local/tenant-import/assets/). On `pnpm seed:database`, the Rates seed uploads it to tenant storage and wires the Accounts metrics widget chart overlay. If the file is missing, the seed uses the bundled SVG fallback at `apps/web/public/images/total-balance-area-chart.svg`.
+
+**Income metric chart asset (optional):** place `income-metric-chart.png` in the same assets folder for the Income by Month widget; fallback SVG is `apps/web/public/images/income-metric-chart.svg`.
+
+**Expenses metric chart asset (optional):** place `expenses-metric-chart.png` in the same assets folder for the Expenses by Month widget; fallback SVG is `apps/web/public/images/expenses-metric-chart.svg`.
+
+**Savings metric chart asset (optional):** place `savings-metric-chart.png` in the same assets folder for the Savings by Month widget; fallback SVG is `apps/web/public/images/savings-metric-chart.svg`.
 
 To test a different user with the same role, assign manually:
 

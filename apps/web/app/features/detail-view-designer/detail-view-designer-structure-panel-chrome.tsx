@@ -5,25 +5,9 @@ import { DetailViewDesignerComponentColumnPanelHeaderMenu } from "./DetailViewDe
 import { DetailViewDesignerComponentRowPanel } from "./DetailViewDesignerComponentRowPanel";
 import { DetailViewDesignerComponentRowPanelHeaderMenu } from "./DetailViewDesignerComponentRowPanelHeaderMenu";
 import { DetailViewDesignerStructurePanelFooter } from "./DetailViewDesignerStructurePanelFooter";
-import {
-  DetailViewDesignerContext,
-  type DetailViewDesignerContextValue,
-} from "./detail-view-designer-context";
 import type { DetailViewPanelSession } from "./detail-view-designer-panel-session";
 
-function withDetailViewContext(
-  value: DetailViewDesignerContextValue,
-  children: ReactNode,
-): ReactNode {
-  return (
-    <DetailViewDesignerContext.Provider value={value}>
-      {children}
-    </DetailViewDesignerContext.Provider>
-  );
-}
-
-export function renderDetailViewStructurePanelChrome(
-  contextValue: DetailViewDesignerContextValue,
+export function renderDetailViewStructurePanelContent(
   session: DetailViewPanelSession,
 ): {
   readonly headerActions?: ReactNode;
@@ -34,35 +18,23 @@ export function renderDetailViewStructurePanelChrome(
 
   if (target.kind === "column") {
     return {
-      headerActions: withDetailViewContext(
-        contextValue,
+      headerActions: (
         <DetailViewDesignerComponentColumnPanelHeaderMenu
           columnRef={target.columnRef}
-        />,
+        />
       ),
-      body: withDetailViewContext(
-        contextValue,
-        <DetailViewDesignerComponentColumnPanel columnRef={target.columnRef} />,
+      body: (
+        <DetailViewDesignerComponentColumnPanel columnRef={target.columnRef} />
       ),
-      footer: withDetailViewContext(
-        contextValue,
-        <DetailViewDesignerStructurePanelFooter />,
-      ),
+      footer: <DetailViewDesignerStructurePanelFooter />,
     };
   }
 
   return {
-    headerActions: withDetailViewContext(
-      contextValue,
-      <DetailViewDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />,
+    headerActions: (
+      <DetailViewDesignerComponentRowPanelHeaderMenu rowRef={target.rowRef} />
     ),
-    body: withDetailViewContext(
-      contextValue,
-      <DetailViewDesignerComponentRowPanel rowRef={target.rowRef} />,
-    ),
-    footer: withDetailViewContext(
-      contextValue,
-      <DetailViewDesignerStructurePanelFooter />,
-    ),
+    body: <DetailViewDesignerComponentRowPanel rowRef={target.rowRef} />,
+    footer: <DetailViewDesignerStructurePanelFooter />,
   };
 }

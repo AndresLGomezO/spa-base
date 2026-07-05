@@ -38,12 +38,14 @@ describe("processAggregationEventTransaction", () => {
 
     await metricDefinitionRepository.create("tenant_a", {
       name: "Loan total",
+      computationMode: "aggregated",
       sourceModel: "loan",
       filters: [],
       groupBy: [],
       dimensions: [],
       dateFieldGranularity: {},
       valueDisplayFormat: "number",
+      parameters: [],
       aggregations: [{ field: "amount", operation: "SUM" }],
       target: { collection: "loan_total", granularity: "dynamic" },
       schemaVersionDependency: 1,

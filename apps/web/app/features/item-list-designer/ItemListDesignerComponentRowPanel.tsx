@@ -31,7 +31,6 @@ import type { ComponentRowRef } from "../form-designer/form-designer-component-r
 import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
 import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentRowPanel";
-import { NestedLayoutRowPanel } from "../form-designer/NestedLayoutRowPanel";
 import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { resolveScopeLayoutBinding } from "./item-list-designer-layout-binding";
 import { resolveDesignSurfaceForScope } from "./item-list-designer-structure-scope";
@@ -77,20 +76,6 @@ export function ItemListDesignerComponentRowPanel({
       </Text>
     );
   }
-
-  if (row.type === "nested-layout") {
-    return (
-      <NestedLayoutRowPanel
-        row={row}
-        rowRef={rowRef}
-        binding={binding}
-        labels={labels}
-        treeLabels={treeLabels}
-        fieldDescriptors={fieldDescriptors}
-      />
-    );
-  }
-
   if (row.type === "component" && isContainerComponent(row.component)) {
     return (
       <ContainerComponentRowPanel

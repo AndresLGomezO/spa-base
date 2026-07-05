@@ -29,6 +29,10 @@ function resolveBindingEditorType(
   source: MetricBindingSource | undefined,
   dateGranularity?: MetricDateGranularity,
 ): BindingType {
+  if (source?.type === "dashboardDateFilter") {
+    return "dashboardDate";
+  }
+
   if (
     source?.type === "routeParam" &&
     dateGranularity &&
@@ -37,7 +41,20 @@ function resolveBindingEditorType(
     return "dashboardDate";
   }
 
-  return source?.type ?? "static";
+  if (source?.type === "relativePeriod") {
+    return "static";
+  }
+
+  if (
+    source?.type === "static" ||
+    source?.type === "entityField" ||
+    source?.type === "listFilter" ||
+    source?.type === "routeParam"
+  ) {
+    return source.type;
+  }
+
+  return "static";
 }
 
 export function MetricBindingSourceEditor({
@@ -98,10 +115,7 @@ export function MetricBindingSourceEditor({
                 });
                 break;
               case "dashboardDate":
-                onChange({
-                  type: "routeParam",
-                  param: dashboardDateParam,
-                });
+                onChange({ type: "dashboardDateFilter" });
                 break;
               case "routeParam":
                 onChange({ type: "routeParam", param: fieldName });

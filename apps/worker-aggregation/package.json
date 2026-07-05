@@ -14,6 +14,8 @@
     "@google-cloud/pubsub": "catalog:",
     "firebase-admin": "catalog:",
     "@repo/aggregation-engine": "workspace:*",
+    "@repo/dynamic-entities": "workspace:*",
+    "@repo/entity-queries": "workspace:*",
     "@repo/event-engine": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/gcp-firebase": "workspace:*",

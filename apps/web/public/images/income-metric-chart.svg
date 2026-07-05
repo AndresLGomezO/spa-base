@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 200" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="incomeArea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#22c55e" stop-opacity="0.18"/>
+      <stop offset="100%" stop-color="#22c55e" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 150 C30 130, 50 145, 80 125 S130 115, 160 100 S190 110, 220 85 L220 200 L0 200 Z" fill="url(#incomeArea)"/>
+  <path d="M0 150 C30 130, 50 145, 80 125 S130 115, 160 100 S190 110, 220 85" fill="none" stroke="#22c55e" stroke-width="2" stroke-linecap="round" stroke-opacity="0.55"/>
+</svg>

@@ -2,7 +2,7 @@
 
 Multi-step wizard with shell + step layouts.
 
-Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-actions. Steps: form-field, form-section.
+Set `presentation: "wizard"`. Default preset: `wizard-form`. Shell: wizard-progress, wizard-step-host, wizard-actions. Steps: form-field, form-section.
 
 ## Allowed component kinds
 - `wizard-progress`
@@ -41,49 +41,60 @@ Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-a
                     "kind": "container",
                     "rows": [
                       {
-                        "type": "nested-layout",
-                        "id": "nested-example",
-                        "columnCount": 2,
-                        "columns": [
-                          {
-                            "id": "col-example",
-                            "rows": [
-                              {
-                                "type": "component",
-                                "id": "row-example",
-                                "component": {
-                                  "kind": "wizard-progress",
-                                  "variant": "bar",
-                                  "stepLabel": {
-                                    "show": true,
-                                    "position": "top",
-                                    "bold": true
+                        "type": "component",
+                        "id": "row-example",
+                        "component": {
+                          "kind": "grid",
+                          "gridTemplateColumns": "minmax(0, 1fr) minmax(0, 2fr)",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "container",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "wizard-progress",
+                                      "variant": "bar",
+                                      "stepLabel": {
+                                        "show": true,
+                                        "position": "top",
+                                        "bold": true
+                                      },
+                                      "conditionalStyles": []
+                                    }
+                                  }
+                                ]
+                              }
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "container",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "wizard-step-host"
+                                    }
                                   },
-                                  "conditionalStyles": []
-                                }
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "wizard-actions"
+                                    }
+                                  }
+                                ]
                               }
-                            ]
-                          },
-                          {
-                            "id": "col-example",
-                            "rows": [
-                              {
-                                "type": "component",
-                                "id": "row-example",
-                                "component": {
-                                  "kind": "wizard-step-host"
-                                }
-                              },
-                              {
-                                "type": "component",
-                                "id": "row-example",
-                                "component": {
-                                  "kind": "wizard-actions"
-                                }
-                              }
-                            ]
-                          }
-                        ]
+                            }
+                          ]
+                        }
                       }
                     ]
                   }

@@ -18,7 +18,9 @@ import {
   updateRootColumnStackDirection,
   updateRootColumnStyles,
   updateRootNodeStyles,
+  asEditableLayoutRoot,
   type MotionPreset,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 import { FieldLabel, Input, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
@@ -43,7 +45,7 @@ export function FormDesignerLayoutColumnPanel({
   const labels = useFormDesignerLayoutEditorLabels();
   const treeLabels = useMemo(() => formDesignerComponentsLabels(t).tree, [t]);
 
-  const column = layout.root.columns[columnIndex];
+  const column = resolveLayoutRootColumns(layout)[columnIndex];
 
   if (!column) {
     return (
@@ -53,10 +55,12 @@ export function FormDesignerLayoutColumnPanel({
     );
   }
 
-  const resolvedPercents = resolveColumnWidthPercents(layout.root.columns);
+  const resolvedPercents = resolveColumnWidthPercents(
+    resolveLayoutRootColumns(layout),
+  );
   const resolvedPercent = resolvedPercents[columnIndex];
   const maxWidthPercent = resolveMaxColumnWidthPercent(
-    layout.root.columns,
+    resolveLayoutRootColumns(layout),
     columnIndex,
   );
   const isAuto = column.widthPercent === undefined;
@@ -100,7 +104,7 @@ export function FormDesignerLayoutColumnPanel({
 
   return (
     <div className="flex flex-col gap-3">
-      {layout.root.columnCount > 1 ? (
+      {asEditableLayoutRoot(layout.root).columnCount > 1 ? (
         <FormDesignerPanelPrimaryControls>
           {columnNameField}
           <div className="flex w-24 flex-col gap-1 text-sm">
@@ -128,7 +132,7 @@ export function FormDesignerLayoutColumnPanel({
                     layout,
                     columnIndex,
                     resolveColumnWidthPercentInput(
-                      layout.root.columns,
+                      resolveLayoutRootColumns(layout),
                       columnIndex,
                       percent,
                     ),

@@ -40,12 +40,14 @@ describe("emitAggregationEventIfNeeded", () => {
 
     await metricDefinitionRepository.create(tenantId, {
       name: "Loan amount total",
+      computationMode: "aggregated",
       sourceModel: "loan",
       filters: [],
       groupBy: [],
       dimensions: [],
       dateFieldGranularity: {},
       valueDisplayFormat: "number",
+      parameters: [],
       aggregations: [{ field: "amount", operation: "SUM" }],
       target: { collection: "loan_amount_total", granularity: "dynamic" },
       schemaVersionDependency: 1,
@@ -104,12 +106,14 @@ describe("emitAggregationEventIfNeeded", () => {
 
     await metricDefinitionRepository.create(tenantId, {
       name: "Loan amount total",
+      computationMode: "aggregated",
       sourceModel: "loan",
       filters: [],
       groupBy: [],
       dimensions: [],
       dateFieldGranularity: {},
       valueDisplayFormat: "number",
+      parameters: [],
       aggregations: [{ field: "amount", operation: "SUM" }],
       target: { collection: "loan_amount_total", granularity: "dynamic" },
       schemaVersionDependency: 1,

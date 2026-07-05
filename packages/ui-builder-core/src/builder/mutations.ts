@@ -1,7 +1,8 @@
 import type {
   ColumnNode,
   ComponentRowNode,
-  NestedLayoutRowNode,
+  LayoutAlign,
+  LayoutRootNode,
   RowNode,
   UiLayoutDocument,
 } from "../types/layout.js";
@@ -9,6 +10,7 @@ import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
 import type { ContainerComponentConfig } from "../types/component.js";
 import {
   isContainerComponent,
+  isGridComponent,
   isRowHolderComponent,
 } from "../types/component.js";
 import type { StyleRule } from "../styles/style-types.js";
@@ -16,11 +18,25 @@ import { isFullDisplayRange } from "../layout/component-display-range.js";
 import type { ResponsiveGridBreakpoint } from "../layout/responsive-grid.js";
 import { createLayoutId } from "./id.js";
 import { regenerateLayoutDocumentIds } from "../validation/regenerate-layout-ids.js";
-import {
-  regenerateComponentRowSubtree,
-  regenerateNestedLayoutRowSubtree,
-} from "../validation/regenerate-layout-ids.js";
+import { regenerateComponentRowSubtree } from "../validation/regenerate-layout-ids.js";
 import { migrateViewSearchFilterLayout } from "../layout/migrate-view-search-filter-layout.js";
+import { toEditableLayoutRoot } from "../layout/layout-root-adapters.js";
+import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
+import { resolveContainerChildRows } from "../layout/resolve-container-child-rows.js";
+
+function editableRoot(layout: UiLayoutDocument): LayoutRootNode {
+  return toEditableLayoutRoot(layout);
+}
+
+function withEditableRoot(
+  layout: UiLayoutDocument,
+  update: (root: LayoutRootNode) => LayoutRootNode,
+): UiLayoutDocument {
+  return {
+    ...layout,
+    root: update(editableRoot(layout)),
+  };
+}
 
 export const MAX_ROOT_COLUMNS = 6;
 export const MAX_NESTED_COLUMNS = 6;
@@ -358,7 +374,7 @@ export function setRootColumnCount(
   columnCount: number,
 ): UiLayoutDocument {
   const count = Math.min(Math.max(1, columnCount), MAX_ROOT_COLUMNS);
-  const columns = [...layout.root.columns];
+  const columns = [...editableRoot(layout).columns];
 
   while (columns.length < count) {
     columns.push(createEmptyColumn());
@@ -369,14 +385,11 @@ export function setRootColumnCount(
       ? clearColumnWidthPercents(columns.slice(0, count))
       : columns.slice(0, count);
 
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columnCount: count,
-      columns: nextColumns,
-    },
-  };
+  return withEditableRoot(layout, (root) => ({
+    ...root,
+    columnCount: count,
+    columns: nextColumns,
+  }));
 }
 
 export function setRootColumnWidthPercent(
@@ -384,22 +397,20 @@ export function setRootColumnWidthPercent(
   columnIndex: number,
   percent: number | undefined,
 ): UiLayoutDocument {
-  const columns = layout.root.columns.map((column, index) => {
+  const root = editableRoot(layout);
+  const columns = root.columns.map((column, index) => {
     if (index !== columnIndex) {
       return column;
     }
     const widthPercent = clampColumnWidthPercent(
-      layout.root.columns,
+      root.columns,
       columnIndex,
       percent,
     );
     return withColumnWidthPercent(column, widthPercent);
   });
 
-  return {
-    ...layout,
-    root: { ...layout.root, columns },
-  };
+  return withEditableRoot(layout, (current) => ({ ...current, columns }));
 }
 
 export function moveRootColumn(
@@ -408,7 +419,7 @@ export function moveRootColumn(
   direction: -1 | 1,
 ): UiLayoutDocument {
   const target = columnIndex + direction;
-  const columns = [...layout.root.columns];
+  const columns = [...editableRoot(layout).columns];
   if (target < 0 || target >= columns.length) {
     return layout;
   }
@@ -422,31 +433,24 @@ export function moveRootColumn(
   columns[columnIndex] = swap;
   columns[target] = current;
 
-  return {
-    ...layout,
-    root: { ...layout.root, columns },
-  };
+  return withEditableRoot(layout, (root) => ({ ...root, columns }));
 }
 
 export function removeRootColumn(
   layout: UiLayoutDocument,
   columnIndex: number,
 ): UiLayoutDocument {
-  if (layout.root.columns.length <= 1) {
+  const root = editableRoot(layout);
+  if (root.columns.length <= 1) {
     return layout;
   }
 
-  const columns = layout.root.columns.filter(
-    (_, index) => index !== columnIndex,
-  );
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columnCount: columns.length,
-      columns,
-    },
-  };
+  const columns = root.columns.filter((_, index) => index !== columnIndex);
+  return withEditableRoot(layout, (current) => ({
+    ...current,
+    columnCount: columns.length,
+    columns,
+  }));
 }
 
 function updateColumnRows(
@@ -454,10 +458,14 @@ function updateColumnRows(
   columnIndex: number,
   updater: (rows: readonly RowNode[]) => readonly RowNode[],
 ): UiLayoutDocument {
-  const columns = layout.root.columns.map((column, index) =>
-    index === columnIndex ? { ...column, rows: updater(column.rows) } : column,
-  );
-  return { ...layout, root: { ...layout.root, columns } };
+  return withEditableRoot(layout, (root) => ({
+    ...root,
+    columns: root.columns.map((column, index) =>
+      index === columnIndex
+        ? { ...column, rows: updater(column.rows) }
+        : column,
+    ),
+  }));
 }
 
 export function addComponentRow(
@@ -473,290 +481,26 @@ export function addComponentRow(
   return updateColumnRows(layout, columnIndex, (rows) => [...rows, row]);
 }
 
-function mapNestedRowById(
-  rows: readonly RowNode[],
-  rowId: string,
-  updater: (row: NestedLayoutRowNode) => NestedLayoutRowNode,
-): readonly RowNode[] {
-  return rows.map((row) => {
-    if (row.type === "nested-layout" && row.id === rowId) {
-      return updater(row);
-    }
-
-    if (row.type === "component" && isRowHolderComponent(row.component)) {
-      return {
-        ...row,
-        component: {
-          ...row.component,
-          rows: mapNestedRowById(row.component.rows, rowId, updater),
-        },
-      };
-    }
-
-    if (row.type === "nested-layout") {
-      return {
-        ...row,
-        columns: row.columns.map((column) => ({
-          ...column,
-          rows: mapNestedRowById(column.rows, rowId, updater),
-        })),
-      };
-    }
-
-    return row;
-  });
-}
-
-/** Updates rows inside a nested column, searching nested-layout rows at any depth. */
-function mapNestedColumnRowsById(
-  rows: readonly RowNode[],
-  rowId: string,
-  nestedColumnIndex: number,
-  updater: (rows: readonly RowNode[]) => readonly RowNode[],
-): readonly RowNode[] {
-  return rows.map((row) => {
-    if (row.type === "nested-layout" && row.id === rowId) {
-      return {
-        ...row,
-        columns: row.columns.map((column, index) =>
-          index === nestedColumnIndex
-            ? { ...column, rows: updater(column.rows) }
-            : column,
-        ),
-      };
-    }
-
-    if (row.type === "component" && isRowHolderComponent(row.component)) {
-      return {
-        ...row,
-        component: {
-          ...row.component,
-          rows: mapNestedColumnRowsById(
-            row.component.rows,
-            rowId,
-            nestedColumnIndex,
-            updater,
-          ),
-        },
-      };
-    }
-
-    if (row.type === "nested-layout") {
-      return {
-        ...row,
-        columns: row.columns.map((column) => ({
-          ...column,
-          rows: mapNestedColumnRowsById(
-            column.rows,
-            rowId,
-            nestedColumnIndex,
-            updater,
-          ),
-        })),
-      };
-    }
-
-    return row;
-  });
-}
-
-function updateNestedRowAt(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  updater: (row: NestedLayoutRowNode) => NestedLayoutRowNode,
-): UiLayoutDocument {
-  return updateColumnRows(layout, columnIndex, (rows) =>
-    mapNestedRowById(rows, rowId, updater),
-  );
-}
-
-export function setNestedColumnCount(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  columnCount: number,
-): UiLayoutDocument {
-  const count = Math.min(Math.max(1, columnCount), MAX_NESTED_COLUMNS);
-
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => {
-    const columns = [...row.columns];
-
-    while (columns.length < count) {
-      columns.push(createEmptyColumn());
-    }
-
-    const nextColumns =
-      count < columns.length
-        ? clearColumnWidthPercents(columns.slice(0, count))
-        : columns.slice(0, count);
-
-    return {
-      ...row,
-      columnCount: count,
-      columns: nextColumns,
-    };
-  });
-}
-
-export function setNestedColumnWidthPercent(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-  percent: number | undefined,
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
-    ...row,
-    columns: row.columns.map((column, index) => {
-      if (index !== nestedColumnIndex) {
-        return column;
-      }
-      const widthPercent = clampColumnWidthPercent(
-        row.columns,
-        nestedColumnIndex,
-        percent,
-      );
-      return withColumnWidthPercent(column, widthPercent);
-    }),
-  }));
-}
-
-export function moveNestedColumn(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-  direction: -1 | 1,
-): UiLayoutDocument {
-  const target = nestedColumnIndex + direction;
-
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => {
-    const columns = [...row.columns];
-    if (target < 0 || target >= columns.length) {
-      return row;
-    }
-
-    const current = columns[nestedColumnIndex];
-    const swap = columns[target];
-    if (!current || !swap) {
-      return row;
-    }
-
-    columns[nestedColumnIndex] = swap;
-    columns[target] = current;
-
-    return { ...row, columns };
-  });
-}
-
-export function removeNestedColumn(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => {
-    if (row.columns.length <= 1) {
-      return row;
-    }
-
-    const columns = row.columns.filter(
-      (_, index) => index !== nestedColumnIndex,
-    );
-    return {
-      ...row,
-      columnCount: columns.length,
-      columns,
-    };
-  });
-}
-
 export function updateRootColumnStyles(
   layout: UiLayoutDocument,
   columnIndex: number,
   styles: readonly StyleRule[],
 ): UiLayoutDocument {
-  const columns = layout.root.columns.map((column, index) =>
-    index === columnIndex ? { ...column, styles: [...styles] } : column,
-  );
-
-  return {
-    ...layout,
-    root: { ...layout.root, columns },
-  };
+  return withEditableRoot(layout, (root) => ({
+    ...root,
+    columns: root.columns.map((column, index) =>
+      index === columnIndex ? { ...column, styles: [...styles] } : column,
+    ),
+  }));
 }
 
 export function updateRootNodeStyles(
   layout: UiLayoutDocument,
   styles: readonly StyleRule[],
 ): UiLayoutDocument {
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      styles: [...styles],
-    },
-  };
-}
-
-export function updateNestedLayoutRowStyles(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  styles: readonly StyleRule[],
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
-    ...row,
+  return withEditableRoot(layout, (root) => ({
+    ...root,
     styles: [...styles],
-  }));
-}
-
-export function updateNestedLayoutRowDisplayRange(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  patch: Partial<Pick<NestedLayoutRowNode, "displayFrom" | "displayTo">>,
-): UiLayoutDocument {
-  return updateNestedLayoutRowMetaAt(
-    layout,
-    { scope: "root", columnIndex },
-    rowId,
-    patch,
-  );
-}
-
-export function updateNestedLayoutRowMetaAt(
-  layout: UiLayoutDocument,
-  locator: RowLocator,
-  rowId: string,
-  patch: Partial<
-    Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo" | "name">
-  >,
-): UiLayoutDocument {
-  return updateRowsAtLocator(layout, locator, (rows) =>
-    rows.map((row) =>
-      row.type === "nested-layout" && row.id === rowId
-        ? stripDisplayRangeIfFull(
-            applyStructureNamePatch({ ...row, ...patch }, patch),
-          )
-        : row,
-    ),
-  );
-}
-
-export function updateNestedColumnStyles(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-  styles: readonly StyleRule[],
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
-    ...row,
-    columns: row.columns.map((column, index) =>
-      index === nestedColumnIndex ? { ...column, styles: [...styles] } : column,
-    ),
   }));
 }
 
@@ -765,16 +509,14 @@ export function updateRootColumnDisplayRange(
   columnIndex: number,
   patch: Partial<Pick<ColumnNode, "displayFrom" | "displayTo">>,
 ): UiLayoutDocument {
-  const columns = layout.root.columns.map((column, index) =>
-    index === columnIndex
-      ? stripDisplayRangeIfFull({ ...column, ...patch })
-      : column,
-  );
-
-  return {
-    ...layout,
-    root: { ...layout.root, columns },
-  };
+  return withEditableRoot(layout, (root) => ({
+    ...root,
+    columns: root.columns.map((column, index) =>
+      index === columnIndex
+        ? stripDisplayRangeIfFull({ ...column, ...patch })
+        : column,
+    ),
+  }));
 }
 
 export function updateRootColumnMetaAt(
@@ -782,61 +524,10 @@ export function updateRootColumnMetaAt(
   columnIndex: number,
   patch: Partial<Pick<ColumnNode, "name">>,
 ): UiLayoutDocument {
-  const columns = layout.root.columns.map((column, index) =>
-    index === columnIndex ? applyColumnMetaPatch(column, patch) : column,
-  );
-
-  return {
-    ...layout,
-    root: { ...layout.root, columns },
-  };
-}
-
-export function updateNestedColumnMetaAt(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-  patch: Partial<Pick<ColumnNode, "name">>,
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
-    ...row,
-    columns: row.columns.map((column, index) =>
-      index === nestedColumnIndex
-        ? applyColumnMetaPatch(column, patch)
-        : column,
-    ),
-  }));
-}
-
-export function updateNestedColumnDisplayRange(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-  patch: Partial<Pick<ColumnNode, "displayFrom" | "displayTo">>,
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
-    ...row,
-    columns: row.columns.map((column, index) =>
-      index === nestedColumnIndex
-        ? stripDisplayRangeIfFull({ ...column, ...patch })
-        : column,
-    ),
-  }));
-}
-
-export function replaceNestedColumnAt(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-  column: ColumnNode,
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
-    ...row,
-    columns: row.columns.map((entry, index) =>
-      index === nestedColumnIndex ? { ...column, id: entry.id } : entry,
+  return withEditableRoot(layout, (root) => ({
+    ...root,
+    columns: root.columns.map((column, index) =>
+      index === columnIndex ? applyColumnMetaPatch(column, patch) : column,
     ),
   }));
 }
@@ -846,44 +537,12 @@ export function updateRootColumnStackDirection(
   columnIndex: number,
   stackDirection: ColumnNode["stackDirection"],
 ): UiLayoutDocument {
-  const columns = layout.root.columns.map((column, index) =>
-    index === columnIndex ? { ...column, stackDirection } : column,
-  );
-
-  return {
-    ...layout,
-    root: { ...layout.root, columns },
-  };
-}
-
-export function updateNestedColumnStackDirection(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  rowId: string,
-  nestedColumnIndex: number,
-  stackDirection: ColumnNode["stackDirection"],
-): UiLayoutDocument {
-  return updateNestedRowAt(layout, columnIndex, rowId, (row) => ({
-    ...row,
-    columns: row.columns.map((column, index) =>
-      index === nestedColumnIndex ? { ...column, stackDirection } : column,
+  return withEditableRoot(layout, (root) => ({
+    ...root,
+    columns: root.columns.map((column, index) =>
+      index === columnIndex ? { ...column, stackDirection } : column,
     ),
   }));
-}
-
-export function addNestedLayoutRow(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  nestedColumnCount = 1,
-): UiLayoutDocument {
-  const count = Math.min(Math.max(1, nestedColumnCount), MAX_NESTED_COLUMNS);
-  const row: NestedLayoutRowNode = {
-    type: "nested-layout",
-    id: createLayoutId("nested"),
-    columnCount: count,
-    columns: Array.from({ length: count }, () => createEmptyColumn()),
-  };
-  return updateColumnRows(layout, columnIndex, (rows) => [...rows, row]);
 }
 
 export function updateComponentRow(
@@ -952,50 +611,27 @@ function normalizeColumnNode(column: ColumnNode): ColumnNode {
 }
 
 function normalizeRowNode(row: RowNode): RowNode {
-  if (row.type === "component") {
-    return row;
-  }
-
-  return normalizeNestedLayoutRow(row);
-}
-
-function normalizeNestedLayoutRow(
-  row: NestedLayoutRowNode,
-): NestedLayoutRowNode {
-  const columns = row.columns.map(normalizeColumnNode);
-  return {
-    ...row,
-    columns,
-    columnCount: columns.length,
-  };
+  return row;
 }
 
 export function normalizeLayout(layout: UiLayoutDocument): UiLayoutDocument {
   const migrated = migrateViewSearchFilterLayout(layout);
-  const columns = migrated.root.columns.map(normalizeColumnNode);
-  return {
-    ...migrated,
-    root: {
-      ...migrated.root,
+  return withEditableRoot(migrated, (root) => {
+    const columns = root.columns.map(normalizeColumnNode);
+    return {
+      ...root,
       columns,
       columnCount: columns.length,
-    },
-  };
+    };
+  });
 }
 
-type RowLocator =
+export type RowLocator =
   | { readonly scope: "root"; readonly columnIndex: number }
   | {
       readonly scope: "container";
       readonly columnIndex: number;
       readonly containerRowId: string;
-    }
-  | {
-      readonly scope: "nested";
-      readonly columnIndex: number;
-      readonly rowId: string;
-      readonly nestedColumnIndex: number;
-      readonly containerRowId?: string;
     };
 
 function mapContainerRowsById(
@@ -1032,16 +668,6 @@ function mapContainerRowsById(
       };
     }
 
-    if (row.type === "nested-layout") {
-      return {
-        ...row,
-        columns: row.columns.map((column) => ({
-          ...column,
-          rows: mapContainerRowsById(column.rows, containerRowId, updater),
-        })),
-      };
-    }
-
     return row;
   });
 }
@@ -1056,16 +682,6 @@ function updateContainerRowsAt(
   );
 }
 
-function mapRootColumns(
-  layout: UiLayoutDocument,
-  mapper: (columns: readonly ColumnNode[]) => readonly ColumnNode[],
-): UiLayoutDocument {
-  return {
-    ...layout,
-    root: { ...layout.root, columns: mapper(layout.root.columns) },
-  };
-}
-
 function updateRowsAtLocator(
   layout: UiLayoutDocument,
   locator: RowLocator,
@@ -1075,45 +691,7 @@ function updateRowsAtLocator(
     return updateColumnRows(layout, locator.columnIndex, updater);
   }
 
-  if (locator.scope === "container") {
-    return updateContainerRowsAt(layout, locator, updater);
-  }
-
-  if (locator.containerRowId) {
-    return updateContainerRowsAt(
-      layout,
-      {
-        scope: "container",
-        columnIndex: locator.columnIndex,
-        containerRowId: locator.containerRowId,
-      },
-      (rows) =>
-        mapNestedColumnRowsById(
-          rows,
-          locator.rowId,
-          locator.nestedColumnIndex,
-          updater,
-        ),
-    );
-  }
-
-  return mapRootColumns(layout, (columns) =>
-    columns.map((column, columnIndex) => {
-      if (columnIndex !== locator.columnIndex) {
-        return column;
-      }
-
-      return {
-        ...column,
-        rows: mapNestedColumnRowsById(
-          column.rows,
-          locator.rowId,
-          locator.nestedColumnIndex,
-          updater,
-        ),
-      };
-    }),
-  );
+  return updateContainerRowsAt(layout, locator, updater);
 }
 
 export type RowInsertPosition = {
@@ -1171,24 +749,200 @@ export function insertComponentRowAt(
   };
 }
 
-export function insertNestedLayoutRowAt(
+function createEmptyGridTrackRow(): ComponentRowNode {
+  return {
+    type: "component",
+    id: createLayoutId("row"),
+    component: {
+      kind: "container",
+      rows: [],
+    },
+  };
+}
+
+export function resolveGridTrackLocators(
+  layout: UiLayoutDocument,
+  locator: Extract<RowLocator, { readonly scope: "container" }>,
+  gridRowId: string,
+): readonly Extract<RowLocator, { readonly scope: "container" }>[] {
+  const column = resolveLayoutRootColumns(layout)[locator.columnIndex];
+  if (!column) {
+    return [];
+  }
+
+  const parentRows =
+    resolveContainerChildRows(column.rows, locator.containerRowId) ?? [];
+  const gridRow = parentRows.find((row) => row.id === gridRowId);
+  if (
+    !gridRow ||
+    gridRow.type !== "component" ||
+    !isGridComponent(gridRow.component)
+  ) {
+    return [];
+  }
+
+  return gridRow.component.rows
+    .filter((row): row is ComponentRowNode => row.type === "component")
+    .map((track) => ({
+      scope: "container" as const,
+      columnIndex: locator.columnIndex,
+      containerRowId: track.id,
+    }));
+}
+
+export function insertGridRowAt(
   layout: UiLayoutDocument,
   locator: RowLocator,
   insert: RowInsertPosition,
-  nestedColumnCount = 1,
+  options?: {
+    readonly gridTemplateColumns?: string;
+    readonly trackCount?: number;
+  },
 ): { readonly layout: UiLayoutDocument; readonly rowId: string } {
-  const count = Math.min(Math.max(1, nestedColumnCount), MAX_NESTED_COLUMNS);
-  const rowId = createLayoutId("nested");
-  const row: NestedLayoutRowNode = {
-    type: "nested-layout",
+  const trackCount = Math.min(
+    Math.max(1, options?.trackCount ?? 1),
+    MAX_NESTED_COLUMNS,
+  );
+  const rowId = createLayoutId("row");
+  const row: ComponentRowNode = {
+    type: "component",
     id: rowId,
-    columnCount: count,
-    columns: Array.from({ length: count }, () => createEmptyColumn()),
+    component: {
+      kind: "grid",
+      gridTemplateColumns:
+        options?.gridTemplateColumns ?? `repeat(${trackCount}, 1fr)`,
+      rows: Array.from({ length: trackCount }, () => createEmptyGridTrackRow()),
+    },
   };
   return {
     layout: insertRowAt(layout, locator, insert, row),
     rowId,
   };
+}
+
+export function setGridTrackCount(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  gridRowId: string,
+  trackCount: number,
+): UiLayoutDocument {
+  const count = Math.min(Math.max(1, trackCount), MAX_NESTED_COLUMNS);
+
+  return updateRowsAtLocator(layout, locator, (rows) =>
+    rows.map((row) => {
+      if (
+        row.type !== "component" ||
+        row.id !== gridRowId ||
+        !isGridComponent(row.component)
+      ) {
+        return row;
+      }
+
+      const tracks = [...row.component.rows];
+      while (tracks.length < count) {
+        tracks.push(createEmptyGridTrackRow());
+      }
+
+      const nextTracks = tracks.slice(0, count);
+      const template = row.component.gridTemplateColumns;
+      const nextTemplate = template.startsWith("repeat(")
+        ? `repeat(${count}, 1fr)`
+        : template;
+
+      return {
+        ...row,
+        component: {
+          ...row.component,
+          gridTemplateColumns: nextTemplate,
+          rows: nextTracks,
+        },
+      };
+    }),
+  );
+}
+
+export function setGridTemplateColumns(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  gridRowId: string,
+  gridTemplateColumns: string,
+): UiLayoutDocument {
+  return updateRowsAtLocator(layout, locator, (rows) =>
+    rows.map((row) => {
+      if (
+        row.type !== "component" ||
+        row.id !== gridRowId ||
+        !isGridComponent(row.component)
+      ) {
+        return row;
+      }
+
+      return {
+        ...row,
+        component: {
+          ...row.component,
+          gridTemplateColumns,
+        },
+      };
+    }),
+  );
+}
+
+export function updateGridRowMetaAt(
+  layout: UiLayoutDocument,
+  locator: RowLocator,
+  gridRowId: string,
+  patch: Partial<
+    Pick<ComponentRowNode, "styles" | "displayFrom" | "displayTo" | "name">
+  > & {
+    readonly gap?: string;
+    readonly alignItems?: LayoutAlign;
+  },
+): UiLayoutDocument {
+  return updateRowsAtLocator(layout, locator, (rows) =>
+    rows.map((row) => {
+      if (
+        row.type !== "component" ||
+        row.id !== gridRowId ||
+        !isGridComponent(row.component)
+      ) {
+        return row;
+      }
+
+      const gridComponent = row.component;
+      const { gap, alignItems, ...rowPatch } = patch;
+      let nextRow = stripDisplayRangeIfFull(
+        applyStructureNamePatch({ ...row, ...rowPatch }, rowPatch),
+      );
+
+      if (gap !== undefined) {
+        const normalizedGap = gap.trim();
+        nextRow = {
+          ...nextRow,
+          styles: (nextRow.styles ?? []).filter(
+            (rule) => rule.property !== "gap",
+          ),
+          component: {
+            ...gridComponent,
+            gap: normalizedGap.length > 0 ? normalizedGap : undefined,
+            styles: (gridComponent.styles ?? []).filter(
+              (rule) => rule.property !== "gap",
+            ),
+            ...(alignItems !== undefined ? { alignItems } : {}),
+          },
+        };
+        return nextRow;
+      }
+
+      return {
+        ...nextRow,
+        component: {
+          ...gridComponent,
+          ...(alignItems !== undefined ? { alignItems } : {}),
+        },
+      };
+    }),
+  );
 }
 
 export function addComponentRowAt(
@@ -1198,19 +952,6 @@ export function addComponentRowAt(
 ): UiLayoutDocument {
   return insertComponentRowAt(layout, locator, { position: "after" }, component)
     .layout;
-}
-
-export function addNestedLayoutRowAt(
-  layout: UiLayoutDocument,
-  locator: RowLocator,
-  nestedColumnCount = 1,
-): UiLayoutDocument {
-  return insertNestedLayoutRowAt(
-    layout,
-    locator,
-    { position: "after" },
-    nestedColumnCount,
-  ).layout;
 }
 
 export function removeRowAt(
@@ -1352,35 +1093,19 @@ export function replaceComponentRowAt(
   );
 }
 
-export function replaceNestedLayoutRowAt(
-  layout: UiLayoutDocument,
-  rowId: string,
-  importedRow: NestedLayoutRowNode,
-): UiLayoutDocument {
-  const nextRow: NestedLayoutRowNode = { ...importedRow, id: rowId };
-  const columns = layout.root.columns.map((column) => ({
-    ...column,
-    rows: mapNestedRowById(column.rows, rowId, () => nextRow),
-  }));
-  return { ...layout, root: { ...layout.root, columns } };
-}
-
 export function insertColumnAt(
   layout: UiLayoutDocument,
   index: number,
   column: ColumnNode,
 ): UiLayoutDocument {
-  const columns = [...layout.root.columns];
+  const columns = [...editableRoot(layout).columns];
   const clampedIndex = Math.min(Math.max(0, index), columns.length);
   columns.splice(clampedIndex, 0, column);
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columnCount: columns.length,
-      columns,
-    },
-  };
+  return withEditableRoot(layout, (root) => ({
+    ...root,
+    columnCount: columns.length,
+    columns,
+  }));
 }
 
 export function appendComponentRowAt(
@@ -1389,15 +1114,6 @@ export function appendComponentRowAt(
   row: ComponentRowNode,
 ): UiLayoutDocument {
   const nextRow = regenerateComponentRowSubtree(row);
-  return updateRowsAtLocator(layout, locator, (rows) => [...rows, nextRow]);
-}
-
-export function appendNestedLayoutRowAt(
-  layout: UiLayoutDocument,
-  locator: RowLocator,
-  row: NestedLayoutRowNode,
-): UiLayoutDocument {
-  const nextRow = regenerateNestedLayoutRowSubtree(row);
   return updateRowsAtLocator(layout, locator, (rows) => [...rows, nextRow]);
 }
 
@@ -1438,5 +1154,3 @@ export function updateContainerStylesAt(
 ): UiLayoutDocument {
   return patchContainerComponent(layout, locator, { styles: [...styles] });
 }
-
-export type { RowLocator };

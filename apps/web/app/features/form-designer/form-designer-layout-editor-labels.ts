@@ -2,6 +2,7 @@ import type { TFunction } from "i18next";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+import type { GridTemplateColumnsErrorCode } from "@repo/ui-builder-core";
 import type { SemanticColorOption } from "@repo/ui-builder-react";
 
 import { componentDisplayRangeEditorLabels } from "../ui-builder/component-display-range-editor-labels";
@@ -18,6 +19,26 @@ export function formDesignerLayoutEditorLabels(
   return {
     structure: t("entity.viewSettings.structure"),
     layoutColumns: t("entity.viewSettings.layoutColumns"),
+    gridGap: t("entity.viewSettings.gridGap"),
+    gridTemplateColumns: t("entity.viewSettings.gridTemplateColumns"),
+    gridTemplateColumnsHint: (trackCount: number) =>
+      t("entity.viewSettings.gridTemplateColumnsHint", { count: trackCount }),
+    gridTemplateColumnsPreview: (preview: string, hasDynamicRepeat: boolean) =>
+      hasDynamicRepeat
+        ? t("entity.viewSettings.gridTemplateColumnsPreviewDynamic", {
+            preview,
+          })
+        : t("entity.viewSettings.gridTemplateColumnsPreview", { preview }),
+    gridTemplateColumnsPreviewFlexible: () =>
+      t("entity.viewSettings.gridTemplateColumnsPreviewFlexible"),
+    gridTemplateColumnsError: (
+      errorCode: GridTemplateColumnsErrorCode,
+      details?: { readonly defined?: number; readonly expected?: number },
+    ) =>
+      t(`entity.viewSettings.gridTemplateColumnsErrors.${errorCode}`, {
+        defined: details?.defined,
+        expected: details?.expected,
+      }),
     showActions: t("entity.viewSettings.showActions"),
     columnStyles: t("entity.viewSettings.columnStyles"),
     stackDirection: {

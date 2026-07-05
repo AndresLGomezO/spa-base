@@ -103,7 +103,10 @@ import {
   configureIndexProvisioningQueue,
 } from "@repo/gcp-firebase";
 import { createMetricRuntimeContext } from "./aggregation/metric-runtime-context.js";
-import { listSourceDocumentsForMetric } from "./aggregation/list-source-documents.js";
+import {
+  createMetricQueryMembershipResolver,
+  listSourceDocumentsForMetricDefinition,
+} from "./aggregation/metric-query-runtime.js";
 import { registerMetricDefinitionRoutes } from "./aggregation/register-metric-definition-routes.js";
 import { registerMetricReadRoutes } from "./aggregation/register-metric-read-routes.js";
 import { registerEntityQueryDefinitionRoutes } from "./entity-queries/register-entity-query-definition-routes.js";
@@ -688,14 +691,25 @@ export async function buildServer(options: BuildServerOptions = {}) {
     await seedPlatformTenants(firebaseAdminConfig, entityRuntime);
   }
 
+  const resolveQueryMembership = createMetricQueryMembershipResolver({
+    entityRuntime,
+    entityQueryDefinitionRepository,
+  });
+
   const metricRuntime = createMetricRuntimeContext({
     metricDefinitionRepository,
     aggregationEventRepository,
     metricValueRepository,
     backfillJobRepository,
     metricContributionRepository,
-    listSourceDocuments: (tenantId, sourceModel) =>
-      listSourceDocumentsForMetric(entityRuntime, tenantId, sourceModel),
+    listSourceDocuments: (tenantId, metric) =>
+      listSourceDocumentsForMetricDefinition(
+        entityRuntime,
+        entityQueryDefinitionRepository,
+        tenantId,
+        metric,
+      ),
+    resolveQueryMembership,
   });
 
   const aggregationEmitter: AggregationEmitterDeps = {
@@ -897,6 +911,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     metricRuntime,
+    entityQueryDefinitionRepository,
     tenantIndexGuard,
   });
 
@@ -912,6 +927,7 @@ export async function buildServer(options: BuildServerOptions = {}) {
     permissionDeps,
     entityRuntime,
     entityQueryDefinitionRepository,
+    metricDefinitionRepository,
     tenantIndexGuard,
   });
 
@@ -929,6 +945,8 @@ export async function buildServer(options: BuildServerOptions = {}) {
     authenticate,
     permissionDeps,
     metricRuntime,
+    entityRuntime,
+    entityQueryDefinitionRepository,
   });
 
   await registerRoleRoutes(server, {

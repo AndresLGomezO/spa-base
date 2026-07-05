@@ -19,7 +19,7 @@
       },
       "skeleton": [
         {
-          "kind": "nested-layout",
+          "kind": "grid",
           "columnCount": 2,
           "columns": [
             { "components": [{ "kind": "text", "fieldPath": "name" }] },

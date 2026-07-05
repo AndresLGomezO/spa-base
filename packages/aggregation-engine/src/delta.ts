@@ -77,8 +77,9 @@ function buildDeltaForRecord(
   metric: MetricDefinitionRecord,
   record: Record<string, unknown>,
   sign: 1 | -1,
+  queryMatch?: boolean,
 ): MetricValueDelta | null {
-  if (!recordMatchesFilters(record, metric.filters)) {
+  if (!isRecordIncluded(record, metric, queryMatch)) {
     return null;
   }
 
@@ -134,13 +135,34 @@ export interface ComputeMetricDeltasOptions {
    * When undefined, legacy net-change behavior is preserved.
    */
   readonly hasContributed?: boolean;
+  readonly queryMembership?: {
+    readonly before?: boolean;
+    readonly after?: boolean;
+  };
+}
+
+function isRecordIncluded(
+  record: Record<string, unknown>,
+  metric: MetricDefinitionRecord,
+  queryMatch?: boolean,
+): boolean {
+  if (!recordMatchesFilters(record, metric.filters)) {
+    return false;
+  }
+
+  if (!metric.sourceQueryDefinitionId) {
+    return true;
+  }
+
+  return queryMatch === true;
 }
 
 export function computeCreateDeltaForRecord(
   metric: MetricDefinitionRecord,
   record: Record<string, unknown>,
+  queryMatch?: boolean,
 ): MetricValueDelta | null {
-  return buildDeltaForRecord(metric, record, 1);
+  return buildDeltaForRecord(metric, record, 1, queryMatch);
 }
 
 export function computeMetricDeltas(
@@ -151,9 +173,10 @@ export function computeMetricDeltas(
   const before = event.before;
   const after = event.after;
   const deltas: MetricValueDelta[] = [];
+  const queryMembership = options?.queryMembership;
 
   if (event.operation === "CREATE" && after) {
-    const delta = buildDeltaForRecord(metric, after, 1);
+    const delta = buildDeltaForRecord(metric, after, 1, queryMembership?.after);
     if (delta) {
       deltas.push(delta);
     }
@@ -165,7 +188,12 @@ export function computeMetricDeltas(
       return deltas;
     }
 
-    const delta = buildDeltaForRecord(metric, before, -1);
+    const delta = buildDeltaForRecord(
+      metric,
+      before,
+      -1,
+      queryMembership?.before,
+    );
     if (delta) {
       deltas.push(delta);
     }
@@ -176,20 +204,39 @@ export function computeMetricDeltas(
     return deltas;
   }
 
-  const beforeIncluded = recordMatchesFilters(before, metric.filters);
-  const afterIncluded = recordMatchesFilters(after, metric.filters);
+  const beforeIncluded = isRecordIncluded(
+    before,
+    metric,
+    queryMembership?.before,
+  );
+  const afterIncluded = isRecordIncluded(after, metric, queryMembership?.after);
 
   if (beforeIncluded && afterIncluded) {
     if (options?.hasContributed === false) {
-      const afterDelta = buildDeltaForRecord(metric, after, 1);
+      const afterDelta = buildDeltaForRecord(
+        metric,
+        after,
+        1,
+        queryMembership?.after,
+      );
       if (afterDelta) {
         deltas.push(afterDelta);
       }
       return deltas;
     }
 
-    const beforeDelta = buildDeltaForRecord(metric, before, -1);
-    const afterDelta = buildDeltaForRecord(metric, after, 1);
+    const beforeDelta = buildDeltaForRecord(
+      metric,
+      before,
+      -1,
+      queryMembership?.before,
+    );
+    const afterDelta = buildDeltaForRecord(
+      metric,
+      after,
+      1,
+      queryMembership?.after,
+    );
     if (beforeDelta && afterDelta && beforeDelta.docId === afterDelta.docId) {
       const merged: Record<string, number> = { ...beforeDelta.increments };
       mergeIncrements(merged, afterDelta.increments);
@@ -212,7 +259,12 @@ export function computeMetricDeltas(
 
   if (beforeIncluded) {
     if (options?.hasContributed !== false) {
-      const remove = buildDeltaForRecord(metric, before, -1);
+      const remove = buildDeltaForRecord(
+        metric,
+        before,
+        -1,
+        queryMembership?.before,
+      );
       if (remove) {
         deltas.push(remove);
       }
@@ -220,7 +272,7 @@ export function computeMetricDeltas(
   }
 
   if (afterIncluded) {
-    const add = buildDeltaForRecord(metric, after, 1);
+    const add = buildDeltaForRecord(metric, after, 1, queryMembership?.after);
     if (add) {
       deltas.push(add);
     }

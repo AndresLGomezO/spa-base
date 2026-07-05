@@ -16,6 +16,14 @@ import {
   THEME_STYLE_RULES_ATOM_ID,
 } from "../packages/ai-context/src/atoms/theme/style-rules.js";
 import {
+  buildUiDesignHandbookRouterAtom,
+  UI_DESIGN_HANDBOOK_ROUTER_ATOM_ID,
+} from "../packages/ai-context/src/atoms/ui/design-handbook-router.js";
+import {
+  buildUiImportScopesAtom,
+  UI_IMPORT_SCOPES_ATOM_ID,
+} from "../packages/ai-context/src/atoms/ui/import-scopes.js";
+import {
   buildUiDataSourcesAtom,
   buildUiLayoutBaseAtom,
   buildUiStyleRulesAtom,
@@ -23,8 +31,17 @@ import {
   UI_LAYOUT_BASE_ATOM_ID,
   UI_STYLE_RULES_ATOM_ID,
 } from "../packages/ai-context/src/atoms/ui/layout-document.js";
+import {
+  buildUiPersistenceKeysAtom,
+  UI_PERSISTENCE_KEYS_ATOM_ID,
+} from "../packages/ai-context/src/atoms/ui/persistence-keys.js";
+import {
+  buildUiPresetsPlatformAtom,
+  UI_PRESETS_PLATFORM_ATOM_ID,
+} from "../packages/ai-context/src/atoms/ui/platform-presets.js";
 import { buildAllGeneratedFragments } from "../packages/ai-context/src/generate/surface-variants.js";
 import { buildAllModelFragments } from "../packages/ai-context/src/generate/model-schema.js";
+import { buildManualRecipeFragments } from "../packages/ai-context/src/generate/manual-recipes.js";
 import { hashSourceValue } from "../packages/ai-context/src/utils/hash.js";
 
 const repoRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -34,6 +51,7 @@ const generatedDir = join(
 );
 const uiDir = join(generatedDir, "ui");
 const modelDir = join(generatedDir, "model");
+const recipesDir = join(repoRoot, "docs/ui-design-manual/07-recipes");
 
 function main(): void {
   mkdirSync(uiDir, { recursive: true });
@@ -45,14 +63,22 @@ function main(): void {
     [UI_LAYOUT_BASE_ATOM_ID]: buildUiLayoutBaseAtom(),
     [UI_STYLE_RULES_ATOM_ID]: buildUiStyleRulesAtom(),
     [UI_DATA_SOURCES_ATOM_ID]: buildUiDataSourcesAtom(),
+    [UI_PRESETS_PLATFORM_ATOM_ID]: buildUiPresetsPlatformAtom(),
+    [UI_IMPORT_SCOPES_ATOM_ID]: buildUiImportScopesAtom(),
+    [UI_PERSISTENCE_KEYS_ATOM_ID]: buildUiPersistenceKeysAtom(),
+    [UI_DESIGN_HANDBOOK_ROUTER_ATOM_ID]: buildUiDesignHandbookRouterAtom(),
   };
 
   const uiGenerated = buildAllGeneratedFragments();
   const modelGenerated = buildAllModelFragments();
-  const generated = { ...uiGenerated, ...modelGenerated };
+  const recipeFragments = buildManualRecipeFragments(recipesDir);
+  const generated = { ...uiGenerated, ...modelGenerated, ...recipeFragments };
   const fragments = { ...staticAtoms, ...generated };
 
-  for (const [id, content] of Object.entries(uiGenerated)) {
+  for (const [id, content] of Object.entries({
+    ...uiGenerated,
+    ...recipeFragments,
+  })) {
     const fileName = `${id.replace(/\./g, "-")}.md`;
     writeFileSync(join(uiDir, fileName), content, "utf8");
   }
@@ -74,8 +100,9 @@ function main(): void {
     "utf8",
   );
 
+  const recipeCount = Object.keys(recipeFragments).length;
   console.log(
-    `Generated ${Object.keys(uiGenerated).length} UI + ${Object.keys(modelGenerated).length} model fragments (hash: ${versionHash}).`,
+    `Generated ${Object.keys(uiGenerated).length} UI + ${Object.keys(modelGenerated).length} model + ${recipeCount} recipe fragments (hash: ${versionHash}).`,
   );
 }
 

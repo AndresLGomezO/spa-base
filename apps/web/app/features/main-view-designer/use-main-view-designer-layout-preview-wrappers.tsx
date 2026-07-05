@@ -23,10 +23,12 @@ import {
   findRowByRef,
   isStructuralPreviewRow,
   resolveColumnRefDisplayLabel,
-  resolvePreviewColumnChromeProps,
-  resolvePreviewRowFocusState,
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
+import {
+  resolvePreviewColumnChromeProps,
+  resolvePreviewRowFocusState,
+} from "../form-designer/preview-focus-state";
 import { resolveRowNodeDisplayLabel } from "../form-designer/form-designer-structure-tree";
 import { resolveLayoutBinding } from "./main-view-designer-layout-binding";
 import { useMainViewDesigner } from "./main-view-designer-context";

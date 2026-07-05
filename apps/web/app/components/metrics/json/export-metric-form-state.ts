@@ -1,4 +1,10 @@
-import type { MetricDefinitionFormData } from "@repo/metrics-engine/browser";
+import type {
+  ComputedMetricComputation,
+  MetricComputationMode,
+  MetricDefinitionFormData,
+  MetricDefinitionParameter,
+} from "@repo/metrics-engine/browser";
+import { toPortableMetricDefinition } from "@repo/metrics-engine/browser";
 
 import type { MetricFilterEditorRow } from "../metric-field-utils";
 import {
@@ -15,7 +21,10 @@ import type {
 export interface MetricFormStateExportInput {
   readonly name: string;
   readonly description: string;
+  readonly computationMode: MetricComputationMode;
   readonly sourceModel: string;
+  readonly sourceType: "entity" | "query";
+  readonly sourceQueryDefinitionId: string;
   readonly status: "ACTIVE" | "PAUSED";
   readonly aggregationOperation: MetricOperation;
   readonly aggregationField: string;
@@ -26,12 +35,18 @@ export interface MetricFormStateExportInput {
   readonly dateFieldGranularity: Readonly<
     Record<string, MetricDateGranularity>
   >;
+  readonly parameters: readonly MetricDefinitionParameter[];
+  readonly computation: ComputedMetricComputation | undefined;
   readonly valueDisplayFormat: MetricValueDisplayFormat;
   readonly version: number;
   readonly schemaVersionDependency: number;
 }
 
 function buildAggregationsFromForm(input: MetricFormStateExportInput) {
+  if (input.computationMode === "computed") {
+    return [{ operation: "COUNT" as const }];
+  }
+
   if (input.aggregationOperation === "COUNT") {
     return [{ operation: "COUNT" as const }];
   }
@@ -45,6 +60,10 @@ function buildAggregationsFromForm(input: MetricFormStateExportInput) {
 }
 
 function resolveFieldsDependency(input: MetricFormStateExportInput): string[] {
+  if (input.computationMode === "computed") {
+    return [];
+  }
+
   if (input.fieldsDependency.length > 0) {
     return [...input.fieldsDependency];
   }
@@ -93,18 +112,28 @@ export function exportMetricFormState(
   input: MetricFormStateExportInput,
 ): MetricDefinitionFormData {
   const aggregations = buildAggregationsFromForm(input);
+  const isComputed = input.computationMode === "computed";
 
   return {
     name: input.name.trim(),
     ...(input.description.trim()
       ? { description: input.description.trim() }
       : {}),
+    computationMode: input.computationMode,
     sourceModel: input.sourceModel,
-    filters: normalizeFiltersForExport(input.filterRows),
-    groupBy: [...input.groupBy],
-    dimensions: [...input.dimensions],
-    dateFieldGranularity: { ...input.dateFieldGranularity },
+    ...(input.sourceType === "query" && input.sourceQueryDefinitionId
+      ? { sourceQueryDefinitionId: input.sourceQueryDefinitionId }
+      : {}),
+    filters:
+      isComputed || input.sourceType === "query"
+        ? []
+        : normalizeFiltersForExport(input.filterRows),
+    groupBy: isComputed ? [] : [...input.groupBy],
+    dimensions: isComputed ? [] : [...input.dimensions],
+    dateFieldGranularity: isComputed ? {} : { ...input.dateFieldGranularity },
     valueDisplayFormat: input.valueDisplayFormat,
+    parameters: [...input.parameters],
+    ...(input.computation ? { computation: input.computation } : {}),
     aggregations,
     version: input.version,
     schemaVersionDependency: input.schemaVersionDependency,
@@ -116,29 +145,18 @@ export function exportMetricFormState(
 export function exportMetricRecord(
   record: MetricDefinitionRecord,
 ): MetricDefinitionFormData {
-  const aggregation = getInitialAggregationFromMetric(record);
-  return exportMetricFormState({
-    name: record.name,
-    description: record.description ?? "",
-    sourceModel: record.sourceModel,
-    status: record.status,
-    aggregationOperation: aggregation.operation,
-    aggregationField: aggregation.field,
-    fieldsDependency: record.fieldsDependency,
-    filterRows: metricFiltersToEditorRows(record.filters),
-    groupBy: record.groupBy,
-    dimensions: record.dimensions,
-    dateFieldGranularity: record.dateFieldGranularity,
-    valueDisplayFormat: record.valueDisplayFormat,
-    version: record.version,
-    schemaVersionDependency: record.schemaVersionDependency,
-  });
+  return toPortableMetricDefinition(
+    record as Parameters<typeof toPortableMetricDefinition>[0],
+  );
 }
 
 export interface MetricFormStateImportResult {
   readonly name: string;
   readonly description: string;
+  readonly computationMode: MetricComputationMode;
   readonly sourceModel: string;
+  readonly sourceType: "entity" | "query";
+  readonly sourceQueryDefinitionId: string;
   readonly status: "ACTIVE" | "PAUSED";
   readonly aggregationOperation: MetricOperation;
   readonly aggregationField: string;
@@ -149,6 +167,8 @@ export interface MetricFormStateImportResult {
   readonly dateFieldGranularity: Readonly<
     Record<string, MetricDateGranularity>
   >;
+  readonly parameters: readonly MetricDefinitionParameter[];
+  readonly computation: ComputedMetricComputation | undefined;
   readonly valueDisplayFormat: MetricValueDisplayFormat;
   readonly version: number;
   readonly schemaVersionDependency: number;
@@ -157,7 +177,7 @@ export interface MetricFormStateImportResult {
 export function importMetricFormState(
   data: MetricDefinitionFormData,
 ): MetricFormStateImportResult {
-  const aggregation = data.aggregations[0];
+  const aggregation = data.aggregations?.[0];
   const operation =
     aggregation?.operation === "COUNT"
       ? "COUNT"
@@ -170,7 +190,10 @@ export function importMetricFormState(
   return {
     name: data.name,
     description: data.description ?? "",
+    computationMode: data.computationMode ?? "aggregated",
     sourceModel: data.sourceModel,
+    sourceType: data.sourceQueryDefinitionId ? "query" : "entity",
+    sourceQueryDefinitionId: data.sourceQueryDefinitionId ?? "",
     status: data.status,
     aggregationOperation: operation,
     aggregationField,
@@ -179,8 +202,37 @@ export function importMetricFormState(
     groupBy: [...data.groupBy],
     dimensions: [...data.dimensions],
     dateFieldGranularity: { ...data.dateFieldGranularity },
+    parameters: [...(data.parameters ?? [])],
+    computation: data.computation as ComputedMetricComputation | undefined,
     valueDisplayFormat: data.valueDisplayFormat,
     version: data.version,
     schemaVersionDependency: data.schemaVersionDependency,
+  };
+}
+
+export function buildExportInputFromRecord(
+  record: MetricDefinitionRecord,
+): MetricFormStateExportInput {
+  const aggregation = getInitialAggregationFromMetric(record);
+  return {
+    name: record.name,
+    description: record.description ?? "",
+    computationMode: record.computationMode ?? "aggregated",
+    sourceModel: record.sourceModel,
+    sourceType: record.sourceQueryDefinitionId ? "query" : "entity",
+    sourceQueryDefinitionId: record.sourceQueryDefinitionId ?? "",
+    status: record.status,
+    aggregationOperation: aggregation.operation,
+    aggregationField: aggregation.field,
+    fieldsDependency: record.fieldsDependency,
+    filterRows: metricFiltersToEditorRows(record.filters),
+    groupBy: record.groupBy,
+    dimensions: record.dimensions,
+    dateFieldGranularity: record.dateFieldGranularity,
+    parameters: record.parameters ?? [],
+    computation: record.computation as ComputedMetricComputation | undefined,
+    valueDisplayFormat: record.valueDisplayFormat,
+    version: record.version,
+    schemaVersionDependency: record.schemaVersionDependency,
   };
 }

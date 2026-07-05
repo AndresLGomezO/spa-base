@@ -5,9 +5,12 @@ import {
   createEmptyLayout,
 } from "../builder/mutations.js";
 import {
+  asEditableLayoutRoot,
+  resolveLayoutRootColumns,
+} from "../layout/layout-root-adapters.js";
+import {
   columnNodeSchema,
   componentRowSchema,
-  nestedLayoutRowSchema,
   uiLayoutDocumentSchema,
 } from "../schema/ui-layout-schema.js";
 import {
@@ -22,7 +25,6 @@ import {
 import type {
   ColumnNode,
   ComponentRowNode,
-  NestedLayoutRowNode,
   UiLayoutDocument,
 } from "../types/layout.js";
 import type { UiComponentKind } from "../types/component.js";
@@ -36,14 +38,16 @@ import {
 import {
   regenerateComponentRowSubtree,
   regenerateLayoutDocumentIds,
-  regenerateNestedLayoutRowSubtree,
 } from "./regenerate-layout-ids.js";
+import {
+  StylePropsValidationError,
+  validateStyleProps,
+} from "./validate-style-props.js";
 
 export type LayoutJsonImportScope =
   | { readonly type: "layout-document" }
   | { readonly type: "column" }
   | { readonly type: "component-row" }
-  | { readonly type: "nested-layout-row" }
   | { readonly type: "insertable-row" };
 
 export interface LayoutJsonImportError {
@@ -53,11 +57,7 @@ export interface LayoutJsonImportError {
 
 export interface LayoutJsonImportValidationResult {
   readonly ok: boolean;
-  readonly data?:
-    | UiLayoutDocument
-    | ColumnNode
-    | ComponentRowNode
-    | NestedLayoutRowNode;
+  readonly data?: UiLayoutDocument | ColumnNode | ComponentRowNode;
   readonly errors: readonly LayoutJsonImportError[];
 }
 
@@ -159,7 +159,7 @@ function assertEntityLayoutSemantics(
 }
 
 function assertImportRowSemantics(
-  row: ComponentRowNode | NestedLayoutRowNode,
+  row: ComponentRowNode,
   options: ValidateLayoutJsonImportOptions,
 ): LayoutJsonImportError[] {
   const wrapped = wrapRowInLayoutDocument(row);
@@ -169,11 +169,9 @@ function assertImportRowSemantics(
   ];
 }
 
-function wrapRowInLayoutDocument(
-  row: ComponentRowNode | NestedLayoutRowNode,
-): UiLayoutDocument {
+function wrapRowInLayoutDocument(row: ComponentRowNode): UiLayoutDocument {
   const layout = createEmptyLayout(1);
-  const column = layout.root.columns[0];
+  const column = resolveLayoutRootColumns(layout)[0];
   if (!column) {
     return layout;
   }
@@ -181,7 +179,7 @@ function wrapRowInLayoutDocument(
   return {
     ...layout,
     root: {
-      ...layout.root,
+      ...asEditableLayoutRoot(layout.root),
       columns: [{ ...column, rows: [row] }],
     },
   };
@@ -191,19 +189,36 @@ function postProcessLayoutDocument(
   layout: UiLayoutDocument,
   options: ValidateLayoutJsonImportOptions,
 ): LayoutJsonImportValidationResult {
-  const normalized = normalizeLayout(layout);
+  const migrated = normalizeLayout(layout);
   const semanticErrors = [
-    ...assertSurfaceComponentKinds(normalized, options.designSurface),
-    ...assertEntityLayoutSemantics(normalized, options),
+    ...assertSurfaceComponentKinds(migrated, options.designSurface),
+    ...assertEntityLayoutSemantics(migrated, options),
   ];
 
   if (semanticErrors.length > 0) {
     return { ok: false, errors: semanticErrors };
   }
 
+  try {
+    validateStyleProps(migrated.root.styles);
+  } catch (error) {
+    if (error instanceof StylePropsValidationError) {
+      return {
+        ok: false,
+        errors: [
+          {
+            path: "root.styles",
+            message: error.message,
+          },
+        ],
+      };
+    }
+    throw error;
+  }
+
   return {
     ok: true,
-    data: regenerateLayoutDocumentIds(normalized),
+    data: regenerateLayoutDocumentIds(migrated),
     errors: [],
   };
 }
@@ -225,31 +240,13 @@ function postProcessComponentRow(
   };
 }
 
-function postProcessNestedLayoutRow(
-  row: NestedLayoutRowNode,
-  options: ValidateLayoutJsonImportOptions,
-): LayoutJsonImportValidationResult {
-  const semanticErrors = assertImportRowSemantics(row, options);
-
-  if (semanticErrors.length > 0) {
-    return { ok: false, errors: semanticErrors };
-  }
-
-  return {
-    ok: true,
-    data: regenerateNestedLayoutRowSubtree(row),
-    errors: [],
-  };
-}
-
-function isInsertableRowJson(
-  value: unknown,
-): value is ComponentRowNode | NestedLayoutRowNode {
-  if (typeof value !== "object" || value === null || !("type" in value)) {
-    return false;
-  }
-
-  return value.type === "component" || value.type === "nested-layout";
+function isInsertableRowJson(value: unknown): value is ComponentRowNode {
+  return (
+    typeof value === "object" &&
+    value !== null &&
+    "type" in value &&
+    value.type === "component"
+  );
 }
 
 export function validateLayoutJsonImport(
@@ -292,7 +289,19 @@ export function validateLayoutJsonImport(
     };
   }
 
-  if (scope.type === "component-row") {
+  if (scope.type === "component-row" || scope.type === "insertable-row") {
+    if (scope.type === "insertable-row" && !isInsertableRowJson(parsed)) {
+      return {
+        ok: false,
+        errors: [
+          {
+            path: "type",
+            message: 'Expected a component row ("type": "component").',
+          },
+        ],
+      };
+    }
+
     const result = componentRowSchema.safeParse(parsed);
     if (!result.success) {
       return { ok: false, errors: zodErrorsToImportErrors(result.error) };
@@ -300,46 +309,10 @@ export function validateLayoutJsonImport(
     return postProcessComponentRow(result.data as ComponentRowNode, options);
   }
 
-  if (scope.type === "insertable-row") {
-    if (!isInsertableRowJson(parsed)) {
-      return {
-        ok: false,
-        errors: [
-          {
-            path: "type",
-            message:
-              'Expected a component row ("type": "component") or nested layout row ("type": "nested-layout").',
-          },
-        ],
-      };
-    }
-
-    if (parsed.type === "component") {
-      const result = componentRowSchema.safeParse(parsed);
-      if (!result.success) {
-        return { ok: false, errors: zodErrorsToImportErrors(result.error) };
-      }
-      return postProcessComponentRow(result.data as ComponentRowNode, options);
-    }
-
-    const result = nestedLayoutRowSchema.safeParse(parsed);
-    if (!result.success) {
-      return { ok: false, errors: zodErrorsToImportErrors(result.error) };
-    }
-    return postProcessNestedLayoutRow(
-      result.data as NestedLayoutRowNode,
-      options,
-    );
-  }
-
-  const result = nestedLayoutRowSchema.safeParse(parsed);
-  if (!result.success) {
-    return { ok: false, errors: zodErrorsToImportErrors(result.error) };
-  }
-  return postProcessNestedLayoutRow(
-    result.data as NestedLayoutRowNode,
-    options,
-  );
+  return {
+    ok: false,
+    errors: [{ path: "(scope)", message: "Unsupported import scope." }],
+  };
 }
 
 function defaultKindForSurface(surface: DesignSurface): UiComponentKind {
@@ -350,11 +323,7 @@ export function createLayoutJsonSkeleton(
   scope: LayoutJsonImportScope,
   designSurface: DesignSurface,
   defaultFieldPath: string,
-  referenceData?:
-    | UiLayoutDocument
-    | ColumnNode
-    | ComponentRowNode
-    | NestedLayoutRowNode,
+  referenceData?: UiLayoutDocument | ColumnNode | ComponentRowNode,
 ): string {
   if (referenceData !== undefined) {
     if (
@@ -372,16 +341,9 @@ export function createLayoutJsonSkeleton(
       return JSON.stringify(referenceData, null, 2);
     }
     if (
-      scope.type === "component-row" &&
+      (scope.type === "component-row" || scope.type === "insertable-row") &&
       "type" in referenceData &&
       referenceData.type === "component"
-    ) {
-      return JSON.stringify(referenceData, null, 2);
-    }
-    if (
-      scope.type === "nested-layout-row" &&
-      "type" in referenceData &&
-      referenceData.type === "nested-layout"
     ) {
       return JSON.stringify(referenceData, null, 2);
     }
@@ -394,14 +356,14 @@ export function createLayoutJsonSkeleton(
 
   if (scope.type === "layout-document") {
     const layout = createEmptyLayout(1);
-    const column = layout.root.columns[0];
+    const column = resolveLayoutRootColumns(layout)[0];
     const document =
       column === undefined
         ? layout
         : {
             ...layout,
             root: {
-              ...layout.root,
+              ...asEditableLayoutRoot(layout.root),
               columns: [
                 {
                   ...column,
@@ -420,7 +382,7 @@ export function createLayoutJsonSkeleton(
   }
 
   if (scope.type === "column") {
-    const column = createEmptyLayout(1).root.columns[0];
+    const column = resolveLayoutRootColumns(createEmptyLayout(1))[0];
     if (column === undefined) {
       return JSON.stringify({ id: "col-example", rows: [] }, null, 2);
     }
@@ -440,31 +402,10 @@ export function createLayoutJsonSkeleton(
     );
   }
 
-  if (scope.type === "component-row" || scope.type === "insertable-row") {
-    const row: ComponentRowNode = {
-      type: "component",
-      id: "row-example",
-      component: createDefaultComponent(kind, defaultFieldPath),
-    };
-    return JSON.stringify(row, null, 2);
-  }
-
-  const nested: NestedLayoutRowNode = {
-    type: "nested-layout",
-    id: "nested-example",
-    columnCount: 1,
-    columns: [
-      {
-        id: "col-example",
-        rows: [
-          {
-            type: "component",
-            id: "row-example",
-            component: createDefaultComponent(kind, defaultFieldPath),
-          },
-        ],
-      },
-    ],
+  const row: ComponentRowNode = {
+    type: "component",
+    id: "row-example",
+    component: createDefaultComponent(kind, defaultFieldPath),
   };
-  return JSON.stringify(nested, null, 2);
+  return JSON.stringify(row, null, 2);
 }

@@ -17,6 +17,9 @@ import { buildRatesCustomRoles } from "./roles.js";
 import { seedRatesCatalogs } from "./seed-rates-catalogs.js";
 import { seedRatesGcpDemoUserAccess } from "./seed-gcp-demo-user-access.js";
 import { seedLocalTenantImportIfPresent } from "./seed-local-tenant-import.js";
+import { seedRatesEntityUiOverrides } from "./seed-rates-entity-ui-overrides.js";
+import { seedRatesUiBuilderPresets } from "./seed-rates-ui-builder-presets.js";
+import { seedRatesTenantDashboardLayout } from "./seed-rates-tenant-dashboard-layout.js";
 import { ensureRatesRole } from "./seed-helpers.js";
 import { seedRatesTestUser } from "./seed-rates-test-user.js";
 
@@ -117,6 +120,16 @@ async function seedRatesTenant(
       catalogResult.definitionRecords,
     );
   }
+
+  await seedRatesEntityUiOverrides(
+    tenantId,
+    firebaseAdminConfig,
+    catalogResult.definitionRecords,
+  );
+
+  await seedRatesUiBuilderPresets(tenantId, firebaseAdminConfig);
+
+  await seedRatesTenantDashboardLayout(tenantId, firebaseAdminConfig);
 
   let metricsBackfillFailures = 0;
   if (backfillMetrics) {

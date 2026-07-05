@@ -618,6 +618,28 @@ function extractMetricDerivedKpiOperatorKeys(corpus) {
   return keys;
 }
 
+/** entity.viewSettings.gridTemplateColumnsErrors.${errorCode} in grid editor labels */
+function extractGridTemplateColumnsErrorKeys(corpus) {
+  if (
+    !corpus.includes("entity.viewSettings.gridTemplateColumnsErrors.${") &&
+    !corpus.includes("`entity.viewSettings.gridTemplateColumnsErrors.${")
+  ) {
+    return [];
+  }
+
+  const refEntity = readJSON(
+    path.join(LOCALES_DIR, REF_LOCALE, `${DEFAULT_NAMESPACE}.json`),
+  ).entity;
+
+  const errors = refEntity?.viewSettings?.gridTemplateColumnsErrors;
+  if (!errors || typeof errors !== "object") return [];
+
+  return Object.keys(errors).map(
+    (key) =>
+      `${DEFAULT_NAMESPACE}:entity.viewSettings.gridTemplateColumnsErrors.${key}`,
+  );
+}
+
 /** queryBuilder.filters.operators|temporalPresets.${...} in source → keys under those objects */
 function extractQueryBuilderFilterDynamicKeys(corpus) {
   const needsOperators = corpus.includes("queryBuilder.filters.operators.${");
@@ -1061,7 +1083,7 @@ mergeUsedKeys(
 );
 const metricsEditorFile = path.join(
   SRC_DIR,
-  "components/metrics/MetricDefinitionEditor.tsx",
+  "components/metrics/MetricAggregatedDefinitionForm.tsx",
 );
 mergeUsedKeys(usedKeys, extractMetricsOperationKeys(corpus), metricsEditorFile);
 const metricBindingEditorFile = path.join(
@@ -1099,6 +1121,15 @@ mergeUsedKeys(
   usedKeys,
   extractQueryBuilderFilterDynamicKeys(corpus),
   entityQueryFilterGroupEditorFile,
+);
+const formDesignerLayoutEditorLabelsFile = path.join(
+  SRC_DIR,
+  "features/form-designer/form-designer-layout-editor-labels.ts",
+);
+mergeUsedKeys(
+  usedKeys,
+  extractGridTemplateColumnsErrorKeys(corpus),
+  formDesignerLayoutEditorLabelsFile,
 );
 const uiBuilderPresetManagerFile = path.join(
   SRC_DIR,

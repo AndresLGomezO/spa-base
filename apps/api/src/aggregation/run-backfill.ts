@@ -77,10 +77,7 @@ export async function runMetricBackfill(
     status: "RUNNING",
   });
 
-  const documents = await metricRuntime.listSourceDocuments(
-    tenantId,
-    metric.sourceModel,
-  );
+  const documents = await metricRuntime.listSourceDocuments(tenantId, metric);
 
   try {
     const result = await runSnapshotBackfillForMetric({

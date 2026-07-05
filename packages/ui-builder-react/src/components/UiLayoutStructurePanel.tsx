@@ -11,6 +11,10 @@ import {
   type MotionPreset,
   updateRootColumnStyles,
   updateRootNodeStyles,
+  toEditableLayoutDocument,
+  fromEditableLayoutDocument,
+  isScreenRootNode,
+  type LayoutRootNode,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { Text } from "@repo/ui";
@@ -98,7 +102,7 @@ export interface UiLayoutStructurePanelLabels extends LayoutColumnControlsLabels
   readonly componentEditor: ComponentConfigEditorLabels;
   readonly addRow: string;
   readonly componentRow: string;
-  readonly nestedRow: string;
+  readonly gridRow: string;
   readonly emptyColumn: string;
   readonly moveUp: string;
   readonly moveDown: string;
@@ -182,6 +186,24 @@ export function UiLayoutStructurePanel({
 
   const [activeColumn, setActiveColumn] = useState(0);
 
+  const editableLayout = useMemo(
+    () => toEditableLayoutDocument(layout),
+    [layout],
+  );
+  const editableRoot = editableLayout.root as LayoutRootNode;
+
+  const applyLayoutChange = (next: UiLayoutDocument) => {
+    onLayoutChange(
+      isScreenRootNode(layout.root)
+        ? {
+            ...layout,
+            ...next,
+            root: fromEditableLayoutDocument(next, "screen").root,
+          }
+        : next,
+    );
+  };
+
   const columnLabels: ColumnRowsEditorLabels = {
     layoutColumns: labels.layoutColumns,
     columnTab: labels.columnTab,
@@ -192,7 +214,7 @@ export function UiLayoutStructurePanel({
     deleteColumn: labels.deleteColumn,
     addRow: labels.addRow,
     componentRow: labels.componentRow,
-    nestedRow: labels.nestedRow,
+    gridRow: labels.gridRow,
     emptyColumn: labels.emptyColumn,
     moveUp: labels.moveUp,
     moveDown: labels.moveDown,
@@ -210,7 +232,7 @@ export function UiLayoutStructurePanel({
     layoutJsonImport: labels.layoutJsonImport,
   };
 
-  const activeColumnNode = layout.root.columns[activeColumn];
+  const activeColumnNode = editableRoot.columns[activeColumn];
 
   return (
     <div className={className ?? "flex flex-col gap-3"}>
@@ -232,7 +254,7 @@ export function UiLayoutStructurePanel({
                 canApply={presetStore.canApplyPresets}
                 labels={presetStore.presetInsertLabels}
                 onApply={(data) =>
-                  onLayoutChange(
+                  applyLayoutChange(
                     replaceLayoutDocument(data as UiLayoutDocument),
                   )
                 }
@@ -264,7 +286,7 @@ export function UiLayoutStructurePanel({
             referenceData={layout}
             actionsInModalFooter={actionsInModalFooter}
             onApply={(data) =>
-              onLayoutChange(replaceLayoutDocument(data as UiLayoutDocument))
+              applyLayoutChange(replaceLayoutDocument(data as UiLayoutDocument))
             }
           />
         </div>
@@ -281,8 +303,12 @@ export function UiLayoutStructurePanel({
             canApply={presetStore.canApplyPresets}
             labels={presetStore.presetInsertLabels}
             onApply={(data) =>
-              onLayoutChange(
-                insertColumnAt(layout, activeColumn + 1, data as ColumnNode),
+              applyLayoutChange(
+                insertColumnAt(
+                  editableLayout,
+                  activeColumn + 1,
+                  data as ColumnNode,
+                ),
               )
             }
           />
@@ -299,34 +325,36 @@ export function UiLayoutStructurePanel({
       ) : null}
 
       <LayoutColumnControls
-        columnCount={layout.root.columnCount}
-        columns={layout.root.columns}
+        columnCount={editableRoot.columnCount}
+        columns={editableRoot.columns}
         activeColumn={activeColumn}
         labels={labels}
         onColumnCountChange={(count) => {
-          onLayoutChange(setRootColumnCount(layout, count));
+          applyLayoutChange(setRootColumnCount(editableLayout, count));
           setActiveColumn((current) =>
             Math.min(current, Math.max(0, count - 1)),
           );
         }}
         onActiveColumnChange={setActiveColumn}
         onColumnWidthPercentChange={(index, percent) =>
-          onLayoutChange(setRootColumnWidthPercent(layout, index, percent))
+          applyLayoutChange(
+            setRootColumnWidthPercent(editableLayout, index, percent),
+          )
         }
         onMoveLeft={() => {
-          onLayoutChange(moveRootColumn(layout, activeColumn, -1));
+          applyLayoutChange(moveRootColumn(editableLayout, activeColumn, -1));
           setActiveColumn((current) => Math.max(0, current - 1));
         }}
         onMoveRight={() => {
-          onLayoutChange(moveRootColumn(layout, activeColumn, 1));
+          applyLayoutChange(moveRootColumn(editableLayout, activeColumn, 1));
           setActiveColumn((current) =>
-            Math.min(layout.root.columns.length - 1, current + 1),
+            Math.min(editableRoot.columns.length - 1, current + 1),
           );
         }}
         onDelete={() => {
-          onLayoutChange(removeRootColumn(layout, activeColumn));
+          applyLayoutChange(removeRootColumn(editableLayout, activeColumn));
           setActiveColumn((current) =>
-            Math.min(layout.root.columns.length - 2, current),
+            Math.min(editableRoot.columns.length - 2, current),
           );
         }}
       />
@@ -337,8 +365,10 @@ export function UiLayoutStructurePanel({
             type="checkbox"
             checked={layout.showActions ?? true}
             onChange={(event) =>
-              onLayoutChange(
-                updateLayoutMeta(layout, { showActions: event.target.checked }),
+              applyLayoutChange(
+                updateLayoutMeta(editableLayout, {
+                  showActions: event.target.checked,
+                }),
               )
             }
           />
@@ -346,25 +376,29 @@ export function UiLayoutStructurePanel({
         </label>
       ) : null}
 
-      {layout.root.columnCount >= 1 ? (
+      {editableRoot.columnCount >= 1 ? (
         <ResponsiveGridEditor
-          styles={layout.root.styles}
-          columnCount={layout.root.columnCount}
+          styles={editableRoot.styles}
+          columnCount={editableRoot.columnCount}
           labels={labels.responsiveGrid}
           onChange={(styles) =>
-            onLayoutChange(updateRootNodeStyles(layout, styles))
+            applyLayoutChange(updateRootNodeStyles(editableLayout, styles))
           }
         />
       ) : null}
 
       <StyleRulesEditor
-        styles={filterStyleRulesForGenericEditor(layout.root.styles)}
+        visualOnly
+        styles={filterStyleRulesForGenericEditor(editableRoot.styles)}
         onChange={(genericStyles) => {
-          const gridStyles = (layout.root.styles ?? []).filter((rule) =>
+          const gridStyles = (editableRoot.styles ?? []).filter((rule) =>
             isResponsiveGridStyleProperty(rule.property),
           );
-          onLayoutChange(
-            updateRootNodeStyles(layout, [...genericStyles, ...gridStyles]),
+          applyLayoutChange(
+            updateRootNodeStyles(editableLayout, [
+              ...genericStyles,
+              ...gridStyles,
+            ]),
           );
         }}
         labels={{
@@ -378,7 +412,7 @@ export function UiLayoutStructurePanel({
           <MotionPresetEditor
             motion={layout.motion}
             onChange={(motion: MotionPreset | undefined) =>
-              onLayoutChange(updateLayoutMeta(layout, { motion }))
+              applyLayoutChange(updateLayoutMeta(editableLayout, { motion }))
             }
             labels={labels.motion}
           />
@@ -389,9 +423,9 @@ export function UiLayoutStructurePanel({
         <ColumnStackDirectionEditor
           stackDirection={activeColumnNode.stackDirection}
           onChange={(stackDirection) =>
-            onLayoutChange(
+            applyLayoutChange(
               updateRootColumnStackDirection(
-                layout,
+                editableLayout,
                 activeColumn,
                 stackDirection,
               ),
@@ -405,7 +439,9 @@ export function UiLayoutStructurePanel({
         <StyleRulesEditor
           styles={activeColumnNode.styles}
           onChange={(styles) =>
-            onLayoutChange(updateRootColumnStyles(layout, activeColumn, styles))
+            applyLayoutChange(
+              updateRootColumnStyles(editableLayout, activeColumn, styles),
+            )
           }
           labels={{
             ...labels.styleRules,
@@ -416,14 +452,14 @@ export function UiLayoutStructurePanel({
 
       {activeColumnNode ? (
         <ColumnRowsEditor
-          layout={layout}
+          layout={editableLayout}
           locator={{ scope: "root", columnIndex: activeColumn }}
           rootColumnIndex={activeColumn}
           rows={activeColumnNode.rows}
           fieldDescriptors={fieldDescriptors}
           displayFieldDescriptors={displayFieldDescriptors}
           defaultFieldPath={defaultFieldPath}
-          onLayoutChange={onLayoutChange}
+          onLayoutChange={applyLayoutChange}
           labels={columnLabels}
           metricKpiEditor={metricKpiEditor}
           staticImageEditor={staticImageEditor}

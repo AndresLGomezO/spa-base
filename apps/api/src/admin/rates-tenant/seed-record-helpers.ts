@@ -132,27 +132,6 @@ export async function loadRatesSeedRecord(
   return existing ? (existing as Record<string, unknown>) : null;
 }
 
-export function snapshotRatesSeedRecord(
-  context: RatesRecordSeedContext,
-  entityName: string,
-  id: string,
-  business: Record<string, unknown>,
-): Record<string, unknown> {
-  const entity = context.entities.get(entityName);
-  if (!entity) {
-    throw new Error(
-      `Entity "${entityName}" is not registered for rates seed on tenant "${context.tenantId}".`,
-    );
-  }
-
-  const now = new Date().toISOString();
-  const draft = applySearchMirrorFields(
-    entity,
-    buildSeedRecord(context.tenantId, business, id, context.ownerId, now),
-  );
-  return entity.schema.parse(draft) as Record<string, unknown>;
-}
-
 export type RatesRecordSeedContext = {
   readonly tenantId: string;
   readonly config: FirebaseAdminConfig;

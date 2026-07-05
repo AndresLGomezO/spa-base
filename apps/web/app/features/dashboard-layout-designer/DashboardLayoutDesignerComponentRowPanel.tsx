@@ -9,6 +9,7 @@ import {
   componentKindsForSurface,
   isContainerComponent,
   isDashboardSectionComponent,
+  isGridComponent,
   isMetricWidgetComponent,
   isUserComponent,
   isViewFilterComponent,
@@ -23,11 +24,12 @@ import type { ComponentRowRef } from "../form-designer/form-designer-component-r
 import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
 import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentRowPanel";
-import { NestedLayoutRowPanel } from "../form-designer/NestedLayoutRowPanel";
+import { GridRowPanel } from "../form-designer/GridRowPanel";
 import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { LucideIconField } from "../../components/shared/LucideIconField";
 import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-binding";
+import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 import { DashboardSectionComponentEditor } from "./DashboardSectionComponentEditor";
 import { UserComponentEditor } from "./UserComponentEditor";
 import { MetricWidgetComponentEditor } from "../metrics-row-designer/MetricWidgetComponentEditor";
@@ -46,16 +48,17 @@ export function DashboardLayoutDesignerComponentRowPanel({
   rowRef,
 }: DashboardLayoutDesignerComponentRowPanelProps) {
   const { t } = useTranslation("common");
-  const { editor, activeTabId } = useDashboardLayoutDesigner();
+  const { editor, designFocus } = useDashboardLayoutDesigner();
   const { items } = useEntityCatalog();
 
   const binding = useMemo(
-    () => resolveActiveLayoutBinding(editor, activeTabId),
-    [activeTabId, editor],
+    () => resolveActiveLayoutBinding(editor, designFocus),
+    [designFocus, editor],
   );
 
-  const designSurface =
-    activeTabId === "layout" ? "dashboardLayout" : "dashboardSection";
+  const designSurface = isShellLayoutFocus(designFocus)
+    ? "dashboardLayout"
+    : "dashboardSection";
   const allowedKinds = componentKindsForSurface(designSurface);
 
   const labels = useFormDesignerLayoutEditorLabels();
@@ -81,11 +84,11 @@ export function DashboardLayoutDesignerComponentRowPanel({
       </Text>
     );
   }
-
-  if (row.type === "nested-layout") {
+  if (row.type === "component" && isGridComponent(row.component)) {
     return (
-      <NestedLayoutRowPanel
-        row={row}
+      <GridRowPanel
+        row={row.component}
+        rowNode={row}
         rowRef={rowRef}
         binding={binding}
         labels={labels}

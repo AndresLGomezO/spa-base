@@ -1,5 +1,7 @@
 import {
   STYLE_PROPERTY_OPTIONS,
+  filterVisualStyleRules,
+  isLayoutStyleProperty,
   type StylePropertyKey,
   type StyleRule,
   type ThemeColorRole,
@@ -72,6 +74,8 @@ export interface StyleRulesEditorProps {
   readonly onChange: (styles: readonly StyleRule[]) => void;
   readonly labels: StyleRulesEditorLabels;
   readonly className?: string;
+  /** When true, layout-affecting properties are hidden (Section 15.2). */
+  readonly visualOnly?: boolean;
 }
 
 function formatPropertyLabel(property: StylePropertyKey): string {
@@ -183,9 +187,28 @@ export function StyleRulesEditor({
   onChange,
   labels,
   className,
+  visualOnly = false,
 }: StyleRulesEditorProps) {
+  const displayStyles = visualOnly ? filterVisualStyleRules(styles) : styles;
+  const propertyOptions = visualOnly
+    ? STYLE_PROPERTY_OPTIONS.filter(
+        (property) => !isLayoutStyleProperty(property),
+      )
+    : STYLE_PROPERTY_OPTIONS;
+
+  const handleRuleChange = (nextDisplayStyles: readonly StyleRule[]) => {
+    if (!visualOnly) {
+      onChange(nextDisplayStyles);
+      return;
+    }
+    const layoutRules = (styles ?? []).filter((rule) =>
+      isLayoutStyleProperty(rule.property),
+    );
+    onChange([...layoutRules, ...nextDisplayStyles]);
+  };
+
   const updateRule = (index: number, patch: Partial<StyleRule>) => {
-    onChange(upsertStyleRule(styles, index, patch));
+    handleRuleChange(upsertStyleRule(displayStyles, index, patch));
   };
 
   return (
@@ -194,7 +217,7 @@ export function StyleRulesEditor({
         <Text className="text-muted-foreground text-sm">{labels.title}</Text>
       ) : null}
 
-      {(styles ?? []).map((rule, index) => (
+      {displayStyles.map((rule, index) => (
         <div key={`${index}-${rule.property}`} className="flex flex-wrap gap-2">
           <label className="flex min-w-[8rem] flex-1 flex-col gap-1 text-sm">
             <span className="text-muted-foreground">
@@ -208,7 +231,7 @@ export function StyleRulesEditor({
                 })
               }
             >
-              {STYLE_PROPERTY_OPTIONS.map((property) => (
+              {propertyOptions.map((property) => (
                 <option key={property} value={property}>
                   {formatPropertyLabel(property)}
                 </option>
@@ -243,7 +266,9 @@ export function StyleRulesEditor({
             type="button"
             variant="outline"
             className="self-end"
-            onClick={() => onChange(removeStyleRule(styles, index))}
+            onClick={() =>
+              handleRuleChange(removeStyleRule(displayStyles, index))
+            }
           >
             {labels.removeStyleRule}
           </Button>
@@ -253,7 +278,7 @@ export function StyleRulesEditor({
       <Button
         type="button"
         variant="outline"
-        onClick={() => onChange(addStyleRule(styles))}
+        onClick={() => handleRuleChange(addStyleRule(displayStyles))}
       >
         {labels.addStyleRule}
       </Button>

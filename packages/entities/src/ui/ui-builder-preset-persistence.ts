@@ -3,7 +3,6 @@ import { z } from "zod";
 import {
   columnNodeSchema,
   componentRowSchema,
-  nestedLayoutRowSchema,
   uiLayoutDocumentSchema,
 } from "@repo/ui-builder-core";
 
@@ -17,12 +16,7 @@ export const persistedUiBuilderPresetSchema = z
   .object({
     name: z.string().trim().min(1),
     description: z.string().trim().min(1).optional(),
-    kind: z.enum([
-      "layout-document",
-      "column",
-      "component-row",
-      "nested-layout-row",
-    ]),
+    kind: z.enum(["layout-document", "column", "component-row"]),
     designSurface: z
       .enum([
         "listItem",
@@ -38,6 +32,9 @@ export const persistedUiBuilderPresetSchema = z
         "formModalFooter",
         "metricStrip",
         "metricRow",
+        "metricWidget",
+        "dashboardSection",
+        "dashboardLayout",
       ])
       .optional(),
     sourceEntityName: z.string().trim().min(1).optional(),
@@ -76,8 +73,8 @@ function validateTemplateJson(
     case "component-row":
       componentRowSchema.parse(parsed);
       return;
-    case "nested-layout-row":
-      nestedLayoutRowSchema.parse(parsed);
+    case "grid-track":
+      componentRowSchema.parse(parsed);
       return;
   }
 }

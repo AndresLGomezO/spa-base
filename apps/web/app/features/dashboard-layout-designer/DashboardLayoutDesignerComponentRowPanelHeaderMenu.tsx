@@ -22,9 +22,7 @@ import {
 } from "@repo/ui-builder-react";
 import {
   replaceComponentRowAt,
-  replaceNestedLayoutRowAt,
   type ComponentRowNode,
-  type NestedLayoutRowNode,
 } from "@repo/ui-builder-core";
 import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
@@ -34,6 +32,7 @@ import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designe
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-binding";
+import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
 import {
   TENANT_DASHBOARD_LAYOUT_PRESET_SOURCE,
@@ -73,19 +72,20 @@ export function DashboardLayoutDesignerComponentRowPanelHeaderMenu({
   rowRef,
 }: DashboardLayoutDesignerComponentRowPanelHeaderMenuProps) {
   const { t } = useTranslation("common");
-  const { editor, activeTabId } = useDashboardLayoutDesigner();
+  const { editor, designFocus } = useDashboardLayoutDesigner();
   const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(
     TENANT_DASHBOARD_LAYOUT_PRESET_SOURCE,
   );
-  const designSurface =
-    activeTabId === "layout" ? "dashboardLayout" : "dashboardSection";
+  const designSurface = isShellLayoutFocus(designFocus)
+    ? "dashboardLayout"
+    : "dashboardSection";
   const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const binding = useMemo(
-    () => resolveActiveLayoutBinding(editor, activeTabId),
-    [activeTabId, editor],
+    () => resolveActiveLayoutBinding(editor, designFocus),
+    [designFocus, editor],
   );
 
   const row = findRowByRef(binding.layout, rowRef);
@@ -113,8 +113,6 @@ export function DashboardLayoutDesignerComponentRowPanelHeaderMenu({
     return null;
   }
 
-  const isNested = row.type === "nested-layout";
-
   const toolLabels = {
     insert: t("formDesigner.components.rowPanel.tools.insert"),
     save: t("formDesigner.components.rowPanel.tools.save"),
@@ -136,9 +134,7 @@ export function DashboardLayoutDesignerComponentRowPanelHeaderMenu({
       />
     );
 
-  const jsonScope = isNested
-    ? { type: "nested-layout-row" as const }
-    : { type: "component-row" as const };
+  const jsonScope = { type: "component-row" as const };
 
   const jsonData = row;
   const presetKind = "component-row" as const;
@@ -170,7 +166,7 @@ export function DashboardLayoutDesignerComponentRowPanelHeaderMenu({
           />
           <SavePresetDialog
             kind={presetKind}
-            node={jsonData as ComponentRowNode | NestedLayoutRowNode}
+            node={jsonData as ComponentRowNode}
             designSurface={designSurface}
             sourceEntityName={presetStore.sourceEntityName}
             canSave={presetStore.canApplyPresets}
@@ -183,7 +179,7 @@ export function DashboardLayoutDesignerComponentRowPanelHeaderMenu({
           />
           <LayoutJsonViewDialog
             scope={jsonScope}
-            data={jsonData as ComponentRowNode | NestedLayoutRowNode}
+            data={jsonData as ComponentRowNode}
             labels={labels.layoutJsonImport}
             renderTrigger={renderIconTrigger(
               toolLabels.view,
@@ -197,19 +193,8 @@ export function DashboardLayoutDesignerComponentRowPanelHeaderMenu({
             defaultFieldPath="name"
             canApply={presetStore.canApplyPresets}
             labels={labels.layoutJsonImport}
-            referenceData={jsonData as ComponentRowNode | NestedLayoutRowNode}
+            referenceData={jsonData as ComponentRowNode}
             onApply={(data) => {
-              if (isNested) {
-                binding.setLayout(
-                  replaceNestedLayoutRowAt(
-                    binding.layout,
-                    rowRef.rowId,
-                    data as NestedLayoutRowNode,
-                  ),
-                );
-                return;
-              }
-
               binding.setLayout(
                 replaceComponentRowAt(
                   binding.layout,

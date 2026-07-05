@@ -102,7 +102,10 @@ export function MetricDefinitionList({
       {
         id: "sourceModel",
         label: t("metrics.sourceModel"),
-        getValue: (item) => item.sourceModel,
+        getValue: (item) =>
+          item.sourceQueryDefinitionId
+            ? `${item.sourceModel} (${t("metrics.sourceTypes.query")})`
+            : item.sourceModel,
       },
       {
         id: "operation",
@@ -184,7 +187,11 @@ export function MetricDefinitionList({
             id: "sourceModel",
             header: t("metrics.sourceModel"),
             cell: (item) => (
-              <span className="font-mono">{item.sourceModel}</span>
+              <span className="font-mono">
+                {item.sourceQueryDefinitionId
+                  ? `${item.sourceModel} (${t("metrics.sourceTypes.query")})`
+                  : item.sourceModel}
+              </span>
             ),
           },
           {

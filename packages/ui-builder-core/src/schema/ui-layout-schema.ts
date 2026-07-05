@@ -262,6 +262,27 @@ const metricBindingSourceSchema = z.discriminatedUnion("type", [
       param: z.string().trim().min(1),
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("dashboardDateFilter"),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("relativePeriod"),
+      field: z.string().trim().min(1),
+      anchor: z.enum([
+        "dashboardDateFilter",
+        "listFilter",
+        "routeParam",
+        "now",
+      ]),
+      offset: z.number().int(),
+      unit: z.enum(["day", "month", "year"]),
+      anchorField: z.string().trim().min(1).optional(),
+      anchorParam: z.string().trim().min(1).optional(),
+    })
+    .strict(),
 ]);
 
 const metricDerivedLegacyTermSchema = z
@@ -314,6 +335,9 @@ const metricDerivedKpiSchema = z
       .optional(),
     groupBindings: z.record(z.string(), metricBindingSourceSchema),
     dimensionBindings: z.record(z.string(), metricBindingSourceSchema),
+    queryParameterBindings: z
+      .record(z.string(), metricBindingSourceSchema)
+      .optional(),
     styles: z.array(styleRuleSchema).optional(),
   })
   .strict()
@@ -338,6 +362,9 @@ const metricDerivedKpiSchema = z
       expression,
       groupBindings: value.groupBindings,
       dimensionBindings: value.dimensionBindings,
+      ...(value.queryParameterBindings
+        ? { queryParameterBindings: value.queryParameterBindings }
+        : {}),
       styles: value.styles,
     };
   })
@@ -361,9 +388,7 @@ const fieldComponentBaseSchema = z
   })
   .strict();
 
-const rowNodeSchema: z.ZodType<unknown> = z.lazy(() =>
-  z.union([componentRowSchema, nestedLayoutRowSchema]),
-);
+const rowNodeSchema: z.ZodType<unknown> = z.lazy(() => componentRowSchema);
 
 const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
   z.discriminatedUnion("kind", [
@@ -397,7 +422,15 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         metricDefinitionId: z.string(),
         groupBindings: z.record(z.string(), metricBindingSourceSchema),
         dimensionBindings: z.record(z.string(), metricBindingSourceSchema),
+        parameterBindings: z
+          .record(z.string(), metricBindingSourceSchema)
+          .optional(),
+        queryParameterBindings: z
+          .record(z.string(), metricBindingSourceSchema)
+          .optional(),
         label: z.string().optional(),
+        showToneColors: z.boolean().optional(),
+        tonePolarity: z.enum(["normal", "inverted"]).optional(),
         styles: z.array(styleRuleSchema).optional(),
       })
       .strict(),
@@ -571,6 +604,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
         enableDateFilter: z.boolean().optional(),
         dateFilterGranularity: z.enum(["year", "month", "day"]).optional(),
         dateFilterParam: z.string().trim().min(1).optional(),
+        dateFilterLabel: labelConfigSchema.optional(),
         searchPlaceholder: z.string().optional(),
         filters: z
           .array(
@@ -595,8 +629,21 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
       .strict(),
     z
       .object({
+        kind: z.literal("grid"),
+        gridTemplateColumns: z.string().trim().min(1),
+        gap: z.string().trim().min(1).optional(),
+        alignItems: z.enum(["start", "center", "end", "stretch"]).optional(),
+        rows: z.array(rowNodeSchema),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
+    z
+      .object({
         kind: z.literal("query-viewer"),
         entityQueryDefinitionId: z.string(),
+        parameterBindings: z
+          .record(z.string(), metricBindingSourceSchema)
+          .optional(),
         rows: z.array(rowNodeSchema),
         stackDirection: z.enum(["column", "row"]).optional(),
         styles: z.array(styleRuleSchema).optional(),
@@ -645,39 +692,6 @@ export const columnNodeSchema: z.ZodType<{
     .strict(),
 );
 
-export const nestedLayoutRowSchema: z.ZodType<{
-  type: "nested-layout";
-  id: string;
-  columnCount: number;
-  columns: unknown[];
-  name?: string;
-  styles?: unknown[];
-  displayFrom?: "base" | "sm" | "md" | "lg" | "xl";
-  displayTo?: "base" | "sm" | "md" | "lg" | "xl";
-}> = z.lazy(() =>
-  z
-    .object({
-      type: z.literal("nested-layout"),
-      id: z.string().trim().min(1),
-      columnCount: z.number().int().min(1).max(6),
-      columns: z.array(columnNodeSchema).min(1),
-      name: z.string().trim().min(1).optional(),
-      styles: z.array(styleRuleSchema).optional(),
-      displayFrom: responsiveGridBreakpointSchema.optional(),
-      displayTo: responsiveGridBreakpointSchema.optional(),
-    })
-    .strict()
-    .superRefine((value, ctx) => {
-      if (value.columnCount !== value.columns.length) {
-        ctx.addIssue({
-          code: z.ZodIssueCode.custom,
-          message: "columnCount must match columns.length",
-          path: ["columnCount"],
-        });
-      }
-    }),
-);
-
 const layoutRootNodeSchema = z
   .object({
     type: z.literal("root"),
@@ -688,15 +702,36 @@ const layoutRootNodeSchema = z
   })
   .strict();
 
+const screenRootNodeSchema = z
+  .object({
+    type: z.literal("screen-root"),
+    id: z.string().trim().min(1),
+    gridTemplateColumns: z.string().trim().min(1),
+    gap: z.string().trim().min(1).optional(),
+    alignItems: z.enum(["start", "center", "end", "stretch"]).optional(),
+    rows: z.array(rowNodeSchema),
+    styles: z.array(styleRuleSchema).optional(),
+  })
+  .strict();
+
+const layoutDocumentRootSchema = z.union([
+  layoutRootNodeSchema,
+  screenRootNodeSchema,
+]);
+
 export const uiLayoutDocumentSchema = z
   .object({
-    root: layoutRootNodeSchema,
+    root: layoutDocumentRootSchema,
     showActions: z.boolean().optional(),
     cardsPerRow: z.number().int().min(1).max(4).optional(),
     motion: motionPresetSchema.optional(),
   })
   .strict()
   .superRefine((value, ctx) => {
+    if (value.root.type !== "root") {
+      return;
+    }
+
     if (value.root.columnCount !== value.root.columns.length) {
       ctx.addIssue({
         code: z.ZodIssueCode.custom,

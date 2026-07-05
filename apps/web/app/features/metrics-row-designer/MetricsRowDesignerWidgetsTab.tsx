@@ -7,7 +7,7 @@ import {
   designerTreeTabRootClassName,
   designerTreeWorkbenchClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
-import { MetricsRowDesignerPreviewPanel } from "./MetricsRowDesignerPreviewPanel";
+import { MetricsRowDesignerUnifiedPreviewPanel } from "./MetricsRowDesignerUnifiedPreviewPanel";
 import { MetricsRowDesignerStructureSessionProvider } from "./MetricsRowDesignerStructureSession";
 import { MetricsRowDesignerWidgetsTreePanel } from "./MetricsRowDesignerWidgetsTreePanel";
 
@@ -48,7 +48,7 @@ export function MetricsRowDesignerWidgetsTab() {
           <MetricsRowDesignerWidgetsTreePanel />
 
           <div className={designerPreviewColumnClassName}>
-            <MetricsRowDesignerPreviewPanel withStructureChrome />
+            <MetricsRowDesignerUnifiedPreviewPanel withStructureChrome />
           </div>
         </div>
       </MetricsRowDesignerStructureSessionProvider>

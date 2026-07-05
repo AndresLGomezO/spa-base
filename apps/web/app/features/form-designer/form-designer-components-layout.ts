@@ -3,38 +3,25 @@ import {
   createDefaultComponent,
   createDefaultStaticComponent,
   insertComponentRowAt,
-  insertNestedLayoutRowAt,
+  insertGridRowAt,
   insertRowAt,
+  isGridComponent,
   isRowHolderComponent,
-  moveRowAt,
-  removeRowAt,
   resolveContainerChildRows,
   updateComponentRowAt,
   updateComponentRowMetaAt,
-  updateLayoutMeta,
-  updateNestedColumnDisplayRange,
-  updateNestedColumnMetaAt,
-  updateNestedColumnStackDirection,
-  updateNestedColumnStyles,
-  updateNestedLayoutRowMetaAt,
-  setNestedColumnCount,
-  setNestedColumnWidthPercent,
-  setRootColumnWidthPercent,
-  updateRootColumnDisplayRange,
-  updateRootColumnMetaAt,
-  updateRootColumnStackDirection,
-  updateRootColumnStyles,
-  updateRootNodeStyles,
+  resolveLayoutRootColumns,
+  withEditableRootColumns,
   type ColumnNode,
   type ComponentRowNode,
-  type MotionPreset,
-  type NestedLayoutRowNode,
   type RowNode,
-  type StyleRule,
-  type UiComponentConfig,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import type { FieldDescriptor } from "@repo/ui-builder-react";
+import {
+  createLayoutEditorBinding,
+  type LayoutEditorBinding,
+} from "@repo/ui-builder-react";
 
 import type { UseEntityFormLayoutEditorResult } from "../ui-builder/use-entity-form-layout-editor";
 import type { CatalogEntryKind } from "./form-designer-component-catalog";
@@ -52,18 +39,10 @@ import {
   resolveDefaultColumnNodeLabel,
 } from "./form-designer-structure-tree";
 
-export {
-  resolvePreviewColumnChromeProps,
-  resolvePreviewRowFocusState,
-} from "./preview-focus-state";
-
 export type ComponentsTreeScope = "shell" | "step" | "footer" | "main";
 
 export function isStructuralPreviewRow(row: RowNode): boolean {
-  return (
-    row.type === "nested-layout" ||
-    (row.type === "component" && isRowHolderComponent(row.component))
-  );
+  return isRowHolderComponent(row.component);
 }
 
 export function resolveComponentsDesignSurface(
@@ -81,70 +60,12 @@ export function resolveComponentsDesignSurface(
   return "formPlain";
 }
 
-export interface ComponentsLayoutBinding {
-  readonly layout: UiLayoutDocument;
-  readonly setLayout: (layout: UiLayoutDocument) => void;
-  readonly removeRow: (rowRef: ComponentRowRef) => void;
-  readonly moveRow: (rowRef: ComponentRowRef, direction: -1 | 1) => void;
-  readonly updateComponent: (
-    rowRef: ComponentRowRef,
-    component: UiComponentConfig,
-  ) => void;
-  readonly updateRowMeta: (
-    rowRef: ComponentRowRef,
-    patch: Partial<
-      Pick<
-        ComponentRowNode,
-        | "styles"
-        | "motion"
-        | "displayFrom"
-        | "displayTo"
-        | "name"
-        | "clickAction"
-      >
-    >,
-  ) => void;
-  readonly updateNestedRowMeta: (
-    rowRef: ComponentRowRef,
-    patch: Partial<
-      Pick<NestedLayoutRowNode, "styles" | "displayFrom" | "displayTo" | "name">
-    >,
-  ) => void;
-  readonly setNestedRowColumnCount: (
-    rowRef: ComponentRowRef,
-    columnCount: number,
-  ) => void;
-  readonly updateLayoutMotion: (motion: MotionPreset | undefined) => void;
-  readonly updateNestedColumn: (
-    rowRef: ComponentRowRef,
-    nestedColumnIndex: number,
-    patch: {
-      readonly widthPercent?: number | undefined;
-      readonly stackDirection?: ColumnNode["stackDirection"];
-      readonly styles?: readonly StyleRule[];
-      readonly displayFrom?: ColumnNode["displayFrom"];
-      readonly displayTo?: ColumnNode["displayTo"];
-      readonly name?: ColumnNode["name"];
-    },
-  ) => void;
-  readonly updateRootColumn: (
-    columnIndex: number,
-    patch: {
-      readonly widthPercent?: number | undefined;
-      readonly stackDirection?: ColumnNode["stackDirection"];
-      readonly styles?: readonly StyleRule[];
-      readonly displayFrom?: ColumnNode["displayFrom"];
-      readonly displayTo?: ColumnNode["displayTo"];
-      readonly name?: ColumnNode["name"];
-    },
-  ) => void;
-  readonly updateRootLayoutStyles: (styles: readonly StyleRule[]) => void;
-}
+export type ComponentsLayoutBinding = LayoutEditorBinding;
 
 interface ResolvedComponentColumn {
   readonly column: ColumnNode;
   readonly siblingColumns: readonly ColumnNode[];
-  readonly parentNestedRow?: NestedLayoutRowNode;
+  readonly parentGridRow?: ComponentRowNode;
 }
 
 function resolveActiveLayout(
@@ -245,29 +166,179 @@ export function applyScopedLayoutSnapshot(
   editor.setPlainLayout(snapshot);
 }
 
-function findNestedLayoutRow(
-  rows: readonly RowNode[],
-  targetRowId: string,
-): NestedLayoutRowNode | undefined {
-  for (const row of rows) {
-    if (row.type === "nested-layout") {
-      if (row.id === targetRowId) {
-        return row;
-      }
+function containerTrackToColumnNode(trackRow: ComponentRowNode): ColumnNode {
+  if (!isRowHolderComponent(trackRow.component)) {
+    return {
+      id: trackRow.id,
+      name: trackRow.name,
+      rows: [trackRow],
+      displayFrom: trackRow.displayFrom,
+      displayTo: trackRow.displayTo,
+    };
+  }
 
-      for (const column of row.columns) {
-        const nested = findNestedLayoutRow(column.rows, targetRowId);
-        if (nested) {
-          return nested;
-        }
-      }
-      continue;
+  return {
+    id: trackRow.id,
+    name: trackRow.name,
+    rows: isRowHolderComponent(trackRow.component)
+      ? trackRow.component.rows
+      : [trackRow],
+    styles: isRowHolderComponent(trackRow.component)
+      ? trackRow.component.styles
+      : undefined,
+    stackDirection:
+      trackRow.component.kind === "container" ||
+      trackRow.component.kind === "query-viewer"
+        ? trackRow.component.stackDirection
+        : undefined,
+    displayFrom: trackRow.displayFrom,
+    displayTo: trackRow.displayTo,
+  };
+}
+
+function replaceRootColumnAt(
+  layout: UiLayoutDocument,
+  columnIndex: number,
+  column: ColumnNode,
+): UiLayoutDocument {
+  return withEditableRootColumns(layout, (columns) =>
+    columns.map((entry, index) => (index === columnIndex ? column : entry)),
+  );
+}
+
+function gridTrackRowRef(
+  columnRef: ComponentColumnRef,
+  parentGridRow: ComponentRowNode,
+  trackRowId: string,
+): ComponentRowRef {
+  return toComponentRowRef(trackRowId, {
+    scope: "container",
+    columnIndex: columnRef.rootColumnIndex,
+    containerRowId: parentGridRow.id,
+  });
+}
+
+export function applyComponentsColumnPatch(
+  binding: ComponentsLayoutBinding,
+  columnRef: ComponentColumnRef,
+  parentGridRow: ComponentRowNode | undefined,
+  patch: Parameters<ComponentsLayoutBinding["updateRootColumn"]>[1],
+): void {
+  if (isNestedComponentColumnRef(columnRef)) {
+    const trackRow =
+      parentGridRow?.type === "component" &&
+      isGridComponent(parentGridRow.component)
+        ? parentGridRow.component.rows[columnRef.nestedColumnIndex]
+        : undefined;
+    if (!trackRow || trackRow.type !== "component" || !parentGridRow) {
+      return;
     }
 
-    if (row.type === "component" && isRowHolderComponent(row.component)) {
-      const nested = findNestedLayoutRow(row.component.rows, targetRowId);
-      if (nested) {
-        return nested;
+    const trackRef = gridTrackRowRef(columnRef, parentGridRow, trackRow.id);
+
+    binding.updateRowMeta(trackRef, {
+      name: patch.name,
+      displayFrom: patch.displayFrom,
+      displayTo: patch.displayTo,
+    });
+
+    if (patch.stackDirection !== undefined || patch.styles !== undefined) {
+      binding.updateComponent(trackRef, {
+        ...trackRow.component,
+        ...(patch.stackDirection !== undefined &&
+        (trackRow.component.kind === "container" ||
+          trackRow.component.kind === "query-viewer")
+          ? { stackDirection: patch.stackDirection }
+          : {}),
+        ...(patch.styles !== undefined ? { styles: [...patch.styles] } : {}),
+      });
+    }
+    return;
+  }
+
+  binding.updateRootColumn(columnRef.rootColumnIndex, patch);
+}
+
+export function replaceColumnAtRef(
+  layout: UiLayoutDocument,
+  columnRef: ComponentColumnRef,
+  column: ColumnNode,
+): UiLayoutDocument {
+  if (!isNestedComponentColumnRef(columnRef)) {
+    return replaceRootColumnAt(layout, columnRef.rootColumnIndex, column);
+  }
+
+  const resolved = findColumnByRef(layout, columnRef);
+  const parentGridRow = resolved?.parentGridRow;
+  if (
+    !parentGridRow ||
+    parentGridRow.type !== "component" ||
+    !isGridComponent(parentGridRow.component)
+  ) {
+    return layout;
+  }
+
+  const trackRow = parentGridRow.component.rows[columnRef.nestedColumnIndex];
+  if (!trackRow || trackRow.type !== "component") {
+    return layout;
+  }
+
+  const locator = {
+    scope: "container" as const,
+    columnIndex: columnRef.rootColumnIndex,
+    containerRowId: parentGridRow.id,
+  };
+
+  let next = updateComponentRowMetaAt(layout, locator, trackRow.id, {
+    name: column.name,
+    displayFrom: column.displayFrom,
+    displayTo: column.displayTo,
+  });
+
+  if (isRowHolderComponent(trackRow.component)) {
+    next = updateComponentRowAt(layout, locator, trackRow.id, {
+      ...trackRow.component,
+      rows: column.rows,
+      ...(trackRow.component.kind === "container" ||
+      trackRow.component.kind === "query-viewer"
+        ? {
+            stackDirection: column.stackDirection,
+            styles: column.styles,
+          }
+        : { styles: column.styles }),
+    });
+  }
+
+  return next;
+}
+
+export function resolveGridTrackCount(
+  parentGridRow: ComponentRowNode | undefined,
+): number | undefined {
+  if (
+    !parentGridRow ||
+    parentGridRow.type !== "component" ||
+    !isGridComponent(parentGridRow.component)
+  ) {
+    return undefined;
+  }
+
+  return parentGridRow.component.rows.length;
+}
+
+function findGridRowById(
+  rows: readonly RowNode[],
+  rowId: string,
+): ComponentRowNode | undefined {
+  for (const row of rows) {
+    if (row.id === rowId && isGridComponent(row.component)) {
+      return row;
+    }
+
+    if (isRowHolderComponent(row.component)) {
+      const found = findGridRowById(row.component.rows, rowId);
+      if (found) {
+        return found;
       }
     }
   }
@@ -279,16 +350,12 @@ function getSearchRowsForLocator(
   layout: UiLayoutDocument,
   locator: ComponentRowRef["locator"],
 ): readonly RowNode[] {
-  const column = layout.root.columns[locator.columnIndex];
+  const column = resolveLayoutRootColumns(layout)[locator.columnIndex];
   if (!column) {
     return [];
   }
 
   if (locator.scope === "container") {
-    return resolveContainerChildRows(column.rows, locator.containerRowId) ?? [];
-  }
-
-  if (locator.scope === "nested" && locator.containerRowId) {
     return resolveContainerChildRows(column.rows, locator.containerRowId) ?? [];
   }
 
@@ -300,34 +367,38 @@ export function findColumnByRef(
   columnRef: ComponentColumnRef,
 ): ResolvedComponentColumn | undefined {
   if (isNestedComponentColumnRef(columnRef)) {
-    const parentRow = findNestedLayoutRow(
-      layout.root.columns[columnRef.rootColumnIndex]?.rows ?? [],
+    const parentGrid = findGridRowById(
+      resolveLayoutRootColumns(layout)[columnRef.rootColumnIndex]?.rows ?? [],
       columnRef.nestedParentRowId,
     );
-    if (!parentRow) {
+    if (!parentGrid || !isGridComponent(parentGrid.component)) {
       return undefined;
     }
 
-    const column = parentRow.columns[columnRef.nestedColumnIndex];
-    if (!column) {
+    const trackRow = parentGrid.component.rows[columnRef.nestedColumnIndex];
+    if (!trackRow || trackRow.type !== "component") {
       return undefined;
     }
+
+    const siblingColumns = parentGrid.component.rows
+      .filter((row): row is ComponentRowNode => row.type === "component")
+      .map(containerTrackToColumnNode);
 
     return {
-      column,
-      siblingColumns: parentRow.columns,
-      parentNestedRow: parentRow,
+      column: containerTrackToColumnNode(trackRow),
+      siblingColumns,
+      parentGridRow: parentGrid,
     };
   }
 
-  const column = layout.root.columns[columnRef.rootColumnIndex];
+  const column = resolveLayoutRootColumns(layout)[columnRef.rootColumnIndex];
   if (!column) {
     return undefined;
   }
 
   return {
     column,
-    siblingColumns: layout.root.columns,
+    siblingColumns: resolveLayoutRootColumns(layout),
   };
 }
 
@@ -364,7 +435,7 @@ export function findRowByRef(
   const { locator, rowId } = rowRef;
 
   if (locator.scope === "root") {
-    return layout.root.columns[locator.columnIndex]?.rows.find(
+    return resolveLayoutRootColumns(layout)[locator.columnIndex]?.rows.find(
       (row) => row.id === rowId,
     );
   }
@@ -375,17 +446,7 @@ export function findRowByRef(
     );
   }
 
-  const parentRow = findNestedLayoutRow(
-    getSearchRowsForLocator(layout, locator),
-    locator.rowId,
-  );
-  if (!parentRow) {
-    return undefined;
-  }
-
-  return parentRow.columns[locator.nestedColumnIndex]?.rows.find(
-    (row) => row.id === rowId,
-  );
+  return undefined;
 }
 
 export function areScopedLayoutSnapshotsEqual(
@@ -399,154 +460,7 @@ export function createComponentsLayoutBinding(
   layout: UiLayoutDocument,
   setLayout: (layout: UiLayoutDocument) => void,
 ): ComponentsLayoutBinding {
-  let currentLayout = layout;
-
-  const applyLayout = (next: UiLayoutDocument) => {
-    currentLayout = next;
-    setLayout(next);
-  };
-
-  const binding: ComponentsLayoutBinding = {
-    get layout() {
-      return currentLayout;
-    },
-    setLayout: applyLayout,
-    removeRow: (rowRef: ComponentRowRef) => {
-      applyLayout(removeRowAt(currentLayout, rowRef.locator, rowRef.rowId));
-    },
-    moveRow: (rowRef: ComponentRowRef, direction: -1 | 1) => {
-      applyLayout(
-        moveRowAt(currentLayout, rowRef.locator, rowRef.rowId, direction),
-      );
-    },
-    updateComponent: (rowRef, component) => {
-      applyLayout(
-        updateComponentRowAt(
-          currentLayout,
-          rowRef.locator,
-          rowRef.rowId,
-          component,
-        ),
-      );
-    },
-    updateRowMeta: (rowRef, patch) => {
-      applyLayout(
-        updateComponentRowMetaAt(
-          currentLayout,
-          rowRef.locator,
-          rowRef.rowId,
-          patch,
-        ),
-      );
-    },
-    updateNestedRowMeta: (rowRef, patch) => {
-      applyLayout(
-        updateNestedLayoutRowMetaAt(
-          currentLayout,
-          rowRef.locator,
-          rowRef.rowId,
-          patch,
-        ),
-      );
-    },
-    setNestedRowColumnCount: (rowRef, columnCount) => {
-      applyLayout(
-        setNestedColumnCount(
-          currentLayout,
-          rowRef.locator.columnIndex,
-          rowRef.rowId,
-          columnCount,
-        ),
-      );
-    },
-    updateLayoutMotion: (motion) => {
-      applyLayout(updateLayoutMeta(currentLayout, { motion }));
-    },
-    updateNestedColumn: (rowRef, nestedColumnIndex, patch) => {
-      if (rowRef.locator.scope !== "root") {
-        return;
-      }
-
-      let next = currentLayout;
-      if ("widthPercent" in patch) {
-        next = setNestedColumnWidthPercent(
-          next,
-          rowRef.locator.columnIndex,
-          rowRef.rowId,
-          nestedColumnIndex,
-          patch.widthPercent,
-        );
-      }
-      if (patch.stackDirection !== undefined) {
-        next = updateNestedColumnStackDirection(
-          next,
-          rowRef.locator.columnIndex,
-          rowRef.rowId,
-          nestedColumnIndex,
-          patch.stackDirection,
-        );
-      }
-      if (patch.styles !== undefined) {
-        next = updateNestedColumnStyles(
-          next,
-          rowRef.locator.columnIndex,
-          rowRef.rowId,
-          nestedColumnIndex,
-          patch.styles,
-        );
-      }
-      if ("displayFrom" in patch || "displayTo" in patch) {
-        next = updateNestedColumnDisplayRange(
-          next,
-          rowRef.locator.columnIndex,
-          rowRef.rowId,
-          nestedColumnIndex,
-          {
-            displayFrom: patch.displayFrom,
-            displayTo: patch.displayTo,
-          },
-        );
-      }
-      if ("name" in patch) {
-        next = updateNestedColumnMetaAt(
-          next,
-          rowRef.locator.columnIndex,
-          rowRef.rowId,
-          nestedColumnIndex,
-          { name: patch.name },
-        );
-      }
-      applyLayout(next);
-    },
-    updateRootColumn: (columnIndex, patch) => {
-      let next = currentLayout;
-      if ("widthPercent" in patch) {
-        next = setRootColumnWidthPercent(next, columnIndex, patch.widthPercent);
-      }
-      if (patch.stackDirection !== undefined) {
-        next = updateRootColumnStackDirection(
-          next,
-          columnIndex,
-          patch.stackDirection,
-        );
-      }
-      if (patch.styles !== undefined) {
-        next = updateRootColumnStyles(next, columnIndex, patch.styles);
-      }
-      if ("displayFrom" in patch || "displayTo" in patch) {
-        next = updateRootColumnDisplayRange(next, columnIndex, patch);
-      }
-      if ("name" in patch) {
-        next = updateRootColumnMetaAt(next, columnIndex, { name: patch.name });
-      }
-      applyLayout(next);
-    },
-    updateRootLayoutStyles: (styles) => {
-      applyLayout(updateRootNodeStyles(currentLayout, styles));
-    },
-  };
-
-  return binding;
+  return createLayoutEditorBinding(layout, setLayout);
 }
 
 export function resolveComponentsLayoutBinding(
@@ -617,16 +531,17 @@ export function insertCatalogEntryAtAnchor(
     referenceRowId: anchor.referenceRowId,
   };
 
-  if (kind === "nested-layout") {
-    const { layout, rowId } = insertNestedLayoutRowAt(
+  if (kind === "grid") {
+    const { layout, rowId } = insertGridRowAt(
       binding.layout,
       anchor.locator,
       insert,
+      { trackCount: 2 },
     );
     binding.setLayout(layout);
     return {
       rowRef: toComponentRowRef(rowId, anchor.locator),
-      label: treeLabels.nestedLayout(1),
+      label: treeLabels.grid(2),
     };
   }
 
@@ -649,7 +564,7 @@ export function insertCatalogEntryAtAnchor(
 export function insertImportedRowAtAnchor(
   binding: ComponentsLayoutBinding,
   anchor: InsertAnchor,
-  row: ComponentRowNode | NestedLayoutRowNode,
+  row: ComponentRowNode,
   fieldDescriptors: readonly FieldDescriptor[],
   treeLabels: StructureTreeLabels,
 ): { readonly rowRef: ComponentRowRef; readonly label: string } {
@@ -665,8 +580,8 @@ export function insertImportedRowAtAnchor(
   binding.setLayout(layout);
 
   const label =
-    row.type === "nested-layout"
-      ? treeLabels.nestedLayout(row.columnCount)
+    row.component.kind === "grid"
+      ? treeLabels.grid(row.component.rows.length)
       : resolveComponentRowLabel(row.component, fieldDescriptors, treeLabels);
 
   return {

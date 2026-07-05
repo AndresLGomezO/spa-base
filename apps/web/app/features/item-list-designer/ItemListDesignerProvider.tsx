@@ -51,7 +51,11 @@ import {
   type ItemListPanelSession,
   type ItemListUnsavedReason,
 } from "./item-list-designer-panel-session";
-import { renderItemListStructurePanelChrome } from "./item-list-designer-structure-panel-chrome";
+import { itemListDesignerThirdRail } from "./item-list-designer-third-rail";
+
+const ItemListThirdRailHeaderActions = itemListDesignerThirdRail.HeaderActions;
+const ItemListThirdRailBody = itemListDesignerThirdRail.Body;
+const ItemListThirdRailFooter = itemListDesignerThirdRail.Footer;
 import type {
   ItemListPanelTarget,
   ItemListStructureScope,
@@ -69,6 +73,7 @@ import {
   readLayoutSnapshotFromDefinition,
   readSettingsSnapshot,
   readSettingsSnapshotFromDefinition,
+  viewTypeFromLayoutPresetId,
   type ItemListDesignerColumnsSnapshot,
   type ItemListDesignerLayoutSnapshot,
   type ItemListDesignerSettingsSnapshot,
@@ -83,17 +88,13 @@ import {
 function isTabDirty(
   tabId: ItemListDesignerTabId,
   settingsIsDirty: boolean,
-  columnsIsDirty: boolean,
-  layoutIsDirty: boolean,
+  designIsDirty: boolean,
 ): boolean {
   if (tabId === "settings") {
     return settingsIsDirty;
   }
-  if (tabId === "columns") {
-    return columnsIsDirty;
-  }
-  if (tabId === "layout") {
-    return layoutIsDirty;
+  if (tabId === "design") {
+    return designIsDirty;
   }
   return false;
 }
@@ -102,12 +103,10 @@ function shouldConfirmTabChange(
   fromTab: ItemListDesignerTabId,
   toTab: ItemListDesignerTabId,
   settingsIsDirty: boolean,
-  columnsIsDirty: boolean,
-  layoutIsDirty: boolean,
+  designIsDirty: boolean,
 ): boolean {
   return (
-    fromTab !== toTab &&
-    isTabDirty(fromTab, settingsIsDirty, columnsIsDirty, layoutIsDirty)
+    fromTab !== toTab && isTabDirty(fromTab, settingsIsDirty, designIsDirty)
   );
 }
 
@@ -162,7 +161,6 @@ export function ItemListDesignerProvider({
     open: openThirdRail,
     close: closeThirdRail,
     update: updateThirdRail,
-    isOpen: isThirdRailOpen,
   } = useThirdRail();
 
   const [previewBreakpoint, setPreviewBreakpoint] =
@@ -173,17 +171,21 @@ export function ItemListDesignerProvider({
 
   const [savedSettingsBaseline, setSavedSettingsBaseline] =
     useState<ItemListDesignerSettingsSnapshot>(() =>
-      readSettingsSnapshotFromDefinition(definition),
+      readSettingsSnapshotFromDefinition(definition, editor),
     );
   const [savedColumnsBaseline, setSavedColumnsBaseline] =
-    useState<ItemListDesignerColumnsSnapshot>(() =>
-      readColumnsSnapshotFromDefinition(
+    useState<ItemListDesignerColumnsSnapshot>(() => {
+      const settingsBaseline = readSettingsSnapshotFromDefinition(
+        definition,
+        editor,
+      );
+      return readColumnsSnapshotFromDefinition(
         definition,
         editor.fieldPaths,
         editor,
-        readSettingsSnapshotFromDefinition(definition).viewType,
-      ),
-    );
+        viewTypeFromLayoutPresetId(settingsBaseline.layoutPresetId),
+      );
+    });
   const [savedLayoutBaseline, setSavedLayoutBaseline] =
     useState<ItemListDesignerLayoutSnapshot>(() =>
       readLayoutSnapshotFromDefinition(definition, editor),
@@ -227,7 +229,7 @@ export function ItemListDesignerProvider({
   );
 
   const structureScope = useMemo((): ItemListStructureScope => {
-    if (activeTabId === "layout" && editor.viewType === "card") {
+    if (activeTabId === "design" && editor.viewType === "card") {
       return { kind: "listItem" };
     }
 
@@ -274,6 +276,9 @@ export function ItemListDesignerProvider({
     () => !areLayoutSnapshotsEqual(savedLayoutBaseline, currentLayoutSnapshot),
     [currentLayoutSnapshot, savedLayoutBaseline],
   );
+
+  const designIsDirty =
+    editor.viewType === "card" ? layoutIsDirty : columnsIsDirty;
 
   const currentScopedLayoutSnapshot = useMemo(() => {
     if (!structurePanelSession) {
@@ -369,14 +374,17 @@ export function ItemListDesignerProvider({
 
   useEffect(() => {
     const currentEditor = editorRef.current;
-    const settingsBaseline = readSettingsSnapshotFromDefinition(definition);
+    const settingsBaseline = readSettingsSnapshotFromDefinition(
+      definition,
+      currentEditor,
+    );
     setSavedSettingsBaseline(settingsBaseline);
     setSavedColumnsBaseline(
       readColumnsSnapshotFromDefinition(
         definition,
         editor.fieldPaths,
         currentEditor,
-        settingsBaseline.viewType,
+        viewTypeFromLayoutPresetId(settingsBaseline.layoutPresetId),
       ),
     );
     setSavedLayoutBaseline(
@@ -385,15 +393,12 @@ export function ItemListDesignerProvider({
   }, [definition, editor.fieldPaths]);
 
   useEffect(() => {
-    if (editor.viewType === "card" && activeTabId === "columns") {
-      setSearchParams(
-        (current) => applyTabToSearchParams(current, "settings"),
-        { replace: true },
-      );
-      return;
-    }
-
-    if (editor.viewType !== "card" && activeTabId === "layout") {
+    if (
+      activeTabId === "design" &&
+      editor.viewType !== "card" &&
+      editor.viewType !== "table" &&
+      editor.viewType !== "expandableTable"
+    ) {
       setSearchParams(
         (current) => applyTabToSearchParams(current, "settings"),
         { replace: true },
@@ -552,7 +557,9 @@ export function ItemListDesignerProvider({
 
       openThirdRail({
         title: label,
-        ...renderItemListStructurePanelChrome(contextValue, session),
+        headerActions: <ItemListThirdRailHeaderActions />,
+        body: <ItemListThirdRailBody />,
+        footer: <ItemListThirdRailFooter />,
         resizeContent: true,
         onClose: guardStructurePanelClose,
       });
@@ -596,7 +603,6 @@ export function ItemListDesignerProvider({
 
       updateThirdRail({
         title: label,
-        ...renderItemListStructurePanelChrome(contextValue, session),
       });
     },
     [updateThirdRail],
@@ -744,8 +750,7 @@ export function ItemListDesignerProvider({
           activeTabId,
           tabId,
           settingsIsDirty,
-          columnsIsDirty,
-          layoutIsDirty,
+          designIsDirty,
         )
       ) {
         setPendingTabId(tabId);
@@ -764,8 +769,7 @@ export function ItemListDesignerProvider({
     [
       activeTabId,
       closeStructurePanel,
-      columnsIsDirty,
-      layoutIsDirty,
+      designIsDirty,
       navigateToTab,
       settingsIsDirty,
       structurePanelSession,
@@ -859,11 +863,11 @@ export function ItemListDesignerProvider({
     }
 
     const error =
-      tabId === "columns"
-        ? await saveColumns()
-        : tabId === "layout"
+      tabId === "design"
+        ? editor.viewType === "card"
           ? await saveLayout()
-          : await saveSettings();
+          : await saveColumns()
+        : await saveSettings();
     if (error) {
       return;
     }
@@ -882,6 +886,7 @@ export function ItemListDesignerProvider({
     currentGroupedColumnDisplayTo,
     currentGroupedColumnLabel,
     currentScopedLayoutSnapshot,
+    editor.viewType,
     executePendingPanelAction,
     navigateToColumnsScope,
     navigateToTab,
@@ -936,10 +941,12 @@ export function ItemListDesignerProvider({
       return;
     }
 
-    if (tabId === "columns") {
-      discardColumns();
-    } else if (tabId === "layout") {
-      discardLayout();
+    if (tabId === "design") {
+      if (editor.viewType === "card") {
+        discardLayout();
+      } else {
+        discardColumns();
+      }
     } else {
       discardSettings();
     }
@@ -1028,7 +1035,6 @@ export function ItemListDesignerProvider({
       cancelUnsavedChanges,
       canSave,
       columnsIsDirty,
-      layoutIsDirty,
       columnsScope,
       commitStructurePanelSave,
       confirmUnsavedDiscard,
@@ -1038,6 +1044,7 @@ export function ItemListDesignerProvider({
       discardSettings,
       editor,
       isLoading,
+      layoutIsDirty,
       previewBreakpoint,
       previewColorScheme,
       previewItem,
@@ -1066,25 +1073,10 @@ export function ItemListDesignerProvider({
 
   contextValueRef.current = contextValue;
 
-  useEffect(() => {
-    if (!structurePanelSession || !isThirdRailOpen) {
-      return;
-    }
-
-    updateThirdRail({
-      title: structurePanelSession.label,
-      ...renderItemListStructurePanelChrome(
-        contextValue,
-        structurePanelSession,
-      ),
-    });
-  }, [
+  itemListDesignerThirdRail.publish({
     contextValue,
-    isThirdRailOpen,
-    structurePanelIsDirty,
-    structurePanelSession,
-    updateThirdRail,
-  ]);
+    session: structurePanelSession,
+  });
 
   return (
     <ItemListDesignerContext.Provider value={contextValue}>

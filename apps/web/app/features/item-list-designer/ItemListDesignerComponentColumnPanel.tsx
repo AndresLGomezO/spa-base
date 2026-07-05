@@ -22,7 +22,11 @@ import { isNestedComponentColumnRef } from "../form-designer/form-designer-compo
 import { toComponentRowRef } from "../form-designer/form-designer-component-row-ref";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
-import { findColumnByRef } from "../form-designer/form-designer-components-layout";
+import {
+  findColumnByRef,
+  applyComponentsColumnPatch,
+  resolveGridTrackCount,
+} from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
 import { StructureColumnNameField } from "../form-designer/StructureItemNameField";
 import { resolveScopeLayoutBinding } from "./item-list-designer-layout-binding";
@@ -56,7 +60,7 @@ export function ItemListDesignerComponentColumnPanel({
     );
   }
 
-  const { column, siblingColumns, parentNestedRow } = resolved;
+  const { column, siblingColumns, parentGridRow } = resolved;
   const columnCount = siblingColumns.length;
   const columnIndex = isNestedComponentColumnRef(columnRef)
     ? columnRef.nestedColumnIndex
@@ -73,19 +77,7 @@ export function ItemListDesignerComponentColumnPanel({
   const applyColumnPatch = (
     patch: Parameters<typeof binding.updateRootColumn>[1],
   ) => {
-    if (isNestedComponentColumnRef(columnRef)) {
-      binding.updateNestedColumn(
-        toComponentRowRef(columnRef.nestedParentRowId, {
-          scope: "root",
-          columnIndex: columnRef.rootColumnIndex,
-        }),
-        columnRef.nestedColumnIndex,
-        patch,
-      );
-      return;
-    }
-
-    binding.updateRootColumn(columnRef.rootColumnIndex, patch);
+    applyComponentsColumnPatch(binding, columnRef, parentGridRow, patch);
   };
 
   const stackEditor = (
@@ -107,12 +99,12 @@ export function ItemListDesignerComponentColumnPanel({
     />
   );
 
-  const rowLayoutStyles = parentNestedRow
-    ? filterStyleRulesForGenericEditor(parentNestedRow.styles)
+  const rowLayoutStyles = parentGridRow
+    ? filterStyleRulesForGenericEditor(parentGridRow.styles)
     : filterStyleRulesForGenericEditor(binding.layout.root.styles);
 
-  const rowLayoutGridStyles = parentNestedRow
-    ? (parentNestedRow.styles ?? []).filter((rule) =>
+  const rowLayoutGridStyles = parentGridRow
+    ? (parentGridRow.styles ?? []).filter((rule) =>
         isResponsiveGridStyleProperty(rule.property),
       )
     : (binding.layout.root.styles ?? []).filter((rule) =>
@@ -123,8 +115,8 @@ export function ItemListDesignerComponentColumnPanel({
     genericStyles: readonly import("@repo/ui-builder-core").StyleRule[],
   ) => {
     const nextStyles = [...genericStyles, ...rowLayoutGridStyles];
-    if (parentNestedRow && isNestedComponentColumnRef(columnRef)) {
-      binding.updateNestedRowMeta(
+    if (parentGridRow && isNestedComponentColumnRef(columnRef)) {
+      binding.updateGridRowMeta(
         toComponentRowRef(columnRef.nestedParentRowId, {
           scope: "root",
           columnIndex: columnRef.rootColumnIndex,
@@ -140,11 +132,11 @@ export function ItemListDesignerComponentColumnPanel({
   const updateResponsiveGrid = (
     styles: readonly import("@repo/ui-builder-core").StyleRule[],
   ) => {
-    if (!parentNestedRow || !isNestedComponentColumnRef(columnRef)) {
+    if (!parentGridRow || !isNestedComponentColumnRef(columnRef)) {
       return;
     }
 
-    binding.updateNestedRowMeta(
+    binding.updateGridRowMeta(
       toComponentRowRef(columnRef.nestedParentRowId, {
         scope: "root",
         columnIndex: columnRef.rootColumnIndex,
@@ -232,10 +224,10 @@ export function ItemListDesignerComponentColumnPanel({
         </FormDesignerPanelPrimaryControls>
       )}
 
-      {parentNestedRow ? (
+      {parentGridRow ? (
         <ResponsiveGridEditor
-          styles={parentNestedRow.styles}
-          columnCount={parentNestedRow.columnCount}
+          styles={parentGridRow.styles}
+          columnCount={resolveGridTrackCount(parentGridRow) ?? 1}
           labels={labels.responsiveGrid}
           onChange={updateResponsiveGrid}
         />

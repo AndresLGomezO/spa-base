@@ -15,6 +15,7 @@ This document is the **authoritative reference for Metrics JSON** used by Settin
 | [metrics-consumption.md](./metrics-consumption.md) | Reading pre-aggregated metric rows at runtime |
 | [aggregations.md](./aggregations.md) | Event pipeline, contributions, backfill internals |
 | [entity-definition-json.md](./entity-definition-json.md) | Entity catalog JSON — metrics reference `sourceModel` entity names |
+| [entity-query-definition-json.md](./entity-query-definition-json.md) | Query catalog JSON — optional `sourceQueryDefinitionId` on metrics |
 | Tenant bundle (`metricDefinitions[]`) | Admin-only full records — not the portable envelope format below |
 
 ---
@@ -159,16 +160,75 @@ Each item matches **`createMetricDefinitionInput`** — the same shape as `POST 
 | `name` | string | yes | Match key for catalog replace |
 | `description` | string | no | |
 | `sourceModel` | string | yes | Entity **name** (e.g. `"loan"`) |
-| `filters` | array | no | Default `[]` |
+| `sourceQueryDefinitionId` | string | no | When set, metric population is scoped to this saved custom query (`limitMode: "all"`, `ACTIVE`). `sourceModel` must match the query's `sourceEntity`. |
+| `filters` | array | no | Default `[]`. Omit or use `[]` for query-backed metrics (query filter defines population). |
 | `groupBy` | string[] | no | Default `[]` |
 | `dimensions` | string[] | no | Default `[]` |
 | `dateFieldGranularity` | record | no | Keys must be in `groupBy` ∪ `dimensions` |
-| `valueDisplayFormat` | `"number"` \| `"currency"` | no | Default `"number"` |
+| `valueDisplayFormat` | `"number"` \| `"currency"` \| `"percent"` | no | Default `"number"`. Use `"percent"` for computed MoM metrics (server returns decimal ratio). |
+| `computationMode` | `"aggregated"` \| `"computed"` | no | Default `"aggregated"`. Computed metrics are evaluated on read via `/evaluate`. |
+| `parameters` | array | no | Required when `computationMode` is `"computed"`. Metric input parameters with optional `deriveFrom` shifts. |
+| `computation` | object | no | Required when `computationMode` is `"computed"`. Formula spec (`percentChange`, `difference`, `ratio`, `expression`) with `metricRef` / `queryRef` inputs. |
 | `aggregations` | array | yes | Min 1; `SUM`/`AVG` need `field`; `COUNT` may omit `field` |
 | `version` | integer | no | Default `1` on create |
 | `schemaVersionDependency` | integer | yes | Entity schema version tracked |
 | `fieldsDependency` | string[] | no | Must satisfy aggregation rules (see types refine) |
 | `status` | `"ACTIVE"` \| `"PAUSED"` | no | Default `"ACTIVE"` |
+
+### Computed metrics (`computationMode: "computed"`)
+
+Computed metrics do **not** maintain incremental Firestore rows. They declare input parameters and a server-side formula evaluated at read time.
+
+```json
+{
+  "name": "Income MoM %",
+  "computationMode": "computed",
+  "sourceModel": "transaction",
+  "valueDisplayFormat": "percent",
+  "parameters": [
+    { "name": "currentPeriod", "valueType": "dateBucket", "granularity": "month" },
+    {
+      "name": "comparisonPeriod",
+      "valueType": "dateBucket",
+      "granularity": "month",
+      "deriveFrom": {
+        "parameter": "currentPeriod",
+        "shift": { "unit": "month", "offset": -1 }
+      }
+    }
+  ],
+  "computation": {
+    "type": "percentChange",
+    "current": {
+      "type": "metricRef",
+      "metricDefinitionId": "Income by Month",
+      "parameterMap": { "date": "currentPeriod" }
+    },
+    "baseline": {
+      "type": "metricRef",
+      "metricDefinitionId": "Income by Month",
+      "parameterMap": { "date": "comparisonPeriod" }
+    }
+  },
+  "aggregations": [{ "operation": "COUNT" }],
+  "filters": [],
+  "groupBy": [],
+  "dimensions": [],
+  "dateFieldGranularity": {},
+  "schemaVersionDependency": 0,
+  "fieldsDependency": [],
+  "status": "ACTIVE"
+}
+```
+
+Input refs:
+
+| Type | Purpose |
+|------|---------|
+| `metricRef` | Read a pre-aggregated metric row after mapping parameters to `group`/`dimensions`. |
+| `queryRef` | Execute a parameterized entity query on read and aggregate a field (`SUM`/`COUNT`/`AVG`). |
+
+Computation types: `percentChange`, `difference`, `ratio`, `expression`.
 
 ---
 
@@ -181,6 +241,8 @@ Each item matches **`createMetricDefinitionInput`** — the same shape as `POST 
 | Unique metric `name` values | yes |
 | Each item passes `createMetricDefinitionInputSchema` | yes |
 | `sourceModel` exists in tenant entity catalog | yes (API) |
+| `sourceQueryDefinitionId` references an ACTIVE query with `limitMode: "all"` and matching `sourceEntity` | yes (API) |
+| Custom queries referenced by metrics cannot be deleted (single delete or catalog replace) | yes (API) |
 | Date fields in `groupBy`/`dimensions` have `dateFieldGranularity` | yes (API) |
 
 ### Distinction from other JSON
@@ -203,7 +265,7 @@ Each item matches **`createMetricDefinitionInput`** — the same shape as `POST 
 
 After replace:
 
-- **Created metrics:** initial backfill from source documents
+- **Created metrics:** initial backfill from source documents (skipped for `computationMode: "computed"`)
 - **Updated metrics:** backfill when aggregation-relevant fields change; version auto-bumps if import version ≤ current
 - **Unchanged updates:** backfill skipped
 
@@ -219,6 +281,7 @@ After replace:
 | Method | Path | Body |
 |--------|------|------|
 | `PUT` | `/api/metric-definitions/catalog` | Full `metric-definitions-catalog` envelope |
+| `POST` | `/api/metrics/:metricDefinitionId/evaluate` | `{ "parameters": { "currentPeriod": "2026-06" } }` — computed metrics only |
 
 Response:
 

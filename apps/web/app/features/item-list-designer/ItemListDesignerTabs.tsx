@@ -4,8 +4,7 @@ import { useTranslation } from "react-i18next";
 
 import type { ItemListDesignerTabId } from "./item-list-designer-tabs";
 import { useItemListDesigner } from "./item-list-designer-context";
-import { ItemListDesignerColumnsTab } from "./ItemListDesignerColumnsTab";
-import { ItemListDesignerLayoutTab } from "./ItemListDesignerLayoutTab";
+import { ItemListDesignerDesignTab } from "./ItemListDesignerDesignTab";
 import { ItemListDesignerSettingsTab } from "./ItemListDesignerSettingsTab";
 import { ItemListDesignerUnsavedChangesModal } from "./ItemListDesignerUnsavedChangesModal";
 
@@ -27,20 +26,15 @@ export function ItemListDesignerTabs() {
       },
     ];
 
-    if (editor.viewType === "table" || editor.viewType === "expandableTable") {
+    if (
+      editor.viewType === "table" ||
+      editor.viewType === "expandableTable" ||
+      editor.viewType === "card"
+    ) {
       items.push({
-        id: "columns",
-        label: t("itemListDesigner.tabs.columns"),
-        panel: <ItemListDesignerColumnsTab />,
-        panelScrollable: false,
-      });
-    }
-
-    if (editor.viewType === "card") {
-      items.push({
-        id: "layout",
-        label: t("itemListDesigner.tabs.layout"),
-        panel: <ItemListDesignerLayoutTab />,
+        id: "design",
+        label: t("itemListDesigner.tabs.design"),
+        panel: <ItemListDesignerDesignTab />,
         panelScrollable: false,
       });
     }
@@ -49,11 +43,12 @@ export function ItemListDesignerTabs() {
   }, [editor.viewType, t]);
 
   const effectiveActiveTabId =
-    activeTabId === "columns" && editor.viewType === "card"
+    activeTabId === "design" &&
+    editor.viewType !== "card" &&
+    editor.viewType !== "table" &&
+    editor.viewType !== "expandableTable"
       ? "settings"
-      : activeTabId === "layout" && editor.viewType !== "card"
-        ? "settings"
-        : activeTabId;
+      : activeTabId;
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">

@@ -416,14 +416,10 @@
     "tabs": {
       "ariaLabel": "Form designer sections",
       "settings": "Settings",
-      "layout": "Layout",
       "components": "Components"
     },
     "layout": {
       "rootLayoutPanelTitle": "Layout properties",
-      "rootLayoutPanel": {
-        "open": "Edit layout properties"
-      },
       "columnPanelTitle": "Column {{column}}",
       "columnPanel": {
         "jsonTitleColumn": "Import column JSON",
@@ -437,9 +433,6 @@
           "import": "Import"
         }
       },
-      "moveColumnLeft": "Move column left",
-      "moveColumnRight": "Move column right",
-      "removeColumn": "Remove column {{column}}",
       "selectColumn": "Edit column {{column}}"
     },
     "components": {
@@ -447,7 +440,8 @@
       "expandPanel": "Expand structure panel",
       "collapsePanel": "Collapse structure panel",
       "emptyColumn": "No components in this column yet.",
-      "nestedLayout": "Nested layout ({{count}} columns)",
+      "gridLayout": "Grid ({{count}} tracks)",
+      "gridTrack": "Track {{track}}",
       "container": "Container",
       "section": "Section",
       "actions": "Actions",
@@ -459,6 +453,7 @@
       "modalCancel": "Cancel",
       "importSectionTitle": "Import",
       "importJsonOption": "Import JSON",
+      "templatesSectionTitle": "Templates",
       "wizardScopeShell": "Shell",
       "wizardScopeStep": "Step content",
       "wizardScopeFooter": "Footer",
@@ -500,7 +495,6 @@
         "dataControls": "Search & filter"
       },
       "options": {
-        "nestedLayout": "Nested column",
         "text": "Text",
         "image": "Image",
         "icon": "Icon",
@@ -543,7 +537,6 @@
     "unsavedChanges": {
       "title": "Unsaved changes",
       "message": "You have unsaved settings changes. Save them before leaving this tab, or discard your changes.",
-      "layoutMessage": "You have unsaved layout changes. Save them before leaving this tab, or discard your changes.",
       "componentsMessage": "You have unsaved component changes. Save them before leaving this tab, or discard your changes.",
       "columnPanelMessage": "You have unsaved column changes. Save them to keep your edits, or discard to revert.",
       "columnPanelSave": "Save column changes",
@@ -801,8 +794,7 @@
     "settings": "Settings",
     "tabs": {
       "settings": "Settings",
-      "columns": "Columns",
-      "layout": "Layout",
+      "design": "Design",
       "groupedColumns": "Grouped columns",
       "expandedRow": "Expanded row",
       "ariaLabel": "Item list designer sections"
@@ -854,11 +846,25 @@
   "forms": {
     "stepIndicator": "Step {{step}} of {{total}}"
   },
+  "unifiedBuilder": {
+    "preview": {
+      "screenHint": "Previewing a responsive screen",
+      "constraintHint": "Previewing a component inside width constraints",
+      "width": "Width",
+      "device": "Device",
+      "devices": {
+        "mobile": "Mobile",
+        "tablet": "Tablet",
+        "desktop": "Desktop"
+      }
+    },
+    "properties": {
+      "ariaLabel": "Properties"
+    }
+  },
   "designLayout": {
     "forbidden": "You do not have permission to configure entity layouts.",
     "readOnly": "You can preview this layout but need entity UI override permission to save changes.",
-    "presentation": "Presentation",
-    "presentationExpandableTable": "Expandable table",
     "expandableTableColumns": "Grouped columns",
     "expandableTableColumnLabel": "Column header",
     "addExpandableTableColumn": "Add column",
@@ -882,8 +888,6 @@
     "formModalShowHeader": "Show modal header",
     "formModalFlushContent": "Flush modal content (no padding)",
     "formModalFooterDedicated": "Use dedicated modal footer layout",
-    "formPresentationPlain": "Plain",
-    "formPresentationWizard": "Wizard",
     "iconName": "Icon (Lucide name)",
     "iconNameHint": "Use a Lucide icon name, for example CircleCheck or Database.",
     "structureName": {
@@ -957,23 +961,17 @@
     "presets": {
       "title": "Component presets",
       "description": "Reusable layout fragments saved for this tenant. Applying a preset copies its structure; later preset edits do not change layouts that already used it.",
-      "listTitle": "Saved presets",
-      "detailTitle": "Preset details",
-      "empty": "No presets saved yet. Save blocks from any UI Builder surface.",
       "selectHint": "Select a preset to preview or edit.",
       "name": "Name",
       "descriptionField": "Description",
       "templateJson": "Template JSON",
       "fieldSlotsTitle": "Field slots",
-      "noFieldSlots": "No field mappings required.",
       "save": "Save",
       "delete": "Delete",
       "saved": "Preset updated.",
       "savedToStore": "Preset saved to library.",
       "saveFailed": "Unable to save preset.",
-      "deleteFailed": "Unable to delete preset.",
       "deleted": "Preset deleted.",
-      "loadFailed": "Unable to load presets.",
       "saveTrigger": "Save preset",
       "saveTitle": "Save to preset library",
       "insertTrigger": "Insert preset",
@@ -986,13 +984,70 @@
       "readOnlyHint": "You can preview presets, but you need entity UI override permission to save or apply them.",
       "noPresets": "No compatible presets found for this block.",
       "slotLabel": "Field",
-      "slot": "slot",
-      "slots": "slots",
       "kind": {
         "layout-document": "Full layout",
         "column": "Column",
+        "grid-track": "Grid track",
         "component-row": "Component row",
         "nested-layout-row": "Nested layout row"
+      },
+      "list": {
+        "title": "Presets",
+        "add": "Add preset",
+        "edit": "Edit",
+        "delete": "Delete",
+        "expandPanel": "Expand panel",
+        "collapsePanel": "Collapse panel",
+        "searchPlaceholder": "Search presets…",
+        "searchClear": "Clear search",
+        "filter": "Filter",
+        "clearFilters": "Clear filters",
+        "removeBadge": "Remove {{label}}",
+        "filterBySource": "Source",
+        "sort": "Sort",
+        "sortNameAsc": "Name (A–Z)",
+        "sortNameDesc": "Name (Z–A)",
+        "sortSource": "Source",
+        "sortUpdatedDesc": "Recently updated",
+        "sourcePlatform": "Platform",
+        "sourceTenant": "Tenant",
+        "emptySource": "No presets available.",
+        "emptyFiltered": "No presets match the current filters.",
+        "summary": "{{count}} shown · {{platform}} platform · {{tenant}} tenant",
+        "platformReadOnly": "read-only",
+        "kindLabel": "Kind",
+        "surfaceLabel": "Design surface",
+        "previewUnavailable": "Preview is not available for this preset.",
+        "previewEntity": "Preview using {{entity}} sample data"
+      },
+      "createTitle": "Create preset",
+      "deleteTitle": "Delete preset",
+      "deleteMessage": "Delete preset \"{{name}}\"? This cannot be undone."
+    },
+    "systemPresets": {
+      "label": "Layout preset",
+      "selectPreset": "Select layout preset",
+      "platformGroup": "Platform",
+      "tenantGroup": "Tenant",
+      "custom": "Custom layout",
+      "default": "default",
+      "confirmTitle": "Replace layout?",
+      "confirmBody": "Applying this preset replaces the current layout structure. Unsaved layout edits may be lost.",
+      "confirmApply": "Apply preset",
+      "tenantPresetTitle": "Apply tenant preset",
+      "builtin": {
+        "plainForm": "Plain form",
+        "plainFormDescription": "Default create/edit form with fields and actions.",
+        "plainTableList": "Plain table list",
+        "plainTableListDescription": "Default list item cell with labeled field text.",
+        "cardList": "Card list",
+        "cardListDescription": "Two-track card layout with actions.",
+        "expandableTableList": "Expandable row",
+        "expandableTableListDescription": "Row expand panel for grouped table rows.",
+        "wizardForm": "Wizard form",
+        "wizardFormDescription": "Multi-step wizard shell with progress and step host.",
+        "kpiStrip": "KPI strip",
+        "kpiStripDescription": "Horizontal metric KPI row."
       }
     }
   },
@@ -1205,8 +1260,6 @@
       }
     },
     "viewSettings": {
-      "table": "Table",
-      "card": "Card",
       "save": "Save layout",
       "saved": "View settings saved.",
       "saveFailed": "Unable to save view settings.",
@@ -1370,6 +1423,24 @@
       "labelAlignRight": "Right",
       "showActions": "Show actions menu",
       "layoutColumns": "Layout columns",
+      "gridGap": "Grid gap",
+      "gridTemplateColumns": "Grid template columns",
+      "gridTemplateColumnsHint": "CSS grid-template-columns string — one width per track ({{count}} tracks). Space-separated values.",
+      "gridTemplateColumnsPreview": "Per track: {{preview}}",
+      "gridTemplateColumnsPreviewDynamic": "Per track: {{preview}} (track count depends on container width)",
+      "gridTemplateColumnsPreviewFlexible": "fr, minmax, and % tracks are flexible — exact pixel widths depend on available space.",
+      "gridTemplateColumnsErrors": {
+        "empty": "Enter a grid-template-columns value.",
+        "unbalanced_delimiters": "Unbalanced parentheses or brackets.",
+        "invalid_repeat": "Invalid repeat() syntax. Use repeat(count, size) with count ≥ 1.",
+        "invalid_track": "Invalid track size. Use values like 1fr, 200px, minmax(200px, 1fr), or repeat(n, size).",
+        "track_count_mismatch": "Defines {{defined}} tracks but Layout columns is {{expected}}."
+      },
+      "gridTemplateColumnsHelp": {
+        "title": "Grid template columns",
+        "description": "A CSS grid-template-columns value: one size expression per column track, separated by spaces. Use fr for flexible shares, px or rem for fixed widths, and minmax(min, max) to set bounds. repeat(n, size) expands n identical tracks. Layout columns controls how many track rows exist; this field sets each track's width. Prefer minmax(0, …fr) on flexible tracks to avoid overflow.",
+        "example": "minmax(500px, 600px) repeat(3, 200px) — one flexible hero column plus three fixed 200px columns"
+      },
       "cardsPerRow": "Max cards per row",
       "columnTab": "Column {{column}}",
       "columnWidthPercent": "Width (%)",
@@ -2104,11 +2175,8 @@
   },
   "metrics": {
     "title": "Metrics",
-    "description": "Define aggregation metrics that update when entity records change.",
-    "createTitle": "Create metric",
     "create": "New metric",
     "empty": "No metric definitions yet.",
-    "editTitle": "Edit metric",
     "version": "Version",
     "statusValues": {
       "ACTIVE": "Active",
@@ -2118,6 +2186,11 @@
     "descriptionLabel": "Description (optional)",
     "descriptionPlaceholder": "What this metric measures and when to use it",
     "sourceModel": "Source entity",
+    "sourceTypes": {
+      "entity": "Entity",
+      "query": "Custom query"
+    },
+    "selectQuery": "Select a custom query",
     "operation": "Aggregation",
     "operations": {
       "SUM": "Sum",
@@ -2141,7 +2214,6 @@
       "valuePlaceholder": "Enter a value",
       "relationPlaceholder": "Enter related record id",
       "listPlaceholder": "Comma-separated values",
-      "validationRequired": "Enter a valid filter value for {{field}}.",
       "operators": {
         "eq": "Equals",
         "in": "Is one of"
@@ -2154,14 +2226,8 @@
     "selectField": "Select a field",
     "selectModelFirst": "Select a source entity to pick fields.",
     "versionLabel": "Version {{version}}",
-    "runBackfill": "Run backfill",
     "forbidden": "You do not have permission to manage metrics.",
-    "loadFailed": "Unable to load metric definitions.",
-    "saveAction": "Save",
     "cancel": "Cancel",
-    "saving": "Saving…",
-    "saved": "Metric saved.",
-    "saveFailed": "Unable to save metric.",
     "json": {
       "viewTrigger": "View JSON",
       "importTrigger": "Import JSON",
@@ -2198,12 +2264,10 @@
         "importFailed": "Unable to replace metrics catalog."
       }
     },
-    "validationRequired": "Name, aggregation field, and field dependencies are required.",
     "dateGranularity": {
       "title": "Date field split",
       "description": "Choose how each date field is bucketed when grouping or storing dimensions.",
       "select": "Select split…",
-      "validationRequired": "Select a date split for {{field}}.",
       "hint": "Stored bucket format: {{format}}",
       "options": {
         "day": "Day (day, month, and year)",
@@ -2217,12 +2281,126 @@
       }
     },
     "valueDisplayFormat": {
-      "label": "Result display format",
-      "number": "Plain number",
-      "currency": "Currency"
+      "label": "Result display format"
     },
-    "backfillComplete": "Backfill processed {{count}} source records.",
-    "backfillFailed": "Backfill failed.",
+    "computed": {
+      "sections": {
+        "parameters": "Parameters",
+        "computation": "Computation",
+        "preview": "Preview",
+        "display": "Display"
+      },
+      "displayHint": "Computed metrics store a placeholder COUNT aggregation. Choose how the evaluated result is displayed.",
+      "parameters": {
+        "empty": "No parameters defined yet.",
+        "itemLabel": "Parameter {{index}}",
+        "remove": "Remove parameter",
+        "name": "Parameter name",
+        "namePlaceholder": "currentPeriod",
+        "valueType": "Value type",
+        "granularity": "Date granularity",
+        "deriveFromEnabled": "Derive from another parameter",
+        "deriveFromSource": "Source parameter",
+        "noSourceOptions": "Add another parameter first.",
+        "shiftUnit": "Shift unit",
+        "shiftOffset": "Shift offset",
+        "add": "Add parameter"
+      },
+      "computation": {
+        "type": "Computation type",
+        "current": "Current input",
+        "baseline": "Baseline input",
+        "numerator": "Numerator input",
+        "denominator": "Denominator input",
+        "expressionInputs": "Named inputs",
+        "noInputs": "No inputs defined yet.",
+        "inputName": "Input name",
+        "removeInput": "Remove input",
+        "addInput": "Add input",
+        "expressionTokens": "Expression",
+        "insertInput": "Insert input token",
+        "insertLiteral": "Insert literal",
+        "types": {
+          "percentChange": "Percent change",
+          "difference": "Difference",
+          "ratio": "Ratio",
+          "expression": "Expression"
+        },
+        "tokenTypes": {
+          "input": "Input",
+          "literal": "Literal"
+        }
+      },
+      "inputRef": {
+        "parameterMap": "Parameter map",
+        "parameterMapEmpty": "No parameter mappings yet.",
+        "fieldKey": "Field or dimension",
+        "selectParameter": "Select parameter…",
+        "removeMapping": "Remove mapping",
+        "addMapping": "Add mapping",
+        "type": "Input type",
+        "types": {
+          "metricRef": "Metric reference",
+          "queryRef": "Query reference"
+        },
+        "metricDefinition": "Metric definition",
+        "queryDefinition": "Query definition",
+        "aggregationFieldPlaceholder": "amount"
+      },
+      "preview": {
+        "title": "Computation preview",
+        "parametersHeading": "Parameters",
+        "computationHeading": "Computation",
+        "noParameters": "(none)",
+        "deriveFrom": "derive from",
+        "shift": "shift"
+      }
+    },
+    "workbench": {
+      "title": "Metrics",
+      "description": "Define aggregation and computed metrics in a tree workbench.",
+      "loading": "Loading metrics…",
+      "list": {
+        "title": "Metrics",
+        "add": "New metric",
+        "expandPanel": "Expand metrics panel",
+        "collapsePanel": "Collapse metrics panel",
+        "emptySource": "No metric definitions yet.",
+        "emptyFiltered": "No metrics match the current filters.",
+        "filter": "Filter",
+        "sort": "Sort",
+        "clearFilters": "Clear filters",
+        "removeBadge": "Remove filter: {{label}}",
+        "filterBySourceType": "Source type",
+        "filterByMode": "Mode",
+        "filterByStatus": "Status",
+        "filterByEntity": "Source entity",
+        "summary": "{{count}} {{status}} ({{percent}}%)",
+        "sortNameAsc": "Name (A–Z)",
+        "sortNameDesc": "Name (Z–A)",
+        "sortSourceModel": "Source entity",
+        "sortMode": "Mode",
+        "sortUpdatedDesc": "Recently updated",
+        "sourceTypeEntity": "Entity",
+        "sourceTypeQuery": "Query",
+        "modeAggregated": "Aggregated",
+        "modeComputed": "Computed",
+        "searchPlaceholder": "Search metrics…",
+        "searchClear": "Clear search"
+      },
+      "settings": {
+        "empty": "Select or create a metric to configure it.",
+        "save": "Save",
+        "saved": "Metric saved."
+      },
+      "metadata": {
+        "createTitle": "New metric",
+        "createAction": "Create",
+        "created": "Metric created.",
+        "computationMode": "Metric mode",
+        "computedHint": "Configure parameters and computation after creating the metric."
+      }
+    },
     "multiselect": {
       "placeholder": "Select fields…",
       "selectedCount": "{{count}} selected",
@@ -2254,31 +2432,13 @@
         "example": "type = INCOME — only income transactions; type in EXPENSE, PAYMENT — outflows"
       }
     },
-    "summary": {
-      "title": "Summary before saving",
-      "whatCreatingNumeric": "{{operation}} of {{field}} on {{model}}",
-      "whatCreatingCount": "Count of {{model}} records",
-      "description": "Description: {{text}}",
-      "whenUpdates": "Recalculates when these fields change: {{fields}}",
-      "anyFieldChange": "any tracked field change",
-      "filters": "Record filters: {{filters}}",
-      "noFilters": "no record filters (all rows included)",
-      "groupBy": "Grouped by: {{fields}}",
-      "noGrouping": "single total (no grouping)",
-      "dimensions": "Dimensions stored on rows: {{fields}}",
-      "noDimensions": "none",
-      "dateGranularity": "Date splits: {{fields}}",
-      "valueDisplayFormat": "Result format: {{format}}",
-      "storagePathCreate": "Values will be stored under tenants/{tenantId}/metrics/{auto-generated-id}/rows/…",
-      "storagePathEdit": "Values are stored under tenants/{tenantId}/metrics/{{collection}}/rows/…",
-      "exampleRow": "Example row values: {{values}}"
-    },
     "widget": {
       "loading": "Loading metric…",
       "error": "Unable to load metric",
       "forbidden": "Metric values are not available for your role.",
       "unconfigured": "Select a metric for this KPI.",
-      "unknown": "Metric definition not found."
+      "unknown": "Metric definition not found.",
+      "noValue": "-"
     },
     "derivedKpi": {
       "defaultLabel": "Derived metric",

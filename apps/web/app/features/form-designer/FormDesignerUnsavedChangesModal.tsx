@@ -22,11 +22,9 @@ export function FormDesignerUnsavedChangesModal() {
         ? "formDesigner.unsavedChanges.rootLayoutPanelMessage"
         : unsavedReason === "componentRowPanel"
           ? "formDesigner.unsavedChanges.componentRowPanelMessage"
-          : unsavedTabId === "layout"
-            ? "formDesigner.unsavedChanges.layoutMessage"
-            : unsavedTabId === "components"
-              ? "formDesigner.unsavedChanges.componentsMessage"
-              : "formDesigner.unsavedChanges.message";
+          : unsavedTabId === "design"
+            ? "formDesigner.unsavedChanges.componentsMessage"
+            : "formDesigner.unsavedChanges.message";
 
   const saveLabelKey =
     unsavedReason === "columnPanel"

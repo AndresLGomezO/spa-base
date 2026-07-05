@@ -1,10 +1,12 @@
 import {
   addComponentRowAt,
-  addNestedLayoutRowAt,
+  beginContainerRootLayout,
   createDefaultComponent,
   createEmptyLayout,
   createLayoutId,
-  ensureContainerRoot,
+  insertGridRowAt,
+  resolveLayoutRootColumns,
+  withEditableRootColumns,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
@@ -23,7 +25,8 @@ import {
 
 const labels: StructureTreeLabels = {
   column: (column) => `Column ${column}`,
-  nestedLayout: (count) => `Nested layout (${count} cols)`,
+  track: (track) => `Track ${track}`,
+  grid: (count) => `Grid (${count} tracks)`,
   container: "Container",
   section: "Section",
   actions: "Actions",
@@ -68,39 +71,69 @@ describe("form-designer-structure-tree", () => {
     });
   });
 
-  it("builds nested layout columns recursively", () => {
+  it("builds grid track columns recursively", () => {
     let layout = createEmptyLayout(1);
-    layout = addNestedLayoutRowAt(layout, { scope: "root", columnIndex: 0 }, 2);
-    const nestedRow = layout.root.columns[0]?.rows[0];
-    if (!nestedRow || nestedRow.type !== "nested-layout") {
-      throw new Error("Expected nested layout row");
+    layout = insertGridRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "after" },
+      { trackCount: 2 },
+    ).layout;
+
+    const gridRow = resolveLayoutRootColumns(layout)[0]?.rows[0];
+    if (
+      !gridRow ||
+      gridRow.type !== "component" ||
+      gridRow.component.kind !== "grid"
+    ) {
+      throw new Error("Expected grid row");
+    }
+    const track0 = gridRow.component.rows[0];
+    if (!track0 || track0.type !== "component") {
+      throw new Error("Expected grid track");
     }
 
     layout = addComponentRowAt(
       layout,
       {
-        scope: "nested",
+        scope: "container",
         columnIndex: 0,
-        rowId: nestedRow.id,
-        nestedColumnIndex: 0,
+        containerRowId: track0.id,
       },
       createDefaultComponent("text", "email"),
     );
 
     const tree = buildStructureTree(layout, labels, fieldDescriptors);
-    const nested = tree[0]?.rows[0];
+    const grid = tree[0]?.rows[0];
 
-    expect(nested).toMatchObject({
-      type: "nested-layout",
-      label: "Nested layout (2 cols)",
+    expect(grid).toMatchObject({
+      type: "component",
+      kind: "grid",
+      label: "Grid (2 tracks)",
     });
     expect(
-      nested?.type === "nested-layout" && nested.columns[0]?.rows[0],
+      grid?.type === "component" &&
+        grid.kind === "grid" &&
+        grid.tracks?.[0]?.rows[0],
     ).toMatchObject({
       type: "component",
       kind: "text",
       label: "Email",
     });
+  });
+
+  it("builds grid rows in the structure tree", () => {
+    const layout = createEmptyLayout(1);
+    const { layout: withGrid } = insertGridRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "after" },
+      { trackCount: 2 },
+    );
+
+    const tree = buildStructureTree(withGrid, labels, fieldDescriptors);
+    const grid = tree[0]?.rows[0];
+    expect(grid).toMatchObject({ type: "component", kind: "grid" });
   });
 
   it("resolves custom section titles and form-field labels", () => {
@@ -134,26 +167,20 @@ describe("form-designer-structure-tree", () => {
   it("prefers custom structure names over default labels", () => {
     let layout = createEmptyLayout(1);
     const textRowId = createLayoutId("row");
-    layout = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [
+    layout = withEditableRootColumns(layout, (columns) => [
+      {
+        ...columns[0]!,
+        name: "Sidebar",
+        rows: [
           {
-            ...layout.root.columns[0]!,
-            name: "Sidebar",
-            rows: [
-              {
-                type: "component",
-                id: textRowId,
-                name: "Hero image",
-                component: createDefaultComponent("image", "name"),
-              },
-            ],
+            type: "component",
+            id: textRowId,
+            name: "Hero image",
+            component: createDefaultComponent("image", "name"),
           },
         ],
       },
-    };
+    ]);
 
     const tree = buildStructureTree(layout, labels, fieldDescriptors);
 
@@ -162,7 +189,7 @@ describe("form-designer-structure-tree", () => {
       label: "Hero image",
     });
 
-    const row = layout.root.columns[0]?.rows[0];
+    const row = resolveLayoutRootColumns(layout)[0]?.rows[0];
     if (!row) {
       throw new Error("Expected row");
     }
@@ -171,7 +198,11 @@ describe("form-designer-structure-tree", () => {
       "Hero image",
     );
     expect(
-      resolveColumnNodeDisplayLabel(layout.root.columns[0]!, 0, labels),
+      resolveColumnNodeDisplayLabel(
+        resolveLayoutRootColumns(layout)[0]!,
+        0,
+        labels,
+      ),
     ).toBe("Sidebar");
   });
 
@@ -208,7 +239,7 @@ describe("form-designer-structure-tree", () => {
   });
 
   it("creates insert anchors for container child rows", () => {
-    const layout = ensureContainerRoot(createEmptyLayout(1));
+    const { layout } = beginContainerRootLayout();
     const tree = buildStructureTree(layout, labels, fieldDescriptors);
     const containerRow = tree[0]?.rows[0];
 
@@ -257,9 +288,14 @@ describe("form-designer-structure-tree", () => {
     });
   });
 
-  it("collects default expanded ids for columns and nested layouts", () => {
+  it("collects default expanded ids for columns and grid rows", () => {
     let layout = createEmptyLayout(1);
-    layout = addNestedLayoutRowAt(layout, { scope: "root", columnIndex: 0 }, 1);
+    layout = insertGridRowAt(
+      layout,
+      { scope: "root", columnIndex: 0 },
+      { position: "after" },
+      { trackCount: 1 },
+    ).layout;
 
     const tree = buildStructureTree(layout, labels, fieldDescriptors);
     const expanded = collectDefaultExpandedNodeIds(tree);

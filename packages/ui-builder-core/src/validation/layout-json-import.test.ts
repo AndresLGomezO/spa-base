@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vitest";
 
 import { createEmptyLayout } from "../builder/mutations.js";
+import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
 import {
   createLayoutJsonSkeleton,
   validateLayoutJsonImport,
@@ -54,7 +55,7 @@ describe("validateLayoutJsonImport", () => {
 
   it("rejects disallowed component kinds for the surface", () => {
     const base = createEmptyLayout(1);
-    const column = base.root.columns[0];
+    const column = resolveLayoutRootColumns(base)[0];
     const layout =
       column == null
         ? base
@@ -93,7 +94,7 @@ describe("validateLayoutJsonImport", () => {
 
   it("rejects invalid field paths", () => {
     const base = createEmptyLayout(1);
-    const column = base.root.columns[0];
+    const column = resolveLayoutRootColumns(base)[0];
     const layout =
       column == null
         ? base
@@ -153,77 +154,7 @@ describe("validateLayoutJsonImport", () => {
     expect(result.data).toMatchObject({ type: "component" });
   });
 
-  it("validates nested-layout-row scope", () => {
-    const skeleton = createLayoutJsonSkeleton(
-      { type: "nested-layout-row" },
-      "listItem",
-      "name",
-    );
-    const result = validateLayoutJsonImport(
-      skeleton,
-      { type: "nested-layout-row" },
-      { designSurface: "listItem", definition },
-    );
-
-    expect(result.ok).toBe(true);
-    expect(result.data).toMatchObject({ type: "nested-layout" });
-  });
-
-  it("accepts container components inside nested layouts on dashboardSection", () => {
-    const nested = {
-      type: "nested-layout" as const,
-      id: "nested-1",
-      columnCount: 1,
-      columns: [
-        {
-          id: "col-1",
-          rows: [
-            {
-              type: "component" as const,
-              id: "row-container",
-              component: {
-                kind: "container" as const,
-                rows: [
-                  {
-                    type: "component" as const,
-                    id: "row-user",
-                    component: {
-                      kind: "user" as const,
-                      display: "photo-and-name" as const,
-                    },
-                  },
-                ],
-              },
-            },
-          ],
-        },
-      ],
-    };
-
-    const result = validateLayoutJsonImport(
-      JSON.stringify(nested),
-      { type: "nested-layout-row" },
-      { designSurface: "dashboardSection", definition },
-    );
-
-    expect(result.ok).toBe(true);
-    expect(result.data).toMatchObject({
-      type: "nested-layout",
-      columns: [
-        {
-          rows: [
-            {
-              component: {
-                kind: "container",
-              },
-            },
-          ],
-        },
-      ],
-    });
-  });
-
-  it("validates insertable-row scope for component and nested rows", () => {
+  it("validates insertable-row scope for component rows", () => {
     const componentRow = {
       type: "component" as const,
       id: "row-text",
@@ -241,19 +172,13 @@ describe("validateLayoutJsonImport", () => {
       ).ok,
     ).toBe(true);
 
-    const nested = createLayoutJsonSkeleton(
-      { type: "nested-layout-row" },
-      "dashboardSection",
-      "name",
-    );
-
     expect(
       validateLayoutJsonImport(
-        nested,
+        JSON.stringify({ type: "nested-layout", id: "legacy" }),
         { type: "insertable-row" },
         { designSurface: "dashboardSection", definition },
       ).ok,
-    ).toBe(true);
+    ).toBe(false);
   });
 
   it("accepts a single image component row on formWizardShell without wizard shell slots", () => {
@@ -297,7 +222,7 @@ describe("validateLayoutJsonImport", () => {
       },
     };
     const layout = createEmptyLayout(1);
-    const column = layout.root.columns[0];
+    const column = resolveLayoutRootColumns(layout)[0];
     const document =
       column == null
         ? layout
@@ -572,6 +497,8 @@ describe("regenerateLayoutDocumentIds", () => {
     const next = regenerateLayoutDocumentIds(layout);
 
     expect(next.root.id).not.toBe(originalRootId);
-    expect(next.root.columns[0]?.id).not.toBe(layout.root.columns[0]?.id);
+    const originalColumnId = resolveLayoutRootColumns(layout)[0]?.id;
+    const nextColumns = resolveLayoutRootColumns(next);
+    expect(nextColumns[0]?.id).not.toBe(originalColumnId);
   });
 });

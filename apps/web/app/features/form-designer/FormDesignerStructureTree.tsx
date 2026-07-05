@@ -365,13 +365,13 @@ function StructureRowBranch({
 }) {
   const showRowBottomInsert =
     !lockRootScopeInserts || !isRootScopeLocator(row.locator);
-  const isNested = row.type === "nested-layout";
+  const isGrid = row.type === "component" && row.kind === "grid";
   const isRowHolder =
     row.type === "component" &&
     (row.kind === "container" || row.kind === "query-viewer");
   const expanded = expandedIds.has(row.id);
-  const kind = isNested ? "nested-layout" : row.kind;
-  const expandable = isNested || isRowHolder;
+  const kind = row.kind;
+  const expandable = isGrid || isRowHolder;
   const moveState = getRowMoveState(layout, row);
   const rowRef = toComponentRowRef(row.rowId, row.locator);
   const rowFocusState = resolveRowFocusState(rowRef, treeFocus);
@@ -427,10 +427,10 @@ function StructureRowBranch({
             onColumnSelect={onColumnSelect}
           />
         </CollapsibleChildren>
-      ) : isNested ? (
+      ) : isGrid && row.type === "component" ? (
         <CollapsibleChildren expanded={expanded}>
           <div className="border-border/60 ml-3 w-full min-w-max border-l pl-1.5">
-            {row.columns.map((column) => (
+            {row.tracks?.map((column) => (
               <StructureColumnBranch
                 key={column.id}
                 column={column}
@@ -499,7 +499,7 @@ function StructureColumnBranch({
       <FormDesignerStructureTreeNode
         id={column.id}
         label={column.label}
-        kind="nested-layout"
+        kind="grid"
         depth={depth}
         expanded={expanded}
         expandable
@@ -630,7 +630,7 @@ function FormDesignerStructureUtilTree({
                 key={column.id}
                 id={column.id}
                 label={column.label}
-                kind="nested-layout"
+                kind="grid"
                 rowFocusState={columnFocusState}
                 flyoutOpen={openFlyoutId === column.id}
                 onFlyoutOpenChange={(open) =>

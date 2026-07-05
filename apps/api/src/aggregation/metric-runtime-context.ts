@@ -1,4 +1,6 @@
 import type { SourceDocumentSnapshot } from "@repo/aggregation-engine";
+import type { MetricDefinitionRecord } from "@repo/metrics-engine";
+import type { MetricQueryMembershipResolver } from "@repo/aggregation-engine";
 import {
   createActiveMetricIndex,
   type ActiveMetricIndex,
@@ -13,7 +15,7 @@ import type {
 
 type SourceDocumentLister = (
   tenantId: string,
-  sourceModel: string,
+  metric: MetricDefinitionRecord,
 ) => Promise<readonly SourceDocumentSnapshot[]>;
 
 export class MetricRuntimeContext {
@@ -26,6 +28,7 @@ export class MetricRuntimeContext {
     readonly backfillJobRepository: BackfillJobRepository,
     readonly metricContributionRepository: MetricContributionRepository,
     readonly listSourceDocuments?: SourceDocumentLister,
+    readonly resolveQueryMembership?: MetricQueryMembershipResolver,
   ) {
     this.activeMetricIndex = createActiveMetricIndex({
       listActive: (tenantId) =>
@@ -45,6 +48,7 @@ export function createMetricRuntimeContext(deps: {
   readonly backfillJobRepository: BackfillJobRepository;
   readonly metricContributionRepository: MetricContributionRepository;
   readonly listSourceDocuments?: SourceDocumentLister;
+  readonly resolveQueryMembership?: MetricQueryMembershipResolver;
 }): MetricRuntimeContext {
   return new MetricRuntimeContext(
     deps.metricDefinitionRepository,
@@ -53,5 +57,6 @@ export function createMetricRuntimeContext(deps: {
     deps.backfillJobRepository,
     deps.metricContributionRepository,
     deps.listSourceDocuments,
+    deps.resolveQueryMembership,
   );
 }

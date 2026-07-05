@@ -7,7 +7,7 @@ import {
   type ComponentProps,
   type ComponentType,
 } from "react";
-import { RecursiveLayoutRenderer } from "@repo/ui-builder-renderer";
+import { EntityMainPageShell } from "./EntityMainPageShell";
 import { useDataViewControls, useDataViewUrlState } from "@repo/data-view";
 import { Button, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
@@ -490,12 +490,10 @@ function EntityPageInner({ entityName }: EntityPageProps) {
       </div>
 
       {mainPageLayout ? (
-        <div className="flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden">
-          <RecursiveLayoutRenderer
-            layout={mainPageLayout}
-            context={mainPageContext}
-          />
-        </div>
+        <EntityMainPageShell
+          layout={mainPageLayout}
+          context={mainPageContext}
+        />
       ) : (
         <div
           className={cn(

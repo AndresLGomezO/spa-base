@@ -88,7 +88,7 @@ Verify in Cloud Logging: `aggregation_event_emitted` (API), `aggregation_event_p
 
 Admins trigger `POST /api/metric-definitions/:id/backfill` from Settings → Metrics.
 
-**Snapshot rebuild (not event replay):** backfill resets the target metric's row documents, scans all records in the metric's `sourceModel` collection, recomputes aggregates from current document state, and seeds the contribution ledger. This is the supported way to include documents that existed before the metric was activated.
+**Snapshot rebuild (not event replay):** backfill resets the target metric's row documents, scans all records in the metric's `sourceModel` collection, recomputes aggregates from current document state, and seeds the contribution ledger. For **query-backed** metrics (`sourceQueryDefinitionId`), the scan still loads all `sourceModel` documents but only includes records that match the saved query filter at backfill time. This is the supported way to include documents that existed before the metric was activated.
 
 | Scenario | Behavior |
 | --- | --- |

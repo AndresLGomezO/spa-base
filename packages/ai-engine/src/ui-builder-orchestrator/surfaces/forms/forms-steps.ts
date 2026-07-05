@@ -45,7 +45,11 @@ const skeletonComponentSchema: z.ZodType<{
 }> = z.lazy(() =>
   z
     .object({
-      kind: z.union([formSkeletonKindSchema, z.literal("nested-layout")]),
+      kind: z.union([
+        formSkeletonKindSchema,
+        z.literal("grid"),
+        z.literal("nested-layout"),
+      ]),
       fieldPath: z.string().trim().min(1).optional(),
       displayFrom: responsiveBreakpointSchema.optional(),
       displayTo: responsiveBreakpointSchema.optional(),
@@ -119,7 +123,7 @@ export const STEP_OUTPUT_INSTRUCTIONS: Record<FormsStepType, string> = {
   [FORMS_STEP_TYPES.GENERATE_BLUEPRINT]: `Return ONLY compact JSON: { "blueprint": { "conceptName", "presentation", "visualTheme?", "steps": [{ "id", "label", "goal?", "maxFields?", "helper?", "readOnly?" }], "footerLayout?" } }. Be imaginative — grouped steps, helper callouts, review step. No layout JSON or styles.`,
   [FORMS_STEP_TYPES.DEFINE_WIZARD_STEPS]: `Return ONLY compact JSON: { "steps": [{ "id": string, "label": string }] }. Create 2-8 steps with clear labels. Include a final review step (empty label suffix like "Review" is OK). Group related fields logically — field assignment happens in the next step.`,
   [FORMS_STEP_TYPES.ALLOCATE_FIELDS_TO_STEPS]: `Return ONLY compact JSON: { "steps": [{ "id", "label", "fieldPaths": string[] }] }. Reuse the exact "id" values from the defined wizard steps block — same step count and ids, only add fieldPaths arrays. Assign each allowed form field to exactly one step. Target 3 ± 1 fields per step (max 4). Last step may be review-only with fieldPaths: [].`,
-  [FORMS_STEP_TYPES.LAYOUT_SKELETON]: `Return ONLY compact JSON skeleton: { "components": [...] }. Each item is either a form/wizard component kind with optional "fieldPath" for form-field/entity-field-selector/display kinds, structural kinds (form-section, form-actions, wizard-progress, wizard-step-host, wizard-actions) with kind only and NO fieldPath, optional nested-layout columns inside components, or static hint text via { "kind": "text" } without fieldPath. Content is assembled inside a root container automatically. Do NOT return full layout documents unless asked.`,
+  [FORMS_STEP_TYPES.LAYOUT_SKELETON]: `Return ONLY compact JSON skeleton: { "components": [...] }. Each item is either a form/wizard component kind with optional "fieldPath" for form-field/entity-field-selector/display kinds, structural kinds (form-section, form-actions, wizard-progress, wizard-step-host, wizard-actions) with kind only and NO fieldPath, optional grid tracks inside components, or static hint text via { "kind": "text" } without fieldPath. Content is assembled inside a root container automatically. Do NOT return full layout documents unless asked.`,
   [FORMS_STEP_TYPES.CONFIGURE_COMPONENT]: `Return ONLY compact JSON: { "component": { "kind", ... } }. You may return the component object directly if it includes "kind". For wizard-progress choose variant "steps" (step list), "bar" (progress bar), or "stepper" (numbered circles) with matching stepLabel and/or barTrackColor/barFillColor and conditionalStyles. For form-field use fieldPath only (no label object). For text hints use primary.type "static". Styles and conditionalStyles are allowed when they improve UX.`,
 };
 

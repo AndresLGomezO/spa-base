@@ -1,5 +1,9 @@
 import { describe, expect, it, vi } from "vitest";
-import { isContainerComponent } from "@repo/ui-builder-core";
+import {
+  isContainerComponent,
+  isGridComponent,
+  resolveLayoutRootColumns,
+} from "@repo/ui-builder-core";
 import { createDefaultFormLayout } from "@repo/ui-builder-core";
 
 import { defineEntity, validateDesignLayoutSlice } from "@repo/entities";
@@ -181,12 +185,12 @@ describe("runOrchestrator mock vertex table flow", () => {
 });
 
 describe("layout skeleton repair", () => {
-  it("repairs nested columnCount when assembling card layout", () => {
+  it("repairs trackCount when assembling card layout", () => {
     const skeleton = [
       {
-        kind: "nested-layout" as const,
-        columnCount: 3,
-        columns: [
+        kind: "grid" as const,
+        trackCount: 3,
+        tracks: [
           { components: [{ kind: "text" as const, fieldPath: "name" }] },
           { components: [{ kind: "text" as const, fieldPath: "status" }] },
         ],
@@ -218,16 +222,19 @@ describe("layout skeleton repair", () => {
     };
 
     const slice = assembleListSliceData(entity, draft);
-    const container = slice.listItem?.root.columns[0]?.rows[0];
+    const listItem = slice.listItem;
+    const container = listItem
+      ? resolveLayoutRootColumns(listItem)[0]?.rows[0]
+      : undefined;
     expect(container?.type).toBe("component");
     if (
       container?.type === "component" &&
       isContainerComponent(container.component)
     ) {
-      const nested = container.component.rows[0];
-      expect(nested?.type).toBe("nested-layout");
-      if (nested?.type === "nested-layout") {
-        expect(nested.columnCount).toBe(2);
+      const gridRow = container.component.rows[0];
+      expect(gridRow?.type).toBe("component");
+      if (gridRow?.type === "component" && isGridComponent(gridRow.component)) {
+        expect(gridRow.component.rows).toHaveLength(2);
       }
     }
     expect(validateDesignLayoutSlice(entity, "list", slice).ok).toBe(true);

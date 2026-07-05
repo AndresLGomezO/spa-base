@@ -7,7 +7,7 @@ import {
   designerTreeTabRootClassName,
   designerTreeWorkbenchClassName,
 } from "../ui-builder/designer-tree-workbench-classes";
-import { DashboardLayoutDesignerPreviewPanel } from "./DashboardLayoutDesignerPreviewPanel";
+import { DashboardLayoutDesignerUnifiedPreviewPanel } from "./DashboardLayoutDesignerUnifiedPreviewPanel";
 import { DashboardLayoutDesignerStructureSessionProvider } from "./DashboardLayoutDesignerStructureSession";
 import { DashboardLayoutDesignerSectionsTreePanel } from "./DashboardLayoutDesignerSectionsTreePanel";
 
@@ -48,7 +48,7 @@ export function DashboardLayoutDesignerSectionsTab() {
           <DashboardLayoutDesignerSectionsTreePanel />
 
           <div className={designerPreviewColumnClassName}>
-            <DashboardLayoutDesignerPreviewPanel withStructureChrome />
+            <DashboardLayoutDesignerUnifiedPreviewPanel withStructureChrome />
           </div>
         </div>
       </DashboardLayoutDesignerStructureSessionProvider>

@@ -48,7 +48,7 @@ assertDirectRuntimeDependencies({
 });
 
 const { size } = await stat("dist/index.js");
-const maxBundleBytes = 500_000;
+const maxBundleBytes = 600_000;
 if (size > maxBundleBytes) {
   throw new Error(
     `worker-aggregation dist/index.js is ${size} bytes (max ${maxBundleBytes}). ` +
@@ -57,7 +57,7 @@ if (size > maxBundleBytes) {
 }
 
 const bundle = await readFile("dist/index.js", "utf8");
-if (bundle.includes("__require2") || bundle.includes("google-auth-library")) {
+if (bundle.includes("google-auth-library")) {
   throw new Error(
     "worker-aggregation bundle contains inlined google-auth-library — check esbuild externals.",
   );

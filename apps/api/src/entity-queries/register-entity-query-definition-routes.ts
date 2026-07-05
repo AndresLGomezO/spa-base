@@ -7,6 +7,7 @@ import {
   validateEntityQueryDefinitionsCatalogEnvelope,
 } from "@repo/entity-queries";
 import type { EntityQueryDefinitionRepository } from "@repo/firestore-converters";
+import type { MetricDefinitionRepository } from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
@@ -26,6 +27,7 @@ interface RegisterEntityQueryDefinitionRoutesOptions {
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly entityQueryDefinitionRepository: EntityQueryDefinitionRepository;
+  readonly metricDefinitionRepository: MetricDefinitionRepository;
   readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
@@ -277,6 +279,20 @@ export async function registerEntityQueryDefinitionRoutes(
         );
       }
 
+      const metricUsageCount =
+        await options.metricDefinitionRepository.countBySourceQueryDefinitionId(
+          tenantId,
+          parsedParams.data.id,
+        );
+      if (metricUsageCount > 0) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          `Cannot delete query while ${metricUsageCount} metric(s) reference it.`,
+        );
+      }
+
       await options.entityQueryDefinitionRepository.delete(
         tenantId,
         parsedParams.data.id,
@@ -324,6 +340,7 @@ export async function registerEntityQueryDefinitionRoutes(
             entityRuntime: options.entityRuntime,
             entityQueryDefinitionRepository:
               options.entityQueryDefinitionRepository,
+            metricDefinitionRepository: options.metricDefinitionRepository,
           },
           tenantId,
           parsedBody.data,

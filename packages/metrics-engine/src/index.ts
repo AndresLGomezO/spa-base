@@ -65,6 +65,20 @@ export {
 export { generateMetricTargetCollection } from "./target-collection.js";
 export { stableStringify } from "./stable-stringify.js";
 export {
+  evaluateComputedMetric,
+  readComputedMetricPrimaryValue,
+  ComputedMetricEvaluationError,
+} from "./computed-metric/evaluate-computed-metric.js";
+export type { ComputedMetricInputResolver } from "./computed-metric/evaluate-computed-metric.js";
+export {
+  resolveComputedMetricParameters,
+  ComputedMetricParameterError,
+} from "./computed-metric/resolve-parameters.js";
+export {
+  computePercentChange,
+  readPrimaryNumericValueFromRow,
+} from "./computed-metric/read-primary-value.js";
+export {
   metricRowQuerySchema,
   metricBatchQuerySchema,
   validateMetricQueryAgainstDefinition,
@@ -74,6 +88,20 @@ export type {
   MetricRowQuery,
   MetricBatchQuery,
 } from "./validate-metric-query.js";
+export {
+  METRIC_COMPUTATION_MODES,
+  metricDefinitionParameterSchema,
+  computedMetricComputationSchema,
+  metricEvaluateRequestSchema,
+  isComputedMetricDefinition,
+} from "./types.js";
+export type {
+  MetricDefinitionParameter,
+  ComputedMetricComputation,
+  ComputedMetricInputRef,
+  MetricEvaluateRequest,
+  MetricComputationMode,
+} from "./types.js";
 export {
   METRIC_DEFINITION_JSON_KIND,
   METRIC_DEFINITION_JSON_VERSION,

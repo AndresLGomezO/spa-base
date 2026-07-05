@@ -3,13 +3,18 @@ import type {
   RowNode,
   UiLayoutDocument,
 } from "@repo/ui-builder-core";
-import { isContainerComponent } from "@repo/ui-builder-core";
+import {
+  isGridComponent,
+  isRowHolderComponent,
+  resolveLayoutRootColumns,
+} from "@repo/ui-builder-core";
 
 import {
   areComponentColumnRefsEqual,
   isNestedComponentColumnRef,
   type ComponentColumnRef,
 } from "./form-designer-component-column-ref";
+import { findColumnByRef } from "./form-designer-components-layout";
 import {
   areComponentRowRefsEqual,
   toComponentRowRef,
@@ -21,21 +26,9 @@ export type PreviewFocusState = "focused" | "dimmed" | "none";
 type LocatorContext = {
   readonly columnIndex: number;
   readonly containerRowId?: string;
-  readonly parentRowId?: string;
-  readonly nestedColumnIndex?: number;
 };
 
 function buildLocator(context: LocatorContext): RowLocator {
-  if (context.parentRowId != null && context.nestedColumnIndex != null) {
-    return {
-      scope: "nested",
-      columnIndex: context.columnIndex,
-      rowId: context.parentRowId,
-      nestedColumnIndex: context.nestedColumnIndex,
-      containerRowId: context.containerRowId,
-    };
-  }
-
   if (context.containerRowId != null) {
     return {
       scope: "container",
@@ -57,7 +50,38 @@ function findRowRefInRows(
       return toComponentRowRef(row.id, buildLocator(context));
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
+      if (isGridComponent(row.component)) {
+        for (const trackRow of row.component.rows) {
+          if (trackRow.type !== "component") {
+            continue;
+          }
+
+          if (trackRow.id === targetRowId) {
+            return toComponentRowRef(trackRow.id, {
+              scope: "container",
+              columnIndex: context.columnIndex,
+              containerRowId: row.id,
+            });
+          }
+
+          if (isRowHolderComponent(trackRow.component)) {
+            const found = findRowRefInRows(
+              trackRow.component.rows,
+              {
+                columnIndex: context.columnIndex,
+                containerRowId: trackRow.id,
+              },
+              targetRowId,
+            );
+            if (found) {
+              return found;
+            }
+          }
+        }
+        continue;
+      }
+
       const found = findRowRefInRows(
         row.component.rows,
         { columnIndex: context.columnIndex, containerRowId: row.id },
@@ -65,33 +89,6 @@ function findRowRefInRows(
       );
       if (found) {
         return found;
-      }
-    }
-
-    if (row.type === "nested-layout") {
-      for (
-        let nestedColumnIndex = 0;
-        nestedColumnIndex < row.columns.length;
-        nestedColumnIndex++
-      ) {
-        const column = row.columns[nestedColumnIndex];
-        if (!column) {
-          continue;
-        }
-
-        const found = findRowRefInRows(
-          column.rows,
-          {
-            columnIndex: context.columnIndex,
-            containerRowId: context.containerRowId,
-            parentRowId: row.id,
-            nestedColumnIndex,
-          },
-          targetRowId,
-        );
-        if (found) {
-          return found;
-        }
       }
     }
   }
@@ -105,10 +102,10 @@ function findRowRefById(
 ): ComponentRowRef | null {
   for (
     let columnIndex = 0;
-    columnIndex < layout.root.columns.length;
+    columnIndex < resolveLayoutRootColumns(layout).length;
     columnIndex++
   ) {
-    const column = layout.root.columns[columnIndex];
+    const column = resolveLayoutRootColumns(layout)[columnIndex];
     if (!column) {
       continue;
     }
@@ -132,11 +129,7 @@ export function getParentRowRef(
     return null;
   }
 
-  if (locator.scope === "container") {
-    return findRowRefById(layout, locator.containerRowId);
-  }
-
-  return findRowRefById(layout, locator.rowId);
+  return findRowRefById(layout, locator.containerRowId);
 }
 
 export function isRowAncestorOf(
@@ -169,21 +162,29 @@ export function isRowAncestorOf(
   return false;
 }
 
-function columnBelongsToRow(
+function resolveGridTrackRowId(
+  layout: UiLayoutDocument,
   columnRef: ComponentColumnRef,
-  rowRef: ComponentRowRef,
-): boolean {
+): string | undefined {
   if (!isNestedComponentColumnRef(columnRef)) {
-    return false;
+    return undefined;
   }
 
-  return (
-    columnRef.nestedParentRowId === rowRef.rowId &&
-    columnRef.rootColumnIndex === rowRef.locator.columnIndex
-  );
+  const resolved = findColumnByRef(layout, columnRef);
+  const parentGridRow = resolved?.parentGridRow;
+  if (
+    !parentGridRow ||
+    parentGridRow.type !== "component" ||
+    !isGridComponent(parentGridRow.component)
+  ) {
+    return undefined;
+  }
+
+  const trackRow = parentGridRow.component.rows[columnRef.nestedColumnIndex];
+  return trackRow?.type === "component" ? trackRow.id : undefined;
 }
 
-function rowIsInNestedColumn(
+function columnBelongsToRow(
   layout: UiLayoutDocument,
   columnRef: ComponentColumnRef,
   rowRef: ComponentRowRef,
@@ -192,16 +193,44 @@ function rowIsInNestedColumn(
     return false;
   }
 
+  const trackRowId = resolveGridTrackRowId(layout, columnRef);
+  if (!trackRowId) {
+    return false;
+  }
+
+  return (
+    rowRef.rowId === columnRef.nestedParentRowId ||
+    rowRef.rowId === trackRowId ||
+    isRowAncestorOf(
+      layout,
+      toComponentRowRef(trackRowId, {
+        scope: "container",
+        columnIndex: columnRef.rootColumnIndex,
+        containerRowId: columnRef.nestedParentRowId,
+      }),
+      rowRef,
+    )
+  );
+}
+
+function rowIsInGridTrackColumn(
+  layout: UiLayoutDocument,
+  columnRef: ComponentColumnRef,
+  rowRef: ComponentRowRef,
+): boolean {
+  const trackRowId = resolveGridTrackRowId(layout, columnRef);
+  if (!trackRowId) {
+    return false;
+  }
+
   let current: ComponentRowRef | null = rowRef;
   while (current) {
-    const { locator } = current;
-    if (
-      locator.scope === "nested" &&
-      locator.rowId === columnRef.nestedParentRowId &&
-      locator.columnIndex === columnRef.rootColumnIndex &&
-      locator.nestedColumnIndex === columnRef.nestedColumnIndex
-    ) {
+    if (current.rowId === trackRowId) {
       return true;
+    }
+
+    if (current.rowId === columnRef.nestedParentRowId) {
+      return false;
     }
 
     current = getParentRowRef(layout, current);
@@ -217,15 +246,14 @@ function rowBelongsToColumn(
 ): boolean {
   if (isNestedComponentColumnRef(columnRef)) {
     if (
-      rowRef.locator.scope === "nested" &&
-      rowRef.locator.rowId === columnRef.nestedParentRowId &&
-      rowRef.locator.columnIndex === columnRef.rootColumnIndex &&
-      rowRef.locator.nestedColumnIndex === columnRef.nestedColumnIndex
+      rowRef.locator.scope === "container" &&
+      rowRef.locator.containerRowId === columnRef.nestedParentRowId &&
+      rowRef.rowId === resolveGridTrackRowId(layout, columnRef)
     ) {
       return true;
     }
 
-    return rowIsInNestedColumn(layout, columnRef, rowRef);
+    return rowIsInGridTrackColumn(layout, columnRef, rowRef);
   }
 
   return (
@@ -249,7 +277,9 @@ function rowContainsFocus(
     }
   }
 
-  return focusedColumn != null && columnBelongsToRow(focusedColumn, rowRef);
+  return (
+    focusedColumn != null && columnBelongsToRow(layout, focusedColumn, rowRef)
+  );
 }
 
 function columnClaimsRowInterior(
@@ -289,7 +319,7 @@ export function resolvePreviewRowFocusState(
     rowRef,
   );
   const hasColumnFocusInsideRow =
-    focusedColumn != null && columnBelongsToRow(focusedColumn, rowRef);
+    focusedColumn != null && columnBelongsToRow(layout, focusedColumn, rowRef);
   const isFocused =
     focusedRow != null &&
     focusedRow.rowId === rowRef.rowId &&

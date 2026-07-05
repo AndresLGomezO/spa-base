@@ -3,7 +3,6 @@ import { isFieldUiComponent } from "../types/component.js";
 import type {
   ColumnNode,
   ComponentRowNode,
-  NestedLayoutRowNode,
   RowNode,
   UiLayoutDocument,
 } from "../types/layout.js";
@@ -12,6 +11,7 @@ import {
   type UiBuilderPresetKind,
   uiBuilderSlotToken,
 } from "./types.js";
+import { asEditableLayoutRoot } from "../layout/layout-root-adapters.js";
 
 export interface GenericizeLayoutNodeResult {
   readonly template: unknown;
@@ -124,27 +124,13 @@ function genericizeRow(
   slots: UiBuilderFieldSlot[],
   slotCounter: { value: number },
 ): RowNode {
-  if (row.type === "component") {
-    return {
-      ...row,
-      component: genericizeComponent(
-        row.component,
-        `${jsonPathPrefix}.component`,
-        slots,
-        slotCounter,
-      ),
-    };
-  }
-
   return {
     ...row,
-    columns: row.columns.map((column, columnIndex) =>
-      genericizeColumn(
-        column,
-        `${jsonPathPrefix}.columns[${columnIndex}]`,
-        slots,
-        slotCounter,
-      ),
+    component: genericizeComponent(
+      row.component,
+      `${jsonPathPrefix}.component`,
+      slots,
+      slotCounter,
     ),
   };
 }
@@ -170,18 +156,19 @@ function genericizeColumn(
 
 export function genericizeLayoutNode(
   kind: UiBuilderPresetKind,
-  node: UiLayoutDocument | ColumnNode | ComponentRowNode | NestedLayoutRowNode,
+  node: UiLayoutDocument | ColumnNode | ComponentRowNode,
 ): GenericizeLayoutNodeResult {
   const slots: UiBuilderFieldSlot[] = [];
   const slotCounter = { value: 0 };
 
   if (kind === "layout-document") {
     const layout = node as UiLayoutDocument;
+    const editableRoot = asEditableLayoutRoot(layout.root);
     const template: UiLayoutDocument = {
       ...layout,
       root: {
-        ...layout.root,
-        columns: layout.root.columns.map((column, columnIndex) =>
+        ...editableRoot,
+        columns: editableRoot.columns.map((column, columnIndex) =>
           genericizeColumn(
             column,
             `root.columns[${columnIndex}]`,
@@ -218,12 +205,5 @@ export function genericizeLayoutNode(
     return { template, fieldSlots: slots };
   }
 
-  const nested = node as NestedLayoutRowNode;
-  const template: NestedLayoutRowNode = {
-    ...nested,
-    columns: nested.columns.map((column, columnIndex) =>
-      genericizeColumn(column, `columns[${columnIndex}]`, slots, slotCounter),
-    ),
-  };
-  return { template, fieldSlots: slots };
+  throw new GenericizeLayoutNodeError(`Unsupported preset kind "${kind}".`);
 }

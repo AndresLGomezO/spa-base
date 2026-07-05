@@ -8,7 +8,7 @@ export function DashboardLayoutDesignerUnsavedChangesModal() {
   const {
     unsavedChangesOpen,
     unsavedReason,
-    unsavedTabId,
+    unsavedDesignFocus,
     editor,
     confirmUnsavedSave,
     confirmUnsavedDiscard,
@@ -20,7 +20,7 @@ export function DashboardLayoutDesignerUnsavedChangesModal() {
       ? "dashboardLayoutDesigner.unsavedChanges.structurePanelMessage"
       : unsavedReason === "section"
         ? "dashboardLayoutDesigner.unsavedChanges.sectionMessage"
-        : unsavedTabId === "layout"
+        : unsavedDesignFocus === "shell"
           ? "dashboardLayoutDesigner.unsavedChanges.layoutMessage"
           : "dashboardLayoutDesigner.unsavedChanges.sectionsMessage";
 

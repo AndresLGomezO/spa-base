@@ -15,10 +15,20 @@ export type LayoutAlign = "start" | "center" | "end" | "stretch";
 export type ColumnStackDirection = "column" | "row";
 
 export interface UiLayoutDocument {
-  readonly root: LayoutRootNode;
+  readonly root: LayoutRootNode | ScreenRootNode;
   readonly showActions?: boolean;
   readonly cardsPerRow?: number;
   readonly motion?: MotionPreset;
+}
+
+export interface ScreenRootNode {
+  readonly type: "screen-root";
+  readonly id: string;
+  readonly gridTemplateColumns: string;
+  readonly gap?: string;
+  readonly alignItems?: LayoutAlign;
+  readonly rows: readonly RowNode[];
+  readonly styles?: readonly StyleRule[];
 }
 
 export interface LayoutRootNode {
@@ -43,7 +53,7 @@ export interface ColumnNode {
   readonly displayTo?: ResponsiveGridBreakpoint;
 }
 
-export type RowNode = ComponentRowNode | NestedLayoutRowNode;
+export type RowNode = ComponentRowNode;
 
 export interface ComponentRowNode {
   readonly type: "component";
@@ -58,20 +68,20 @@ export interface ComponentRowNode {
   readonly displayTo?: ResponsiveGridBreakpoint;
 }
 
-export interface NestedLayoutRowNode {
-  readonly type: "nested-layout";
-  readonly id: string;
-  readonly columnCount: number;
-  readonly columns: readonly ColumnNode[];
-  /** Builder-only label override for the structure tree and third rail. */
-  readonly name?: string;
-  readonly styles?: readonly StyleRule[];
-  readonly displayFrom?: ResponsiveGridBreakpoint;
-  readonly displayTo?: ResponsiveGridBreakpoint;
-}
-
 export function resolveColumnStackDirection(
   column: ColumnNode,
 ): ColumnStackDirection {
   return column.stackDirection ?? "column";
+}
+
+export function isScreenRootNode(
+  root: LayoutRootNode | ScreenRootNode,
+): root is ScreenRootNode {
+  return root.type === "screen-root";
+}
+
+export function isLayoutRootNode(
+  root: LayoutRootNode | ScreenRootNode,
+): root is LayoutRootNode {
+  return root.type === "root";
 }

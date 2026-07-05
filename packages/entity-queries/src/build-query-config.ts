@@ -1,11 +1,13 @@
 import type { FilterNode } from "./filter-tree.js";
 
+import { resolveQueryParameterFilterValue } from "./query-parameter-resolution.js";
 import { resolveTemporalPreset } from "./temporal.js";
 import type {
   EntityQueryDefinitionRecord,
   EntityQueryFilterCondition,
   EntityQueryFilterNode,
   EntityQueryFilterValue,
+  EntityQueryParameter,
 } from "./types.js";
 import { isEmptyFilterTree } from "./filter-tree-utils.js";
 
@@ -23,6 +25,8 @@ export interface ResolvedEntityQueryConfig {
 
 export interface BuildQueryConfigOptions {
   readonly now?: Date;
+  readonly parameterValues?: Readonly<Record<string, unknown>>;
+  readonly parameters?: readonly EntityQueryParameter[];
 }
 
 export function resolveEntityQueryFilterValue(
@@ -33,6 +37,14 @@ export function resolveEntityQueryFilterValue(
     return resolveTemporalPreset(value.preset, options.now);
   }
 
+  if (value.type === "parameter") {
+    return resolveQueryParameterFilterValue(
+      value,
+      options.parameters ?? [],
+      options.parameterValues ?? {},
+    );
+  }
+
   return value.value;
 }
 
@@ -40,10 +52,16 @@ export function buildQueryConfigFromDefinition(
   definition: Pick<
     EntityQueryDefinitionRecord,
     "filter" | "sort" | "select" | "limitMode" | "limit"
-  >,
+  > & {
+    readonly parameters?: readonly EntityQueryParameter[];
+  },
   options: BuildQueryConfigOptions = {},
 ): ResolvedEntityQueryConfig {
-  const mappedFilter = mapFilterNode(definition.filter, options);
+  const resolvedOptions: BuildQueryConfigOptions = {
+    ...options,
+    parameters: options.parameters ?? definition.parameters ?? [],
+  };
+  const mappedFilter = mapFilterNode(definition.filter, resolvedOptions);
   const filter =
     mappedFilter && !isEmptyFilterTree(mappedFilter) ? mappedFilter : undefined;
 

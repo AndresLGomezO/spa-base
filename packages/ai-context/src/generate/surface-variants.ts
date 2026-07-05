@@ -35,7 +35,7 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     description:
       "Flat column table. Field paths in `views[].fields` (not layout tree).",
     extraNotes:
-      'Set `listViewType: "table"`. Columns are field path strings. Optional `showActions`.',
+      'Set `listViewType: "table"`. Default preset: `plain-table-list`. Columns are field path strings. Optional `showActions`.',
   },
   {
     fragmentId: "ui.surface.list.card",
@@ -44,7 +44,7 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     designLayoutSurface: "list",
     description: "Card grid using `listItem` UiLayoutDocument per record.",
     extraNotes:
-      'Set `listViewType: "card"`. Layout uses display components only. Prefer root → single nested-layout row → inner columns (see `ui.layout.base` card pattern).',
+      'Set `listViewType: "card"`. Default preset: `card-list`. Layout uses display components only. Prefer root → container → grid with two tracks (see `ui.layout.base` card pattern).',
     buildSkeleton: () =>
       stabilizeLayoutJson(
         JSON.stringify(
@@ -77,7 +77,7 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     description:
       "Grouped columns with per-column `cellLayout` and `rowExpandLayout`.",
     extraNotes:
-      'Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocument`. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses nested single-column pattern for expanded row content.',
+      'Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. Each column has `cellLayout: UiLayoutDocument`. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses container + grid for expanded row content.',
   },
   {
     fragmentId: "ui.surface.forms.plain",
@@ -86,7 +86,7 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     designLayoutSurface: "forms",
     description: "Single-page create/edit form layout.",
     extraNotes:
-      'Set `presentation: "plain"`. Use form-field, form-section, form-actions.',
+      'Set `presentation: "plain"`. Default preset: `plain-form`. Use form-field, form-section, form-actions.',
   },
   {
     fragmentId: "ui.surface.forms.wizard",
@@ -95,7 +95,7 @@ export const SURFACE_VARIANTS: readonly SurfaceVariantSpec[] = [
     designLayoutSurface: "forms",
     description: "Multi-step wizard with shell + step layouts.",
     extraNotes:
-      'Set `presentation: "wizard"`. Shell: wizard-progress, wizard-step-host, wizard-actions. Steps: form-field, form-section.',
+      'Set `presentation: "wizard"`. Default preset: `wizard-form`. Shell: wizard-progress, wizard-step-host, wizard-actions. Steps: form-field, form-section.',
     buildSkeleton: () => {
       const wizard = createDefaultWizardFormConfig(["name"]);
       return stabilizeLayoutJson(

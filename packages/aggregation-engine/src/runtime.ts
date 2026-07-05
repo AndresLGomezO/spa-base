@@ -8,6 +8,7 @@ import type {
 
 import {
   processAggregationEvent,
+  type MetricQueryMembershipResolver,
   type MetricValueWriter,
 } from "./process-event.js";
 
@@ -37,6 +38,7 @@ export interface MetricProcessingRepositories {
   readonly metricDefinitionRepository: MetricDefinitionRepository;
   readonly metricValueRepository: MetricValueRepository;
   readonly metricContributionRepository?: MetricContributionRepository;
+  readonly resolveQueryMembership?: MetricQueryMembershipResolver;
 }
 
 export async function processEventWithRepositories(input: {
@@ -44,6 +46,7 @@ export async function processEventWithRepositories(input: {
   readonly metricDefinitionRepository: MetricDefinitionRepository;
   readonly metricValueRepository: MetricValueRepository;
   readonly metricContributionRepository?: MetricContributionRepository;
+  readonly resolveQueryMembership?: MetricQueryMembershipResolver;
 }): Promise<void> {
   const definitions = await input.metricDefinitionRepository.listActive(
     input.event.tenantId,
@@ -54,6 +57,7 @@ export async function processEventWithRepositories(input: {
     definitions,
     writer: createMetricValueWriter(input.metricValueRepository),
     metricContributionRepository: input.metricContributionRepository,
+    resolveQueryMembership: input.resolveQueryMembership,
   });
 }
 
@@ -95,6 +99,7 @@ export async function processAggregationEventTransaction(
       metricDefinitionRepository: deps.metricDefinitionRepository,
       metricValueRepository: deps.metricValueRepository,
       metricContributionRepository: deps.metricContributionRepository,
+      resolveQueryMembership: deps.resolveQueryMembership,
     });
 
     await deps.aggregationEventRepository.updateStatus(
@@ -136,5 +141,6 @@ export async function replayAggregationEvent(
     metricDefinitionRepository: deps.metricDefinitionRepository,
     metricValueRepository: deps.metricValueRepository,
     metricContributionRepository: deps.metricContributionRepository,
+    resolveQueryMembership: deps.resolveQueryMembership,
   });
 }

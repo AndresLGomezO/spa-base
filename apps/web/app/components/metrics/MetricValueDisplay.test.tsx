@@ -11,12 +11,12 @@ vi.mock("../../hooks/metrics/useCanReadMetricValues", () => ({
   useMetricReadAccess: vi.fn(),
 }));
 
-vi.mock("../../hooks/metrics/useMetricDefinition", () => ({
-  useMetricDefinition: vi.fn(),
-}));
-
 vi.mock("../../hooks/metrics/useMetricRow", () => ({
   useMetricRow: vi.fn(),
+}));
+
+vi.mock("../../hooks/metrics/useMetricEvaluate", () => ({
+  useMetricEvaluate: vi.fn(),
 }));
 
 vi.mock("../../hooks/metrics/useActiveMetricDefinitions", () => ({
@@ -24,13 +24,13 @@ vi.mock("../../hooks/metrics/useActiveMetricDefinitions", () => ({
 }));
 
 import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues";
-import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow";
+import { useMetricEvaluate } from "../../hooks/metrics/useMetricEvaluate";
 import { useActiveMetricDefinitions } from "../../hooks/metrics/useActiveMetricDefinitions";
 
 const mockUseMetricReadAccess = vi.mocked(useMetricReadAccess);
-const mockUseMetricDefinition = vi.mocked(useMetricDefinition);
 const mockUseMetricRow = vi.mocked(useMetricRow);
+const mockUseMetricEvaluate = vi.mocked(useMetricEvaluate);
 const mockUseActiveMetricDefinitions = vi.mocked(useActiveMetricDefinitions);
 
 const definition = {
@@ -72,21 +72,22 @@ function renderDisplay(
 
 describe("MetricValueDisplay", () => {
   beforeEach(() => {
+    mockUseMetricEvaluate.mockReturnValue({
+      data: undefined,
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useMetricEvaluate>);
     mockUseActiveMetricDefinitions.mockReturnValue({
       data: [definition],
       isLoading: false,
       isSuccess: true,
+      isFetched: true,
+      isError: false,
     } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
   });
 
   it("shows forbidden state when metricValue.read is denied", () => {
     mockUseMetricReadAccess.mockReturnValue("denied");
-    mockUseMetricDefinition.mockReturnValue({
-      data: definition,
-      isLoading: false,
-      isError: false,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
     mockUseMetricRow.mockReturnValue({
       data: null,
       isLoading: false,
@@ -101,12 +102,6 @@ describe("MetricValueDisplay", () => {
 
   it("shows loading state while the row query is loading", () => {
     mockUseMetricReadAccess.mockReturnValue("allowed");
-    mockUseMetricDefinition.mockReturnValue({
-      data: definition,
-      isLoading: false,
-      isError: false,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
     mockUseMetricRow.mockReturnValue({
       data: null,
       isLoading: true,
@@ -117,20 +112,34 @@ describe("MetricValueDisplay", () => {
     expect(screen.getByText("Loading metric…")).toBeInTheDocument();
   });
 
+  it("shows loading state while the metric catalog is loading", () => {
+    mockUseActiveMetricDefinitions.mockReturnValue({
+      data: undefined,
+      isLoading: true,
+      isSuccess: false,
+      isFetched: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
+    mockUseMetricReadAccess.mockReturnValue("pending");
+    mockUseMetricRow.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    renderDisplay({ metricDefinitionId: "Total revenue" });
+
+    expect(screen.getByText("Loading metric…")).toBeInTheDocument();
+  });
+
   it("shows unconfigured state when metricDefinitionId is missing", () => {
     mockUseActiveMetricDefinitions.mockReturnValue({
       data: [],
       isLoading: false,
       isSuccess: true,
+      isFetched: true,
+      isError: false,
     } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
     mockUseMetricReadAccess.mockReturnValue("pending");
-    mockUseMetricDefinition.mockReturnValue({
-      data: undefined,
-      isLoading: false,
-      isError: false,
-      isSuccess: false,
-      isFetched: false,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
     mockUseMetricRow.mockReturnValue({
       data: null,
       isLoading: false,
@@ -146,13 +155,6 @@ describe("MetricValueDisplay", () => {
 
   it("shows error state when the row query fails", () => {
     mockUseMetricReadAccess.mockReturnValue("allowed");
-    mockUseMetricDefinition.mockReturnValue({
-      data: definition,
-      isLoading: false,
-      isError: false,
-      isSuccess: true,
-      isFetched: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
     mockUseMetricRow.mockReturnValue({
       data: null,
       isLoading: false,
@@ -164,14 +166,28 @@ describe("MetricValueDisplay", () => {
     expect(screen.getByText("Unable to load metric")).toBeInTheDocument();
   });
 
+  it("resolves metric display names from the active catalog", () => {
+    mockUseMetricReadAccess.mockReturnValue("allowed");
+    mockUseMetricRow.mockReturnValue({
+      data: {
+        id: "row-1",
+        metricDefinitionId: "metric-1",
+        group: {},
+        dimensions: {},
+        values: { sum_amount: 4200 },
+        updatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+
+    renderDisplay({ metricDefinitionId: "Total revenue" });
+
+    expect(screen.getByText("Total revenue")).toBeInTheDocument();
+    expect(screen.getByText("4,200")).toBeInTheDocument();
+  });
+
   it("renders the primary aggregation value", () => {
     mockUseMetricReadAccess.mockReturnValue("allowed");
-    mockUseMetricDefinition.mockReturnValue({
-      data: definition,
-      isLoading: false,
-      isError: false,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
     mockUseMetricRow.mockReturnValue({
       data: {
         id: "row-1",
@@ -191,13 +207,14 @@ describe("MetricValueDisplay", () => {
   });
 
   it("formats currency metrics for display", () => {
-    mockUseMetricReadAccess.mockReturnValue("allowed");
-    mockUseMetricDefinition.mockReturnValue({
-      data: { ...definition, valueDisplayFormat: "currency" as const },
+    mockUseActiveMetricDefinitions.mockReturnValue({
+      data: [{ ...definition, valueDisplayFormat: "currency" as const }],
       isLoading: false,
-      isError: false,
       isSuccess: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
+      isFetched: true,
+      isError: false,
+    } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
+    mockUseMetricReadAccess.mockReturnValue("allowed");
     mockUseMetricRow.mockReturnValue({
       data: {
         id: "row-1",
@@ -217,12 +234,6 @@ describe("MetricValueDisplay", () => {
 
   it("inline presentation renders value without card chrome or title", () => {
     mockUseMetricReadAccess.mockReturnValue("allowed");
-    mockUseMetricDefinition.mockReturnValue({
-      data: definition,
-      isLoading: false,
-      isError: false,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
     mockUseMetricRow.mockReturnValue({
       data: {
         id: "row-1",
@@ -244,12 +255,6 @@ describe("MetricValueDisplay", () => {
 
   it("shows formatted zero when no metric row is returned", () => {
     mockUseMetricReadAccess.mockReturnValue("allowed");
-    mockUseMetricDefinition.mockReturnValue({
-      data: definition,
-      isLoading: false,
-      isError: false,
-      isSuccess: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
     mockUseMetricRow.mockReturnValue({
       data: null,
       isLoading: false,
@@ -262,13 +267,14 @@ describe("MetricValueDisplay", () => {
   });
 
   it("shows formatted currency zero when no metric row is returned", () => {
-    mockUseMetricReadAccess.mockReturnValue("allowed");
-    mockUseMetricDefinition.mockReturnValue({
-      data: { ...definition, valueDisplayFormat: "currency" as const },
+    mockUseActiveMetricDefinitions.mockReturnValue({
+      data: [{ ...definition, valueDisplayFormat: "currency" as const }],
       isLoading: false,
-      isError: false,
       isSuccess: true,
-    } as unknown as ReturnType<typeof useMetricDefinition>);
+      isFetched: true,
+      isError: false,
+    } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
+    mockUseMetricReadAccess.mockReturnValue("allowed");
     mockUseMetricRow.mockReturnValue({
       data: null,
       isLoading: false,
@@ -278,5 +284,64 @@ describe("MetricValueDisplay", () => {
 
     expect(screen.getByText("$ 0")).toBeInTheDocument();
     expect(screen.queryByText("No value")).not.toBeInTheDocument();
+  });
+
+  it("shows a dash when a computed metric evaluates to empty values", () => {
+    mockUseActiveMetricDefinitions.mockReturnValue({
+      data: [
+        {
+          ...definition,
+          computationMode: "computed" as const,
+          valueDisplayFormat: "percent" as const,
+          parameters: [
+            {
+              name: "currentPeriod",
+              valueType: "dateBucket" as const,
+              granularity: "month" as const,
+            },
+          ],
+          computation: {
+            type: "percentChange" as const,
+            current: {
+              type: "metricRef" as const,
+              metricDefinitionId: "Income by Month",
+              parameterMap: { date: "currentPeriod" },
+            },
+            baseline: {
+              type: "metricRef" as const,
+              metricDefinitionId: "Income by Month",
+              parameterMap: { date: "comparisonPeriod" },
+            },
+          },
+        },
+      ],
+      isLoading: false,
+      isSuccess: true,
+      isFetched: true,
+      isError: false,
+    } as unknown as ReturnType<typeof useActiveMetricDefinitions>);
+    mockUseMetricReadAccess.mockReturnValue("allowed");
+    mockUseMetricRow.mockReturnValue({
+      data: null,
+      isLoading: false,
+    } as unknown as ReturnType<typeof useMetricRow>);
+    mockUseMetricEvaluate.mockReturnValue({
+      data: {
+        values: {},
+        evaluatedAt: "2026-01-01T00:00:00.000Z",
+      },
+      isLoading: false,
+      isError: false,
+    } as unknown as ReturnType<typeof useMetricEvaluate>);
+
+    renderDisplay({
+      presentation: "inline",
+      parameterBindings: {
+        currentPeriod: { type: "static", value: "2026-06" },
+      },
+    });
+
+    expect(screen.getByText("-")).toBeInTheDocument();
+    expect(screen.queryByText("0%")).not.toBeInTheDocument();
   });
 });

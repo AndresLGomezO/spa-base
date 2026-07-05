@@ -24,7 +24,9 @@ import { useFormDesignerLayoutEditorLabels } from "./form-designer-layout-editor
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import {
   findColumnByRef,
+  applyComponentsColumnPatch,
   resolveComponentsLayoutBinding,
+  resolveGridTrackCount,
   type ComponentsTreeScope,
 } from "./form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
@@ -62,7 +64,7 @@ export function FormDesignerComponentColumnPanel({
     );
   }
 
-  const { column, siblingColumns, parentNestedRow } = resolved;
+  const { column, siblingColumns, parentGridRow } = resolved;
   const columnCount = siblingColumns.length;
   const columnIndex = isNestedComponentColumnRef(columnRef)
     ? columnRef.nestedColumnIndex
@@ -79,19 +81,7 @@ export function FormDesignerComponentColumnPanel({
   const applyColumnPatch = (
     patch: Parameters<typeof binding.updateRootColumn>[1],
   ) => {
-    if (isNestedComponentColumnRef(columnRef)) {
-      binding.updateNestedColumn(
-        toComponentRowRef(columnRef.nestedParentRowId, {
-          scope: "root",
-          columnIndex: columnRef.rootColumnIndex,
-        }),
-        columnRef.nestedColumnIndex,
-        patch,
-      );
-      return;
-    }
-
-    binding.updateRootColumn(columnRef.rootColumnIndex, patch);
+    applyComponentsColumnPatch(binding, columnRef, parentGridRow, patch);
   };
 
   const stackEditor = (
@@ -113,12 +103,12 @@ export function FormDesignerComponentColumnPanel({
     />
   );
 
-  const rowLayoutStyles = parentNestedRow
-    ? filterStyleRulesForGenericEditor(parentNestedRow.styles)
+  const rowLayoutStyles = parentGridRow
+    ? filterStyleRulesForGenericEditor(parentGridRow.styles)
     : filterStyleRulesForGenericEditor(binding.layout.root.styles);
 
-  const rowLayoutGridStyles = parentNestedRow
-    ? (parentNestedRow.styles ?? []).filter((rule) =>
+  const rowLayoutGridStyles = parentGridRow
+    ? (parentGridRow.styles ?? []).filter((rule) =>
         isResponsiveGridStyleProperty(rule.property),
       )
     : (binding.layout.root.styles ?? []).filter((rule) =>
@@ -129,9 +119,9 @@ export function FormDesignerComponentColumnPanel({
     genericStyles: readonly import("@repo/ui-builder-core").StyleRule[],
   ) => {
     const nextStyles = [...genericStyles, ...rowLayoutGridStyles];
-    if (parentNestedRow && isNestedComponentColumnRef(columnRef)) {
-      binding.updateNestedRowMeta(
-        toComponentRowRef(columnRef.nestedParentRowId, {
+    if (parentGridRow && isNestedComponentColumnRef(columnRef)) {
+      binding.updateGridRowMeta(
+        toComponentRowRef(parentGridRow.id, {
           scope: "root",
           columnIndex: columnRef.rootColumnIndex,
         }),
@@ -146,12 +136,12 @@ export function FormDesignerComponentColumnPanel({
   const updateResponsiveGrid = (
     styles: readonly import("@repo/ui-builder-core").StyleRule[],
   ) => {
-    if (!parentNestedRow || !isNestedComponentColumnRef(columnRef)) {
+    if (!parentGridRow || !isNestedComponentColumnRef(columnRef)) {
       return;
     }
 
-    binding.updateNestedRowMeta(
-      toComponentRowRef(columnRef.nestedParentRowId, {
+    binding.updateGridRowMeta(
+      toComponentRowRef(parentGridRow.id, {
         scope: "root",
         columnIndex: columnRef.rootColumnIndex,
       }),
@@ -225,10 +215,10 @@ export function FormDesignerComponentColumnPanel({
         </FormDesignerPanelPrimaryControls>
       )}
 
-      {parentNestedRow ? (
+      {parentGridRow ? (
         <ResponsiveGridEditor
-          styles={parentNestedRow.styles}
-          columnCount={parentNestedRow.columnCount}
+          styles={parentGridRow.styles}
+          columnCount={resolveGridTrackCount(parentGridRow) ?? 1}
           labels={labels.responsiveGrid}
           onChange={updateResponsiveGrid}
         />

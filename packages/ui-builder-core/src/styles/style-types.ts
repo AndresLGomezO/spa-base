@@ -70,7 +70,9 @@ export type StylePropertyKey =
   | "gridColumnsLg"
   | "gridColumnsXl"
   | "gridAutoFitMinWidth"
-  | "gridResponsiveMode";
+  | "gridResponsiveMode"
+  | "gridColumn"
+  | "gridRow";
 
 export interface StyleRule {
   readonly property: StylePropertyKey;
@@ -136,4 +138,6 @@ export const STYLE_PROPERTY_OPTIONS: readonly StylePropertyKey[] = [
   "gridColumnsXl",
   "gridAutoFitMinWidth",
   "gridResponsiveMode",
+  "gridColumn",
+  "gridRow",
 ] as const;

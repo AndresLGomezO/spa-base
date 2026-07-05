@@ -1,13 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import {
+  applyBuiltInTemplate,
   createDefaultModalFooterLayout,
   createDefaultWizardShellLayout,
   createDefaultWizardStepLayout,
   createLayoutId,
   ensureContainerRoot,
   ensureWizardShellLayout,
+  resolveBuiltInFormPresentation,
+  type BuiltInComponentTemplateId,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
+import type { UiBuilderPresetRecord } from "@repo/entities";
 import {
   normalizeEntityViews,
   resolveFormModalChrome,
@@ -39,6 +43,8 @@ import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { DEFAULT_FORM_DESIGN_ROUTE_ID } from "../../routing/design-layout-nav";
 import { putEntityUiOverride } from "../../lib/api-client";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
+import type { LayoutPresetId } from "./use-layout-system-preset-catalog";
+import { selectionToPresetValue } from "./use-layout-system-preset-catalog";
 
 function getDefaultFieldPaths(
   definition: ReturnType<typeof useEntityDefinition>,
@@ -70,6 +76,18 @@ function resolveEditorFormDesignId(formDesignId?: string): string | undefined {
   return formDesignId;
 }
 
+export function resolveFormLayoutPresetId(
+  presentation: FormPresentation,
+): LayoutPresetId {
+  return presentation === "wizard" ? "wizard-form" : "plain-form";
+}
+
+export function resolvePresentationFromLayoutPresetId(
+  layoutPresetId: LayoutPresetId,
+): FormPresentation {
+  return layoutPresetId === "wizard-form" ? "wizard" : "plain";
+}
+
 export function useEntityFormLayoutEditor(
   entityName: EntityName,
   options?: UseEntityFormLayoutEditorOptions,
@@ -86,6 +104,11 @@ export function useEntityFormLayoutEditor(
 
   const [presentation, setPresentation] = useState<FormPresentation>(() =>
     resolveFormPresentation(definition, resolvedFormDesignId),
+  );
+  const [layoutPresetId, setLayoutPresetId] = useState<LayoutPresetId>(() =>
+    resolveFormLayoutPresetId(
+      resolveFormPresentation(definition, resolvedFormDesignId),
+    ),
   );
   const [modalSize, setModalSize] = useState<FormModalSize>(() =>
     resolveFormModalSize(definition, resolvedFormDesignId),
@@ -158,7 +181,12 @@ export function useEntityFormLayoutEditor(
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
 
   useEffect(() => {
-    setPresentation(resolveFormPresentation(definition, resolvedFormDesignId));
+    const nextPresentation = resolveFormPresentation(
+      definition,
+      resolvedFormDesignId,
+    );
+    setPresentation(nextPresentation);
+    setLayoutPresetId(resolveFormLayoutPresetId(nextPresentation));
     setModalSize(resolveFormModalSize(definition, resolvedFormDesignId));
     setModalSizeByBreakpoint(
       resolveFormModalSizeByBreakpointFromDefinition(
@@ -496,11 +524,92 @@ export function useEntityFormLayoutEditor(
     wizard,
   ]);
 
+  const applyFormSystemPreset = useCallback(
+    (
+      input:
+        | {
+            readonly source: "builtin";
+            readonly id: BuiltInComponentTemplateId;
+          }
+        | {
+            readonly source: "tenant";
+            readonly preset: UiBuilderPresetRecord;
+            readonly layout: UiLayoutDocument;
+          },
+    ) => {
+      if (input.source === "builtin") {
+        const nextPresentation = resolveBuiltInFormPresentation(input.id);
+        if (nextPresentation === "wizard") {
+          setPresentation("wizard");
+          setWizard((current) => ({
+            ...current,
+            shellLayout: ensureContainerRoot(
+              ensureWizardShellLayout(
+                applyBuiltInTemplate("wizard-form", { fieldPaths }),
+                { actionsInModalFooter: modalFooterLayout != null },
+              ),
+            ),
+            steps:
+              current.steps.length > 0
+                ? current.steps
+                : [
+                    {
+                      id: createLayoutId("step"),
+                      label: "Step 1",
+                      layout: createDefaultWizardStepLayout(fieldPaths),
+                    },
+                  ],
+          }));
+          setLayoutPresetId(input.id);
+        } else if (nextPresentation === "plain") {
+          setPresentation("plain");
+          setPlainLayout(applyBuiltInTemplate(input.id, { fieldPaths }));
+          setLayoutPresetId(input.id);
+        }
+      } else {
+        const isWizard = input.preset.designSurface === "formWizardShell";
+        if (isWizard) {
+          setPresentation("wizard");
+          setWizard((current) => ({
+            ...current,
+            shellLayout: ensureContainerRoot(
+              ensureWizardShellLayout(input.layout, {
+                actionsInModalFooter: modalFooterLayout != null,
+              }),
+            ),
+            steps:
+              current.steps.length > 0
+                ? current.steps
+                : [
+                    {
+                      id: createLayoutId("step"),
+                      label: "Step 1",
+                      layout: createDefaultWizardStepLayout(fieldPaths),
+                    },
+                  ],
+          }));
+        } else {
+          setPresentation("plain");
+          setPlainLayout(input.layout);
+        }
+        setLayoutPresetId(
+          selectionToPresetValue({
+            source: "tenant",
+            id: input.preset.id,
+          }),
+        );
+      }
+      setLayoutEditorKey((current) => current + 1);
+    },
+    [fieldPaths, modalFooterLayout, setPlainLayout],
+  );
+
   const applySlice = useCallback(
     (data: DesignLayoutSliceData) => {
       const formsData = data as FormsSliceData;
       const nextPresentation = formsData.presentation ?? "plain";
       setPresentation(nextPresentation);
+      setLayoutPresetId(resolveFormLayoutPresetId(nextPresentation));
       if (formsData.modalSize) {
         setModalSize(formsData.modalSize);
       }
@@ -551,7 +660,8 @@ export function useEntityFormLayoutEditor(
     enableModalFooterLayout,
     disableModalFooterLayout,
     presentation,
-    setPresentation,
+    layoutPresetId,
+    applyFormSystemPreset,
     plainLayout,
     setPlainLayout,
     wizard,

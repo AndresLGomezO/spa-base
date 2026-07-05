@@ -2,11 +2,25 @@ import type { GroupedTableColumn, UiLayoutDocument } from "@repo/entities";
 
 import { areScopedLayoutSnapshotsEqual } from "../form-designer/form-designer-components-layout";
 import type { UseEntityListLayoutEditorResult } from "../ui-builder/use-entity-list-layout-editor";
+import { resolveListLayoutPresetId } from "../ui-builder/use-entity-list-layout-editor";
+import type { LayoutPresetId } from "../ui-builder/use-layout-system-preset-catalog";
 
 type ListPresentationType = "table" | "card" | "expandableTable";
 
+export function viewTypeFromLayoutPresetId(
+  layoutPresetId: LayoutPresetId,
+): ListPresentationType {
+  if (layoutPresetId === "card-list") {
+    return "card";
+  }
+  if (layoutPresetId === "expandable-table-list") {
+    return "expandableTable";
+  }
+  return "table";
+}
+
 export interface ItemListDesignerSettingsSnapshot {
-  readonly viewType: ListPresentationType;
+  readonly layoutPresetId: LayoutPresetId;
 }
 
 export interface ItemListDesignerTableColumnsSnapshot {
@@ -38,18 +52,6 @@ export type ItemListDesignerLayoutSnapshot = {
   readonly kind: "card";
   readonly data: ItemListDesignerCardLayoutSnapshot;
 };
-
-function resolvePresentationType(
-  listViewType: string | undefined,
-): ListPresentationType {
-  if (listViewType === "card") {
-    return "card";
-  }
-  if (listViewType === "expandableTable" || listViewType === "compact") {
-    return "expandableTable";
-  }
-  return "table";
-}
 
 function readTableViewFromDefinition(
   definition: UseEntityListLayoutEditorResult["definition"],
@@ -97,16 +99,22 @@ function readExpandableViewFromDefinition(
 }
 
 export function readSettingsSnapshot(
-  editor: Pick<UseEntityListLayoutEditorResult, "viewType">,
+  editor: Pick<UseEntityListLayoutEditorResult, "layoutPresetId">,
 ): ItemListDesignerSettingsSnapshot {
-  return { viewType: editor.viewType };
+  return { layoutPresetId: editor.layoutPresetId };
 }
 
 export function readSettingsSnapshotFromDefinition(
   definition: UseEntityListLayoutEditorResult["definition"],
+  editor: Pick<UseEntityListLayoutEditorResult, "layout" | "layoutPresetId">,
 ): ItemListDesignerSettingsSnapshot {
+  const listItem =
+    definition.ui.listItem ??
+    definition.ui.views.find((view) => view.type === "card")?.layout;
   return {
-    viewType: resolvePresentationType(definition.ui.listViewType),
+    layoutPresetId: listItem
+      ? resolveListLayoutPresetId(listItem, definition.ui.listViewType)
+      : editor.layoutPresetId,
   };
 }
 
@@ -114,7 +122,7 @@ export function areSettingsSnapshotsEqual(
   left: ItemListDesignerSettingsSnapshot,
   right: ItemListDesignerSettingsSnapshot,
 ): boolean {
-  return left.viewType === right.viewType;
+  return left.layoutPresetId === right.layoutPresetId;
 }
 
 function readTableColumnsSnapshot(
@@ -240,10 +248,17 @@ export function areColumnsSnapshotsEqual(
 }
 
 export function applySettingsSnapshotToEditor(
-  editor: Pick<UseEntityListLayoutEditorResult, "setViewType">,
+  editor: Pick<UseEntityListLayoutEditorResult, "applyListSystemPreset">,
   snapshot: ItemListDesignerSettingsSnapshot,
 ): void {
-  editor.setViewType(snapshot.viewType);
+  const presetId = snapshot.layoutPresetId;
+  if (
+    presetId === "plain-table-list" ||
+    presetId === "card-list" ||
+    presetId === "expandable-table-list"
+  ) {
+    editor.applyListSystemPreset({ source: "builtin", id: presetId });
+  }
 }
 
 export function applyColumnsSnapshotToEditor(

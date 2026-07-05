@@ -12,11 +12,20 @@ export function npmPackageName(specifier) {
   ) {
     return null;
   }
+  let name;
   if (specifier.startsWith("@")) {
     const parts = specifier.split("/");
-    return parts.length >= 2 ? `${parts[0]}/${parts[1]}` : specifier;
+    name = parts.length >= 2 ? `${parts[0]}/${parts[1]}` : specifier;
+  } else {
+    name = specifier.split("/")[0] ?? null;
   }
-  return specifier.split("/")[0] ?? null;
+  if (!name || name.includes("${") || name.includes("{")) {
+    return null;
+  }
+  if (!/^(@[a-z0-9][\w.-]*\/[a-z0-9][\w.-]*|[a-z0-9][\w.-]*)$/i.test(name)) {
+    return null;
+  }
+  return name;
 }
 
 /**

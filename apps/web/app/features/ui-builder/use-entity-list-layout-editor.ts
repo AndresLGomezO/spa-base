@@ -4,14 +4,18 @@ import type {
   ExpandableTableViewConfig,
   GroupedTableColumn,
   ListSliceData,
+  UiBuilderPresetRecord,
   UiLayoutDocument,
   ViewConfig,
 } from "@repo/entities";
 import { createDefaultExpandableTableView } from "@repo/entities";
 import {
-  createDefaultListCardLayout,
-  ensureListCardContainerRootLayout,
-  ensureRowExpandContainerRootLayout,
+  applyBuiltInTemplate,
+  deriveListPresentationFromLayout,
+  ensureContainerRoot,
+  resolveBuiltInTemplatePresentation,
+  resolveListBuiltinTemplateId,
+  type BuiltInComponentTemplateId,
 } from "@repo/ui-builder-core";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -19,8 +23,10 @@ import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
+import type { LayoutPresetId } from "./use-layout-system-preset-catalog";
+import { selectionToPresetValue } from "./use-layout-system-preset-catalog";
 
-type ListPresentationType = "table" | "card" | "expandableTable";
+export type ListPresentationType = "table" | "card" | "expandableTable";
 
 function getDefaultFieldPaths(
   definition: ReturnType<typeof useEntityDefinition>,
@@ -42,6 +48,30 @@ function resolvePresentationType(
   return "table";
 }
 
+function resolveInitialPresentation(
+  listViewType: string | undefined,
+  layout: UiLayoutDocument,
+): ListPresentationType {
+  const derived = deriveListPresentationFromLayout(layout);
+  if (derived !== "table") {
+    return derived;
+  }
+  return resolvePresentationType(listViewType);
+}
+
+function createPlainTableLayout(
+  fieldPaths: readonly string[],
+): UiLayoutDocument {
+  return applyBuiltInTemplate("plain-table-list", { fieldPaths });
+}
+
+export function resolveListLayoutPresetId(
+  layout: UiLayoutDocument,
+  listViewType?: string,
+): LayoutPresetId {
+  return resolveListBuiltinTemplateId(layout, listViewType);
+}
+
 export function useEntityListLayoutEditor(entityName: EntityName) {
   const definition = useEntityDefinition(entityName);
   const queryClient = useQueryClient();
@@ -52,21 +82,17 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const uiViews = definition.ui.views;
   const listViewType = definition.ui.listViewType;
 
-  const [viewType, setViewType] = useState<ListPresentationType>("table");
+  const [viewType, setViewTypeState] = useState<ListPresentationType>("table");
+  const [layoutPresetId, setLayoutPresetId] =
+    useState<LayoutPresetId>("plain-table-list");
   const [tableFields, setTableFields] = useState<readonly string[]>(fieldPaths);
   const [tableShowActions, setTableShowActions] = useState(true);
   const [expandableColumns, setExpandableColumns] = useState<
     readonly GroupedTableColumn[]
   >(() => createDefaultExpandableTableView(fieldPaths).columns);
-  const [rowExpandLayout, setRowExpandLayout] = useState<UiLayoutDocument>(() =>
-    ensureRowExpandContainerRootLayout(
-      createDefaultExpandableTableView(fieldPaths).rowExpandLayout,
-      fieldPaths,
-    ),
-  );
   const [expandableShowActions, setExpandableShowActions] = useState(true);
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
-    createDefaultListCardLayout(fieldPaths),
+    createPlainTableLayout(fieldPaths),
   );
   const [isSaving, setIsSaving] = useState(false);
   const [layoutEditorKey, setLayoutEditorKey] = useState(0);
@@ -74,14 +100,49 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
   const filterFieldOptions = useMemo(() => [...fieldPaths], [fieldPaths]);
   const defaultFieldPath = fieldPaths[0] ?? "name";
 
+  const applyListSystemPreset = useCallback(
+    (
+      input:
+        | {
+            readonly source: "builtin";
+            readonly id: BuiltInComponentTemplateId;
+          }
+        | {
+            readonly source: "tenant";
+            readonly preset: UiBuilderPresetRecord;
+            readonly layout: UiLayoutDocument;
+          },
+    ) => {
+      const nextLayout =
+        input.source === "builtin"
+          ? ensureContainerRoot(applyBuiltInTemplate(input.id, { fieldPaths }))
+          : ensureContainerRoot(input.layout);
+
+      setLayout(nextLayout);
+
+      const presentation =
+        input.source === "builtin"
+          ? (resolveBuiltInTemplatePresentation(input.id) ??
+            deriveListPresentationFromLayout(nextLayout))
+          : deriveListPresentationFromLayout(nextLayout);
+
+      setViewTypeState(presentation);
+      setLayoutPresetId(
+        input.source === "builtin"
+          ? input.id
+          : selectionToPresetValue({ source: "tenant", id: input.preset.id }),
+      );
+      setLayoutEditorKey((current) => current + 1);
+    },
+    [fieldPaths],
+  );
+
   useEffect(() => {
     const tableView = uiViews.find((view) => view.type === "table");
-    const cardView = uiViews.find((view) => view.type === "card");
     const expandableView = uiViews.find(
       (view) => view.type === "expandableTable",
     ) as ExpandableTableViewConfig | undefined;
 
-    setViewType(resolvePresentationType(listViewType));
     setTableFields(
       tableView && tableView.fields.length > 0
         ? [...tableView.fields]
@@ -93,33 +154,32 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
 
     if (expandableView) {
       setExpandableColumns([...expandableView.columns]);
-      setRowExpandLayout(
-        ensureRowExpandContainerRootLayout(
-          expandableView.rowExpandLayout,
-          fieldPaths,
-        ),
-      );
       setExpandableShowActions(expandableView.showActions !== false);
     } else {
       const defaults = createDefaultExpandableTableView(fieldPaths);
       setExpandableColumns(defaults.columns);
-      setRowExpandLayout(
-        ensureRowExpandContainerRootLayout(
-          defaults.rowExpandLayout,
-          fieldPaths,
-        ),
-      );
       setExpandableShowActions(true);
     }
 
-    const listItem = definition.ui.listItem ?? cardView?.layout;
+    const listItem =
+      definition.ui.listItem ??
+      uiViews.find((view) => view.type === "card")?.layout ??
+      expandableView?.rowExpandLayout;
+
     if (listItem) {
-      setLayout(ensureListCardContainerRootLayout(listItem, fieldPaths));
+      const normalized = ensureContainerRoot(listItem);
+      const nextViewType = resolveInitialPresentation(listViewType, normalized);
+      setLayout(normalized);
+      setViewTypeState(nextViewType);
+      setLayoutPresetId(resolveListLayoutPresetId(normalized, listViewType));
       setLayoutEditorKey((current) => current + 1);
       return;
     }
 
-    setLayout(createDefaultListCardLayout(fieldPaths));
+    const plainLayout = createPlainTableLayout(fieldPaths);
+    setViewTypeState("table");
+    setLayoutPresetId("plain-table-list");
+    setLayout(plainLayout);
     setLayoutEditorKey((current) => current + 1);
   }, [definition.ui.listItem, fieldPaths, listViewType, uiViews]);
 
@@ -140,12 +200,12 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
         expandableColumns.length > 0
           ? expandableColumns
           : createDefaultExpandableTableView(fieldPaths).columns,
-      rowExpandLayout,
+      rowExpandLayout: layout,
       showActions: expandableShowActions,
       ...(existing?.filters ? { filters: existing.filters } : {}),
       ...(existing?.defaultSort ? { defaultSort: existing.defaultSort } : {}),
     }),
-    [expandableColumns, expandableShowActions, fieldPaths, rowExpandLayout],
+    [expandableColumns, expandableShowActions, fieldPaths, layout],
   );
 
   const buildViews = useCallback((): readonly ViewConfig[] => {
@@ -170,24 +230,21 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
         : {}),
     };
 
-    const expandableViewConfig = buildExpandableTableView(expandableView);
-
-    if (viewType === "table") {
-      return [tableViewConfig, expandableViewConfig];
+    if (viewType === "card") {
+      const cardViewConfig: ViewConfig = {
+        type: "card",
+        name: "card",
+        fields: fieldPaths,
+        layout,
+      };
+      return [tableViewConfig, cardViewConfig];
     }
 
     if (viewType === "expandableTable") {
-      return [tableViewConfig, expandableViewConfig];
+      return [tableViewConfig, buildExpandableTableView(expandableView)];
     }
 
-    const cardViewConfig: ViewConfig = {
-      type: "card",
-      name: "card",
-      fields: fieldPaths,
-      layout,
-    };
-
-    return [tableViewConfig, expandableViewConfig, cardViewConfig];
+    return [tableViewConfig];
   }, [
     buildExpandableTableView,
     fieldPaths,
@@ -204,20 +261,10 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       const payload: Parameters<typeof putEntityUiOverride>[1] = {
         views: buildViews(),
         listViewType: viewType,
+        listItem: layout,
       };
-      const existingListItem =
-        definition.ui.listItem ??
-        uiViews.find((view) => view.type === "card")?.layout;
-      const { override } =
-        viewType === "card"
-          ? await putEntityUiOverride(entityName, {
-              ...payload,
-              listItem: layout,
-            })
-          : await putEntityUiOverride(entityName, {
-              ...payload,
-              ...(existingListItem ? { listItem: existingListItem } : {}),
-            });
+
+      const { override } = await putEntityUiOverride(entityName, payload);
 
       patchEntityCatalogAfterUiOverrideSave(queryClient, entityName, override);
       return true;
@@ -226,15 +273,7 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     } finally {
       setIsSaving(false);
     }
-  }, [
-    buildViews,
-    definition.ui.listItem,
-    entityName,
-    layout,
-    queryClient,
-    uiViews,
-    viewType,
-  ]);
+  }, [buildViews, entityName, layout, queryClient, viewType]);
 
   const exportSlice = useCallback((): ListSliceData => {
     return {
@@ -245,49 +284,41 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
       },
       expandableTable: {
         columns: [...expandableColumns],
-        rowExpandLayout,
+        rowExpandLayout: layout,
         showActions: expandableShowActions,
       },
-      ...(viewType === "card" ? { listItem: layout } : {}),
+      listItem: layout,
     };
   }, [
     expandableColumns,
     expandableShowActions,
     fieldPaths,
     layout,
-    rowExpandLayout,
     tableFields,
     tableShowActions,
     viewType,
   ]);
 
-  const applySlice = useCallback(
-    (data: DesignLayoutSliceData) => {
-      const listData = data as ListSliceData;
-      const nextViewType =
-        listData.listViewType === "compact"
-          ? "expandableTable"
-          : listData.listViewType;
-      setViewType(nextViewType);
-      setTableFields([...listData.table.fields]);
-      setTableShowActions(listData.table.showActions !== false);
-      setExpandableColumns([...listData.expandableTable.columns]);
-      setRowExpandLayout(
-        ensureRowExpandContainerRootLayout(
-          listData.expandableTable.rowExpandLayout,
-          fieldPaths,
-        ),
-      );
-      setExpandableShowActions(listData.expandableTable.showActions !== false);
-      if (listData.listItem) {
-        setLayout(
-          ensureListCardContainerRootLayout(listData.listItem, fieldPaths),
-        );
-      }
-      setLayoutEditorKey((current) => current + 1);
-    },
-    [fieldPaths],
-  );
+  const applySlice = useCallback((data: DesignLayoutSliceData) => {
+    const listData = data as ListSliceData;
+    const nextViewType =
+      listData.listViewType === "compact"
+        ? "expandableTable"
+        : listData.listViewType;
+    setViewTypeState(nextViewType);
+    setTableFields([...listData.table.fields]);
+    setTableShowActions(listData.table.showActions !== false);
+    setExpandableColumns([...listData.expandableTable.columns]);
+    setExpandableShowActions(listData.expandableTable.showActions !== false);
+    const nextLayout = ensureContainerRoot(
+      listData.listItem ?? listData.expandableTable.rowExpandLayout,
+    );
+    setLayout(nextLayout);
+    setLayoutPresetId(
+      resolveListLayoutPresetId(nextLayout, listData.listViewType),
+    );
+    setLayoutEditorKey((current) => current + 1);
+  }, []);
 
   return {
     entityName,
@@ -296,15 +327,16 @@ export function useEntityListLayoutEditor(entityName: EntityName) {
     filterFieldOptions,
     defaultFieldPath,
     viewType,
-    setViewType,
+    layoutPresetId,
+    applyListSystemPreset,
     tableFields,
     setTableFields,
     tableShowActions,
     setTableShowActions,
     expandableColumns,
     setExpandableColumns,
-    rowExpandLayout,
-    setRowExpandLayout,
+    rowExpandLayout: layout,
+    setRowExpandLayout: setLayout,
     expandableShowActions,
     setExpandableShowActions,
     layout,

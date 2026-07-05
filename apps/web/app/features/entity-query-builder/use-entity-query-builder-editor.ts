@@ -3,6 +3,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   createEntityQueryDefinition,
   deleteEntityQueryDefinition,
+  isApiClientError,
   listEntityQueryDefinitions,
   patchEntityQueryDefinition,
   type EntityQueryDefinitionRecord,
@@ -258,9 +259,11 @@ export function useEntityQueryBuilderEditor() {
         });
         return null;
       } catch (error) {
-        return error instanceof Error
+        return isApiClientError(error)
           ? error.message
-          : "Failed to delete query.";
+          : error instanceof Error
+            ? error.message
+            : "Failed to delete query.";
       }
     },
     [],

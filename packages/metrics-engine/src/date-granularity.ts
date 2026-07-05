@@ -98,6 +98,80 @@ export function applyDateGranularityToSlice(
   return slice;
 }
 
+function parseMonthBucket(
+  value: string,
+): { year: number; month: number } | null {
+  const match = /^(\d{4})-(\d{2})$/.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  if (month < 1 || month > 12) {
+    return null;
+  }
+  return { year, month };
+}
+
+function parseYearBucket(value: string): number | null {
+  const match = /^(\d{4})$/.exec(value.trim());
+  return match ? Number(match[1]) : null;
+}
+
+function parseDayBucket(
+  value: string,
+): { year: number; month: number; day: number } | null {
+  const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(value.trim());
+  if (!match) {
+    return null;
+  }
+  const year = Number(match[1]);
+  const month = Number(match[2]);
+  const day = Number(match[3]);
+  if (month < 1 || month > 12 || day < 1 || day > 31) {
+    return null;
+  }
+  return { year, month, day };
+}
+
+export function shiftMetricDateBucket(
+  value: string,
+  unit: MetricDateGranularity,
+  offset: number,
+): string | null {
+  switch (unit) {
+    case "month": {
+      const parsed = parseMonthBucket(value);
+      if (!parsed) {
+        return null;
+      }
+      const date = new Date(
+        Date.UTC(parsed.year, parsed.month - 1 + offset, 1),
+      );
+      return normalizeMetricDateValue(date.toISOString(), "month");
+    }
+    case "year": {
+      const year = parseYearBucket(value);
+      if (year === null) {
+        return null;
+      }
+      return String(year + offset);
+    }
+    case "day": {
+      const parsed = parseDayBucket(value);
+      if (!parsed) {
+        return null;
+      }
+      const date = new Date(
+        Date.UTC(parsed.year, parsed.month - 1, parsed.day + offset),
+      );
+      return normalizeMetricDateValue(date.toISOString(), "day");
+    }
+    default:
+      return null;
+  }
+}
+
 export function applyDateGranularityToQuerySlice(
   slice: Record<string, string | number | boolean>,
   fields: readonly string[],

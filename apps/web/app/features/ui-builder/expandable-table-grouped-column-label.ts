@@ -1,3 +1,4 @@
+import { resolveLayoutRootColumns } from "@repo/ui-builder-core";
 import type { GroupedTableColumn, UiLayoutDocument } from "@repo/entities";
 
 import {
@@ -8,7 +9,7 @@ import {
 function resolveFirstFieldPathFromCellLayout(
   layout: UiLayoutDocument,
 ): string | null {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     for (const row of column.rows) {
       if (
         row.type === "component" &&

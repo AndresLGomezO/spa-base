@@ -1,8 +1,8 @@
 export type UiBuilderPresetKind =
   | "layout-document"
   | "column"
-  | "component-row"
-  | "nested-layout-row";
+  | "grid-track"
+  | "component-row";
 
 export type UiBuilderFieldSlotKind = "dataSourceField" | "formFieldPath";
 

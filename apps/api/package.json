@@ -10,6 +10,7 @@
     "lint": "eslint .",
     "typecheck": "tsc --noEmit -p tsconfig.json",
     "test": "vitest run",
+    "test:local-import": "vitest run --config vitest.local-import.config.ts",
     "test:coverage": "vitest run --coverage",
     "lint:unused": "knip --no-progress",
     "lint:circular": "node ../../scripts/lint-circular.mjs --circular --extensions ts src/"

@@ -40,7 +40,12 @@ import {
   type MetricsRowPanelTarget,
   type MetricsRowUnsavedReason,
 } from "./metrics-row-designer-panel-session";
-import { renderMetricsRowStructurePanelChrome } from "./metrics-row-designer-structure-panel-chrome";
+import { metricsRowDesignerThirdRail } from "./metrics-row-designer-third-rail";
+
+const MetricsRowThirdRailHeaderActions =
+  metricsRowDesignerThirdRail.HeaderActions;
+const MetricsRowThirdRailBody = metricsRowDesignerThirdRail.Body;
+const MetricsRowThirdRailFooter = metricsRowDesignerThirdRail.Footer;
 import {
   applyRowLayoutSnapshotToEditor,
   applyWidgetsSnapshotToEditor,
@@ -116,7 +121,6 @@ export function MetricsRowDesignerProvider({
     open: openThirdRail,
     close: closeThirdRail,
     update: updateThirdRail,
-    isOpen: isThirdRailOpen,
   } = useThirdRail();
 
   const [previewBreakpoint, setPreviewBreakpoint] =
@@ -318,7 +322,9 @@ export function MetricsRowDesignerProvider({
 
       openThirdRail({
         title: label,
-        ...renderMetricsRowStructurePanelChrome(contextValue, session),
+        headerActions: <MetricsRowThirdRailHeaderActions />,
+        body: <MetricsRowThirdRailBody />,
+        footer: <MetricsRowThirdRailFooter />,
         resizeContent: true,
         onClose: guardStructurePanelClose,
       });
@@ -348,7 +354,6 @@ export function MetricsRowDesignerProvider({
 
       updateThirdRail({
         title: label,
-        ...renderMetricsRowStructurePanelChrome(contextValue, session),
       });
     },
     [updateThirdRail],
@@ -748,33 +753,10 @@ export function MetricsRowDesignerProvider({
 
   contextValueRef.current = contextValue;
 
-  useEffect(() => {
-    if (!structurePanelSession || !isThirdRailOpen) {
-      return;
-    }
-
-    const latestContext = contextValueRef.current;
-    if (!latestContext) {
-      return;
-    }
-
-    updateThirdRail({
-      title: structurePanelSession.label,
-      ...renderMetricsRowStructurePanelChrome(
-        latestContext,
-        structurePanelSession,
-      ),
-    });
-  }, [
-    activeTabId,
-    editor.metricRowLayout,
-    editor.selectedWidget?.layout,
-    isThirdRailOpen,
-    previewColorScheme,
-    structurePanelIsDirty,
-    structurePanelSession,
-    updateThirdRail,
-  ]);
+  metricsRowDesignerThirdRail.publish({
+    contextValue,
+    session: structurePanelSession,
+  });
 
   return (
     <MetricsRowDesignerContext.Provider value={contextValue}>

@@ -8,7 +8,6 @@ import {
   type FieldPathValidationDefinition,
   type LayoutJsonImportScope,
   type LayoutJsonImportValidationResult,
-  type NestedLayoutRowNode,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { Button, Modal, Text } from "@repo/ui";
@@ -48,17 +47,13 @@ export interface LayoutJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: LayoutJsonImportLabels;
   readonly onApply: (
-    data:
-      | UiLayoutDocument
-      | ColumnNode
-      | ComponentRowNode
-      | NestedLayoutRowNode,
+    data: UiLayoutDocument | ColumnNode | ComponentRowNode | ComponentRowNode,
   ) => void;
   readonly referenceData?:
     | UiLayoutDocument
     | ColumnNode
     | ComponentRowNode
-    | NestedLayoutRowNode;
+    | ComponentRowNode;
   readonly actionsInModalFooter?: boolean;
   readonly triggerSize?: "sm" | "md" | "lg";
   readonly renderTrigger?: (options: { open: () => void }) => ReactNode;
@@ -79,8 +74,6 @@ function titleForScope(
       return labels.titleComponentRow;
     case "insertable-row":
       return labels.titleInsertableRow;
-    case "nested-layout-row":
-      return labels.titleNestedRow;
   }
 }
 

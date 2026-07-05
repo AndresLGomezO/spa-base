@@ -10,9 +10,10 @@ import {
   ensureWizardShellLayout,
   type ColumnNode,
   type ComponentRowNode,
-  type NestedLayoutRowNode,
   type RowNode,
   type UiLayoutDocument,
+  withEditableRootColumns,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 
 import type { UseEntityFormLayoutEditorResult } from "../ui-builder/use-entity-form-layout-editor";
@@ -23,11 +24,7 @@ interface FormDesignerComponentsSnapshot {
   readonly modalFooterLayout?: UiLayoutDocument;
 }
 
-type ComponentsRowTree =
-  | ComponentRowNode
-  | (Omit<NestedLayoutRowNode, "columns"> & {
-      readonly columns: readonly ComponentsColumnTree[];
-    });
+type ComponentsRowTree = ComponentRowNode;
 
 interface ComponentsColumnTree {
   readonly rows: readonly ComponentsRowTree[];
@@ -48,19 +45,7 @@ export interface FormDesignerComponentsTreeSnapshot {
 }
 
 function extractRowTree(row: RowNode): ComponentsRowTree {
-  if (row.type === "component") {
-    return structuredClone(row);
-  }
-
-  return {
-    type: "nested-layout",
-    id: row.id,
-    columnCount: row.columnCount,
-    columns: row.columns.map(extractColumnTree),
-    styles: row.styles,
-    displayFrom: row.displayFrom,
-    displayTo: row.displayTo,
-  };
+  return structuredClone(row);
 }
 
 function extractColumnTree(column: ColumnNode): ComponentsColumnTree {
@@ -71,7 +56,7 @@ function extractColumnTree(column: ColumnNode): ComponentsColumnTree {
 
 function extractComponentsTree(layout: UiLayoutDocument): ComponentsLayoutTree {
   return {
-    columns: layout.root.columns.map(extractColumnTree),
+    columns: resolveLayoutRootColumns(layout).map(extractColumnTree),
   };
 }
 
@@ -261,16 +246,12 @@ function applyComponentsTreeToLayout(
   currentLayout: UiLayoutDocument,
   tree: ComponentsLayoutTree,
 ): UiLayoutDocument {
-  return {
-    ...currentLayout,
-    root: {
-      ...currentLayout.root,
-      columns: currentLayout.root.columns.map((column, columnIndex) => ({
-        ...column,
-        rows: mergeRows(column.rows, tree.columns[columnIndex]?.rows ?? []),
-      })),
-    },
-  };
+  return withEditableRootColumns(currentLayout, (columns) =>
+    columns.map((column, columnIndex) => ({
+      ...column,
+      rows: mergeRows(column.rows, tree.columns[columnIndex]?.rows ?? []),
+    })),
+  );
 }
 
 function mergeRows(
@@ -280,30 +261,9 @@ function mergeRows(
   return treeRows.map((treeRow) => {
     const existing = currentRows.find((row) => row.id === treeRow.id);
     if (!existing) {
-      return structuredClone(treeRow) as RowNode;
-    }
-
-    if (treeRow.type === "component" && existing.type === "component") {
       return structuredClone(treeRow);
     }
 
-    if (treeRow.type === "nested-layout" && existing.type === "nested-layout") {
-      return {
-        ...existing,
-        columnCount: treeRow.columnCount,
-        styles: treeRow.styles,
-        displayFrom: treeRow.displayFrom,
-        displayTo: treeRow.displayTo,
-        columns: existing.columns.map((column, columnIndex) => ({
-          ...column,
-          rows: mergeRows(
-            column.rows,
-            treeRow.columns[columnIndex]?.rows ?? [],
-          ),
-        })),
-      };
-    }
-
-    return structuredClone(treeRow) as RowNode;
+    return structuredClone(treeRow);
   });
 }

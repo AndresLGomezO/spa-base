@@ -2,7 +2,7 @@
 
 Grouped columns with per-column `cellLayout` and `rowExpandLayout`.
 
-Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocument`. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses nested single-column pattern for expanded row content.
+Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. Each column has `cellLayout: UiLayoutDocument`. Columns support `displayFrom`/`displayTo` for responsive column visibility. `rowExpandLayout` uses container + grid for expanded row content.
 
 ## Allowed component kinds
 - `text`
@@ -49,52 +49,63 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
                         "kind": "container",
                         "rows": [
                           {
-                            "type": "nested-layout",
-                            "id": "nested-example",
-                            "columnCount": 2,
-                            "columns": [
-                              {
-                                "id": "col-example",
-                                "rows": [
-                                  {
-                                    "type": "component",
-                                    "id": "row-example",
-                                    "component": {
-                                      "kind": "text",
-                                      "primary": {
-                                        "type": "field",
-                                        "path": "name"
-                                      },
-                                      "label": {
-                                        "show": true
-                                      }
-                                    }
-                                  }
-                                ]
-                              },
-                              {
-                                "id": "col-example",
-                                "rows": [
-                                  {
-                                    "type": "component",
-                                    "id": "row-example",
-                                    "component": {
-                                      "kind": "text",
-                                      "primary": {
-                                        "type": "field",
-                                        "path": "name"
-                                      },
-                                      "styles": [
-                                        {
-                                          "property": "fontWeight",
-                                          "value": "bold"
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "grid",
+                              "gridTemplateColumns": "repeat(2, 1fr)",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "name"
+                                          },
+                                          "label": {
+                                            "show": true
+                                          }
                                         }
-                                      ]
-                                    }
+                                      }
+                                    ]
                                   }
-                                ]
-                              }
-                            ]
+                                },
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "container",
+                                    "rows": [
+                                      {
+                                        "type": "component",
+                                        "id": "row-example",
+                                        "component": {
+                                          "kind": "text",
+                                          "primary": {
+                                            "type": "field",
+                                            "path": "name"
+                                          },
+                                          "styles": [
+                                            {
+                                              "property": "fontWeight",
+                                              "value": "bold"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
                           }
                         ]
                       }
@@ -124,52 +135,63 @@ Set `listViewType: "expandableTable"`. Each column has `cellLayout: UiLayoutDocu
                     "kind": "container",
                     "rows": [
                       {
-                        "type": "nested-layout",
-                        "id": "nested-example",
-                        "columnCount": 2,
-                        "columns": [
-                          {
-                            "id": "col-example",
-                            "rows": [
-                              {
-                                "type": "component",
-                                "id": "row-example",
-                                "component": {
-                                  "kind": "text",
-                                  "primary": {
-                                    "type": "field",
-                                    "path": "name"
-                                  },
-                                  "label": {
-                                    "show": true
-                                  }
-                                }
-                              }
-                            ]
-                          },
-                          {
-                            "id": "col-example",
-                            "rows": [
-                              {
-                                "type": "component",
-                                "id": "row-example",
-                                "component": {
-                                  "kind": "text",
-                                  "primary": {
-                                    "type": "field",
-                                    "path": "name"
-                                  },
-                                  "styles": [
-                                    {
-                                      "property": "fontWeight",
-                                      "value": "bold"
+                        "type": "component",
+                        "id": "row-example",
+                        "component": {
+                          "kind": "grid",
+                          "gridTemplateColumns": "repeat(2, 1fr)",
+                          "rows": [
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "container",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "label": {
+                                        "show": true
+                                      }
                                     }
-                                  ]
-                                }
+                                  }
+                                ]
                               }
-                            ]
-                          }
-                        ]
+                            },
+                            {
+                              "type": "component",
+                              "id": "row-example",
+                              "component": {
+                                "kind": "container",
+                                "rows": [
+                                  {
+                                    "type": "component",
+                                    "id": "row-example",
+                                    "component": {
+                                      "kind": "text",
+                                      "primary": {
+                                        "type": "field",
+                                        "path": "name"
+                                      },
+                                      "styles": [
+                                        {
+                                          "property": "fontWeight",
+                                          "value": "bold"
+                                        }
+                                      ]
+                                    }
+                                  }
+                                ]
+                              }
+                            }
+                          ]
+                        }
                       }
                     ]
                   }

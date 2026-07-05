@@ -44,11 +44,17 @@ export function createInMemoryMetricDefinitionRepository(): MetricDefinitionRepo
         name: parsed.name,
         ...(parsed.description ? { description: parsed.description } : {}),
         sourceModel: parsed.sourceModel,
+        ...(parsed.sourceQueryDefinitionId
+          ? { sourceQueryDefinitionId: parsed.sourceQueryDefinitionId }
+          : {}),
         filters: parsed.filters,
         groupBy: parsed.groupBy,
         dimensions: parsed.dimensions,
         dateFieldGranularity: parsed.dateFieldGranularity,
         valueDisplayFormat: parsed.valueDisplayFormat,
+        computationMode: parsed.computationMode,
+        parameters: parsed.parameters,
+        ...(parsed.computation ? { computation: parsed.computation } : {}),
         aggregations: parsed.aggregations,
         target: {
           collection: generateMetricTargetCollection(id),
@@ -87,6 +93,15 @@ export function createInMemoryMetricDefinitionRepository(): MetricDefinitionRepo
         ...(input.valueDisplayFormat !== undefined
           ? { valueDisplayFormat: input.valueDisplayFormat }
           : {}),
+        ...(input.computationMode !== undefined
+          ? { computationMode: input.computationMode }
+          : {}),
+        ...(input.parameters !== undefined
+          ? { parameters: input.parameters }
+          : {}),
+        ...(input.computation !== undefined
+          ? { computation: input.computation }
+          : {}),
         ...(input.aggregations ? { aggregations: input.aggregations } : {}),
         ...(input.version !== undefined ? { version: input.version } : {}),
         ...(input.schemaVersionDependency !== undefined
@@ -103,6 +118,13 @@ export function createInMemoryMetricDefinitionRepository(): MetricDefinitionRepo
     },
     async delete(tenantId, id) {
       store.delete(key(tenantId, id));
+    },
+    async countBySourceQueryDefinitionId(tenantId, entityQueryDefinitionId) {
+      return [...store.values()].filter(
+        (record) =>
+          record.tenantId === tenantId &&
+          record.sourceQueryDefinitionId === entityQueryDefinitionId,
+      ).length;
     },
   };
 }

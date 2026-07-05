@@ -22,6 +22,7 @@ export interface FormDesignerComponentsLabels {
   readonly modalCancel: string;
   readonly importSectionTitle: string;
   readonly importJsonOption: string;
+  readonly templatesSectionTitle: string;
   readonly layoutJsonImport: LayoutJsonImportLabels;
   readonly sectionTitle: (section: CatalogSectionId) => string;
   readonly optionLabel: (kind: CatalogEntryKind) => string;
@@ -77,8 +78,9 @@ export function formDesignerComponentsLabels(
   return {
     tree: {
       column: (column) => t("entity.viewSettings.columnTab", { column }),
-      nestedLayout: (columnCount) =>
-        t("formDesigner.components.nestedLayout", { count: columnCount }),
+      track: (track) => t("formDesigner.components.gridTrack", { track }),
+      grid: (trackCount) =>
+        t("formDesigner.components.gridLayout", { count: trackCount }),
       container: t("formDesigner.components.container"),
       section: t("formDesigner.components.section"),
       actions: t("formDesigner.components.actions"),
@@ -98,6 +100,7 @@ export function formDesignerComponentsLabels(
     modalCancel: t("formDesigner.components.modalCancel"),
     importSectionTitle: t("formDesigner.components.importSectionTitle"),
     importJsonOption: t("formDesigner.components.importJsonOption"),
+    templatesSectionTitle: t("formDesigner.components.templatesSectionTitle"),
     layoutJsonImport: layoutJsonImportLabels(t),
     sectionTitle: (section) => {
       switch (section) {
@@ -112,8 +115,8 @@ export function formDesignerComponentsLabels(
       }
     },
     optionLabel: (kind) => {
-      if (kind === "nested-layout") {
-        return t("formDesigner.components.options.nestedLayout");
+      if (kind === "grid") {
+        return t("formDesigner.components.container");
       }
       if (kind === "container") {
         return t("formDesigner.components.container");

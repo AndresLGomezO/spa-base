@@ -1,5 +1,8 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
-import { createEmptyLayout } from "@repo/ui-builder-core";
+import {
+  createEmptyLayout,
+  resolveLayoutRootColumns,
+} from "@repo/ui-builder-core";
 import { describe, expect, it, vi } from "vitest";
 
 import {
@@ -83,7 +86,7 @@ describe("form-designer-layout", () => {
 
     const snapshot = readLayoutSnapshotFromDefinition(definition, "plain");
 
-    expect(snapshot.layout.root.columns.length).toBeGreaterThan(0);
+    expect(resolveLayoutRootColumns(snapshot.layout).length).toBeGreaterThan(0);
   });
 
   it("restores layout snapshot to the active outer layout setter", () => {

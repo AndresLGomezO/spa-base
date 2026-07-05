@@ -40,7 +40,11 @@ import {
   type MainViewPanelTarget,
   type MainViewUnsavedReason,
 } from "./main-view-designer-panel-session";
-import { renderMainViewStructurePanelChrome } from "./main-view-designer-structure-panel-chrome";
+import { mainViewDesignerThirdRail } from "./main-view-designer-third-rail";
+
+const MainViewThirdRailHeaderActions = mainViewDesignerThirdRail.HeaderActions;
+const MainViewThirdRailBody = mainViewDesignerThirdRail.Body;
+const MainViewThirdRailFooter = mainViewDesignerThirdRail.Footer;
 import {
   applyLayoutSnapshotToEditor,
   areLayoutSnapshotsEqual,
@@ -98,7 +102,6 @@ export function MainViewDesignerProvider({
     open: openThirdRail,
     close: closeThirdRail,
     update: updateThirdRail,
-    isOpen: isThirdRailOpen,
   } = useThirdRail();
 
   const [previewBreakpoint, setPreviewBreakpoint] =
@@ -251,7 +254,9 @@ export function MainViewDesignerProvider({
 
       openThirdRail({
         title: label,
-        ...renderMainViewStructurePanelChrome(contextValue, session),
+        headerActions: <MainViewThirdRailHeaderActions />,
+        body: <MainViewThirdRailBody />,
+        footer: <MainViewThirdRailFooter />,
         resizeContent: true,
         onClose: guardStructurePanelClose,
       });
@@ -278,7 +283,6 @@ export function MainViewDesignerProvider({
 
       updateThirdRail({
         title: label,
-        ...renderMainViewStructurePanelChrome(contextValue, session),
       });
     },
     [updateThirdRail],
@@ -583,31 +587,10 @@ export function MainViewDesignerProvider({
 
   contextValueRef.current = contextValue;
 
-  useEffect(() => {
-    if (!structurePanelSession || !isThirdRailOpen) {
-      return;
-    }
-
-    const latestContext = contextValueRef.current;
-    if (!latestContext) {
-      return;
-    }
-
-    updateThirdRail({
-      title: structurePanelSession.label,
-      ...renderMainViewStructurePanelChrome(
-        latestContext,
-        structurePanelSession,
-      ),
-    });
-  }, [
-    editor.layout,
-    isThirdRailOpen,
-    previewColorScheme,
-    structurePanelIsDirty,
-    structurePanelSession,
-    updateThirdRail,
-  ]);
+  mainViewDesignerThirdRail.publish({
+    contextValue,
+    session: structurePanelSession,
+  });
 
   return (
     <MainViewDesignerContext.Provider value={contextValue}>

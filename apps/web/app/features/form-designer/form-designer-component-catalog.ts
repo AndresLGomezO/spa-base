@@ -26,7 +26,7 @@ import {
   type UiComponentKind,
 } from "@repo/ui-builder-core";
 
-export type CatalogEntryKind = UiComponentKind | "nested-layout";
+export type CatalogEntryKind = UiComponentKind;
 
 export type CatalogSectionId = "layout" | "content" | "form" | "dataControls";
 
@@ -44,7 +44,7 @@ const LAYOUT_SECTION: ComponentCatalogSection = {
   id: "layout",
   entries: [
     { kind: "container", icon: Box },
-    { kind: "nested-layout", icon: Columns2 },
+    { kind: "grid", icon: LayoutGrid },
     { kind: "wizard-progress", icon: Route },
     { kind: "wizard-step-host", icon: Layers },
   ],
@@ -89,10 +89,6 @@ function isAllowedOnSurface(
   kind: CatalogEntryKind,
   designSurface: DesignSurface,
 ): boolean {
-  if (kind === "nested-layout") {
-    return true;
-  }
-
   return isComponentKindAllowedOnSurface(kind, designSurface);
 }
 

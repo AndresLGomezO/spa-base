@@ -3,7 +3,6 @@ import type {
   ColumnNode,
   ComponentRowNode,
   LayoutJsonImportScope,
-  NestedLayoutRowNode,
   UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { Button, Modal, Text } from "@repo/ui";
@@ -16,7 +15,7 @@ export interface LayoutJsonViewDialogProps {
     | UiLayoutDocument
     | ColumnNode
     | ComponentRowNode
-    | NestedLayoutRowNode;
+    | ComponentRowNode;
   readonly labels: LayoutJsonImportLabels;
   readonly triggerSize?: "sm" | "md" | "lg";
   readonly renderTrigger?: (options: { open: () => void }) => ReactNode;
@@ -37,8 +36,6 @@ function titleForScope(
       return labels.viewTitleComponentRow;
     case "insertable-row":
       return labels.titleInsertableRow;
-    case "nested-layout-row":
-      return labels.viewTitleNestedRow;
   }
 }
 

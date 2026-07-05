@@ -3,6 +3,7 @@ import { useThirdRail } from "@repo/ui";
 import {
   useCallback,
   useEffect,
+  useLayoutEffect,
   useMemo,
   useRef,
   useState,
@@ -37,7 +38,12 @@ import {
   type DashboardLayoutPanelTarget,
   type DashboardLayoutUnsavedReason,
 } from "./dashboard-layout-designer-panel-session";
-import { renderDashboardLayoutStructurePanelChrome } from "./dashboard-layout-designer-structure-panel-chrome";
+import { dashboardLayoutDesignerThirdRail } from "./dashboard-layout-designer-third-rail";
+
+const DashboardLayoutThirdRailHeaderActions =
+  dashboardLayoutDesignerThirdRail.HeaderActions;
+const DashboardLayoutThirdRailBody = dashboardLayoutDesignerThirdRail.Body;
+const DashboardLayoutThirdRailFooter = dashboardLayoutDesignerThirdRail.Footer;
 import {
   applyLayoutSnapshotToEditor,
   applySectionsSnapshotToEditor,
@@ -51,42 +57,45 @@ import {
   type DashboardLayoutDesignerSectionsSnapshot,
 } from "./dashboard-layout-designer-snapshots";
 import {
+  DASHBOARD_LAYOUT_DESIGNER_FOCUS_SEARCH_PARAM,
   DASHBOARD_LAYOUT_DESIGNER_TAB_SEARCH_PARAM,
-  isDashboardLayoutDesignerTabId,
-  parseDashboardLayoutDesignerTabId,
+  isShellLayoutFocus,
+  parseDashboardLayoutDesignFocus,
+  type DashboardLayoutDesignFocus,
   type DashboardLayoutDesignerTabId,
 } from "./dashboard-layout-designer-tabs";
 
-function shouldConfirmTabChange(
-  fromTab: DashboardLayoutDesignerTabId,
-  toTab: DashboardLayoutDesignerTabId,
+function shouldConfirmFocusChange(
+  fromFocus: DashboardLayoutDesignFocus,
+  toFocus: DashboardLayoutDesignFocus,
   sectionsIsDirty: boolean,
   layoutIsDirty: boolean,
 ): boolean {
-  if (fromTab === toTab) {
+  if (fromFocus === toFocus) {
     return false;
   }
 
-  if (fromTab === "sections" && sectionsIsDirty) {
+  if (!isShellLayoutFocus(fromFocus) && sectionsIsDirty) {
     return true;
   }
 
-  if (fromTab === "layout" && layoutIsDirty) {
+  if (isShellLayoutFocus(fromFocus) && layoutIsDirty) {
     return true;
   }
 
   return false;
 }
 
-function applyTabToSearchParams(
+function applyFocusToSearchParams(
   searchParams: URLSearchParams,
-  tabId: DashboardLayoutDesignerTabId,
+  focus: DashboardLayoutDesignFocus,
 ): URLSearchParams {
   const next = new URLSearchParams(searchParams);
-  if (tabId === "sections") {
-    next.delete(DASHBOARD_LAYOUT_DESIGNER_TAB_SEARCH_PARAM);
+  next.delete(DASHBOARD_LAYOUT_DESIGNER_TAB_SEARCH_PARAM);
+  if (focus === "sections") {
+    next.delete(DASHBOARD_LAYOUT_DESIGNER_FOCUS_SEARCH_PARAM);
   } else {
-    next.set(DASHBOARD_LAYOUT_DESIGNER_TAB_SEARCH_PARAM, tabId);
+    next.set(DASHBOARD_LAYOUT_DESIGNER_FOCUS_SEARCH_PARAM, focus);
   }
   return next;
 }
@@ -107,7 +116,6 @@ export function DashboardLayoutDesignerProvider({
     open: openThirdRail,
     close: closeThirdRail,
     update: updateThirdRail,
-    isOpen: isThirdRailOpen,
   } = useThirdRail();
 
   const [previewBreakpoint, setPreviewBreakpoint] =
@@ -126,10 +134,10 @@ export function DashboardLayoutDesignerProvider({
     );
 
   const [unsavedChangesOpen, setUnsavedChangesOpen] = useState(false);
-  const [pendingTabId, setPendingTabId] =
-    useState<DashboardLayoutDesignerTabId | null>(null);
-  const [unsavedTabId, setUnsavedTabId] =
-    useState<DashboardLayoutDesignerTabId | null>(null);
+  const [pendingDesignFocus, setPendingDesignFocus] =
+    useState<DashboardLayoutDesignFocus | null>(null);
+  const [unsavedDesignFocus, setUnsavedDesignFocus] =
+    useState<DashboardLayoutDesignFocus | null>(null);
   const [pendingSectionId, setPendingSectionId] = useState<string | null>(null);
   const [unsavedReason, setUnsavedReason] =
     useState<DashboardLayoutUnsavedReason | null>(null);
@@ -147,15 +155,17 @@ export function DashboardLayoutDesignerProvider({
   );
   const hasSyncedBaselinesRef = useRef(false);
 
-  const activeTabId = useMemo(
+  const designFocus = useMemo(
     () =>
-      parseDashboardLayoutDesignerTabId(
+      parseDashboardLayoutDesignFocus(
         searchParams.get(DASHBOARD_LAYOUT_DESIGNER_TAB_SEARCH_PARAM),
+        searchParams.get(DASHBOARD_LAYOUT_DESIGNER_FOCUS_SEARCH_PARAM),
       ),
     [searchParams],
   );
-  const activeTabIdRef = useRef(activeTabId);
-  activeTabIdRef.current = activeTabId;
+  const activeTabId: DashboardLayoutDesignerTabId = "design";
+  const designFocusRef = useRef(designFocus);
+  designFocusRef.current = designFocus;
 
   const currentSectionsSnapshot = useMemo(
     () => readSectionsSnapshot(editor),
@@ -186,8 +196,8 @@ export function DashboardLayoutDesignerProvider({
       return null;
     }
 
-    return readPanelLayoutSnapshot(editor, activeTabId);
-  }, [activeTabId, editor, structurePanelSession]);
+    return readPanelLayoutSnapshot(editor, designFocus);
+  }, [designFocus, editor, structurePanelSession]);
 
   const structurePanelIsDirty = useMemo(() => {
     if (!structurePanelSession || !currentPanelLayoutSnapshot) {
@@ -229,9 +239,9 @@ export function DashboardLayoutDesignerProvider({
     editor,
   ]);
 
-  const navigateToTab = useCallback(
-    (tabId: DashboardLayoutDesignerTabId) => {
-      setSearchParams((current) => applyTabToSearchParams(current, tabId), {
+  const navigateToFocus = useCallback(
+    (focus: DashboardLayoutDesignFocus) => {
+      setSearchParams((current) => applyFocusToSearchParams(current, focus), {
         replace: true,
       });
     },
@@ -275,6 +285,43 @@ export function DashboardLayoutDesignerProvider({
     closeThirdRail();
   }, [closeThirdRail]);
 
+  const requestDesignFocusChange = useCallback(
+    (focus: DashboardLayoutDesignFocus) => {
+      if (focus === designFocus) {
+        return;
+      }
+
+      if (
+        shouldConfirmFocusChange(
+          designFocus,
+          focus,
+          sectionsIsDirty,
+          layoutIsDirty,
+        )
+      ) {
+        setPendingDesignFocus(focus);
+        setUnsavedDesignFocus(designFocus);
+        setUnsavedReason("tab");
+        setUnsavedChangesOpen(true);
+        return;
+      }
+
+      if (structurePanelSession) {
+        closeStructurePanel();
+      }
+
+      navigateToFocus(focus);
+    },
+    [
+      closeStructurePanel,
+      designFocus,
+      layoutIsDirty,
+      navigateToFocus,
+      sectionsIsDirty,
+      structurePanelSession,
+    ],
+  );
+
   const guardStructurePanelClose = useCallback((): void | boolean => {
     const session = structurePanelSessionRef.current;
     if (!session) {
@@ -282,12 +329,12 @@ export function DashboardLayoutDesignerProvider({
     }
 
     const currentEditor = editorRef.current;
-    const tabId = activeTabIdRef.current;
-    if (tabId === "sections" && !currentEditor.selectedSection) {
+    const focus = designFocusRef.current;
+    if (!isShellLayoutFocus(focus) && !currentEditor.selectedSection) {
       return;
     }
 
-    const current = readPanelLayoutSnapshot(currentEditor, tabId);
+    const current = readPanelLayoutSnapshot(currentEditor, focus);
     if (isDashboardLayoutPanelSessionDirty(session, current)) {
       setPendingPanelAction({ type: "close" });
       setUnsavedReason("structurePanel");
@@ -303,7 +350,7 @@ export function DashboardLayoutDesignerProvider({
       const currentEditor = editorRef.current;
       const baseline = readPanelLayoutSnapshot(
         currentEditor,
-        activeTabIdRef.current,
+        designFocusRef.current,
       );
       const session: DashboardLayoutPanelSession = {
         target,
@@ -320,7 +367,9 @@ export function DashboardLayoutDesignerProvider({
 
       openThirdRail({
         title: label,
-        ...renderDashboardLayoutStructurePanelChrome(contextValue, session),
+        headerActions: <DashboardLayoutThirdRailHeaderActions />,
+        body: <DashboardLayoutThirdRailBody />,
+        footer: <DashboardLayoutThirdRailFooter />,
         resizeContent: true,
         onClose: guardStructurePanelClose,
       });
@@ -333,7 +382,7 @@ export function DashboardLayoutDesignerProvider({
       const currentEditor = editorRef.current;
       const baseline = readPanelLayoutSnapshot(
         currentEditor,
-        activeTabIdRef.current,
+        designFocusRef.current,
       );
       const session: DashboardLayoutPanelSession = {
         target,
@@ -350,7 +399,6 @@ export function DashboardLayoutDesignerProvider({
 
       updateThirdRail({
         title: label,
-        ...renderDashboardLayoutStructurePanelChrome(contextValue, session),
       });
     },
     [updateThirdRail],
@@ -463,42 +511,9 @@ export function DashboardLayoutDesignerProvider({
     closeStructurePanel();
   }, [closeStructurePanel, currentPanelLayoutSnapshot, structurePanelSession]);
 
-  const requestTabChange = useCallback(
-    (tabId: DashboardLayoutDesignerTabId) => {
-      if (!isDashboardLayoutDesignerTabId(tabId) || tabId === activeTabId) {
-        return;
-      }
-
-      if (
-        shouldConfirmTabChange(
-          activeTabId,
-          tabId,
-          sectionsIsDirty,
-          layoutIsDirty,
-        )
-      ) {
-        setPendingTabId(tabId);
-        setUnsavedTabId(activeTabId);
-        setUnsavedReason("tab");
-        setUnsavedChangesOpen(true);
-        return;
-      }
-
-      if (structurePanelSession) {
-        closeStructurePanel();
-      }
-
-      navigateToTab(tabId);
-    },
-    [
-      activeTabId,
-      closeStructurePanel,
-      navigateToTab,
-      layoutIsDirty,
-      structurePanelSession,
-      sectionsIsDirty,
-    ],
-  );
+  const requestTabChange = useCallback(() => {
+    // Single unified design tab — focus changes use requestDesignFocusChange.
+  }, []);
 
   const requestSectionChange = useCallback(
     (sectionId: string) => {
@@ -571,40 +586,41 @@ export function DashboardLayoutDesignerProvider({
       return;
     }
 
-    const tabId = unsavedTabId;
-    const nextTabId = pendingTabId;
-    if (!tabId || !nextTabId) {
+    const fromFocus = unsavedDesignFocus;
+    const nextFocus = pendingDesignFocus;
+    if (!fromFocus || !nextFocus) {
       return;
     }
 
-    const error =
-      tabId === "sections" ? await saveSections() : await saveLayout();
+    const error = isShellLayoutFocus(fromFocus)
+      ? await saveLayout()
+      : await saveSections();
     if (error) {
       return;
     }
 
     setUnsavedChangesOpen(false);
-    setPendingTabId(null);
-    setUnsavedTabId(null);
+    setPendingDesignFocus(null);
+    setUnsavedDesignFocus(null);
     setUnsavedReason(null);
     if (structurePanelSession) {
       closeStructurePanel();
     }
-    navigateToTab(nextTabId);
+    navigateToFocus(nextFocus);
   }, [
     closeStructurePanel,
     currentPanelLayoutSnapshot,
     executePendingPanelAction,
-    navigateToTab,
+    navigateToFocus,
+    pendingDesignFocus,
     pendingPanelAction,
-    pendingTabId,
     pendingSectionId,
     saveLayout,
     saveSections,
     structurePanelSession,
     switchSection,
+    unsavedDesignFocus,
     unsavedReason,
-    unsavedTabId,
   ]);
 
   const confirmUnsavedDiscard = useCallback(() => {
@@ -616,7 +632,11 @@ export function DashboardLayoutDesignerProvider({
         return;
       }
 
-      applyPanelSessionSnapshot(editor, session, unsavedTabId ?? activeTabId);
+      applyPanelSessionSnapshot(
+        editor,
+        session,
+        unsavedDesignFocus ?? designFocus,
+      );
       setUnsavedChangesOpen(false);
       setPendingPanelAction(null);
       setUnsavedReason(null);
@@ -641,47 +661,47 @@ export function DashboardLayoutDesignerProvider({
       return;
     }
 
-    const tabId = unsavedTabId;
-    const nextTabId = pendingTabId;
-    if (!tabId || !nextTabId) {
+    const fromFocus = unsavedDesignFocus;
+    const nextFocus = pendingDesignFocus;
+    if (!fromFocus || !nextFocus) {
       return;
     }
 
-    if (tabId === "sections") {
-      discardSections();
-    } else {
+    if (isShellLayoutFocus(fromFocus)) {
       discardLayout();
+    } else {
+      discardSections();
     }
 
     setUnsavedChangesOpen(false);
-    setPendingTabId(null);
-    setUnsavedTabId(null);
+    setPendingDesignFocus(null);
+    setUnsavedDesignFocus(null);
     setUnsavedReason(null);
     if (structurePanelSession) {
       closeStructurePanel();
     }
-    navigateToTab(nextTabId);
+    navigateToFocus(nextFocus);
   }, [
-    activeTabId,
     closeStructurePanel,
+    designFocus,
     discardLayout,
     discardSections,
     editor,
     executePendingPanelAction,
-    navigateToTab,
+    navigateToFocus,
+    pendingDesignFocus,
     pendingPanelAction,
-    pendingTabId,
     pendingSectionId,
     structurePanelSession,
     switchSection,
+    unsavedDesignFocus,
     unsavedReason,
-    unsavedTabId,
   ]);
 
   const cancelUnsavedChanges = useCallback(() => {
     setUnsavedChangesOpen(false);
-    setPendingTabId(null);
-    setUnsavedTabId(null);
+    setPendingDesignFocus(null);
+    setUnsavedDesignFocus(null);
     setPendingSectionId(null);
     setPendingPanelAction(null);
     setUnsavedReason(null);
@@ -698,15 +718,18 @@ export function DashboardLayoutDesignerProvider({
       previewColorScheme,
       setPreviewColorScheme,
       activeTabId,
+      designFocus,
       sectionsIsDirty,
       layoutIsDirty,
-      unsavedTabId,
+      unsavedTabId: activeTabId,
+      unsavedDesignFocus,
       unsavedReason,
       saveSections,
       saveLayout,
       discardSections,
       discardLayout,
       requestTabChange,
+      requestDesignFocusChange,
       requestSectionChange,
       unsavedChangesOpen,
       confirmUnsavedSave,
@@ -728,6 +751,7 @@ export function DashboardLayoutDesignerProvider({
       commitStructurePanelSave,
       confirmUnsavedDiscard,
       confirmUnsavedSave,
+      designFocus,
       discardLayout,
       discardSections,
       editor,
@@ -738,6 +762,7 @@ export function DashboardLayoutDesignerProvider({
       requestCloseStructurePanel,
       requestComponentColumnPanel,
       requestComponentRowPanel,
+      requestDesignFocusChange,
       requestTabChange,
       requestSectionChange,
       saveLayout,
@@ -748,40 +773,19 @@ export function DashboardLayoutDesignerProvider({
       structurePanelIsDirty,
       structurePanelSession,
       unsavedChangesOpen,
+      unsavedDesignFocus,
       unsavedReason,
-      unsavedTabId,
     ],
   );
 
   contextValueRef.current = contextValue;
 
-  useEffect(() => {
-    if (!structurePanelSession || !isThirdRailOpen) {
-      return;
-    }
-
-    const latestContext = contextValueRef.current;
-    if (!latestContext) {
-      return;
-    }
-
-    updateThirdRail({
-      title: structurePanelSession.label,
-      ...renderDashboardLayoutStructurePanelChrome(
-        latestContext,
-        structurePanelSession,
-      ),
+  useLayoutEffect(() => {
+    dashboardLayoutDesignerThirdRail.publish({
+      contextValue,
+      session: structurePanelSession,
     });
-  }, [
-    activeTabId,
-    editor.dashboardLayout,
-    editor.selectedSection?.layout,
-    isThirdRailOpen,
-    previewColorScheme,
-    structurePanelIsDirty,
-    structurePanelSession,
-    updateThirdRail,
-  ]);
+  });
 
   return (
     <DashboardLayoutDesignerContext.Provider value={contextValue}>

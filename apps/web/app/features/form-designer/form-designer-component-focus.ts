@@ -40,10 +40,25 @@ export function rowContainsRowFocus(
     return true;
   }
 
-  return (
-    focusedRow.locator.scope === "nested" &&
-    focusedRow.locator.rowId === containerRowRef.rowId
-  );
+  if (focusedRow.locator.scope === "container") {
+    const parentRowRef: ComponentRowRef = {
+      rowId: focusedRow.locator.containerRowId,
+      locator: {
+        scope: "container",
+        columnIndex: focusedRow.locator.columnIndex,
+        containerRowId: containerRowRef.rowId,
+      },
+    };
+
+    if (
+      !areComponentRowRefsEqual(parentRowRef, focusedRow) &&
+      rowContainsRowFocus(parentRowRef, containerRowRef)
+    ) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 export function rowContainsFocus(
@@ -64,10 +79,8 @@ export function rowBelongsToColumn(
 ): boolean {
   if (isNestedComponentColumnRef(columnRef)) {
     return (
-      rowRef.locator.scope === "nested" &&
-      rowRef.locator.rowId === columnRef.nestedParentRowId &&
-      rowRef.locator.columnIndex === columnRef.rootColumnIndex &&
-      rowRef.locator.nestedColumnIndex === columnRef.nestedColumnIndex
+      rowRef.locator.scope === "container" &&
+      rowRef.locator.columnIndex === columnRef.rootColumnIndex
     );
   }
 

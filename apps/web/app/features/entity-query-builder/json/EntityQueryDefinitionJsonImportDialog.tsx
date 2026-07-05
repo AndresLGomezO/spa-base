@@ -43,6 +43,7 @@ export function EntityQueryDefinitionJsonImportDialog({
         createEntityQueryDefinitionEnvelope({
           name: "Upcoming payments",
           sourceEntity: "transaction",
+          parameters: [],
           filter: {
             type: "group",
             combinator: "and",

@@ -23,12 +23,15 @@ import {
   findRowByRef,
   isStructuralPreviewRow,
   resolveColumnRefDisplayLabel,
-  resolvePreviewColumnChromeProps,
-  resolvePreviewRowFocusState,
   type ComponentsLayoutBinding,
 } from "../form-designer/form-designer-components-layout";
+import {
+  resolvePreviewColumnChromeProps,
+  resolvePreviewRowFocusState,
+} from "../form-designer/preview-focus-state";
 import { resolveRowNodeDisplayLabel } from "../form-designer/form-designer-structure-tree";
 import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-binding";
+import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
 import { useOptionalDashboardLayoutDesignerStructureSession } from "./DashboardLayoutDesignerStructureSession";
 
@@ -40,11 +43,11 @@ interface DashboardLayoutDesignerLayoutPreviewRendererProps {
 
 function useLayoutPreviewBinding(
   editor: ReturnType<typeof useDashboardLayoutDesigner>["editor"],
-  activeTabId: ReturnType<typeof useDashboardLayoutDesigner>["activeTabId"],
+  designFocus: ReturnType<typeof useDashboardLayoutDesigner>["designFocus"],
 ): ComponentsLayoutBinding | null {
   return useMemo(() => {
-    if (activeTabId === "layout") {
-      return resolveActiveLayoutBinding(editor, "layout");
+    if (isShellLayoutFocus(designFocus)) {
+      return resolveActiveLayoutBinding(editor, "shell");
     }
 
     if (!editor.selectedSection) {
@@ -52,7 +55,7 @@ function useLayoutPreviewBinding(
     }
 
     return resolveActiveLayoutBinding(editor, "sections");
-  }, [activeTabId, editor]);
+  }, [designFocus, editor]);
 }
 
 export function useDashboardLayoutDesignerLayoutPreviewWrappers(
@@ -61,7 +64,7 @@ export function useDashboardLayoutDesignerLayoutPreviewWrappers(
   const { t } = useTranslation("common");
   const {
     editor,
-    activeTabId,
+    designFocus,
     requestComponentRowPanel,
     requestComponentColumnPanel,
     requestCloseStructurePanel,
@@ -69,7 +72,7 @@ export function useDashboardLayoutDesignerLayoutPreviewWrappers(
   } = useDashboardLayoutDesigner();
   const structureSession = useOptionalDashboardLayoutDesignerStructureSession();
   const labels = useMemo(() => formDesignerComponentsLabels(t), [t]);
-  const binding = useLayoutPreviewBinding(editor, activeTabId);
+  const binding = useLayoutPreviewBinding(editor, designFocus);
 
   const previewRowFocus = structureSession?.previewRowFocus ?? null;
   const previewColumnFocus = structureSession?.previewColumnFocus ?? null;

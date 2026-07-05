@@ -30,6 +30,11 @@ describe("componentRowSchema view filter components", () => {
         enableDateFilter: true,
         dateFilterGranularity: "month",
         dateFilterParam: "month",
+        dateFilterLabel: {
+          show: true,
+          text: "Period",
+          position: "below",
+        },
         searchPlaceholder: "Search…",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },
@@ -43,6 +48,11 @@ describe("componentRowSchema view filter components", () => {
         enableDateFilter: true,
         dateFilterGranularity: "month",
         dateFilterParam: "month",
+        dateFilterLabel: {
+          show: true,
+          text: "Period",
+          position: "below",
+        },
         searchPlaceholder: "Search…",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },

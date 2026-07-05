@@ -39,52 +39,63 @@ Display components + related-records. Stored as `recordDetail`.
                   "kind": "container",
                   "rows": [
                     {
-                      "type": "nested-layout",
-                      "id": "nested-example",
-                      "columnCount": 2,
-                      "columns": [
-                        {
-                          "id": "col-example",
-                          "rows": [
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "name"
-                                },
-                                "label": {
-                                  "show": true
-                                }
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "id": "col-example",
-                          "rows": [
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "name"
-                                },
-                                "styles": [
-                                  {
-                                    "property": "fontWeight",
-                                    "value": "bold"
+                      "type": "component",
+                      "id": "row-example",
+                      "component": {
+                        "kind": "grid",
+                        "gridTemplateColumns": "repeat(2, 1fr)",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "name"
+                                    },
+                                    "label": {
+                                      "show": true
+                                    }
                                   }
-                                ]
-                              }
+                                }
+                              ]
                             }
-                          ]
-                        }
-                      ]
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "name"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
                     }
                   ]
                 }

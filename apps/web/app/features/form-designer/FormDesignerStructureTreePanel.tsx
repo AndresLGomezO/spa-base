@@ -316,13 +316,17 @@ export function FormDesignerStructureTreePanel({
     : null;
 
   const structureTree = treeProps ? (
-    <FormDesignerStructureTree {...treeProps} />
+    <FormDesignerStructureTree {...treeProps} promoteSingleContainerRoot />
   ) : (
     emptyStepTreeMessage
   );
 
   const collapsedStructureTree = treeProps ? (
-    <FormDesignerStructureTree variant="util" {...treeProps} />
+    <FormDesignerStructureTree
+      variant="util"
+      {...treeProps}
+      promoteSingleContainerRoot
+    />
   ) : (
     emptyStepTreeMessage
   );

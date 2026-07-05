@@ -8,6 +8,10 @@ function formatPrimaryMetricValue(
   definition: MetricDefinitionRecord,
   values: Record<string, number>,
 ): number | null {
+  if (typeof values.primary === "number" && Number.isFinite(values.primary)) {
+    return values.primary;
+  }
+
   const spec = definition.aggregations[0];
   if (!spec) {
     return null;
@@ -45,10 +49,15 @@ export function formatDefaultMetricDisplayValue(
   definition: Pick<MetricDefinitionRecord, "valueDisplayFormat">,
   locale?: string,
 ): string {
+  const displayFormat =
+    definition.valueDisplayFormat === "currency"
+      ? "currency"
+      : definition.valueDisplayFormat === "percent"
+        ? "percentage"
+        : "plain";
   return formatDisplayValue(0, {
     fieldType: "number",
-    displayFormat:
-      definition.valueDisplayFormat === "currency" ? "currency" : "plain",
+    displayFormat,
     locale,
   });
 }
@@ -66,7 +75,11 @@ export function formatPrimaryMetricDisplayValue(
   return formatDisplayValue(numeric, {
     fieldType: "number",
     displayFormat:
-      definition.valueDisplayFormat === "currency" ? "currency" : "plain",
+      definition.valueDisplayFormat === "currency"
+        ? "currency"
+        : definition.valueDisplayFormat === "percent"
+          ? "percentage"
+          : "plain",
     locale,
   });
 }

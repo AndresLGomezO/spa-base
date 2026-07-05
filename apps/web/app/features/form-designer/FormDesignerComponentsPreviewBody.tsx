@@ -29,9 +29,11 @@ import {
   isStructuralPreviewRow,
   resolveColumnRefDisplayLabel,
   resolveComponentsLayoutBinding,
+} from "./form-designer-components-layout";
+import {
   resolvePreviewColumnChromeProps,
   resolvePreviewRowFocusState,
-} from "./form-designer-components-layout";
+} from "./preview-focus-state";
 import { resolveRowNodeDisplayLabel } from "./form-designer-structure-tree";
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import { useFormDesigner } from "./form-designer-context";

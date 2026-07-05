@@ -23,8 +23,10 @@ import {
 } from "@repo/ui-builder-react";
 import {
   insertColumnAt,
+  withEditableRootColumns,
   type ColumnNode,
   type UiLayoutDocument,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
@@ -44,15 +46,9 @@ function replaceRootColumn(
   columnIndex: number,
   column: ColumnNode,
 ): UiLayoutDocument {
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columns: layout.root.columns.map((entry, index) =>
-        index === columnIndex ? column : entry,
-      ),
-    },
-  };
+  return withEditableRootColumns(layout, (columns) =>
+    columns.map((entry, index) => (index === columnIndex ? column : entry)),
+  );
 }
 
 function defaultFieldPath(
@@ -102,7 +98,7 @@ export function FormDesignerLayoutColumnPanelHeaderMenu({
   const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
-  const column = layout.root.columns[columnIndex];
+  const column = resolveLayoutRootColumns(layout)[columnIndex];
   const designSurface =
     editor.presentation === "wizard" ? "formWizardShell" : "formPlain";
 

@@ -4,7 +4,6 @@ import {
   type ColumnNode,
   type ComponentRowNode,
   type DesignSurface,
-  type NestedLayoutRowNode,
   type UiBuilderPresetKind,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -36,11 +35,7 @@ export interface InsertPresetDialogProps {
   readonly canApply: boolean;
   readonly labels: LayoutPresetInsertLabels;
   readonly onApply: (
-    data:
-      | UiLayoutDocument
-      | ColumnNode
-      | ComponentRowNode
-      | NestedLayoutRowNode,
+    data: UiLayoutDocument | ColumnNode | ComponentRowNode | ComponentRowNode,
   ) => void;
   readonly actionsInModalFooter?: boolean;
   readonly triggerSize?: "sm" | "md" | "lg";

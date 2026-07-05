@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { resolveLayoutRootColumns } from "@repo/ui-builder-core";
 
 import { syncEntityDefinitionUiWithFields } from "./sync-entity-definition-ui.js";
 
@@ -9,7 +10,7 @@ function readFormFieldPaths(
     >["create"]["layout"]
   >,
 ): string[] {
-  return layout.root.columns.flatMap((column) =>
+  return resolveLayoutRootColumns(layout).flatMap((column) =>
     column.rows.flatMap((row) => {
       if (row.type === "component" && row.component.kind === "form-field") {
         return [row.component.fieldPath];

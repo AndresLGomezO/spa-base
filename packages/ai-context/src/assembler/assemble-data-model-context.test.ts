@@ -4,8 +4,10 @@ import { assembleDataModelContext } from "./assemble-data-model-context.js";
 import {
   buildAllModelFragments,
   MODEL_ENTITY_SCHEMA_ATOM_ID,
+  MODEL_ENTITY_QUERY_DEFINITIONS_ATOM_ID,
   MODEL_EXAMPLE_FULL_ATOM_ID,
   MODEL_FIELD_TYPES_ATOM_ID,
+  MODEL_METRIC_DEFINITIONS_ATOM_ID,
   MODEL_RELATIONS_ATOM_ID,
 } from "../generate/model-schema.js";
 
@@ -18,6 +20,12 @@ describe("buildAllModelFragments", () => {
     expect(fragments[MODEL_RELATIONS_ATOM_ID]).toContain("many-to-many");
     expect(fragments[MODEL_EXAMPLE_FULL_ATOM_ID]).toContain("demoItem");
     expect(fragments[MODEL_EXAMPLE_FULL_ATOM_ID]).toContain("sensitive");
+    expect(fragments[MODEL_METRIC_DEFINITIONS_ATOM_ID]).toContain(
+      "sourceQueryDefinitionId",
+    );
+    expect(fragments[MODEL_ENTITY_QUERY_DEFINITIONS_ATOM_ID]).toContain(
+      "limitMode",
+    );
   });
 });
 
@@ -26,7 +34,7 @@ describe("assembleDataModelContext", () => {
     const assembled = assembleDataModelContext({
       userPrompt: "Add a currency enum field",
     });
-    expect(assembled.contextBlocks.length).toBeGreaterThanOrEqual(7);
+    expect(assembled.contextBlocks.length).toBeGreaterThanOrEqual(9);
     expect(assembled.contextBlocks.at(-1)?.id).toBe("user.prompt");
     expect(assembled.systemInstruction).toContain("data-model");
   });

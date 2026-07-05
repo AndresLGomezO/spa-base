@@ -1,57 +1,32 @@
-import { Button, toast } from "@repo/ui";
-import { useTranslation } from "react-i18next";
-
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
-import {
-  designerPreviewColumnClassName,
-  designerTreeTabRootClassName,
-  designerTreeWorkbenchClassName,
-} from "../ui-builder/designer-tree-workbench-classes";
-import { DashboardLayoutDesignerPreviewPanel } from "./DashboardLayoutDesignerPreviewPanel";
+import { DashboardLayoutDesignerUnifiedPreviewPanel } from "./DashboardLayoutDesignerUnifiedPreviewPanel";
 import { DashboardLayoutDesignerStructureSessionProvider } from "./DashboardLayoutDesignerStructureSession";
 import { DashboardLayoutDesignerLayoutTreePanel } from "./DashboardLayoutDesignerLayoutTreePanel";
+import { UnifiedDesignerLayoutTab } from "../unified-builder/UnifiedDesignerLayoutTab";
 
 export function DashboardLayoutDesignerLayoutTab() {
-  const { t } = useTranslation("common");
   const { editor, canSave, layoutIsDirty, saveLayout } =
     useDashboardLayoutDesigner();
 
-  const handleSave = async () => {
-    if (!canSave || !layoutIsDirty) {
-      return;
-    }
-
-    const error = await saveLayout();
-    if (!error) {
-      toast.success(t("entity.viewSettings.saved"));
-    } else {
-      toast.error(error);
-    }
-  };
-
   return (
-    <div className={designerTreeTabRootClassName}>
-      <div className="flex shrink-0 justify-end">
-        <Button
-          type="button"
-          className="shrink-0"
-          loading={editor.isSaving}
-          disabled={!canSave || !layoutIsDirty}
-          onClick={() => void handleSave()}
-        >
-          {t("entity.viewSettings.save")}
-        </Button>
-      </div>
-
-      <DashboardLayoutDesignerStructureSessionProvider>
-        <div className={designerTreeWorkbenchClassName}>
-          <DashboardLayoutDesignerLayoutTreePanel />
-
-          <div className={designerPreviewColumnClassName}>
-            <DashboardLayoutDesignerPreviewPanel withStructureChrome />
-          </div>
-        </div>
-      </DashboardLayoutDesignerStructureSessionProvider>
-    </div>
+    <UnifiedDesignerLayoutTab
+      scope="screen"
+      designSurface="dashboardLayout"
+      layout={editor.dashboardLayout}
+      setLayout={editor.setDashboardLayout}
+      canSave={canSave}
+      isDirty={layoutIsDirty}
+      isSaving={editor.isSaving}
+      onSave={saveLayout}
+      treePanel={<DashboardLayoutDesignerLayoutTreePanel />}
+      previewPanel={
+        <DashboardLayoutDesignerUnifiedPreviewPanel withStructureChrome />
+      }
+      sessionWrapper={(workbench) => (
+        <DashboardLayoutDesignerStructureSessionProvider>
+          {workbench}
+        </DashboardLayoutDesignerStructureSessionProvider>
+      )}
+    />
   );
 }

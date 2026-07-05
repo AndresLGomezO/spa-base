@@ -25,7 +25,6 @@ import type { ComponentRowRef } from "../form-designer/form-designer-component-r
 import { findRowByRef } from "../form-designer/form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "../form-designer/FormDesignerPanelPrimaryControls";
 import { ContainerComponentRowPanel } from "../form-designer/ContainerComponentRowPanel";
-import { NestedLayoutRowPanel } from "../form-designer/NestedLayoutRowPanel";
 import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { resolveLayoutBinding } from "./detail-view-designer-layout-binding";
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
@@ -67,20 +66,6 @@ export function DetailViewDesignerComponentRowPanel({
       </Text>
     );
   }
-
-  if (row.type === "nested-layout") {
-    return (
-      <NestedLayoutRowPanel
-        row={row}
-        rowRef={rowRef}
-        binding={binding}
-        labels={labels}
-        treeLabels={treeLabels}
-        fieldDescriptors={fieldDescriptors}
-      />
-    );
-  }
-
   if (row.type === "component" && isContainerComponent(row.component)) {
     return (
       <ContainerComponentRowPanel

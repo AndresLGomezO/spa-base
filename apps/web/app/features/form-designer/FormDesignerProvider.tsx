@@ -20,7 +20,10 @@ import {
   DEFAULT_LAYOUT_PREVIEW_BREAKPOINT,
   type LayoutPreviewBreakpoint,
 } from "../ui-builder/LayoutPreviewPanel";
-import { useEntityFormLayoutEditor } from "../ui-builder/use-entity-form-layout-editor";
+import {
+  useEntityFormLayoutEditor,
+  resolvePresentationFromLayoutPresetId,
+} from "../ui-builder/use-entity-form-layout-editor";
 import {
   applyLayoutSnapshotToEditor,
   areLayoutSnapshotsEqual,
@@ -72,86 +75,34 @@ import {
   type ComponentRowPanelSession,
   isComponentRowPanelDirty,
 } from "./form-designer-component-row-panel-session";
-import { FormDesignerComponentColumnPanel } from "./FormDesignerComponentColumnPanel";
-import { FormDesignerComponentColumnPanelHeaderMenu } from "./FormDesignerComponentColumnPanelHeaderMenu";
-import { FormDesignerComponentRowPanel } from "./FormDesignerComponentRowPanel";
-import { FormDesignerComponentRowPanelFooter } from "./FormDesignerComponentRowPanelFooter";
-import { FormDesignerComponentRowPanelHeaderMenu } from "./FormDesignerComponentRowPanelHeaderMenu";
-import { FormDesignerLayoutColumnPanel } from "./FormDesignerLayoutColumnPanel";
-import { FormDesignerLayoutColumnPanelFooter } from "./FormDesignerLayoutColumnPanelFooter";
-import { FormDesignerLayoutColumnPanelHeaderMenu } from "./FormDesignerLayoutColumnPanelHeaderMenu";
-import { FormDesignerRootLayoutPanel } from "./FormDesignerRootLayoutPanel";
-import { FormDesignerRootLayoutPanelFooter } from "./FormDesignerRootLayoutPanelFooter";
+import { formDesignerComponentPanelThirdRail } from "./form-designer-component-panel-third-rail";
+import {
+  formDesignerLayoutColumnThirdRail,
+  formDesignerRootLayoutThirdRail,
+} from "./form-designer-layout-third-rail";
 import {
   DEFAULT_MOBILE_PREVIEW_DEVICE_ID,
   type MobilePreviewDeviceId,
 } from "./mobile-preview-device-presets";
 
-function withFormDesignerContext(
-  value: FormDesignerContextValue,
-  children: ReactNode,
-): ReactNode {
-  return (
-    <FormDesignerContext.Provider value={value}>
-      {children}
-    </FormDesignerContext.Provider>
-  );
-}
+const FormDesignerComponentPanelThirdRailHeaderActions =
+  formDesignerComponentPanelThirdRail.HeaderActions;
+const FormDesignerComponentPanelThirdRailBody =
+  formDesignerComponentPanelThirdRail.Body;
+const FormDesignerComponentPanelThirdRailFooter =
+  formDesignerComponentPanelThirdRail.Footer;
 
-function renderComponentPanelChrome(
-  contextValue: FormDesignerContextValue,
-  session: ComponentRowPanelSession,
-): {
-  readonly headerActions: ReactNode;
-  readonly body: ReactNode;
-  readonly footer: ReactNode;
-} {
-  const { target, treeScope, stepIndex } = session;
+const FormDesignerLayoutColumnThirdRailHeaderActions =
+  formDesignerLayoutColumnThirdRail.HeaderActions;
+const FormDesignerLayoutColumnThirdRailBody =
+  formDesignerLayoutColumnThirdRail.Body;
+const FormDesignerLayoutColumnThirdRailFooter =
+  formDesignerLayoutColumnThirdRail.Footer;
 
-  if (target.kind === "column") {
-    const columnProps = {
-      columnRef: target.columnRef,
-      treeScope,
-      stepIndex,
-    };
-
-    return {
-      headerActions: withFormDesignerContext(
-        contextValue,
-        <FormDesignerComponentColumnPanelHeaderMenu {...columnProps} />,
-      ),
-      body: withFormDesignerContext(
-        contextValue,
-        <FormDesignerComponentColumnPanel {...columnProps} />,
-      ),
-      footer: withFormDesignerContext(
-        contextValue,
-        <FormDesignerComponentRowPanelFooter />,
-      ),
-    };
-  }
-
-  const rowProps = {
-    rowRef: target.rowRef,
-    treeScope,
-    stepIndex,
-  };
-
-  return {
-    headerActions: withFormDesignerContext(
-      contextValue,
-      <FormDesignerComponentRowPanelHeaderMenu {...rowProps} />,
-    ),
-    body: withFormDesignerContext(
-      contextValue,
-      <FormDesignerComponentRowPanel {...rowProps} />,
-    ),
-    footer: withFormDesignerContext(
-      contextValue,
-      <FormDesignerComponentRowPanelFooter />,
-    ),
-  };
-}
+const FormDesignerRootLayoutThirdRailBody =
+  formDesignerRootLayoutThirdRail.Body;
+const FormDesignerRootLayoutThirdRailFooter =
+  formDesignerRootLayoutThirdRail.Footer;
 
 function isTabDirty(
   tabId: FormDesignerTabId,
@@ -162,11 +113,8 @@ function isTabDirty(
   if (tabId === "settings") {
     return settingsIsDirty;
   }
-  if (tabId === "layout") {
-    return layoutIsDirty;
-  }
-  if (tabId === "components") {
-    return componentsIsDirty;
+  if (tabId === "design") {
+    return layoutIsDirty || componentsIsDirty;
   }
   return false;
 }
@@ -213,7 +161,6 @@ export function FormDesignerProvider({
     open: openThirdRail,
     close: closeThirdRail,
     update: updateThirdRail,
-    isOpen: isThirdRailOpen,
   } = useThirdRail();
   const editor = useEntityFormLayoutEditor(entityName, { formDesignId });
   const definition = useEntityDefinition(entityName);
@@ -234,7 +181,9 @@ export function FormDesignerProvider({
     useState<FormDesignerLayoutSnapshot>(() =>
       readLayoutSnapshotFromDefinition(
         definition,
-        readSettingsSnapshotFromDefinition(definition).presentation,
+        resolvePresentationFromLayoutPresetId(
+          readSettingsSnapshotFromDefinition(definition).layoutPresetId,
+        ),
       ),
     );
   const [componentsSessionTreeBaseline, setComponentsSessionTreeBaseline] =
@@ -287,19 +236,19 @@ export function FormDesignerProvider({
     setSavedLayoutBaseline(
       readLayoutSnapshotFromDefinition(
         definition,
-        settingsBaseline.presentation,
+        resolvePresentationFromLayoutPresetId(settingsBaseline.layoutPresetId),
       ),
     );
   }, [definition]);
 
   useLayoutEffect(() => {
     const previousTabId = previousTabIdRef.current;
-    if (activeTabId === "components" && previousTabId !== "components") {
+    if (activeTabId === "design" && previousTabId !== "design") {
       setComponentsSessionTreeBaseline(
         readComponentsTreeSnapshot(editorRef.current),
       );
       setComponentsSessionDirty(false);
-    } else if (activeTabId !== "components" && previousTabId === "components") {
+    } else if (activeTabId !== "design" && previousTabId === "design") {
       setComponentsSessionTreeBaseline(null);
       setComponentsSessionDirty(false);
     }
@@ -335,8 +284,7 @@ export function FormDesignerProvider({
     [currentLayoutSnapshot, savedLayoutBaseline],
   );
 
-  const componentsIsDirty =
-    activeTabId === "components" && componentsSessionDirty;
+  const componentsIsDirty = activeTabId === "design" && componentsSessionDirty;
 
   const markComponentsDirty = useCallback(() => {
     setComponentsSessionDirty(true);
@@ -553,10 +501,11 @@ export function FormDesignerProvider({
       if (!contextValue) {
         return;
       }
-      const chrome = renderComponentPanelChrome(contextValue, session);
       openThirdRail({
         title: label,
-        ...chrome,
+        headerActions: <FormDesignerComponentPanelThirdRailHeaderActions />,
+        body: <FormDesignerComponentPanelThirdRailBody />,
+        footer: <FormDesignerComponentPanelThirdRailFooter />,
         resizeContent: true,
         onClose: guardComponentRowPanelClose,
       });
@@ -591,7 +540,6 @@ export function FormDesignerProvider({
       }
       updateThirdRail({
         title: label,
-        ...renderComponentPanelChrome(contextValue, session),
       });
     },
     [updateThirdRail],
@@ -766,18 +714,9 @@ export function FormDesignerProvider({
       });
       openThirdRail({
         title: columnPanelTitle,
-        headerActions: withFormDesignerContext(
-          contextValue,
-          <FormDesignerLayoutColumnPanelHeaderMenu columnIndex={columnIndex} />,
-        ),
-        body: withFormDesignerContext(
-          contextValue,
-          <FormDesignerLayoutColumnPanel columnIndex={columnIndex} />,
-        ),
-        footer: withFormDesignerContext(
-          contextValue,
-          <FormDesignerLayoutColumnPanelFooter />,
-        ),
+        headerActions: <FormDesignerLayoutColumnThirdRailHeaderActions />,
+        body: <FormDesignerLayoutColumnThirdRailBody />,
+        footer: <FormDesignerLayoutColumnThirdRailFooter />,
         resizeContent: true,
         onClose: guardColumnPanelClose,
       });
@@ -803,18 +742,6 @@ export function FormDesignerProvider({
       });
       updateThirdRail({
         title: columnPanelTitle,
-        headerActions: withFormDesignerContext(
-          contextValue,
-          <FormDesignerLayoutColumnPanelHeaderMenu columnIndex={columnIndex} />,
-        ),
-        body: withFormDesignerContext(
-          contextValue,
-          <FormDesignerLayoutColumnPanel columnIndex={columnIndex} />,
-        ),
-        footer: withFormDesignerContext(
-          contextValue,
-          <FormDesignerLayoutColumnPanelFooter />,
-        ),
       });
     },
     [t, updateThirdRail],
@@ -862,14 +789,8 @@ export function FormDesignerProvider({
     }
     openThirdRail({
       title: t("formDesigner.layout.rootLayoutPanelTitle"),
-      body: withFormDesignerContext(
-        contextValue,
-        <FormDesignerRootLayoutPanel />,
-      ),
-      footer: withFormDesignerContext(
-        contextValue,
-        <FormDesignerRootLayoutPanelFooter />,
-      ),
+      body: <FormDesignerRootLayoutThirdRailBody />,
+      footer: <FormDesignerRootLayoutThirdRailFooter />,
       resizeContent: true,
       onClose: guardRootLayoutPanelClose,
     });
@@ -1098,12 +1019,17 @@ export function FormDesignerProvider({
       return;
     }
 
-    const error =
-      tabToSave === "layout"
-        ? await saveLayout()
-        : tabToSave === "components"
-          ? await saveComponents()
-          : await saveSettings();
+    let error: string | null = null;
+    if (tabToSave === "design") {
+      if (layoutIsDirty) {
+        error = await saveLayout();
+      }
+      if (!error && componentsIsDirty) {
+        error = await saveComponents();
+      }
+    } else {
+      error = await saveSettings();
+    }
     if (error) {
       return;
     }
@@ -1131,6 +1057,8 @@ export function FormDesignerProvider({
     saveComponents,
     saveLayout,
     saveSettings,
+    componentsIsDirty,
+    layoutIsDirty,
     unsavedReason,
     unsavedTabId,
   ]);
@@ -1201,10 +1129,13 @@ export function FormDesignerProvider({
       return;
     }
 
-    if (tabToDiscard === "layout") {
-      discardLayout();
-    } else if (tabToDiscard === "components") {
-      discardComponents();
+    if (tabToDiscard === "design") {
+      if (layoutIsDirty) {
+        discardLayout();
+      }
+      if (componentsIsDirty) {
+        discardComponents();
+      }
     } else {
       discardSettings();
     }
@@ -1220,6 +1151,8 @@ export function FormDesignerProvider({
     discardComponents,
     discardLayout,
     discardSettings,
+    componentsIsDirty,
+    layoutIsDirty,
     editor,
     executePendingColumnAction,
     executePendingComponentRowAction,
@@ -1364,87 +1297,22 @@ export function FormDesignerProvider({
 
   contextValueRef.current = value;
 
-  useEffect(() => {
-    if (!columnPanelSession || !isThirdRailOpen) {
-      return;
-    }
+  formDesignerComponentPanelThirdRail.publish({
+    contextValue: value,
+    session: componentRowPanelSession,
+  });
 
-    const contextValue = contextValueRef.current;
-    if (!contextValue) {
-      return;
-    }
+  formDesignerLayoutColumnThirdRail.publish({
+    contextValue: value,
+    session: columnPanelSession
+      ? { columnIndex: columnPanelSession.columnIndex }
+      : null,
+  });
 
-    updateThirdRail({
-      body: withFormDesignerContext(
-        contextValue,
-        <FormDesignerLayoutColumnPanel
-          columnIndex={columnPanelSession.columnIndex}
-        />,
-      ),
-      footer: withFormDesignerContext(
-        contextValue,
-        <FormDesignerLayoutColumnPanelFooter />,
-      ),
-    });
-  }, [
-    columnPanelIsDirty,
-    columnPanelSession,
-    currentLayoutSnapshot,
-    isThirdRailOpen,
-    previewColorScheme,
-    updateThirdRail,
-  ]);
-
-  useEffect(() => {
-    if (!rootLayoutPanelSession || !isThirdRailOpen) {
-      return;
-    }
-
-    const contextValue = contextValueRef.current;
-    if (!contextValue) {
-      return;
-    }
-
-    updateThirdRail({
-      body: withFormDesignerContext(
-        contextValue,
-        <FormDesignerRootLayoutPanel />,
-      ),
-      footer: withFormDesignerContext(
-        contextValue,
-        <FormDesignerRootLayoutPanelFooter />,
-      ),
-    });
-  }, [
-    currentLayoutSnapshot,
-    isThirdRailOpen,
-    previewColorScheme,
-    rootLayoutPanelIsDirty,
-    rootLayoutPanelSession,
-    updateThirdRail,
-  ]);
-
-  useEffect(() => {
-    if (!componentRowPanelSession || !isThirdRailOpen) {
-      return;
-    }
-
-    const contextValue = contextValueRef.current;
-    if (!contextValue) {
-      return;
-    }
-
-    updateThirdRail(
-      renderComponentPanelChrome(contextValue, componentRowPanelSession),
-    );
-  }, [
-    componentRowPanelIsDirty,
-    componentRowPanelSession,
-    currentScopedLayoutSnapshot,
-    isThirdRailOpen,
-    previewColorScheme,
-    updateThirdRail,
-  ]);
+  formDesignerRootLayoutThirdRail.publish({
+    contextValue: value,
+    session: rootLayoutPanelSession ? { kind: "root" } : null,
+  });
 
   return (
     <FormDesignerContext.Provider value={value}>

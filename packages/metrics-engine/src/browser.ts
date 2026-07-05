@@ -8,6 +8,7 @@ export {
   normalizeMetricDateValue,
   isMetricDateBucketInputComplete,
   applyDateGranularityToQuerySlice,
+  shiftMetricDateBucket,
 } from "./date-granularity.js";
 export {
   validateMetricQueryAgainstDefinition,
@@ -27,6 +28,7 @@ export {
   valueKeyForAggregation,
 } from "./metric-field-keys.js";
 export {
+  METRIC_COMPUTATION_MODES,
   METRIC_DATE_GRANULARITIES,
   METRIC_VALUE_DISPLAY_FORMATS,
 } from "./types.js";
@@ -36,6 +38,10 @@ export type {
   MetricDefinitionRecord,
   MetricAggregationOperation,
   CreateMetricDefinitionInput,
+  MetricDefinitionParameter,
+  ComputedMetricComputation,
+  ComputedMetricInputRef,
+  MetricComputationMode,
 } from "./types.js";
 export {
   METRIC_DEFINITION_JSON_KIND,

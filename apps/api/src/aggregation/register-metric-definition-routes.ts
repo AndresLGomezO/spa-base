@@ -21,16 +21,19 @@ import {
 import { runMetricBackfill } from "./run-backfill.js";
 import type { MetricRuntimeContext } from "./metric-runtime-context.js";
 import type { TenantIndexGuard } from "../indexes/create-tenant-index-guard.js";
+import type { EntityQueryDefinitionRepository } from "@repo/firestore-converters";
 import {
   findEntityForSourceModel,
   validateMetricDefinitionDateGranularity,
 } from "./validate-metric-definition-entity.js";
+import { resolveValidatedMetricCreateInput } from "./validate-metric-definition-query-source.js";
 
 interface RegisterMetricDefinitionRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly entityRuntime: EntityRuntimeContext;
   readonly metricRuntime: MetricRuntimeContext;
+  readonly entityQueryDefinitionRepository: EntityQueryDefinitionRepository;
   readonly tenantIndexGuard?: TenantIndexGuard;
 }
 
@@ -204,11 +207,25 @@ export async function registerMetricDefinitionRoutes(
         }
       }
 
+      const resolvedCreate = await resolveValidatedMetricCreateInput(
+        options.entityQueryDefinitionRepository,
+        tenantId,
+        parsedBody.data,
+      );
+      if (!resolvedCreate.ok) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          resolvedCreate.error,
+        );
+      }
+
       try {
         const created =
           await options.metricRuntime.metricDefinitionRepository.create(
             tenantId,
-            parsedBody.data,
+            resolvedCreate.input,
           );
         options.metricRuntime.invalidateTenantMetrics(tenantId);
         return reply.status(201).send(successEnvelope(created));
@@ -391,6 +408,8 @@ export async function registerMetricDefinitionRoutes(
           {
             entityRuntime: options.entityRuntime,
             metricRuntime: options.metricRuntime,
+            entityQueryDefinitionRepository:
+              options.entityQueryDefinitionRepository,
           },
           tenantId,
           parsedBody.data,

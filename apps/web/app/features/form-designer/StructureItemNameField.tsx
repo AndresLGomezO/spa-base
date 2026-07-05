@@ -15,6 +15,7 @@ interface StructureRowNameFieldProps {
   readonly treeLabels: StructureTreeLabels;
   readonly onChange: (name: string | undefined) => void;
   readonly id?: string;
+  readonly className?: string;
 }
 
 export function StructureRowNameField({
@@ -23,6 +24,7 @@ export function StructureRowNameField({
   treeLabels,
   onChange,
   id,
+  className,
 }: StructureRowNameFieldProps) {
   const defaultName = resolveDefaultRowNodeLabelForEditor(
     row,
@@ -38,6 +40,7 @@ export function StructureRowNameField({
       defaultName={defaultName}
       labels={labels}
       onChange={onChange}
+      className={className}
     />
   );
 }

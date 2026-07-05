@@ -81,7 +81,7 @@ export function DashboardLayoutDesignerLayoutTreePanel() {
       anchor: InsertAnchor,
       row:
         | import("@repo/ui-builder-core").ComponentRowNode
-        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+        | import("@repo/ui-builder-core").ComponentRowNode,
     ) => {
       const { rowRef, label } = insertImportedRowAtAnchor(
         binding,

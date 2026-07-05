@@ -2,6 +2,7 @@ import {
   createDefaultTableCellLayout,
   createDefaultRowExpandLayout,
   createLayoutId,
+  resolveLayoutRootColumns,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 
@@ -46,7 +47,7 @@ export function expandableTableViewFromListItem(
   listItem: UiLayoutDocument,
   fieldPaths: readonly string[],
 ): ExpandableTableViewConfig {
-  const columns: GroupedTableColumn[] = listItem.root.columns.map(
+  const columns: GroupedTableColumn[] = resolveLayoutRootColumns(listItem).map(
     (column, index) => ({
       id: column.id || `column-${index}`,
       cellLayout: {

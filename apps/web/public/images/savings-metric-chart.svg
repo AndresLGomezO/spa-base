@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 220 200" preserveAspectRatio="none">
+  <defs>
+    <linearGradient id="savingsArea" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#f59e0b" stop-opacity="0.2"/>
+      <stop offset="100%" stop-color="#f59e0b" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <path d="M0 160 C40 145, 70 155, 110 130 S150 120, 190 95 S210 105, 220 80 L220 200 L0 200 Z" fill="url(#savingsArea)"/>
+  <path d="M0 160 C40 145, 70 155, 110 130 S150 120, 190 95 S210 105, 220 80" fill="none" stroke="#f59e0b" stroke-width="2" stroke-linecap="round" stroke-opacity="0.6"/>
+</svg>

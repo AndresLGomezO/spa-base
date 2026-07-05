@@ -1,4 +1,9 @@
 import { describe, expect, it } from "vitest";
+import {
+  asEditableLayoutRoot,
+  resolveLayoutRootColumns,
+  withEditableRootColumns,
+} from "@repo/ui-builder-core";
 
 import {
   createDefaultMetricStripLayout,
@@ -8,11 +13,11 @@ import {
 describe("metric strip helpers", () => {
   it("creates empty shell layout with column count", () => {
     const layout = createDefaultMetricStripLayout(3);
-    expect(layout.root.columnCount).toBe(3);
-    expect(layout.root.columns).toHaveLength(3);
-    expect(layout.root.columns.every((col) => col.rows.length === 0)).toBe(
-      true,
-    );
+    expect(asEditableLayoutRoot(layout.root).columnCount).toBe(3);
+    expect(resolveLayoutRootColumns(layout)).toHaveLength(3);
+    expect(
+      resolveLayoutRootColumns(layout).every((col) => col.rows.length === 0),
+    ).toBe(true);
   });
 
   it("metricStripHasContent is false for empty columns", () => {
@@ -24,30 +29,24 @@ describe("metric strip helpers", () => {
 
   it("metricStripHasContent is true when any column has rows", () => {
     const empty = createDefaultMetricStripLayout(2);
-    const layout = {
-      ...empty,
-      root: {
-        ...empty.root,
-        columns: [
+    const layout = withEditableRootColumns(empty, (rootColumns) => [
+      {
+        ...rootColumns[0]!,
+        rows: [
           {
-            ...empty.root.columns[0]!,
-            rows: [
-              {
-                type: "component" as const,
-                id: "row-1",
-                component: {
-                  kind: "metric-kpi" as const,
-                  metricDefinitionId: "m1",
-                  groupBindings: {},
-                  dimensionBindings: {},
-                },
-              },
-            ],
+            type: "component" as const,
+            id: "row-1",
+            component: {
+              kind: "metric-kpi" as const,
+              metricDefinitionId: "m1",
+              groupBindings: {},
+              dimensionBindings: {},
+            },
           },
-          ...empty.root.columns.slice(1),
         ],
       },
-    };
+      ...rootColumns.slice(1),
+    ]);
     expect(metricStripHasContent(layout)).toBe(true);
   });
 });

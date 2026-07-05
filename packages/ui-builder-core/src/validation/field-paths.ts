@@ -1,6 +1,6 @@
 import type { UiLayoutDocument } from "../types/layout.js";
+import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
 import {
-  isContainerComponent,
   isQueryViewerComponent,
   isRowHolderComponent,
   isDashboardSectionComponent,
@@ -11,7 +11,7 @@ import {
 } from "../types/component.js";
 import type { UiComponentConfig } from "../types/component.js";
 import { listDataSourcePaths } from "../resolver/data-source.js";
-import type { ColumnNode, RowNode } from "../types/layout.js";
+import type { RowNode } from "../types/layout.js";
 import { collectNestedRelationLayoutFieldPaths } from "./layout-field-leaf.js";
 
 const ALLOWED_SYSTEM_FIELDS = new Set(["id", "createdAt", "updatedAt"]);
@@ -218,40 +218,12 @@ function collectInputComponentPaths(
   return [];
 }
 
-function walkRows(rows: readonly RowNode[], paths: Set<string>): void {
-  for (const row of rows) {
-    if (row.type === "component") {
-      if (isQueryViewerComponent(row.component)) {
-        continue;
-      }
-
-      if (isContainerComponent(row.component)) {
-        walkRows(row.component.rows, paths);
-        continue;
-      }
-
-      for (const path of collectComponentPaths(row.component)) {
-        paths.add(path);
-      }
-      continue;
-    }
-
-    for (const column of row.columns) {
-      walkColumn(column, paths);
-    }
-  }
-}
-
-function walkColumn(column: ColumnNode, paths: Set<string>): void {
-  walkRows(column.rows, paths);
-}
-
 function collectLayoutPathsFromLayout(
   layout: UiLayoutDocument,
   collectPaths: (component: UiComponentConfig) => readonly string[],
 ): readonly string[] {
   const paths = new Set<string>();
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     walkRowsWithCollector(column.rows, paths, collectPaths);
   }
   return [...paths];
@@ -263,24 +235,17 @@ function walkRowsWithCollector(
   collectPaths: (component: UiComponentConfig) => readonly string[],
 ): void {
   for (const row of rows) {
-    if (row.type === "component") {
-      if (isQueryViewerComponent(row.component)) {
-        continue;
-      }
-
-      if (isContainerComponent(row.component)) {
-        walkRowsWithCollector(row.component.rows, paths, collectPaths);
-        continue;
-      }
-
-      for (const path of collectPaths(row.component)) {
-        paths.add(path);
-      }
+    if (isQueryViewerComponent(row.component)) {
       continue;
     }
 
-    for (const column of row.columns) {
-      walkRowsWithCollector(column.rows, paths, collectPaths);
+    if (isRowHolderComponent(row.component)) {
+      walkRowsWithCollector(row.component.rows, paths, collectPaths);
+      continue;
+    }
+
+    for (const path of collectPaths(row.component)) {
+      paths.add(path);
     }
   }
 }
@@ -552,13 +517,9 @@ function walkFormComponentValidation(
   context: string,
 ): void {
   for (const row of rows) {
-    if (row.type === "component") {
-      validateFormComponent(row.component, definition, context);
-      continue;
-    }
-
-    for (const column of row.columns) {
-      walkFormComponentValidation(column.rows, definition, context);
+    validateFormComponent(row.component, definition, context);
+    if (isRowHolderComponent(row.component)) {
+      walkFormComponentValidation(row.component.rows, definition, context);
     }
   }
 }
@@ -568,7 +529,7 @@ export function assertFormLayoutFieldPaths(
   layout: UiLayoutDocument,
   context: string,
 ): void {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     walkFormComponentValidation(column.rows, definition, context);
   }
 }

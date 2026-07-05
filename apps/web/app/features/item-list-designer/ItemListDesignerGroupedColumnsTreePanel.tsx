@@ -386,7 +386,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
       anchor: InsertAnchor,
       row:
         | import("@repo/ui-builder-core").ComponentRowNode
-        | import("@repo/ui-builder-core").NestedLayoutRowNode,
+        | import("@repo/ui-builder-core").ComponentRowNode,
     ) => {
       if (insertColumnIndex == null) {
         return;
@@ -454,7 +454,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
           <FormDesignerStructureTreeNode
             id={`grouped-column-${columnId}`}
             label={columnLabel}
-            kind="nested-layout"
+            kind="grid"
             depth={0}
             expanded={expanded}
             expandable
@@ -669,7 +669,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
               key={column.id}
               id={column.id}
               label={columnLabel}
-              kind="nested-layout"
+              kind="grid"
               rowFocusState={rowFocusState}
               flyoutOpen={openFlyoutId === column.id}
               onFlyoutOpenChange={(open) =>

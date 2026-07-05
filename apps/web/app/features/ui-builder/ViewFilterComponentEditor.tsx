@@ -5,7 +5,10 @@ import type {
   ViewFilterEntry,
 } from "@repo/ui-builder-core";
 import { defaultDateFilterParam } from "@repo/ui-builder-core";
-import { CollapsibleEditorCard } from "@repo/ui-builder-react";
+import {
+  CollapsibleEditorCard,
+  LabelConfigEditor,
+} from "@repo/ui-builder-react";
 import {
   Button,
   Checkbox,
@@ -437,6 +440,21 @@ export function ViewFilterComponentEditor({
                 }
               />
             </label>
+            <LabelConfigEditor
+              label={config.dateFilterLabel ?? { show: true }}
+              onChange={(dateFilterLabel) => updateConfig({ dateFilterLabel })}
+              labels={{
+                showLabel: t("entity.viewSettings.showLabel"),
+                label: t("viewFilterComponents.dateFilterLabel"),
+                labelPosition: t("entity.viewSettings.labelPosition"),
+                labelAbove: t("entity.viewSettings.labelAbove"),
+                labelBelow: t("entity.viewSettings.labelBelow"),
+                labelAlignLeft: t("entity.viewSettings.labelAlignLeft"),
+                labelAlignCenter: t("entity.viewSettings.labelAlignCenter"),
+                labelAlignRight: t("entity.viewSettings.labelAlignRight"),
+                labelColor: t("entity.viewSettings.labelColor"),
+              }}
+            />
           </>
         ) : null}
       </div>

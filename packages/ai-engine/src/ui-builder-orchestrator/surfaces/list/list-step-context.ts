@@ -24,7 +24,7 @@ function taskDescriptionForStep(step: UiBuilderStep): string {
     case LIST_STEP_TYPES.LAYOUT_SKELETON: {
       const pathKey = String(step.payload?.pathKey ?? "");
       if (pathKey === "listItem") {
-        return "Design a visually rich card listItem skeleton. Return components that will live inside the root container — for multi-column cards use one nested-layout with 2–3 columns. Lead with image (if an image/file field exists in allowed paths) or icon in the first column; place bold title text, colorful badge status, and date/numeric metadata in remaining slots. Do not produce a flat text-only skeleton.";
+        return "Design a visually rich card listItem skeleton. Return components that will live inside the root container — for multi-track cards use one grid with 2–3 tracks. Lead with image (if an image/file field exists in allowed paths) or icon in the first track; place bold title text, colorful badge status, and date/numeric metadata in remaining slots. Do not produce a flat text-only skeleton.";
       }
       return `Design an expressive component skeleton for ${pathKey}. Prefer image/icon + badge + metadata mix over plain text rows. Return kinds, field paths, and responsive visibility only — no full component props.`;
     }

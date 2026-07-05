@@ -126,14 +126,20 @@ export {
 } from "./search/searchable-fields.js";
 export {
   metricBindingSourceSchema,
+  filterBindingSourceSchema,
   metricWidgetBindingsSchema,
   metricWidgetDefinitionSchema,
   metricWidgetsSchema,
+  relativePeriodAnchorSchema,
+  relativePeriodUnitSchema,
 } from "./ui/metric-widget-types.js";
 export type {
   MetricBindingSource,
+  FilterBindingSource,
   MetricWidgetBindings,
   MetricWidgetDefinition,
+  RelativePeriodAnchor,
+  RelativePeriodUnit,
 } from "./ui/metric-widget-types.js";
 export {
   dashboardSectionDefinitionSchema,
@@ -241,11 +247,13 @@ export {
   updateUiBuilderPresetInputSchema,
   uiBuilderFieldSlotSchema,
   uiBuilderPresetKindSchema,
+  uiBuilderPresetCategorySchema,
   type UiBuilderPresetRecord,
   type CreateUiBuilderPresetInput,
   type UpdateUiBuilderPresetInput,
   type UiBuilderFieldSlot,
   type UiBuilderPresetKind,
+  type UiBuilderPresetCategory,
 } from "./ui/ui-builder-preset-schema.js";
 export {
   fromPersistedUiBuilderPreset,

@@ -123,9 +123,9 @@ describe("card listItem assembly", () => {
           label: "Card",
           skeleton: [
             {
-              kind: "nested-layout",
-              columnCount: 2,
-              columns: [
+              kind: "grid",
+              trackCount: 2,
+              tracks: [
                 {
                   components: [{ kind: "text", fieldPath: "name" }],
                 },
@@ -136,11 +136,11 @@ describe("card listItem assembly", () => {
             },
           ],
           componentConfigs: {
-            "root/0/col0/0": {
+            "root/0/track0/0": {
               kind: "text",
               primary: { path: "name" },
             } as never,
-            "root/0/col1/0": {
+            "root/0/track1/0": {
               kind: "badge",
               primary: { path: "status" },
             } as never,
@@ -157,7 +157,7 @@ describe("card listItem assembly", () => {
     expect(uiLayoutDocumentSchema.safeParse(slice.listItem).success).toBe(true);
   });
 
-  it("repairs nested card layouts with empty nested columns", () => {
+  it("repairs grid card layouts with empty tracks", () => {
     const broken = repairListLayoutDocument({
       root: {
         type: "root",
@@ -168,25 +168,36 @@ describe("card listItem assembly", () => {
             id: "col-1",
             rows: [
               {
-                type: "nested-layout",
-                id: "nested-1",
-                columnCount: 2,
-                columns: [
-                  { id: "col-a", rows: [] },
-                  {
-                    id: "col-b",
-                    rows: [
-                      {
-                        type: "component",
-                        id: "row-1",
-                        component: {
-                          kind: "text",
-                          primary: { path: "status" },
-                        } as never,
+                type: "component",
+                id: "grid-1",
+                component: {
+                  kind: "grid",
+                  gridTemplateColumns: "repeat(2, 1fr)",
+                  rows: [
+                    {
+                      type: "component",
+                      id: "track-1",
+                      component: { kind: "container", rows: [] },
+                    },
+                    {
+                      type: "component",
+                      id: "track-2",
+                      component: {
+                        kind: "container",
+                        rows: [
+                          {
+                            type: "component",
+                            id: "row-1",
+                            component: {
+                              kind: "text",
+                              primary: { path: "status" },
+                            } as never,
+                          },
+                        ],
                       },
-                    ],
-                  },
-                ],
+                    },
+                  ],
+                },
               },
             ],
           },

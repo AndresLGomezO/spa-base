@@ -1,13 +1,11 @@
 import {
   componentRowSchema,
-  nestedLayoutRowSchema,
   uiLayoutDocumentSchema,
   columnNodeSchema,
 } from "../schema/ui-layout-schema.js";
 import type {
   ColumnNode,
   ComponentRowNode,
-  NestedLayoutRowNode,
   UiLayoutDocument,
 } from "../types/layout.js";
 import {
@@ -19,7 +17,6 @@ import {
   regenerateColumnSubtree,
   regenerateComponentRowSubtree,
   regenerateLayoutDocumentIds,
-  regenerateNestedLayoutRowSubtree,
 } from "../validation/regenerate-layout-ids.js";
 import {
   type UiBuilderFieldSlot,
@@ -30,11 +27,7 @@ import {
 
 export interface ApplyPresetSlotsResult {
   readonly ok: boolean;
-  readonly data?:
-    | UiLayoutDocument
-    | ColumnNode
-    | ComponentRowNode
-    | NestedLayoutRowNode;
+  readonly data?: UiLayoutDocument | ColumnNode | ComponentRowNode;
   readonly errors: readonly { path: string; message: string }[];
 }
 
@@ -46,9 +39,8 @@ function presetKindToImportScope(
       return { type: "layout-document" };
     case "component-row":
       return { type: "component-row" };
-    case "nested-layout-row":
-      return { type: "nested-layout-row" };
     case "column":
+    case "grid-track":
       return { type: "layout-document" };
   }
 }
@@ -127,27 +119,25 @@ function parseByKind(kind: UiBuilderPresetKind, parsed: unknown): unknown {
     case "layout-document":
       return uiLayoutDocumentSchema.parse(parsed);
     case "column":
+    case "grid-track":
       return columnNodeSchema.parse(parsed);
     case "component-row":
       return componentRowSchema.parse(parsed);
-    case "nested-layout-row":
-      return nestedLayoutRowSchema.parse(parsed);
   }
 }
 
 function regenerateByKind(
   kind: UiBuilderPresetKind,
   parsed: unknown,
-): UiLayoutDocument | ColumnNode | ComponentRowNode | NestedLayoutRowNode {
+): UiLayoutDocument | ColumnNode | ComponentRowNode {
   switch (kind) {
     case "layout-document":
       return regenerateLayoutDocumentIds(parsed as UiLayoutDocument);
     case "column":
+    case "grid-track":
       return regenerateColumnSubtree(parsed as ColumnNode);
     case "component-row":
       return regenerateComponentRowSubtree(parsed as ComponentRowNode);
-    case "nested-layout-row":
-      return regenerateNestedLayoutRowSubtree(parsed as NestedLayoutRowNode);
   }
 }
 
@@ -200,7 +190,7 @@ export function applyPresetSlots(
   const validationTarget =
     kind === "column"
       ? wrapColumnAsLayout(parsed as ColumnNode)
-      : (parsed as UiLayoutDocument | ComponentRowNode | NestedLayoutRowNode);
+      : (parsed as UiLayoutDocument | ComponentRowNode);
 
   const validationJson =
     kind === "column"

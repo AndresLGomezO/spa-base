@@ -4,10 +4,14 @@ import type { ContainerComponentConfig } from "../types/component.js";
 import { isContainerComponent } from "../types/component.js";
 import type {
   ComponentRowNode,
-  NestedLayoutRowNode,
+  LayoutRootNode,
   RowNode,
   UiLayoutDocument,
 } from "../types/layout.js";
+import {
+  asEditableLayoutRoot,
+  resolveLayoutRootColumns,
+} from "./layout-root-adapters.js";
 
 export interface RootContainerResolution {
   readonly row: ComponentRowNode;
@@ -18,7 +22,7 @@ export interface RootContainerResolution {
 function isCanonicalContainerRoot(
   layout: UiLayoutDocument,
 ): layout is UiLayoutDocument & {
-  readonly root: {
+  readonly root: LayoutRootNode & {
     readonly columns: readonly [
       {
         readonly rows: readonly [
@@ -30,11 +34,12 @@ function isCanonicalContainerRoot(
     ];
   };
 } {
-  if (layout.root.columns.length !== 1) {
+  const root = asEditableLayoutRoot(layout.root);
+  if (root.columns.length !== 1) {
     return false;
   }
 
-  const rootColumn = layout.root.columns[0];
+  const rootColumn = root.columns[0];
   if (!rootColumn || rootColumn.rows.length !== 1) {
     return false;
   }
@@ -50,26 +55,19 @@ export function resolveRootContainer(
     return null;
   }
 
-  const row = layout.root.columns[0].rows[0];
-  if (!isContainerComponent(row.component)) {
+  const rootRow = asEditableLayoutRoot(layout.root).columns[0]?.rows[0];
+  if (
+    rootRow?.type !== "component" ||
+    !isContainerComponent(rootRow.component)
+  ) {
     return null;
   }
 
   return {
-    row,
-    config: row.component,
+    row: rootRow,
+    config: rootRow.component,
     rootColumnIndex: 0,
   };
-}
-
-function collectRowsFromNestedLayoutRoot(
-  nestedRow: NestedLayoutRowNode,
-): readonly RowNode[] {
-  if (nestedRow.columnCount === 1) {
-    return nestedRow.columns[0]?.rows ?? [];
-  }
-
-  return nestedRow.columns.flatMap((column) => column.rows);
 }
 
 function collectRowsForContainerWrap(layout: UiLayoutDocument): {
@@ -84,38 +82,23 @@ function collectRowsForContainerWrap(layout: UiLayoutDocument): {
     };
   }
 
-  const nestedRootColumn = layout.root.columns[0];
-  if (
-    layout.root.columns.length === 1 &&
-    nestedRootColumn?.rows.length === 1 &&
-    nestedRootColumn.rows[0]?.type === "nested-layout"
-  ) {
-    const nestedRow = nestedRootColumn.rows[0];
-    const rows =
-      nestedRow.columnCount === 1
-        ? collectRowsFromNestedLayoutRoot(nestedRow)
-        : [nestedRow];
-
-    return {
-      rows,
-      styles: nestedRow.styles ?? nestedRootColumn.styles ?? layout.root.styles,
-    };
-  }
-
-  const rootColumn = layout.root.columns[0] ?? createEmptyColumn();
+  const root = asEditableLayoutRoot(layout.root);
+  const columns = resolveLayoutRootColumns(layout);
+  const rootColumn = columns[0] ?? createEmptyColumn();
   const rowsToWrap =
-    layout.root.columns.length === 1
+    columns.length === 1
       ? rootColumn.rows
-      : layout.root.columns.flatMap((column) => column.rows);
+      : columns.flatMap((column) => column.rows);
 
   return {
     rows: rowsToWrap,
-    styles: rootColumn.styles ?? layout.root.styles,
+    styles: rootColumn.styles ?? root.styles,
   };
 }
 
 function isMultiColumnRootLayout(layout: UiLayoutDocument): boolean {
-  return layout.root.columnCount > 1 || layout.root.columns.length > 1;
+  const root = asEditableLayoutRoot(layout.root);
+  return root.columnCount > 1 || root.columns.length > 1;
 }
 
 export function ensureContainerRoot(
@@ -130,7 +113,7 @@ export function ensureContainerRoot(
   }
 
   const { rows, styles } = collectRowsForContainerWrap(layout);
-  const rootColumn = layout.root.columns[0] ?? createEmptyColumn();
+  const rootColumn = resolveLayoutRootColumns(layout)[0] ?? createEmptyColumn();
   const containerRowId = createLayoutId("row");
   const containerRow: ComponentRowNode = {
     type: "component",
@@ -145,7 +128,7 @@ export function ensureContainerRoot(
   return {
     ...layout,
     root: {
-      ...layout.root,
+      ...asEditableLayoutRoot(layout.root),
       columnCount: 1,
       styles: undefined,
       columns: [

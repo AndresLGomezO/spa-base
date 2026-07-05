@@ -16,6 +16,8 @@ import {
   ensureAggregationEventsTopic,
 } from "@repo/gcp-firebase/firestore-aggregation-pubsub";
 
+import { createWorkerMetricQueryMembershipResolver } from "./metric-query-deps.js";
+
 const projectId = process.env.GCP_PROJECT_ID?.trim();
 const topicName =
   process.env.AGGREGATION_EVENTS_TOPIC?.trim() ?? AGGREGATION_EVENTS_TOPIC;
@@ -56,6 +58,8 @@ const deps = {
     createFirestoreAdminMetricValueRepository(firebaseAdminConfig),
   metricContributionRepository:
     createFirestoreAdminMetricContributionRepository(firebaseAdminConfig),
+  resolveQueryMembership:
+    createWorkerMetricQueryMembershipResolver(firebaseAdminConfig),
 };
 
 function log(message: string, meta: Record<string, unknown>): void {

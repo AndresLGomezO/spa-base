@@ -9,6 +9,8 @@ export function buildUiMetricBindingsAtom(): string {
 
 \`metric-kpi\` components bind metric parameters via \`groupBindings\` and \`dimensionBindings\`.
 
+Metric **population** (entity vs custom query) is configured in Settings → Metrics (\`sourceModel\`, optional \`sourceQueryDefinitionId\`) — not in layout JSON. Query-backed and entity-backed definitions use the same binding shapes here.
+
 Each key is a parameter name from the metric definition; each value is a \`MetricBindingSource\`.
 
 ## MetricBindingSource shapes

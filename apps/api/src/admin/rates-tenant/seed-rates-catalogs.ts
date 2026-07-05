@@ -25,7 +25,10 @@ import { replaceEntityDefinitionsCatalog } from "../../entities/replace-entity-d
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
 import { replaceMetricDefinitionsCatalog } from "../../aggregation/replace-metric-definitions-catalog.js";
 import { createMetricRuntimeContext } from "../../aggregation/metric-runtime-context.js";
-import { listSourceDocumentsForMetric } from "../../aggregation/list-source-documents.js";
+import {
+  createMetricQueryMembershipResolver,
+  listSourceDocumentsForMetricDefinition,
+} from "../../aggregation/metric-query-runtime.js";
 import { replaceEntityQueryDefinitionsCatalog } from "../../entity-queries/replace-entity-query-definitions-catalog.js";
 import { replaceCustomViewsCatalog } from "../../custom-views/replace-custom-views-catalog.js";
 import { createHookRuntimeContext } from "../../hooks/hook-runtime-context.js";
@@ -171,18 +174,24 @@ export async function seedRatesCatalogs(
       createFirestoreAdminBackfillJobRepository(firebaseAdminConfig),
     metricContributionRepository:
       createFirestoreAdminMetricContributionRepository(firebaseAdminConfig),
-    listSourceDocuments: (resolvedTenantId, sourceModel) =>
-      listSourceDocumentsForMetric(
+    listSourceDocuments: (resolvedTenantId, metric) =>
+      listSourceDocumentsForMetricDefinition(
         entityRuntime,
+        entityQueryDefinitionRepository,
         resolvedTenantId,
-        sourceModel,
+        metric,
       ),
+    resolveQueryMembership: createMetricQueryMembershipResolver({
+      entityRuntime,
+      entityQueryDefinitionRepository,
+    }),
   });
 
   const metricResult = await replaceMetricDefinitionsCatalog(
     {
       entityRuntime,
       metricRuntime,
+      entityQueryDefinitionRepository,
     },
     tenantId,
     metricParsed.data,
@@ -192,6 +201,7 @@ export async function seedRatesCatalogs(
     {
       entityRuntime,
       entityQueryDefinitionRepository,
+      metricDefinitionRepository,
     },
     tenantId,
     queryParsed.data,

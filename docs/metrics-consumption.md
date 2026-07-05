@@ -14,6 +14,8 @@ Metrics are stored at:
 
 Reads use **deterministic document IDs** (O(1) `get` / `getAll`), not Firestore queries. The same key algorithm used by the aggregation engine (`buildMetricDocId` in `@repo/metrics-engine`) is used by the read API.
 
+**Query-backed metrics:** definitions may set `sourceQueryDefinitionId` so aggregation only includes records matching a saved custom query. Consumption (KPI/Series widgets, `GET /api/metrics/...`) is unchanged — widgets bind `metricDefinitionId` and parameter keys the same way as entity-scoped metrics. See [metric-definition-json.md](./metric-definition-json.md) and [metric definition sources](./ui-design-manual/02-data-binding/metric-definition-sources.md).
+
 ## Document shape
 
 ```json

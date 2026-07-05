@@ -4,6 +4,19 @@ import {
 } from "@repo/ui-builder-core";
 import { z } from "zod";
 
+export const relativePeriodAnchorSchema = z.enum([
+  "dashboardDateFilter",
+  "listFilter",
+  "routeParam",
+  "now",
+]);
+
+export type RelativePeriodAnchor = z.infer<typeof relativePeriodAnchorSchema>;
+
+export const relativePeriodUnitSchema = z.enum(["day", "month", "year"]);
+
+export type RelativePeriodUnit = z.infer<typeof relativePeriodUnitSchema>;
+
 export const metricBindingSourceSchema = z.discriminatedUnion("type", [
   z
     .object({
@@ -29,9 +42,30 @@ export const metricBindingSourceSchema = z.discriminatedUnion("type", [
       param: z.string().trim().min(1),
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("dashboardDateFilter"),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("relativePeriod"),
+      field: z.string().trim().min(1),
+      anchor: relativePeriodAnchorSchema,
+      offset: z.number().int(),
+      unit: relativePeriodUnitSchema,
+      anchorField: z.string().trim().min(1).optional(),
+      anchorParam: z.string().trim().min(1).optional(),
+    })
+    .strict(),
 ]);
 
 export type MetricBindingSource = z.infer<typeof metricBindingSourceSchema>;
+
+/** Alias for metric and query parameter bindings. */
+export type FilterBindingSource = MetricBindingSource;
+
+export const filterBindingSourceSchema = metricBindingSourceSchema;
 
 export const metricWidgetBindingsSchema = z
   .object({

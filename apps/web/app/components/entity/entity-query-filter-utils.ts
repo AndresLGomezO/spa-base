@@ -122,6 +122,19 @@ function conditionToEditorRow(
     };
   }
 
+  if (filter.value.type === "parameter") {
+    return {
+      id: crypto.randomUUID(),
+      type: "condition",
+      field: filter.field,
+      operator: filter.operator,
+      valueKind: "static",
+      temporalPreset: "today",
+      scalarValue: `$${filter.value.name}${filter.value.bound ? `:${filter.value.bound}` : ""}`,
+      listValues: [],
+    };
+  }
+
   const raw = filter.value.value;
   if (Array.isArray(raw)) {
     return {

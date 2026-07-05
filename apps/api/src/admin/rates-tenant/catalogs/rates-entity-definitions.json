@@ -3660,7 +3660,8 @@
             "TRANSFER",
             "PAYMENT",
             "INTEREST",
-            "FEE"
+            "FEE",
+            "INVESTMENT"
           ],
           "ui": {
             "label": "Type",

@@ -1,3 +1,4 @@
+import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
@@ -17,11 +18,9 @@ import {
   RATES_LOCAL_IMPORT_OWNER_EMAIL,
   RATES_LOCAL_IMPORT_TENANT_ROLE,
 } from "./constants.js";
-import { replaySeedPaymentScheduleHooks } from "./seed-replay-payment-schedule-hooks.js";
 import {
   createRatesRecordSeedContext,
   ensureRatesRecord,
-  snapshotRatesSeedRecord,
 } from "./seed-record-helpers.js";
 
 const LOCAL_IMPORT_DIR = join(process.cwd(), ".local/tenant-import");
@@ -39,7 +38,20 @@ const LOCAL_IMPORT_SPECS = [
   { fileName: "serviceDetails.json", entityName: "serviceDetails" },
 ] as const;
 
+const LOCAL_GENERATED_IMPORT_SPECS = [
+  {
+    fileName: "generated/paymentSchedule.json",
+    entityName: "paymentSchedule",
+  },
+  { fileName: "generated/transaction.json", entityName: "transaction" },
+  {
+    fileName: "generated/balanceSnapshot.json",
+    entityName: "balanceSnapshot",
+  },
+] as const;
+
 type LocalImportSpec = (typeof LOCAL_IMPORT_SPECS)[number];
+type LocalGeneratedImportSpec = (typeof LOCAL_GENERATED_IMPORT_SPECS)[number];
 
 function isAuthUserNotFound(error: unknown): boolean {
   const code =
@@ -65,6 +77,14 @@ export function listPresentLocalImportSpecs(
   );
 }
 
+export function listPresentLocalGeneratedImportSpecs(
+  importDir: string = LOCAL_IMPORT_DIR,
+): LocalGeneratedImportSpec[] {
+  return LOCAL_GENERATED_IMPORT_SPECS.filter((spec) =>
+    existsSync(join(importDir, spec.fileName)),
+  );
+}
+
 function readImportRecords(filePath: string): Record<string, unknown>[] {
   const parsed: unknown = JSON.parse(readFileSync(filePath, "utf8"));
   if (!Array.isArray(parsed)) {
@@ -83,6 +103,35 @@ function readImportRecords(filePath: string): Record<string, unknown>[] {
 
     return record;
   });
+}
+
+function runLocalSchedulePaymentMockGenerator(importDir: string): void {
+  const scriptPath = join(importDir, "generate-schedule-payment-mocks.ts");
+  if (!existsSync(scriptPath)) {
+    console.log(
+      `[seed] No local schedule mock generator at ${scriptPath}; skipping generated import.`,
+    );
+    return;
+  }
+
+  console.log(`[seed] Running local schedule payment mock generator...`);
+  const result = spawnSync("pnpm", ["exec", "tsx", scriptPath], {
+    cwd: join(process.cwd(), "apps/api"),
+    stdio: "inherit",
+    env: {
+      ...process.env,
+      TENANT_IMPORT_DIR: importDir,
+    },
+  });
+
+  if (result.error) {
+    throw result.error;
+  }
+  if (result.status !== 0) {
+    throw new Error(
+      `Local schedule payment mock generator exited with status ${result.status ?? "unknown"}.`,
+    );
+  }
 }
 
 async function ensureLocalImportOwnerAccess(
@@ -131,6 +180,26 @@ async function ensureLocalImportOwnerAccess(
   return uid;
 }
 
+async function importLocalRecords(
+  context: ReturnType<typeof createRatesRecordSeedContext>,
+  importDir: string,
+  specs: readonly { readonly fileName: string; readonly entityName: string }[],
+): Promise<void> {
+  for (const spec of specs) {
+    const filePath = join(importDir, spec.fileName);
+    const records = readImportRecords(filePath);
+
+    for (const record of records) {
+      const { id, ...business } = record;
+      await ensureRatesRecord(context, spec.entityName, id as string, business);
+    }
+
+    console.log(
+      `[seed]   ${spec.fileName}: ${records.length} ${spec.entityName} record(s)`,
+    );
+  }
+}
+
 export async function seedLocalTenantImportIfPresent(
   tenantId: string,
   firebaseAdminConfig: FirebaseAdminConfig,
@@ -166,63 +235,16 @@ export async function seedLocalTenantImportIfPresent(
     `[seed] Importing ${presentSpecs.length} local JSON file(s) for ${ownerEmail} from ${importDir}...`,
   );
 
-  const loanDetails: Array<{
-    id: string;
-    financialItemId: string;
-    record: Record<string, unknown>;
-  }> = [];
-  const financialItemIds: string[] = [];
-  const financialItemRecords = new Map<string, Record<string, unknown>>();
+  await importLocalRecords(context, importDir, presentSpecs);
+  runLocalSchedulePaymentMockGenerator(importDir);
 
-  for (const spec of presentSpecs) {
-    const filePath = join(importDir, spec.fileName);
-    const records = readImportRecords(filePath);
-
-    for (const record of records) {
-      const { id, ...business } = record;
-      const recordId = id as string;
-      await ensureRatesRecord(context, spec.entityName, recordId, business);
-
-      if (spec.entityName === "financialItem") {
-        financialItemIds.push(recordId);
-        financialItemRecords.set(
-          recordId,
-          snapshotRatesSeedRecord(context, spec.entityName, recordId, business),
-        );
-      }
-      if (spec.entityName === "loanDetails") {
-        const financialItemId = business.financialItemId;
-        if (typeof financialItemId === "string" && financialItemId.length > 0) {
-          loanDetails.push({
-            id: recordId,
-            financialItemId,
-            record: snapshotRatesSeedRecord(
-              context,
-              spec.entityName,
-              recordId,
-              business,
-            ),
-          });
-        }
-      }
-    }
-
+  const generatedSpecs = listPresentLocalGeneratedImportSpecs(importDir);
+  if (generatedSpecs.length > 0) {
     console.log(
-      `[seed]   ${spec.fileName}: ${records.length} ${spec.entityName} record(s)`,
+      `[seed] Importing ${generatedSpecs.length} generated local JSON file(s)...`,
     );
+    await importLocalRecords(context, importDir, generatedSpecs);
   }
-
-  await replaySeedPaymentScheduleHooks(
-    tenantId,
-    firebaseAdminConfig,
-    definitionRecords,
-    ownerId,
-    {
-      loanDetails,
-      financialItemIds,
-      financialItemRecords,
-    },
-  );
 
   console.log(`[seed] Local tenant import complete for ${ownerEmail}.`);
   return { seeded: true, ownerEmail };

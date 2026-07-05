@@ -10,47 +10,44 @@ import {
   rowIsWithinFocusedColumn,
 } from "./form-designer-component-focus";
 
-const nestedLayoutRowRef = {
-  rowId: "nested-1",
+const gridRowRef = {
+  rowId: "grid-1",
   locator: { scope: "root" as const, columnIndex: 0 },
 };
 
-const nestedLayoutRowAtNestedScope = {
-  rowId: "nested-inner",
+const gridTrackRowRef = {
+  rowId: "track-1",
   locator: {
-    scope: "nested" as const,
+    scope: "container" as const,
     columnIndex: 0,
-    rowId: "nested-outer",
-    nestedColumnIndex: 1,
+    containerRowId: "grid-1",
   },
 };
 
 const innerComponentRowRef = {
   rowId: "component-1",
   locator: {
-    scope: "nested" as const,
+    scope: "container" as const,
     columnIndex: 0,
-    rowId: "nested-1",
-    nestedColumnIndex: 1,
+    containerRowId: "track-1",
   },
 };
 
-const nestedColumnRef = {
+const gridTrackColumnRef = {
   rootColumnIndex: 0,
-  nestedParentRowId: "nested-1",
+  nestedParentRowId: "grid-1",
   nestedColumnIndex: 1,
 };
 
 describe("form-designer-component-focus", () => {
-  it("matches nested columns to their parent nested-layout row", () => {
-    expect(columnBelongsToRow(nestedColumnRef, nestedLayoutRowRef)).toBe(true);
-    expect(
-      columnBelongsToRow(nestedColumnRef, nestedLayoutRowAtNestedScope),
-    ).toBe(false);
+  it("matches grid track columns to their parent grid row", () => {
+    expect(columnBelongsToRow(gridTrackColumnRef, gridRowRef)).toBe(true);
+    expect(columnBelongsToRow(gridTrackColumnRef, gridTrackRowRef)).toBe(false);
   });
 
-  it("treats nested-layout rows as containing descendant row focus", () => {
-    expect(rowContainsRowFocus(innerComponentRowRef, nestedLayoutRowRef)).toBe(
+  it("treats grid rows as containing descendant row focus", () => {
+    expect(rowContainsRowFocus(innerComponentRowRef, gridRowRef)).toBe(true);
+    expect(rowContainsRowFocus(innerComponentRowRef, gridTrackRowRef)).toBe(
       true,
     );
     expect(
@@ -59,63 +56,54 @@ describe("form-designer-component-focus", () => {
   });
 
   it("combines row and column containment", () => {
-    expect(rowContainsFocus(null, nestedColumnRef, nestedLayoutRowRef)).toBe(
-      true,
-    );
+    expect(rowContainsFocus(null, gridTrackColumnRef, gridRowRef)).toBe(true);
+    expect(rowContainsFocus(innerComponentRowRef, null, gridRowRef)).toBe(true);
     expect(
-      rowContainsFocus(innerComponentRowRef, null, nestedLayoutRowRef),
-    ).toBe(true);
-    expect(
-      rowContainsFocus(
-        innerComponentRowRef,
-        nestedColumnRef,
-        nestedLayoutRowRef,
-      ),
+      rowContainsFocus(innerComponentRowRef, gridTrackColumnRef, gridRowRef),
     ).toBe(true);
   });
 
-  it("maps focused rows to their nested column", () => {
-    expect(rowFocusBelongsToColumn(innerComponentRowRef, nestedColumnRef)).toBe(
-      true,
-    );
+  it("maps focused rows to their grid track column", () => {
+    expect(
+      rowFocusBelongsToColumn(innerComponentRowRef, gridTrackColumnRef),
+    ).toBe(true);
     expect(
       rowFocusBelongsToColumn(innerComponentRowRef, {
         rootColumnIndex: 0,
-        nestedParentRowId: "nested-1",
+        nestedParentRowId: "grid-1",
         nestedColumnIndex: 0,
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 
-  it("treats root columns as containing descendant nested column focus", () => {
+  it("treats root columns as containing descendant grid track column focus", () => {
     expect(
-      rootColumnContainsColumnFocus({ rootColumnIndex: 0 }, nestedColumnRef),
+      rootColumnContainsColumnFocus({ rootColumnIndex: 0 }, gridTrackColumnRef),
     ).toBe(true);
     expect(
-      rootColumnContainsColumnFocus({ rootColumnIndex: 1 }, nestedColumnRef),
+      rootColumnContainsColumnFocus({ rootColumnIndex: 1 }, gridTrackColumnRef),
     ).toBe(false);
     expect(
-      rootColumnContainsColumnFocus(nestedColumnRef, nestedColumnRef),
+      rootColumnContainsColumnFocus(gridTrackColumnRef, gridTrackColumnRef),
     ).toBe(false);
   });
 
   it("keeps rows inside the focused column from dimming", () => {
-    expect(rowBelongsToColumn(nestedColumnRef, innerComponentRowRef)).toBe(
+    expect(rowBelongsToColumn(gridTrackColumnRef, innerComponentRowRef)).toBe(
       true,
     );
     expect(
-      rowIsWithinFocusedColumn(nestedColumnRef, innerComponentRowRef),
+      rowIsWithinFocusedColumn(gridTrackColumnRef, innerComponentRowRef),
     ).toBe(true);
     expect(
-      rowIsWithinFocusedColumn(nestedColumnRef, {
+      rowIsWithinFocusedColumn(gridTrackColumnRef, {
         rowId: "component-2",
         locator: {
-          scope: "nested",
+          scope: "container",
           columnIndex: 0,
-          rowId: "nested-1",
-          nestedColumnIndex: 0,
+          containerRowId: "track-2",
         },
       }),
-    ).toBe(false);
+    ).toBe(true);
   });
 });

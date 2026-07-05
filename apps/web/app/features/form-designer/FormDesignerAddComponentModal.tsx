@@ -6,7 +6,6 @@ import type {
   ComponentRowNode,
   DesignSurface,
   FieldPathValidationDefinition,
-  NestedLayoutRowNode,
   UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { Button, Modal, Text } from "@repo/ui";
@@ -27,10 +26,7 @@ interface FormDesignerAddComponentModalProps {
   readonly labels: FormDesignerComponentsLabels;
   readonly onClose: () => void;
   readonly onSelect: (anchor: InsertAnchor, kind: CatalogEntryKind) => void;
-  readonly onImportRow: (
-    anchor: InsertAnchor,
-    row: ComponentRowNode | NestedLayoutRowNode,
-  ) => void;
+  readonly onImportRow: (anchor: InsertAnchor, row: ComponentRowNode) => void;
   readonly insertAnchor: InsertAnchor | null;
   readonly actionsInModalFooter?: boolean;
 }
@@ -99,20 +95,13 @@ export function FormDesignerAddComponentModal({
   };
 
   const handleImportApply = (
-    data:
-      | UiLayoutDocument
-      | ColumnNode
-      | ComponentRowNode
-      | NestedLayoutRowNode,
+    data: UiLayoutDocument | ColumnNode | ComponentRowNode | ComponentRowNode,
   ) => {
     if (!insertAnchor) {
       return;
     }
 
-    if (
-      "type" in data &&
-      (data.type === "component" || data.type === "nested-layout")
-    ) {
+    if ("type" in data && data.type === "component") {
       onImportRow(insertAnchor, data);
       setImportOpen(false);
       onClose();

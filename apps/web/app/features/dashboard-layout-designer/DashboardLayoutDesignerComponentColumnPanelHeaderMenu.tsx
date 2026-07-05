@@ -20,41 +20,24 @@ import {
   LayoutJsonViewDialog,
   SavePresetDialog,
 } from "@repo/ui-builder-react";
-import {
-  replaceNestedColumnAt,
-  type ColumnNode,
-  type UiLayoutDocument,
-} from "@repo/ui-builder-core";
+import { type ColumnNode } from "@repo/ui-builder-core";
 import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
-import { isNestedComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
-import { findColumnByRef } from "../form-designer/form-designer-components-layout";
+import {
+  findColumnByRef,
+  replaceColumnAtRef,
+} from "../form-designer/form-designer-components-layout";
 import { resolveActiveLayoutBinding } from "./dashboard-layout-designer-layout-binding";
+import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
 import {
   TENANT_DASHBOARD_LAYOUT_PRESET_SOURCE,
   TENANT_DASHBOARD_LAYOUT_VALIDATION_DEFINITION,
 } from "./tenant-dashboard-layout-validation-definition";
-
-function replaceRootColumnAt(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  column: ColumnNode,
-): UiLayoutDocument {
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columns: layout.root.columns.map((entry, index) =>
-        index === columnIndex ? column : entry,
-      ),
-    },
-  };
-}
 
 function ToolAction({
   label,
@@ -89,19 +72,20 @@ export function DashboardLayoutDesignerComponentColumnPanelHeaderMenu({
   columnRef,
 }: DashboardLayoutDesignerComponentColumnPanelHeaderMenuProps) {
   const { t } = useTranslation("common");
-  const { editor, activeTabId } = useDashboardLayoutDesigner();
+  const { editor, designFocus } = useDashboardLayoutDesigner();
   const labels = useFormDesignerLayoutEditorLabels();
   const presetStore = useUiBuilderPresetStore(
     TENANT_DASHBOARD_LAYOUT_PRESET_SOURCE,
   );
-  const designSurface =
-    activeTabId === "layout" ? "dashboardLayout" : "dashboardSection";
+  const designSurface = isShellLayoutFocus(designFocus)
+    ? "dashboardLayout"
+    : "dashboardSection";
   const [menuOpen, setMenuOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
 
   const binding = useMemo(
-    () => resolveActiveLayoutBinding(editor, activeTabId),
-    [activeTabId, editor],
+    () => resolveActiveLayoutBinding(editor, designFocus),
+    [designFocus, editor],
   );
 
   const resolved = findColumnByRef(binding.layout, columnRef);
@@ -152,22 +136,7 @@ export function DashboardLayoutDesignerComponentColumnPanelHeaderMenu({
     );
 
   const applyColumn = (data: ColumnNode) => {
-    if (isNestedComponentColumnRef(columnRef)) {
-      binding.setLayout(
-        replaceNestedColumnAt(
-          binding.layout,
-          columnRef.rootColumnIndex,
-          columnRef.nestedParentRowId,
-          columnRef.nestedColumnIndex,
-          data,
-        ),
-      );
-      return;
-    }
-
-    binding.setLayout(
-      replaceRootColumnAt(binding.layout, columnRef.rootColumnIndex, data),
-    );
+    binding.setLayout(replaceColumnAtRef(binding.layout, columnRef, data));
   };
 
   return (

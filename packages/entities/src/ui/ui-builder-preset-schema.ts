@@ -5,8 +5,13 @@ export const UI_BUILDER_PRESETS_COLLECTION = "ui_builder_presets";
 export const uiBuilderPresetKindSchema = z.enum([
   "layout-document",
   "column",
+  "grid-track",
   "component-row",
-  "nested-layout-row",
+]);
+
+export const uiBuilderPresetCategorySchema = z.enum([
+  "layout-preset",
+  "component-template",
 ]);
 
 export const uiBuilderFieldSlotKindSchema = z.enum([
@@ -49,19 +54,34 @@ export const uiBuilderPresetRecordSchema = z
     name: z.string().trim().min(1),
     description: z.string().trim().min(1).optional(),
     kind: uiBuilderPresetKindSchema,
+    presetCategory: uiBuilderPresetCategorySchema.optional(),
     designSurface: designSurfaceSchema.optional(),
     sourceEntityName: z.string().trim().min(1).optional(),
     templateJson: z.string().min(2),
     fieldSlots: z.array(uiBuilderFieldSlotSchema),
     updatedAt: z.string().datetime(),
   })
-  .strict();
+  .strict()
+  .superRefine((value, ctx) => {
+    const category =
+      value.presetCategory ??
+      (value.fieldSlots.length === 0 ? "layout-preset" : "component-template");
+
+    if (category === "layout-preset" && value.fieldSlots.length > 0) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "layout-preset must not include fieldSlots",
+        path: ["fieldSlots"],
+      });
+    }
+  });
 
 export const createUiBuilderPresetInputSchema = z
   .object({
     name: z.string().trim().min(1),
     description: z.string().trim().min(1).optional(),
     kind: uiBuilderPresetKindSchema,
+    presetCategory: uiBuilderPresetCategorySchema.optional(),
     designSurface: designSurfaceSchema.optional(),
     sourceEntityName: z.string().trim().min(1).optional(),
     templateJson: z.string().min(2),
@@ -74,6 +94,7 @@ export const updateUiBuilderPresetInputSchema = z
     name: z.string().trim().min(1).optional(),
     description: z.string().trim().min(1).optional(),
     kind: uiBuilderPresetKindSchema.optional(),
+    presetCategory: uiBuilderPresetCategorySchema.optional(),
     designSurface: designSurfaceSchema.optional(),
     sourceEntityName: z.string().trim().min(1).optional(),
     templateJson: z.string().min(2).optional(),
@@ -82,6 +103,9 @@ export const updateUiBuilderPresetInputSchema = z
   .strict();
 
 export type UiBuilderPresetKind = z.infer<typeof uiBuilderPresetKindSchema>;
+export type UiBuilderPresetCategory = z.infer<
+  typeof uiBuilderPresetCategorySchema
+>;
 export type UiBuilderFieldSlotKind = z.infer<
   typeof uiBuilderFieldSlotKindSchema
 >;

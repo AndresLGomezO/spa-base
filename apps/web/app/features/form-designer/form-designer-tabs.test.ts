@@ -7,9 +7,13 @@ import {
 
 describe("form-designer-tabs", () => {
   it("parses valid tab ids from search params", () => {
-    expect(parseFormDesignerTabId("layout")).toBe("layout");
-    expect(parseFormDesignerTabId("components")).toBe("components");
+    expect(parseFormDesignerTabId("design")).toBe("design");
     expect(parseFormDesignerTabId("settings")).toBe("settings");
+  });
+
+  it("maps legacy layout/components tabs to design", () => {
+    expect(parseFormDesignerTabId("layout")).toBe("design");
+    expect(parseFormDesignerTabId("components")).toBe("design");
   });
 
   it("defaults to settings for missing or invalid tab ids", () => {
@@ -18,7 +22,7 @@ describe("form-designer-tabs", () => {
   });
 
   it("identifies valid tab ids", () => {
-    expect(isFormDesignerTabId("layout")).toBe(true);
-    expect(isFormDesignerTabId("unknown")).toBe(false);
+    expect(isFormDesignerTabId("design")).toBe(true);
+    expect(isFormDesignerTabId("layout")).toBe(false);
   });
 });

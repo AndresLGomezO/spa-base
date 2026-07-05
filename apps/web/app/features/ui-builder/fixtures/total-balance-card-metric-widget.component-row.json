@@ -1,187 +1,264 @@
 {
   "type": "component",
-  "id": "row-total-balance-card",
+  "id": "row-main-container",
   "component": {
     "kind": "container",
     "stackDirection": "column",
     "styles": [
-      { "property": "backgroundColor", "value": "var(--gradient-primary)" },
-      { "property": "borderRadius", "value": "16" },
-      { "property": "padding", "value": "20" },
       { "property": "width", "value": "100%" },
-      { "property": "maxWidth", "value": "420" },
-      { "property": "height", "value": "200" },
-      { "property": "overflowY", "value": "hidden" },
-      { "property": "color", "value": "#ffffff" }
+      { "property": "minHeight", "value": "200" },
+      { "property": "maxWidth", "value": "500" }
     ],
     "rows": [
       {
         "type": "component",
-        "id": "row-total-balance-chart",
-        "component": {
-          "kind": "image",
-          "displayMode": "overlay",
-          "objectFit": "cover",
-          "primary": {
-            "type": "static",
-            "value": "REPLACE_CHART_IMAGE_URL"
-          }
-        }
-      },
-      {
-        "type": "component",
-        "id": "row-total-balance-header",
+        "id": "row-content",
         "component": {
           "kind": "container",
-          "stackDirection": "row",
-          "styles": [
-            { "property": "justifyContent", "value": "between" },
-            { "property": "alignItems", "value": "start" }
-          ],
+          "stackDirection": "column",
           "rows": [
             {
               "type": "component",
-              "id": "row-total-balance-title-group",
+              "id": "row-gradient-card",
               "component": {
                 "kind": "container",
-                "stackDirection": "row",
+                "stackDirection": "column",
                 "styles": [
-                  { "property": "alignItems", "value": "center" },
-                  { "property": "gap", "value": "8" }
+                  {
+                    "property": "backgroundColor",
+                    "value": "var(--gradient-primary)"
+                  },
+                  { "property": "borderRadius", "value": "var(--radius-lg)" },
+                  { "property": "padding", "value": "var(--spacing-macro)" },
+                  {
+                    "property": "boxShadow",
+                    "value": "0 10px 30px rgba(0,0,0,0.08)"
+                  },
+                  { "property": "height", "value": "100%" },
+                  { "property": "width", "value": "100%" },
+                  { "property": "overflowX", "value": "hidden" },
+                  { "property": "overflowY", "value": "hidden" }
                 ],
                 "rows": [
                   {
                     "type": "component",
-                    "id": "row-total-balance-label",
+                    "id": "row-header",
                     "component": {
-                      "kind": "text",
-                      "primary": {
-                        "type": "static",
-                        "value": "Total Balance"
-                      },
+                      "kind": "container",
+                      "stackDirection": "row",
                       "styles": [
-                        { "property": "fontSize", "value": "14" },
+                        { "property": "height", "value": "auto" },
+                        { "property": "justifyContent", "value": "between" },
+                        { "property": "alignItems", "value": "start" }
+                      ],
+                      "rows": [
                         {
-                          "property": "color",
-                          "value": "rgba(255,255,255,0.8)"
+                          "type": "component",
+                          "id": "row-title-group",
+                          "component": {
+                            "kind": "container",
+                            "stackDirection": "row",
+                            "styles": [
+                              { "property": "alignItems", "value": "center" },
+                              {
+                                "property": "gap",
+                                "value": "var(--spacing-compact)"
+                              }
+                            ],
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-label",
+                                "component": {
+                                  "kind": "text",
+                                  "primary": {
+                                    "type": "static",
+                                    "value": "Total Balance"
+                                  },
+                                  "styles": [
+                                    { "property": "fontSize", "value": "14" },
+                                    {
+                                      "property": "color",
+                                      "value": "rgba(255,255,255,0.8)"
+                                    }
+                                  ]
+                                }
+                              },
+                              {
+                                "type": "component",
+                                "id": "row-eye",
+                                "component": {
+                                  "kind": "icon",
+                                  "iconName": "Eye",
+                                  "iconSize": 16,
+                                  "styles": [
+                                    {
+                                      "property": "color",
+                                      "value": "rgba(255,255,255,0.7)"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
+                        },
+                        {
+                          "type": "component",
+                          "id": "row-period",
+                          "component": {
+                            "kind": "text",
+                            "primary": {
+                              "type": "static",
+                              "value": "This month"
+                            },
+                            "styles": [
+                              { "property": "fontSize", "value": "12" },
+                              { "property": "paddingTop", "value": "4" },
+                              { "property": "paddingBottom", "value": "4" },
+                              { "property": "paddingLeft", "value": "12" },
+                              { "property": "paddingRight", "value": "12" },
+                              { "property": "borderRadius", "value": "9999" },
+                              {
+                                "property": "backgroundColor",
+                                "value": "rgba(255,255,255,0.2)"
+                              },
+                              {
+                                "property": "backdropFilter",
+                                "value": "blur(8px)"
+                              },
+                              { "property": "color", "value": "#ffffff" }
+                            ]
+                          }
                         }
                       ]
                     }
                   },
                   {
                     "type": "component",
-                    "id": "row-total-balance-eye",
+                    "id": "row-body",
                     "component": {
-                      "kind": "icon",
-                      "iconName": "Eye",
-                      "iconSize": 16,
+                      "kind": "container",
+                      "stackDirection": "column",
                       "styles": [
                         {
-                          "property": "color",
-                          "value": "rgba(255,255,255,0.7)"
+                          "property": "gap",
+                          "value": "var(--spacing-compact)"
+                        }
+                      ],
+                      "rows": [
+                        {
+                          "type": "component",
+                          "id": "row-kpi-wrap",
+                          "component": {
+                            "kind": "container",
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-kpi",
+                                "component": {
+                                  "kind": "metric-kpi",
+                                  "metricDefinitionId": "REPLACE_NET_BALANCE_METRIC_ID",
+                                  "label": "",
+                                  "groupBindings": {},
+                                  "dimensionBindings": {},
+                                  "parameterBindings": {
+                                    "period": {
+                                      "type": "dashboardDateFilter"
+                                    }
+                                  },
+                                  "styles": [
+                                    { "property": "marginTop", "value": "16" },
+                                    { "property": "fontSize", "value": "30" },
+                                    {
+                                      "property": "fontWeight",
+                                      "value": "bold"
+                                    },
+                                    {
+                                      "property": "letterSpacing",
+                                      "value": "1"
+                                    },
+                                    { "property": "color", "value": "#ffffff" }
+                                  ]
+                                }
+                              }
+                            ],
+                            "styles": []
+                          }
+                        },
+                        {
+                          "type": "component",
+                          "id": "row-growth-wrap",
+                          "component": {
+                            "kind": "container",
+                            "stackDirection": "row",
+                            "styles": [
+                              { "property": "alignItems", "value": "center" }
+                            ],
+                            "rows": [
+                              {
+                                "type": "component",
+                                "id": "row-growth",
+                                "component": {
+                                  "kind": "metric-kpi",
+                                  "metricDefinitionId": "Total Balance MoM %",
+                                  "label": "",
+                                  "groupBindings": {},
+                                  "dimensionBindings": {},
+                                  "parameterBindings": {
+                                    "currentPeriod": {
+                                      "type": "dashboardDateFilter"
+                                    }
+                                  },
+                                  "showToneColors": true,
+                                  "tonePolarity": "normal",
+                                  "styles": [
+                                    { "property": "fontSize", "value": "12" },
+                                    {
+                                      "property": "fontWeight",
+                                      "value": "bold"
+                                    },
+                                    {
+                                      "property": "backgroundColor",
+                                      "value": "var(--color-muted)"
+                                    },
+                                    {
+                                      "property": "paddingRight",
+                                      "value": "var(--spacing-comfortable)"
+                                    },
+                                    {
+                                      "property": "paddingLeft",
+                                      "value": "var(--spacing-comfortable)"
+                                    },
+                                    {
+                                      "property": "borderRadius",
+                                      "value": "var(--radius-lg)"
+                                    }
+                                  ]
+                                }
+                              }
+                            ]
+                          }
                         }
                       ]
                     }
-                  }
-                ]
-              }
-            },
-            {
-              "type": "component",
-              "id": "row-total-balance-period",
-              "component": {
-                "kind": "text",
-                "primary": { "type": "static", "value": "This month" },
-                "styles": [
-                  { "property": "fontSize", "value": "12" },
-                  { "property": "paddingTop", "value": "4" },
-                  { "property": "paddingBottom", "value": "4" },
-                  { "property": "paddingLeft", "value": "12" },
-                  { "property": "paddingRight", "value": "12" },
-                  { "property": "borderRadius", "value": "9999" },
-                  {
-                    "property": "backgroundColor",
-                    "value": "rgba(255,255,255,0.2)"
                   },
-                  { "property": "backdropFilter", "value": "blur(8px)" },
-                  { "property": "color", "value": "#ffffff" }
-                ]
-              }
-            }
-          ]
-        }
-      },
-      {
-        "type": "component",
-        "id": "row-total-balance-value",
-        "component": {
-          "kind": "metric-derived-kpi",
-          "expression": [
-            {
-              "type": "metric",
-              "metricDefinitionId": "REPLACE_TOTAL_INCOMES_METRIC_ID"
-            },
-            { "type": "operator", "op": "-" },
-            {
-              "type": "metric",
-              "metricDefinitionId": "REPLACE_TOTAL_OUTFLOWS_METRIC_ID"
-            }
-          ],
-          "groupBindings": {},
-          "dimensionBindings": {},
-          "styles": [
-            { "property": "marginTop", "value": "16" },
-            { "property": "fontSize", "value": "30" },
-            { "property": "fontWeight", "value": "bold" },
-            { "property": "letterSpacing", "value": "1" },
-            { "property": "color", "value": "#ffffff" }
-          ]
-        }
-      },
-      {
-        "type": "component",
-        "id": "row-total-balance-growth",
-        "component": {
-          "kind": "container",
-          "stackDirection": "row",
-          "styles": [
-            { "property": "marginTop", "value": "12" },
-            { "property": "alignSelf", "value": "start" },
-            { "property": "alignItems", "value": "center" },
-            { "property": "gap", "value": "8" },
-            { "property": "paddingTop", "value": "4" },
-            { "property": "paddingBottom", "value": "4" },
-            { "property": "paddingLeft", "value": "12" },
-            { "property": "paddingRight", "value": "12" },
-            { "property": "borderRadius", "value": "9999" },
-            {
-              "property": "backgroundColor",
-              "value": "rgba(255,255,255,0.9)"
-            }
-          ],
-          "rows": [
-            {
-              "type": "component",
-              "id": "row-total-balance-growth-value",
-              "component": {
-                "kind": "text",
-                "primary": { "type": "static", "value": "↑ 8.6%" },
-                "styles": [
-                  { "property": "fontSize", "value": "12" },
-                  { "property": "fontWeight", "value": "bold" },
-                  { "property": "color", "value": "success" }
-                ]
-              }
-            },
-            {
-              "type": "component",
-              "id": "row-total-balance-growth-caption",
-              "component": {
-                "kind": "text",
-                "primary": { "type": "static", "value": "vs last month" },
-                "styles": [
-                  { "property": "fontSize", "value": "12" },
-                  { "property": "color", "value": "#6b7280" }
+                  {
+                    "type": "component",
+                    "id": "row-total-balance-chart",
+                    "component": {
+                      "kind": "image",
+                      "displayMode": "overlay",
+                      "objectFit": "cover",
+                      "primary": {
+                        "type": "static",
+                        "value": "REPLACE_CHART_IMAGE_URL"
+                      },
+                      "styles": [
+                        { "property": "width", "value": "100%" },
+                        { "property": "marginBottom", "value": "-110" }
+                      ]
+                    }
+                  }
                 ]
               }
             }

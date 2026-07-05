@@ -21,6 +21,7 @@ import {
   type FlexAlign,
   type LayoutInlineStyle,
 } from "../styles/apply-style-rules.js";
+import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
 
 function findRowNodeInRows(
   rows: readonly RowNode[],
@@ -37,15 +38,6 @@ function findRowNodeInRows(
         return found;
       }
     }
-
-    if (row.type === "nested-layout") {
-      for (const column of row.columns) {
-        const found = findRowNodeInRows(column.rows, rowId);
-        if (found) {
-          return found;
-        }
-      }
-    }
   }
 
   return null;
@@ -55,7 +47,7 @@ function findRowNodeInLayout(
   layout: UiLayoutDocument,
   rowId: string,
 ): RowNode | null {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     const found = findRowNodeInRows(column.rows, rowId);
     if (found) {
       return found;
@@ -77,7 +69,7 @@ export function resolveParentStackDirection(
 ): ColumnStackDirection {
   switch (locator.scope) {
     case "root": {
-      const column = layout.root.columns[locator.columnIndex];
+      const column = resolveLayoutRootColumns(layout)[locator.columnIndex];
       return column ? resolveColumnStackDirection(column) : "column";
     }
     case "container": {
@@ -90,14 +82,6 @@ export function resolveParentStackDirection(
       }
       return "column";
     }
-    case "nested": {
-      const nestedRow = findRowNodeInLayout(layout, locator.rowId);
-      if (nestedRow?.type === "nested-layout") {
-        const column = nestedRow.columns[locator.nestedColumnIndex];
-        return column ? resolveColumnStackDirection(column) : "column";
-      }
-      return "column";
-    }
   }
 }
 
@@ -107,7 +91,7 @@ export function resolveParentStackAlign(
 ): FlexAlign | undefined {
   switch (locator.scope) {
     case "root": {
-      const column = layout.root.columns[locator.columnIndex];
+      const column = resolveLayoutRootColumns(layout)[locator.columnIndex];
       return column ? readStackAlignFromStyles(column.styles) : undefined;
     }
     case "container": {
@@ -120,14 +104,6 @@ export function resolveParentStackAlign(
       }
       return undefined;
     }
-    case "nested": {
-      const nestedRow = findRowNodeInLayout(layout, locator.rowId);
-      if (nestedRow?.type === "nested-layout") {
-        const column = nestedRow.columns[locator.nestedColumnIndex];
-        return column ? readStackAlignFromStyles(column.styles) : undefined;
-      }
-      return undefined;
-    }
   }
 }
 
@@ -137,7 +113,7 @@ export function resolveParentStackStyles(
 ): readonly StyleRule[] | undefined {
   switch (locator.scope) {
     case "root": {
-      return layout.root.columns[locator.columnIndex]?.styles;
+      return resolveLayoutRootColumns(layout)[locator.columnIndex]?.styles;
     }
     case "container": {
       const containerRow = findRowNodeInLayout(layout, locator.containerRowId);
@@ -146,13 +122,6 @@ export function resolveParentStackStyles(
         isContainerComponent(containerRow.component)
       ) {
         return containerRow.component.styles;
-      }
-      return undefined;
-    }
-    case "nested": {
-      const nestedRow = findRowNodeInLayout(layout, locator.rowId);
-      if (nestedRow?.type === "nested-layout") {
-        return nestedRow.columns[locator.nestedColumnIndex]?.styles;
       }
       return undefined;
     }
@@ -386,11 +355,11 @@ export function resolveProductionRowShellClassName(options: {
 }
 
 export function isStructuralLayoutRow(row: RowNode): boolean {
-  if (row.type === "nested-layout") {
+  if (row.type === "component" && isContainerComponent(row.component)) {
     return true;
   }
 
-  if (row.type === "component" && isContainerComponent(row.component)) {
+  if (row.type === "component" && row.component.kind === "grid") {
     return true;
   }
 

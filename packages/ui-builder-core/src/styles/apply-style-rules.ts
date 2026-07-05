@@ -667,11 +667,16 @@ export function rowPrefersContentWidth(
   return hasFlexZero || hasAlignSelfStartEnd;
 }
 
-/** Text, user, and image rows hug content unless they explicitly use flex: 1. */
+/** Text, user, and inline image rows hug content unless they explicitly use flex: 1. */
 export function prefersInlineContentWidth(component: {
   readonly kind: string;
   readonly styles?: readonly StyleRule[];
+  readonly displayMode?: "inline" | "overlay";
 }): boolean {
+  if (component.kind === "image" && component.displayMode === "overlay") {
+    return false;
+  }
+
   if (
     component.kind !== "text" &&
     component.kind !== "user" &&
@@ -691,6 +696,7 @@ export function inlineContentRowClassName(
   component: {
     readonly kind: string;
     readonly styles?: readonly StyleRule[];
+    readonly displayMode?: "inline" | "overlay";
   },
   parentIsFlexWrapRow = false,
 ): string {
@@ -942,6 +948,19 @@ export function gapStyleFromStyleRules(
   return resolveLengthStyleValue(String(gapRule.value));
 }
 
+/** Resolves grid gap CSS from explicit `gap` prop, then legacy style rules. */
+export function resolveGridGapCSSValue(
+  gap: string | undefined,
+  styles: readonly StyleRule[] | undefined,
+): string | undefined {
+  const trimmedGap = gap?.trim();
+  if (trimmedGap) {
+    return resolveLengthStyleValue(trimmedGap) ?? trimmedGap;
+  }
+
+  return gapStyleFromStyleRules(styles);
+}
+
 /** Pixel gap for `LayoutGrid` / `LayoutStack`; defaults to 0 when no `gap` style rule. */
 export function gapPxFromStyles(
   styles: readonly StyleRule[] | undefined,
@@ -1138,6 +1157,13 @@ function parseOpacityStyleValue(raw: string): string | undefined {
   const trimmed = raw.trim();
   if (trimmed.length === 0) {
     return undefined;
+  }
+
+  if (trimmed.includes(".")) {
+    const decimal = Number.parseFloat(trimmed);
+    if (Number.isFinite(decimal) && decimal >= 0 && decimal <= 1) {
+      return String(decimal);
+    }
   }
 
   const parsed = Number.parseInt(trimmed, 10);

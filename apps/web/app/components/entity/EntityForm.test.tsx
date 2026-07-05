@@ -10,6 +10,7 @@ import {
   createDefaultWizardShellLayout,
   createDefaultWizardFormConfig,
   createEmptyLayout,
+  withEditableRootColumns,
 } from "@repo/ui-builder-core";
 import { toast } from "@repo/ui";
 
@@ -385,29 +386,23 @@ describe("EntityForm", () => {
 
   it("shows validation summary for hidden field errors", () => {
     let layout = createDefaultFormLayout(["name"]);
-    layout = {
-      ...layout,
-      root: {
-        ...layout.root,
-        columns: [
+    layout = withEditableRootColumns(layout, (columns) => [
+      {
+        ...columns[0]!,
+        rows: [
           {
-            ...layout.root.columns[0]!,
-            rows: [
-              {
-                type: "component",
-                id: "hidden-category",
-                component: {
-                  kind: "form-field",
-                  fieldPath: "categoryId",
-                  hidden: true,
-                },
-              },
-              ...layout.root.columns[0]!.rows,
-            ],
+            type: "component",
+            id: "hidden-category",
+            component: {
+              kind: "form-field",
+              fieldPath: "categoryId",
+              hidden: true,
+            },
           },
+          ...columns[0]!.rows,
         ],
       },
-    };
+    ]);
 
     const entityWithHiddenField: EntityCatalogEntry = {
       ...widgetWithDesignedCreateForm,

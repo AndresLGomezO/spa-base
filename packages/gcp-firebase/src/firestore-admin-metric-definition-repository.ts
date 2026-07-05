@@ -64,11 +64,17 @@ export function createFirestoreAdminMetricDefinitionRepository(
         name: parsed.name,
         ...(parsed.description ? { description: parsed.description } : {}),
         sourceModel: parsed.sourceModel,
+        ...(parsed.sourceQueryDefinitionId
+          ? { sourceQueryDefinitionId: parsed.sourceQueryDefinitionId }
+          : {}),
         filters: parsed.filters,
         groupBy: parsed.groupBy,
         dimensions: parsed.dimensions,
         dateFieldGranularity: parsed.dateFieldGranularity,
         valueDisplayFormat: parsed.valueDisplayFormat,
+        computationMode: parsed.computationMode,
+        parameters: parsed.parameters,
+        ...(parsed.computation ? { computation: parsed.computation } : {}),
         aggregations: parsed.aggregations,
         target: {
           collection: generateMetricTargetCollection(id),
@@ -108,6 +114,15 @@ export function createFirestoreAdminMetricDefinitionRepository(
         ...(input.valueDisplayFormat !== undefined
           ? { valueDisplayFormat: input.valueDisplayFormat }
           : {}),
+        ...(input.computationMode !== undefined
+          ? { computationMode: input.computationMode }
+          : {}),
+        ...(input.parameters !== undefined
+          ? { parameters: input.parameters }
+          : {}),
+        ...(input.computation !== undefined
+          ? { computation: input.computation }
+          : {}),
         ...(input.aggregations ? { aggregations: input.aggregations } : {}),
         ...(input.version !== undefined ? { version: input.version } : {}),
         ...(input.schemaVersionDependency !== undefined
@@ -125,6 +140,12 @@ export function createFirestoreAdminMetricDefinitionRepository(
     },
     async delete(tenantId, id) {
       await collection(tenantId).doc(id).delete();
+    },
+    async countBySourceQueryDefinitionId(tenantId, entityQueryDefinitionId) {
+      const snapshot = await collection(tenantId)
+        .where("sourceQueryDefinitionId", "==", entityQueryDefinitionId)
+        .get();
+      return snapshot.size;
     },
   };
 }

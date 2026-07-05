@@ -20,11 +20,7 @@ import {
   LayoutJsonViewDialog,
   SavePresetDialog,
 } from "@repo/ui-builder-react";
-import {
-  replaceNestedColumnAt,
-  type ColumnNode,
-  type UiLayoutDocument,
-} from "@repo/ui-builder-core";
+import { type ColumnNode } from "@repo/ui-builder-core";
 import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
@@ -32,26 +28,12 @@ import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { useUiBuilderPresetStore } from "../ui-builder/use-ui-builder-preset-store";
 import { useFormDesignerLayoutEditorLabels } from "../form-designer/form-designer-layout-editor-labels";
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
-import { isNestedComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
-import { findColumnByRef } from "../form-designer/form-designer-components-layout";
+import {
+  findColumnByRef,
+  replaceColumnAtRef,
+} from "../form-designer/form-designer-components-layout";
 import { resolveLayoutBinding } from "./main-view-designer-layout-binding";
 import { useMainViewDesigner } from "./main-view-designer-context";
-
-function replaceRootColumnAt(
-  layout: UiLayoutDocument,
-  columnIndex: number,
-  column: ColumnNode,
-): UiLayoutDocument {
-  return {
-    ...layout,
-    root: {
-      ...layout.root,
-      columns: layout.root.columns.map((entry, index) =>
-        index === columnIndex ? column : entry,
-      ),
-    },
-  };
-}
 
 function ToolAction({
   label,
@@ -143,22 +125,7 @@ export function MainViewDesignerComponentColumnPanelHeaderMenu({
     );
 
   const applyColumn = (data: ColumnNode) => {
-    if (isNestedComponentColumnRef(columnRef)) {
-      binding.setLayout(
-        replaceNestedColumnAt(
-          binding.layout,
-          columnRef.rootColumnIndex,
-          columnRef.nestedParentRowId,
-          columnRef.nestedColumnIndex,
-          data,
-        ),
-      );
-      return;
-    }
-
-    binding.setLayout(
-      replaceRootColumnAt(binding.layout, columnRef.rootColumnIndex, data),
-    );
+    binding.setLayout(replaceColumnAtRef(binding.layout, columnRef, data));
   };
 
   return (

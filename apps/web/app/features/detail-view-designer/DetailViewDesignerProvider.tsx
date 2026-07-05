@@ -40,7 +40,12 @@ import {
   type DetailViewPanelTarget,
   type DetailViewUnsavedReason,
 } from "./detail-view-designer-panel-session";
-import { renderDetailViewStructurePanelChrome } from "./detail-view-designer-structure-panel-chrome";
+import { detailViewDesignerThirdRail } from "./detail-view-designer-third-rail";
+
+const DetailViewThirdRailHeaderActions =
+  detailViewDesignerThirdRail.HeaderActions;
+const DetailViewThirdRailBody = detailViewDesignerThirdRail.Body;
+const DetailViewThirdRailFooter = detailViewDesignerThirdRail.Footer;
 import {
   applyLayoutSnapshotToEditor,
   areLayoutSnapshotsEqual,
@@ -96,7 +101,6 @@ export function DetailViewDesignerProvider({
     open: openThirdRail,
     close: closeThirdRail,
     update: updateThirdRail,
-    isOpen: isThirdRailOpen,
   } = useThirdRail();
 
   const [previewBreakpoint, setPreviewBreakpoint] =
@@ -246,7 +250,9 @@ export function DetailViewDesignerProvider({
 
       openThirdRail({
         title: label,
-        ...renderDetailViewStructurePanelChrome(contextValue, session),
+        headerActions: <DetailViewThirdRailHeaderActions />,
+        body: <DetailViewThirdRailBody />,
+        footer: <DetailViewThirdRailFooter />,
         resizeContent: true,
         onClose: guardStructurePanelClose,
       });
@@ -273,7 +279,6 @@ export function DetailViewDesignerProvider({
 
       updateThirdRail({
         title: label,
-        ...renderDetailViewStructurePanelChrome(contextValue, session),
       });
     },
     [updateThirdRail],
@@ -580,31 +585,10 @@ export function DetailViewDesignerProvider({
 
   contextValueRef.current = contextValue;
 
-  useEffect(() => {
-    if (!structurePanelSession || !isThirdRailOpen) {
-      return;
-    }
-
-    const latestContext = contextValueRef.current;
-    if (!latestContext) {
-      return;
-    }
-
-    updateThirdRail({
-      title: structurePanelSession.label,
-      ...renderDetailViewStructurePanelChrome(
-        latestContext,
-        structurePanelSession,
-      ),
-    });
-  }, [
-    editor.layout,
-    isThirdRailOpen,
-    previewColorScheme,
-    structurePanelIsDirty,
-    structurePanelSession,
-    updateThirdRail,
-  ]);
+  detailViewDesignerThirdRail.publish({
+    contextValue,
+    session: structurePanelSession,
+  });
 
   return (
     <DetailViewDesignerContext.Provider value={contextValue}>

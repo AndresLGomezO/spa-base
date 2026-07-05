@@ -189,6 +189,7 @@ checksum = hash(
   "name": "string",
 
   "sourceModel": "string",
+  "sourceQueryDefinitionId": "string (optional)",
 
   "filters": [],
   "groupBy": [],
@@ -223,8 +224,9 @@ checksum = hash(
 UI must allow:
 
 * Selecting source model
+* Selecting source type: entity-only or custom query (`sourceQueryDefinitionId`)
 * Selecting fields dynamically
-* Defining filters
+* Defining filters (entity-backed metrics only; query-backed metrics use the query filter)
 * Defining groupBy + dimensions
 * Selecting aggregation operations
 * Version tracking
@@ -259,6 +261,10 @@ Filter relevant metrics:
    ↓
 For each metric:
    ↓
+If sourceQueryDefinitionId set:
+   - evaluate query membership (recordMatchesEntityQueryDefinition)
+   - skip if record outside query population
+   ↓
 Compute delta
    ↓
 Apply aggregation
@@ -275,6 +281,7 @@ Only process metric if:
 ```ts
 event.model === metric.sourceModel &&
 intersects(event.changedFields, metric.fieldsDependency)
+// Query-backed: additionally require query membership at event time
 ```
 
 ---

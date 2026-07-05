@@ -53,6 +53,21 @@ export {
   type ResponsiveGridEditorProps,
 } from "./components/ResponsiveGridEditor.js";
 export {
+  PreservedTextInput,
+  type PreservedTextInputProps,
+} from "./components/PreservedTextInput.js";
+export {
+  StructureItemNameEditor,
+  normalizeStructureItemName,
+  type StructureItemNameEditorLabels,
+  type StructureItemNameEditorProps,
+} from "./components/StructureItemNameEditor.js";
+export {
+  LayoutPropsEditor,
+  LayoutPropsEditorSectionLabel,
+  type LayoutPropsEditorProps,
+} from "./components/LayoutPropsEditor.js";
+export {
   filterStyleRulesForGenericEditor,
   isResponsiveGridStyleProperty,
 } from "./components/responsive-grid-state.js";
@@ -117,7 +132,12 @@ export {
   type ColumnStackDirectionEditorProps,
 } from "./components/ColumnStackDirectionEditor.js";
 export {
-  StructureItemNameEditor,
-  type StructureItemNameEditorLabels,
-  type StructureItemNameEditorProps,
-} from "./components/StructureItemNameEditor.js";
+  createLayoutEditorBinding,
+  areLayoutSnapshotsEqual,
+  type LayoutEditorBinding,
+} from "./layout/create-layout-editor-binding.js";
+export {
+  toComponentRowRef,
+  areComponentRowRefsEqual,
+  type ComponentRowRef,
+} from "./layout/component-row-ref.js";

@@ -13,6 +13,7 @@ export {
 export {
   processAggregationEvent,
   selectMetricsForEvent,
+  type MetricQueryMembershipResolver,
   type MetricValueWriter,
 } from "./process-event.js";
 export {

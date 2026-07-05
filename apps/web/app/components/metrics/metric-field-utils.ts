@@ -10,7 +10,7 @@ import type {
   MetricValueDisplayFormat,
 } from "@repo/metrics-engine/browser";
 
-export type MetricFilterRecord = MetricDefinitionRecord["filters"][number];
+type MetricFilterRecord = MetricDefinitionRecord["filters"][number];
 
 export interface MetricFilterEditorRow {
   readonly id: string;
@@ -417,7 +417,7 @@ export function formatAggregationLabel(
   return `${spec.operation}(${spec.field})`;
 }
 
-export interface MetricSummaryContext {
+interface MetricSummaryContext {
   readonly name: string;
   readonly description: string;
   readonly sourceModel: string;
@@ -536,11 +536,4 @@ export function formatSummaryExampleValues(
       : "{}";
 
   return `{ ${valueParts.join(", ")}, group: ${groupExample}, dimensions: ${dimensionsExample} }`;
-}
-
-export function formatFieldList(fields: readonly string[]): string {
-  if (fields.length === 0) {
-    return "";
-  }
-  return fields.join(", ");
 }

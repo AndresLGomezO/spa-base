@@ -9,16 +9,19 @@ import {
   buildMetricRowQueryFromBindings,
   type MetricBindingContext,
 } from "../../lib/metric-binding-resolution.js";
+import { buildMetricParameterValuesFromBindings } from "../../lib/build-metric-parameter-values.js";
 import type { MetricRowQuery } from "../../lib/api-client.js";
 import { resolveMetricDefinitionDocumentId } from "../../lib/resolve-metric-definition-reference.js";
 import { useActiveMetricDefinitions } from "../../hooks/metrics/useActiveMetricDefinitions.js";
 import { useMetricReadAccess } from "../../hooks/metrics/useCanReadMetricValues.js";
-import { useMetricDefinition } from "../../hooks/metrics/useMetricDefinition.js";
 import { useMetricRow } from "../../hooks/metrics/useMetricRow.js";
+import { useMetricEvaluate } from "../../hooks/metrics/useMetricEvaluate.js";
 import {
   formatPrimaryMetricDisplayValue,
   formatDefaultMetricDisplayValue,
+  readPrimaryMetricNumericValue,
 } from "./format-metric-display-value.js";
+import { resolveMetricKpiValueToneClass } from "@repo/ui-builder-core";
 
 type MetricValuePresentation = "card" | "inline";
 
@@ -26,6 +29,10 @@ interface MetricValueDisplayProps {
   readonly metricDefinitionId: string;
   readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly parameterBindings?: Readonly<Record<string, MetricBindingSource>>;
+  readonly queryParameterBindings?: Readonly<
+    Record<string, MetricBindingSource>
+  >;
   readonly context?: MetricBindingContext;
   readonly label?: string;
   readonly emptyLabel?: string;
@@ -36,6 +43,8 @@ interface MetricValueDisplayProps {
   readonly valueClassName?: string;
   readonly valueStyle?: CSSProperties;
   readonly textSize?: number;
+  readonly showToneColors?: boolean;
+  readonly tonePolarity?: "normal" | "inverted";
 }
 
 function MetricValueShell({
@@ -66,12 +75,16 @@ function MetricValueShell({
   );
 }
 
-function metricValueTextClassName(valueClassName: string | undefined): string {
+function metricValueTextClassName(
+  valueClassName: string | undefined,
+  toneClassName: string,
+): string {
   return cn(
     "tabular-nums",
     valueClassName === undefined || valueClassName.length === 0
       ? "text-2xl font-semibold truncate"
       : valueClassName,
+    toneClassName,
   );
 }
 
@@ -106,6 +119,8 @@ export function MetricValueDisplay({
   metricDefinitionId,
   groupBindings,
   dimensionBindings,
+  parameterBindings,
+  queryParameterBindings,
   context = {},
   label,
   emptyLabel,
@@ -116,14 +131,18 @@ export function MetricValueDisplay({
   valueClassName,
   valueStyle,
   textSize,
+  showToneColors,
+  tonePolarity,
 }: MetricValueDisplayProps) {
   const { t, i18n } = useTranslation("common");
   const configuredMetricDefinitionId = metricDefinitionId?.trim() ?? "";
   const activeDefinitionsQuery = useActiveMetricDefinitions(
     configuredMetricDefinitionId.length > 0,
   );
+  const catalogReady = activeDefinitionsQuery.isSuccess;
+
   const resolvedMetricDefinitionId = useMemo(() => {
-    if (configuredMetricDefinitionId.length === 0) {
+    if (configuredMetricDefinitionId.length === 0 || !catalogReady) {
       return undefined;
     }
 
@@ -131,46 +150,101 @@ export function MetricValueDisplay({
       configuredMetricDefinitionId,
       activeDefinitionsQuery.data ?? [],
     );
-  }, [activeDefinitionsQuery.data, configuredMetricDefinitionId]);
+  }, [activeDefinitionsQuery.data, catalogReady, configuredMetricDefinitionId]);
+
+  const definition = useMemo(() => {
+    if (!resolvedMetricDefinitionId) {
+      return undefined;
+    }
+
+    return activeDefinitionsQuery.data?.find(
+      (item) => item.id === resolvedMetricDefinitionId,
+    );
+  }, [activeDefinitionsQuery.data, resolvedMetricDefinitionId]);
 
   const hasMetricDefinitionId = Boolean(resolvedMetricDefinitionId?.trim());
-  const definitionQuery = useMetricDefinition(resolvedMetricDefinitionId);
-  const readAccess = useMetricReadAccess(definitionQuery.data?.sourceModel, {
-    sourceModelResolved: !hasMetricDefinitionId || definitionQuery.isFetched,
+  const readAccess = useMetricReadAccess(definition?.sourceModel, {
+    sourceModelResolved:
+      !hasMetricDefinitionId || activeDefinitionsQuery.isFetched,
   });
   const canRead = readAccess === "allowed";
   const inline = presentation === "inline";
   const statusClassName = "text-sm";
-  const valueTextClassName = metricValueTextClassName(valueClassName);
+
+  const resolveValueClassName = (numericValue: number | null | undefined) =>
+    metricValueTextClassName(
+      valueClassName,
+      resolveMetricKpiValueToneClass(numericValue, {
+        showToneColors,
+        tonePolarity,
+      }),
+    );
+
+  const isComputed = definition?.computationMode === "computed";
+
+  const resolvedParameters = useMemo(() => {
+    if (!definition || !isComputed) {
+      return null;
+    }
+    const resolvedParameterBindings =
+      parameterBindings ?? queryParameterBindings ?? {};
+    return buildMetricParameterValuesFromBindings(
+      definition,
+      resolvedParameterBindings,
+      context,
+    );
+  }, [
+    context,
+    definition,
+    isComputed,
+    parameterBindings,
+    queryParameterBindings,
+  ]);
 
   const resolvedQuery = useMemo(
     () =>
       queryOverride ??
-      (definitionQuery.data
+      (!isComputed && definition
         ? buildMetricRowQueryFromBindings(
-            definitionQuery.data,
+            definition,
             { groupBindings, dimensionBindings },
             context,
           )
         : null),
     [
       context,
-      definitionQuery.data,
+      definition,
       dimensionBindings,
       groupBindings,
+      isComputed,
       queryOverride,
     ],
   );
 
   const rowQueryEnabled =
-    canRead && definitionQuery.isSuccess && resolvedQuery !== null;
+    canRead && Boolean(definition) && !isComputed && resolvedQuery !== null;
+
+  const evaluateEnabled =
+    canRead && Boolean(definition) && isComputed && resolvedParameters !== null;
 
   const rowQuery = useMetricRow({
     metricDefinitionId: resolvedMetricDefinitionId,
-    sourceModel: definitionQuery.data?.sourceModel,
+    sourceModel: definition?.sourceModel,
     query: resolvedQuery,
     enabled: rowQueryEnabled,
   });
+
+  const evaluateQuery = useMetricEvaluate({
+    metricDefinitionId: resolvedMetricDefinitionId,
+    definition,
+    parameters: resolvedParameters,
+    enabled: evaluateEnabled,
+  });
+
+  const activeQuery = isComputed ? evaluateQuery : rowQuery;
+  const rowQueryEnabledForLoading = isComputed
+    ? evaluateEnabled
+    : rowQueryEnabled;
 
   if (configuredMetricDefinitionId.length === 0) {
     return (
@@ -188,10 +262,9 @@ export function MetricValueDisplay({
 
   if (
     readAccess === "pending" ||
-    definitionQuery.isLoading ||
-    (configuredMetricDefinitionId.length > 0 &&
-      activeDefinitionsQuery.isLoading) ||
-    (rowQueryEnabled && rowQuery.isLoading)
+    activeDefinitionsQuery.isLoading ||
+    (configuredMetricDefinitionId.length > 0 && !catalogReady) ||
+    (rowQueryEnabledForLoading && activeQuery.isLoading)
   ) {
     return (
       <MetricValueShell
@@ -220,7 +293,7 @@ export function MetricValueDisplay({
     );
   }
 
-  if (definitionQuery.isError || rowQuery.isError) {
+  if (activeDefinitionsQuery.isError || activeQuery.isError) {
     return (
       <MetricValueShell
         presentation={presentation}
@@ -228,7 +301,7 @@ export function MetricValueDisplay({
         style={style}
       >
         <Text variant="muted" className={statusClassName}>
-          {definitionQuery.isError
+          {activeDefinitionsQuery.isError
             ? t("metrics.widget.unknown")
             : t("metrics.widget.error")}
         </Text>
@@ -236,18 +309,33 @@ export function MetricValueDisplay({
     );
   }
 
-  const definition = definitionQuery.data;
+  if (catalogReady && configuredMetricDefinitionId.length > 0 && !definition) {
+    return (
+      <MetricValueShell
+        presentation={presentation}
+        className={className}
+        style={style}
+      >
+        <Text variant="muted" className={statusClassName}>
+          {t("metrics.widget.unknown")}
+        </Text>
+      </MetricValueShell>
+    );
+  }
+
   if (!definition) {
     return null;
   }
 
   const title = label ?? definition.name;
-  const row = rowQuery.data;
+  const row = activeQuery.data;
   const defaultDisplayValue = formatDefaultMetricDisplayValue(
     definition,
     i18n.language,
   );
-  const emptyText = emptyLabel ?? defaultDisplayValue;
+  const emptyText =
+    emptyLabel ??
+    (isComputed ? t("metrics.widget.noValue") : defaultDisplayValue);
 
   if (!row) {
     if (inline) {
@@ -258,7 +346,7 @@ export function MetricValueDisplay({
           style={style}
         >
           <MetricKpiValueText
-            valueClassName={valueTextClassName}
+            valueClassName={resolveValueClassName(null)}
             valueStyle={valueStyle}
             textSize={textSize}
           >
@@ -275,7 +363,7 @@ export function MetricValueDisplay({
       >
         <Text className="text-muted-foreground text-xs">{title}</Text>
         <MetricKpiValueText
-          valueClassName={valueTextClassName}
+          valueClassName={resolveValueClassName(null)}
           valueStyle={valueStyle}
           textSize={textSize}
         >
@@ -285,12 +373,14 @@ export function MetricValueDisplay({
     );
   }
 
+  const numericValue = readPrimaryMetricNumericValue(definition, row.values);
   const value = formatPrimaryMetricDisplayValue(
     definition,
     row.values,
     i18n.language,
   );
   const displayValue = value === null ? emptyText : value;
+  const valueTextClassName = resolveValueClassName(numericValue);
 
   if (inline) {
     return (

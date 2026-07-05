@@ -275,6 +275,7 @@ const BACKFILL_RELEVANT_FIELDS = [
   "fieldsDependency",
   "schemaVersionDependency",
   "sourceModel",
+  "sourceQueryDefinitionId",
 ] as const;
 
 export function listBackfillRelevantChangedFields(input: {
@@ -298,5 +299,11 @@ export function metricDefinitionNeedsBackfill(input: {
   readonly existing: MetricDefinitionRecord;
   readonly imported: CreateMetricDefinitionInput;
 }): boolean {
+  if (
+    input.imported.computationMode === "computed" ||
+    input.existing.computationMode === "computed"
+  ) {
+    return false;
+  }
   return listBackfillRelevantChangedFields(input).length > 0;
 }

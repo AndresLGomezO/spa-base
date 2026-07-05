@@ -6,7 +6,8 @@ import {
 } from "../form-designer/form-designer-components-layout";
 import type { UseTenantDashboardLayoutEditorResult } from "../ui-builder/use-tenant-dashboard-layout-editor";
 import type { DashboardLayoutPanelSession } from "./dashboard-layout-designer-panel-session";
-import type { DashboardLayoutDesignerTabId } from "./dashboard-layout-designer-tabs";
+import type { DashboardLayoutDesignFocus } from "./dashboard-layout-designer-tabs";
+import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 
 function resolveSelectedSectionLayout(
   editor: Pick<
@@ -49,9 +50,9 @@ export function readPanelLayoutSnapshot(
     UseTenantDashboardLayoutEditorResult,
     "dashboardLayout" | "selectedSection" | "dashboardSections"
   >,
-  activeTabId: DashboardLayoutDesignerTabId,
+  designFocus: DashboardLayoutDesignFocus,
 ): UiLayoutDocument {
-  if (activeTabId === "layout") {
+  if (isShellLayoutFocus(designFocus)) {
     return readDashboardLayoutSnapshot(editor);
   }
 
@@ -64,10 +65,10 @@ export function applyPanelSessionSnapshot(
     "setDashboardLayout" | "updateSelectedSectionLayout"
   >,
   session: Pick<DashboardLayoutPanelSession, "baseline">,
-  activeTabId: DashboardLayoutDesignerTabId,
+  designFocus: DashboardLayoutDesignFocus,
 ): void {
   const snapshot = structuredClone(session.baseline);
-  if (activeTabId === "layout") {
+  if (isShellLayoutFocus(designFocus)) {
     editor.setDashboardLayout(snapshot);
     return;
   }
@@ -122,9 +123,9 @@ export function resolveActiveLayoutBinding(
     | "dashboardSections"
     | "updateSelectedSectionLayout"
   >,
-  activeTabId: DashboardLayoutDesignerTabId,
+  designFocus: DashboardLayoutDesignFocus,
 ): ComponentsLayoutBinding {
-  if (activeTabId === "layout") {
+  if (isShellLayoutFocus(designFocus)) {
     return resolveDashboardLayoutBinding(editor);
   }
 

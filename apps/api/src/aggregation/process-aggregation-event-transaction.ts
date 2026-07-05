@@ -14,6 +14,7 @@ export async function processAggregationEventTransaction(
       metricDefinitionRepository: metricRuntime.metricDefinitionRepository,
       metricValueRepository: metricRuntime.metricValueRepository,
       metricContributionRepository: metricRuntime.metricContributionRepository,
+      resolveQueryMembership: metricRuntime.resolveQueryMembership,
     },
     tenantId,
     eventId,

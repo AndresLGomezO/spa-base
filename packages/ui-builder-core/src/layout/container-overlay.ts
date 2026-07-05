@@ -1,6 +1,7 @@
 import type { ImageComponentConfig } from "../types/component.js";
 import { isContainerComponent } from "../types/component.js";
 import type { RowNode, UiLayoutDocument } from "../types/layout.js";
+import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
 import type { StyleRule, StylePropertyKey } from "../styles/style-types.js";
 import {
   layoutInlineStyleFromStyleRules,
@@ -161,7 +162,7 @@ function rowEstablishesDefiniteHeight(row: RowNode): boolean {
 export function layoutEstablishesDefiniteHeight(
   layout: UiLayoutDocument,
 ): boolean {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     for (const row of column.rows) {
       if (rowEstablishesDefiniteHeight(row)) {
         return true;
@@ -387,14 +388,6 @@ export function containerRowsIncludeOverlayImage(
     if (row.type === "component" && isContainerComponent(row.component)) {
       if (containerHasOverlayImage(row.component.rows)) {
         return true;
-      }
-    }
-
-    if (row.type === "nested-layout") {
-      for (const column of row.columns) {
-        if (containerRowsIncludeOverlayImage(column.rows)) {
-          return true;
-        }
       }
     }
   }

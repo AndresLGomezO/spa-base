@@ -5,10 +5,11 @@ import {
   toast,
   type SegmentedSwitchOption,
 } from "@repo/ui";
-import type { FormModalSize, FormPresentation } from "@repo/entities";
+import type { FormModalSize } from "@repo/entities";
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
+import { LayoutSystemPresetPicker } from "../ui-builder/LayoutSystemPresetPicker";
 import { useFormDesigner } from "./form-designer-context";
 import { FormDesignerPreview } from "./FormDesignerPreview";
 
@@ -36,26 +37,18 @@ const PREVIEW_BREAKPOINT_LABEL_KEY = {
   full: "formDesigner.previewBreakpoints.full",
 } as const;
 
+const FORM_PRESET_SURFACES = ["formPlain", "formWizardShell"] as const;
+
 export function FormDesignerSettingsTab() {
   const { t } = useTranslation("common");
-  const { editor, canSave, settingsIsDirty, saveSettings, previewBreakpoint } =
-    useFormDesigner();
-
-  const presentationOptions = useMemo(
-    (): readonly SegmentedSwitchOption<FormPresentation>[] => [
-      {
-        value: "plain",
-        label: t("designLayout.formPresentationPlain"),
-        ariaLabel: t("designLayout.formPresentationPlain"),
-      },
-      {
-        value: "wizard",
-        label: t("designLayout.formPresentationWizard"),
-        ariaLabel: t("designLayout.formPresentationWizard"),
-      },
-    ],
-    [t],
-  );
+  const {
+    editor,
+    canSave,
+    settingsIsDirty,
+    layoutIsDirty,
+    saveSettings,
+    previewBreakpoint,
+  } = useFormDesigner();
 
   const modalSizeOptions = useMemo(
     (): readonly SegmentedSwitchOption<FormModalSize>[] => [
@@ -104,17 +97,24 @@ export function FormDesignerSettingsTab() {
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap items-start gap-4">
-        <div className="flex min-w-0 flex-col gap-1">
-          <span className="text-muted-foreground text-sm">
-            {t("designLayout.presentation")}
-          </span>
-          <SegmentedSwitch
-            value={editor.presentation}
-            options={presentationOptions}
-            onChange={(value) => editor.setPresentation(value)}
-            ariaLabel={t("designLayout.presentation")}
-          />
-        </div>
+        <LayoutSystemPresetPicker
+          entityName={editor.entityName}
+          surfaces={FORM_PRESET_SURFACES}
+          fieldPaths={editor.fieldPaths}
+          value={editor.layoutPresetId}
+          canApply={canSave}
+          confirmOnReplace={layoutIsDirty}
+          onApplyBuiltin={(selection) =>
+            editor.applyFormSystemPreset(selection)
+          }
+          onApplyTenant={(preset, layout) =>
+            editor.applyFormSystemPreset({
+              source: "tenant",
+              preset,
+              layout,
+            })
+          }
+        />
         <div className="flex min-w-0 flex-col gap-1">
           <span className="text-muted-foreground text-sm">
             {t("designLayout.formModalSize")}

@@ -6,14 +6,15 @@ import {
   resolveFormPresentation,
   type FormModalSize,
   type FormModalSizeByBreakpoint,
-  type FormPresentation,
   type SerializableEntityDefinition,
 } from "@repo/entities";
 
 import type { UseEntityFormLayoutEditorResult } from "../ui-builder/use-entity-form-layout-editor";
+import { resolveFormLayoutPresetId } from "../ui-builder/use-entity-form-layout-editor";
+import type { LayoutPresetId } from "../ui-builder/use-layout-system-preset-catalog";
 
 export interface FormDesignerSettingsSnapshot {
-  readonly presentation: FormPresentation;
+  readonly layoutPresetId: LayoutPresetId;
   readonly modalSize: FormModalSize;
   readonly modalSizeByBreakpoint: FormModalSizeByBreakpoint;
   readonly showHeader: boolean;
@@ -41,7 +42,7 @@ function areModalSizeByBreakpointsEqual(
 export function readSettingsSnapshot(
   editor: Pick<
     UseEntityFormLayoutEditorResult,
-    | "presentation"
+    | "layoutPresetId"
     | "modalSize"
     | "modalSizeByBreakpoint"
     | "modalChrome"
@@ -49,7 +50,7 @@ export function readSettingsSnapshot(
   >,
 ): FormDesignerSettingsSnapshot {
   return {
-    presentation: editor.presentation,
+    layoutPresetId: editor.layoutPresetId,
     modalSize: editor.modalSize,
     modalSizeByBreakpoint: editor.modalSizeByBreakpoint,
     showHeader: editor.modalChrome.showHeader ?? true,
@@ -63,7 +64,9 @@ export function readSettingsSnapshotFromDefinition(
 ): FormDesignerSettingsSnapshot {
   const chrome = resolveFormModalChrome(definition);
   return {
-    presentation: resolveFormPresentation(definition),
+    layoutPresetId: resolveFormLayoutPresetId(
+      resolveFormPresentation(definition),
+    ),
     modalSize: resolveFormModalSize(definition),
     modalSizeByBreakpoint:
       resolveFormModalSizeByBreakpointFromDefinition(definition),
@@ -78,7 +81,7 @@ export function areSettingsSnapshotsEqual(
   right: FormDesignerSettingsSnapshot,
 ): boolean {
   return (
-    left.presentation === right.presentation &&
+    left.layoutPresetId === right.layoutPresetId &&
     left.modalSize === right.modalSize &&
     areModalSizeByBreakpointsEqual(
       left.modalSizeByBreakpoint,
@@ -93,7 +96,7 @@ export function areSettingsSnapshotsEqual(
 export function applySettingsSnapshotToEditor(
   editor: Pick<
     UseEntityFormLayoutEditorResult,
-    | "setPresentation"
+    | "applyFormSystemPreset"
     | "setModalSize"
     | "setModalSizeByBreakpoint"
     | "setShowModalHeader"
@@ -104,7 +107,15 @@ export function applySettingsSnapshotToEditor(
   >,
   snapshot: FormDesignerSettingsSnapshot,
 ): void {
-  editor.setPresentation(snapshot.presentation);
+  const builtinId =
+    snapshot.layoutPresetId === "plain-form" ||
+    snapshot.layoutPresetId === "wizard-form"
+      ? snapshot.layoutPresetId
+      : null;
+  if (builtinId) {
+    editor.applyFormSystemPreset({ source: "builtin", id: builtinId });
+  }
+
   editor.setModalSize(snapshot.modalSize);
   editor.setModalSizeByBreakpoint(snapshot.modalSizeByBreakpoint);
   editor.setShowModalHeader(snapshot.showHeader);

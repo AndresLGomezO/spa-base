@@ -1,9 +1,10 @@
+import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
 import { describe, expect, it } from "vitest";
 
 import { migrateViewSearchFilterLayout } from "./migrate-view-search-filter-layout.js";
-import type { UiLayoutDocument } from "../types/layout.js";
+import type { ColumnNode } from "../types/layout.js";
 
-function layoutWithRows(rows: UiLayoutDocument["root"]["columns"][0]["rows"]) {
+function layoutWithRows(rows: ColumnNode["rows"]) {
   return {
     root: {
       type: "root" as const,
@@ -42,8 +43,8 @@ describe("migrateViewSearchFilterLayout", () => {
 
     const migrated = migrateViewSearchFilterLayout(layout);
 
-    expect(migrated.root.columns[0]?.rows).toHaveLength(1);
-    expect(migrated.root.columns[0]?.rows[0]).toMatchObject({
+    expect(resolveLayoutRootColumns(migrated)[0]?.rows).toHaveLength(1);
+    expect(resolveLayoutRootColumns(migrated)[0]?.rows[0]).toMatchObject({
       id: "row-filter",
       component: {
         kind: "view-filter",
@@ -68,7 +69,7 @@ describe("migrateViewSearchFilterLayout", () => {
 
     const migrated = migrateViewSearchFilterLayout(layout);
 
-    expect(migrated.root.columns[0]?.rows[0]).toMatchObject({
+    expect(resolveLayoutRootColumns(migrated)[0]?.rows[0]).toMatchObject({
       id: "row-search",
       component: {
         kind: "view-filter",

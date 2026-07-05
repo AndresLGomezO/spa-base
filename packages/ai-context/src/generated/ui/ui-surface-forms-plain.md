@@ -2,7 +2,7 @@
 
 Single-page create/edit form layout.
 
-Set `presentation: "plain"`. Use form-field, form-section, form-actions.
+Set `presentation: "plain"`. Default preset: `plain-form`. Use form-field, form-section, form-actions.
 
 ## Allowed component kinds
 - `form-field`
@@ -41,52 +41,63 @@ Set `presentation: "plain"`. Use form-field, form-section, form-actions.
                   "kind": "container",
                   "rows": [
                     {
-                      "type": "nested-layout",
-                      "id": "nested-example",
-                      "columnCount": 2,
-                      "columns": [
-                        {
-                          "id": "col-example",
-                          "rows": [
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "name"
-                                },
-                                "label": {
-                                  "show": true
-                                }
-                              }
-                            }
-                          ]
-                        },
-                        {
-                          "id": "col-example",
-                          "rows": [
-                            {
-                              "type": "component",
-                              "id": "row-example",
-                              "component": {
-                                "kind": "text",
-                                "primary": {
-                                  "type": "field",
-                                  "path": "name"
-                                },
-                                "styles": [
-                                  {
-                                    "property": "fontWeight",
-                                    "value": "bold"
+                      "type": "component",
+                      "id": "row-example",
+                      "component": {
+                        "kind": "grid",
+                        "gridTemplateColumns": "repeat(2, 1fr)",
+                        "rows": [
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "name"
+                                    },
+                                    "label": {
+                                      "show": true
+                                    }
                                   }
-                                ]
-                              }
+                                }
+                              ]
                             }
-                          ]
-                        }
-                      ]
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-example",
+                            "component": {
+                              "kind": "container",
+                              "rows": [
+                                {
+                                  "type": "component",
+                                  "id": "row-example",
+                                  "component": {
+                                    "kind": "text",
+                                    "primary": {
+                                      "type": "field",
+                                      "path": "name"
+                                    },
+                                    "styles": [
+                                      {
+                                        "property": "fontWeight",
+                                        "value": "bold"
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            }
+                          }
+                        ]
+                      }
                     }
                   ]
                 }

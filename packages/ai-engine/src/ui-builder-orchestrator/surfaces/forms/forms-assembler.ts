@@ -12,7 +12,6 @@ import {
   ensureContainerRoot,
   normalizeLayout,
   resolveRootContainerLocator,
-  type ColumnNode,
   type RowNode,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
@@ -24,6 +23,10 @@ import type {
 } from "../../types.js";
 import { sanitizeFormComponentConfig } from "./sanitize-form-component-config.js";
 import { wizardStepPathKey } from "./forms-plan.js";
+import {
+  buildGridRowFromSkeleton,
+  isGridSkeletonSpec,
+} from "../skeleton-grid-assembler.js";
 
 function buildRowsFromSkeleton(
   skeleton: readonly SkeletonComponentSpec[],
@@ -38,24 +41,15 @@ function buildRowsFromSkeleton(
     const spec = skeleton[index]!;
     const path = `${prefix}/${index}`;
 
-    if (spec.kind === "nested-layout") {
-      const innerColumns = spec.columns ?? [];
-      const columns: ColumnNode[] = innerColumns.map((column, colIndex) => ({
-        id: createLayoutId("col"),
-        rows: buildRowsFromSkeleton(
-          column.components,
-          configs,
-          `${path}/col${colIndex}`,
+    if (isGridSkeletonSpec(spec)) {
+      rows.push(
+        buildGridRowFromSkeleton(
+          spec,
+          (components, childPath) =>
+            buildRowsFromSkeleton(components, configs, childPath),
+          path,
         ),
-      }));
-      rows.push({
-        type: "nested-layout",
-        id: createLayoutId("nested"),
-        columnCount: columns.length,
-        columns,
-        ...(spec.displayFrom ? { displayFrom: spec.displayFrom } : {}),
-        ...(spec.displayTo ? { displayTo: spec.displayTo } : {}),
-      });
+      );
       continue;
     }
 
@@ -115,9 +109,9 @@ function hasFormActions(rows: readonly SkeletonComponentSpec[]): boolean {
     if (spec.kind === "form-actions" || spec.kind === "wizard-actions") {
       return true;
     }
-    if (spec.kind === "nested-layout") {
-      for (const column of spec.columns ?? []) {
-        if (hasFormActions(column.components)) {
+    if (isGridSkeletonSpec(spec)) {
+      for (const track of spec.tracks ?? spec.columns ?? []) {
+        if (hasFormActions(track.components)) {
           return true;
         }
       }

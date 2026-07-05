@@ -1,24 +1,19 @@
 import type { MetricWidgetDefinition } from "@repo/entities";
 import {
-  addComponentRowAt,
-  createDefaultComponent,
+  createEmptyLayout,
   createLayoutId,
-  beginContainerRootLayout,
+  ensureContainerRoot,
 } from "@repo/ui-builder-core";
 
 export function createDefaultMetricWidget(
   name: string,
 ): MetricWidgetDefinition {
-  const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
-  const layout = addComponentRowAt(
-    beganLayout,
-    containerLocator,
-    createDefaultComponent("metric-kpi"),
-  );
-
   return {
     id: createLayoutId("widget"),
     name,
-    layout: { ...layout, showActions: true },
+    layout: {
+      ...ensureContainerRoot(createEmptyLayout(1)),
+      showActions: true,
+    },
   };
 }

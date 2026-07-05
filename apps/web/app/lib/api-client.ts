@@ -668,7 +668,9 @@ export interface MetricDefinitionRecord {
   readonly metricId: string;
   readonly name: string;
   readonly description?: string;
+  readonly computationMode?: "aggregated" | "computed";
   readonly sourceModel: string;
+  readonly sourceQueryDefinitionId?: string;
   readonly filters: readonly {
     readonly field: string;
     readonly op: "eq" | "in";
@@ -679,7 +681,20 @@ export interface MetricDefinitionRecord {
   readonly dateFieldGranularity: Readonly<
     Record<string, "day" | "month" | "year">
   >;
-  readonly valueDisplayFormat: "number" | "currency";
+  readonly valueDisplayFormat: "number" | "currency" | "percent";
+  readonly parameters?: readonly {
+    readonly name: string;
+    readonly valueType: "dateBucket" | "string" | "number";
+    readonly granularity?: "day" | "month" | "year";
+    readonly deriveFrom?: {
+      readonly parameter: string;
+      readonly shift: {
+        readonly unit: "day" | "month" | "year";
+        readonly offset: number;
+      };
+    };
+  }[];
+  readonly computation?: Record<string, unknown>;
   readonly aggregations: readonly {
     readonly field?: string;
     readonly operation: "SUM" | "COUNT" | "AVG";
@@ -766,6 +781,33 @@ export async function fetchMetricBatch(
   return result.items;
 }
 
+async function fetchMetricEvaluate(
+  metricDefinitionId: string,
+  parameters: Readonly<Record<string, unknown>>,
+): Promise<MetricRowResponse> {
+  return apiRequest<MetricRowResponse>(
+    `/api/metrics/${metricDefinitionId}/evaluate`,
+    {
+      method: "POST",
+      body: { parameters },
+    },
+  );
+}
+
+export async function fetchMetricEvaluateOrNull(
+  metricDefinitionId: string,
+  parameters: Readonly<Record<string, unknown>>,
+): Promise<MetricRowResponse | null> {
+  try {
+    return await fetchMetricEvaluate(metricDefinitionId, parameters);
+  } catch (error) {
+    if (isMetricRowNotFoundError(error)) {
+      return null;
+    }
+    throw error;
+  }
+}
+
 type CreateMetricDefinitionInput = Omit<
   MetricDefinitionRecord,
   "id" | "tenantId" | "metricId" | "createdAt" | "updatedAt" | "target"
@@ -794,25 +836,6 @@ export async function patchMetricDefinition(
   return apiRequest<MetricDefinitionRecord>(`/api/metric-definitions/${id}`, {
     method: "PATCH",
     body: input,
-  });
-}
-
-export async function backfillMetricDefinition(
-  id: string,
-  input?: {
-    readonly previousVersion: number;
-    readonly changedDefinitionFields?: readonly string[];
-  },
-): Promise<{
-  readonly processedEvents: number;
-  readonly processedDocuments?: number;
-}> {
-  return apiRequest<{
-    readonly processedEvents: number;
-    readonly processedDocuments?: number;
-  }>(`/api/metric-definitions/${id}/backfill`, {
-    method: "POST",
-    body: input ?? {},
   });
 }
 
@@ -860,6 +883,12 @@ export interface EntityQueryDefinitionRecord {
   readonly name: string;
   readonly description?: string;
   readonly sourceEntity: string;
+  readonly parameters?: readonly {
+    readonly name: string;
+    readonly valueType: "dateBucket" | "scalar";
+    readonly granularity?: "day" | "month" | "year";
+    readonly field?: string;
+  }[];
   readonly filter: EntityQueryFilterNode;
   readonly sort: readonly {
     readonly field: string;

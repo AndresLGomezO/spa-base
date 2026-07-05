@@ -5,6 +5,7 @@ import {
   type ComponentRowNode,
   type DesignSurface,
   type UiLayoutDocument,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 import {
   ComponentRowClickActionEditor,
@@ -45,7 +46,7 @@ function showsCurrentRecordClickTarget(surface: DesignSurface): boolean {
 }
 
 function layoutHasQueryViewer(layout: UiLayoutDocument): boolean {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     for (const layoutRow of column.rows) {
       if (
         layoutRow.type === "component" &&
@@ -64,7 +65,7 @@ function findFirstQueryViewerSourceEntity(
   queryDefinitions: readonly EntityQueryDefinitionRecord[],
   catalogItems: readonly EntityCatalogEntry[],
 ): string | undefined {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     for (const layoutRow of column.rows) {
       if (
         layoutRow.type !== "component" ||

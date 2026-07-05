@@ -10,6 +10,10 @@ export const designerTreeWorkbenchClassName =
 export const designerPreviewColumnClassName =
   "flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden";
 
+/** Properties rail in unified builder workbench (Section 15.7). */
+export const designerPropertiesColumnClassName =
+  "border-border bg-card flex h-full min-h-0 w-80 shrink-0 flex-col gap-3 overflow-hidden rounded-lg border p-4";
+
 /** Card shell wrapping designer preview panels (header + scrollable body). */
 export const designerPreviewPanelShellClassName =
   "bg-card border-border flex flex-col gap-3 rounded-lg border p-4";
@@ -31,9 +35,6 @@ export const designerPreviewPanelBodyFillClassName =
 /** Stretches preview content to at least the shell body height (scroll stays on the shell). */
 export const designerPreviewContentFillClassName =
   "flex min-h-full w-full flex-1 flex-col";
-
-/** Applied to RecursiveLayoutRenderer roots inside a fill-height designer preview. */
-export const designerPreviewLayoutFillClassName = "min-h-full flex-1";
 
 /** Aside shell for structure tree panels (expanded or collapsed). */
 export const designerTreePanelShellClassName =

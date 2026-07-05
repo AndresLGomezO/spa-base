@@ -1,6 +1,10 @@
 import type { UiLayoutDocument } from "../types/layout.js";
 import { createLayoutId } from "./id.js";
-import { addComponentRowAt, insertNestedLayoutRowAt } from "./mutations.js";
+import {
+  addComponentRowAt,
+  insertGridRowAt,
+  resolveGridTrackLocators,
+} from "./mutations.js";
 import {
   beginContainerRootLayout,
   ensureContainerRoot,
@@ -13,32 +17,32 @@ export function createDefaultUiLayout(
   const primaryField = fieldPaths[0] ?? "name";
 
   const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
-  let layout = beganLayout;
-  const { layout: withNested, rowId: nestedRowId } = insertNestedLayoutRowAt(
-    layout,
+  const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+    beganLayout,
     containerLocator,
     { position: "after" },
-    2,
+    { trackCount: 2 },
   );
-  layout = withNested;
 
-  const nestedLocator = (nestedColumnIndex: number) => ({
-    scope: "nested" as const,
-    columnIndex: containerLocator.columnIndex,
-    containerRowId: containerLocator.containerRowId,
-    rowId: nestedRowId,
-    nestedColumnIndex,
-  });
+  const [leftLocator, rightLocator] = resolveGridTrackLocators(
+    withGrid,
+    containerLocator,
+    gridRowId,
+  );
+  if (!leftLocator || !rightLocator) {
+    return { ...withGrid, showActions: true };
+  }
 
+  let layout = withGrid;
   for (const fieldPath of primaryFields) {
-    layout = addComponentRowAt(layout, nestedLocator(0), {
+    layout = addComponentRowAt(layout, leftLocator, {
       kind: "text",
       primary: { type: "field", path: fieldPath },
       label: { show: true },
     });
   }
 
-  layout = addComponentRowAt(layout, nestedLocator(1), {
+  layout = addComponentRowAt(layout, rightLocator, {
     kind: "text",
     primary: { type: "field", path: primaryField },
     styles: [{ property: "fontWeight", value: "bold" }],

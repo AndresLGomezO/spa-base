@@ -1,4 +1,8 @@
-import { createEmptyLayout } from "@repo/ui-builder-core";
+import {
+  asEditableLayoutRoot,
+  createEmptyLayout,
+  resolveLayoutRootColumns,
+} from "@repo/ui-builder-core";
 import type { UiLayoutDocument } from "@repo/ui-builder-core";
 
 export const DEFAULT_METRIC_STRIP_COLUMN_COUNT = 4;
@@ -15,7 +19,9 @@ export function createDefaultMetricStripLayout(
 export function metricStripColumnCount(
   layout: UiLayoutDocument | undefined,
 ): number {
-  return layout?.root.columnCount ?? DEFAULT_METRIC_STRIP_COLUMN_COUNT;
+  return layout
+    ? asEditableLayoutRoot(layout.root).columnCount
+    : DEFAULT_METRIC_STRIP_COLUMN_COUNT;
 }
 
 /** True when any strip column has at least one row (gates strip visibility). */
@@ -25,5 +31,7 @@ export function metricStripHasContent(
   if (!layout) {
     return false;
   }
-  return layout.root.columns.some((column) => column.rows.length > 0);
+  return resolveLayoutRootColumns(layout).some(
+    (column) => column.rows.length > 0,
+  );
 }

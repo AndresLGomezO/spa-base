@@ -30,6 +30,11 @@ import {
   LIST_PRESENTATION_SELECTION_FRAGMENT_ID,
   LIST_PRESENTATION_SELECTION_GUIDANCE,
 } from "../atoms/ui/list-presentation-selection.js";
+import { UI_DESIGN_HANDBOOK_ROUTER_ATOM_ID } from "../atoms/ui/design-handbook-router.js";
+import { UI_IMPORT_SCOPES_ATOM_ID } from "../atoms/ui/import-scopes.js";
+import { UI_PERSISTENCE_KEYS_ATOM_ID } from "../atoms/ui/persistence-keys.js";
+import { UI_PRESETS_PLATFORM_ATOM_ID } from "../atoms/ui/platform-presets.js";
+import { getCombinedStaticFragments } from "../generated/load-generated.js";
 import { estimateTokenCount, truncateText } from "../utils/hash.js";
 
 export interface AiContextBlock {
@@ -68,7 +73,7 @@ Rules:
 - Use field paths from the entity context; never invent fields or use the entity name as a field path.
 - Follow theme styling rules (ThemeToken for colors, pixels for spacing); prefer theme tokens, then semantic var(--color-*), then sparing custom hex accents.
 - Design mobile-first; use displayFrom/displayTo and responsive grid for multiscreen layouts.
-- Use nested-layout rows for multi-column content; set columnCount equal to columns.length.
+- Use grid component rows for multi-column content; set gridTemplateColumns and one child row per track.
 - **Visual-first:** when image/file/logo fields exist, lead with an image component; otherwise anchor with icon + bold title. Avoid flat text-only cards.
 - **Colorful & polished:** use badge conditionalStyles for status fields, styles for typography hierarchy, and intentional whitespace — make layouts feel premium and industry-leading.
 - Use labels, static fallbacks, and conditional badge/text styles where they improve clarity.
@@ -77,6 +82,10 @@ Rules:
 - Be concise in JSON shape; express creativity through component choice, layout structure, and styling — not prose.`;
 
 const ASSEMBLY_ORDER = [
+  UI_DESIGN_HANDBOOK_ROUTER_ATOM_ID,
+  UI_PRESETS_PLATFORM_ATOM_ID,
+  UI_IMPORT_SCOPES_ATOM_ID,
+  UI_PERSISTENCE_KEYS_ATOM_ID,
   UI_LAYOUT_BASE_ATOM_ID,
   UI_RESPONSIVE_VISIBILITY_ATOM_ID,
   UI_DATA_SOURCES_ATOM_ID,
@@ -122,7 +131,22 @@ export function assembleUiBuilderContext(
       : {}),
   });
 
+  const staticHandbookFragments = getCombinedStaticFragments();
+  const handbookIds = [
+    UI_DESIGN_HANDBOOK_ROUTER_ATOM_ID,
+    UI_PRESETS_PLATFORM_ATOM_ID,
+    UI_IMPORT_SCOPES_ATOM_ID,
+    UI_PERSISTENCE_KEYS_ATOM_ID,
+  ] as const;
+
   const blocks: AiContextBlock[] = [];
+
+  for (const id of handbookIds) {
+    const content = staticHandbookFragments[id];
+    if (content) {
+      blocks.push({ id, content });
+    }
+  }
 
   for (const [id, content] of Object.entries(uiSchemaFragments)) {
     blocks.push({ id, content });

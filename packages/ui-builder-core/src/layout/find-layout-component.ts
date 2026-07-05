@@ -1,29 +1,19 @@
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
 import { isRowHolderComponent } from "../types/component.js";
 import type { ColumnNode, RowNode, UiLayoutDocument } from "../types/layout.js";
+import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
 
 function walkRows(
   rows: readonly RowNode[],
   kind: UiComponentKind,
 ): UiComponentConfig | undefined {
   for (const row of rows) {
-    if (row.type === "component") {
-      if (row.component.kind === kind) {
-        return row.component;
-      }
-
-      if (isRowHolderComponent(row.component)) {
-        const found = walkRows(row.component.rows, kind);
-        if (found) {
-          return found;
-        }
-      }
-
-      continue;
+    if (row.component.kind === kind) {
+      return row.component;
     }
 
-    for (const column of row.columns) {
-      const found = walkColumn(column, kind);
+    if (isRowHolderComponent(row.component)) {
+      const found = walkRows(row.component.rows, kind);
       if (found) {
         return found;
       }
@@ -43,7 +33,7 @@ export function findLayoutComponent(
   layout: UiLayoutDocument,
   kind: UiComponentKind,
 ): UiComponentConfig | undefined {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     const found = walkColumn(column, kind);
     if (found) {
       return found;

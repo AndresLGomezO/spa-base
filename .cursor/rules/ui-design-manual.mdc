@@ -1,0 +1,33 @@
+---
+description: UI layout JSON and AI context — use the UI Design Manual and regenerate ai-context after schema changes
+globs:
+  - docs/ui-design-manual/**
+  - packages/ai-context/**
+  - packages/ui-builder-core/src/types/**
+  - packages/ui-builder-core/src/schema/**
+  - scripts/generate-ai-context.ts
+---
+
+# UI Design Manual and AI context
+
+## Design team SSOT
+
+- Human-readable manual: `docs/ui-design-manual/README.md`
+- Grid-only layouts (`container` → `grid` tracks). Do not author `nested-layout`.
+- Preset-first: list `listViewType` and form `presentation` come from layout presets.
+
+## AI context
+
+- Fragments: `packages/ai-context/src/generated/manifest.json`
+- Regenerate after schema or preset changes: `pnpm generate:ai-context`
+- Recipe excerpts: `docs/ui-design-manual/07-recipes/*.md` (YAML frontmatter with `aiContextFragmentId`)
+- Sync guide: `docs/ui-design-manual/SYNC.md`
+
+## When editing
+
+1. Change Zod/types in `ui-builder-core` or `entities` → update manual pages if behavior changed
+2. Run `pnpm generate:ai-context`
+3. Run `pnpm --filter @repo/ai-context test`
+4. Optional: `node scripts/validate-ui-design-manual-examples.mjs`
+
+Files marked `@ai-context-sync` must trigger fragment regeneration.

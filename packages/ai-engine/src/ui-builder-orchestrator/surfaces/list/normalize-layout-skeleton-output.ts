@@ -1,6 +1,8 @@
 import {
   ensureContainerRoot,
   isContainerComponent,
+  isGridComponent,
+  resolveLayoutRootColumns,
   resolveRootContainer,
   type RowNode,
   type UiLayoutDocument,
@@ -51,8 +53,8 @@ function normalizeKind(value: unknown): SkeletonComponentSpec["kind"] {
   }
 
   const kind = value.trim();
-  if (kind === "nested-layout") {
-    return "nested-layout";
+  if (kind === "nested-layout" || kind === "grid") {
+    return "grid";
   }
 
   if (DISPLAY_COMPONENT_KINDS.has(kind)) {
@@ -86,22 +88,26 @@ function normalizeSkeletonComponent(
 
   const kind = normalizeKind(value.kind);
 
-  if (kind === "nested-layout") {
-    const rawColumns = Array.isArray(value.columns)
-      ? value.columns
-      : isRecord(value.columns)
-        ? Object.values(value.columns)
-        : [];
+  if (kind === "grid" || kind === "nested-layout") {
+    const rawTracks = Array.isArray(value.tracks)
+      ? value.tracks
+      : Array.isArray(value.columns)
+        ? value.columns
+        : isRecord(value.columns)
+          ? Object.values(value.columns)
+          : isRecord(value.tracks)
+            ? Object.values(value.tracks)
+            : [];
 
-    const columns = rawColumns
-      .map((column) => {
-        if (!isRecord(column)) {
+    const tracks = rawTracks
+      .map((track) => {
+        if (!isRecord(track)) {
           return null;
         }
-        const rawComponents = Array.isArray(column.components)
-          ? column.components
-          : isRecord(column.components)
-            ? Object.values(column.components)
+        const rawComponents = Array.isArray(track.components)
+          ? track.components
+          : isRecord(track.components)
+            ? Object.values(track.components)
             : [];
         const components = rawComponents
           .map((component) => normalizeSkeletonComponent(component))
@@ -115,25 +121,27 @@ function normalizeSkeletonComponent(
         return { components };
       })
       .filter(
-        (column): column is { components: SkeletonComponentSpec[] } =>
-          column != null,
+        (track): track is { components: SkeletonComponentSpec[] } =>
+          track != null,
       );
 
-    if (columns.length === 0) {
+    if (tracks.length === 0) {
       return null;
     }
 
-    const columnCount =
-      typeof value.columnCount === "number" &&
-      Number.isInteger(value.columnCount)
-        ? Math.min(Math.max(value.columnCount, 1), 6)
-        : columns.length;
-    const normalizedColumns = columns.slice(0, columnCount);
+    const trackCount =
+      typeof value.trackCount === "number" && Number.isInteger(value.trackCount)
+        ? Math.min(Math.max(value.trackCount, 1), 6)
+        : typeof value.columnCount === "number" &&
+            Number.isInteger(value.columnCount)
+          ? Math.min(Math.max(value.columnCount, 1), 6)
+          : tracks.length;
+    const normalizedTracks = tracks.slice(0, trackCount);
 
     return {
-      kind: "nested-layout",
-      columnCount: normalizedColumns.length,
-      columns: normalizedColumns,
+      kind: "grid",
+      trackCount: normalizedTracks.length,
+      tracks: normalizedTracks,
       ...(normalizeBreakpoint(value.displayFrom)
         ? { displayFrom: normalizeBreakpoint(value.displayFrom) }
         : {}),
@@ -175,10 +183,16 @@ function rowNodeToSkeleton(row: RowNode): SkeletonComponentSpec | null {
     return null;
   }
 
-  if (row.type === "nested-layout") {
-    const columns = row.columns
-      .map((column) => {
-        const components = column.rows
+  if (row.type === "component" && isGridComponent(row.component)) {
+    const tracks = row.component.rows
+      .map((trackRow) => {
+        if (
+          trackRow.type !== "component" ||
+          trackRow.component.kind !== "container"
+        ) {
+          return null;
+        }
+        const components = trackRow.component.rows
           .map((nestedRow) => rowNodeToSkeleton(nestedRow))
           .filter(
             (component): component is SkeletonComponentSpec =>
@@ -187,18 +201,18 @@ function rowNodeToSkeleton(row: RowNode): SkeletonComponentSpec | null {
         return components.length > 0 ? { components } : null;
       })
       .filter(
-        (column): column is { components: SkeletonComponentSpec[] } =>
-          column != null,
+        (track): track is { components: SkeletonComponentSpec[] } =>
+          track != null,
       );
 
-    if (columns.length === 0) {
+    if (tracks.length === 0) {
       return null;
     }
 
     return {
-      kind: "nested-layout",
-      columnCount: row.columnCount,
-      columns,
+      kind: "grid",
+      trackCount: tracks.length,
+      tracks,
       ...(row.displayFrom ? { displayFrom: row.displayFrom } : {}),
       ...(row.displayTo ? { displayTo: row.displayTo } : {}),
     };
@@ -214,7 +228,7 @@ function layoutDocumentToSkeleton(
   const rootContainer = resolveRootContainer(normalized);
   const rows =
     rootContainer?.config.rows ??
-    normalized.root.columns.flatMap((column) => column.rows);
+    resolveLayoutRootColumns(normalized).flatMap((column) => column.rows);
   const components: SkeletonComponentSpec[] = [];
 
   for (const row of rows) {

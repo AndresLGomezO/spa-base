@@ -13,7 +13,7 @@ import {
 } from "./designer-tree-workbench-classes";
 
 interface DesignerPreviewPanelShellProps {
-  readonly controls: ReactNode;
+  readonly controls?: ReactNode;
   readonly children: ReactNode;
   readonly fillHeight?: boolean;
 }
@@ -36,7 +36,9 @@ export function DesignerPreviewPanelShell({
         <Text className="text-muted-foreground text-sm">
           {t("entity.viewSettings.preview")}
         </Text>
-        <div className="flex flex-wrap items-end gap-3">{controls}</div>
+        {controls ? (
+          <div className="flex flex-wrap items-end gap-3">{controls}</div>
+        ) : null}
       </div>
       <div
         className={cn(

@@ -1,3 +1,4 @@
+import { resolveLayoutRootColumns } from "../layout/layout-root-adapters.js";
 import { describe, expect, it } from "vitest";
 
 import {
@@ -18,7 +19,7 @@ describe("resolveContainerChildRows", () => {
       createDefaultComponent("user"),
     );
 
-    const rootRows = layout.root.columns[0]?.rows ?? [];
+    const rootRows = resolveLayoutRootColumns(layout)[0]?.rows ?? [];
     const childRows = resolveContainerChildRows(
       rootRows,
       containerLocator.containerRowId,
@@ -40,7 +41,7 @@ describe("resolveContainerChildRows", () => {
       createDefaultComponent("container"),
     );
 
-    const rootContainer = layout.root.columns[0]?.rows[0];
+    const rootContainer = resolveLayoutRootColumns(layout)[0]?.rows[0];
     if (
       !rootContainer ||
       rootContainer.type !== "component" ||
@@ -66,7 +67,7 @@ describe("resolveContainerChildRows", () => {
       createDefaultComponent("user"),
     );
 
-    const rootRows = layout.root.columns[0]?.rows ?? [];
+    const rootRows = resolveLayoutRootColumns(layout)[0]?.rows ?? [];
     const childRows = resolveContainerChildRows(rootRows, nestedContainer.id);
 
     expect(childRows).toHaveLength(1);

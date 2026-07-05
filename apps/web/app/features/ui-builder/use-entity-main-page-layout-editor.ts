@@ -13,7 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
-import { ensureContainerRoot } from "@repo/ui-builder-core";
+import { ensureStandardRoot } from "@repo/ui-builder-core";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
 export function useEntityMainPageLayoutEditor(entityName: EntityName) {
@@ -22,18 +22,18 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
   const uiViews = definition.ui.views;
 
   const [layout, setLayout] = useState<UiLayoutDocument>(() =>
-    ensureContainerRoot(createDefaultMainPageLayout()),
+    ensureStandardRoot("screen", createDefaultMainPageLayout()),
   );
   const [isSaving, setIsSaving] = useState(false);
 
   useEffect(() => {
     const existing = definition.ui.mainPageLayout;
     const source = existing ?? createDefaultMainPageLayout();
-    setLayout(ensureContainerRoot(source));
+    setLayout(ensureStandardRoot("screen", source));
   }, [definition.ui.mainPageLayout]);
 
   const setLayoutNormalized = useCallback((next: UiLayoutDocument) => {
-    setLayout(ensureContainerRoot(next));
+    setLayout(ensureStandardRoot("screen", next));
   }, []);
 
   const save = useCallback(async (): Promise<boolean> => {
@@ -60,7 +60,9 @@ export function useEntityMainPageLayoutEditor(entityName: EntityName) {
   }, [layout]);
 
   const applySlice = useCallback((data: DesignLayoutSliceData) => {
-    setLayout(ensureContainerRoot((data as MainPageSliceData).mainPage));
+    setLayout(
+      ensureStandardRoot("screen", (data as MainPageSliceData).mainPage),
+    );
   }, []);
 
   return {

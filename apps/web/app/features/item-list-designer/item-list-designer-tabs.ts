@@ -1,8 +1,4 @@
-export const ITEM_LIST_DESIGNER_TAB_IDS = [
-  "settings",
-  "columns",
-  "layout",
-] as const;
+export const ITEM_LIST_DESIGNER_TAB_IDS = ["settings", "design"] as const;
 
 export type ItemListDesignerTabId = (typeof ITEM_LIST_DESIGNER_TAB_IDS)[number];
 
@@ -17,6 +13,9 @@ export function isItemListDesignerTabId(
 export function parseItemListDesignerTabId(
   value: string | null,
 ): ItemListDesignerTabId {
+  if (value === "columns" || value === "layout") {
+    return "design";
+  }
   if (value && isItemListDesignerTabId(value)) {
     return value;
   }

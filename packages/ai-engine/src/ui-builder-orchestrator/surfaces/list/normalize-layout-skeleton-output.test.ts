@@ -90,14 +90,14 @@ describe("coerceLayoutSkeletonOutput", () => {
     });
   });
 
-  it("normalizes nested-layout skeletons and repairs columnCount", () => {
+  it("normalizes grid skeletons and repairs trackCount", () => {
     expect(
       coerceLayoutSkeletonOutput({
         components: [
           {
-            kind: "nested-layout",
-            columnCount: 3,
-            columns: [
+            kind: "grid",
+            trackCount: 3,
+            tracks: [
               {
                 components: [{ kind: "text", fieldPath: "name" }],
               },
@@ -111,9 +111,9 @@ describe("coerceLayoutSkeletonOutput", () => {
     ).toEqual({
       components: [
         {
-          kind: "nested-layout",
-          columnCount: 2,
-          columns: [
+          kind: "grid",
+          trackCount: 2,
+          tracks: [
             { components: [{ kind: "text", fieldPath: "name" }] },
             { components: [{ kind: "badge", fieldPath: "status" }] },
           ],

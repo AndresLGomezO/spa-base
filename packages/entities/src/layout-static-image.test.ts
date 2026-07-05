@@ -44,6 +44,18 @@ describe("layout-static-image", () => {
     );
   });
 
+  it("reads app-relative static asset paths", () => {
+    expect(
+      readLayoutStaticImageUrl("/images/total-balance-area-chart.svg"),
+    ).toBe("/images/total-balance-area-chart.svg");
+  });
+
+  it("reads data URI static images", () => {
+    const dataUri =
+      "data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3C%2Fsvg%3E";
+    expect(readLayoutStaticImageUrl(dataUri)).toBe(dataUri);
+  });
+
   it("uses reserved field when entity has no image field", () => {
     expect(
       resolveLayoutStaticUploadFieldName({

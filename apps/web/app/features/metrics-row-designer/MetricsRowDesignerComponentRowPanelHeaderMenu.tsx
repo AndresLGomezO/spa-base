@@ -22,9 +22,7 @@ import {
 } from "@repo/ui-builder-react";
 import {
   replaceComponentRowAt,
-  replaceNestedLayoutRowAt,
   type ComponentRowNode,
-  type NestedLayoutRowNode,
 } from "@repo/ui-builder-core";
 import { IconButton, Text } from "@repo/ui";
 import { cn } from "@repo/theme/utils";
@@ -108,8 +106,6 @@ export function MetricsRowDesignerComponentRowPanelHeaderMenu({
     return null;
   }
 
-  const isNested = row.type === "nested-layout";
-
   const toolLabels = {
     insert: t("formDesigner.components.rowPanel.tools.insert"),
     save: t("formDesigner.components.rowPanel.tools.save"),
@@ -131,9 +127,7 @@ export function MetricsRowDesignerComponentRowPanelHeaderMenu({
       />
     );
 
-  const jsonScope = isNested
-    ? { type: "nested-layout-row" as const }
-    : { type: "component-row" as const };
+  const jsonScope = { type: "component-row" as const };
 
   const jsonData = row;
   const presetKind = "component-row" as const;
@@ -165,7 +159,7 @@ export function MetricsRowDesignerComponentRowPanelHeaderMenu({
           />
           <SavePresetDialog
             kind={presetKind}
-            node={jsonData as ComponentRowNode | NestedLayoutRowNode}
+            node={jsonData as ComponentRowNode}
             designSurface={designSurface}
             sourceEntityName={presetStore.sourceEntityName}
             canSave={presetStore.canApplyPresets}
@@ -178,7 +172,7 @@ export function MetricsRowDesignerComponentRowPanelHeaderMenu({
           />
           <LayoutJsonViewDialog
             scope={jsonScope}
-            data={jsonData as ComponentRowNode | NestedLayoutRowNode}
+            data={jsonData as ComponentRowNode}
             labels={labels.layoutJsonImport}
             renderTrigger={renderIconTrigger(
               toolLabels.view,
@@ -192,19 +186,8 @@ export function MetricsRowDesignerComponentRowPanelHeaderMenu({
             defaultFieldPath="name"
             canApply={presetStore.canApplyPresets}
             labels={labels.layoutJsonImport}
-            referenceData={jsonData as ComponentRowNode | NestedLayoutRowNode}
+            referenceData={jsonData as ComponentRowNode}
             onApply={(data) => {
-              if (isNested) {
-                binding.setLayout(
-                  replaceNestedLayoutRowAt(
-                    binding.layout,
-                    rowRef.rowId,
-                    data as NestedLayoutRowNode,
-                  ),
-                );
-                return;
-              }
-
               binding.setLayout(
                 replaceComponentRowAt(
                   binding.layout,

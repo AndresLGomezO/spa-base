@@ -13,10 +13,14 @@ import {
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 
-import { listSourceDocumentsForMetric } from "../../aggregation/list-source-documents.js";
+import {
+  createMetricQueryMembershipResolver,
+  listSourceDocumentsForMetricDefinition,
+} from "../../aggregation/metric-query-runtime.js";
 import { runMetricBackfill } from "../../aggregation/run-backfill.js";
 import { createMetricRuntimeContext } from "../../aggregation/metric-runtime-context.js";
 import type { EntityRuntimeContext } from "../../entities/entity-runtime-context.js";
+import { createFirestoreAdminEntityQueryDefinitionRepository } from "@repo/gcp-firebase";
 
 interface BackfillRatesMetricsResult {
   readonly activated: number;
@@ -53,6 +57,8 @@ export async function activateAndBackfillRatesMetrics(
 
   const metricDefinitionRepository =
     createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig);
+  const entityQueryDefinitionRepository =
+    createFirestoreAdminEntityQueryDefinitionRepository(firebaseAdminConfig);
   const metricValueRepository =
     createFirestoreAdminMetricValueRepository(firebaseAdminConfig);
   const metricContributionRepository =
@@ -68,12 +74,17 @@ export async function activateAndBackfillRatesMetrics(
     metricValueRepository,
     backfillJobRepository,
     metricContributionRepository,
-    listSourceDocuments: (resolvedTenantId, sourceModel) =>
-      listSourceDocumentsForMetric(
+    listSourceDocuments: (resolvedTenantId, metric) =>
+      listSourceDocumentsForMetricDefinition(
         entityRuntime,
+        entityQueryDefinitionRepository,
         resolvedTenantId,
-        sourceModel,
+        metric,
       ),
+    resolveQueryMembership: createMetricQueryMembershipResolver({
+      entityRuntime,
+      entityQueryDefinitionRepository,
+    }),
   });
 
   const desiredNames = new Set(loadRatesMetricNames());
@@ -108,10 +119,11 @@ export async function activateAndBackfillRatesMetrics(
         );
 
       if (hasCompleted) {
-        const documents = await listSourceDocumentsForMetric(
+        const documents = await listSourceDocumentsForMetricDefinition(
           entityRuntime,
+          entityQueryDefinitionRepository,
           tenantId,
-          current.sourceModel,
+          current,
         );
         const result = await runSnapshotBackfillForMetric({
           tenantId,

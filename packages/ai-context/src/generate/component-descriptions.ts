@@ -22,6 +22,64 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
       2,
     ),
   },
+  grid: {
+    summary:
+      "CSS Grid structural primitive. One child row per grid track; use for multi-column sections.",
+    properties: [
+      "gridTemplateColumns",
+      "gap?",
+      "alignItems?",
+      "rows",
+      "styles?",
+    ],
+    example: JSON.stringify(
+      {
+        kind: "grid",
+        gridTemplateColumns: "minmax(0, 2fr) minmax(0, 1fr)",
+        gap: "12px",
+        rows: [
+          {
+            type: "component",
+            id: "track-left",
+            component: {
+              kind: "container",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-name",
+                  component: {
+                    kind: "text",
+                    primary: { type: "field", path: "name" },
+                    label: { show: true },
+                  },
+                },
+              ],
+            },
+          },
+          {
+            type: "component",
+            id: "track-right",
+            component: {
+              kind: "container",
+              rows: [
+                {
+                  type: "component",
+                  id: "row-amount",
+                  component: {
+                    kind: "numeric",
+                    primary: { type: "field", path: "amount" },
+                    displayFormat: "currency",
+                  },
+                },
+              ],
+            },
+          },
+        ],
+      },
+      null,
+      2,
+    ),
+  },
   text: {
     summary: "Plain text from a field or static value.",
     properties: [
@@ -465,6 +523,7 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
       "enableDateFilter?",
       "dateFilterGranularity?",
       "dateFilterParam?",
+      "dateFilterLabel?",
       "searchPlaceholder?",
       "filters",
       "styles?",
@@ -477,6 +536,11 @@ export const COMPONENT_DESCRIPTIONS: Readonly<
         enableDateFilter: true,
         dateFilterGranularity: "month",
         dateFilterParam: "month",
+        dateFilterLabel: {
+          show: true,
+          text: "Reporting period",
+          position: "above",
+        },
         searchPlaceholder: "Search…",
         filters: [{ entityName: "account", fieldName: "accountType" }],
       },

@@ -8,10 +8,12 @@ import {
 
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
 import type { EntityQueryDefinitionRepository } from "@repo/firestore-converters";
+import type { MetricDefinitionRepository } from "@repo/firestore-converters";
 
 interface ReplaceEntityQueryDefinitionsCatalogDeps {
   readonly entityRuntime: EntityRuntimeContext;
   readonly entityQueryDefinitionRepository: EntityQueryDefinitionRepository;
+  readonly metricDefinitionRepository: MetricDefinitionRepository;
 }
 
 export class EntityQueryCatalogReplaceError extends Error {
@@ -37,6 +39,9 @@ function createPatchFromCreateInput(
     name: imported.name,
     ...(imported.description !== undefined
       ? { description: imported.description }
+      : {}),
+    ...(imported.parameters !== undefined
+      ? { parameters: imported.parameters }
       : {}),
     filter: imported.filter,
     sort: imported.sort,
@@ -85,6 +90,25 @@ export async function replaceEntityQueryDefinitionsCatalog(
 
   for (const imported of catalog.entityQueryDefinitions) {
     assertEntityQueryImportValid(availableNames, imported);
+  }
+
+  const blockedDeletes: string[] = [];
+  for (const record of plan.toDelete) {
+    const metricUsageCount =
+      await deps.metricDefinitionRepository.countBySourceQueryDefinitionId(
+        tenantId,
+        record.id,
+      );
+    if (metricUsageCount > 0) {
+      blockedDeletes.push(
+        `"${record.name}" (${metricUsageCount} metric${metricUsageCount === 1 ? "" : "s"})`,
+      );
+    }
+  }
+  if (blockedDeletes.length > 0) {
+    throw new EntityQueryCatalogReplaceError(
+      `Cannot delete queries referenced by metrics: ${blockedDeletes.join(", ")}.`,
+    );
   }
 
   for (const record of plan.toDelete) {

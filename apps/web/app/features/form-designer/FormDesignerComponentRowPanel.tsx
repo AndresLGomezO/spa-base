@@ -8,6 +8,7 @@ import {
 import {
   componentKindsForSurface,
   isContainerComponent,
+  isGridComponent,
   type MotionPreset,
 } from "@repo/ui-builder-core";
 import { Text } from "@repo/ui";
@@ -35,7 +36,7 @@ import {
 } from "./form-designer-components-layout";
 import { FormDesignerPanelPrimaryControls } from "./FormDesignerPanelPrimaryControls";
 import { ContainerComponentRowPanel } from "./ContainerComponentRowPanel";
-import { NestedLayoutRowPanel } from "./NestedLayoutRowPanel";
+import { GridRowPanel } from "./GridRowPanel";
 import { StructureRowNameField } from "./StructureItemNameField";
 import { useFormDesignerFieldDescriptors } from "./use-form-designer-field-descriptors";
 import { useFormDesigner } from "./form-designer-context";
@@ -85,10 +86,11 @@ export function FormDesignerComponentRowPanel({
     );
   }
 
-  if (row.type === "nested-layout") {
+  if (row.type === "component" && isGridComponent(row.component)) {
     return (
-      <NestedLayoutRowPanel
-        row={row}
+      <GridRowPanel
+        row={row.component}
+        rowNode={row}
         rowRef={rowRef}
         binding={binding}
         labels={labels}

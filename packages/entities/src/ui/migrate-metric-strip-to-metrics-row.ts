@@ -10,9 +10,9 @@ import {
   createEmptyLayout,
   createLayoutId,
   ensureContainerRoot,
-  type ColumnNode,
+  asEditableLayoutRoot,
+  resolveLayoutRootColumns,
   type ComponentRowNode,
-  type NestedLayoutRowNode,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 
@@ -40,42 +40,50 @@ function buildMetricRowLayout(
 ): UiLayoutDocument {
   const columnCount = Math.max(1, widgets.length);
   const layout = createEmptyLayout(columnCount);
-  const nestedColumns: ColumnNode[] = widgets.map((widget) => ({
-    ...createEmptyColumn(),
-    rows: [
-      {
-        type: "component",
-        id: createLayoutId("row"),
-        component: {
-          kind: "metric-widget",
-          entityName,
-          widgetId: widget.id,
-        },
-      } satisfies ComponentRowNode,
-    ],
-  }));
 
   if (widgets.length === 0) {
     return ensureContainerRoot(layout);
   }
 
-  const nestedRow: NestedLayoutRowNode = {
-    type: "nested-layout",
-    id: createLayoutId("nested"),
-    columnCount: nestedColumns.length,
-    columns: nestedColumns,
+  const trackRows: ComponentRowNode[] = widgets.map((widget) => ({
+    type: "component",
+    id: createLayoutId("row"),
+    component: {
+      kind: "container",
+      rows: [
+        {
+          type: "component",
+          id: createLayoutId("row"),
+          component: {
+            kind: "metric-widget",
+            entityName,
+            widgetId: widget.id,
+          },
+        },
+      ],
+    },
+  }));
+
+  const gridRow: ComponentRowNode = {
+    type: "component",
+    id: createLayoutId("row"),
+    component: {
+      kind: "grid",
+      gridTemplateColumns: `repeat(${trackRows.length}, 1fr)`,
+      rows: trackRows,
+    },
   };
 
-  const rootColumn = layout.root.columns[0] ?? createEmptyColumn();
+  const rootColumn = resolveLayoutRootColumns(layout)[0] ?? createEmptyColumn();
   return ensureContainerRoot({
     ...layout,
     root: {
-      ...layout.root,
+      ...asEditableLayoutRoot(layout.root),
       columnCount: 1,
       columns: [
         {
           ...rootColumn,
-          rows: [nestedRow],
+          rows: [gridRow],
         },
       ],
     },
@@ -104,7 +112,7 @@ function stripMetricStripLayoutFromViews(
 function buildWidgetsFromStrip(
   stripLayout: UiLayoutDocument,
 ): MetricWidgetDefinition[] {
-  const columnsWithContent = stripLayout.root.columns.filter(
+  const columnsWithContent = resolveLayoutRootColumns(stripLayout).filter(
     (column) => column.rows.length > 0,
   );
 
@@ -113,7 +121,7 @@ function buildWidgetsFromStrip(
   for (const [index, column] of columnsWithContent.entries()) {
     const widgetLayout = ensureWidgetContainerRoot({
       root: {
-        ...stripLayout.root,
+        ...asEditableLayoutRoot(stripLayout.root),
         columnCount: 1,
         columns: [
           {

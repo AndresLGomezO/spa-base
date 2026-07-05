@@ -3,9 +3,10 @@ import {
   createDefaultComponent,
   createEmptyLayout,
 } from "../builder/mutations.js";
-import { isContainerComponent } from "../types/component.js";
+import { isRowHolderComponent } from "../types/component.js";
 import type { UiComponentKind } from "../types/component.js";
 import type { ColumnNode, RowNode, UiLayoutDocument } from "../types/layout.js";
+import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
 
 import { createDefaultWizardShellLayout } from "./default-wizard-form-layout.js";
 
@@ -17,15 +18,9 @@ const REQUIRED_WIZARD_SHELL_KINDS = [
 
 function walkRows(rows: readonly RowNode[], kinds: Set<UiComponentKind>): void {
   for (const row of rows) {
-    if (row.type === "component") {
-      kinds.add(row.component.kind);
-      if (isContainerComponent(row.component)) {
-        walkRows(row.component.rows, kinds);
-      }
-      continue;
-    }
-    for (const column of row.columns) {
-      walkColumn(column, kinds);
+    kinds.add(row.component.kind);
+    if (isRowHolderComponent(row.component)) {
+      walkRows(row.component.rows, kinds);
     }
   }
 }
@@ -38,7 +33,7 @@ export function collectLayoutComponentKinds(
   layout: UiLayoutDocument,
 ): ReadonlySet<UiComponentKind> {
   const kinds = new Set<UiComponentKind>();
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     walkColumn(column, kinds);
   }
   return kinds;
@@ -84,7 +79,7 @@ export function ensureWizardShellLayout(
     return layout;
   }
 
-  if (layout.root.columns.length < 2) {
+  if (resolveLayoutRootColumns(layout).length < 2) {
     return createDefaultWizardShellLayout();
   }
 

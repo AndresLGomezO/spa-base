@@ -1,8 +1,4 @@
-export const FORM_DESIGNER_TAB_IDS = [
-  "settings",
-  "layout",
-  "components",
-] as const;
+export const FORM_DESIGNER_TAB_IDS = ["settings", "design"] as const;
 
 export type FormDesignerTabId = (typeof FORM_DESIGNER_TAB_IDS)[number];
 
@@ -15,6 +11,9 @@ export function isFormDesignerTabId(value: string): value is FormDesignerTabId {
 export function parseFormDesignerTabId(
   value: string | null,
 ): FormDesignerTabId {
+  if (value === "layout" || value === "components") {
+    return "design";
+  }
   if (value && isFormDesignerTabId(value)) {
     return value;
   }

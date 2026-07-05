@@ -72,6 +72,14 @@ export function readLayoutStaticImageUrl(value: string): string | null {
     return trimmed;
   }
 
+  if (trimmed.startsWith("data:image/")) {
+    return trimmed;
+  }
+
+  if (trimmed.startsWith("/")) {
+    return trimmed;
+  }
+
   return null;
 }
 

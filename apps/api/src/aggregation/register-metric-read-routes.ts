@@ -3,12 +3,16 @@ import { z } from "zod";
 
 import {
   buildMetricDocId,
+  isComputedMetricDefinition,
   mergeAvgFieldsIntoValues,
   metricBatchQuerySchema,
+  metricEvaluateRequestSchema,
   metricRowQuerySchema,
   MetricQueryValidationError,
   validateMetricQueryAgainstDefinition,
+  ComputedMetricEvaluationError,
 } from "@repo/metrics-engine";
+import type { EntityQueryDefinitionRepository } from "@repo/firestore-converters";
 
 import { ApiErrorCode } from "../crud/errors.js";
 import { replyWithError, successEnvelope } from "../crud/response.js";
@@ -16,11 +20,15 @@ import { requireJwtTenant } from "../auth/resolve-target-tenant-id.js";
 import type { LoadRequestPermissionsDeps } from "../rbac/load-request-permissions.js";
 import { assertCanReadMetricValues } from "./assert-metric-access.js";
 import type { MetricRuntimeContext } from "./metric-runtime-context.js";
+import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
+import { evaluateComputedMetricForUser } from "./computed-metric-resolver.js";
 
 interface RegisterMetricReadRoutesOptions {
   readonly authenticate: preHandlerAsyncHookHandler;
   readonly permissionDeps: LoadRequestPermissionsDeps;
   readonly metricRuntime: MetricRuntimeContext;
+  readonly entityRuntime: EntityRuntimeContext;
+  readonly entityQueryDefinitionRepository: EntityQueryDefinitionRepository;
 }
 
 const metricDefinitionIdParamsSchema = z.object({
@@ -251,6 +259,114 @@ export async function registerMetricReadRoutes(
       );
 
       return reply.send(successEnvelope({ items }));
+    },
+  );
+
+  app.post(
+    "/api/metrics/:metricDefinitionId/evaluate",
+    { preHandler: [options.authenticate] },
+    async (request, reply) => {
+      const parsedParams = metricDefinitionIdParamsSchema.safeParse(
+        request.params,
+      );
+      if (!parsedParams.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid path parameters.",
+        );
+      }
+
+      const parsedBody = metricEvaluateRequestSchema.safeParse(request.body);
+      if (!parsedBody.success) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Invalid request body.",
+          parsedBody.error.flatten(),
+        );
+      }
+
+      const tenantId = requireJwtTenant(request, reply);
+      if (!tenantId) return;
+
+      const userId = request.ctx?.uid?.trim();
+      if (!userId) {
+        return replyWithError(
+          reply,
+          401,
+          ApiErrorCode.UNAUTHORIZED,
+          "Authentication required.",
+        );
+      }
+
+      const definition =
+        await options.metricRuntime.metricDefinitionRepository.getById(
+          tenantId,
+          parsedParams.data.metricDefinitionId,
+        );
+      if (!definition) {
+        return replyWithError(
+          reply,
+          404,
+          ApiErrorCode.NOT_FOUND,
+          "Metric definition not found.",
+        );
+      }
+
+      if (!isComputedMetricDefinition(definition)) {
+        return replyWithError(
+          reply,
+          400,
+          ApiErrorCode.VALIDATION_ERROR,
+          "Metric definition is not computed.",
+        );
+      }
+
+      if (
+        !(await assertCanReadMetricValues(
+          request,
+          reply,
+          options.permissionDeps,
+          definition.sourceModel,
+        ))
+      ) {
+        return;
+      }
+
+      try {
+        const result = await evaluateComputedMetricForUser({
+          tenantId,
+          userId,
+          definition,
+          providedParameters: parsedBody.data.parameters,
+          entityRuntime: options.entityRuntime,
+          metricDefinitionRepository:
+            options.metricRuntime.metricDefinitionRepository,
+          entityQueryDefinitionRepository:
+            options.entityQueryDefinitionRepository,
+          metricValueRepository: options.metricRuntime.metricValueRepository,
+        });
+
+        return reply.send(
+          successEnvelope({
+            values: mergeAvgFieldsIntoValues(result.values),
+            evaluatedAt: new Date().toISOString(),
+          }),
+        );
+      } catch (error) {
+        if (error instanceof ComputedMetricEvaluationError) {
+          return replyWithError(
+            reply,
+            400,
+            ApiErrorCode.VALIDATION_ERROR,
+            error.message,
+          );
+        }
+        throw error;
+      }
     },
   );
 }

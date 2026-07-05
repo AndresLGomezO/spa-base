@@ -4,33 +4,31 @@ Visual layout builder packages and documentation index.
 
 ## Documentation
 
+- [UI-Builder-unification-master-plan.md](./UI-Builder-unification-master-plan.md) — **active plan:** unified builder, Section 15 enforcement, phased migration
+- [UI-Builder-refactor-enhancement.md](./UI-Builder-refactor-enhancement.md) — architectural principles
 - [UIBuilder.md](./UIBuilder.md) — product spec (recursive layout, components, styles, fallbacks)
 - [UIBuilderStructure.md](./UIBuilderStructure.md) — monorepo package layout
-- [UIBuilderPhase2MasterPlan.md](./UIBuilderPhase2MasterPlan.md) — **next phases:** detail page, forms, unified list item, motion
+- [UIBuilderPhase2MasterPlan.md](./UIBuilderPhase2MasterPlan.md) — historical phase 2 notes
 
 ## Packages
 
 | Package | Role |
 |---------|------|
-| `@repo/ui-builder-core` | Types, Zod schema, resolvers, validation, builder mutations |
+| `@repo/ui-builder-core` | Types, Zod schema, composition scopes, grid/container primitives, mutations |
 | `@repo/ui-builder-renderer` | Production + preview render engine (`RecursiveLayoutRenderer`) |
-| `@repo/ui-builder-react` | Builder UI (`UiLayoutStructurePanel`, column/row editors) |
-| `@repo/ui-builder` | Catalog/table/form/query engine (unchanged; not the visual builder) |
+| `@repo/ui-builder-react` | Builder UI, `createLayoutEditorBinding`, structure panel |
+| `@repo/ui-builder` | Legacy metadata engine (target rename: `@repo/ui-metadata`) |
 
 ## App integration
 
-- `apps/web/app/features/ui-builder/` — entity layout render context and shared layout preview helpers
-- `apps/web/app/features/metrics-row-designer/` — metrics row designer (widgets + row layout tabs)
-- `EntityLayoutCardView` — list card rendering
-- **Design layout** (sidebar) — `/settings/design-layout/{list|page|forms}/:entityName` (primary configuration surface)
-- Entity list header **Design layout** link — `/settings/design-layout/list/:entityName` (same editor; requires `entityUiOverride.update`)
-  - Requires `entityUiOverride.read` (+ per-entity `.read` for nav links)
-  - Save requires `entityUiOverride.update` (or admin / superadmin)
-  - **Item list** — tabbed Item List Designer (`apps/web/app/features/item-list-designer/`): table, expandable table, and card presentation
-  - **Main View** — main page layout designer (`main-view-designer/`, `MainViewDesignerView`)
-  - **Detailed View** — record detail layout designer (`detail-view-designer/`, `DetailViewDesignerView`)
-  - **Forms** — Form Designer (`FormDesignerView`): shared layout for create/edit, wizard shell + steps, tabbed settings/layout/components UX with preview
+- `apps/web/app/features/unified-builder/` — **UnifiedBuilderShell**, `UnifiedDesignerPreviewPanel`, PreviewContext, scope adapters
+- `apps/web/app/features/ui-builder/` — entity layout render context and shared preview helpers
+- Design layout routes use unified shell via `UnifiedDesignerLayoutTab` (main, detail, dashboard, metrics, item-list on layout tab; form designer in progress)
 
 ## Persisted shape
 
-Card views store `ViewConfig.layout` as `UiLayoutDocument` (columns → rows → components / nested columns).
+Layouts are `UiLayoutDocument` with `LayoutRootNode` or `ScreenRootNode`. On load:
+
+- **Screen** scope → `ensureStandardRoot("screen", layout)` (`screen-root`)
+- **Form** surfaces → `ensureFormLayoutGridOnly(layout)` (container root + `nested-layout` → grid migration)
+- **Block/component** scope → `ensureContainerRoot(layout)` (canonical container root; full grid migration in progress)

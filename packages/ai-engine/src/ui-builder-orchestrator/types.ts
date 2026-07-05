@@ -19,11 +19,16 @@ export interface ExpandableColumnMeta {
 }
 
 export interface SkeletonComponentSpec {
-  readonly kind: UiComponentKind | "nested-layout";
+  readonly kind: UiComponentKind | "grid" | "nested-layout";
   readonly fieldPath?: string;
   readonly displayFrom?: ResponsiveGridBreakpoint;
   readonly displayTo?: ResponsiveGridBreakpoint;
+  readonly trackCount?: number;
   readonly columnCount?: number;
+  readonly tracks?: readonly {
+    readonly components: readonly SkeletonComponentSpec[];
+  }[];
+  /** @deprecated Legacy AI output — normalized to tracks */
   readonly columns?: readonly {
     readonly components: readonly SkeletonComponentSpec[];
   }[];

@@ -1,9 +1,11 @@
 import {
-  isContainerComponent,
+  isGridComponent,
   isQueryViewerComponent,
+  isRowHolderComponent,
   type QueryViewerComponentConfig,
   type RowNode,
   type UiLayoutDocument,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
@@ -16,18 +18,22 @@ function rowTreeContainsId(rows: readonly RowNode[], rowId: string): boolean {
       return true;
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
+      if (isGridComponent(row.component)) {
+        for (const trackRow of row.component.rows) {
+          if (
+            trackRow.type === "component" &&
+            isRowHolderComponent(trackRow.component) &&
+            rowTreeContainsId(trackRow.component.rows, rowId)
+          ) {
+            return true;
+          }
+        }
+        continue;
+      }
+
       if (rowTreeContainsId(row.component.rows, rowId)) {
         return true;
-      }
-      continue;
-    }
-
-    if (row.type === "nested-layout") {
-      for (const column of row.columns) {
-        if (rowTreeContainsId(column.rows, rowId)) {
-          return true;
-        }
       }
     }
   }
@@ -39,7 +45,7 @@ export function findEnclosingQueryViewerConfig(
   layout: UiLayoutDocument,
   targetRowId: string,
 ): QueryViewerComponentConfig | null {
-  for (const column of layout.root.columns) {
+  for (const column of resolveLayoutRootColumns(layout)) {
     const found = findQueryViewerInRows(column.rows, targetRowId);
     if (found) {
       return found;
@@ -64,20 +70,28 @@ function findQueryViewerInRows(
       continue;
     }
 
-    if (row.type === "component" && isContainerComponent(row.component)) {
+    if (row.type === "component" && isRowHolderComponent(row.component)) {
+      if (isGridComponent(row.component)) {
+        for (const trackRow of row.component.rows) {
+          if (trackRow.type !== "component") {
+            continue;
+          }
+          const nested = findQueryViewerInRows(
+            isRowHolderComponent(trackRow.component)
+              ? trackRow.component.rows
+              : [trackRow],
+            targetRowId,
+          );
+          if (nested) {
+            return nested;
+          }
+        }
+        continue;
+      }
+
       const nested = findQueryViewerInRows(row.component.rows, targetRowId);
       if (nested) {
         return nested;
-      }
-      continue;
-    }
-
-    if (row.type === "nested-layout") {
-      for (const column of row.columns) {
-        const nested = findQueryViewerInRows(column.rows, targetRowId);
-        if (nested) {
-          return nested;
-        }
       }
     }
   }

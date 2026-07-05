@@ -9,16 +9,19 @@ import {
 } from "@repo/metrics-engine";
 
 import type { EntityRuntimeContext } from "../entities/entity-runtime-context.js";
+import type { EntityQueryDefinitionRepository } from "@repo/firestore-converters";
 import type { MetricRuntimeContext } from "./metric-runtime-context.js";
 import { runMetricBackfill } from "./run-backfill.js";
 import {
   findEntityForSourceModel,
   validateMetricDefinitionDateGranularity,
 } from "./validate-metric-definition-entity.js";
+import { resolveValidatedMetricCreateInput } from "./validate-metric-definition-query-source.js";
 
 interface ReplaceMetricDefinitionsCatalogDeps {
   readonly entityRuntime: EntityRuntimeContext;
   readonly metricRuntime: MetricRuntimeContext;
+  readonly entityQueryDefinitionRepository: EntityQueryDefinitionRepository;
 }
 
 export class MetricCatalogReplaceError extends Error {
@@ -105,6 +108,22 @@ function assertMetricImportValid(
   }
 }
 
+async function resolveMetricCreateInput(
+  entityQueryDefinitionRepository: EntityQueryDefinitionRepository,
+  tenantId: string,
+  imported: CreateMetricDefinitionInput,
+): Promise<CreateMetricDefinitionInput> {
+  const resolved = await resolveValidatedMetricCreateInput(
+    entityQueryDefinitionRepository,
+    tenantId,
+    imported,
+  );
+  if (!resolved.ok) {
+    throw new MetricCatalogReplaceError(resolved.error);
+  }
+  return resolved.input;
+}
+
 async function runBackfillSafely(
   metricRuntime: MetricRuntimeContext,
   tenantId: string,
@@ -138,6 +157,11 @@ export async function replaceMetricDefinitionsCatalog(
       tenantId,
       imported,
       availableNames,
+    );
+    await resolveMetricCreateInput(
+      deps.entityQueryDefinitionRepository,
+      tenantId,
+      imported,
     );
   }
 
@@ -204,9 +228,14 @@ export async function replaceMetricDefinitionsCatalog(
   }
 
   for (const input of plan.toCreate) {
-    const created = await deps.metricRuntime.metricDefinitionRepository.create(
+    const resolvedInput = await resolveMetricCreateInput(
+      deps.entityQueryDefinitionRepository,
       tenantId,
       input,
+    );
+    const created = await deps.metricRuntime.metricDefinitionRepository.create(
+      tenantId,
+      resolvedInput,
     );
 
     try {

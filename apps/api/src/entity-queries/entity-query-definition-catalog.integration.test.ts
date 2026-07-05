@@ -256,4 +256,122 @@ describe("entity query definitions catalog integration", () => {
     expect(replaceCatalog.statusCode).toBe(400);
     expect(replaceCatalog.json().error.message).toContain("missing");
   });
+
+  it("rejects delete when a metric references the query", async () => {
+    const server = await buildTestServer();
+    await seedTransactionEntity(server);
+
+    const createQuery = await server.inject({
+      method: "POST",
+      url: "/api/entity-query-definitions",
+      headers,
+      payload: {
+        name: "All transactions",
+        sourceEntity: "transaction",
+        filter: { type: "group", combinator: "and", children: [] },
+        sort: [],
+        limitMode: "all",
+        status: "ACTIVE",
+      },
+    });
+    expect(createQuery.statusCode).toBe(201);
+    const queryId = createQuery.json().data.id as string;
+
+    const createMetric = await server.inject({
+      method: "POST",
+      url: "/api/metric-definitions",
+      headers,
+      payload: {
+        name: "Transaction count",
+        sourceModel: "transaction",
+        sourceQueryDefinitionId: queryId,
+        aggregations: [{ operation: "COUNT" }],
+        fieldsDependency: [],
+        schemaVersionDependency: 0,
+      },
+    });
+    expect(createMetric.statusCode).toBe(201);
+
+    const deleteQuery = await server.inject({
+      method: "DELETE",
+      url: `/api/entity-query-definitions/${queryId}`,
+      headers,
+    });
+    expect(deleteQuery.statusCode).toBe(400);
+    expect(deleteQuery.json().error.message).toContain(
+      "Cannot delete query while",
+    );
+  });
+
+  it("rejects catalog replace that would delete a query referenced by a metric", async () => {
+    const server = await buildTestServer();
+    await seedTransactionEntity(server);
+
+    const createQuery = await server.inject({
+      method: "POST",
+      url: "/api/entity-query-definitions",
+      headers,
+      payload: {
+        name: "All transactions",
+        sourceEntity: "transaction",
+        filter: { type: "group", combinator: "and", children: [] },
+        sort: [],
+        limitMode: "all",
+        status: "ACTIVE",
+      },
+    });
+    expect(createQuery.statusCode).toBe(201);
+    const queryId = createQuery.json().data.id as string;
+
+    const createMetric = await server.inject({
+      method: "POST",
+      url: "/api/metric-definitions",
+      headers,
+      payload: {
+        name: "Transaction count",
+        sourceModel: "transaction",
+        sourceQueryDefinitionId: queryId,
+        aggregations: [{ operation: "COUNT" }],
+        fieldsDependency: [],
+        schemaVersionDependency: 0,
+      },
+    });
+    expect(createMetric.statusCode).toBe(201);
+
+    const replaceCatalog = await server.inject({
+      method: "PUT",
+      url: "/api/entity-query-definitions/catalog",
+      headers,
+      payload: {
+        kind: "entity-query-definitions-catalog",
+        version: 1,
+        exportedAt: new Date().toISOString(),
+        entityQueryDefinitions: [
+          {
+            name: "Income only",
+            sourceEntity: "transaction",
+            filter: {
+              type: "group",
+              combinator: "and",
+              children: [
+                {
+                  type: "condition",
+                  field: "type",
+                  operator: "==",
+                  value: { type: "static", value: "INCOME" },
+                },
+              ],
+            },
+            sort: [],
+            limitMode: "all",
+            status: "ACTIVE",
+          },
+        ],
+      },
+    });
+    expect(replaceCatalog.statusCode).toBe(400);
+    expect(replaceCatalog.json().error.message).toContain(
+      "Cannot delete queries referenced by metrics",
+    );
+  });
 });

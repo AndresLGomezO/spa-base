@@ -14,6 +14,10 @@ import {
   gapStyleFromStyleRules,
   hasExplicitColumnWidthPercents,
   isContainerComponent,
+  filterLayoutStyleRules,
+  isGridComponent,
+  isScreenRootNode,
+  normalizeGridTemplateColumnsForCss,
   isCssLengthTokenValue,
   mergeRowWrapperStyles,
   parseFlexLayoutFromStyles,
@@ -24,6 +28,7 @@ import {
   resolveDisplayRangeVisibility,
   resolveImageComponentRowStyles,
   resolveResponsiveGridLayout,
+  resolveGridGapCSSValue,
   resolveRowWrapperStyleRules,
   stylesIncludeFlexGrow,
   usesFlexWrapLayout,
@@ -190,9 +195,12 @@ function columnContainsComponentKind(
     if (row.type === "component" && row.component.kind === kind) {
       return true;
     }
-    if (row.type === "nested-layout") {
-      for (const nestedColumn of row.columns) {
-        if (columnContainsComponentKind(nestedColumn, kind)) {
+    if (
+      row.type === "component" &&
+      (row.component.kind === "container" || row.component.kind === "grid")
+    ) {
+      for (const childRow of row.component.rows) {
+        if (childRow.type === "component" && childRow.component.kind === kind) {
           return true;
         }
       }
@@ -259,22 +267,10 @@ interface ColumnRenderFlags {
 interface RowRenderScope {
   readonly rootColumnIndex: number;
   readonly containerParentRowId?: string;
-  readonly nestedParentRowId?: string;
-  readonly nestedColumnIndex?: number;
   readonly containerOverlayContext?: ContainerOverlayContext;
 }
 
 function buildRowLocator(scope: RowRenderScope): RowLocator {
-  if (scope.nestedParentRowId != null && scope.nestedColumnIndex != null) {
-    return {
-      scope: "nested",
-      columnIndex: scope.rootColumnIndex,
-      rowId: scope.nestedParentRowId,
-      nestedColumnIndex: scope.nestedColumnIndex,
-      containerRowId: scope.containerParentRowId,
-    };
-  }
-
   if (scope.containerParentRowId != null) {
     return {
       scope: "container",
@@ -318,23 +314,7 @@ function shouldStretchRootContainerRow(
   return (
     row.type === "component" &&
     isContainerComponent(row.component) &&
-    rowScope.nestedParentRowId == null &&
     rowScope.containerParentRowId == null &&
-    isStretchedSurfaceFillContext(
-      context,
-      columnGridOptions?.stretchRootColumns ?? false,
-    )
-  );
-}
-
-function shouldStretchContainerChildRow(
-  context: LayoutRenderContext,
-  rowScope: RowRenderScope,
-  columnGridOptions?: ColumnGridRenderOptions,
-): boolean {
-  return (
-    rowScope.containerParentRowId != null &&
-    rowScope.nestedParentRowId == null &&
     isStretchedSurfaceFillContext(
       context,
       columnGridOptions?.stretchRootColumns ?? false,
@@ -489,6 +469,31 @@ function renderRows(
   );
 }
 
+function renderGridTrackRows(
+  tracks: readonly RowNode[],
+  context: LayoutRenderContext,
+  atBreakpoint: ResponsiveGridBreakpoint | undefined,
+  gridScope: RowRenderScope,
+  rowIndexOffset: number,
+  parentColumn: ColumnNode,
+  columnGridOptions?: ColumnGridRenderOptions,
+): ReactNode {
+  return tracks.map((trackRow, trackIndex) => (
+    <Fragment key={trackRow.id}>
+      {renderRow(
+        trackRow,
+        context,
+        "column",
+        atBreakpoint,
+        gridScope,
+        rowIndexOffset + trackIndex,
+        parentColumn,
+        columnGridOptions,
+      )}
+    </Fragment>
+  ));
+}
+
 function rowStackShellClassName(
   stackDirection: ColumnStackDirection,
   component?: UiComponentConfig,
@@ -599,18 +604,15 @@ function wrapColumn(
 
 function resolveColumnRowScope(
   columnIndex: number,
-  nestedContext?: {
+  parentContext?: {
     readonly rootColumnIndex: number;
-    readonly nestedParentRowId: string;
     readonly containerParentRowId?: string;
   },
 ): RowRenderScope {
-  if (nestedContext) {
+  if (parentContext?.containerParentRowId) {
     return {
-      rootColumnIndex: nestedContext.rootColumnIndex,
-      nestedParentRowId: nestedContext.nestedParentRowId,
-      nestedColumnIndex: columnIndex,
-      containerParentRowId: nestedContext.containerParentRowId,
+      rootColumnIndex: parentContext.rootColumnIndex,
+      containerParentRowId: parentContext.containerParentRowId,
     };
   }
 
@@ -867,9 +869,76 @@ function renderRow(
           parentColumn.styles,
           row,
         );
-  const stackShellClass = rowStackShellClassName(stackDirection);
-
   if (row.type === "component") {
+    if (isGridComponent(row.component)) {
+      const gridStyles = resolveRowWrapperStyleRules(row.component.styles);
+      const gridInlineStyle = gridStyles.style ?? {};
+      const syntheticColumn: ColumnNode = {
+        id: `${row.id}-grid`,
+        rows: row.component.rows,
+      };
+      const gridScope: RowRenderScope = {
+        rootColumnIndex: rowScope.rootColumnIndex,
+        containerParentRowId: row.id,
+      };
+      const gridInner = (
+        <div
+          key={row.id}
+          className={gridStyles.className}
+          style={{
+            display: "grid",
+            gridTemplateColumns: normalizeGridTemplateColumnsForCss(
+              row.component.gridTemplateColumns,
+            ),
+            alignItems: row.component.alignItems,
+            ...gridInlineStyle,
+            gap: resolveGridGapCSSValue(
+              row.component.gap,
+              row.component.styles,
+            ),
+          }}
+        >
+          {renderGridTrackRows(
+            row.component.rows,
+            context,
+            atBreakpoint,
+            gridScope,
+            rowIndex,
+            syntheticColumn,
+            columnGridOptions,
+          )}
+        </div>
+      );
+      return wrapRowContent(
+        row,
+        rowLocator,
+        wrapRowWithClickAction(row, gridInner, context),
+        columnGridOptions,
+      );
+    }
+
+    if (
+      isContainerComponent(row.component) &&
+      row.component.rows.length === 0 &&
+      !row.component.stackDirection &&
+      filterLayoutStyleRules(row.component.styles ?? []).length === 0
+    ) {
+      const neutralStyles = resolveRowWrapperStyleRules(row.component.styles);
+      const neutralInner = (
+        <div
+          key={row.id}
+          className={neutralStyles.className}
+          style={neutralStyles.style}
+        />
+      );
+      return wrapRowContent(
+        row,
+        rowLocator,
+        wrapRowWithClickAction(row, neutralInner, context),
+        columnGridOptions,
+      );
+    }
+
     if (isContainerComponent(row.component)) {
       const containerOverlayContext = createContainerOverlayContext(
         row.component.rows,
@@ -902,7 +971,6 @@ function renderRow(
         !stretchRootContainer &&
         !percentSplitHeight &&
         rowScope.containerParentRowId != null &&
-        rowScope.nestedParentRowId == null &&
         containerUsesPercentFillHeight(row.component.styles) &&
         (isStretchedSurfaceFillContext(
           context,
@@ -1151,101 +1219,7 @@ function renderRow(
     );
   }
 
-  const rowStyles = resolveRowWrapperStyleRules(row.styles);
-  const isFormFill = context.mode === "form";
-  const stretchedSurfaceNestedRowClass =
-    !useProductionShellLayout &&
-    shouldStretchContainerChildRow(context, rowScope, columnGridOptions)
-      ? "flex min-h-0 flex-1 h-full w-full min-w-0 flex-col"
-      : undefined;
-  const formNestedRowClass =
-    isFormFill && stackDirection === "column"
-      ? "flex w-full min-w-0 shrink-0 flex-col"
-      : undefined;
-  const nestedContext = {
-    rootColumnIndex: rowScope.rootColumnIndex,
-    containerParentRowId: rowScope.containerParentRowId,
-    nestedParentRowId: row.id,
-  };
-  const columnStructuralRowClass =
-    useProductionShellLayout || stackDirection !== "column"
-      ? undefined
-      : "w-full min-w-0";
-  const nestedRowBody = (key: string, children: ReactNode) => (
-    <div
-      key={key}
-      className={[
-        columnStructuralRowClass,
-        stackShellClass,
-        stretchedSurfaceNestedRowClass,
-        formNestedRowClass,
-        rowStyles.className,
-        displayRange.className,
-      ]
-        .filter(Boolean)
-        .join(" ")}
-      style={rowStyles.style}
-    >
-      {children}
-    </div>
-  );
-
-  if (
-    !usesResponsiveGridLayout(row.styles, row.columnCount) &&
-    usesFlexWrapLayout(row.styles)
-  ) {
-    const nestedContent = nestedRowBody(
-      row.id,
-      renderWrappedColumns(
-        row.columns,
-        context,
-        row.styles,
-        atBreakpoint,
-        row.columnCount,
-        nestedColumnGridOptions(context, columnGridOptions),
-        nestedContext,
-      ),
-    );
-
-    return wrapRowContent(
-      row,
-      rowLocator,
-      useProductionShellLayout && rowShellLayout ? (
-        <Fragment key={row.id}>
-          {wrapProductionRowShell(rowShellLayout, nestedContent)}
-        </Fragment>
-      ) : (
-        nestedContent
-      ),
-      columnGridOptions,
-    );
-  }
-
-  const nestedContent = nestedRowBody(
-    row.id,
-    renderLayoutColumnGrid(
-      row.columns,
-      context,
-      row.styles,
-      row.columnCount,
-      atBreakpoint,
-      nestedColumnGridOptions(context, columnGridOptions),
-      nestedContext,
-    ),
-  );
-
-  return wrapRowContent(
-    row,
-    rowLocator,
-    useProductionShellLayout && rowShellLayout ? (
-      <Fragment key={row.id}>
-        {wrapProductionRowShell(rowShellLayout, nestedContent)}
-      </Fragment>
-    ) : (
-      nestedContent
-    ),
-    columnGridOptions,
-  );
+  return null;
 }
 
 function renderColumn(
@@ -1332,6 +1306,62 @@ export function RecursiveLayoutRenderer({
 }: RecursiveLayoutRendererProps): ReactNode {
   const atBreakpoint = usePreviewBreakpoint();
   const rootMotionClass = resolveMotionPreset(layout.motion);
+
+  if (isScreenRootNode(layout.root)) {
+    const screenRoot = layout.root;
+    const rootStylesResolved = resolveRowWrapperStyleRules(
+      screenRoot.styles,
+      className,
+    );
+    const columnGridOptions: ColumnGridRenderOptions = {
+      rootColumnWrapper,
+      nestedColumnWrapper,
+      rowWrapper,
+      renderEmptyRootColumns,
+      stretchRootColumns,
+    };
+    const syntheticColumn: ColumnNode = {
+      id: `${screenRoot.id}-screen`,
+      rows: screenRoot.rows,
+    };
+
+    return (
+      <LayoutRenderOptionsProvider value={columnGridOptions}>
+        <div
+          className={[
+            "flex w-full min-w-0 max-w-full flex-col",
+            rootStylesResolved.className,
+            rootMotionClass,
+          ]
+            .filter(Boolean)
+            .join(" ")}
+          style={rootStylesResolved.style}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: normalizeGridTemplateColumnsForCss(
+                screenRoot.gridTemplateColumns,
+              ),
+              gap: resolveGridGapCSSValue(screenRoot.gap, screenRoot.styles),
+              alignItems: screenRoot.alignItems,
+            }}
+          >
+            {renderGridTrackRows(
+              screenRoot.rows,
+              context,
+              atBreakpoint,
+              { rootColumnIndex: 0 },
+              0,
+              syntheticColumn,
+              columnGridOptions,
+            )}
+          </div>
+        </div>
+      </LayoutRenderOptionsProvider>
+    );
+  }
+
   const isMainPage = context.mode === "mainPage";
   const isFormFill = context.mode === "form";
   const isWizardForm = isWizardFormContext(context);

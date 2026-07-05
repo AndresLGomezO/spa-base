@@ -10,7 +10,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
 import { putEntityUiOverride } from "../../lib/api-client";
-import { ensureContainerRoot } from "@repo/ui-builder-core";
+import { ensureStandardRoot } from "@repo/ui-builder-core";
 import { patchEntityCatalogAfterUiOverrideSave } from "./patch-entity-catalog-after-ui-override-save";
 
 function getDefaultFieldPaths(
@@ -35,7 +35,7 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
     const existing =
       definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
     const source = existing ?? createDefaultUiLayout(fieldPaths);
-    return ensureContainerRoot(source);
+    return ensureStandardRoot("screen", source);
   });
   const [isSaving, setIsSaving] = useState(false);
   const [layoutSyncGeneration, setLayoutSyncGeneration] = useState(0);
@@ -44,7 +44,7 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
     const existing =
       definition.ui.recordDetailLayout ?? definition.ui.detailLayout;
     const source = existing ?? createDefaultUiLayout(fieldPaths);
-    setLayout(ensureContainerRoot(source));
+    setLayout(ensureStandardRoot("screen", source));
     setLayoutSyncGeneration((current) => current + 1);
   }, [
     definition.ui.detailLayout,
@@ -53,7 +53,7 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
   ]);
 
   const setLayoutNormalized = useCallback((next: UiLayoutDocument) => {
-    setLayout(ensureContainerRoot(next));
+    setLayout(ensureStandardRoot("screen", next));
   }, []);
 
   const save = useCallback(async (): Promise<boolean> => {
@@ -81,7 +81,10 @@ export function useEntityRecordDetailLayoutEditor(entityName: EntityName) {
 
   const applySlice = useCallback((data: DesignLayoutSliceData) => {
     setLayout(
-      ensureContainerRoot((data as RecordDetailSliceData).recordDetail),
+      ensureStandardRoot(
+        "screen",
+        (data as RecordDetailSliceData).recordDetail,
+      ),
     );
   }, []);
 

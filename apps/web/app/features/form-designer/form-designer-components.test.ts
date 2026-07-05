@@ -3,6 +3,8 @@ import {
   removeRowAt,
   setRootColumnCount,
   setRootColumnWidthPercent,
+  asEditableLayoutRoot,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
@@ -32,7 +34,9 @@ describe("form-designer-components", () => {
   it("reads a components snapshot from the entity definition", () => {
     const snapshot = readComponentsSnapshotFromDefinition(baseDefinition);
 
-    expect(snapshot.plainLayout.root.columnCount).toBeGreaterThan(0);
+    expect(
+      asEditableLayoutRoot(snapshot.plainLayout.root).columnCount,
+    ).toBeGreaterThan(0);
     expect(snapshot.wizard.steps.length).toBe(0);
   });
 
@@ -61,7 +65,7 @@ describe("form-designer-components", () => {
   it("detects component tree row changes", () => {
     const snapshot = readComponentsSnapshotFromDefinition(baseDefinition);
     const baseTree = readComponentsTreeSnapshotFromFull(snapshot);
-    const firstRow = snapshot.plainLayout.root.columns[0]?.rows[0];
+    const firstRow = resolveLayoutRootColumns(snapshot.plainLayout)[0]?.rows[0];
     if (!firstRow) {
       throw new Error("Expected a default plain layout row");
     }

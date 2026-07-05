@@ -1,5 +1,9 @@
 import type { UiLayoutDocument } from "../types/layout.js";
-import { addComponentRowAt, insertNestedLayoutRowAt } from "./mutations.js";
+import {
+  addComponentRowAt,
+  insertGridRowAt,
+  resolveGridTrackLocators,
+} from "./mutations.js";
 import {
   beginContainerRootLayout,
   ensureContainerRoot,
@@ -14,31 +18,29 @@ export function createDefaultRowExpandLayout(
     fieldPaths.length > 1 ? fieldPaths.slice(1) : [primaryField];
 
   const { layout: beganLayout, containerLocator } = beginContainerRootLayout();
-  let layout = beganLayout;
-  const { layout: withNested, rowId: nestedRowId } = insertNestedLayoutRowAt(
-    layout,
+  const { layout: withGrid, rowId: gridRowId } = insertGridRowAt(
+    beganLayout,
     containerLocator,
     { position: "after" },
-    1,
+    { trackCount: 1 },
   );
-  layout = withNested;
 
+  const [trackLocator] = resolveGridTrackLocators(
+    withGrid,
+    containerLocator,
+    gridRowId,
+  );
+  if (!trackLocator) {
+    return withGrid;
+  }
+
+  let layout = withGrid;
   for (const fieldPath of expandFields) {
-    layout = addComponentRowAt(
-      layout,
-      {
-        scope: "nested",
-        columnIndex: containerLocator.columnIndex,
-        containerRowId: containerLocator.containerRowId,
-        rowId: nestedRowId,
-        nestedColumnIndex: 0,
-      },
-      {
-        kind: "text",
-        primary: { type: "field", path: fieldPath },
-        label: { show: true },
-      },
-    );
+    layout = addComponentRowAt(layout, trackLocator, {
+      kind: "text",
+      primary: { type: "field", path: fieldPath },
+      label: { show: true },
+    });
   }
 
   return layout;

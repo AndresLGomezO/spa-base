@@ -3,6 +3,20 @@
  * Source of truth: packages/dynamic-entities/src/types.ts
  */
 
+import {
+  buildModelEntityQueryDefinitionsAtom,
+  MODEL_ENTITY_QUERY_DEFINITIONS_ATOM_ID,
+} from "../atoms/model/entity-query-definitions.js";
+import {
+  buildModelMetricDefinitionsAtom,
+  MODEL_METRIC_DEFINITIONS_ATOM_ID,
+} from "../atoms/model/metric-definitions.js";
+
+export {
+  MODEL_ENTITY_QUERY_DEFINITIONS_ATOM_ID,
+  MODEL_METRIC_DEFINITIONS_ATOM_ID,
+};
+
 export const MODEL_ENTITY_SCHEMA_ATOM_ID = "model.entity.schema";
 
 export function buildModelEntitySchemaAtom(): string {
@@ -332,6 +346,14 @@ export const MODEL_FRAGMENT_SPECS = [
   { id: MODEL_RELATIONS_ATOM_ID, build: buildModelRelationsAtom },
   { id: MODEL_FILES_ATOM_ID, build: buildModelFilesAtom },
   { id: MODEL_EXAMPLE_FULL_ATOM_ID, build: buildModelFullExampleAtom },
+  {
+    id: MODEL_ENTITY_QUERY_DEFINITIONS_ATOM_ID,
+    build: buildModelEntityQueryDefinitionsAtom,
+  },
+  {
+    id: MODEL_METRIC_DEFINITIONS_ATOM_ID,
+    build: buildModelMetricDefinitionsAtom,
+  },
 ] as const;
 
 export function buildAllModelFragments(): Record<string, string> {

@@ -8,6 +8,7 @@ import {
   flexWrapClassFromStyles,
   fontSizePxFromStyles,
   gapPxFromStyles,
+  resolveGridGapCSSValue,
   inlineContentRowClassName,
   inlineFlexGrowStretchClassName,
   parseFlexLayoutFromStyles,
@@ -350,6 +351,21 @@ describe("applyStyleRules", () => {
     ).toBe(false);
   });
 
+  it("uses full width for overlay image rows instead of w-fit", () => {
+    expect(
+      prefersInlineContentWidth({
+        kind: "image",
+        displayMode: "overlay",
+      }),
+    ).toBe(false);
+    expect(
+      inlineContentRowClassName({
+        kind: "image",
+        displayMode: "overlay",
+      }),
+    ).toBe("");
+  });
+
   it("uses full width for wrapping container row wrappers with flex zero", () => {
     expect(
       containerRowWrapperClassName(
@@ -377,6 +393,15 @@ describe("applyStyleRules", () => {
 
     const split = splitStyleRuleClasses([{ property: "gap", value: "12" }]);
     expect(split.containerClassName).toBe("");
+  });
+
+  it("resolveGridGapCSSValue prefers explicit gap over style rules", () => {
+    expect(
+      resolveGridGapCSSValue("32", [{ property: "gap", value: "20" }]),
+    ).toBe("32px");
+    expect(
+      resolveGridGapCSSValue(undefined, [{ property: "gap", value: "20" }]),
+    ).toBe("20px");
   });
 
   it("reads fontSize as pixels for inline styles, not Tailwind classes", () => {
@@ -565,6 +590,12 @@ describe("applyStyleRules", () => {
       opacity: "0.8",
       backdropFilter: "blur(8px)",
     });
+  });
+
+  it("accepts decimal opacity values between 0 and 1", () => {
+    expect(
+      layoutInlineStyleFromStyleRules([{ property: "opacity", value: "0.8" }]),
+    ).toEqual({ opacity: "0.8" });
   });
 
   it("applies letter spacing on text inline styles", () => {

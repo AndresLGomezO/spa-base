@@ -1,14 +1,16 @@
 /**
  * @ai-context-sync
  * When changing component kinds or props, run: pnpm generate:ai-context
+ * Also update docs/ui-design-manual/03-components/ for the affected kind.
  * Affected fragments: ui.components.*
  */
 import type { StyleRule } from "../styles/style-types.js";
-import type { RowNode, ColumnStackDirection } from "./layout.js";
+import type { RowNode, ColumnStackDirection, LayoutAlign } from "./layout.js";
 import type { ConditionalStyleRule, LabelConfig } from "./styling.js";
 
 export type UiComponentKind =
   | "container"
+  | "grid"
   | "text"
   | "image"
   | "icon"
@@ -65,15 +67,50 @@ export type MetricBindingSource =
   | { readonly type: "static"; readonly value: string | number | boolean }
   | { readonly type: "entityField"; readonly fieldPath: string }
   | { readonly type: "listFilter"; readonly field: string }
-  | { readonly type: "routeParam"; readonly param: string };
+  | { readonly type: "routeParam"; readonly param: string }
+  | { readonly type: "dashboardDateFilter" }
+  | {
+      readonly type: "relativePeriod";
+      readonly field: string;
+      readonly anchor:
+        | "dashboardDateFilter"
+        | "listFilter"
+        | "routeParam"
+        | "now";
+      readonly offset: number;
+      readonly unit: "day" | "month" | "year";
+      readonly anchorField?: string;
+      readonly anchorParam?: string;
+    };
+
+/** Alias used for metric and query parameter bindings. */
+export type FilterBindingSource = MetricBindingSource;
+
+export type RelativePeriodAnchor = Extract<
+  MetricBindingSource,
+  { type: "relativePeriod" }
+>["anchor"];
+
+export type RelativePeriodUnit = Extract<
+  MetricBindingSource,
+  { type: "relativePeriod" }
+>["unit"];
 
 export interface MetricKpiComponentConfig {
   readonly kind: "metric-kpi";
   readonly metricDefinitionId: string;
   readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly parameterBindings?: Readonly<Record<string, MetricBindingSource>>;
+  readonly queryParameterBindings?: Readonly<
+    Record<string, MetricBindingSource>
+  >;
   readonly label?: string;
   readonly styles?: readonly StyleRule[];
+  /** When true, colors the value from its sign (see `tonePolarity`). */
+  readonly showToneColors?: boolean;
+  /** `normal`: positive = success, negative = danger. `inverted`: positive = danger, negative = success. */
+  readonly tonePolarity?: "normal" | "inverted";
 }
 
 export interface MetricDerivedTerm {
@@ -97,6 +134,9 @@ export interface MetricDerivedKpiComponentConfig {
   readonly terms?: readonly MetricDerivedTerm[];
   readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
   readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly queryParameterBindings?: Readonly<
+    Record<string, MetricBindingSource>
+  >;
   readonly styles?: readonly StyleRule[];
 }
 
@@ -322,6 +362,7 @@ export interface ViewFilterComponentConfig {
   readonly enableDateFilter?: boolean;
   readonly dateFilterGranularity?: ViewFilterDateGranularity;
   readonly dateFilterParam?: string;
+  readonly dateFilterLabel?: LabelConfig;
   readonly searchPlaceholder?: string;
   readonly filters: readonly ViewFilterEntry[];
   readonly styles?: readonly StyleRule[];
@@ -331,15 +372,27 @@ export type ViewFilterDateGranularity = "year" | "month" | "day";
 
 export interface ContainerComponentConfig {
   readonly kind: "container";
+  /** @deprecated Layout children — migrate to nested `grid` component. Neutral containers have no rows. */
   readonly rows: readonly RowNode[];
-  /** Vertical (default) or horizontal stacking of child rows. */
+  /** @deprecated Use `grid` component for layout structure. */
   readonly stackDirection?: ColumnStackDirection;
+  readonly styles?: readonly StyleRule[];
+}
+
+/** Grid is the only layout structural primitive (Section 15.1). */
+export interface GridComponentConfig {
+  readonly kind: "grid";
+  readonly gridTemplateColumns: string;
+  readonly gap?: string;
+  readonly alignItems?: LayoutAlign;
+  readonly rows: readonly RowNode[];
   readonly styles?: readonly StyleRule[];
 }
 
 export interface QueryViewerComponentConfig {
   readonly kind: "query-viewer";
   readonly entityQueryDefinitionId: string;
+  readonly parameterBindings?: Readonly<Record<string, MetricBindingSource>>;
   readonly rows: readonly RowNode[];
   /** Vertical (default) or horizontal stacking of result items. */
   readonly stackDirection?: ColumnStackDirection;
@@ -348,6 +401,7 @@ export interface QueryViewerComponentConfig {
 
 export type RowHolderComponentConfig =
   | ContainerComponentConfig
+  | GridComponentConfig
   | QueryViewerComponentConfig;
 
 export type PageUiComponentConfig =
@@ -362,6 +416,7 @@ export type ViewFilterUiComponentConfig =
 
 export type UiComponentConfig =
   | ContainerComponentConfig
+  | GridComponentConfig
   | QueryViewerComponentConfig
   | FieldUiComponentConfig
   | IconComponentConfig
@@ -477,6 +532,12 @@ export function isContainerComponent(
   return config.kind === "container";
 }
 
+export function isGridComponent(
+  config: UiComponentConfig,
+): config is GridComponentConfig {
+  return config.kind === "grid";
+}
+
 export function isQueryViewerComponent(
   config: UiComponentConfig,
 ): config is QueryViewerComponentConfig {
@@ -486,5 +547,9 @@ export function isQueryViewerComponent(
 export function isRowHolderComponent(
   config: UiComponentConfig,
 ): config is RowHolderComponentConfig {
-  return config.kind === "container" || config.kind === "query-viewer";
+  return (
+    config.kind === "container" ||
+    config.kind === "grid" ||
+    config.kind === "query-viewer"
+  );
 }

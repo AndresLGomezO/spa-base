@@ -9,7 +9,8 @@ import type {
   ViewFilterComponentConfig,
   ViewSearchComponentConfig,
 } from "../types/component.js";
-import { isContainerComponent } from "../types/component.js";
+import { isRowHolderComponent } from "../types/component.js";
+import { asEditableLayoutRoot } from "./layout-root-adapters.js";
 
 function isViewSearchComponent(
   config: UiComponentConfig,
@@ -106,34 +107,28 @@ function migrateColumnNode(column: ColumnNode): ColumnNode {
 }
 
 function migrateRowNode(row: RowNode): RowNode {
-  if (row.type === "component") {
-    if (isContainerComponent(row.component)) {
-      return {
-        ...row,
-        component: {
-          ...row.component,
-          rows: migrateColumnRows(row.component.rows),
-        },
-      };
-    }
-
-    return row;
+  if (isRowHolderComponent(row.component)) {
+    return {
+      ...row,
+      component: {
+        ...row.component,
+        rows: migrateColumnRows(row.component.rows),
+      },
+    };
   }
 
-  return {
-    ...row,
-    columns: row.columns.map(migrateColumnNode),
-  };
+  return row;
 }
 
 export function migrateViewSearchFilterLayout(
   layout: UiLayoutDocument,
 ): UiLayoutDocument {
+  const root = asEditableLayoutRoot(layout.root);
   return {
     ...layout,
     root: {
-      ...layout.root,
-      columns: layout.root.columns.map(migrateColumnNode),
+      ...root,
+      columns: root.columns.map(migrateColumnNode),
     },
   };
 }

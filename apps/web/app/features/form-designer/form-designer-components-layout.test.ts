@@ -3,6 +3,7 @@ import {
   beginContainerRootLayout,
   createDefaultComponent,
   isContainerComponent,
+  resolveLayoutRootColumns,
 } from "@repo/ui-builder-core";
 import { describe, expect, it } from "vitest";
 
@@ -15,7 +16,8 @@ import { toComponentRowRef } from "./form-designer-component-row-ref";
 
 const labels: StructureTreeLabels = {
   column: (column) => `Column ${column}`,
-  nestedLayout: (count) => `Nested layout (${count} cols)`,
+  track: (track) => `Track ${track}`,
+  grid: (count) => `Grid (${count} tracks)`,
   container: "Container",
   section: "Section",
   actions: "Actions",
@@ -68,7 +70,7 @@ describe("findRowByRef with container layouts", () => {
       createDefaultComponent("container"),
     );
 
-    const rootContainer = layout.root.columns[0]?.rows[0];
+    const rootContainer = resolveLayoutRootColumns(layout)[0]?.rows[0];
     if (
       !rootContainer ||
       rootContainer.type !== "component" ||

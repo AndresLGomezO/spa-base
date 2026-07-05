@@ -171,6 +171,10 @@ export function createEntityLayoutRenderContext(options: {
         metricDefinitionId={config.metricDefinitionId}
         groupBindings={config.groupBindings}
         dimensionBindings={config.dimensionBindings}
+        parameterBindings={config.parameterBindings}
+        queryParameterBindings={config.queryParameterBindings}
+        showToneColors={config.showToneColors}
+        tonePolarity={config.tonePolarity}
         context={{
           record: item,
           listFilters,

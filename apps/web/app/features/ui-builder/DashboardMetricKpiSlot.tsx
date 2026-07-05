@@ -50,6 +50,11 @@ export function DashboardMetricKpiSlot({
       metricDefinitionId={config.metricDefinitionId}
       groupBindings={config.groupBindings}
       dimensionBindings={config.dimensionBindings}
+      parameterBindings={config.parameterBindings}
+      queryParameterBindings={config.queryParameterBindings}
+      label={config.label}
+      showToneColors={config.showToneColors}
+      tonePolarity={config.tonePolarity}
       context={{
         record: {},
         listFilters,

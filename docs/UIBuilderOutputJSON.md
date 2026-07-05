@@ -1,5 +1,7 @@
 # UI Builder output JSON specification
 
+> **Superseded for design team handoff.** Use the [UI Design Manual](./ui-design-manual/README.md) (`docs/ui-design-manual/`) as the single source of truth for producing import-ready layout JSON. This document remains for engineers tracing validation and legacy shapes.
+
 This document describes the **exact JSON shape** produced by the UI Builder and persisted for entity **card list** layouts. It matches:
 
 - **Validation:** [`packages/ui-builder-core/src/schema/ui-layout-schema.ts`](../packages/ui-builder-core/src/schema/ui-layout-schema.ts) (`uiLayoutDocumentSchema`)

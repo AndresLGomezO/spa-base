@@ -27,15 +27,6 @@ export function resolveRowHolderChildRows(
         return nested;
       }
     }
-
-    if (row.type === "nested-layout") {
-      for (const column of row.columns) {
-        const nested = resolveRowHolderChildRows(column.rows, holderRowId);
-        if (nested) {
-          return nested;
-        }
-      }
-    }
   }
 
   return undefined;

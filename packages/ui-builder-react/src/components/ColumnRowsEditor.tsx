@@ -1,24 +1,19 @@
 import { useState } from "react";
 import {
   addComponentRowAt,
-  addNestedLayoutRowAt,
   createDefaultComponent,
-  moveNestedColumn,
+  insertGridRowAt,
+  isGridComponent,
+  isRowHolderComponent,
   moveRowAt,
-  removeNestedColumn,
   removeRowAt,
   replaceComponentRowAt,
-  replaceNestedLayoutRowAt,
-  setNestedColumnCount,
-  setNestedColumnWidthPercent,
+  setGridTrackCount,
   updateComponentRowAt,
   updateComponentRowMetaAt,
-  updateNestedColumnStackDirection,
-  updateNestedColumnStyles,
-  updateNestedLayoutRowStyles,
-  updateNestedLayoutRowDisplayRange,
-  type NestedLayoutRowNode,
+  updateGridRowMetaAt,
   type ComponentRowNode,
+  type GridComponentConfig,
   type RowLocator,
   type RowNode,
   type UiComponentConfig,
@@ -36,14 +31,8 @@ import {
   type ComponentConfigEditorLabels,
   type ComponentConfigEditorProps,
 } from "./ComponentConfigEditor.js";
-import {
-  LayoutColumnControls,
-  type LayoutColumnControlsLabels,
-} from "./LayoutColumnControls.js";
-import {
-  ColumnStackDirectionEditor,
-  type ColumnStackDirectionEditorLabels,
-} from "./ColumnStackDirectionEditor.js";
+import type { LayoutColumnControlsLabels } from "./LayoutColumnControls.js";
+import type { ColumnStackDirectionEditorLabels } from "./ColumnStackDirectionEditor.js";
 import {
   MotionPresetEditor,
   type MotionPresetEditorLabels,
@@ -85,7 +74,7 @@ import type {
 export interface ColumnRowsEditorLabels extends LayoutColumnControlsLabels {
   readonly addRow: string;
   readonly componentRow: string;
-  readonly nestedRow: string;
+  readonly gridRow: string;
   readonly emptyColumn: string;
   readonly moveUp: string;
   readonly moveDown: string;
@@ -171,8 +160,11 @@ export function ColumnRowsEditor({
     setShowAddMenu(false);
   };
 
-  const addNested = () => {
-    onLayoutChange(addNestedLayoutRowAt(layout, locator));
+  const addGrid = () => {
+    onLayoutChange(
+      insertGridRowAt(layout, locator, { position: "after" }, { trackCount: 2 })
+        .layout,
+    );
     setShowAddMenu(false);
   };
 
@@ -196,19 +188,15 @@ export function ColumnRowsEditor({
                 )
               }
             >
-              {row.type === "component"
-                ? `Component: ${row.component.kind}`
-                : `Nested layout (${row.columnCount} cols)`}
+              {row.type === "component" && isGridComponent(row.component)
+                ? `Grid (${row.component.rows.length} tracks)`
+                : `Component: ${row.component.kind}`}
             </button>
             <div className="flex flex-wrap gap-1">
               {definition && presetStore ? (
                 <>
                   <InsertPresetDialog
-                    kind={
-                      row.type === "component"
-                        ? "component-row"
-                        : "nested-layout-row"
-                    }
+                    kind="component-row"
                     designSurface={designSurface}
                     definition={definition}
                     fieldDescriptors={fieldDescriptors}
@@ -216,32 +204,18 @@ export function ColumnRowsEditor({
                     canApply={presetStore.canApplyPresets}
                     labels={presetStore.presetInsertLabels}
                     onApply={(data) => {
-                      if (row.type === "component") {
-                        onLayoutChange(
-                          replaceComponentRowAt(
-                            layout,
-                            locator,
-                            row.id,
-                            data as ComponentRowNode,
-                          ),
-                        );
-                        return;
-                      }
                       onLayoutChange(
-                        replaceNestedLayoutRowAt(
+                        replaceComponentRowAt(
                           layout,
+                          locator,
                           row.id,
-                          data as NestedLayoutRowNode,
+                          data as ComponentRowNode,
                         ),
                       );
                     }}
                   />
                   <SavePresetDialog
-                    kind={
-                      row.type === "component"
-                        ? "component-row"
-                        : "nested-layout-row"
-                    }
+                    kind="component-row"
                     node={row}
                     designSurface={designSurface}
                     sourceEntityName={presetStore.sourceEntityName}
@@ -254,22 +228,12 @@ export function ColumnRowsEditor({
               {definition ? (
                 <>
                   <LayoutJsonViewDialog
-                    scope={{
-                      type:
-                        row.type === "component"
-                          ? "component-row"
-                          : "nested-layout-row",
-                    }}
+                    scope={{ type: "component-row" }}
                     data={row}
                     labels={labels.layoutJsonImport}
                   />
                   <LayoutJsonImportDialog
-                    scope={{
-                      type:
-                        row.type === "component"
-                          ? "component-row"
-                          : "nested-layout-row",
-                    }}
+                    scope={{ type: "component-row" }}
                     designSurface={designSurface}
                     definition={definition}
                     defaultFieldPath={defaultFieldPath}
@@ -277,22 +241,12 @@ export function ColumnRowsEditor({
                     labels={labels.layoutJsonImport}
                     referenceData={row}
                     onApply={(data) => {
-                      if (row.type === "component") {
-                        onLayoutChange(
-                          replaceComponentRowAt(
-                            layout,
-                            locator,
-                            row.id,
-                            data as ComponentRowNode,
-                          ),
-                        );
-                        return;
-                      }
                       onLayoutChange(
-                        replaceNestedLayoutRowAt(
+                        replaceComponentRowAt(
                           layout,
+                          locator,
                           row.id,
-                          data as NestedLayoutRowNode,
+                          data as ComponentRowNode,
                         ),
                       );
                     }}
@@ -398,10 +352,17 @@ export function ColumnRowsEditor({
             </div>
           ) : null}
 
-          {expandedRowId === row.id && row.type === "nested-layout" ? (
-            <NestedLayoutRowEditor
+          {expandedRowId === row.id &&
+          row.type === "component" &&
+          isGridComponent(row.component) ? (
+            <GridRowEditor
               layout={layout}
-              row={row}
+              locator={locator}
+              row={
+                row as ComponentRowNode & {
+                  readonly component: GridComponentConfig;
+                }
+              }
               rootColumnIndex={rootColumnIndex}
               fieldDescriptors={fieldDescriptors}
               defaultFieldPath={defaultFieldPath}
@@ -446,9 +407,9 @@ export function ColumnRowsEditor({
             <button
               type="button"
               className="rounded px-3 py-2 text-left text-sm hover:bg-muted"
-              onClick={addNested}
+              onClick={addGrid}
             >
-              {labels.nestedRow}
+              {labels.gridRow}
             </button>
           </div>
         ) : null}
@@ -457,8 +418,20 @@ export function ColumnRowsEditor({
   );
 }
 
-function NestedLayoutRowEditor({
+function trackLocator(
+  parentLocator: RowLocator,
+  trackRowId: string,
+): Extract<RowLocator, { scope: "container" }> {
+  return {
+    scope: "container",
+    columnIndex: parentLocator.columnIndex,
+    containerRowId: trackRowId,
+  };
+}
+
+function GridRowEditor({
   layout,
+  locator,
   row,
   rootColumnIndex,
   fieldDescriptors,
@@ -479,7 +452,8 @@ function NestedLayoutRowEditor({
   presetStore,
 }: {
   readonly layout: UiLayoutDocument;
-  readonly row: NestedLayoutRowNode;
+  readonly locator: RowLocator;
+  readonly row: ComponentRowNode & { readonly component: GridComponentConfig };
   readonly rootColumnIndex: number;
   readonly fieldDescriptors: readonly FieldDescriptor[];
   readonly defaultFieldPath: string;
@@ -500,110 +474,80 @@ function NestedLayoutRowEditor({
   readonly displayFieldDescriptors?: readonly FieldDescriptor[];
   readonly presetStore?: ColumnRowsEditorProps["presetStore"];
 }) {
-  const [activeColumn, setActiveColumn] = useState(0);
-  const clampedActiveColumn = Math.min(
-    activeColumn,
-    Math.max(0, row.columns.length - 1),
+  const grid = row.component;
+  const [activeTrack, setActiveTrack] = useState(0);
+  const clampedActiveTrack = Math.min(
+    activeTrack,
+    Math.max(0, grid.rows.length - 1),
   );
-  const activeColumnNode = row.columns[clampedActiveColumn];
+  const trackRow = grid.rows[clampedActiveTrack];
 
   return (
     <div className="flex flex-col gap-3 pl-2">
-      <LayoutColumnControls
-        columnCount={row.columnCount}
-        columns={row.columns}
-        activeColumn={clampedActiveColumn}
-        labels={labels}
-        onColumnCountChange={(count) => {
-          onLayoutChange(
-            setNestedColumnCount(layout, rootColumnIndex, row.id, count),
-          );
-          setActiveColumn((current) =>
-            Math.min(current, Math.max(0, count - 1)),
-          );
-        }}
-        onActiveColumnChange={setActiveColumn}
-        onColumnWidthPercentChange={(index, percent) =>
-          onLayoutChange(
-            setNestedColumnWidthPercent(
-              layout,
-              rootColumnIndex,
-              row.id,
-              index,
-              percent,
-            ),
-          )
-        }
-        onMoveLeft={() => {
-          onLayoutChange(
-            moveNestedColumn(
-              layout,
-              rootColumnIndex,
-              row.id,
-              clampedActiveColumn,
-              -1,
-            ),
-          );
-          setActiveColumn((current) => Math.max(0, current - 1));
-        }}
-        onMoveRight={() => {
-          onLayoutChange(
-            moveNestedColumn(
-              layout,
-              rootColumnIndex,
-              row.id,
-              clampedActiveColumn,
-              1,
-            ),
-          );
-          setActiveColumn((current) =>
-            Math.min(row.columns.length - 1, current + 1),
-          );
-        }}
-        onDelete={() => {
-          onLayoutChange(
-            removeNestedColumn(
-              layout,
-              rootColumnIndex,
-              row.id,
-              clampedActiveColumn,
-            ),
-          );
-          setActiveColumn((current) =>
-            Math.min(row.columns.length - 2, current),
-          );
-        }}
-      />
+      <div className="flex flex-wrap items-center gap-2">
+        {grid.rows.map((_, index) => (
+          <Button
+            key={index}
+            type="button"
+            variant={index === clampedActiveTrack ? "primary" : "outline"}
+            onClick={() => setActiveTrack(index)}
+          >
+            Track {index + 1}
+          </Button>
+        ))}
+        <Button
+          type="button"
+          variant="outline"
+          disabled={grid.rows.length >= 6}
+          onClick={() => {
+            onLayoutChange(
+              setGridTrackCount(layout, locator, row.id, grid.rows.length + 1),
+            );
+            setActiveTrack(grid.rows.length);
+          }}
+        >
+          +
+        </Button>
+        {grid.rows.length > 1 ? (
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => {
+              onLayoutChange(
+                setGridTrackCount(
+                  layout,
+                  locator,
+                  row.id,
+                  grid.rows.length - 1,
+                ),
+              );
+              setActiveTrack((current) =>
+                Math.min(current, grid.rows.length - 2),
+              );
+            }}
+          >
+            -
+          </Button>
+        ) : null}
+      </div>
 
       <ComponentDisplayRangeEditor
         displayFrom={row.displayFrom}
         displayTo={row.displayTo}
         labels={labels.displayRange}
         onChange={(patch) =>
-          onLayoutChange(
-            updateNestedLayoutRowDisplayRange(
-              layout,
-              rootColumnIndex,
-              row.id,
-              patch,
-            ),
-          )
+          onLayoutChange(updateGridRowMetaAt(layout, locator, row.id, patch))
         }
       />
 
-      {row.columnCount >= 1 ? (
+      {grid.rows.length >= 1 ? (
         <ResponsiveGridEditor
           styles={row.styles}
-          columnCount={row.columnCount}
+          columnCount={grid.rows.length}
           labels={labels.responsiveGrid}
           onChange={(styles) =>
             onLayoutChange(
-              updateNestedLayoutRowStyles(
-                layout,
-                rootColumnIndex,
-                row.id,
-                styles,
-              ),
+              updateGridRowMetaAt(layout, locator, row.id, { styles }),
             )
           }
         />
@@ -616,10 +560,9 @@ function NestedLayoutRowEditor({
             isResponsiveGridStyleProperty(rule.property),
           );
           onLayoutChange(
-            updateNestedLayoutRowStyles(layout, rootColumnIndex, row.id, [
-              ...genericStyles,
-              ...gridStyles,
-            ]),
+            updateGridRowMetaAt(layout, locator, row.id, {
+              styles: [...genericStyles, ...gridStyles],
+            }),
           );
         }}
         labels={{
@@ -628,56 +571,13 @@ function NestedLayoutRowEditor({
         }}
       />
 
-      {activeColumnNode ? (
-        <ColumnStackDirectionEditor
-          stackDirection={activeColumnNode.stackDirection}
-          onChange={(stackDirection) =>
-            onLayoutChange(
-              updateNestedColumnStackDirection(
-                layout,
-                rootColumnIndex,
-                row.id,
-                clampedActiveColumn,
-                stackDirection,
-              ),
-            )
-          }
-          labels={labels.stackDirection}
-        />
-      ) : null}
-
-      {activeColumnNode ? (
-        <StyleRulesEditor
-          styles={activeColumnNode.styles}
-          onChange={(styles) =>
-            onLayoutChange(
-              updateNestedColumnStyles(
-                layout,
-                rootColumnIndex,
-                row.id,
-                clampedActiveColumn,
-                styles,
-              ),
-            )
-          }
-          labels={{
-            ...labels.styleRules,
-            title: labels.columnStyles,
-          }}
-        />
-      ) : null}
-
-      {activeColumnNode ? (
+      {trackRow?.type === "component" &&
+      isRowHolderComponent(trackRow.component) ? (
         <ColumnRowsEditor
           layout={layout}
           rootColumnIndex={rootColumnIndex}
-          locator={{
-            scope: "nested",
-            columnIndex: rootColumnIndex,
-            rowId: row.id,
-            nestedColumnIndex: clampedActiveColumn,
-          }}
-          rows={activeColumnNode.rows}
+          locator={trackLocator(locator, trackRow.id)}
+          rows={trackRow.component.rows}
           fieldDescriptors={fieldDescriptors}
           defaultFieldPath={defaultFieldPath}
           onLayoutChange={onLayoutChange}

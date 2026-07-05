@@ -9,7 +9,7 @@ import {
 } from "./form-designer-settings";
 
 const baseSnapshot: FormDesignerSettingsSnapshot = {
-  presentation: "plain",
+  layoutPresetId: "plain-form",
   modalSize: "lg",
   modalSizeByBreakpoint: {},
   showHeader: true,
@@ -29,6 +29,12 @@ describe("form-designer-settings", () => {
     expect(
       areSettingsSnapshotsEqual(baseSnapshot, {
         ...baseSnapshot,
+        layoutPresetId: "wizard-form",
+      }),
+    ).toBe(false);
+    expect(
+      areSettingsSnapshotsEqual(baseSnapshot, {
+        ...baseSnapshot,
         modalSizeByBreakpoint: { base: "2xl" },
       }),
     ).toBe(false);
@@ -37,14 +43,14 @@ describe("form-designer-settings", () => {
   it("reads settings snapshot from editor state", () => {
     expect(
       readSettingsSnapshot({
-        presentation: "wizard",
+        layoutPresetId: "wizard-form",
         modalSize: "xl",
         modalSizeByBreakpoint: { base: "2xl" },
         modalChrome: { showHeader: false, contentPadding: "none" },
         modalFooterLayout: {} as unknown as UiLayoutDocument,
       }),
     ).toEqual({
-      presentation: "wizard",
+      layoutPresetId: "wizard-form",
       modalSize: "xl",
       modalSizeByBreakpoint: { base: "2xl" },
       showHeader: false,
@@ -54,7 +60,7 @@ describe("form-designer-settings", () => {
   });
 
   it("applies snapshot to editor setters", () => {
-    const setPresentation = vi.fn();
+    const applyFormSystemPreset = vi.fn();
     const setModalSize = vi.fn();
     const setModalSizeByBreakpoint = vi.fn();
     const setShowModalHeader = vi.fn();
@@ -64,7 +70,7 @@ describe("form-designer-settings", () => {
 
     applySettingsSnapshotToEditor(
       {
-        setPresentation,
+        applyFormSystemPreset,
         setModalSize,
         setModalSizeByBreakpoint,
         setShowModalHeader,
@@ -74,7 +80,7 @@ describe("form-designer-settings", () => {
         modalFooterLayout: undefined,
       },
       {
-        presentation: "wizard",
+        layoutPresetId: "wizard-form",
         modalSize: "sm",
         modalSizeByBreakpoint: { lg: "xl" },
         showHeader: false,
@@ -83,7 +89,10 @@ describe("form-designer-settings", () => {
       },
     );
 
-    expect(setPresentation).toHaveBeenCalledWith("wizard");
+    expect(applyFormSystemPreset).toHaveBeenCalledWith({
+      source: "builtin",
+      id: "wizard-form",
+    });
     expect(setModalSize).toHaveBeenCalledWith("sm");
     expect(setModalSizeByBreakpoint).toHaveBeenCalledWith({ lg: "xl" });
     expect(setShowModalHeader).toHaveBeenCalledWith(false);

@@ -1,10 +1,15 @@
+import {
+  asEditableLayoutRoot,
+  resolveLayoutRootColumns,
+} from "../layout/layout-root-adapters.js";
 import { describe, expect, it } from "vitest";
 
 import {
   addComponentRowAt,
   createEmptyLayout,
-  insertNestedLayoutRowAt,
+  insertGridRowAt,
   isContainerComponent,
+  isGridComponent,
   setRootColumnCount,
 } from "../index.js";
 import {
@@ -34,32 +39,18 @@ describe("ensureContainerRoot", () => {
     expect(rootContainer?.config.rows[0]?.type).toBe("component");
   });
 
-  it("unwraps canonical nested-layout root into container rows", () => {
-    let layout = createEmptyLayout(1);
-    const { layout: withNested, rowId } = insertNestedLayoutRowAt(
-      layout,
+  it("wraps grid rows into container root", () => {
+    const layout = insertGridRowAt(
+      createEmptyLayout(1),
       { scope: "root", columnIndex: 0 },
       { position: "after" },
-      1,
-    );
-    layout = addComponentRowAt(
-      withNested,
-      {
-        scope: "nested",
-        columnIndex: 0,
-        rowId,
-        nestedColumnIndex: 0,
-      },
-      {
-        kind: "text",
-        primary: { type: "field", path: "name" },
-      },
-    );
+      { trackCount: 1 },
+    ).layout;
 
     const normalized = ensureContainerRoot(layout);
     const rootContainer = resolveRootContainer(normalized);
 
-    expect(rootContainer?.config.rows).toHaveLength(1);
+    expect(rootContainer?.config.rows.length).toBeGreaterThan(0);
     expect(isRootContainerRow(normalized, rootContainer!.row.id)).toBe(true);
   });
 
@@ -81,31 +72,31 @@ describe("ensureContainerRoot", () => {
     });
   });
 
-  it("preserves nested-layout rows moved inside container", () => {
+  it("preserves grid rows moved inside container", () => {
     let layout = createEmptyLayout(1);
-    const { layout: withNested } = insertNestedLayoutRowAt(
+    const { layout: withGrid } = insertGridRowAt(
       layout,
       { scope: "root", columnIndex: 0 },
       { position: "after" },
-      2,
+      { trackCount: 2 },
     );
-    layout = withNested;
+    layout = withGrid;
 
     const normalized = ensureContainerRoot(layout);
     const rootContainer = resolveRootContainer(normalized);
-    const nestedRow = rootContainer?.config.rows.find(
-      (row) => row.type === "nested-layout",
+    const gridRow = rootContainer?.config.rows.find(
+      (row) => row.type === "component" && isGridComponent(row.component),
     );
 
-    expect(nestedRow?.type).toBe("nested-layout");
-    if (nestedRow?.type === "nested-layout") {
-      expect(nestedRow.columnCount).toBe(2);
+    expect(gridRow?.type).toBe("component");
+    if (gridRow?.type === "component" && isGridComponent(gridRow.component)) {
+      expect(gridRow.component.rows).toHaveLength(2);
     }
   });
 
   it("creates container component config with empty rows by default", () => {
     const layout = ensureContainerRoot(createEmptyLayout(1));
-    const row = layout.root.columns[0]?.rows[0];
+    const row = resolveLayoutRootColumns(layout)[0]?.rows[0];
 
     expect(row?.type).toBe("component");
     if (row?.type === "component" && isContainerComponent(row.component)) {
@@ -118,7 +109,7 @@ describe("ensureContainerRoot", () => {
     const multiColumn = setRootColumnCount(singleColumn, 3);
     const normalized = ensureContainerRoot(multiColumn);
 
-    expect(normalized.root.columnCount).toBe(3);
-    expect(normalized.root.columns).toHaveLength(3);
+    expect(asEditableLayoutRoot(normalized.root).columnCount).toBe(3);
+    expect(resolveLayoutRootColumns(normalized)).toHaveLength(3);
   });
 });

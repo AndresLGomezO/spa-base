@@ -33,11 +33,54 @@ export function selectMetricsForEvent(
   );
 }
 
+export type MetricQueryMembershipResolver = (input: {
+  readonly tenantId: string;
+  readonly metric: MetricDefinitionRecord;
+  readonly record: Record<string, unknown>;
+  readonly evaluatedAt: string;
+}) => Promise<boolean>;
+
+async function resolveQueryMembershipForEvent(
+  resolver: MetricQueryMembershipResolver | undefined,
+  event: AggregationEvent,
+  metric: MetricDefinitionRecord,
+): Promise<
+  { readonly before?: boolean; readonly after?: boolean } | undefined
+> {
+  if (!metric.sourceQueryDefinitionId || !resolver) {
+    return undefined;
+  }
+
+  const evaluatedAt = event.timestamp;
+  const membership: { before?: boolean; after?: boolean } = {};
+
+  if (event.before) {
+    membership.before = await resolver({
+      tenantId: event.tenantId,
+      metric,
+      record: event.before,
+      evaluatedAt,
+    });
+  }
+
+  if (event.after) {
+    membership.after = await resolver({
+      tenantId: event.tenantId,
+      metric,
+      record: event.after,
+      evaluatedAt,
+    });
+  }
+
+  return membership;
+}
+
 export async function processAggregationEvent(input: {
   readonly event: AggregationEvent;
   readonly definitions: readonly MetricDefinitionRecord[];
   readonly writer: MetricValueWriter;
   readonly metricContributionRepository?: MetricContributionRepository;
+  readonly resolveQueryMembership?: MetricQueryMembershipResolver;
 }): Promise<void> {
   const relevant = selectMetricsForEvent(input.definitions, input.event);
   const allDeltas: MetricValueDelta[] = [];
@@ -56,8 +99,20 @@ export async function processAggregationEvent(input: {
       );
     }
 
+    const queryMembership = await resolveQueryMembershipForEvent(
+      input.resolveQueryMembership,
+      input.event,
+      metric,
+    );
     const deltaOptions =
-      hasContributed === undefined ? undefined : { hasContributed };
+      hasContributed === undefined
+        ? queryMembership
+          ? { queryMembership }
+          : undefined
+        : {
+            hasContributed,
+            ...(queryMembership ? { queryMembership } : {}),
+          };
     allDeltas.push(...computeMetricDeltas(input.event, metric, deltaOptions));
 
     if (input.metricContributionRepository) {
