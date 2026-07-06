@@ -386,6 +386,67 @@ describe("runSnapshotBackfillForMetric", () => {
       ),
     ).toBe(true);
   });
+
+  it("counts pre-filtered documents for query-backed metrics", async () => {
+    const metricDefinitionRepository =
+      createInMemoryMetricDefinitionRepository();
+    const metricValueRepository = createInMemoryMetricValueRepository();
+    const metricContributionRepository =
+      createInMemoryMetricContributionRepository();
+
+    const created = await metricDefinitionRepository.create("tenant_a", {
+      name: "Due Today Count",
+      sourceModel: "paymentSchedule",
+      sourceQueryDefinitionId: "due_today_metrics",
+      filters: [],
+      groupBy: [],
+      dimensions: [],
+      dateFieldGranularity: {},
+      valueDisplayFormat: "number",
+      parameters: [],
+      computationMode: "aggregated",
+      aggregations: [{ operation: "COUNT" }],
+      schemaVersionDependency: 0,
+      fieldsDependency: ["dueDate", "status"],
+      status: "ACTIVE",
+      version: 1,
+    });
+
+    const metric = (await metricDefinitionRepository.getById(
+      "tenant_a",
+      created.id,
+    ))!;
+
+    const result = await runSnapshotBackfillForMetric({
+      tenantId: "tenant_a",
+      metric,
+      documents: [
+        {
+          documentId: "doc_1",
+          record: {
+            status: "UPCOMING",
+            dueDate: "2026-07-06",
+            ownerId: TEST_OWNER_ID,
+          },
+        },
+        {
+          documentId: "doc_2",
+          record: {
+            status: "UPCOMING",
+            dueDate: "2026-07-06",
+            ownerId: TEST_OWNER_ID,
+          },
+        },
+      ],
+      metricValueRepository,
+      metricContributionRepository,
+    });
+
+    expect(result.processedDocuments).toBe(2);
+    expect(
+      [...metricValueRepository.store.values()][0]?.values.count,
+    ).toBe(2);
+  });
 });
 
 describe("AVG metric storage", () => {

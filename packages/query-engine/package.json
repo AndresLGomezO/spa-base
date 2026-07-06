@@ -25,6 +25,7 @@
   },
   "dependencies": {
     "@repo/entities": "workspace:*",
+    "@repo/entity-queries": "workspace:*",
     "@repo/firestore-converters": "workspace:*",
     "@repo/rbac": "workspace:*",
     "zod": "catalog:"

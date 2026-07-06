@@ -26,6 +26,7 @@ export function buildDraftFromChartRecord(
     ...(record.legend !== undefined ? { legend: record.legend } : {}),
     ...(record.grid !== undefined ? { grid: record.grid } : {}),
     ...(record.animation !== undefined ? { animation: record.animation } : {}),
+    ...(record.donut !== undefined ? { donut: record.donut } : {}),
   };
 }
 

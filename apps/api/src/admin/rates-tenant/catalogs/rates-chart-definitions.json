@@ -250,6 +250,43 @@
         "enabled": true,
         "durationMs": 600
       }
+    },
+    {
+      "name": "Budget status donut",
+      "chartType": "donut",
+      "status": "ACTIVE",
+      "displayMode": "inline",
+      "dataSource": {
+        "type": "metricValue",
+        "metricDefinitionId": "Payment Progress %",
+        "maxValue": 100,
+        "parameterBindings": {
+          "period": {
+            "type": "dashboardDateFilter"
+          }
+        }
+      },
+      "donut": {
+        "innerRadiusRatio": 0.72,
+        "trackColor": "color-mix(in oklch, var(--color-success) 20%, transparent)",
+        "fillColor": "var(--color-success)",
+        "showCenterLabel": true
+      },
+      "legend": {
+        "visible": false,
+        "position": "none"
+      },
+      "xAxis": {
+        "visible": false,
+        "showTicks": false
+      },
+      "yAxis": {
+        "visible": false,
+        "showTicks": false
+      },
+      "grid": {
+        "visible": false
+      }
     }
   ]
 }

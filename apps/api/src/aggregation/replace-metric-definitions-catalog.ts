@@ -61,6 +61,13 @@ function createPatchFromCreateInput(
     dateFieldGranularity: imported.dateFieldGranularity,
     valueDisplayFormat: imported.valueDisplayFormat,
     aggregations: imported.aggregations,
+    computationMode: imported.computationMode,
+    ...(imported.computationMode === "computed"
+      ? {
+          parameters: imported.parameters ?? [],
+          ...(imported.computation ? { computation: imported.computation } : {}),
+        }
+      : { parameters: [] }),
     version: options?.version ?? imported.version,
     schemaVersionDependency: imported.schemaVersionDependency,
     fieldsDependency: imported.fieldsDependency,

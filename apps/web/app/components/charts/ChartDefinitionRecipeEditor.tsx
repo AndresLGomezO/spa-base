@@ -267,6 +267,138 @@ function MetricSeriesEditorSection({
   );
 }
 
+function MetricValueEditorSection({
+  recipe,
+  definitions,
+  entityDefinition,
+  filterFieldOptions,
+  onChange,
+}: {
+  readonly recipe: ChartDefinitionRecipe;
+  readonly definitions: readonly MetricDefinitionRecord[] | undefined;
+  readonly entityDefinition: SerializableEntityDefinition;
+  readonly filterFieldOptions: readonly string[];
+  readonly onChange: (recipe: ChartDefinitionRecipe) => void;
+}) {
+  const { t } = useTranslation("common");
+  const { items: entities } = useEntityCatalog();
+
+  if (recipe.dataSource.type !== "metricValue") {
+    return null;
+  }
+
+  const dataSource = recipe.dataSource;
+  const resolvedId = resolveMetricDefinitionDocumentId(
+    dataSource.metricDefinitionId,
+    definitions ?? [],
+  );
+  const metricDefinition = (definitions ?? []).find(
+    (entry) => entry.id === resolvedId,
+  );
+  const bindingEntityDefinition =
+    metricDefinition &&
+    entities.find((entity) => entity.name === metricDefinition.sourceModel)
+      ? entities.find((entity) => entity.name === metricDefinition.sourceModel)!
+      : entityDefinition;
+  const bindingFilterFieldOptions =
+    bindingEntityDefinition === entityDefinition
+      ? filterFieldOptions
+      : Object.keys(bindingEntityDefinition.fields).filter(
+          (field) => bindingEntityDefinition.fields[field]?.type !== "document",
+        );
+
+  return (
+    <div className="flex flex-col gap-3">
+      <Field label={t("entity.viewSettings.metrics.definition")}>
+        <Select
+          value={resolvedId ?? ""}
+          onChange={(event) =>
+            onChange(
+              updateDataSource(recipe, {
+                ...dataSource,
+                metricDefinitionId: event.target.value,
+              }),
+            )
+          }
+        >
+          <option value="">
+            {t("entity.viewSettings.metrics.selectMetric")}
+          </option>
+          {(definitions ?? []).map((definition) => (
+            <option key={definition.id} value={definition.id}>
+              {formatMetricDefinitionOptionLabel(definition)}
+            </option>
+          ))}
+        </Select>
+      </Field>
+
+      <Field label={t("chartComponent.maxValue")}>
+        <input
+          type="number"
+          min={1}
+          className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+          value={dataSource.maxValue ?? 100}
+          onChange={(event) =>
+            onChange(
+              updateDataSource(recipe, {
+                ...dataSource,
+                maxValue: Number(event.target.value) || 100,
+              }),
+            )
+          }
+        />
+      </Field>
+
+      {metricDefinition?.computationMode === "computed"
+        ? (metricDefinition.parameters ?? [])
+            .filter((parameter) => !parameter.deriveFrom)
+            .map((parameter) => (
+              <MetricBindingSourceEditor
+                key={parameter.name}
+                fieldName={parameter.name}
+                source={dataSource.parameterBindings?.[parameter.name]}
+                definition={bindingEntityDefinition}
+                filterFieldOptions={bindingFilterFieldOptions}
+                dateGranularity={parameter.granularity}
+                onChange={(source) =>
+                  onChange(
+                    updateDataSource(recipe, {
+                      ...dataSource,
+                      parameterBindings: {
+                        ...(dataSource.parameterBindings ?? {}),
+                        [parameter.name]: source,
+                      },
+                    }),
+                  )
+                }
+              />
+            ))
+        : null}
+
+      {metricDefinition && metricDefinition.computationMode !== "computed" ? (
+        <MetricBindingsEditor
+          metric={metricDefinition}
+          bindings={{
+            groupBindings: dataSource.groupBindings ?? {},
+            dimensionBindings: dataSource.dimensionBindings ?? {},
+          }}
+          entityDefinition={bindingEntityDefinition}
+          filterFieldOptions={bindingFilterFieldOptions}
+          onChange={(bindings) =>
+            onChange(
+              updateDataSource(recipe, {
+                ...dataSource,
+                groupBindings: bindings.groupBindings,
+                dimensionBindings: bindings.dimensionBindings,
+              }),
+            )
+          }
+        />
+      ) : null}
+    </div>
+  );
+}
+
 export function ChartDefinitionRecipeEditor({
   recipe,
   entityDefinition,
@@ -284,20 +416,51 @@ export function ChartDefinitionRecipeEditor({
     return JSON.stringify(recipe.dataSource.points, null, 2);
   }, [recipe.dataSource]);
 
+  const isDonutChart = recipe.chartType === "donut";
+
   return (
     <div className="flex flex-col gap-4">
       <Field label={t("chartComponent.chartType")}>
         <Select
           value={recipe.chartType}
-          onChange={(event) =>
+          onChange={(event) => {
+            const chartType = event.target.value as ChartType;
+            if (chartType === "donut") {
+              onChange({
+                ...recipe,
+                chartType,
+                dataSource:
+                  recipe.dataSource.type === "metricValue"
+                    ? recipe.dataSource
+                    : {
+                        type: "metricValue",
+                        metricDefinitionId: "",
+                        maxValue: 100,
+                        groupBindings: {},
+                        dimensionBindings: {},
+                        parameterBindings: {},
+                      },
+                donut: recipe.donut ?? {
+                  innerRadiusRatio: 0.72,
+                  showCenterLabel: true,
+                },
+                legend: { visible: false, position: "none" },
+                xAxis: { visible: false, showTicks: false },
+                yAxis: { visible: false, showTicks: false },
+                grid: { visible: false },
+              });
+              return;
+            }
+
             onChange({
               ...recipe,
-              chartType: event.target.value as ChartType,
-            })
-          }
+              chartType,
+            });
+          }}
         >
           <option value="line">{t("chartComponent.types.line")}</option>
           <option value="area">{t("chartComponent.types.area")}</option>
+          <option value="donut">{t("chartComponent.types.donut")}</option>
         </Select>
       </Field>
 
@@ -351,6 +514,19 @@ export function ChartDefinitionRecipeEditor({
               );
               return;
             }
+            if (type === "metricValue") {
+              onChange(
+                updateDataSource(recipe, {
+                  type: "metricValue",
+                  metricDefinitionId: "",
+                  maxValue: 100,
+                  groupBindings: {},
+                  dimensionBindings: {},
+                  parameterBindings: {},
+                }),
+              );
+              return;
+            }
             onChange(
               updateDataSource(recipe, {
                 type: "entityQuery",
@@ -366,6 +542,9 @@ export function ChartDefinitionRecipeEditor({
           </option>
           <option value="metricSeries">
             {t("chartComponent.dataSources.metricSeries")}
+          </option>
+          <option value="metricValue">
+            {t("chartComponent.dataSources.metricValue")}
           </option>
           <option value="entityQuery">
             {t("chartComponent.dataSources.entityQuery")}
@@ -409,6 +588,16 @@ export function ChartDefinitionRecipeEditor({
         />
       ) : null}
 
+      {recipe.dataSource.type === "metricValue" ? (
+        <MetricValueEditorSection
+          recipe={recipe}
+          definitions={definitions}
+          entityDefinition={entityDefinition}
+          filterFieldOptions={filterFieldOptions}
+          onChange={onChange}
+        />
+      ) : null}
+
       {recipe.dataSource.type === "entityQuery" ? (
         <ChartEntityQuerySourceEditor
           dataSource={recipe.dataSource}
@@ -420,7 +609,9 @@ export function ChartDefinitionRecipeEditor({
 
       <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
         <Text className="text-sm font-medium">
-          {t("chartComponent.seriesStyle")}
+          {isDonutChart
+            ? t("chartComponent.donutStyle")
+            : t("chartComponent.seriesStyle")}
         </Text>
         <Field label={t("chartComponent.seriesLabel")}>
           <input
@@ -436,14 +627,86 @@ export function ChartDefinitionRecipeEditor({
         <Field label={t("chartComponent.seriesColor")}>
           <input
             className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
-            value={recipe.series?.[0]?.color ?? "var(--color-primary)"}
+            value={
+              isDonutChart
+                ? (recipe.donut?.fillColor ??
+                  recipe.series?.[0]?.color ??
+                  "var(--color-primary)")
+                : (recipe.series?.[0]?.color ?? "var(--color-primary)")
+            }
             onChange={(event) =>
-              onChange(
-                updatePrimarySeries(recipe, { color: event.target.value }),
-              )
+              isDonutChart
+                ? onChange({
+                    ...recipe,
+                    donut: {
+                      ...recipe.donut,
+                      fillColor: event.target.value,
+                    },
+                  })
+                : onChange(
+                    updatePrimarySeries(recipe, { color: event.target.value }),
+                  )
             }
           />
         </Field>
+        {isDonutChart ? (
+          <>
+            <Field label={t("chartComponent.trackColor")}>
+              <input
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                value={
+                  recipe.donut?.trackColor ??
+                  "color-mix(in oklch, var(--color-primary) 20%, transparent)"
+                }
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    donut: {
+                      ...recipe.donut,
+                      trackColor: event.target.value,
+                    },
+                  })
+                }
+              />
+            </Field>
+            <Field label={t("chartComponent.innerRadiusRatio")}>
+              <input
+                type="number"
+                min={0}
+                max={0.95}
+                step={0.01}
+                className="border-input bg-background w-full rounded-md border px-3 py-2 text-sm"
+                value={recipe.donut?.innerRadiusRatio ?? 0.72}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    donut: {
+                      ...recipe.donut,
+                      innerRadiusRatio: Number(event.target.value) || 0.72,
+                    },
+                  })
+                }
+              />
+            </Field>
+            <label className="flex items-center gap-2 text-sm">
+              <input
+                type="checkbox"
+                checked={recipe.donut?.showCenterLabel ?? true}
+                onChange={(event) =>
+                  onChange({
+                    ...recipe,
+                    donut: {
+                      ...recipe.donut,
+                      showCenterLabel: event.target.checked,
+                    },
+                  })
+                }
+              />
+              {t("chartComponent.showCenterLabel")}
+            </label>
+          </>
+        ) : (
+          <>
         <Field label={t("chartComponent.strokeWidth")}>
           <input
             type="number"
@@ -494,8 +757,12 @@ export function ChartDefinitionRecipeEditor({
             }
           />
         </Field>
+          </>
+        )}
       </div>
 
+      {!isDonutChart ? (
+      <>
       <div className="border-border/60 flex flex-col gap-3 border-t pt-3">
         <Text className="text-sm font-medium">
           {t("chartComponent.legend")}
@@ -676,6 +943,8 @@ export function ChartDefinitionRecipeEditor({
           />
         </Field>
       </div>
+      </>
+      ) : null}
     </div>
   );
 }

@@ -492,6 +492,20 @@ const chartDataSourceSchema = z.discriminatedUnion("type", [
       timeSeries: chartEntityQueryTimeSeriesSchema.optional(),
     })
     .strict(),
+  z
+    .object({
+      type: z.literal("metricValue"),
+      metricDefinitionId: z.string(),
+      maxValue: z.number().finite().positive().optional(),
+      groupBindings: z.record(z.string(), metricBindingSourceSchema).optional(),
+      dimensionBindings: z
+        .record(z.string(), metricBindingSourceSchema)
+        .optional(),
+      parameterBindings: z
+        .record(z.string(), metricBindingSourceSchema)
+        .optional(),
+    })
+    .strict(),
 ]);
 
 const chartSeriesStyleSchema = z
@@ -537,9 +551,19 @@ const chartAnimationSchema = z
   })
   .strict();
 
+const chartDonutSchema = z
+  .object({
+    innerRadiusRatio: z.number().finite().min(0).max(0.95).optional(),
+    trackColor: z.string().optional(),
+    fillColor: z.string().optional(),
+    showCenterLabel: z.boolean().optional(),
+    strokeWidth: z.number().finite().min(0).max(12).optional(),
+  })
+  .strict();
+
 export const chartDefinitionRecipeSchema = z
   .object({
-    chartType: z.enum(["line", "area"]),
+    chartType: z.enum(["line", "area", "donut"]),
     displayMode: z.enum(["inline", "overlay"]).optional(),
     dataSource: chartDataSourceSchema,
     series: z.array(chartSeriesStyleSchema).optional(),
@@ -548,6 +572,7 @@ export const chartDefinitionRecipeSchema = z
     legend: chartLegendSchema.optional(),
     grid: chartGridSchema.optional(),
     animation: chartAnimationSchema.optional(),
+    donut: chartDonutSchema.optional(),
   })
   .strict();
 

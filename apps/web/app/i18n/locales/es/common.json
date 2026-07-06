@@ -302,7 +302,8 @@
     "chartType": "Tipo de gráfico",
     "types": {
       "line": "Línea",
-      "area": "Área"
+      "area": "Área",
+      "donut": "Donut"
     },
     "displayMode": "Modo de visualización",
     "displayModes": {
@@ -313,8 +314,15 @@
     "dataSources": {
       "static": "Puntos JSON estáticos",
       "metricSeries": "Serie temporal de métrica",
-      "entityQuery": "Filas de consulta de entidad"
+      "entityQuery": "Filas de consulta de entidad",
+      "metricValue": "Valor único de métrica"
     },
+    "maxValue": "Valor máximo",
+    "donutStyle": "Estilo del donut",
+    "innerRadiusRatio": "Ratio del radio interior",
+    "trackColor": "Color de la pista",
+    "fillColor": "Color de relleno",
+    "showCenterLabel": "Mostrar etiqueta central",
     "staticPoints": "Puntos estáticos (arreglo JSON)",
     "dimensionField": "Campo de dimensión",
     "bucketCount": "Cantidad de buckets",
@@ -1463,7 +1471,7 @@
       "styleColorBadge": "Colores de badge",
       "styleColorCustomTokens": "Tokens personalizados",
       "styleColorCustomInput": "Color personalizado",
-      "styleColorInvalid": "Introduce un color válido (#hex, rgb(), hsl() o var(--color-*)).",
+      "styleColorInvalid": "Introduce un color válido (#hex, rgb(), hsl(), var(--color-*) o color-mix(...)).",
       "styleShadowTheme": "Tema",
       "styleShadowCustom": "Personalizado",
       "styleShadowShortcuts": "Presets de sombra",

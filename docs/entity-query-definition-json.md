@@ -199,7 +199,7 @@ Parameter declaration example:
 
 At runtime, `query-viewer` and metric components bind parameter values via `parameterBindings` / `queryParameterBindings` using the same `MetricBindingSource` shapes as metric dimensions. During aggregation, query-backed metrics resolve parameters from each source record’s field values.
 
-Supported temporal presets: `today`, `startOfDay`, `endOfDay`, `startOfMonth`, `endOfMonth`, `startOfYear`, `endOfYear`.
+Supported temporal presets: `today`, `startOfDay`, `endOfDay`, `startOfWeek`, `endOfWeek`, `startOfMonth`, `endOfMonth`, `startOfYear`, `endOfYear`. Week presets use ISO weeks (Monday start, UTC).
 
 Groups nest with `combinator`: `"and"` or `"or"`. Depth and OR-branch limits are enforced by `refineEntityQueryDefinitionBody` in the shared package.
 

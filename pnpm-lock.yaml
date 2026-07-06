@@ -1665,6 +1665,9 @@ importers:
       '@repo/entities':
         specifier: workspace:*
         version: link:../entities
+      '@repo/entity-queries':
+        specifier: workspace:*
+        version: link:../entity-queries
       '@repo/firestore-converters':
         specifier: workspace:*
         version: link:../firestore-converters

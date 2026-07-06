@@ -46,7 +46,7 @@ export const patchChartDefinitionInputSchema = z
   .object({
     name: z.string().trim().min(1).optional(),
     description: z.string().trim().optional(),
-    chartType: z.enum(["line", "area"]).optional(),
+    chartType: z.enum(["line", "area", "donut"]).optional(),
     displayMode: z.enum(["inline", "overlay"]).optional(),
     dataSource: chartDefinitionRecipeSchema.shape.dataSource.optional(),
     series: chartDefinitionRecipeSchema.shape.series.optional(),
@@ -55,6 +55,7 @@ export const patchChartDefinitionInputSchema = z
     legend: chartDefinitionRecipeSchema.shape.legend.optional(),
     grid: chartDefinitionRecipeSchema.shape.grid.optional(),
     animation: chartDefinitionRecipeSchema.shape.animation.optional(),
+    donut: chartDefinitionRecipeSchema.shape.donut.optional(),
     status: z.enum(CHART_DEFINITION_STATUSES).optional(),
   })
   .strict();

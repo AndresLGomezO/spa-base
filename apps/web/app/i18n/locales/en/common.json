@@ -302,7 +302,8 @@
     "chartType": "Chart type",
     "types": {
       "line": "Line",
-      "area": "Area"
+      "area": "Area",
+      "donut": "Donut"
     },
     "displayMode": "Display mode",
     "displayModes": {
@@ -313,8 +314,15 @@
     "dataSources": {
       "static": "Static JSON points",
       "metricSeries": "Metric time series",
-      "entityQuery": "Entity query rows"
+      "entityQuery": "Entity query rows",
+      "metricValue": "Single metric value"
     },
+    "maxValue": "Maximum value",
+    "donutStyle": "Donut styling",
+    "innerRadiusRatio": "Inner radius ratio",
+    "trackColor": "Track color",
+    "fillColor": "Fill color",
+    "showCenterLabel": "Show center label",
     "staticPoints": "Static points (JSON array)",
     "dimensionField": "Dimension field",
     "bucketCount": "Bucket count",
@@ -1463,7 +1471,7 @@
       "styleColorBadge": "Badge colors",
       "styleColorCustomTokens": "Custom tokens",
       "styleColorCustomInput": "Custom color",
-      "styleColorInvalid": "Enter a valid color (#hex, rgb(), hsl(), or var(--color-*)).",
+      "styleColorInvalid": "Enter a valid color (#hex, rgb(), hsl(), var(--color-*), or color-mix(...)).",
       "styleShadowTheme": "Theme",
       "styleShadowCustom": "Custom",
       "styleShadowShortcuts": "Shadow presets",

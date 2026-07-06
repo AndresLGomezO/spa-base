@@ -1,6 +1,7 @@
 import {
   evaluateEntityQueryFilterTree,
   recordMatchesEntityQueryDefinition,
+  resolveEntityQueryDefinitionByReference,
   type EntityCatalogEntry,
   type EntityQueryFilterOperator,
 } from "@repo/entity-queries";
@@ -131,7 +132,8 @@ export function createMetricQueryMembershipResolver(deps: {
 
     let definition = queryCache.get(`${input.tenantId}:${queryId}`);
     if (definition === undefined) {
-      definition = await deps.entityQueryDefinitionRepository.getById(
+      definition = await resolveEntityQueryDefinitionByReference(
+        deps.entityQueryDefinitionRepository,
         input.tenantId,
         queryId,
       );
@@ -169,7 +171,8 @@ export async function listSourceDocumentsForMetricDefinition(
     );
   }
 
-  const definition = await entityQueryDefinitionRepository.getById(
+  const definition = await resolveEntityQueryDefinitionByReference(
+    entityQueryDefinitionRepository,
     tenantId,
     metric.sourceQueryDefinitionId,
   );
@@ -188,12 +191,15 @@ export async function listSourceDocumentsForMetricDefinition(
   const catalog = buildEntityCatalog(entityRuntime, tenantId);
   const matched: SourceDocumentSnapshot[] = [];
 
+  const evaluatedAt = new Date().toISOString();
+
   for (const document of allDocuments) {
     const included = await recordMatchesEntityQueryDefinition({
       record: document.record,
       definition,
       catalog,
       listChildRecords,
+      options: { now: new Date(evaluatedAt) },
     });
     if (included) {
       matched.push(document);

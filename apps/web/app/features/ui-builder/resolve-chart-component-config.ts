@@ -51,6 +51,14 @@ function mergeDataSourceParameterBindings(
           instanceBindings,
         ),
       };
+    case "metricValue":
+      return {
+        ...dataSource,
+        parameterBindings: mergeParameterBindings(
+          dataSource.parameterBindings,
+          instanceBindings,
+        ),
+      };
   }
 }
 
@@ -77,6 +85,7 @@ export function resolveChartComponentConfig(
     ...(definition.animation !== undefined
       ? { animation: definition.animation }
       : {}),
+    ...(definition.donut !== undefined ? { donut: definition.donut } : {}),
     ...(config.styles !== undefined ? { styles: config.styles } : {}),
     ...(config.ariaLabel !== undefined ? { ariaLabel: config.ariaLabel } : {}),
   };

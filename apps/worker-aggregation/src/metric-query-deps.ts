@@ -1,6 +1,7 @@
 import {
   evaluateEntityQueryFilterTree,
   recordMatchesEntityQueryDefinition,
+  resolveEntityQueryDefinitionByReference,
   type EntityCatalogEntry,
   type EntityQueryFilterOperator,
 } from "@repo/entity-queries";
@@ -165,7 +166,8 @@ export function createWorkerMetricQueryMembershipResolver(
     const cacheKey = `${input.tenantId}:${queryId}`;
     let definition = queryCache.get(cacheKey);
     if (definition === undefined) {
-      definition = await entityQueryDefinitionRepository.getById(
+      definition = await resolveEntityQueryDefinitionByReference(
+        entityQueryDefinitionRepository,
         input.tenantId,
         queryId,
       );

@@ -1,6 +1,8 @@
 import type { FilterOperator } from "./filter-tree.js";
 import { isFilterCondition } from "./filter-tree.js";
 
+import { compareFilterValues } from "./compare-filter-values.js";
+
 import {
   expandRelationFiltersInTree,
   type ExpandRelationFiltersInTreeInput,
@@ -27,10 +29,7 @@ export interface RecordMatchesEntityQueryDefinitionInput {
 }
 
 function compareValues(left: unknown, right: unknown): number {
-  if (typeof left === "number" && typeof right === "number") {
-    return left - right;
-  }
-  return String(left).localeCompare(String(right));
+  return compareFilterValues(left, right);
 }
 
 function evaluateCondition(

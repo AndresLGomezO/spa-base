@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { LineAreaChart } from "@repo/ui-charts";
+import { DonutChart, LineAreaChart } from "@repo/ui-charts";
 import { Button, Text } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
@@ -46,7 +46,7 @@ export function ChartPreviewSection({
 
   const inputsComplete = areChartPreviewInputsComplete(fields, inputValues);
 
-  const { series, loading, error } = useChartData({
+  const { series, donutData, loading, error } = useChartData({
     config: previewRuntime.config,
     context: previewRuntime.context,
     previewMode: needsLiveFetch && !hasRun,
@@ -113,18 +113,38 @@ export function ChartPreviewSection({
       ) : null}
 
       <div className="border-border bg-muted/20 h-48 shrink-0 overflow-hidden rounded-md border">
-        <LineAreaChart
-          chartType={previewRuntime.config.chartType}
-          series={series}
-          xAxis={previewRuntime.config.xAxis}
-          yAxis={previewRuntime.config.yAxis}
-          legend={previewRuntime.config.legend}
-          grid={previewRuntime.config.grid}
-          animation={previewRuntime.config.animation}
-          ariaLabel={draft.name}
-          loading={loading}
-          className="h-full w-full"
-        />
+        {previewRuntime.config.chartType === "donut" && donutData ? (
+          <DonutChart
+            value={donutData.value}
+            maxValue={donutData.maxValue}
+            fillColor={donutData.fillColor}
+            trackColor={donutData.trackColor}
+            innerRadiusRatio={donutData.innerRadiusRatio}
+            centerLabel={donutData.centerLabel}
+            showCenterLabel={donutData.showCenterLabel}
+            strokeWidth={donutData.strokeWidth}
+            ariaLabel={draft.name}
+            loading={loading}
+            className="h-full w-full"
+          />
+        ) : (
+          <LineAreaChart
+            chartType={
+              previewRuntime.config.chartType === "donut"
+                ? "line"
+                : previewRuntime.config.chartType
+            }
+            series={series}
+            xAxis={previewRuntime.config.xAxis}
+            yAxis={previewRuntime.config.yAxis}
+            legend={previewRuntime.config.legend}
+            grid={previewRuntime.config.grid}
+            animation={previewRuntime.config.animation}
+            ariaLabel={draft.name}
+            loading={loading}
+            className="h-full w-full"
+          />
+        )}
       </div>
 
       <div className="flex flex-col gap-2">

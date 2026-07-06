@@ -32,6 +32,7 @@ export type {
   PatchEntityQueryDefinitionInput,
 } from "./types.js";
 export { resolveTemporalPreset } from "./temporal.js";
+export { compareFilterValues } from "./compare-filter-values.js";
 export {
   buildQueryConfigFromDefinition,
   resolveEntityQueryFilterValue,

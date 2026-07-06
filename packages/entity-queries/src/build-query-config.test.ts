@@ -39,6 +39,23 @@ describe("resolveTemporalPreset", () => {
       "2026-12-31T23:59:59.999Z",
     );
   });
+
+  it("resolves ISO week boundaries (Monday start)", () => {
+    const sunday = new Date("2026-07-05T12:00:00.000Z");
+    expect(resolveTemporalPreset("startOfWeek", sunday)).toBe(
+      "2026-06-29T00:00:00.000Z",
+    );
+    expect(resolveTemporalPreset("endOfWeek", sunday)).toBe(
+      "2026-07-05T23:59:59.999Z",
+    );
+
+    expect(resolveTemporalPreset("startOfWeek", fixedNow)).toBe(
+      "2026-06-15T00:00:00.000Z",
+    );
+    expect(resolveTemporalPreset("endOfWeek", fixedNow)).toBe(
+      "2026-06-21T23:59:59.999Z",
+    );
+  });
 });
 
 describe("buildQueryConfigFromDefinition", () => {

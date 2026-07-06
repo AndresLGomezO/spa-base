@@ -40,6 +40,8 @@ export {
   ENTITY_QUERY_PERMISSIONS,
 } from "./permissions.js";
 export { resolveTemporalPreset } from "./temporal.js";
+export { resolveEntityQueryDefinitionByReference } from "./resolve-entity-query-definition-by-reference.js";
+export { compareFilterValues } from "./compare-filter-values.js";
 export {
   buildIntrinsicQueryParameterMap,
   resolveQueryParameterFilterValue,

@@ -9,6 +9,7 @@ import {
   type NormalizedFilter,
   type NormalizedSort,
 } from "@repo/firestore-converters/entity-query-contract";
+import { compareFilterValues } from "@repo/entity-queries";
 
 import { QueryError, QueryErrorCode } from "./errors.js";
 import { applyPostFilters } from "./post-filters.js";
@@ -16,10 +17,7 @@ import { applyPostFilters } from "./post-filters.js";
 const INEQUALITY_OPERATORS = new Set(["!=", ">", "<", ">=", "<="]);
 
 function compareValues(left: unknown, right: unknown): number {
-  if (typeof left === "number" && typeof right === "number") {
-    return left - right;
-  }
-  return String(left).localeCompare(String(right));
+  return compareFilterValues(left, right);
 }
 
 function evaluateCondition(

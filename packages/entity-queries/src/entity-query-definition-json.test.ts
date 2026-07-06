@@ -180,7 +180,7 @@ describe("entity-query-definition-json", () => {
       );
     }
 
-    expect(parsed.data.entityQueryDefinitions).toHaveLength(38);
+    expect(parsed.data.entityQueryDefinitions).toHaveLength(40);
     const names = parsed.data.entityQueryDefinitions.map((query) => query.name);
     expect(names).toContain("Upcoming payments");
     expect(names).toContain("Active commitments");

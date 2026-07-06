@@ -41,7 +41,11 @@ export async function runSnapshotBackfillForMetric(input: {
       continue;
     }
 
-    const delta = computeCreateDeltaForRecord(input.metric, document.record);
+    const delta = computeCreateDeltaForRecord(
+      input.metric,
+      document.record,
+      input.metric.sourceQueryDefinitionId ? true : undefined,
+    );
     if (!delta) {
       continue;
     }

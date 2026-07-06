@@ -462,6 +462,17 @@ describe("applyStyleRules", () => {
     expect(resolved.className).not.toContain("bg-");
   });
 
+  it("applies color-mix backgrounds as inline styles", () => {
+    const tint =
+      "color-mix(in oklch, var(--color-destructive) 14%, transparent)";
+    const resolved = resolveStyleRules([
+      { property: "backgroundColor", value: tint },
+    ]);
+
+    expect(resolved.style.backgroundColor).toBe(tint);
+    expect(resolved.className).not.toContain("bg-");
+  });
+
   it("applies gradient backgrounds via the background property", () => {
     expect(
       resolveStyleRules([

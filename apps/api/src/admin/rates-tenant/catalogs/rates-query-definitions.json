@@ -242,6 +242,62 @@
       ]
     },
     {
+      "name": "Scheduled this month",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "in",
+            "value": {
+              "type": "static",
+              "value": ["UPCOMING", "PAID", "OVERDUE"]
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "dueDate"
+        }
+      ]
+    },
+    {
       "name": "Active commitments",
       "sourceEntity": "financialItem",
       "filter": {
@@ -1568,6 +1624,96 @@
       ],
       "limitMode": "topN",
       "limit": 50,
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Due today (metrics)",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfDay"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfDay"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Upcoming this week (metrics)",
+      "sourceEntity": "paymentSchedule",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "status",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "UPCOMING"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": ">=",
+            "value": {
+              "type": "temporal",
+              "preset": "startOfWeek"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "dueDate",
+            "operator": "<=",
+            "value": {
+              "type": "temporal",
+              "preset": "endOfWeek"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "dueDate",
+          "direction": "asc"
+        }
+      ],
+      "limitMode": "all",
       "status": "ACTIVE"
     }
   ]

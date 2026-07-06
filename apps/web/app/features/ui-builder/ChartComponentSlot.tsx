@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { LineAreaChart } from "@repo/ui-charts";
+import { DonutChart, LineAreaChart } from "@repo/ui-charts";
 import {
   filterComponentInnerStyleRules,
   layoutInlineStyleFromStyleRules,
@@ -42,7 +42,7 @@ export function ChartComponentSlot({
   const { containerClassName } = splitStyleRuleClasses(innerStyles);
   const containerStyle = layoutInlineStyleFromStyleRules(innerStyles);
 
-  const { series, loading } = useChartData({
+  const { series, donutData, loading } = useChartData({
     config: resolvedConfig ?? {
       kind: "chart",
       chartDefinitionId: config.chartDefinitionId,
@@ -82,18 +82,35 @@ export function ChartComponentSlot({
       className={cn("h-full w-full min-h-0", containerClassName)}
       style={containerStyle}
     >
-      <LineAreaChart
-        chartType={resolvedConfig.chartType}
-        series={series}
-        xAxis={resolvedConfig.xAxis}
-        yAxis={resolvedConfig.yAxis}
-        legend={resolvedConfig.legend}
-        grid={resolvedConfig.grid}
-        animation={resolvedConfig.animation}
-        ariaLabel={ariaLabel}
-        loading={loading}
-        className="h-full w-full"
-      />
+      {resolvedConfig.chartType === "donut" && donutData ? (
+        <DonutChart
+          value={donutData.value}
+          maxValue={donutData.maxValue}
+          fillColor={donutData.fillColor}
+          trackColor={donutData.trackColor}
+          innerRadiusRatio={donutData.innerRadiusRatio}
+          centerLabel={donutData.centerLabel}
+          showCenterLabel={donutData.showCenterLabel}
+          strokeWidth={donutData.strokeWidth}
+          ariaLabel={ariaLabel}
+          loading={loading}
+          className="h-full w-full"
+        />
+      ) : resolvedConfig.chartType === "line" ||
+        resolvedConfig.chartType === "area" ? (
+        <LineAreaChart
+          chartType={resolvedConfig.chartType}
+          series={series}
+          xAxis={resolvedConfig.xAxis}
+          yAxis={resolvedConfig.yAxis}
+          legend={resolvedConfig.legend}
+          grid={resolvedConfig.grid}
+          animation={resolvedConfig.animation}
+          ariaLabel={ariaLabel}
+          loading={loading}
+          className="h-full w-full"
+        />
+      ) : null}
     </div>
   );
 }

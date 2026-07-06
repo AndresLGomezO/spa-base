@@ -56,6 +56,62 @@ Example — net balance (matches KPI evaluate path):
 
 Per-bucket `relativePeriod` offsets are applied at runtime from `dimensionField` and `step`.
 
+## Donut progress chart recipe
+
+Use when a single metric value should render as a **progress ring** with the formatted value centered (e.g. budget utilization %).
+
+1. Create a chart definition with `chartType: "donut"` and `dataSource.type: "metricValue"`.
+2. Set `maxValue` (default `100` for percent metrics).
+3. Bind parameters via `parameterBindings` (e.g. `period` → `dashboardDateFilter`).
+4. Style arcs in `donut`: `fillColor`, `trackColor`, `innerRadiusRatio`, `showCenterLabel`.
+5. In the widget layout, add a `chart` component referencing the definition; size with `width`/`height` styles (e.g. `80`).
+
+Example — payment progress donut:
+
+```json
+{
+  "name": "Budget status donut",
+  "chartType": "donut",
+  "displayMode": "inline",
+  "dataSource": {
+    "type": "metricValue",
+    "metricDefinitionId": "Payment Progress %",
+    "maxValue": 100,
+    "parameterBindings": {
+      "period": { "type": "dashboardDateFilter" }
+    }
+  },
+  "donut": {
+    "innerRadiusRatio": 0.72,
+    "trackColor": "color-mix(in oklch, var(--color-success) 20%, transparent)",
+    "fillColor": "var(--color-success)",
+    "showCenterLabel": true
+  },
+  "legend": { "visible": false, "position": "none" },
+  "xAxis": { "visible": false },
+  "yAxis": { "visible": false },
+  "grid": { "visible": false }
+}
+```
+
+Layout instance:
+
+```json
+{
+  "kind": "chart",
+  "chartDefinitionId": "Budget status donut",
+  "parameterBindings": {
+    "period": { "type": "dashboardDateFilter" }
+  },
+  "styles": [
+    { "property": "width", "value": "80" },
+    { "property": "height", "value": "80" }
+  ]
+}
+```
+
+The renderer fetches the metric once, draws filled + track arcs, and formats the center label from the metric's `valueDisplayFormat`.
+
 ## Entity-query time series overlay recipe
 
 Use one **parametric windowed** saved query (e.g. `Transaction trend`) with `period` (date window) and `types` (`stringList` bound via `parameterBindings`). Multiple charts on the same page share **one cached row fetch** when query + bindings match; each chart applies its own `timeSeries.rowFilters` client-side.

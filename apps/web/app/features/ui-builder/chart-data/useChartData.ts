@@ -34,6 +34,13 @@ import {
   mapStaticPointsToRenderSeries,
   resolvePreviewChartSeries,
 } from "./map-chart-render-series.js";
+import {
+  buildMetricValueChartQueryKey,
+  buildPreviewDonutData,
+  fetchMetricValueDonutData,
+  resolveMetricDefinitionForChart,
+  type ChartDonutData,
+} from "./resolve-metric-value-chart-data.js";
 
 interface UseChartDataInput {
   readonly config: ResolvedChartComponentConfig;
@@ -46,6 +53,7 @@ interface UseChartDataInput {
 
 interface UseChartDataResult {
   readonly series: readonly ChartRenderSeries[];
+  readonly donutData: ChartDonutData | null;
   readonly loading: boolean;
   readonly error: Error | null;
   readonly refetch: () => Promise<void>;
@@ -84,23 +92,45 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
   );
 
   const metricDefinition =
-    config.dataSource.type === "metricSeries"
-      ? definitions.find((entry) => {
-          const dataSource = config.dataSource;
-          if (dataSource.type !== "metricSeries") {
-            return false;
-          }
-          const resolvedId = resolveMetricDefinitionDocumentId(
-            dataSource.metricDefinitionId,
-            definitions,
-          );
-          return (
-            entry.id === resolvedId ||
-            entry.metricId === dataSource.metricDefinitionId ||
-            entry.id === dataSource.metricDefinitionId
-          );
-        })
+    config.dataSource.type === "metricSeries" ||
+    config.dataSource.type === "metricValue"
+      ? resolveMetricDefinitionForChart(
+          config.dataSource.metricDefinitionId,
+          definitions,
+        )
       : undefined;
+
+  const metricValueDataSource =
+    config.dataSource.type === "metricValue" ? config.dataSource : null;
+
+  const metricValueQuery = useQuery({
+    queryKey: [
+      "chart-metric-value",
+      refreshKey,
+      metricValueDataSource
+        ? buildMetricValueChartQueryKey(metricValueDataSource, context)
+        : "disabled",
+    ],
+    queryFn: async () => {
+      if (!metricDefinition || !metricValueDataSource) {
+        return buildPreviewDonutData(config);
+      }
+
+      return (
+        (await fetchMetricValueDonutData(
+          metricDefinition,
+          config,
+          context,
+          { force: refreshKey > 0 },
+        )) ?? buildPreviewDonutData(config)
+      );
+    },
+    enabled:
+      config.chartType === "donut" &&
+      config.dataSource.type === "metricValue" &&
+      Boolean(metricDefinition) &&
+      !previewMode,
+  });
 
   const metricQueries =
     config.dataSource.type === "metricSeries" && metricDefinition
@@ -269,6 +299,10 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
   });
 
   const refetch = useCallback(async () => {
+    if (config.chartType === "donut" && config.dataSource.type === "metricValue") {
+      await metricValueQuery.refetch();
+      return;
+    }
     if (config.dataSource.type === "metricSeries") {
       await metricQuery.refetch();
       return;
@@ -286,17 +320,51 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
       await entityQuery.refetch();
     }
   }, [
+    config.chartType,
     config.dataSource.type,
     entityQuery,
     entityQueryFetchKey,
     entityQueryRowsQuery,
     entityQueryUsesTimeSeries,
     metricQuery,
+    metricValueQuery,
   ]);
+
+  const previewDonutData = useMemo(
+    () =>
+      config.chartType === "donut" ? buildPreviewDonutData(config) : null,
+    [config],
+  );
+
+  if (config.chartType === "donut") {
+    if (previewMode) {
+      return {
+        series: previewSeries,
+        donutData: previewDonutData,
+        loading: false,
+        error: null,
+        refetch,
+      };
+    }
+
+    if (config.dataSource.type === "metricValue") {
+      return {
+        series: previewSeries,
+        donutData: metricValueQuery.data ?? previewDonutData,
+        loading: metricValueQuery.isLoading,
+        error:
+          metricValueQuery.error instanceof Error
+            ? metricValueQuery.error
+            : null,
+        refetch,
+      };
+    }
+  }
 
   if (config.dataSource.type === "static") {
     return {
       series: staticSeries,
+      donutData: null,
       loading: false,
       error: null,
       refetch,
@@ -306,6 +374,7 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
   if (previewMode) {
     return {
       series: previewSeries,
+      donutData: null,
       loading: false,
       error: null,
       refetch,
@@ -315,6 +384,7 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
   if (config.dataSource.type === "metricSeries") {
     return {
       series: metricQuery.data ?? previewSeries,
+      donutData: null,
       loading: metricQuery.isLoading,
       error: metricQuery.error instanceof Error ? metricQuery.error : null,
       refetch,
@@ -325,6 +395,7 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
     if (entityQueryUsesTimeSeries) {
       return {
         series: timeSeriesSeries,
+        donutData: null,
         loading: entityQueryRowsQuery.isLoading,
         error:
           entityQueryRowsQuery.error instanceof Error
@@ -336,6 +407,7 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
 
     return {
       series: entityQuery.data ?? previewSeries,
+      donutData: null,
       loading: entityQuery.isLoading,
       error: entityQuery.error instanceof Error ? entityQuery.error : null,
       refetch,
@@ -344,6 +416,7 @@ export function useChartData(input: UseChartDataInput): UseChartDataResult {
 
   return {
     series: previewSeries,
+    donutData: null,
     loading: false,
     error: null,
     refetch,

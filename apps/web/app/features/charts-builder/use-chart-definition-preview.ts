@@ -38,6 +38,7 @@ export function useChartDefinitionPreview(
       ...(draft.legend !== undefined ? { legend: draft.legend } : {}),
       ...(draft.grid !== undefined ? { grid: draft.grid } : {}),
       ...(draft.animation !== undefined ? { animation: draft.animation } : {}),
+      ...(draft.donut !== undefined ? { donut: draft.donut } : {}),
       status: draft.status,
       version: 1,
       createdAt: new Date().toISOString(),

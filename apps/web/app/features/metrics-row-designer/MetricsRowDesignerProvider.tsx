@@ -64,6 +64,10 @@ import {
   parseMetricsRowDesignerTabId,
   type MetricsRowDesignerTabId,
 } from "./metrics-row-designer-tabs";
+import {
+  applyWidgetSelectionToSearchParams,
+  getMetricsRowDesignerWidgetId,
+} from "./metrics-row-designer-widget-selection";
 
 function shouldConfirmTabChange(
   fromTab: MetricsRowDesignerTabId,
@@ -167,6 +171,11 @@ export function MetricsRowDesignerProvider({
   const activeTabIdRef = useRef(activeTabId);
   activeTabIdRef.current = activeTabId;
 
+  const selectedWidgetIdFromUrl = useMemo(
+    () => getMetricsRowDesignerWidgetId(searchParams),
+    [searchParams],
+  );
+
   const currentWidgetsSnapshot = useMemo(
     () => readWidgetsSnapshot(editor),
     [editor],
@@ -244,6 +253,16 @@ export function MetricsRowDesignerProvider({
     [setSearchParams],
   );
 
+  const navigateToWidget = useCallback(
+    (widgetId: string) => {
+      setSearchParams(
+        (current) => applyWidgetSelectionToSearchParams(current, widgetId),
+        { replace: true },
+      );
+    },
+    [setSearchParams],
+  );
+
   const saveChanges = useCallback(async (): Promise<string | null> => {
     const ok = await editor.save();
     if (ok) {
@@ -266,10 +285,56 @@ export function MetricsRowDesignerProvider({
 
   const switchWidget = useCallback(
     (widgetId: string) => {
-      editor.setSelectedWidgetId(widgetId);
+      navigateToWidget(widgetId);
     },
-    [editor],
+    [navigateToWidget],
   );
+
+  useEffect(() => {
+    const widgets = editor.widgets;
+
+    if (widgets.length === 0) {
+      if (selectedWidgetIdFromUrl.length > 0) {
+        navigateToWidget("");
+      }
+      if (editor.selectedWidgetId !== "") {
+        editor.setSelectedWidgetId("");
+      }
+      return;
+    }
+
+    const urlIsValid = widgets.some(
+      (widget) => widget.id === selectedWidgetIdFromUrl,
+    );
+    const editorIsValid = widgets.some(
+      (widget) => widget.id === editor.selectedWidgetId,
+    );
+
+    if (urlIsValid) {
+      if (editor.selectedWidgetId !== selectedWidgetIdFromUrl) {
+        editor.setSelectedWidgetId(selectedWidgetIdFromUrl);
+      }
+      return;
+    }
+
+    const resolvedId = editorIsValid
+      ? editor.selectedWidgetId
+      : (widgets[0]?.id ?? "");
+
+    if (editor.selectedWidgetId !== resolvedId) {
+      editor.setSelectedWidgetId(resolvedId);
+    }
+
+    if (selectedWidgetIdFromUrl !== resolvedId) {
+      navigateToWidget(resolvedId);
+    }
+  }, [
+    editor,
+    editor.selectedWidgetId,
+    editor.widgets,
+    navigateToWidget,
+    selectedWidgetIdFromUrl,
+  ]);
 
   const closeStructurePanel = useCallback(() => {
     structurePanelSessionRef.current = null;

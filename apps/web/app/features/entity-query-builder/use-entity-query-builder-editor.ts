@@ -33,7 +33,10 @@ function buildDraftFromDefinition(
 ): EntityQueryDraftState {
   return {
     description: definition.description,
-    filter: entityQueryFilterRootToEditor(definition.filter),
+    filter: entityQueryFilterRootToEditor(
+      definition.filter,
+      definition.parameters,
+    ),
     sort: entityQuerySortToEditorRows(definition.sort),
     select: definition.select ? [...definition.select] : [],
     limitMode: definition.limitMode,

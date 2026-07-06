@@ -1,5 +1,26 @@
 /** CSS value helpers for UI builder style rules (no @repo/theme dependency). */
 
+/** Modern CSS color functions, e.g. color-mix(in oklch, var(--color-primary) 14%, transparent). */
+export function isCssColorMixValue(value: string): boolean {
+  const trimmed = value.trim();
+  if (!/^color-mix\s*\(/i.test(trimmed)) {
+    return false;
+  }
+
+  let depth = 0;
+  let started = false;
+  for (const char of trimmed) {
+    if (char === "(") {
+      depth += 1;
+      started = true;
+    } else if (char === ")") {
+      depth -= 1;
+    }
+  }
+
+  return started && depth === 0;
+}
+
 /** Gradients must use the CSS `background` property, not `background-color`. */
 export function isCssGradientBackgroundValue(value: string): boolean {
   const trimmed = value.trim();

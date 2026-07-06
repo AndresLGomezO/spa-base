@@ -31,4 +31,18 @@ describe("color-values", () => {
     expect(isCssBackgroundFillValue("var(--gradient-primary)")).toBe(true);
     expect(isCustomBackgroundFillValue("var(--gradient-primary)")).toBe(true);
   });
+
+  it("accepts color-mix expressions with semantic css variables", () => {
+    const tint =
+      "color-mix(in oklch, var(--color-destructive) 14%, transparent)";
+    expect(isCssColorValue(tint)).toBe(true);
+    expect(isCssBackgroundFillValue(tint)).toBe(true);
+    expect(isCustomColorValue(tint)).toBe(true);
+    expect(isCustomBackgroundFillValue(tint)).toBe(true);
+  });
+
+  it("rejects malformed color-mix expressions", () => {
+    expect(isCssColorValue("color-mix(in oklch, #fff")).toBe(false);
+    expect(isCssColorValue("not-color-mix(#fff, #000)")).toBe(false);
+  });
 });

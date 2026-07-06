@@ -4,8 +4,55 @@ import {
   createEmptyEntityQueryFilterCondition,
   createEmptyEntityQueryFilterRoot,
   editorRootToEntityQueryFilter,
+  entityQueryFilterRootToEditor,
   updateEditorNode,
 } from "./entity-query-filter-utils";
+
+describe("entityQueryFilterRootToEditor", () => {
+  it("maps month parameter bounds to temporal presets for date fields", () => {
+    const editor = entityQueryFilterRootToEditor(
+      {
+        type: "group",
+        combinator: "and",
+        children: [
+          {
+            type: "condition",
+            field: "dueDate",
+            operator: ">=",
+            value: { type: "parameter", name: "period", bound: "start" },
+          },
+          {
+            type: "condition",
+            field: "dueDate",
+            operator: "<=",
+            value: { type: "parameter", name: "period", bound: "end" },
+          },
+        ],
+      },
+      [
+        {
+          name: "period",
+          valueType: "dateBucket",
+          granularity: "month",
+          field: "dueDate",
+        },
+      ],
+    );
+
+    const conditions = editor.children.filter(
+      (child) => child.type === "condition",
+    );
+    expect(conditions).toHaveLength(2);
+    expect(conditions[0]).toMatchObject({
+      valueKind: "temporal",
+      temporalPreset: "startOfMonth",
+    });
+    expect(conditions[1]).toMatchObject({
+      valueKind: "temporal",
+      temporalPreset: "endOfMonth",
+    });
+  });
+});
 
 describe("updateEditorNode", () => {
   it("updates the root group combinator", () => {

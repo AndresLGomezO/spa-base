@@ -206,16 +206,6 @@ export async function seedRatesCatalogs(
     }),
   });
 
-  const metricResult = await replaceMetricDefinitionsCatalog(
-    {
-      entityRuntime,
-      metricRuntime,
-      entityQueryDefinitionRepository,
-    },
-    tenantId,
-    metricParsed.data,
-  );
-
   const queryResult = await replaceEntityQueryDefinitionsCatalog(
     {
       entityRuntime,
@@ -224,6 +214,16 @@ export async function seedRatesCatalogs(
     },
     tenantId,
     queryParsed.data,
+  );
+
+  const metricResult = await replaceMetricDefinitionsCatalog(
+    {
+      entityRuntime,
+      metricRuntime,
+      entityQueryDefinitionRepository,
+    },
+    tenantId,
+    metricParsed.data,
   );
 
   const chartResult = await replaceChartDefinitionsCatalog(

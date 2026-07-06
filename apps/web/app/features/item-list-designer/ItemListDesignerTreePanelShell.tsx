@@ -62,6 +62,7 @@ export function ItemListDesignerTreePanelShell({
             type="button"
             size="sm"
             label={expandLabel}
+            className="text-primary hover:text-primary bg-primary/10 hover:bg-primary/20"
             onClick={() => setCollapsed(false)}
           >
             <PanelLeftOpen aria-hidden className="size-4" />
@@ -89,11 +90,14 @@ export function ItemListDesignerTreePanelShell({
         expandedClassName,
       )}
     >
-      <div className="border-border flex w-full min-w-0 shrink-0 flex-nowrap items-center gap-2 border-b px-3 py-2.5">
-        <Text className="text-foreground min-w-0 shrink-0 text-sm font-semibold tracking-tight">
+      <div className="border-border flex w-full min-w-0 shrink-0 items-center gap-2 border-b px-3 py-2.5">
+        <Text
+          as="span"
+          className="text-foreground min-w-0 flex-1 truncate text-sm font-semibold tracking-tight"
+        >
           {title}
         </Text>
-        <div className="ml-auto flex shrink-0 flex-nowrap items-center gap-2">
+        <div className="flex shrink-0 items-center gap-2">
           {headerActions ? (
             jsonTriggerLabels ? (
               <JsonActionTriggerGroup
@@ -110,6 +114,7 @@ export function ItemListDesignerTreePanelShell({
             type="button"
             size="sm"
             label={collapseLabel}
+            className="text-primary hover:text-primary bg-primary/10 hover:bg-primary/20"
             onClick={() => setCollapsed(true)}
           >
             <PanelLeftClose aria-hidden className="size-4" />

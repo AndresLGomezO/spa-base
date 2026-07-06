@@ -60,7 +60,7 @@ export function importEntityQueryFormState(
     ...(data.description !== undefined
       ? { description: data.description }
       : {}),
-    filter: entityQueryFilterRootToEditor(data.filter),
+    filter: entityQueryFilterRootToEditor(data.filter, data.parameters),
     sort: entityQuerySortToEditorRows(data.sort),
     select: data.select ? [...data.select] : [],
     limitMode: data.limitMode,

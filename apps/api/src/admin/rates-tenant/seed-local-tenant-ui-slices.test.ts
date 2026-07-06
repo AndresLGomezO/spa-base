@@ -39,11 +39,20 @@ describe("seed-local-tenant-ui-slices", () => {
       return;
     }
 
-    expect(parsed.data.entityQueryDefinitions).toHaveLength(1);
+    expect(parsed.data.entityQueryDefinitions).toHaveLength(3);
     expect(parsed.data.entityQueryDefinitions[0]?.name).toBe(
       "Upcoming payments (dashboard)",
     );
     expect(parsed.data.entityQueryDefinitions[0]?.limitMode).toBe("all");
+    expect(
+      parsed.data.entityQueryDefinitions.map((query) => query.name),
+    ).toEqual(
+      expect.arrayContaining([
+        "Upcoming payments (dashboard)",
+        "Due today (metrics)",
+        "Upcoming this week (metrics)",
+      ]),
+    );
   });
 
   it("parses local paymentSchedule widget override slice", () => {
@@ -56,11 +65,20 @@ describe("seed-local-tenant-ui-slices", () => {
 
     const override = catalog.overrides[0];
     expect(override?.entityName).toBe("paymentSchedule");
-    expect(override?.metricWidgets?.[0]?.id).toBe(
-      "upcoming-payments-dashboard",
+    expect(override?.metricWidgets?.map((widget) => widget.id)).toEqual(
+      expect.arrayContaining([
+        "upcoming-payments-dashboard",
+        "due-today-snapshot-mini",
+        "upcoming-week-snapshot-mini",
+        "budget-status-snapshot-mini",
+      ]),
     );
 
-    const layout = override?.metricWidgets?.[0]?.layout as {
+    const upcomingWidget = override?.metricWidgets?.find(
+      (widget) => widget.id === "upcoming-payments-dashboard",
+    );
+
+    const layout = upcomingWidget?.layout as {
       root?: {
         columns?: Array<{ rows?: Array<{ component?: { kind?: string } }> }>;
       };
@@ -101,7 +119,7 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(shellStyles).toEqual(
       expect.arrayContaining([
         { property: "width", value: "100%" },
-        { property: "height", value: "350" },
+        { property: "height", value: "400" },
       ]),
     );
   });
@@ -133,6 +151,39 @@ describe("seed-local-tenant-ui-slices", () => {
 
     expect(gridRow?.kind).toBe("grid");
     expect(gridRow?.rows).toHaveLength(3);
+
+    const spendingTrack = gridRow?.rows[1] as {
+      component?: {
+        kind?: string;
+        rows?: Array<{
+          id?: string;
+          component?: { kind?: string; rows?: unknown[] };
+        }>;
+      };
+    };
+    expect(spendingTrack?.component?.kind).toBe("container");
+    expect(spendingTrack?.component?.rows).toHaveLength(2);
+
+    const upperBand = spendingTrack?.component?.rows?.[0];
+    expect(upperBand?.id).toBe("row-spending-snapshot-upper");
+
+    const miniGrid = (
+      upperBand?.component as { rows?: Array<{ component?: { kind?: string; rows?: unknown[] } }> }
+    )?.rows?.[0]?.component;
+    expect(miniGrid?.kind).toBe("grid");
+    expect(miniGrid?.rows).toHaveLength(3);
+
+    const miniWidgetIds = (miniGrid?.rows ?? []).map((track) => {
+      const container = track as {
+        component?: { rows?: Array<{ component?: { widgetId?: string } }> };
+      };
+      return container.component?.rows?.[0]?.component?.widgetId;
+    });
+    expect(miniWidgetIds).toEqual([
+      "due-today-snapshot-mini",
+      "upcoming-week-snapshot-mini",
+      "budget-status-snapshot-mini",
+    ]);
 
     const shellRow = slice.shellAppendRows[0];
     expect(shellRow?.id).toBe("track-financial-snapshot");

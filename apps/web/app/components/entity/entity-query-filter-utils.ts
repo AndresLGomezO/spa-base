@@ -6,6 +6,8 @@ import {
   type EntityQueryFilterCondition,
   type EntityQueryFilterNode,
   type EntityQueryFilterOperator,
+  type EntityQueryFilterValue,
+  type EntityQueryParameter,
   type EntityCatalogEntry as QueryCatalogEntry,
   type QueryableFieldMeta,
 } from "@repo/entity-queries/browser";
@@ -106,8 +108,44 @@ export function createEmptyEntityQuerySortRow(): EntityQuerySortEditorRow {
   };
 }
 
+function resolveParameterToTemporalPreset(
+  value: Extract<EntityQueryFilterValue, { type: "parameter" }>,
+  parameters: readonly EntityQueryParameter[] | undefined,
+): EntityQueryTemporalPreset | null {
+  if (!parameters?.length || value.offset !== undefined) {
+    return null;
+  }
+
+  const parameter = parameters.find((entry) => entry.name === value.name);
+  if (!parameter || parameter.valueType !== "dateBucket") {
+    return null;
+  }
+
+  const granularity = parameter.granularity ?? "month";
+  if (granularity === "month") {
+    if (value.bound === "start") {
+      return "startOfMonth";
+    }
+    if (value.bound === "end") {
+      return "endOfMonth";
+    }
+  }
+
+  if (granularity === "year") {
+    if (value.bound === "start") {
+      return "startOfYear";
+    }
+    if (value.bound === "end") {
+      return "endOfYear";
+    }
+  }
+
+  return null;
+}
+
 function conditionToEditorRow(
   filter: EntityQueryFilterCondition,
+  parameters?: readonly EntityQueryParameter[],
 ): EntityQueryFilterEditorCondition {
   if (filter.value.type === "temporal") {
     return {
@@ -123,6 +161,23 @@ function conditionToEditorRow(
   }
 
   if (filter.value.type === "parameter") {
+    const temporalPreset = resolveParameterToTemporalPreset(
+      filter.value,
+      parameters,
+    );
+    if (temporalPreset) {
+      return {
+        id: crypto.randomUUID(),
+        type: "condition",
+        field: filter.field,
+        operator: filter.operator,
+        valueKind: "temporal",
+        temporalPreset,
+        scalarValue: "",
+        listValues: [],
+      };
+    }
+
     return {
       id: crypto.randomUUID(),
       type: "condition",
@@ -163,9 +218,10 @@ function conditionToEditorRow(
 
 function entityQueryFilterToEditorNode(
   node: EntityQueryFilterNode,
+  parameters?: readonly EntityQueryParameter[],
 ): EntityQueryFilterEditorNode {
   if (node.type === "condition") {
-    return conditionToEditorRow(node);
+    return conditionToEditorRow(node, parameters);
   }
 
   return {
@@ -173,15 +229,19 @@ function entityQueryFilterToEditorNode(
     type: "group",
     combinator: node.combinator,
     children: node.children.map((child) =>
-      entityQueryFilterToEditorNode(child),
+      entityQueryFilterToEditorNode(child, parameters),
     ),
   };
 }
 
 export function entityQueryFilterRootToEditor(
   filter: EntityQueryDefinitionRecord["filter"],
+  parameters?: readonly EntityQueryParameter[],
 ): EntityQueryFilterEditorGroup {
-  return entityQueryFilterToEditorNode(filter) as EntityQueryFilterEditorGroup;
+  return entityQueryFilterToEditorNode(
+    filter,
+    parameters,
+  ) as EntityQueryFilterEditorGroup;
 }
 
 function editorConditionToApi(

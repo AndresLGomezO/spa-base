@@ -182,7 +182,7 @@ export interface ImageComponentConfig extends FieldComponentConfigBase {
   readonly objectFit?: "contain" | "cover" | "fill";
 }
 
-export type ChartType = "line" | "area";
+export type ChartType = "line" | "area" | "donut";
 
 export interface ChartPoint {
   readonly x: string | number;
@@ -253,6 +253,18 @@ export type ChartDataSource =
         Record<string, MetricBindingSource>
       >;
       readonly timeSeries?: ChartEntityQueryTimeSeries;
+    }
+  | {
+      readonly type: "metricValue";
+      readonly metricDefinitionId: string;
+      readonly maxValue?: number;
+      readonly groupBindings?: Readonly<Record<string, MetricBindingSource>>;
+      readonly dimensionBindings?: Readonly<
+        Record<string, MetricBindingSource>
+      >;
+      readonly parameterBindings?: Readonly<
+        Record<string, MetricBindingSource>
+      >;
     };
 
 export type ChartLegendPosition = "top" | "bottom" | "left" | "right" | "none";
@@ -292,6 +304,14 @@ export interface ChartAnimationConfig {
   readonly durationMs?: number;
 }
 
+export interface ChartDonutConfig {
+  readonly innerRadiusRatio?: number;
+  readonly trackColor?: string;
+  readonly fillColor?: string;
+  readonly showCenterLabel?: boolean;
+  readonly strokeWidth?: number;
+}
+
 /** Full chart recipe stored in the Charts catalog (not layout instance fields). */
 export interface ChartDefinitionRecipe {
   readonly chartType: ChartType;
@@ -303,6 +323,7 @@ export interface ChartDefinitionRecipe {
   readonly legend?: ChartLegendConfig;
   readonly grid?: ChartGridConfig;
   readonly animation?: ChartAnimationConfig;
+  readonly donut?: ChartDonutConfig;
 }
 
 /** Merged config used at runtime after resolving a chart definition reference. */

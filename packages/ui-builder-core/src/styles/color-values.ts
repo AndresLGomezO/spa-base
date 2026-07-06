@@ -1,7 +1,10 @@
 import type { ThemeToken } from "./style-types.js";
-import { isCssGradientBackgroundValue } from "./css-values.js";
+import {
+  isCssColorMixValue,
+  isCssGradientBackgroundValue,
+} from "./css-values.js";
 
-export { isCssGradientBackgroundValue } from "./css-values.js";
+export { isCssColorMixValue, isCssGradientBackgroundValue } from "./css-values.js";
 
 const THEME_TOKENS = new Set<string>([
   "default",
@@ -32,6 +35,10 @@ export function isCssColorValue(value: string): boolean {
   }
 
   if (/^(rgb|rgba|hsl|hsla)\(/i.test(trimmed)) {
+    return true;
+  }
+
+  if (isCssColorMixValue(trimmed)) {
     return true;
   }
 

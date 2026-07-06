@@ -40,6 +40,8 @@ export const ENTITY_QUERY_TEMPORAL_PRESETS = [
   "today",
   "startOfDay",
   "endOfDay",
+  "startOfWeek",
+  "endOfWeek",
   "startOfMonth",
   "endOfMonth",
   "startOfYear",

@@ -123,6 +123,7 @@ export type {
   ChartAxisConfig,
   ChartGridConfig,
   ChartAnimationConfig,
+  ChartDonutConfig,
   ChartLegendPosition,
   ChartLegendAlign,
   ChartMetricSeriesStep,

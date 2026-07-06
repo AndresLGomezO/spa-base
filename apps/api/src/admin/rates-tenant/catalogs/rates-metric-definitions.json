@@ -891,6 +891,232 @@
       "schemaVersionDependency": 0,
       "fieldsDependency": [],
       "status": "ACTIVE"
+    },
+    {
+      "name": "Due Today Total",
+      "description": "Sum of expected amounts for payment schedule rows due today.",
+      "sourceModel": "paymentSchedule",
+      "sourceQueryDefinitionId": "Due today (metrics)",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "expectedAmount"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["expectedAmount", "dueDate", "status"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Due Today Count",
+      "description": "Count of payment schedule rows due today.",
+      "sourceModel": "paymentSchedule",
+      "sourceQueryDefinitionId": "Due today (metrics)",
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "number",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["dueDate", "status"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Upcoming This Week Total",
+      "description": "Sum of expected amounts for upcoming payments due this week.",
+      "sourceModel": "paymentSchedule",
+      "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "expectedAmount"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["expectedAmount", "dueDate", "status"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Upcoming This Week Count",
+      "description": "Count of upcoming payment schedule rows due this week.",
+      "sourceModel": "paymentSchedule",
+      "sourceQueryDefinitionId": "Upcoming this week (metrics)",
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "number",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["dueDate", "status"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Paid Amount by Due Month",
+      "description": "Sum of paid payment schedule amounts grouped by due date month.",
+      "sourceModel": "paymentSchedule",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "expectedAmount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "eq",
+          "value": "PAID"
+        }
+      ],
+      "groupBy": [],
+      "dimensions": ["dueDate"],
+      "dateFieldGranularity": {
+        "dueDate": "month"
+      },
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["expectedAmount", "status", "dueDate"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Scheduled Amount by Due Month",
+      "description": "Sum of scheduled payment amounts (upcoming, paid, overdue) grouped by due date month.",
+      "sourceModel": "paymentSchedule",
+      "aggregations": [
+        {
+          "operation": "SUM",
+          "field": "expectedAmount"
+        }
+      ],
+      "filters": [
+        {
+          "field": "status",
+          "op": "in",
+          "value": ["UPCOMING", "PAID", "OVERDUE"]
+        }
+      ],
+      "groupBy": [],
+      "dimensions": ["dueDate"],
+      "dateFieldGranularity": {
+        "dueDate": "month"
+      },
+      "valueDisplayFormat": "currency",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": ["expectedAmount", "status", "dueDate"],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Payment Progress %",
+      "description": "Share of scheduled period payments that have been paid (paid amount ÷ scheduled amount).",
+      "computationMode": "computed",
+      "sourceModel": "paymentSchedule",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        }
+      ],
+      "computation": {
+        "type": "ratio",
+        "numerator": {
+          "type": "metricRef",
+          "metricDefinitionId": "Paid Amount by Due Month",
+          "parameterMap": {
+            "dueDate": "period"
+          }
+        },
+        "denominator": {
+          "type": "metricRef",
+          "metricDefinitionId": "Scheduled Amount by Due Month",
+          "parameterMap": {
+            "dueDate": "period"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "percent",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
+      "status": "ACTIVE"
+    },
+    {
+      "name": "Monthly Spending Ratio %",
+      "description": "Ratio of monthly outflows to income (budget utilization proxy).",
+      "computationMode": "computed",
+      "sourceModel": "transaction",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month"
+        }
+      ],
+      "computation": {
+        "type": "ratio",
+        "numerator": {
+          "type": "metricRef",
+          "metricDefinitionId": "Outflows by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        },
+        "denominator": {
+          "type": "metricRef",
+          "metricDefinitionId": "Income by Month",
+          "parameterMap": {
+            "date": "period"
+          }
+        }
+      },
+      "aggregations": [
+        {
+          "operation": "COUNT"
+        }
+      ],
+      "filters": [],
+      "groupBy": [],
+      "dimensions": [],
+      "dateFieldGranularity": {},
+      "valueDisplayFormat": "percent",
+      "version": 1,
+      "schemaVersionDependency": 0,
+      "fieldsDependency": [],
+      "status": "ACTIVE"
     }
   ]
 }

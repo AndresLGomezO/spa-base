@@ -277,7 +277,7 @@ export function ColorValueEditor({
             />
             <Input
               value={rawValue}
-              placeholder="#rrggbb, rgb(), hsl(), var(--color-primary), linear-gradient(...)"
+              placeholder="#rrggbb, rgb(), hsl(), var(--color-*), color-mix(...), linear-gradient(...)"
               onChange={(event) => onChange(event.target.value)}
             />
           </div>

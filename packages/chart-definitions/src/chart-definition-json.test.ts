@@ -109,4 +109,38 @@ describe("chart-definition-json", () => {
     expect(envelope.chartDefinitions).toHaveLength(1);
     expect(envelope.kind).toBe("chart-definitions-catalog");
   });
+
+  it("parses donut chart definitions with metricValue source", () => {
+    const parsed = parseChartDefinitionJson(
+      JSON.stringify(
+        createChartDefinitionEnvelope({
+          name: "Budget status donut",
+          chartType: "donut",
+          dataSource: {
+            type: "metricValue",
+            metricDefinitionId: "Payment Progress %",
+            maxValue: 100,
+            parameterBindings: {
+              period: { type: "dashboardDateFilter" },
+            },
+          },
+          donut: {
+            innerRadiusRatio: 0.72,
+            showCenterLabel: true,
+          },
+          status: "ACTIVE",
+        }),
+      ),
+    );
+
+    expect(parsed.ok).toBe(true);
+    if (!parsed.ok) {
+      return;
+    }
+    expect(parsed.data.chartType).toBe("donut");
+    expect(parsed.data.dataSource.type).toBe("metricValue");
+    if (parsed.data.dataSource.type === "metricValue") {
+      expect(parsed.data.dataSource.maxValue).toBe(100);
+    }
+  });
 });

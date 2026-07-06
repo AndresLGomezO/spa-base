@@ -1,4 +1,4 @@
-export type ChartRenderType = "line" | "area";
+export type ChartRenderType = "line" | "area" | "donut";
 
 export interface ChartRenderPoint {
   readonly x: string | number;
@@ -45,13 +45,28 @@ export interface ChartAnimationOptions {
 }
 
 export interface LineAreaChartProps {
-  readonly chartType: ChartRenderType;
+  readonly chartType: Extract<ChartRenderType, "line" | "area">;
   readonly series: readonly ChartRenderSeries[];
   readonly xAxis?: ChartAxisOptions;
   readonly yAxis?: ChartAxisOptions;
   readonly legend?: ChartLegendOptions;
   readonly grid?: ChartGridOptions;
   readonly animation?: ChartAnimationOptions;
+  readonly ariaLabel?: string;
+  readonly className?: string;
+  readonly loading?: boolean;
+  readonly emptyMessage?: string;
+}
+
+export interface DonutChartProps {
+  readonly value: number;
+  readonly maxValue?: number;
+  readonly fillColor?: string;
+  readonly trackColor?: string;
+  readonly innerRadiusRatio?: number;
+  readonly centerLabel?: string;
+  readonly showCenterLabel?: boolean;
+  readonly strokeWidth?: number;
   readonly ariaLabel?: string;
   readonly className?: string;
   readonly loading?: boolean;

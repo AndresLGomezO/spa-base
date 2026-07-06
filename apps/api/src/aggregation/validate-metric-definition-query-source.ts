@@ -1,5 +1,6 @@
 import {
   collectQueryFilterFieldPaths,
+  resolveEntityQueryDefinitionByReference,
   type EntityQueryDefinitionRecord,
 } from "@repo/entity-queries";
 import type { CreateMetricDefinitionInput } from "@repo/metrics-engine";
@@ -10,7 +11,11 @@ async function resolveMetricQuerySource(
   tenantId: string,
   sourceQueryDefinitionId: string,
 ): Promise<EntityQueryDefinitionRecord | null> {
-  return repository.getById(tenantId, sourceQueryDefinitionId);
+  return resolveEntityQueryDefinitionByReference(
+    repository,
+    tenantId,
+    sourceQueryDefinitionId,
+  );
 }
 
 export function validateMetricQuerySourceEligibility(
@@ -109,6 +114,7 @@ export async function resolveValidatedMetricCreateInput(
     ok: true,
     input: {
       ...input,
+      sourceQueryDefinitionId: query.id,
       fieldsDependency: [
         ...mergeMetricFieldsDependencyWithQuery(input.fieldsDependency, query),
       ],
