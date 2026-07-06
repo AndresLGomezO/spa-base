@@ -7,6 +7,7 @@ import { describe, expect, it } from "vitest";
 import {
   listPresentLocalGeneratedImportSpecs,
   listPresentLocalImportSpecs,
+  normalizeLocalImportRecord,
   resolveLocalTenantImportOwnerEmail,
 } from "./seed-local-tenant-import.js";
 
@@ -44,5 +45,22 @@ describe("seed-local-tenant-import", () => {
   it("resolves owner email from bootstrap env with fallback", () => {
     expect(typeof resolveLocalTenantImportOwnerEmail()).toBe("string");
     expect(resolveLocalTenantImportOwnerEmail().length).toBeGreaterThan(0);
+  });
+
+  it("replaces TENANT_ID placeholders in imported records", () => {
+    const normalized = normalizeLocalImportRecord("rates", {
+      id: "actor_1",
+      logo: {
+        storagePath: "tenants/TENANT_ID/entity-files/actor/logo.png",
+        fileName: "logo.png",
+        contentType: "image/png",
+      },
+    });
+
+    expect(normalized.logo).toEqual({
+      storagePath: "tenants/rates/entity-files/actor/logo.png",
+      fileName: "logo.png",
+      contentType: "image/png",
+    });
   });
 });

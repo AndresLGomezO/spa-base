@@ -3,12 +3,14 @@ import { existsSync, readFileSync } from "node:fs";
 import { join } from "node:path";
 
 import type { EntityDefinitionRecord } from "@repo/dynamic-entities";
+import type { EntityFileReference } from "@repo/entities";
 import {
   createFirestoreAdminRegisteredUserRepository,
   getFirebaseUserRecord,
   initializeFirebaseAdmin,
   mapFirebaseUserRecordToAuthUserProjection,
   setFirebaseUserCustomClaims,
+  uploadEntityFile,
   type FirebaseAdminConfig,
 } from "@repo/gcp-firebase";
 import { getAuth } from "firebase-admin/auth";
@@ -105,6 +107,108 @@ function readImportRecords(filePath: string): Record<string, unknown>[] {
   });
 }
 
+export function normalizeLocalImportRecord(
+  tenantId: string,
+  record: Record<string, unknown>,
+): Record<string, unknown> {
+  return JSON.parse(
+    JSON.stringify(record).replaceAll("TENANT_ID", tenantId),
+  ) as Record<string, unknown>;
+}
+
+function resolveLogoContentType(fileName: string): string | null {
+  const normalized = fileName.trim().toLowerCase();
+  if (normalized.endsWith(".png")) {
+    return "image/png";
+  }
+  if (normalized.endsWith(".jpg") || normalized.endsWith(".jpeg")) {
+    return "image/jpeg";
+  }
+  if (normalized.endsWith(".webp")) {
+    return "image/webp";
+  }
+  if (normalized.endsWith(".svg")) {
+    return "image/svg+xml";
+  }
+  return null;
+}
+
+function readActorLogoFileName(record: Record<string, unknown>): string | null {
+  const logo = record.logo;
+  if (!logo || typeof logo !== "object" || Array.isArray(logo)) {
+    return null;
+  }
+
+  const fileName = (logo as EntityFileReference).fileName;
+  return typeof fileName === "string" && fileName.trim().length > 0
+    ? fileName.trim()
+    : null;
+}
+
+async function seedActorLogosFromLocalFiles(
+  tenantId: string,
+  firebaseAdminConfig: FirebaseAdminConfig,
+  importDir: string,
+  context: ReturnType<typeof createRatesRecordSeedContext>,
+): Promise<void> {
+  const logosDir = join(importDir, "logos");
+  const actorPath = join(importDir, "actor.json");
+  if (!existsSync(logosDir) || !existsSync(actorPath)) {
+    return;
+  }
+
+  const records = readImportRecords(actorPath);
+  let uploaded = 0;
+
+  for (const record of records) {
+    const actorId = record.id;
+    if (typeof actorId !== "string" || actorId.trim().length === 0) {
+      continue;
+    }
+
+    const fileName = readActorLogoFileName(record);
+    if (!fileName) {
+      continue;
+    }
+
+    const localLogoPath = join(logosDir, fileName);
+    if (!existsSync(localLogoPath)) {
+      console.log(
+        `[seed]   actor logo file missing for ${record.name ?? actorId}: ${fileName}`,
+      );
+      continue;
+    }
+
+    const contentType = resolveLogoContentType(fileName);
+    if (!contentType) {
+      console.log(
+        `[seed]   unsupported actor logo type for ${record.name ?? actorId}: ${fileName}`,
+      );
+      continue;
+    }
+
+    const file = await uploadEntityFile({
+      config: firebaseAdminConfig,
+      tenantId,
+      entityName: "actor",
+      fieldName: "logo",
+      fieldType: "image",
+      objectId: actorId,
+      buffer: readFileSync(localLogoPath),
+      contentType,
+      fileName,
+      uploadedBy: "seed-database",
+    });
+
+    await ensureRatesRecord(context, "actor", actorId, { logo: file });
+    uploaded += 1;
+  }
+
+  if (uploaded > 0) {
+    console.log(`[seed]   actor logos: ${uploaded} uploaded from ${logosDir}`);
+  }
+}
+
 function runLocalSchedulePaymentMockGenerator(importDir: string): void {
   const scriptPath = join(importDir, "generate-schedule-payment-mocks.ts");
   if (!existsSync(scriptPath)) {
@@ -190,7 +294,8 @@ async function importLocalRecords(
     const records = readImportRecords(filePath);
 
     for (const record of records) {
-      const { id, ...business } = record;
+      const normalized = normalizeLocalImportRecord(context.tenantId, record);
+      const { id, ...business } = normalized;
       await ensureRatesRecord(context, spec.entityName, id as string, business);
     }
 
@@ -236,6 +341,12 @@ export async function seedLocalTenantImportIfPresent(
   );
 
   await importLocalRecords(context, importDir, presentSpecs);
+  await seedActorLogosFromLocalFiles(
+    tenantId,
+    firebaseAdminConfig,
+    importDir,
+    context,
+  );
   runLocalSchedulePaymentMockGenerator(importDir);
 
   const generatedSpecs = listPresentLocalGeneratedImportSpecs(importDir);

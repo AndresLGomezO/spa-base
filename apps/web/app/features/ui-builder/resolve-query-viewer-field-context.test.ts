@@ -116,4 +116,17 @@ describe("resolve-query-viewer-field-context", () => {
       ),
     ).toBeNull();
   });
+
+  it("resolves source entity when query-viewer stores query definition name", () => {
+    const layoutByName = createLayoutWithQueryViewer("Active accounts");
+
+    expect(
+      resolveQueryViewerSourceDefinition(
+        layoutByName,
+        "template-text",
+        queryDefinitions,
+        catalog,
+      )?.name,
+    ).toBe("account");
+  });
 });

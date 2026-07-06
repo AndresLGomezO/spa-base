@@ -6,6 +6,8 @@ import type { EntityName } from "../entities/entity-catalog";
 import {
   buildManyToOneRelationLoadPlans,
   loadManyToOneTargetRecords,
+  mergeLoadedRelationsIntoPopulated,
+  mergeRelationRecordMaps,
   readForeignKeyValues,
   readForeignKeyValuesFromLoadedRecords,
   resolveManyToOneSubfieldValue,
@@ -34,6 +36,9 @@ export function useManyToOneRelationSubfieldValues(
   getDefinition: (name: EntityName) => SerializableEntityDefinition,
 ): {
   readonly getSubfieldValue: (recordId: string, fieldPath: string) => unknown;
+  readonly enrichItemWithLoadedRelations: (
+    item: Record<string, unknown>,
+  ) => Record<string, unknown>;
   readonly isLoading: boolean;
 } {
   const loadPlans = useMemo(
@@ -122,7 +127,10 @@ export function useManyToOneRelationSubfieldValues(
     for (const [index, plan] of nestedLoadPlans.entries()) {
       map.set(
         plan.relationField,
-        nestedRelationQueries[index]?.data ?? new Map(),
+        mergeRelationRecordMaps(
+          map.get(plan.relationField),
+          nestedRelationQueries[index]?.data,
+        ),
       );
     }
 
@@ -151,8 +159,20 @@ export function useManyToOneRelationSubfieldValues(
     [definition, getDefinition, itemsById, targetRecordsByRelation],
   );
 
+  const enrichItemWithLoadedRelations = useCallback(
+    (item: Record<string, unknown>) =>
+      mergeLoadedRelationsIntoPopulated(
+        item,
+        definition,
+        targetRecordsByRelation,
+        getDefinition,
+      ),
+    [definition, getDefinition, targetRecordsByRelation],
+  );
+
   return {
     isLoading,
     getSubfieldValue,
+    enrichItemWithLoadedRelations,
   };
 }

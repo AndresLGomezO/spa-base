@@ -15,6 +15,7 @@ import {
   listEntityQueryDefinitions,
   type EntityQueryDefinitionRecord,
 } from "../../lib/api-client";
+import { resolveEntityQueryDefinitionDocumentId } from "../../lib/resolve-entity-query-definition-reference";
 
 interface QueryViewerComponentEditorProps {
   readonly config: QueryViewerComponentConfig;
@@ -74,6 +75,12 @@ export function QueryViewerComponentEditor({
   }, [t]);
 
   const configuredQueryId = config.entityQueryDefinitionId.trim();
+  const resolvedQueryId = useMemo(
+    () =>
+      resolveEntityQueryDefinitionDocumentId(configuredQueryId, definitions) ??
+      configuredQueryId,
+    [configuredQueryId, definitions],
+  );
 
   const queryOptions = useMemo(() => {
     const options = definitions.map((query) => ({
@@ -88,7 +95,7 @@ export function QueryViewerComponentEditor({
       !options.some((option) => option.value === configuredQueryId)
     ) {
       const staleDefinition = definitions.find(
-        (item) => item.id === configuredQueryId,
+        (item) => item.id === resolvedQueryId,
       );
       options.unshift({
         value: configuredQueryId,
@@ -101,11 +108,9 @@ export function QueryViewerComponentEditor({
     }
 
     return options;
-  }, [configuredQueryId, definitions, getDefinition]);
+  }, [configuredQueryId, definitions, getDefinition, resolvedQueryId]);
 
-  const selectedQuery = definitions.find(
-    (item) => item.id === configuredQueryId,
-  );
+  const selectedQuery = definitions.find((item) => item.id === resolvedQueryId);
   const sourceEntityDefinition = selectedQuery
     ? tryGetEntityDefinition(selectedQuery.sourceEntity, items)
     : undefined;

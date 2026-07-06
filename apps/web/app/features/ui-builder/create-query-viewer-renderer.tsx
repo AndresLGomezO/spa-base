@@ -184,12 +184,15 @@ function QueryViewerRuntime({
       getDefinitionForRelations,
     );
 
-  const { getSubfieldValue: getManyToOneSubfieldValue } =
-    useManyToOneRelationSubfieldValues(
-      resolvedSourceDefinition ?? EMPTY_SOURCE_DEFINITION,
-      items,
-      getDefinitionForRelations,
-    );
+  const {
+    getSubfieldValue: getManyToOneSubfieldValue,
+    enrichItemWithLoadedRelations,
+    isLoading: relationsLoading,
+  } = useManyToOneRelationSubfieldValues(
+    resolvedSourceDefinition ?? EMPTY_SOURCE_DEFINITION,
+    items,
+    getDefinitionForRelations,
+  );
 
   if (queryId.length === 0) {
     return (
@@ -244,6 +247,14 @@ function QueryViewerRuntime({
     );
   }
 
+  if (relationsLoading) {
+    return (
+      <Text className="text-muted-foreground text-sm">
+        {t("metricsRowDesigner.queryViewerEditor.loading")}
+      </Text>
+    );
+  }
+
   return (
     <LayoutStack
       direction={stackDirection}
@@ -264,16 +275,20 @@ function QueryViewerRuntime({
         .join(" ")}
       style={{ ...stackGapProps.style, ...containerStyle }}
     >
-      {items.map((item, index) => (
-        <EmbeddedLayoutRenderer
-          key={String(item.id ?? `query-item-${index}`)}
-          layout={itemLayout}
-          context={buildLayoutContext(sourceDefinition, item, {
-            getOneToManyRelationSubfieldValue: getOneToManySubfieldValue,
-            getManyToOneRelationSubfieldValue: getManyToOneSubfieldValue,
-          })}
-        />
-      ))}
+      {items.map((item, index) => {
+        const enrichedItem = enrichItemWithLoadedRelations(item);
+
+        return (
+          <EmbeddedLayoutRenderer
+            key={String(item.id ?? `query-item-${index}`)}
+            layout={itemLayout}
+            context={buildLayoutContext(sourceDefinition, enrichedItem, {
+              getOneToManyRelationSubfieldValue: getOneToManySubfieldValue,
+              getManyToOneRelationSubfieldValue: getManyToOneSubfieldValue,
+            })}
+          />
+        );
+      })}
     </LayoutStack>
   );
 }

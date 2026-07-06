@@ -193,7 +193,11 @@ export function shouldFetchEntityLayoutImageDownload(options: {
     options.getDefinition,
   );
   if (resolved) {
-    return false;
+    const fieldValue = resolved.record[resolved.leaf.leafFieldName];
+    if (readEntityFileDownloadUrl(fieldValue)) {
+      return false;
+    }
+    return isEntityFileReferenceWithDownload(fieldValue);
   }
 
   const leaf = resolveLayoutFieldLeaf(

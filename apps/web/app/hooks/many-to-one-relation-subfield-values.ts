@@ -1,6 +1,24 @@
 import type { SerializableEntityDefinition } from "@repo/entities";
 import { MAX_LAYOUT_RELATION_HOPS } from "@repo/ui-builder-core";
 
+export type LoadedRelationRecordsByField = ReadonlyMap<
+  string,
+  ReadonlyMap<string, Record<string, unknown>>
+>;
+
+export function mergeRelationRecordMaps(
+  existing: ReadonlyMap<string, Record<string, unknown>> | undefined,
+  incoming: ReadonlyMap<string, Record<string, unknown>> | undefined,
+): ReadonlyMap<string, Record<string, unknown>> {
+  if (!incoming || incoming.size === 0) {
+    return existing ?? new Map();
+  }
+  if (!existing || existing.size === 0) {
+    return incoming;
+  }
+  return new Map([...existing, ...incoming]);
+}
+
 import {
   parseRelationFieldPath,
   resolveRelationFieldName,
@@ -237,4 +255,86 @@ export function resolveManyToOneSubfieldValue(
     targetRecordsByRelation.get(parsed.relationField)?.get(foreignKey) ??
     getPopulatedRecord(item, parsed.relationField);
   return targetRecord?.[parsed.subField] ?? null;
+}
+
+function readExistingPopulated(
+  item: Record<string, unknown>,
+): Record<string, Record<string, unknown> | null> {
+  const populated = item._populated;
+  if (!populated || typeof populated !== "object" || Array.isArray(populated)) {
+    return {};
+  }
+
+  return populated as Record<string, Record<string, unknown> | null>;
+}
+
+export function mergeLoadedRelationsIntoPopulated(
+  item: Record<string, unknown>,
+  definition: SerializableEntityDefinition,
+  targetRecordsByRelation: LoadedRelationRecordsByField,
+  getDefinition: RelationDefinitionLookup,
+  depth = 0,
+): Record<string, unknown> {
+  if (depth >= MAX_LAYOUT_RELATION_HOPS) {
+    return item;
+  }
+
+  const existingPopulated = readExistingPopulated(item);
+  const mergedPopulated: Record<string, Record<string, unknown> | null> = {
+    ...existingPopulated,
+  };
+  let changed = false;
+
+  for (const [relationField, meta] of Object.entries(definition.fields)) {
+    if (
+      meta.relation?.type !== "many-to-one" &&
+      meta.relation?.type !== "one-to-one"
+    ) {
+      continue;
+    }
+
+    const foreignKey = item[relationField];
+    if (typeof foreignKey !== "string" || foreignKey.length === 0) {
+      continue;
+    }
+
+    const loadedRecord = targetRecordsByRelation
+      .get(relationField)
+      ?.get(foreignKey);
+    const existingRecord = existingPopulated[relationField];
+    const baseRecord = loadedRecord ?? existingRecord;
+    if (!baseRecord) {
+      continue;
+    }
+
+    const targetEntity = meta.relation?.target;
+    const targetDefinition =
+      targetEntity && getDefinition ? getDefinition(targetEntity) : undefined;
+    const enrichedRecord = targetDefinition
+      ? mergeLoadedRelationsIntoPopulated(
+          baseRecord,
+          targetDefinition,
+          targetRecordsByRelation,
+          getDefinition,
+          depth + 1,
+        )
+      : baseRecord;
+
+    if (enrichedRecord !== existingRecord || loadedRecord) {
+      mergedPopulated[relationField] = enrichedRecord as Record<
+        string,
+        unknown
+      >;
+      changed = true;
+    }
+  }
+
+  if (!changed) {
+    return item;
+  }
+
+  return {
+    ...item,
+    _populated: mergedPopulated,
+  };
 }

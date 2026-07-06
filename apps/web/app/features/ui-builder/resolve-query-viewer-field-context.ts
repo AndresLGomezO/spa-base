@@ -11,6 +11,7 @@ import {
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { tryGetEntityDefinition } from "../../entities/entity-catalog";
 import type { EntityQueryDefinitionRecord } from "../../lib/api-client";
+import { resolveEntityQueryDefinitionDocumentId } from "../../lib/resolve-entity-query-definition-reference";
 
 function rowTreeContainsId(rows: readonly RowNode[], rowId: string): boolean {
   for (const row of rows) {
@@ -122,7 +123,12 @@ export function resolveQueryViewerSourceDefinition(
     return null;
   }
 
-  const queryDefinition = queryDefinitions.find((item) => item.id === queryId);
+  const resolvedQueryId =
+    resolveEntityQueryDefinitionDocumentId(queryId, queryDefinitions) ??
+    queryId;
+  const queryDefinition = queryDefinitions.find(
+    (item) => item.id === resolvedQueryId,
+  );
   if (!queryDefinition) {
     return null;
   }
