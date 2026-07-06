@@ -4,6 +4,7 @@ import {
   fetchMetricEvaluateOrNull,
   type MetricDefinitionRecord,
 } from "../../lib/api-client.js";
+import { metricEvaluateQueryKey } from "../../query/query-client.js";
 import { useCanReadMetricValues } from "./useCanReadMetricValues.js";
 
 export function useMetricEvaluate(input: {
@@ -21,7 +22,10 @@ export function useMetricEvaluate(input: {
     input.parameters !== null;
 
   return useQuery({
-    queryKey: ["metric-evaluate", input.metricDefinitionId, input.parameters],
+    queryKey: metricEvaluateQueryKey(
+      input.metricDefinitionId ?? "",
+      input.parameters,
+    ),
     queryFn: () =>
       fetchMetricEvaluateOrNull(input.metricDefinitionId!, input.parameters!),
     enabled,

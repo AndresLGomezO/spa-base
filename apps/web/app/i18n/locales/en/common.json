@@ -49,6 +49,7 @@
     "automation": "Automation",
     "analytics": "Data & Analytics",
     "metricsNav": "Metrics",
+    "chartsNav": "Charts",
     "formulasNav": "Formulas",
     "queryBuilderNav": "Query Builder",
     "customViewsNav": "Custom Views",
@@ -290,6 +291,98 @@
     "forbidden": "You do not have permission to use AI chat.",
     "status": "Status: {{status}}"
   },
+  "chartComponent": {
+    "chartType": "Chart type",
+    "types": {
+      "line": "Line",
+      "area": "Area"
+    },
+    "displayMode": "Display mode",
+    "displayModes": {
+      "inline": "Inline",
+      "overlay": "Overlay (background)"
+    },
+    "dataSourceType": "Data source",
+    "dataSources": {
+      "static": "Static JSON points",
+      "metricSeries": "Metric time series",
+      "entityQuery": "Entity query rows"
+    },
+    "staticPoints": "Static points (JSON array)",
+    "dimensionField": "Dimension field",
+    "bucketCount": "Bucket count",
+    "stepUnit": "Step unit",
+    "offsetStart": "Offset start",
+    "offsetEnd": "Offset end",
+    "units": {
+      "day": "Day",
+      "month": "Month",
+      "year": "Year"
+    },
+    "entityQuery": "Entity query",
+    "timeSeriesMode": "Time series mode",
+    "timeSeriesModeHelp": "Aggregate query results across relative period buckets",
+    "timeSeriesLayout": "Time series layout",
+    "timeSeriesLayouts": {
+      "span": "Span (relative offsets)",
+      "monthToDateRightAligned": "Month to date (30 slots, right-aligned)"
+    },
+    "periodParameter": "Period parameter",
+    "timeSeriesAggregate": "Bucket aggregate",
+    "aggregateSum": "Sum field values",
+    "aggregateCount": "Count rows",
+    "rowFilters": "Row filters",
+    "addRowFilter": "Add row filter",
+    "removeRowFilter": "Remove filter",
+    "valueTransforms": "Value transforms",
+    "valueTransformField": "When field",
+    "valueTransformOperator": "Operator",
+    "valueTransformEquals": "Equals (==)",
+    "valueTransformIn": "In list (in)",
+    "valueTransformValue": "Match value(s)",
+    "valueTransformMultiplier": "Multiplier",
+    "addValueTransform": "Add value transform",
+    "removeValueTransform": "Remove transform",
+    "xFieldPath": "X axis field",
+    "yFieldPath": "Y axis field",
+    "seriesFieldPath": "Series field (optional)",
+    "seriesFieldPathOptional": "Optional — groups rows into multiple series",
+    "seriesStyle": "Series styling",
+    "seriesLabel": "Series label",
+    "seriesColor": "Series color",
+    "strokeWidth": "Stroke width",
+    "showAreaFill": "Fill area under line",
+    "areaFillOpacity": "Area fill opacity",
+    "definition": "Chart definition",
+    "selectDefinition": "Select a chart definition…",
+    "noDefinitions": "No chart definitions registered yet.",
+    "parameterBindings": "Parameter bindings",
+    "ariaLabel": "Accessible label (optional)",
+    "legend": "Legend",
+    "legendVisible": "Show legend",
+    "legendPosition": "Legend position",
+    "legendPositions": {
+      "none": "Hidden",
+      "top": "Top",
+      "bottom": "Bottom",
+      "left": "Left",
+      "right": "Right"
+    },
+    "legendAlign": "Legend alignment",
+    "legendAlignments": {
+      "start": "Start",
+      "center": "Center",
+      "end": "End"
+    },
+    "legendFontSize": "Legend font size (px)",
+    "axesAndGrid": "Axes and grid",
+    "showXAxis": "Show X axis",
+    "showYAxis": "Show Y axis",
+    "showGrid": "Show grid lines",
+    "animation": "Animation",
+    "animationEnabled": "Enable animation",
+    "animationDuration": "Duration (ms)"
+  },
   "formDesigner": {
     "title": "Form Designer",
     "designSubtitle": "{{entity}} / {{design}}",
@@ -491,6 +584,7 @@
       "sections": {
         "layout": "Layout components",
         "content": "Content components",
+        "charts": "Chart components",
         "form": "Form components",
         "dataControls": "Search & filter"
       },
@@ -501,6 +595,9 @@
         "date": "Date",
         "numeric": "Number",
         "badge": "Badge",
+        "chart": "Chart",
+        "chartLine": "Line chart",
+        "chartArea": "Area chart",
         "formField": "Form field",
         "entityFieldSelector": "Selectable field",
         "formSection": "Form section",
@@ -2173,6 +2270,75 @@
       "selectFormula": "Select a formula"
     }
   },
+  "charts": {
+    "title": "Charts",
+    "forbidden": "You do not have permission to manage charts.",
+    "statusValues": {
+      "ACTIVE": "Active",
+      "PAUSED": "Paused"
+    },
+    "workbench": {
+      "title": "Charts",
+      "description": "Register reusable chart recipes and reference them from UI Builder layouts.",
+      "loading": "Loading charts…",
+      "readOnlyHint": "You have read-only access to chart definitions.",
+      "saveSuccess": "Chart saved.",
+      "createTitle": "New chart definition",
+      "createAction": "Create chart",
+      "createSuccess": "Chart created.",
+      "createForbidden": "You do not have permission to create charts.",
+      "fields": {
+        "name": "Name",
+        "description": "Description",
+        "status": "Status"
+      },
+      "settings": {
+        "empty": "Select a chart from the list to edit its recipe."
+      },
+      "preview": {
+        "title": "Live preview",
+        "run": "Run preview",
+        "refresh": "Refresh preview",
+        "hint": "Fill in the preview inputs, then run to load live chart and data from the current draft.",
+        "notRunYet": "Run preview to inspect rendered series."
+      },
+      "previewInputs": {
+        "title": "Preview inputs",
+        "dashboardDate": "Period anchor ({{parameter}})",
+        "stringListHint": "Comma-separated values.",
+        "stringListPlaceholder": "INCOME, EXPENSE, PAYMENT",
+        "incomplete": "Complete all preview inputs before running."
+      },
+      "dataPreview": {
+        "title": "Data inspector",
+        "source": "Data source configuration",
+        "context": "Resolved preview context",
+        "renderedSeries": "Rendered series"
+      },
+      "list": {
+        "title": "Charts",
+        "empty": "No charts match the current filters.",
+        "searchPlaceholder": "Search charts…",
+        "filterByDataSource": "Data source",
+        "filterByChartType": "Chart type",
+        "filterByDisplayMode": "Display mode",
+        "filterByStatus": "Status",
+        "sortLabel": "Sort",
+        "sortNameAsc": "Name (A–Z)",
+        "sortNameDesc": "Name (Z–A)",
+        "sortUpdatedDesc": "Recently updated",
+        "sortDataSource": "Data source",
+        "sortChartType": "Chart type",
+        "dataSourceStatic": "Static",
+        "dataSourceMetricSeries": "Metric series",
+        "dataSourceEntityQuery": "Entity query",
+        "chartTypeLine": "Line",
+        "chartTypeArea": "Area",
+        "displayModeInline": "Inline",
+        "displayModeOverlay": "Overlay"
+      }
+    }
+  },
   "metrics": {
     "title": "Metrics",
     "create": "New metric",
@@ -2210,7 +2376,6 @@
       "field": "Field",
       "operator": "Operator",
       "value": "Value",
-      "selectValue": "Select a value…",
       "valuePlaceholder": "Enter a value",
       "relationPlaceholder": "Enter related record id",
       "listPlaceholder": "Comma-separated values",

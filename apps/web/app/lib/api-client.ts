@@ -885,7 +885,7 @@ export interface EntityQueryDefinitionRecord {
   readonly sourceEntity: string;
   readonly parameters?: readonly {
     readonly name: string;
-    readonly valueType: "dateBucket" | "scalar";
+    readonly valueType: "dateBucket" | "scalar" | "stringList";
     readonly granularity?: "day" | "month" | "year";
     readonly field?: string;
   }[];
@@ -981,6 +981,45 @@ export async function putEntityQueryDefinitionsCatalog(
     readonly items: readonly EntityQueryDefinitionRecord[];
   }>("/api/entity-query-definitions/catalog", {
     method: "PUT",
+    body: input,
+  });
+}
+
+import type {
+  ChartDefinitionRecord,
+  CreateChartDefinitionInput,
+  PatchChartDefinitionInput,
+} from "@repo/chart-definitions";
+
+export type {
+  ChartDefinitionRecord,
+  CreateChartDefinitionInput,
+  PatchChartDefinitionInput,
+};
+
+export async function listChartDefinitions(): Promise<{
+  readonly items: readonly ChartDefinitionRecord[];
+}> {
+  return apiRequest<{ readonly items: readonly ChartDefinitionRecord[] }>(
+    "/api/chart-definitions",
+  );
+}
+
+export async function createChartDefinition(
+  input: CreateChartDefinitionInput,
+): Promise<ChartDefinitionRecord> {
+  return apiRequest<ChartDefinitionRecord>("/api/chart-definitions", {
+    method: "POST",
+    body: input,
+  });
+}
+
+export async function patchChartDefinition(
+  id: string,
+  input: PatchChartDefinitionInput,
+): Promise<ChartDefinitionRecord> {
+  return apiRequest<ChartDefinitionRecord>(`/api/chart-definitions/${id}`, {
+    method: "PATCH",
     body: input,
   });
 }

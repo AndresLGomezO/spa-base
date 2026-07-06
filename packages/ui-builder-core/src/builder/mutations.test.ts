@@ -24,7 +24,10 @@ import {
   updateRootColumnMetaAt,
 } from "./mutations.js";
 import { beginContainerRootLayout } from "../layout/ensure-container-root.js";
-import { isContainerComponent } from "../types/component.js";
+import {
+  isContainerComponent,
+  createDefaultChartComponent,
+} from "../types/component.js";
 
 describe("addComponentRowAt", () => {
   it("adds a component to the third grid track inside a container", () => {
@@ -548,6 +551,12 @@ describe("createDefaultComponent", () => {
       kind: "icon",
       iconName: "CircleCheck",
     });
+  });
+
+  it("creates chart defaults", () => {
+    expect(createDefaultComponent("chart")).toEqual(
+      createDefaultChartComponent(),
+    );
   });
 });
 

@@ -1,5 +1,6 @@
 import { entityDefinitionRecordSchema } from "@repo/dynamic-entities";
 import { entityCategoryRecordSchema } from "@repo/entity-categories";
+import { chartDefinitionRecordSchema } from "@repo/chart-definitions/types";
 import { entityQueryDefinitionRecordSchema } from "@repo/entity-queries/types";
 import { customViewRecordSchema } from "@repo/custom-views/types";
 import {
@@ -32,6 +33,7 @@ export const tenantBundleExportDocumentSchema = z
     hooks: z.array(dataHookDefinitionSchema),
     metricDefinitions: z.array(metricDefinitionRecordSchema),
     entityQueryDefinitions: z.array(entityQueryDefinitionRecordSchema),
+    chartDefinitions: z.array(chartDefinitionRecordSchema).default([]),
     customViews: z.array(customViewRecordSchema).default([]),
   })
   .strict();
@@ -51,6 +53,7 @@ export interface TenantBundleImportCounts {
   readonly hooks: number;
   readonly metricDefinitions: number;
   readonly entityQueryDefinitions: number;
+  readonly chartDefinitions: number;
   readonly customViews: number;
 }
 
@@ -68,6 +71,7 @@ export function countTenantBundleSections(
     hooks: bundle.hooks.length,
     metricDefinitions: bundle.metricDefinitions.length,
     entityQueryDefinitions: bundle.entityQueryDefinitions.length,
+    chartDefinitions: bundle.chartDefinitions.length,
     customViews: bundle.customViews.length,
   };
 }

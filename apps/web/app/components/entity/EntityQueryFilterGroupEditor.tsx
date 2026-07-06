@@ -6,6 +6,7 @@ import type { TFunction } from "i18next";
 import { Button, Input, Select, Text } from "@repo/ui";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
+import { EntityFieldConditionValueInput } from "./EntityFieldConditionValueInput";
 import {
   addChildToEditorGroup,
   createEmptyEntityQueryFilterCondition,
@@ -178,24 +179,42 @@ function EntityQueryFilterValueEditor({
     );
   }
 
-  if (row.operator === "in") {
+  if (
+    row.valueKind === "static" &&
+    (row.operator === "==" || row.operator === "in")
+  ) {
+    const operator = row.operator === "in" ? "in" : "==";
+    const value =
+      row.operator === "in"
+        ? row.listValues.length > 0
+          ? row.listValues
+          : row.scalarValue
+        : row.scalarValue;
+
     return (
-      <Input
-        value={
-          row.listValues.length > 0
-            ? row.listValues.join(", ")
-            : row.scalarValue
-        }
+      <EntityFieldConditionValueInput
+        fieldMeta={fieldMeta ?? undefined}
+        operator={operator}
+        value={value}
         disabled={disabled}
-        placeholder={t("queryBuilder.filters.listPlaceholder")}
-        onChange={(event) => {
-          const next = event.target.value;
+        listPlaceholderKey="queryBuilder.filters.listPlaceholder"
+        valuePlaceholderKey="queryBuilder.filters.valuePlaceholder"
+        onChange={(nextValue) => {
+          if (row.operator === "in") {
+            const listValues = Array.isArray(nextValue)
+              ? nextValue
+              : [nextValue];
+            onChange({
+              listValues,
+              scalarValue: listValues.join(", "),
+            });
+            return;
+          }
+
           onChange({
-            scalarValue: next,
-            listValues: next
-              .split(",")
-              .map((part) => part.trim())
-              .filter(Boolean),
+            scalarValue: Array.isArray(nextValue)
+              ? (nextValue[0] ?? "")
+              : nextValue,
           });
         }}
       />

@@ -36,4 +36,38 @@ describe("resolveQueryParameterFilterValue", () => {
       ),
     ).toBe("2026-06-01T00:00:00.000Z");
   });
+
+  it("applies offset before resolving date bucket bound", () => {
+    expect(
+      resolveQueryParameterFilterValue(
+        {
+          type: "parameter",
+          name: "period",
+          bound: "start",
+          offset: -11,
+          unit: "month",
+        },
+        parameters,
+        { period: "2026-06" },
+      ),
+    ).toBe("2025-07-01T00:00:00.000Z");
+  });
+
+  it("resolves stringList parameter values for in filters", () => {
+    const stringListParameters: readonly EntityQueryParameter[] = [
+      {
+        name: "types",
+        valueType: "stringList",
+        field: "type",
+      },
+    ];
+
+    expect(
+      resolveQueryParameterFilterValue(
+        { type: "parameter", name: "types" },
+        stringListParameters,
+        { types: ["INCOME", "EXPENSE"] },
+      ),
+    ).toEqual(["INCOME", "EXPENSE"]);
+  });
 });

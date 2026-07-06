@@ -52,6 +52,7 @@ export type EntityQueryTemporalPreset =
 export const ENTITY_QUERY_PARAMETER_VALUE_TYPES = [
   "dateBucket",
   "scalar",
+  "stringList",
 ] as const;
 
 export type EntityQueryParameterValueType =
@@ -105,8 +106,26 @@ export const entityQueryFilterValueSchema = z.discriminatedUnion("type", [
       type: z.literal("parameter"),
       name: z.string().trim().min(1),
       bound: z.enum(ENTITY_QUERY_PARAMETER_BOUNDS).optional(),
+      offset: z.number().int().optional(),
+      unit: z.enum(["day", "month", "year"]).optional(),
     })
-    .strict(),
+    .strict()
+    .superRefine((value, context) => {
+      if (value.offset !== undefined && value.unit === undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "Parameter offset requires a unit.",
+          path: ["unit"],
+        });
+      }
+      if (value.unit !== undefined && value.offset === undefined) {
+        context.addIssue({
+          code: "custom",
+          message: "Parameter unit requires an offset.",
+          path: ["offset"],
+        });
+      }
+    }),
 ]);
 
 export type EntityQueryFilterValue = z.infer<
@@ -201,12 +220,21 @@ export function refineEntityQueryFilterTree(
   if (filter.type === "condition") {
     const conditionValue = filter.value as EntityQueryFilterValue;
     if (filter.operator === "in") {
-      const staticValue =
-        conditionValue.type === "static" ? conditionValue.value : undefined;
-      if (!Array.isArray(staticValue) || staticValue.length === 0) {
+      if (conditionValue.type === "static") {
+        if (
+          !Array.isArray(conditionValue.value) ||
+          conditionValue.value.length === 0
+        ) {
+          context.addIssue({
+            code: "custom",
+            message: "in operator requires a non-empty static array value.",
+            path: pathPrefix,
+          });
+        }
+      } else if (conditionValue.type !== "parameter") {
         context.addIssue({
           code: "custom",
-          message: "in operator requires a non-empty static array value.",
+          message: "in operator requires a static array or parameter value.",
           path: pathPrefix,
         });
       }
@@ -318,6 +346,31 @@ function refineQueryParameterFilterTree(
         context.addIssue({
           code: "custom",
           message: `Parameter bound "${conditionValue.bound}" requires a dateBucket parameter.`,
+          path: pathPrefix,
+        });
+      }
+      if (
+        (conditionValue.offset !== undefined ||
+          conditionValue.unit !== undefined) &&
+        parameter.valueType !== "dateBucket"
+      ) {
+        context.addIssue({
+          code: "custom",
+          message: "Parameter offset requires a dateBucket parameter.",
+          path: pathPrefix,
+        });
+      }
+      if (filter.operator === "in" && parameter.valueType !== "stringList") {
+        context.addIssue({
+          code: "custom",
+          message: `Parameter "${conditionValue.name}" used with in operator must be stringList.`,
+          path: pathPrefix,
+        });
+      }
+      if (parameter.valueType === "stringList" && filter.operator !== "in") {
+        context.addIssue({
+          code: "custom",
+          message: `stringList parameter "${conditionValue.name}" requires the in operator.`,
           path: pathPrefix,
         });
       }

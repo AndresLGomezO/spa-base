@@ -70,6 +70,8 @@ describe("EntityRuntimeContext", () => {
     expect(knownPermissions).toContain("entityQueryDefinition.create");
     expect(knownPermissions).toContain("entityQueryDefinition.update");
     expect(knownPermissions).toContain("entityQueryDefinition.delete");
+    expect(knownPermissions).toContain("chartDefinition.read");
+    expect(knownPermissions).toContain("chartDefinition.create");
   });
 
   it("persists tenantWideRead on create and update", async () => {

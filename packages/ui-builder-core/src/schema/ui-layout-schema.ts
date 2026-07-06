@@ -241,7 +241,12 @@ const metricBindingSourceSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("static"),
-      value: z.union([z.string(), z.number(), z.boolean()]),
+      value: z.union([
+        z.string(),
+        z.number(),
+        z.boolean(),
+        z.array(z.string().trim().min(1)).min(1),
+      ]),
     })
     .strict(),
   z
@@ -388,6 +393,164 @@ const fieldComponentBaseSchema = z
   })
   .strict();
 
+const chartPointSchema = z
+  .object({
+    x: z.union([z.string(), z.number()]),
+    y: z.number().finite(),
+    seriesId: z.string().trim().min(1).optional(),
+  })
+  .strict();
+
+const chartMetricSeriesStepSchema = z
+  .object({
+    unit: z.enum(["day", "month", "year"]),
+    offsetStart: z.number().int(),
+    offsetEnd: z.number().int(),
+  })
+  .strict();
+
+const chartEntityQueryRowFilterSchema = z
+  .object({
+    whenField: z.string().trim().min(1),
+    whenOperator: z.enum(["==", "in"]),
+    whenValue: z.union([
+      z.string().trim().min(1),
+      z.array(z.string().trim().min(1)).min(1),
+    ]),
+  })
+  .strict();
+
+const chartEntityQueryValueTransformSchema = z
+  .object({
+    whenField: z.string().trim().min(1),
+    whenOperator: z.enum(["==", "in"]),
+    whenValue: z.union([
+      z.string().trim().min(1),
+      z.array(z.string().trim().min(1)).min(1),
+    ]),
+    multiplier: z.number().finite(),
+  })
+  .strict();
+
+const chartEntityQueryTimeSeriesSchema = z
+  .object({
+    periodParameter: z.string().trim().min(1),
+    bucketCount: z.number().int().min(1).max(366),
+    step: chartMetricSeriesStepSchema,
+    aggregate: z.enum(["sum", "count"]),
+    layout: z.enum(["span", "monthToDateRightAligned"]).optional(),
+    rowFilters: z.array(chartEntityQueryRowFilterSchema).optional(),
+    valueTransforms: z.array(chartEntityQueryValueTransformSchema).optional(),
+  })
+  .strict()
+  .superRefine((value, ctx) => {
+    if (
+      value.layout === "monthToDateRightAligned" &&
+      value.bucketCount !== 30
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "monthToDateRightAligned layout requires bucketCount to be 30",
+        path: ["bucketCount"],
+      });
+    }
+  });
+
+const chartDataSourceSchema = z.discriminatedUnion("type", [
+  z
+    .object({
+      type: z.literal("static"),
+      points: z.array(chartPointSchema),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("metricSeries"),
+      metricDefinitionId: z.string(),
+      dimensionField: z.string().trim().min(1),
+      bucketCount: z.number().int().min(1).max(366),
+      step: chartMetricSeriesStepSchema,
+      groupBindings: z.record(z.string(), metricBindingSourceSchema).optional(),
+      dimensionBindings: z
+        .record(z.string(), metricBindingSourceSchema)
+        .optional(),
+      parameterBindings: z
+        .record(z.string(), metricBindingSourceSchema)
+        .optional(),
+    })
+    .strict(),
+  z
+    .object({
+      type: z.literal("entityQuery"),
+      entityQueryDefinitionId: z.string(),
+      xFieldPath: z.string().trim().min(1),
+      yFieldPath: z.string().trim().min(1),
+      seriesFieldPath: z.string().trim().min(1).optional(),
+      parameterBindings: z
+        .record(z.string(), metricBindingSourceSchema)
+        .optional(),
+      timeSeries: chartEntityQueryTimeSeriesSchema.optional(),
+    })
+    .strict(),
+]);
+
+const chartSeriesStyleSchema = z
+  .object({
+    id: z.string().trim().min(1),
+    label: z.string().optional(),
+    color: z.string().optional(),
+    strokeWidth: z.number().finite().min(0.5).max(12).optional(),
+    showAreaFill: z.boolean().optional(),
+    areaFillColor: z.string().optional(),
+    areaFillOpacity: z.number().finite().min(0).max(1).optional(),
+  })
+  .strict();
+
+const chartLegendSchema = z
+  .object({
+    visible: z.boolean().optional(),
+    position: z.enum(["top", "bottom", "left", "right", "none"]).optional(),
+    align: z.enum(["start", "center", "end"]).optional(),
+    fontSize: z.number().int().min(8).max(32).optional(),
+    fontWeight: z.enum(["normal", "medium", "semibold", "bold"]).optional(),
+  })
+  .strict();
+
+const chartAxisSchema = z
+  .object({
+    visible: z.boolean().optional(),
+    label: z.string().optional(),
+    showTicks: z.boolean().optional(),
+  })
+  .strict();
+
+const chartGridSchema = z
+  .object({
+    visible: z.boolean().optional(),
+  })
+  .strict();
+
+const chartAnimationSchema = z
+  .object({
+    enabled: z.boolean().optional(),
+    durationMs: z.number().int().min(0).max(5000).optional(),
+  })
+  .strict();
+
+export const chartDefinitionRecipeSchema = z
+  .object({
+    chartType: z.enum(["line", "area"]),
+    displayMode: z.enum(["inline", "overlay"]).optional(),
+    dataSource: chartDataSourceSchema,
+    series: z.array(chartSeriesStyleSchema).optional(),
+    xAxis: chartAxisSchema.optional(),
+    yAxis: chartAxisSchema.optional(),
+    legend: chartLegendSchema.optional(),
+    grid: chartGridSchema.optional(),
+    animation: chartAnimationSchema.optional(),
+  })
+  .strict();
+
 const rowNodeSchema: z.ZodType<unknown> = z.lazy(() => componentRowSchema);
 
 const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
@@ -416,6 +579,17 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
       })
       .strict(),
     fieldComponentBaseSchema.extend({ kind: z.literal("badge") }).strict(),
+    z
+      .object({
+        kind: z.literal("chart"),
+        chartDefinitionId: z.string().trim().min(1),
+        parameterBindings: z
+          .record(z.string(), metricBindingSourceSchema)
+          .optional(),
+        ariaLabel: z.string().optional(),
+        styles: z.array(styleRuleSchema).optional(),
+      })
+      .strict(),
     z
       .object({
         kind: z.literal("metric-kpi"),
@@ -645,6 +819,7 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
           .record(z.string(), metricBindingSourceSchema)
           .optional(),
         rows: z.array(rowNodeSchema),
+        emptyStateRows: z.array(rowNodeSchema).optional(),
         stackDirection: z.enum(["column", "row"]).optional(),
         styles: z.array(styleRuleSchema).optional(),
       })

@@ -1,0 +1,41 @@
+{
+  "name": "@repo/ui-charts",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "format": "prettier --write --log-level silent .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run typecheck && pnpm run test && pnpm run format:check"
+  },
+  "exports": {
+    ".": "./src/index.ts"
+  },
+  "peerDependencies": {
+    "react": "catalog:"
+  },
+  "dependencies": {
+    "@repo/theme": "workspace:*",
+    "@visx/axis": "catalog:",
+    "@visx/curve": "catalog:",
+    "@visx/gradient": "catalog:",
+    "@visx/grid": "catalog:",
+    "@visx/group": "catalog:",
+    "@visx/responsive": "catalog:",
+    "@visx/scale": "catalog:",
+    "@visx/shape": "catalog:",
+    "d3-scale": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "@types/d3-scale": "catalog:",
+    "@types/react": "catalog:",
+    "@types/react-dom": "catalog:",
+    "prettier": "catalog:",
+    "react": "catalog:",
+    "react-dom": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

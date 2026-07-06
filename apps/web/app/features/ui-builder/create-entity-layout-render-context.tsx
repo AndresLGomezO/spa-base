@@ -21,6 +21,7 @@ import { EntityLayoutImageField } from "../../components/entity/EntityLayoutImag
 import { LayoutLucideIcon } from "../../components/entity/LayoutLucideIcon";
 import { MetricDerivedValueDisplay } from "../../components/metrics/MetricDerivedValueDisplay";
 import { MetricValueDisplay } from "../../components/metrics/MetricValueDisplay";
+import { ChartComponentSlot } from "./ChartComponentSlot.js";
 import { readLayoutStaticImageUrl } from "@repo/entities";
 
 import { isEntityFileReferenceWithDownload } from "../../lib/entity-file-client";
@@ -205,6 +206,19 @@ export function createEntityLayoutRenderContext(options: {
         textSize={presentation?.textSize}
       />
     ),
+    chartRenderer: (config) => (
+      <ChartComponentSlot
+        config={config}
+        context={{
+          record: item,
+          listFilters,
+          routeParams,
+          dashboardDateFilter,
+        }}
+        catalog={catalogItems}
+        previewMode={usePreviewSamples}
+      />
+    ),
     metricWidgetRenderer:
       getDefinition && t
         ? createMetricWidgetRenderer({
@@ -233,6 +247,12 @@ export function createEntityLayoutRenderContext(options: {
         ? createQueryViewerRenderer({
             catalogItems,
             t,
+            pageFilterContext: {
+              record: item,
+              listFilters,
+              routeParams,
+              dashboardDateFilter,
+            },
             buildLayoutContext: (nestedDefinition, nestedItem, extras) =>
               createEntityLayoutRenderContext({
                 item: nestedItem,

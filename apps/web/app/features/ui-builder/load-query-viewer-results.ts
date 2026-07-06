@@ -1,8 +1,10 @@
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import {
   getEntityQueryDefinition,
+  listEntityQueryDefinitions,
   type EntityQueryDefinitionRecord,
 } from "../../lib/api-client";
+import { resolveEntityQueryDefinitionDocumentId } from "../../lib/resolve-entity-query-definition-reference";
 import { executeEntityQueryDefinition } from "./execute-entity-query-definition";
 
 interface QueryViewerResults {
@@ -20,7 +22,11 @@ export async function loadQueryViewerResults(
     readonly context?: import("../../lib/metric-binding-resolution.js").PageFilterContext;
   } = {},
 ): Promise<QueryViewerResults> {
-  const definition = await getEntityQueryDefinition(queryId);
+  const definitions = await listEntityQueryDefinitions();
+  const resolvedId =
+    resolveEntityQueryDefinitionDocumentId(queryId, definitions.items) ??
+    queryId.trim();
+  const definition = await getEntityQueryDefinition(resolvedId);
   const items = await executeEntityQueryDefinition(
     definition,
     catalogItems,

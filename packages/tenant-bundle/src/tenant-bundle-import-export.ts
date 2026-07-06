@@ -318,6 +318,10 @@ export function rewriteTenantBundleTenantId(
       ...record,
       tenantId: targetTenantId,
     })),
+    chartDefinitions: bundle.chartDefinitions.map((record) => ({
+      ...record,
+      tenantId: targetTenantId,
+    })),
     customViews: bundle.customViews.map((record) => ({
       ...record,
       tenantId: targetTenantId,
@@ -336,6 +340,7 @@ export const TENANT_BUNDLE_COLLECTION_IMPORT_ORDER = [
   "__data_hooks",
   "__metrics_definitions",
   "__entity_query_definitions",
+  "__chart_definitions",
   "__custom_views",
 ] as const;
 

@@ -36,7 +36,8 @@ export type UiComponentKind =
   | "page-metrics"
   | "page-list"
   | "view-search"
-  | "view-filter";
+  | "view-filter"
+  | "chart";
 
 export type WizardStepStatusKind =
   | "pending"
@@ -64,7 +65,10 @@ export type CardBadgeVariant =
   | "neutral";
 
 export type MetricBindingSource =
-  | { readonly type: "static"; readonly value: string | number | boolean }
+  | {
+      readonly type: "static";
+      readonly value: string | number | boolean | readonly string[];
+    }
   | { readonly type: "entityField"; readonly fieldPath: string }
   | { readonly type: "listFilter"; readonly field: string }
   | { readonly type: "routeParam"; readonly param: string }
@@ -172,6 +176,145 @@ export interface ImageComponentConfig extends FieldComponentConfigBase {
   readonly imageSize?: number;
   readonly displayMode?: "inline" | "overlay";
   readonly objectFit?: "contain" | "cover" | "fill";
+}
+
+export type ChartType = "line" | "area";
+
+export interface ChartPoint {
+  readonly x: string | number;
+  readonly y: number;
+  readonly seriesId?: string;
+}
+
+export type ChartSeriesStepUnit = "day" | "month" | "year";
+
+export interface ChartMetricSeriesStep {
+  readonly unit: ChartSeriesStepUnit;
+  readonly offsetStart: number;
+  readonly offsetEnd: number;
+}
+
+export type ChartEntityQueryAggregate = "sum" | "count";
+
+export interface ChartEntityQueryRowFilter {
+  readonly whenField: string;
+  readonly whenOperator: "==" | "in";
+  readonly whenValue: string | readonly string[];
+}
+
+export interface ChartEntityQueryValueTransform {
+  readonly whenField: string;
+  readonly whenOperator: "==" | "in";
+  readonly whenValue: string | readonly string[];
+  readonly multiplier: number;
+}
+
+export type ChartEntityQueryTimeSeriesLayout =
+  | "span"
+  | "monthToDateRightAligned";
+
+export interface ChartEntityQueryTimeSeries {
+  readonly periodParameter: string;
+  readonly bucketCount: number;
+  readonly step: ChartMetricSeriesStep;
+  readonly aggregate: ChartEntityQueryAggregate;
+  readonly layout?: ChartEntityQueryTimeSeriesLayout;
+  readonly rowFilters?: readonly ChartEntityQueryRowFilter[];
+  readonly valueTransforms?: readonly ChartEntityQueryValueTransform[];
+}
+
+export type ChartDataSource =
+  | { readonly type: "static"; readonly points: readonly ChartPoint[] }
+  | {
+      readonly type: "metricSeries";
+      readonly metricDefinitionId: string;
+      readonly dimensionField: string;
+      readonly bucketCount: number;
+      readonly step: ChartMetricSeriesStep;
+      readonly groupBindings?: Readonly<Record<string, MetricBindingSource>>;
+      readonly dimensionBindings?: Readonly<
+        Record<string, MetricBindingSource>
+      >;
+      readonly parameterBindings?: Readonly<
+        Record<string, MetricBindingSource>
+      >;
+    }
+  | {
+      readonly type: "entityQuery";
+      readonly entityQueryDefinitionId: string;
+      readonly xFieldPath: string;
+      readonly yFieldPath: string;
+      readonly seriesFieldPath?: string;
+      readonly parameterBindings?: Readonly<
+        Record<string, MetricBindingSource>
+      >;
+      readonly timeSeries?: ChartEntityQueryTimeSeries;
+    };
+
+export type ChartLegendPosition = "top" | "bottom" | "left" | "right" | "none";
+
+export type ChartLegendAlign = "start" | "center" | "end";
+
+export interface ChartLegendConfig {
+  readonly visible?: boolean;
+  readonly position?: ChartLegendPosition;
+  readonly align?: ChartLegendAlign;
+  readonly fontSize?: number;
+  readonly fontWeight?: "normal" | "medium" | "semibold" | "bold";
+}
+
+export interface ChartAxisConfig {
+  readonly visible?: boolean;
+  readonly label?: string;
+  readonly showTicks?: boolean;
+}
+
+export interface ChartGridConfig {
+  readonly visible?: boolean;
+}
+
+export interface ChartSeriesStyle {
+  readonly id: string;
+  readonly label?: string;
+  readonly color?: string;
+  readonly strokeWidth?: number;
+  readonly showAreaFill?: boolean;
+  readonly areaFillColor?: string;
+  readonly areaFillOpacity?: number;
+}
+
+export interface ChartAnimationConfig {
+  readonly enabled?: boolean;
+  readonly durationMs?: number;
+}
+
+/** Full chart recipe stored in the Charts catalog (not layout instance fields). */
+export interface ChartDefinitionRecipe {
+  readonly chartType: ChartType;
+  readonly displayMode?: "inline" | "overlay";
+  readonly dataSource: ChartDataSource;
+  readonly series?: readonly ChartSeriesStyle[];
+  readonly xAxis?: ChartAxisConfig;
+  readonly yAxis?: ChartAxisConfig;
+  readonly legend?: ChartLegendConfig;
+  readonly grid?: ChartGridConfig;
+  readonly animation?: ChartAnimationConfig;
+}
+
+/** Merged config used at runtime after resolving a chart definition reference. */
+export interface ResolvedChartComponentConfig extends ChartDefinitionRecipe {
+  readonly kind: "chart";
+  readonly chartDefinitionId: string;
+  readonly ariaLabel?: string;
+  readonly styles?: readonly StyleRule[];
+}
+
+export interface ChartComponentConfig {
+  readonly kind: "chart";
+  readonly chartDefinitionId: string;
+  readonly parameterBindings?: Readonly<Record<string, MetricBindingSource>>;
+  readonly styles?: readonly StyleRule[];
+  readonly ariaLabel?: string;
 }
 
 export interface DateComponentConfig extends FieldComponentConfigBase {
@@ -394,6 +537,8 @@ export interface QueryViewerComponentConfig {
   readonly entityQueryDefinitionId: string;
   readonly parameterBindings?: Readonly<Record<string, MetricBindingSource>>;
   readonly rows: readonly RowNode[];
+  /** Optional layout rendered when the query returns zero rows. */
+  readonly emptyStateRows?: readonly RowNode[];
   /** Vertical (default) or horizontal stacking of result items. */
   readonly stackDirection?: ColumnStackDirection;
   readonly styles?: readonly StyleRule[];
@@ -419,6 +564,7 @@ export type UiComponentConfig =
   | GridComponentConfig
   | QueryViewerComponentConfig
   | FieldUiComponentConfig
+  | ChartComponentConfig
   | IconComponentConfig
   | UserComponentConfig
   | MetricKpiComponentConfig
@@ -518,6 +664,19 @@ export function isFieldUiComponent(
     config.kind === "numeric" ||
     config.kind === "badge"
   );
+}
+
+export function isChartComponent(
+  config: UiComponentConfig,
+): config is ChartComponentConfig {
+  return config.kind === "chart";
+}
+
+export function createDefaultChartComponent(): ChartComponentConfig {
+  return {
+    kind: "chart",
+    chartDefinitionId: "",
+  };
 }
 
 export function isEntityFieldSelectorComponent(

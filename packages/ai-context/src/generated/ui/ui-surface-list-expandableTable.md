@@ -9,6 +9,7 @@ Set `listViewType: "expandableTable"`. Default preset: `expandable-table-list`. 
 - `image`
 - `icon`
 - `user`
+- `chart`
 - `metric-kpi`
 - `metric-derived-kpi`
 - `metric-widget`

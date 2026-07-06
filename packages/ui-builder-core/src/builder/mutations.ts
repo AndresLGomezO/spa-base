@@ -7,6 +7,7 @@ import type {
   UiLayoutDocument,
 } from "../types/layout.js";
 import type { UiComponentConfig, UiComponentKind } from "../types/component.js";
+import { createDefaultChartComponent } from "../types/component.js";
 import type { ContainerComponentConfig } from "../types/component.js";
 import {
   isContainerComponent,
@@ -90,6 +91,10 @@ export function createDefaultComponent(
       kind: "dashboard-section",
       sectionId: "",
     };
+  }
+
+  if (kind === "chart") {
+    return createDefaultChartComponent();
   }
 
   if (kind === "view-search" || kind === "view-filter") {
@@ -216,6 +221,10 @@ export function createDefaultStaticComponent(
       kind: "dashboard-section",
       sectionId: "",
     };
+  }
+
+  if (kind === "chart") {
+    return createDefaultChartComponent();
   }
 
   if (kind === "view-search" || kind === "view-filter") {

@@ -25,12 +25,14 @@ import type { TFunction } from "i18next";
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { tryGetEntityDefinition } from "../../entities/entity-catalog";
 import { useOneToManyRelationSubfieldValues } from "../../hooks/useOneToManyRelationSubfieldValues";
+import type { PageFilterContext } from "../../lib/metric-binding-resolution";
 import { entityQueryResultsQueryKey } from "../../query/query-client";
 import { loadQueryViewerResults } from "./load-query-viewer-results";
 
 interface CreateQueryViewerRendererOptions {
   readonly catalogItems: readonly EntityCatalogEntry[];
   readonly t: TFunction;
+  readonly pageFilterContext: PageFilterContext;
   readonly buildLayoutContext: (
     definition: SerializableEntityDefinition,
     item: Record<string, unknown>,
@@ -43,15 +45,18 @@ interface CreateQueryViewerRendererOptions {
   ) => LayoutRenderContext;
 }
 
-function rowsToItemLayout(rows: readonly RowNode[]): UiLayoutDocument {
+function rowsToLayout(
+  rows: readonly RowNode[],
+  rootId: string,
+): UiLayoutDocument {
   return {
     root: {
       type: "root",
-      id: "query-viewer-item-root",
+      id: rootId,
       columnCount: 1,
       columns: [
         {
-          id: "query-viewer-item-col",
+          id: `${rootId}-col`,
           rows: [...rows],
         },
       ],
@@ -71,6 +76,18 @@ function gapLayoutProps(styles: readonly StyleRule[] | undefined): {
   return { gap: gapPxFromStyles(styles) };
 }
 
+function buildQueryViewerContextKey(
+  config: QueryViewerComponentConfig,
+  pageFilterContext: PageFilterContext,
+): string {
+  return JSON.stringify({
+    parameterBindings: config.parameterBindings ?? {},
+    dashboardDateFilter: pageFilterContext.dashboardDateFilter ?? null,
+    listFilters: pageFilterContext.listFilters ?? {},
+    routeParams: pageFilterContext.routeParams ?? {},
+  });
+}
+
 const EMPTY_SOURCE_DEFINITION: SerializableEntityDefinition = {
   name: "query-viewer-source",
   collection: "query-viewer-source",
@@ -87,18 +104,32 @@ function QueryViewerRuntime({
   config,
   catalogItems,
   t,
+  pageFilterContext,
   buildLayoutContext,
 }: {
   readonly config: QueryViewerComponentConfig;
   readonly catalogItems: readonly EntityCatalogEntry[];
   readonly t: TFunction;
+  readonly pageFilterContext: PageFilterContext;
   readonly buildLayoutContext: CreateQueryViewerRendererOptions["buildLayoutContext"];
 }) {
   const queryId = config.entityQueryDefinitionId.trim();
+  const contextKey = useMemo(
+    () => buildQueryViewerContextKey(config, pageFilterContext),
+    [config, pageFilterContext],
+  );
 
   const itemLayout = useMemo(
-    () => rowsToItemLayout(config.rows),
+    () => rowsToLayout(config.rows, "query-viewer-item-root"),
     [config.rows],
+  );
+
+  const emptyStateLayout = useMemo(
+    () =>
+      config.emptyStateRows && config.emptyStateRows.length > 0
+        ? rowsToLayout(config.emptyStateRows, "query-viewer-empty-root")
+        : null,
+    [config.emptyStateRows],
   );
 
   const stackDirection = config.stackDirection ?? "column";
@@ -111,8 +142,12 @@ function QueryViewerRuntime({
   const stackGapProps = gapLayoutProps(innerStyles);
 
   const queryResults = useQuery({
-    queryKey: entityQueryResultsQueryKey(queryId),
-    queryFn: () => loadQueryViewerResults(queryId, catalogItems),
+    queryKey: entityQueryResultsQueryKey(queryId, contextKey),
+    queryFn: () =>
+      loadQueryViewerResults(queryId, catalogItems, {
+        parameterBindings: config.parameterBindings,
+        context: pageFilterContext,
+      }),
     enabled: queryId.length > 0,
   });
 
@@ -180,6 +215,15 @@ function QueryViewerRuntime({
   }
 
   if (items.length === 0) {
+    if (emptyStateLayout) {
+      return (
+        <EmbeddedLayoutRenderer
+          layout={emptyStateLayout}
+          context={buildLayoutContext(sourceDefinition, {})}
+        />
+      );
+    }
+
     return (
       <Text className="text-muted-foreground text-sm">
         {t("metricsRowDesigner.queryViewerEditor.emptyResults")}
@@ -223,13 +267,14 @@ function QueryViewerRuntime({
 export function createQueryViewerRenderer(
   options: CreateQueryViewerRendererOptions,
 ) {
-  const { catalogItems, t, buildLayoutContext } = options;
+  const { catalogItems, t, pageFilterContext, buildLayoutContext } = options;
 
   return (config: QueryViewerComponentConfig) => (
     <QueryViewerRuntime
       config={config}
       catalogItems={catalogItems}
       t={t}
+      pageFilterContext={pageFilterContext}
       buildLayoutContext={buildLayoutContext}
     />
   );

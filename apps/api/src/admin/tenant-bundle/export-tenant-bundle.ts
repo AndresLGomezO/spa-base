@@ -2,6 +2,7 @@ import {
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
+  createFirestoreAdminChartDefinitionRepository,
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminEntityUiOverrideRepository,
   createFirestoreAdminDataHookRepository,
@@ -60,6 +61,8 @@ export async function exportTenantBundle(
     createFirestoreAdminEntityQueryDefinitionRepository(
       deps.firebaseAdminConfig,
     );
+  const chartDefinitionRepository =
+    createFirestoreAdminChartDefinitionRepository(deps.firebaseAdminConfig);
   const customViewRepository = createFirestoreAdminCustomViewRepository(
     deps.firebaseAdminConfig,
   );
@@ -80,6 +83,7 @@ export async function exportTenantBundle(
     formulaDefinitions,
     metricDefinitions,
     entityQueryDefinitions,
+    chartDefinitions,
     customViews,
   ] = await Promise.all([
     categoryRepository.list(tenantId),
@@ -92,6 +96,7 @@ export async function exportTenantBundle(
     formulaDefinitionRepository.list(tenantId),
     metricDefinitionRepository.list(tenantId),
     queryDefinitionRepository.list(tenantId),
+    chartDefinitionRepository.list(tenantId),
     customViewRepository.list(tenantId),
   ]);
 
@@ -112,6 +117,7 @@ export async function exportTenantBundle(
     ),
     metricDefinitions,
     entityQueryDefinitions,
+    chartDefinitions,
     customViews,
   });
 }

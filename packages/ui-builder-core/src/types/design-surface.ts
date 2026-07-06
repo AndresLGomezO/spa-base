@@ -32,6 +32,7 @@ const LIST_ITEM_KINDS: readonly UiComponentKind[] = [
   "date",
   "numeric",
   "badge",
+  "chart",
   "metric-kpi",
   "metric-derived-kpi",
   ...VIEW_FILTER_KINDS,
@@ -62,6 +63,7 @@ const FORM_DISPLAY_KINDS: readonly UiComponentKind[] = [
   "date",
   "numeric",
   "badge",
+  "chart",
 ];
 
 const FORM_PLAIN_KINDS: readonly UiComponentKind[] = [
@@ -112,6 +114,7 @@ const DASHBOARD_CONTENT_KINDS: readonly UiComponentKind[] = [
   "image",
   "icon",
   "user",
+  "chart",
   "metric-kpi",
   "metric-derived-kpi",
   "metric-widget",

@@ -10,6 +10,7 @@ import {
   Home,
   Layers,
   LayoutTemplate,
+  LineChart,
   PanelsTopLeft,
   Palette,
   Search,
@@ -34,6 +35,7 @@ export type NavLabelKey =
   | "automation"
   | "analytics"
   | "metricsNav"
+  | "chartsNav"
   | "formulasNav"
   | "queryBuilderNav"
   | "customViewsNav"
@@ -156,6 +158,14 @@ export const SETTINGS_METRICS_NAV_ITEM: NavLinkConfig = {
   to: "/settings/metrics",
   matchPath: "/settings/metrics",
   icon: BarChart3,
+};
+
+export const SETTINGS_CHARTS_NAV_ITEM: NavLinkConfig = {
+  id: "charts",
+  labelKey: "chartsNav",
+  to: "/settings/charts",
+  matchPath: "/settings/charts",
+  icon: LineChart,
 };
 
 export const SETTINGS_FORMULAS_NAV_ITEM: NavLinkConfig = {

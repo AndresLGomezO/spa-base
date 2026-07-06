@@ -49,6 +49,7 @@
     "@repo/custom-views": "workspace:*",
     "@repo/debug-logs": "workspace:*",
     "@repo/user-notifications": "workspace:*",
+    "@repo/chart-definitions": "workspace:*",
     "@repo/entity-queries": "workspace:*",
     "@repo/metrics-engine": "workspace:*",
     "@repo/query-engine": "workspace:*",

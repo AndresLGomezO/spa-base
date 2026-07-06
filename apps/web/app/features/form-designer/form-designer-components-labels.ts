@@ -5,6 +5,7 @@ import { layoutJsonImportLabels } from "../ui-builder/layout-json-import-labels"
 import type {
   CatalogEntryKind,
   CatalogSectionId,
+  ComponentCatalogEntry,
 } from "./form-designer-component-catalog";
 import type { StructureTreeLabels } from "./form-designer-structure-tree";
 import type { UiComponentKind } from "@repo/ui-builder-core";
@@ -25,7 +26,10 @@ export interface FormDesignerComponentsLabels {
   readonly templatesSectionTitle: string;
   readonly layoutJsonImport: LayoutJsonImportLabels;
   readonly sectionTitle: (section: CatalogSectionId) => string;
-  readonly optionLabel: (kind: CatalogEntryKind) => string;
+  readonly optionLabel: (
+    kind: CatalogEntryKind,
+    entry?: ComponentCatalogEntry,
+  ) => string;
   readonly wizardScopeShell: string;
   readonly wizardScopeStep: string;
   readonly wizardScopeFooter: string;
@@ -72,6 +76,7 @@ export function formDesignerComponentsLabels(
       "dashboardLayoutDesigner.components.dashboardSection",
     ),
     user: t("dashboardLayoutDesigner.components.user"),
+    chart: t("formDesigner.components.options.chart"),
     "related-records": t("detailViewDesigner.components.relatedRecords"),
   };
 
@@ -108,13 +113,21 @@ export function formDesignerComponentsLabels(
           return t("formDesigner.components.sections.layout");
         case "content":
           return t("formDesigner.components.sections.content");
+        case "charts":
+          return t("formDesigner.components.sections.charts");
         case "form":
           return t("formDesigner.components.sections.form");
         case "dataControls":
           return t("formDesigner.components.sections.dataControls");
       }
     },
-    optionLabel: (kind) => {
+    optionLabel: (kind, entry) => {
+      if (entry?.entryId === "chart-line") {
+        return t("formDesigner.components.options.chartLine");
+      }
+      if (entry?.entryId === "chart-area") {
+        return t("formDesigner.components.options.chartArea");
+      }
       if (kind === "grid") {
         return t("formDesigner.components.container");
       }

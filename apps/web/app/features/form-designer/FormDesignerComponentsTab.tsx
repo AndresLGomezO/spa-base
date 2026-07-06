@@ -15,7 +15,7 @@ import {
 } from "./FormDesignerComponentsSession";
 import { FormDesignerPreviewPanel } from "./FormDesignerPreviewPanel";
 import { FormDesignerStructureTreePanel } from "./FormDesignerStructureTreePanel";
-import type { CatalogEntryKind } from "./form-designer-component-catalog";
+import type { ComponentCatalogEntry } from "./form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "./form-designer-components-labels";
 import {
   clampComponentsStepIndex,
@@ -99,11 +99,11 @@ function FormDesignerComponentsTabContent() {
   }, []);
 
   const handleSelect = useCallback(
-    (anchor: InsertAnchor, kind: CatalogEntryKind) => {
+    (anchor: InsertAnchor, entry: ComponentCatalogEntry) => {
       const { rowRef, label } = insertCatalogEntryAtAnchor(
         binding,
         anchor,
-        kind,
+        entry,
         editor.defaultFieldPath,
         labels.tree,
         fieldDescriptors,

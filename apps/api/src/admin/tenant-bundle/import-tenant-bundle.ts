@@ -117,6 +117,10 @@ function buildCollectionDocuments(
       id: record.id,
       data: toPlainRecord(record as unknown as Record<string, unknown>),
     })),
+    __chart_definitions: bundle.chartDefinitions.map((record) => ({
+      id: record.id,
+      data: toPlainRecord(record as unknown as Record<string, unknown>),
+    })),
     __custom_views: bundle.customViews.map((record) => ({
       id: record.id,
       data: toPlainRecord(record as unknown as Record<string, unknown>),

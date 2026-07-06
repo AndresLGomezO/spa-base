@@ -49,6 +49,7 @@
     "automation": "Automatización",
     "analytics": "Analítica",
     "metricsNav": "Métricas",
+    "chartsNav": "Gráficos",
     "formulasNav": "Fórmulas",
     "queryBuilderNav": "Constructor de consultas",
     "customViewsNav": "Vistas personalizadas",
@@ -290,6 +291,98 @@
     "forbidden": "No tienes permiso para usar el chat IA.",
     "status": "Estado: {{status}}"
   },
+  "chartComponent": {
+    "chartType": "Tipo de gráfico",
+    "types": {
+      "line": "Línea",
+      "area": "Área"
+    },
+    "displayMode": "Modo de visualización",
+    "displayModes": {
+      "inline": "En línea",
+      "overlay": "Superpuesto (fondo)"
+    },
+    "dataSourceType": "Fuente de datos",
+    "dataSources": {
+      "static": "Puntos JSON estáticos",
+      "metricSeries": "Serie temporal de métrica",
+      "entityQuery": "Filas de consulta de entidad"
+    },
+    "staticPoints": "Puntos estáticos (arreglo JSON)",
+    "dimensionField": "Campo de dimensión",
+    "bucketCount": "Cantidad de buckets",
+    "stepUnit": "Unidad del paso",
+    "offsetStart": "Desplazamiento inicial",
+    "offsetEnd": "Desplazamiento final",
+    "units": {
+      "day": "Día",
+      "month": "Mes",
+      "year": "Año"
+    },
+    "entityQuery": "Consulta de entidad",
+    "timeSeriesMode": "Modo serie temporal",
+    "timeSeriesModeHelp": "Agrega resultados de consulta en buckets de periodo relativos",
+    "timeSeriesLayout": "Disposición de serie temporal",
+    "timeSeriesLayouts": {
+      "span": "Rango (offsets relativos)",
+      "monthToDateRightAligned": "Mes hasta la fecha (30 slots, alineado a la derecha)"
+    },
+    "periodParameter": "Parámetro de periodo",
+    "timeSeriesAggregate": "Agregación por bucket",
+    "aggregateSum": "Sumar valores del campo",
+    "aggregateCount": "Contar filas",
+    "rowFilters": "Filtros de fila",
+    "addRowFilter": "Agregar filtro de fila",
+    "removeRowFilter": "Quitar filtro",
+    "valueTransforms": "Transformaciones de valor",
+    "valueTransformField": "Campo condición",
+    "valueTransformOperator": "Operador",
+    "valueTransformEquals": "Igual (==)",
+    "valueTransformIn": "En lista (in)",
+    "valueTransformValue": "Valor(es) a coincidir",
+    "valueTransformMultiplier": "Multiplicador",
+    "addValueTransform": "Agregar transformación",
+    "removeValueTransform": "Quitar transformación",
+    "xFieldPath": "Campo del eje X",
+    "yFieldPath": "Campo del eje Y",
+    "seriesFieldPath": "Campo de serie (opcional)",
+    "seriesFieldPathOptional": "Opcional — agrupa filas en varias series",
+    "seriesStyle": "Estilo de serie",
+    "seriesLabel": "Etiqueta de serie",
+    "seriesColor": "Color de serie",
+    "strokeWidth": "Grosor de trazo",
+    "showAreaFill": "Rellenar área bajo la línea",
+    "areaFillOpacity": "Opacidad del relleno",
+    "definition": "Definición del gráfico",
+    "selectDefinition": "Selecciona una definición de gráfico…",
+    "noDefinitions": "Aún no hay definiciones de gráficos registradas.",
+    "parameterBindings": "Enlaces de parámetros",
+    "ariaLabel": "Etiqueta accesible (opcional)",
+    "legend": "Leyenda",
+    "legendVisible": "Mostrar leyenda",
+    "legendPosition": "Posición de leyenda",
+    "legendPositions": {
+      "none": "Oculta",
+      "top": "Arriba",
+      "bottom": "Abajo",
+      "left": "Izquierda",
+      "right": "Derecha"
+    },
+    "legendAlign": "Alineación de leyenda",
+    "legendAlignments": {
+      "start": "Inicio",
+      "center": "Centro",
+      "end": "Fin"
+    },
+    "legendFontSize": "Tamaño de leyenda (px)",
+    "axesAndGrid": "Ejes y cuadrícula",
+    "showXAxis": "Mostrar eje X",
+    "showYAxis": "Mostrar eje Y",
+    "showGrid": "Mostrar cuadrícula",
+    "animation": "Animación",
+    "animationEnabled": "Habilitar animación",
+    "animationDuration": "Duración (ms)"
+  },
   "formDesigner": {
     "title": "Diseñador de formularios",
     "designSubtitle": "{{entity}} / {{design}}",
@@ -491,6 +584,7 @@
       "sections": {
         "layout": "Componentes de diseño",
         "content": "Componentes de contenido",
+        "charts": "Componentes de gráficos",
         "form": "Componentes de formulario",
         "dataControls": "Búsqueda y filtros"
       },
@@ -501,6 +595,9 @@
         "date": "Fecha",
         "numeric": "Número",
         "badge": "Insignia",
+        "chart": "Gráfico",
+        "chartLine": "Gráfico de línea",
+        "chartArea": "Gráfico de área",
         "formField": "Campo de formulario",
         "entityFieldSelector": "Campo seleccionable",
         "formSection": "Sección de formulario",
@@ -2173,6 +2270,75 @@
       "selectFormula": "Selecciona una fórmula"
     }
   },
+  "charts": {
+    "title": "Gráficos",
+    "forbidden": "No tienes permiso para administrar gráficos.",
+    "statusValues": {
+      "ACTIVE": "Activo",
+      "PAUSED": "Pausado"
+    },
+    "workbench": {
+      "title": "Gráficos",
+      "description": "Registra recetas de gráficos reutilizables y referencia desde diseños del UI Builder.",
+      "loading": "Cargando gráficos…",
+      "readOnlyHint": "Tienes acceso de solo lectura a las definiciones de gráficos.",
+      "saveSuccess": "Gráfico guardado.",
+      "createTitle": "Nueva definición de gráfico",
+      "createAction": "Crear gráfico",
+      "createSuccess": "Gráfico creado.",
+      "createForbidden": "No tienes permiso para crear gráficos.",
+      "fields": {
+        "name": "Nombre",
+        "description": "Descripción",
+        "status": "Estado"
+      },
+      "settings": {
+        "empty": "Selecciona un gráfico de la lista para editar su receta."
+      },
+      "preview": {
+        "title": "Vista previa en vivo",
+        "run": "Ejecutar vista previa",
+        "refresh": "Actualizar vista previa",
+        "hint": "Completa los campos de vista previa y ejecuta para cargar el gráfico y los datos en vivo del borrador actual.",
+        "notRunYet": "Ejecuta la vista previa para inspeccionar las series renderizadas."
+      },
+      "previewInputs": {
+        "title": "Entradas de vista previa",
+        "dashboardDate": "Ancla del periodo ({{parameter}})",
+        "stringListHint": "Valores separados por comas.",
+        "stringListPlaceholder": "INCOME, EXPENSE, PAYMENT",
+        "incomplete": "Completa todas las entradas de vista previa antes de ejecutar."
+      },
+      "dataPreview": {
+        "title": "Inspector de datos",
+        "source": "Configuración de origen de datos",
+        "context": "Contexto de vista previa resuelto",
+        "renderedSeries": "Series renderizadas"
+      },
+      "list": {
+        "title": "Gráficos",
+        "empty": "Ningún gráfico coincide con los filtros actuales.",
+        "searchPlaceholder": "Buscar gráficos…",
+        "filterByDataSource": "Origen de datos",
+        "filterByChartType": "Tipo de gráfico",
+        "filterByDisplayMode": "Modo de visualización",
+        "filterByStatus": "Estado",
+        "sortLabel": "Ordenar",
+        "sortNameAsc": "Nombre (A–Z)",
+        "sortNameDesc": "Nombre (Z–A)",
+        "sortUpdatedDesc": "Actualizados recientemente",
+        "sortDataSource": "Origen de datos",
+        "sortChartType": "Tipo de gráfico",
+        "dataSourceStatic": "Estático",
+        "dataSourceMetricSeries": "Serie métrica",
+        "dataSourceEntityQuery": "Consulta de entidad",
+        "chartTypeLine": "Línea",
+        "chartTypeArea": "Área",
+        "displayModeInline": "En línea",
+        "displayModeOverlay": "Superpuesto"
+      }
+    }
+  },
   "metrics": {
     "title": "Métricas",
     "create": "Nueva métrica",
@@ -2210,7 +2376,6 @@
       "field": "Campo",
       "operator": "Operador",
       "value": "Valor",
-      "selectValue": "Selecciona un valor…",
       "valuePlaceholder": "Introduce un valor",
       "relationPlaceholder": "Introduce el id del registro relacionado",
       "listPlaceholder": "Valores separados por comas",

@@ -14,6 +14,7 @@ Set `presentation: "wizard"`. Default preset: `wizard-form`. Shell: wizard-progr
 - `date`
 - `numeric`
 - `badge`
+- `chart`
 
 ## Slice envelope example
 ```json

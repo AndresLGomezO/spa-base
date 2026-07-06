@@ -28,11 +28,13 @@ COPY packages/ui-builder/package.json ./packages/ui-builder/
 COPY packages/ui-builder-core/package.json ./packages/ui-builder-core/
 COPY packages/ui-builder-react/package.json ./packages/ui-builder-react/
 COPY packages/ui-builder-renderer/package.json ./packages/ui-builder-renderer/
+COPY packages/ui-charts/package.json ./packages/ui-charts/
 COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/hooks/package.json ./packages/hooks/
 COPY packages/formula-definitions/package.json ./packages/formula-definitions/
+COPY packages/chart-definitions/package.json ./packages/chart-definitions/
 COPY packages/dynamic-entities/package.json ./packages/dynamic-entities/
 COPY packages/ai-engine/package.json ./packages/ai-engine/
 COPY packages/ai-context/package.json ./packages/ai-context/

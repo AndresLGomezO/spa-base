@@ -21,10 +21,10 @@ Build a **gradient KPI card** with header (title + icon + period pill), a derive
    - Left: row with `text` ("Total Balance", `color: rgba(255,255,255,0.8)`) + `icon` (Eye, `rgba(255,255,255,0.7)`).
    - Right: `text` pill ("This month") with `backgroundColor: rgba(255,255,255,0.2)`, `backdropFilter: blur(8px)`, pill padding/radius on the **text** component.
 4. **Body column** — `gap: var(--spacing-compact)`:
-   - `metric-derived-kpi` (e.g. Income by Month − Outflows by Month) with `dimensionBindings.date` → `dashboardDateFilter`.
+   - `metric-kpi` bound to `Net Balance by Month` with `parameterBindings.period` → `dashboardDateFilter`.
    - `metric-kpi` bound to a computed metric (e.g. `Total Balance MoM %`) with `parameterBindings.currentPeriod` → `dashboardDateFilter`.
-5. **Chart overlay (last sibling)** — `image` with `displayMode: "overlay"`, `objectFit: "cover"`, `width: "100%"` on row/component styles, and `marginBottom: "-110"` to anchor at the card bottom. Place the chart row **after** header and body.
-6. **Chart asset** — upload PNG in the builder (serialized entity-file JSON ref) or use `/images/...` / `https://` static URL. See [image overlay](../03-components/image.md#decorative-chart-overlay).
+5. **Chart overlay (last sibling)** — `chart` with `chartType: "area"`, `displayMode: "overlay"`, and `dataSource.type: "entityQuery"` with **`layout: "monthToDateRightAligned"`** (30 daily buckets, filled from the right through calendar today when the dashboard month matches the current month). Use `Transaction trend` with net-balance `rowFilters` / `valueTransforms` (expense rows × `-1`). KPI still reads **`Net Balance by Month`** via metric bindings; the overlay shows daily net transaction totals month-to-date. Place the chart row **after** header and body.
+6. **Chart styling** — hide legend/axes for KPI backgrounds; set series color (e.g. `rgba(255,255,255,0.95)` on gradient cards) and optional area fill opacity. Anchor the chart to the **bottom half** of the card with overlay row styles: `top: 50%`, `bottom: 0`, `left: 0`, `right: 0`, `width: 100%`.
 7. **Register widget** — add to `metricWidgets[]` with stable `id`; reference via `metric-widget` in `metricRowLayout`.
 
 ## Layout sketch
@@ -36,16 +36,21 @@ metricWidget.root
         └── gradient card (column)
             ├── header row [title+icon | period pill]
             ├── body column [metric-kpi Net Balance | metric-kpi MoM %]
-            └── chart image (overlay, marginBottom -110, contain)  ← LAST
+            └── chart (overlay, bottom half: top 50%)  ← LAST
 ```
 
 ## Transparency and color
 
 Prefer **rgba on `color` / `backgroundColor`** for semi-transparent text and pills. Do not use `opacity` on a row when children must stay visible — `opacity` applies to the entire row subtree.
 
-## Reference fixture
+## Reference (Rates seed catalog)
 
-See [`total-balance-card-metric-widget.component-row.json`](../../../apps/web/app/features/ui-builder/fixtures/total-balance-card-metric-widget.component-row.json) and the Rates seed catalog [`rates-entity-ui-overrides.json`](../../../apps/api/src/admin/rates-tenant/catalogs/rates-entity-ui-overrides.json).
+Canonical widget JSON lives in the tenant seed catalog only — not under `apps/web`:
+
+- [`rates-entity-ui-overrides.json`](../../../apps/api/src/admin/rates-tenant/catalogs/rates-entity-ui-overrides.json) — `metricWidgets[]` entry `id: "total-balance-by-month"`, chart row `id: "row-total-balance-chart"`
+- [`rates-ui-builder-presets.json`](../../../apps/api/src/admin/rates-tenant/catalogs/rates-ui-builder-presets.json) — compact Income / Expenses / Invest card presets
+
+Reload with `pnpm seed:database` after editing catalog JSON.
 
 ## Common mistakes
 
@@ -56,6 +61,7 @@ See [`total-balance-card-metric-widget.component-row.json`](../../../apps/web/ap
 
 ## Related
 
-- [image](../03-components/image.md) — overlay modes and static sources
+- [chart](../03-components/chart.md) — metric-series and entity-query overlays
+- [image](../03-components/image.md) — static decorative assets
 - [metric bindings](../02-data-binding/metric-bindings.md) — `metric-derived-kpi`, `dashboardDateFilter`
 - [kpi-strip](./kpi-strip.md) — horizontal multi-KPI alternative

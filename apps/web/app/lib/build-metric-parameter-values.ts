@@ -28,5 +28,5 @@ export function buildMetricParameterValuesFromBindings(
 
   return resolveFilterBindingMap(parameterBindings, context, {
     dateFieldGranularity: granularityMap,
-  });
+  }) as Record<string, string | number | boolean> | null;
 }

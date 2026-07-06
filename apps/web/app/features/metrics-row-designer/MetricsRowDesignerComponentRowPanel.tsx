@@ -10,6 +10,7 @@ import {
   componentKindsForSurface,
   isContainerComponent,
   isQueryViewerComponent,
+  isChartComponent,
   isMetricWidgetComponent,
   type MotionPreset,
 } from "@repo/ui-builder-core";
@@ -37,6 +38,7 @@ import { MetricWidgetComponentEditor } from "./MetricWidgetComponentEditor";
 import { QueryViewerComponentEditor } from "./QueryViewerComponentEditor";
 import { MetricDerivedKpiComponentEditor } from "../../components/metrics/MetricDerivedKpiComponentEditor";
 import { MetricKpiComponentEditor } from "../../components/metrics/MetricKpiComponentEditor";
+import { ChartComponentEditor } from "../../components/charts/ChartComponentEditor";
 import { useMetricsRowDesigner } from "./metrics-row-designer-context";
 import {
   listEntityQueryDefinitions,
@@ -207,6 +209,13 @@ export function MetricsRowDesignerComponentRowPanel({
           <MetricWidgetComponentEditor
             config={row.component}
             currentEntityName={editor.entityName}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
+        ) : isChartComponent(row.component) ? (
+          <ChartComponentEditor
+            config={row.component}
+            entityDefinition={fieldDefinition}
+            filterFieldOptions={filterFieldOptions}
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />
         ) : (

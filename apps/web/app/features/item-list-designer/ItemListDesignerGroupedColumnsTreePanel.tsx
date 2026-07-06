@@ -14,7 +14,7 @@ import {
 } from "../../entities/entity-catalog-context";
 import { resolveExpandableTableGroupedColumnDisplayLabel } from "../ui-builder/expandable-table-grouped-column-label";
 import { FormDesignerAddComponentModal } from "../form-designer/FormDesignerAddComponentModal";
-import type { CatalogEntryKind } from "../form-designer/form-designer-component-catalog";
+import type { ComponentCatalogEntry } from "../form-designer/form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import { toComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import {
@@ -343,7 +343,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
   );
 
   const handleSelectComponent = useCallback(
-    (anchor: InsertAnchor, kind: CatalogEntryKind) => {
+    (anchor: InsertAnchor, entry: ComponentCatalogEntry) => {
       if (insertColumnIndex == null) {
         return;
       }
@@ -356,7 +356,7 @@ export function ItemListDesignerGroupedColumnsTreePanel({
       const { rowRef, label } = insertCatalogEntryAtAnchor(
         binding,
         anchor,
-        kind,
+        entry,
         editor.defaultFieldPath,
         labels.tree,
         fieldDescriptors,

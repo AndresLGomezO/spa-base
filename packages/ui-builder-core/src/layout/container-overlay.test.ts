@@ -9,8 +9,13 @@ import {
   layoutEstablishesDefiniteHeight,
   resolveContainerPercentSplitFlexStyle,
   resolveContainerShellLayoutStyle,
+  resolveContainerShellOverlayStyle,
   resolvePercentSplitSiblingContainerClass,
+  resolveChartComponentRowStyles,
+  isOverlayImageRow,
 } from "@repo/ui-builder-core";
+import type { ChartComponentConfig } from "../types/component.js";
+import type { ComponentRowNode } from "../types/layout.js";
 
 describe("container height style helpers", () => {
   it("detects percentage heights", () => {
@@ -199,5 +204,42 @@ describe("container height style helpers", () => {
         ],
       ),
     ).toBeUndefined();
+  });
+
+  it("detects overlay chart rows and applies overlay row styles", () => {
+    const chartComponent = {
+      kind: "chart",
+      chartDefinitionId: "Income trend chart",
+      styles: [
+        { property: "pointerEvents", value: "none" },
+        { property: "top", value: "50%" },
+      ],
+    } satisfies ChartComponentConfig;
+    const chartRow: ComponentRowNode = {
+      type: "component",
+      id: "row-income-chart",
+      component: chartComponent,
+    };
+
+    expect(isOverlayImageRow(chartRow)).toBe(true);
+    expect(resolveContainerShellOverlayStyle([], [chartRow]).position).toBe(
+      "relative",
+    );
+    expect(
+      resolveChartComponentRowStyles(chartComponent).some(
+        (rule) => rule.property === "position" && rule.value === "absolute",
+      ),
+    ).toBe(true);
+    expect(
+      resolveChartComponentRowStyles({
+        ...chartComponent,
+        styles: [
+          { property: "top", value: "auto" },
+          { property: "pointerEvents", value: "none" },
+        ],
+      } satisfies ChartComponentConfig).some(
+        (rule) => rule.property === "top" && rule.value === "0",
+      ),
+    ).toBe(true);
   });
 });

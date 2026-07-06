@@ -18,6 +18,7 @@ import { DashboardMetricDerivedKpiSlot } from "./DashboardMetricDerivedKpiSlot";
 import { DashboardMetricKpiSlot } from "./DashboardMetricKpiSlot";
 import { createEntityLayoutRenderContext } from "./create-entity-layout-render-context";
 import { createMetricWidgetRenderer } from "./create-metric-widget-renderer";
+import { ChartComponentSlot } from "./ChartComponentSlot";
 import { listFiltersForEntity } from "./list-filters-for-entity";
 import { ViewFilterComponent } from "./ViewFilterComponent";
 import { resolveStaticImageSrc } from "@repo/entities";
@@ -34,6 +35,7 @@ interface CreateTenantDashboardLayoutRenderContextOptions {
   readonly getDefinition?: (
     entityName: EntityName,
   ) => EntityCatalogEntry | undefined;
+  readonly previewMode?: boolean;
 }
 
 export function createTenantDashboardLayoutRenderContext(
@@ -48,6 +50,7 @@ export function createTenantDashboardLayoutRenderContext(
     pageFilters = {},
     dashboardDateFilter,
     getDefinition,
+    previewMode = false,
   } = options;
   const fallbackName = t("nav.fallbackName");
   const dateRouteParams = dashboardDateFilter
@@ -108,6 +111,18 @@ export function createTenantDashboardLayoutRenderContext(
         dashboardDateFilter={dashboardDateFilter}
       />
     ),
+    chartRenderer: (config) => (
+      <ChartComponentSlot
+        config={config}
+        context={{
+          record: {},
+          listFilters: pageFilters,
+          routeParams: dateRouteParams,
+          dashboardDateFilter,
+        }}
+        catalog={catalogItems}
+      />
+    ),
     metricWidgetRenderer: getDefinition
       ? createMetricWidgetRenderer({
           catalogItems,
@@ -122,8 +137,8 @@ export function createTenantDashboardLayoutRenderContext(
               listFilters: listFiltersForEntity(definition.name, pageFilters),
               routeParams: dateRouteParams,
               dashboardDateFilter,
-              usePreviewPlaceholder: true,
-              usePreviewSamples: true,
+              usePreviewPlaceholder: previewMode,
+              usePreviewSamples: previewMode,
               t,
             }),
         })

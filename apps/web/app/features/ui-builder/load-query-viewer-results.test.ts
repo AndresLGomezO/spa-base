@@ -7,6 +7,7 @@ describe("entityQueryResultsQueryKey", () => {
     expect(entityQueryResultsQueryKey("query-def-1")).toEqual([
       "entity-query-results",
       "query-def-1",
+      null,
     ]);
   });
 });

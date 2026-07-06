@@ -365,12 +365,18 @@
                                         "type": "component",
                                         "id": "row-total-balance-chart",
                                         "component": {
-                                          "kind": "image",
-                                          "displayMode": "overlay",
-                                          "objectFit": "cover",
-                                          "primary": {
-                                            "type": "static",
-                                            "value": "/images/total-balance-area-chart.svg"
+                                          "kind": "chart",
+                                          "chartDefinitionId": "Total balance trend chart",
+                                          "parameterBindings": {
+                                            "types": {
+                                              "type": "static",
+                                              "value": [
+                                                "INCOME",
+                                                "EXPENSE",
+                                                "PAYMENT",
+                                                "INVESTMENT"
+                                              ]
+                                            }
                                           },
                                           "styles": [
                                             {
@@ -378,8 +384,28 @@
                                               "value": "100%"
                                             },
                                             {
-                                              "property": "marginBottom",
-                                              "value": "-110"
+                                              "property": "top",
+                                              "value": "50%"
+                                            },
+                                            {
+                                              "property": "right",
+                                              "value": "0"
+                                            },
+                                            {
+                                              "property": "bottom",
+                                              "value": "0"
+                                            },
+                                            {
+                                              "property": "left",
+                                              "value": "0"
+                                            },
+                                            {
+                                              "property": "pointerEvents",
+                                              "value": "none"
+                                            },
+                                            {
+                                              "property": "zIndex",
+                                              "value": "0"
                                             }
                                           ]
                                         }
@@ -468,53 +494,6 @@
                           }
                         ],
                         "rows": [
-                          {
-                            "type": "component",
-                            "id": "row-income-chart",
-                            "component": {
-                              "kind": "image",
-                              "displayMode": "overlay",
-                              "objectFit": "contain",
-                              "primary": {
-                                "type": "static",
-                                "value": "/images/income-metric-chart.svg"
-                              },
-                              "styles": [
-                                {
-                                  "property": "position",
-                                  "value": "absolute"
-                                },
-                                {
-                                  "property": "top",
-                                  "value": "auto"
-                                },
-                                {
-                                  "property": "right",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "bottom",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "left",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "pointerEvents",
-                                  "value": "none"
-                                },
-                                {
-                                  "property": "zIndex",
-                                  "value": "0"
-                                }
-                              ]
-                            }
-                          },
                           {
                             "type": "component",
                             "id": "row-income-header",
@@ -676,6 +655,55 @@
                                 }
                               ]
                             }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-income-chart",
+                            "component": {
+                              "kind": "chart",
+                              "chartDefinitionId": "Income trend chart",
+                              "parameterBindings": {
+                                "types": {
+                                  "type": "static",
+                                  "value": [
+                                    "INCOME",
+                                    "EXPENSE",
+                                    "PAYMENT",
+                                    "INVESTMENT"
+                                  ]
+                                }
+                              },
+                              "styles": [
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "50%"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ]
+                            }
                           }
                         ]
                       }
@@ -755,53 +783,6 @@
                           }
                         ],
                         "rows": [
-                          {
-                            "type": "component",
-                            "id": "row-expenses-chart",
-                            "component": {
-                              "kind": "image",
-                              "displayMode": "overlay",
-                              "objectFit": "contain",
-                              "primary": {
-                                "type": "static",
-                                "value": "/images/expenses-metric-chart.svg"
-                              },
-                              "styles": [
-                                {
-                                  "property": "position",
-                                  "value": "absolute"
-                                },
-                                {
-                                  "property": "top",
-                                  "value": "auto"
-                                },
-                                {
-                                  "property": "right",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "bottom",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "left",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "pointerEvents",
-                                  "value": "none"
-                                },
-                                {
-                                  "property": "zIndex",
-                                  "value": "0"
-                                }
-                              ]
-                            }
-                          },
                           {
                             "type": "component",
                             "id": "row-expenses-header",
@@ -963,6 +944,55 @@
                                 }
                               ]
                             }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-expenses-chart",
+                            "component": {
+                              "kind": "chart",
+                              "chartDefinitionId": "Expenses trend chart",
+                              "parameterBindings": {
+                                "types": {
+                                  "type": "static",
+                                  "value": [
+                                    "INCOME",
+                                    "EXPENSE",
+                                    "PAYMENT",
+                                    "INVESTMENT"
+                                  ]
+                                }
+                              },
+                              "styles": [
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "50%"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
+                                }
+                              ]
+                            }
                           }
                         ]
                       }
@@ -1042,53 +1072,6 @@
                           }
                         ],
                         "rows": [
-                          {
-                            "type": "component",
-                            "id": "row-invest-chart",
-                            "component": {
-                              "kind": "image",
-                              "displayMode": "overlay",
-                              "objectFit": "contain",
-                              "primary": {
-                                "type": "static",
-                                "value": "/images/invest-metric-chart.svg"
-                              },
-                              "styles": [
-                                {
-                                  "property": "position",
-                                  "value": "absolute"
-                                },
-                                {
-                                  "property": "top",
-                                  "value": "auto"
-                                },
-                                {
-                                  "property": "right",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "bottom",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "left",
-                                  "value": "0"
-                                },
-                                {
-                                  "property": "width",
-                                  "value": "100%"
-                                },
-                                {
-                                  "property": "pointerEvents",
-                                  "value": "none"
-                                },
-                                {
-                                  "property": "zIndex",
-                                  "value": "0"
-                                }
-                              ]
-                            }
-                          },
                           {
                             "type": "component",
                             "id": "row-invest-header",
@@ -1247,6 +1230,55 @@
                                 {
                                   "property": "fontWeight",
                                   "value": "bold"
+                                }
+                              ]
+                            }
+                          },
+                          {
+                            "type": "component",
+                            "id": "row-invest-chart",
+                            "component": {
+                              "kind": "chart",
+                              "chartDefinitionId": "Invest trend chart",
+                              "parameterBindings": {
+                                "types": {
+                                  "type": "static",
+                                  "value": [
+                                    "INCOME",
+                                    "EXPENSE",
+                                    "PAYMENT",
+                                    "INVESTMENT"
+                                  ]
+                                }
+                              },
+                              "styles": [
+                                {
+                                  "property": "width",
+                                  "value": "100%"
+                                },
+                                {
+                                  "property": "top",
+                                  "value": "50%"
+                                },
+                                {
+                                  "property": "right",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "bottom",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "left",
+                                  "value": "0"
+                                },
+                                {
+                                  "property": "pointerEvents",
+                                  "value": "none"
+                                },
+                                {
+                                  "property": "zIndex",
+                                  "value": "0"
                                 }
                               ]
                             }

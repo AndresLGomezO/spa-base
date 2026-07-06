@@ -1,27 +1,11 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import type { ExpressionNode } from "@repo/hooks";
 
+import {
+  amortizationLoopStateBody,
+  loanPrincipalPaymentBody,
+  schedulePrincipalPortionBody,
+} from "../../test/expression-dsl-preview-fixtures.js";
 import { formatExpressionDsl } from "./format-expression-dsl-preview";
-
-const ratesFormulasPath = resolve(
-  import.meta.dirname,
-  "../../../../../apps/api/src/admin/rates-tenant/catalogs/rates-formula-definitions.json",
-);
-
-function loadLoanPrincipalPaymentBody(): ExpressionNode {
-  const catalog = JSON.parse(readFileSync(ratesFormulasPath, "utf8")) as {
-    formulaDefinitions: Array<{ name: string; body: ExpressionNode }>;
-  };
-  const formula = catalog.formulaDefinitions.find(
-    (entry) => entry.name === "loanPrincipalPayment",
-  );
-  if (!formula) {
-    throw new Error("loanPrincipalPayment not found in rates formulas.");
-  }
-  return formula.body;
-}
 
 describe("formatExpressionDsl", () => {
   it("formats literals and fields", () => {
@@ -128,15 +112,8 @@ describe("formatExpressionDsl", () => {
     ).toBe("1 + 2 - 3");
   });
 
-  it("formats amortizationLoopState from catalog on one line", () => {
-    const catalog = JSON.parse(readFileSync(ratesFormulasPath, "utf8")) as {
-      formulaDefinitions: Array<{ name: string; body: ExpressionNode }>;
-    };
-    const amortizationLoopState = catalog.formulaDefinitions.find(
-      (entry) => entry.name === "amortizationLoopState",
-    );
-    expect(amortizationLoopState).toBeDefined();
-    expect(formatExpressionDsl(amortizationLoopState!.body)).toBe(
+  it("formats amortizationLoopState on one line", () => {
+    expect(formatExpressionDsl(amortizationLoopStateBody)).toBe(
       "loanPeriodBalance - schedulePrincipalPortion",
     );
   });
@@ -204,21 +181,13 @@ describe("formatExpressionDsl", () => {
   });
 
   it("formats schedulePrincipalPortion as delegation to loanPrincipalPayment", () => {
-    const catalog = JSON.parse(readFileSync(ratesFormulasPath, "utf8")) as {
-      formulaDefinitions: Array<{ name: string; body: ExpressionNode }>;
-    };
-    const schedulePrincipal = catalog.formulaDefinitions.find(
-      (entry) => entry.name === "schedulePrincipalPortion",
-    );
-    expect(schedulePrincipal).toBeDefined();
-    expect(formatExpressionDsl(schedulePrincipal!.body)).toBe(
+    expect(formatExpressionDsl(schedulePrincipalPortionBody)).toBe(
       "loanPrincipalPayment",
     );
   });
 
   it("formats loanPrincipalPayment strategy switch with readable structure", () => {
-    const body = loadLoanPrincipalPaymentBody();
-    const dsl = formatExpressionDsl(body);
+    const dsl = formatExpressionDsl(loanPrincipalPaymentBody);
 
     expect(dsl).toContain(
       'switch coalesce(current.amortizationType, "FRENCH") {',

@@ -7,7 +7,7 @@ import {
   useEntityDefinition,
 } from "../../entities/entity-catalog-context";
 import { FormDesignerAddComponentModal } from "../form-designer/FormDesignerAddComponentModal";
-import type { CatalogEntryKind } from "../form-designer/form-designer-component-catalog";
+import type { ComponentCatalogEntry } from "../form-designer/form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import {
   insertCatalogEntryAtAnchor,
@@ -55,11 +55,11 @@ export function ItemListDesignerCardLayoutTreePanel({
   }, []);
 
   const handleSelect = useCallback(
-    (anchor: InsertAnchor, kind: CatalogEntryKind) => {
+    (anchor: InsertAnchor, entry: ComponentCatalogEntry) => {
       const { rowRef, label } = insertCatalogEntryAtAnchor(
         binding,
         anchor,
-        kind,
+        entry,
         editor.defaultFieldPath,
         labels.tree,
         fieldDescriptors,

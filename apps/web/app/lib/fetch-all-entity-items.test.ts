@@ -91,4 +91,27 @@ describe("fetchAllEntityItems", () => {
   it("exports RELATION_FILTER_OPTIONS_MAX_ITEMS for preload cap", () => {
     expect(RELATION_FILTER_OPTIONS_MAX_ITEMS).toBe(500);
   });
+
+  it("deduplicates concurrent fetches with the same arguments", async () => {
+    listEntityMock
+      .mockResolvedValueOnce({
+        items: [{ id: "1" }],
+        nextCursor: "cursor-1",
+        totalCount: 2,
+      })
+      .mockResolvedValueOnce({
+        items: [{ id: "2" }],
+        nextCursor: null,
+        totalCount: 2,
+      });
+
+    const [first, second] = await Promise.all([
+      fetchAllEntityItems<{ id: string }>("frequency"),
+      fetchAllEntityItems<{ id: string }>("frequency"),
+    ]);
+
+    expect(first).toEqual([{ id: "1" }, { id: "2" }]);
+    expect(second).toEqual([{ id: "1" }, { id: "2" }]);
+    expect(listEntityMock).toHaveBeenCalledTimes(2);
+  });
 });

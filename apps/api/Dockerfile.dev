@@ -35,6 +35,7 @@ COPY packages/firestore-converters/package.json ./packages/firestore-converters/
 COPY packages/firestore-indexes/package.json ./packages/firestore-indexes/
 COPY packages/hooks/package.json ./packages/hooks/
 COPY packages/formula-definitions/package.json ./packages/formula-definitions/
+COPY packages/chart-definitions/package.json ./packages/chart-definitions/
 COPY packages/gcp-firebase/package.json ./packages/gcp-firebase/
 COPY packages/rbac/package.json ./packages/rbac/
 COPY packages/theme/package.json ./packages/theme/

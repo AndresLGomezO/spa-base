@@ -1,5 +1,6 @@
 import {
   uiLayoutDocumentSchema,
+  type MetricBindingSource,
   type UiLayoutDocument,
 } from "@repo/ui-builder-core";
 import { z } from "zod";
@@ -21,7 +22,12 @@ export const metricBindingSourceSchema = z.discriminatedUnion("type", [
   z
     .object({
       type: z.literal("static"),
-      value: z.union([z.string(), z.number(), z.boolean()]),
+      value: z.union([
+        z.string(),
+        z.number(),
+        z.boolean(),
+        z.array(z.string().trim().min(1)).min(1),
+      ]),
     })
     .strict(),
   z
@@ -60,10 +66,10 @@ export const metricBindingSourceSchema = z.discriminatedUnion("type", [
     .strict(),
 ]);
 
-export type MetricBindingSource = z.infer<typeof metricBindingSourceSchema>;
-
-/** Alias for metric and query parameter bindings. */
-export type FilterBindingSource = MetricBindingSource;
+export type {
+  MetricBindingSource,
+  FilterBindingSource,
+} from "@repo/ui-builder-core";
 
 export const filterBindingSourceSchema = metricBindingSourceSchema;
 
@@ -74,7 +80,10 @@ export const metricWidgetBindingsSchema = z
   })
   .strict();
 
-export type MetricWidgetBindings = z.infer<typeof metricWidgetBindingsSchema>;
+export type MetricWidgetBindings = {
+  readonly groupBindings: Readonly<Record<string, MetricBindingSource>>;
+  readonly dimensionBindings: Readonly<Record<string, MetricBindingSource>>;
+};
 
 export interface MetricWidgetDefinition {
   readonly id: string;

@@ -1,4 +1,7 @@
-import type { ImageComponentConfig } from "../types/component.js";
+import type {
+  ChartComponentConfig,
+  ImageComponentConfig,
+} from "../types/component.js";
 import { isContainerComponent } from "../types/component.js";
 import type { RowNode, UiLayoutDocument } from "../types/layout.js";
 import { resolveLayoutRootColumns } from "./layout-root-adapters.js";
@@ -225,12 +228,48 @@ export function isOverlayImageComponent(
   return component.displayMode === "overlay";
 }
 
-export function isOverlayImageRow(row: RowNode): boolean {
-  return (
-    row.type === "component" &&
-    row.component.kind === "image" &&
-    isOverlayImageComponent(row.component)
+export function isOverlayChartComponent(
+  component: ChartComponentConfig,
+): boolean {
+  const styles = component.styles ?? [];
+  if (
+    styles.some(
+      (rule) =>
+        rule.property === "position" &&
+        String(rule.value).trim() === "absolute",
+    )
+  ) {
+    return true;
+  }
+  return styles.some(
+    (rule) =>
+      rule.property === "pointerEvents" && String(rule.value).trim() === "none",
   );
+}
+
+function isOverlayDecorativeComponent(
+  component: ImageComponentConfig | ChartComponentConfig,
+): boolean {
+  if (component.kind === "image") {
+    return component.displayMode === "overlay";
+  }
+  return isOverlayChartComponent(component);
+}
+
+export function isOverlayImageRow(row: RowNode): boolean {
+  if (row.type !== "component") {
+    return false;
+  }
+
+  if (row.component.kind === "image") {
+    return isOverlayImageComponent(row.component);
+  }
+
+  if (row.component.kind === "chart") {
+    return isOverlayChartComponent(row.component);
+  }
+
+  return false;
 }
 
 export function collectOverlayImageRowIds(
@@ -286,14 +325,38 @@ const CONTENT_LAYER_DEFAULTS: readonly StyleRule[] = [
   { property: "zIndex", value: "1" },
 ];
 
-export function resolveImageComponentRowStyles(
-  component: ImageComponentConfig,
+function sanitizeOverlayComponentStyles(
+  styles: readonly StyleRule[] | undefined,
 ): readonly StyleRule[] {
-  if (!isOverlayImageComponent(component)) {
+  return (styles ?? []).filter(
+    (rule) =>
+      !(rule.property === "top" && String(rule.value).trim() === "auto"),
+  );
+}
+
+export function resolveOverlayComponentRowStyles(
+  component: ImageComponentConfig | ChartComponentConfig,
+): readonly StyleRule[] {
+  if (!isOverlayDecorativeComponent(component)) {
     return component.styles ?? [];
   }
 
-  return mergeStyleRulesByProperty(OVERLAY_IMAGE_DEFAULTS, component.styles);
+  return mergeStyleRulesByProperty(
+    OVERLAY_IMAGE_DEFAULTS,
+    sanitizeOverlayComponentStyles(component.styles),
+  );
+}
+
+export function resolveImageComponentRowStyles(
+  component: ImageComponentConfig,
+): readonly StyleRule[] {
+  return resolveOverlayComponentRowStyles(component);
+}
+
+export function resolveChartComponentRowStyles(
+  component: ChartComponentConfig,
+): readonly StyleRule[] {
+  return resolveOverlayComponentRowStyles(component);
 }
 
 export function resolveContainerContentLayerRowStyles(

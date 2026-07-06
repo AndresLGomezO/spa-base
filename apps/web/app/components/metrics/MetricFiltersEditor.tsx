@@ -1,16 +1,12 @@
 import { useMemo } from "react";
 import { useTranslation } from "react-i18next";
 
-import {
-  Button,
-  Input,
-  SearchableMultiSelectDropdown,
-  Select,
-  Text,
-} from "@repo/ui";
+import { Button, Select, Text } from "@repo/ui";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { formatFieldLabel } from "../../entities/entity-catalog";
+import { EntityFieldConditionValueInput } from "../entity/EntityFieldConditionValueInput";
+import { resolveEntityFieldMeta } from "../entity/entity-field-condition-utils";
 import { MetricFieldLabel } from "./MetricFieldHelp";
 import {
   createEmptyMetricFilterEditorRow,
@@ -40,127 +36,44 @@ function MetricFilterValueEditor({
   row,
   entity,
   disabled,
-  multiselectLabels,
   onChange,
 }: {
   readonly row: MetricFilterEditorRow;
   readonly entity: EntityCatalogEntry | undefined;
   readonly disabled?: boolean;
-  readonly multiselectLabels: {
-    readonly placeholder: string;
-    readonly selectedCountLabel: (count: number) => string;
-    readonly searchPlaceholder: string;
-    readonly noResultsLabel: string;
-    readonly removeAriaLabel: (label: string) => string;
-  };
   readonly onChange: (patch: Partial<MetricFilterEditorRow>) => void;
 }) {
-  const { t } = useTranslation("common");
-  const fieldMeta = row.field ? entity?.fields[row.field] : undefined;
-  const fieldType = fieldMeta?.type ?? "string";
-
-  if (row.op === "in") {
-    if (fieldType === "enum" && fieldMeta?.enumValues) {
-      const enumOptions = fieldMeta.enumValues.map((value) => ({
-        value,
-        label: value,
-      }));
-
-      return (
-        <SearchableMultiSelectDropdown
-          options={enumOptions}
-          selected={row.listValues}
-          onChange={(values) => onChange({ listValues: values })}
-          disabled={disabled}
-          ariaLabel={t("metrics.filters.value")}
-          {...multiselectLabels}
-        />
-      );
-    }
-
-    if (fieldType === "boolean") {
-      return (
-        <SearchableMultiSelectDropdown
-          options={[
-            { value: "true", label: t("entity.arrayBooleanTrue") },
-            { value: "false", label: t("entity.arrayBooleanFalse") },
-          ]}
-          selected={row.listValues}
-          onChange={(values) => onChange({ listValues: values })}
-          disabled={disabled}
-          ariaLabel={t("metrics.filters.value")}
-          {...multiselectLabels}
-        />
-      );
-    }
-
-    return (
-      <Input
-        value={
-          row.listValues.length > 0
-            ? row.listValues.join(", ")
-            : row.scalarValue
-        }
-        disabled={disabled}
-        placeholder={t("metrics.filters.listPlaceholder")}
-        onChange={(event) => {
-          const next = event.target.value;
-          onChange({
-            scalarValue: next,
-            listValues: next
-              .split(",")
-              .map((part) => part.trim())
-              .filter(Boolean),
-          });
-        }}
-      />
-    );
-  }
-
-  if (fieldType === "enum" && fieldMeta?.enumValues) {
-    return (
-      <Select
-        className={selectClassName}
-        value={row.scalarValue}
-        disabled={disabled}
-        onChange={(event) => onChange({ scalarValue: event.target.value })}
-      >
-        <option value="">{t("metrics.filters.selectValue")}</option>
-        {fieldMeta.enumValues.map((value) => (
-          <option key={value} value={value}>
-            {value}
-          </option>
-        ))}
-      </Select>
-    );
-  }
-
-  if (fieldType === "boolean") {
-    return (
-      <Select
-        className={selectClassName}
-        value={row.scalarValue}
-        disabled={disabled}
-        onChange={(event) => onChange({ scalarValue: event.target.value })}
-      >
-        <option value="">{t("metrics.filters.selectValue")}</option>
-        <option value="true">{t("entity.arrayBooleanTrue")}</option>
-        <option value="false">{t("entity.arrayBooleanFalse")}</option>
-      </Select>
-    );
-  }
+  const fieldMeta = row.field
+    ? resolveEntityFieldMeta(entity, row.field)
+    : undefined;
+  const operator = row.op === "in" ? "in" : "==";
+  const value = row.op === "in" ? row.listValues : row.scalarValue;
 
   return (
-    <Input
-      value={row.scalarValue}
+    <EntityFieldConditionValueInput
+      fieldMeta={fieldMeta}
+      operator={operator}
+      value={value}
       disabled={disabled}
-      type={fieldType === "number" ? "number" : "text"}
-      placeholder={
-        fieldType === "relation"
-          ? t("metrics.filters.relationPlaceholder")
-          : t("metrics.filters.valuePlaceholder")
-      }
-      onChange={(event) => onChange({ scalarValue: event.target.value })}
+      onChange={(nextValue) => {
+        if (row.op === "in") {
+          onChange({
+            listValues: Array.isArray(nextValue) ? nextValue : [nextValue],
+            scalarValue: Array.isArray(nextValue)
+              ? nextValue.join(", ")
+              : typeof nextValue === "string"
+                ? nextValue
+                : nextValue.join(", "),
+          });
+          return;
+        }
+
+        onChange({
+          scalarValue: Array.isArray(nextValue)
+            ? (nextValue[0] ?? "")
+            : nextValue,
+        });
+      }}
     />
   );
 }
@@ -177,16 +90,6 @@ export function MetricFiltersEditor({
     () => listMetricFilterFieldOptions(entity),
     [entity],
   );
-
-  const multiselectLabels = {
-    placeholder: t("metrics.multiselect.placeholder"),
-    selectedCountLabel: (count: number) =>
-      t("metrics.multiselect.selectedCount", { count }),
-    searchPlaceholder: t("metrics.multiselect.searchPlaceholder"),
-    noResultsLabel: t("metrics.multiselect.noResults"),
-    removeAriaLabel: (label: string) =>
-      t("metrics.multiselect.removeBadge", { label }),
-  };
 
   return (
     <div className="space-y-3">
@@ -296,7 +199,6 @@ export function MetricFiltersEditor({
                   row={row}
                   entity={entity}
                   disabled={disabled || !row.field}
-                  multiselectLabels={multiselectLabels}
                   onChange={(patch) => onChange(updateRow(rows, row.id, patch))}
                 />
               </label>

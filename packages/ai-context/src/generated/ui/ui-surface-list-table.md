@@ -9,6 +9,7 @@ Set `listViewType: "table"`. Default preset: `plain-table-list`. Columns are fie
 - `image`
 - `icon`
 - `user`
+- `chart`
 - `metric-kpi`
 - `metric-derived-kpi`
 - `metric-widget`

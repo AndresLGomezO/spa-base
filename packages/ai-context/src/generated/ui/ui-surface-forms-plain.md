@@ -15,6 +15,7 @@ Set `presentation: "plain"`. Default preset: `plain-form`. Use form-field, form-
 - `date`
 - `numeric`
 - `badge`
+- `chart`
 
 ## Slice envelope example
 ```json

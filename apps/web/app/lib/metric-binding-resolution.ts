@@ -28,7 +28,7 @@ export function resolveMetricBindingSource(
       Record<string, MetricDateGranularity>
     >;
   } = {},
-): string | number | boolean | null {
+): string | number | boolean | readonly string[] | null {
   return resolveSharedFilterBindingSource(source, context, options);
 }
 
@@ -40,7 +40,7 @@ export function resolveFilterBindingMap(
       Record<string, MetricDateGranularity>
     >;
   } = {},
-): Record<string, string | number | boolean> | null {
+): Record<string, string | number | boolean | readonly string[]> | null {
   return resolveSharedFilterBindingMap(bindings, context, options);
 }
 
@@ -94,6 +94,14 @@ function resolveMetricBindingMap(
         return null;
       }
       value = fallback;
+    }
+
+    if (
+      typeof value !== "string" &&
+      typeof value !== "number" &&
+      typeof value !== "boolean"
+    ) {
+      return null;
     }
 
     resolved[field] = value;

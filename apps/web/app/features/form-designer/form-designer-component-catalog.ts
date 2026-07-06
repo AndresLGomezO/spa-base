@@ -1,6 +1,7 @@
 import type { LucideIcon } from "lucide-react";
 import {
   ArrowRightLeft,
+  AreaChart,
   Badge,
   Box,
   Calendar,
@@ -22,17 +23,25 @@ import {
 } from "lucide-react";
 import {
   isComponentKindAllowedOnSurface,
+  type ChartType,
   type DesignSurface,
   type UiComponentKind,
 } from "@repo/ui-builder-core";
 
 export type CatalogEntryKind = UiComponentKind;
 
-export type CatalogSectionId = "layout" | "content" | "form" | "dataControls";
+export type CatalogSectionId =
+  | "layout"
+  | "content"
+  | "charts"
+  | "form"
+  | "dataControls";
 
-interface ComponentCatalogEntry {
+export interface ComponentCatalogEntry {
   readonly kind: CatalogEntryKind;
   readonly icon: LucideIcon;
+  readonly entryId?: string;
+  readonly defaultChartType?: ChartType;
 }
 
 interface ComponentCatalogSection {
@@ -62,6 +71,24 @@ const CONTENT_SECTION: ComponentCatalogSection = {
   ],
 };
 
+const CHARTS_SECTION: ComponentCatalogSection = {
+  id: "charts",
+  entries: [
+    {
+      kind: "chart",
+      entryId: "chart-line",
+      icon: ChartLine,
+      defaultChartType: "line",
+    },
+    {
+      kind: "chart",
+      entryId: "chart-area",
+      icon: AreaChart,
+      defaultChartType: "area",
+    },
+  ],
+};
+
 const FORM_SECTION: ComponentCatalogSection = {
   id: "form",
   entries: [
@@ -81,6 +108,7 @@ const DATA_CONTROLS_SECTION: ComponentCatalogSection = {
 const ALL_SECTIONS: readonly ComponentCatalogSection[] = [
   LAYOUT_SECTION,
   CONTENT_SECTION,
+  CHARTS_SECTION,
   FORM_SECTION,
   DATA_CONTROLS_SECTION,
 ];
@@ -92,15 +120,24 @@ function isAllowedOnSurface(
   return isComponentKindAllowedOnSurface(kind, designSurface);
 }
 
-export function getFilteredComponentCatalog(
+function filterSectionEntries(
+  section: ComponentCatalogSection,
   designSurface: DesignSurface,
-): readonly ComponentCatalogSection[] {
-  const sections = ALL_SECTIONS.map((section) => ({
+): ComponentCatalogSection {
+  return {
     ...section,
     entries: section.entries.filter((entry) =>
       isAllowedOnSurface(entry.kind, designSurface),
     ),
-  })).filter((section) => section.entries.length > 0);
+  };
+}
+
+export function getFilteredComponentCatalog(
+  designSurface: DesignSurface,
+): readonly ComponentCatalogSection[] {
+  const sections = ALL_SECTIONS.map((section) =>
+    filterSectionEntries(section, designSurface),
+  ).filter((section) => section.entries.length > 0);
 
   if (
     designSurface !== "metricRow" &&
@@ -157,4 +194,8 @@ function getComponentCatalogIcon(
 
 export function getTreeNodeIcon(kind: CatalogEntryKind): LucideIcon {
   return getComponentCatalogIcon(kind) ?? Columns2;
+}
+
+export function getCatalogEntryKey(entry: ComponentCatalogEntry): string {
+  return entry.entryId ?? entry.kind;
 }

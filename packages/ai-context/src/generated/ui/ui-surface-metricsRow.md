@@ -11,6 +11,7 @@ Requires `metricWidgets[]` definitions and `metricRowLayout` with metric-widget 
 - `date`
 - `numeric`
 - `badge`
+- `chart`
 - `metric-kpi`
 - `metric-derived-kpi`
 - `view-filter`

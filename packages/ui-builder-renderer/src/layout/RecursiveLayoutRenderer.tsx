@@ -26,6 +26,7 @@ import {
   resolveContainerContentLayerRowStyles,
   resolveContainerShellLayoutStyle,
   resolveDisplayRangeVisibility,
+  resolveChartComponentRowStyles,
   resolveImageComponentRowStyles,
   resolveResponsiveGridLayout,
   resolveGridGapCSSValue,
@@ -1090,7 +1091,9 @@ function renderRow(
     const componentStylesForRow =
       row.component.kind === "image"
         ? resolveImageComponentRowStyles(row.component)
-        : row.component.styles;
+        : row.component.kind === "chart"
+          ? resolveChartComponentRowStyles(row.component)
+          : row.component.styles;
     const rowStylesForMerge = overlayContext
       ? resolveContainerContentLayerRowStyles(
           row.styles,

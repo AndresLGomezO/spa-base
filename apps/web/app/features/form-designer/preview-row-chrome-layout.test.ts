@@ -33,6 +33,27 @@ describe("preview-row-chrome-layout", () => {
     expect(classes.inner).not.toContain("z-0");
   });
 
+  it("uses absolute inset overlay sizing for overlay chart rows", () => {
+    const classes = resolvePreviewRowChromeLayoutClasses({
+      parentStackDirection: "column",
+      isStructuralRow: false,
+      preferFlexGrow: false,
+      preferContentWidth: false,
+      row: {
+        type: "component",
+        id: "row-income-chart",
+        component: {
+          kind: "chart",
+          chartDefinitionId: "Income trend chart",
+          styles: [{ property: "pointerEvents", value: "none" }],
+        },
+      },
+    });
+
+    expect(classes.shell).toContain("absolute");
+    expect(classes.shell).toContain("inset-0");
+  });
+
   it("avoids stretch classes for containers with explicit pixel height", () => {
     const classes = resolvePreviewRowChromeLayoutClasses({
       parentStackDirection: "column",

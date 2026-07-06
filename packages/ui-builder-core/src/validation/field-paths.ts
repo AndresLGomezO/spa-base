@@ -8,6 +8,7 @@ import {
   isMetricDerivedKpiComponent,
   isMetricWidgetComponent,
   isUserComponent,
+  isChartComponent,
 } from "../types/component.js";
 import type { UiComponentConfig } from "../types/component.js";
 import { listDataSourcePaths } from "../resolver/data-source.js";
@@ -169,7 +170,8 @@ function collectComponentPaths(
     isMetricDerivedKpiComponent(component) ||
     isMetricWidgetComponent(component) ||
     isDashboardSectionComponent(component) ||
-    isUserComponent(component)
+    isUserComponent(component) ||
+    isChartComponent(component)
   ) {
     return [];
   }

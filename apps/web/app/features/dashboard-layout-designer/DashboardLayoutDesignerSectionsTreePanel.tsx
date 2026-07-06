@@ -2,7 +2,7 @@ import { useCallback, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 
 import { FormDesignerAddComponentModal } from "../form-designer/FormDesignerAddComponentModal";
-import type { CatalogEntryKind } from "../form-designer/form-designer-component-catalog";
+import type { ComponentCatalogEntry } from "../form-designer/form-designer-component-catalog";
 import { formDesignerComponentsLabels } from "../form-designer/form-designer-components-labels";
 import {
   insertCatalogEntryAtAnchor,
@@ -38,7 +38,7 @@ export function DashboardLayoutDesignerSectionsTreePanel() {
   }, []);
 
   const handleSelect = useCallback(
-    (anchor: InsertAnchor, kind: CatalogEntryKind) => {
+    (anchor: InsertAnchor, entry: ComponentCatalogEntry) => {
       if (!binding) {
         return;
       }
@@ -46,7 +46,7 @@ export function DashboardLayoutDesignerSectionsTreePanel() {
       const { rowRef, label } = insertCatalogEntryAtAnchor(
         binding,
         anchor,
-        kind,
+        entry,
         "name",
         labels.tree,
         [],

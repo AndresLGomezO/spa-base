@@ -1,5 +1,6 @@
 {
   "$schema": "https://unpkg.com/knip@5/schema.json",
+  "entry": ["app/routes/**/*.tsx"],
   "ignoreDependencies": [
     "@app/platform",
     "@repo/custom-views",
@@ -7,6 +8,7 @@
     "@repo/dynamic-entities",
     "@repo/entities",
     "@repo/formula-definitions",
+    "@repo/chart-definitions",
     "@repo/entity-queries",
     "@repo/firestore-indexes",
     "@repo/hooks",
@@ -23,6 +25,7 @@
     "@repo/ui-builder-core",
     "@repo/ui-builder-react",
     "@repo/ui-builder-renderer",
+    "@repo/ui-charts",
     "tailwindcss"
   ],
   "project": ["app/**/*.{ts,tsx}"]

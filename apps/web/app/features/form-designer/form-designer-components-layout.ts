@@ -1,5 +1,6 @@
 import type { DesignSurface } from "@repo/ui-builder-core";
 import {
+  createDefaultChartComponent,
   createDefaultComponent,
   createDefaultStaticComponent,
   insertComponentRowAt,
@@ -24,7 +25,7 @@ import {
 } from "@repo/ui-builder-react";
 
 import type { UseEntityFormLayoutEditorResult } from "../ui-builder/use-entity-form-layout-editor";
-import type { CatalogEntryKind } from "./form-designer-component-catalog";
+import type { ComponentCatalogEntry } from "./form-designer-component-catalog";
 import type { ComponentColumnRef } from "./form-designer-component-column-ref";
 import { isNestedComponentColumnRef } from "./form-designer-component-column-ref";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
@@ -520,12 +521,13 @@ export function resolveComponentsLayoutBinding(
 export function insertCatalogEntryAtAnchor(
   binding: ComponentsLayoutBinding,
   anchor: InsertAnchor,
-  kind: CatalogEntryKind,
+  entry: ComponentCatalogEntry,
   defaultFieldPath: string,
   treeLabels: StructureTreeLabels,
   fieldDescriptors: readonly FieldDescriptor[],
   options?: { readonly useStaticDefaults?: boolean },
 ): { readonly rowRef: ComponentRowRef; readonly label: string } {
+  const kind = entry.kind;
   const insert = {
     position: anchor.position,
     referenceRowId: anchor.referenceRowId,
@@ -545,9 +547,14 @@ export function insertCatalogEntryAtAnchor(
     };
   }
 
-  const component = options?.useStaticDefaults
+  let component = options?.useStaticDefaults
     ? createDefaultStaticComponent(kind)
     : createDefaultComponent(kind, defaultFieldPath);
+
+  if (kind === "chart" && entry.defaultChartType) {
+    component = createDefaultChartComponent();
+  }
+
   const { layout, rowId } = insertComponentRowAt(
     binding.layout,
     anchor.locator,

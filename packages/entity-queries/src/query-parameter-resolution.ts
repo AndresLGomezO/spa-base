@@ -1,5 +1,8 @@
 import type { MetricDateGranularity } from "@repo/metrics-engine/browser";
-import { normalizeMetricDateValue } from "@repo/metrics-engine/browser";
+import {
+  normalizeMetricDateValue,
+  shiftMetricDateBucket,
+} from "@repo/metrics-engine/browser";
 
 import type {
   EntityQueryFilterNode,
@@ -167,7 +170,25 @@ export function resolveQueryParameterFilterValue(
     if (typeof raw !== "string") {
       return undefined;
     }
-    return resolveDateBucketParameterBound(raw, granularity, bound);
+    const bucket =
+      value.offset !== undefined && value.unit !== undefined
+        ? shiftMetricDateBucket(raw, value.unit, value.offset)
+        : raw;
+    if (bucket === null) {
+      return undefined;
+    }
+    return resolveDateBucketParameterBound(bucket, granularity, bound);
+  }
+
+  if (parameter.valueType === "stringList") {
+    if (!Array.isArray(raw) || raw.length === 0) {
+      return undefined;
+    }
+    const values = raw.filter(
+      (entry): entry is string =>
+        typeof entry === "string" && entry.trim().length > 0,
+    );
+    return values.length > 0 ? values : undefined;
   }
 
   return raw;

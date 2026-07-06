@@ -6,6 +6,7 @@ import { parseEntityDefinitionsCatalogJson } from "@repo/dynamic-entities";
 import { parseCustomViewsCatalogJson } from "@repo/custom-views";
 import { parseMetricDefinitionsCatalogJson } from "@repo/metrics-engine";
 import { parseEntityQueryDefinitionsCatalogJson } from "@repo/entity-queries";
+import { parseChartDefinitionsCatalogJson } from "@repo/chart-definitions";
 import { parseDataHooksCatalogJson } from "@repo/hooks";
 import {
   createFirestoreAdminAggregationEventRepository,
@@ -15,6 +16,7 @@ import {
   createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminEntityCategoryRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
+  createFirestoreAdminChartDefinitionRepository,
   createFirestoreAdminMetricContributionRepository,
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminMetricValueRepository,
@@ -30,6 +32,7 @@ import {
   listSourceDocumentsForMetricDefinition,
 } from "../../aggregation/metric-query-runtime.js";
 import { replaceEntityQueryDefinitionsCatalog } from "../../entity-queries/replace-entity-query-definitions-catalog.js";
+import { replaceChartDefinitionsCatalog } from "../../chart-definitions/replace-chart-definitions-catalog.js";
 import { replaceCustomViewsCatalog } from "../../custom-views/replace-custom-views-catalog.js";
 import { createHookRuntimeContext } from "../../hooks/hook-runtime-context.js";
 import { replaceDataHooksCatalog } from "../../hooks/replace-data-hooks-catalog.js";
@@ -55,6 +58,11 @@ interface SeedRatesCatalogsResult {
     readonly deleted: number;
   };
   readonly queryCounts: {
+    readonly created: number;
+    readonly updated: number;
+    readonly deleted: number;
+  };
+  readonly chartCounts: {
     readonly created: number;
     readonly updated: number;
     readonly deleted: number;
@@ -111,6 +119,15 @@ export async function seedRatesCatalogs(
     );
   }
 
+  const chartParsed = parseChartDefinitionsCatalogJson(
+    readCatalogJson("rates-chart-definitions.json"),
+  );
+  if (!chartParsed.ok) {
+    throw new Error(
+      `Invalid rates chart catalog: ${chartParsed.errors.map((error) => error.message).join("; ")}`,
+    );
+  }
+
   const customViewParsed = parseCustomViewsCatalogJson(
     readCatalogJson("rates-custom-views.json"),
   );
@@ -144,6 +161,8 @@ export async function seedRatesCatalogs(
     createFirestoreAdminMetricDefinitionRepository(firebaseAdminConfig);
   const entityQueryDefinitionRepository =
     createFirestoreAdminEntityQueryDefinitionRepository(firebaseAdminConfig);
+  const chartDefinitionRepository =
+    createFirestoreAdminChartDefinitionRepository(firebaseAdminConfig);
   const customViewRepository =
     createFirestoreAdminCustomViewRepository(firebaseAdminConfig);
   const dataHookRepository =
@@ -207,6 +226,14 @@ export async function seedRatesCatalogs(
     queryParsed.data,
   );
 
+  const chartResult = await replaceChartDefinitionsCatalog(
+    {
+      chartDefinitionRepository,
+    },
+    tenantId,
+    chartParsed.data,
+  );
+
   const formulaResult = await replaceFormulasCatalog(
     formulaRuntime,
     tenantId,
@@ -236,13 +263,14 @@ export async function seedRatesCatalogs(
   );
 
   console.log(
-    `[rates seed] Catalogs: entities +${entityResult.counts.created}/~${entityResult.counts.updated}/-${entityResult.counts.deleted}, metrics +${metricResult.counts.created}/~${metricResult.counts.updated}/-${metricResult.counts.deleted}, queries +${queryResult.counts.created}/~${queryResult.counts.updated}/-${queryResult.counts.deleted}, formulas +${formulaResult.counts.created}/~${formulaResult.counts.updated}/-${formulaResult.counts.deleted}, hooks +${hookResult.counts.created}/~${hookResult.counts.updated}/-${hookResult.counts.deleted}, customViews +${customViewResult.counts.created}/~${customViewResult.counts.updated}/-${customViewResult.counts.deleted}`,
+    `[rates seed] Catalogs: entities +${entityResult.counts.created}/~${entityResult.counts.updated}/-${entityResult.counts.deleted}, metrics +${metricResult.counts.created}/~${metricResult.counts.updated}/-${metricResult.counts.deleted}, queries +${queryResult.counts.created}/~${queryResult.counts.updated}/-${queryResult.counts.deleted}, charts +${chartResult.counts.created}/~${chartResult.counts.updated}/-${chartResult.counts.deleted}, formulas +${formulaResult.counts.created}/~${formulaResult.counts.updated}/-${formulaResult.counts.deleted}, hooks +${hookResult.counts.created}/~${hookResult.counts.updated}/-${hookResult.counts.deleted}, customViews +${customViewResult.counts.created}/~${customViewResult.counts.updated}/-${customViewResult.counts.deleted}`,
   );
 
   return {
     entityCounts: entityResult.counts,
     metricCounts: metricResult.counts,
     queryCounts: queryResult.counts,
+    chartCounts: chartResult.counts,
     formulaCounts: formulaResult.counts,
     hookCounts: hookResult.counts,
     customViewCounts: customViewResult.counts,

@@ -101,9 +101,12 @@ export function resolveFilterBindingSource(
       Record<string, MetricDateGranularity>
     >;
   } = {},
-): string | number | boolean | null {
+): string | number | boolean | readonly string[] | null {
   switch (source.type) {
     case "static": {
+      if (Array.isArray(source.value)) {
+        return source.value.length > 0 ? source.value : null;
+      }
       if (
         typeof source.value === "string" &&
         source.value.trim().length === 0
@@ -178,8 +181,11 @@ export function resolveFilterBindingMap(
       Record<string, MetricDateGranularity>
     >;
   } = {},
-): Record<string, string | number | boolean> | null {
-  const resolved: Record<string, string | number | boolean> = {};
+): Record<string, string | number | boolean | readonly string[]> | null {
+  const resolved: Record<
+    string,
+    string | number | boolean | readonly string[]
+  > = {};
 
   for (const [key, source] of Object.entries(bindings)) {
     const value = resolveFilterBindingSource(source, context, options);

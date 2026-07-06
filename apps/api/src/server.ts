@@ -30,6 +30,7 @@ import type {
   FormulaDefinitionRepository,
   MetricValueRepository,
   EntityQueryDefinitionRepository,
+  ChartDefinitionRepository,
   CustomViewRepository,
   PlatformRuntimeSettingsRepository,
   TenantDeletionArchiveRepository,
@@ -57,6 +58,7 @@ import {
   createInMemoryMetricDefinitionRepository,
   createInMemoryFormulaDefinitionRepository,
   createInMemoryEntityQueryDefinitionRepository,
+  createInMemoryChartDefinitionRepository,
   createInMemoryCustomViewRepository,
   createInMemoryMetricContributionRepository,
   createInMemoryMetricValueRepository,
@@ -88,6 +90,7 @@ import {
   createFirestoreAdminMetricDefinitionRepository,
   createFirestoreAdminFormulaDefinitionRepository,
   createFirestoreAdminEntityQueryDefinitionRepository,
+  createFirestoreAdminChartDefinitionRepository,
   createFirestoreAdminCustomViewRepository,
   createFirestoreAdminMetricContributionRepository,
   createFirestoreAdminMetricValueRepository,
@@ -110,6 +113,7 @@ import {
 import { registerMetricDefinitionRoutes } from "./aggregation/register-metric-definition-routes.js";
 import { registerMetricReadRoutes } from "./aggregation/register-metric-read-routes.js";
 import { registerEntityQueryDefinitionRoutes } from "./entity-queries/register-entity-query-definition-routes.js";
+import { registerChartDefinitionRoutes } from "./chart-definitions/register-chart-definition-routes.js";
 import { registerCustomViewRoutes } from "./custom-views/register-custom-view-routes.js";
 import type { AggregationEmitterDeps } from "./aggregation/emit-aggregation-event.js";
 import { type RoleCatalog, type UserAccessProfile } from "@repo/rbac";
@@ -204,6 +208,7 @@ interface BuildServerOptions {
   readonly metricDefinitionRepository?: MetricDefinitionRepository;
   readonly formulaDefinitionRepository?: FormulaDefinitionRepository;
   readonly entityQueryDefinitionRepository?: EntityQueryDefinitionRepository;
+  readonly chartDefinitionRepository?: ChartDefinitionRepository;
   readonly customViewRepository?: CustomViewRepository;
   readonly aggregationEventRepository?: AggregationEventRepository;
   readonly metricValueRepository?: MetricValueRepository;
@@ -497,6 +502,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
       : createFirestoreAdminEntityQueryDefinitionRepository(
           firebaseAdminConfig,
         ));
+
+  const chartDefinitionRepository =
+    options.chartDefinitionRepository ??
+    (options.repositories
+      ? createInMemoryChartDefinitionRepository()
+      : createFirestoreAdminChartDefinitionRepository(firebaseAdminConfig));
 
   const customViewRepository =
     options.customViewRepository ??
@@ -929,6 +940,12 @@ export async function buildServer(options: BuildServerOptions = {}) {
     entityQueryDefinitionRepository,
     metricDefinitionRepository,
     tenantIndexGuard,
+  });
+
+  await registerChartDefinitionRoutes(server, {
+    authenticate,
+    permissionDeps,
+    chartDefinitionRepository,
   });
 
   await registerCustomViewRoutes(server, {

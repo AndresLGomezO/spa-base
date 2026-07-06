@@ -52,6 +52,7 @@ const entityUiOverridesCatalogSchema = z
             listViewType: z
               .enum(["table", "card", "expandableTable", "compact"])
               .optional(),
+            listItem: z.unknown().optional(),
             metricWidgets: z.array(metricWidgetCatalogSchema).optional(),
             metricRowLayout: z.unknown().optional(),
           })

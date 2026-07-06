@@ -23,6 +23,7 @@
     "@repo/ai-engine",
     "@repo/event-engine",
     "@repo/formula-definitions",
+    "@repo/chart-definitions",
     "@repo/metrics-engine",
     "@repo/hooks",
     "@repo/modules",

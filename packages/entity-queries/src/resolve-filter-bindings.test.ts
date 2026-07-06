@@ -38,4 +38,16 @@ describe("resolveFilterBindingSource", () => {
       ),
     ).toBe("2026-05");
   });
+
+  it("resolves static string list bindings", () => {
+    expect(
+      resolveFilterBindingSource(
+        {
+          type: "static",
+          value: ["INCOME", "EXPENSE"],
+        },
+        {},
+      ),
+    ).toEqual(["INCOME", "EXPENSE"]);
+  });
 });

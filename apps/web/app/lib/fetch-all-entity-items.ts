@@ -13,9 +13,32 @@ interface FetchAllEntityItemsOptions {
   readonly query?: QueryConfig;
 }
 
-export async function fetchAllEntityItems<T>(
+const inFlightFetchAllEntityItems = new Map<
+  string,
+  Promise<readonly unknown[]>
+>();
+
+function buildFetchAllEntityItemsKey(
   entityName: string,
-  options: FetchAllEntityItemsOptions = {},
+  options: FetchAllEntityItemsOptions,
+): string {
+  const pageSize = Math.min(
+    options.pageSize ?? ENTITY_LIST_MAX_LIMIT,
+    ENTITY_LIST_MAX_LIMIT,
+  );
+  const maxItems = options.maxItems ?? RELATION_FILTER_OPTIONS_MAX_ITEMS;
+
+  return JSON.stringify({
+    entityName,
+    query: options.query ?? null,
+    maxItems,
+    pageSize,
+  });
+}
+
+async function fetchAllEntityItemsImpl<T>(
+  entityName: string,
+  options: FetchAllEntityItemsOptions,
 ): Promise<readonly T[]> {
   const pageSize = Math.min(
     options.pageSize ?? ENTITY_LIST_MAX_LIMIT,
@@ -41,4 +64,26 @@ export async function fetchAllEntityItems<T>(
   }
 
   return items.slice(0, maxItems);
+}
+
+export async function fetchAllEntityItems<T>(
+  entityName: string,
+  options: FetchAllEntityItemsOptions = {},
+): Promise<readonly T[]> {
+  const cacheKey = buildFetchAllEntityItemsKey(entityName, options);
+  const inFlight = inFlightFetchAllEntityItems.get(cacheKey);
+  if (inFlight) {
+    return inFlight as Promise<readonly T[]>;
+  }
+
+  const promise = fetchAllEntityItemsImpl<T>(entityName, options).finally(
+    () => {
+      if (inFlightFetchAllEntityItems.get(cacheKey) === promise) {
+        inFlightFetchAllEntityItems.delete(cacheKey);
+      }
+    },
+  );
+  inFlightFetchAllEntityItems.set(cacheKey, promise);
+
+  return promise;
 }

@@ -10,6 +10,7 @@ import {
   isContainerComponent,
   isDashboardSectionComponent,
   isGridComponent,
+  isChartComponent,
   isMetricWidgetComponent,
   isUserComponent,
   isViewFilterComponent,
@@ -33,6 +34,7 @@ import { isShellLayoutFocus } from "./dashboard-layout-designer-tabs";
 import { DashboardSectionComponentEditor } from "./DashboardSectionComponentEditor";
 import { UserComponentEditor } from "./UserComponentEditor";
 import { MetricWidgetComponentEditor } from "../metrics-row-designer/MetricWidgetComponentEditor";
+import { ChartComponentEditor } from "../../components/charts/ChartComponentEditor";
 import { ViewFilterComponentEditor } from "../ui-builder/ViewFilterComponentEditor";
 import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useDashboardLayoutDesigner } from "./dashboard-layout-designer-context";
@@ -137,6 +139,13 @@ export function DashboardLayoutDesignerComponentRowPanel({
         ) : isMetricWidgetComponent(row.component) ? (
           <MetricWidgetComponentEditor
             config={row.component}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
+        ) : isChartComponent(row.component) ? (
+          <ChartComponentEditor
+            config={row.component}
+            entityDefinition={clickActionDefinition}
+            filterFieldOptions={[]}
             onChange={(component) => binding.updateComponent(rowRef, component)}
           />
         ) : isViewFilterComponent(row.component) ? null : (

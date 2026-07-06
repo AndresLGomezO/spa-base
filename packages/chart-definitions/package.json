@@ -1,0 +1,32 @@
+{
+  "name": "@repo/chart-definitions",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "vitest run",
+    "lint": "pnpm exec eslint .",
+    "format": "prettier --write --log-level silent .",
+    "format:check": "prettier --check .",
+    "validate": "pnpm run typecheck && pnpm run test && pnpm run lint && pnpm run format:check"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./permissions": "./src/permissions.ts",
+    "./types": "./src/types.ts",
+    "./browser": "./src/browser.ts"
+  },
+  "dependencies": {
+    "@repo/ui-builder-core": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/typescript-config": "workspace:*",
+    "@types/node": "catalog:",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  }
+}

@@ -1,16 +1,8 @@
-import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
 
-import { parseDataHooksCatalogJson } from "@repo/hooks";
-
+import { createInitialScheduleRowHook } from "../../../test/hook-preview-fixtures.js";
 import { buildHookPreviewModel } from "./build-hook-preview-model.js";
 import type { HookPreviewBuildContext } from "./hook-preview-types.js";
-
-const ratesCatalogPath = resolve(
-  import.meta.dirname,
-  "../../../../../api/src/admin/rates-tenant/catalogs/rates-data-hooks.json",
-);
 
 function mockContext(
   overrides: Partial<HookPreviewBuildContext> = {},
@@ -28,20 +20,6 @@ function mockContext(
     t,
     ...overrides,
   };
-}
-
-function loadRatesHook(name: string) {
-  const parsed = parseDataHooksCatalogJson(
-    readFileSync(ratesCatalogPath, "utf8"),
-  );
-  if (!parsed.ok) {
-    throw new Error("Failed to parse rates hooks catalog");
-  }
-  const hook = parsed.data.dataHooks.find((entry) => entry.name === name);
-  if (!hook) {
-    throw new Error(`Hook not found: ${name}`);
-  }
-  return hook;
 }
 
 describe("buildHookPreviewModel", () => {
@@ -118,7 +96,7 @@ describe("buildHookPreviewModel", () => {
   });
 
   it("humanizes create initial schedule row without raw formula DSL in overview", () => {
-    const hook = loadRatesHook("Create initial schedule row");
+    const hook = createInitialScheduleRowHook;
     const model = buildHookPreviewModel(
       {
         name: hook.name,

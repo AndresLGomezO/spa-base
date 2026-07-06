@@ -13,6 +13,7 @@ import {
   type EntityDefinitionRecord,
 } from "@repo/dynamic-entities";
 import { HOOK_PERMISSIONS } from "@repo/hooks";
+import { CHART_PERMISSIONS } from "@repo/chart-definitions/permissions";
 import { ENTITY_QUERY_PERMISSIONS } from "@repo/entity-queries/permissions";
 import { CUSTOM_VIEW_PERMISSIONS } from "@repo/custom-views/permissions";
 import { DEBUG_PERMISSIONS } from "@repo/debug-logs/permissions";
@@ -141,6 +142,7 @@ export class EntityRuntimeContext {
         ...DEBUG_PERMISSIONS,
         ...METRIC_PERMISSIONS,
         ...ENTITY_QUERY_PERMISSIONS,
+        ...CHART_PERMISSIONS,
         ...CUSTOM_VIEW_PERMISSIONS,
         ...AI_PERMISSIONS,
         ...ROLE_PERMISSIONS,

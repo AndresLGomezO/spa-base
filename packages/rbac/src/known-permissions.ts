@@ -9,6 +9,7 @@ import {
 import { ENTITY_UI_OVERRIDE_PERMISSIONS } from "@repo/entities";
 import { FORMULA_PERMISSIONS } from "@repo/formula-definitions/permissions";
 import { HOOK_PERMISSIONS } from "@repo/hooks/permissions";
+import { CHART_PERMISSIONS } from "@repo/chart-definitions/permissions";
 import { ENTITY_QUERY_PERMISSIONS } from "@repo/entity-queries/permissions";
 import { CUSTOM_VIEW_PERMISSIONS } from "@repo/custom-views/permissions";
 import { METRIC_PERMISSIONS } from "@repo/metrics-engine/permissions";
@@ -33,6 +34,7 @@ export function getAllKnownPermissions(tenantId?: string): readonly string[] {
     ...FORMULA_PERMISSIONS,
     ...METRIC_PERMISSIONS,
     ...ENTITY_QUERY_PERMISSIONS,
+    ...CHART_PERMISSIONS,
     ...CUSTOM_VIEW_PERMISSIONS,
     ...DEBUG_PERMISSIONS,
     ...AI_PERMISSIONS,

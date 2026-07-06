@@ -13,7 +13,8 @@ import { cn } from "@repo/theme/utils";
 
 import {
   getFilteredComponentCatalog,
-  type CatalogEntryKind,
+  getCatalogEntryKey,
+  type ComponentCatalogEntry,
 } from "./form-designer-component-catalog";
 import type { FormDesignerComponentsLabels } from "./form-designer-components-labels";
 import type { InsertAnchor } from "./form-designer-structure-tree";
@@ -25,7 +26,10 @@ interface FormDesignerAddComponentModalProps {
   readonly defaultFieldPath: string;
   readonly labels: FormDesignerComponentsLabels;
   readonly onClose: () => void;
-  readonly onSelect: (anchor: InsertAnchor, kind: CatalogEntryKind) => void;
+  readonly onSelect: (
+    anchor: InsertAnchor,
+    entry: ComponentCatalogEntry,
+  ) => void;
   readonly onImportRow: (anchor: InsertAnchor, row: ComponentRowNode) => void;
   readonly insertAnchor: InsertAnchor | null;
   readonly actionsInModalFooter?: boolean;
@@ -78,12 +82,12 @@ export function FormDesignerAddComponentModal({
     [designSurface],
   );
 
-  const handleSelect = (kind: CatalogEntryKind) => {
+  const handleSelect = (entry: ComponentCatalogEntry) => {
     if (!insertAnchor) {
       return;
     }
 
-    onSelect(insertAnchor, kind);
+    onSelect(insertAnchor, entry);
     onClose();
   };
 
@@ -144,10 +148,10 @@ export function FormDesignerAddComponentModal({
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
                 {section.entries.map((entry) => (
                   <ComponentOptionTile
-                    key={entry.kind}
-                    label={labels.optionLabel(entry.kind)}
+                    key={getCatalogEntryKey(entry)}
+                    label={labels.optionLabel(entry.kind, entry)}
                     icon={entry.icon}
-                    onClick={() => handleSelect(entry.kind)}
+                    onClick={() => handleSelect(entry)}
                   />
                 ))}
               </div>

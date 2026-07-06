@@ -31,3 +31,9 @@ globs:
 4. Optional: `node scripts/validate-ui-design-manual-examples.mjs`
 
 Files marked `@ai-context-sync` must trigger fragment regeneration.
+
+## Tenant-specific layout JSON
+
+- **Do not** add tenant widget layouts, metric bindings, or query names under `apps/web`.
+- Tenant UI JSON belongs only in seed catalogs such as `apps/api/src/admin/<tenant>/catalogs/` (or tenant bundle import JSON).
+- Docs may link to seed catalog paths; unit tests use inline mocks or minimal stubs under `apps/web/app/test/`.

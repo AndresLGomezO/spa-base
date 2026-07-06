@@ -10,6 +10,7 @@ import type {
   MetricKpiComponentConfig,
   MetricKpiPresentation,
   MetricWidgetComponentConfig,
+  ChartComponentConfig,
   QueryViewerComponentConfig,
   ResolvedComponentClickTarget,
   UserComponentConfig,
@@ -87,6 +88,7 @@ export interface LayoutRenderContext {
     config: MetricDerivedKpiComponentConfig,
     presentation?: MetricKpiPresentation,
   ) => ReactNode;
+  readonly chartRenderer?: (config: ChartComponentConfig) => ReactNode;
   readonly metricWidgetRenderer?: (
     config: MetricWidgetComponentConfig,
   ) => ReactNode;

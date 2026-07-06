@@ -17,6 +17,7 @@
   "dependencies": {
     "@repo/dynamic-entities": "workspace:*",
     "@repo/entity-categories": "workspace:*",
+    "@repo/chart-definitions": "workspace:*",
     "@repo/entity-queries": "workspace:*",
     "@repo/custom-views": "workspace:*",
     "@repo/entities": "workspace:*",

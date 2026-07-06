@@ -50,6 +50,24 @@ export function metricRowQueryKey(
 
 export function entityQueryResultsQueryKey(
   queryId: string,
-): readonly ["entity-query-results", string] {
-  return ["entity-query-results", queryId];
+  contextKey?: string | null,
+): readonly ["entity-query-results", string, string | null] {
+  return ["entity-query-results", queryId, contextKey ?? null];
+}
+
+export function metricEvaluateQueryKey(
+  metricDefinitionId: string,
+  parameters: Readonly<Record<string, string | number | boolean>> | null,
+): readonly [
+  "metric-evaluate",
+  string,
+  Readonly<Record<string, string | number | boolean>> | null,
+] {
+  return ["metric-evaluate", metricDefinitionId, parameters];
+}
+
+export function entityQueryRowsQueryKey(
+  fetchKey: string,
+): readonly ["entity-query-rows", string] {
+  return ["entity-query-rows", fetchKey];
 }

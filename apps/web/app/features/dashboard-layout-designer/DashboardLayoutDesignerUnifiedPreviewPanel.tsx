@@ -80,6 +80,7 @@ export function DashboardLayoutDesignerUnifiedPreviewPanel({
         getDefinition,
         pageFilters: pageState.filters,
         dashboardDateFilter,
+        previewMode: true,
         user: user
           ? {
               displayName: user.displayName,

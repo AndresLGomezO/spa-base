@@ -1222,6 +1222,180 @@
       ]
     },
     {
+      "name": "Invest this month",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "==",
+            "value": {
+              "type": "static",
+              "value": "INVESTMENT"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ]
+    },
+    {
+      "name": "Outflows this month",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "start"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "in",
+            "value": {
+              "type": "static",
+              "value": ["EXPENSE", "PAYMENT"]
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "topN",
+      "limit": 100,
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        }
+      ]
+    },
+    {
+      "name": "Transaction trend",
+      "sourceEntity": "transaction",
+      "filter": {
+        "type": "group",
+        "combinator": "and",
+        "children": [
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": ">=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "start",
+              "offset": -11,
+              "unit": "month"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "date",
+            "operator": "<=",
+            "value": {
+              "type": "parameter",
+              "name": "period",
+              "bound": "end"
+            }
+          },
+          {
+            "type": "condition",
+            "field": "type",
+            "operator": "in",
+            "value": {
+              "type": "parameter",
+              "name": "types"
+            }
+          }
+        ]
+      },
+      "sort": [
+        {
+          "field": "date",
+          "direction": "desc"
+        }
+      ],
+      "limitMode": "all",
+      "status": "ACTIVE",
+      "parameters": [
+        {
+          "name": "period",
+          "valueType": "dateBucket",
+          "granularity": "month",
+          "field": "date"
+        },
+        {
+          "name": "types",
+          "valueType": "stringList",
+          "field": "type"
+        }
+      ]
+    },
+    {
       "name": "Transfers this month",
       "sourceEntity": "transaction",
       "filter": {

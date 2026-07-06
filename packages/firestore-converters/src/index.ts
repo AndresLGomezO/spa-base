@@ -122,6 +122,8 @@ export { type FormulaDefinitionRepository } from "./formula-definition/repositor
 export { createInMemoryFormulaDefinitionRepository } from "./formula-definition/in-memory-repository.js";
 export { type EntityQueryDefinitionRepository } from "./entity-query-definition/repository-contract.js";
 export { createInMemoryEntityQueryDefinitionRepository } from "./entity-query-definition/in-memory-repository.js";
+export { type ChartDefinitionRepository } from "./chart-definition/repository-contract.js";
+export { createInMemoryChartDefinitionRepository } from "./chart-definition/in-memory-repository.js";
 export { type CustomViewRepository } from "./custom-view/repository-contract.js";
 export { createInMemoryCustomViewRepository } from "./custom-view/in-memory-repository.js";
 export { type AggregationEventRepository } from "./aggregation-event/repository-contract.js";

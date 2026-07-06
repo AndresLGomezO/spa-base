@@ -9,6 +9,7 @@ import {
 import {
   componentKindsForSurface,
   isContainerComponent,
+  isChartComponent,
   type MotionPreset,
 } from "@repo/ui-builder-core";
 import { Text } from "@repo/ui";
@@ -29,6 +30,7 @@ import { StructureRowNameField } from "../form-designer/StructureItemNameField";
 import { resolveLayoutBinding } from "./detail-view-designer-layout-binding";
 import { ComponentRowClickActionPanelSection } from "../ui-builder/ComponentRowClickActionPanelSection.js";
 import { useDetailViewDesigner } from "./detail-view-designer-context";
+import { ChartComponentEditor } from "../../components/charts/ChartComponentEditor";
 
 interface DetailViewDesignerComponentRowPanelProps {
   readonly rowRef: ComponentRowRef;
@@ -79,6 +81,53 @@ export function DetailViewDesignerComponentRowPanel({
         fieldDescriptors={fieldDescriptors}
         designSurface={designSurface}
       />
+    );
+  }
+
+  if (row.type === "component" && isChartComponent(row.component)) {
+    return (
+      <div className="flex flex-col gap-3">
+        <FormDesignerPanelPrimaryControls className="flex-col gap-3">
+          <StructureRowNameField
+            id={`component-row-name-${row.id}`}
+            row={row}
+            fieldDescriptors={fieldDescriptors}
+            treeLabels={treeLabels}
+            onChange={(name) => binding.updateRowMeta(rowRef, { name })}
+          />
+          <ChartComponentEditor
+            config={row.component}
+            entityDefinition={definition}
+            filterFieldOptions={fieldDescriptors.map(
+              (descriptor) => descriptor.path,
+            )}
+            onChange={(component) => binding.updateComponent(rowRef, component)}
+          />
+        </FormDesignerPanelPrimaryControls>
+        <CollapsibleStyleRulesEditor
+          title={componentEditorLabels.componentStyles}
+          styles={row.component.styles}
+          onChange={(styles) =>
+            binding.updateComponent(rowRef, { ...row.component, styles })
+          }
+          labels={labels.styleRules}
+        />
+        <CollapsibleStyleRulesEditor
+          title={labels.rowStyles}
+          styles={row.styles}
+          onChange={(styles) => binding.updateRowMeta(rowRef, { styles })}
+          labels={labels.styleRules}
+        />
+        <CollapsibleMotionPresetSection
+          title={labels.rowEffects}
+          motion={row.motion}
+          onChange={(motion: MotionPreset | undefined) =>
+            binding.updateRowMeta(rowRef, { motion })
+          }
+          labels={labels.motion}
+          clearLabel={labels.motion.clearEffects}
+        />
+      </div>
     );
   }
 

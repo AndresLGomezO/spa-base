@@ -9,6 +9,7 @@ Set `listViewType: "card"`. Default preset: `card-list`. Layout uses display com
 - `image`
 - `icon`
 - `user`
+- `chart`
 - `metric-kpi`
 - `metric-derived-kpi`
 - `metric-widget`
