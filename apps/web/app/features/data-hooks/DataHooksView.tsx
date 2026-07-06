@@ -1,8 +1,6 @@
 import { BuilderPageShell, Button, Modal, Text, toast } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
-import { getEntityLabel } from "../../entities/entity-catalog";
-import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import {
   designerPreviewColumnClassName,
   designerTreeTabRootClassName,
@@ -109,33 +107,27 @@ function DataHooksWorkbench() {
 }
 
 interface DataHooksViewProps {
-  readonly entityName: string;
   readonly canCreate: boolean;
   readonly canUpdate: boolean;
   readonly canDelete: boolean;
 }
 
 export function DataHooksView({
-  entityName,
   canCreate,
   canUpdate,
   canDelete,
 }: DataHooksViewProps) {
   const { t } = useTranslation("common");
-  const { items: entities } = useEntityCatalog();
-  const entity = entities.find((entry) => entry.name === entityName);
-  const entityLabel = entity ? getEntityLabel(entity) : entityName;
 
   return (
     <DataHooksProvider
-      entityName={entityName}
       canCreate={canCreate}
       canUpdate={canUpdate}
       canDelete={canDelete}
     >
       <div className="flex min-h-0 flex-1 flex-col">
         <BuilderPageShell
-          title={t("dataHooks.title", { entity: entityLabel })}
+          title={t("dataHooks.pageTitle")}
           subtitle={t("dataHooks.description")}
           bodyScrollable={false}
         >

@@ -4,7 +4,13 @@ import {
   validateFormulaDefinitionImport,
   type FormulaDefinitionFormData,
 } from "@repo/formula-definitions/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
 import type { FormulaDefinitionFormJsonLabels } from "./formula-definition-json-labels.js";
@@ -14,7 +20,7 @@ interface FormulaDefinitionJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: FormulaDefinitionFormJsonLabels;
   readonly onApply: (data: FormulaDefinitionFormData) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
 }
 
 export function FormulaDefinitionJsonImportDialog({
@@ -22,7 +28,7 @@ export function FormulaDefinitionJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
 }: FormulaDefinitionJsonImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [jsonText, setJsonText] = useState("");
@@ -102,14 +108,10 @@ export function FormulaDefinitionJsonImportDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
+      <JsonImportTriggerButton
+        labels={triggerLabels}
         onClick={() => setOpen(true)}
-      >
-        {labels.importTrigger}
-      </Button>
+      />
 
       <Modal
         open={open}

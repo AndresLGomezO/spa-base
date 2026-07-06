@@ -39,7 +39,7 @@ export interface CustomViewsCatalogJsonLabels extends CustomViewDefinitionJsonLa
   readonly importFailed: string;
 }
 
-function sharedLabels(t: TFunction): CustomViewDefinitionJsonLabels {
+function sharedLabels(t: TFunction<"common">): CustomViewDefinitionJsonLabels {
   return {
     viewTrigger: t("customViews.json.viewTrigger"),
     importTrigger: t("customViews.json.importTrigger"),
@@ -60,7 +60,7 @@ function sharedLabels(t: TFunction): CustomViewDefinitionJsonLabels {
 }
 
 export function customViewDefinitionFormJsonLabels(
-  t: TFunction,
+  t: TFunction<"common">,
 ): CustomViewDefinitionFormJsonLabels {
   return {
     ...sharedLabels(t),
@@ -74,7 +74,7 @@ export function customViewDefinitionFormJsonLabels(
 }
 
 export function customViewsCatalogJsonLabels(
-  t: TFunction,
+  t: TFunction<"common">,
 ): CustomViewsCatalogJsonLabels {
   return {
     ...sharedLabels(t),

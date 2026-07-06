@@ -60,7 +60,7 @@ function defaultAction(): DataHookAction {
   return { type: "sendNotification", message: { kind: "literal", value: "" } };
 }
 
-export function useDataHooksEditor(entityName: string) {
+export function useDataHooksEditor(scopeEntity?: string) {
   const [definitions, setDefinitions] = useState<
     readonly DataHookDefinitionRecord[]
   >([]);
@@ -75,6 +75,8 @@ export function useDataHooksEditor(entityName: string) {
     [definitions, selectedId],
   );
 
+  const entityName = selectedDefinition?.entity ?? scopeEntity ?? "";
+
   const isDirty = useMemo(() => {
     if (!selectedDefinition || !draft) {
       return false;
@@ -86,7 +88,9 @@ export function useDataHooksEditor(entityName: string) {
     setIsLoading(true);
     setLoadError(null);
     try {
-      const result = await listDataHooks({ entity: entityName });
+      const result = await listDataHooks(
+        scopeEntity ? { entity: scopeEntity } : undefined,
+      );
       const items = [...result.items].sort((left, right) => {
         if (left.order !== right.order) {
           return left.order - right.order;
@@ -109,7 +113,7 @@ export function useDataHooksEditor(entityName: string) {
     } finally {
       setIsLoading(false);
     }
-  }, [entityName]);
+  }, [scopeEntity]);
 
   useEffect(() => {
     void loadDefinitions();
@@ -166,12 +170,13 @@ export function useDataHooksEditor(entityName: string) {
       readonly name: string;
       readonly description?: string;
       readonly operation: DataHookOperation;
+      readonly entity: string;
     }): Promise<DataHookDefinitionRecord | string> => {
       try {
         const created = await createDataHook({
           name: input.name,
           ...(input.description ? { description: input.description } : {}),
-          entity: entityName,
+          entity: input.entity,
           phase: "after",
           trigger: { kind: "crud", operation: input.operation },
           condition: null,
@@ -192,7 +197,7 @@ export function useDataHooksEditor(entityName: string) {
           : "Failed to create data hook.";
       }
     },
-    [entityName],
+    [],
   );
 
   const importDefinition = useCallback(
@@ -207,7 +212,7 @@ export function useDataHooksEditor(entityName: string) {
           ...(typeof source.description === "string"
             ? { description: source.description }
             : {}),
-          entity: entityName,
+          entity: String(source.entity ?? entityName),
           phase: (source.phase as "before" | "after") ?? "after",
           trigger: (source.trigger as {
             operation: "create" | "update" | "delete";

@@ -21,6 +21,7 @@ import {
 import { MetricDefinitionsCatalogJsonImportDialog } from "../../components/metrics/json/MetricDefinitionsCatalogJsonImportDialog";
 import { MetricDefinitionsCatalogJsonViewDialog } from "../../components/metrics/json/MetricDefinitionsCatalogJsonViewDialog";
 import { metricDefinitionsCatalogJsonLabels } from "../../components/metrics/json/metric-definition-json-labels";
+import { useJsonActionTriggerLabels } from "../../components/json/json-action-trigger-labels";
 import { ItemListDesignerTreePanelShell } from "../item-list-designer/ItemListDesignerTreePanelShell";
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
 import { MetricListBadge } from "./components/MetricListBadge";
@@ -31,7 +32,6 @@ import {
   METRIC_MODE_FILTERS,
   METRIC_SOURCE_TYPE_FILTERS,
   METRIC_STATUS_FILTERS,
-  metricSortLabelKey,
   type MetricListSort,
   type MetricModeFilter,
   type MetricSourceTypeFilter,
@@ -64,9 +64,6 @@ export function MetricListTreePanel() {
     toggleStatus,
     toggleEntity,
     clearFilters,
-    metricSourceTypeLabelKey,
-    metricModeLabelKey,
-    metricStatusLabelKey,
   } = useMetricsListQuery(editor.definitions);
 
   useFilterPanelDismiss(filtersOpen, setFiltersOpen, toolbarRef);
@@ -75,6 +72,7 @@ export function MetricListTreePanel() {
     () => metricDefinitionsCatalogJsonLabels(t),
     [t],
   );
+  const triggerLabels = useJsonActionTriggerLabels();
   const canReplaceCatalog = canCreate && canUpdate && canBackfill;
 
   const displayBadges = useMemo(
@@ -84,9 +82,19 @@ export function MetricListTreePanel() {
           return badge;
         }
         if (badge.id === "sort") {
+          const sortLabel =
+            query.sort === "nameDesc"
+              ? t("metrics.workbench.list.sortNameDesc")
+              : query.sort === "sourceModel"
+                ? t("metrics.workbench.list.sortSourceModel")
+                : query.sort === "mode"
+                  ? t("metrics.workbench.list.sortMode")
+                  : query.sort === "updatedDesc"
+                    ? t("metrics.workbench.list.sortUpdatedDesc")
+                    : t("metrics.workbench.list.sortNameAsc");
           return {
             ...badge,
-            label: t(metricSortLabelKey(query.sort)),
+            label: sortLabel,
           };
         }
         if (badge.id.startsWith("sourceType:")) {
@@ -95,33 +103,35 @@ export function MetricListTreePanel() {
           ) as MetricSourceTypeFilter;
           return {
             ...badge,
-            label: t(metricSourceTypeLabelKey(sourceType)),
+            label:
+              sourceType === "entity"
+                ? t("metrics.workbench.list.sourceTypeEntity")
+                : t("metrics.workbench.list.sourceTypeQuery"),
           };
         }
         if (badge.id.startsWith("mode:")) {
           const mode = badge.id.slice("mode:".length) as MetricModeFilter;
           return {
             ...badge,
-            label: t(metricModeLabelKey(mode)),
+            label:
+              mode === "aggregated"
+                ? t("metrics.workbench.list.modeAggregated")
+                : t("metrics.workbench.list.modeComputed"),
           };
         }
         if (badge.id.startsWith("status:")) {
           const status = badge.id.slice("status:".length) as MetricStatusFilter;
           return {
             ...badge,
-            label: t(metricStatusLabelKey(status)),
+            label:
+              status === "ACTIVE"
+                ? t("metrics.statusValues.ACTIVE")
+                : t("metrics.statusValues.PAUSED"),
           };
         }
         return badge;
       }),
-    [
-      activeFilterBadges,
-      metricModeLabelKey,
-      metricSourceTypeLabelKey,
-      metricStatusLabelKey,
-      query.sort,
-      t,
-    ],
+    [activeFilterBadges, query.sort, t],
   );
 
   const handleCatalogImport = useCallback(
@@ -141,8 +151,8 @@ export function MetricListTreePanel() {
     [catalogLabels.importFailed, catalogLabels.importSuccess, editor],
   );
 
-  const catalogActions = (
-    <div className="flex flex-wrap items-center gap-2">
+  const headerJsonActions = (
+    <>
       <MetricDefinitionsCatalogJsonViewDialog
         items={editor.definitions}
         labels={catalogLabels}
@@ -155,7 +165,7 @@ export function MetricListTreePanel() {
           onApply={(catalog) => void handleCatalogImport(catalog)}
         />
       ) : null}
-    </div>
+    </>
   );
 
   const filterBody = (
@@ -283,6 +293,8 @@ export function MetricListTreePanel() {
         expandedClassName={designerTreePanelShellClassName}
         collapsedClassName={designerTreePanelShellClassName}
         collapsedContent={addRow}
+        headerActions={headerJsonActions}
+        jsonTriggerLabels={triggerLabels}
         scopeSection={
           <div className="flex w-full min-w-0 flex-col gap-3 px-2 pb-2">
             <div className="w-full py-0.5">
@@ -371,8 +383,6 @@ export function MetricListTreePanel() {
               statusCounts={statusCounts}
               total={filteredDefinitions.length}
             />
-
-            {catalogActions}
           </div>
         }
       >

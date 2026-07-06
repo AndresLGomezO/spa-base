@@ -11,6 +11,8 @@ import {
 import type { ComponentColumnRef } from "./form-designer-component-column-ref";
 import type { ComponentRowRef } from "./form-designer-component-row-ref";
 import type { ComponentsTreeScope } from "./form-designer-components-layout";
+import { resolveComponentsLayoutBinding } from "./form-designer-components-layout";
+import { useAutoSelectFirstStructureRowOnEntityChange } from "../../components/design-layout/use-auto-select-first-structure-row";
 import { useFormDesigner } from "./form-designer-context";
 
 interface FormDesignerComponentsSessionContextValue {
@@ -165,9 +167,33 @@ export function FormDesignerComponentsSessionProvider({
   return (
     <FormDesignerComponentsSessionContext.Provider value={value}>
       <ComponentPanelSync />
+      <AutoSelectFirstStructureRowSync
+        treeScope={treeScope}
+        stepIndex={stepIndex}
+      />
       {children}
     </FormDesignerComponentsSessionContext.Provider>
   );
+}
+
+function AutoSelectFirstStructureRowSync({
+  treeScope,
+  stepIndex,
+}: {
+  readonly treeScope: ComponentsTreeScope;
+  readonly stepIndex: number;
+}) {
+  const { editor } = useFormDesigner();
+  const { setSelectedRow } = useFormDesignerComponentsSession();
+  const binding = resolveComponentsLayoutBinding(editor, treeScope, stepIndex);
+
+  useAutoSelectFirstStructureRowOnEntityChange(
+    editor.entityName,
+    binding.layout,
+    setSelectedRow,
+  );
+
+  return null;
 }
 
 function ComponentPanelSync() {

@@ -7,7 +7,7 @@ import { Text } from "../typography/Text";
 
 export interface BuilderPageShellProps {
   readonly title: string;
-  readonly subtitle?: string;
+  readonly subtitle?: ReactNode;
   readonly actions?: ReactNode;
   readonly children?: ReactNode;
   readonly className?: string;
@@ -33,7 +33,13 @@ export function BuilderPageShell({
         <div className="flex items-start justify-between gap-4">
           <div className="min-w-0 space-y-1">
             <Heading level={1}>{title}</Heading>
-            {subtitle ? <Text>{subtitle}</Text> : null}
+            {subtitle ? (
+              typeof subtitle === "string" ? (
+                <Text>{subtitle}</Text>
+              ) : (
+                subtitle
+              )
+            ) : null}
           </div>
           {actions ? <div className="shrink-0">{actions}</div> : null}
         </div>

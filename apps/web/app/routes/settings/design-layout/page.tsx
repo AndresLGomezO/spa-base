@@ -1,7 +1,16 @@
-import { Navigate, useParams } from "react-router";
+import { Navigate, useLocation, useParams } from "react-router";
+
+import { designLayoutEntityPath } from "../../../routing/design-layout-nav";
 
 export default function DesignLayoutPageRedirect() {
   const params = useParams();
+  const location = useLocation();
   const entityName = params.entityName ?? "";
-  return <Navigate to={`/settings/design-layout/main/${entityName}`} replace />;
+
+  return (
+    <Navigate
+      replace
+      to={designLayoutEntityPath("main", entityName, location.search)}
+    />
+  );
 }

@@ -8,7 +8,13 @@ import {
   type DesignLayoutSurface,
   type SerializableEntityDefinition,
 } from "@repo/entities";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { DesignLayoutSliceJsonLabels } from "./design-layout-slice-json-labels.js";
 import { toValidationEntity } from "./to-validation-entity.js";
@@ -19,7 +25,7 @@ interface DesignLayoutSliceJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: DesignLayoutSliceJsonLabels;
   readonly onApply: (data: DesignLayoutSliceData) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -30,7 +36,7 @@ export function DesignLayoutSliceJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: DesignLayoutSliceJsonImportDialogProps) {
@@ -95,14 +101,10 @@ export function DesignLayoutSliceJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

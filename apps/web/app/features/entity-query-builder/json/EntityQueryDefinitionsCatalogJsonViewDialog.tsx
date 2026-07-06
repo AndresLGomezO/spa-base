@@ -3,7 +3,13 @@ import {
   createEntityQueryDefinitionsCatalogEnvelope,
   type EntityQueryDefinitionRecord as PackageEntityQueryDefinitionRecord,
 } from "@repo/entity-queries/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { EntityQueryDefinitionRecord } from "../../../lib/api-client";
 import type { EntityQueryDefinitionsCatalogJsonLabels } from "./entity-query-definition-json-labels.js";
@@ -11,7 +17,7 @@ import type { EntityQueryDefinitionsCatalogJsonLabels } from "./entity-query-def
 interface EntityQueryDefinitionsCatalogJsonViewDialogProps {
   readonly items: readonly EntityQueryDefinitionRecord[];
   readonly labels: EntityQueryDefinitionsCatalogJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -19,7 +25,7 @@ interface EntityQueryDefinitionsCatalogJsonViewDialogProps {
 export function EntityQueryDefinitionsCatalogJsonViewDialog({
   items,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: EntityQueryDefinitionsCatalogJsonViewDialogProps) {
@@ -28,17 +34,25 @@ export function EntityQueryDefinitionsCatalogJsonViewDialog({
   const setOpen = onOpenChange ?? setInternalOpen;
   const [copied, setCopied] = useState(false);
 
-  const jsonText = useMemo(
-    () =>
-      JSON.stringify(
+  const jsonText = useMemo(() => {
+    if (!open) {
+      return "";
+    }
+
+    try {
+      return JSON.stringify(
         createEntityQueryDefinitionsCatalogEnvelope(
           items as unknown as readonly PackageEntityQueryDefinitionRecord[],
         ),
         null,
         2,
-      ),
-    [items],
-  );
+      );
+    } catch (error) {
+      return error instanceof Error
+        ? error.message
+        : "Failed to export catalog.";
+    }
+  }, [items, open]);
 
   const handleCopy = async () => {
     try {
@@ -53,14 +67,10 @@ export function EntityQueryDefinitionsCatalogJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

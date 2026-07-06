@@ -111,13 +111,15 @@ function EntityQueryBuilderPageContent() {
   const { t } = useTranslation("common");
 
   return (
-    <BuilderPageShell
-      title={t("queryBuilder.title")}
-      subtitle={t("queryBuilder.description")}
-      bodyScrollable={false}
-    >
-      <EntityQueryBuilderWorkbench />
-    </BuilderPageShell>
+    <div className="flex min-h-0 flex-1 flex-col">
+      <BuilderPageShell
+        title={t("queryBuilder.title")}
+        subtitle={t("queryBuilder.description")}
+        bodyScrollable={false}
+      >
+        <EntityQueryBuilderWorkbench />
+      </BuilderPageShell>
+    </div>
   );
 }
 
@@ -138,9 +140,7 @@ export function EntityQueryBuilderView({
       canUpdate={canUpdate}
       canDelete={canDelete}
     >
-      <div className="flex min-h-0 flex-1 flex-col">
-        <EntityQueryBuilderPageContent />
-      </div>
+      <EntityQueryBuilderPageContent />
     </EntityQueryBuilderProvider>
   );
 }

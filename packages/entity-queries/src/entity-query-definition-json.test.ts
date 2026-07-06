@@ -117,6 +117,52 @@ describe("entity-query-definition-json", () => {
     expect(envelope.entityQueryDefinitions[0]?.name).toBe("Upcoming payments");
   });
 
+  it("preserves query parameters in catalog export", () => {
+    const recordWithPeriod: EntityQueryDefinitionRecord = {
+      ...baseRecord,
+      name: "Transaction trend",
+      parameters: [
+        {
+          name: "period",
+          valueType: "dateBucket",
+          granularity: "month",
+          field: "date",
+        },
+      ],
+      filter: {
+        type: "group",
+        combinator: "and",
+        children: [
+          {
+            type: "condition",
+            field: "date",
+            operator: ">=",
+            value: { type: "parameter", name: "period", bound: "start" },
+          },
+          {
+            type: "condition",
+            field: "date",
+            operator: "<=",
+            value: { type: "parameter", name: "period", bound: "end" },
+          },
+        ],
+      },
+    };
+
+    const envelope = createEntityQueryDefinitionsCatalogEnvelope([
+      recordWithPeriod,
+    ]);
+
+    expect(envelope.entityQueryDefinitions[0]?.parameters).toEqual([
+      {
+        name: "period",
+        valueType: "dateBucket",
+        granularity: "month",
+        field: "date",
+      },
+    ]);
+  });
+
   it("parses rates query definitions catalog", () => {
     const catalogPath = join(
       dirname(fileURLToPath(import.meta.url)),

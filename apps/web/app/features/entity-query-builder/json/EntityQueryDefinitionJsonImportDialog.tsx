@@ -4,7 +4,13 @@ import {
   validateEntityQueryDefinitionImport,
   type EntityQueryDefinitionFormData,
 } from "@repo/entity-queries/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
 import type { EntityQueryDefinitionFormJsonLabels } from "./entity-query-definition-json-labels.js";
@@ -15,7 +21,7 @@ interface EntityQueryDefinitionJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: EntityQueryDefinitionFormJsonLabels;
   readonly onApply: (data: EntityQueryDefinitionFormData) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -26,7 +32,7 @@ export function EntityQueryDefinitionJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: EntityQueryDefinitionJsonImportDialogProps) {
@@ -140,14 +146,10 @@ export function EntityQueryDefinitionJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

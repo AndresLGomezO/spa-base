@@ -1,5 +1,12 @@
 {
   "loading": "Loading...",
+  "jsonActions": {
+    "group": "JSON",
+    "view": "View",
+    "import": "Import",
+    "viewAriaLabel": "View JSON",
+    "importAriaLabel": "Import JSON"
+  },
   "language": {
     "label": "Language"
   },
@@ -46,13 +53,13 @@
     "dataModels": "Data Entities",
     "dataStructure": "Data structure",
     "dataModelBuilder": "Data Entity Builder",
-    "automation": "Automation",
+    "automationNav": "Automation",
     "analytics": "Data & Analytics",
     "metricsNav": "Metrics",
     "chartsNav": "Charts",
     "formulasNav": "Formulas",
     "queryBuilderNav": "Query Builder",
-    "customViewsNav": "Custom Views",
+    "customViewsNav": "Sidebar Queries",
     "entityCategories": "Entity categories",
     "roles": "Roles & Permissions",
     "platform": "Platform",
@@ -389,7 +396,6 @@
     "backToDesigns": "Back to form designs",
     "hub": {
       "title": "Form designs",
-      "subtitle": "Manage form layouts for {{entity}}",
       "designsTitle": "Form designs",
       "defaultDesign": "Default",
       "edit": "Edit",
@@ -648,7 +654,6 @@
   },
   "mainViewDesigner": {
     "title": "Main view Designer",
-    "entitySubtitle": "Entity: {{entity}}",
     "settings": "Settings",
     "tabs": {
       "settings": "Settings",
@@ -674,7 +679,6 @@
   },
   "detailViewDesigner": {
     "title": "Detailed View Designer",
-    "entitySubtitle": "Entity: {{entity}}",
     "settings": "Settings",
     "previewNoRecords": "Create at least one element to visualize the preview.",
     "tabs": {
@@ -699,7 +703,6 @@
   },
   "metricsRowDesigner": {
     "title": "Metrics Row Designer",
-    "entitySubtitle": "Entity: {{entity}}",
     "settings": "Settings",
     "tabs": {
       "widgets": "Widgets",
@@ -887,7 +890,6 @@
   },
   "itemListDesigner": {
     "title": "Item list Designer",
-    "entitySubtitle": "Entity: {{entity}}",
     "settings": "Settings",
     "tabs": {
       "settings": "Settings",
@@ -960,6 +962,13 @@
     }
   },
   "designLayout": {
+    "entityLabel": "Entity",
+    "targetLabel": "Layout for",
+    "targetGroup": {
+      "entities": "Entities",
+      "customViews": "Sidebar queries"
+    },
+    "switchingEntity": "Switching entity…",
     "forbidden": "You do not have permission to configure entity layouts.",
     "readOnly": "You can preview this layout but need entity UI override permission to save changes.",
     "expandableTableColumns": "Grouped columns",
@@ -2654,24 +2663,43 @@
     }
   },
   "customViews": {
-    "title": "Custom Views",
-    "subtitle": "Create entity-style pages powered by saved queries, with full UI builder customization and sidebar navigation.",
-    "forbidden": "You do not have permission to manage custom views.",
-    "notFound": "Custom view not found.",
-    "empty": "No custom views yet.",
-    "create": "Create custom view",
-    "createTitle": "Create custom view",
-    "editTitle": "Edit custom view",
-    "edit": "Edit",
-    "delete": "Delete",
+    "title": "Sidebar Queries",
+    "subtitle": "Link saved queries to sidebar navigation items, with optional layout customization.",
+    "forbidden": "You do not have permission to manage sidebar queries.",
+    "notFound": "Sidebar query not found.",
+    "createSuccess": "Sidebar query created.",
     "openPage": "Open page",
     "designLayout": "Design layout",
     "save": "Save",
     "cancel": "Cancel",
-    "saveSuccess": "Custom view saved.",
-    "saveFailed": "Failed to save custom view.",
-    "deleteSuccess": "Custom view deleted.",
-    "deleteFailed": "Failed to delete custom view.",
+    "deleteSuccess": "Sidebar query deleted.",
+    "list": {
+      "title": "Sidebar queries",
+      "add": "Add sidebar query",
+      "searchPlaceholder": "Search sidebar queries…",
+      "searchClear": "Clear search",
+      "filter": "Filter",
+      "clearFilters": "Clear filters",
+      "removeBadge": "Remove filter: {{label}}",
+      "sort": "Sort",
+      "sortNameAsc": "Name (A–Z)",
+      "sortNameDesc": "Name (Z–A)",
+      "sortEntity": "Entity",
+      "sortUpdatedDesc": "Recently updated",
+      "filterByStatus": "Status",
+      "filterByEntity": "Entity",
+      "statusActive": "Active",
+      "statusPaused": "Paused",
+      "summary": "{{count}} {{status}} ({{percent}}%)",
+      "emptySource": "No sidebar queries yet.",
+      "emptyFiltered": "No sidebar queries match the current filters.",
+      "expandPanel": "Expand panel",
+      "collapsePanel": "Collapse panel"
+    },
+    "settings": {
+      "empty": "Select a sidebar query to edit its settings.",
+      "saved": "Sidebar query saved."
+    },
     "fields": {
       "name": "Name",
       "description": "Description",
@@ -2702,31 +2730,40 @@
       "apply": "Apply",
       "cancel": "Cancel",
       "readOnlyHint": "You do not have permission to apply imported JSON.",
-      "viewDescription": "Portable custom view definition JSON for handoff or version control.",
+      "viewDescription": "Portable sidebar query definition JSON for handoff or version control.",
       "viewCopy": "Copy JSON",
       "viewCopied": "Copied",
       "view": {
-        "viewTitle": "Current custom view JSON",
-        "importTitle": "Import custom view JSON",
-        "importDescriptionCreate": "Replace the form with the imported custom view definition. Save to create the view.",
-        "importDescriptionEdit": "Apply the imported custom view definition immediately. viewId and query name must not change.",
+        "viewTitle": "Current sidebar query JSON",
+        "importTitle": "Import sidebar query JSON",
+        "importDescriptionCreate": "Replace the form with the imported sidebar query definition. Save to create the entry.",
+        "importDescriptionEdit": "Apply the imported sidebar query definition immediately. viewId and query name must not change.",
         "viewIdChangeError": "viewId cannot be changed via JSON import.",
         "queryNameChangeError": "entityQueryDefinitionName cannot be changed via JSON import.",
         "queryNotFound": "Saved query not found for the imported entityQueryDefinitionName.",
-        "importSuccess": "Custom view updated from JSON.",
-        "importFailed": "Unable to apply imported custom view JSON."
+        "importSuccess": "Sidebar query updated from JSON.",
+        "importFailed": "Unable to apply imported sidebar query JSON."
       },
       "catalog": {
-        "viewTitle": "Current custom views catalog JSON",
-        "importTitle": "Import custom views catalog JSON",
-        "importDescription": "Replace the tenant custom views catalog with the imported definitions. Views not in the JSON will be removed.",
-        "confirmTitle": "Replace custom views catalog?",
-        "confirmDescription": "This will create, update, and delete custom view definitions to match the imported JSON. Sidebar and design-layout links to removed views are not cleaned up automatically.",
+        "viewTitle": "Current sidebar queries catalog JSON",
+        "importTitle": "Import sidebar queries catalog JSON",
+        "importDescription": "Replace the tenant sidebar queries catalog with the imported definitions. Entries not in the JSON will be removed.",
+        "confirmTitle": "Replace sidebar queries catalog?",
+        "confirmDescription": "This will create, update, and delete sidebar query definitions to match the imported JSON. Sidebar and design-layout links to removed entries are not cleaned up automatically.",
         "confirmAction": "Replace catalog",
-        "replaceSummary": "Views: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
-        "importSuccess": "Custom views catalog replaced.",
-        "importFailed": "Unable to replace custom views catalog."
+        "replaceSummary": "Entries: {{created}} created, {{updated}} updated, {{deleted}} deleted.",
+        "importSuccess": "Sidebar queries catalog replaced.",
+        "importFailed": "Unable to replace sidebar queries catalog."
       }
+    },
+    "createModal": {
+      "title": "Create sidebar query",
+      "submit": "Create"
+    },
+    "deleteModal": {
+      "title": "Delete sidebar query",
+      "message": "Delete \"{{name}}\"? This cannot be undone.",
+      "confirm": "Delete"
     }
   },
   "queryBuilder": {
@@ -2888,7 +2925,7 @@
   },
   "dataHooks": {
     "navTitle": "Automation",
-    "title": "Automation · {{entity}}",
+    "pageTitle": "Automation",
     "description": "Define logic that runs automatically when records are created, updated, or deleted.",
     "forbidden": "You do not have permission to manage automation.",
     "loading": "Loading automation hooks…",
@@ -2904,7 +2941,30 @@
       "add": "New hook",
       "expandPanel": "Expand hooks panel",
       "collapsePanel": "Collapse hooks panel",
-      "empty": "No automation hooks for this entity yet.",
+      "emptyGlobal": "No automation hooks yet.",
+      "emptyFiltered": "No hooks match the current filters.",
+      "searchPlaceholder": "Search hooks",
+      "searchClear": "Clear search",
+      "filter": "Filter",
+      "clearFilters": "Clear filters",
+      "removeBadge": "Remove filter {{label}}",
+      "sort": "Sort",
+      "sortNameAsc": "Name (A–Z)",
+      "sortNameDesc": "Name (Z–A)",
+      "sortEntity": "Entity",
+      "sortOrder": "Execution order",
+      "sortUpdatedDesc": "Recently updated",
+      "summary": "{{count}} hooks",
+      "statusEnabled": "Enabled",
+      "statusDisabled": "Disabled",
+      "triggerKindCrud": "Record change",
+      "triggerKindSchedule": "Schedule",
+      "filters": {
+        "entity": "Entity",
+        "phase": "Timing",
+        "triggerKind": "Trigger type",
+        "status": "Status"
+      },
       "edit": "Edit hook",
       "delete": "Delete hook"
     },
@@ -2970,6 +3030,7 @@
       "name": "Name",
       "namePlaceholder": "e.g. Complete transaction",
       "description": "Description",
+      "entity": "Entity",
       "trigger": "Trigger"
     },
     "operation": {
@@ -3172,7 +3233,7 @@
       "catalog": {
         "viewTitle": "Current hooks catalog JSON",
         "importTitle": "Import hooks catalog JSON",
-        "importDescription": "Replace automation hooks for this entity with the imported definitions. Hooks for this entity not in the JSON will be removed. Hooks on other entities are not affected.",
+        "importDescription": "Replace automation hooks for the selected entity with the imported definitions. Hooks for that entity not in the JSON will be removed. Hooks on other entities are not affected.",
         "confirmTitle": "Replace hooks catalog?",
         "confirmDescription": "This will create, update, and delete automation hooks for this entity to match the imported JSON.",
         "confirmAction": "Replace catalog",

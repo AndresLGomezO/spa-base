@@ -10,6 +10,7 @@ import {
 
 import type { ComponentColumnRef } from "../form-designer/form-designer-component-column-ref";
 import type { ComponentRowRef } from "../form-designer/form-designer-component-row-ref";
+import { useAutoSelectFirstStructureRowOnEntityChange } from "../../components/design-layout/use-auto-select-first-structure-row";
 import { useMainViewDesigner } from "./main-view-designer-context";
 
 interface MainViewDesignerStructureSessionContextValue {
@@ -68,6 +69,19 @@ function StructurePanelSync() {
     setSelectedRow,
     structurePanelOpen,
   ]);
+
+  return null;
+}
+
+function AutoSelectFirstStructureRowSync() {
+  const { editor } = useMainViewDesigner();
+  const { setSelectedRow } = useMainViewDesignerStructureSession();
+
+  useAutoSelectFirstStructureRowOnEntityChange(
+    editor.entityName,
+    editor.layout,
+    setSelectedRow,
+  );
 
   return null;
 }
@@ -155,6 +169,7 @@ export function MainViewDesignerStructureSessionProvider({
   return (
     <MainViewDesignerStructureSessionContext.Provider value={value}>
       <StructurePanelSync />
+      <AutoSelectFirstStructureRowSync />
       {children}
     </MainViewDesignerStructureSessionContext.Provider>
   );

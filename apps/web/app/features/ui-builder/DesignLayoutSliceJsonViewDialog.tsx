@@ -4,7 +4,13 @@ import {
   type DesignLayoutSliceData,
   type DesignLayoutSurface,
 } from "@repo/entities";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { DesignLayoutSliceJsonLabels } from "./design-layout-slice-json-labels.js";
 
@@ -12,7 +18,7 @@ interface DesignLayoutSliceJsonViewDialogProps {
   readonly surface: DesignLayoutSurface;
   readonly data: DesignLayoutSliceData;
   readonly labels: DesignLayoutSliceJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -21,7 +27,7 @@ export function DesignLayoutSliceJsonViewDialog({
   surface,
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: DesignLayoutSliceJsonViewDialogProps) {
@@ -49,14 +55,10 @@ export function DesignLayoutSliceJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

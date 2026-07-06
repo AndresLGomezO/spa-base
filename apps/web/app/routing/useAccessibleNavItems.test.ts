@@ -1,12 +1,17 @@
 import { renderHook } from "@testing-library/react";
-import { Database, LayoutDashboard, LayoutGrid } from "lucide-react";
 import { describe, expect, it, vi } from "vitest";
 
 import {
+  DESIGN_LAYOUT_DASHBOARD_NAV_ICON,
+  DESIGN_LAYOUT_DETAIL_NAV_ICON,
+  DESIGN_LAYOUT_FORMS_NAV_ICON,
+  DESIGN_LAYOUT_LIST_NAV_ICON,
+  DESIGN_LAYOUT_MAIN_NAV_ICON,
+  DESIGN_LAYOUT_PRESETS_NAV_ICON,
   flattenNavGroupLinks,
   isNavGroup,
   isNavSubGroup,
-  type NavSubGroupConfig,
+  type NavLinkConfig,
 } from "../components/sidebar/nav-config";
 import type { EntityCatalogEntry } from "../entities/entity-catalog";
 import { MOCK_ENTITY_CATALOG } from "../test/entity-catalog-fixtures";
@@ -14,49 +19,35 @@ import { useAccessibleNavItems } from "./useAccessibleNavItems";
 
 const mockUseAuth = vi.fn();
 let mockCatalogItems: readonly EntityCatalogEntry[] = MOCK_ENTITY_CATALOG;
-let mockDesignLayoutSubGroups: readonly NavSubGroupConfig[] = [];
+let mockDesignLayoutNavLinks: readonly NavLinkConfig[] = [];
 
-const designLayoutEntityLink = (kind: string, entityName: string) => ({
-  id: `design-layout-${kind}-${entityName}`,
-  label: entityName,
-  to: `/settings/design-layout/${kind}/${entityName}`,
-  matchPath: `/settings/design-layout/${kind}/${entityName}`,
-  icon: Database,
+const DESIGN_LAYOUT_FEATURE_ICON = {
+  main: DESIGN_LAYOUT_MAIN_NAV_ICON,
+  list: DESIGN_LAYOUT_LIST_NAV_ICON,
+  detail: DESIGN_LAYOUT_DETAIL_NAV_ICON,
+  forms: DESIGN_LAYOUT_FORMS_NAV_ICON,
+} as const;
+
+const designLayoutFeatureLink = (
+  kind: keyof typeof DESIGN_LAYOUT_FEATURE_ICON,
+  labelKey:
+    | "designLayoutMain"
+    | "designLayoutList"
+    | "designLayoutDetail"
+    | "designLayoutForms",
+) => ({
+  id: `design-layout-${kind}`,
+  labelKey,
+  to: `/settings/design-layout/${kind}`,
+  matchPath: `/settings/design-layout/${kind}`,
+  icon: DESIGN_LAYOUT_FEATURE_ICON[kind],
 });
 
-const DESIGN_LAYOUT_SUBGROUPS_FIXTURE: readonly NavSubGroupConfig[] = [
-  {
-    id: "design-layout-main",
-    labelKey: "designLayoutMain",
-    children: [
-      designLayoutEntityLink("main", "testItem"),
-      designLayoutEntityLink("main", "widget"),
-    ],
-  },
-  {
-    id: "design-layout-list",
-    labelKey: "designLayoutList",
-    children: [
-      designLayoutEntityLink("list", "testItem"),
-      designLayoutEntityLink("list", "widget"),
-    ],
-  },
-  {
-    id: "design-layout-detail",
-    labelKey: "designLayoutDetail",
-    children: [
-      designLayoutEntityLink("detail", "testItem"),
-      designLayoutEntityLink("detail", "widget"),
-    ],
-  },
-  {
-    id: "design-layout-forms",
-    labelKey: "designLayoutForms",
-    children: [
-      designLayoutEntityLink("forms", "testItem"),
-      designLayoutEntityLink("forms", "widget"),
-    ],
-  },
+const DESIGN_LAYOUT_LINKS_FIXTURE: readonly NavLinkConfig[] = [
+  designLayoutFeatureLink("main", "designLayoutMain"),
+  designLayoutFeatureLink("list", "designLayoutList"),
+  designLayoutFeatureLink("detail", "designLayoutDetail"),
+  designLayoutFeatureLink("forms", "designLayoutForms"),
 ];
 
 vi.mock("../auth/AuthContext", () => ({
@@ -103,16 +94,16 @@ vi.mock("./design-layout-nav", () => ({
     labelKey: "designLayoutPresets",
     to: "/settings/design-layout/presets",
     matchPath: "/settings/design-layout/presets",
-    icon: LayoutGrid,
+    icon: DESIGN_LAYOUT_PRESETS_NAV_ICON,
   },
   DESIGN_LAYOUT_DASHBOARD_NAV_ITEM: {
     id: "design-layout-dashboard",
     labelKey: "designLayoutDashboard",
     to: "/settings/design-layout/dashboard",
     matchPath: "/settings/design-layout/dashboard",
-    icon: LayoutDashboard,
+    icon: DESIGN_LAYOUT_DASHBOARD_NAV_ICON,
   },
-  useDesignLayoutNavSubGroups: () => mockDesignLayoutSubGroups,
+  useDesignLayoutNavLinks: () => mockDesignLayoutNavLinks,
 }));
 
 function getDataModelEntityIds(
@@ -131,7 +122,7 @@ const defaultAuth = {
 
 describe("useAccessibleNavItems", () => {
   it("shows all entities for superadmin", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -148,7 +139,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("filters entities by read permission for viewers", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -161,13 +152,18 @@ describe("useAccessibleNavItems", () => {
     expect(getDataModelEntityIds(result.current)).toEqual(["widget"]);
   });
 
-  it("puts model builder in data structure and automation in its own group", () => {
-    mockDesignLayoutSubGroups = [];
+  it("puts model builder in data structure and automation in analytics group", () => {
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
       isSuperAdmin: false,
-      permissions: ["entityDefinition.read", "hook.read", "widget.read"],
+      permissions: [
+        "entityDefinition.read",
+        "hook.read",
+        "metricDefinition.read",
+        "widget.read",
+      ],
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
@@ -175,7 +171,7 @@ describe("useAccessibleNavItems", () => {
       (item) => item.id === "data-structure",
     );
     const settings = result.current.find((item) => item.id === "settings");
-    const automation = result.current.find((item) => item.id === "automation");
+    const analytics = result.current.find((item) => item.id === "analytics");
 
     expect(dataStructure && isNavGroup(dataStructure)).toBe(true);
     if (dataStructure && isNavGroup(dataStructure)) {
@@ -191,20 +187,26 @@ describe("useAccessibleNavItems", () => {
       ).toBe(false);
     }
 
-    // Automation is now its own top-level collapsible group listing entities.
-    expect(automation && isNavGroup(automation)).toBe(true);
-    if (automation && isNavGroup(automation)) {
+    expect(analytics && isNavGroup(analytics)).toBe(true);
+    if (analytics && isNavGroup(analytics)) {
       expect(
-        automation.children.some((child) => child.id === "automation-widget"),
+        analytics.children.some((child) => child.id === "automation"),
       ).toBe(true);
+      expect(analytics.children.some((child) => child.id === "metrics")).toBe(
+        true,
+      );
     }
+
+    expect(
+      result.current.find((item) => item.id === "automation"),
+    ).toBeUndefined();
 
     // With only these permissions, the settings group has no children.
     expect(settings).toBeUndefined();
   });
 
-  it("hides automation when the user cannot read any entity", () => {
-    mockDesignLayoutSubGroups = [];
+  it("shows automation in analytics when hook.read is granted", () => {
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -213,13 +215,18 @@ describe("useAccessibleNavItems", () => {
     });
 
     const { result } = renderHook(() => useAccessibleNavItems());
-    expect(
-      result.current.find((item) => item.id === "automation"),
-    ).toBeUndefined();
+    const analytics = result.current.find((item) => item.id === "analytics");
+
+    expect(analytics && isNavGroup(analytics)).toBe(true);
+    if (analytics && isNavGroup(analytics)) {
+      expect(
+        analytics.children.some((child) => child.id === "automation"),
+      ).toBe(true);
+    }
   });
 
   it("puts metrics in analytics group, not settings", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -241,7 +248,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("shows entity categories in data structure without settings group", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -267,7 +274,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("groups categorized entities separately from uncategorized data models", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = [
       {
         ...MOCK_ENTITY_CATALOG[0],
@@ -305,7 +312,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("shows only home when there are no tenants", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       isSuperAdmin: true,
@@ -320,7 +327,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("shows design layout group when entityUiOverride.read is granted", () => {
-    mockDesignLayoutSubGroups = DESIGN_LAYOUT_SUBGROUPS_FIXTURE;
+    mockDesignLayoutNavLinks = DESIGN_LAYOUT_LINKS_FIXTURE;
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -336,45 +343,47 @@ describe("useAccessibleNavItems", () => {
     expect(designLayout && isNavGroup(designLayout)).toBe(true);
     if (designLayout && isNavGroup(designLayout)) {
       expect(designLayout.children.length).toBe(6);
-      const detailSubgroup = designLayout.children.find(
-        (child) => child.id === "design-layout-detail",
-      );
-      expect(detailSubgroup && isNavSubGroup(detailSubgroup)).toBe(true);
-      if (detailSubgroup && isNavSubGroup(detailSubgroup)) {
-        expect(
-          detailSubgroup.children.some((link) =>
-            link.to.includes("/settings/design-layout/detail/"),
-          ),
-        ).toBe(true);
-      }
-      const mainSubgroup = designLayout.children.find(
-        (child) => child.id === "design-layout-main",
-      );
-      expect(mainSubgroup && isNavSubGroup(mainSubgroup)).toBe(true);
-      if (mainSubgroup && isNavSubGroup(mainSubgroup)) {
-        expect(
-          mainSubgroup.children.some((link) =>
-            link.to.includes("/settings/design-layout/main/"),
-          ),
-        ).toBe(true);
-      }
-      const listSubgroup = designLayout.children.find(
-        (child) => child.id === "design-layout-list",
-      );
-      expect(listSubgroup && isNavSubGroup(listSubgroup)).toBe(true);
-      if (listSubgroup && isNavSubGroup(listSubgroup)) {
-        expect(listSubgroup.children.length).toBeGreaterThan(0);
-        expect(
-          flattenNavGroupLinks(designLayout).some((link) =>
-            link.to.includes("/settings/design-layout/list/"),
-          ),
-        ).toBe(true);
-      }
+      expect(
+        designLayout.children.some(
+          (child) => child.id === "design-layout-detail",
+        ),
+      ).toBe(true);
+      expect(
+        designLayout.children.some(
+          (child) =>
+            child.id === "design-layout-detail" &&
+            "to" in child &&
+            child.to === "/settings/design-layout/detail",
+        ),
+      ).toBe(true);
+      expect(
+        designLayout.children.some(
+          (child) =>
+            child.id === "design-layout-main" &&
+            "to" in child &&
+            child.to === "/settings/design-layout/main",
+        ),
+      ).toBe(true);
+      expect(
+        flattenNavGroupLinks(designLayout).some(
+          (link) => link.to === "/settings/design-layout/list",
+        ),
+      ).toBe(true);
+      expect(
+        designLayout.children.some(
+          (child) => child.id === "design-layout-main",
+        ),
+      ).toBe(true);
+      expect(
+        designLayout.children.every(
+          (child) => !("children" in child && Array.isArray(child.children)),
+        ),
+      ).toBe(true);
     }
   });
 
   it("hides design layout group without entityUiOverride.read", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -390,7 +399,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("shows custom views settings only when create or update is granted", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -405,7 +414,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("includes platform current tenant and appearance for superadmin", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -427,7 +436,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("includes all entities subgroup in data structure for superadmin with hidden entities", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = [
       ...MOCK_ENTITY_CATALOG,
       {
@@ -488,7 +497,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("includes all entities subgroup in data structure for internal entity readers", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,
@@ -517,7 +526,7 @@ describe("useAccessibleNavItems", () => {
   });
 
   it("includes debugger group with separate source links when hook.read is granted", () => {
-    mockDesignLayoutSubGroups = [];
+    mockDesignLayoutNavLinks = [];
     mockCatalogItems = MOCK_ENTITY_CATALOG;
     mockUseAuth.mockReturnValue({
       ...defaultAuth,

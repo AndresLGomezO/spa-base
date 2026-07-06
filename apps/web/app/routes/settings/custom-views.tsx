@@ -10,6 +10,7 @@ export default function SettingsCustomViewsRoute() {
   const { isReady, tenantId } = useAuth();
   const canCreate = usePermission("customView.create");
   const canUpdate = usePermission("customView.update");
+  const canDelete = usePermission("customView.delete");
   const canAccess = canCreate || canUpdate;
 
   if (!isReady) {
@@ -36,7 +37,11 @@ export default function SettingsCustomViewsRoute() {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col">
-      <CustomViewsView />
+      <CustomViewsView
+        canCreate={canCreate}
+        canUpdate={canUpdate}
+        canDelete={canDelete}
+      />
     </div>
   );
 }

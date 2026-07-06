@@ -274,3 +274,19 @@ export {
   type SortControlsProps,
   type SortControlsSortState,
 } from "./sort-controls/SortControls";
+export {
+  JsonActionTriggerGroup,
+  type JsonActionTriggerGroupProps,
+} from "./json-action-triggers/JsonActionTriggerGroup";
+export {
+  JsonImportTriggerButton,
+  type JsonImportTriggerButtonProps,
+} from "./json-action-triggers/JsonImportTriggerButton";
+export {
+  JsonViewTriggerButton,
+  type JsonViewTriggerButtonProps,
+} from "./json-action-triggers/JsonViewTriggerButton";
+export {
+  DEFAULT_JSON_ACTION_TRIGGER_LABELS,
+  type JsonActionTriggerLabels,
+} from "./json-action-triggers/json-action-trigger-types";

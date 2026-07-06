@@ -1,6 +1,12 @@
 import { useMemo, useState } from "react";
 import { createFormulaDefinitionsCatalogEnvelope } from "@repo/formula-definitions/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { FormulaDefinitionRecord } from "../../../lib/api-client";
 import type { FormulaDefinitionsCatalogJsonLabels } from "./formula-definition-json-labels.js";
@@ -8,13 +14,13 @@ import type { FormulaDefinitionsCatalogJsonLabels } from "./formula-definition-j
 interface FormulaDefinitionsCatalogJsonViewDialogProps {
   readonly items: readonly FormulaDefinitionRecord[];
   readonly labels: FormulaDefinitionsCatalogJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
 }
 
 export function FormulaDefinitionsCatalogJsonViewDialog({
   items,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
 }: FormulaDefinitionsCatalogJsonViewDialogProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -50,14 +56,10 @@ export function FormulaDefinitionsCatalogJsonViewDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
+      <JsonViewTriggerButton
+        labels={triggerLabels}
         onClick={() => setOpen(true)}
-      >
-        {labels.viewTrigger}
-      </Button>
+      />
 
       <Modal
         open={open}

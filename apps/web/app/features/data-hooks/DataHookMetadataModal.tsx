@@ -1,9 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Button, FieldLabel, Input, Modal, Select, toast } from "@repo/ui";
 import type { DataHookOperation } from "@repo/hooks";
 import { DATA_HOOK_OPERATIONS } from "@repo/hooks";
 
+import { getEntityLabel } from "../../entities/entity-catalog";
+import { useEntityCatalog } from "../../entities/entity-catalog-context";
 import { useDataHooks } from "./data-hooks-context";
 
 interface DataHookMetadataModalProps {
@@ -26,6 +28,18 @@ export function DataHookMetadataModal({
 }: DataHookMetadataModalProps) {
   const { t } = useTranslation("common");
   const { editor, canCreate, canUpdate } = useDataHooks();
+  const { items: entities } = useEntityCatalog();
+
+  const entityOptions = useMemo(
+    () =>
+      entities
+        .map((entity) => ({
+          value: entity.name,
+          label: getEntityLabel(entity),
+        }))
+        .sort((left, right) => left.label.localeCompare(right.label)),
+    [entities],
+  );
 
   const editingDefinition =
     mode === "edit" && hookId
@@ -34,6 +48,7 @@ export function DataHookMetadataModal({
 
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
+  const [entity, setEntity] = useState("");
   const [operation, setOperation] = useState<DataHookOperation>("create");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -48,11 +63,14 @@ export function DataHookMetadataModal({
     }
     setName("");
     setDescription("");
+    setEntity(entityOptions[0]?.value ?? "");
     setOperation("create");
-  }, [editingDefinition, mode, open]);
+  }, [editingDefinition, entityOptions, mode, open]);
 
   const canSubmit =
-    name.trim().length > 0 && (mode === "create" ? canCreate : canUpdate);
+    name.trim().length > 0 &&
+    (mode !== "create" || entity.trim().length > 0) &&
+    (mode === "create" ? canCreate : canUpdate);
 
   async function handleSubmit() {
     if (!canSubmit) {
@@ -63,6 +81,7 @@ export function DataHookMetadataModal({
       if (mode === "create") {
         const result = await editor.createHook({
           name: name.trim(),
+          entity,
           ...(description.trim() ? { description: description.trim() } : {}),
           operation,
         });
@@ -138,22 +157,38 @@ export function DataHookMetadataModal({
           />
         </div>
         {mode === "create" ? (
-          <div className="space-y-1">
-            <FieldLabel>{t("dataHooks.metadata.trigger")}</FieldLabel>
-            <Select
-              className={controlClassName}
-              value={operation}
-              onChange={(event) =>
-                setOperation(event.target.value as DataHookOperation)
-              }
-            >
-              {DATA_HOOK_OPERATIONS.map((op) => (
-                <option key={op} value={op}>
-                  {t(`dataHooks.operation.${op}`)}
-                </option>
-              ))}
-            </Select>
-          </div>
+          <>
+            <div className="space-y-1">
+              <FieldLabel>{t("dataHooks.metadata.entity")}</FieldLabel>
+              <Select
+                className={controlClassName}
+                value={entity}
+                onChange={(event) => setEntity(event.target.value)}
+              >
+                {entityOptions.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <div className="space-y-1">
+              <FieldLabel>{t("dataHooks.metadata.trigger")}</FieldLabel>
+              <Select
+                className={controlClassName}
+                value={operation}
+                onChange={(event) =>
+                  setOperation(event.target.value as DataHookOperation)
+                }
+              >
+                {DATA_HOOK_OPERATIONS.map((op) => (
+                  <option key={op} value={op}>
+                    {t(`dataHooks.operation.${op}`)}
+                  </option>
+                ))}
+              </Select>
+            </div>
+          </>
         ) : null}
       </div>
     </Modal>

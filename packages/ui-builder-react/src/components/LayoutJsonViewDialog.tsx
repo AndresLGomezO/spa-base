@@ -5,7 +5,13 @@ import type {
   LayoutJsonImportScope,
   UiLayoutDocument,
 } from "@repo/ui-builder-core";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { LayoutJsonImportLabels } from "./LayoutJsonImportDialog.js";
 
@@ -17,7 +23,7 @@ export interface LayoutJsonViewDialogProps {
     | ComponentRowNode
     | ComponentRowNode;
   readonly labels: LayoutJsonImportLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly renderTrigger?: (options: { open: () => void }) => ReactNode;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
@@ -43,7 +49,7 @@ export function LayoutJsonViewDialog({
   scope,
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   renderTrigger,
   open: openProp,
   onOpenChange,
@@ -72,14 +78,7 @@ export function LayoutJsonViewDialog({
       {renderTrigger ? (
         renderTrigger({ open: openDialog })
       ) : openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
-          onClick={openDialog}
-        >
-          {labels.viewTrigger}
-        </Button>
+        <JsonViewTriggerButton labels={triggerLabels} onClick={openDialog} />
       ) : null}
 
       <Modal

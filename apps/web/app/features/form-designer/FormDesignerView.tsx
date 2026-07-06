@@ -63,7 +63,11 @@ export function FormDesignerView({
   formDesignId = DEFAULT_FORM_DESIGN_ROUTE_ID,
 }: FormDesignerViewProps) {
   return (
-    <FormDesignerProvider entityName={entityName} formDesignId={formDesignId}>
+    <FormDesignerProvider
+      key={entityName}
+      entityName={entityName}
+      formDesignId={formDesignId}
+    >
       <div className="flex min-h-0 flex-1 flex-col">
         <FormDesignerPageContent
           entityName={entityName}

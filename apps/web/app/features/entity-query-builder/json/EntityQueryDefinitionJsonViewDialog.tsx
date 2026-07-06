@@ -3,14 +3,20 @@ import {
   createEntityQueryDefinitionEnvelope,
   type EntityQueryDefinitionFormData,
 } from "@repo/entity-queries/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { EntityQueryDefinitionFormJsonLabels } from "./entity-query-definition-json-labels.js";
 
 interface EntityQueryDefinitionJsonViewDialogProps {
   readonly data: EntityQueryDefinitionFormData;
   readonly labels: EntityQueryDefinitionFormJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
 }
@@ -18,7 +24,7 @@ interface EntityQueryDefinitionJsonViewDialogProps {
 export function EntityQueryDefinitionJsonViewDialog({
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
 }: EntityQueryDefinitionJsonViewDialogProps) {
@@ -45,14 +51,10 @@ export function EntityQueryDefinitionJsonViewDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonViewTriggerButton
+          labels={triggerLabels}
           onClick={() => setOpen(true)}
-        >
-          {labels.viewTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

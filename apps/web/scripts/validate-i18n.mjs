@@ -809,6 +809,23 @@ function extractDebuggerStatusLabelKeys(corpus) {
   );
 }
 
+/** DESIGN_LAYOUT_FEATURE_LABEL_KEY in design-layout-nav.ts → common:nav.* */
+function extractDesignLayoutNavLabelKeys(files) {
+  const file = files.find((f) => f.path.endsWith("design-layout-nav.ts"));
+  if (!file) return [];
+
+  const blockMatch = file.content.match(
+    /DESIGN_LAYOUT_FEATURE_LABEL_KEY[^=]*=\s*\{([\s\S]*?)\n\};/,
+  );
+  if (!blockMatch) return [];
+
+  const keys = new Set();
+  for (const match of blockMatch[1].matchAll(/:\s*"([^"]+)"/g)) {
+    keys.add(`${DEFAULT_NAMESPACE}:nav.${match[1]}`);
+  }
+  return [...keys];
+}
+
 /** DEBUGGER_SOURCE_NAV_LABEL_KEYS in debugger-nav.ts → common:nav.* */
 function extractDebuggerNavLabelKeys(files) {
   const file = files.find((f) => f.path.endsWith("debugger-nav.ts"));
@@ -1182,6 +1199,11 @@ mergeUsedKeys(
   usedKeys,
   extractHookExecutionTypeLabelKeys(corpus),
   path.join(SRC_DIR, "features/debugger/hook-execution-live-metrics.ts"),
+);
+mergeUsedKeys(
+  usedKeys,
+  extractDesignLayoutNavLabelKeys(files),
+  path.join(SRC_DIR, "routing/design-layout-nav.ts"),
 );
 mergeUsedKeys(
   usedKeys,

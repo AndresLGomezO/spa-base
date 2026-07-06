@@ -1,5 +1,7 @@
 import { Navigate, useLocation, useParams } from "react-router";
 
+import { designLayoutEntityPath } from "../../../routing/design-layout-nav";
+
 export default function DesignLayoutNewMetricsRedirect() {
   const params = useParams();
   const location = useLocation();
@@ -7,8 +9,8 @@ export default function DesignLayoutNewMetricsRedirect() {
 
   return (
     <Navigate
-      to={`/settings/design-layout/metrics/${entityName}${location.search}`}
       replace
+      to={designLayoutEntityPath("metrics", entityName, location.search)}
     />
   );
 }

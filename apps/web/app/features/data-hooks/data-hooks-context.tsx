@@ -20,7 +20,7 @@ const DataHooksContext = createContext<DataHooksContextValue | undefined>(
 );
 
 interface DataHooksProviderProps {
-  readonly entityName: string;
+  readonly scopeEntity?: string;
   readonly canCreate: boolean;
   readonly canUpdate: boolean;
   readonly canDelete: boolean;
@@ -28,13 +28,13 @@ interface DataHooksProviderProps {
 }
 
 export function DataHooksProvider({
-  entityName,
+  scopeEntity,
   canCreate,
   canUpdate,
   canDelete,
   children,
 }: DataHooksProviderProps) {
-  const editor = useDataHooksEditor(entityName);
+  const editor = useDataHooksEditor(scopeEntity);
   const [metadataEditId, setMetadataEditId] = useState<string | null>(null);
   const [deleteTargetId, setDeleteTargetId] = useState<string | null>(null);
 

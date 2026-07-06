@@ -20,10 +20,7 @@ export default [
     ]),
     route("settings/users", "./routes/settings/users.tsx"),
     route("settings/data-models", "./routes/settings/data-models.tsx"),
-    route(
-      "settings/automation/:entityName",
-      "./routes/settings/automation.tsx",
-    ),
+    route("settings/automation", "./routes/settings/automation.tsx"),
     route("settings/metrics", "./routes/settings/metrics.tsx"),
     route("settings/charts", "./routes/settings/charts.tsx"),
     route("settings/formulas", "./routes/settings/formulas.tsx"),
@@ -52,7 +49,19 @@ export default [
       "./routes/settings/design-layout/metrics-custom-view.tsx",
     ),
     route(
+      "settings/design-layout/forms/:entityName/:formDesignId",
+      "./routes/settings/design-layout/legacy-forms-redirect.tsx",
+    ),
+    route(
+      "settings/design-layout/forms/:formDesignId",
+      "./routes/settings/design-layout/form-design.tsx",
+    ),
+    route(
       "settings/design-layout/list/:entityName",
+      "./routes/settings/design-layout/legacy-list-entity.tsx",
+    ),
+    route(
+      "settings/design-layout/list",
       "./routes/settings/design-layout/list.tsx",
     ),
     route(
@@ -61,6 +70,10 @@ export default [
     ),
     route(
       "settings/design-layout/main/:entityName",
+      "./routes/settings/design-layout/legacy-main-entity.tsx",
+    ),
+    route(
+      "settings/design-layout/main",
       "./routes/settings/design-layout/main.tsx",
     ),
     route(
@@ -69,6 +82,10 @@ export default [
     ),
     route(
       "settings/design-layout/detail/:entityName",
+      "./routes/settings/design-layout/legacy-detail-entity.tsx",
+    ),
+    route(
+      "settings/design-layout/detail",
       "./routes/settings/design-layout/detail.tsx",
     ),
     route(
@@ -80,12 +97,8 @@ export default [
       "./routes/settings/design-layout/page.tsx",
     ),
     route(
-      "settings/design-layout/forms/:entityName",
+      "settings/design-layout/forms",
       "./routes/settings/design-layout/forms.tsx",
-    ),
-    route(
-      "settings/design-layout/forms/:entityName/:formDesignId",
-      "./routes/settings/design-layout/form-design.tsx",
     ),
     route(
       "settings/design-layout/new-forms/:entityName",
@@ -93,6 +106,10 @@ export default [
     ),
     route(
       "settings/design-layout/metrics/:entityName",
+      "./routes/settings/design-layout/legacy-metrics-entity.tsx",
+    ),
+    route(
+      "settings/design-layout/metrics",
       "./routes/settings/design-layout/metrics-row-designer.tsx",
     ),
     route(

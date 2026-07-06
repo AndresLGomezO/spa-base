@@ -60,7 +60,9 @@ describe("EntityQueryListTreePanel", () => {
 
     render(<EntityQueryListTreePanel />);
 
-    fireEvent.click(screen.getAllByText("queryBuilder.json.importTrigger")[0]!);
+    fireEvent.click(
+      screen.getByRole("button", { name: "jsonActions.importAriaLabel" }),
+    );
     fireEvent.change(screen.getByRole("textbox"), {
       target: {
         value: JSON.stringify({

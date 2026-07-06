@@ -1,5 +1,7 @@
 import { Navigate, useLocation, useParams } from "react-router";
 
+import { designLayoutEntityPath } from "../../../routing/design-layout-nav";
+
 export default function DesignLayoutNewListRedirect() {
   const params = useParams();
   const location = useLocation();
@@ -7,8 +9,8 @@ export default function DesignLayoutNewListRedirect() {
 
   return (
     <Navigate
-      to={`/settings/design-layout/list/${entityName}${location.search}`}
       replace
+      to={designLayoutEntityPath("list", entityName, location.search)}
     />
   );
 }

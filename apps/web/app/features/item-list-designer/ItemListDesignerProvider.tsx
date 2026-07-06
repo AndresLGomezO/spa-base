@@ -12,6 +12,7 @@ import { useTranslation } from "react-i18next";
 import { useSearchParams } from "react-router";
 import { useColorScheme } from "@repo/theme/react";
 
+import { DEFAULT_GROUPED_COLUMN_INDEX } from "../../components/design-layout/resolve-first-structure-selection";
 import { useAnyPermission } from "../../auth/useAnyPermission";
 import type { EntityName } from "../../entities/entity-catalog";
 import { useEntityDefinition } from "../../entities/entity-catalog-context";
@@ -202,7 +203,13 @@ export function ItemListDesignerProvider({
     useState<ItemListPanelPendingAction | null>(null);
   const [pendingColumnsScope, setPendingColumnsScope] =
     useState<ItemListColumnsScope | null>(null);
-  const [activeGroupedColumnIndex, setActiveGroupedColumnIndex] = useState(0);
+  const [activeGroupedColumnIndex, setActiveGroupedColumnIndex] = useState(
+    DEFAULT_GROUPED_COLUMN_INDEX,
+  );
+
+  useEffect(() => {
+    setActiveGroupedColumnIndex(DEFAULT_GROUPED_COLUMN_INDEX);
+  }, [entityName]);
 
   const [structurePanelSession, setStructurePanelSession] =
     useState<ItemListPanelSession | null>(null);

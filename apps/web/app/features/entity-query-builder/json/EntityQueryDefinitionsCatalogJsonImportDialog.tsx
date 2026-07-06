@@ -6,7 +6,13 @@ import {
   type EntityQueryDefinitionRecord,
   type EntityQueryDefinitionsCatalogEnvelope,
 } from "@repo/entity-queries/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { EntityQueryDefinitionRecord as ApiEntityQueryDefinitionRecord } from "../../../lib/api-client";
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
@@ -17,7 +23,7 @@ interface EntityQueryDefinitionsCatalogJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: EntityQueryDefinitionsCatalogJsonLabels;
   readonly onApply: (catalog: EntityQueryDefinitionsCatalogEnvelope) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
   readonly open?: boolean;
   readonly onOpenChange?: (open: boolean) => void;
   readonly importDisabled?: boolean;
@@ -28,7 +34,7 @@ export function EntityQueryDefinitionsCatalogJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
   open: openProp,
   onOpenChange,
   importDisabled = false,
@@ -147,15 +153,11 @@ export function EntityQueryDefinitionsCatalogJsonImportDialog({
   return (
     <>
       {openProp === undefined ? (
-        <Button
-          type="button"
-          variant="outline"
-          size={triggerSize}
+        <JsonImportTriggerButton
+          labels={triggerLabels}
           disabled={importDisabled}
           onClick={() => setOpen(true)}
-        >
-          {labels.importTrigger}
-        </Button>
+        />
       ) : null}
 
       <Modal

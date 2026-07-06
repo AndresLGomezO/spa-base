@@ -1,8 +1,9 @@
 import { BuilderPageShell } from "@repo/ui";
 import { useTranslation } from "react-i18next";
 
-import { getEntityLabel, type EntityName } from "../../entities/entity-catalog";
-import { useEntityDefinition } from "../../entities/entity-catalog-context";
+import type { EntityName } from "../../entities/entity-catalog";
+import { DesignLayoutEntityTransitionShell } from "../../components/design-layout/DesignLayoutEntityTransitionShell";
+import { useDesignLayoutEntityPage } from "../../components/design-layout/use-design-layout-entity-page";
 import { DetailViewDesignerHeaderActions } from "./DetailViewDesignerHeaderActions";
 import { DetailViewDesignerProvider } from "./DetailViewDesignerProvider";
 import { DetailViewDesignerTabs } from "./DetailViewDesignerTabs";
@@ -17,17 +18,21 @@ function DetailViewDesignerPageContent({
   readonly entityName: EntityName;
 }) {
   const { t } = useTranslation("common");
-  const definition = useEntityDefinition(entityName);
-  const entityLabel = getEntityLabel(definition);
+  const { entitySubtitle, isEntityTransitioning } = useDesignLayoutEntityPage(
+    "detail",
+    entityName,
+  );
 
   return (
     <BuilderPageShell
       title={t("detailViewDesigner.title")}
-      subtitle={t("detailViewDesigner.entitySubtitle", { entity: entityLabel })}
+      subtitle={entitySubtitle}
       actions={<DetailViewDesignerHeaderActions />}
       bodyScrollable={false}
     >
-      <DetailViewDesignerTabs />
+      <DesignLayoutEntityTransitionShell loading={isEntityTransitioning}>
+        <DetailViewDesignerTabs />
+      </DesignLayoutEntityTransitionShell>
     </BuilderPageShell>
   );
 }

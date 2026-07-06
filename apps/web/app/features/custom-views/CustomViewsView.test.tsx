@@ -57,6 +57,8 @@ vi.mock("react-i18next", () => ({
 
 vi.mock("react-router", () => ({
   Link: ({ children }: { readonly children: React.ReactNode }) => children,
+  useNavigate: () => vi.fn(),
+  useSearchParams: () => [new URLSearchParams(), vi.fn()],
 }));
 
 describe("CustomViewsView", () => {
@@ -72,7 +74,7 @@ describe("CustomViewsView", () => {
 
     render(
       <QueryClientProvider client={queryClient}>
-        <CustomViewsView />
+        <CustomViewsView canCreate canUpdate canDelete />
       </QueryClientProvider>,
     );
 

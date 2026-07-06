@@ -1,23 +1,30 @@
 import type { LucideIcon } from "lucide-react";
 import {
+  AppWindow,
   BarChart3,
+  Blocks,
   Bot,
   Building2,
+  ChartColumn,
+  ClipboardPen,
   Database,
   FolderTree,
   FunctionSquare,
   Gauge,
   Home,
   Layers,
+  LayoutDashboard,
   LayoutTemplate,
   LineChart,
-  PanelsTopLeft,
   Palette,
+  Rows3,
   Search,
   Settings,
   Shield,
+  Sidebar,
   Users,
   ScanSearch,
+  Workflow,
 } from "lucide-react";
 
 export type NavLabelKey =
@@ -32,7 +39,7 @@ export type NavLabelKey =
   | "dataModels"
   | "dataStructure"
   | "dataModelBuilder"
-  | "automation"
+  | "automationNav"
   | "analytics"
   | "metricsNav"
   | "chartsNav"
@@ -87,8 +94,6 @@ export interface NavGroupConfig {
 }
 
 export type NavItemConfig = NavLinkConfig | NavGroupConfig;
-
-export const DESIGN_LAYOUT_GROUP_ICON = LayoutTemplate;
 
 export function isNavSubGroup(
   child: NavGroupChild,
@@ -168,12 +173,30 @@ export const SETTINGS_CHARTS_NAV_ITEM: NavLinkConfig = {
   icon: LineChart,
 };
 
+export const DESIGN_LAYOUT_GROUP_ICON = LayoutTemplate;
+
+export const DESIGN_LAYOUT_MAIN_NAV_ICON = AppWindow;
+export const DESIGN_LAYOUT_LIST_NAV_ICON = Rows3;
+export const DESIGN_LAYOUT_DETAIL_NAV_ICON = LayoutTemplate;
+export const DESIGN_LAYOUT_FORMS_NAV_ICON = ClipboardPen;
+export const DESIGN_LAYOUT_METRICS_NAV_ICON = ChartColumn;
+export const DESIGN_LAYOUT_PRESETS_NAV_ICON = Blocks;
+export const DESIGN_LAYOUT_DASHBOARD_NAV_ICON = LayoutDashboard;
+
 export const SETTINGS_FORMULAS_NAV_ITEM: NavLinkConfig = {
   id: "formulas",
   labelKey: "formulasNav",
   to: "/settings/formulas",
   matchPath: "/settings/formulas",
   icon: FunctionSquare,
+};
+
+export const SETTINGS_AUTOMATION_NAV_ITEM: NavLinkConfig = {
+  id: "automation",
+  labelKey: "automationNav",
+  to: "/settings/automation",
+  matchPath: "/settings/automation",
+  icon: Workflow,
 };
 
 export const SETTINGS_QUERY_BUILDER_NAV_ITEM: NavLinkConfig = {
@@ -189,7 +212,7 @@ export const SETTINGS_CUSTOM_VIEWS_NAV_ITEM: NavLinkConfig = {
   labelKey: "customViewsNav",
   to: "/settings/custom-views",
   matchPath: "/settings/custom-views",
-  icon: PanelsTopLeft,
+  icon: Sidebar,
 };
 
 export const ANALYTICS_GROUP_ICON = BarChart3;

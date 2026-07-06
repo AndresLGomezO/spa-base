@@ -15,6 +15,7 @@ import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-wor
 import { EntityQueryMetadataModal } from "./EntityQueryMetadataModal";
 import { useEntityQueryBuilder } from "./entity-query-builder-context";
 import { entityQueryDefinitionsCatalogJsonLabels } from "./json/entity-query-definition-json-labels";
+import { useJsonActionTriggerLabels } from "../../components/json/json-action-trigger-labels";
 import { EntityQueryDefinitionsCatalogJsonImportDialog } from "./json/EntityQueryDefinitionsCatalogJsonImportDialog";
 import { EntityQueryDefinitionsCatalogJsonViewDialog } from "./json/EntityQueryDefinitionsCatalogJsonViewDialog";
 import { IndexEnvironmentBlockedNotice } from "../../components/index-provisioning/IndexEnvironmentBlockedNotice";
@@ -36,6 +37,7 @@ export function EntityQueryListTreePanel() {
     () => entityQueryDefinitionsCatalogJsonLabels(t),
     [t],
   );
+  const triggerLabels = useJsonActionTriggerLabels();
   const canReplaceCatalog = canCreate && canUpdate && canDelete;
   const { isEnvironmentReady, buildingCollections } = useTenantIndexReadiness();
 
@@ -72,29 +74,30 @@ export function EntityQueryListTreePanel() {
     </button>
   );
 
-  const catalogActions = (
-    <div className="flex flex-col gap-2 px-2 pb-2">
-      {!isEnvironmentReady ? (
-        <IndexEnvironmentBlockedNotice
-          feature="import"
-          buildingCollections={buildingCollections}
-        />
-      ) : null}
-      <div className="flex flex-wrap items-center gap-2">
-        <EntityQueryDefinitionsCatalogJsonViewDialog
-          items={editor.definitions}
-          labels={catalogLabels}
-        />
-        <EntityQueryDefinitionsCatalogJsonImportDialog
-          existingItems={editor.definitions}
-          canApply={canReplaceCatalog}
-          importDisabled={!isEnvironmentReady}
-          labels={catalogLabels}
-          onApply={(catalog) => void handleCatalogImport(catalog)}
-        />
-      </div>
-    </div>
+  const headerJsonActions = (
+    <>
+      <EntityQueryDefinitionsCatalogJsonViewDialog
+        items={editor.definitions}
+        labels={catalogLabels}
+        triggerLabels={triggerLabels}
+      />
+      <EntityQueryDefinitionsCatalogJsonImportDialog
+        existingItems={editor.definitions}
+        canApply={canReplaceCatalog}
+        importDisabled={!isEnvironmentReady}
+        labels={catalogLabels}
+        triggerLabels={triggerLabels}
+        onApply={(catalog) => void handleCatalogImport(catalog)}
+      />
+    </>
   );
+
+  const indexNoticeSection = !isEnvironmentReady ? (
+    <IndexEnvironmentBlockedNotice
+      feature="import"
+      buildingCollections={buildingCollections}
+    />
+  ) : null;
 
   return (
     <>
@@ -105,7 +108,9 @@ export function EntityQueryListTreePanel() {
         expandedClassName={designerTreePanelShellClassName}
         collapsedClassName={designerTreePanelShellClassName}
         collapsedContent={addRow}
-        scopeSection={catalogActions}
+        headerActions={headerJsonActions}
+        jsonTriggerLabels={triggerLabels}
+        scopeSection={indexNoticeSection ?? undefined}
       >
         <div className="flex w-full min-w-max flex-col gap-1 py-1">
           {addRow}

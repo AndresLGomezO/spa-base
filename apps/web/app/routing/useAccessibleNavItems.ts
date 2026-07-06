@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { Database, Workflow } from "lucide-react";
+import { Database } from "lucide-react";
 import { hasPermission } from "@repo/rbac";
 
 import { useAuth } from "../auth/AuthContext";
@@ -29,6 +29,7 @@ import {
   SETTINGS_METRICS_NAV_ITEM,
   SETTINGS_CHARTS_NAV_ITEM,
   SETTINGS_FORMULAS_NAV_ITEM,
+  SETTINGS_AUTOMATION_NAV_ITEM,
   SETTINGS_QUERY_BUILDER_NAV_ITEM,
   SETTINGS_CUSTOM_VIEWS_NAV_ITEM,
   SETTINGS_GROUP_ICON,
@@ -42,12 +43,8 @@ import {
   DESIGN_LAYOUT_DASHBOARD_NAV_ITEM,
   DESIGN_LAYOUT_MATCH_PATH,
   DESIGN_LAYOUT_PRESETS_NAV_ITEM,
-  useDesignLayoutNavSubGroups,
+  useDesignLayoutNavLinks,
 } from "./design-layout-nav";
-import {
-  AUTOMATION_MATCH_PATH,
-  useAutomationEntityLinks,
-} from "./automation-nav";
 import { useAdminEntityNavLinks } from "./useAdminEntityNavLinks";
 import {
   buildAccessibleDebuggerNavLinks,
@@ -73,8 +70,7 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
   const entityNavItems = useEntityNavItems();
   const customViewNavItems = useCustomViewNavItems();
   const categoriesQuery = useEntityNavCategories();
-  const designLayoutSubGroups = useDesignLayoutNavSubGroups();
-  const automationEntityLinks = useAutomationEntityLinks();
+  const designLayoutNavLinks = useDesignLayoutNavLinks();
   const adminEntityNavLinks = useAdminEntityNavLinks();
 
   return useMemo(() => {
@@ -195,16 +191,6 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       });
     }
 
-    if (automationEntityLinks.length > 0) {
-      items.push({
-        id: "automation",
-        labelKey: "automation",
-        matchPath: AUTOMATION_MATCH_PATH,
-        icon: Workflow,
-        children: [...automationEntityLinks],
-      });
-    }
-
     const debuggerChildren = buildAccessibleDebuggerNavLinks(
       permissions,
       isSuperAdmin,
@@ -247,6 +233,10 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       analyticsChildren.push(SETTINGS_CUSTOM_VIEWS_NAV_ITEM);
     }
 
+    if (hasPermission("hook.read", permissions, { isSuperAdmin })) {
+      analyticsChildren.push(SETTINGS_AUTOMATION_NAV_ITEM);
+    }
+
     if (analyticsChildren.length > 0) {
       items.push({
         id: "analytics",
@@ -263,14 +253,14 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
       { isSuperAdmin },
     );
 
-    if (canAccessDesignLayout || designLayoutSubGroups.length > 0) {
+    if (canAccessDesignLayout || designLayoutNavLinks.length > 0) {
       const designLayoutChildren = canAccessDesignLayout
         ? [
             DESIGN_LAYOUT_PRESETS_NAV_ITEM,
             DESIGN_LAYOUT_DASHBOARD_NAV_ITEM,
-            ...designLayoutSubGroups,
+            ...designLayoutNavLinks,
           ]
-        : designLayoutSubGroups;
+        : designLayoutNavLinks;
 
       items.push({
         id: "design-layout",
@@ -299,11 +289,10 @@ export function useAccessibleNavItems(): readonly NavItemConfig[] {
   }, [
     adminEntityNavLinks,
     availableTenants.length,
-    automationEntityLinks,
     catalogItems,
     categoriesQuery.data,
     customViewNavItems,
-    designLayoutSubGroups,
+    designLayoutNavLinks,
     entityNavItems,
     isSuperAdmin,
     permissions,

@@ -16,7 +16,7 @@ function normalizeViews(
   return normalizeEntityViews(views as readonly ViewConfig[]);
 }
 
-export function toApiCustomViewUi(ui: CustomViewUIConfig): ApiCustomViewUi {
+function toApiCustomViewUi(ui: CustomViewUIConfig): ApiCustomViewUi {
   return {
     ...ui,
     views: [...normalizeViews(ui.views)],

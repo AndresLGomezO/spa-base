@@ -35,25 +35,10 @@ import {
 } from "./formula-list-styles";
 import { FormulaMetadataModal } from "./FormulaMetadataModal";
 import { formulaDefinitionsCatalogJsonLabels } from "./json/formula-definition-json-labels";
+import { useJsonActionTriggerLabels } from "../../components/json/json-action-trigger-labels";
 import { FormulaDefinitionsCatalogJsonImportDialog } from "./json/FormulaDefinitionsCatalogJsonImportDialog";
 import { FormulaDefinitionsCatalogJsonViewDialog } from "./json/FormulaDefinitionsCatalogJsonViewDialog";
 import { useFormulasListQuery } from "./use-formulas-list-query";
-
-function sortLabelKey(
-  sort: FormulaListSort,
-): `formulas.list.sort${"NameAsc" | "NameDesc" | "Source" | "UpdatedDesc"}` {
-  switch (sort) {
-    case "nameDesc":
-      return "formulas.list.sortNameDesc";
-    case "source":
-      return "formulas.list.sortSource";
-    case "updatedDesc":
-      return "formulas.list.sortUpdatedDesc";
-    case "nameAsc":
-    default:
-      return "formulas.list.sortNameAsc";
-  }
-}
 
 export function FormulaListTreePanel() {
   const { t } = useTranslation("common");
@@ -82,8 +67,6 @@ export function FormulaListTreePanel() {
     toggleSource,
     toggleStatus,
     clearFilters,
-    formulaSourceLabelKey,
-    formulaStatusLabelKey,
   } = useFormulasListQuery(editor.definitions);
 
   useFilterPanelDismiss(filtersOpen, setFiltersOpen, toolbarRef);
@@ -92,6 +75,7 @@ export function FormulaListTreePanel() {
     () => formulaDefinitionsCatalogJsonLabels(t),
     [t],
   );
+  const triggerLabels = useJsonActionTriggerLabels();
   const canReplaceCatalog = canCreate && canUpdate;
 
   const displayBadges = useMemo(
@@ -101,9 +85,17 @@ export function FormulaListTreePanel() {
           return badge;
         }
         if (badge.id === "sort") {
+          const sortLabel =
+            query.sort === "nameDesc"
+              ? t("formulas.list.sortNameDesc")
+              : query.sort === "source"
+                ? t("formulas.list.sortSource")
+                : query.sort === "updatedDesc"
+                  ? t("formulas.list.sortUpdatedDesc")
+                  : t("formulas.list.sortNameAsc");
           return {
             ...badge,
-            label: t(sortLabelKey(query.sort)),
+            label: sortLabel,
           };
         }
         if (badge.id.startsWith("source:")) {
@@ -112,7 +104,10 @@ export function FormulaListTreePanel() {
           ) as FormulaSourceFilter;
           return {
             ...badge,
-            label: t(formulaSourceLabelKey(source)),
+            label:
+              source === "platform"
+                ? t("formulas.list.sourcePlatform")
+                : t("formulas.list.sourceTenant"),
           };
         }
         if (badge.id.startsWith("status:")) {
@@ -121,18 +116,15 @@ export function FormulaListTreePanel() {
           ) as FormulaStatusFilter;
           return {
             ...badge,
-            label: t(formulaStatusLabelKey(status)),
+            label:
+              status === "enabled"
+                ? t("formulas.list.statusEnabled")
+                : t("formulas.list.statusDisabled"),
           };
         }
         return badge;
       }),
-    [
-      activeFilterBadges,
-      formulaSourceLabelKey,
-      formulaStatusLabelKey,
-      query.sort,
-      t,
-    ],
+    [activeFilterBadges, query.sort, t],
   );
 
   const handleCatalogImport = useCallback(
@@ -152,21 +144,23 @@ export function FormulaListTreePanel() {
     [catalogLabels.importFailed, catalogLabels.importSuccess, editor],
   );
 
-  const catalogActions = (
-    <div className="flex flex-wrap items-center gap-2">
+  const headerJsonActions = (
+    <>
       <FormulaDefinitionsCatalogJsonViewDialog
         items={editor.definitions}
         labels={catalogLabels}
+        triggerLabels={triggerLabels}
       />
       {canReplaceCatalog ? (
         <FormulaDefinitionsCatalogJsonImportDialog
           existingItems={editor.definitions}
           canApply={canReplaceCatalog}
           labels={catalogLabels}
+          triggerLabels={triggerLabels}
           onApply={(catalog) => void handleCatalogImport(catalog)}
         />
       ) : null}
-    </div>
+    </>
   );
 
   const filterBody = (
@@ -252,6 +246,8 @@ export function FormulaListTreePanel() {
         expandedClassName={designerTreePanelShellClassName}
         collapsedClassName={designerTreePanelShellClassName}
         collapsedContent={addRow}
+        headerActions={headerJsonActions}
+        jsonTriggerLabels={triggerLabels}
         scopeSection={
           <div className="flex w-full min-w-0 flex-col gap-3 px-2 pb-2">
             <div className="w-full py-0.5">
@@ -337,8 +333,6 @@ export function FormulaListTreePanel() {
               statusCounts={statusCounts}
               total={filteredDefinitions.length}
             />
-
-            {catalogActions}
           </div>
         }
       >

@@ -3,20 +3,26 @@ import {
   createFormulaDefinitionEnvelope,
   type FormulaDefinitionFormData,
 } from "@repo/formula-definitions/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonViewTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { FormulaDefinitionFormJsonLabels } from "./formula-definition-json-labels.js";
 
 interface FormulaDefinitionJsonViewDialogProps {
   readonly data: FormulaDefinitionFormData;
   readonly labels: FormulaDefinitionFormJsonLabels;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
 }
 
 export function FormulaDefinitionJsonViewDialog({
   data,
   labels,
-  triggerSize = "sm",
+  triggerLabels,
 }: FormulaDefinitionJsonViewDialogProps) {
   const [open, setOpen] = useState(false);
   const [copied, setCopied] = useState(false);
@@ -38,14 +44,10 @@ export function FormulaDefinitionJsonViewDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
+      <JsonViewTriggerButton
+        labels={triggerLabels}
         onClick={() => setOpen(true)}
-      >
-        {labels.viewTrigger}
-      </Button>
+      />
 
       <Modal
         open={open}

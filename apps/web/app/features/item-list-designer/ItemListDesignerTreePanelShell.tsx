@@ -1,6 +1,11 @@
 import { useState, type ReactNode } from "react";
 import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
-import { IconButton, Text } from "@repo/ui";
+import {
+  IconButton,
+  JsonActionTriggerGroup,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 import { cn } from "@repo/theme/utils";
 
 import { designerTreePanelShellClassName } from "../ui-builder/designer-tree-workbench-classes";
@@ -16,6 +21,9 @@ interface ItemListDesignerTreePanelShellProps {
   readonly expandedBodyClassName?: string;
   readonly collapsedBodyClassName?: string;
   readonly collapsedHeaderContent?: ReactNode;
+  readonly headerActions?: ReactNode;
+  readonly jsonTriggerLabels?: JsonActionTriggerLabels;
+  readonly jsonTriggerShowGroupLabel?: boolean;
   readonly scopeSection?: ReactNode;
   readonly footer?: ReactNode;
 }
@@ -31,6 +39,9 @@ export function ItemListDesignerTreePanelShell({
   expandedBodyClassName,
   collapsedBodyClassName,
   collapsedHeaderContent,
+  headerActions,
+  jsonTriggerLabels,
+  jsonTriggerShowGroupLabel = true,
   scopeSection,
   footer,
 }: ItemListDesignerTreePanelShellProps) {
@@ -78,18 +89,32 @@ export function ItemListDesignerTreePanelShell({
         expandedClassName,
       )}
     >
-      <div className="border-border flex w-full min-w-0 items-center justify-between gap-2 border-b px-3 py-2.5">
-        <Text className="text-foreground text-sm font-semibold tracking-tight">
+      <div className="border-border flex w-full min-w-0 shrink-0 flex-nowrap items-center gap-2 border-b px-3 py-2.5">
+        <Text className="text-foreground min-w-0 shrink-0 text-sm font-semibold tracking-tight">
           {title}
         </Text>
-        <IconButton
-          type="button"
-          size="sm"
-          label={collapseLabel}
-          onClick={() => setCollapsed(true)}
-        >
-          <PanelLeftClose aria-hidden className="size-4" />
-        </IconButton>
+        <div className="ml-auto flex shrink-0 flex-nowrap items-center gap-2">
+          {headerActions ? (
+            jsonTriggerLabels ? (
+              <JsonActionTriggerGroup
+                labels={jsonTriggerLabels}
+                showGroupLabel={jsonTriggerShowGroupLabel}
+              >
+                {headerActions}
+              </JsonActionTriggerGroup>
+            ) : (
+              headerActions
+            )
+          ) : null}
+          <IconButton
+            type="button"
+            size="sm"
+            label={collapseLabel}
+            onClick={() => setCollapsed(true)}
+          >
+            <PanelLeftClose aria-hidden className="size-4" />
+          </IconButton>
+        </div>
       </div>
       {scopeSection ? (
         <div className="border-border flex w-full min-w-0 flex-col gap-2 border-b px-3 py-2.5">

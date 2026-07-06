@@ -5,7 +5,13 @@ import {
   parseFormulaDefinitionsCatalogJson,
   type FormulaDefinitionsCatalogEnvelope,
 } from "@repo/formula-definitions/browser";
-import { Button, Modal, Text } from "@repo/ui";
+import {
+  Button,
+  JsonImportTriggerButton,
+  Modal,
+  Text,
+  type JsonActionTriggerLabels,
+} from "@repo/ui";
 
 import type { FormulaDefinitionRecord } from "../../../lib/api-client";
 import { JsonImportErrors } from "../../../components/data-models/json/JsonImportErrors.js";
@@ -16,7 +22,7 @@ interface FormulaDefinitionsCatalogJsonImportDialogProps {
   readonly canApply: boolean;
   readonly labels: FormulaDefinitionsCatalogJsonLabels;
   readonly onApply: (catalog: FormulaDefinitionsCatalogEnvelope) => void;
-  readonly triggerSize?: "sm" | "md" | "lg";
+  readonly triggerLabels?: JsonActionTriggerLabels;
 }
 
 export function FormulaDefinitionsCatalogJsonImportDialog({
@@ -24,7 +30,7 @@ export function FormulaDefinitionsCatalogJsonImportDialog({
   canApply,
   labels,
   onApply,
-  triggerSize = "sm",
+  triggerLabels,
 }: FormulaDefinitionsCatalogJsonImportDialogProps) {
   const [open, setOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
@@ -128,14 +134,10 @@ export function FormulaDefinitionsCatalogJsonImportDialog({
 
   return (
     <>
-      <Button
-        type="button"
-        variant="outline"
-        size={triggerSize}
+      <JsonImportTriggerButton
+        labels={triggerLabels}
         onClick={() => setOpen(true)}
-      >
-        {labels.importTrigger}
-      </Button>
+      />
 
       <Modal
         open={open}
