@@ -201,7 +201,14 @@ export function shouldFetchEntityLayoutImageDownload(options: {
     trimmedPath,
     options.getDefinition,
   );
-  if (!leaf?.rootRelationField) {
+  if (
+    !leaf?.rootRelationField ||
+    !canFetchUnpopulatedRelationImage(
+      options.definition,
+      leaf,
+      options.getDefinition,
+    )
+  ) {
     return false;
   }
 
@@ -255,6 +262,54 @@ export function resolveEntityLayoutImageStorageDownloadTarget(options: {
   };
 }
 
+function relationLeafFieldMeta(
+  definition: SerializableEntityDefinition,
+  relationField: string,
+  leafFieldName: string,
+  getDefinition?: RelationDefinitionLookup,
+): SerializableEntityDefinition["fields"][string] | undefined {
+  const targetEntity = definition.fields[relationField]?.relation?.target;
+  if (!targetEntity) {
+    return undefined;
+  }
+
+  const targetDefinition = getDefinition?.(targetEntity);
+  return targetDefinition?.fields[leafFieldName];
+}
+
+function isFileImageFieldMeta(
+  meta: SerializableEntityDefinition["fields"][string] | undefined,
+): boolean {
+  return meta?.type === "image" || meta?.type === "document";
+}
+
+function canFetchUnpopulatedRelationImage(
+  definition: SerializableEntityDefinition,
+  leaf: import("@repo/ui-builder-core").ResolvedLayoutFieldLeaf,
+  getDefinition?: RelationDefinitionLookup,
+): boolean {
+  if (!leaf.rootRelationField) {
+    return false;
+  }
+
+  if (leaf.pathPrefix.includes(".")) {
+    return false;
+  }
+
+  if (!getDefinition) {
+    return true;
+  }
+
+  return isFileImageFieldMeta(
+    relationLeafFieldMeta(
+      definition,
+      leaf.rootRelationField,
+      leaf.leafFieldName,
+      getDefinition,
+    ),
+  );
+}
+
 export function resolveEntityLayoutImageDownloadTarget(options: {
   readonly item: Record<string, unknown>;
   readonly fieldPath: string;
@@ -291,6 +346,16 @@ export function resolveEntityLayoutImageDownloadTarget(options: {
     options.getDefinition,
   );
   if (leaf?.rootRelationField) {
+    if (
+      !canFetchUnpopulatedRelationImage(
+        options.definition,
+        leaf,
+        options.getDefinition,
+      )
+    ) {
+      return null;
+    }
+
     const foreignKey = options.item[leaf.rootRelationField];
     if (typeof foreignKey !== "string" || foreignKey.length === 0) {
       return null;

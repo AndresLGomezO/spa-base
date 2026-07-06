@@ -43,6 +43,151 @@ describe("resolveEntityFieldPath", () => {
     ).toBe("Banco de Bogotá");
   });
 
+  it("falls back to populated records when bridged lookup returns null", () => {
+    expect(
+      resolveEntityFieldPath(
+        {
+          id: "ps_1",
+          financialItemId: "fi_1",
+          _populated: {
+            financialItemId: { id: "fi_1", name: "Mortgage payment" },
+          },
+        },
+        "financialItem.name",
+        {
+          ...accountDefinition,
+          name: "paymentSchedule",
+          fields: {
+            financialItemId: {
+              type: "reference",
+              required: true,
+              optional: false,
+              relation: { type: "many-to-one", target: "financialItem" },
+            },
+          },
+        } as SerializableEntityDefinition,
+        () => null,
+        {
+          getManyToOneRelationSubfieldValue: () => null,
+        },
+      ),
+    ).toBe("Mortgage payment");
+  });
+
+  it("reads many-to-one subfields via bridged lookup when records are not populated", () => {
+    expect(
+      resolveEntityFieldPath(
+        {
+          id: "ps_1",
+          financialItemId: "fi_1",
+        },
+        "financialItem.name",
+        {
+          ...accountDefinition,
+          name: "paymentSchedule",
+          fields: {
+            financialItemId: {
+              type: "reference",
+              required: true,
+              optional: false,
+              relation: { type: "many-to-one", target: "financialItem" },
+            },
+          },
+        } as SerializableEntityDefinition,
+        () => null,
+        {
+          getDefinition: (entityName) =>
+            entityName === "financialItem"
+              ? ({
+                  name: "financialItem",
+                  collection: "financialItems",
+                  permissions: [],
+                  fields: {
+                    name: { type: "string", required: true, optional: false },
+                  },
+                  ui: {
+                    views: [],
+                    forms: { create: { sections: [] }, edit: { sections: [] } },
+                    fields: {},
+                  },
+                } as SerializableEntityDefinition)
+              : undefined,
+          getManyToOneRelationSubfieldValue: (recordId, fieldPath) => {
+            if (recordId !== "ps_1" || fieldPath !== "financialItem.name") {
+              return null;
+            }
+            return "Mortgage payment";
+          },
+        },
+      ),
+    ).toBe("Mortgage payment");
+  });
+
+  it("reads two-hop relation paths via bridged lookup when records are not populated", () => {
+    expect(
+      resolveEntityFieldPath(
+        {
+          id: "ps_1",
+          financialItemId: "fi_1",
+        },
+        "financialItem.actor.logo",
+        {
+          ...accountDefinition,
+          name: "paymentSchedule",
+          fields: {
+            financialItemId: {
+              type: "reference",
+              required: true,
+              optional: false,
+              relation: { type: "many-to-one", target: "financialItem" },
+            },
+          },
+        } as SerializableEntityDefinition,
+        () => null,
+        {
+          getDefinition: (entityName) =>
+            entityName === "financialItem"
+              ? ({
+                  name: "financialItem",
+                  collection: "financialItems",
+                  permissions: [],
+                  fields: {
+                    actorId: {
+                      type: "reference",
+                      required: false,
+                      optional: true,
+                      relation: { type: "many-to-one", target: "actor" },
+                    },
+                  },
+                  ui: {
+                    views: [],
+                    forms: { create: { sections: [] }, edit: { sections: [] } },
+                    fields: {},
+                  },
+                } as SerializableEntityDefinition)
+              : undefined,
+          getManyToOneRelationSubfieldValue: (recordId, fieldPath) => {
+            if (
+              recordId !== "ps_1" ||
+              fieldPath !== "financialItem.actor.logo"
+            ) {
+              return null;
+            }
+            return {
+              storagePath: "actors/logo.png",
+              fileName: "logo.png",
+              contentType: "image/png",
+            };
+          },
+        },
+      ),
+    ).toEqual({
+      storagePath: "actors/logo.png",
+      fileName: "logo.png",
+      contentType: "image/png",
+    });
+  });
+
   it("reads two-hop relation paths via nested populated records", () => {
     const paymentDefinition = {
       name: "payment",

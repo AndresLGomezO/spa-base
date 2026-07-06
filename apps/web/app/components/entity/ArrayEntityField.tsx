@@ -64,7 +64,8 @@ export function ArrayEntityField({
   const [draftDate, setDraftDate] = useState<string | undefined>(undefined);
   const [selectValue, setSelectValue] = useState("");
 
-  const dateMode = fieldUI?.dateDisplayFormat ?? "datetime";
+  const dateModeRaw = fieldUI?.dateDisplayFormat ?? "datetime";
+  const dateMode = dateModeRaw === "daysRemaining" ? "date" : dateModeRaw;
   const datePickerLabels: DatePickerLabels = {
     placeholder: t("entity.datePicker.placeholder"),
     clear: t("entity.datePicker.clear"),

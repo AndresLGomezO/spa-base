@@ -25,6 +25,10 @@ interface ResolveEntityFieldPathOptions {
     recordId: string,
     fieldPath: string,
   ) => unknown;
+  readonly getManyToOneRelationSubfieldValue?: (
+    recordId: string,
+    fieldPath: string,
+  ) => unknown;
 }
 
 export function resolveEntityFieldPath(
@@ -53,6 +57,14 @@ export function resolveEntityFieldPath(
 
   const pathSegments = trimmedPath.split(".");
   if (pathSegments.length >= 3) {
+    const bridged = options?.getManyToOneRelationSubfieldValue?.(
+      String(item.id),
+      trimmedPath,
+    );
+    if (bridged !== undefined && bridged !== null) {
+      return bridged;
+    }
+
     const firstSegment = pathSegments[0];
     if (!firstSegment) {
       return null;
@@ -108,6 +120,19 @@ export function resolveEntityFieldPath(
   }
 
   const { relationField, subField } = parsed;
+  if (
+    parsed.relationKind === "many-to-one" ||
+    parsed.relationKind === "one-to-one"
+  ) {
+    const bridged = options?.getManyToOneRelationSubfieldValue?.(
+      String(item.id),
+      trimmedPath,
+    );
+    if (bridged !== undefined && bridged !== null) {
+      return bridged;
+    }
+  }
+
   const populatedRecord = getPopulatedRecord(item, relationField);
   if (!populatedRecord) {
     return null;

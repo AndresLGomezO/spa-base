@@ -567,7 +567,9 @@ const fieldComponentSchema: z.ZodType<unknown> = z.lazy(() =>
     fieldComponentBaseSchema
       .extend({
         kind: z.literal("date"),
-        dateDisplayFormat: z.enum(["date", "datetime", "time"]).optional(),
+        dateDisplayFormat: z
+          .enum(["date", "datetime", "time", "daysRemaining"])
+          .optional(),
       })
       .strict(),
     fieldComponentBaseSchema

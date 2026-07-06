@@ -25,7 +25,11 @@ export type FieldComponentType =
 
 export type FieldDisplayFormat = "currency" | "plain" | "percentage";
 
-export type FieldDateDisplayFormat = "date" | "datetime" | "time";
+export type FieldDateDisplayFormat =
+  | "date"
+  | "datetime"
+  | "time"
+  | "daysRemaining";
 
 export interface FieldUIConfig {
   readonly label?: string;

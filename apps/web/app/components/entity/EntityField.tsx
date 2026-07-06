@@ -255,7 +255,8 @@ export function EntityField({
   }
 
   if (meta.type === "date") {
-    const dateMode = fieldUI?.dateDisplayFormat ?? "datetime";
+    const dateModeRaw = fieldUI?.dateDisplayFormat ?? "datetime";
+    const dateMode = dateModeRaw === "daysRemaining" ? "date" : dateModeRaw;
     const datePickerLabels: DatePickerLabels = {
       placeholder: t("entity.datePicker.placeholder"),
       clear: t("entity.datePicker.clear"),

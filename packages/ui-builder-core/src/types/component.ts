@@ -49,7 +49,11 @@ export type DataSource =
   | { readonly type: "field"; readonly path: string }
   | { readonly type: "static"; readonly value: string };
 
-export type FieldDateDisplayFormat = "date" | "datetime" | "time";
+export type FieldDateDisplayFormat =
+  | "date"
+  | "datetime"
+  | "time"
+  | "daysRemaining";
 
 export type NumericDisplayFormat = "currency" | "plain" | "percentage";
 

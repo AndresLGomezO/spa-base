@@ -20,7 +20,7 @@ export interface FieldDescriptor {
     | "image"
     | "unknown";
   readonly displayFormat?: "currency" | "plain" | "percentage";
-  readonly dateDisplayFormat?: "date" | "datetime" | "time";
+  readonly dateDisplayFormat?: "date" | "datetime" | "time" | "daysRemaining";
 }
 
 export interface EntityCardViewAdapterResult {

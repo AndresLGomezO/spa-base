@@ -363,9 +363,15 @@ export type {
   MotionPreset,
   MotionEntrance,
   MotionHover,
+  MotionHoverSurface,
+  MotionHoverTransform,
   MotionTransition,
 } from "./types/motion.js";
-export { MOTION_DURATION_MAX_MS } from "./types/motion.js";
+export {
+  MOTION_DURATION_MAX_MS,
+  MOTION_HOVER_ROTATE_DEG_MIN,
+  MOTION_HOVER_ROTATE_DEG_MAX,
+} from "./types/motion.js";
 export { motionPresetSchema } from "./schema/motion-schema.js";
 
 export type {
@@ -485,7 +491,13 @@ export {
 } from "./styles/resolve-metric-kpi-presentation.js";
 
 export {
+  diffCalendarDays,
+  parseDateValue,
+} from "./dates/diff-calendar-days.js";
+export {
   matchConditionalStyles,
+  matchConditionalDaysRemainingStyles,
+  matchConditionalStylesForDate,
   conditionalRulesToBadgeVariants,
   type MatchedConditionalStyles,
 } from "./conditions/match-conditional-styles.js";

@@ -12,7 +12,7 @@ export type DisplayFieldType =
 
 export type DisplayFormat = "currency" | "plain" | "percentage";
 
-export type DateDisplayFormat = "date" | "datetime" | "time";
+export type DateDisplayFormat = "date" | "datetime" | "time" | "daysRemaining";
 
 export interface FormatDisplayOptions {
   readonly locale?: string;
@@ -47,6 +47,75 @@ function formatTimezoneShort(
   return tz ?? timeZone;
 }
 
+function calendarDayUtcMs(date: Date, timeZone: string): number {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const year = Number(parts.find((part) => part.type === "year")?.value ?? "0");
+  const month = Number(
+    parts.find((part) => part.type === "month")?.value ?? "0",
+  );
+  const day = Number(parts.find((part) => part.type === "day")?.value ?? "0");
+  return Date.UTC(year, month - 1, day);
+}
+
+function diffCalendarDays(
+  target: Date,
+  reference: Date,
+  timeZone: string,
+): number {
+  const dayMs = 86_400_000;
+  return Math.round(
+    (calendarDayUtcMs(target, timeZone) -
+      calendarDayUtcMs(reference, timeZone)) /
+      dayMs,
+  );
+}
+
+function formatDaysRemainingLabel(days: number, locale: string): string {
+  const language = locale.trim().toLowerCase();
+  if (days === 0) {
+    return language.startsWith("es") ? "Vence hoy" : "Due today";
+  }
+  if (days === 1) {
+    return language.startsWith("es") ? "1 día restante" : "1 day left";
+  }
+  if (days > 1) {
+    return language.startsWith("es")
+      ? `${days} días restantes`
+      : `${days} days left`;
+  }
+  if (days === -1) {
+    return language.startsWith("es") ? "1 día de retraso" : "1 day overdue";
+  }
+  return language.startsWith("es")
+    ? `${Math.abs(days)} días de retraso`
+    : `${Math.abs(days)} days overdue`;
+}
+
+export function formatDaysRemainingDisplayValue(
+  value: string | Date,
+  options: Pick<FormatDisplayOptions, "locale" | "timeZone"> & {
+    readonly referenceDate?: Date;
+  } = {},
+): string {
+  const locale = options.locale ?? "en";
+  const timeZone = options.timeZone ?? "UTC";
+  const reference = options.referenceDate ?? new Date();
+  const date = value instanceof Date ? value : new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    return "—";
+  }
+
+  return formatDaysRemainingLabel(
+    diffCalendarDays(date, reference, timeZone),
+    locale,
+  );
+}
+
 export function formatDateDisplayValue(
   value: string | Date,
   options: Pick<
@@ -78,6 +147,10 @@ export function formatDateDisplayValue(
       minute: "2-digit",
       hour12: true,
     }).format(date);
+  }
+
+  if (dateDisplayFormat === "daysRemaining") {
+    return formatDaysRemainingDisplayValue(date, { locale, timeZone });
   }
 
   const parts = new Intl.DateTimeFormat(locale, {

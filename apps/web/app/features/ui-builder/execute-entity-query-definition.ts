@@ -9,6 +9,8 @@ import {
 } from "@repo/entity-queries/browser";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
+import { tryGetEntityDefinition } from "../../entities/entity-catalog";
+import { buildManyToOnePopulateParam } from "../../entities/build-many-to-one-populate-param";
 import {
   fetchAllEntityItems,
   RELATION_FILTER_OPTIONS_MAX_ITEMS,
@@ -83,6 +85,10 @@ export async function executeEntityQueryDefinition(
     expanded.filterTree,
   );
 
+  const sourcePopulate = buildManyToOnePopulateParam(
+    tryGetEntityDefinition(definition.sourceEntity, catalog),
+  );
+
   const listChildRecords = async (
     entityName: string,
     query: {
@@ -105,6 +111,7 @@ export async function executeEntityQueryDefinition(
       {
         maxItems: RELATION_FILTER_OPTIONS_MAX_ITEMS,
         query: queryConfig,
+        populate: sourcePopulate,
       },
     );
     if (sort.length > 0) {
@@ -124,6 +131,7 @@ export async function executeEntityQueryDefinition(
     {
       limit: definition.limit,
       query: queryConfig,
+      populate: sourcePopulate,
     },
   );
   let items = page.items;

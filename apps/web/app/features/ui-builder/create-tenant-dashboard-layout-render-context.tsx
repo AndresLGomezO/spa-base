@@ -127,7 +127,7 @@ export function createTenantDashboardLayoutRenderContext(
       ? createMetricWidgetRenderer({
           catalogItems,
           t,
-          buildLayoutContext: (definition, item) =>
+          buildLayoutContext: (definition, item, extras) =>
             createEntityLayoutRenderContext({
               item,
               definition,
@@ -140,6 +140,10 @@ export function createTenantDashboardLayoutRenderContext(
               usePreviewPlaceholder: previewMode,
               usePreviewSamples: previewMode,
               t,
+              getOneToManyRelationSubfieldValue:
+                extras?.getOneToManyRelationSubfieldValue,
+              getManyToOneRelationSubfieldValue:
+                extras?.getManyToOneRelationSubfieldValue,
             }),
         })
       : undefined,

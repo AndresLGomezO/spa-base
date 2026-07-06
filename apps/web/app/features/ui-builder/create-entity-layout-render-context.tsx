@@ -41,6 +41,10 @@ export function createEntityLayoutRenderContext(options: {
     recordId: string,
     fieldPath: string,
   ) => unknown;
+  readonly getManyToOneRelationSubfieldValue?: (
+    recordId: string,
+    fieldPath: string,
+  ) => unknown;
   readonly getDefinition?: (
     entityName: string,
   ) => EntityCatalogEntry | undefined;
@@ -60,6 +64,7 @@ export function createEntityLayoutRenderContext(options: {
     locale,
     getOneToManyCellValue = () => null,
     getOneToManyRelationSubfieldValue,
+    getManyToOneRelationSubfieldValue,
     getDefinition,
     catalogItems = [],
     listFilters,
@@ -79,6 +84,7 @@ export function createEntityLayoutRenderContext(options: {
     resolveEntityFieldPath(item, path, definition, getOneToManyCellValue, {
       getDefinition,
       getOneToManyRelationSubfieldValue,
+      getManyToOneRelationSubfieldValue,
     });
 
   return {
@@ -239,6 +245,8 @@ export function createEntityLayoutRenderContext(options: {
                 t,
                 getOneToManyRelationSubfieldValue:
                   extras?.getOneToManyRelationSubfieldValue,
+                getManyToOneRelationSubfieldValue:
+                  extras?.getManyToOneRelationSubfieldValue,
               }),
           })
         : undefined,
@@ -268,6 +276,8 @@ export function createEntityLayoutRenderContext(options: {
                 t,
                 getOneToManyRelationSubfieldValue:
                   extras?.getOneToManyRelationSubfieldValue,
+                getManyToOneRelationSubfieldValue:
+                  extras?.getManyToOneRelationSubfieldValue,
               }),
           })
         : undefined,

@@ -140,7 +140,17 @@ export function containerHasPixelMinHeight(
     return false;
   }
 
-  return !raw.trim().endsWith("%");
+  const trimmed = raw.trim();
+  if (trimmed.endsWith("%")) {
+    return false;
+  }
+
+  const parsed = Number.parseInt(trimmed, 10);
+  if (Number.isFinite(parsed) && parsed === 0) {
+    return false;
+  }
+
+  return true;
 }
 
 /** Fixed `height` or pixel `minHeight` — enough for percentage children to resolve against. */

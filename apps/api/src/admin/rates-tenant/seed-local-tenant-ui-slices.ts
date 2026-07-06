@@ -58,6 +58,7 @@ const tenantDashboardLayoutSliceSchema = z
     description: z.string().optional(),
     dashboardSections: dashboardSectionsSchema,
     shellAppendRows: z.array(z.unknown()).optional(),
+    shellRemoveRowIds: z.array(z.string()).optional(),
   })
   .strict();
 
@@ -80,23 +81,27 @@ function mergeDashboardSections(
   return [...byId.values()];
 }
 
-function appendShellRowsIfMissing(
+function applyShellRowSlice(
   dashboardLayout: UiLayoutDocument,
   rowsToAppend: readonly RowNode[],
+  removeRowIds: readonly string[] = [],
 ): UiLayoutDocument {
-  if (rowsToAppend.length === 0) {
-    return dashboardLayout;
-  }
-
   const root = dashboardLayout.root;
   if (root.type !== "screen-root") {
     return dashboardLayout;
   }
 
-  const existingIds = new Set((root.rows as RowNode[]).map((row) => row.id));
-  const nextRows = [...root.rows];
+  const removeIds = new Set(removeRowIds);
+  const appendById = new Map(rowsToAppend.map((row) => [row.id, row]));
+  const existingRows = (root.rows as RowNode[]).filter(
+    (row) => !removeIds.has(row.id),
+  );
+  const nextRows = existingRows.map(
+    (row) => appendById.get(row.id) ?? row,
+  ) as RowNode[];
+
   for (const row of rowsToAppend) {
-    if (!existingIds.has(row.id)) {
+    if (!existingRows.some((existing) => existing.id === row.id)) {
       nextRows.push(row);
     }
   }
@@ -269,9 +274,10 @@ async function seedLocalDashboardLayoutSlice(
       baseLayout.dashboardSections as DashboardSectionDefinition[],
       slice.dashboardSections as DashboardSectionDefinition[],
     ),
-    dashboardLayout: appendShellRowsIfMissing(
+    dashboardLayout: applyShellRowSlice(
       baseLayout.dashboardLayout as UiLayoutDocument,
       shellAppendRows,
+      slice.shellRemoveRowIds ?? [],
     ),
   } as PutTenantDashboardLayoutInput;
 

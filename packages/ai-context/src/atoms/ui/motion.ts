@@ -18,7 +18,9 @@ On **component rows** (\`type: "component"\`):
     "durationMs": 300,
     "delayMs": 0,
     "staggerIndex": true,
-    "hover": "lift",
+    "hoverSurface": "default",
+    "hoverTransform": "lift",
+    "hoverDurationMs": 150,
     "transition": "layout"
   },
   "component": { "kind": "text", "primary": { "type": "field", "path": "name" } }
@@ -44,7 +46,11 @@ On \`UiLayoutDocument\` root (layout effects for nested layouts):
 | \`durationMs\` | number | 0–2000 |
 | \`delayMs\` | number | delay before animation |
 | \`staggerIndex\` | boolean | stagger by row index within column |
-| \`hover\` | string | \`none\` \\| \`lift\` \\| \`glow\` |
+| \`hoverSurface\` | string | \`none\` \\| \`default\` (theme \`--color-hover\`) \\| \`accent\` (theme \`--color-accent-hover\`) \\| \`muted\` (theme \`--color-muted\`) |
+| \`hoverTransform\` | string | \`none\` \\| \`lift\` \\| \`scale-up\` \\| \`scale-down\` \\| \`glow\` |
+| \`hoverRotateDeg\` | number | -45–45; appended to hover transform |
+| \`hoverDurationMs\` | number | 0–2000; hover transition duration (default 150) |
+| \`hover\` | string | **deprecated** — \`none\` \\| \`lift\` \\| \`glow\`; maps to \`hoverTransform\` when unset |
 | \`transition\` | string | \`none\` \\| \`layout\` \\| \`all\` |
 
 **Nested-layout rows** do not support \`motion\` — only component rows and document root.

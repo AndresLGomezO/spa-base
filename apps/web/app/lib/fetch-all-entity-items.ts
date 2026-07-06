@@ -11,6 +11,7 @@ interface FetchAllEntityItemsOptions {
   readonly pageSize?: number;
   readonly maxItems?: number;
   readonly query?: QueryConfig;
+  readonly populate?: string;
 }
 
 const inFlightFetchAllEntityItems = new Map<
@@ -33,6 +34,7 @@ function buildFetchAllEntityItemsKey(
     query: options.query ?? null,
     maxItems,
     pageSize,
+    populate: options.populate ?? null,
   });
 }
 
@@ -53,6 +55,7 @@ async function fetchAllEntityItemsImpl<T>(
       limit: pageSize,
       cursor,
       ...(options.query ? { query: options.query } : {}),
+      ...(options.populate ? { populate: options.populate } : {}),
     });
     items.push(...page.items);
 

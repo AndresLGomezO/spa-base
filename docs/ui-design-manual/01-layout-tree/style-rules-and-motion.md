@@ -146,7 +146,9 @@ Attach `motion` on a component row:
     "durationMs": 300,
     "delayMs": 0,
     "staggerIndex": true,
-    "hover": "lift",
+    "hoverSurface": "default",
+    "hoverTransform": "lift",
+    "hoverDurationMs": 150,
     "transition": "layout"
   },
   "component": {
@@ -192,8 +194,14 @@ Attach `motion` on the `UiLayoutDocument` root for layout-wide entrance effects:
 | `durationMs` | number | 0–2000 |
 | `delayMs` | number | Delay before animation starts |
 | `staggerIndex` | boolean | Stagger by row index within parent |
-| `hover` | string | `none` \| `lift` \| `glow` |
+| `hoverSurface` | string | `none` \| `default` (theme `--color-hover`) \| `accent` (theme `--color-accent-hover`) \| `muted` (theme `--color-muted`) |
+| `hoverTransform` | string | `none` \| `lift` \| `scale-up` \| `scale-down` \| `glow` |
+| `hoverRotateDeg` | number | -45–45; degrees appended to hover transform |
+| `hoverDurationMs` | number | 0–2000; hover transition duration (default 150ms) |
+| `hover` | string | **Deprecated** — `none` \| `lift` \| `glow`; maps to `hoverTransform` when unset |
 | `transition` | string | `none` \| `layout` \| `all` |
+
+Interactive hover resolves to the `ui-motion-hover-interactive` class plus CSS variables (`--motion-hover-bg`, `--motion-hover-transform`, `--motion-hover-shadow`, `--motion-hover-duration`) on the row wrapper. Style rules cannot express `:hover` pseudo-states — use motion presets for hover background and transforms.
 
 **Note:** Motion applies to component rows and the document root only — not to `container` or `grid` configs directly.
 

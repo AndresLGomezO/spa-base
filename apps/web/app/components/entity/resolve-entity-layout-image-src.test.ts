@@ -318,6 +318,95 @@ describe("shouldFetchEntityLayoutImageDownload", () => {
       fieldName: "logo",
     });
   });
+
+  it("does not resolve nested relation image downloads without populated records", () => {
+    const paymentScheduleDefinition = {
+      name: "paymentSchedule",
+      collection: "paymentSchedules",
+      permissions: [],
+      fields: {
+        financialItemId: {
+          type: "reference",
+          required: true,
+          optional: false,
+          relation: { type: "many-to-one", target: "financialItem" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const financialItemDefinition = {
+      name: "financialItem",
+      collection: "financialItems",
+      permissions: [],
+      fields: {
+        actorId: {
+          type: "reference",
+          required: false,
+          optional: true,
+          relation: { type: "many-to-one", target: "actor" },
+        },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const actorDefinition = {
+      name: "actor",
+      collection: "actors",
+      permissions: [],
+      fields: {
+        logo: { type: "image", required: false, optional: true },
+      },
+      ui: {
+        views: [],
+        forms: { create: { sections: [] }, edit: { sections: [] } },
+        fields: {},
+      },
+    } as SerializableEntityDefinition;
+
+    const getDefinition = (entityName: string) => {
+      if (entityName === "financialItem") {
+        return financialItemDefinition;
+      }
+      if (entityName === "actor") {
+        return actorDefinition;
+      }
+      return undefined;
+    };
+
+    expect(
+      resolveEntityLayoutImageDownloadTarget({
+        item: {
+          id: "ps_1",
+          financialItemId: "fi_1",
+        },
+        fieldPath: "financialItem.actor.logo",
+        definition: paymentScheduleDefinition,
+        getDefinition,
+      }),
+    ).toBeNull();
+
+    expect(
+      shouldFetchEntityLayoutImageDownload({
+        item: {
+          id: "ps_1",
+          financialItemId: "fi_1",
+        },
+        fieldPath: "financialItem.actor.logo",
+        rawValue: null,
+        definition: paymentScheduleDefinition,
+        getDefinition,
+      }),
+    ).toBe(false);
+  });
 });
 
 describe("resolveEntityLayoutImageStorageDownloadTarget", () => {

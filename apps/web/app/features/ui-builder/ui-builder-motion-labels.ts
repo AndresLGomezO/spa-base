@@ -6,7 +6,10 @@ export function motionPresetEditorLabels(
 ): MotionPresetEditorLabels {
   return {
     entrance: t("entity.viewSettings.motionEntrance"),
-    hover: t("entity.viewSettings.motionHover"),
+    hoverSurface: t("entity.viewSettings.motionHoverSurface"),
+    hoverTransform: t("entity.viewSettings.motionHoverTransform"),
+    hoverRotateDeg: t("entity.viewSettings.motionHoverRotateDeg"),
+    hoverDurationMs: t("entity.viewSettings.motionHoverDuration"),
     transition: t("entity.viewSettings.motionTransition"),
     durationMs: t("entity.viewSettings.motionDuration"),
     delayMs: t("entity.viewSettings.motionDelay"),

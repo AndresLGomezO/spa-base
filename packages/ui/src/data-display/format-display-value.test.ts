@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   formatDateDisplayValue,
+  formatDaysRemainingDisplayValue,
   formatDisplayValue,
   formatNumberDisplayValue,
   isCurrencyField,
@@ -129,5 +130,23 @@ describe("formatDateDisplayValue", () => {
     });
     expect(formatted).toContain("2024");
     expect(formatted).toContain("PM");
+  });
+
+  it("formats days remaining from a due date", () => {
+    const reference = new Date("2024-06-01T12:00:00.000Z");
+    expect(
+      formatDaysRemainingDisplayValue("2024-06-03T00:00:00.000Z", {
+        locale: "en-US",
+        timeZone: "UTC",
+        referenceDate: reference,
+      }),
+    ).toBe("2 days left");
+    expect(
+      formatDaysRemainingDisplayValue("2024-06-01T00:00:00.000Z", {
+        locale: "en-US",
+        timeZone: "UTC",
+        referenceDate: reference,
+      }),
+    ).toBe("Due today");
   });
 });

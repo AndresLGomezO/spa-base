@@ -16,6 +16,7 @@ import {
   isViewFilterComponent,
   isPageUiComponent,
   matchConditionalStyles,
+  matchConditionalStylesForDate,
   resolveFieldChain,
   filterComponentInnerStyleRules,
   resolvePageSlotWrapper,
@@ -550,19 +551,31 @@ export function renderUiComponent(
       );
     }
 
+    const dateDisplayFormat =
+      config.dateDisplayFormat ?? meta.dateDisplayFormat ?? "datetime";
+    const matched = matchConditionalStylesForDate(
+      rawValue,
+      config.conditionalStyles,
+      {
+        dateDisplayFormat,
+        timeZone: "UTC",
+      },
+    );
+
     return (
       <CardFieldDate
         value={rawValue}
-        dateDisplayFormat={
-          config.dateDisplayFormat ?? meta.dateDisplayFormat ?? "datetime"
-        }
+        dateDisplayFormat={dateDisplayFormat}
         locale={context.locale}
         label={label}
         className={containerClassName}
         style={containerStyle}
-        valueClassName={valueClassNameFromStyles(innerStyles, textClassName)}
+        valueClassName={valueClassNameFromStyles(
+          innerStyles,
+          [textClassName, matched.className].filter(Boolean).join(" "),
+        )}
         textSize={textSize}
-        valueStyle={valueStyle}
+        valueStyle={{ ...valueStyle, ...matched.style }}
         {...textPropsFromLabel(config)}
       />
     );

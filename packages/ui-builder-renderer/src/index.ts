@@ -13,6 +13,7 @@ export { renderUiComponent } from "./engine/render-component.js";
 export {
   resolveMotionPreset,
   REDUCED_MOTION_MEDIA,
+  type ResolvedMotionPreset,
 } from "./motion/resolve-motion.js";
 export {
   RecursiveLayoutRenderer,

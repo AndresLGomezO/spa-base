@@ -1,7 +1,10 @@
 import {
   MOTION_DURATION_MAX_MS,
+  MOTION_HOVER_ROTATE_DEG_MAX,
+  MOTION_HOVER_ROTATE_DEG_MIN,
   type MotionEntrance,
-  type MotionHover,
+  type MotionHoverSurface,
+  type MotionHoverTransform,
   type MotionPreset,
   type MotionTransition,
 } from "@repo/ui-builder-core";
@@ -10,7 +13,10 @@ import { Button, Input, Text, Select } from "@repo/ui";
 export interface MotionPresetEditorLabels {
   readonly title?: string;
   readonly entrance: string;
-  readonly hover: string;
+  readonly hoverSurface: string;
+  readonly hoverTransform: string;
+  readonly hoverRotateDeg: string;
+  readonly hoverDurationMs: string;
   readonly transition: string;
   readonly durationMs: string;
   readonly delayMs: string;
@@ -35,12 +41,24 @@ const ENTRANCE_OPTIONS: readonly {
   { value: "scale", label: "Scale in" },
 ];
 
-const HOVER_OPTIONS: readonly {
-  readonly value: MotionHover;
+const HOVER_SURFACE_OPTIONS: readonly {
+  readonly value: MotionHoverSurface;
+  readonly label: string;
+}[] = [
+  { value: "none", label: "None" },
+  { value: "default", label: "Highlight (theme)" },
+  { value: "accent", label: "Accent (theme)" },
+  { value: "muted", label: "Muted (theme)" },
+];
+
+const HOVER_TRANSFORM_OPTIONS: readonly {
+  readonly value: MotionHoverTransform;
   readonly label: string;
 }[] = [
   { value: "none", label: "None" },
   { value: "lift", label: "Lift" },
+  { value: "scale-up", label: "Scale up" },
+  { value: "scale-down", label: "Scale down" },
   { value: "glow", label: "Glow" },
 ];
 
@@ -60,6 +78,28 @@ function patchMotion(
   return { ...(motion ?? {}), ...patch };
 }
 
+function resolveHoverSurface(
+  motion: MotionPreset | undefined,
+): MotionHoverSurface {
+  return motion?.hoverSurface ?? "none";
+}
+
+function resolveHoverTransform(
+  motion: MotionPreset | undefined,
+): MotionHoverTransform {
+  if (motion?.hoverTransform !== undefined) {
+    return motion.hoverTransform;
+  }
+  switch (motion?.hover) {
+    case "lift":
+      return "lift";
+    case "glow":
+      return "glow";
+    default:
+      return "none";
+  }
+}
+
 function hasMotionValues(motion: MotionPreset | undefined): boolean {
   if (!motion) {
     return false;
@@ -67,6 +107,10 @@ function hasMotionValues(motion: MotionPreset | undefined): boolean {
   return (
     motion.entrance !== undefined ||
     motion.hover !== undefined ||
+    motion.hoverSurface !== undefined ||
+    motion.hoverTransform !== undefined ||
+    motion.hoverRotateDeg !== undefined ||
+    motion.hoverDurationMs !== undefined ||
     motion.transition !== undefined ||
     motion.durationMs !== undefined ||
     motion.delayMs !== undefined ||
@@ -81,7 +125,8 @@ export function MotionPresetEditor({
   className,
 }: MotionPresetEditorProps) {
   const entrance = motion?.entrance ?? "none";
-  const hover = motion?.hover ?? "none";
+  const hoverSurface = resolveHoverSurface(motion);
+  const hoverTransform = resolveHoverTransform(motion);
   const transition = motion?.transition ?? "none";
 
   return (
@@ -111,23 +156,111 @@ export function MotionPresetEditor({
       </label>
 
       <label className="flex flex-col gap-1 text-sm">
-        <span className="text-muted-foreground">{labels.hover}</span>
+        <span className="text-muted-foreground">{labels.hoverSurface}</span>
         <Select
-          value={hover}
+          value={hoverSurface}
           onChange={(event) =>
             onChange(
               patchMotion(motion, {
-                hover: event.target.value as MotionHover,
+                hoverSurface: event.target.value as MotionHoverSurface,
+                hover: undefined,
               }),
             )
           }
         >
-          {HOVER_OPTIONS.map((option) => (
+          {HOVER_SURFACE_OPTIONS.map((option) => (
             <option key={option.value} value={option.value}>
               {option.label}
             </option>
           ))}
         </Select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">{labels.hoverTransform}</span>
+        <Select
+          value={hoverTransform}
+          onChange={(event) =>
+            onChange(
+              patchMotion(motion, {
+                hoverTransform: event.target.value as MotionHoverTransform,
+                hover: undefined,
+              }),
+            )
+          }
+        >
+          {HOVER_TRANSFORM_OPTIONS.map((option) => (
+            <option key={option.value} value={option.value}>
+              {option.label}
+            </option>
+          ))}
+        </Select>
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">{labels.hoverRotateDeg}</span>
+        <Input
+          type="number"
+          min={MOTION_HOVER_ROTATE_DEG_MIN}
+          max={MOTION_HOVER_ROTATE_DEG_MAX}
+          step={1}
+          value={motion?.hoverRotateDeg ?? ""}
+          placeholder="0"
+          onChange={(event) => {
+            const raw = event.target.value.trim();
+            if (raw.length === 0) {
+              const { hoverRotateDeg: _removed, ...rest } = motion ?? {};
+              void _removed;
+              onChange(hasMotionValues(rest) ? rest : undefined);
+              return;
+            }
+            const parsed = Number.parseInt(raw, 10);
+            if (!Number.isFinite(parsed)) {
+              return;
+            }
+            onChange(
+              patchMotion(motion, {
+                hoverRotateDeg: Math.min(
+                  MOTION_HOVER_ROTATE_DEG_MAX,
+                  Math.max(MOTION_HOVER_ROTATE_DEG_MIN, parsed),
+                ),
+              }),
+            );
+          }}
+        />
+      </label>
+
+      <label className="flex flex-col gap-1 text-sm">
+        <span className="text-muted-foreground">{labels.hoverDurationMs}</span>
+        <Input
+          type="number"
+          min={0}
+          max={MOTION_DURATION_MAX_MS}
+          step={25}
+          value={motion?.hoverDurationMs ?? ""}
+          placeholder="150"
+          onChange={(event) => {
+            const raw = event.target.value.trim();
+            if (raw.length === 0) {
+              const { hoverDurationMs: _removed, ...rest } = motion ?? {};
+              void _removed;
+              onChange(hasMotionValues(rest) ? rest : undefined);
+              return;
+            }
+            const parsed = Number.parseInt(raw, 10);
+            if (!Number.isFinite(parsed)) {
+              return;
+            }
+            onChange(
+              patchMotion(motion, {
+                hoverDurationMs: Math.min(
+                  MOTION_DURATION_MAX_MS,
+                  Math.max(0, parsed),
+                ),
+              }),
+            );
+          }}
+        />
       </label>
 
       <label className="flex flex-col gap-1 text-sm">

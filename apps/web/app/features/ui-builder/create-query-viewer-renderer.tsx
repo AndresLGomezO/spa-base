@@ -24,6 +24,7 @@ import type { TFunction } from "i18next";
 
 import type { EntityCatalogEntry } from "../../entities/entity-catalog";
 import { tryGetEntityDefinition } from "../../entities/entity-catalog";
+import { useManyToOneRelationSubfieldValues } from "../../hooks/useManyToOneRelationSubfieldValues";
 import { useOneToManyRelationSubfieldValues } from "../../hooks/useOneToManyRelationSubfieldValues";
 import type { PageFilterContext } from "../../lib/metric-binding-resolution";
 import { entityQueryResultsQueryKey } from "../../query/query-client";
@@ -38,6 +39,10 @@ interface CreateQueryViewerRendererOptions {
     item: Record<string, unknown>,
     extras?: {
       readonly getOneToManyRelationSubfieldValue?: (
+        recordId: string,
+        fieldPath: string,
+      ) => unknown;
+      readonly getManyToOneRelationSubfieldValue?: (
         recordId: string,
         fieldPath: string,
       ) => unknown;
@@ -172,11 +177,19 @@ function QueryViewerRuntime({
     [items],
   );
 
-  const { getSubfieldValue } = useOneToManyRelationSubfieldValues(
-    resolvedSourceDefinition ?? EMPTY_SOURCE_DEFINITION,
-    parentItems,
-    getDefinitionForRelations,
-  );
+  const { getSubfieldValue: getOneToManySubfieldValue } =
+    useOneToManyRelationSubfieldValues(
+      resolvedSourceDefinition ?? EMPTY_SOURCE_DEFINITION,
+      parentItems,
+      getDefinitionForRelations,
+    );
+
+  const { getSubfieldValue: getManyToOneSubfieldValue } =
+    useManyToOneRelationSubfieldValues(
+      resolvedSourceDefinition ?? EMPTY_SOURCE_DEFINITION,
+      items,
+      getDefinitionForRelations,
+    );
 
   if (queryId.length === 0) {
     return (
@@ -256,7 +269,8 @@ function QueryViewerRuntime({
           key={String(item.id ?? `query-item-${index}`)}
           layout={itemLayout}
           context={buildLayoutContext(sourceDefinition, item, {
-            getOneToManyRelationSubfieldValue: getSubfieldValue,
+            getOneToManyRelationSubfieldValue: getOneToManySubfieldValue,
+            getManyToOneRelationSubfieldValue: getManyToOneSubfieldValue,
           })}
         />
       ))}

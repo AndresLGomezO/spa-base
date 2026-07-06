@@ -31,6 +31,18 @@
   }
 }
 
+.ui-motion-hover-interactive {
+  transition:
+    background-color var(--motion-hover-duration, 150ms) ease,
+    transform var(--motion-hover-duration, 150ms) ease,
+    box-shadow var(--motion-hover-duration, 150ms) ease;
+}
+.ui-motion-hover-interactive:hover {
+  background-color: var(--motion-hover-bg, transparent);
+  transform: var(--motion-hover-transform, none);
+  box-shadow: var(--motion-hover-shadow, none);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .ui-motion-entrance-fade,
   .ui-motion-entrance-slide-up,
@@ -39,6 +51,9 @@
   .ui-motion-hover-glow,
   .ui-expandable-row-panel {
     transition: none !important;
+  }
+  .ui-motion-hover-interactive {
+    transition: background-color 0.01ms ease !important;
   }
   .ui-expandable-row-panel > * > * {
     transition: none !important;

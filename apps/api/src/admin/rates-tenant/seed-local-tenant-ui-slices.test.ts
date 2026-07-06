@@ -43,7 +43,7 @@ describe("seed-local-tenant-ui-slices", () => {
     expect(parsed.data.entityQueryDefinitions[0]?.name).toBe(
       "Upcoming payments (dashboard)",
     );
-    expect(parsed.data.entityQueryDefinitions[0]?.limit).toBe(4);
+    expect(parsed.data.entityQueryDefinitions[0]?.limitMode).toBe("all");
   });
 
   it("parses local paymentSchedule widget override slice", () => {
@@ -70,16 +70,79 @@ describe("seed-local-tenant-ui-slices", () => {
         ? (layout.root.columns[0].rows[0].component as { rows?: unknown[] })
             .rows
         : [];
-    const queryViewer = cardRows?.find(
-      (row) =>
-        typeof row === "object" &&
-        row !== null &&
-        "component" in row &&
-        (row as { component?: { kind?: string } }).component?.kind ===
-          "query-viewer",
-    ) as { component?: { emptyStateRows?: unknown[] } } | undefined;
+    const findQueryViewer = (
+      rows: unknown[] | undefined,
+    ): { component?: { emptyStateRows?: unknown[] } } | undefined => {
+      for (const row of rows ?? []) {
+        if (typeof row === "object" && row !== null && "component" in row) {
+          const component = (
+            row as { component?: { kind?: string; rows?: unknown[] } }
+          ).component;
+          if (component?.kind === "query-viewer") {
+            return row as { component?: { emptyStateRows?: unknown[] } };
+          }
+          const nested = findQueryViewer(component?.rows);
+          if (nested) {
+            return nested;
+          }
+        }
+      }
+      return undefined;
+    };
+    const queryViewer = findQueryViewer(cardRows);
 
     expect(queryViewer?.component?.emptyStateRows?.length).toBeGreaterThan(0);
+
+    const shellStyles = (
+      layout.root?.columns?.[0]?.rows?.[0]?.component as {
+        styles?: Array<{ property: string; value: string }>;
+      }
+    )?.styles;
+    expect(shellStyles).toEqual(
+      expect.arrayContaining([
+        { property: "width", value: "100%" },
+        { property: "height", value: "350" },
+      ]),
+    );
+  });
+
+  it("parses local financial snapshot dashboard section slice", () => {
+    const slice = JSON.parse(
+      readFileSync(
+        join(LOCAL_UI_DIR, "tenant-dashboard-layout-slice.json"),
+        "utf8",
+      ),
+    ) as {
+      dashboardSections: Array<{ id: string; name: string; layout: unknown }>;
+      shellAppendRows: Array<{ id: string; component: { rows: unknown[] } }>;
+    };
+
+    expect(slice.dashboardSections).toHaveLength(1);
+    expect(slice.dashboardSections[0]?.id).toBe("financial-snapshot");
+    expect(slice.dashboardSections[0]?.name).toBe("Financial Snapshot");
+
+    const gridRow = (
+      slice.dashboardSections[0]?.layout as {
+        root: {
+          columns: Array<{
+            rows: Array<{ component: { kind: string; rows: unknown[] } }>;
+          }>;
+        };
+      }
+    ).root.columns[0]?.rows[0]?.component;
+
+    expect(gridRow?.kind).toBe("grid");
+    expect(gridRow?.rows).toHaveLength(3);
+
+    const shellRow = slice.shellAppendRows[0];
+    expect(shellRow?.id).toBe("track-financial-snapshot");
+    expect(
+      (
+        shellRow?.component.rows[0] as {
+          component?: { sectionId?: string };
+        }
+      )?.component?.sectionId,
+    ).toBe("financial-snapshot");
   });
 
   it("exports seedLocalTenantUiSlicesIfPresent", () => {

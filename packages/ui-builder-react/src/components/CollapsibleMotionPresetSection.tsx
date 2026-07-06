@@ -22,6 +22,10 @@ function hasMotionValues(motion: MotionPreset | undefined): boolean {
   return (
     motion.entrance !== undefined ||
     motion.hover !== undefined ||
+    motion.hoverSurface !== undefined ||
+    motion.hoverTransform !== undefined ||
+    motion.hoverRotateDeg !== undefined ||
+    motion.hoverDurationMs !== undefined ||
     motion.transition !== undefined ||
     motion.durationMs !== undefined ||
     motion.delayMs !== undefined ||

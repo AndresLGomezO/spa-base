@@ -12,8 +12,11 @@ import {
   MAX_NESTED_COLUMNS,
   readGridGapEditorValue,
   stripGapStyleRules,
+  updateComponentRowAt,
+  updateGridRowMetaAt,
   type ComponentRowNode,
   type GridComponentConfig,
+  type StyleRule,
 } from "@repo/ui-builder-core";
 import { PreservedTextInput } from "@repo/ui-builder-react";
 import { FieldError, FieldLabel, Text } from "@repo/ui";
@@ -35,6 +38,50 @@ interface GridRowPanelProps {
   readonly labels: ReturnType<typeof formDesignerLayoutEditorLabels>;
   readonly treeLabels: StructureTreeLabels;
   readonly fieldDescriptors: readonly FieldDescriptor[];
+}
+
+function readGridShellStyleRules(
+  row: GridComponentConfig,
+  rowNode: ComponentRowNode,
+): readonly StyleRule[] {
+  const legacyRowShellStyles = (rowNode.styles ?? []).filter(
+    (rule) => !isResponsiveGridStyleProperty(rule.property),
+  );
+  const byProperty = new Map<string, StyleRule>(
+    [...legacyRowShellStyles, ...(row.styles ?? [])].map((rule) => [
+      rule.property,
+      rule,
+    ]),
+  );
+
+  return stripGapStyleRules(
+    filterStyleRulesForGenericEditor([...byProperty.values()]),
+  );
+}
+
+function writeGridShellStyleRules(
+  binding: ComponentsLayoutBinding,
+  rowRef: ComponentRowRef,
+  row: GridComponentConfig,
+  rowNode: ComponentRowNode,
+  genericStyles: readonly StyleRule[],
+): void {
+  const responsiveGridStyles = (rowNode.styles ?? []).filter((rule) =>
+    isResponsiveGridStyleProperty(rule.property),
+  );
+  let nextLayout = updateComponentRowAt(
+    binding.layout,
+    rowRef.locator,
+    rowRef.rowId,
+    {
+      ...row,
+      styles: stripGapStyleRules(genericStyles),
+    },
+  );
+  nextLayout = updateGridRowMetaAt(nextLayout, rowRef.locator, rowRef.rowId, {
+    styles: responsiveGridStyles.length > 0 ? responsiveGridStyles : undefined,
+  });
+  binding.setLayout(nextLayout);
 }
 
 export function GridRowPanel({
@@ -158,17 +205,10 @@ export function GridRowPanel({
 
       <CollapsibleStyleRulesEditor
         title={labels.rowLayoutStyles}
-        styles={stripGapStyleRules(
-          filterStyleRulesForGenericEditor(rowNode.styles),
-        )}
-        onChange={(genericStyles) => {
-          const gridStyles = (rowNode.styles ?? []).filter((rule) =>
-            isResponsiveGridStyleProperty(rule.property),
-          );
-          binding.updateGridRowMeta(rowRef, {
-            styles: [...stripGapStyleRules(genericStyles), ...gridStyles],
-          });
-        }}
+        styles={readGridShellStyleRules(row, rowNode)}
+        onChange={(genericStyles) =>
+          writeGridShellStyleRules(binding, rowRef, row, rowNode, genericStyles)
+        }
         labels={labels.styleRules}
       />
 

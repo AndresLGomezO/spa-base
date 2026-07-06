@@ -28,6 +28,10 @@ interface CreateMetricWidgetRendererOptions {
         recordId: string,
         fieldPath: string,
       ) => unknown;
+      readonly getManyToOneRelationSubfieldValue?: (
+        recordId: string,
+        fieldPath: string,
+      ) => unknown;
     },
   ) => LayoutRenderContext;
 }

@@ -3,6 +3,7 @@ import { describe, expect, it } from "vitest";
 import {
   containerEstablishesDefiniteHeight,
   containerHasFixedExplicitHeight,
+  containerHasPixelMinHeight,
   containerUsesPercentFillHeight,
   containerUsesPercentHeight,
   containerUsesPercentSplitHeight,
@@ -71,6 +72,29 @@ describe("container height style helpers", () => {
     ).toEqual({
       minHeight: "200px",
       height: "200px",
+    });
+  });
+
+  it("does not treat minHeight 0 as a definite pixel height", () => {
+    expect(
+      containerEstablishesDefiniteHeight([
+        { property: "minHeight", value: "0" },
+      ]),
+    ).toBe(false);
+    expect(
+      containerHasPixelMinHeight([{ property: "minHeight", value: "0" }]),
+    ).toBe(false);
+    expect(
+      resolveContainerShellLayoutStyle(
+        [
+          { property: "flex", value: "1" },
+          { property: "minHeight", value: "0" },
+          { property: "overflowY", value: "auto" },
+        ],
+        [],
+      ),
+    ).toEqual({
+      minHeight: "0px",
     });
   });
 
